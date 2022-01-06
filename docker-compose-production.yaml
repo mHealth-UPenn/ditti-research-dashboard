@@ -1,0 +1,36 @@
+version: '3'
+services:
+  aws-portal:
+    build: .
+    container_name: aws-portal
+    restart: unless-stopped
+    volumes:
+      - /mnt/log:/log
+    ports:
+      - 5000:5000
+    environment:
+      - FLASK_CONFIG=Production
+    secrets:
+      - aws-portal-flask
+      - aws-portal-aws
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/healthy"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+  aws-portal-db:
+    image: postgres:14
+    container_name: aws-portal-db
+    restart: unless-stopped
+    volumes:
+      - /var/lib/postgresql/data:/var/lib/postgresql/data
+    secrets:
+      - aws-portal-postgres
+secrets:
+  aws-portal-flask:
+    file: secret-flask.env
+  aws-portal-aws:
+    file: secret-aws.env
+  aws-portal-postgres:
+    file: secret-postgres.env

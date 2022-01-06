@@ -1,0 +1,28 @@
+version: '3'
+services:
+  aws-portal:
+    build: .
+    container_name: aws-portal
+    restart: unless-stopped
+    volumes:
+      - .log:/log
+    ports:
+      - 5000:5000
+    environment:
+      - FLASK_CONFIG=Development
+    env_file:
+      - flask.env
+      - postgres.env
+    secrets:
+      - secret-aws.env
+  aws-portal-db:
+    image: postgres:14
+    container_name: aws-portal-db
+    restart: unless-stopped
+    volumes:
+      - .postgresql/data:/var/lib/postgresql/data
+    env_file:
+      - postgres.env
+secrets:
+  aws-portal-aws:
+    file: secret-aws.env
