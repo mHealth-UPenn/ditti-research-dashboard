@@ -2,11 +2,14 @@ from functools import partial
 from flask import json
 import pytest
 from aws_portal.app import create_app
+from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, App, Permission, Role, Study, create_tables,
-    create_joins, init_admin_account, init_admin_app, init_admin_group, init_db
+    AccessGroup, Account, App, Permission, Role, Study, init_admin_account,
+    init_admin_app, init_admin_group, init_db
 )
-from tests.testing_utils import get_csrf_headers, login_admin_account
+from tests.testing_utils import (
+    create_joins, create_tables, get_csrf_headers, login_admin_account
+)
 
 
 @pytest.fixture
@@ -14,11 +17,12 @@ def app():
     app = create_app(testing=True)
     with app.app_context():
         init_db()
-        create_tables()
-        create_joins()
         init_admin_app()
         init_admin_group()
         init_admin_account()
+        create_tables()
+        create_joins()
+        db.session.commit()
         yield app
 
 
@@ -43,11 +47,12 @@ def post(client):
 
 def test_account(client):
     res = login_admin_account(client)
-    res = client.get('/admin/account')
+    opts = '?group=1'
+    res = client.get('/admin/account' + opts)
     data = json.loads(res.data)
-    assert len(data) == 2
-    assert data[0]['Email'] == 'foo@email.com'
-    assert data[1]['Email'] == 'bar@email.com'
+    assert len(data) == 3
+    assert data[1]['Email'] == 'foo@email.com'
+    assert data[2]['Email'] == 'bar@email.com'
 
 
 def test_account_create(post):
@@ -98,7 +103,8 @@ def test_account_archive():
 
 def test_study(client):
     res = login_admin_account(client)
-    res = client.get('/admin/study')
+    opts = '?group=1'
+    res = client.get('/admin/study' + opts)
     data = json.loads(res.data)
     assert len(data) == 2
     assert data[0]['Name'] == 'foo'
@@ -152,7 +158,8 @@ def test_study_archive():
 
 def test_access_group(client):
     res = login_admin_account(client)
-    res = client.get('/admin/access-group')
+    opts = '?group=1'
+    res = client.get('/admin/access-group' + opts)
     data = json.loads(res.data)
     assert len(data) == 2
     assert data[0]['Name'] == 'foo'
@@ -257,7 +264,7 @@ def test_access_group_archive():
 
 def test_role(client):
     res = login_admin_account(client)
-    opts = '?access-group=1'
+    opts = '?group=1&access-group=1'
     res = client.get('/admin/role' + opts)
     data = json.loads(res.data)
     assert len(data) == 1
@@ -266,7 +273,7 @@ def test_role(client):
 
 def test_permission_from_access_group(client):
     res = login_admin_account(client)
-    opts = '?access-group=1'
+    opts = '?group=1&access-group=1'
     res = client.get('/admin/permission' + opts)
     data = json.loads(res.data)
     assert len(data) == 1
@@ -275,7 +282,7 @@ def test_permission_from_access_group(client):
 
 def test_permission_from_role(client):
     res = login_admin_account(client)
-    opts = '?role=1'
+    opts = '?group=1&role=1'
     res = client.get('/admin/permission' + opts)
     data = json.loads(res.data)
     assert len(data) == 1
@@ -284,7 +291,8 @@ def test_permission_from_role(client):
 
 def test_app():
     res = login_admin_account(client)
-    res = client.get('/admin/app')
+    opts = '?group=1'
+    res = client.get('/admin/app' + opts)
     data = json.loads(res.data)
     assert len(data) == 2
     assert data[0]['Name'] == 'foo'

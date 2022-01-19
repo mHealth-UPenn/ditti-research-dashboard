@@ -206,6 +206,7 @@ class Account(db.Model):
         if valid is None:
             raise ValueError('Unauthorized Ask')
 
+    @property
     def meta(self):
         return {
             'ID': self.id,
@@ -216,7 +217,6 @@ class Account(db.Model):
             'Email': self.email,
             'IsConfirmed': self.is_confirmed,
             'AccessGroups': [j.access_group.meta for j in self.access_groups],
-            'Apps': [j.app.meta for j in self.apps],
             'Studies': [s.meta for s in self.studies]
         }
 
@@ -288,6 +288,7 @@ class JoinAccountStudy(db.Model):
     def primary_key(cls):
         return tuple_(cls.account_id, cls.study_id)
 
+    @property
     def meta(self):
         return {
             **self.study.meta,
@@ -330,6 +331,7 @@ class AccessGroup(db.Model):
         cascade='all, delete-orphan'
     )
 
+    @property
     def meta(self):
         return {
             'Name': self.name,
@@ -419,11 +421,11 @@ class Role(db.Model):
         cascade='all, delete-orphan'
     )
 
+    @property
     def meta(self):
         return {
             'Name': self.name,
-            'AccessGroup': self.access_group.meta,
-            'Permissions': [p.meta for p in self.permissions]
+            'Permissions': [p.permission.meta for p in self.permissions]
         }
 
     def __repr__(self):
@@ -489,6 +491,7 @@ class Permission(db.Model):
     def definition(cls):
         return tuple_(cls.action, cls.resource)
 
+    @property
     def meta(self):
         return {
             'Action': self.action,
@@ -504,6 +507,7 @@ class App(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
 
+    @property
     def meta(self):
         return {
             'Name': self.name
@@ -520,6 +524,7 @@ class Study(db.Model):
     acronym = db.Column(db.String, nullable=False, unique=True)
     ditti_id = db.Column(db.String, nullable=False, unique=True)
 
+    @property
     def meta(self):
         return {
             'Name': self.name,

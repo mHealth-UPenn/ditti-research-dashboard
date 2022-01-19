@@ -9,8 +9,11 @@ blueprint = Blueprint('admin', __name__, url_prefix='/admin')
 
 
 @blueprint.route('/account')
+@auth_required('Read', 'Account')
 def account():
-    return jsonify({})
+    accounts = Account.query.all()
+    res = [a.meta for a in accounts]
+    return jsonify(res)
 
 
 @blueprint.route('/account/create', methods=['POST'])
