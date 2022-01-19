@@ -1,4 +1,4 @@
-from flask import Blueprint, json, jsonify
+from flask import Blueprint, jsonify
 
 blueprint = Blueprint('db', __name__, url_prefix='/db')
 
