@@ -14,7 +14,7 @@ def account():
 
 
 @blueprint.route('/account/create', methods=['POST'])
-@auth_required('Create', 'User')
+@auth_required('Create', 'Account')
 def account_create():
     account = Account(
         public_id=str(uuid.uuid4()),

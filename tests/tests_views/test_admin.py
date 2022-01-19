@@ -24,7 +24,11 @@ def client(app):
         yield client
 
 
-def test_user_create(client):
+def test_account():
+    raise Exception
+
+
+def test_account_create(client):
     res = login_admin_account(client)
     headers = get_csrf_headers(res)
     data = {
@@ -52,3 +56,91 @@ def test_user_create(client):
     assert foo.first_name == 'foo'
     assert foo.last_name == 'bar'
     assert foo.check_password('foo')
+
+
+def test_account_edit():
+    raise Exception
+
+
+def test_account_archive():
+    raise Exception
+
+
+def test_study():
+    raise Exception
+
+
+def test_study_create():
+    raise Exception
+
+
+def test_study_edit():
+    raise Exception
+
+
+def test_study_archive():
+    raise Exception
+
+
+def test_access_group():
+    raise Exception
+
+
+def test_access_group_create():
+    raise Exception
+
+
+def test_access_group_edit():
+    raise Exception
+
+
+def test_access_group_archive():
+    raise Exception
+
+
+def test_role():
+    raise Exception
+
+
+def test_role_create():
+    raise Exception
+
+
+def test_role_edit():
+    raise Exception
+
+
+def test_role_archive():
+    raise Exception
+
+
+def test_permission():
+    raise Exception
+
+
+def test_permission_create():
+    raise Exception
+
+
+def test_permission_edit():
+    raise Exception
+
+
+def test_permission_archive():
+    raise Exception
+
+
+def test_app():
+    raise Exception
+
+
+def test_app_create():
+    raise Exception
+
+
+def test_app_edit():
+    raise Exception
+
+
+def test_app_archive():
+    raise Exception
