@@ -1,8 +1,10 @@
+from functools import partial
 from flask import json
 import pytest
 from aws_portal.app import create_app
 from aws_portal.models import (
-    Account, init_admin_account, init_admin_app, init_admin_group, init_db
+    AccessGroup, Account, App, Permission, Role, Study, create_tables,
+    create_joins, init_admin_account, init_admin_app, init_admin_group, init_db
 )
 from tests.testing_utils import get_csrf_headers, login_admin_account
 
@@ -12,6 +14,8 @@ def app():
     app = create_app(testing=True)
     with app.app_context():
         init_db()
+        create_tables()
+        create_joins()
         init_admin_app()
         init_admin_group()
         init_admin_account()
@@ -24,33 +28,43 @@ def client(app):
         yield client
 
 
-def test_account():
-    raise Exception
-
-
-def test_account_create(client):
+@pytest.fixture
+def post(client):
     res = login_admin_account(client)
     headers = get_csrf_headers(res)
+    post = partial(
+        client.post,
+        content_type='multipart/form-data',
+        headers=headers
+    )
+
+    yield post
+
+
+def test_account(client):
+    res = login_admin_account(client)
+    res = client.get('/admin/account')
+    data = json.loads(res.data)
+    assert len(data) == 2
+    assert data[0]['Email'] == 'foo@email.com'
+    assert data[1]['Email'] == 'bar@email.com'
+
+
+def test_account_create(post):
     data = {
         'group': 1,
         'first-name': 'foo',
         'last-name': 'bar',
-        'email': 'foo@email.com',
+        'email': 'baz@email.com',
         'password': 'foo'
     }
 
-    res = client.post(
-        '/admin/account/create',
-        content_type='multipart/form-data',
-        data=data,
-        headers=headers
-    )
-
+    res = post('/admin/account/create', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Account Created Successfully'
 
-    q1 = Account.email == 'foo@email.com'
+    q1 = Account.email == 'baz@email.com'
     foo = Account.query.filter(q1).first()
     assert foo is not None
     assert foo.first_name == 'foo'
@@ -58,88 +72,258 @@ def test_account_create(client):
     assert foo.check_password('foo')
 
 
-def test_account_edit():
-    raise Exception
+def test_account_edit(post):
+    data = {
+        'group': 1,
+        'id': 1,
+        'edit': {
+            'first-name': 'foo',
+            'last-name': 'bar',
+        }
+    }
+
+    res = post('/admin/account/edit', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Account Edited Successfully'
+
+    foo = Account.query.get(1)
+    assert foo.first_name == 'foo'
+    assert foo.last_name == 'bar'
 
 
 def test_account_archive():
     raise Exception
 
 
-def test_study():
-    raise Exception
+def test_study(client):
+    res = login_admin_account(client)
+    res = client.get('/admin/study')
+    data = json.loads(res.data)
+    assert len(data) == 2
+    assert data[0]['Name'] == 'foo'
+    assert data[1]['Name'] == 'bar'
 
 
-def test_study_create():
-    raise Exception
+def test_study_create(post):
+    data = {
+        'group': 1,
+        'name': 'baz',
+        'acronym': 'BAZ',
+        'ditti_id': 'BZ'
+    }
+
+    res = post('/admin/study/create', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Study Created Successfully'
+
+    q1 = Study.name == 'baz'
+    foo = Study.query.filter(q1).first()
+    assert foo is not None
+    assert foo.name == 'baz'
+    assert foo.acronym == 'BAZ'
+    assert foo.ditti_id == 'BZ'
 
 
-def test_study_edit():
-    raise Exception
+def test_study_edit(post):
+    data = {
+        'group': 1,
+        'id': 1,
+        'edit': {
+            'name': 'qux',
+            'acronym': 'QUX',
+        }
+    }
+
+    res = post('/admin/account/edit', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Account Edited Successfully'
+
+    foo = Study.query.get(1)
+    assert foo.name == 'qux'
+    assert foo.acronym == 'QUX'
 
 
 def test_study_archive():
     raise Exception
 
 
-def test_access_group():
-    raise Exception
+def test_access_group(client):
+    res = login_admin_account(client)
+    res = client.get('/admin/access-group')
+    data = json.loads(res.data)
+    assert len(data) == 2
+    assert data[0]['Name'] == 'foo'
+    assert data[1]['Name'] == 'bar'
 
 
-def test_access_group_create():
-    raise Exception
+def test_access_group_create(post):
+    data = {
+        'group': 1,
+        'name': 'baz',
+        'app': 1,
+        'accounts': [
+            1
+        ],
+        'roles': [
+            {
+                'name': 'baz',
+                'permissions': [
+                    {
+                        'action': 'foo',
+                        'resource': 'baz'
+                    }
+                ]
+            }
+        ],
+        'permissions': [
+            {
+                'action': 'foo',
+                'resource': 'qux'
+            }
+        ],
+        'studies': [
+            1
+        ]
+    }
+
+    res = post('/admin/access-group/create', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Access Group Created Successfully'
+
+    q1 = AccessGroup.name == 'baz'
+    foo = AccessGroup.query.filter(q1).first()
+    assert foo.name == 'baz'
+    assert foo.app.name == 'foo'
+    assert len(foo.accounts) == 1
+    assert foo.accounts[0].email == 'foo@email.com'
+    assert len(foo.roles) == 1
+    assert foo.roles[0].name == 'baz'
+    assert len(foo.roles[0].permissions) == 1
+    assert foo.roles[0].permissions[0].id == 1
+    assert len(foo.permissions) == 0
+    assert foo.permissions[0].action == 'foo'
+    assert len(foo.studies) == 1
+    assert foo.studies[0].name == 'foo'
 
 
-def test_access_group_edit():
-    raise Exception
+def test_access_group_edit(post):
+    data = {
+        'group': 1,
+        'id': 1,
+        'edit': {
+            'name': 'baz',
+            'roles': [
+                {
+                    'name': 'baz',
+                    'permissions': [
+                        {
+                            'action': 'foo',
+                            'resource': 'baz'
+                        }
+                    ]
+                }
+            ],
+            'permissions': []
+        }
+    }
+
+    res = post('/admin/access-group/edit', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Access Group Edited Successfully'
+
+    q1 = Role.name == 'foo'
+    q2 = Permission.definition == ('foo', 'baz')
+    foo = AccessGroup.query.get(1)
+    bar = Role.query.filter(q1).first()
+    baz = Permission.query.filter(q2).first()
+    assert foo.name == 'baz'
+    assert len(foo.roles) == 1
+    assert foo.roles[0].name == 'baz'
+    assert len(foo.roles[0].permissions) == 1
+    assert foo.roles[0].permissions[0].action == 'foo'
+    assert len(foo.permissions) == 0
+    assert bar is None
+    assert baz is None
 
 
 def test_access_group_archive():
     raise Exception
 
 
-def test_role():
-    raise Exception
+def test_role(client):
+    res = login_admin_account(client)
+    opts = '?access-group=1'
+    res = client.get('/admin/role' + opts)
+    data = json.loads(res.data)
+    assert len(data) == 1
+    assert data[0]['Name'] == 'foo'
 
 
-def test_role_create():
-    raise Exception
+def test_permission_from_access_group(client):
+    res = login_admin_account(client)
+    opts = '?access-group=1'
+    res = client.get('/admin/permission' + opts)
+    data = json.loads(res.data)
+    assert len(data) == 1
+    assert data[0]['Action'] == 'foo'
 
 
-def test_role_edit():
-    raise Exception
-
-
-def test_role_archive():
-    raise Exception
-
-
-def test_permission():
-    raise Exception
-
-
-def test_permission_create():
-    raise Exception
-
-
-def test_permission_edit():
-    raise Exception
-
-
-def test_permission_archive():
-    raise Exception
+def test_permission_from_role(client):
+    res = login_admin_account(client)
+    opts = '?role=1'
+    res = client.get('/admin/permission' + opts)
+    data = json.loads(res.data)
+    assert len(data) == 1
+    assert data[0]['Action'] == 'foo'
 
 
 def test_app():
-    raise Exception
+    res = login_admin_account(client)
+    res = client.get('/admin/app')
+    data = json.loads(res.data)
+    assert len(data) == 2
+    assert data[0]['Name'] == 'foo'
+    assert data[0]['Name'] == 'bar'
 
 
-def test_app_create():
-    raise Exception
+def test_app_create(post):
+    data = {
+        'group': 1,
+        'name': 'baz'
+    }
+
+    res = post('/admin/app/create', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'App Created Successfully'
+
+    q1 = App.name == 'baz'
+    foo = App.query.filter(q1).first()
+    assert foo is not None
+    assert foo.name == 'baz'
 
 
 def test_app_edit():
-    raise Exception
+    data = {
+        'group': 1,
+        'id': 1,
+        'edit': {
+            'name': 'baz'
+        }
+    }
+
+    res = post('/admin/app/edit', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'App Edited Successfully'
+
+    foo = App.query.get(1)
+    assert foo.name == 'baz'
 
 
 def test_app_archive():
