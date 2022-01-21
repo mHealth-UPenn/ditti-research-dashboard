@@ -58,10 +58,12 @@ def test_account(client):
 def test_account_create(post):
     data = {
         'group': 1,
-        'first_name': 'foo',
-        'last_name': 'bar',
-        'email': 'baz@email.com',
-        'password': 'foo'
+        'create': {
+            'first_name': 'foo',
+            'last_name': 'bar',
+            'email': 'baz@email.com',
+            'password': 'foo'
+        }
     }
 
     data = json.dumps(data)
@@ -132,11 +134,14 @@ def test_study(client):
 def test_study_create(post):
     data = {
         'group': 1,
-        'name': 'baz',
-        'acronym': 'BAZ',
-        'ditti_id': 'BZ'
+        'create': {
+            'name': 'baz',
+            'acronym': 'BAZ',
+            'ditti_id': 'BZ'
+        }
     }
 
+    data = json.dumps(data)
     res = post('/admin/study/create', data=data)
     data = json.loads(res.data)
     assert 'msg' in data

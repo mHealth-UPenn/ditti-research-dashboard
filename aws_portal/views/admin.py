@@ -19,16 +19,17 @@ def account():
 @blueprint.route('/account/create', methods=['POST'])
 @auth_required('Create', 'Account')
 def account_create():
+    create = request.json['create']
     account = Account(
         public_id=str(uuid.uuid4()),
         created_on=datetime.utcnow(),
-        first_name=request.json['first_name'],
-        last_name=request.json['last_name'],
-        email=request.json['email'],
+        first_name=create['first_name'],
+        last_name=create['last_name'],
+        email=create['email'],
     )
 
     db.session.flush()
-    account.password = request.json['password']
+    account.password = create['password']
     db.session.add(account)
     db.session.commit()
 
@@ -49,8 +50,8 @@ def account_edit():
             else:
                 raise ValueError
 
-        msg = 'Account Edited Successfully'
         db.session.commit()
+        msg = 'Account Edited Successfully'
 
     except ValueError:
         msg = 'Invalid attribute: %s' % k
@@ -65,6 +66,7 @@ def account_archive():
 
 
 @blueprint.route('/study')
+@auth_required('Read', 'Study')
 def study():
     studies = Study.query.all()
     res = [a.meta for a in studies]
@@ -72,8 +74,27 @@ def study():
 
 
 @blueprint.route('/study/create', methods=['POST'])
+@auth_required('Create', 'Study')
 def study_create():
-    return jsonify({})
+    study = Study()
+
+    try:
+        for k, v in request.json['create'].items():
+            if hasattr(study, k):
+                setattr(study, k, v)
+
+            else:
+                raise ValueError
+
+        db.session.add(study)
+        db.session.commit()
+        msg = 'Study Created Successfully'
+
+    except ValueError:
+        msg = 'Invalid attribute: %s' % k
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/study/edit', methods=['POST'])
