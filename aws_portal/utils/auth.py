@@ -12,7 +12,7 @@ def auth_required(action, _resource=None):
         @wraps(func)
         def wrapper(*args, **kwargs):
             verify_jwt_in_request()
-            data = request.args or request.form
+            data = request.args or request.json
             group_id = data.get('group')
             study_id = data.get('study')
             resource = _resource or data.get('resource')

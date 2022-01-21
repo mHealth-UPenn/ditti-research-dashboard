@@ -1,5 +1,5 @@
 from functools import partial
-from flask import json
+import json
 import pytest
 from aws_portal.app import create_app
 from aws_portal.extensions import db
@@ -38,7 +38,7 @@ def post(client):
     headers = get_csrf_headers(res)
     post = partial(
         client.post,
-        content_type='multipart/form-data',
+        content_type='application/json',
         headers=headers
     )
 
@@ -58,12 +58,13 @@ def test_account(client):
 def test_account_create(post):
     data = {
         'group': 1,
-        'first-name': 'foo',
-        'last-name': 'bar',
+        'first_name': 'foo',
+        'last_name': 'bar',
         'email': 'baz@email.com',
         'password': 'foo'
     }
 
+    data = json.dumps(data)
     res = post('/admin/account/create', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
@@ -82,11 +83,12 @@ def test_account_edit(post):
         'group': 1,
         'id': 1,
         'edit': {
-            'first-name': 'foo',
-            'last-name': 'bar',
+            'first_name': 'foo',
+            'last_name': 'bar',
         }
     }
 
+    data = json.dumps(data)
     res = post('/admin/account/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
@@ -95,6 +97,22 @@ def test_account_edit(post):
     foo = Account.query.get(1)
     assert foo.first_name == 'foo'
     assert foo.last_name == 'bar'
+
+
+def test_account_edit_invalid(post):
+    data = {
+        'group': 1,
+        'id': 1,
+        'edit': {
+            'foo': 'bar'
+        }
+    }
+
+    data = json.dumps(data)
+    res = post('/admin/account/edit', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Invalid attribute: foo'
 
 
 def test_account_archive():

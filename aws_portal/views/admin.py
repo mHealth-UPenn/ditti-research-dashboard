@@ -22,13 +22,13 @@ def account_create():
     account = Account(
         public_id=str(uuid.uuid4()),
         created_on=datetime.utcnow(),
-        first_name=request.form['first-name'],
-        last_name=request.form['last-name'],
-        email=request.form['email'],
+        first_name=request.json['first_name'],
+        last_name=request.json['last_name'],
+        email=request.json['email'],
     )
 
     db.session.flush()
-    account.password = request.form['password']
+    account.password = request.json['password']
     db.session.add(account)
     db.session.commit()
 
@@ -37,7 +37,25 @@ def account_create():
 
 @blueprint.route('/account/edit', methods=['POST'])
 def account_edit():
-    return jsonify({})
+    account_id = request.json['id']
+    account = Account.query.get(account_id)
+
+    try:
+        for k, v in request.json['edit'].items():
+            if hasattr(account, k):
+                setattr(account, k, v)
+
+            else:
+                raise ValueError
+
+        msg = 'Account Edited Successfully'
+        db.session.commit()
+
+    except ValueError:
+        msg = 'Invalid attribute: %s' % k
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/account/archive', methods=['POST'])
