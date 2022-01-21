@@ -2,7 +2,7 @@ from datetime import datetime
 import uuid
 from flask import Blueprint, jsonify, request
 from aws_portal.extensions import db
-from aws_portal.models import Account
+from aws_portal.models import Account, Study
 from aws_portal.utils.auth import auth_required
 
 blueprint = Blueprint('admin', __name__, url_prefix='/admin')
@@ -36,6 +36,7 @@ def account_create():
 
 
 @blueprint.route('/account/edit', methods=['POST'])
+@auth_required('Edit', 'Account')
 def account_edit():
     account_id = request.json['id']
     account = Account.query.get(account_id)
@@ -65,7 +66,9 @@ def account_archive():
 
 @blueprint.route('/study')
 def study():
-    return jsonify({})
+    studies = Study.query.all()
+    res = [a.meta for a in studies]
+    return jsonify(res)
 
 
 @blueprint.route('/study/create', methods=['POST'])
