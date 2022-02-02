@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, request
 from aws_portal.extensions import db
 from aws_portal.models import Account, Study
 from aws_portal.utils.auth import auth_required
+from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint('admin', __name__, url_prefix='/admin')
 

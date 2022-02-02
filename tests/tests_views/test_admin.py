@@ -101,22 +101,6 @@ def test_account_edit(post):
     assert foo.last_name == 'bar'
 
 
-def test_account_edit_invalid(post):
-    data = {
-        'group': 1,
-        'id': 1,
-        'edit': {
-            'foo': 'bar'
-        }
-    }
-
-    data = json.dumps(data)
-    res = post('/admin/account/edit', data=data)
-    data = json.loads(res.data)
-    assert 'msg' in data
-    assert data['msg'] == 'Invalid attribute: foo'
-
-
 def test_account_archive():
     raise Exception
 
