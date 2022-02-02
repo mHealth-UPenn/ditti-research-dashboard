@@ -19,21 +19,21 @@ def account():
 @blueprint.route('/account/create', methods=['POST'])
 @auth_required('Create', 'Account')
 def account_create():
-    create = request.json['create']
-    account = Account(
-        public_id=str(uuid.uuid4()),
-        created_on=datetime.utcnow(),
-        first_name=create['first_name'],
-        last_name=create['last_name'],
-        email=create['email'],
-    )
+    account = Account()
 
-    db.session.flush()
-    account.password = create['password']
-    db.session.add(account)
-    db.session.commit()
+    try:
+        populate_model(account, request.json['create'])
+        account.public_id = str(uuid.uuid4())
+        account.created_on = datetime.utcnow()
+        db.session.add(account)
+        db.session.commit()
+        msg = 'Account Created Successfully'
 
-    return jsonify({'msg': 'Account Created Successfully'})
+    except ValueError as e:
+        msg = e
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/account/edit', methods=['POST'])
