@@ -177,31 +177,33 @@ def test_access_group(client):
 def test_access_group_create(post):
     data = {
         'group': 1,
-        'name': 'baz',
-        'app': 1,
-        'accounts': [
-            1
-        ],
-        'roles': [
-            {
-                'name': 'baz',
-                'permissions': [
-                    {
-                        'action': 'foo',
-                        'resource': 'baz'
-                    }
-                ]
-            }
-        ],
-        'permissions': [
-            {
-                'action': 'foo',
-                'resource': 'qux'
-            }
-        ],
-        'studies': [
-            1
-        ]
+        'create': {
+            'name': 'baz',
+            'app': 1,
+            'accounts': [
+                1
+            ],
+            'roles': [
+                {
+                    'name': 'baz',
+                    'permissions': [
+                        {
+                            'action': 'foo',
+                            'resource': 'baz'
+                        }
+                    ]
+                }
+            ],
+            'permissions': [
+                {
+                    'action': 'foo',
+                    'resource': 'qux'
+                }
+            ],
+            'studies': [
+                1
+            ]
+        }
     }
 
     res = post('/admin/access-group/create', data=data)
