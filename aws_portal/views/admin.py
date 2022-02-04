@@ -2,7 +2,7 @@ from datetime import datetime
 import uuid
 from flask import Blueprint, jsonify, request
 from aws_portal.extensions import db
-from aws_portal.models import Account, Study
+from aws_portal.models import AccessGroup, Account, Study
 from aws_portal.utils.auth import auth_required
 from aws_portal.utils.db import populate_model
 
@@ -64,7 +64,7 @@ def account_archive():
 @auth_required('Read', 'Study')
 def study():
     studies = Study.query.all()
-    res = [a.meta for a in studies]
+    res = [s.meta for s in studies]
     return jsonify(res)
 
 
@@ -110,7 +110,9 @@ def study_archive():
 
 @blueprint.route('/access-group')
 def access_group():
-    return jsonify({})
+    access_groups = AccessGroup.query.all()
+    res = [a.meta for a in access_groups]
+    return jsonify(res)
 
 
 @blueprint.route('/access-group/create', methods=['POST'])

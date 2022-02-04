@@ -169,9 +169,9 @@ def test_access_group(client):
     opts = '?group=1'
     res = client.get('/admin/access-group' + opts)
     data = json.loads(res.data)
-    assert len(data) == 2
-    assert data[0]['Name'] == 'foo'
-    assert data[1]['Name'] == 'bar'
+    assert len(data) == 3
+    assert data[1]['Name'] == 'foo'
+    assert data[2]['Name'] == 'bar'
 
 
 def test_access_group_create(post):
