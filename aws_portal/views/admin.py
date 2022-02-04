@@ -44,18 +44,12 @@ def account_edit():
     account = Account.query.get(account_id)
 
     try:
-        for k, v in request.json['edit'].items():
-            if hasattr(account, k):
-                setattr(account, k, v)
-
-            else:
-                raise ValueError
-
+        populate_model(account, request.json['edit'])
         db.session.commit()
         msg = 'Account Edited Successfully'
 
-    except ValueError:
-        msg = 'Invalid attribute: %s' % k
+    except ValueError as e:
+        msg = e
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -80,19 +74,13 @@ def study_create():
     study = Study()
 
     try:
-        for k, v in request.json['create'].items():
-            if hasattr(study, k):
-                setattr(study, k, v)
-
-            else:
-                raise ValueError
-
+        populate_model(study, request.json['create'])
         db.session.add(study)
         db.session.commit()
         msg = 'Study Created Successfully'
 
-    except ValueError:
-        msg = 'Invalid attribute: %s' % k
+    except ValueError as e:
+        msg = e
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -100,7 +88,19 @@ def study_create():
 
 @blueprint.route('/study/edit', methods=['POST'])
 def study_edit():
-    return jsonify({})
+    study_id = request.json['id']
+    study = Study.query.get(study_id)
+
+    try:
+        populate_model(study, request.json['edit'])
+        db.session.commit()
+        msg = 'Study Edited Successfully'
+
+    except ValueError as e:
+        msg = e
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/study/archive', methods=['POST'])

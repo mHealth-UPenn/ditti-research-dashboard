@@ -149,10 +149,11 @@ def test_study_edit(post):
         }
     }
 
-    res = post('/admin/account/edit', data=data)
+    data = json.dumps(data)
+    res = post('/admin/study/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
-    assert data['msg'] == 'Account Edited Successfully'
+    assert data['msg'] == 'Study Edited Successfully'
 
     foo = Study.query.get(1)
     assert foo.name == 'qux'
