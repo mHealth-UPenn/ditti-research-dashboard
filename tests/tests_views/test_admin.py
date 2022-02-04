@@ -179,9 +179,9 @@ def test_access_group_create(post):
         'group': 1,
         'create': {
             'name': 'baz',
-            'app': 1,
+            'app': 2,
             'accounts': [
-                1
+                2
             ],
             'roles': [
                 {
@@ -206,6 +206,7 @@ def test_access_group_create(post):
         }
     }
 
+    data = json.dumps(data)
     res = post('/admin/access-group/create', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
@@ -216,15 +217,15 @@ def test_access_group_create(post):
     assert foo.name == 'baz'
     assert foo.app.name == 'foo'
     assert len(foo.accounts) == 1
-    assert foo.accounts[0].email == 'foo@email.com'
+    assert foo.accounts[0].account.email == 'foo@email.com'
     assert len(foo.roles) == 1
     assert foo.roles[0].name == 'baz'
     assert len(foo.roles[0].permissions) == 1
-    assert foo.roles[0].permissions[0].id == 1
-    assert len(foo.permissions) == 0
-    assert foo.permissions[0].action == 'foo'
+    assert foo.roles[0].permissions[0].permission.id == 2
+    assert len(foo.permissions) == 1
+    assert foo.permissions[0].permission.action == 'foo'
     assert len(foo.studies) == 1
-    assert foo.studies[0].name == 'foo'
+    assert foo.studies[0].study.name == 'foo'
 
 
 def test_access_group_edit(post):

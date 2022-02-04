@@ -2,7 +2,10 @@ from datetime import datetime
 import uuid
 from flask import Blueprint, jsonify, request
 from aws_portal.extensions import db
-from aws_portal.models import AccessGroup, Account, Study
+from aws_portal.models import (
+    AccessGroup, Account, App, JoinAccessGroupPermission, JoinAccessGroupStudy,
+    JoinAccountAccessGroup, JoinRolePermission, Permission, Role, Study
+)
 from aws_portal.utils.auth import auth_required
 from aws_portal.utils.db import populate_model
 
@@ -117,7 +120,73 @@ def access_group():
 
 @blueprint.route('/access-group/create', methods=['POST'])
 def access_group_create():
-    return jsonify({})
+    access_group = AccessGroup()
+
+    try:
+        populate_model(access_group, request.json['create'])
+        app = App.query.get(request.json['create']['app'])
+        access_group.app = app
+
+        for entry in request.json['create']['accounts']:
+            account = Account.query.get(entry)
+            join = JoinAccountAccessGroup(
+                account=account,
+                access_group=access_group
+            )
+
+            access_group.accounts.append(join)
+
+        for entry in request.json['create']['roles']:
+            role = Role()
+            populate_model(role, entry)
+
+            for entry in entry['permissions']:
+                action = entry['action']
+                resource = entry['resource']
+                q = Permission.definition == (action, resource)
+                permission = Permission.query.filter(q).first()
+
+                if permission is None:
+                    permission = Permission()
+                    populate_model(permission, entry)
+
+                join = JoinRolePermission(
+                    role=role,
+                    permission=permission
+                )
+
+                role.permissions.append(join)
+
+            access_group.roles.append(role)
+
+        for entry in request.json['create']['permissions']:
+            permission = Permission()
+            populate_model(permission, entry)
+            join = JoinAccessGroupPermission(
+                access_group=access_group,
+                permission=permission
+            )
+
+            access_group.permissions.append(join)
+
+        for entry in request.json['create']['studies']:
+            study = Study.query.get(entry)
+            join = JoinAccessGroupStudy(
+                access_group=access_group,
+                study=study
+            )
+
+            access_group.studies.append(join)
+
+        db.session.add(access_group)
+        db.session.commit()
+        msg = 'Access Group Created Successfully'
+
+    except ValueError as e:
+        msg = e
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/access-group/edit', methods=['POST'])
