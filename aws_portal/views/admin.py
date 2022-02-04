@@ -129,12 +129,7 @@ def access_group_create():
 
         for entry in request.json['create']['accounts']:
             account = Account.query.get(entry)
-            join = JoinAccountAccessGroup(
-                account=account,
-                access_group=access_group
-            )
-
-            access_group.accounts.append(join)
+            JoinAccountAccessGroup(account=account, access_group=access_group)
 
         for entry in request.json['create']['roles']:
             role = Role()
@@ -150,33 +145,21 @@ def access_group_create():
                     permission = Permission()
                     populate_model(permission, entry)
 
-                join = JoinRolePermission(
-                    role=role,
-                    permission=permission
-                )
-
-                role.permissions.append(join)
+                JoinRolePermission(role=role, permission=permission)
 
             access_group.roles.append(role)
 
         for entry in request.json['create']['permissions']:
             permission = Permission()
             populate_model(permission, entry)
-            join = JoinAccessGroupPermission(
+            JoinAccessGroupPermission(
                 access_group=access_group,
                 permission=permission
             )
 
-            access_group.permissions.append(join)
-
         for entry in request.json['create']['studies']:
             study = Study.query.get(entry)
-            join = JoinAccessGroupStudy(
-                access_group=access_group,
-                study=study
-            )
-
-            access_group.studies.append(join)
+            JoinAccessGroupStudy(access_group=access_group, study=study)
 
         db.session.add(access_group)
         db.session.commit()
