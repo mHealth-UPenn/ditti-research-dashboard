@@ -4,7 +4,7 @@ import pytest
 from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, App, Permission, Role, Study, init_admin_account,
+    AccessGroup, Account, App, JoinAccessGroupPermission, JoinAccessGroupStudy, JoinAccountAccessGroup, Permission, Role, Study, init_admin_account,
     init_admin_app, init_admin_group, init_db
 )
 from tests.testing_utils import (
@@ -268,16 +268,22 @@ def test_access_group_edit_accounts(post):
         }
     }
 
+    foo = JoinAccountAccessGroup.query.get((2, 2))
+    assert foo is not None
+
     data = json.dumps(data)
     res = post('/admin/access-group/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Access Group Edited Successfully'
 
-    foo = AccessGroup.query.get(2)
-    assert len(foo.accounts) == 2
-    assert foo.accounts[0].account.email == 'admin@email.com'
-    assert foo.accounts[1].account.email == 'bar@email.com'
+    bar = AccessGroup.query.get(2)
+    assert len(bar.accounts) == 2
+    assert bar.accounts[0].account.email == 'admin@email.com'
+    assert bar.accounts[1].account.email == 'bar@email.com'
+
+    foo = JoinAccountAccessGroup.query.get((2, 2))
+    assert foo is None
 
 
 def test_access_group_edit_roles(post):
@@ -287,24 +293,11 @@ def test_access_group_edit_roles(post):
         'edit': {
             'roles': [
                 {
-                    'name': 'foo',
+                    'name': 'bar',
                     'permissions': [
-                        {
-                            'action': 'foo',
-                            'resource': 'baz'
-                        },
                         {
                             'action': '*',
                             'resource': '*'
-                        }
-                    ]
-                },
-                {
-                    'name': 'baz',
-                    'permissions': [
-                        {
-                            'action': 'foo',
-                            'resource': 'baz'
                         }
                     ]
                 }
@@ -312,21 +305,25 @@ def test_access_group_edit_roles(post):
         }
     }
 
+    q = (Role.access_group_id == 2) & (Role.name == 'foo')
+    foo = Role.query.filter(q).first()
+    assert foo is not None
+
     data = json.dumps(data)
     res = post('/admin/access-group/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Access Group Edited Successfully'
 
-    foo = AccessGroup.query.get(2)
-    assert len(foo.roles) == 2
-    assert foo.roles[0].name == 'foo'
-    assert len(foo.roles[0].permissions) == 2
-    assert foo.roles[0].permissions[0].permission.definition == ('foo', 'baz')
-    assert foo.roles[0].permissions[1].permission.definition == ('*', '*')
-    assert foo.roles[1].name == 'baz'
-    assert len(foo.roles[1].permissions) == 1
-    assert foo.roles[1].permissions[0].permission.definition == ('foo', 'baz')
+    bar = AccessGroup.query.get(2)
+    assert len(bar.roles) == 1
+    assert bar.roles[0].name == 'bar'
+    assert len(bar.roles[0].permissions) == 1
+    assert bar.roles[0].permissions[0].permission.definition == ('*', '*')
+
+    q = (Role.access_group_id == 2) & (Role.name == 'foo')
+    foo = Role.query.filter(q).first()
+    assert foo is None
 
 
 def test_access_group_edit_permissions(post):
@@ -343,15 +340,21 @@ def test_access_group_edit_permissions(post):
         }
     }
 
+    foo = JoinAccessGroupPermission.query.get((2, 2))
+    assert foo is not None
+
     data = json.dumps(data)
     res = post('/admin/access-group/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Access Group Edited Successfully'
 
-    foo = AccessGroup.query.get(2)
-    assert len(foo.permissions) == 1
-    assert foo.permissions[0].permission.definition == ('foo', 'qux')
+    bar = AccessGroup.query.get(2)
+    assert len(bar.permissions) == 1
+    assert bar.permissions[0].permission.definition == ('foo', 'qux')
+
+    foo = JoinAccessGroupPermission.query.get((2, 2))
+    assert foo is None
 
 
 def test_access_group_edit_studies(post):
@@ -365,15 +368,21 @@ def test_access_group_edit_studies(post):
         }
     }
 
+    foo = JoinAccessGroupStudy.query.get((2, 1))
+    assert foo is not None
+
     data = json.dumps(data)
     res = post('/admin/access-group/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Access Group Edited Successfully'
 
-    foo = AccessGroup.query.get(2)
-    assert len(foo.studies) == 1
-    assert foo.studies[0].study.name == 'bar'
+    bar = AccessGroup.query.get(2)
+    assert len(bar.studies) == 1
+    assert bar.studies[0].study.name == 'bar'
+
+    foo = JoinAccessGroupStudy.query.get((2, 1))
+    assert foo is None
 
 
 def test_access_group_archive():
