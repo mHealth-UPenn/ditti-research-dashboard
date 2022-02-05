@@ -4,8 +4,9 @@ import pytest
 from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission, JoinAccessGroupStudy, JoinAccountAccessGroup, Permission, Role, Study, init_admin_account,
-    init_admin_app, init_admin_group, init_db
+    AccessGroup, Account, App, JoinAccessGroupPermission, JoinAccessGroupStudy,
+    JoinAccountAccessGroup, Role, Study, init_admin_account, init_admin_app,
+    init_admin_group, init_db
 )
 from tests.testing_utils import (
     create_joins, create_tables, get_csrf_headers, login_admin_account
