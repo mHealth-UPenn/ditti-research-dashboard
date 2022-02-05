@@ -23,10 +23,11 @@ def account():
 @blueprint.route('/account/create', methods=['POST'])
 @auth_required('Create', 'Account')
 def account_create():
+    data = request.json['create']
     account = Account()
 
     try:
-        populate_model(account, request.json['create'])
+        populate_model(account, data)
         account.public_id = str(uuid.uuid4())
         account.created_on = datetime.utcnow()
         db.session.add(account)
@@ -43,11 +44,12 @@ def account_create():
 @blueprint.route('/account/edit', methods=['POST'])
 @auth_required('Edit', 'Account')
 def account_edit():
+    data = request.json['edit']
     account_id = request.json['id']
     account = Account.query.get(account_id)
 
     try:
-        populate_model(account, request.json['edit'])
+        populate_model(account, data)
         db.session.commit()
         msg = 'Account Edited Successfully'
 
@@ -74,10 +76,11 @@ def study():
 @blueprint.route('/study/create', methods=['POST'])
 @auth_required('Create', 'Study')
 def study_create():
+    data = request.json['create']
     study = Study()
 
     try:
-        populate_model(study, request.json['create'])
+        populate_model(study, data)
         db.session.add(study)
         db.session.commit()
         msg = 'Study Created Successfully'
@@ -91,11 +94,12 @@ def study_create():
 
 @blueprint.route('/study/edit', methods=['POST'])
 def study_edit():
+    data = request.json['edit']
     study_id = request.json['id']
     study = Study.query.get(study_id)
 
     try:
-        populate_model(study, request.json['edit'])
+        populate_model(study, data)
         db.session.commit()
         msg = 'Study Edited Successfully'
 
@@ -120,18 +124,19 @@ def access_group():
 
 @blueprint.route('/access-group/create', methods=['POST'])
 def access_group_create():
+    data = request.json['create']
     access_group = AccessGroup()
 
     try:
-        populate_model(access_group, request.json['create'])
-        app = App.query.get(request.json['create']['app'])
+        populate_model(access_group, data)
+        app = App.query.get(data['app'])
         access_group.app = app
 
-        for entry in request.json['create']['accounts']:
+        for entry in data['accounts']:
             account = Account.query.get(entry)
             JoinAccountAccessGroup(account=account, access_group=access_group)
 
-        for entry in request.json['create']['roles']:
+        for entry in data['roles']:
             role = Role()
             populate_model(role, entry)
 
@@ -149,7 +154,7 @@ def access_group_create():
 
             access_group.roles.append(role)
 
-        for entry in request.json['create']['permissions']:
+        for entry in data['permissions']:
             permission = Permission()
             populate_model(permission, entry)
             JoinAccessGroupPermission(
@@ -157,7 +162,7 @@ def access_group_create():
                 permission=permission
             )
 
-        for entry in request.json['create']['studies']:
+        for entry in data['studies']:
             study = Study.query.get(entry)
             JoinAccessGroupStudy(access_group=access_group, study=study)
 
@@ -174,23 +179,24 @@ def access_group_create():
 
 @blueprint.route('/access-group/edit', methods=['POST'])
 def access_group_edit():
+    data = request.json['edit']
     access_group_id = request.json['id']
     access_group = AccessGroup.query.get(access_group_id)
 
     try:
-        populate_model(access_group, request.json['edit'])
+        populate_model(access_group, data)
 
-        if 'app' in request.json['edit']:
-            app = App.query.get(request.json['edit']['app'])
+        if 'app' in data:
+            app = App.query.get(data['app'])
             access_group.app = app
 
-        if 'accounts' in request.json['edit']:
+        if 'accounts' in data:
             for join in access_group.accounts:
-                if join.account_id not in request.json['edit']['accounts']:
+                if join.account_id not in data['accounts']:
                     db.session.delete(join)
 
             ids = [j.account_id for j in access_group.accounts]
-            for entry in request.json['edit']['accounts']:
+            for entry in data['accounts']:
                 if entry not in ids:
                     account = Account.query.get(entry)
                     JoinAccountAccessGroup(
@@ -198,14 +204,14 @@ def access_group_edit():
                         access_group=access_group
                     )
 
-        if 'roles' in request.json['edit']:
-            names = [r['name'] for r in request.json['edit']['roles']]
+        if 'roles' in data:
+            names = [r['name'] for r in data['roles']]
             for role in access_group.roles:
                 if role.name not in names:
                     db.session.delete(role)
 
             names = [r.name for r in access_group.roles]
-            for entry in request.json['edit']['roles']:
+            for entry in data['roles']:
                 if entry['name'] not in names:
                     role = Role()
                     populate_model(role, entry)
@@ -243,10 +249,10 @@ def access_group_edit():
 
                         JoinRolePermission(role=role, permission=permission)
 
-        if 'permissions' in request.json['edit']:
+        if 'permissions' in data:
             access_group.permissions = []
 
-            for entry in request.json['edit']['permissions']:
+            for entry in data['permissions']:
                 action = entry['action']
                 resource = entry['resource']
                 q = Permission.definition == (action, resource)
@@ -261,13 +267,13 @@ def access_group_edit():
                     permission=permission
                 )
 
-        if 'studies' in request.json['edit']:
+        if 'studies' in data:
             for join in access_group.studies:
-                if join.study_id not in request.json['edit']['studies']:
+                if join.study_id not in data['studies']:
                     db.session.delete(join)
 
             ids = [j.study_id for j in access_group.studies]
-            for entry in request.json['edit']['studies']:
+            for entry in data['studies']:
                 if entry not in ids:
                     study = Study.query.get(entry)
                     JoinAccessGroupStudy(
