@@ -357,42 +357,23 @@ def test_access_group_edit_permissions(post):
 def test_access_group_edit_studies(post):
     data = {
         'group': 1,
-        'id': 1,
+        'id': 2,
         'edit': {
-            'name': 'baz',
-            'roles': [
-                {
-                    'name': 'baz',
-                    'permissions': [
-                        {
-                            'action': 'foo',
-                            'resource': 'baz'
-                        }
-                    ]
-                }
-            ],
-            'permissions': []
+            'studies': [
+                2
+            ]
         }
     }
 
+    data = json.dumps(data)
     res = post('/admin/access-group/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Access Group Edited Successfully'
 
-    q1 = Role.name == 'foo'
-    q2 = Permission.definition == ('foo', 'baz')
-    foo = AccessGroup.query.get(1)
-    bar = Role.query.filter(q1).first()
-    baz = Permission.query.filter(q2).first()
-    assert foo.name == 'baz'
-    assert len(foo.roles) == 1
-    assert foo.roles[0].name == 'baz'
-    assert len(foo.roles[0].permissions) == 1
-    assert foo.roles[0].permissions[0].action == 'foo'
-    assert len(foo.permissions) == 0
-    assert bar is None
-    assert baz is None
+    foo = AccessGroup.query.get(2)
+    assert len(foo.studies) == 1
+    assert foo.studies[0].study.name == 'bar'
 
 
 def test_access_group_archive():
