@@ -282,7 +282,7 @@ def access_group_edit():
                     )
 
         db.session.commit()
-        msg = 'Access Group Created Successfully'
+        msg = 'Access Group Edited Successfully'
 
     except ValueError as e:
         msg = e
