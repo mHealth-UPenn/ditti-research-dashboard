@@ -330,7 +330,28 @@ def test_access_group_edit_roles(post):
 
 
 def test_access_group_edit_permissions(post):
-    pass
+    data = {
+        'group': 1,
+        'id': 2,
+        'edit': {
+            'permissions': [
+                {
+                    'action': 'foo',
+                    'resource': 'qux'
+                }
+            ]
+        }
+    }
+
+    data = json.dumps(data)
+    res = post('/admin/access-group/edit', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Access Group Edited Successfully'
+
+    foo = AccessGroup.query.get(2)
+    assert len(foo.permissions) == 1
+    assert foo.permissions[0].permission.definition == ('foo', 'qux')
 
 
 def test_access_group_edit_studies(post):
