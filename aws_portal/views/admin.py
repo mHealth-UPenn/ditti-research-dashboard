@@ -174,7 +174,115 @@ def access_group_create():
 
 @blueprint.route('/access-group/edit', methods=['POST'])
 def access_group_edit():
-    return jsonify({})
+    access_group_id = request.json['id']
+    access_group = AccessGroup.query.get(access_group_id)
+
+    try:
+        populate_model(access_group, request.json['edit'])
+
+        if 'app' in request.json['edit']:
+            app = App.query.get(request.json['edit']['app'])
+            access_group.app = app
+
+        if 'accounts' in request.json['edit']:
+            for join in access_group.accounts:
+                if join.account_id not in request.json['edit']['accounts']:
+                    db.session.delete(join)
+
+            ids = [j.account_id for j in access_group.accounts]
+            for entry in request.json['edit']['accounts']:
+                if entry not in ids:
+                    account = Account.query.get(entry)
+                    JoinAccountAccessGroup(
+                        account=account,
+                        access_group=access_group
+                    )
+
+        if 'roles' in request.json['edit']:
+            names = [r['name'] for r in request.json['edit']['roles']]
+            for role in access_group.roles:
+                if role.name not in names:
+                    db.session.delete(role)
+
+            names = [r.name for r in access_group.roles]
+            for entry in request.json['edit']['roles']:
+                if entry['name'] not in names:
+                    role = Role()
+                    populate_model(role, entry)
+
+                    for entry in entry['permissions']:
+                        action = entry['action']
+                        resource = entry['resource']
+                        q = Permission.definition == (action, resource)
+                        permission = Permission.query.filter(q).first()
+
+                        if permission is None:
+                            permission = Permission()
+                            populate_model(permission, entry)
+
+                        JoinRolePermission(role=role, permission=permission)
+
+                    access_group.roles.append(role)
+
+                else:
+                    q = Role.name == entry['name']
+                    q = q & Role.access_group_id == access_group.id
+                    role = Role.query.filter(q).first()
+                    populate_model(role, entry)
+
+                    role.permissions = []
+                    for entry in entry['permissions']:
+                        action = entry['action']
+                        resource = entry['resource']
+                        q = Permission.definition == (action, resource)
+                        permission = Permission.query.filter(q).first()
+
+                        if permission is None:
+                            permission = Permission()
+                            populate_model(permission, entry)
+
+                        JoinRolePermission(role=role, permission=permission)
+
+        if 'permissions' in request.json['edit']:
+            access_group.permissions = []
+
+            for entry in request.json['edit']['permissions']:
+                action = entry['action']
+                resource = entry['resource']
+                q = Permission.definition == (action, resource)
+                permission = Permission.query.filter(q).first()
+
+                if permission is None:
+                    permission = Permission()
+                    populate_model(permission, entry)
+
+                JoinAccessGroupPermission(
+                    access_group=access_group,
+                    permission=permission
+                )
+
+        if 'studies' in request.json['edit']:
+            for join in access_group.studies:
+                if join.study_id not in request.json['edit']['studies']:
+                    db.session.delete(join)
+
+            ids = [j.study_id for j in access_group.studies]
+            for entry in request.json['edit']['studies']:
+                if entry not in ids:
+                    study = Study.query.get(entry)
+                    JoinAccessGroupStudy(
+                        access_group=access_group,
+                        study=study
+                    )
+
+        db.session.commit()
+        msg = 'Access Group Created Successfully'
+
+    except ValueError as e:
+        msg = e
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/access-group/archive', methods=['POST'])
