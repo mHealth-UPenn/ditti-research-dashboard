@@ -232,7 +232,7 @@ def access_group_edit():
 
                 else:
                     q = Role.name == entry['name']
-                    q = q & Role.access_group_id == access_group.id
+                    q = q & (Role.access_group_id == access_group.id)
                     role = Role.query.filter(q).first()
                     populate_model(role, entry)
 
