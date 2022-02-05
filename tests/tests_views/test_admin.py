@@ -231,7 +231,7 @@ def test_access_group_create(post):
 def test_access_group_edit(post):
     data = {
         'group': 1,
-        'id': 1,
+        'id': 2,
         'edit': {
             'name': 'baz',
             'app': 1
@@ -244,12 +244,12 @@ def test_access_group_edit(post):
     assert 'msg' in data
     assert data['msg'] == 'Access Group Edited Successfully'
 
-    foo = AccessGroup.query.get(1)
+    foo = AccessGroup.query.get(2)
     assert foo.name == 'baz'
     assert len(foo.roles) == 1
-    assert foo.roles[0].name == 'baz'
+    assert foo.roles[0].name == 'foo'
     assert len(foo.roles[0].permissions) == 1
-    assert foo.roles[0].permissions[0].action == 'foo'
+    assert foo.roles[0].permissions[0].permission.action == 'foo'
     assert len(foo.permissions) == 1
 
 
