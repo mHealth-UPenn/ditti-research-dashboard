@@ -403,9 +403,12 @@ def test_app(client):
 def test_app_create(post):
     data = {
         'group': 1,
-        'name': 'baz'
+        'create': {
+            'name': 'baz'
+        }
     }
 
+    data = json.dumps(data)
     res = post('/admin/app/create', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
