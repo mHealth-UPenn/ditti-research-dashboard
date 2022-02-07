@@ -296,26 +296,6 @@ def access_group_archive():
     return jsonify({})
 
 
-@blueprint.route('/permission')
-def permission():
-    return jsonify({})
-
-
-@blueprint.route('/permission/create', methods=['POST'])
-def permission_create():
-    return jsonify({})
-
-
-@blueprint.route('/permission/edit', methods=['POST'])
-def permission_edit():
-    return jsonify({})
-
-
-@blueprint.route('/permission/archive', methods=['POST'])
-def permission_archive():
-    return jsonify({})
-
-
 @blueprint.route('/app')
 def app():
     return jsonify({})

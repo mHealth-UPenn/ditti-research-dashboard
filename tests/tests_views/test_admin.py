@@ -390,33 +390,6 @@ def test_access_group_archive():
     raise Exception
 
 
-def test_role(client):
-    res = login_admin_account(client)
-    opts = '?group=1&access-group=1'
-    res = client.get('/admin/role' + opts)
-    data = json.loads(res.data)
-    assert len(data) == 1
-    assert data[0]['Name'] == 'foo'
-
-
-def test_permission_from_access_group(client):
-    res = login_admin_account(client)
-    opts = '?group=1&access-group=1'
-    res = client.get('/admin/permission' + opts)
-    data = json.loads(res.data)
-    assert len(data) == 1
-    assert data[0]['Action'] == 'foo'
-
-
-def test_permission_from_role(client):
-    res = login_admin_account(client)
-    opts = '?group=1&role=1'
-    res = client.get('/admin/permission' + opts)
-    data = json.loads(res.data)
-    assert len(data) == 1
-    assert data[0]['Action'] == 'foo'
-
-
 def test_app():
     res = login_admin_account(client)
     opts = '?group=1'
