@@ -298,7 +298,9 @@ def access_group_archive():
 
 @blueprint.route('/app')
 def app():
-    return jsonify({})
+    apps = App.query.all()
+    res = [a.meta for a in apps]
+    return jsonify(res)
 
 
 @blueprint.route('/app/create', methods=['POST'])
