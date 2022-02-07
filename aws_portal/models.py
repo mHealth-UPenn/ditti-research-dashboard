@@ -145,7 +145,14 @@ class Account(db.Model):
     access_groups = db.relationship(
         'JoinAccountAccessGroup',
         back_populates='account',
-        cascade='all, delete-orphan'
+        cascade='all, delete-orphan',
+        primaryjoin=(
+            'and_(' +
+            '   Account.id ==JoinAccountAccessGroup.account_id,' +
+            '   JoinAccountAccessGroup.access_group_id == AccessGroup.id,' +
+            '   AccessGroup.is_archived == False' +
+            ')'
+        )
     )
 
     studies = db.relationship(
@@ -187,13 +194,21 @@ class Account(db.Model):
             .join(AccessGroup)\
             .join(JoinAccountAccessGroup)\
             .filter(
-                JoinAccountAccessGroup.primary_key == tuple_(self.id, group_id)
+                (~AccessGroup.is_archived) &
+                (
+                    JoinAccountAccessGroup.primary_key ==
+                    tuple_(self.id, group_id)
+                )
             )
 
         q2 = Permission.query.join(JoinRolePermission)\
             .join(Role)\
+            .join(AccessGroup, Role.access_group_id == AccessGroup.id)\
             .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)\
-            .filter(JoinAccountStudy.primary_key == tuple_(self.id, study_id))
+            .filter(
+                (~AccessGroup.is_archived) &
+                (JoinAccountStudy.primary_key == tuple_(self.id, study_id))
+            )
 
         permissions = q1.union(q2)
         return permissions

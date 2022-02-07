@@ -276,12 +276,21 @@ class TestArchives:
 
         foo.is_archived = True
         db.session.commit()
-        foo = Account.query.filter(q1).first()
         assert foo.is_archived
         assert len(bar.accounts) == 0
 
-        foo.is_archived = False
+    def test_archive_access_group(self, app):
+        q1 = AccessGroup.name == 'foo'
+        foo = AccessGroup.query.filter(q1).first()
+        assert 'foo: %s' % foo != 'foo: %s' % None
+
+        q2 = Account.email == 'foo@email.com'
+        bar = Account.query.filter(q2).first()
+        assert 'bar: %s' % bar != 'bar: %s' % None
+        assert len(bar.access_groups) == 1
+        assert bar.access_groups[0].access_group is foo
+
+        foo.is_archived = True
         db.session.commit()
-        foo = Account.query.filter(q1).first()
-        assert not foo.is_archived
-        assert len(bar.accounts) == 1
+        assert foo.is_archived
+        assert len(bar.access_groups) == 0
