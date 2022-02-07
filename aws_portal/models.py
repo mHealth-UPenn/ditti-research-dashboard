@@ -139,6 +139,7 @@ class Account(db.Model):
     last_name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False, unique=True)
     is_confirmed = db.Column(db.Boolean, default=False, nullable=False)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
     _password = db.Column(db.String, nullable=False)
 
     access_groups = db.relationship(
@@ -303,6 +304,7 @@ class AccessGroup(db.Model):
     __tablename__ = 'access_group'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
     app_id = db.Column(db.Integer, db.ForeignKey('app.id', ondelete='CASCADE'))
     app = db.relationship('App')
@@ -506,6 +508,7 @@ class App(db.Model):
     __tablename__ = 'app'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
     @property
     def meta(self):
@@ -523,6 +526,7 @@ class Study(db.Model):
     name = db.Column(db.String, nullable=False, unique=True)
     acronym = db.Column(db.String, nullable=False, unique=True)
     ditti_id = db.Column(db.String, nullable=False, unique=True)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
     @property
     def meta(self):
