@@ -323,7 +323,21 @@ def app_create():
 
 @blueprint.route('/app/edit', methods=['POST'])
 def app_edit():
-    return jsonify({})
+    data = request.json['edit']
+    app_id = request.json['id']
+    app = App.query.get(app_id)
+
+    try:
+        populate_model(app, data)
+        db.session.add(app)
+        db.session.commit()
+        msg = 'App Edited Successfully'
+
+    except ValueError as e:
+        msg = e
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/app/archive', methods=['POST'])

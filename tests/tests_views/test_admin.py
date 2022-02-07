@@ -420,7 +420,7 @@ def test_app_create(post):
     assert foo.name == 'baz'
 
 
-def test_app_edit():
+def test_app_edit(post):
     data = {
         'group': 1,
         'id': 1,
@@ -429,6 +429,7 @@ def test_app_edit():
         }
     }
 
+    data = json.dumps(data)
     res = post('/admin/app/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
