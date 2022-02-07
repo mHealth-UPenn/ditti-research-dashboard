@@ -290,7 +290,19 @@ class TestArchives:
         assert len(bar.access_groups) == 1
         assert bar.access_groups[0].access_group is foo
 
+        baz = bar.get_permissions(foo.id).all()
+        assert 'baz: %s' % baz != 'baz: %s' % None
+
+        qux = [x.definition for x in baz]
+        assert qux == [('foo', 'baz')]
+
         foo.is_archived = True
         db.session.commit()
         assert foo.is_archived
         assert len(bar.access_groups) == 0
+
+        baz = bar.get_permissions(foo.id).all()
+        assert 'baz: %s' % baz != 'baz: %s' % None
+
+        qux = [x.definition for x in baz]
+        assert qux == []
