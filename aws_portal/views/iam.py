@@ -17,9 +17,12 @@ def login():
     if not auth or not auth.username or not auth.password:
         return make_response('Login credentials are required', 401)
 
-    account = Account.query.filter(Account.email == auth.username).first()
+    account = Account.query.filter(
+        (Account.email == auth.username) &
+        ~Account.is_archived
+    ).first()
 
-    if account.check_password(auth.password):
+    if account is not None and account.check_password(auth.password):
         access_token = create_access_token(account)
         res = jsonify({'msg': 'Login Successful'})
         set_access_cookies(res, access_token)

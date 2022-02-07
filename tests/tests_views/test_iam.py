@@ -1,9 +1,10 @@
+from base64 import b64encode
 import json
 import pytest
 from flask_jwt_extended import decode_token
 from aws_portal.app import create_app
 from aws_portal.extensions import db
-from aws_portal.models import BlockedToken, init_db
+from aws_portal.models import Account, BlockedToken, init_db
 from tests.testing_utils import (
     get_cookie_from_response, get_csrf_headers, login_test_account
 )
@@ -35,6 +36,22 @@ def test_login_no_credentials(client):
 
 def test_login_invalid_credentials(client):
     res = login_test_account('foo', client, 'bar')
+    assert res.status_code == 403
+
+
+def test_login_archived_account(client):
+    q1 = Account.email == 'foo@email.com'
+    foo = Account.query.filter(q1).first()
+    assert foo is not None
+
+    foo.is_archived = True
+    db.session.commit()
+    foo = Account.query.filter(q1).first()
+    assert foo.is_archived
+
+    cred = b64encode('foo@email.com:foo'.encode())
+    headers = {'Authorization': 'Basic %s' % cred.decode()}
+    res = client.post('/iam/login', headers=headers)
     assert res.status_code == 403
 
 
