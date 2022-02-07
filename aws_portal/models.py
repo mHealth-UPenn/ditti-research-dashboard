@@ -148,7 +148,7 @@ class Account(db.Model):
         cascade='all, delete-orphan',
         primaryjoin=(
             'and_(' +
-            '   Account.id ==JoinAccountAccessGroup.account_id,' +
+            '   Account.id == JoinAccountAccessGroup.account_id,' +
             '   JoinAccountAccessGroup.access_group_id == AccessGroup.id,' +
             '   AccessGroup.is_archived == False' +
             ')'
@@ -158,7 +158,14 @@ class Account(db.Model):
     studies = db.relationship(
         'JoinAccountStudy',
         back_populates='account',
-        cascade='all, delete-orphan'
+        cascade='all, delete-orphan',
+        primaryjoin=(
+            'and_(' +
+            '   Account.id == JoinAccountStudy.account_id,' +
+            '   JoinAccountStudy.study_id == Study.id,' +
+            '   Study.is_archived == False' +
+            ')'
+        )
     )
 
     @validates('created_on')
@@ -330,7 +337,7 @@ class AccessGroup(db.Model):
         cascade='all, delete-orphan',
         primaryjoin=(
             'and_(' +
-            '   AccessGroup.id ==JoinAccountAccessGroup.access_group_id,' +
+            '   AccessGroup.id == JoinAccountAccessGroup.access_group_id,' +
             '   JoinAccountAccessGroup.account_id == Account.id,' +
             '   Account.is_archived == False' +
             ')'
@@ -352,7 +359,14 @@ class AccessGroup(db.Model):
     studies = db.relationship(
         'JoinAccessGroupStudy',
         back_populates='access_group',
-        cascade='all, delete-orphan'
+        cascade='all, delete-orphan',
+        primaryjoin=(
+            'and_(' +
+            '   AccessGroup.id == JoinAccessGroupStudy.access_group_id,' +
+            '   JoinAccessGroupStudy.study_id == Study.id,' +
+            '   Study.is_archived == False' +
+            ')'
+        )
     )
 
     @property

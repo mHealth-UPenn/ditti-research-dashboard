@@ -306,3 +306,26 @@ class TestArchives:
 
         qux = [x.definition for x in baz]
         assert qux == []
+
+    def test_archive_study(self, app):
+        q1 = Study.name == 'foo'
+        foo = Study.query.filter(q1).first()
+        assert 'foo: %s' % foo != 'foo: %s' % None
+
+        q2 = AccessGroup.name == 'foo'
+        bar = AccessGroup.query.filter(q2).first()
+        assert 'bar: %s' % bar != 'bar: %s' % None
+        assert len(bar.studies) == 1
+        assert bar.studies[0].study is foo
+
+        q3 = Account.email == 'foo@email.com'
+        baz = Account.query.filter(q3).first()
+        assert 'baz: %s' % baz != 'baz: %s' % None
+        assert len(baz.studies) == 1
+        assert baz.studies[0].study is foo
+
+        foo.is_archived = True
+        db.session.commit()
+        assert foo.is_archived
+        assert len(bar.studies) == 0
+        assert len(baz.studies) == 0
