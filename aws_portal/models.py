@@ -312,7 +312,14 @@ class AccessGroup(db.Model):
     accounts = db.relationship(
         'JoinAccountAccessGroup',
         back_populates='access_group',
-        cascade='all, delete-orphan'
+        cascade='all, delete-orphan',
+        primaryjoin=(
+            'and_(' +
+            '   AccessGroup.id ==JoinAccountAccessGroup.access_group_id,' +
+            '   JoinAccountAccessGroup.account_id == Account.id,' +
+            '   Account.is_archived == False' +
+            ')'
+        )
     )
 
     roles = db.relationship(

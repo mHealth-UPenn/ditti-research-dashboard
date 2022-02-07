@@ -260,3 +260,28 @@ class TestDeletions:
         assert 'foo: %s' % foo == 'foo: %s' % None
         assert 'bar: %s' % bar == 'bar: %s' % None
         assert 'baz: %s' % baz == 'baz: %s' % None
+
+
+class TestArchives:
+    def test_archive_account(self, app):
+        q1 = Account.email == 'foo@email.com'
+        foo = Account.query.filter(q1).first()
+        assert 'foo: %s' % foo != 'foo: %s' % None
+
+        q2 = AccessGroup.name == 'foo'
+        bar = AccessGroup.query.filter(q2).first()
+        assert 'bar: %s' % bar != 'bar: %s' % None
+        assert len(bar.accounts) == 1
+        assert bar.accounts[0].account is foo
+
+        foo.is_archived = True
+        db.session.commit()
+        foo = Account.query.filter(q1).first()
+        assert foo.is_archived
+        assert len(bar.accounts) == 0
+
+        foo.is_archived = False
+        db.session.commit()
+        foo = Account.query.filter(q1).first()
+        assert not foo.is_archived
+        assert len(bar.accounts) == 1
