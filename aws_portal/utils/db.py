@@ -9,6 +9,9 @@ def populate_model(model, data):
         if isinstance(v, list):
             continue
 
+        if isinstance(getattr(model, k), list):
+            continue
+
         if isinstance(getattr(model, k), db.Model):
             continue
 
