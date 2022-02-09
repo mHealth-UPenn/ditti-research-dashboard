@@ -74,5 +74,5 @@ def test_populate_model_skip_relationships(app):
     data = {'app': 'foo'}
     populate_model(access_group, data)
     db.session.commit()
-    account = Account.query.get(1)
+    access_group = AccessGroup.query.get(1)
     assert access_group.app == app
