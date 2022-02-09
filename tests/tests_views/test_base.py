@@ -19,7 +19,7 @@ def client(app):
 
 
 def test_serve():  # TODO create this test
-    raise Exception
+    raise NotImplementedError
 
 
 def test_healthy(client):

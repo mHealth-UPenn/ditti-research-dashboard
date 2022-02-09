@@ -23,20 +23,20 @@ def client(app):
 
 
 def test_apps():
-    raise Exception
+    raise NotImplementedError
 
 
 def test_studies():
-    raise Exception
+    raise NotImplementedError
 
 
 def test_study_details():
-    raise Exception
+    raise NotImplementedError
 
 
 def test_study_contacts():
-    raise Exception
+    raise NotImplementedError
 
 
 def test_account_details():
-    raise Exception
+    raise NotImplementedError

@@ -103,7 +103,7 @@ def test_account_edit(post):
 
 
 def test_account_archive():
-    raise Exception
+    raise NotImplementedError
 
 
 def test_study(client):
@@ -162,7 +162,7 @@ def test_study_edit(post):
 
 
 def test_study_archive():
-    raise Exception
+    raise NotImplementedError
 
 
 def test_access_group(client):
@@ -387,7 +387,7 @@ def test_access_group_edit_studies(post):
 
 
 def test_access_group_archive():
-    raise Exception
+    raise NotImplementedError
 
 
 def test_app(client):
@@ -440,4 +440,4 @@ def test_app_edit(post):
 
 
 def test_app_archive():
-    raise Exception
+    raise NotImplementedError
