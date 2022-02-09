@@ -547,7 +547,6 @@ class App(db.Model):
     __tablename__ = 'app'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
-    is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
     @property
     def meta(self):
