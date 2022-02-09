@@ -473,7 +473,3 @@ def test_app_edit(post):
 
     foo = App.query.get(1)
     assert foo.name == 'baz'
-
-
-def test_app_archive():
-    raise NotImplementedError

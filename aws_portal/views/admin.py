@@ -374,8 +374,3 @@ def app_edit():
         db.session.rollback()
 
     return jsonify({'msg': msg})
-
-
-@blueprint.route('/app/archive', methods=['POST'])
-def app_archive():
-    return jsonify({})
