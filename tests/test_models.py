@@ -308,24 +308,36 @@ class TestArchives:
         assert qux == []
 
     def test_archive_study(self, app):
-        q1 = Study.name == 'foo'
+        q1 = Study.name == 'bar'
         foo = Study.query.filter(q1).first()
         assert 'foo: %s' % foo != 'foo: %s' % None
 
-        q2 = AccessGroup.name == 'foo'
+        q2 = AccessGroup.name == 'bar'
         bar = AccessGroup.query.filter(q2).first()
         assert 'bar: %s' % bar != 'bar: %s' % None
         assert len(bar.studies) == 1
         assert bar.studies[0].study is foo
 
-        q3 = Account.email == 'foo@email.com'
+        q3 = Account.email == 'bar@email.com'
         baz = Account.query.filter(q3).first()
         assert 'baz: %s' % baz != 'baz: %s' % None
         assert len(baz.studies) == 1
         assert baz.studies[0].study is foo
+
+        qux = baz.get_permissions(bar.id, foo.id).all()
+        assert 'qux: %s' % qux != 'qux: %s' % None
+
+        qux = [x.definition for x in qux]
+        assert qux == [('bar', 'baz'), ('bar', 'qux')]
 
         foo.is_archived = True
         db.session.commit()
         assert foo.is_archived
         assert len(bar.studies) == 0
         assert len(baz.studies) == 0
+
+        qux = baz.get_permissions(bar.id, foo.id).all()
+        assert 'qux: %s' % qux != 'qux: %s' % None
+
+        qux = [x.definition for x in qux]
+        assert qux == [('bar', 'baz')]

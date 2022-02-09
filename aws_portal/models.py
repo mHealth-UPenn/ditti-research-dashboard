@@ -208,16 +208,19 @@ class Account(db.Model):
                 )
             )
 
-        q2 = Permission.query.join(JoinRolePermission)\
-            .join(Role)\
-            .join(AccessGroup, Role.access_group_id == AccessGroup.id)\
-            .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)\
-            .filter(
-                (~AccessGroup.is_archived) &
-                (JoinAccountStudy.primary_key == tuple_(self.id, study_id))
-            )
+        if study_id and not Study.query.get(study_id).is_archived:
+            q2 = Permission.query.join(JoinRolePermission)\
+                .join(Role)\
+                .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)\
+                .filter(
+                    JoinAccountStudy.primary_key == tuple_(self.id, study_id)
+                )
 
-        permissions = q1.union(q2)
+            permissions = q1.union(q2)
+
+        else:
+            permissions = q1
+
         return permissions
 
     def validate_ask(self, action, resource, permissions):
