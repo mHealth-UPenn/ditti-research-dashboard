@@ -124,7 +124,19 @@ def study_edit():
 
 @blueprint.route('/study/archive', methods=['POST'])
 def study_archive():
-    return jsonify({})
+    study_id = request.json['id']
+
+    try:
+        study = Study.query.get(study_id)
+        study.is_archived = True
+        db.session.commit()
+        msg = 'Study Archived Successfully'
+
+    except Exception as e:
+        msg = e
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/access-group')

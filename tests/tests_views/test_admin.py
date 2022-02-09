@@ -173,8 +173,20 @@ def test_study_edit(post):
     assert foo.acronym == 'QUX'
 
 
-def test_study_archive():
-    raise NotImplementedError
+def test_study_archive(post):
+    data = {
+        'group': 1,
+        'id': 1
+    }
+
+    data = json.dumps(data)
+    res = post('/admin/study/archive', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Study Archived Successfully'
+
+    foo = Study.query.get(1)
+    assert foo.is_archived
 
 
 def test_access_group(client):
