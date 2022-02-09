@@ -62,7 +62,19 @@ def account_edit():
 
 @blueprint.route('/account/archive', methods=['POST'])
 def account_archive():
-    return jsonify({})
+    account_id = request.json['id']
+
+    try:
+        account = Account.query.get(account_id)
+        account.is_archived = True
+        db.session.commit()
+        msg = 'Account Archived Successfully'
+
+    except Exception as e:
+        msg = e
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/study')

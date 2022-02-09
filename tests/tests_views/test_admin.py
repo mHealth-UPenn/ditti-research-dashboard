@@ -102,8 +102,20 @@ def test_account_edit(post):
     assert foo.last_name == 'bar'
 
 
-def test_account_archive():
-    raise NotImplementedError
+def test_account_archive(post):
+    data = {
+        'group': 1,
+        'id': 1
+    }
+
+    data = json.dumps(data)
+    res = post('/admin/account/archive', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Account Archived Successfully'
+
+    foo = Account.query.get(1)
+    assert foo.is_archived
 
 
 def test_study(client):
