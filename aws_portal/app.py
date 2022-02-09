@@ -8,7 +8,7 @@ from aws_portal.commands import (
     init_admin_group_click, init_admin_account_click, init_db_click
 )
 from aws_portal.extensions import bcrypt, db, jwt, migrate
-from aws_portal.views import admin, aws_requests, base, iam
+from aws_portal.views import admin, aws_requests, base, db_requests, iam
 
 
 def create_app(testing=False):
@@ -48,6 +48,7 @@ def register_blueprints(app):
     app.register_blueprint(admin.blueprint)
     app.register_blueprint(aws_requests.blueprint)
     app.register_blueprint(base.blueprint)
+    app.register_blueprint(db_requests.blueprint)
     app.register_blueprint(iam.blueprint)
 
 

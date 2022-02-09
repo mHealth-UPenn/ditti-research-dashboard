@@ -1,8 +1,8 @@
+import json
 import pytest
 from aws_portal.app import create_app
-from aws_portal.models import (
-    init_admin_account, init_admin_app, init_admin_group, init_db
-)
+from aws_portal.models import init_admin_account, init_admin_app, init_admin_group, init_db
+from tests.testing_utils import create_joins, create_tables, login_admin_account, login_test_account
 
 
 @pytest.fixture
@@ -13,6 +13,8 @@ def app():
         init_admin_app()
         init_admin_group()
         init_admin_account()
+        create_tables()
+        create_joins()
         yield app
 
 
@@ -22,8 +24,20 @@ def client(app):
         yield client
 
 
-def test_apps():
-    raise NotImplementedError
+def test_apps(client):
+    login_test_account('foo', client)
+    res = client.get('/db/apps')
+    res = json.loads(res.data)
+    assert len(res) == 1
+    assert res[0]['Name'] == 'foo'
+
+
+def test_apps_admin(client):
+    login_admin_account(client)
+    res = client.get('/db/apps')
+    res = json.loads(res.data)
+    assert len(res) == 1
+    assert res[0]['Name'] == 'Admin Dashboard'
 
 
 def test_studies():
