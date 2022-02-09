@@ -206,9 +206,11 @@ def test_post_auth_required_action_unauthorized(client):
     group = get_user_access_group_id(account)
     study = get_user_study_id(account)
     data = {'group': group, 'study': study, 'resource': 'baz'}
+    data = json.dumps(data)
     headers = get_csrf_headers(res)
     res = client.post(
         '/test/post-auth-required-action',
+        content_type='application/json',
         data=data,
         headers=headers
     )
@@ -224,9 +226,11 @@ def test_post_auth_required_action(client):
     group = get_user_access_group_id(account)
     study = get_user_study_id(account)
     data = {'group': group, 'study': study, 'resource': 'baz'}
+    data = json.dumps(data)
     headers = get_csrf_headers(res)
     res = client.post(
         '/test/post-auth-required-action',
+        content_type='application/json',
         data=data,
         headers=headers
     )
@@ -242,9 +246,11 @@ def test_post_auth_required_resource_unauthorized(client):
     group = get_user_access_group_id(account)
     study = get_user_study_id(account)
     data = {'group': group, 'study': study}
+    data = json.dumps(data)
     headers = get_csrf_headers(res)
     res = client.post(
         '/test/post-auth-required-resource',
+        content_type='application/json',
         data=data,
         headers=headers
     )
@@ -260,9 +266,11 @@ def test_post_auth_required_resource(client):
     group = get_user_access_group_id(account)
     study = get_user_study_id(account)
     data = {'group': group, 'study': study}
+    data = json.dumps(data)
     headers = get_csrf_headers(res)
     res = client.post(
         '/test/post-auth-required-resource',
+        content_type='application/json',
         data=data,
         headers=headers
     )
