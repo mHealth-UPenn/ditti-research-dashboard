@@ -317,7 +317,19 @@ def access_group_edit():
 
 @blueprint.route('/access-group/archive', methods=['POST'])
 def access_group_archive():
-    return jsonify({})
+    access_group_id = request.json['id']
+
+    try:
+        access_group = AccessGroup.query.get(access_group_id)
+        access_group.is_archived = True
+        db.session.commit()
+        msg = 'Access Group Archived Successfully'
+
+    except Exception as e:
+        msg = e
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/app')

@@ -410,8 +410,20 @@ def test_access_group_edit_studies(post):
     assert foo is None
 
 
-def test_access_group_archive():
-    raise NotImplementedError
+def test_access_group_archive(post):
+    data = {
+        'group': 1,
+        'id': 1
+    }
+
+    data = json.dumps(data)
+    res = post('/admin/access-group/archive', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Access Group Archived Successfully'
+
+    foo = AccessGroup.query.get(1)
+    assert foo.is_archived
 
 
 def test_app(client):
