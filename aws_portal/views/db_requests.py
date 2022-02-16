@@ -44,16 +44,41 @@ def get_study_details():
         .join(JoinAccountStudy)\
         .filter(
             JoinAccountStudy.primary_key == tuple_(current_user.id, study_id)
-        )\
-        .first()
+        ).first()
 
     res = study.meta if study is not None else {}
     return jsonify(res)
 
 
 @blueprint.route('/get-study-contacts')
+@jwt_required()
 def get_study_contacts():
-    return jsonify({})
+    study_id = request.args['study']
+    study = Study.query\
+        .join(JoinAccountStudy)\
+        .filter(
+            JoinAccountStudy.primary_key == tuple_(current_user.id, study_id)
+        ).first()
+
+    res = []
+    if study is None:
+        return jsonify(res)
+
+    joins = JoinAccountStudy.query.filter(
+        JoinAccountStudy.study_id == study_id
+    ).all()
+
+    for join in joins:
+        account = {
+            'FullName': join.account.full_name,
+            'Email': join.account.email,
+            'PhoneNumber': None,
+            'Role': join.role.name
+        }
+
+        res.append(account)
+
+    return jsonify(res)
 
 
 @blueprint.route('/get-account-details')

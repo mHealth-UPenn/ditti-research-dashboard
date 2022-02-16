@@ -81,8 +81,16 @@ def test_study_details_invalid_study(client):
     assert res == {}
 
 
-def test_study_contacts():
-    raise NotImplementedError
+def test_study_contacts(client):
+    login_test_account('foo', client)
+    opts = '?study=1'
+    res = client.get('/db/get-study-contacts' + opts)
+    res = json.loads(res.data)
+    assert len(res) == 1
+    assert 'FullName' in res[0]
+    assert res[0]['FullName'] == 'John Smith'
+    assert 'Role' in res[0]
+    assert res[0]['Role'] == 'foo'
 
 
 def test_account_details():
