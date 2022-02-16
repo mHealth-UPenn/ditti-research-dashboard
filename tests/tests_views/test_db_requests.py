@@ -5,8 +5,7 @@ from aws_portal.models import (
     init_admin_account, init_admin_app, init_admin_group, init_db
 )
 from tests.testing_utils import (
-    create_joins, create_tables, create_test_access_group,
-    login_admin_account, login_test_account
+    create_joins, create_tables, login_admin_account, login_test_account
 )
 
 
@@ -101,5 +100,9 @@ def test_study_contacts_invalid_study(client):
     assert len(res) == 0
 
 
-def test_account_details():
-    raise NotImplementedError
+def test_account_details(client):
+    login_test_account('foo', client)
+    res = client.get('/db/get-account-details')
+    res = json.loads(res.data)
+    assert 'FirstName' in res
+    assert res['FirstName'] == 'John'

@@ -82,5 +82,13 @@ def get_study_contacts():
 
 
 @blueprint.route('/get-account-details')
+@jwt_required()
 def get_account_details():
-    return jsonify({})
+    res = {
+        'FirstName': current_user.first_name,
+        'LastName': current_user.last_name,
+        'Email': current_user.email,
+        'PhoneNumber': None
+    }
+
+    return jsonify(res)
