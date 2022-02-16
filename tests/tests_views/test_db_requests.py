@@ -54,6 +54,14 @@ def test_studies(client):
     assert res[0]['Name'] == 'foo'
 
 
+def test_studies_invalid_group(client):
+    login_test_account('foo', client)
+    opts = '?group=3'
+    res = client.get('/db/get-studies' + opts)
+    res = json.loads(res.data)
+    assert len(res) == 0
+
+
 def test_study_details():
     raise NotImplementedError
 
