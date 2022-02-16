@@ -73,6 +73,14 @@ def test_study_details(client):
     assert 'DittiID' in res
 
 
+def test_study_details_invalid_study(client):
+    login_test_account('foo', client)
+    opts = '?study=2'
+    res = client.get('/db/get-study-details' + opts)
+    res = json.loads(res.data)
+    assert res == {}
+
+
 def test_study_contacts():
     raise NotImplementedError
 
