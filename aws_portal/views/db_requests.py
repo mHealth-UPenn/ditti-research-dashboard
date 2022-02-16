@@ -1,7 +1,10 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import current_user, jwt_required
-from aws_portal.models import AccessGroup, App, JoinAccessGroupStudy, JoinAccountAccessGroup, JoinAccountStudy, Study
-from aws_portal.utils.auth import auth_required
+from sqlalchemy.sql import tuple_
+from aws_portal.models import (
+    AccessGroup, App, JoinAccessGroupStudy, JoinAccountAccessGroup,
+    JoinAccountStudy, Study
+)
 
 blueprint = Blueprint('db', __name__, url_prefix='/db')
 
@@ -34,8 +37,18 @@ def get_studies():
 
 
 @blueprint.route('/get-study-details')
+@jwt_required()
 def get_study_details():
-    return jsonify({})
+    study_id = request.args['study']
+    study = Study.query\
+        .join(JoinAccountStudy)\
+        .filter(
+            JoinAccountStudy.primary_key == tuple_(current_user.id, study_id)
+        )\
+        .first()
+
+    res = study.meta if study is not None else {}
+    return jsonify(res)
 
 
 @blueprint.route('/get-study-contacts')

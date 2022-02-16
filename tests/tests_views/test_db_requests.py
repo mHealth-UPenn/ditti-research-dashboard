@@ -62,8 +62,15 @@ def test_studies_invalid_group(client):
     assert len(res) == 0
 
 
-def test_study_details():
-    raise NotImplementedError
+def test_study_details(client):
+    login_test_account('foo', client)
+    opts = '?study=1'
+    res = client.get('/db/get-study-details' + opts)
+    res = json.loads(res.data)
+    assert 'Name' in res
+    assert res['Name'] == 'foo'
+    assert 'Acronym' in res
+    assert 'DittiID' in res
 
 
 def test_study_contacts():
