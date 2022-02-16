@@ -5,7 +5,8 @@ from aws_portal.models import (
     init_admin_account, init_admin_app, init_admin_group, init_db
 )
 from tests.testing_utils import (
-    create_joins, create_tables, login_admin_account, login_test_account
+    create_joins, create_tables, create_test_access_group,
+    login_admin_account, login_test_account
 )
 
 

@@ -288,3 +288,20 @@ def get_account_from_response(res):
     account = Account.query.filter(Account.public_id == public_id).first()
 
     return account
+
+
+def create_test_access_group(name, *args):
+    access_group = AccessGroup(name=name)
+
+    for action, resource in args:
+        permission = Permission(action=action, resource=resource)
+        JoinAccessGroupPermission(
+            access_group=access_group,
+            permission=permission
+        )
+
+    for study in Study.query.all():
+        JoinAccessGroupStudy(access_group=access_group, study=study)
+
+    db.session.add(access_group)
+    db.session.commit()

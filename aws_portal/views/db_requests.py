@@ -1,6 +1,6 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from flask_jwt_extended import current_user, jwt_required
-from aws_portal.models import AccessGroup, App, JoinAccountAccessGroup, JoinAccountStudy, Study
+from aws_portal.models import AccessGroup, App, JoinAccessGroupStudy, JoinAccountAccessGroup, JoinAccountStudy, Study
 from aws_portal.utils.auth import auth_required
 
 blueprint = Blueprint('db', __name__, url_prefix='/db')
@@ -19,9 +19,13 @@ def get_apps():
 
 
 @blueprint.route('/get-studies')
-@auth_required('Read')
+@jwt_required()
 def get_studies():
+    access_group_id = request.args['group']
+
     studies = Study.query\
+        .join(JoinAccessGroupStudy)\
+        .filter(JoinAccessGroupStudy.access_group_id == access_group_id)\
         .join(JoinAccountStudy)\
         .filter(JoinAccountStudy.account_id == current_user.id)\
         .all()
