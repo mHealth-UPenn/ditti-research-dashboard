@@ -1,37 +1,44 @@
 from flask import Blueprint, jsonify
 from flask_jwt_extended import current_user, jwt_required
-from aws_portal.models import AccessGroup, App, JoinAccountAccessGroup
+from aws_portal.models import AccessGroup, App, JoinAccountAccessGroup, JoinAccountStudy, Study
+from aws_portal.utils.auth import auth_required
 
 blueprint = Blueprint('db', __name__, url_prefix='/db')
 
 
-@blueprint.route('/apps')
+@blueprint.route('/get-apps')
 @jwt_required()
-def apps():
-    app = App.query\
+def get_apps():
+    apps = App.query\
         .join(AccessGroup, AccessGroup.app_id == App.id)\
         .join(JoinAccountAccessGroup)\
         .filter(JoinAccountAccessGroup.account_id == current_user.id)\
         .all()
 
-    return jsonify([a.meta for a in app])
+    return jsonify([a.meta for a in apps])
 
 
-@blueprint.route('/studies')
-def studies():
+@blueprint.route('/get-studies')
+@auth_required('Read')
+def get_studies():
+    studies = Study.query\
+        .join(JoinAccountStudy)\
+        .filter(JoinAccountStudy.account_id == current_user.id)\
+        .all()
+
+    return jsonify([s.meta for s in studies])
+
+
+@blueprint.route('/get-study-details')
+def get_study_details():
     return jsonify({})
 
 
-@blueprint.route('/study-details')
-def study_details():
+@blueprint.route('/get-study-contacts')
+def get_study_contacts():
     return jsonify({})
 
 
-@blueprint.route('/study-contacts')
-def study_contacts():
-    return jsonify({})
-
-
-@blueprint.route('/account-details')
-def account_details():
+@blueprint.route('/get-account-details')
+def get_account_details():
     return jsonify({})
