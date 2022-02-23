@@ -48,3 +48,15 @@ def test_scan(client):
     assert data['msg'] == 'Scan Successful'
     assert 'res' in data
     assert len(data['res']) == 1
+
+
+def test_user_create(client):
+    raise NotImplementedError
+
+
+def test_user_edit(client):
+    raise NotImplementedError
+
+
+def test_user_archive(client):
+    raise NotImplementedError

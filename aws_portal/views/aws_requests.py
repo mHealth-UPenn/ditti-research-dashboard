@@ -23,3 +23,21 @@ def scan():
     }
 
     return jsonify(res)
+
+
+@blueprint.route('/user/create')
+@auth_required('Create', 'User')
+def user_create():
+    return jsonify({})
+
+
+@blueprint.route('/user/edit')
+@auth_required('Edit', 'User')
+def user_edit():
+    return jsonify({})
+
+
+@blueprint.route('/user/archive')
+@auth_required('Archive', 'User')
+def user_archive():
+    return jsonify({})
