@@ -39,15 +39,15 @@ def user_edit():
     app = request.json.get('app')
     user_permission_id = request.json.get('user_permission_id')
 
+    if re.search(r'[^\dA-Za-z]', user_permission_id) is not None:
+        return jsonify({'msg': 'Invalid Ditti ID: %s' % user_permission_id})
+
     acronym = re.sub(r'[\d]+', '', user_permission_id)
     study_id = request.json.get('study')
     study = Study.query.get(study_id)
 
     if acronym != study.ditti_id:
         return jsonify({'msg': 'Invalid study acronym: %s' % acronym})
-
-    if re.search(r'[^\dA-Za-z]', user_permission_id) is not None:
-        return jsonify({'msg': 'Invalid Ditti ID: %s' % user_permission_id})
 
     query = 'user_permission_id=="%s"' % user_permission_id
     res = Query(app, 'User', query).scan()

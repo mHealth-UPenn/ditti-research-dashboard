@@ -94,6 +94,24 @@ def test_user_edit_invalid_acronym(post):
     assert res['msg'] == 'Invalid study acronym: QU'
 
 
+def test_user_edit_invalid_id(post):
+    data = {
+        'group': 2,
+        'study': 1,
+        'app': 'DittiApp',
+        'user_permission_id': 'FO000#',
+        'edit': {
+            'information': 'foo'
+        }
+    }
+
+    data = json.dumps(data)
+    res = post('/aws/user/edit', data=data)
+    res = json.loads(res.data)
+    assert 'msg' in res
+    assert res['msg'] == 'Invalid Ditti ID: FO000#'
+
+
 def test_user_edit(post):
     query = 'user_permission_id=="FO000"'
     data = {
