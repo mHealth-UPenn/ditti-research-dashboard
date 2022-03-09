@@ -50,6 +50,43 @@ class TestLoader:
         assert loader.table.name == tablename
 
 
+class TestUpdater:
+    def test_set_expression(self):
+        foo = Updater()
+        exp = {'information': 'foo'}
+        foo.set_expression(exp)
+        bar = 'set info.information=:i'
+        baz = {':i': 'foo'}
+        assert foo.get_update_expression == bar
+        assert foo.get_expression_attribute_values == baz
+
+    def test_update():
+        query = 'user_permission_id==abc123'
+        foo = Query('DittiApp', 'User', query)
+        res = foo.scan()
+        assert len(res['Items']) == 1
+        assert 'information' in res['Items'][0]
+        assert res['Items'][0]['information'] == ''
+
+        key = {'user_permission_id': 'abc123'}
+        bar = Updater('DittiApp', 'User', key)
+        exp = {'information': 'foo'}
+        bar.set_expression(exp)
+        bar.update()
+        res = foo.scan()
+        assert len(res['Items']) == 1
+        assert 'information' in res['Items'][0]
+        assert res['Items'][0]['information'] == 'foo'
+
+        exp = {'information': ''}
+        bar.set_expression(exp)
+        bar.update()
+        res = foo.scan()
+        assert len(res['Items']) == 1
+        assert 'information' in res['Items'][0]
+        assert res['Items'][0]['information'] == ''
+
+
 class TestColumn:
     def test_eq(self):
         exp = Column('foo') == 'bar'
