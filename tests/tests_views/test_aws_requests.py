@@ -77,43 +77,45 @@ def test_user_create(client):
 
 
 def test_user_edit(post):
-    query = 'user_permission_id==foo000'
+    query = 'user_permission_id=="FO000"'
     data = {
         'group': 2,
         'study': 1,
         'app': 'DittiApp',
-        'user_permission_id': 'FOO000',
+        'user_permission_id': 'FO000',
         'edit': {
-            'team_email': 'bar@email.com'
+            'information': 'foo'
         }
     }
 
     res = Query('DittiApp', 'User', query).scan()
     assert len(res['Items']) == 1
-    assert 'team_email' in res['Items'][0]
-    assert res['Items'][0]['team_email'] == 'foo@email.com'
+    assert 'information' in res['Items'][0]
+    assert res['Items'][0]['information'] == ''
 
     data = json.dumps(data)
     res = post('/aws/user/edit', data=data)
-    res = json.loads(res)
+    res = json.loads(res.data)
     assert 'msg' in res
     assert res['msg'] == 'User Successfully Edited'
 
     res = Query('DittiApp', 'User', query).scan()
     assert len(res['Items']) == 1
-    assert 'team_email' in res['Items'][0]
-    assert res['Items'][0]['team_email'] == 'bar@email.com'
+    assert 'information' in res['Items'][0]
+    assert res['Items'][0]['information'] == 'foo'
 
+    data = json.loads(data)
+    data['edit']['information'] = ''
     data = json.dumps(data)
     res = post('/aws/user/edit', data=data)
-    res = json.loads(res)
+    res = json.loads(res.data)
     assert 'msg' in res
     assert res['msg'] == 'User Successfully Edited'
 
     res = Query('DittiApp', 'User', query).scan()
     assert len(res['Items']) == 1
-    assert 'team_email' in res['Items'][0]
-    assert res['Items'][0]['team_email'] == 'foo@email.com'
+    assert 'information' in res['Items'][0]
+    assert res['Items'][0]['information'] == ''
 
 
 def test_user_archive(client):
