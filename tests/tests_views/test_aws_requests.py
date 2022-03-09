@@ -76,6 +76,24 @@ def test_user_create(client):
     raise NotImplementedError
 
 
+def test_user_edit_invalid_acronym(post):
+    data = {
+        'group': 2,
+        'study': 1,
+        'app': 'DittiApp',
+        'user_permission_id': 'QU000',
+        'edit': {
+            'information': 'foo'
+        }
+    }
+
+    data = json.dumps(data)
+    res = post('/aws/user/edit', data=data)
+    res = json.loads(res.data)
+    assert 'msg' in res
+    assert res['msg'] == 'Invalid study acronym: QU'
+
+
 def test_user_edit(post):
     query = 'user_permission_id=="FO000"'
     data = {
