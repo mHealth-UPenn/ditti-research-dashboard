@@ -1,3 +1,4 @@
+from functools import reduce
 import os
 import re
 import boto3
@@ -43,6 +44,53 @@ class Loader:
     @property
     def table(self):
         return self.__table
+
+
+class Updater:
+    def __init__(self, app=None, tablekey=None):
+        self.app = app
+        self.tablekey = tablekey
+        self.__key = None
+        self.__update_expression = None
+        self.__expression_attribute_values = None
+
+    def set_key_from_query(self, q, pk='id'):
+        res = Query(self.app, self.tablekey, q).scan()
+        key = res['Items'][0][pk]
+        self.__key = {pk: key}
+
+    def get_key(self):
+        return self.__key
+
+    def set_expression(self, exp):
+        e = reduce(lambda l, r: l + f' {r}=:{r[0]},', exp.keys(), 'set')[:-1]
+        a = {':%s' % k[0]: str(v) for k, v in exp.items()}
+        self.__update_expression = e
+        self.__expression_attribute_values = a
+
+    def get_update_expression(self):
+        return self.__update_expression
+
+    def get_expression_attribute_values(self):
+        return self.__expression_attribute_values
+
+    def update(self):
+        if not (self.app and self.tablekey and self.__key):
+            raise ValueError('app, tablekey, and key must be set')
+
+        connection = Connection()
+        connection.open_connection('dynamodb')
+        loader = Loader(self.app, self.tablekey)
+        loader.connect(connection)
+        loader.load_table()
+        res = loader.table.update_item(
+            Key=self.__key,
+            UpdateExpression=self.__update_expression,
+            ExpressionAttributeValues=self.__expression_attribute_values,
+            ReturnValues='UPDATED_NEW'
+        )
+
+        return res
 
 
 class Column:

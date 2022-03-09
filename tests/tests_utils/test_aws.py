@@ -1,5 +1,7 @@
 import pytest
-from aws_portal.utils.aws import Column, Connection, Loader, Query, Scanner
+from aws_portal.utils.aws import (
+    Column, Connection, Loader, Query, Scanner, Updater
+)
 
 
 def assert_expression(exp, name, operator, *args):
@@ -51,25 +53,44 @@ class TestLoader:
 
 
 class TestUpdater:
+    def test_set_key_from_query(self):
+        query = 'user_permission_id=="abc123"'
+        foo = Query('DittiApp', 'User', query)
+        res = foo.scan()
+        assert len(res['Items']) == 1
+
+        baz = Updater('DittiApp', 'User')
+        baz.set_key_from_query(query)
+        bar = res['Items'][0]['id']
+        assert baz.get_key() == {'id': bar}
+
     def test_set_expression(self):
         foo = Updater()
         exp = {'information': 'foo'}
         foo.set_expression(exp)
-        bar = 'set info.information=:i'
+        bar = 'set information=:i'
         baz = {':i': 'foo'}
-        assert foo.get_update_expression == bar
-        assert foo.get_expression_attribute_values == baz
+        assert foo.get_update_expression() == bar
+        assert foo.get_expression_attribute_values() == baz
 
-    def test_update():
-        query = 'user_permission_id==abc123'
+    def test_update_exception(self):
+        foo = Updater()
+
+        with pytest.raises(ValueError) as e:
+            foo.update()
+
+        assert str(e.value) == 'app, tablekey, and key must be set'
+
+    def test_update(self):
+        query = 'user_permission_id=="abc123"'
         foo = Query('DittiApp', 'User', query)
         res = foo.scan()
         assert len(res['Items']) == 1
         assert 'information' in res['Items'][0]
         assert res['Items'][0]['information'] == ''
 
-        key = {'user_permission_id': 'abc123'}
-        bar = Updater('DittiApp', 'User', key)
+        bar = Updater('DittiApp', 'User')
+        bar.set_key_from_query(query)
         exp = {'information': 'foo'}
         bar.set_expression(exp)
         bar.update()
