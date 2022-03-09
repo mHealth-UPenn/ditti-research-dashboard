@@ -112,6 +112,24 @@ def test_user_edit_invalid_id(post):
     assert res['msg'] == 'Invalid Ditti ID: FO000#'
 
 
+def test_user_edit_id_not_found(post):
+    data = {
+        'group': 2,
+        'study': 1,
+        'app': 'DittiApp',
+        'user_permission_id': 'FO001',
+        'edit': {
+            'information': 'foo'
+        }
+    }
+
+    data = json.dumps(data)
+    res = post('/aws/user/edit', data=data)
+    res = json.loads(res.data)
+    assert 'msg' in res
+    assert res['msg'] == 'Ditti ID not found: FO001'
+
+
 def test_user_edit(post):
     query = 'user_permission_id=="FO000"'
     data = {
