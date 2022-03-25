@@ -1,5 +1,4 @@
 import http
-import os
 import pytest
 from aws_portal.utils.aws import (
     Column, Connection, Loader, MutationClient, Query, Scanner, Updater
