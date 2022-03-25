@@ -81,9 +81,3 @@ def user_edit():
         msg = 'User Edit Failed: %s' % e
 
     return jsonify({'msg': msg})
-
-
-@blueprint.route('/user/archive')
-@auth_required('Archive', 'User')
-def user_archive():
-    return jsonify({})
