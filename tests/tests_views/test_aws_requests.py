@@ -212,7 +212,3 @@ def test_user_edit(post):
     assert len(res['Items']) == 1
     assert 'information' in res['Items'][0]
     assert res['Items'][0]['information'] == ''
-
-
-def test_user_archive(client):
-    raise NotImplementedError
