@@ -1,8 +1,53 @@
 from functools import reduce
+import http
 import os
 import re
 import boto3
 from boto3.dynamodb.conditions import Attr
+from itsdangerous import json
+
+
+class MutationClient:
+    f_string = 'mutation($in:%(inp)s!){%(fun)s(input:$in){%(var)s}})'
+    headers = {
+        'Content-type': 'application/graphql',
+        'x-api-key': os.getenv('APP_SYNC_API_KEY'),
+        'host': os.getenv('APP_SYNC_HOST')
+    }
+
+    def __init__(self):
+        self.__body = None
+        self.__conn = None
+
+    def get_body(self):
+        return self.__body
+
+    def get_connection(self):
+        return self.__conn
+
+    def open_connection(self):
+        host = self.headers['host']
+        self.__conn = http.client.HTTPSConnection(host, 443)
+
+    def set_mutation(self, inp, fun, var):
+        fmt = {'inp': inp, 'fun': fun, 'var': ' '.join(var.keys())}
+        query = self.f_string % fmt
+        body = {
+            'query': query,
+            'variables': '{"in": %s}' % json.dumps(var)
+        }
+
+        self.__body = json.dumps(body)
+
+    def post_mutation(self):
+        if self.__body is None:
+            raise ValueError('Mutation is not set. Call set_mutation() first.')
+
+        self.__conn.request('POST', '/graphql', self.__body, self.headers)
+        res = self.__conn.getresponse()
+        res = res.read().decode('utf-8')
+
+        return res
 
 
 class Connection:
