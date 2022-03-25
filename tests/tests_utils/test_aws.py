@@ -1,6 +1,8 @@
+import http
+import os
 import pytest
 from aws_portal.utils.aws import (
-    Column, Connection, Loader, Query, Scanner, Updater
+    Column, Connection, Loader, MutationClient, Query, Scanner, Updater
 )
 
 
@@ -21,6 +23,81 @@ def assert_expression(exp, name, operator, *args):
     assert exp_operator == operator
     assert exp.get_expression()['values'][0].name == name
     assert values == args
+
+
+class TestMutationClient:
+    def test_open_connection(self):
+        foo = MutationClient()
+        assert foo.get_connection() is None
+
+        foo.open_connection()
+        assert type(foo.get_connection()) is http.client.HTTPSConnection
+
+    def test_set_mutation(self):
+        foo = MutationClient()
+        assert foo.get_body() is None
+
+        foo.set_mutation('foo', 'bar', {'baz': 'baz', 'qux': 'qux'})
+        bar = (
+            '{"query": "mutation($in:foo!){bar(input:$in){baz qux}}", "vari' +
+            'ables": "{\\"in\\": {\\"baz\\": \\"baz\\", \\"qux\\": \\"qux\\"' +
+            '}}"}'
+        )
+
+        assert foo.get_body() == bar
+
+    def test_post_mutation_no_body(self):
+        foo = MutationClient()
+        foo.open_connection()
+        assert foo.get_body() is None
+
+        with pytest.raises(ValueError) as e:
+            foo.post_mutation()
+
+        bar = str(e.value)
+        assert bar == 'Mutation is not set. Call set_mutation() first.'
+
+    def test_post_mutation(self):
+        foo = MutationClient()
+        foo.open_connection()
+        foo.set_mutation(
+            'CreateUserPermissionInput',
+            'createUserPermission',
+            {
+                'exp_time': '1900-01-01T09:00:00.000Z',
+                'tap_permission': True,
+                'team_email': 'foo@email.com',
+                'user_permission_id': 'foo',
+                'information': 'foo'
+            }
+        )
+
+        foo.post_mutation()
+
+        query = 'user_permission_id=="foo"'
+        bar = Query('DittiApp', 'User', query)
+        res = bar.scan()
+        assert len(res['Items']) == 1
+        assert 'exp_time' in res['Items'][0]
+        assert res['Items'][0]['exp_time'] == '1900-01-01T09:00:00.000Z'
+        assert 'tap_permission' in res['Items'][0]
+        assert res['Items'][0]['tap_permission']
+        assert 'team_email' in res['Items'][0]
+        assert res['Items'][0]['team_email'] == 'foo@email.com'
+        assert 'user_permission_id' in res['Items'][0]
+        assert res['Items'][0]['user_permission_id'] == 'foo'
+        assert 'information' in res['Items'][0]
+        assert res['Items'][0]['information'] == 'foo'
+
+        connection = Connection()
+        connection.open_connection('dynamodb')
+        loader = Loader('DittiApp', 'User')
+        loader.connect(connection)
+        loader.load_table()
+        res = loader.table.delete_item(Key={'id': res['Items'][0]['id']})
+
+        res = bar.scan()
+        assert len(res['Items']) == 0
 
 
 class TestConnection:
