@@ -64,6 +64,10 @@ permissions = [
     {
         'action': 'Edit',
         'resource': 'User'
+    },
+    {
+        'action': 'Create',
+        'resource': 'User'
     }
 ]
 
@@ -172,6 +176,7 @@ def create_joins():
     q1 = Role.name == 'foo'
     q2 = Permission.definition == ('foo', 'baz')
     q3 = Permission.definition == ('Edit', 'User')
+    q4 = Permission.definition == ('Create', 'User')
     foo = JoinRolePermission(
         role=Role.query.filter(q1).first(),
         permission=Permission.query.filter(q2).first()
@@ -182,8 +187,14 @@ def create_joins():
         permission=Permission.query.filter(q3).first()
     )
 
+    baz = JoinRolePermission(
+        role=Role.query.filter(q1).first(),
+        permission=Permission.query.filter(q4).first()
+    )
+
     db.session.add(foo)
     db.session.add(bar)
+    db.session.add(baz)
 
     q1 = Role.name == 'bar'
     q2 = Permission.definition == ('bar', 'qux')

@@ -2,7 +2,7 @@ import re
 from flask import Blueprint, jsonify, request
 from aws_portal.models import Study
 from aws_portal.utils.auth import auth_required
-from aws_portal.utils.aws import Query, Updater
+from aws_portal.utils.aws import MutationClient, Query, Updater
 
 blueprint = Blueprint('aws', __name__, url_prefix='/aws')
 
@@ -26,10 +26,26 @@ def scan():
     return jsonify(res)
 
 
-@blueprint.route('/user/create')
+@blueprint.route('/user/create', methods=['POST'])
 @auth_required('Create', 'User')
 def user_create():
-    return jsonify({})
+    msg = 'User Created Successfully'
+
+    try:
+        client = MutationClient()
+        client.open_connection()
+        client.set_mutation(
+            'CreateUserPermissionInput',
+            'createUserPermission',
+            request.json.get('create')
+        )
+
+        client.post_mutation()
+
+    except Exception as e:
+        msg = 'User creation failed: %s' % e
+
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/user/edit', methods=['POST'])
