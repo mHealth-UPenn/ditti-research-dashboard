@@ -275,7 +275,7 @@ def test_access_group_edit(post):
     assert foo.accounts[0].account.email == 'foo@email.com'
     assert len(foo.roles) == 1
     assert foo.roles[0].name == 'foo'
-    assert len(foo.roles[0].permissions) == 1
+    assert len(foo.roles[0].permissions) == 2
     assert foo.roles[0].permissions[0].permission.action == 'foo'
     assert len(foo.permissions) == 1
     assert len(foo.studies) == 1
