@@ -586,3 +586,13 @@ class BlockedToken(db.Model):
 
     def __repr__(self):
         return '<BlockedToken %s>' % self.id
+
+
+class AboutSleepTemplate(db.Model):
+    __tablename__ = 'about_sleep_template'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False, unique=True)
+    text = db.Column(db.String, nullable=False)
+
+    def __repr__(self):
+        return '<AboutSleepTemplate %s>' % self.name
