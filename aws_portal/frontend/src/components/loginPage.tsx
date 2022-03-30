@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Component } from 'react';
 import "./loginPage.css"
+import TextField from "./fields/textField"
 
 interface LoginPageProps {}
  
@@ -18,7 +19,13 @@ class LoginPage extends React.Component<LoginPageProps, LoginPageState> {
                     <div className="login-menu-content">
                         <h1>Geriatric Sleep Research Lab</h1>
                         <h2>AWS Data Portal</h2>
-                        <span>Email field</span>
+                        <TextField
+                            id="login-email"
+                            placeholder="Email"
+                            prefill=""
+                            label=""
+                            feedback="Invalid email address"
+                        />
                         <span>Password field</span>
                         <div className="flex flex-space-between">
                             <span>Login button</span>
