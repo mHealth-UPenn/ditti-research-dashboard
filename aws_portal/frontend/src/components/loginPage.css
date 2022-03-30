@@ -1,0 +1,21 @@
+.login-container {
+  background-color: #f0f0f5;
+  display: flex;
+  margin: 0 20rem;
+  height: 100vh;
+}
+
+.login-image-container {
+  flex-grow: 1;
+}
+
+.login-menu {
+  background-color: white;
+  display: flex;
+  margin: 0 2rem;
+  width: 36rem;
+}
+
+.login-menu-content {
+  margin: auto 2rem;
+}

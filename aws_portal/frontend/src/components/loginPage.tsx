@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Component } from 'react';
+import "./loginPage.css"
 
 interface LoginPageProps {}
  
@@ -10,7 +11,9 @@ class LoginPage extends React.Component<LoginPageProps, LoginPageState> {
     render() { 
         return (
             <div className="login-container">
-                <div className='login-image'>Image placeholder</div>
+                <div className='login-image-container'>
+                    <div className='login-image'>Image placeholder</div>
+                </div>
                 <div className="login-menu">
                     <div className="login-menu-content">
                         <h1>Geriatric Sleep Research Lab</h1>
