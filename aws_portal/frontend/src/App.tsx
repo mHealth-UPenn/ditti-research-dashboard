@@ -1,8 +1,13 @@
 import React from 'react';
 import './App.css';
+import LoginPage from './components/loginPage';
 
 function App() {
-  return <div>Hello world</div>
+  return (
+    <main>
+      <LoginPage />
+    </main>
+  );
 }
 
 export default App;
