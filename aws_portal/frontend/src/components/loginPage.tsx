@@ -13,12 +13,12 @@ class LoginPage extends React.Component<LoginPageProps, LoginPageState> {
         return (
             <div className="login-container">
                 <div className='login-image-container'>
-                    <div className='login-image'>Image placeholder</div>
+                    <img className='login-image' src={process.env.PUBLIC_URL + "/logo.png"}></img>
                 </div>
                 <div className="login-menu">
                     <div className="login-menu-content">
                         <h1>Geriatric Sleep Research Lab</h1>
-                        <h2>AWS Data Portal</h2>
+                        <h3>AWS Data Portal</h3>
                         <TextField
                             id="login-email"
                             img={<img src={process.env.PUBLIC_URL + "/icons/person.svg"}></img>}
@@ -37,8 +37,8 @@ class LoginPage extends React.Component<LoginPageProps, LoginPageState> {
                             label=""
                             feedback="Invalid password"
                         />
-                        <div className="flex flex-space-between">
-                            <span>Login button</span>
+                        <div className="login-buttons">
+                            <button>Sign In</button>
                             <span>Forgot password?</span>
                         </div>
                     </div>
