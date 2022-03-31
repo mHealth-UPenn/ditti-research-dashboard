@@ -22,12 +22,21 @@ class LoginPage extends React.Component<LoginPageProps, LoginPageState> {
                         <TextField
                             id="login-email"
                             img={<img src={process.env.PUBLIC_URL + "/icons/person.svg"}></img>}
+                            type=""
                             placeholder="Email"
                             prefill=""
                             label=""
                             feedback="Invalid email address"
                         />
-                        <span>Password field</span>
+                        <TextField
+                            id="login-password"
+                            img={<img src={process.env.PUBLIC_URL + "/icons/key.svg"}></img>}
+                            type="password"
+                            placeholder="Password"
+                            prefill=""
+                            label=""
+                            feedback="Invalid password"
+                        />
                         <div className="flex flex-space-between">
                             <span>Login button</span>
                             <span>Forgot password?</span>

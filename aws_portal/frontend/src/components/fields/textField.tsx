@@ -5,6 +5,7 @@ import "./textField.css"
 interface TextFieldProps {
     id: string
     img: React.ReactElement
+    type: string
     placeholder: string
     prefill: string
     label: string
@@ -21,14 +22,14 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
     }
 
     render() {
-        const { id, img, placeholder, prefill, label, feedback } = this.props;
+        const { id, img, type, placeholder, prefill, label, feedback } = this.props;
 
         return (
             <div className="text-field-container">
                 { label ? <label htmlFor={ id }>label</label> : null }
                 <div className="text-field-content">
                     { img ? img : null }
-                    <input type="text" className="text-field-input" placeholder={ placeholder } defaultValue={ prefill }/>
+                    <input type={ type ? type : "text" } className="text-field-input" placeholder={ placeholder } defaultValue={ prefill }/>
                 </div>
                 { feedback ? <span className="text-field-feedback">{ feedback }</span> : null }
             </div>
