@@ -21,6 +21,7 @@ class LoginPage extends React.Component<LoginPageProps, LoginPageState> {
                         <h2>AWS Data Portal</h2>
                         <TextField
                             id="login-email"
+                            badge={<img src={process.env.PUBLIC_URL + "/icons/person.svg"}></img>}
                             placeholder="Email"
                             prefill=""
                             label=""

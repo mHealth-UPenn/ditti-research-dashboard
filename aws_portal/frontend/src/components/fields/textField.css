@@ -1,0 +1,20 @@
+.text-field-container {
+  width: 100%;
+}
+
+.text-field-content {
+  border: solid 2px #b3b3cc;
+  display: flex;
+  height: 2rem;
+  padding: 8px;
+}
+
+.text-field-input {
+  border: none;
+  padding: 0;
+  width: 100%;
+}
+
+.text-field-input:focus {
+  outline: none;
+}
