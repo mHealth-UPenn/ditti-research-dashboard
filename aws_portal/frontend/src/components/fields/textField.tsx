@@ -4,7 +4,7 @@ import "./textField.css"
 
 interface TextFieldProps {
     id: string
-    badge: React.ReactElement
+    img: React.ReactElement
     placeholder: string
     prefill: string
     label: string
@@ -21,13 +21,13 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
     }
 
     render() {
-        const { id, badge, placeholder, prefill, label, feedback } = this.props;
+        const { id, img, placeholder, prefill, label, feedback } = this.props;
 
         return (
             <div className="text-field-container">
                 { label ? <label htmlFor={ id }>label</label> : null }
                 <div className="text-field-content">
-                    { badge ? badge : null }
+                    { img ? img : null }
                     <input type="text" className="text-field-input" placeholder={ placeholder } defaultValue={ prefill }/>
                 </div>
                 { feedback ? <span className="text-field-feedback">{ feedback }</span> : null }

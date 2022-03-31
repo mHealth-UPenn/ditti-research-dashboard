@@ -1,4 +1,5 @@
 .text-field-container {
+  margin-bottom: 2rem;
   width: 100%;
 }
 
@@ -6,7 +7,7 @@
   border: solid 2px #b3b3cc;
   display: flex;
   height: 2rem;
-  padding: 8px;
+  padding: 0.25rem;
 }
 
 .text-field-input {
@@ -17,4 +18,18 @@
 
 .text-field-input:focus {
   outline: none;
+}
+
+.text-field-feedback {
+  color: red;
+  display: none;
+  font-size: 0.75rem;
+  padding: 0.25rem 0;
+  position: absolute;
+}
+
+img {
+  height: 1.25rem;
+  margin: auto;
+  padding: 0 0.75rem 0 0.5rem;
 }
