@@ -26,7 +26,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
 
         return (
             <div className="text-field-container">
-                { label ? <label htmlFor={ id }>label</label> : null }
+                { label ? <label className='text-field-label' htmlFor={ id }>{ label }</label> : null }
                 <div className="text-field-content">
                     { img ? img : null }
                     <input type={ type ? type : "text" } className="text-field-input" placeholder={ placeholder } defaultValue={ prefill }/>

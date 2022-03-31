@@ -10,6 +10,10 @@
   padding: 0.25rem;
 }
 
+.text-field-label {
+  font-weight: 500;
+}
+
 .text-field-input {
   border: none;
   padding: 0;
