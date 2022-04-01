@@ -1,11 +1,11 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import './App.css';
-import LoginPage from './components/loginPage';
 
 function App() {
   return (
     <main>
-      <LoginPage />
+      <p>Hello world!</p>
     </main>
   );
 }
