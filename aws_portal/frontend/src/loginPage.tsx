@@ -4,11 +4,7 @@ import { Link } from "react-router-dom";
 import "./loginPage.css";
 import TextField from "./components/fields/textField";
 
-interface LoginPageProps {}
-
-interface LoginPageState {}
-
-class LoginPage extends React.Component<LoginPageProps, LoginPageState> {
+class LoginPage extends React.Component<any, any> {
   // state = { :  }
   render() {
     return (
@@ -47,8 +43,10 @@ class LoginPage extends React.Component<LoginPageProps, LoginPageState> {
                 feedback="Invalid password"
               />
               <div className="login-buttons">
-                <button className="button-primary">Sign In</button>
-                <Link to="/">Sign In</Link>
+                {/* <button className="button-primary">Sign In</button> */}
+                <Link className="button-primary" to="/">
+                  Sign In
+                </Link>
                 <span>Forgot password?</span>
               </div>
             </div>
