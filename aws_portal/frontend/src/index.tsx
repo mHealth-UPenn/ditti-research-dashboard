@@ -13,7 +13,6 @@ ReactDOM.render(
         <Route path="login" element={<LoginPage />} />
       </Routes>
     </BrowserRouter>
-    ,
   </React.StrictMode>,
   document.getElementById("root")
 );

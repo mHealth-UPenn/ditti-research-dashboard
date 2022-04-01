@@ -1,0 +1,23 @@
+.header-container {
+  align-items: center;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  height: 4rem;
+}
+
+.header-brand {
+  font-size: 1.5rem;
+  margin-left: 2rem;
+}
+
+.header-profile {
+  align-items: center;
+  display: flex;
+  margin-right: 2rem;
+}
+
+.header-profile-icon {
+  height: 2.5rem;
+  margin-left: 2rem;
+}
