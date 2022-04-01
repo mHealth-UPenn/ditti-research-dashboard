@@ -1,0 +1,28 @@
+.studies-menu-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  width: 16rem;
+}
+
+.studies-menu-header {
+  align-items: center;
+  display: flex;
+  font-weight: bold;
+  height: 4rem;
+  padding-left: 2rem;
+}
+
+.studies-menu-content {
+  padding: 2rem;
+}
+
+.studies-menu-content > ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+.studies-menu-content > ul > li {
+  margin-bottom: 1rem;
+}

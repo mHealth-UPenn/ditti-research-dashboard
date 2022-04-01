@@ -10,6 +10,12 @@ code {
     monospace;
 }
 
+main {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
 .button-primary {
   background-color: #3366ff;
   border: none;
