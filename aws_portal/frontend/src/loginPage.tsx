@@ -9,14 +9,14 @@ class LoginPage extends React.Component<any, any> {
   render() {
     return (
       <main>
-        <div className="login-container">
+        <div className="login-container bg-light">
           <div className="login-image-container">
             <img
               className="login-image"
               src={process.env.PUBLIC_URL + "/logo.png"}
             ></img>
           </div>
-          <div className="login-menu">
+          <div className="login-menu bg-white">
             <div className="login-menu-content">
               <h1>Geriatric Sleep Research Lab</h1>
               <h3>AWS Data Portal</h3>

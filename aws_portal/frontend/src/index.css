@@ -21,3 +21,15 @@ code {
   background-color: #0040ff;
   color: white;
 }
+
+.bg-white {
+  background-color: white;
+}
+
+.bg-light {
+  background-color: #f0f0f5;
+}
+
+.bg-dark {
+  background-color: #33334D;
+}
