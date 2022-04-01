@@ -11,8 +11,8 @@ class StudiesMenu extends React.Component<StudiesMenuProps, any> {
     const { studies } = this.props;
 
     return (
-      <div className="bg-white studies-menu-container">
-        <div className="studies-menu-header">
+      <div className="bg-white studies-menu-container border-dark-r">
+        <div className="studies-menu-header border-dark-b">
           <span>Studies</span>
         </div>
         <div className="studies-menu-content">

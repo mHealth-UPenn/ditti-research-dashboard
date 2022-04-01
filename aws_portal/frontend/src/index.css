@@ -39,3 +39,43 @@ main {
 .bg-dark {
   background-color: #33334D;
 }
+
+.border-light {
+  border: 1px solid #f0f0f5;
+}
+
+.border-light-t {
+  border-top: 1px solid #f0f0f5;
+}
+
+.border-light-r {
+  border-right: 1px solid #f0f0f5;
+}
+
+.border-light-b {
+  border-bottom: 1px solid #f0f0f5;
+}
+
+.border-light-l {
+  border-left: 1px solid #f0f0f5;
+}
+
+.border-dark {
+  border: 1px solid #33334D;
+}
+
+.border-dark-t {
+  border-top: 1px solid #33334D;
+}
+
+.border-dark-r {
+  border-right: 1px solid #33334D;
+}
+
+.border-dark-b {
+  border-bottom: 1px solid #33334D;
+}
+
+.border-dark-l {
+  border-left: 1px solid #33334D;
+}
