@@ -9,3 +9,15 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+
+.button-primary {
+  background-color: #3366ff;
+  border: none;
+  color: white;
+}
+
+.button-primary:hover {
+  cursor: pointer;
+  background-color: #0040ff;
+  color: white;
+}

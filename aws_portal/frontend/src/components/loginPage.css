@@ -47,9 +47,6 @@
 }
 
 .login-buttons > button {
-  background-color: #3366ff;
-  border: none;
-  color: white;
   height: 3rem;
   padding: 0 1.5rem;
 }

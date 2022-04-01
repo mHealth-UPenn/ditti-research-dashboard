@@ -38,7 +38,7 @@ class LoginPage extends React.Component<LoginPageProps, LoginPageState> {
                             feedback="Invalid password"
                         />
                         <div className="login-buttons">
-                            <button>Sign In</button>
+                            <button className='button-primary'>Sign In</button>
                             <span>Forgot password?</span>
                         </div>
                     </div>
