@@ -5,8 +5,13 @@ from aws_portal.extensions import db
 blueprint = Blueprint('base', __name__)
 
 
-@blueprint.route('/', defaults={'path': ''})
-def serve(path):
+@blueprint.route('/')
+def serve():
+    return send_from_directory(current_app.static_folder, 'index.html')
+
+
+@blueprint.route('/login')
+def login():
     return send_from_directory(current_app.static_folder, 'index.html')
 
 
