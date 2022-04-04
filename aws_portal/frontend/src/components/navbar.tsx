@@ -3,8 +3,8 @@ import { Component } from "react";
 import "./navbar.css";
 
 interface NavbarProps {
-  breadcrumbs: { name: string; view: React.ElementType }[];
-  handleClick: (view: React.ElementType) => void;
+  breadcrumbs: { name: string; view: React.ReactElement }[];
+  handleClick: (view: React.ReactElement) => void;
 }
 
 class Navbar extends React.Component<NavbarProps, any> {

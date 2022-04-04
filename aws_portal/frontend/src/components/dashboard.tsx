@@ -10,15 +10,15 @@ import "./dashboard.css";
 // interface DashboardProps {}
 
 interface DashboardState {
-  view: React.ElementType;
+  view: React.ReactElement;
 }
 
 class Dashboard extends React.Component<any, DashboardState> {
   state = {
-    view: HomeView
+    view: <React.Fragment />
   };
 
-  getView = (view: React.ElementType) => {
+  getView = (view: React.ReactElement) => {
     this.setState({ view: view });
   };
 
@@ -28,9 +28,15 @@ class Dashboard extends React.Component<any, DashboardState> {
       { name: "ART OSA", id: 2 }
     ];
 
+    const apps = [
+      { name: "Ditti App", id: 1 },
+      { name: "Admin Dashboard", id: 2 }
+    ];
+
+    const home = <HomeView apps={apps} />;
     const breadcrumbs = [
-      { name: "Home", view: HomeView },
-      { name: "Ditti App", view: AppView }
+      { name: "Home", view: home },
+      { name: "Ditti App", view: <AppView /> }
     ];
 
     return (
@@ -38,11 +44,9 @@ class Dashboard extends React.Component<any, DashboardState> {
         <Header name="John Smith" email="john.smith@pennmedicine.upenn.edu" />
         <div style={{ display: "flex", flexGrow: 1 }}>
           <StudiesMenu studies={studies} />
-          <div
-            style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}
-          >
+          <div className="dashboard-content">
             <Navbar breadcrumbs={breadcrumbs} handleClick={this.getView} />
-            {<this.state.view />}
+            {this.state.view}
           </div>
         </div>
       </main>

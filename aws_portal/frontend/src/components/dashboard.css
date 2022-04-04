@@ -3,3 +3,9 @@
   flex-direction: column;
   height: 100vh;
 }
+
+.dashboard-content {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
