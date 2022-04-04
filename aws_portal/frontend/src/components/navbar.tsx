@@ -3,7 +3,8 @@ import { Component } from "react";
 import "./navbar.css";
 
 interface NavbarProps {
-  breadcrumbs: { name: string; view: () => void }[];
+  breadcrumbs: { name: string; view: React.ElementType }[];
+  handleClick: (view: React.ElementType) => void;
 }
 
 class Navbar extends React.Component<NavbarProps, any> {
@@ -15,7 +16,9 @@ class Navbar extends React.Component<NavbarProps, any> {
         <img src={process.env.PUBLIC_URL + "/icons/back.svg"}></img>
         <div className="navbar-content">
           {breadcrumbs.map((b) => (
-            <span>b&nbsp;&nbsp;/&nbsp;&nbsp;</span>
+            <span onClick={() => this.props.handleClick(b.view)}>
+              {b.name}&nbsp;&nbsp;/&nbsp;&nbsp;
+            </span>
           ))}
         </div>
       </div>

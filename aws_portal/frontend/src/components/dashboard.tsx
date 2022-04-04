@@ -9,10 +9,19 @@ import "./dashboard.css";
 
 // interface DashboardProps {}
 
-// interface DashboardState {}
+interface DashboardState {
+  view: React.ElementType;
+}
 
-class Dashboard extends React.Component<any, any> {
-  // state = { :  }
+class Dashboard extends React.Component<any, DashboardState> {
+  state = {
+    view: HomeView
+  };
+
+  getView = (view: React.ElementType) => {
+    this.setState({ view: view });
+  };
+
   render() {
     const studies = [
       { name: "MSBI", id: 1 },
@@ -20,8 +29,8 @@ class Dashboard extends React.Component<any, any> {
     ];
 
     const breadcrumbs = [
-      { name: "Home", view: () => HomeView },
-      { name: "Ditti App", view: () => AppView }
+      { name: "Home", view: HomeView },
+      { name: "Ditti App", view: AppView }
     ];
 
     return (
@@ -32,7 +41,8 @@ class Dashboard extends React.Component<any, any> {
           <div
             style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}
           >
-            <Navbar breadcrumbs={breadcrumbs} />
+            <Navbar breadcrumbs={breadcrumbs} handleClick={this.getView} />
+            {<this.state.view />}
           </div>
         </div>
       </main>
