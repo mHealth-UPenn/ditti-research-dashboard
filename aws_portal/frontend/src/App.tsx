@@ -1,7 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "./App.css";
+import AppView from "./components/views/appView";
+import Dashboard from "./components/dashboard";
 import Header from "./components/header";
+import HomeView from "./components/views/homeView";
 import Navbar from "./components/navbar";
 import StudiesMenu from "./components/studiesMenu";
 
@@ -11,16 +14,21 @@ function App() {
     { name: "ART OSA", id: 2 }
   ];
 
-  const breadcrumbs = [{ name: "Home" }, { name: "Ditti App" }];
+  const breadcrumbs = [
+    { name: "Home", view: () => HomeView },
+    { name: "Ditti App", view: () => AppView }
+  ];
 
   return (
-    <main>
+    <Dashboard>
       <Header name="John Smith" email="john.smith@pennmedicine.upenn.edu" />
       <div style={{ display: "flex", flexGrow: 1 }}>
         <StudiesMenu studies={studies} />
-        <Navbar breadcrumbs={breadcrumbs} />
+        <div style={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
+          <Navbar breadcrumbs={breadcrumbs} />
+        </div>
       </div>
-    </main>
+    </Dashboard>
   );
 }
 
