@@ -17,24 +17,20 @@ interface DashboardState {
 }
 
 class Dashboard extends React.Component<any, DashboardState> {
-  state = {
-    apps: [],
-    breadcrumbs: [],
-    studies: [],
-    view: <React.Fragment />
-  };
-
   constructor(props: any) {
     super(props);
+    console.log(this.getApps());
 
     const apps = this.getApps();
     const studies = this.getStudies();
-    const view = <HomeView apps={this.state.apps} />;
+    const view = <HomeView apps={apps} />;
 
-    this.setState({ apps: apps });
-    this.setState({ studies: studies });
-    this.setState({ view: view });
-    this.setState({ breadcrumbs: [{ name: "Home", view: view }] });
+    this.state = {
+      apps: apps,
+      breadcrumbs: [{ name: "Home", view: view }],
+      studies: studies,
+      view: view
+    };
   }
 
   getApps = () => {
@@ -57,6 +53,7 @@ class Dashboard extends React.Component<any, DashboardState> {
 
   render() {
     const { breadcrumbs, studies, view } = this.state;
+    console.log(breadcrumbs, studies, view);
 
     return (
       <main className="bg-light dashboard-container">
