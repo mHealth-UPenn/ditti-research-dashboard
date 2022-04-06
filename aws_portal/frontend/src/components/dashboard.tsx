@@ -10,34 +10,53 @@ import "./dashboard.css";
 // interface DashboardProps {}
 
 interface DashboardState {
+  apps: { name: string; id: number }[];
+  breadcrumbs: { name: string; view: React.ReactElement }[];
+  studies: { name: string; id: number }[];
   view: React.ReactElement;
 }
 
 class Dashboard extends React.Component<any, DashboardState> {
   state = {
+    apps: [],
+    breadcrumbs: [],
+    studies: [],
     view: <React.Fragment />
   };
 
-  getView = (view: React.ReactElement) => {
+  constructor(props: any) {
+    super(props);
+
+    const apps = this.getApps();
+    const studies = this.getStudies();
+    const view = <HomeView apps={this.state.apps} />;
+
+    this.setState({ apps: apps });
+    this.setState({ studies: studies });
+    this.setState({ view: view });
+    this.setState({ breadcrumbs: [{ name: "Home", view: view }] });
+  }
+
+  getApps = () => {
+    return [
+      { name: "Ditti App", id: 1 },
+      { name: "Admin Dashboard", id: 2 }
+    ];
+  };
+
+  getStudies = () => {
+    return [
+      { name: "MSBI", id: 1 },
+      { name: "ART OSA", id: 2 }
+    ];
+  };
+
+  setView = (view: React.ReactElement) => {
     this.setState({ view: view });
   };
 
   render() {
-    const studies = [
-      { name: "MSBI", id: 1 },
-      { name: "ART OSA", id: 2 }
-    ];
-
-    const apps = [
-      { name: "Ditti App", id: 1 },
-      { name: "Admin Dashboard", id: 2 }
-    ];
-
-    const home = <HomeView apps={apps} />;
-    const breadcrumbs = [
-      { name: "Home", view: home },
-      { name: "Ditti App", view: <AppView /> }
-    ];
+    const { breadcrumbs, studies, view } = this.state;
 
     return (
       <main className="bg-light dashboard-container">
@@ -45,8 +64,8 @@ class Dashboard extends React.Component<any, DashboardState> {
         <div style={{ display: "flex", flexGrow: 1 }}>
           <StudiesMenu studies={studies} />
           <div className="dashboard-content">
-            <Navbar breadcrumbs={breadcrumbs} handleClick={this.getView} />
-            {this.state.view}
+            <Navbar breadcrumbs={breadcrumbs} handleClick={this.setView} />
+            {view}
           </div>
         </div>
       </main>
