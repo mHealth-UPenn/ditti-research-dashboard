@@ -22,7 +22,7 @@ class Dashboard extends React.Component<any, DashboardState> {
 
     const apps = this.getApps();
     const studies = this.getStudies();
-    const view = <HomeView apps={apps} />;
+    const view = <HomeView apps={apps} handleClick={this.setView} />;
 
     this.state = {
       apps: apps,
@@ -46,13 +46,29 @@ class Dashboard extends React.Component<any, DashboardState> {
     ];
   };
 
-  setView = (view: React.ReactElement) => {
+  setView = (name: string, view: React.ReactElement) => {
+    let i = 0;
+    for (const b of this.state.breadcrumbs) {
+      if (b.name === name) {
+        let breadcrumbs = this.state.breadcrumbs;
+        breadcrumbs = breadcrumbs.slice(0, i + 1);
+        this.setState({ breadcrumbs });
+        break;
+      } else if (i === this.state.breadcrumbs.length - 1) {
+        const breadcrumbs = this.state.breadcrumbs;
+        breadcrumbs.push({ name: name, view: view });
+        this.setState({ breadcrumbs });
+        break;
+      }
+
+      i++;
+    }
+
     this.setState({ view: view });
   };
 
   render() {
     const { breadcrumbs, studies, view } = this.state;
-    console.log(breadcrumbs, studies, view);
 
     return (
       <main className="bg-light dashboard-container">

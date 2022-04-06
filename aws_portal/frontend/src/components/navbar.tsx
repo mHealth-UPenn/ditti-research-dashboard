@@ -4,7 +4,7 @@ import "./navbar.css";
 
 interface NavbarProps {
   breadcrumbs: { name: string; view: React.ReactElement }[];
-  handleClick: (view: React.ReactElement) => void;
+  handleClick: (name: string, view: React.ReactElement) => void;
 }
 
 class Navbar extends React.Component<NavbarProps, any> {
@@ -16,7 +16,7 @@ class Navbar extends React.Component<NavbarProps, any> {
         <img src={process.env.PUBLIC_URL + "/icons/back.svg"}></img>
         <div className="navbar-content">
           {breadcrumbs.map((b) => (
-            <span onClick={() => this.props.handleClick(b.view)}>
+            <span onClick={() => this.props.handleClick(b.name, b.view)}>
               {b.name}&nbsp;&nbsp;/&nbsp;&nbsp;
             </span>
           ))}
