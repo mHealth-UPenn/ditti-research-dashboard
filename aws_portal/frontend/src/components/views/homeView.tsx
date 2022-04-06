@@ -1,8 +1,9 @@
 import * as React from "react";
 import { Component } from "react";
+import "./homeView.css";
 
 interface HomeViewProps {
-  apps: { name: string; id: string }[];
+  apps: { name: string; id: number }[];
 }
 
 // interface HomeViewState {}
@@ -11,8 +12,20 @@ class HomeView extends React.Component<any, HomeViewProps> {
   // state = { :  }
   render() {
     return (
-      <div className="bg-white">
-        {this.props.apps.map((a: { name: string; id: string }) => a.name)}
+      <div className="card-container">
+        <div className="card-row">
+          {this.props.apps.map((a: { name: string; id: number }) => (
+            <div key={"app-" + a.id} className="card-s bg-white shadow">
+              <div className="app-name">
+                <span>{a.name}</span>
+              </div>
+              <img
+                className="app-button"
+                src={process.env.PUBLIC_URL + "/icons/right.svg"}
+              ></img>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

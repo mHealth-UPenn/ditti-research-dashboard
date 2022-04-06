@@ -19,7 +19,6 @@ interface DashboardState {
 class Dashboard extends React.Component<any, DashboardState> {
   constructor(props: any) {
     super(props);
-    console.log(this.getApps());
 
     const apps = this.getApps();
     const studies = this.getStudies();
