@@ -12,6 +12,7 @@ import "./dashboard.css";
 interface DashboardState {
   apps: { name: string; id: number }[];
   breadcrumbs: { name: string; view: React.ReactElement }[];
+  history: { name: string; view: React.ReactElement }[][];
   studies: { name: string; id: number }[];
   view: React.ReactElement;
 }
@@ -28,6 +29,7 @@ class Dashboard extends React.Component<any, DashboardState> {
       apps: apps,
       breadcrumbs: [{ name: "Home", view: view }],
       studies: studies,
+      history: [],
       view: view
     };
   }
@@ -47,6 +49,10 @@ class Dashboard extends React.Component<any, DashboardState> {
   };
 
   setView = (name: string, view: React.ReactElement) => {
+    const { breadcrumbs, history } = this.state;
+    history.push(breadcrumbs.slice(0));
+    this.setState({ history });
+
     let i = 0;
     for (const b of this.state.breadcrumbs) {
       if (b.name === name) {
@@ -64,7 +70,19 @@ class Dashboard extends React.Component<any, DashboardState> {
       i++;
     }
 
-    this.setState({ view: view });
+    this.setState({ view });
+  };
+
+  goBack = () => {
+    const { history } = this.state;
+    const breadcrumbs = history.pop();
+
+    if (breadcrumbs) {
+      const view = breadcrumbs[breadcrumbs.length - 1].view;
+      this.setState({ history });
+      this.setState({ breadcrumbs });
+      this.setState({ view });
+    }
   };
 
   render() {
@@ -76,7 +94,11 @@ class Dashboard extends React.Component<any, DashboardState> {
         <div style={{ display: "flex", flexGrow: 1 }}>
           <StudiesMenu studies={studies} />
           <div className="dashboard-content">
-            <Navbar breadcrumbs={breadcrumbs} handleClick={this.setView} />
+            <Navbar
+              breadcrumbs={breadcrumbs}
+              handleBack={this.goBack}
+              handleClick={this.setView}
+            />
             {view}
           </div>
         </div>
