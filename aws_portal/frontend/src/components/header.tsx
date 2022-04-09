@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Component } from "react";
 import "./header.css";
+import { ReactComponent as Profile } from "../icons/profile.svg";
 
 interface HeaderProps {
   name: string;
@@ -20,10 +21,9 @@ class Header extends React.Component<HeaderProps, any> {
           <span>
             {name}&nbsp;&nbsp;|&nbsp;&nbsp;{email}
           </span>
-          <img
-            className="header-profile-icon"
-            src={process.env.PUBLIC_URL + "/icons/profile.svg"}
-          ></img>
+          <div className="header-profile-icon">
+            <Profile />
+          </div>
         </div>
       </div>
     );

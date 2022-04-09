@@ -32,7 +32,7 @@
   position: absolute;
 }
 
-.text-field-content > img {
+.text-field-content svg {
   height: 1.25rem;
   margin: auto;
   padding: 0 0.75rem 0 0.5rem;

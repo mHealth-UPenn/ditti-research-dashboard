@@ -16,6 +16,10 @@ main {
   height: 100vh;
 }
 
+svg {
+  display: block;
+}
+
 .card-container {
   display: flex;
   flex-direction: column;

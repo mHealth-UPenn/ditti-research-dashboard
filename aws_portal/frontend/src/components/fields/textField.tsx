@@ -4,7 +4,7 @@ import "./textField.css";
 
 interface TextFieldProps {
   id: string;
-  img: React.ReactElement;
+  svg: React.ReactElement;
   type: string;
   placeholder: string;
   prefill: string;
@@ -22,7 +22,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
   };
 
   render() {
-    const { id, img, type, placeholder, prefill, label, feedback } = this.props;
+    const { id, svg, type, placeholder, prefill, label, feedback } = this.props;
 
     return (
       <div className="text-field-container">
@@ -32,7 +32,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
           </label>
         ) : null}
         <div className="text-field-content">
-          {img ? img : null}
+          {svg ? svg : null}
           <input
             type={type ? type : "text"}
             className="text-field-input"

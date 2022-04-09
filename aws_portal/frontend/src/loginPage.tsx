@@ -3,6 +3,8 @@ import { Component } from "react";
 import { Link } from "react-router-dom";
 import "./loginPage.css";
 import TextField from "./components/fields/textField";
+import { ReactComponent as Person } from "./icons/person.svg";
+import { ReactComponent as Key } from "./icons/key.svg";
 
 class LoginPage extends React.Component<any, any> {
   // state = { :  }
@@ -22,9 +24,7 @@ class LoginPage extends React.Component<any, any> {
               <h3>AWS Data Portal</h3>
               <TextField
                 id="login-email"
-                img={
-                  <img src={process.env.PUBLIC_URL + "/icons/person.svg"}></img>
-                }
+                svg={<Person />}
                 type=""
                 placeholder="Email"
                 prefill=""
@@ -33,9 +33,7 @@ class LoginPage extends React.Component<any, any> {
               />
               <TextField
                 id="login-password"
-                img={
-                  <img src={process.env.PUBLIC_URL + "/icons/key.svg"}></img>
-                }
+                svg={<Key />}
                 type="password"
                 placeholder="Password"
                 prefill=""
@@ -43,7 +41,6 @@ class LoginPage extends React.Component<any, any> {
                 feedback="Invalid password"
               />
               <div className="login-buttons">
-                {/* <button className="button-primary">Sign In</button> */}
                 <Link className="button-primary" to="/">
                   Sign In
                 </Link>

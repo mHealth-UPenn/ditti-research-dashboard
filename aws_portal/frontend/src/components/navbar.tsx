@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Component } from "react";
 import "./navbar.css";
-import { ReactComponent as Back } from "./back.svg";
+import { ReactComponent as Back } from "../icons/back.svg";
 
 interface NavbarProps {
   breadcrumbs: { name: string; view: React.ReactElement }[];
@@ -16,11 +16,6 @@ class Navbar extends React.Component<NavbarProps, any> {
 
     return (
       <div className="bg-white border-dark-b navbar-container">
-        {/* <img
-          className={hasHistory ? "stroke-dark" : ""}
-          onClick={handleBack}
-          src={process.env.PUBLIC_URL + "/icons/back.svg"}
-        ></img> */}
         <div className={hasHistory ? "stroke-dark" : ""} onClick={handleBack}>
           <Back />
         </div>

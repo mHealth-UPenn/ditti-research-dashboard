@@ -2,6 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 import AppView from "./appView";
 import "./homeView.css";
+import { ReactComponent as Right } from "../../icons/right.svg";
 
 interface HomeViewProps {
   apps: { name: string; id: number }[];
@@ -21,11 +22,12 @@ class HomeView extends React.Component<any, HomeViewProps> {
               <div className="app-name">
                 <span>{a.name}</span>
               </div>
-              <img
+              <div
                 className="app-button"
-                src={process.env.PUBLIC_URL + "/icons/right.svg"}
                 onClick={() => this.props.handleClick(a.name, <AppView />)}
-              ></img>
+              >
+                <Right />
+              </div>
             </div>
           ))}
         </div>
