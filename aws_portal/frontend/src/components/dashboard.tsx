@@ -86,7 +86,7 @@ class Dashboard extends React.Component<any, DashboardState> {
   };
 
   render() {
-    const { breadcrumbs, studies, view } = this.state;
+    const { breadcrumbs, history, studies, view } = this.state;
 
     return (
       <main className="bg-light dashboard-container">
@@ -98,6 +98,7 @@ class Dashboard extends React.Component<any, DashboardState> {
               breadcrumbs={breadcrumbs}
               handleBack={this.goBack}
               handleClick={this.setView}
+              hasHistory={history.length > 0}
             />
             {view}
           </div>

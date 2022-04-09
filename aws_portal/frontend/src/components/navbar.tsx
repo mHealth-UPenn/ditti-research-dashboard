@@ -1,26 +1,32 @@
 import * as React from "react";
 import { Component } from "react";
 import "./navbar.css";
+import { ReactComponent as Back } from "./back.svg";
 
 interface NavbarProps {
   breadcrumbs: { name: string; view: React.ReactElement }[];
   handleBack: () => void;
   handleClick: (name: string, view: React.ReactElement) => void;
+  hasHistory: boolean;
 }
 
 class Navbar extends React.Component<NavbarProps, any> {
   render() {
-    const { breadcrumbs } = this.props;
+    const { breadcrumbs, handleBack, handleClick, hasHistory } = this.props;
 
     return (
       <div className="bg-white border-dark-b navbar-container">
-        <img
+        {/* <img
+          className={hasHistory ? "stroke-dark" : ""}
+          onClick={handleBack}
           src={process.env.PUBLIC_URL + "/icons/back.svg"}
-          onClick={this.props.handleBack}
-        ></img>
+        ></img> */}
+        <div className={hasHistory ? "stroke-dark" : ""} onClick={handleBack}>
+          <Back />
+        </div>
         <div className="navbar-content">
           {breadcrumbs.map((b) => (
-            <span onClick={() => this.props.handleClick(b.name, b.view)}>
+            <span onClick={() => handleClick(b.name, b.view)}>
               {b.name}&nbsp;&nbsp;/&nbsp;&nbsp;
             </span>
           ))}
