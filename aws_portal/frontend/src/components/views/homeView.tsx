@@ -23,7 +23,7 @@ class HomeView extends React.Component<any, HomeViewProps> {
                 <span>{a.name}</span>
               </div>
               <div
-                className="app-button"
+                className="app-button link-svg"
                 onClick={() => this.props.handleClick(a.name, <AppView />)}
               >
                 <Right />

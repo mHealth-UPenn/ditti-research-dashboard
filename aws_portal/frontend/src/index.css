@@ -112,14 +112,41 @@ svg {
   border-left: 1px solid #33334D;
 }
 
-.shadow {
-  box-shadow: 8px 8px 8px #00000016;
+.link {
+  color: #666699;
+  text-decoration: underline;
 }
 
-.stroke-dark .svg-fill {
+.link-no-underline {
+  color: #666699;
+}
+
+.link:hover,
+.link-no-underline:hover {
+  color: #52527a;
+  cursor: pointer;
+}
+
+.link-svg .svg-fill {
   fill: #666699;
 }
 
-.stroke-dark .svg-stroke {
+.link-svg .svg-stroke {
   stroke: #666699;
+}
+
+.link-svg:hover {
+  cursor: pointer;
+}
+
+.link-svg:hover .svg-fill {
+  fill: #52527a;
+}
+
+.link-svg:hover .svg-stroke {
+  stroke: #52527a;
+}
+
+.shadow {
+  box-shadow: 8px 8px 8px #00000016;
 }

@@ -18,7 +18,7 @@ class StudiesMenu extends React.Component<StudiesMenuProps, any> {
         <div className="studies-menu-content">
           <ul>
             {studies.map((s) => (
-              <li key={s.id} id={"study-menu-" + s.id}>
+              <li key={s.id} className="link" id={"study-menu-" + s.id}>
                 {s.name}
               </li>
             ))}

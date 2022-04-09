@@ -16,15 +16,27 @@ class Navbar extends React.Component<NavbarProps, any> {
 
     return (
       <div className="bg-white border-dark-b navbar-container">
-        <div className={hasHistory ? "stroke-dark" : ""} onClick={handleBack}>
+        <div className={hasHistory ? "link-svg" : ""} onClick={handleBack}>
           <Back />
         </div>
         <div className="navbar-content">
-          {breadcrumbs.map((b) => (
-            <span onClick={() => handleClick(b.name, b.view)}>
-              {b.name}&nbsp;&nbsp;/&nbsp;&nbsp;
-            </span>
-          ))}
+          {breadcrumbs.map((b, i, arr) => {
+            if (i === arr.length - 1) {
+              return <span>{b.name}&nbsp;&nbsp;/&nbsp;&nbsp;</span>;
+            } else {
+              return (
+                <span>
+                  <span
+                    className="link-no-underline"
+                    onClick={() => handleClick(b.name, b.view)}
+                  >
+                    {b.name}
+                  </span>
+                  <span>&nbsp;&nbsp;/&nbsp;&nbsp;</span>
+                </span>
+              );
+            }
+          })}
         </div>
       </div>
     );
