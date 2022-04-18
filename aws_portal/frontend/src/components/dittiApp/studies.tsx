@@ -5,11 +5,11 @@ import { Component } from "react";
 
 // interface AppViewState {}
 
-class AppView extends React.Component<any, any> {
+class StudiesView extends React.Component<any, any> {
   // state = { :  }
   render() {
-    return <div className="bg-white">App View!</div>;
+    return <div className="bg-white">Studies View!</div>;
   }
 }
 
-export default AppView;
+export default StudiesView;

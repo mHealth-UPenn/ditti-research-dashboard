@@ -1,8 +1,9 @@
 import * as React from "react";
 import { Component } from "react";
-import AppView from "./views/appView";
+import AccountsView from "./adminDashboard/accounts";
+import StudiesView from "./dittiApp/studies";
 import Header from "./header";
-import HomeView from "./views/homeView";
+import Home from "./home";
 import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
@@ -10,7 +11,7 @@ import "./dashboard.css";
 // interface DashboardProps {}
 
 interface DashboardState {
-  apps: { name: string; id: number }[];
+  apps: { name: string; id: number; view: React.ReactElement }[];
   breadcrumbs: { name: string; view: React.ReactElement }[];
   history: { name: string; view: React.ReactElement }[][];
   studies: { name: string; id: number }[];
@@ -23,7 +24,7 @@ class Dashboard extends React.Component<any, DashboardState> {
 
     const apps = this.getApps();
     const studies = this.getStudies();
-    const view = <HomeView apps={apps} handleClick={this.setView} />;
+    const view = <Home apps={apps} handleClick={this.setView} />;
 
     this.state = {
       apps: apps,
@@ -36,8 +37,8 @@ class Dashboard extends React.Component<any, DashboardState> {
 
   getApps = () => {
     return [
-      { name: "Ditti App", id: 1 },
-      { name: "Admin Dashboard", id: 2 }
+      { name: "Ditti App", id: 1, view: <StudiesView /> },
+      { name: "Admin Dashboard", id: 2, view: <AccountsView /> }
     ];
   };
 
