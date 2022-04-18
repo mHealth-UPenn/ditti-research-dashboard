@@ -49,7 +49,7 @@ class Dashboard extends React.Component<any, DashboardState> {
     ];
   };
 
-  setView = (name: string, view: React.ReactElement) => {
+  updateHistory = (name: string, view: React.ReactElement) => {
     const { breadcrumbs, history } = this.state;
     history.push(breadcrumbs.slice(0));
     this.setState({ history });
@@ -70,7 +70,10 @@ class Dashboard extends React.Component<any, DashboardState> {
 
       i++;
     }
+  };
 
+  setView = (name: string, view: React.ReactElement) => {
+    this.updateHistory(name, view);
     this.setState({ view });
   };
 
