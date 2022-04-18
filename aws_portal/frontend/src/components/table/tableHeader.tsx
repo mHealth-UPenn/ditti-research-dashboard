@@ -6,7 +6,6 @@ interface TableHeaderProps {
     name: string;
     searchable: boolean;
     sortable: boolean;
-    width: number;
   }[];
   onSort: (name: string, ascending: boolean) => void;
   sortDefault: string;

@@ -2,6 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 
 interface TablePaginationProps {
+  onClick: (page: number) => void;
   paginationPer: number;
   totalRows: number;
 }
