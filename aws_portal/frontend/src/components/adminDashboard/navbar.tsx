@@ -1,6 +1,9 @@
 import * as React from "react";
 import { Component } from "react";
 import Accounts from "./accounts";
+import Studies from "./studies";
+import AccessGroups from "./accessGroups";
+import Apps from "./apps";
 import "./navbar.css";
 
 interface NavbarProps {
@@ -30,17 +33,17 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
       {
         active: false,
         name: "Studies",
-        view: <Accounts handleClick={props.handleClick} />
+        view: <Studies handleClick={props.handleClick} />
       },
       {
         active: false,
         name: "Access Groups",
-        view: <Accounts handleClick={props.handleClick} />
+        view: <AccessGroups handleClick={props.handleClick} />
       },
       {
         active: false,
         name: "Apps",
-        view: <Accounts handleClick={props.handleClick} />
+        view: <Apps handleClick={props.handleClick} />
       }
     ];
 
