@@ -32,7 +32,7 @@ class TableControl extends React.Component<TableControlProps, any> {
           />
         </div>
         includeControl ?
-        <div className="table-control" style={{ width: controlWidth }}>
+        <div className="table-control" style={{ width: controlWidth + "%" }}>
           {control}
         </div>
       </div>

@@ -10,9 +10,6 @@ interface TableProps {
     name: string;
     searchable: boolean;
     sortable: boolean;
-  }[];
-  columnWidths: {
-    name: string;
     width: number;
   }[];
   control: React.ReactElement;
@@ -22,6 +19,7 @@ interface TableProps {
     name: string;
     searchValue: string;
     sortValue: string;
+    width: number;
   }[][];
   includeControl: boolean;
   includeSearch: boolean;

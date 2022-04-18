@@ -16,7 +16,7 @@ class TablePagination extends React.Component<
   TablePaginationState
 > {
   render() {
-    return <div>TablePagination</div>;
+    return <div className="table-pagination">TablePagination</div>;
   }
 }
 

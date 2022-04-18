@@ -7,6 +7,7 @@ interface TableRowProps {
     name: string;
     searchValue: string;
     sortValue: string;
+    width: number;
   }[];
 }
 
@@ -14,7 +15,15 @@ interface TableRowProps {
 
 class TableRow extends React.Component<TableRowProps, any> {
   render() {
-    return <div>TableRow</div>;
+    const { data } = this.props;
+
+    return (
+      <tr>
+        {data.map((cell) => (
+          <th style={{ width: cell.width + "%" }}>{cell.contents}</th>
+        ))}
+      </tr>
+    );
   }
 }
 

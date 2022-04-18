@@ -6,6 +6,7 @@ interface TableHeaderProps {
     name: string;
     searchable: boolean;
     sortable: boolean;
+    width: number;
   }[];
   onSort: (name: string, ascending: boolean) => void;
   sortDefault: string;
@@ -15,7 +16,15 @@ interface TableHeaderProps {
 
 class TableHeader extends React.Component<TableHeaderProps, any> {
   render() {
-    return <div>TableHeader</div>;
+    const { columns, onSort, sortDefault } = this.props;
+
+    return (
+      <tr>
+        {columns.map((c) => (
+          <th style={{ width: c.width + "%" }}>h.name</th>
+        ))}
+      </tr>
+    );
   }
 }
 
