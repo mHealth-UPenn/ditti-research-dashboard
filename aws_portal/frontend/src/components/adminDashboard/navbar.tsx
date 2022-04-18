@@ -6,7 +6,7 @@ import "./navbar.css";
 interface NavbarProps {
   active: string;
   handleClick: (
-    name: string,
+    name: string[],
     view: React.ReactElement,
     replace: boolean
   ) => void;
@@ -66,7 +66,7 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
               "page-header-button" +
               (v.active ? " bg-dark" : " link-no-underline")
             }
-            onClick={() => handleClick(v.name, v.view, true)}
+            onClick={() => handleClick([v.name], v.view, true)}
           >
             {v.name}
           </div>

@@ -11,7 +11,12 @@ import "./dashboard.css";
 // interface DashboardProps {}
 
 interface DashboardState {
-  apps: { name: string; id: number; view: React.ReactElement }[];
+  apps: {
+    breadcrumbs: string[];
+    name: string;
+    id: number;
+    view: React.ReactElement;
+  }[];
   breadcrumbs: { name: string; view: React.ReactElement }[];
   history: { name: string; view: React.ReactElement }[][];
   studies: { name: string; id: number }[];
@@ -37,8 +42,14 @@ class Dashboard extends React.Component<any, DashboardState> {
 
   getApps = () => {
     return [
-      { name: "Ditti App", id: 1, view: <StudiesView /> },
       {
+        breadcrumbs: ["Ditti App"],
+        name: "Ditti App",
+        id: 1,
+        view: <StudiesView />
+      },
+      {
+        breadcrumbs: ["Admin Dashboard", "Accounts"],
         name: "Admin Dashboard",
         id: 2,
         view: <Accounts handleClick={this.setView} />
@@ -53,7 +64,7 @@ class Dashboard extends React.Component<any, DashboardState> {
     ];
   };
 
-  setView = (name: string, view: React.ReactElement, replace?: boolean) => {
+  setView = (name: string[], view: React.ReactElement, replace?: boolean) => {
     const { breadcrumbs, history } = this.state;
     history.push(breadcrumbs.slice(0));
     this.setState({ history });
@@ -61,14 +72,20 @@ class Dashboard extends React.Component<any, DashboardState> {
 
     let i = 0;
     for (const b of this.state.breadcrumbs) {
-      if (b.name === name) {
+      if (b.name === name[0]) {
         let breadcrumbs = this.state.breadcrumbs;
         breadcrumbs = breadcrumbs.slice(0, i + 1);
         this.setState({ breadcrumbs });
         break;
       } else if (i === this.state.breadcrumbs.length - 1) {
         const breadcrumbs = this.state.breadcrumbs;
-        breadcrumbs.push({ name: name, view: view });
+
+        for (const i in name) {
+          breadcrumbs.push({
+            name: name[i],
+            view: parseInt(i) === name.length - 1 ? view : <React.Fragment />
+          });
+        }
         this.setState({ breadcrumbs });
         break;
       }

@@ -4,8 +4,13 @@ import "./home.css";
 import { ReactComponent as Right } from "../icons/right.svg";
 
 interface HomeProps {
-  apps: { name: string; id: number; view: React.ReactElement }[];
-  handleClick(name: string, view: React.ReactElement): void;
+  apps: {
+    breadcrumbs: string[];
+    name: string;
+    id: number;
+    view: React.ReactElement;
+  }[];
+  handleClick(name: string[], view: React.ReactElement): void;
 }
 
 // interface HomeState {}
@@ -17,14 +22,19 @@ class Home extends React.Component<any, HomeProps> {
       <div className="card-container">
         <div className="card-row">
           {this.props.apps.map(
-            (a: { name: string; id: number; view: React.ReactElement }) => (
+            (a: {
+              breadcrumbs: string[];
+              name: string;
+              id: number;
+              view: React.ReactElement;
+            }) => (
               <div key={"app-" + a.id} className="card-s bg-white shadow">
                 <div className="app-name">
                   <span>{a.name}</span>
                 </div>
                 <div
                   className="app-button link-svg"
-                  onClick={() => this.props.handleClick(a.name, a.view)}
+                  onClick={() => this.props.handleClick(a.breadcrumbs, a.view)}
                 >
                   <Right />
                 </div>

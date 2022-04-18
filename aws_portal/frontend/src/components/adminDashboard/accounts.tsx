@@ -4,7 +4,7 @@ import Navbar from "./navbar";
 
 interface AccountsProps {
   handleClick: (
-    name: string,
+    name: string[],
     view: React.ReactElement,
     replace: boolean
   ) => void;
