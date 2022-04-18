@@ -62,6 +62,13 @@ svg {
   justify-content: left;
 }
 
+.page-header-button {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  padding: 0 3rem;
+}
+
 .page-content {
   flex-grow: 1;
   padding: 3rem;
@@ -89,6 +96,7 @@ svg {
 
 .bg-dark {
   background-color: #33334D;
+  color: white;
 }
 
 .border-light {
