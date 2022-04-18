@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
-import AdminDashboard from "./adminDashboard/adminDashboard";
+import Accounts from "./adminDashboard/accounts";
 import StudiesView from "./dittiApp/studies";
 import Header from "./header";
 import Home from "./home";
@@ -38,7 +38,7 @@ class Dashboard extends React.Component<any, DashboardState> {
   getApps = () => {
     return [
       { name: "Ditti App", id: 1, view: <StudiesView /> },
-      { name: "Admin Dashboard", id: 2, view: <AdminDashboard /> }
+      { name: "Admin Dashboard", id: 2, view: <Accounts /> }
     ];
   };
 

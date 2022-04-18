@@ -1,21 +1,20 @@
 import * as React from "react";
 import { Component } from "react";
-import Accounts from "./accounts";
 import "./adminDashboard.css";
 
 // interface AdminDashboardProps {}
 
 interface AdminDashboardState {
-  views: { active: boolean; name: string; view: React.ReactElement }[];
+  views: { active: boolean; name: string }[];
 }
 
-class AdminDashboardView extends React.Component<any, AdminDashboardState> {
+class AdminDashboard extends React.Component<any, AdminDashboardState> {
   state = {
     views: [
-      { active: true, name: "Accounts", view: <Accounts /> },
-      { active: false, name: "Studies", view: <Accounts /> },
-      { active: false, name: "Access Groups", view: <Accounts /> },
-      { active: false, name: "Apps", view: <Accounts /> }
+      { active: true, name: "Accounts" },
+      { active: false, name: "Studies" },
+      { active: false, name: "Access Groups" },
+      { active: false, name: "Apps" }
     ]
   };
 
@@ -35,16 +34,15 @@ class AdminDashboardView extends React.Component<any, AdminDashboardState> {
                 "page-header-button" +
                 (v.active ? " bg-dark" : " link-no-underline")
               }
-              onClick={() => this.setView(v.view)}
             >
               {v.name}
             </div>
           ))}
         </div>
-        <div className="page-content bg-white">Content!</div>
+        <div className="page-content bg-white">{this.props.children}</div>
       </div>
     );
   }
 }
 
-export default AdminDashboardView;
+export default AdminDashboard;
