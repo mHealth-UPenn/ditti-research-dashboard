@@ -48,6 +48,25 @@ svg {
   width: calc(100% - 6rem);
 }
 
+.page-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  margin: 0 3rem;
+}
+
+.page-header {
+  align-items: center;
+  display: flex;
+  height: 4rem;
+  justify-content: left;
+}
+
+.page-content {
+  flex-grow: 1;
+  padding: 3rem;
+}
+
 .button-primary {
   background-color: #3366ff;
   border: none;
