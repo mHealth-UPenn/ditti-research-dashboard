@@ -1,18 +1,28 @@
 import * as React from "react";
 import { Component } from "react";
-import AdminDashboard from "./adminDashboard";
+import Navbar from "./navbar";
 
-// interface AccountsProps {}
+interface AccountsProps {
+  handleClick: (
+    name: string,
+    view: React.ReactElement,
+    replace: boolean
+  ) => void;
+}
 
 // interface AccountsState {}
 
-class Accounts extends React.Component<any, any> {
-  // state = { :  }
+class Accounts extends React.Component<AccountsProps, any> {
   render() {
+    const { handleClick } = this.props;
+
     return (
-      <AdminDashboard>
-        <div>Accounts!</div>
-      </AdminDashboard>
+      <div className="page-container">
+        <Navbar handleClick={handleClick} active="Accounts" />
+        <div className="page-content bg-white">
+          <div>Accounts!</div>
+        </div>
+      </div>
     );
   }
 }

@@ -38,7 +38,11 @@ class Dashboard extends React.Component<any, DashboardState> {
   getApps = () => {
     return [
       { name: "Ditti App", id: 1, view: <StudiesView /> },
-      { name: "Admin Dashboard", id: 2, view: <Accounts /> }
+      {
+        name: "Admin Dashboard",
+        id: 2,
+        view: <Accounts handleClick={this.setView} />
+      }
     ];
   };
 
@@ -49,10 +53,11 @@ class Dashboard extends React.Component<any, DashboardState> {
     ];
   };
 
-  updateHistory = (name: string, view: React.ReactElement) => {
+  setView = (name: string, view: React.ReactElement, replace?: boolean) => {
     const { breadcrumbs, history } = this.state;
     history.push(breadcrumbs.slice(0));
     this.setState({ history });
+    if (replace) breadcrumbs.pop();
 
     let i = 0;
     for (const b of this.state.breadcrumbs) {
@@ -70,10 +75,7 @@ class Dashboard extends React.Component<any, DashboardState> {
 
       i++;
     }
-  };
 
-  setView = (name: string, view: React.ReactElement) => {
-    this.updateHistory(name, view);
     this.setState({ view });
   };
 
