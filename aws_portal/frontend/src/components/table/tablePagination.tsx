@@ -1,11 +1,19 @@
 import * as React from "react";
 import { Component } from "react";
 
-// interface TablePaginationProps {}
+interface TablePaginationProps {
+  paginationPer: number;
+  totalRows: number;
+}
 
-// interface TablePaginationState {}
+interface TablePaginationState {
+  page: number;
+}
 
-class TablePagination extends React.Component<any, any> {
+class TablePagination extends React.Component<
+  TablePaginationProps,
+  TablePaginationState
+> {
   render() {
     return <div>TablePagination</div>;
   }
