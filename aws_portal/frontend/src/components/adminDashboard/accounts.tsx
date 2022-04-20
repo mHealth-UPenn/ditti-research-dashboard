@@ -82,7 +82,14 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         <div className="page-content bg-white">
           <Table
             columns={columns}
-            control={<div>Control</div>}
+            control={
+              <button
+                className="button-primary"
+                style={{ flexGrow: 1, fontSize: "1rem" }}
+              >
+                Create&nbsp;<b>+</b>
+              </button>
+            }
             controlWidth={15}
             data={this.getData()}
             includeControl={true}

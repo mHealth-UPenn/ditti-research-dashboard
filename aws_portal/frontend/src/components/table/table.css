@@ -2,6 +2,10 @@ table {
   border-spacing: 0;
 }
 
+.table-control {
+  display: flex;
+}
+
 .table-control-container {
   display: flex;
   height: 3rem;
