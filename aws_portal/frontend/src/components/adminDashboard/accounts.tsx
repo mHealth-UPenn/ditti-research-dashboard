@@ -24,22 +24,34 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
   state = {
     columns: [
       {
-        name: "a",
+        name: "Name",
         searchable: false,
         sortable: false,
-        width: 10
+        width: 20
       },
       {
-        name: "b",
+        name: "Email",
         searchable: false,
         sortable: false,
-        width: 10
+        width: 35
       },
       {
-        name: "c",
+        name: "Created On",
         searchable: false,
         sortable: false,
-        width: 10
+        width: 15
+      },
+      {
+        name: "Last Login",
+        searchable: false,
+        sortable: false,
+        width: 15
+      },
+      {
+        name: "",
+        searchable: false,
+        sortable: false,
+        width: 15
       }
     ]
   };
@@ -48,25 +60,266 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
     return [
       [
         {
-          contents: <div>1</div>,
-          name: "1",
+          contents: <div className="flex-center">John Smith</div>,
+          name: "Name",
           searchValue: "",
           sortValue: "",
-          width: 10
+          width: 20
         },
         {
-          contents: <div>2</div>,
-          name: "2",
+          contents: (
+            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
+          ),
+          name: "Email",
           searchValue: "",
           sortValue: "",
-          width: 10
+          width: 35
         },
         {
-          contents: <div>3</div>,
-          name: "3",
+          contents: <div className="flex-center">Jan 1, 2022</div>,
+          name: "Created On",
           searchValue: "",
           sortValue: "",
-          width: 10
+          width: 15
+        },
+        {
+          contents: <div className="flex-center">1 day ago</div>,
+          name: "Last Login",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: (
+            <div className="flex-center table-control">
+              <button className="button-secondary">Edit</button>
+              <button className="button-danger">Delete</button>
+            </div>
+          ),
+          name: "",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        }
+      ],
+      [
+        {
+          contents: <div className="flex-center">John Smith</div>,
+          name: "Name",
+          searchValue: "",
+          sortValue: "",
+          width: 20
+        },
+        {
+          contents: (
+            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
+          ),
+          name: "Email",
+          searchValue: "",
+          sortValue: "",
+          width: 35
+        },
+        {
+          contents: <div className="flex-center">Jan 1, 2022</div>,
+          name: "Created On",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: <div className="flex-center">1 day ago</div>,
+          name: "Last Login",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: (
+            <div className="flex-center table-control">
+              <button className="button-secondary">Edit</button>
+              <button className="button-danger">Delete</button>
+            </div>
+          ),
+          name: "",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        }
+      ],
+      [
+        {
+          contents: <div className="flex-center">John Smith</div>,
+          name: "Name",
+          searchValue: "",
+          sortValue: "",
+          width: 20
+        },
+        {
+          contents: (
+            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
+          ),
+          name: "Email",
+          searchValue: "",
+          sortValue: "",
+          width: 35
+        },
+        {
+          contents: <div className="flex-center">Jan 1, 2022</div>,
+          name: "Created On",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: <div className="flex-center">1 day ago</div>,
+          name: "Last Login",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: (
+            <div className="flex-center table-control">
+              <button className="button-secondary">Edit</button>
+              <button className="button-danger">Delete</button>
+            </div>
+          ),
+          name: "",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        }
+      ],
+      [
+        {
+          contents: <div className="flex-center">John Smith</div>,
+          name: "Name",
+          searchValue: "",
+          sortValue: "",
+          width: 20
+        },
+        {
+          contents: (
+            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
+          ),
+          name: "Email",
+          searchValue: "",
+          sortValue: "",
+          width: 35
+        },
+        {
+          contents: <div className="flex-center">Jan 1, 2022</div>,
+          name: "Created On",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: <div className="flex-center">1 day ago</div>,
+          name: "Last Login",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: (
+            <div className="flex-center table-control">
+              <button className="button-secondary">Edit</button>
+              <button className="button-danger">Delete</button>
+            </div>
+          ),
+          name: "",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        }
+      ],
+      [
+        {
+          contents: <div className="flex-center">John Smith</div>,
+          name: "Name",
+          searchValue: "",
+          sortValue: "",
+          width: 20
+        },
+        {
+          contents: (
+            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
+          ),
+          name: "Email",
+          searchValue: "",
+          sortValue: "",
+          width: 35
+        },
+        {
+          contents: <div className="flex-center">Jan 1, 2022</div>,
+          name: "Created On",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: <div className="flex-center">1 day ago</div>,
+          name: "Last Login",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: (
+            <div className="flex-center table-control">
+              <button className="button-secondary">Edit</button>
+              <button className="button-danger">Delete</button>
+            </div>
+          ),
+          name: "",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        }
+      ],
+      [
+        {
+          contents: <div className="flex-center">John Smith</div>,
+          name: "Name",
+          searchValue: "",
+          sortValue: "",
+          width: 20
+        },
+        {
+          contents: (
+            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
+          ),
+          name: "Email",
+          searchValue: "",
+          sortValue: "",
+          width: 35
+        },
+        {
+          contents: <div className="flex-center">Jan 1, 2022</div>,
+          name: "Created On",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: <div className="flex-center">1 day ago</div>,
+          name: "Last Login",
+          searchValue: "",
+          sortValue: "",
+          width: 15
+        },
+        {
+          contents: (
+            <div className="flex-center table-control">
+              <button className="button-secondary">Edit</button>
+              <button className="button-danger">Delete</button>
+            </div>
+          ),
+          name: "",
+          searchValue: "",
+          sortValue: "",
+          width: 15
         }
       ]
     ];
@@ -83,10 +336,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
           <Table
             columns={columns}
             control={
-              <button
-                className="button-primary"
-                style={{ flexGrow: 1, fontSize: "1rem" }}
-              >
+              <button className="button-primary">
                 Create&nbsp;<b>+</b>
               </button>
             }

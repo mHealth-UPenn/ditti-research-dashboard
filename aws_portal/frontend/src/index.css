@@ -74,6 +74,18 @@ svg {
   padding: 3rem;
 }
 
+.button-danger {
+  background-color: #ff0000;
+  border: none;
+  color: white;
+}
+
+.button-danger:hover {
+  cursor: pointer;
+  background-color: #ff0000;
+  color: white;
+}
+
 .button-primary {
   background-color: #3366ff;
   border: none;
@@ -83,6 +95,18 @@ svg {
 .button-primary:hover {
   cursor: pointer;
   background-color: #0040ff;
+  color: white;
+}
+
+.button-secondary {
+  background-color: #33334D;
+  border: none;
+  color: white;
+}
+
+.button-secondary:hover {
+  cursor: pointer;
+  background-color: #33334D;
   color: white;
 }
 
@@ -137,6 +161,12 @@ svg {
 
 .border-dark-l {
   border-left: 1px solid #33334D;
+}
+
+.flex-center {
+  align-items: center;
+  display: flex;
+  justify-content: center;
 }
 
 .link {

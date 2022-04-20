@@ -20,12 +20,12 @@ class TableRow extends React.Component<TableRowProps, any> {
     return (
       <tr>
         {data.map((cell) => (
-          <th
+          <td
             className="border-light-t border-light-r"
             style={{ width: cell.width + "%" }}
           >
             {cell.contents}
-          </th>
+          </td>
         ))}
       </tr>
     );

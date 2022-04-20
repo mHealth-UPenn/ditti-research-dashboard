@@ -1,9 +1,24 @@
 table {
   border-spacing: 0;
+  width: 100%;
+}
+
+th, td {
+  height: 3rem;
+  padding: 0;
+}
+
+th > div, td > div {
+  height: 100%;
 }
 
 .table-control {
   display: flex;
+}
+
+.table-control > button {
+  flex-grow: 1;
+  height: 100%;
 }
 
 .table-control-container {
