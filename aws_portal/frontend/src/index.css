@@ -100,23 +100,23 @@ svg {
 }
 
 .border-light {
-  border: 1px solid #f0f0f5;
+  border: 1px solid #B3B3CC;
 }
 
 .border-light-t {
-  border-top: 1px solid #f0f0f5;
+  border-top: 1px solid #B3B3CC;
 }
 
 .border-light-r {
-  border-right: 1px solid #f0f0f5;
+  border-right: 1px solid #B3B3CC;
 }
 
 .border-light-b {
-  border-bottom: 1px solid #f0f0f5;
+  border-bottom: 1px solid #B3B3CC;
 }
 
 .border-light-l {
-  border-left: 1px solid #f0f0f5;
+  border-left: 1px solid #B3B3CC;
 }
 
 .border-dark {

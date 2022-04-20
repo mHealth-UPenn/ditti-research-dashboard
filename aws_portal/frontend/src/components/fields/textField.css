@@ -1,12 +1,11 @@
 .text-field-container {
-  margin-bottom: 2rem;
-  width: 100%;
+  display: flex;
+  flex-grow: 1;
 }
 
 .text-field-content {
-  border: solid 2px #b3b3cc;
   display: flex;
-  height: 2rem;
+  flex-grow: 1;
   padding: 0.75rem 0.25rem;
 }
 
@@ -17,7 +16,7 @@
 .text-field-input {
   border: none;
   padding: 0;
-  width: 100%;
+  flex-grow: 1;
 }
 
 .text-field-input:focus {

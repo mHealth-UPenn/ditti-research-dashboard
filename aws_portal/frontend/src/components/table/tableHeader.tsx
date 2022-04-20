@@ -21,7 +21,9 @@ class TableHeader extends React.Component<TableHeaderProps, any> {
     return (
       <tr>
         {columns.map((c) => (
-          <th style={{ width: c.width + "%" }}>h.name</th>
+          <th className="border-light-r" style={{ width: c.width + "%" }}>
+            h.name
+          </th>
         ))}
       </tr>
     );

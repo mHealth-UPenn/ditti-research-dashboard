@@ -4,6 +4,7 @@ import TableControl from "./tableControl";
 import TableHeader from "./tableHeader";
 import TablePagination from "./tablePagination";
 import TableRow from "./tableRow";
+import "./table.css";
 
 interface TableProps {
   columns: {
@@ -60,15 +61,18 @@ class Table extends React.Component<TableProps, TableState> {
 
     return (
       <div className="table-container">
-        includeControl || includeSearch ?
-        <TableControl
-          control={control}
-          controlWidth={controlWidth}
-          includeControl={includeControl}
-          includeSearch={includeSearch}
-          onSearch={this.onSearch}
-        />
-        <table>
+        {includeControl || includeSearch ? (
+          <TableControl
+            control={control}
+            controlWidth={controlWidth}
+            includeControl={includeControl}
+            includeSearch={includeSearch}
+            onSearch={this.onSearch}
+          />
+        ) : (
+          ""
+        )}
+        <table className="border-light-t border-light-b border-light-l">
           <TableHeader
             columns={columns}
             onSort={this.onSort}

@@ -4,6 +4,12 @@
   height: 100vh;
 }
 
+.login-field {
+  display: flex;
+  margin-bottom: 2rem;
+  height: 4rem;
+}
+
 .login-image-container {
   display: flex;
   flex-grow: 1;

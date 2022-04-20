@@ -22,24 +22,28 @@ class LoginPage extends React.Component<any, any> {
             <div className="login-menu-content">
               <h1>Geriatric Sleep Research Lab</h1>
               <h3>AWS Data Portal</h3>
-              <TextField
-                id="login-email"
-                svg={<Person />}
-                type=""
-                placeholder="Email"
-                prefill=""
-                label=""
-                feedback="Invalid email address"
-              />
-              <TextField
-                id="login-password"
-                svg={<Key />}
-                type="password"
-                placeholder="Password"
-                prefill=""
-                label=""
-                feedback="Invalid password"
-              />
+              <div className="login-field border-light">
+                <TextField
+                  id="login-email"
+                  svg={<Person />}
+                  type=""
+                  placeholder="Email"
+                  prefill=""
+                  label=""
+                  feedback="Invalid email address"
+                />
+              </div>
+              <div className="login-field border-light">
+                <TextField
+                  id="login-password"
+                  svg={<Key />}
+                  type="password"
+                  placeholder="Password"
+                  prefill=""
+                  label=""
+                  feedback="Invalid password"
+                />
+              </div>
               <div className="login-buttons">
                 <Link className="button-primary" to="/">
                   Sign In
