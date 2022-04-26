@@ -32,6 +32,7 @@ class TableControl extends React.Component<TableControlProps, any> {
               placeholder="Search..."
               prefill=""
               label=""
+              onKeyup={onSearch}
               feedback=""
             />
           </div>

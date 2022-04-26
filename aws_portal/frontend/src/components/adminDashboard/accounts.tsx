@@ -14,7 +14,6 @@ interface AccountsProps {
 interface AccountsState {
   columns: {
     name: string;
-    searchable: boolean;
     sortable: boolean;
     width: number;
   }[];
@@ -25,31 +24,26 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
     columns: [
       {
         name: "Name",
-        searchable: false,
         sortable: false,
         width: 20
       },
       {
         name: "Email",
-        searchable: false,
         sortable: false,
         width: 35
       },
       {
         name: "Created On",
-        searchable: false,
         sortable: false,
         width: 15
       },
       {
         name: "Last Login",
-        searchable: false,
         sortable: false,
         width: 15
       },
       {
         name: "",
-        searchable: false,
         sortable: false,
         width: 15
       }
@@ -62,8 +56,10 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: <div className="flex-center">John Smith1</div>,
           name: "Name",
-          searchValue: "",
+          searchValue: "John Smith1",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 20
         },
         {
@@ -71,22 +67,28 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           name: "Email",
-          searchValue: "",
+          searchValue: "john.smith@pennmedicine.upenn.edu",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 35
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
           name: "Created On",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
           name: "Last Login",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
@@ -98,7 +100,9 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
           ),
           name: "",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: false,
           width: 15
         }
       ],
@@ -106,8 +110,10 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: <div className="flex-center">John Smith2</div>,
           name: "Name",
-          searchValue: "",
+          searchValue: "John Smith2",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 20
         },
         {
@@ -115,22 +121,28 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           name: "Email",
-          searchValue: "",
+          searchValue: "john.smith@pennmedicine.upenn.edu",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 35
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
           name: "Created On",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
           name: "Last Login",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
@@ -142,7 +154,9 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
           ),
           name: "",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: false,
           width: 15
         }
       ],
@@ -150,8 +164,10 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: <div className="flex-center">John Smith3</div>,
           name: "Name",
-          searchValue: "",
+          searchValue: "John Smith3",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 20
         },
         {
@@ -159,22 +175,28 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           name: "Email",
-          searchValue: "",
+          searchValue: "john.smith@pennmedicine.upenn.edu",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 35
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
           name: "Created On",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
           name: "Last Login",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
@@ -186,16 +208,20 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
           ),
           name: "",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: false,
           width: 15
         }
       ],
       [
         {
-          contents: <div className="flex-center">John Smith4</div>,
+          contents: <div className="flex-center">Jane Smith2</div>,
           name: "Name",
-          searchValue: "",
+          searchValue: "Jane Smith2",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 20
         },
         {
@@ -203,22 +229,28 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           name: "Email",
-          searchValue: "",
+          searchValue: "john.smith@pennmedicine.upenn.edu",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 35
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
           name: "Created On",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
           name: "Last Login",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
@@ -230,16 +262,20 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
           ),
           name: "",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: false,
           width: 15
         }
       ],
       [
         {
-          contents: <div className="flex-center">John Smith5</div>,
+          contents: <div className="flex-center">Jane Smith3</div>,
           name: "Name",
-          searchValue: "",
+          searchValue: "Jane Smith3",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 20
         },
         {
@@ -247,22 +283,28 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           name: "Email",
-          searchValue: "",
+          searchValue: "john.smith@pennmedicine.upenn.edu",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 35
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
           name: "Created On",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
           name: "Last Login",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
@@ -274,16 +316,20 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
           ),
           name: "",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: false,
           width: 15
         }
       ],
       [
         {
-          contents: <div className="flex-center">John Smith6</div>,
+          contents: <div className="flex-center">Jane Smith4</div>,
           name: "Name",
-          searchValue: "",
+          searchValue: "Jane Smith4",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 20
         },
         {
@@ -291,22 +337,28 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           name: "Email",
-          searchValue: "",
+          searchValue: "john.smith@pennmedicine.upenn.edu",
+          searchable: true,
           sortValue: "",
+          sortable: true,
           width: 35
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
           name: "Created On",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
           name: "Last Login",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: true,
           width: 15
         },
         {
@@ -318,7 +370,9 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
           ),
           name: "",
           searchValue: "",
+          searchable: false,
           sortValue: "",
+          sortable: false,
           width: 15
         }
       ]

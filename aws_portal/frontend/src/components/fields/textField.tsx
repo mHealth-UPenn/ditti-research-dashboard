@@ -9,6 +9,7 @@ interface TextFieldProps {
   placeholder: string;
   prefill: string;
   label: string;
+  onKeyup: (text: string) => void;
   feedback: string;
 }
 
@@ -22,7 +23,8 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
   };
 
   render() {
-    const { id, svg, type, placeholder, prefill, label, feedback } = this.props;
+    const { id, svg, type, placeholder, prefill, label, onKeyup, feedback } =
+      this.props;
 
     return (
       <div className="text-field-container">
@@ -38,6 +40,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
             className="text-field-input"
             placeholder={placeholder}
             defaultValue={prefill}
+            onKeyUp={(e) => onKeyup((e.target as HTMLInputElement).value)}
           />
         </div>
         {feedback ? (

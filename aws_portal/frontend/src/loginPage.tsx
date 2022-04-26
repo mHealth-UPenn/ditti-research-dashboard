@@ -30,6 +30,7 @@ class LoginPage extends React.Component<any, any> {
                   placeholder="Email"
                   prefill=""
                   label=""
+                  onKeyup={(text) => null}
                   feedback="Invalid email address"
                 />
               </div>
@@ -41,6 +42,7 @@ class LoginPage extends React.Component<any, any> {
                   placeholder="Password"
                   prefill=""
                   label=""
+                  onKeyup={(text) => null}
                   feedback="Invalid password"
                 />
               </div>

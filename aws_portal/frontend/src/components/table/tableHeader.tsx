@@ -4,7 +4,6 @@ import { Component } from "react";
 interface TableHeaderProps {
   columns: {
     name: string;
-    searchable: boolean;
     sortable: boolean;
     width: number;
   }[];

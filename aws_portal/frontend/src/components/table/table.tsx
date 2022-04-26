@@ -1,4 +1,5 @@
 import * as React from "react";
+import { renderToString } from "react-dom/server";
 import { Component } from "react";
 import TableControl from "./tableControl";
 import TableHeader from "./tableHeader";
@@ -7,22 +8,25 @@ import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
 import { ReactComponent as Right } from "../../icons/arrowRight.svg";
 import "./table.css";
 
+interface TableData {
+  contents: React.ReactElement;
+  name: string;
+  searchable: boolean;
+  searchValue: string;
+  sortable: boolean;
+  sortValue: string;
+  width: number;
+}
+
 interface TableProps {
   columns: {
     name: string;
-    searchable: boolean;
     sortable: boolean;
     width: number;
   }[];
   control: React.ReactElement;
   controlWidth: number;
-  data: {
-    contents: React.ReactElement;
-    name: string;
-    searchValue: string;
-    sortValue: string;
-    width: number;
-  }[][];
+  data: TableData[][];
   includeControl: boolean;
   includeSearch: boolean;
   paginationPer: number;
@@ -31,8 +35,8 @@ interface TableProps {
 
 interface TableState {
   page: number;
+  renderedData: TableData[][];
   renderedRows: React.ReactElement;
-  searchText: string;
   sortBy: string;
   totalPages: number;
 }
@@ -45,15 +49,31 @@ class Table extends React.Component<TableProps, TableState> {
 
     this.state = {
       page: 1,
-      renderedRows: this.renderRows(1),
-      searchText: "",
+      renderedData: data,
+      renderedRows: <React.Fragment />,
       sortBy: "",
       totalPages: totalPages
     };
   }
 
+  componentDidMount() {
+    const { renderedData } = this.state;
+    this.renderRows(1, renderedData);
+  }
+
   onSearch = (text: string) => {
-    console.log(text);
+    const { data, paginationPer } = this.props;
+    const renderedData = data.filter((row) =>
+      row.some(
+        (cell) =>
+          cell.searchable &&
+          cell.searchValue.toLowerCase().includes(text.toLowerCase())
+      )
+    );
+
+    const totalPages = Math.ceil(renderedData.length / paginationPer);
+    this.setState({ page: 1, renderedData, totalPages });
+    this.renderRows(1, renderedData);
   };
 
   onSort = (name: string, ascending: boolean) => {
@@ -61,15 +81,16 @@ class Table extends React.Component<TableProps, TableState> {
   };
 
   paginate = (page: number) => {
-    const renderedRows = this.renderRows(page);
-    this.setState({ renderedRows });
+    const { renderedData } = this.state;
+
+    this.renderRows(page, renderedData);
     this.setState({ page });
   };
 
-  renderRows(page: number) {
-    const { data, paginationPer } = this.props;
+  renderRows(page: number, data: TableData[][]) {
+    const { paginationPer } = this.props;
 
-    return (
+    const renderedRows = (
       <React.Fragment>
         {data
           .slice((page - 1) * paginationPer, page * paginationPer)
@@ -78,6 +99,8 @@ class Table extends React.Component<TableProps, TableState> {
           ))}
       </React.Fragment>
     );
+
+    this.setState({ renderedRows });
   }
 
   render() {
@@ -85,14 +108,13 @@ class Table extends React.Component<TableProps, TableState> {
       columns,
       control,
       controlWidth,
-      data,
       includeControl,
       includeSearch,
       paginationPer,
       sortDefault
     } = this.props;
 
-    const { page, renderedRows, totalPages } = this.state;
+    const { page, renderedData, renderedRows, totalPages } = this.state;
 
     return (
       <div className="table-container">
@@ -141,7 +163,7 @@ class Table extends React.Component<TableProps, TableState> {
           </div>
           <span>
             {(page - 1) * paginationPer + 1} - {page * paginationPer} of{" "}
-            {data.length} items
+            {renderedData.length} items
           </span>
         </div>
       </div>
