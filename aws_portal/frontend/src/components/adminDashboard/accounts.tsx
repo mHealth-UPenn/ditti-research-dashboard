@@ -60,7 +60,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
     return [
       [
         {
-          contents: <div className="flex-center">John Smith</div>,
+          contents: <div className="flex-center">John Smith1</div>,
           name: "Name",
           searchValue: "",
           sortValue: "",
@@ -104,7 +104,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
       ],
       [
         {
-          contents: <div className="flex-center">John Smith</div>,
+          contents: <div className="flex-center">John Smith2</div>,
           name: "Name",
           searchValue: "",
           sortValue: "",
@@ -148,7 +148,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
       ],
       [
         {
-          contents: <div className="flex-center">John Smith</div>,
+          contents: <div className="flex-center">John Smith3</div>,
           name: "Name",
           searchValue: "",
           sortValue: "",
@@ -192,7 +192,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
       ],
       [
         {
-          contents: <div className="flex-center">John Smith</div>,
+          contents: <div className="flex-center">John Smith4</div>,
           name: "Name",
           searchValue: "",
           sortValue: "",
@@ -236,7 +236,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
       ],
       [
         {
-          contents: <div className="flex-center">John Smith</div>,
+          contents: <div className="flex-center">John Smith5</div>,
           name: "Name",
           searchValue: "",
           sortValue: "",
@@ -280,7 +280,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
       ],
       [
         {
-          contents: <div className="flex-center">John Smith</div>,
+          contents: <div className="flex-center">John Smith6</div>,
           name: "Name",
           searchValue: "",
           sortValue: "",
@@ -344,7 +344,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
             data={this.getData()}
             includeControl={true}
             includeSearch={true}
-            paginationPer={20}
+            paginationPer={2}
             sortDefault=""
           />
         </div>

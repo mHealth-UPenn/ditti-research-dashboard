@@ -31,6 +31,7 @@ th > div, td > div {
   display: flex;
   font-weight: bold;
   justify-content: space-between;
+  user-select: none;
 }
 
 .table-pagination-control {
@@ -47,12 +48,16 @@ th > div, td > div {
   width: 3rem;
 }
 
-.pagination-button:hover {
+.pagination-button-active:hover {
   cursor: pointer;
 }
 
-.pagination-button:hover .svg-fill {
-  fill: #b3b3b3;
+.pagination-button-active .svg-fill {
+  fill: #666699;
+}
+
+.pagination-button-active:hover .svg-fill {
+  fill: #52527a;
 }
 
 .table-search {
