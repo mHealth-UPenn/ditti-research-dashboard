@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Component } from "react";
 import "./navbar.css";
-import { ReactComponent as Back } from "../icons/back.svg";
+import { ReactComponent as Back } from "../icons/left.svg";
 
 interface NavbarProps {
   breadcrumbs: { name: string; view: React.ReactElement }[];

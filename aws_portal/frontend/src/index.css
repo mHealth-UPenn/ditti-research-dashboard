@@ -82,7 +82,7 @@ svg {
 
 .button-danger:hover {
   cursor: pointer;
-  background-color: #ff0000;
+  background-color: #cc0000;
   color: white;
 }
 
@@ -106,7 +106,7 @@ svg {
 
 .button-secondary:hover {
   cursor: pointer;
-  background-color: #33334D;
+  background-color: #1f1f2e;
   color: white;
 }
 

@@ -26,6 +26,35 @@ th > div, td > div {
   height: 3rem;
 }
 
+.table-pagination {
+  align-items: center;
+  display: flex;
+  font-weight: bold;
+  justify-content: space-between;
+}
+
+.table-pagination-control {
+  align-items: center;
+  display: flex;
+}
+
+.table-pagination-control > span {
+  margin-left: 1rem;
+}
+
+.pagination-button {
+  height: 3rem;
+  width: 3rem;
+}
+
+.pagination-button:hover {
+  cursor: pointer;
+}
+
+.pagination-button:hover .svg-fill {
+  fill: #b3b3b3;
+}
+
 .table-search {
   flex-grow: 1;
   display: flex;
