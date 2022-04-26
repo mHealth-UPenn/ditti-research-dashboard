@@ -23,26 +23,36 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
   state = {
     columns: [
       {
+        ascending: false,
+        descending: false,
         name: "Name",
-        sortable: false,
+        sortable: true,
         width: 20
       },
       {
+        ascending: false,
+        descending: false,
         name: "Email",
-        sortable: false,
+        sortable: true,
         width: 35
       },
       {
+        ascending: false,
+        descending: false,
         name: "Created On",
-        sortable: false,
+        sortable: true,
         width: 15
       },
       {
+        ascending: false,
+        descending: false,
         name: "Last Login",
-        sortable: false,
+        sortable: true,
         width: 15
       },
       {
+        ascending: false,
+        descending: false,
         name: "",
         sortable: false,
         width: 15

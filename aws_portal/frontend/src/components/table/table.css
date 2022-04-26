@@ -8,8 +8,45 @@ th, td {
   padding: 0;
 }
 
+th > div {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 1rem;
+}
+
 th > div, td > div {
   height: 100%;
+}
+
+th svg {
+  height: 2rem;
+  width: 2rem;
+}
+
+th .sort {
+  display: flex;
+  flex-direction: column;
+}
+
+th .sort div {
+  width: 1.2rem;
+  height: 1rem;
+}
+
+th .sort div:hover {
+  cursor: pointer;
+}
+
+th .sort div:hover .svg-fill,
+th .sort-active .svg-fill {
+  fill: #33334D;
+}
+
+th .sort svg {
+  position: relative;
+  right: 0.4rem;
+  bottom: 0.5rem;
 }
 
 .table-control {

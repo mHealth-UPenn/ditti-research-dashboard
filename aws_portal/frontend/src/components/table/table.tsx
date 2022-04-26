@@ -20,6 +20,8 @@ interface TableData {
 
 interface TableProps {
   columns: {
+    ascending: boolean;
+    descending: boolean;
     name: string;
     sortable: boolean;
     width: number;
