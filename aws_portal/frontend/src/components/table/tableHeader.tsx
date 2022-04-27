@@ -4,7 +4,7 @@ import { ReactComponent as Ascending } from "../../icons/sortAscending.svg";
 import { ReactComponent as Descending } from "../../icons/sortDescending.svg";
 
 interface TableHeaderProps {
-  columns: {
+  headers: {
     ascending: boolean;
     descending: boolean;
     name: string;
@@ -12,32 +12,31 @@ interface TableHeaderProps {
     width: number;
   }[];
   onSort: (name: string, ascending: boolean) => void;
-  sortDefault: string;
 }
 
 // interface TableHeaderState {}
 
 class TableHeader extends React.Component<TableHeaderProps, any> {
   render() {
-    const { columns, onSort, sortDefault } = this.props;
+    const { headers, onSort } = this.props;
 
     return (
       <tr>
-        {columns.map((c) => (
-          <th className="border-light-r" style={{ width: c.width + "%" }}>
+        {headers.map((h) => (
+          <th className="border-light-r" style={{ width: h.width + "%" }}>
             <div>
-              <span>{c.name}</span>
-              {c.sortable ? (
+              <span>{h.name}</span>
+              {h.sortable ? (
                 <div className="sort">
                   <div
-                    className={c.descending ? " sort-active" : ""}
-                    onClick={() => onSort(c.name, false)}
+                    className={h.descending ? " sort-active" : ""}
+                    onClick={() => onSort(h.name, false)}
                   >
                     <Descending />
                   </div>
                   <div
-                    className={c.ascending ? " sort-active" : ""}
-                    onClick={() => onSort(c.name, true)}
+                    className={h.ascending ? " sort-active" : ""}
+                    onClick={() => onSort(h.name, true)}
                   >
                     <Ascending />
                   </div>

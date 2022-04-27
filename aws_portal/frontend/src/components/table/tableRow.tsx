@@ -2,13 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 
 interface TableRowProps {
-  data: {
-    contents: React.ReactElement;
-    name: string;
-    searchValue: string;
-    sortValue: string;
-    width: number;
-  }[];
+  data: { contents: React.ReactElement; width: number }[];
 }
 
 // interface TableRowState {}

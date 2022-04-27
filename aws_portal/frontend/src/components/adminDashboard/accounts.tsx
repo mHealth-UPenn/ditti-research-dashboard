@@ -23,37 +23,32 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
   state = {
     columns: [
       {
-        ascending: false,
-        descending: false,
         name: "Name",
+        searchable: true,
         sortable: true,
         width: 20
       },
       {
-        ascending: false,
-        descending: false,
         name: "Email",
+        searchable: true,
         sortable: true,
         width: 35
       },
       {
-        ascending: false,
-        descending: false,
         name: "Created On",
+        searchable: false,
         sortable: true,
         width: 15
       },
       {
-        ascending: false,
-        descending: false,
         name: "Last Login",
+        searchable: false,
         sortable: true,
         width: 15
       },
       {
-        ascending: false,
-        descending: false,
         name: "",
+        searchable: false,
         sortable: false,
         width: 15
       }
@@ -65,41 +60,25 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
       [
         {
           contents: <div className="flex-center">John Smith1</div>,
-          name: "Name",
           searchValue: "John Smith1",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 20
+          sortValue: ""
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
-          name: "Email",
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 35
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
-          name: "Created On",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
-          name: "Last Login",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: (
@@ -108,52 +87,32 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
               <button className="button-danger">Delete</button>
             </div>
           ),
-          name: "",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: false,
-          width: 15
+          sortValue: ""
         }
       ],
       [
         {
           contents: <div className="flex-center">John Smith2</div>,
-          name: "Name",
           searchValue: "John Smith2",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 20
+          sortValue: ""
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
-          name: "Email",
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 35
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
-          name: "Created On",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
-          name: "Last Login",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: (
@@ -162,52 +121,32 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
               <button className="button-danger">Delete</button>
             </div>
           ),
-          name: "",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: false,
-          width: 15
+          sortValue: ""
         }
       ],
       [
         {
           contents: <div className="flex-center">John Smith3</div>,
-          name: "Name",
           searchValue: "John Smith3",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 20
+          sortValue: ""
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
-          name: "Email",
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 35
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
-          name: "Created On",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
-          name: "Last Login",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: (
@@ -216,52 +155,32 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
               <button className="button-danger">Delete</button>
             </div>
           ),
-          name: "",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: false,
-          width: 15
+          sortValue: ""
         }
       ],
       [
         {
           contents: <div className="flex-center">Jane Smith2</div>,
-          name: "Name",
           searchValue: "Jane Smith2",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 20
+          sortValue: ""
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
-          name: "Email",
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 35
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
-          name: "Created On",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
-          name: "Last Login",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: (
@@ -270,52 +189,32 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
               <button className="button-danger">Delete</button>
             </div>
           ),
-          name: "",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: false,
-          width: 15
+          sortValue: ""
         }
       ],
       [
         {
           contents: <div className="flex-center">Jane Smith3</div>,
-          name: "Name",
           searchValue: "Jane Smith3",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 20
+          sortValue: ""
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
-          name: "Email",
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 35
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
-          name: "Created On",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
-          name: "Last Login",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: (
@@ -324,52 +223,32 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
               <button className="button-danger">Delete</button>
             </div>
           ),
-          name: "",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: false,
-          width: 15
+          sortValue: ""
         }
       ],
       [
         {
           contents: <div className="flex-center">Jane Smith4</div>,
-          name: "Name",
           searchValue: "Jane Smith4",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 20
+          sortValue: ""
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
-          name: "Email",
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          searchable: true,
-          sortValue: "",
-          sortable: true,
-          width: 35
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
-          name: "Created On",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: <div className="flex-center">1 day ago</div>,
-          name: "Last Login",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: true,
-          width: 15
+          sortValue: ""
         },
         {
           contents: (
@@ -378,12 +257,8 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
               <button className="button-danger">Delete</button>
             </div>
           ),
-          name: "",
           searchValue: "",
-          searchable: false,
-          sortValue: "",
-          sortable: false,
-          width: 15
+          sortValue: ""
         }
       ]
     ];
