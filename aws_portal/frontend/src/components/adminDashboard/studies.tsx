@@ -65,13 +65,13 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         name: "Acronym",
         searchable: true,
         sortable: true,
-        width: 15
+        width: 10
       },
       {
         name: "Name",
         searchable: true,
         sortable: true,
-        width: 35
+        width: 45
       },
       {
         name: "Ditti ID",
@@ -89,7 +89,7 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         name: "",
         searchable: false,
         sortable: false,
-        width: 15
+        width: 10
       }
     ]
   };
@@ -100,7 +100,11 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
 
       return [
         {
-          contents: <div className="flex-center table-data">{acronym}</div>,
+          contents: (
+            <div className="flex-center table-data">
+              <span>{acronym}</span>
+            </div>
+          ),
           searchValue: acronym,
           sortValue: acronym
         },
@@ -114,12 +118,20 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
           sortValue: name
         },
         {
-          contents: <div className="flex-center table-data">{dittiID}</div>,
+          contents: (
+            <div className="flex-center table-data">
+              <span>{dittiID}</span>
+            </div>
+          ),
           searchValue: dittiID,
           sortValue: dittiID
         },
         {
-          contents: <div className="flex-center table-data">{email}</div>,
+          contents: (
+            <div className="flex-center table-data">
+              <span>{email}</span>
+            </div>
+          ),
           searchValue: email,
           sortValue: email
         },
@@ -152,7 +164,7 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
                 Create&nbsp;<b>+</b>
               </button>
             }
-            controlWidth={15}
+            controlWidth={10}
             data={this.getData()}
             includeControl={true}
             includeSearch={true}

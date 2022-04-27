@@ -65,7 +65,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         name: "Name",
         searchable: true,
         sortable: true,
-        width: 20
+        width: 25
       },
       {
         name: "Email",
@@ -89,7 +89,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         name: "",
         searchable: false,
         sortable: false,
-        width: 15
+        width: 10
       }
     ]
   };
@@ -101,19 +101,27 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
 
       return [
         {
-          contents: <div className="flex-center table-data">{name}</div>,
+          contents: (
+            <div className="flex-center table-data">
+              <span>{name}</span>
+            </div>
+          ),
           searchValue: name,
           sortValue: name
         },
         {
-          contents: <div className="flex-center table-data">{email}</div>,
+          contents: (
+            <div className="flex-center table-data">
+              <span>{email}</span>
+            </div>
+          ),
           searchValue: email,
           sortValue: email
         },
         {
           contents: (
             <div className="flex-center table-data">
-              {createdOn.toDateString()}
+              <span>{createdOn.toDateString()}</span>
             </div>
           ),
           searchValue: "",
@@ -122,9 +130,11 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: (
             <div className="flex-center table-data">
-              {lastLogin
-                ? `${lastLogin} day${lastLogin === 1 ? "" : "s"} ago`
-                : "Today"}
+              <span>
+                {lastLogin
+                  ? `${lastLogin} day${lastLogin === 1 ? "" : "s"} ago`
+                  : "Today"}
+              </span>
             </div>
           ),
           searchValue: "",
@@ -159,7 +169,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
                 Create&nbsp;<b>+</b>
               </button>
             }
-            controlWidth={15}
+            controlWidth={10}
             data={this.getData()}
             includeControl={true}
             includeSearch={true}

@@ -1,6 +1,16 @@
 import * as React from "react";
 import { Component } from "react";
 import Navbar from "./navbar";
+import Table from "../table/table";
+
+const data = [
+  {
+    name: "Ditti App"
+  },
+  {
+    name: "Admin Dashboard"
+  }
+];
 
 interface AppsProps {
   handleClick: (
@@ -10,17 +20,82 @@ interface AppsProps {
   ) => void;
 }
 
-// interface AppsState {}
+interface AppsState {
+  columns: {
+    name: string;
+    sortable: boolean;
+    width: number;
+  }[];
+}
 
-class Apps extends React.Component<AppsProps, any> {
+class Apps extends React.Component<AppsProps, AppsState> {
+  state = {
+    columns: [
+      {
+        name: "Name",
+        searchable: true,
+        sortable: true,
+        width: 90
+      },
+      {
+        name: "",
+        searchable: false,
+        sortable: false,
+        width: 10
+      }
+    ]
+  };
+
+  getData = () => {
+    return data.map((row) => {
+      const { name } = row;
+
+      return [
+        {
+          contents: (
+            <div className="flex-center table-data">
+              <span>{name}</span>
+            </div>
+          ),
+          searchValue: name,
+          sortValue: name
+        },
+        {
+          contents: (
+            <div className="flex-center table-control">
+              <button className="button-secondary">Edit</button>
+              <button className="button-danger">Delete</button>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: ""
+        }
+      ];
+    });
+  };
+
   render() {
     const { handleClick } = this.props;
+    const { columns } = this.state;
 
     return (
       <div className="page-container">
         <Navbar handleClick={handleClick} active="Apps" />
         <div className="page-content bg-white">
-          <div>Apps!</div>
+          <Table
+            columns={columns}
+            control={
+              <button className="button-primary">
+                Create&nbsp;<b>+</b>
+              </button>
+            }
+            controlWidth={10}
+            data={this.getData()}
+            includeControl={true}
+            includeSearch={true}
+            paginationPer={2}
+            sortDefault=""
+          />
         </div>
       </div>
     );
