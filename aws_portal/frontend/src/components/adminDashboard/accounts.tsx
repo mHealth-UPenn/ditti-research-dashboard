@@ -3,6 +3,45 @@ import { Component } from "react";
 import Table from "../table/table";
 import Navbar from "./navbar";
 
+const data = [
+  {
+    name: "John Smith1",
+    email: "john.smith1@pennmedicine.upenn.edu",
+    createdOn: new Date("Jan 1, 2022"),
+    lastLogin: 21
+  },
+  {
+    name: "John Smith2",
+    email: "john.smith2@pennmedicine.upenn.edu",
+    createdOn: new Date("Feb 6, 2022"),
+    lastLogin: 1
+  },
+  {
+    name: "John Smith3",
+    email: "john.smith3@pennmedicine.upenn.edu",
+    createdOn: new Date("Apr 2, 2022"),
+    lastLogin: 354
+  },
+  {
+    name: "Jane Doe2",
+    email: "jane.doe2@pennmedicine.upenn.edu",
+    createdOn: new Date("Jan 1, 2022"),
+    lastLogin: 0
+  },
+  {
+    name: "Jane Doe3",
+    email: "jane.doe3@pennmedicine.upenn.edu",
+    createdOn: new Date("Dec 31, 2021"),
+    lastLogin: 12
+  },
+  {
+    name: "Jane Doe4",
+    email: "jane.doe4@pennmedicine.upenn.edu",
+    createdOn: new Date("Oct 1, 2021"),
+    lastLogin: 44
+  }
+];
+
 interface AccountsProps {
   handleClick: (
     name: string[],
@@ -56,29 +95,38 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
   };
 
   getData = () => {
-    return [
-      [
+    const pad = Math.max(...data.map((row) => String(row.lastLogin).length));
+    return data.map((row) => {
+      const { createdOn, email, lastLogin, name } = row;
+
+      return [
         {
-          contents: <div className="flex-center">John Smith1</div>,
-          searchValue: "John Smith1",
-          sortValue: "John Smith1"
+          contents: <div className="flex-center">{name}</div>,
+          searchValue: name,
+          sortValue: name
+        },
+        {
+          contents: <div className="flex-center">{email}</div>,
+          searchValue: email,
+          sortValue: email
         },
         {
           contents: (
-            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
+            <div className="flex-center">{createdOn.toDateString()}</div>
           ),
-          searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: "john.smith@pennmedicine.upenn.edu"
+          searchValue: "",
+          sortValue: String(createdOn.getTime())
         },
         {
-          contents: <div className="flex-center">Jan 1, 2022</div>,
+          contents: (
+            <div className="flex-center">
+              {lastLogin
+                ? `${lastLogin} day${lastLogin === 1 ? "" : "s"} ago`
+                : "Today"}
+            </div>
+          ),
           searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: <div className="flex-center">1 day ago</div>,
-          searchValue: "",
-          sortValue: ""
+          sortValue: String(lastLogin).padStart(pad, "0")
         },
         {
           contents: (
@@ -90,178 +138,8 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
           searchValue: "",
           sortValue: ""
         }
-      ],
-      [
-        {
-          contents: <div className="flex-center">John Smith2</div>,
-          searchValue: "John Smith2",
-          sortValue: "John Smith2"
-        },
-        {
-          contents: (
-            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
-          ),
-          searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: "john.smith@pennmedicine.upenn.edu"
-        },
-        {
-          contents: <div className="flex-center">Jan 1, 2022</div>,
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: <div className="flex-center">1 day ago</div>,
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: (
-            <div className="flex-center table-control">
-              <button className="button-secondary">Edit</button>
-              <button className="button-danger">Delete</button>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        }
-      ],
-      [
-        {
-          contents: <div className="flex-center">John Smith3</div>,
-          searchValue: "John Smith3",
-          sortValue: "John Smith3"
-        },
-        {
-          contents: (
-            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
-          ),
-          searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: "john.smith@pennmedicine.upenn.edu"
-        },
-        {
-          contents: <div className="flex-center">Jan 1, 2022</div>,
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: <div className="flex-center">1 day ago</div>,
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: (
-            <div className="flex-center table-control">
-              <button className="button-secondary">Edit</button>
-              <button className="button-danger">Delete</button>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        }
-      ],
-      [
-        {
-          contents: <div className="flex-center">Jane Smith2</div>,
-          searchValue: "Jane Smith2",
-          sortValue: "Jane Smith2"
-        },
-        {
-          contents: (
-            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
-          ),
-          searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: "john.smith@pennmedicine.upenn.edu"
-        },
-        {
-          contents: <div className="flex-center">Jan 1, 2022</div>,
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: <div className="flex-center">1 day ago</div>,
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: (
-            <div className="flex-center table-control">
-              <button className="button-secondary">Edit</button>
-              <button className="button-danger">Delete</button>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        }
-      ],
-      [
-        {
-          contents: <div className="flex-center">Jane Smith3</div>,
-          searchValue: "Jane Smith3",
-          sortValue: "Jane Smith3"
-        },
-        {
-          contents: (
-            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
-          ),
-          searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: "john.smith@pennmedicine.upenn.edu"
-        },
-        {
-          contents: <div className="flex-center">Jan 1, 2022</div>,
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: <div className="flex-center">1 day ago</div>,
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: (
-            <div className="flex-center table-control">
-              <button className="button-secondary">Edit</button>
-              <button className="button-danger">Delete</button>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        }
-      ],
-      [
-        {
-          contents: <div className="flex-center">Jane Smith4</div>,
-          searchValue: "Jane Smith4",
-          sortValue: "Jane Smith4"
-        },
-        {
-          contents: (
-            <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
-          ),
-          searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: "john.smith@pennmedicine.upenn.edu"
-        },
-        {
-          contents: <div className="flex-center">Jan 1, 2022</div>,
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: <div className="flex-center">1 day ago</div>,
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: (
-            <div className="flex-center table-control">
-              <button className="button-secondary">Edit</button>
-              <button className="button-danger">Delete</button>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        }
-      ]
-    ];
+      ];
+    });
   };
 
   render() {
