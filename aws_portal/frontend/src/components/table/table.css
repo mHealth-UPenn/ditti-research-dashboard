@@ -26,12 +26,12 @@ th svg {
 
 th .sort {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
 }
 
 th .sort div {
   width: 1.2rem;
-  height: 1rem;
+  height: 1.2rem;
 }
 
 th .sort div:hover {
@@ -46,7 +46,7 @@ th .sort-active .svg-fill {
 th .sort svg {
   position: relative;
   right: 0.4rem;
-  bottom: 0.5rem;
+  bottom: 0.4rem;
 }
 
 .table-control {

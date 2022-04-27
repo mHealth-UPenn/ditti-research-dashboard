@@ -61,14 +61,14 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: <div className="flex-center">John Smith1</div>,
           searchValue: "John Smith1",
-          sortValue: ""
+          sortValue: "John Smith1"
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: ""
+          sortValue: "john.smith@pennmedicine.upenn.edu"
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
@@ -95,14 +95,14 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: <div className="flex-center">John Smith2</div>,
           searchValue: "John Smith2",
-          sortValue: ""
+          sortValue: "John Smith2"
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: ""
+          sortValue: "john.smith@pennmedicine.upenn.edu"
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
@@ -129,14 +129,14 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: <div className="flex-center">John Smith3</div>,
           searchValue: "John Smith3",
-          sortValue: ""
+          sortValue: "John Smith3"
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: ""
+          sortValue: "john.smith@pennmedicine.upenn.edu"
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
@@ -163,14 +163,14 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: <div className="flex-center">Jane Smith2</div>,
           searchValue: "Jane Smith2",
-          sortValue: ""
+          sortValue: "Jane Smith2"
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: ""
+          sortValue: "john.smith@pennmedicine.upenn.edu"
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
@@ -197,14 +197,14 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: <div className="flex-center">Jane Smith3</div>,
           searchValue: "Jane Smith3",
-          sortValue: ""
+          sortValue: "Jane Smith3"
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: ""
+          sortValue: "john.smith@pennmedicine.upenn.edu"
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,
@@ -231,14 +231,14 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: <div className="flex-center">Jane Smith4</div>,
           searchValue: "Jane Smith4",
-          sortValue: ""
+          sortValue: "Jane Smith4"
         },
         {
           contents: (
             <div className="flex-center">john.smith@pennmedicine.upenn.edu</div>
           ),
           searchValue: "john.smith@pennmedicine.upenn.edu",
-          sortValue: ""
+          sortValue: "john.smith@pennmedicine.upenn.edu"
         },
         {
           contents: <div className="flex-center">Jan 1, 2022</div>,

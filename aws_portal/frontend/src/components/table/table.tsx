@@ -118,7 +118,22 @@ class Table extends React.Component<TableProps, TableState> {
   };
 
   onSort = (name: string, ascending: boolean) => {
-    console.log(name, ascending);
+    const { headers, page, rowsFiltered } = this.state;
+
+    for (const h of headers) {
+      h.ascending = ascending && h.name === name;
+      h.descending = !ascending && h.name === name;
+    }
+
+    const i = headers.findIndex((h) => h.name === name);
+    rowsFiltered.sort((a, b) => {
+      if (a[i].sortValue < b[i].sortValue) return ascending ? 1 : -1;
+      else if (a[i].sortValue > b[i].sortValue) return ascending ? -1 : 1;
+      else return 0;
+    });
+
+    this.setState({ headers, rowsFiltered });
+    this.renderRows(page, rowsFiltered);
   };
 
   paginate = (page: number) => {
