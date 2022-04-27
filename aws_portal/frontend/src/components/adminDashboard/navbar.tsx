@@ -4,7 +4,6 @@ import Accounts from "./accounts";
 import Studies from "./studies";
 import AccessGroups from "./accessGroups";
 import Apps from "./apps";
-import "./navbar.css";
 
 interface NavbarProps {
   active: string;

@@ -4,6 +4,8 @@ table {
 }
 
 th, td {
+  box-sizing: border-box;
+  display: inline-block;
   height: 3rem;
   padding: 0;
 }
@@ -61,6 +63,17 @@ th .sort svg {
 .table-control-container {
   display: flex;
   height: 3rem;
+}
+
+.table-data {
+  padding: 0 1rem;
+}
+
+.table-data span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .table-pagination {

@@ -206,7 +206,7 @@ class Account(db.Model):
                     JoinAccountAccessGroup.primary_key ==
                     tuple_(self.id, group_id)
                 )
-            )
+        )
 
         if study_id and not Study.query.get(study_id).is_archived:
             q2 = Permission.query.join(JoinRolePermission)\
@@ -214,7 +214,7 @@ class Account(db.Model):
                 .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)\
                 .filter(
                     JoinAccountStudy.primary_key == tuple_(self.id, study_id)
-                )
+            )
 
             permissions = q1.union(q2)
 

@@ -101,25 +101,27 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
 
       return [
         {
-          contents: <div className="flex-center">{name}</div>,
+          contents: <div className="flex-center table-data">{name}</div>,
           searchValue: name,
           sortValue: name
         },
         {
-          contents: <div className="flex-center">{email}</div>,
+          contents: <div className="flex-center table-data">{email}</div>,
           searchValue: email,
           sortValue: email
         },
         {
           contents: (
-            <div className="flex-center">{createdOn.toDateString()}</div>
+            <div className="flex-center table-data">
+              {createdOn.toDateString()}
+            </div>
           ),
           searchValue: "",
           sortValue: String(createdOn.getTime())
         },
         {
           contents: (
-            <div className="flex-center">
+            <div className="flex-center table-data">
               {lastLogin
                 ? `${lastLogin} day${lastLogin === 1 ? "" : "s"} ago`
                 : "Today"}
