@@ -23,7 +23,10 @@ class TableHeader extends React.Component<TableHeaderProps, any> {
     return (
       <tr>
         {headers.map((h) => (
-          <th className="border-light-r" style={{ width: h.width + "%" }}>
+          <th
+            className="bg-light border-light-r"
+            style={{ width: h.width + "%" }}
+          >
             <div>
               <span>{h.name}</span>
               {h.sortable ? (

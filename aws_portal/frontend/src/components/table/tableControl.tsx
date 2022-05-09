@@ -19,9 +19,16 @@ class TableControl extends React.Component<TableControlProps, any> {
       this.props;
 
     return (
-      <div className="table-control-container border-light-t border-light-r border-light-l">
+      <div className="table-control-container">
+        {includeControl ? (
+          <div className="table-control" style={{ width: controlWidth + "%" }}>
+            {control}
+          </div>
+        ) : (
+          ""
+        )}
         {includeSearch ? (
-          <div className="table-search">
+          <div className="table-search border-light">
             <div className="table-search-svg bg-dark">
               <Search />
             </div>
@@ -35,13 +42,6 @@ class TableControl extends React.Component<TableControlProps, any> {
               onKeyup={onSearch}
               feedback=""
             />
-          </div>
-        ) : (
-          ""
-        )}
-        {includeControl ? (
-          <div className="table-control" style={{ width: controlWidth + "%" }}>
-            {control}
           </div>
         ) : (
           ""

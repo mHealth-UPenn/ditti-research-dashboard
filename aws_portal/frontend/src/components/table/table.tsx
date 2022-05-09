@@ -194,7 +194,7 @@ class Table extends React.Component<TableProps, TableState> {
           <div className="table-pagination-control">
             <div
               className={
-                "pagination-button border-light-l border-light-b" +
+                "pagination-button bg-light border-light-t border-light-l border-light-b" +
                 (page > 1 ? " pagination-button-active" : "")
               }
               onClick={() => page > 1 && this.paginate(page - 1)}
@@ -203,7 +203,7 @@ class Table extends React.Component<TableProps, TableState> {
             </div>
             <div
               className={
-                "pagination-button border-light-l border-light-b border-light-r" +
+                "pagination-button bg-light border-light" +
                 (page < totalPages ? " pagination-button-active" : "")
               }
               onClick={() => page < totalPages && this.paginate(page + 1)}
