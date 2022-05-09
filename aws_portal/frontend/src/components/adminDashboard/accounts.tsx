@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
+import AccountsEdit from "./accountsEdit";
 import Table from "../table/table";
 import Navbar from "./navbar";
 
@@ -143,7 +144,18 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: (
             <div className="flex-center table-control">
-              <button className="button-secondary">Edit</button>
+              <button
+                className="button-secondary"
+                onClick={() =>
+                  this.props.handleClick(
+                    ["Edit", name],
+                    <AccountsEdit accountId={0} />,
+                    false
+                  )
+                }
+              >
+                Edit
+              </button>
               <button className="button-danger">Delete</button>
             </div>
           ),
@@ -165,7 +177,12 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
           <Table
             columns={columns}
             control={
-              <button className="button-primary">
+              <button
+                className="button-primary"
+                onClick={() =>
+                  handleClick(["Create"], <AccountsEdit accountId={0} />, false)
+                }
+              >
                 Create&nbsp;<b>+</b>
               </button>
             }
