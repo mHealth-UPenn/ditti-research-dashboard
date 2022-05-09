@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Component } from "react";
 import AccountsEdit from "./accountsEdit";
+import { Column } from "../table/table";
 import Table from "../table/table";
 import Navbar from "./navbar";
 
@@ -52,11 +53,7 @@ interface AccountsProps {
 }
 
 interface AccountsState {
-  columns: {
-    name: string;
-    sortable: boolean;
-    width: number;
-  }[];
+  columns: Column[];
 }
 
 class Accounts extends React.Component<AccountsProps, AccountsState> {

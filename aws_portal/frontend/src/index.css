@@ -206,3 +206,21 @@ svg {
 .shadow {
   box-shadow: 8px 8px 8px #00000016;
 }
+
+.admin-form {
+  display: flex;
+}
+
+.admin-form-content {
+  flex-grow: 1;
+  margin-right: 3rem;
+}
+
+.admin-form-field {
+  flex-grow: 1;
+  margin: 0 2rem 2rem 2rem;
+}
+
+.admin-form-row {
+  display: flex;
+}

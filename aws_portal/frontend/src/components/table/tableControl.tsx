@@ -28,13 +28,17 @@ class TableControl extends React.Component<TableControlProps, any> {
           ""
         )}
         {includeSearch ? (
-          <div className="table-search border-light">
-            <div className="table-search-svg bg-dark">
-              <Search />
-            </div>
+          <div className="table-search">
             <TextField
               id="table-search-input"
-              svg={<React.Fragment />}
+              svg={
+                <div
+                  className="table-search-svg bg-dark"
+                  style={{ margin: "-0.75rem 1rem -0.75rem -0.25rem" }}
+                >
+                  <Search />
+                </div>
+              }
               type="text"
               placeholder="Search..."
               prefill=""

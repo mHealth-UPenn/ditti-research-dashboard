@@ -2,14 +2,10 @@ import * as React from "react";
 import { Component } from "react";
 import { ReactComponent as Ascending } from "../../icons/sortAscending.svg";
 import { ReactComponent as Descending } from "../../icons/sortDescending.svg";
+import { Header } from "./table";
 
 interface TableHeaderProps {
-  headers: {
-    ascending: -1 | 0 | 1;
-    name: string;
-    sortable: boolean;
-    width: number;
-  }[];
+  headers: Header[];
   onSort: (name: string, ascending: boolean) => void;
 }
 

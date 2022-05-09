@@ -8,7 +8,14 @@ import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
 import { ReactComponent as Right } from "../../icons/arrowRight.svg";
 import "./table.css";
 
-interface Header {
+export interface Column {
+  name: string;
+  searchable: boolean;
+  sortable: boolean;
+  width: number;
+}
+
+export interface Header {
   ascending: -1 | 0 | 1;
   name: string;
   sortable: boolean;
@@ -25,12 +32,7 @@ interface TableData {
 }
 
 interface TableProps {
-  columns: {
-    name: string;
-    searchable: boolean;
-    sortable: boolean;
-    width: number;
-  }[];
+  columns: Column[];
   control: React.ReactElement;
   controlWidth: number;
   data: {

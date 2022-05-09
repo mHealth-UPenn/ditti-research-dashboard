@@ -1,5 +1,6 @@
 .text-field-container {
   display: flex;
+  flex-direction: column;
   flex-grow: 1;
 }
 
@@ -11,6 +12,7 @@
 
 .text-field-label {
   font-weight: bold;
+  margin-bottom: 0.5rem;
 }
 
 .text-field-input {
@@ -34,5 +36,5 @@
 .text-field-content svg {
   height: 1.25rem;
   margin: auto;
-  padding: 0 0.75rem 0 0.5rem;
+  padding: 0 0.75rem;
 }

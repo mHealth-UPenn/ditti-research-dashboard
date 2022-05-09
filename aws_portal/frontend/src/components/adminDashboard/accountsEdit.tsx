@@ -1,16 +1,277 @@
 import * as React from "react";
 import { Component } from "react";
+import Table, { Column } from "../table/table";
+import TextField from "../fields/textField";
+
+const accessGroups = [
+  {
+    id: 0,
+    name: "DittiApp Staff",
+    app: "DittiApp Dashboard",
+    permissions: [
+      {
+        id: 0,
+        action: "View",
+        resource: "DittiApp Dashboard"
+      }
+    ]
+  },
+  {
+    id: 0,
+    name: "Admins",
+    app: "Admin Dashboard",
+    permissions: [
+      {
+        id: 0,
+        action: "View",
+        resource: "Admin Dashboard"
+      }
+    ]
+  }
+];
+
+const studies = [
+  {
+    id: 0,
+    name: "MSBI",
+    accessGroup: "DittiApp Staff",
+    roles: [
+      {
+        id: 0,
+        name: "Admin",
+        permissions: [
+          {
+            id: 0,
+            action: "View",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "View",
+            resource: "Taps"
+          },
+          {
+            id: 0,
+            action: "Add",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "Edit",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "Delete",
+            resource: "Users"
+          }
+        ]
+      },
+      {
+        id: 0,
+        name: "Coordinator",
+        permissions: [
+          {
+            id: 0,
+            action: "View",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "View",
+            resource: "Taps"
+          },
+          {
+            id: 0,
+            action: "Add",
+            resource: "Users"
+          }
+        ]
+      },
+      {
+        id: 0,
+        name: "Viewer",
+        permissions: [
+          {
+            id: 0,
+            action: "View",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "View",
+            resource: "Taps"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 0,
+    name: "OSA ART",
+    accessGroup: "DittiApp Staff",
+    roles: [
+      {
+        id: 0,
+        name: "Admin",
+        permissions: [
+          {
+            id: 0,
+            action: "View",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "View",
+            resource: "Taps"
+          },
+          {
+            id: 0,
+            action: "Add",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "Edit",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "Delete",
+            resource: "Users"
+          }
+        ]
+      },
+      {
+        id: 0,
+        name: "Coordinator",
+        permissions: [
+          {
+            id: 0,
+            action: "View",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "View",
+            resource: "Taps"
+          },
+          {
+            id: 0,
+            action: "Add",
+            resource: "Users"
+          }
+        ]
+      },
+      {
+        id: 0,
+        name: "Viewer",
+        permissions: [
+          {
+            id: 0,
+            action: "View",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "View",
+            resource: "Taps"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 0,
+    name: "Caregiver ART",
+    accessGroup: "DittiApp Staff",
+    roles: [
+      {
+        id: 0,
+        name: "Admin",
+        permissions: [
+          {
+            id: 0,
+            action: "View",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "View",
+            resource: "Taps"
+          },
+          {
+            id: 0,
+            action: "Add",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "Edit",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "Delete",
+            resource: "Users"
+          }
+        ]
+      },
+      {
+        id: 0,
+        name: "Coordinator",
+        permissions: [
+          {
+            id: 0,
+            action: "View",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "View",
+            resource: "Taps"
+          },
+          {
+            id: 0,
+            action: "Add",
+            resource: "Users"
+          }
+        ]
+      },
+      {
+        id: 0,
+        name: "Viewer",
+        permissions: [
+          {
+            id: 0,
+            action: "View",
+            resource: "Users"
+          },
+          {
+            id: 0,
+            action: "View",
+            resource: "Taps"
+          }
+        ]
+      }
+    ]
+  }
+];
 
 interface AccountsEditProps {
   accountId: number;
 }
 
 interface AccountsEditState {
-  name: string;
+  columnsAccessGroups: Column[];
+  columnsStudies: Column[];
+  firstName: string;
+  lastName: string;
   email: string;
   accessGroups: {
     id: number;
     name: string;
+    app: string;
     permissions: {
       id: number;
       name: string;
@@ -19,11 +280,16 @@ interface AccountsEditState {
   studies: {
     id: number;
     name: string;
-    role: {
+    accessGroup: string;
+    roles: {
       id: number;
       name: string;
-      permissions: string[];
-    };
+      permissions: {
+        id: number;
+        action: string;
+        resource: string;
+      }[];
+    }[];
   }[];
 }
 
@@ -35,27 +301,259 @@ class AccountsEdit extends React.Component<
     super(props);
 
     const { accountId } = props;
-    this.state = accountId
+    const prefill = accountId
       ? this.getData(accountId)
       : {
-          name: "",
+          firstName: "",
+          lastName: "",
           email: "",
           accessGroups: [],
           studies: []
         };
+
+    this.state = {
+      columnsAccessGroups: [
+        {
+          name: "Name",
+          sortable: true,
+          searchable: false,
+          width: 45
+        },
+        {
+          name: "App",
+          sortable: true,
+          searchable: false,
+          width: 45
+        },
+        {
+          name: "",
+          sortable: false,
+          searchable: false,
+          width: 10
+        }
+      ],
+      columnsStudies: [
+        {
+          name: "Name",
+          sortable: true,
+          searchable: false,
+          width: 30
+        },
+        {
+          name: "Access Group",
+          sortable: true,
+          searchable: false,
+          width: 30
+        },
+        {
+          name: "Role",
+          sortable: false,
+          searchable: false,
+          width: 30
+        },
+        {
+          name: "",
+          sortable: true,
+          searchable: false,
+          width: 10
+        }
+      ],
+      firstName: prefill.firstName,
+      lastName: prefill.lastName,
+      email: prefill.email,
+      accessGroups: prefill.accessGroups,
+      studies: prefill.studies
+    };
   }
 
   getData(id: number) {
     return {
-      name: "",
+      firstName: "",
+      lastName: "",
       email: "",
       accessGroups: [],
       studies: []
     };
   }
 
+  getAccessGroupsData() {
+    return accessGroups.map((accessGroup) => {
+      const { name, app } = accessGroup;
+
+      return [
+        {
+          contents: (
+            <div className="flex-center table-data">
+              <span>{name}</span>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: name
+        },
+        {
+          contents: (
+            <div className="flex-center table-data">
+              <span>{app}</span>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: app
+        },
+        {
+          contents: (
+            <div className="flex-center table-control">
+              <button className="button-secondary" onClick={() => null}>
+                Add&nbsp;+
+              </button>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: ""
+        }
+      ];
+    });
+  }
+
+  getStudiesData() {
+    return studies.map((study) => {
+      const { name, accessGroup } = study;
+
+      return [
+        {
+          contents: (
+            <div className="flex-center table-data">
+              <span>{name}</span>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: name
+        },
+        {
+          contents: (
+            <div className="flex-center table-data">
+              <span>{accessGroup}</span>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: accessGroup
+        },
+        {
+          contents: (
+            <div className="flex-center table-data">
+              <span>Select role...</span>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: ""
+        },
+        {
+          contents: (
+            <div className="flex-center table-control">
+              <button className="button-secondary" onClick={() => null}>
+                Add&nbsp;+
+              </button>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: ""
+        }
+      ];
+    });
+  }
+
   render() {
-    return <p>Create Account</p>;
+    const { accountId } = this.props;
+    const { columnsAccessGroups, columnsStudies, firstName, lastName, email } =
+      this.state;
+
+    return (
+      <div className="page-container">
+        <div className="page-content bg-white">
+          <div className="admin-form">
+            <div className="admin-form-content">
+              <h1 className="border-light-b">
+                {accountId ? "Edit " : "Create "} Account
+              </h1>
+              <div className="admin-form-row">
+                <div className="admin-form-field">
+                  <TextField
+                    id="first-name"
+                    svg={<React.Fragment />}
+                    type="text"
+                    placeholder=""
+                    prefill={firstName}
+                    label="First Name"
+                    onKeyup={(text: string) => ""}
+                    feedback=""
+                  />
+                </div>
+                <div className="admin-form-field">
+                  <TextField
+                    id="last-name"
+                    svg={<React.Fragment />}
+                    type="text"
+                    placeholder=""
+                    prefill={lastName}
+                    label="Last Name"
+                    onKeyup={(text: string) => ""}
+                    feedback=""
+                  />
+                </div>
+              </div>
+              <div className="admin-form-row">
+                <div className="admin-form-field">
+                  <TextField
+                    id="email"
+                    svg={<React.Fragment />}
+                    type="text"
+                    placeholder=""
+                    prefill={email}
+                    label="Email"
+                    onKeyup={(text: string) => ""}
+                    feedback=""
+                  />
+                </div>
+              </div>
+              <div className="admin-form-row">
+                <div className="admin-form-field">
+                  <span>Assign Account to Access Group</span>
+                  <Table
+                    columns={columnsAccessGroups}
+                    control={<React.Fragment />}
+                    controlWidth={0}
+                    data={this.getAccessGroupsData()}
+                    includeControl={false}
+                    includeSearch={false}
+                    paginationPer={2}
+                    sortDefault="Name"
+                  />
+                </div>
+              </div>
+              <div className="admin-form-row">
+                <div className="admin-form-field">
+                  <span>Assign Account to Studies</span>
+                  <Table
+                    columns={columnsStudies}
+                    control={<React.Fragment />}
+                    controlWidth={0}
+                    data={this.getStudiesData()}
+                    includeControl={false}
+                    includeSearch={false}
+                    paginationPer={2}
+                    sortDefault="Name"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="admin-form-summary bg-dark">
+              <h1 className="border-white-b">Account Summary</h1>
+              <p>Summary</p>
+              <button className="button-primary">Create</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 }
 
