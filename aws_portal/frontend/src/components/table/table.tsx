@@ -8,6 +8,13 @@ import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
 import { ReactComponent as Right } from "../../icons/arrowRight.svg";
 import "./table.css";
 
+interface Header {
+  ascending: -1 | 0 | 1;
+  name: string;
+  sortable: boolean;
+  width: number;
+}
+
 interface TableData {
   contents: React.ReactElement;
   searchable: boolean;
@@ -40,13 +47,7 @@ interface TableState {
   rows: TableData[][];
   rowsFiltered: TableData[][];
   rowsRendered: React.ReactElement;
-  headers: {
-    ascending: boolean;
-    descending: boolean;
-    name: string;
-    sortable: boolean;
-    width: number;
-  }[];
+  headers: Header[];
   page: number;
   totalPages: number;
 }
@@ -72,10 +73,9 @@ class Table extends React.Component<TableProps, TableState> {
     );
 
     const rowsRendered = <React.Fragment />;
-    const headers = columns.map((c) => {
+    const headers = columns.map((c): Header => {
       return {
-        ascending: c.name === sortDefault,
-        descending: false,
+        ascending: c.name === sortDefault ? 1 : -1,
         name: c.name,
         sortable: c.sortable,
         width: c.width
@@ -121,8 +121,7 @@ class Table extends React.Component<TableProps, TableState> {
     const { headers, page, rowsFiltered } = this.state;
 
     for (const h of headers) {
-      h.ascending = ascending && h.name === name;
-      h.descending = !ascending && h.name === name;
+      h.ascending = h.name === name ? (ascending ? 1 : 0) : -1;
     }
 
     const i = headers.findIndex((h) => h.name === name);

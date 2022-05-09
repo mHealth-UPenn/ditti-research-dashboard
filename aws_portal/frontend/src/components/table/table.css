@@ -4,6 +4,10 @@ table {
   width: 100%;
 }
 
+th {
+  user-select: none;
+}
+
 th, td {
   box-sizing: border-box;
   display: inline-block;
@@ -11,7 +15,7 @@ th, td {
   padding: 0;
 }
 
-th:hover {
+th.sortable:hover {
   background-color: #d1d1e0;
   cursor: pointer;
 }
@@ -46,6 +50,10 @@ th .sort svg {
   bottom: 0.25rem;
   position: relative;
   right: 0.2rem;
+}
+
+th .sort-active .svg-fill {
+  fill: #33334D;
 }
 
 .table-control {

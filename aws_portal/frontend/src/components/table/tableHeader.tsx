@@ -5,8 +5,7 @@ import { ReactComponent as Descending } from "../../icons/sortDescending.svg";
 
 interface TableHeaderProps {
   headers: {
-    ascending: boolean;
-    descending: boolean;
+    ascending: -1 | 0 | 1;
     name: string;
     sortable: boolean;
     width: number;
@@ -24,23 +23,22 @@ class TableHeader extends React.Component<TableHeaderProps, any> {
       <tr>
         {headers.map((h) => (
           <th
-            className="bg-light border-light-r"
+            className={
+              "bg-light border-light-r" + (h.sortable ? " sortable" : "")
+            }
             style={{ width: h.width + "%" }}
+            onClick={() => {
+              return h.sortable && onSort(h.name, h.ascending == 0);
+            }}
           >
             <div>
               <span>{h.name}</span>
               {h.sortable ? (
                 <div className="sort">
-                  <div
-                    className={h.descending ? " sort-active" : ""}
-                    onClick={() => onSort(h.name, false)}
-                  >
+                  <div className={h.ascending == 0 ? "sort-active" : ""}>
                     <Descending />
                   </div>
-                  <div
-                    className={h.ascending ? " sort-active" : ""}
-                    onClick={() => onSort(h.name, true)}
-                  >
+                  <div className={h.ascending == 1 ? "sort-active" : ""}>
                     <Ascending />
                   </div>
                 </div>
