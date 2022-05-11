@@ -101,7 +101,7 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
       return [
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{acronym}</span>
             </div>
           ),
@@ -110,7 +110,7 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{name}</span>
             </div>
           ),
@@ -119,7 +119,7 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{dittiID}</span>
             </div>
           ),
@@ -128,7 +128,7 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{email}</span>
             </div>
           ),
@@ -137,7 +137,7 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         },
         {
           contents: (
-            <div className="flex-center table-control">
+            <div className="flex-left table-control">
               <button className="button-secondary">Edit</button>
               <button className="button-danger">Delete</button>
             </div>

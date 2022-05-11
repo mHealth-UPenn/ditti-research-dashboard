@@ -1,7 +1,20 @@
 import * as React from "react";
 import { Component } from "react";
+import { ReactComponent as Check } from "../../icons/check.svg";
 import Table, { Column } from "../table/table";
 import TextField from "../fields/textField";
+import { renderToString } from "react-dom/server";
+
+interface AccessGroup {
+  id: number;
+  name: string;
+  app: string;
+  permissions: {
+    id: number;
+    action: string;
+    resource: string;
+  }[];
+}
 
 const accessGroups = [
   {
@@ -17,7 +30,7 @@ const accessGroups = [
     ]
   },
   {
-    id: 0,
+    id: 1,
     name: "Admins",
     app: "Admin Dashboard",
     permissions: [
@@ -107,7 +120,7 @@ const studies = [
     ]
   },
   {
-    id: 0,
+    id: 1,
     name: "OSA ART",
     accessGroup: "DittiApp Staff",
     roles: [
@@ -182,7 +195,7 @@ const studies = [
     ]
   },
   {
-    id: 0,
+    id: 2,
     name: "Caregiver ART",
     accessGroup: "DittiApp Staff",
     roles: [
@@ -268,15 +281,7 @@ interface AccountsEditState {
   firstName: string;
   lastName: string;
   email: string;
-  accessGroups: {
-    id: number;
-    name: string;
-    app: string;
-    permissions: {
-      id: number;
-      name: string;
-    }[];
-  }[];
+  accessGroups: AccessGroup[];
   studies: {
     id: number;
     name: string;
@@ -378,12 +383,12 @@ class AccountsEdit extends React.Component<
 
   getAccessGroupsData() {
     return accessGroups.map((accessGroup) => {
-      const { name, app } = accessGroup;
+      const { id, name, app } = accessGroup;
 
       return [
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{name}</span>
             </div>
           ),
@@ -392,7 +397,7 @@ class AccountsEdit extends React.Component<
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{app}</span>
             </div>
           ),
@@ -401,10 +406,32 @@ class AccountsEdit extends React.Component<
         },
         {
           contents: (
-            <div className="flex-center table-control">
-              <button className="button-secondary" onClick={() => null}>
-                Add&nbsp;+
-              </button>
+            <div className="flex-left table-control">
+              {accessGroups.some((x) => x.id == id) ? (
+                <button
+                  className="button-secondary"
+                  onClick={(e) => {
+                    this.updateAccessGroups(
+                      e.target as HTMLInputElement,
+                      accessGroup
+                    );
+                  }}
+                >
+                  Add&nbsp;+
+                </button>
+              ) : (
+                <button
+                  className="button-success flex-center"
+                  onClick={(e) => {
+                    this.updateAccessGroups(
+                      e.target as HTMLInputElement,
+                      accessGroup
+                    );
+                  }}
+                >
+                  <Check />
+                </button>
+              )}
             </div>
           ),
           searchValue: "",
@@ -421,7 +448,7 @@ class AccountsEdit extends React.Component<
       return [
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{name}</span>
             </div>
           ),
@@ -430,7 +457,7 @@ class AccountsEdit extends React.Component<
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{accessGroup}</span>
             </div>
           ),
@@ -439,7 +466,7 @@ class AccountsEdit extends React.Component<
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>Select role...</span>
             </div>
           ),
@@ -448,7 +475,7 @@ class AccountsEdit extends React.Component<
         },
         {
           contents: (
-            <div className="flex-center table-control">
+            <div className="flex-left table-control">
               <button className="button-secondary" onClick={() => null}>
                 Add&nbsp;+
               </button>
@@ -461,10 +488,34 @@ class AccountsEdit extends React.Component<
     });
   }
 
+  updateAccessGroups = (e: HTMLInputElement, accessGroup: AccessGroup) => {
+    let { accessGroups } = this.state;
+
+    if (e.classList.contains("button-secondary")) {
+      e.classList.remove("button-secondary");
+      e.classList.add("button-success", "flex-center");
+      e.innerHTML = renderToString(<Check />);
+      accessGroups.push(accessGroup);
+      this.setState({ accessGroups });
+    } else {
+      e.classList.remove("button-success", "flex-center");
+      e.classList.add("button-secondary");
+      e.innerHTML = "Add +";
+      accessGroups = accessGroups.filter((x) => x.id != accessGroup.id);
+      this.setState({ accessGroups });
+    }
+  };
+
   render() {
     const { accountId } = this.props;
-    const { columnsAccessGroups, columnsStudies, firstName, lastName, email } =
-      this.state;
+    const {
+      accessGroups,
+      columnsAccessGroups,
+      columnsStudies,
+      firstName,
+      lastName,
+      email
+    } = this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -561,6 +612,28 @@ class AccountsEdit extends React.Component<
             <br />
             AccessGroups:
             <br />
+            {accessGroups.map((accessGroup, i) => {
+              const permissions = accessGroup.permissions.map((permission) => {
+                return (
+                  <span>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    {permission.action + " - " + permission.resource}
+                    <br />
+                  </span>
+                );
+              });
+
+              return (
+                <span>
+                  {i ? <br /> : ""}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{accessGroup.name}
+                  <br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;Permissions:
+                  <br />
+                  {permissions}
+                </span>
+              );
+            })}
             <br />
             Studies:
             <br />

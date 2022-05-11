@@ -86,7 +86,7 @@ class AccessGroups extends React.Component<
       return [
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{name}</span>
             </div>
           ),
@@ -95,7 +95,7 @@ class AccessGroups extends React.Component<
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{app}</span>
             </div>
           ),
@@ -104,7 +104,7 @@ class AccessGroups extends React.Component<
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{roles.join(", ")}</span>
             </div>
           ),
@@ -113,7 +113,7 @@ class AccessGroups extends React.Component<
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{studies.join(", ")}</span>
             </div>
           ),
@@ -122,7 +122,7 @@ class AccessGroups extends React.Component<
         },
         {
           contents: (
-            <div className="flex-center table-control">
+            <div className="flex-left table-control">
               <button className="button-secondary">Edit</button>
               <button className="button-danger">Delete</button>
             </div>

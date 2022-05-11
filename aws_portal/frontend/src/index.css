@@ -119,6 +119,18 @@ h1 {
   color: white;
 }
 
+.button-success {
+  background-color: #00cc00;
+  border: none;
+  color: white;
+}
+
+.button-success:hover {
+  cursor: pointer;
+  background-color: #009900;
+  color: white;
+}
+
 .bg-white {
   background-color: white;
 }
@@ -177,6 +189,12 @@ h1 {
 }
 
 .flex-center {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.flex-left {
   align-items: center;
   display: flex;
 }

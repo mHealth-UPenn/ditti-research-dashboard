@@ -53,7 +53,7 @@ class Apps extends React.Component<AppsProps, AppsState> {
       return [
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{name}</span>
             </div>
           ),
@@ -62,7 +62,7 @@ class Apps extends React.Component<AppsProps, AppsState> {
         },
         {
           contents: (
-            <div className="flex-center table-control">
+            <div className="flex-left table-control">
               <button className="button-secondary">Edit</button>
               <button className="button-danger">Delete</button>
             </div>

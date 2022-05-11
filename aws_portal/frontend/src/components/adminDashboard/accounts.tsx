@@ -100,7 +100,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
       return [
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{name}</span>
             </div>
           ),
@@ -109,7 +109,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{email}</span>
             </div>
           ),
@@ -118,7 +118,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>{createdOn.toDateString()}</span>
             </div>
           ),
@@ -127,7 +127,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         },
         {
           contents: (
-            <div className="flex-center table-data">
+            <div className="flex-left table-data">
               <span>
                 {lastLogin
                   ? `${lastLogin} day${lastLogin === 1 ? "" : "s"} ago`
@@ -140,7 +140,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         },
         {
           contents: (
-            <div className="flex-center table-control">
+            <div className="flex-left table-control">
               <button
                 className="button-secondary"
                 onClick={() =>
