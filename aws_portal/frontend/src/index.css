@@ -238,6 +238,7 @@ h1 {
 }
 
 .admin-form-field > span {
+  display: block;
   font-weight: bold;
   margin-bottom: 0.5rem;
 }
