@@ -249,12 +249,13 @@ h1 {
   width: 18rem;
 }
 
-.admin-form-summary p {
+.admin-form-summary span {
   flex-grow: 1;
 }
 
 .admin-form-summary button {
   height: 3rem;
+  margin-top: 2rem;
 }
 
 *::-webkit-scrollbar,
