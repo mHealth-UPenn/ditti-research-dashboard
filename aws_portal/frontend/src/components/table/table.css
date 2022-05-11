@@ -69,7 +69,7 @@ th .sort-active .svg-fill {
   display: flex;
   height: 3rem;
   justify-content: space-between;
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .table-data {

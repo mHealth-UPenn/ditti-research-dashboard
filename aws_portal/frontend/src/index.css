@@ -20,6 +20,12 @@ svg {
   display: block;
 }
 
+h1 {
+  margin-top: 0;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+}
+
 .card-container {
   display: flex;
   flex-direction: column;
@@ -53,9 +59,6 @@ svg {
   flex-direction: column;
   flex-grow: 1;
   padding: 0 3rem;
-  max-height: calc(100vh - 8rem);
-  overflow: scroll;
-  overflow-x: hidden;
 }
 
 .page-header {
@@ -74,6 +77,9 @@ svg {
 
 .page-content {
   flex-grow: 1;
+  max-height: calc(calc(100vh - 14rem) - 1px);
+  overflow: scroll;
+  overflow-x: hidden;
   padding: 3rem;
 }
 
@@ -166,6 +172,10 @@ svg {
   border-left: 1px solid #33334D;
 }
 
+.border-white-b {
+  border-bottom: 1px solid white;
+}
+
 .flex-center {
   align-items: center;
   display: flex;
@@ -216,7 +226,6 @@ svg {
 
 .admin-form-content {
   flex-grow: 1;
-  margin-right: 3rem;
 }
 
 .admin-form-field {
@@ -226,6 +235,26 @@ svg {
 
 .admin-form-row {
   display: flex;
+}
+
+.admin-form-field > span {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.admin-form-summary {
+  display: flex;
+  flex-direction: column;
+  padding: 3rem;
+  width: 18rem;
+}
+
+.admin-form-summary p {
+  flex-grow: 1;
+}
+
+.admin-form-summary button {
+  height: 3rem;
 }
 
 *::-webkit-scrollbar,

@@ -467,7 +467,7 @@ class AccountsEdit extends React.Component<
       this.state;
 
     return (
-      <div className="page-container">
+      <div className="page-container" style={{ flexDirection: "row" }}>
         <div className="page-content bg-white">
           <div className="admin-form">
             <div className="admin-form-content">
@@ -545,12 +545,12 @@ class AccountsEdit extends React.Component<
                 </div>
               </div>
             </div>
-            <div className="admin-form-summary bg-dark">
-              <h1 className="border-white-b">Account Summary</h1>
-              <p>Summary</p>
-              <button className="button-primary">Create</button>
-            </div>
           </div>
+        </div>
+        <div className="admin-form-summary bg-dark">
+          <h1 className="border-white-b">Account Summary</h1>
+          <span>Summary</span>
+          <button className="button-primary">Create</button>
         </div>
       </div>
     );
