@@ -302,7 +302,7 @@ class AccountsEdit extends React.Component<
 
     const { accountId } = props;
     const prefill = accountId
-      ? this.getData(accountId)
+      ? this.getPrefill(accountId)
       : {
           firstName: "",
           lastName: "",
@@ -366,7 +366,7 @@ class AccountsEdit extends React.Component<
     };
   }
 
-  getData(id: number) {
+  getPrefill(id: number) {
     return {
       firstName: "",
       lastName: "",
@@ -483,7 +483,9 @@ class AccountsEdit extends React.Component<
                     placeholder=""
                     prefill={firstName}
                     label="First Name"
-                    onKeyup={(text: string) => ""}
+                    onKeyup={(text: string) =>
+                      this.setState({ firstName: text })
+                    }
                     feedback=""
                   />
                 </div>
@@ -495,7 +497,9 @@ class AccountsEdit extends React.Component<
                     placeholder=""
                     prefill={lastName}
                     label="Last Name"
-                    onKeyup={(text: string) => ""}
+                    onKeyup={(text: string) =>
+                      this.setState({ lastName: text })
+                    }
                     feedback=""
                   />
                 </div>
@@ -509,7 +513,7 @@ class AccountsEdit extends React.Component<
                     placeholder=""
                     prefill={email}
                     label="Email"
-                    onKeyup={(text: string) => ""}
+                    onKeyup={(text: string) => this.setState({ email: text })}
                     feedback=""
                   />
                 </div>
@@ -549,7 +553,18 @@ class AccountsEdit extends React.Component<
         </div>
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Account Summary</h1>
-          <span>Summary</span>
+          <span>
+            {firstName || lastName ? firstName + " " + lastName : <i>Name</i>}
+            <br />
+            {email ? email : <i>Email</i>}
+            <br />
+            <br />
+            AccessGroups:
+            <br />
+            <br />
+            Studies:
+            <br />
+          </span>
           <button className="button-primary">Create</button>
         </div>
       </div>
