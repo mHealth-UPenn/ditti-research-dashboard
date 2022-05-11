@@ -52,7 +52,10 @@ svg {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-  margin: 0 3rem;
+  padding: 0 3rem;
+  max-height: calc(100vh - 8rem);
+  overflow: scroll;
+  overflow-x: hidden;
 }
 
 .page-header {
@@ -223,4 +226,17 @@ svg {
 
 .admin-form-row {
   display: flex;
+}
+
+*::-webkit-scrollbar,
+*::-webkit-scrollbar-thumb {
+  color: rgba(0, 0, 0, 0.3);
+  border-radius: 13px;
+  background-clip: padding-box;
+  border: 10px solid transparent;
+  width: 26px;
+}
+
+*::-webkit-scrollbar-thumb {        
+  box-shadow: inset 0 0 0 10px;
 }

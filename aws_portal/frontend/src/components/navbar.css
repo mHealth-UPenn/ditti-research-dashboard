@@ -2,6 +2,7 @@
   align-items: center;
   display: flex;
   height: 4rem;
+  flex-shrink: 0;
   user-select: none;
 }
 

@@ -114,7 +114,13 @@ class Dashboard extends React.Component<any, DashboardState> {
     return (
       <main className="bg-light dashboard-container">
         <Header name="John Smith" email="john.smith@pennmedicine.upenn.edu" />
-        <div style={{ display: "flex", flexGrow: 1 }}>
+        <div
+          style={{
+            display: "flex",
+            flexGrow: 1,
+            maxHeight: "calc(100vh - 4rem)"
+          }}
+        >
           <StudiesMenu studies={studies} />
           <div className="dashboard-content">
             <Navbar
