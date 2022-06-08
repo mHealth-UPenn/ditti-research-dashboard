@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 import os
 from flask import Flask
+from flask_cors import CORS
 from flask_jwt_extended.utils import (
     create_access_token, current_user, get_jwt, set_access_cookies
 )
@@ -19,6 +20,7 @@ def create_app(testing=False):
         flask_config = os.getenv('FLASK_CONFIG', 'Development')
 
     app = Flask(__name__, static_url_path='', static_folder='frontend/build')
+    CORS(app)
     app.config.from_object('aws_portal.config.%s' % flask_config)
     register_blueprints(app)
     register_commands(app)
