@@ -1,20 +1,34 @@
 import * as React from "react";
 import { Component } from "react";
-import { Link } from "react-router-dom";
 import "./loginPage.css";
 import TextField from "./components/fields/textField";
 import { ReactComponent as Person } from "./icons/person.svg";
 import { ReactComponent as Key } from "./icons/key.svg";
+import Dashboard from "./components/dashboard";
 
-class LoginPage extends React.Component<any, any> {
+interface LoginPageState {
+  loggedIn: boolean;
+}
+
+class LoginPage extends React.Component<any, LoginPageState> {
+  state = {
+    loggedIn: false
+  };
+
   componentDidMount() {
     fetch(process.env.REACT_APP_FLASK_SERVER + "/healthy")
       .then((res) => res.json())
       .then((res) => console.log(res));
   }
 
+  logIn = () => {
+    this.setState({ loggedIn: true });
+  };
+
   render() {
-    return (
+    return this.state.loggedIn ? (
+      <Dashboard />
+    ) : (
       <main>
         <div className="login-container bg-light">
           <div className="login-image-container">
@@ -52,9 +66,13 @@ class LoginPage extends React.Component<any, any> {
                 />
               </div>
               <div className="login-buttons">
-                <Link className="button-primary" to="/">
+                <button
+                  className="button-primary"
+                  onClick={this.logIn}
+                  style={{ padding: "1rem" }}
+                >
                   Sign In
-                </Link>
+                </button>
                 <span>Forgot password?</span>
               </div>
             </div>

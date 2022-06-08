@@ -14,4 +14,4 @@ RUN rm requirements.txt
 
 RUN cp $(python -c "from zappa import handler;print(handler.__file__)") .
 
-CMD handler.lambda_handler
+CMD ["handler.lambda_handler"]
