@@ -1,0 +1,22 @@
+{
+    "dev": {
+        "app_function": "run.app",
+        "aws_region": "us-east-1",
+        "profile_name": "default",
+        "project_name": "aws-portal",
+        "runtime": "python3.8",
+        "s3_bucket": "zappa-e4w0b72q9",
+        "exclude_glob": [
+            "aws_portal/frontend/",
+            ".vscode/",
+            "env/",
+            "tests/",
+            "*.env",
+            "*.sh",
+            "*.yaml",
+            "Dockerfile",
+            "README.md",
+            "zappa_settings.json"
+        ]
+    }
+}

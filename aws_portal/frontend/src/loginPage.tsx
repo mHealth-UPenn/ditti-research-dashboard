@@ -7,7 +7,12 @@ import { ReactComponent as Person } from "./icons/person.svg";
 import { ReactComponent as Key } from "./icons/key.svg";
 
 class LoginPage extends React.Component<any, any> {
-  // state = { :  }
+  componentDidMount() {
+    fetch(process.env.REACT_APP_FLASK_SERVER + "/healthy")
+      .then((res) => res.json())
+      .then((res) => console.log(res));
+  }
+
   render() {
     return (
       <main>

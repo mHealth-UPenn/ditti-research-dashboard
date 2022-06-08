@@ -1,12 +1,8 @@
-FROM python:slim
+FROM public.ecr.aws/lambda/python:3.8
 
-WORKDIR /app
+WORKDIR /var/task
 
-RUN apt-get update && apt-get upgrade -y
-
-RUN mkdir /log
 ENV PYTHONUNBUFFERED=1
-ENV FLASK_LOG_MOUNT=/log
 ENV FLASK_APP=run.py
 
 COPY requirements.txt .
@@ -16,4 +12,6 @@ RUN pip3 install -r requirements.txt
 COPY . .
 RUN rm requirements.txt
 
-CMD python3 run.py
+RUN cp $(python -c "from zappa import handler;print(handler.__file__)") .
+
+CMD handler.lambda_handler

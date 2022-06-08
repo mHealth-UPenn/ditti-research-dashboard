@@ -23,7 +23,9 @@ env/
 
 !flask.env
 !postgres.env
+!aws_portal/frontend/.env
 
 x.py
 y.py
 z.py
+zappa_settings.py

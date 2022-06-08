@@ -1,12 +1,9 @@
 aws_portal/frontend/*
-!aws_portal/frontend/build
-.log/
-.postgresql/
 .vscode/
 env/
 *.env
 *.sh
-*logfile
 Dockerfile
 docker-compose.yaml
 README.md
+zappa_settings.json
