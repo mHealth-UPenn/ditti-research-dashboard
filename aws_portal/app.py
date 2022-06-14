@@ -22,6 +22,17 @@ def create_app(testing=False):
     app = Flask(__name__, static_url_path='', static_folder='frontend/build')
     CORS(app)
     app.config.from_object('aws_portal.config.%s' % flask_config)
+
+    if app.config['ENV'] == 'production':
+        import boto3
+        client = boto3.client('rds')
+        rds_id = os.getenv('AWS_DB_INSTANCE_IDENTIFIER')
+        res = client.describe_db_instances(DBInstanceIdentifier=rds_id)
+        status = res['DBInstances'][0]['DBInstanceStatus']
+
+        if status not in ['available', 'starting']:
+            client.start_db_instance(DBInstanceIdentifier=rds_id)
+
     register_blueprints(app)
     register_commands(app)
     register_extensions(app)

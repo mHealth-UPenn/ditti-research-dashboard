@@ -49,11 +49,13 @@ else
     echo "Skipping tests..."
 fi
 
+zappa save-python-settings-file
 if [ $NOCACHE -eq 1 ]; then
     docker build -t --no-cache ${DOCKER_IMAGE} .
 else
     docker build -t ${DOCKER_IMAGE} .
 fi
+rm zappa_settings.py
 
 if [ $? -ne 0 ]; then
     exit 1
