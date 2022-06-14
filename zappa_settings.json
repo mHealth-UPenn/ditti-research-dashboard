@@ -6,10 +6,9 @@
         "environment_variables": {
             "FLASK_CONFIG": "Production"
         },
-        "extra_permissions": [{
-            "Effect": "Allow",
-            "Action": ["rds:*"],
-            "Resource": "*"
+        "events": [{
+            "function": "rds_stopper.stop",
+            "expression": "rate(1 hour)"
         }],
         "profile_name": "default",
         "project_name": "aws-portal",
