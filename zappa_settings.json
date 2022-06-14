@@ -3,6 +3,14 @@
         "app_function": "run.app",
         "aws_region": "us-east-1",
         "cors": true,
+        "environment_variables": {
+            "FLASK_CONFIG": "Production"
+        },
+        "extra_permissions": [{
+            "Effect": "Allow",
+            "Action": ["rds:*"],
+            "Resource": "*"
+        }],
         "profile_name": "default",
         "project_name": "aws-portal",
         "runtime": "python3.8",
