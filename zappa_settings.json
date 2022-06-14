@@ -1,10 +1,12 @@
 {
-    "dev": {
+    "app": {
         "app_function": "run.app",
         "aws_region": "us-east-1",
         "cors": true,
         "profile_name": "default",
         "project_name": "aws-portal",
+        "runtime": "python3.8",
+        "s3_bucket": "zappa-o8x4qwmxc",
         "touch": false
     }
 }
