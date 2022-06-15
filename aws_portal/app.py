@@ -20,11 +20,19 @@ def create_app(testing=False):
         flask_config = os.getenv('FLASK_CONFIG', 'Development')
 
     app = Flask(__name__, static_url_path='', static_folder='frontend/build')
-    CORS(app)
-    app.config.from_object('aws_portal.config.%s' % flask_config)
 
-    if app.config['ENV'] == 'production':
+    if flask_config == 'Production':
+        import json
         import boto3
+
+        client = boto3.client('secretsmanager')
+        secret_id = os.getenv('AWS_SECRET_NAME')
+        res = client.get_secret_value(SecretId=secret_id)
+        secret = json.loads(res['SecretString'])
+
+        for k, v in secret.items():
+            os.environ[k] = v
+
         client = boto3.client('rds')
         rds_id = os.getenv('AWS_DB_INSTANCE_IDENTIFIER')
         res = client.describe_db_instances(DBInstanceIdentifier=rds_id)
@@ -33,6 +41,8 @@ def create_app(testing=False):
         if status not in ['available', 'starting']:
             client.start_db_instance(DBInstanceIdentifier=rds_id)
 
+    CORS(app, origins=os.getenv('AWS_CLOUDFRONT_DOMAIN_NAME'))
+    app.config.from_object('aws_portal.config.%s' % flask_config)
     register_blueprints(app)
     register_commands(app)
     register_extensions(app)

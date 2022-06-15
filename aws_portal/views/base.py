@@ -23,10 +23,11 @@ def healthy():
 
     if current_app.config['ENV'] == 'production':
         import boto3
+
         client = boto3.client('rds')
         rds_id = os.getenv('AWS_DB_INSTANCE_IDENTIFIER')
-        res = client.describe_db_instances(DBInstanceIdentifier=rds_id)
-        status = res['DBInstances'][0]['DBInstanceStatus']
+        rds_res = client.describe_db_instances(DBInstanceIdentifier=rds_id)
+        status = rds_res['DBInstances'][0]['DBInstanceStatus']
 
         if status != 'available':
             available = False
