@@ -2,14 +2,24 @@ from base64 import b64encode
 from datetime import datetime
 import os
 import uuid
-
+import traceback
 from flask_jwt_extended.utils import decode_token
+from sqlalchemy.exc import OperationalError
+from aws_portal.app import create_app
 from aws_portal.extensions import bcrypt, db
 from aws_portal.models import (
     AccessGroup, Account, App, BlockedToken, JoinAccessGroupPermission,
     JoinAccessGroupStudy, JoinAccountAccessGroup, JoinAccountStudy,
     JoinRolePermission, Permission, Role, Study
 )
+
+uri = os.getenv('FLASK_DB')
+if 'localhost' not in uri:
+    raise Exception(
+        'The SQLAlchemy URI does not point to localhost. Run `source deploy-' +
+        'dev.sh` before running pytest. Current URI:',
+        uri
+    )
 
 apps = [
     {
