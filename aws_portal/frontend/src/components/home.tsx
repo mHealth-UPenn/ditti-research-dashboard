@@ -22,13 +22,16 @@ class Home extends React.Component<any, HomeProps> {
       <div className="card-container">
         <div className="card-row">
           {this.props.apps.map(
-            (a: {
-              breadcrumbs: string[];
-              name: string;
-              id: number;
-              view: React.ReactElement;
-            }) => (
-              <div key={"app-" + a.id} className="card-s bg-white shadow">
+            (
+              a: {
+                breadcrumbs: string[];
+                name: string;
+                id: number;
+                view: React.ReactElement;
+              },
+              i: number
+            ) => (
+              <div key={i} className="card-s bg-white shadow">
                 <div className="app-name">
                   <span>{a.name}</span>
                 </div>

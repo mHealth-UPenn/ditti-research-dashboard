@@ -17,8 +17,9 @@ class TableHeader extends React.Component<TableHeaderProps, any> {
 
     return (
       <tr>
-        {headers.map((h) => (
+        {headers.map((h, i) => (
           <th
+            key={i}
             className={
               "bg-light border-light-r" + (h.sortable ? " sortable" : "")
             }

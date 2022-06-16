@@ -149,8 +149,9 @@ class Table extends React.Component<TableProps, TableState> {
       <React.Fragment>
         {data
           .slice((page - 1) * paginationPer, page * paginationPer)
-          .map((row) => (
+          .map((row, i) => (
             <TableRow
+              key={i}
               data={row.map((cell) => {
                 return { contents: cell.contents, width: cell.width };
               })}
@@ -188,8 +189,10 @@ class Table extends React.Component<TableProps, TableState> {
           ""
         )}
         <table className="border-light-t border-light-b border-light-l">
-          <TableHeader headers={headers} onSort={this.onSort} />
-          {rowsRendered}
+          <thead>
+            <TableHeader headers={headers} onSort={this.onSort} />
+          </thead>
+          <tbody>{rowsRendered}</tbody>
         </table>
         <div className="table-pagination">
           <div className="table-pagination-control">

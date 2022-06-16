@@ -62,8 +62,9 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
 
     return (
       <div className="page-header bg-white border-dark-b">
-        {views.map((v) => (
+        {views.map((v, i) => (
           <div
+            key={i}
             className={
               "page-header-button" +
               (v.active ? " bg-dark" : " link-no-underline")

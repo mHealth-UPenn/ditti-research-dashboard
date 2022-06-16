@@ -13,8 +13,9 @@ class TableRow extends React.Component<TableRowProps, any> {
 
     return (
       <tr>
-        {data.map((cell) => (
+        {data.map((cell, i) => (
           <td
+            key={i}
             className="border-light-t border-light-r"
             style={{ width: cell.width + "%" }}
           >

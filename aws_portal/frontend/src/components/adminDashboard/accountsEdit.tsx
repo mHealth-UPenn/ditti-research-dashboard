@@ -596,19 +596,20 @@ class AccountsEdit extends React.Component<
             AccessGroups:
             <br />
             {accessGroups.map((accessGroup, i) => {
-              const permissions = accessGroup.permissions.map((permission) => {
-                const key = permission.action + " - " + permission.resource;
-                return (
-                  <span key={key}>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    {key}
-                    <br />
-                  </span>
-                );
-              });
+              const permissions = accessGroup.permissions.map(
+                (permission, i) => {
+                  return (
+                    <span key={i}>
+                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                      {permission.action + " - " + permission.resource}
+                      <br />
+                    </span>
+                  );
+                }
+              );
 
               return (
-                <span>
+                <span key={i}>
                   {i ? <br /> : ""}
                   &nbsp;&nbsp;&nbsp;&nbsp;{accessGroup.name}
                   <br />
