@@ -15,6 +15,21 @@ interface AccessGroup {
   }[];
 }
 
+interface Study {
+  id: number;
+  name: string;
+  accessGroup: string;
+  roles: {
+    id: number;
+    name: string;
+    permissions: {
+      id: number;
+      action: string;
+      resource: string;
+    }[];
+  }[];
+}
+
 const accessGroupsRaw: AccessGroup[] = [
   {
     id: 0,
@@ -42,7 +57,7 @@ const accessGroupsRaw: AccessGroup[] = [
   }
 ];
 
-const studies = [
+const studiesRaw = [
   {
     id: 0,
     name: "MSBI",
@@ -281,20 +296,7 @@ interface AccountsEditState {
   lastName: string;
   email: string;
   accessGroups: AccessGroup[];
-  studies: {
-    id: number;
-    name: string;
-    accessGroup: string;
-    roles: {
-      id: number;
-      name: string;
-      permissions: {
-        id: number;
-        action: string;
-        resource: string;
-      }[];
-    }[];
-  }[];
+  studies: Study[];
 }
 
 class AccountsEdit extends React.Component<
@@ -426,8 +428,8 @@ class AccountsEdit extends React.Component<
   }
 
   getStudiesData() {
-    return studies.map((study) => {
-      const { name, accessGroup } = study;
+    return studiesRaw.map((study) => {
+      const { id, name, accessGroup } = study;
 
       return [
         {
@@ -460,9 +462,16 @@ class AccountsEdit extends React.Component<
         {
           contents: (
             <div className="flex-left table-control">
-              <button className="button-secondary" onClick={() => null}>
-                Add&nbsp;+
-              </button>
+              <ToggleButton
+                add={(id: number, callback: (ids: number[]) => void) =>
+                  this.addStudy(id, callback)
+                }
+                ids={this.state.studies.map((x) => x.id)}
+                id={id}
+                remove={(id: number, callback: (ids: number[]) => void) =>
+                  this.removeStudy(id, callback)
+                }
+              />
             </div>
           ),
           searchValue: "",
@@ -489,6 +498,23 @@ class AccountsEdit extends React.Component<
     this.setState({ accessGroups }, () => callback(ids));
   }
 
+  addStudy(id: number, callback: (ids: number[]) => void): void {
+    const { studies } = this.state;
+    const study = studiesRaw.filter((x) => x.id == id).pop();
+
+    if (study) {
+      studies.push(study);
+      const ids = studies.map((x: Study) => x.id);
+      this.setState({ studies }, () => callback(ids));
+    }
+  }
+
+  removeStudy(id: number, callback: (ids: number[]) => void): void {
+    const studies = this.state.studies.filter((x) => x.id != id);
+    const ids = studies.map((x: Study) => x.id);
+    this.setState({ studies }, () => callback(ids));
+  }
+
   render() {
     const { accountId } = this.props;
     const {
@@ -497,7 +523,8 @@ class AccountsEdit extends React.Component<
       columnsStudies,
       firstName,
       lastName,
-      email
+      email,
+      studies
     } = this.state;
 
     return (
@@ -621,6 +648,40 @@ class AccountsEdit extends React.Component<
             })}
             <br />
             Studies:
+            <br />
+            {studies.map((study, i) => {
+              const roles = study.roles.map((role, i) => {
+                const permissions = role.permissions.map((permission, i) => {
+                  return (
+                    <span key={i}>
+                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                      {permission.action + " - " + permission.resource}
+                      <br />
+                    </span>
+                  );
+                });
+                return (
+                  <span key={i}>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    {role.name}:
+                    <br />
+                    {permissions}
+                    <br />
+                  </span>
+                );
+              });
+
+              return (
+                <span key={i}>
+                  {i ? <br /> : ""}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{study.name}
+                  <br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;Roles:
+                  <br />
+                  {roles}
+                </span>
+              );
+            })}
             <br />
           </span>
           <button className="button-primary">Create</button>
