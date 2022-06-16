@@ -2,10 +2,7 @@ from base64 import b64encode
 from datetime import datetime
 import os
 import uuid
-import traceback
 from flask_jwt_extended.utils import decode_token
-from sqlalchemy.exc import OperationalError
-from aws_portal.app import create_app
 from aws_portal.extensions import bcrypt, db
 from aws_portal.models import (
     AccessGroup, Account, App, BlockedToken, JoinAccessGroupPermission,
