@@ -9,18 +9,40 @@ logger.setLevel(logging.INFO)
 
 def stop():
     logs = boto3.client('logs')
-    streams = logs.describe_log_streams(
-        logGroupName='/aws/lambda/aws-portal-app',
-        orderBy='LastEventTime',
-        descending=True
+    name = '/aws/lambda/aws-portal-app'
+    pattern = (
+        '[level, utc, id, ip, user, username, timestamp, request=*HTTP*, sta' +
+        'tus, bytes]'
     )
-    last = streams['logStreams'][0]['lastEventTimestamp']
-    last = datetime.fromtimestamp(last // 1000)
+    start = int((datetime.now() - timedelta(hours=2)).timestamp() * 1000)
+    res = logs.filter_log_events(
+        logGroupName=name,
+        filterPattern=pattern,
+        startTime=start
+    )
+    events = res['events']
 
-    logger.info('Last event timestamp: %s' % last)
+    while 'nextToken' in res:
+        res = logs.filter_log_events(
+            logGroupName=name,
+            filterPattern=pattern,
+            nextToken=res['nextToken'],
+            startTime=start
+        )
+        events.extend(res['events'])
+
     logger.info('Current time: %s' % datetime.now())
 
-    if last + timedelta(hours=2) < datetime.now():
+    if events:
+        timestamps = map(lambda x: x['timestamp'], events)
+        last = sorted(list(timestamps))[-1]
+        last = datetime.fromtimestamp(last // 1000)
+
+        logger.info('Last request timestamp: %s' % last)
+
+    else:
+        logger.info('No requests in the last two hours')
+
         rds = boto3.client('rds')
         instance = os.getenv('AWS_DB_INSTANCE_IDENTIFIER')
         res = rds.describe_db_instances(DBInstanceIdentifier=instance)
