@@ -1,7 +1,7 @@
-if [ -f secret-production.env ]; then
-    export $(cat secret-production.env | xargs)
+if [ -f secret-react.env ]; then
+    export $(cat secret-react.env | xargs)
 else
-    echo "secret-production.env not found."
+    echo "secret-react.env not found."
     exit 1
 fi
 

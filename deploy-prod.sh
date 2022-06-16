@@ -29,15 +29,15 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ -f secret-aws.env ]; then
-    export $(cat secret-aws.env | xargs)
+if [ -f secret-deploy.env ]; then
+    export $(cat secret-deploy.env | xargs)
 else
-    echo "secret-aws.env not found."
+    echo "secret-deploy.env not found."
     exit 1
 fi
 
 DOCKER_SERVER=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-DOCKER_IMAGE=${DOCKER_SERVER}/${AWS_ECR_IMAGE_NAME}:${TAG}
+DOCKER_IMAGE=${DOCKER_SERVER}/${AWS_ECR_REPO_NAME}:${TAG}
 
 if [ $NOBUILD -eq 0 ]; then
     aws ecr get-login-password | docker login --username AWS --password-stdin ${DOCKER_SERVER}
