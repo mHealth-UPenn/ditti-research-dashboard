@@ -15,29 +15,31 @@ interface AccessGroup {
   }[];
 }
 
+interface Role {
+  id: number;
+  name: string;
+  permissions: {
+    id: number;
+    action: string;
+    resource: string;
+  }[];
+}
+
 interface Study {
   id: number;
   name: string;
   accessGroup: string;
-  roles: {
-    id: number;
-    name: string;
-    permissions: {
-      id: number;
-      action: string;
-      resource: string;
-    }[];
-  }[];
+  roles: Role[];
 }
 
 const accessGroupsRaw: AccessGroup[] = [
   {
-    id: 0,
+    id: 10,
     name: "DittiApp Staff",
     app: "DittiApp Dashboard",
     permissions: [
       {
-        id: 0,
+        id: 10,
         action: "View",
         resource: "DittiApp Dashboard"
       }
@@ -49,7 +51,7 @@ const accessGroupsRaw: AccessGroup[] = [
     app: "Admin Dashboard",
     permissions: [
       {
-        id: 0,
+        id: 10,
         action: "View",
         resource: "Admin Dashboard"
       }
@@ -59,73 +61,73 @@ const accessGroupsRaw: AccessGroup[] = [
 
 const studiesRaw = [
   {
-    id: 0,
+    id: 10,
     name: "MSBI",
     accessGroup: "DittiApp Staff",
     roles: [
       {
-        id: 0,
+        id: 1,
         name: "Admin",
         permissions: [
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Taps"
           },
           {
-            id: 0,
+            id: 10,
             action: "Add",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "Edit",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "Delete",
             resource: "Users"
           }
         ]
       },
       {
-        id: 0,
+        id: 2,
         name: "Coordinator",
         permissions: [
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Taps"
           },
           {
-            id: 0,
+            id: 10,
             action: "Add",
             resource: "Users"
           }
         ]
       },
       {
-        id: 0,
+        id: 3,
         name: "Viewer",
         permissions: [
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Taps"
           }
@@ -139,68 +141,68 @@ const studiesRaw = [
     accessGroup: "DittiApp Staff",
     roles: [
       {
-        id: 0,
+        id: 1,
         name: "Admin",
         permissions: [
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Taps"
           },
           {
-            id: 0,
+            id: 10,
             action: "Add",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "Edit",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "Delete",
             resource: "Users"
           }
         ]
       },
       {
-        id: 0,
+        id: 2,
         name: "Coordinator",
         permissions: [
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Taps"
           },
           {
-            id: 0,
+            id: 10,
             action: "Add",
             resource: "Users"
           }
         ]
       },
       {
-        id: 0,
+        id: 3,
         name: "Viewer",
         permissions: [
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Taps"
           }
@@ -214,68 +216,68 @@ const studiesRaw = [
     accessGroup: "DittiApp Staff",
     roles: [
       {
-        id: 0,
+        id: 1,
         name: "Admin",
         permissions: [
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Taps"
           },
           {
-            id: 0,
+            id: 10,
             action: "Add",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "Edit",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "Delete",
             resource: "Users"
           }
         ]
       },
       {
-        id: 0,
+        id: 2,
         name: "Coordinator",
         permissions: [
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Taps"
           },
           {
-            id: 0,
+            id: 10,
             action: "Add",
             resource: "Users"
           }
         ]
       },
       {
-        id: 0,
+        id: 2,
         name: "Viewer",
         permissions: [
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Users"
           },
           {
-            id: 0,
+            id: 10,
             action: "View",
             resource: "Taps"
           }
@@ -296,6 +298,7 @@ interface AccountsEditState {
   lastName: string;
   email: string;
   accessGroups: AccessGroup[];
+  selectedRoles: { study: number; role: number }[];
   studies: Study[];
 }
 
@@ -314,6 +317,7 @@ class AccountsEdit extends React.Component<
           lastName: "",
           email: "",
           accessGroups: [],
+          selectedRoles: [],
           studies: []
         };
 
@@ -368,6 +372,7 @@ class AccountsEdit extends React.Component<
       lastName: prefill.lastName,
       email: prefill.email,
       accessGroups: prefill.accessGroups,
+      selectedRoles: prefill.selectedRoles,
       studies: prefill.studies
     };
   }
@@ -378,6 +383,7 @@ class AccountsEdit extends React.Component<
       lastName: "",
       email: "",
       accessGroups: [],
+      selectedRoles: [],
       studies: []
     };
   }
@@ -429,7 +435,7 @@ class AccountsEdit extends React.Component<
 
   getStudiesData() {
     return studiesRaw.map((study) => {
-      const { id, name, accessGroup } = study;
+      const { accessGroup, id, name, roles } = study;
 
       return [
         {
@@ -452,8 +458,35 @@ class AccountsEdit extends React.Component<
         },
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>Select role...</span>
+            <div className="flex-left" style={{ position: "relative" }}>
+              {this.state.selectedRoles.some((x) => x.study == study.id) ? (
+                <div
+                  id={"select-role-placeholder-" + String(study.id)}
+                  style={{
+                    position: "absolute",
+                    marginLeft: "1rem",
+                    backgroundColor: "white",
+                    color: "#B3B3CC"
+                  }}
+                >
+                  Select role...
+                </div>
+              ) : null}
+              <select
+                id={"select-role-" + String(study.id)}
+                onChange={(e) =>
+                  this.selectRole(e.target as HTMLSelectElement, study.id)
+                }
+              >
+                <option value="0"></option>
+                {roles.map((role, i) => {
+                  return (
+                    <option key={i} value={role.id}>
+                      {role.name}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
           ),
           searchValue: "",
@@ -483,7 +516,7 @@ class AccountsEdit extends React.Component<
 
   addAccessGroup(id: number, callback: (ids: number[]) => void): void {
     const { accessGroups } = this.state;
-    const accessGroup = accessGroupsRaw.filter((x) => x.id == id).pop();
+    const accessGroup = accessGroupsRaw.filter((x) => x.id == id)[0];
 
     if (accessGroup) {
       accessGroups.push(accessGroup);
@@ -500,10 +533,12 @@ class AccountsEdit extends React.Component<
 
   addStudy(id: number, callback: (ids: number[]) => void): void {
     const { studies } = this.state;
-    const study = studiesRaw.filter((x) => x.id == id).pop();
+    const study = Object.assign({}, studiesRaw.filter((x) => x.id == id)[0]);
 
     if (study) {
+      this.findRole(study);
       studies.push(study);
+
       const ids = studies.map((x: Study) => x.id);
       this.setState({ studies }, () => callback(ids));
     }
@@ -513,6 +548,45 @@ class AccountsEdit extends React.Component<
     const studies = this.state.studies.filter((x) => x.id != id);
     const ids = studies.map((x: Study) => x.id);
     this.setState({ studies }, () => callback(ids));
+  }
+
+  selectRole(e: HTMLSelectElement, studyId: number): void {
+    let { selectedRoles } = this.state;
+    const { studies } = this.state;
+    const study = studies.filter((x) => x.id == studyId)[0];
+    const roleId = parseInt(e.value);
+
+    selectedRoles = selectedRoles.filter((x) => x.study != studyId);
+    selectedRoles.push({ study: studyId, role: roleId });
+
+    if (study) {
+      const studyRaw = studiesRaw.filter((x) => x.id == studyId)[0];
+      console.log(studyRaw);
+
+      if (studyRaw) {
+        const role = studyRaw.roles.filter((x) => x.id == roleId)[0];
+        console.log(role);
+
+        if (role) {
+          study.roles = [role];
+        } else {
+          study.roles = [];
+        }
+      }
+    }
+
+    this.setState({ selectedRoles, studies });
+  }
+
+  findRole(study: Study): void {
+    const { selectedRoles } = this.state;
+
+    if (selectedRoles.some((x) => x.study == study.id)) {
+      const role = selectedRoles.filter((x) => x.study == study.id)[0];
+      if (role) study.roles = study.roles.filter((x) => x.id == role.role);
+    } else {
+      study.roles = [];
+    }
   }
 
   render() {
