@@ -1,9 +1,8 @@
 import * as React from "react";
 import { Component } from "react";
-import { ReactComponent as Check } from "../../icons/check.svg";
 import Table, { Column } from "../table/table";
 import TextField from "../fields/textField";
-import { renderToString } from "react-dom/server";
+import ToggleButton from "../buttons/toggleButton";
 
 interface AccessGroup {
   id: number;
@@ -16,7 +15,7 @@ interface AccessGroup {
   }[];
 }
 
-const accessGroups = [
+const accessGroupsRaw: AccessGroup[] = [
   {
     id: 0,
     name: "DittiApp Staff",
@@ -382,7 +381,7 @@ class AccountsEdit extends React.Component<
   }
 
   getAccessGroupsData() {
-    return accessGroups.map((accessGroup) => {
+    return accessGroupsRaw.map((accessGroup) => {
       const { id, name, app } = accessGroup;
 
       return [
@@ -407,31 +406,16 @@ class AccountsEdit extends React.Component<
         {
           contents: (
             <div className="flex-left table-control">
-              {accessGroups.some((x) => x.id == id) ? (
-                <button
-                  className="button-secondary"
-                  onClick={(e) => {
-                    this.updateAccessGroups(
-                      e.target as HTMLInputElement,
-                      accessGroup
-                    );
-                  }}
-                >
-                  Add&nbsp;+
-                </button>
-              ) : (
-                <button
-                  className="button-success flex-center"
-                  onClick={(e) => {
-                    this.updateAccessGroups(
-                      e.target as HTMLInputElement,
-                      accessGroup
-                    );
-                  }}
-                >
-                  <Check />
-                </button>
-              )}
+              <ToggleButton
+                add={(id: number, callback: (ids: number[]) => void) =>
+                  this.addAccessGroup(id, callback)
+                }
+                ids={this.state.accessGroups.map((x) => x.id)}
+                id={id}
+                remove={(id: number, callback: (ids: number[]) => void) =>
+                  this.removeAccessGroup(id, callback)
+                }
+              />
             </div>
           ),
           searchValue: "",
@@ -488,23 +472,22 @@ class AccountsEdit extends React.Component<
     });
   }
 
-  updateAccessGroups = (e: HTMLInputElement, accessGroup: AccessGroup) => {
-    let { accessGroups } = this.state;
+  addAccessGroup(id: number, callback: (ids: number[]) => void): void {
+    const { accessGroups } = this.state;
+    const accessGroup = accessGroupsRaw.filter((x) => x.id == id).pop();
 
-    if (e.classList.contains("button-secondary")) {
-      e.classList.remove("button-secondary");
-      e.classList.add("button-success", "flex-center");
-      e.innerHTML = renderToString(<Check />);
+    if (accessGroup) {
       accessGroups.push(accessGroup);
-      this.setState({ accessGroups });
-    } else {
-      e.classList.remove("button-success", "flex-center");
-      e.classList.add("button-secondary");
-      e.innerHTML = "Add +";
-      accessGroups = accessGroups.filter((x) => x.id != accessGroup.id);
-      this.setState({ accessGroups });
+      const ids = accessGroups.map((x: AccessGroup) => x.id);
+      this.setState({ accessGroups }, () => callback(ids));
     }
-  };
+  }
+
+  removeAccessGroup(id: number, callback: (ids: number[]) => void): void {
+    const accessGroups = this.state.accessGroups.filter((x) => x.id != id);
+    const ids = accessGroups.map((x: AccessGroup) => x.id);
+    this.setState({ accessGroups }, () => callback(ids));
+  }
 
   render() {
     const { accountId } = this.props;
@@ -614,10 +597,11 @@ class AccountsEdit extends React.Component<
             <br />
             {accessGroups.map((accessGroup, i) => {
               const permissions = accessGroup.permissions.map((permission) => {
+                const key = permission.action + " - " + permission.resource;
                 return (
-                  <span>
+                  <span key={key}>
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    {permission.action + " - " + permission.resource}
+                    {key}
                     <br />
                   </span>
                 );
