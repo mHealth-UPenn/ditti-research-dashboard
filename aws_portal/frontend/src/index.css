@@ -5,6 +5,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+button svg {
+  pointer-events: none;
+}
+
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
@@ -80,7 +84,7 @@ h1 {
   max-height: calc(calc(100vh - 14rem) - 1px);
   overflow: scroll;
   overflow-x: hidden;
-  padding: 3rem;
+  padding: 3rem 1.5rem 3rem 3rem;
 }
 
 .button-danger {
@@ -264,6 +268,9 @@ h1 {
 .admin-form-summary {
   display: flex;
   flex-direction: column;
+  max-height: calc(100vh - 14rem - 1px);
+  overflow: scroll;
+  overflow-x: hidden;
   padding: 3rem;
   width: 18rem;
 }
@@ -273,6 +280,7 @@ h1 {
 }
 
 .admin-form-summary button {
+  flex-shrink: 0;
   height: 3rem;
   margin-top: 2rem;
 }
