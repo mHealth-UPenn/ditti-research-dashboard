@@ -164,6 +164,16 @@ Create an inbound rule on your database's VPC that allows inbound requests.
 6. In the **Source** dropdown menu of the rule that you just added, select **Anywhere-IPv4**.
 7. Click **Save rules**.
 
+### Create All Database Tables.
+
+From a command line that supports bash, export the SQLAlchemy database URI (postgresql://postgres:**Password**@**Database Endpoint**/postgres) as an environment vairable named FLASK_DB. Replace **Password** with the master password that you created your database with. **Database Endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**. Then, enter the python interpreter and run the following code:
+
+```python
+from aws_portal.app import *
+with create_app().app_context():
+    db.create_all()
+```
+
 ### Deploy the Flask Backend to Lambda
 
 Ensure Docker is running, your AWS CLI is configured, and all variables are saved in `secret-deploy.env`. From command line that supports bash, run a test database container, deploy the development environment, and run the deploy script. Do not open the deployment's URL until after the following steps are complete.
@@ -185,7 +195,7 @@ docker rm test-db
 
 1. Navigate to the Secrets Manager dashboard (https://us-east-1.console.aws.amazon.com/secretsmanager) and click **Store a new secret**.
 2. Under **Secret type**, select **Other type of secret**.
-3. Under **Key/value pairs**, enter the following rows. For the SQLAlchemy database URI, replace **Password** with the master password that you created your database with. **Database endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**.
+3. Under **Key/value pairs**, enter the following rows. For the SQLAlchemy database URI, replace **Password** with the master password that you created your database with. **Database Endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**.
 
 | Key                        | Value                                                                                          |
 | -------------------------- | ---------------------------------------------------------------------------------------------- |
@@ -194,7 +204,7 @@ docker rm test-db
 | AWS_TABLENAME_USER         | The DynamoDB User table name                                                                   |
 | AWS_TABLENAME_TAP          | The DynamoDB Tap table name                                                                    |
 | AWS_DB_INSTANCE_IDENTIFIER | The DB identifier of your database instance                                                    |
-| FLASK_DB                   | The SQLAlchemy database URI: postgresql://postgres:**Password**@**Database endpoint**/postgres |
+| FLASK_DB                   | The SQLAlchemy database URI: postgresql://postgres:**Password**@**Database Endpoint**/postgres |
 
 5. Click **Next**.
 6. For **Secret name**, enter **secret-aws-portal** and click **Next**.
@@ -243,8 +253,6 @@ docker rm test-db
 ```sh
 ./react-build-prod.sh
 ```
-
-### TODO: Initialize the Database
 
 ### Updating and Undeploying
 
