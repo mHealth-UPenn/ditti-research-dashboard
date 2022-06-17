@@ -16,7 +16,7 @@ interface SelectState {
   value: string;
 }
 
-class Select extends React.Component<SelectProps, SelectState> {
+export class Select extends React.Component<SelectProps, SelectState> {
   constructor(props: SelectProps) {
     super(props);
 
@@ -63,6 +63,11 @@ class Select extends React.Component<SelectProps, SelectState> {
   }
 }
 
+export interface App {
+  id: number;
+  name: string;
+}
+
 export interface AccessGroup {
   id: number;
   name: string;
@@ -85,6 +90,7 @@ export interface Role {
 export interface Study {
   id: number;
   name: string;
+  acronym: string;
   accessGroup: string;
   roles: Role[];
 }
@@ -116,10 +122,11 @@ const accessGroupsRaw: AccessGroup[] = [
   }
 ];
 
-const studiesRaw: Study[] = [
+export const studiesRaw: Study[] = [
   {
     id: 10,
     name: "MSBI",
+    acronym: "MSBI",
     accessGroup: "DittiApp Staff",
     roles: [
       {
@@ -195,6 +202,7 @@ const studiesRaw: Study[] = [
   {
     id: 1,
     name: "OSA ART",
+    acronym: "OSA",
     accessGroup: "DittiApp Staff",
     roles: [
       {
@@ -270,6 +278,7 @@ const studiesRaw: Study[] = [
   {
     id: 2,
     name: "Caregiver ART",
+    acronym: "Caregiver",
     accessGroup: "DittiApp Staff",
     roles: [
       {

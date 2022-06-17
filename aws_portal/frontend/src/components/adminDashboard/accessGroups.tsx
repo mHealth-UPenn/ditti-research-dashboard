@@ -2,6 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 import Navbar from "./navbar";
 import Table from "../table/table";
+import AccessGroupsEdit from "./accessGroupsEdit";
 
 const data = [
   {
@@ -145,7 +146,16 @@ class AccessGroups extends React.Component<
           <Table
             columns={columns}
             control={
-              <button className="button-primary">
+              <button
+                className="button-primary"
+                onClick={() =>
+                  handleClick(
+                    ["Create"],
+                    <AccessGroupsEdit accessGroupId={0} />,
+                    false
+                  )
+                }
+              >
                 Create&nbsp;<b>+</b>
               </button>
             }
