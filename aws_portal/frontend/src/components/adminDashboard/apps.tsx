@@ -2,6 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 import Navbar from "./navbar";
 import Table from "../table/table";
+import AppsEdit from "./appsEdit";
 
 const data = [
   {
@@ -85,7 +86,12 @@ class Apps extends React.Component<AppsProps, AppsState> {
           <Table
             columns={columns}
             control={
-              <button className="button-primary">
+              <button
+                className="button-primary"
+                onClick={() =>
+                  handleClick(["Create"], <AppsEdit appId={0} />, false)
+                }
+              >
                 Create&nbsp;<b>+</b>
               </button>
             }
