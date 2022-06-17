@@ -5,7 +5,7 @@ import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
 import { Role } from "./accountsEdit";
 
-const rolesRaw: Role[] = [
+export const rolesRaw: Role[] = [
   {
     id: 1,
     name: "Admin",

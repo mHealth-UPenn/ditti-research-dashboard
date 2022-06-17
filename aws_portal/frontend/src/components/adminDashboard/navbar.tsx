@@ -4,6 +4,7 @@ import Accounts from "./accounts";
 import Studies from "./studies";
 import AccessGroups from "./accessGroups";
 import Apps from "./apps";
+import Roles from "./roles";
 
 interface NavbarProps {
   active: string;
@@ -33,6 +34,11 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
         active: false,
         name: "Studies",
         view: <Studies handleClick={props.handleClick} />
+      },
+      {
+        active: false,
+        name: "Roles",
+        view: <Roles handleClick={props.handleClick} />
       },
       {
         active: false,
