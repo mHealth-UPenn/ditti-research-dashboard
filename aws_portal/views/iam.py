@@ -15,11 +15,11 @@ def check_login():
     check = verify_jwt_in_request(optional=True)
 
     if check is None:
-        res = {'msg': 'No JWT token present'}
-        return jsonify(res)
+        return make_response('Unauthorized', 401)
 
     res = {'msg': 'User is logged in'}
     return jsonify(res)
+
 
 @blueprint.route('/login', methods=['POST'])
 def login():

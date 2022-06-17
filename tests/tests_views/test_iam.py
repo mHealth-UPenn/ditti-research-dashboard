@@ -1,5 +1,7 @@
 from base64 import b64encode
+from datetime import timedelta
 import json
+from time import sleep
 import pytest
 from flask_jwt_extended import decode_token
 from aws_portal.app import create_app
@@ -27,6 +29,35 @@ def app():
 def client(app):
     with app.test_client() as client:
         yield client
+
+
+@pytest.fixture
+def timeout_client(app):
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=1)
+    with app.test_client() as client:
+        yield client
+
+
+def test_check_login_no_token(client):
+    res = client.get('/iam/check-login')
+    assert res.status_code == 401
+
+
+def test_check_login_expired_token(timeout_client):
+    login_test_account('foo', timeout_client)
+    sleep(2)
+    res = timeout_client.get('/iam/check-login')
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Token has expired'
+
+
+def test_check_login(client):
+    login_test_account('foo', client)
+    res = client.get('/iam/check-login')
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'User is logged in'
 
 
 def test_login_no_credentials(client):
