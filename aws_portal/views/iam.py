@@ -15,7 +15,7 @@ def check_login():
     check = verify_jwt_in_request(optional=True)
 
     if check is None:
-        return make_response('Unauthorized', 401)
+        return make_response({'msg': 'Unauthorized'}, 401)
 
     res = {'msg': 'User is logged in'}
     return jsonify(res)
@@ -26,7 +26,7 @@ def login():
     auth = request.authorization
 
     if not auth or not auth.username or not auth.password:
-        return make_response('Login credentials are required', 401)
+        return make_response({'msg': 'Login credentials are required'}, 401)
 
     account = Account.query.filter(
         (Account.email == auth.username) &
@@ -40,7 +40,7 @@ def login():
 
         return res
 
-    return make_response('Invalid login credentials',  403)
+    return make_response({'msg': 'Invalid login credentials'},  403)
 
 
 @blueprint.route('/logout', methods=['POST'])

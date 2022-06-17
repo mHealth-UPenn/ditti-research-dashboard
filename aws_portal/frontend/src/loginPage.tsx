@@ -67,8 +67,8 @@ const makeRequest = (url: string, opts?: any): Promise<any> => {
 
   return fetch(process.env.REACT_APP_FLASK_SERVER + url, opts ? opts : {}).then(
     async (res) => {
-      if (res.status != 200) throw new Error(await res.json());
-      else return res.json();
+      if (res.status != 200) throw await res.json();
+      else return await res.json();
     }
   );
 };
@@ -112,13 +112,14 @@ class LoginPage extends React.Component<any, LoginPageState> {
     this.setState({ loggedIn: true });
   };
 
-  handleException = (msg: string): void => {
-    console.log(msg);
+  handleException = (res: any): void => {
+    console.log(res.msg);
   };
 
   checkLogin = async (): Promise<boolean> => {
-    const res = await makeRequest("/iam/check-login");
-    return res.msg == "User is logged in";
+    return await makeRequest("/iam/check-login")
+      .then((res) => res.msg == "User is logged in")
+      .catch(() => false);
   };
 
   render() {
