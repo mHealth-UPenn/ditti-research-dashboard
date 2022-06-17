@@ -58,7 +58,11 @@ export class Select extends React.Component<SelectProps, SelectState> {
             {placeholder}
           </div>
         ) : null}
-        <select onChange={this.changeValue} value={value}>
+        <select
+          onChange={this.changeValue}
+          value={value}
+          style={{ minHeight: "2.5rem" }}
+        >
           {opts.map((opt, i) => (
             <option key={i} value={opt.value}>
               {opt.label}

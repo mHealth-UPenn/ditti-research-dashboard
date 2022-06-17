@@ -186,15 +186,20 @@ class AccessGroupsEdit extends React.Component<
               </div>
               <div className="admin-form-row">
                 <div className="admin-form-field">
-                  <Select
-                    id={accessGroupId}
-                    opts={appsRaw.map((a) => {
-                      return { value: a.id, label: a.name };
-                    })}
-                    placeholder="Select app..."
-                    callback={this.selectApp}
-                    getDefault={this.getSelectedApp}
-                  />
+                  <div style={{ marginBottom: "0.5rem" }}>
+                    <b>App</b>
+                  </div>
+                  <div className="border-light">
+                    <Select
+                      id={accessGroupId}
+                      opts={appsRaw.map((a) => {
+                        return { value: a.id, label: a.name };
+                      })}
+                      placeholder="Select app..."
+                      callback={this.selectApp}
+                      getDefault={this.getSelectedApp}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="admin-form-row">
