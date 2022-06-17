@@ -4,14 +4,14 @@ import { ReactComponent as Check } from "../../icons/check.svg";
 import { renderToString } from "react-dom/server";
 
 interface ToggleButtonProps {
-  add: (id: number, callback: (ids: number[]) => void) => void;
-  ids: number[];
   id: number;
-  remove: (id: number, callback: (ids: number[]) => void) => void;
+  getActive: (id: number) => boolean;
+  add: (id: number, callback: () => void) => void;
+  remove: (id: number, callback: () => void) => void;
 }
 
 interface ToggleButtonState {
-  ids: number[];
+  active: boolean;
 }
 
 class ToggleButton extends React.Component<
@@ -19,37 +19,32 @@ class ToggleButton extends React.Component<
   ToggleButtonState
 > {
   constructor(props: ToggleButtonProps) {
+    const { id, getActive } = props;
     super(props);
 
     this.state = {
-      ids: this.props.ids
+      active: getActive(id)
     };
   }
 
-  callback = (ids: number[]) => {
-    this.setState({ ids });
+  update = () => {
+    const { id, getActive } = this.props;
+    const active = getActive(id);
+    this.setState({ active });
   };
 
   render() {
-    const { add, id, remove } = this.props;
-    const { ids } = this.state;
+    const { id, add, remove } = this.props;
 
-    return ids.some((x: number) => x == id) ? (
+    return this.state.active ? (
       <button
         className="button-success flex-center"
-        onClick={() => {
-          remove(id, this.callback);
-        }}
+        onClick={() => remove(id, this.update)}
       >
         <Check />
       </button>
     ) : (
-      <button
-        className="button-secondary"
-        onClick={() => {
-          add(id, this.callback);
-        }}
-      >
+      <button className="button-secondary" onClick={() => add(id, this.update)}>
         Add&nbsp;+
       </button>
     );

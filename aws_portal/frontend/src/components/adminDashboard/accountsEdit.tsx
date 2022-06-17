@@ -4,25 +4,82 @@ import Table, { Column } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
 
+interface SelectProps {
+  id: number;
+  opts: { value: number; label: string }[];
+  placeholder: string;
+  callback: (selected: number, id: number) => void;
+  getDefault: (id: number) => number;
+}
+
+interface SelectState {
+  value: string;
+}
+
+class Select extends React.Component<SelectProps, SelectState> {
+  constructor(props: SelectProps) {
+    super(props);
+
+    this.state = {
+      value: String(props.getDefault(props.id))
+    };
+  }
+
+  changeValue = (e: React.ChangeEvent<HTMLSelectElement>): void => {
+    const { callback, id } = this.props;
+    const value = e.target.value;
+    this.setState({ value }, () => callback(parseInt(value), id));
+  };
+
+  render() {
+    let { opts } = this.props;
+    const { placeholder } = this.props;
+    const { value } = this.state;
+    opts = [{ value: 0, label: "" }].concat(opts);
+
+    return (
+      <div style={{ display: "flex", flexGrow: 1 }}>
+        {value === "0" ? (
+          <div
+            style={{
+              position: "absolute",
+              marginLeft: "1rem",
+              backgroundColor: "white",
+              color: "#B3B3CC"
+            }}
+          >
+            {placeholder}
+          </div>
+        ) : null}
+        <select onChange={this.changeValue} value={value}>
+          {opts.map((opt, i) => (
+            <option key={i} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+}
+
 interface AccessGroup {
   id: number;
   name: string;
   app: string;
-  permissions: {
-    id: number;
-    action: string;
-    resource: string;
-  }[];
+  permissions: Permission[];
+}
+
+interface Permission {
+  id: number;
+  action: string;
+  resource: string;
 }
 
 interface Role {
   id: number;
   name: string;
-  permissions: {
-    id: number;
-    action: string;
-    resource: string;
-  }[];
+  permissions: Permission[];
 }
 
 interface Study {
@@ -59,7 +116,7 @@ const accessGroupsRaw: AccessGroup[] = [
   }
 ];
 
-const studiesRaw = [
+const studiesRaw: Study[] = [
   {
     id: 10,
     name: "MSBI",
@@ -294,11 +351,11 @@ interface AccountsEditProps {
 interface AccountsEditState {
   columnsAccessGroups: Column[];
   columnsStudies: Column[];
+  selectedRoles: { study: number; role: number }[];
+  email: string;
   firstName: string;
   lastName: string;
-  email: string;
   accessGroups: AccessGroup[];
-  selectedRoles: { study: number; role: number }[];
   studies: Study[];
 }
 
@@ -313,11 +370,11 @@ class AccountsEdit extends React.Component<
     const prefill = accountId
       ? this.getPrefill(accountId)
       : {
+          selectedRoles: [],
+          email: "",
           firstName: "",
           lastName: "",
-          email: "",
           accessGroups: [],
-          selectedRoles: [],
           studies: []
         };
 
@@ -363,7 +420,7 @@ class AccountsEdit extends React.Component<
         },
         {
           name: "",
-          sortable: true,
+          sortable: false,
           searchable: false,
           width: 10
         }
@@ -389,7 +446,7 @@ class AccountsEdit extends React.Component<
   }
 
   getAccessGroupsData() {
-    return accessGroupsRaw.map((accessGroup) => {
+    return accessGroupsRaw.map((accessGroup, i) => {
       const { id, name, app } = accessGroup;
 
       return [
@@ -415,14 +472,11 @@ class AccountsEdit extends React.Component<
           contents: (
             <div className="flex-left table-control">
               <ToggleButton
-                add={(id: number, callback: (ids: number[]) => void) =>
-                  this.addAccessGroup(id, callback)
-                }
-                ids={this.state.accessGroups.map((x) => x.id)}
+                key={i}
                 id={id}
-                remove={(id: number, callback: (ids: number[]) => void) =>
-                  this.removeAccessGroup(id, callback)
-                }
+                getActive={this.isActiveAccessGroup}
+                add={this.addAccessGroup}
+                remove={this.removeAccessGroup}
               />
             </div>
           ),
@@ -434,7 +488,7 @@ class AccountsEdit extends React.Component<
   }
 
   getStudiesData() {
-    return studiesRaw.map((study) => {
+    return studiesRaw.map((study, i) => {
       const { accessGroup, id, name, roles } = study;
 
       return [
@@ -459,34 +513,16 @@ class AccountsEdit extends React.Component<
         {
           contents: (
             <div className="flex-left" style={{ position: "relative" }}>
-              {this.state.selectedRoles.some((x) => x.study == study.id) ? (
-                <div
-                  id={"select-role-placeholder-" + String(study.id)}
-                  style={{
-                    position: "absolute",
-                    marginLeft: "1rem",
-                    backgroundColor: "white",
-                    color: "#B3B3CC"
-                  }}
-                >
-                  Select role...
-                </div>
-              ) : null}
-              <select
-                id={"select-role-" + String(study.id)}
-                onChange={(e) =>
-                  this.selectRole(e.target as HTMLSelectElement, study.id)
-                }
-              >
-                <option value="0"></option>
-                {roles.map((role, i) => {
-                  return (
-                    <option key={i} value={role.id}>
-                      {role.name}
-                    </option>
-                  );
+              <Select
+                key={i}
+                id={study.id}
+                opts={study.roles.map((r) => {
+                  return { value: r.id, label: r.name };
                 })}
-              </select>
+                placeholder="Select role..."
+                callback={this.selectRole}
+                getDefault={this.getSelectedRole}
+              />
             </div>
           ),
           searchValue: "",
@@ -496,14 +532,11 @@ class AccountsEdit extends React.Component<
           contents: (
             <div className="flex-left table-control">
               <ToggleButton
-                add={(id: number, callback: (ids: number[]) => void) =>
-                  this.addStudy(id, callback)
-                }
-                ids={this.state.studies.map((x) => x.id)}
+                key={i}
                 id={id}
-                remove={(id: number, callback: (ids: number[]) => void) =>
-                  this.removeStudy(id, callback)
-                }
+                getActive={this.isActiveStudy}
+                add={this.addStudy}
+                remove={this.removeStudy}
               />
             </div>
           ),
@@ -514,92 +547,136 @@ class AccountsEdit extends React.Component<
     });
   }
 
-  addAccessGroup(id: number, callback: (ids: number[]) => void): void {
+  getSelectedRole = (id: number) => {
+    const { selectedRoles } = this.state;
+    if (selectedRoles.some((x) => x.study == id)) {
+      return selectedRoles.filter((x) => x.study == id)[0].role;
+    } else {
+      return 0;
+    }
+  };
+
+  isActiveAccessGroup = (id: number): boolean => {
+    return this.state.accessGroups.some((ag) => ag.id == id);
+  };
+
+  addAccessGroup = (id: number, callback: () => void): void => {
     const { accessGroups } = this.state;
-    const accessGroup = accessGroupsRaw.filter((x) => x.id == id)[0];
+    const accessGroup = accessGroupsRaw.filter((ag) => ag.id == id)[0];
 
     if (accessGroup) {
       accessGroups.push(accessGroup);
-      const ids = accessGroups.map((x: AccessGroup) => x.id);
-      this.setState({ accessGroups }, () => callback(ids));
+      this.setState({ accessGroups }, callback);
     }
-  }
+  };
 
-  removeAccessGroup(id: number, callback: (ids: number[]) => void): void {
-    const accessGroups = this.state.accessGroups.filter((x) => x.id != id);
-    const ids = accessGroups.map((x: AccessGroup) => x.id);
-    this.setState({ accessGroups }, () => callback(ids));
-  }
+  removeAccessGroup = (id: number, callback: () => void): void => {
+    const accessGroups = this.state.accessGroups.filter((ag) => ag.id != id);
+    this.setState({ accessGroups }, callback);
+  };
 
-  addStudy(id: number, callback: (ids: number[]) => void): void {
+  isActiveStudy = (id: number): boolean => {
+    return this.state.studies.some((s) => s.id == id);
+  };
+
+  addStudy = (id: number, callback: () => void): void => {
     const { studies } = this.state;
-    const study = Object.assign({}, studiesRaw.filter((x) => x.id == id)[0]);
+    const study = Object.assign({}, studiesRaw.filter((s) => s.id == id)[0]);
 
     if (study) {
-      this.findRole(study);
       studies.push(study);
-
-      const ids = studies.map((x: Study) => x.id);
-      this.setState({ studies }, () => callback(ids));
+      this.setState({ studies }, callback);
     }
-  }
+  };
 
-  removeStudy(id: number, callback: (ids: number[]) => void): void {
-    const studies = this.state.studies.filter((x) => x.id != id);
-    const ids = studies.map((x: Study) => x.id);
-    this.setState({ studies }, () => callback(ids));
-  }
+  removeStudy = (id: number, callback: () => void): void => {
+    const studies = this.state.studies.filter((s) => s.id != id);
+    this.setState({ studies }, callback);
+  };
 
-  selectRole(e: HTMLSelectElement, studyId: number): void {
-    let { selectedRoles } = this.state;
-    const { studies } = this.state;
-    const study = studies.filter((x) => x.id == studyId)[0];
-    const roleId = parseInt(e.value);
-
-    selectedRoles = selectedRoles.filter((x) => x.study != studyId);
+  selectRole = (roleId: number, studyId: number): void => {
+    const selectedRoles = this.state.selectedRoles.filter(
+      (x) => x.study != studyId
+    );
     selectedRoles.push({ study: studyId, role: roleId });
+    this.setState({ selectedRoles });
+  };
 
-    if (study) {
-      const studyRaw = studiesRaw.filter((x) => x.id == studyId)[0];
-      console.log(studyRaw);
+  getAccessGroupsSummary = () => {
+    return this.state.accessGroups.map((accessGroup, i) => {
+      const permissions = accessGroup.permissions.map((permission, i) => {
+        return (
+          <span key={i}>
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            {permission.action + " - " + permission.resource}
+            <br />
+          </span>
+        );
+      });
 
-      if (studyRaw) {
-        const role = studyRaw.roles.filter((x) => x.id == roleId)[0];
-        console.log(role);
+      return (
+        <span key={i}>
+          {i ? <br /> : ""}
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          {accessGroup.name}
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;Permissions:
+          <br />
+          {permissions}
+        </span>
+      );
+    });
+  };
+
+  getStudiesSummary = () => {
+    const { selectedRoles, studies } = this.state;
+
+    return studies.map((study, i) => {
+      let role;
+      let permissions;
+      const selectedRole = selectedRoles.filter(
+        (sr) => sr.study == study.id
+      )[0];
+
+      if (selectedRole) {
+        role = study.roles.filter((r) => r.id == selectedRole.role)[0];
 
         if (role) {
-          study.roles = [role];
-        } else {
-          study.roles = [];
+          permissions = role.permissions.map((permission, j) => {
+            return (
+              <span key={j}>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                {permission.action + " - " + permission.resource}
+                <br />
+              </span>
+            );
+          });
         }
       }
-    }
 
-    this.setState({ selectedRoles, studies });
-  }
-
-  findRole(study: Study): void {
-    const { selectedRoles } = this.state;
-
-    if (selectedRoles.some((x) => x.study == study.id)) {
-      const role = selectedRoles.filter((x) => x.study == study.id)[0];
-      if (role) study.roles = study.roles.filter((x) => x.id == role.role);
-    } else {
-      study.roles = [];
-    }
-  }
+      return (
+        <span key={i}>
+          {i ? <br /> : ""}
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          {study.name}
+          <br />
+          {role ? (
+            <span>
+              &nbsp;&nbsp;&nbsp;&nbsp;Role:
+              {" " + role.name}
+              <br />
+              {permissions}
+            </span>
+          ) : null}
+        </span>
+      );
+    });
+  };
 
   render() {
     const { accountId } = this.props;
-    const {
-      accessGroups,
-      columnsAccessGroups,
-      columnsStudies,
-      firstName,
-      lastName,
-      email,
-      studies
-    } = this.state;
+    const { columnsAccessGroups, columnsStudies, email, firstName, lastName } =
+      this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -696,66 +773,11 @@ class AccountsEdit extends React.Component<
             <br />
             AccessGroups:
             <br />
-            {accessGroups.map((accessGroup, i) => {
-              const permissions = accessGroup.permissions.map(
-                (permission, i) => {
-                  return (
-                    <span key={i}>
-                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                      {permission.action + " - " + permission.resource}
-                      <br />
-                    </span>
-                  );
-                }
-              );
-
-              return (
-                <span key={i}>
-                  {i ? <br /> : ""}
-                  &nbsp;&nbsp;&nbsp;&nbsp;{accessGroup.name}
-                  <br />
-                  &nbsp;&nbsp;&nbsp;&nbsp;Permissions:
-                  <br />
-                  {permissions}
-                </span>
-              );
-            })}
+            {this.getAccessGroupsSummary()}
             <br />
             Studies:
             <br />
-            {studies.map((study, i) => {
-              const roles = study.roles.map((role, i) => {
-                const permissions = role.permissions.map((permission, i) => {
-                  return (
-                    <span key={i}>
-                      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                      {permission.action + " - " + permission.resource}
-                      <br />
-                    </span>
-                  );
-                });
-                return (
-                  <span key={i}>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    {role.name}:
-                    <br />
-                    {permissions}
-                    <br />
-                  </span>
-                );
-              });
-
-              return (
-                <span key={i}>
-                  {i ? <br /> : ""}
-                  &nbsp;&nbsp;&nbsp;&nbsp;{study.name}
-                  <br />
-                  &nbsp;&nbsp;&nbsp;&nbsp;Roles:
-                  <br />
-                  {roles}
-                </span>
-              );
-            })}
+            {this.getStudiesSummary()}
             <br />
           </span>
           <button className="button-primary">Create</button>

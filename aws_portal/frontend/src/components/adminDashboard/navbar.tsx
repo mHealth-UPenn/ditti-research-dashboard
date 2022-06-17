@@ -1,9 +1,9 @@
 import * as React from "react";
 import { Component } from "react";
 import Accounts from "./accounts";
-import Studies from "./studies";
-import AccessGroups from "./accessGroups";
-import Apps from "./apps";
+// import Studies from "./studies";
+// import AccessGroups from "./accessGroups";
+// import Apps from "./apps";
 
 interface NavbarProps {
   active: string;
@@ -28,22 +28,22 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
         active: false,
         name: "Accounts",
         view: <Accounts handleClick={props.handleClick} />
-      },
-      {
-        active: false,
-        name: "Studies",
-        view: <Studies handleClick={props.handleClick} />
-      },
-      {
-        active: false,
-        name: "Access Groups",
-        view: <AccessGroups handleClick={props.handleClick} />
-      },
-      {
-        active: false,
-        name: "Apps",
-        view: <Apps handleClick={props.handleClick} />
       }
+      // {
+      //   active: false,
+      //   name: "Studies",
+      //   view: <Studies handleClick={props.handleClick} />
+      // },
+      // {
+      //   active: false,
+      //   name: "Access Groups",
+      //   view: <AccessGroups handleClick={props.handleClick} />
+      // },
+      // {
+      //   active: false,
+      //   name: "Apps",
+      //   view: <Apps handleClick={props.handleClick} />
+      // }
     ];
 
     for (const v of views) {
