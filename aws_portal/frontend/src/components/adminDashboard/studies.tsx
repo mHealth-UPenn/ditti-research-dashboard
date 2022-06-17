@@ -2,6 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 import Table from "../table/table";
 import Navbar from "./navbar";
+import StudiesEdit from "./studiesEdit";
 
 const data = [
   {
@@ -160,7 +161,12 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
           <Table
             columns={columns}
             control={
-              <button className="button-primary">
+              <button
+                className="button-primary"
+                onClick={() =>
+                  handleClick(["Create"], <StudiesEdit studyId={0} />, false)
+                }
+              >
                 Create&nbsp;<b>+</b>
               </button>
             }

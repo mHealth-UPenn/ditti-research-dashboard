@@ -63,26 +63,26 @@ class Select extends React.Component<SelectProps, SelectState> {
   }
 }
 
-interface AccessGroup {
+export interface AccessGroup {
   id: number;
   name: string;
   app: string;
   permissions: Permission[];
 }
 
-interface Permission {
+export interface Permission {
   id: number;
   action: string;
   resource: string;
 }
 
-interface Role {
+export interface Role {
   id: number;
   name: string;
   permissions: Permission[];
 }
 
-interface Study {
+export interface Study {
   id: number;
   name: string;
   accessGroup: string;
