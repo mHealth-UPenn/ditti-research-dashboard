@@ -38,7 +38,14 @@ export class Select extends React.Component<SelectProps, SelectState> {
     opts = [{ value: 0, label: "" }].concat(opts);
 
     return (
-      <div style={{ display: "flex", flexGrow: 1 }}>
+      <div
+        style={{
+          alignItems: "center",
+          display: "flex",
+          flexGrow: 1,
+          position: "relative"
+        }}
+      >
         {value === "0" ? (
           <div
             style={{

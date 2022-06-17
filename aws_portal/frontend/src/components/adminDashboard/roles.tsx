@@ -2,7 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 import Table from "../table/table";
 import Navbar from "./navbar";
-// import RolesEdit from "./rolesEdit";
+import RolesEdit from "./rolesEdit";
 import { Role } from "./accountsEdit";
 import { rolesRaw } from "./studiesEdit";
 
@@ -100,9 +100,9 @@ class Roles extends React.Component<RolesProps, RolesState> {
             control={
               <button
                 className="button-primary"
-                // onClick={() =>
-                //   handleClick(["Create"], <RolesEdit roleId={0} />, false)
-                // }
+                onClick={() =>
+                  handleClick(["Create"], <RolesEdit roleId={0} />, false)
+                }
               >
                 Create&nbsp;<b>+</b>
               </button>
