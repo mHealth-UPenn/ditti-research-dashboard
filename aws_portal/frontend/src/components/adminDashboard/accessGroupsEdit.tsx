@@ -5,7 +5,7 @@ import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
 import { studiesRaw } from "./accountsEdit";
 import Select from "../fields/select";
-import { App, Study } from "../interfaces";
+import { App, Study } from "../../interfaces";
 
 const appsRaw: App[] = [
   {

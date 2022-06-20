@@ -2,7 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
 import Select from "../fields/select";
-import { Permission } from "../interfaces";
+import { Permission } from "../../interfaces";
 
 const actionsRaw = [
   {

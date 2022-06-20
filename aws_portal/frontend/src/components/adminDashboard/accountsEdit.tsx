@@ -3,7 +3,7 @@ import { Component } from "react";
 import Table, { Column } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
-import { AccessGroup, Study } from "../interfaces";
+import { AccessGroup, Study } from "../../interfaces";
 import Select from "../fields/select";
 
 const accessGroupsRaw: AccessGroup[] = [
