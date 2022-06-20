@@ -3,7 +3,8 @@ import { Component } from "react";
 import Table, { Column } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
-import { Select, studiesRaw } from "./accountsEdit";
+import { studiesRaw } from "./accountsEdit";
+import Select from "../fields/select";
 import { App, Study } from "../interfaces";
 
 const appsRaw: App[] = [
