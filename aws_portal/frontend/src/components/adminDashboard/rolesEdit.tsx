@@ -1,7 +1,8 @@
 import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
-import { Permission, Select } from "./accountsEdit";
+import { Select } from "./accountsEdit";
+import { Permission } from "../interfaces";
 
 const actionsRaw = [
   {

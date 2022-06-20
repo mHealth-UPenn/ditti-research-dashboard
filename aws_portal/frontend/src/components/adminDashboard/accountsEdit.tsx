@@ -3,6 +3,7 @@ import { Component } from "react";
 import Table, { Column } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
+import { AccessGroup, Study } from "../interfaces";
 
 interface SelectProps {
   id: number;
@@ -72,38 +73,6 @@ export class Select extends React.Component<SelectProps, SelectState> {
       </div>
     );
   }
-}
-
-export interface App {
-  id: number;
-  name: string;
-}
-
-export interface AccessGroup {
-  id: number;
-  name: string;
-  app: string;
-  permissions: Permission[];
-}
-
-export interface Permission {
-  id: number;
-  action: string;
-  resource: string;
-}
-
-export interface Role {
-  id: number;
-  name: string;
-  permissions: Permission[];
-}
-
-export interface Study {
-  id: number;
-  name: string;
-  acronym: string;
-  accessGroup: string;
-  roles: Role[];
 }
 
 const accessGroupsRaw: AccessGroup[] = [

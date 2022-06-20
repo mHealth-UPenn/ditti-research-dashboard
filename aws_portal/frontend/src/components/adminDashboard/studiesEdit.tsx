@@ -3,7 +3,7 @@ import { Component } from "react";
 import Table, { Column } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
-import { Role } from "./accountsEdit";
+import { Role } from "../interfaces";
 
 export const rolesRaw: Role[] = [
   {

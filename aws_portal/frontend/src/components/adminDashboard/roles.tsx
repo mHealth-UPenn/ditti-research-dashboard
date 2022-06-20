@@ -3,7 +3,6 @@ import { Component } from "react";
 import Table from "../table/table";
 import Navbar from "./navbar";
 import RolesEdit from "./rolesEdit";
-import { Role } from "./accountsEdit";
 import { rolesRaw } from "./studiesEdit";
 
 interface RolesProps {
