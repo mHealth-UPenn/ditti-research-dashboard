@@ -1,3 +1,15 @@
+export interface Account {
+  id: number;
+  createdOn: string;
+  lastLogin: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  isConfirmed: boolean;
+  accessGroups: AccessGroup[];
+  studies: Study[];
+}
+
 export interface App {
   id: number;
   name: string;
@@ -6,8 +18,10 @@ export interface App {
 export interface AccessGroup {
   id: number;
   name: string;
-  app: string;
+  app: App;
   permissions: Permission[];
+  roles: Role[];
+  studies: Study[];
 }
 
 export interface Permission {

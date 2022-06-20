@@ -124,8 +124,8 @@ def test_study(client):
     res = client.get('/admin/study' + opts)
     data = json.loads(res.data)
     assert len(data) == 2
-    assert data[0]['Name'] == 'foo'
-    assert data[1]['Name'] == 'bar'
+    assert data[0]['name'] == 'foo'
+    assert data[1]['name'] == 'bar'
 
 
 def test_study_create(post):
@@ -195,8 +195,8 @@ def test_access_group(client):
     res = client.get('/admin/access-group' + opts)
     data = json.loads(res.data)
     assert len(data) == 3
-    assert data[1]['Name'] == 'foo'
-    assert data[2]['Name'] == 'bar'
+    assert data[1]['name'] == 'foo'
+    assert data[2]['name'] == 'bar'
 
 
 def test_access_group_create(post):
@@ -432,8 +432,8 @@ def test_app(client):
     res = client.get('/admin/app' + opts)
     data = json.loads(res.data)
     assert len(data) == 3
-    assert data[1]['Name'] == 'foo'
-    assert data[2]['Name'] == 'bar'
+    assert data[1]['name'] == 'foo'
+    assert data[2]['name'] == 'bar'
 
 
 def test_app_create(post):

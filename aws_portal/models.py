@@ -235,15 +235,15 @@ class Account(db.Model):
     @property
     def meta(self):
         return {
-            'ID': self.id,
-            'CreatedOn': self.created_on,
-            'LastLogin': self.last_login,
-            'FirstName': self.first_name,
-            'LastName': self.last_name,
-            'Email': self.email,
-            'IsConfirmed': self.is_confirmed,
-            'AccessGroups': [j.access_group.meta for j in self.access_groups],
-            'Studies': [s.meta for s in self.studies]
+            'id': self.id,
+            'createdOn': self.created_on,
+            'lastLogin': self.last_login,
+            'firstName': self.first_name,
+            'lastName': self.last_name,
+            'email': self.email,
+            'isConfirmed': self.is_confirmed,
+            'accessGroups': [j.access_group.meta for j in self.access_groups],
+            'studies': [s.meta for s in self.studies]
         }
 
     def __repr__(self):
@@ -317,8 +317,9 @@ class JoinAccountStudy(db.Model):
     @property
     def meta(self):
         return {
+            'id': self.id,
             **self.study.meta,
-            'Role': self.role.meta
+            'role': self.role.meta
         }
 
     def __repr__(self):
@@ -375,9 +376,12 @@ class AccessGroup(db.Model):
     @property
     def meta(self):
         return {
-            'Name': self.name,
-            'Roles': [r.meta for r in self.roles],
-            'Studies': [j.study.meta for j in self.studies]
+            'id': self.id,
+            'name': self.name,
+            'app': self.app.meta,
+            'permissions': [p.meta for p in self.permissions],
+            'roles': [r.meta for r in self.roles],
+            'studies': [j.study.meta for j in self.studies]
         }
 
     def __repr__(self):
@@ -465,8 +469,9 @@ class Role(db.Model):
     @property
     def meta(self):
         return {
-            'Name': self.name,
-            'Permissions': [p.permission.meta for p in self.permissions]
+            'id': self.id,
+            'name': self.name,
+            'permissions': [p.permission.meta for p in self.permissions]
         }
 
     def __repr__(self):
@@ -535,8 +540,9 @@ class Permission(db.Model):
     @property
     def meta(self):
         return {
-            'Action': self.action,
-            'Resource': self.resource
+            'id': self.id,
+            'action': self.action,
+            'resource': self.resource
         }
 
     def __repr__(self):
@@ -551,7 +557,8 @@ class App(db.Model):
     @property
     def meta(self):
         return {
-            'Name': self.name
+            'id': self.id,
+            'name': self.name
         }
 
     def __repr__(self):
@@ -569,9 +576,10 @@ class Study(db.Model):
     @property
     def meta(self):
         return {
-            'Name': self.name,
-            'Acronym': self.acronym,
-            'DittiID': self.ditti_id,
+            'id': self.id,
+            'name': self.name,
+            'acronym': self.acronym,
+            'dittiId': self.ditti_id,
         }
 
     def __repr__(self):
