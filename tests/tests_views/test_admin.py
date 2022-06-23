@@ -5,7 +5,7 @@ from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
     AccessGroup, Account, App, JoinAccessGroupPermission,
-    JoinAccountAccessGroup, Study, init_admin_account, init_admin_app,
+    JoinAccountAccessGroup, Role, Study, init_admin_account, init_admin_app,
     init_admin_group, init_db
 )
 from tests.testing_utils import (
@@ -331,6 +331,75 @@ def test_access_group_archive(post):
 
     foo = AccessGroup.query.get(1)
     assert foo.is_archived
+
+
+def test_role(client):
+    res = login_admin_account(client)
+    opts = '?app=1'
+    res = client.get('/admin/role' + opts)
+    data = json.loads(res.data)
+    assert len(data) == 2
+    assert data[0]['name'] == 'foo'
+    assert data[1]['name'] == 'bar'
+
+
+def test_role_create(post):
+    data = {
+        'app': 1,
+        'create': {
+            'name': 'baz',
+            'permissions': [
+                {
+                    'action': 'foo',
+                    'resource': 'baz'
+                }
+            ]
+        }
+    }
+
+    data = json.dumps(data)
+    res = post('/admin/role/create', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Role Created Successfully'
+
+    q1 = Role.name == 'baz'
+    foo = Role.query.filter(q1).first()
+    assert foo is not None
+    assert foo.name == 'baz'
+    assert len(foo.permissions) == 1
+    assert foo.permissions[0].permission.action == 'foo'
+    assert foo.permissions[0].permission.resource == 'baz'
+
+
+def test_role_edit(post):
+    data = {
+        'app': 1,
+        'id': 1,
+        'edit': {
+            'name': 'baz',
+            'permissions': [
+                {
+                    'action': 'bar',
+                    'resource': 'qux'
+                }
+            ]
+        }
+    }
+
+    data = json.dumps(data)
+    res = post('/admin/role/edit', data=data)
+    data = json.loads(res.data)
+    assert 'msg' in data
+    assert data['msg'] == 'Role Edited Successfully'
+
+    q1 = Role.name == 'baz'
+    foo = Role.query.filter(q1).first()
+    assert foo is not None
+    assert foo.name == 'baz'
+    assert len(foo.permissions) == 1
+    assert foo.permissions[0].permission.action == 'bar'
+    assert foo.permissions[0].permission.resource == 'qux'
 
 
 def test_app(client):

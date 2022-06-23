@@ -1,4 +1,5 @@
 from datetime import datetime
+import traceback
 import uuid
 from flask import Blueprint, jsonify, request
 from aws_portal.extensions import db
@@ -34,8 +35,8 @@ def account_create():
         db.session.commit()
         msg = 'Account Created Successfully'
 
-    except ValueError as e:
-        msg = e
+    except ValueError:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -53,8 +54,8 @@ def account_edit():
         db.session.commit()
         msg = 'Account Edited Successfully'
 
-    except ValueError as e:
-        msg = e
+    except ValueError:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -70,8 +71,8 @@ def account_archive():
         db.session.commit()
         msg = 'Account Archived Successfully'
 
-    except Exception as e:
-        msg = e
+    except Exception:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -97,8 +98,8 @@ def study_create():
         db.session.commit()
         msg = 'Study Created Successfully'
 
-    except ValueError as e:
-        msg = e
+    except ValueError:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -115,8 +116,8 @@ def study_edit():
         db.session.commit()
         msg = 'Study Edited Successfully'
 
-    except ValueError as e:
-        msg = e
+    except ValueError:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -132,8 +133,8 @@ def study_archive():
         db.session.commit()
         msg = 'Study Archived Successfully'
 
-    except Exception as e:
-        msg = e
+    except Exception:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -172,8 +173,8 @@ def access_group_create():
         db.session.commit()
         msg = 'Access Group Created Successfully'
 
-    except ValueError as e:
-        msg = e
+    except ValueError:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -227,8 +228,8 @@ def access_group_edit():
         db.session.commit()
         msg = 'Access Group Edited Successfully'
 
-    except ValueError as e:
-        msg = e
+    except ValueError:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -244,8 +245,8 @@ def access_group_archive():
         db.session.commit()
         msg = 'Access Group Archived Successfully'
 
-    except Exception as e:
-        msg = e
+    except Exception:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -258,7 +259,7 @@ def role():
     return jsonify(res)
 
 
-@blueprint.route('/role/create')
+@blueprint.route('/role/create', methods=['POST'])
 def role_create():
     data = request.json['create']
     role = Role()
@@ -282,18 +283,18 @@ def role_create():
         db.session.commit()
         msg = 'Role Created Successfully'
 
-    except ValueError as e:
-        msg = e
+    except ValueError:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
 
 
-@blueprint.route('/role/edit')
+@blueprint.route('/role/edit', methods=['POST'])
 def role_edit():
-    data = request.json['create']
+    data = request.json['edit']
     role_id = request.json['id']
-    role = App.query.get(role_id)
+    role = Role.query.get(role_id)
 
     try:
         populate_model(role, data)
@@ -313,10 +314,10 @@ def role_edit():
 
         db.session.add(role)
         db.session.commit()
-        msg = 'Role Created Successfully'
+        msg = 'Role Edited Successfully'
 
-    except ValueError as e:
-        msg = e
+    except ValueError:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -340,8 +341,8 @@ def app_create():
         db.session.commit()
         msg = 'App Created Successfully'
 
-    except ValueError as e:
-        msg = e
+    except ValueError:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
@@ -359,8 +360,8 @@ def app_edit():
         db.session.commit()
         msg = 'App Edited Successfully'
 
-    except ValueError as e:
-        msg = e
+    except ValueError:
+        msg = traceback.format_exc()
         db.session.rollback()
 
     return jsonify({'msg': msg})
