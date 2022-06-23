@@ -5,9 +5,10 @@ from sqlalchemy.exc import IntegrityError
 from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission, JoinAccessGroupStudy,
-    JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission, Permission,
-    Role, Study, init_admin_account, init_admin_app, init_admin_group, init_db
+    AccessGroup, Account, App, JoinAccessGroupPermission,
+    JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
+    JoinStudyRole, Permission, Role, Study, init_admin_account,
+    init_admin_app, init_admin_group, init_db
 )
 from tests.testing_utils import create_joins, create_tables
 
@@ -137,31 +138,21 @@ class TestDeletions:
         assert 'foo: %s' % foo != 'foo: %s' % None
 
         foo_id = foo.id
-        q2 = Role.access_group_id == foo_id
-        q3 = JoinAccessGroupPermission.access_group_id == foo_id
-        q4 = JoinAccessGroupStudy.access_group_id == foo_id
-        q5 = JoinAccountAccessGroup.access_group_id == foo_id
-        bar = Role.query.filter(q2).first()
-        baz = JoinAccessGroupPermission.query.filter(q3).first()
-        qux = JoinAccessGroupStudy.query.filter(q4).first()
-        qaz = JoinAccountAccessGroup.query.filter(q5).first()
+        q2 = JoinAccessGroupPermission.access_group_id == foo_id
+        q3 = JoinAccountAccessGroup.access_group_id == foo_id
+        bar = JoinAccessGroupPermission.query.filter(q2).first()
+        baz = JoinAccountAccessGroup.query.filter(q3).first()
         assert 'bar: %s' % bar != 'bar: %s' % None
         assert 'baz: %s' % baz != 'baz: %s' % None
-        assert 'qux: %s' % qux != 'qux: %s' % None
-        assert 'qaz: %s' % qaz != 'qaz: %s' % None
 
         db.session.delete(foo)
         db.session.commit()
         foo = AccessGroup.query.filter(q1).first()
-        bar = Role.query.filter(q2).first()
-        baz = JoinAccessGroupPermission.query.filter(q3).first()
-        qux = JoinAccessGroupStudy.query.filter(q4).first()
-        qaz = JoinAccountAccessGroup.query.filter(q5).first()
+        bar = JoinAccessGroupPermission.query.filter(q2).first()
+        baz = JoinAccountAccessGroup.query.filter(q3).first()
         assert 'foo: %s' % foo == 'foo: %s' % None
         assert 'bar: %s' % bar == 'bar: %s' % None
         assert 'baz: %s' % baz == 'baz: %s' % None
-        assert 'qux: %s' % qux == 'qux: %s' % None
-        assert 'qaz: %s' % qaz == 'qaz: %s' % None
 
     def test_delete_account(self, app):
         q1 = Account.email == 'foo@email.com'
@@ -245,18 +236,18 @@ class TestDeletions:
         assert 'foo: %s' % foo != 'foo: %s' % None
 
         foo_id = foo.id
-        q2 = JoinAccessGroupStudy.study_id == foo_id
-        q3 = JoinAccountStudy.study_id == foo_id
-        bar = JoinAccessGroupStudy.query.filter(q2).first()
-        baz = JoinAccountStudy.query.filter(q3).first()
+        q2 = JoinAccountStudy.study_id == foo_id
+        q3 = JoinStudyRole.study_id == foo_id
+        bar = JoinAccountStudy.query.filter(q2).first()
+        baz = JoinStudyRole.query.filter(q3).first()
         assert 'bar: %s' % bar != 'bar: %s' % None
         assert 'baz: %s' % baz != 'baz: %s' % None
 
         db.session.delete(foo)
         db.session.commit()
         foo = Study.query.filter(q1).filter().first()
-        bar = JoinAccessGroupStudy.query.filter(q2).first()
-        baz = JoinAccountStudy.query.filter(q3).first()
+        bar = JoinAccountStudy.query.filter(q2).first()
+        baz = JoinStudyRole.query.filter(q3).first()
         assert 'foo: %s' % foo == 'foo: %s' % None
         assert 'bar: %s' % bar == 'bar: %s' % None
         assert 'baz: %s' % baz == 'baz: %s' % None
@@ -312,32 +303,14 @@ class TestArchives:
         foo = Study.query.filter(q1).first()
         assert 'foo: %s' % foo != 'foo: %s' % None
 
-        q2 = AccessGroup.name == 'bar'
-        bar = AccessGroup.query.filter(q2).first()
+        q2 = Account.email == 'bar@email.com'
+        bar = Account.query.filter(q2).first()
         assert 'bar: %s' % bar != 'bar: %s' % None
         assert len(bar.studies) == 1
         assert bar.studies[0].study is foo
-
-        q3 = Account.email == 'bar@email.com'
-        baz = Account.query.filter(q3).first()
-        assert 'baz: %s' % baz != 'baz: %s' % None
-        assert len(baz.studies) == 1
-        assert baz.studies[0].study is foo
-
-        qux = baz.get_permissions(bar.id, foo.id).all()
-        assert 'qux: %s' % qux != 'qux: %s' % None
-
-        qux = [x.definition for x in qux]
-        assert qux == [('bar', 'baz'), ('bar', 'qux')]
 
         foo.is_archived = True
         db.session.commit()
         assert foo.is_archived
         assert len(bar.studies) == 0
-        assert len(baz.studies) == 0
-
-        qux = baz.get_permissions(bar.id, foo.id).all()
-        assert 'qux: %s' % qux != 'qux: %s' % None
-
-        qux = [x.definition for x in qux]
-        assert qux == [('bar', 'baz')]
+        assert len(bar.studies) == 0

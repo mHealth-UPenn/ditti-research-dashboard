@@ -3,7 +3,7 @@ import uuid
 from flask import Blueprint, jsonify, request
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission, JoinAccessGroupStudy,
+    AccessGroup, Account, App, JoinAccessGroupPermission,
     JoinAccountAccessGroup, JoinRolePermission, Permission, Role, Study
 )
 from aws_portal.utils.auth import auth_required
@@ -160,24 +160,6 @@ def access_group_create():
             account = Account.query.get(entry)
             JoinAccountAccessGroup(account=account, access_group=access_group)
 
-        for entry in data['roles']:
-            role = Role()
-            populate_model(role, entry)
-
-            for entry in entry['permissions']:
-                action = entry['action']
-                resource = entry['resource']
-                q = Permission.definition == (action, resource)
-                permission = Permission.query.filter(q).first()
-
-                if permission is None:
-                    permission = Permission()
-                    populate_model(permission, entry)
-
-                JoinRolePermission(role=role, permission=permission)
-
-            access_group.roles.append(role)
-
         for entry in data['permissions']:
             permission = Permission()
             populate_model(permission, entry)
@@ -185,10 +167,6 @@ def access_group_create():
                 access_group=access_group,
                 permission=permission
             )
-
-        for entry in data['studies']:
-            study = Study.query.get(entry)
-            JoinAccessGroupStudy(access_group=access_group, study=study)
 
         db.session.add(access_group)
         db.session.commit()
@@ -228,51 +206,6 @@ def access_group_edit():
                         access_group=access_group
                     )
 
-        if 'roles' in data:
-            names = [r['name'] for r in data['roles']]
-            for role in access_group.roles:
-                if role.name not in names:
-                    db.session.delete(role)
-
-            names = [r.name for r in access_group.roles]
-            for entry in data['roles']:
-                if entry['name'] not in names:
-                    role = Role()
-                    populate_model(role, entry)
-
-                    for entry in entry['permissions']:
-                        action = entry['action']
-                        resource = entry['resource']
-                        q = Permission.definition == (action, resource)
-                        permission = Permission.query.filter(q).first()
-
-                        if permission is None:
-                            permission = Permission()
-                            populate_model(permission, entry)
-
-                        JoinRolePermission(role=role, permission=permission)
-
-                    access_group.roles.append(role)
-
-                else:
-                    q = Role.name == entry['name']
-                    q = q & (Role.access_group_id == access_group.id)
-                    role = Role.query.filter(q).first()
-                    populate_model(role, entry)
-
-                    role.permissions = []
-                    for entry in entry['permissions']:
-                        action = entry['action']
-                        resource = entry['resource']
-                        q = Permission.definition == (action, resource)
-                        permission = Permission.query.filter(q).first()
-
-                        if permission is None:
-                            permission = Permission()
-                            populate_model(permission, entry)
-
-                        JoinRolePermission(role=role, permission=permission)
-
         if 'permissions' in data:
             access_group.permissions = []
 
@@ -290,20 +223,6 @@ def access_group_edit():
                     access_group=access_group,
                     permission=permission
                 )
-
-        if 'studies' in data:
-            for join in access_group.studies:
-                if join.study_id not in data['studies']:
-                    db.session.delete(join)
-
-            ids = [j.study_id for j in access_group.studies]
-            for entry in data['studies']:
-                if entry not in ids:
-                    study = Study.query.get(entry)
-                    JoinAccessGroupStudy(
-                        access_group=access_group,
-                        study=study
-                    )
 
         db.session.commit()
         msg = 'Access Group Edited Successfully'
@@ -326,6 +245,77 @@ def access_group_archive():
         msg = 'Access Group Archived Successfully'
 
     except Exception as e:
+        msg = e
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
+
+
+@blueprint.route('/role')
+def role():
+    roles = Role.query.all()
+    res = [r.meta for r in roles]
+    return jsonify(res)
+
+
+@blueprint.route('/role/create')
+def role_create():
+    data = request.json['create']
+    role = Role()
+
+    try:
+        populate_model(role, data)
+
+        for entry in data['permissions']:
+            action = entry['action']
+            resource = entry['resource']
+            q = Permission.definition == (action, resource)
+            permission = Permission.query.filter(q).first()
+
+            if permission is None:
+                permission = Permission()
+                populate_model(permission, entry)
+
+            JoinRolePermission(role=role, permission=permission)
+
+        db.session.add(role)
+        db.session.commit()
+        msg = 'Role Created Successfully'
+
+    except ValueError as e:
+        msg = e
+        db.session.rollback()
+
+    return jsonify({'msg': msg})
+
+
+@blueprint.route('/role/edit')
+def role_edit():
+    data = request.json['create']
+    role_id = request.json['id']
+    role = App.query.get(role_id)
+
+    try:
+        populate_model(role, data)
+
+        role.permissions = []
+        for entry in data['permissions']:
+            action = entry['action']
+            resource = entry['resource']
+            q = Permission.definition == (action, resource)
+            permission = Permission.query.filter(q).first()
+
+            if permission is None:
+                permission = Permission()
+                populate_model(permission, entry)
+
+            JoinRolePermission(role=role, permission=permission)
+
+        db.session.add(role)
+        db.session.commit()
+        msg = 'Role Created Successfully'
+
+    except ValueError as e:
         msg = e
         db.session.rollback()
 

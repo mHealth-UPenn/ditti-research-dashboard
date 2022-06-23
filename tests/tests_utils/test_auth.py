@@ -6,7 +6,7 @@ import pytest
 from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, JoinAccountAccessGroup, JoinAccountStudy, Study, init_db
+    AccessGroup, App, JoinAccountAccessGroup, JoinAccountStudy, Study, init_db
 )
 from aws_portal.utils.auth import auth_required
 from tests.testing_utils import (
@@ -17,8 +17,9 @@ from tests.testing_utils import (
 blueprint = Blueprint('test', __name__, url_prefix='/test')
 
 
-def get_user_access_group_id(account):
-    foo = AccessGroup.query.join(JoinAccountAccessGroup)\
+def get_user_app_id(account):
+    foo = App.query.join(AccessGroup)\
+        .join(JoinAccountAccessGroup)\
         .filter(JoinAccountAccessGroup.account_id == account.id)\
         .first()
 
@@ -88,10 +89,10 @@ def test_get_auth_required_no_token(client):
     res = login_test_account('foo', client)
     account = get_account_from_response(res)
     client.delete_cookie('localhost', 'access_token_cookie')
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
     resource = 'baz'
-    opts = '?group=%s&study=%s&resource=%s' % (group, study, resource)
+    opts = '?app=%s&study=%s&resource=%s' % (app, study, resource)
     res = client.get('/test/get-auth-required-action%s' % opts)
     data = json.loads(res.data)
     assert 'msg' in data
@@ -101,10 +102,10 @@ def test_get_auth_required_no_token(client):
 def test_get_auth_required_timeout(timeout_client):
     res = login_test_account('foo', timeout_client)
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
     resource = 'baz'
-    opts = '?group=%s&study=%s&resource=%s' % (group, study, resource)
+    opts = '?app=%s&study=%s&resource=%s' % (app, study, resource)
     sleep(2)
 
     res = timeout_client.get('/test/get-auth-required-action%s' % opts)
@@ -118,10 +119,10 @@ def test_get_auth_required_after_logout(client):
     headers = get_csrf_headers(res)
     client.post('/iam/logout', headers=headers)
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
     resource = 'baz'
-    opts = '?group=%s&study=%s&resource=%s' % (group, study, resource)
+    opts = '?app=%s&study=%s&resource=%s' % (app, study, resource)
     res = client.get('/test/get-auth-required-action%s' % opts)
     data = json.loads(res.data)
     assert 'msg' in data
@@ -141,10 +142,10 @@ def test_get_auth_required_after_logout_with_fake(client):
     )
 
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
     resource = 'baz'
-    opts = '?group=%s&study=%s&resource=%s' % (group, study, resource)
+    opts = '?app=%s&study=%s&resource=%s' % (app, study, resource)
     res = client.get('/test/get-auth-required-action%s' % opts)
     data = json.loads(res.data)
     assert 'msg' in data
@@ -154,9 +155,9 @@ def test_get_auth_required_after_logout_with_fake(client):
 def test_post_auth_required_no_csrf(client):
     res = login_test_account('foo', client)
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
-    data = {'group': group, 'study': study, 'resource': 'baz'}
+    data = {'app': app, 'study': study, 'resource': 'baz'}
     res = client.post('/test/post-auth-required-action', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
@@ -166,10 +167,10 @@ def test_post_auth_required_no_csrf(client):
 def test_get_auth_required_action(client):
     res = login_test_account('foo', client)
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
     resource = 'baz'
-    opts = '?group=%s&study=%s&resource=%s' % (group, study, resource)
+    opts = '?app=%s&study=%s&resource=%s' % (app, study, resource)
     res = client.get('/test/get-auth-required-action%s' % opts)
     data = json.loads(res.data)
     assert 'msg' in data
@@ -179,9 +180,9 @@ def test_get_auth_required_action(client):
 def test_get_auth_required_resource_unauthorized(client):
     res = login_test_account('foo', client)
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
-    opts = '?group=%s&study=%s' % (group, study)
+    opts = '?app=%s&study=%s' % (app, study)
     res = client.get('/test/get-auth-required-resource%s' % opts)
     data = json.loads(res.data)
     assert 'msg' in data
@@ -191,9 +192,9 @@ def test_get_auth_required_resource_unauthorized(client):
 def test_get_auth_required_resource(client):
     res = login_test_account('bar', client)
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
-    opts = '?group=%s&study=%s' % (group, study)
+    opts = '?app=%s&study=%s' % (app, study)
     res = client.get('/test/get-auth-required-resource%s' % opts)
     data = json.loads(res.data)
     assert 'msg' in data
@@ -203,9 +204,9 @@ def test_get_auth_required_resource(client):
 def test_post_auth_required_action_unauthorized(client):
     res = login_test_account('bar', client)
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
-    data = {'group': group, 'study': study, 'resource': 'baz'}
+    data = {'app': app, 'study': study, 'resource': 'baz'}
     data = json.dumps(data)
     headers = get_csrf_headers(res)
     res = client.post(
@@ -223,9 +224,9 @@ def test_post_auth_required_action_unauthorized(client):
 def test_post_auth_required_action(client):
     res = login_test_account('foo', client)
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
-    data = {'group': group, 'study': study, 'resource': 'baz'}
+    data = {'app': app, 'study': study, 'resource': 'baz'}
     data = json.dumps(data)
     headers = get_csrf_headers(res)
     res = client.post(
@@ -243,9 +244,9 @@ def test_post_auth_required_action(client):
 def test_post_auth_required_resource_unauthorized(client):
     res = login_test_account('foo', client)
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
-    data = {'group': group, 'study': study}
+    data = {'app': app, 'study': study}
     data = json.dumps(data)
     headers = get_csrf_headers(res)
     res = client.post(
@@ -263,9 +264,9 @@ def test_post_auth_required_resource_unauthorized(client):
 def test_post_auth_required_resource(client):
     res = login_test_account('bar', client)
     account = get_account_from_response(res)
-    group = get_user_access_group_id(account)
+    app = get_user_app_id(account)
     study = get_user_study_id(account)
-    data = {'group': group, 'study': study}
+    data = {'app': app, 'study': study}
     data = json.dumps(data)
     headers = get_csrf_headers(res)
     res = client.post(

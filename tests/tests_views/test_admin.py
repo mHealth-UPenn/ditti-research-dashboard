@@ -4,8 +4,8 @@ import pytest
 from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission, JoinAccessGroupStudy,
-    JoinAccountAccessGroup, Role, Study, init_admin_account, init_admin_app,
+    AccessGroup, Account, App, JoinAccessGroupPermission,
+    JoinAccountAccessGroup, Study, init_admin_account, init_admin_app,
     init_admin_group, init_db
 )
 from tests.testing_utils import (
@@ -48,17 +48,17 @@ def post(client):
 
 def test_account(client):
     res = login_admin_account(client)
-    opts = '?group=1'
+    opts = '?app=1'
     res = client.get('/admin/account' + opts)
     data = json.loads(res.data)
     assert len(data) == 3
-    assert data[1]['Email'] == 'foo@email.com'
-    assert data[2]['Email'] == 'bar@email.com'
+    assert data[1]['email'] == 'foo@email.com'
+    assert data[2]['email'] == 'bar@email.com'
 
 
 def test_account_create(post):
     data = {
-        'group': 1,
+        'app': 1,
         'create': {
             'first_name': 'foo',
             'last_name': 'bar',
@@ -83,7 +83,7 @@ def test_account_create(post):
 
 def test_account_edit(post):
     data = {
-        'group': 1,
+        'app': 1,
         'id': 1,
         'edit': {
             'first_name': 'foo',
@@ -104,7 +104,7 @@ def test_account_edit(post):
 
 def test_account_archive(post):
     data = {
-        'group': 1,
+        'app': 1,
         'id': 1
     }
 
@@ -120,7 +120,7 @@ def test_account_archive(post):
 
 def test_study(client):
     res = login_admin_account(client)
-    opts = '?group=1'
+    opts = '?app=1'
     res = client.get('/admin/study' + opts)
     data = json.loads(res.data)
     assert len(data) == 2
@@ -130,7 +130,7 @@ def test_study(client):
 
 def test_study_create(post):
     data = {
-        'group': 1,
+        'app': 1,
         'create': {
             'name': 'baz',
             'acronym': 'BAZ',
@@ -154,7 +154,7 @@ def test_study_create(post):
 
 def test_study_edit(post):
     data = {
-        'group': 1,
+        'app': 1,
         'id': 1,
         'edit': {
             'name': 'qux',
@@ -175,7 +175,7 @@ def test_study_edit(post):
 
 def test_study_archive(post):
     data = {
-        'group': 1,
+        'app': 1,
         'id': 1
     }
 
@@ -191,7 +191,7 @@ def test_study_archive(post):
 
 def test_access_group(client):
     res = login_admin_account(client)
-    opts = '?group=1'
+    opts = '?app=1'
     res = client.get('/admin/access-group' + opts)
     data = json.loads(res.data)
     assert len(data) == 3
@@ -201,32 +201,18 @@ def test_access_group(client):
 
 def test_access_group_create(post):
     data = {
-        'group': 1,
+        'app': 1,
         'create': {
             'name': 'baz',
             'app': 2,
             'accounts': [
                 2
             ],
-            'roles': [
-                {
-                    'name': 'baz',
-                    'permissions': [
-                        {
-                            'action': 'foo',
-                            'resource': 'baz'
-                        }
-                    ]
-                }
-            ],
             'permissions': [
                 {
                     'action': 'foo',
                     'resource': 'qux'
                 }
-            ],
-            'studies': [
-                1
             ]
         }
     }
@@ -243,19 +229,13 @@ def test_access_group_create(post):
     assert foo.app.name == 'foo'
     assert len(foo.accounts) == 1
     assert foo.accounts[0].account.email == 'foo@email.com'
-    assert len(foo.roles) == 1
-    assert foo.roles[0].name == 'baz'
-    assert len(foo.roles[0].permissions) == 1
-    assert foo.roles[0].permissions[0].permission.id == 2
     assert len(foo.permissions) == 1
     assert foo.permissions[0].permission.action == 'foo'
-    assert len(foo.studies) == 1
-    assert foo.studies[0].study.name == 'foo'
 
 
 def test_access_group_edit(post):
     data = {
-        'group': 1,
+        'app': 1,
         'id': 2,
         'edit': {
             'name': 'baz',
@@ -273,18 +253,13 @@ def test_access_group_edit(post):
     assert foo.name == 'baz'
     assert len(foo.accounts) == 1
     assert foo.accounts[0].account.email == 'foo@email.com'
-    assert len(foo.roles) == 1
-    assert foo.roles[0].name == 'foo'
-    assert len(foo.roles[0].permissions) == 3
-    assert foo.roles[0].permissions[0].permission.action == 'foo'
     assert len(foo.permissions) == 1
-    assert len(foo.studies) == 1
-    assert foo.studies[0].study.name == 'foo'
+    assert foo.permissions[0].permission.action == 'foo'
 
 
 def test_access_group_edit_accounts(post):
     data = {
-        'group': 1,
+        'app': 1,
         'id': 2,
         'edit': {
             'accounts': [
@@ -311,49 +286,9 @@ def test_access_group_edit_accounts(post):
     assert foo is None
 
 
-def test_access_group_edit_roles(post):
-    data = {
-        'group': 1,
-        'id': 2,
-        'edit': {
-            'roles': [
-                {
-                    'name': 'bar',
-                    'permissions': [
-                        {
-                            'action': '*',
-                            'resource': '*'
-                        }
-                    ]
-                }
-            ]
-        }
-    }
-
-    q = (Role.access_group_id == 2) & (Role.name == 'foo')
-    foo = Role.query.filter(q).first()
-    assert foo is not None
-
-    data = json.dumps(data)
-    res = post('/admin/access-group/edit', data=data)
-    data = json.loads(res.data)
-    assert 'msg' in data
-    assert data['msg'] == 'Access Group Edited Successfully'
-
-    bar = AccessGroup.query.get(2)
-    assert len(bar.roles) == 1
-    assert bar.roles[0].name == 'bar'
-    assert len(bar.roles[0].permissions) == 1
-    assert bar.roles[0].permissions[0].permission.definition == ('*', '*')
-
-    q = (Role.access_group_id == 2) & (Role.name == 'foo')
-    foo = Role.query.filter(q).first()
-    assert foo is None
-
-
 def test_access_group_edit_permissions(post):
     data = {
-        'group': 1,
+        'app': 1,
         'id': 2,
         'edit': {
             'permissions': [
@@ -382,37 +317,9 @@ def test_access_group_edit_permissions(post):
     assert foo is None
 
 
-def test_access_group_edit_studies(post):
-    data = {
-        'group': 1,
-        'id': 2,
-        'edit': {
-            'studies': [
-                2
-            ]
-        }
-    }
-
-    foo = JoinAccessGroupStudy.query.get((2, 1))
-    assert foo is not None
-
-    data = json.dumps(data)
-    res = post('/admin/access-group/edit', data=data)
-    data = json.loads(res.data)
-    assert 'msg' in data
-    assert data['msg'] == 'Access Group Edited Successfully'
-
-    bar = AccessGroup.query.get(2)
-    assert len(bar.studies) == 1
-    assert bar.studies[0].study.name == 'bar'
-
-    foo = JoinAccessGroupStudy.query.get((2, 1))
-    assert foo is None
-
-
 def test_access_group_archive(post):
     data = {
-        'group': 1,
+        'app': 1,
         'id': 1
     }
 
@@ -428,7 +335,7 @@ def test_access_group_archive(post):
 
 def test_app(client):
     res = login_admin_account(client)
-    opts = '?group=1'
+    opts = '?app=1'
     res = client.get('/admin/app' + opts)
     data = json.loads(res.data)
     assert len(data) == 3
@@ -438,7 +345,7 @@ def test_app(client):
 
 def test_app_create(post):
     data = {
-        'group': 1,
+        'app': 1,
         'create': {
             'name': 'baz'
         }
@@ -458,7 +365,7 @@ def test_app_create(post):
 
 def test_app_edit(post):
     data = {
-        'group': 1,
+        'app': 1,
         'id': 1,
         'edit': {
             'name': 'baz'

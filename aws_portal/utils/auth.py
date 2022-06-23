@@ -2,7 +2,7 @@ from functools import wraps
 import logging
 from flask import jsonify, request
 from flask_jwt_extended import current_user, verify_jwt_in_request
-from aws_portal.models import AccessGroup, Study
+from aws_portal.models import App, Study
 
 logger = logging.getLogger(__name__)
 
@@ -13,18 +13,18 @@ def auth_required(action, _resource=None):
         def wrapper(*args, **kwargs):
             verify_jwt_in_request()
             data = request.args or request.json
-            group_id = data.get('group')
+            app_id = data.get('app')
             study_id = data.get('study')
             resource = _resource or data.get('resource')
 
             try:
-                permissions = current_user.get_permissions(group_id, study_id)
+                permissions = current_user.get_permissions(app_id, study_id)
                 current_user.validate_ask(action, resource, permissions)
 
             except ValueError:
-                group = AccessGroup.query.get(group_id)
+                app = App.query.get(app_id) if study_id else None
                 study = Study.query.get(study_id) if study_id else None
-                ask = '%s -> %s -> %s -> %s' % (group, study, action, resource)
+                ask = '%s -> %s -> %s -> %s' % (app, study, action, resource)
                 s = current_user, ask
                 logger.warning('Unauthorized request from %s: %s' % s)
 

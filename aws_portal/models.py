@@ -196,16 +196,14 @@ class Account(db.Model):
     def check_password(self, val):
         return bcrypt.check_password_hash(self._password, val)
 
-    def get_permissions(self, group_id, study_id=None):
+    def get_permissions(self, app_id, study_id=None):
         q1 = Permission.query.join(JoinAccessGroupPermission)\
             .join(AccessGroup)\
+            .filter(AccessGroup.app_id == app_id)\
             .join(JoinAccountAccessGroup)\
             .filter(
                 (~AccessGroup.is_archived) &
-                (
-                    JoinAccountAccessGroup.primary_key ==
-                    tuple_(self.id, group_id)
-                )
+                (JoinAccountAccessGroup.account_id == self.id)
         )
 
         if study_id and not Study.query.get(study_id).is_archived:
@@ -317,7 +315,6 @@ class JoinAccountStudy(db.Model):
     @property
     def meta(self):
         return {
-            'id': self.id,
             **self.study.meta,
             'role': self.role.meta
         }
@@ -348,29 +345,10 @@ class AccessGroup(db.Model):
         )
     )
 
-    roles = db.relationship(
-        'Role',
-        back_populates='access_group',
-        cascade='all, delete-orphan'
-    )
-
     permissions = db.relationship(
         'JoinAccessGroupPermission',
         back_populates='access_group',
         cascade='all, delete-orphan'
-    )
-
-    studies = db.relationship(
-        'JoinAccessGroupStudy',
-        back_populates='access_group',
-        cascade='all, delete-orphan',
-        primaryjoin=(
-            'and_(' +
-            '   AccessGroup.id == JoinAccessGroupStudy.access_group_id,' +
-            '   JoinAccessGroupStudy.study_id == Study.id,' +
-            '   Study.is_archived == False' +
-            ')'
-        )
     )
 
     @property
@@ -379,9 +357,7 @@ class AccessGroup(db.Model):
             'id': self.id,
             'name': self.name,
             'app': self.app.meta,
-            'permissions': [p.meta for p in self.permissions],
-            'roles': [r.meta for r in self.roles],
-            'studies': [j.study.meta for j in self.studies]
+            'permissions': [p.meta for p in self.permissions]
         }
 
     def __repr__(self):
@@ -414,51 +390,18 @@ class JoinAccessGroupPermission(db.Model):
     def primary_key(cls):
         return tuple_(cls.access_group_id, cls.permission_id)
 
+    @property
+    def meta(self):
+        return self.permission.meta
+
     def __repr__(self):
         return '<JoinAccessGroupPermission %s-%s>' % self.primary_key
-
-
-class JoinAccessGroupStudy(db.Model):
-    __tablename__ = 'join_access_group_study'
-
-    access_group_id = db.Column(
-        db.Integer,
-        db.ForeignKey('access_group.id', ondelete='CASCADE'),
-        primary_key=True
-    )
-
-    study_id = db.Column(
-        db.Integer,
-        db.ForeignKey('study.id', ondelete='CASCADE'),
-        primary_key=True
-    )
-
-    access_group = db.relationship('AccessGroup', back_populates='studies')
-    study = db.relationship('Study')
-
-    @hybrid_property
-    def primary_key(self):
-        return self.access_group_id, self.study_id
-
-    @primary_key.expression
-    def primary_key(cls):
-        return tuple_(cls.access_group_id, cls.study_id)
-
-    def __repr__(self):
-        return '<JoinAccessGroupStudy %s-%s>' % self.primary_key
 
 
 class Role(db.Model):
     __tablename__ = 'role'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
-
-    access_group_id = db.Column(
-        db.Integer,
-        db.ForeignKey('access_group.id', ondelete='CASCADE')
-    )
-
-    access_group = db.relationship('AccessGroup', back_populates='roles')
 
     permissions = db.relationship(
         'JoinRolePermission',
@@ -471,11 +414,11 @@ class Role(db.Model):
         return {
             'id': self.id,
             'name': self.name,
-            'permissions': [p.permission.meta for p in self.permissions]
+            'permissions': [p.meta for p in self.permissions]
         }
 
     def __repr__(self):
-        return '<Role %s %s>' % (self.access_group.name, self.name)
+        return '<Role %s>' % self.name
 
 
 class JoinRolePermission(db.Model):
@@ -503,6 +446,10 @@ class JoinRolePermission(db.Model):
     @primary_key.expression
     def primary_key(cls):
         return tuple_(cls.role_id, cls.permission_id)
+
+    @property
+    def meta(self):
+        return self.permission.meta
 
     def __repr__(self):
         return '<JoinRolePermission %s-%s>' % self.primary_key
@@ -573,6 +520,8 @@ class Study(db.Model):
     ditti_id = db.Column(db.String, nullable=False, unique=True)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
+    roles = db.relationship('JoinStudyRole', cascade='all, delete-orphan')
+
     @property
     def meta(self):
         return {
@@ -580,10 +529,45 @@ class Study(db.Model):
             'name': self.name,
             'acronym': self.acronym,
             'dittiId': self.ditti_id,
+            'roles': [r.meta for r in self.roles]
         }
 
     def __repr__(self):
         return '<Study %s>' % self.acronym
+
+
+class JoinStudyRole(db.Model):
+    __tablename__ = 'join_study_role'
+
+    study_id = db.Column(
+        db.Integer,
+        db.ForeignKey('study.id'),
+        primary_key=True
+    )
+
+    role_id = db.Column(
+        db.Integer,
+        db.ForeignKey('role.id', ondelete='CASCADE'),
+        primary_key=True
+    )
+
+    study = db.relationship('Study', back_populates='roles')
+    role = db.relationship('Role')
+
+    @hybrid_property
+    def primary_key(self):
+        return self.study_id, self.role_id
+
+    @primary_key.expression
+    def primary_key(cls):
+        return tuple_(cls.study_id, cls.role_id)
+
+    @property
+    def meta(self):
+        return self.role.meta
+
+    def __repr__(self):
+        return '<JoinStudyRole %s-%s>' % self.primary_key
 
 
 class BlockedToken(db.Model):

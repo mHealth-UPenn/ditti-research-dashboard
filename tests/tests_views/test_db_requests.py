@@ -46,16 +46,16 @@ def test_apps_admin(client):
 
 def test_studies(client):
     login_test_account('foo', client)
-    opts = '?group=2'
+    opts = '?app=2'
     res = client.get('/db/get-studies' + opts)
     res = json.loads(res.data)
     assert len(res) == 1
     assert res[0]['name'] == 'foo'
 
 
-def test_studies_invalid_group(client):
+def test_studies_invalid_app(client):
     login_test_account('foo', client)
-    opts = '?group=3'
+    opts = '?app=3'
     res = client.get('/db/get-studies' + opts)
     res = json.loads(res.data)
     assert len(res) == 0
@@ -68,8 +68,8 @@ def test_study_details(client):
     res = json.loads(res.data)
     assert 'name' in res
     assert res['name'] == 'foo'
-    assert 'Acronym' in res
-    assert 'DittiID' in res
+    assert 'acronym' in res
+    assert 'dittiId' in res
 
 
 def test_study_details_invalid_study(client):

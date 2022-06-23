@@ -18,10 +18,6 @@ def client(app):
         yield client
 
 
-def test_serve():  # TODO create this test
-    raise NotImplementedError
-
-
 def test_healthy(client):
     res = client.get('/healthy')
     data = json.loads(res.data)

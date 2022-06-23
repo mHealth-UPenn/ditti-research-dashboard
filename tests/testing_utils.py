@@ -6,8 +6,8 @@ from flask_jwt_extended.utils import decode_token
 from aws_portal.extensions import bcrypt, db
 from aws_portal.models import (
     AccessGroup, Account, App, BlockedToken, JoinAccessGroupPermission,
-    JoinAccessGroupStudy, JoinAccountAccessGroup, JoinAccountStudy,
-    JoinRolePermission, Permission, Role, Study
+    JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
+    JoinStudyRole, Permission, Role, Study
 )
 
 uri = os.getenv('FLASK_DB')
@@ -162,22 +162,6 @@ def create_joins():
         permission=Permission.query.filter(q2).first()
     )
 
-    q1 = AccessGroup.name == 'foo'
-    q2 = Study.name == 'foo'
-    foo = JoinAccessGroupStudy(
-        access_group=AccessGroup.query.filter(q1).first(),
-        study=Study.query.filter(q2).first()
-    )
-
-    db.session.add(foo)
-
-    q1 = AccessGroup.name == 'bar'
-    q2 = Study.name == 'bar'
-    foo = JoinAccessGroupStudy(
-        access_group=AccessGroup.query.filter(q1).first(),
-        study=Study.query.filter(q2).first()
-    )
-
     db.session.add(foo)
 
     q1 = Role.name == 'foo'
@@ -213,14 +197,14 @@ def create_joins():
     db.session.add(foo)
 
     foo = Role.query.filter(Role.name == 'foo').first()
-    bar = AccessGroup.query.filter(AccessGroup.name == 'foo').first()
-    foo.access_group = bar
-    db.session.add(foo)
+    bar = Study.query.filter(Study.name == 'foo').first()
+    baz = JoinStudyRole(role=foo, study=bar)
+    db.session.add(baz)
 
     foo = Role.query.filter(Role.name == 'bar').first()
-    bar = AccessGroup.query.filter(AccessGroup.name == 'bar').first()
-    foo.access_group = bar
-    db.session.add(foo)
+    bar = Study.query.filter(Study.name == 'bar').first()
+    baz = JoinStudyRole(role=foo, study=bar)
+    db.session.add(baz)
 
     q1 = Account.email == 'foo@email.com'
     q2 = AccessGroup.name == 'foo'
