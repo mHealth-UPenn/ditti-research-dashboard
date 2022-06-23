@@ -11,6 +11,14 @@ const getCookie = (name: string): string => {
 };
 
 export const makeRequest = async (url: string, opts?: any): Promise<any> => {
+  if (opts) {
+    opts.credentials = "include";
+    opts.crossorigin = true;
+  } else
+    opts = {
+      credentials: "include",
+      corssorigin: true
+    };
   if (opts && opts.method == "POST")
     opts.headers["X-CSRF-TOKEN"] = getCookie("csrf_access_token");
 

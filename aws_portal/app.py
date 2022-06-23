@@ -42,7 +42,13 @@ def create_app(testing=False):
         if status not in ['available', 'starting']:
             client.start_db_instance(DBInstanceIdentifier=rds_id)
 
-    CORS(app, origins=os.getenv('AWS_CLOUDFRONT_DOMAIN_NAME', '*'))
+    CORS(
+      app,
+      allow_headers=['authorization', 'content-type', 'x-csrf-token'],
+      origins=os.getenv('AWS_CLOUDFRONT_DOMAIN_NAME', '*'),
+      supports_credentials=True
+    )
+
     app.config.from_object('aws_portal.config.%s' % flask_config)
     register_blueprints(app)
     register_commands(app)

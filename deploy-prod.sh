@@ -79,3 +79,25 @@ if [ $? -eq 1 ]; then
 else
     zappa update app -d ${DOCKER_IMAGE}
 fi
+
+echo "Enabling CORS..."
+RESPONSE_PARAMETERS=$(jq -jrc --arg origin "'$AWS_CLOUDFRONT_DOMAIN_NAME'" \
+    '. += { "method.response.header.Access-Control-Allow-Origin": $origin }' <<< "$(cat cors.json)")
+
+ZAPPA_STATUS=$(zappa status app -j)
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+REST_API_ID=$(echo "$ZAPPA_STATUS" | jq -r '."API Gateway URL"' | grep -oP "https://+\K\w{10}")
+RESOURCE_ID=$(aws apigateway get-resources --rest-api-id $REST_API_ID | jq -r '.items[] | select(.path == "/") | .id')
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
+aws apigateway put-integration-response \
+    --rest-api-id $REST_API_ID \
+    --resource-id $RESOURCE_ID \
+    --http-method OPTIONS \
+    --status-code 200 \
+    --response-parameters $RESPONSE_PARAMETERS \

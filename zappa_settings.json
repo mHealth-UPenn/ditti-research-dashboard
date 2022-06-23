@@ -2,7 +2,6 @@
     "app": {
         "app_function": "run.app",
         "aws_region": "us-east-1",
-        "cors": true,
         "environment_variables": {
             "FLASK_CONFIG": "Production",
             "AWS_SECRET_NAME": "test-secret-2"

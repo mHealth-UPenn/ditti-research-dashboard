@@ -5,10 +5,10 @@ else
     exit 1
 fi
 
-if [ -f secret-aws.env ]; then
-    export $(cat secret-aws.env | xargs)
+if [ -f secret-deploy.env ]; then
+    export $(cat secret-deploy.env | xargs)
 else
-    echo "secret-aws.env not found."
+    echo "secret-deploy.env not found."
     exit 1
 fi
 

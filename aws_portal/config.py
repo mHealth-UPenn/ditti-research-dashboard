@@ -22,6 +22,7 @@ class Development(Default):
 class Production(Default):
     ENV = 'production'
 
+    JWT_COOKIE_SAMESITE = 'None'
     JWT_COOKIE_SECURE = True
 
 
