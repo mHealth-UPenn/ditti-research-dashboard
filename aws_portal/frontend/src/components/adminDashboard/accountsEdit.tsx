@@ -6,6 +6,7 @@ import ToggleButton from "../buttons/toggleButton";
 import { AccessGroup, Role, Study } from "../../interfaces";
 import Select from "../fields/select";
 import { makeRequest } from "../../utils";
+import { SmallLoader } from "../loader";
 
 interface AccountsEditProps {
   accountId: number;
@@ -17,6 +18,8 @@ interface AccountsEditState {
   studies: Study[];
   columnsAccessGroups: Column[];
   columnsStudies: Column[];
+  loading: boolean;
+  fading: boolean;
   email: string;
   firstName: string;
   lastName: string;
@@ -94,6 +97,8 @@ class AccountsEdit extends React.Component<
           width: 10
         }
       ],
+      loading: true,
+      fading: false,
       firstName: prefill.firstName,
       lastName: prefill.lastName,
       email: prefill.email,
@@ -114,13 +119,25 @@ class AccountsEdit extends React.Component<
     };
   }
 
-  async componentDidMount() {
-    const accessGroups: AccessGroup[] = await makeRequest(
-      "/admin/access-group?app=1"
-    );
-    const roles: Role[] = await makeRequest("/admin/role?app=1");
-    const studies: Study[] = await makeRequest("/admin/study?app=1");
-    this.setState({ accessGroups, roles, studies });
+  componentDidMount() {
+    const accessGroups = makeRequest("/admin/access-group?app=1");
+    const roles = makeRequest("/admin/role?app=1");
+    const studies = makeRequest("/admin/study?app=1");
+    const promises = [accessGroups, roles, studies];
+
+    Promise.all(promises).then((value) => {
+      const [accessGroups, roles, studies] = value;
+
+      this.setState({
+        accessGroups,
+        roles,
+        studies,
+        loading: false,
+        fading: true
+      });
+
+      setTimeout(() => this.setState({ fading: false }), 500);
+    });
   }
 
   getAccessGroupsData = (): TableData[][] => {
@@ -355,8 +372,15 @@ class AccountsEdit extends React.Component<
 
   render() {
     const { accountId } = this.props;
-    const { columnsAccessGroups, columnsStudies, email, firstName, lastName } =
-      this.state;
+    const {
+      columnsAccessGroups,
+      columnsStudies,
+      loading,
+      fading,
+      email,
+      firstName,
+      lastName
+    } = this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -413,31 +437,45 @@ class AccountsEdit extends React.Component<
               <div className="admin-form-row">
                 <div className="admin-form-field">
                   <span>Assign Account to Access Group</span>
-                  <Table
-                    columns={columnsAccessGroups}
-                    control={<React.Fragment />}
-                    controlWidth={0}
-                    data={this.getAccessGroupsData()}
-                    includeControl={false}
-                    includeSearch={false}
-                    paginationPer={2}
-                    sortDefault="Name"
-                  />
+                  <div className="loader-container">
+                    {loading || fading ? (
+                      <SmallLoader loading={loading} />
+                    ) : null}
+                    {loading ? null : (
+                      <Table
+                        columns={columnsAccessGroups}
+                        control={<React.Fragment />}
+                        controlWidth={0}
+                        data={this.getAccessGroupsData()}
+                        includeControl={false}
+                        includeSearch={false}
+                        paginationPer={2}
+                        sortDefault="Name"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="admin-form-row">
                 <div className="admin-form-field">
                   <span>Assign Account to Studies</span>
-                  <Table
-                    columns={columnsStudies}
-                    control={<React.Fragment />}
-                    controlWidth={0}
-                    data={this.getStudiesData()}
-                    includeControl={false}
-                    includeSearch={false}
-                    paginationPer={2}
-                    sortDefault="Name"
-                  />
+                  <div className="loader-container">
+                    {loading || fading ? (
+                      <SmallLoader loading={loading} />
+                    ) : null}
+                    {loading ? null : (
+                      <Table
+                        columns={columnsStudies}
+                        control={<React.Fragment />}
+                        controlWidth={0}
+                        data={this.getStudiesData()}
+                        includeControl={false}
+                        includeSearch={false}
+                        paginationPer={2}
+                        sortDefault="Name"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

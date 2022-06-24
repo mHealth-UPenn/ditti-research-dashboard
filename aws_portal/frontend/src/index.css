@@ -62,19 +62,19 @@ h1 {
 
 .card-s {
   padding: 1.5rem;
-  margin: 1.5rem; 
+  margin: 1.5rem;
   width: calc(calc(100% - 18rem) / 3);
 }
 
 .card-m {
   padding: 1.5rem;
-  margin: 1.5rem; 
+  margin: 1.5rem;
   width: calc(calc(100% - 9rem) / 1.5);
 }
 
 .card-l {
   padding: 1.5rem;
-  margin: 1.5rem; 
+  margin: 1.5rem;
   width: calc(100% - 6rem);
 }
 
@@ -136,7 +136,7 @@ h1 {
 }
 
 .button-secondary {
-  background-color: #33334D;
+  background-color: #33334d;
   border: none;
   color: white;
 }
@@ -168,48 +168,48 @@ h1 {
 }
 
 .bg-dark {
-  background-color: #33334D;
+  background-color: #33334d;
   color: white;
 }
 
 .border-light {
-  border: 1px solid #B3B3CC;
+  border: 1px solid #b3b3cc;
 }
 
 .border-light-t {
-  border-top: 1px solid #B3B3CC;
+  border-top: 1px solid #b3b3cc;
 }
 
 .border-light-r {
-  border-right: 1px solid #B3B3CC;
+  border-right: 1px solid #b3b3cc;
 }
 
 .border-light-b {
-  border-bottom: 1px solid #B3B3CC;
+  border-bottom: 1px solid #b3b3cc;
 }
 
 .border-light-l {
-  border-left: 1px solid #B3B3CC;
+  border-left: 1px solid #b3b3cc;
 }
 
 .border-dark {
-  border: 1px solid #33334D;
+  border: 1px solid #33334d;
 }
 
 .border-dark-t {
-  border-top: 1px solid #33334D;
+  border-top: 1px solid #33334d;
 }
 
 .border-dark-r {
-  border-right: 1px solid #33334D;
+  border-right: 1px solid #33334d;
 }
 
 .border-dark-b {
-  border-bottom: 1px solid #33334D;
+  border-bottom: 1px solid #33334d;
 }
 
 .border-dark-l {
-  border-left: 1px solid #33334D;
+  border-left: 1px solid #33334d;
 }
 
 .border-white-b {
@@ -320,7 +320,7 @@ h1 {
   width: 26px;
 }
 
-*::-webkit-scrollbar-thumb {        
+*::-webkit-scrollbar-thumb {
   box-shadow: inset 0 0 0 10px;
 }
 
@@ -338,10 +338,10 @@ h1 {
   width: 64px;
   height: 64px;
   margin: 8px;
-  border: 8px solid #B3B3CC;
+  border: 8px solid #b3b3cc;
   border-radius: 50%;
   animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
-  border-color: #B3B3CC transparent transparent transparent;
+  border-color: #b3b3cc transparent transparent transparent;
 }
 
 .lds-ring div:nth-child(1) {
@@ -365,3 +365,9 @@ h1 {
   }
 }
 
+.loader-container {
+  height: 100%;
+  min-height: 160px;
+  position: relative;
+  width: 100%;
+}

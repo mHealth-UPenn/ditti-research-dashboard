@@ -154,7 +154,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
       <div className="page-container">
         <Navbar handleClick={handleClick} active="Accounts" />
         <div className="page-content bg-white">
-          <div style={{ position: "relative", height: "100%", width: "100%" }}>
+          <div className="loader-container">
             {loading || fading ? <SmallLoader loading={loading} /> : null}
             {loading ? null : (
               <Table
