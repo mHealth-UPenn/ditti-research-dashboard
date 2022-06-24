@@ -200,13 +200,16 @@ def access_group_create():
         app = App.query.get(data['app'])
         access_group.app = app
 
-        for entry in data['accounts']:
-            account = Account.query.get(entry['id'])
-            JoinAccountAccessGroup(account=account, access_group=access_group)
-
         for entry in data['permissions']:
-            permission = Permission()
-            populate_model(permission, entry)
+            action = entry['action']
+            resource = entry['resource']
+            q = Permission.definition == (action, resource)
+            permission = Permission.query.filter(q).first()
+
+            if permission is None:
+                permission = Permission()
+                populate_model(permission, entry)
+
             JoinAccessGroupPermission(
                 access_group=access_group,
                 permission=permission
@@ -235,21 +238,6 @@ def access_group_edit():
         if 'app' in data:
             app = App.query.get(data['app'])
             access_group.app = app
-
-        if 'accounts' in data:
-            for join in access_group.accounts:
-                a_ids = [a['id'] for a in data['accounts']]
-                if join.account_id not in a_ids:
-                    db.session.delete(join)
-
-            ids = [j.account_id for j in access_group.accounts]
-            for entry in data['accounts']:
-                if entry['id'] not in ids:
-                    account = Account.query.get(entry['id'])
-                    JoinAccountAccessGroup(
-                        account=account,
-                        access_group=access_group
-                    )
 
         if 'permissions' in data:
             access_group.permissions = []

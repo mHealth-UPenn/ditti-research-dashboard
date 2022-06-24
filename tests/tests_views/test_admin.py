@@ -4,9 +4,8 @@ import pytest
 from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission,
-    JoinAccountAccessGroup, Role, Study, init_admin_account, init_admin_app,
-    init_admin_group, init_db
+    AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study,
+    init_admin_account, init_admin_app, init_admin_group, init_db
 )
 from tests.testing_utils import (
     create_joins, create_tables, get_csrf_headers, login_admin_account
@@ -234,9 +233,6 @@ def test_access_group_create(post):
         'create': {
             'name': 'baz',
             'app': 2,
-            'accounts': [
-                {'id': 2}
-            ],
             'permissions': [
                 {
                     'action': 'foo',
@@ -256,8 +252,6 @@ def test_access_group_create(post):
     foo = AccessGroup.query.filter(q1).first()
     assert foo.name == 'baz'
     assert foo.app.name == 'foo'
-    assert len(foo.accounts) == 1
-    assert foo.accounts[0].account.email == 'foo@email.com'
     assert len(foo.permissions) == 1
     assert foo.permissions[0].permission.action == 'foo'
 
@@ -284,36 +278,6 @@ def test_access_group_edit(post):
     assert foo.accounts[0].account.email == 'foo@email.com'
     assert len(foo.permissions) == 1
     assert foo.permissions[0].permission.action == 'foo'
-
-
-def test_access_group_edit_accounts(post):
-    data = {
-        'app': 1,
-        'id': 2,
-        'edit': {
-            'accounts': [
-                {'id': 1},
-                {'id': 3}
-            ]
-        }
-    }
-
-    foo = JoinAccountAccessGroup.query.get((2, 2))
-    assert foo is not None
-
-    data = json.dumps(data)
-    res = post('/admin/access-group/edit', data=data)
-    data = json.loads(res.data)
-    assert 'msg' in data
-    assert data['msg'] == 'Access Group Edited Successfully'
-
-    bar = AccessGroup.query.get(2)
-    assert len(bar.accounts) == 2
-    assert bar.accounts[0].account.email == 'admin@email.com'
-    assert bar.accounts[1].account.email == 'bar@email.com'
-
-    foo = JoinAccountAccessGroup.query.get((2, 2))
-    assert foo is None
 
 
 def test_access_group_edit_permissions(post):

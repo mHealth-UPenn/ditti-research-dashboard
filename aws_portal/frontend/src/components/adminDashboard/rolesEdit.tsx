@@ -5,7 +5,7 @@ import Select from "../fields/select";
 import { Permission, ResponseBody } from "../../interfaces";
 import { makeRequest } from "../../utils";
 
-const actionsRaw = [
+export const actionsRaw = [
   {
     id: 4,
     text: "View"
@@ -24,7 +24,7 @@ const actionsRaw = [
   }
 ];
 
-const resourcesRaw = [
+export const resourcesRaw = [
   {
     id: 3,
     text: "Accounts"
@@ -191,12 +191,15 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
 
   create = (): void => {
     const { name, permissions } = this.state;
+    const ps = permissions.map((p) => {
+      return { action: p.action, resource: p.resource };
+    });
 
     const body = {
       app: 1,
       create: {
         name: name,
-        permissions: permissions
+        permissions: ps
       }
     };
 
@@ -229,7 +232,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
               <br />
             </span>
           ) : (
-            <React.Fragment />
+            <React.Fragment key={p.id} />
           );
         })}
       </React.Fragment>
