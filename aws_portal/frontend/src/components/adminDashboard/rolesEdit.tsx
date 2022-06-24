@@ -2,7 +2,8 @@ import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
 import Select from "../fields/select";
-import { Permission } from "../../interfaces";
+import { Permission, ResponseBody } from "../../interfaces";
+import { makeRequest } from "../../utils";
 
 const actionsRaw = [
   {
@@ -188,6 +189,35 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     }
   };
 
+  create = (): void => {
+    const { name, permissions } = this.state;
+
+    const body = {
+      app: 1,
+      create: {
+        name: name,
+        permissions: permissions
+      }
+    };
+
+    const opts = {
+      method: "POST",
+      body: JSON.stringify(body)
+    };
+
+    makeRequest("/admin/role/create", opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
+  };
+
+  handleSuccess = (res: ResponseBody) => {
+    console.log(res.msg);
+  };
+
+  handleFailure = (res: ResponseBody) => {
+    console.log(res.msg);
+  };
+
   getPermissionsSummary = (): React.ReactElement => {
     return (
       <React.Fragment>
@@ -259,7 +289,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
             <br />
             {this.getPermissionsSummary()}
           </span>
-          <button className="button-primary">Create</button>
+          <button className="button-primary" onClick={this.create}>
+            Create
+          </button>
         </div>
       </div>
     );

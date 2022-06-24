@@ -3,8 +3,9 @@ import { Component } from "react";
 import Table, { Column, TableData } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
-import { Role } from "../../interfaces";
+import { ResponseBody, Role } from "../../interfaces";
 import { makeRequest } from "../../utils";
+import { SmallLoader } from "../loader";
 
 interface StudiesEditProps {
   studyId: number;
@@ -13,6 +14,8 @@ interface StudiesEditProps {
 interface StudiesEditState {
   roles: Role[];
   columnsRoles: Column[];
+  loading: boolean;
+  fading: boolean;
   name: string;
   acronym: string;
   dittiId: string;
@@ -55,6 +58,8 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
           width: 10
         }
       ],
+      loading: true,
+      fading: false,
       name: prefill.name,
       acronym: prefill.acronym,
       dittiId: prefill.dittiId,
@@ -71,9 +76,11 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     };
   }
 
-  async componentDidMount() {
-    const roles: Role[] = await makeRequest("/admin/role?app=1");
-    this.setState({ roles });
+  componentDidMount() {
+    makeRequest("/admin/role?app=1").then((roles) => {
+      this.setState({ roles, loading: false, fading: true });
+      setTimeout(() => this.setState({ fading: false }), 500);
+    });
   }
 
   getRolesData = (): TableData[][] => {
@@ -141,6 +148,41 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     this.setState({ rolesSelected }, callback);
   };
 
+  create = (): void => {
+    const { acronym, dittiId, name, rolesSelected } = this.state;
+
+    const roles = rolesSelected.map((r) => {
+      return { id: r.id };
+    });
+
+    const body = {
+      app: 1,
+      create: {
+        acronym: acronym,
+        ditti_id: dittiId,
+        name: name,
+        roles: roles
+      }
+    };
+
+    const opts = {
+      method: "POST",
+      body: JSON.stringify(body)
+    };
+
+    makeRequest("/admin/study/create", opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
+  };
+
+  handleSuccess = (res: ResponseBody) => {
+    console.log(res.msg);
+  };
+
+  handleFailure = (res: ResponseBody) => {
+    console.log(res.msg);
+  };
+
   getRolesSummary = () => {
     const { rolesSelected } = this.state;
 
@@ -168,7 +210,8 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
 
   render() {
     const { studyId } = this.props;
-    const { columnsRoles, name, acronym, dittiId } = this.state;
+    const { columnsRoles, loading, fading, name, acronym, dittiId } =
+      this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -221,16 +264,23 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
               <div className="admin-form-row">
                 <div className="admin-form-field">
                   <span>Add Roles to Study</span>
-                  <Table
-                    columns={columnsRoles}
-                    control={<React.Fragment />}
-                    controlWidth={0}
-                    data={this.getRolesData()}
-                    includeControl={false}
-                    includeSearch={false}
-                    paginationPer={2}
-                    sortDefault="Name"
-                  />
+                  <div className="loader-container">
+                    {loading || fading ? (
+                      <SmallLoader loading={loading} />
+                    ) : null}
+                    {loading ? null : (
+                      <Table
+                        columns={columnsRoles}
+                        control={<React.Fragment />}
+                        controlWidth={0}
+                        data={this.getRolesData()}
+                        includeControl={false}
+                        includeSearch={false}
+                        paginationPer={2}
+                        sortDefault="Name"
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -251,7 +301,9 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
             {this.getRolesSummary()}
             <br />
           </span>
-          <button className="button-primary">Create</button>
+          <button className="button-primary" onClick={this.create}>
+            Create
+          </button>
         </div>
       </div>
     );

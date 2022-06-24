@@ -21,10 +21,14 @@ export const makeRequest = async (url: string, opts?: any): Promise<any> => {
     };
 
   if (opts && opts.method == "POST") {
-    opts.headers = {
-      "Content-Type": "application/json",
-      "X-CSRF-Token": getCookie("csrf_access_token")
-    };
+    if (opts.headers) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.headers["X-CSRF-Token"] = getCookie("csrf_access_token");
+    } else
+      opts.headers = {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": getCookie("csrf_access_token")
+      };
   }
 
   return fetch(process.env.REACT_APP_FLASK_SERVER + url, opts ? opts : {}).then(

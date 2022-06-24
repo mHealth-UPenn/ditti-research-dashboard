@@ -302,13 +302,32 @@ class AccountsEdit extends React.Component<
   };
 
   create = (): void => {
-    const { email, firstName, lastName } = this.state;
+    const {
+      accessGroupsSelected,
+      email,
+      firstName,
+      lastName,
+      rolesSelected,
+      studiesSelected
+    } = this.state;
+
+    const accessGroups = accessGroupsSelected.map((ag) => {
+      return { id: ag.id };
+    });
+
+    const studies = studiesSelected.map((s) => {
+      const role = rolesSelected.filter((r) => r.study == s.id)[0];
+      return { id: s.id, role: role ? { id: role.role } : {} };
+    });
+
     const body = {
       app: 1,
       create: {
+        access_groups: accessGroups,
         email: email,
         first_name: firstName,
-        last_name: lastName
+        last_name: lastName,
+        studies: studies
       }
     };
 

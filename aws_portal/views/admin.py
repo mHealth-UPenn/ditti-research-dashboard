@@ -5,7 +5,8 @@ from flask import Blueprint, jsonify, request
 from aws_portal.extensions import db
 from aws_portal.models import (
     AccessGroup, Account, App, JoinAccessGroupPermission,
-    JoinAccountAccessGroup, JoinRolePermission, Permission, Role, Study
+    JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission, Permission,
+    Role, Study
 )
 from aws_portal.utils.auth import auth_required
 from aws_portal.utils.db import populate_model
@@ -32,6 +33,16 @@ def account_create():
         account.public_id = str(uuid.uuid4())
         account.password = str(uuid.uuid4())
         account.created_on = datetime.utcnow()
+
+        for entry in data['access_groups']:
+            access_group = AccessGroup.query.get(entry['id'])
+            JoinAccountAccessGroup(access_group=access_group, account=account)
+
+        for entry in data['studies']:
+            study = Study.query.get(entry['id'])
+            role = Role.query.get(entry['role']['id'])
+            JoinAccountStudy(account=account, role=role, study=study)
+
         db.session.add(account)
         db.session.commit()
         msg = 'Account Created Successfully'
