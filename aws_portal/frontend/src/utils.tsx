@@ -19,8 +19,13 @@ export const makeRequest = async (url: string, opts?: any): Promise<any> => {
       credentials: "include",
       corssorigin: true
     };
-  if (opts && opts.method == "POST")
-    opts.headers["X-CSRF-TOKEN"] = getCookie("csrf_access_token");
+
+  if (opts && opts.method == "POST") {
+    opts.headers = {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": getCookie("csrf_access_token")
+    };
+  }
 
   return fetch(process.env.REACT_APP_FLASK_SERVER + url, opts ? opts : {}).then(
     async (res) => {

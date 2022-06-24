@@ -3,7 +3,7 @@ import { Component } from "react";
 import Table, { Column, TableData } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
-import { AccessGroup, Role, Study } from "../../interfaces";
+import { AccessGroup, ResponseBody, Role, Study } from "../../interfaces";
 import Select from "../fields/select";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
@@ -301,6 +301,35 @@ class AccountsEdit extends React.Component<
     this.setState({ studiesSelected }, callback);
   };
 
+  create = (): void => {
+    const { email, firstName, lastName } = this.state;
+    const body = {
+      app: 1,
+      create: {
+        email: email,
+        first_name: firstName,
+        last_name: lastName
+      }
+    };
+
+    const opts = {
+      method: "POST",
+      body: JSON.stringify(body)
+    };
+
+    makeRequest("/admin/account/create", opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
+  };
+
+  handleSuccess = (res: ResponseBody) => {
+    console.log(res.msg);
+  };
+
+  handleFailure = (res: ResponseBody) => {
+    console.log(res.msg);
+  };
+
   getAccessGroupsSummary = () => {
     return this.state.accessGroupsSelected.map((ag, i) => {
       const permissions = ag.permissions.map((p, i) => {
@@ -498,7 +527,9 @@ class AccountsEdit extends React.Component<
             {this.getStudiesSummary()}
             <br />
           </span>
-          <button className="button-primary">Create</button>
+          <button className="button-primary" onClick={this.create}>
+            Create
+          </button>
         </div>
       </div>
     );

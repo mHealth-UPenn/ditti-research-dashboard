@@ -30,6 +30,7 @@ def account_create():
     try:
         populate_model(account, data)
         account.public_id = str(uuid.uuid4())
+        account.password = str(uuid.uuid4())
         account.created_on = datetime.utcnow()
         db.session.add(account)
         db.session.commit()
