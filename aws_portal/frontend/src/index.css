@@ -300,6 +300,7 @@ h1 {
 }
 
 .admin-form-summary span {
+  flex-grow: 1;
   overflow: scroll;
   overflow-x: hidden;
 }
