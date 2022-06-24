@@ -63,6 +63,33 @@ def account_edit():
 
     try:
         populate_model(account, data)
+
+        if 'access_groups' in data:
+            for join in account.access_groups:
+                a_ids = [a['id'] for a in data['access_groups']]
+
+                if join.access_group_id not in a_ids:
+                    db.session.delete(join)
+
+            for entry in data['access_groups']:
+                access_group = AccessGroup.query.get(entry['id'])
+                JoinAccountAccessGroup(
+                    access_group=access_group,
+                    account=account
+                )
+
+        if 'studies' in data:
+            for join in account.studies:
+                s_ids = [s['id'] for s in entry['studies']]
+
+                if join.study_id not in s_ids:
+                    db.session.delete(join)
+
+            for entry in data['studies']:
+                study = Study.query.get(entry['id'])
+                role = Role.query.get(entry['role']['id'])
+                JoinAccountStudy(account=account, role=role, study=study)
+
         db.session.commit()
         msg = 'Account Edited Successfully'
 

@@ -63,7 +63,18 @@ def test_account_create(post):
             'first_name': 'foo',
             'last_name': 'bar',
             'email': 'baz@email.com',
-            'password': 'foo'
+            'password': 'foo',
+            'access_groups': [
+                {'id': 1}
+            ],
+            'studies': [
+                {
+                    'id': 1,
+                    'role': {
+                        'id': 1
+                    }
+                }
+            ]
         }
     }
 
@@ -77,8 +88,11 @@ def test_account_create(post):
     foo = Account.query.filter(q1).first()
     assert foo is not None
     assert foo.first_name == 'foo'
-    assert foo.last_name == 'bar'
-    assert foo.check_password('foo')
+    assert len(foo.access_groups) == 1
+    assert foo.access_groups[0].access_group_id == 1
+    assert len(foo.studies) == 1
+    assert foo.studies[0].study_id == 1
+    assert foo.studies[0].role_id == 1
 
 
 def test_account_edit(post):
@@ -88,6 +102,17 @@ def test_account_edit(post):
         'edit': {
             'first_name': 'foo',
             'last_name': 'bar',
+            'access_groups': [
+                {'id': 2}
+            ],
+            'studies': [
+                {
+                    'id': 2,
+                    'role': {
+                        'id': 2
+                    }
+                }
+            ]
         }
     }
 
@@ -99,7 +124,11 @@ def test_account_edit(post):
 
     foo = Account.query.get(1)
     assert foo.first_name == 'foo'
-    assert foo.last_name == 'bar'
+    assert len(foo.access_groups) == 1
+    assert foo.access_groups[0].access_group_id == 2
+    assert len(foo.studies) == 1
+    assert foo.studies[0].study_id == 2
+    assert foo.studies[0].role_id == 2
 
 
 def test_account_archive(post):
