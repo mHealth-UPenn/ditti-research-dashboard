@@ -2,60 +2,75 @@ import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
 import Select from "../fields/select";
-import { App, Permission, ResponseBody, Study } from "../../interfaces";
+import { AccessGroup, App, Permission, ResponseBody } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { actionsRaw, resourcesRaw } from "./rolesEdit";
+import { SmallLoader } from "../loader";
+
+interface AccessGroupPrefill {
+  name: string;
+  appSelected: App;
+  permissions: Permission[];
+}
 
 interface AccessGroupsEditProps {
   accessGroupId: number;
 }
 
-interface AccessGroupsEditState {
+interface AccessGroupsEditState extends AccessGroupPrefill {
   apps: App[];
-  name: string;
-  appSelected: App;
-  permissions: Permission[];
+  loading: boolean;
 }
 
 class AccessGroupsEdit extends React.Component<
   AccessGroupsEditProps,
   AccessGroupsEditState
 > {
-  constructor(props: AccessGroupsEditProps) {
-    super(props);
-
-    const { accessGroupId } = props;
-    const prefill = accessGroupId
-      ? this.getPrefill(accessGroupId)
-      : {
-          name: "",
-          app: {} as App,
-          permissions: []
-        };
-
-    this.state = {
-      apps: [],
-      name: prefill.name,
-      appSelected: prefill.app,
-      permissions: prefill.permissions
-    };
-  }
+  state = {
+    apps: [],
+    loading: true,
+    name: "",
+    appSelected: {} as App,
+    permissions: []
+  };
 
   componentDidMount() {
-    if (!this.state.permissions) this.addPermission();
-    makeRequest("/admin/app?app=1").then((apps) => this.setState({ apps }));
+    const apps = makeRequest("/admin/app?app=1").then((apps) =>
+      this.setState({ apps })
+    );
+    const prefill = this.getPrefill().then((prefill) => {
+      this.setState({ ...prefill });
+    });
+
+    const promises = [apps, prefill];
+    Promise.all(promises).then(() => {
+      if (!this.state.permissions) this.addPermission();
+      this.setState({ loading: false });
+    });
   }
 
-  getPrefill(id: number) {
+  getPrefill = async (): Promise<AccessGroupPrefill> => {
+    const id = this.props.accessGroupId;
+    return id
+      ? makeRequest("/admin/access-group?app=1&id=" + id).then(this.makePrefill)
+      : {
+          name: "",
+          appSelected: {} as App,
+          permissions: []
+        };
+  };
+
+  makePrefill = (res: AccessGroup[]): AccessGroupPrefill => {
+    const accessGroup = res[0];
     return {
-      name: "",
-      app: {} as App,
-      permissions: []
+      name: accessGroup.name,
+      appSelected: accessGroup.app,
+      permissions: accessGroup.permissions
     };
-  }
+  };
 
   selectApp = (id: number): void => {
-    const appSelected = this.state.apps.filter((a) => a.id == id)[0];
+    const appSelected = this.state.apps.filter((a: App) => a.id == id)[0];
     if (appSelected) this.setState({ appSelected });
   };
 
@@ -69,7 +84,7 @@ class AccessGroupsEdit extends React.Component<
 
     return (
       <React.Fragment>
-        {permissions.map((p) => {
+        {permissions.map((p: Permission) => {
           return (
             <div key={p.id} className="admin-form-row">
               <div className="admin-form-field border-light">
@@ -110,7 +125,7 @@ class AccessGroupsEdit extends React.Component<
   };
 
   addPermission = (): void => {
-    const { permissions } = this.state;
+    const permissions: Permission[] = this.state.permissions;
     const id = permissions.length
       ? permissions[permissions.length - 1].id + 1
       : 0;
@@ -119,7 +134,9 @@ class AccessGroupsEdit extends React.Component<
   };
 
   removePermission = (id: number): void => {
-    const permissions = this.state.permissions.filter((p) => p.id != id);
+    const permissions = this.state.permissions.filter(
+      (p: Permission) => p.id != id
+    );
     this.setState({ permissions });
   };
 
@@ -128,7 +145,9 @@ class AccessGroupsEdit extends React.Component<
 
     if (action) {
       const { permissions } = this.state;
-      const permission = permissions.filter((p) => p.id == permissionId)[0];
+      const permission: Permission = permissions.filter(
+        (p: Permission) => p.id == permissionId
+      )[0];
 
       if (permission) {
         permission.action = action.text;
@@ -138,7 +157,9 @@ class AccessGroupsEdit extends React.Component<
   };
 
   getSelectedAction = (id: number): number => {
-    const permission = this.state.permissions.filter((p) => p.id == id)[0];
+    const permission: Permission = this.state.permissions.filter(
+      (p: Permission) => p.id == id
+    )[0];
 
     if (permission) {
       const actionText = permission.action;
@@ -155,7 +176,9 @@ class AccessGroupsEdit extends React.Component<
 
     if (resource) {
       const { permissions } = this.state;
-      const permission = permissions.filter((p) => p.id == permissionId)[0];
+      const permission: Permission = permissions.filter(
+        (p: Permission) => p.id == permissionId
+      )[0];
 
       if (permission) {
         permission.resource = resource.text;
@@ -165,7 +188,9 @@ class AccessGroupsEdit extends React.Component<
   };
 
   getSelectedResource = (id: number): number => {
-    const permission = this.state.permissions.filter((p) => p.id == id)[0];
+    const permission: Permission = this.state.permissions.filter(
+      (p: Permission) => p.id == id
+    )[0];
 
     if (permission) {
       const resourceText = permission.resource;
@@ -177,29 +202,22 @@ class AccessGroupsEdit extends React.Component<
     }
   };
 
-  create = (): void => {
+  post = (): void => {
     const { appSelected, name, permissions } = this.state;
-    const ps = permissions.map((p) => {
+    const ps = permissions.map((p: Permission) => {
       return { action: p.action, resource: p.resource };
     });
 
+    const id = this.props.accessGroupId;
+    const data = { app: appSelected.id, name: name, permissions: ps };
     const body = {
       app: 1,
-      create: {
-        app: appSelected.id,
-        name: name,
-        permissions: ps
-      }
+      ...(id ? { id: id, edit: data } : { create: data })
     };
 
-    const opts = {
-      method: "POST",
-      body: JSON.stringify(body)
-    };
-
-    makeRequest("/admin/access-group/create", opts)
-      .then(this.handleSuccess)
-      .catch(this.handleFailure);
+    const opts = { method: "POST", body: JSON.stringify(body) };
+    const url = id ? "/admin/access-group/edit" : "/admin/access-group/create";
+    makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
@@ -213,7 +231,7 @@ class AccessGroupsEdit extends React.Component<
   getPermissionsSummary = (): React.ReactElement => {
     return (
       <React.Fragment>
-        {this.state.permissions.map((p) => {
+        {this.state.permissions.map((p: Permission) => {
           return p.action || p.resource ? (
             <span key={p.id}>
               &nbsp;&nbsp;&nbsp;&nbsp;
@@ -230,7 +248,7 @@ class AccessGroupsEdit extends React.Component<
 
   render() {
     const { accessGroupId } = this.props;
-    const { name, apps, appSelected } = this.state;
+    const { name, loading, apps, appSelected } = this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -259,23 +277,33 @@ class AccessGroupsEdit extends React.Component<
                   <div style={{ marginBottom: "0.5rem" }}>
                     <b>App</b>
                   </div>
-                  <div className="border-light">
-                    <Select
-                      id={accessGroupId}
-                      opts={apps.map((a) => {
-                        return { value: a.id, label: a.name };
-                      })}
-                      placeholder="Select app..."
-                      callback={this.selectApp}
-                      getDefault={this.getSelectedApp}
-                    />
-                  </div>
+                  {loading ? (
+                    <SmallLoader />
+                  ) : (
+                    <div className="border-light">
+                      <Select
+                        id={accessGroupId}
+                        opts={apps.map((a: App) => {
+                          return { value: a.id, label: a.name };
+                        })}
+                        placeholder="Select app..."
+                        callback={this.selectApp}
+                        getDefault={this.getSelectedApp}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
               <div style={{ marginLeft: "2rem", marginBottom: "0.5rem" }}>
                 <b>Add Permissions to Access Group</b>
               </div>
-              {this.getPermissionFields()}
+              {loading ? (
+                <div style={{ marginBottom: "2rem" }}>
+                  <SmallLoader />
+                </div>
+              ) : (
+                this.getPermissionFields()
+              )}
               <div className="admin-form-row">
                 <div className="admin-form-field">
                   <button
@@ -297,12 +325,12 @@ class AccessGroupsEdit extends React.Component<
             App: {appSelected.name}
             <br />
             <br />
-            Studies:
+            Permissions:
             <br />
             {this.getPermissionsSummary()}
             <br />
           </span>
-          <button className="button-primary" onClick={this.create}>
+          <button className="button-primary" onClick={this.post}>
             Create
           </button>
         </div>

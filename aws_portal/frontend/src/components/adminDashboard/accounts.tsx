@@ -152,35 +152,33 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
       <div className="page-container">
         <Navbar handleClick={handleClick} active="Accounts" />
         <div className="page-content bg-white">
-          <div className="loader-container">
-            {loading ? (
-              <SmallLoader />
-            ) : (
-              <Table
-                columns={columns}
-                control={
-                  <button
-                    className="button-primary"
-                    onClick={() =>
-                      handleClick(
-                        ["Create"],
-                        <AccountsEdit accountId={0} />,
-                        false
-                      )
-                    }
-                  >
-                    Create&nbsp;<b>+</b>
-                  </button>
-                }
-                controlWidth={10}
-                data={this.getData()}
-                includeControl={true}
-                includeSearch={true}
-                paginationPer={10}
-                sortDefault=""
-              />
-            )}
-          </div>
+          {loading ? (
+            <SmallLoader />
+          ) : (
+            <Table
+              columns={columns}
+              control={
+                <button
+                  className="button-primary"
+                  onClick={() =>
+                    handleClick(
+                      ["Create"],
+                      <AccountsEdit accountId={0} />,
+                      false
+                    )
+                  }
+                >
+                  Create&nbsp;<b>+</b>
+                </button>
+              }
+              controlWidth={10}
+              data={this.getData()}
+              includeControl={true}
+              includeSearch={true}
+              paginationPer={10}
+              sortDefault=""
+            />
+          )}
         </div>
       </div>
     );

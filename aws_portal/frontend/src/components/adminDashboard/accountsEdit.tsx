@@ -511,43 +511,39 @@ class AccountsEdit extends React.Component<
               <div className="admin-form-row">
                 <div className="admin-form-field">
                   <span>Assign Account to Access Group</span>
-                  <div className="loader-container">
-                    {loading ? (
-                      <SmallLoader />
-                    ) : (
-                      <Table
-                        columns={columnsAccessGroups}
-                        control={<React.Fragment />}
-                        controlWidth={0}
-                        data={this.getAccessGroupsData()}
-                        includeControl={false}
-                        includeSearch={false}
-                        paginationPer={4}
-                        sortDefault="Name"
-                      />
-                    )}
-                  </div>
+                  {loading ? (
+                    <SmallLoader />
+                  ) : (
+                    <Table
+                      columns={columnsAccessGroups}
+                      control={<React.Fragment />}
+                      controlWidth={0}
+                      data={this.getAccessGroupsData()}
+                      includeControl={false}
+                      includeSearch={false}
+                      paginationPer={4}
+                      sortDefault="Name"
+                    />
+                  )}
                 </div>
               </div>
               <div className="admin-form-row">
                 <div className="admin-form-field">
                   <span>Assign Account to Studies</span>
-                  <div className="loader-container">
-                    {loading ? (
-                      <SmallLoader />
-                    ) : (
-                      <Table
-                        columns={columnsStudies}
-                        control={<React.Fragment />}
-                        controlWidth={0}
-                        data={this.getStudiesData()}
-                        includeControl={false}
-                        includeSearch={false}
-                        paginationPer={4}
-                        sortDefault="Name"
-                      />
-                    )}
-                  </div>
+                  {loading ? (
+                    <SmallLoader />
+                  ) : (
+                    <Table
+                      columns={columnsStudies}
+                      control={<React.Fragment />}
+                      controlWidth={0}
+                      data={this.getStudiesData()}
+                      includeControl={false}
+                      includeSearch={false}
+                      paginationPer={4}
+                      sortDefault="Name"
+                    />
+                  )}
                 </div>
               </div>
             </div>

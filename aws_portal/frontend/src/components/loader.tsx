@@ -50,7 +50,11 @@ export class SmallLoader extends React.Component<any, SmallLoaderState> {
   };
 
   render() {
-    return <Loader style={this.state.style} />;
+    return (
+      <div className="loader-container">
+        <Loader style={this.state.style} />
+      </div>
+    );
   }
 }
 

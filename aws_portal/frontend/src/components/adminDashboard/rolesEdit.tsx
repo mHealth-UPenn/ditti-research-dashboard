@@ -4,6 +4,7 @@ import TextField from "../fields/textField";
 import Select from "../fields/select";
 import { Permission, ResponseBody, Role } from "../../interfaces";
 import { makeRequest } from "../../utils";
+import { SmallLoader } from "../loader";
 
 export const actionsRaw = [
   {
@@ -39,37 +40,43 @@ export const resourcesRaw = [
   }
 ];
 
-interface RolesEditProps {
-  roleId: number;
-}
-
-interface RolesEditState {
+interface RolesPrefill {
   name: string;
   permissions: Permission[];
 }
 
+interface RolesEditProps {
+  roleId: number;
+}
+
+interface RolesEditState extends RolesPrefill {
+  loading: boolean;
+}
+
 class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   state = {
+    loading: true,
     name: "",
     permissions: []
   };
 
   componentDidMount() {
-    this.getPrefill().then((prefill: RolesEditState) =>
+    this.getPrefill().then((prefill: RolesPrefill) =>
       this.setState({ ...prefill }, () => {
         if (!this.state.permissions) this.addPermission();
+        this.setState({ loading: false });
       })
     );
   }
 
-  getPrefill = async (): Promise<RolesEditState> => {
+  getPrefill = async (): Promise<RolesPrefill> => {
     const id = this.props.roleId;
     return id
       ? makeRequest("/admin/role?app=1&id=" + id).then(this.makePrefill)
       : { name: "", permissions: [] };
   };
 
-  makePrefill = (res: Role[]): RolesEditState => {
+  makePrefill = (res: Role[]): RolesPrefill => {
     const role = res[0];
 
     return {
@@ -247,7 +254,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
 
   render() {
     const { roleId } = this.props;
-    const { name } = this.state;
+    const { loading, name } = this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -274,7 +281,13 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
               <div style={{ marginLeft: "2rem", marginBottom: "0.5rem" }}>
                 <b>Add Permissions to Role</b>
               </div>
-              {this.getPermissionFields()}
+              {loading ? (
+                <div style={{ marginBottom: "2rem" }}>
+                  <SmallLoader />
+                </div>
+              ) : (
+                this.getPermissionFields()
+              )}
               <div className="admin-form-row">
                 <div className="admin-form-field">
                   <button

@@ -70,7 +70,7 @@ class AccessGroups extends React.Component<
 
   getData = (): TableData[][] => {
     return this.state.accessGroups.map((ag: AccessGroup) => {
-      const { app, name } = ag;
+      const { app, id, name } = ag;
 
       return [
         {
@@ -112,7 +112,18 @@ class AccessGroups extends React.Component<
         {
           contents: (
             <div className="flex-left table-control">
-              <button className="button-secondary">Edit</button>
+              <button
+                className="button-secondary"
+                onClick={() =>
+                  this.props.handleClick(
+                    ["Edit", name],
+                    <AccessGroupsEdit accessGroupId={id} />,
+                    false
+                  )
+                }
+              >
+                Edit
+              </button>
               <button className="button-danger">Delete</button>
             </div>
           ),
