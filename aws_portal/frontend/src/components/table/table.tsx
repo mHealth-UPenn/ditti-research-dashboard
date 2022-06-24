@@ -22,7 +22,12 @@ export interface Header {
   width: number;
 }
 
-interface TableData {
+export interface TableData {
+  contents: React.ReactElement;
+  sortValue: string;
+}
+
+interface Row {
   contents: React.ReactElement;
   searchable: boolean;
   searchValue: string;
@@ -35,10 +40,7 @@ interface TableProps {
   columns: Column[];
   control: React.ReactElement;
   controlWidth: number;
-  data: {
-    contents: React.ReactElement;
-    sortValue: string;
-  }[][];
+  data: TableData[][];
   includeControl: boolean;
   includeSearch: boolean;
   paginationPer: number;
@@ -46,8 +48,8 @@ interface TableProps {
 }
 
 interface TableState {
-  rows: TableData[][];
-  rowsFiltered: TableData[][];
+  rows: Row[][];
+  rowsFiltered: Row[][];
   rowsRendered: React.ReactElement;
   headers: Header[];
   page: number;
@@ -142,7 +144,7 @@ class Table extends React.Component<TableProps, TableState> {
     this.setState({ page });
   };
 
-  renderRows(page: number, data: TableData[][]) {
+  renderRows(page: number, data: Row[][]) {
     const { paginationPer } = this.props;
 
     const rowsRendered = (

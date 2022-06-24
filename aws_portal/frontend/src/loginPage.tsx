@@ -7,47 +7,7 @@ import { ReactComponent as Key } from "./icons/key.svg";
 import Dashboard from "./components/dashboard";
 import { Buffer } from "buffer";
 import { makeRequest } from "./utils";
-
-interface LoaderProps {
-  loading: boolean;
-}
-
-class Loader extends React.Component<LoaderProps, any> {
-  render() {
-    const loadingStyle = {
-      alignItems: "center",
-      backgroundColor: "white",
-      display: "flex",
-      justifyContent: "center",
-      height: "100vh",
-      position: "absolute",
-      width: "100vw"
-    } as React.StyleHTMLAttributes<HTMLDivElement>;
-
-    const fadingStyle = {
-      alignItems: "center",
-      backgroundColor: "white",
-      display: "flex",
-      justifyContent: "center",
-      height: "100vh",
-      opacity: 0,
-      position: "absolute",
-      transition: "opacity 500ms ease-in",
-      width: "100vw"
-    } as React.StyleHTMLAttributes<HTMLDivElement>;
-
-    return (
-      <div id="loader" style={this.props.loading ? loadingStyle : fadingStyle}>
-        <div className="lds-ring">
-          <div></div>
-          <div></div>
-          <div></div>
-          <div></div>
-        </div>
-      </div>
-    );
-  }
-}
+import { FullLoader } from "./components/loader";
 
 interface LoginPageState {
   email: string;
@@ -152,7 +112,7 @@ class LoginPage extends React.Component<any, LoginPageState> {
 
     return (
       <React.Fragment>
-        {loading || fading ? <Loader loading={loading} /> : null}
+        {loading || fading ? <FullLoader loading={loading} /> : null}
         <div>{loggedIn ? <Dashboard /> : page}</div>
       </React.Fragment>
     );

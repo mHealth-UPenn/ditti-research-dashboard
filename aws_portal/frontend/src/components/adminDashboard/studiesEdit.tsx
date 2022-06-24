@@ -1,91 +1,93 @@
 import * as React from "react";
 import { Component } from "react";
-import Table, { Column } from "../table/table";
+import Table, { Column, TableData } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
 import { Role } from "../../interfaces";
+import { makeRequest } from "../../utils";
 
-export const rolesRaw: Role[] = [
-  {
-    id: 1,
-    name: "Admin",
-    permissions: [
-      {
-        id: 10,
-        action: "View",
-        resource: "Users"
-      },
-      {
-        id: 10,
-        action: "View",
-        resource: "Taps"
-      },
-      {
-        id: 10,
-        action: "Add",
-        resource: "Users"
-      },
-      {
-        id: 10,
-        action: "Edit",
-        resource: "Users"
-      },
-      {
-        id: 10,
-        action: "Delete",
-        resource: "Users"
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: "Coordinator",
-    permissions: [
-      {
-        id: 10,
-        action: "View",
-        resource: "Users"
-      },
-      {
-        id: 10,
-        action: "View",
-        resource: "Taps"
-      },
-      {
-        id: 10,
-        action: "Add",
-        resource: "Users"
-      }
-    ]
-  },
-  {
-    id: 3,
-    name: "Viewer",
-    permissions: [
-      {
-        id: 10,
-        action: "View",
-        resource: "Users"
-      },
-      {
-        id: 10,
-        action: "View",
-        resource: "Taps"
-      }
-    ]
-  }
-];
+// export const rolesRaw: Role[] = [
+//   {
+//     id: 1,
+//     name: "Admin",
+//     permissions: [
+//       {
+//         id: 10,
+//         action: "View",
+//         resource: "Users"
+//       },
+//       {
+//         id: 10,
+//         action: "View",
+//         resource: "Taps"
+//       },
+//       {
+//         id: 10,
+//         action: "Add",
+//         resource: "Users"
+//       },
+//       {
+//         id: 10,
+//         action: "Edit",
+//         resource: "Users"
+//       },
+//       {
+//         id: 10,
+//         action: "Delete",
+//         resource: "Users"
+//       }
+//     ]
+//   },
+//   {
+//     id: 2,
+//     name: "Coordinator",
+//     permissions: [
+//       {
+//         id: 10,
+//         action: "View",
+//         resource: "Users"
+//       },
+//       {
+//         id: 10,
+//         action: "View",
+//         resource: "Taps"
+//       },
+//       {
+//         id: 10,
+//         action: "Add",
+//         resource: "Users"
+//       }
+//     ]
+//   },
+//   {
+//     id: 3,
+//     name: "Viewer",
+//     permissions: [
+//       {
+//         id: 10,
+//         action: "View",
+//         resource: "Users"
+//       },
+//       {
+//         id: 10,
+//         action: "View",
+//         resource: "Taps"
+//       }
+//     ]
+//   }
+// ];
 
 interface StudiesEditProps {
   studyId: number;
 }
 
 interface StudiesEditState {
+  roles: Role[];
   columnsRoles: Column[];
   name: string;
   acronym: string;
   dittiId: string;
-  roles: Role[];
+  rolesSelected: Role[];
 }
 
 class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
@@ -99,10 +101,11 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
           name: "",
           acronym: "",
           dittiId: "",
-          roles: []
+          rolesSelected: []
         };
 
     this.state = {
+      roles: [],
       columnsRoles: [
         {
           name: "Name",
@@ -126,7 +129,7 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
       name: prefill.name,
       acronym: prefill.acronym,
       dittiId: prefill.dittiId,
-      roles: prefill.roles
+      rolesSelected: prefill.rolesSelected
     };
   }
 
@@ -135,12 +138,17 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
       name: "",
       acronym: "",
       dittiId: "",
-      roles: []
+      rolesSelected: []
     };
   }
 
-  getRolesData() {
-    return rolesRaw.map((role, i) => {
+  async componentDidMount() {
+    const roles: Role[] = await makeRequest("/admin/role?app=1");
+    this.setState({ roles });
+  }
+
+  getRolesData = (): TableData[][] => {
+    return this.state.roles.map((role: Role) => {
       const { id, name, permissions } = role;
 
       return [
@@ -170,7 +178,7 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
           contents: (
             <div className="flex-left table-control">
               <ToggleButton
-                key={i}
+                key={id}
                 id={id}
                 getActive={this.isActiveRole}
                 add={this.addRole}
@@ -183,33 +191,31 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
         }
       ];
     });
-  }
+  };
 
   isActiveRole = (id: number): boolean => {
-    console.log(id);
-    console.log(this.state.roles);
-    return this.state.roles.some((r) => r.id == id);
+    return this.state.rolesSelected.some((r) => r.id == id);
   };
 
   addRole = (id: number, callback: () => void): void => {
-    const { roles } = this.state;
-    const role = rolesRaw.filter((r) => r.id == id)[0];
+    const { rolesSelected } = this.state;
+    const role = this.state.roles.filter((r) => r.id == id)[0];
 
     if (role) {
-      roles.push(role);
-      this.setState({ roles }, callback);
+      rolesSelected.push(role);
+      this.setState({ rolesSelected }, callback);
     }
   };
 
   removeRole = (id: number, callback: () => void): void => {
-    const roles = this.state.roles.filter((r) => r.id != id);
-    this.setState({ roles }, callback);
+    const rolesSelected = this.state.rolesSelected.filter((r) => r.id != id);
+    this.setState({ rolesSelected }, callback);
   };
 
   getRolesSummary = () => {
-    const { roles } = this.state;
+    const { rolesSelected } = this.state;
 
-    return roles.map((role, i) => {
+    return rolesSelected.map((role, i) => {
       const permissions = role.permissions.map((permission, j) => {
         return (
           <span key={j}>

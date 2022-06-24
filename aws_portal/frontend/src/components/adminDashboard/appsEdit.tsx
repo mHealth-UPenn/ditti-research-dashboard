@@ -1,8 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
-import { App, ResponseBody } from "../../interfaces";
-import { makeRequest } from "../../utils";
 
 interface AppsEditProps {
   appId: number;
@@ -23,26 +21,6 @@ class AppsEdit extends React.Component<AppsEditProps, AppsEditState> {
   getPrefill(id: number) {
     return { name: "" };
   }
-
-  tryCreate = (): void => {
-    this.create().then(this.handleCreate, this.handleException);
-  };
-
-  create = async (): Promise<ResponseBody> => {
-    return fetch("").then((res) => {
-      return {
-        msg: ""
-      };
-    });
-  };
-
-  handleCreate = (res: ResponseBody): void => {
-    console.log(res.msg);
-  };
-
-  handleException = (res: ResponseBody): void => {
-    console.log(res.msg);
-  };
 
   render() {
     const { appId } = this.props;

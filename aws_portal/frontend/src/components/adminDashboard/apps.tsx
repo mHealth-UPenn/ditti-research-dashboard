@@ -1,17 +1,19 @@
 import * as React from "react";
 import { Component } from "react";
 import Navbar from "./navbar";
-import Table from "../table/table";
+import Table, { TableData } from "../table/table";
 import AppsEdit from "./appsEdit";
+import { makeRequest } from "../../utils";
+import { App } from "../../interfaces";
 
-const data = [
-  {
-    name: "Ditti App"
-  },
-  {
-    name: "Admin Dashboard"
-  }
-];
+// const data = [
+//   {
+//     name: "Ditti App"
+//   },
+//   {
+//     name: "Admin Dashboard"
+//   }
+// ];
 
 interface AppsProps {
   handleClick: (
@@ -22,6 +24,7 @@ interface AppsProps {
 }
 
 interface AppsState {
+  apps: App[];
   columns: {
     name: string;
     sortable: boolean;
@@ -31,6 +34,7 @@ interface AppsState {
 
 class Apps extends React.Component<AppsProps, AppsState> {
   state = {
+    apps: [],
     columns: [
       {
         name: "Name",
@@ -47,9 +51,14 @@ class Apps extends React.Component<AppsProps, AppsState> {
     ]
   };
 
-  getData = () => {
-    return data.map((row) => {
-      const { name } = row;
+  async componentDidMount() {
+    const apps: App[] = await makeRequest("/admin/app?app=1");
+    this.setState({ apps });
+  }
+
+  getData = (): TableData[][] => {
+    return this.state.apps.map((a) => {
+      const { name } = a;
 
       return [
         {

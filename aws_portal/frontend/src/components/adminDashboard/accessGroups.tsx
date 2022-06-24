@@ -1,29 +1,32 @@
 import * as React from "react";
 import { Component } from "react";
 import Navbar from "./navbar";
-import Table from "../table/table";
+import Table, { Column, TableData } from "../table/table";
 import AccessGroupsEdit from "./accessGroupsEdit";
+import { AccessGroup } from "../../interfaces";
+import { makeRequest } from "../../utils";
+import { SmallLoader } from "../loader";
 
-const data = [
-  {
-    app: "Ditti App",
-    name: "Ditti App Staff",
-    roles: ["Coordinator", "Manager"],
-    studies: ["MSBI", "ART OSA"]
-  },
-  {
-    app: "Ditti App",
-    name: "Ditti App Admins",
-    roles: ["Admin", "Super Admin"],
-    studies: ["MSBI", "ART OSA"]
-  },
-  {
-    app: "Admin Dashboard",
-    name: "Admins",
-    roles: ["Admin", "Super Admin"],
-    studies: []
-  }
-];
+// const data = [
+//   {
+//     app: "Ditti App",
+//     name: "Ditti App Staff",
+//     roles: ["Coordinator", "Manager"],
+//     studies: ["MSBI", "ART OSA"]
+//   },
+//   {
+//     app: "Ditti App",
+//     name: "Ditti App Admins",
+//     roles: ["Admin", "Super Admin"],
+//     studies: ["MSBI", "ART OSA"]
+//   },
+//   {
+//     app: "Admin Dashboard",
+//     name: "Admins",
+//     roles: ["Admin", "Super Admin"],
+//     studies: []
+//   }
+// ];
 
 interface AccessGroupsProps {
   handleClick: (
@@ -34,11 +37,10 @@ interface AccessGroupsProps {
 }
 
 interface AccessGroupsState {
-  columns: {
-    name: string;
-    sortable: boolean;
-    width: number;
-  }[];
+  accessGroups: AccessGroup[];
+  columns: Column[];
+  loading: boolean;
+  fading: boolean;
 }
 
 class AccessGroups extends React.Component<
@@ -46,6 +48,7 @@ class AccessGroups extends React.Component<
   AccessGroupsState
 > {
   state = {
+    accessGroups: [],
     columns: [
       {
         name: "Name",
@@ -77,12 +80,21 @@ class AccessGroups extends React.Component<
         sortable: false,
         width: 10
       }
-    ]
+    ],
+    loading: true,
+    fading: false
   };
 
-  getData = () => {
-    return data.map((row) => {
-      const { app, name, roles, studies } = row;
+  async componentDidMount() {
+    makeRequest("/admin/access-group?app=1").then((accessGroups) => {
+      this.setState({ accessGroups, loading: false, fading: true });
+      setTimeout(() => this.setState({ fading: false }), 500);
+    });
+  }
+
+  getData = (): TableData[][] => {
+    return this.state.accessGroups.map((ag: AccessGroup) => {
+      const { app, name } = ag;
 
       return [
         {
@@ -97,16 +109,16 @@ class AccessGroups extends React.Component<
         {
           contents: (
             <div className="flex-left table-data">
-              <span>{app}</span>
+              <span>{app.name}</span>
             </div>
           ),
-          searchValue: app,
-          sortValue: app
+          searchValue: app.name,
+          sortValue: app.name
         },
         {
           contents: (
             <div className="flex-left table-data">
-              <span>{roles.join(", ")}</span>
+              <span>roles</span>
             </div>
           ),
           searchValue: "",
@@ -115,11 +127,11 @@ class AccessGroups extends React.Component<
         {
           contents: (
             <div className="flex-left table-data">
-              <span>{studies.join(", ")}</span>
+              <span>studies</span>
             </div>
           ),
-          searchValue: studies.join(", "),
-          sortValue: studies.join(", ")
+          searchValue: "",
+          sortValue: ""
         },
         {
           contents: (
@@ -137,35 +149,40 @@ class AccessGroups extends React.Component<
 
   render() {
     const { handleClick } = this.props;
-    const { columns } = this.state;
+    const { columns, loading, fading } = this.state;
 
     return (
       <div className="page-container">
         <Navbar handleClick={handleClick} active="Access Groups" />
         <div className="page-content bg-white">
-          <Table
-            columns={columns}
-            control={
-              <button
-                className="button-primary"
-                onClick={() =>
-                  handleClick(
-                    ["Create"],
-                    <AccessGroupsEdit accessGroupId={0} />,
-                    false
-                  )
+          <div style={{ position: "relative", height: "100%", width: "100%" }}>
+            {loading || fading ? <SmallLoader loading={loading} /> : null}
+            {loading ? null : (
+              <Table
+                columns={columns}
+                control={
+                  <button
+                    className="button-primary"
+                    onClick={() =>
+                      handleClick(
+                        ["Create"],
+                        <AccessGroupsEdit accessGroupId={0} />,
+                        false
+                      )
+                    }
+                  >
+                    Create&nbsp;<b>+</b>
+                  </button>
                 }
-              >
-                Create&nbsp;<b>+</b>
-              </button>
-            }
-            controlWidth={10}
-            data={this.getData()}
-            includeControl={true}
-            includeSearch={true}
-            paginationPer={2}
-            sortDefault=""
-          />
+                controlWidth={10}
+                data={this.getData()}
+                includeControl={true}
+                includeSearch={true}
+                paginationPer={2}
+                sortDefault=""
+              />
+            )}
+          </div>
         </div>
       </div>
     );

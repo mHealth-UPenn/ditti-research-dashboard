@@ -1,48 +1,51 @@
 import * as React from "react";
 import { Component } from "react";
 import AccountsEdit from "./accountsEdit";
-import { Column } from "../table/table";
+import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import Navbar from "./navbar";
+import { makeRequest } from "../../utils";
+import { Account } from "../../interfaces";
+import { SmallLoader } from "../loader";
 
-const data = [
-  {
-    name: "John Smith1",
-    email: "john.smith1@pennmedicine.upenn.edu",
-    createdOn: new Date("Jan 1, 2022"),
-    lastLogin: 21
-  },
-  {
-    name: "John Smith2",
-    email: "john.smith2@pennmedicine.upenn.edu",
-    createdOn: new Date("Feb 6, 2022"),
-    lastLogin: 1
-  },
-  {
-    name: "John Smith3",
-    email: "john.smith3@pennmedicine.upenn.edu",
-    createdOn: new Date("Apr 2, 2022"),
-    lastLogin: 354
-  },
-  {
-    name: "Jane Doe2",
-    email: "jane.doe2@pennmedicine.upenn.edu",
-    createdOn: new Date("Jan 1, 2022"),
-    lastLogin: 0
-  },
-  {
-    name: "Jane Doe3",
-    email: "jane.doe3@pennmedicine.upenn.edu",
-    createdOn: new Date("Dec 31, 2021"),
-    lastLogin: 12
-  },
-  {
-    name: "Jane Doe4",
-    email: "jane.doe4@pennmedicine.upenn.edu",
-    createdOn: new Date("Oct 1, 2021"),
-    lastLogin: 44
-  }
-];
+// const data = [
+//   {
+//     name: "John Smith1",
+//     email: "john.smith1@pennmedicine.upenn.edu",
+//     createdOn: new Date("Jan 1, 2022"),
+//     lastLogin: 21
+//   },
+//   {
+//     name: "John Smith2",
+//     email: "john.smith2@pennmedicine.upenn.edu",
+//     createdOn: new Date("Feb 6, 2022"),
+//     lastLogin: 1
+//   },
+//   {
+//     name: "John Smith3",
+//     email: "john.smith3@pennmedicine.upenn.edu",
+//     createdOn: new Date("Apr 2, 2022"),
+//     lastLogin: 354
+//   },
+//   {
+//     name: "Jane Doe2",
+//     email: "jane.doe2@pennmedicine.upenn.edu",
+//     createdOn: new Date("Jan 1, 2022"),
+//     lastLogin: 0
+//   },
+//   {
+//     name: "Jane Doe3",
+//     email: "jane.doe3@pennmedicine.upenn.edu",
+//     createdOn: new Date("Dec 31, 2021"),
+//     lastLogin: 12
+//   },
+//   {
+//     name: "Jane Doe4",
+//     email: "jane.doe4@pennmedicine.upenn.edu",
+//     createdOn: new Date("Oct 1, 2021"),
+//     lastLogin: 44
+//   }
+// ];
 
 interface AccountsProps {
   handleClick: (
@@ -53,11 +56,15 @@ interface AccountsProps {
 }
 
 interface AccountsState {
+  accounts: Account[];
   columns: Column[];
+  loading: boolean;
+  fading: boolean;
 }
 
 class Accounts extends React.Component<AccountsProps, AccountsState> {
   state = {
+    accounts: [],
     columns: [
       {
         name: "Name",
@@ -89,13 +96,24 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         sortable: false,
         width: 10
       }
-    ]
+    ],
+    loading: true,
+    fading: false
   };
 
-  getData = () => {
-    const pad = Math.max(...data.map((row) => String(row.lastLogin).length));
-    return data.map((row) => {
-      const { createdOn, email, lastLogin, name } = row;
+  componentDidMount() {
+    makeRequest("/admin/account?app=1").then((accounts) => {
+      this.setState({ accounts, loading: false, fading: true });
+      setTimeout(() => this.setState({ fading: false }), 500);
+    });
+  }
+
+  getData = (): TableData[][] => {
+    // const pad = Math.max(...accounts.map((a) => String(a.lastLogin).length));
+
+    return this.state.accounts.map((a: Account) => {
+      const { createdOn, email, firstName, lastLogin, lastName } = a;
+      const name = firstName + " " + lastName;
 
       return [
         {
@@ -119,24 +137,28 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: (
             <div className="flex-left table-data">
-              <span>{createdOn.toDateString()}</span>
+              {/* <span>{createdOn.toDateString()}</span> */}
+              <span>{createdOn}</span>
             </div>
           ),
           searchValue: "",
-          sortValue: String(createdOn.getTime())
+          sortValue: createdOn
+          // sortValue: String(createdOn.getTime())
         },
         {
           contents: (
             <div className="flex-left table-data">
-              <span>
+              {/* <span>
                 {lastLogin
                   ? `${lastLogin} day${lastLogin === 1 ? "" : "s"} ago`
                   : "Today"}
-              </span>
+              </span> */}
+              <span>{lastLogin}</span>
             </div>
           ),
           searchValue: "",
-          sortValue: String(lastLogin).padStart(pad, "0")
+          sortValue: ""
+          // sortValue: String(lastLogin).padStart(pad, "0")
         },
         {
           contents: (
@@ -165,31 +187,40 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
 
   render() {
     const { handleClick } = this.props;
-    const { columns } = this.state;
+    const { columns, loading, fading } = this.state;
 
     return (
       <div className="page-container">
         <Navbar handleClick={handleClick} active="Accounts" />
         <div className="page-content bg-white">
-          <Table
-            columns={columns}
-            control={
-              <button
-                className="button-primary"
-                onClick={() =>
-                  handleClick(["Create"], <AccountsEdit accountId={0} />, false)
+          <div style={{ position: "relative", height: "100%", width: "100%" }}>
+            {loading || fading ? <SmallLoader loading={loading} /> : null}
+            {loading ? null : (
+              <Table
+                columns={columns}
+                control={
+                  <button
+                    className="button-primary"
+                    onClick={() =>
+                      handleClick(
+                        ["Create"],
+                        <AccountsEdit accountId={0} />,
+                        false
+                      )
+                    }
+                  >
+                    Create&nbsp;<b>+</b>
+                  </button>
                 }
-              >
-                Create&nbsp;<b>+</b>
-              </button>
-            }
-            controlWidth={10}
-            data={this.getData()}
-            includeControl={true}
-            includeSearch={true}
-            paginationPer={2}
-            sortDefault=""
-          />
+                controlWidth={10}
+                data={this.getData()}
+                includeControl={true}
+                includeSearch={true}
+                paginationPer={2}
+                sortDefault=""
+              />
+            )}
+          </div>
         </div>
       </div>
     );

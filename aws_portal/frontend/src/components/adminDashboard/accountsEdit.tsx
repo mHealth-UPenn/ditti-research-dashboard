@@ -1,282 +1,286 @@
 import * as React from "react";
 import { Component } from "react";
-import Table, { Column } from "../table/table";
+import Table, { Column, TableData } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
-import { AccessGroup, Study } from "../../interfaces";
+import { AccessGroup, Role, Study } from "../../interfaces";
 import Select from "../fields/select";
+import { makeRequest } from "../../utils";
 
-const accessGroupsRaw: AccessGroup[] = [
-  {
-    id: 10,
-    name: "DittiApp Staff",
-    app: "DittiApp Dashboard",
-    permissions: [
-      {
-        id: 10,
-        action: "View",
-        resource: "DittiApp Dashboard"
-      }
-    ]
-  },
-  {
-    id: 1,
-    name: "Admins",
-    app: "Admin Dashboard",
-    permissions: [
-      {
-        id: 10,
-        action: "View",
-        resource: "Admin Dashboard"
-      }
-    ]
-  }
-];
+// const accessGroupsRaw: AccessGroup[] = [
+//   {
+//     id: 10,
+//     name: "DittiApp Staff",
+//     app: "DittiApp Dashboard",
+//     permissions: [
+//       {
+//         id: 10,
+//         action: "View",
+//         resource: "DittiApp Dashboard"
+//       }
+//     ]
+//   },
+//   {
+//     id: 1,
+//     name: "Admins",
+//     app: "Admin Dashboard",
+//     permissions: [
+//       {
+//         id: 10,
+//         action: "View",
+//         resource: "Admin Dashboard"
+//       }
+//     ]
+//   }
+// ];
 
-export const studiesRaw: Study[] = [
-  {
-    id: 10,
-    name: "MSBI",
-    acronym: "MSBI",
-    accessGroup: "DittiApp Staff",
-    roles: [
-      {
-        id: 1,
-        name: "Admin",
-        permissions: [
-          {
-            id: 10,
-            action: "View",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "View",
-            resource: "Taps"
-          },
-          {
-            id: 10,
-            action: "Add",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "Edit",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "Delete",
-            resource: "Users"
-          }
-        ]
-      },
-      {
-        id: 2,
-        name: "Coordinator",
-        permissions: [
-          {
-            id: 10,
-            action: "View",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "View",
-            resource: "Taps"
-          },
-          {
-            id: 10,
-            action: "Add",
-            resource: "Users"
-          }
-        ]
-      },
-      {
-        id: 3,
-        name: "Viewer",
-        permissions: [
-          {
-            id: 10,
-            action: "View",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "View",
-            resource: "Taps"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 1,
-    name: "OSA ART",
-    acronym: "OSA",
-    accessGroup: "DittiApp Staff",
-    roles: [
-      {
-        id: 1,
-        name: "Admin",
-        permissions: [
-          {
-            id: 10,
-            action: "View",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "View",
-            resource: "Taps"
-          },
-          {
-            id: 10,
-            action: "Add",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "Edit",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "Delete",
-            resource: "Users"
-          }
-        ]
-      },
-      {
-        id: 2,
-        name: "Coordinator",
-        permissions: [
-          {
-            id: 10,
-            action: "View",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "View",
-            resource: "Taps"
-          },
-          {
-            id: 10,
-            action: "Add",
-            resource: "Users"
-          }
-        ]
-      },
-      {
-        id: 3,
-        name: "Viewer",
-        permissions: [
-          {
-            id: 10,
-            action: "View",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "View",
-            resource: "Taps"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    id: 2,
-    name: "Caregiver ART",
-    acronym: "Caregiver",
-    accessGroup: "DittiApp Staff",
-    roles: [
-      {
-        id: 1,
-        name: "Admin",
-        permissions: [
-          {
-            id: 10,
-            action: "View",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "View",
-            resource: "Taps"
-          },
-          {
-            id: 10,
-            action: "Add",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "Edit",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "Delete",
-            resource: "Users"
-          }
-        ]
-      },
-      {
-        id: 2,
-        name: "Coordinator",
-        permissions: [
-          {
-            id: 10,
-            action: "View",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "View",
-            resource: "Taps"
-          },
-          {
-            id: 10,
-            action: "Add",
-            resource: "Users"
-          }
-        ]
-      },
-      {
-        id: 2,
-        name: "Viewer",
-        permissions: [
-          {
-            id: 10,
-            action: "View",
-            resource: "Users"
-          },
-          {
-            id: 10,
-            action: "View",
-            resource: "Taps"
-          }
-        ]
-      }
-    ]
-  }
-];
+// export const studiesRaw: Study[] = [
+//   {
+//     id: 10,
+//     name: "MSBI",
+//     acronym: "MSBI",
+//     accessGroup: "DittiApp Staff",
+//     roles: [
+//       {
+//         id: 1,
+//         name: "Admin",
+//         permissions: [
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Taps"
+//           },
+//           {
+//             id: 10,
+//             action: "Add",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "Edit",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "Delete",
+//             resource: "Users"
+//           }
+//         ]
+//       },
+//       {
+//         id: 2,
+//         name: "Coordinator",
+//         permissions: [
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Taps"
+//           },
+//           {
+//             id: 10,
+//             action: "Add",
+//             resource: "Users"
+//           }
+//         ]
+//       },
+//       {
+//         id: 3,
+//         name: "Viewer",
+//         permissions: [
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Taps"
+//           }
+//         ]
+//       }
+//     ]
+//   },
+//   {
+//     id: 1,
+//     name: "OSA ART",
+//     acronym: "OSA",
+//     accessGroup: "DittiApp Staff",
+//     roles: [
+//       {
+//         id: 1,
+//         name: "Admin",
+//         permissions: [
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Taps"
+//           },
+//           {
+//             id: 10,
+//             action: "Add",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "Edit",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "Delete",
+//             resource: "Users"
+//           }
+//         ]
+//       },
+//       {
+//         id: 2,
+//         name: "Coordinator",
+//         permissions: [
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Taps"
+//           },
+//           {
+//             id: 10,
+//             action: "Add",
+//             resource: "Users"
+//           }
+//         ]
+//       },
+//       {
+//         id: 3,
+//         name: "Viewer",
+//         permissions: [
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Taps"
+//           }
+//         ]
+//       }
+//     ]
+//   },
+//   {
+//     id: 2,
+//     name: "Caregiver ART",
+//     acronym: "Caregiver",
+//     accessGroup: "DittiApp Staff",
+//     roles: [
+//       {
+//         id: 1,
+//         name: "Admin",
+//         permissions: [
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Taps"
+//           },
+//           {
+//             id: 10,
+//             action: "Add",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "Edit",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "Delete",
+//             resource: "Users"
+//           }
+//         ]
+//       },
+//       {
+//         id: 2,
+//         name: "Coordinator",
+//         permissions: [
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Taps"
+//           },
+//           {
+//             id: 10,
+//             action: "Add",
+//             resource: "Users"
+//           }
+//         ]
+//       },
+//       {
+//         id: 2,
+//         name: "Viewer",
+//         permissions: [
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Users"
+//           },
+//           {
+//             id: 10,
+//             action: "View",
+//             resource: "Taps"
+//           }
+//         ]
+//       }
+//     ]
+//   }
+// ];
 
 interface AccountsEditProps {
   accountId: number;
 }
 
 interface AccountsEditState {
+  accessGroups: AccessGroup[];
+  roles: Role[];
+  studies: Study[];
   columnsAccessGroups: Column[];
   columnsStudies: Column[];
-  selectedRoles: { study: number; role: number }[];
   email: string;
   firstName: string;
   lastName: string;
-  accessGroups: AccessGroup[];
-  studies: Study[];
+  accessGroupsSelected: AccessGroup[];
+  rolesSelected: { study: number; role: number }[];
+  studiesSelected: Study[];
 }
 
 class AccountsEdit extends React.Component<
@@ -290,15 +294,18 @@ class AccountsEdit extends React.Component<
     const prefill = accountId
       ? this.getPrefill(accountId)
       : {
-          selectedRoles: [],
           email: "",
           firstName: "",
           lastName: "",
-          accessGroups: [],
-          studies: []
+          accessGroupsSelected: [],
+          rolesSelected: [],
+          studiesSelected: []
         };
 
     this.state = {
+      accessGroups: [],
+      roles: [],
+      studies: [],
       columnsAccessGroups: [
         {
           name: "Name",
@@ -348,9 +355,9 @@ class AccountsEdit extends React.Component<
       firstName: prefill.firstName,
       lastName: prefill.lastName,
       email: prefill.email,
-      accessGroups: prefill.accessGroups,
-      selectedRoles: prefill.selectedRoles,
-      studies: prefill.studies
+      rolesSelected: prefill.rolesSelected,
+      accessGroupsSelected: prefill.accessGroupsSelected,
+      studiesSelected: prefill.studiesSelected
     };
   }
 
@@ -359,15 +366,24 @@ class AccountsEdit extends React.Component<
       firstName: "",
       lastName: "",
       email: "",
-      accessGroups: [],
-      selectedRoles: [],
-      studies: []
+      accessGroupsSelected: [],
+      rolesSelected: [],
+      studiesSelected: []
     };
   }
 
-  getAccessGroupsData() {
-    return accessGroupsRaw.map((accessGroup, i) => {
-      const { id, name, app } = accessGroup;
+  async componentDidMount() {
+    const accessGroups: AccessGroup[] = await makeRequest(
+      "/admin/access-group?app=1"
+    );
+    const roles: Role[] = await makeRequest("/admin/role?app=1");
+    const studies: Study[] = await makeRequest("/admin/study?app=1");
+    this.setState({ accessGroups, roles, studies });
+  }
+
+  getAccessGroupsData = (): TableData[][] => {
+    return this.state.accessGroups.map((ag: AccessGroup) => {
+      const { id, name, app } = ag;
 
       return [
         {
@@ -382,17 +398,17 @@ class AccountsEdit extends React.Component<
         {
           contents: (
             <div className="flex-left table-data">
-              <span>{app}</span>
+              <span>{app.name}</span>
             </div>
           ),
           searchValue: "",
-          sortValue: app
+          sortValue: app.name
         },
         {
           contents: (
             <div className="flex-left table-control">
               <ToggleButton
-                key={i}
+                key={id}
                 id={id}
                 getActive={this.isActiveAccessGroup}
                 add={this.addAccessGroup}
@@ -405,11 +421,11 @@ class AccountsEdit extends React.Component<
         }
       ];
     });
-  }
+  };
 
-  getStudiesData() {
-    return studiesRaw.map((study, i) => {
-      const { accessGroup, id, name, roles } = study;
+  getStudiesData = (): TableData[][] => {
+    return this.state.studies.map((s, i) => {
+      const { id, name } = s;
 
       return [
         {
@@ -424,19 +440,19 @@ class AccountsEdit extends React.Component<
         {
           contents: (
             <div className="flex-left table-data">
-              <span>{accessGroup}</span>
+              <span>accessGroup</span>
             </div>
           ),
           searchValue: "",
-          sortValue: accessGroup
+          sortValue: "accessGroup"
         },
         {
           contents: (
             <div className="flex-left" style={{ position: "relative" }}>
               <Select
                 key={i}
-                id={study.id}
-                opts={study.roles.map((r) => {
+                id={id}
+                opts={this.state.roles.map((r) => {
                   return { value: r.id, label: r.name };
                 })}
                 placeholder="Select role..."
@@ -465,70 +481,74 @@ class AccountsEdit extends React.Component<
         }
       ];
     });
-  }
+  };
+
+  selectRole = (roleId: number, studyId: number): void => {
+    const rolesSelected = this.state.rolesSelected.filter(
+      (x) => x.study != studyId
+    );
+    rolesSelected.push({ study: studyId, role: roleId });
+    this.setState({ rolesSelected });
+  };
 
   getSelectedRole = (id: number) => {
-    const { selectedRoles } = this.state;
-    if (selectedRoles.some((x) => x.study == id)) {
-      return selectedRoles.filter((x) => x.study == id)[0].role;
+    const { rolesSelected } = this.state;
+    if (rolesSelected.some((x) => x.study == id)) {
+      return rolesSelected.filter((x) => x.study == id)[0].role;
     } else {
       return 0;
     }
   };
 
   isActiveAccessGroup = (id: number): boolean => {
-    return this.state.accessGroups.some((ag) => ag.id == id);
+    return this.state.accessGroupsSelected.some((ag) => ag.id == id);
   };
 
   addAccessGroup = (id: number, callback: () => void): void => {
-    const { accessGroups } = this.state;
-    const accessGroup = accessGroupsRaw.filter((ag) => ag.id == id)[0];
+    const { accessGroups, accessGroupsSelected } = this.state;
+    const accessGroup = accessGroups.filter((ag) => ag.id == id)[0];
 
     if (accessGroup) {
-      accessGroups.push(accessGroup);
-      this.setState({ accessGroups }, callback);
+      accessGroupsSelected.push(accessGroup);
+      this.setState({ accessGroupsSelected }, callback);
     }
   };
 
   removeAccessGroup = (id: number, callback: () => void): void => {
-    const accessGroups = this.state.accessGroups.filter((ag) => ag.id != id);
-    this.setState({ accessGroups }, callback);
+    const accessGroupsSelected = this.state.accessGroupsSelected.filter(
+      (ag) => ag.id != id
+    );
+    this.setState({ accessGroupsSelected }, callback);
   };
 
   isActiveStudy = (id: number): boolean => {
-    return this.state.studies.some((s) => s.id == id);
+    return this.state.studiesSelected.some((s) => s.id == id);
   };
 
   addStudy = (id: number, callback: () => void): void => {
-    const { studies } = this.state;
-    const study = Object.assign({}, studiesRaw.filter((s) => s.id == id)[0]);
+    const { studies, studiesSelected } = this.state;
+    const study = Object.assign({}, studies.filter((s) => s.id == id)[0]);
 
     if (study) {
-      studies.push(study);
-      this.setState({ studies }, callback);
+      studiesSelected.push(study);
+      this.setState({ studiesSelected }, callback);
     }
   };
 
   removeStudy = (id: number, callback: () => void): void => {
-    const studies = this.state.studies.filter((s) => s.id != id);
-    this.setState({ studies }, callback);
-  };
-
-  selectRole = (roleId: number, studyId: number): void => {
-    const selectedRoles = this.state.selectedRoles.filter(
-      (x) => x.study != studyId
+    const studiesSelected = this.state.studiesSelected.filter(
+      (s) => s.id != id
     );
-    selectedRoles.push({ study: studyId, role: roleId });
-    this.setState({ selectedRoles });
+    this.setState({ studiesSelected }, callback);
   };
 
   getAccessGroupsSummary = () => {
-    return this.state.accessGroups.map((accessGroup, i) => {
-      const permissions = accessGroup.permissions.map((permission, i) => {
+    return this.state.accessGroupsSelected.map((ag, i) => {
+      const permissions = ag.permissions.map((p, i) => {
         return (
           <span key={i}>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            {permission.action + " - " + permission.resource}
+            {p.action + " - " + p.resource}
             <br />
           </span>
         );
@@ -538,7 +558,7 @@ class AccountsEdit extends React.Component<
         <span key={i}>
           {i ? <br /> : ""}
           &nbsp;&nbsp;&nbsp;&nbsp;
-          {accessGroup.name}
+          {ag.name}
           <br />
           &nbsp;&nbsp;&nbsp;&nbsp;Permissions:
           <br />
@@ -549,24 +569,22 @@ class AccountsEdit extends React.Component<
   };
 
   getStudiesSummary = () => {
-    const { selectedRoles, studies } = this.state;
+    const { roles, rolesSelected, studiesSelected } = this.state;
 
-    return studies.map((study, i) => {
+    return studiesSelected.map((s, i) => {
       let role;
       let permissions;
-      const selectedRole = selectedRoles.filter(
-        (sr) => sr.study == study.id
-      )[0];
+      const selectedRole = rolesSelected.filter((sr) => sr.study == s.id)[0];
 
       if (selectedRole) {
-        role = study.roles.filter((r) => r.id == selectedRole.role)[0];
+        role = roles.filter((r) => r.id == selectedRole.role)[0];
 
         if (role) {
-          permissions = role.permissions.map((permission, j) => {
+          permissions = role.permissions.map((p, j) => {
             return (
               <span key={j}>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {permission.action + " - " + permission.resource}
+                {p.action + " - " + p.resource}
                 <br />
               </span>
             );
@@ -578,7 +596,7 @@ class AccountsEdit extends React.Component<
         <span key={i}>
           {i ? <br /> : ""}
           &nbsp;&nbsp;&nbsp;&nbsp;
-          {study.name}
+          {s.name}
           <br />
           {role ? (
             <span>

@@ -1,47 +1,50 @@
 import * as React from "react";
 import { Component } from "react";
-import Table from "../table/table";
+import { Study } from "../../interfaces";
+import { makeRequest } from "../../utils";
+import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
 import StudiesEdit from "./studiesEdit";
+import { SmallLoader } from "../loader";
 
-const data = [
-  {
-    acronym: "MSBI",
-    name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-    dittiID: "mb",
-    email: "mhealth@pennmedicine.upenn.edu"
-  },
-  {
-    acronym: "MSBI",
-    name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-    dittiID: "mb",
-    email: "mhealth@pennmedicine.upenn.edu"
-  },
-  {
-    acronym: "MSBI",
-    name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-    dittiID: "mb",
-    email: "mhealth@pennmedicine.upenn.edu"
-  },
-  {
-    acronym: "MSBI",
-    name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-    dittiID: "mb",
-    email: "mhealth@pennmedicine.upenn.edu"
-  },
-  {
-    acronym: "MSBI",
-    name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-    dittiID: "mb",
-    email: "mhealth@pennmedicine.upenn.edu"
-  },
-  {
-    acronym: "MSBI",
-    name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-    dittiID: "mb",
-    email: "mhealth@pennmedicine.upenn.edu"
-  }
-];
+// const data = [
+//   {
+//     acronym: "MSBI",
+//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
+//     dittiID: "mb",
+//     email: "mhealth@pennmedicine.upenn.edu"
+//   },
+//   {
+//     acronym: "MSBI",
+//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
+//     dittiID: "mb",
+//     email: "mhealth@pennmedicine.upenn.edu"
+//   },
+//   {
+//     acronym: "MSBI",
+//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
+//     dittiID: "mb",
+//     email: "mhealth@pennmedicine.upenn.edu"
+//   },
+//   {
+//     acronym: "MSBI",
+//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
+//     dittiID: "mb",
+//     email: "mhealth@pennmedicine.upenn.edu"
+//   },
+//   {
+//     acronym: "MSBI",
+//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
+//     dittiID: "mb",
+//     email: "mhealth@pennmedicine.upenn.edu"
+//   },
+//   {
+//     acronym: "MSBI",
+//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
+//     dittiID: "mb",
+//     email: "mhealth@pennmedicine.upenn.edu"
+//   }
+// ];
 
 interface StudiesProps {
   handleClick: (
@@ -52,15 +55,15 @@ interface StudiesProps {
 }
 
 interface StudiesState {
-  columns: {
-    name: string;
-    sortable: boolean;
-    width: number;
-  }[];
+  studies: Study[];
+  columns: Column[];
+  loading: boolean;
+  fading: boolean;
 }
 
 class Studies extends React.Component<StudiesProps, StudiesState> {
   state = {
+    studies: [],
     columns: [
       {
         name: "Acronym",
@@ -92,12 +95,21 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         sortable: false,
         width: 10
       }
-    ]
+    ],
+    loading: true,
+    fading: false
   };
 
-  getData = () => {
-    return data.map((row) => {
-      const { acronym, dittiID, email, name } = row;
+  async componentDidMount() {
+    makeRequest("/admin/study?app=1").then((studies) => {
+      this.setState({ studies, loading: false, fading: true });
+      setTimeout(() => this.setState({ fading: false }), 500);
+    });
+  }
+
+  getData = (): TableData[][] => {
+    return this.state.studies.map((s: Study) => {
+      const { acronym, dittiId, name } = s;
 
       return [
         {
@@ -121,20 +133,20 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         {
           contents: (
             <div className="flex-left table-data">
-              <span>{dittiID}</span>
+              <span>{dittiId}</span>
             </div>
           ),
-          searchValue: dittiID,
-          sortValue: dittiID
+          searchValue: dittiId,
+          sortValue: dittiId
         },
         {
           contents: (
             <div className="flex-left table-data">
-              <span>{email}</span>
+              <span>email</span>
             </div>
           ),
-          searchValue: email,
-          sortValue: email
+          searchValue: "email",
+          sortValue: "email"
         },
         {
           contents: (
@@ -152,31 +164,40 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
 
   render() {
     const { handleClick } = this.props;
-    const { columns } = this.state;
+    const { columns, loading, fading } = this.state;
 
     return (
       <div className="page-container">
         <Navbar handleClick={handleClick} active="Studies" />
         <div className="page-content bg-white">
-          <Table
-            columns={columns}
-            control={
-              <button
-                className="button-primary"
-                onClick={() =>
-                  handleClick(["Create"], <StudiesEdit studyId={0} />, false)
+          <div style={{ position: "relative", height: "100%", width: "100%" }}>
+            {loading || fading ? <SmallLoader loading={loading} /> : null}
+            {loading ? null : (
+              <Table
+                columns={columns}
+                control={
+                  <button
+                    className="button-primary"
+                    onClick={() =>
+                      handleClick(
+                        ["Create"],
+                        <StudiesEdit studyId={0} />,
+                        false
+                      )
+                    }
+                  >
+                    Create&nbsp;<b>+</b>
+                  </button>
                 }
-              >
-                Create&nbsp;<b>+</b>
-              </button>
-            }
-            controlWidth={10}
-            data={this.getData()}
-            includeControl={true}
-            includeSearch={true}
-            paginationPer={2}
-            sortDefault=""
-          />
+                controlWidth={10}
+                data={this.getData()}
+                includeControl={true}
+                includeSearch={true}
+                paginationPer={2}
+                sortDefault=""
+              />
+            )}
+          </div>
         </div>
       </div>
     );

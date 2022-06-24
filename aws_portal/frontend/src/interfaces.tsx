@@ -20,8 +20,6 @@ export interface AccessGroup {
   name: string;
   app: App;
   permissions: Permission[];
-  roles: Role[];
-  studies: Study[];
 }
 
 export interface Permission {
@@ -40,8 +38,7 @@ export interface Study {
   id: number;
   name: string;
   acronym: string;
-  accessGroup: string;
-  roles: Role[];
+  dittiId: string;
 }
 
 export interface ResponseBody {

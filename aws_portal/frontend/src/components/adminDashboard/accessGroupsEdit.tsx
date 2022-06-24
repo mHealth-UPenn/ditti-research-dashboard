@@ -1,32 +1,34 @@
 import * as React from "react";
 import { Component } from "react";
-import Table, { Column } from "../table/table";
+import Table, { Column, TableData } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
-import { studiesRaw } from "./accountsEdit";
 import Select from "../fields/select";
 import { App, Study } from "../../interfaces";
+import { makeRequest } from "../../utils";
 
-const appsRaw: App[] = [
-  {
-    id: 1,
-    name: "Ditti App Dashboard"
-  },
-  {
-    id: 2,
-    name: "Admin Dashboard"
-  }
-];
+// const appsRaw: App[] = [
+//   {
+//     id: 1,
+//     name: "Ditti App Dashboard"
+//   },
+//   {
+//     id: 2,
+//     name: "Admin Dashboard"
+//   }
+// ];
 
 interface AccessGroupsEditProps {
   accessGroupId: number;
 }
 
 interface AccessGroupsEditState {
+  apps: App[];
+  studies: Study[];
   columnsStudies: Column[];
   name: string;
-  app: App;
-  studies: Study[];
+  appSelected: App;
+  studiesSelected: Study[];
 }
 
 class AccessGroupsEdit extends React.Component<
@@ -42,7 +44,7 @@ class AccessGroupsEdit extends React.Component<
       : {
           name: "",
           app: {} as App,
-          studies: []
+          studiesSelected: []
         };
 
     this.state = {
@@ -67,22 +69,30 @@ class AccessGroupsEdit extends React.Component<
         }
       ],
       name: prefill.name,
-      app: prefill.app,
-      studies: prefill.studies
+      apps: [],
+      appSelected: prefill.app,
+      studies: [],
+      studiesSelected: prefill.studiesSelected
     };
+  }
+
+  async componentDidMount() {
+    const apps: App[] = await makeRequest("/admin/app?app=1");
+    const studies: Study[] = await makeRequest("/admin/study?app=1");
+    this.setState({ apps, studies });
   }
 
   getPrefill(id: number) {
     return {
       name: "",
       app: {} as App,
-      studies: []
+      studiesSelected: []
     };
   }
 
-  getStudiesData() {
-    return studiesRaw.map((study, i) => {
-      const { id, name, acronym } = study;
+  getStudiesData = (): TableData[][] => {
+    return this.state.studies.map((s: Study) => {
+      const { id, name, acronym } = s;
 
       return [
         {
@@ -107,7 +117,7 @@ class AccessGroupsEdit extends React.Component<
           contents: (
             <div className="flex-left table-control">
               <ToggleButton
-                key={i}
+                key={id}
                 id={id}
                 getActive={this.isActiveStudy}
                 add={this.addStudy}
@@ -120,49 +130,51 @@ class AccessGroupsEdit extends React.Component<
         }
       ];
     });
-  }
+  };
 
   isActiveStudy = (id: number): boolean => {
-    return this.state.studies.some((s) => s.id == id);
+    return this.state.studiesSelected.some((s) => s.id == id);
   };
 
   addStudy = (id: number, callback: () => void): void => {
-    const { studies } = this.state;
-    const study = studiesRaw.filter((s) => s.id == id)[0];
+    const { studies, studiesSelected } = this.state;
+    const study = studies.filter((s) => s.id == id)[0];
 
     if (study) {
-      studies.push(study);
-      this.setState({ studies }, callback);
+      studiesSelected.push(study);
+      this.setState({ studiesSelected }, callback);
     }
   };
 
   removeStudy = (id: number, callback: () => void): void => {
-    const studies = this.state.studies.filter((r) => r.id != id);
-    this.setState({ studies }, callback);
+    const studiesSelected = this.state.studiesSelected.filter(
+      (r) => r.id != id
+    );
+    this.setState({ studiesSelected }, callback);
   };
 
   getStudiesSummary = () => {
-    return this.state.studies.map((study, i) => (
+    return this.state.studiesSelected.map((s, i) => (
       <span key={i}>
-        {study.name}
+        {s.name}
         <br />
       </span>
     ));
   };
 
   selectApp = (id: number): void => {
-    const app = appsRaw.filter((a) => a.id == id)[0];
-    if (app) this.setState({ app });
+    const appSelected = this.state.apps.filter((a) => a.id == id)[0];
+    if (appSelected) this.setState({ appSelected });
   };
 
   getSelectedApp = (): number => {
-    const { app } = this.state;
-    return app ? app.id : 0;
+    const { appSelected } = this.state;
+    return appSelected ? appSelected.id : 0;
   };
 
   render() {
     const { accessGroupId } = this.props;
-    const { columnsStudies, name, app } = this.state;
+    const { columnsStudies, name, apps, appSelected } = this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -194,7 +206,7 @@ class AccessGroupsEdit extends React.Component<
                   <div className="border-light">
                     <Select
                       id={accessGroupId}
-                      opts={appsRaw.map((a) => {
+                      opts={apps.map((a) => {
                         return { value: a.id, label: a.name };
                       })}
                       placeholder="Select app..."
@@ -227,7 +239,7 @@ class AccessGroupsEdit extends React.Component<
           <span>
             Name: {name}
             <br />
-            App: {app.name}
+            App: {appSelected.name}
             <br />
             <br />
             Studies:
