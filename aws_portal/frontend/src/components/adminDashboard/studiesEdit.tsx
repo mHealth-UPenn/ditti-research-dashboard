@@ -1,11 +1,8 @@
 import * as React from "react";
 import { Component } from "react";
-import Table, { Column, TableData } from "../table/table";
 import TextField from "../fields/textField";
-import ToggleButton from "../buttons/toggleButton";
-import { ResponseBody, Role } from "../../interfaces";
+import { ResponseBody, Role, Study } from "../../interfaces";
 import { makeRequest } from "../../utils";
-import { SmallLoader } from "../loader";
 
 interface StudiesEditProps {
   studyId: number;
@@ -18,53 +15,51 @@ interface StudiesEditState {
 }
 
 class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
-  constructor(props: StudiesEditProps) {
-    super(props);
+  state = {
+    name: "",
+    acronym: "",
+    dittiId: ""
+  };
 
-    const { studyId } = props;
-    const prefill = studyId
-      ? this.getPrefill(studyId)
+  componentDidMount() {
+    this.getPrefill().then((prefill: StudiesEditState) =>
+      this.setState({ ...prefill })
+    );
+  }
+
+  getPrefill = async (): Promise<StudiesEditState> => {
+    const id = this.props.studyId;
+    return id
+      ? makeRequest("/admin/study?app=1&id=" + id).then(this.makePrefill)
       : {
           name: "",
           acronym: "",
           dittiId: ""
         };
+  };
 
-    this.state = {
-      name: prefill.name,
-      acronym: prefill.acronym,
-      dittiId: prefill.dittiId
-    };
-  }
+  makePrefill = (res: Study[]): StudiesEditState => {
+    const study = res[0];
 
-  getPrefill(id: number) {
     return {
-      name: "",
-      acronym: "",
-      dittiId: ""
+      name: study.name,
+      acronym: study.acronym,
+      dittiId: study.dittiId
     };
-  }
+  };
 
-  create = (): void => {
+  post = (): void => {
     const { acronym, dittiId, name } = this.state;
-
+    const data = { acronym, ditti_id: dittiId, name };
+    const id = this.props.studyId;
     const body = {
       app: 1,
-      create: {
-        acronym: acronym,
-        ditti_id: dittiId,
-        name: name
-      }
+      ...(id ? { id: id, edit: data } : { create: data })
     };
 
-    const opts = {
-      method: "POST",
-      body: JSON.stringify(body)
-    };
-
-    makeRequest("/admin/study/create", opts)
-      .then(this.handleSuccess)
-      .catch(this.handleFailure);
+    const opts = { method: "POST", body: JSON.stringify(body) };
+    const url = id ? "/admin/study/edit" : "/admin/study/create";
+    makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
@@ -140,9 +135,15 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
             Ditti ID: {dittiId}
             <br />
           </span>
-          <button className="button-primary" onClick={this.create}>
-            Create
-          </button>
+          {studyId ? (
+            <button className="button-primary" onClick={this.post}>
+              Update
+            </button>
+          ) : (
+            <button className="button-primary" onClick={this.post}>
+              Create
+            </button>
+          )}
         </div>
       </div>
     );

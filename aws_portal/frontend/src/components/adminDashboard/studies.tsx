@@ -67,7 +67,7 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
 
   getData = (): TableData[][] => {
     return this.state.studies.map((s: Study) => {
-      const { acronym, dittiId, name } = s;
+      const { acronym, dittiId, id, name } = s;
 
       return [
         {
@@ -109,7 +109,18 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         {
           contents: (
             <div className="flex-left table-control">
-              <button className="button-secondary">Edit</button>
+              <button
+                className="button-secondary"
+                onClick={() =>
+                  this.props.handleClick(
+                    ["Edit", name],
+                    <StudiesEdit studyId={id} />,
+                    false
+                  )
+                }
+              >
+                Edit
+              </button>
               <button className="button-danger">Delete</button>
             </div>
           ),

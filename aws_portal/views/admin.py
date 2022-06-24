@@ -131,7 +131,14 @@ def account_archive():
 @blueprint.route('/study')
 @auth_required('Read', 'Study')
 def study():
-    studies = Study.query.all()
+    i = request.args.get('id')
+
+    if i:
+        studies = [Study.query.get(i)]
+
+    else:
+        studies = Study.query.all()
+
     res = [s.meta for s in studies]
     return jsonify(res)
 
@@ -192,7 +199,14 @@ def study_archive():
 
 @blueprint.route('/access-group')
 def access_group():
-    access_groups = AccessGroup.query.all()
+    i = request.args.get('id')
+
+    if i:
+        access_groups = [AccessGroup.query.get(i)]
+
+    else:
+        access_groups = AccessGroup.query.all()
+
     res = [a.meta for a in access_groups]
     return jsonify(res)
 
@@ -293,7 +307,14 @@ def access_group_archive():
 
 @blueprint.route('/role')
 def role():
-    roles = Role.query.all()
+    i = request.args.get('id')
+
+    if i:
+        roles = [Role.query.get(i)]
+
+    else:
+        roles = Role.query.all()
+
     res = [r.meta for r in roles]
     return jsonify(res)
 

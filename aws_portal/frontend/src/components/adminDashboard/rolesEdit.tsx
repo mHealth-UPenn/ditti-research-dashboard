@@ -2,7 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
 import Select from "../fields/select";
-import { Permission, ResponseBody } from "../../interfaces";
+import { Permission, ResponseBody, Role } from "../../interfaces";
 import { makeRequest } from "../../utils";
 
 export const actionsRaw = [
@@ -49,39 +49,41 @@ interface RolesEditState {
 }
 
 class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
-  constructor(props: RolesEditProps) {
-    super(props);
-    const { roleId } = props;
-    const prefill = roleId
-      ? this.getPrefill(roleId)
-      : {
-          name: "",
-          permissions: []
-        };
-
-    this.state = {
-      name: prefill.name,
-      permissions: prefill.permissions
-    };
-  }
+  state = {
+    name: "",
+    permissions: []
+  };
 
   componentDidMount() {
-    if (!this.state.permissions) this.addPermission();
+    this.getPrefill().then((prefill: RolesEditState) =>
+      this.setState({ ...prefill }, () => {
+        if (!this.state.permissions) this.addPermission();
+      })
+    );
   }
 
-  getPrefill(id: number) {
+  getPrefill = async (): Promise<RolesEditState> => {
+    const id = this.props.roleId;
+    return id
+      ? makeRequest("/admin/role?app=1&id=" + id).then(this.makePrefill)
+      : { name: "", permissions: [] };
+  };
+
+  makePrefill = (res: Role[]): RolesEditState => {
+    const role = res[0];
+
     return {
-      name: "",
-      permissions: []
+      name: role.name,
+      permissions: role.permissions
     };
-  }
+  };
 
   getPermissionFields = (): React.ReactElement => {
     const { permissions } = this.state;
 
     return (
       <React.Fragment>
-        {permissions.map((p) => {
+        {permissions.map((p: Permission) => {
           return (
             <div key={p.id} className="admin-form-row">
               <div className="admin-form-field border-light">
@@ -122,7 +124,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   };
 
   addPermission = (): void => {
-    const { permissions } = this.state;
+    const permissions: Permission[] = this.state.permissions;
     const id = permissions.length
       ? permissions[permissions.length - 1].id + 1
       : 0;
@@ -131,7 +133,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   };
 
   removePermission = (id: number): void => {
-    const permissions = this.state.permissions.filter((p) => p.id != id);
+    const permissions = this.state.permissions.filter(
+      (p: Permission) => p.id != id
+    );
     this.setState({ permissions });
   };
 
@@ -140,7 +144,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
 
     if (action) {
       const { permissions } = this.state;
-      const permission = permissions.filter((p) => p.id == permissionId)[0];
+      const permission: Permission = permissions.filter(
+        (p: Permission) => p.id == permissionId
+      )[0];
 
       if (permission) {
         permission.action = action.text;
@@ -150,7 +156,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   };
 
   getSelectedAction = (id: number): number => {
-    const permission = this.state.permissions.filter((p) => p.id == id)[0];
+    const permission: Permission = this.state.permissions.filter(
+      (p: Permission) => p.id == id
+    )[0];
 
     if (permission) {
       const actionText = permission.action;
@@ -167,7 +175,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
 
     if (resource) {
       const { permissions } = this.state;
-      const permission = permissions.filter((p) => p.id == permissionId)[0];
+      const permission: Permission = permissions.filter(
+        (p: Permission) => p.id == permissionId
+      )[0];
 
       if (permission) {
         permission.resource = resource.text;
@@ -177,7 +187,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   };
 
   getSelectedResource = (id: number): number => {
-    const permission = this.state.permissions.filter((p) => p.id == id)[0];
+    const permission: Permission = this.state.permissions.filter(
+      (p: Permission) => p.id == id
+    )[0];
 
     if (permission) {
       const resourceText = permission.resource;
@@ -189,28 +201,22 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     }
   };
 
-  create = (): void => {
+  post = (): void => {
     const { name, permissions } = this.state;
-    const ps = permissions.map((p) => {
+    const ps = permissions.map((p: Permission) => {
       return { action: p.action, resource: p.resource };
     });
 
+    const data = { name, permissions: ps };
+    const id = this.props.roleId;
     const body = {
       app: 1,
-      create: {
-        name: name,
-        permissions: ps
-      }
+      ...(id ? { id: id, edit: data } : { create: data })
     };
 
-    const opts = {
-      method: "POST",
-      body: JSON.stringify(body)
-    };
-
-    makeRequest("/admin/role/create", opts)
-      .then(this.handleSuccess)
-      .catch(this.handleFailure);
+    const opts = { method: "POST", body: JSON.stringify(body) };
+    const url = id ? "/admin/role/edit" : "/admin/role/create";
+    makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
@@ -224,7 +230,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   getPermissionsSummary = (): React.ReactElement => {
     return (
       <React.Fragment>
-        {this.state.permissions.map((p) => {
+        {this.state.permissions.map((p: Permission) => {
           return p.action || p.resource ? (
             <span key={p.id}>
               &nbsp;&nbsp;&nbsp;&nbsp;
@@ -292,7 +298,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
             <br />
             {this.getPermissionsSummary()}
           </span>
-          <button className="button-primary" onClick={this.create}>
+          <button className="button-primary" onClick={this.post}>
             Create
           </button>
         </div>

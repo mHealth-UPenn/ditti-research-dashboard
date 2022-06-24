@@ -55,7 +55,7 @@ class Roles extends React.Component<RolesProps, RolesState> {
 
   getData = (): TableData[][] => {
     return this.state.roles.map((r: Role) => {
-      const { name, permissions } = r;
+      const { id, name, permissions } = r;
 
       return [
         {
@@ -83,7 +83,18 @@ class Roles extends React.Component<RolesProps, RolesState> {
         {
           contents: (
             <div className="flex-left table-control">
-              <button className="button-secondary">Edit</button>
+              <button
+                className="button-secondary"
+                onClick={() =>
+                  this.props.handleClick(
+                    ["Edit", name],
+                    <RolesEdit roleId={id} />,
+                    false
+                  )
+                }
+              >
+                Edit
+              </button>
               <button className="button-danger">Delete</button>
             </div>
           ),
