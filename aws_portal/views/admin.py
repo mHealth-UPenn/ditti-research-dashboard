@@ -17,7 +17,14 @@ blueprint = Blueprint('admin', __name__, url_prefix='/admin')
 @blueprint.route('/account')
 @auth_required('Read', 'Account')
 def account():
-    accounts = Account.query.all()
+    i = request.args.get('id')
+
+    if i:
+        accounts = [Account.query.get(i)]
+
+    else:
+        accounts = Account.query.all()
+
     res = [a.meta for a in accounts]
     return jsonify(res)
 
@@ -82,7 +89,7 @@ def account_edit():
 
         if 'studies' in data:
             for join in account.studies:
-                s_ids = [s['id'] for s in entry['studies']]
+                s_ids = [s['id'] for s in data['studies']]
 
                 if join.study_id not in s_ids:
                     db.session.delete(join)

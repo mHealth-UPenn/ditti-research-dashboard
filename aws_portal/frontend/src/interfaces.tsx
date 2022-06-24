@@ -39,6 +39,7 @@ export interface Study {
   name: string;
   acronym: string;
   dittiId: string;
+  role: Role;
 }
 
 export interface ResponseBody {

@@ -73,7 +73,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
     // const pad = Math.max(...accounts.map((a) => String(a.lastLogin).length));
 
     return this.state.accounts.map((a: Account) => {
-      const { createdOn, email, firstName, lastLogin, lastName } = a;
+      const { createdOn, email, firstName, id, lastLogin, lastName } = a;
       const name = firstName + " " + lastName;
 
       return [
@@ -129,7 +129,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
                 onClick={() =>
                   this.props.handleClick(
                     ["Edit", name],
-                    <AccountsEdit accountId={0} />,
+                    <AccountsEdit accountId={id} />,
                     false
                   )
                 }
