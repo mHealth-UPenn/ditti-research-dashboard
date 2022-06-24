@@ -30,13 +30,19 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         name: "Name",
         searchable: true,
         sortable: true,
-        width: 25
+        width: 20
       },
       {
         name: "Email",
         searchable: true,
         sortable: true,
-        width: 35
+        width: 25
+      },
+      {
+        name: "Phone Number",
+        searchable: true,
+        sortable: true,
+        width: 15
       },
       {
         name: "Created On",
@@ -69,10 +75,27 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
 
   getData = (): TableData[][] => {
     // const pad = Math.max(...accounts.map((a) => String(a.lastLogin).length));
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    };
 
     return this.state.accounts.map((a: Account) => {
-      const { createdOn, email, firstName, id, lastLogin, lastName } = a;
+      const {
+        createdOn,
+        email,
+        firstName,
+        id,
+        lastLogin,
+        lastName,
+        phoneNumber
+      } = a;
       const name = firstName + " " + lastName;
+      const ago = Math.ceil(
+        Math.abs(new Date().getTime() - new Date(lastLogin).getTime()) /
+          (1000 * 60 * 60 * 24)
+      );
 
       return [
         {
@@ -96,22 +119,33 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         {
           contents: (
             <div className="flex-left table-data">
-              {/* <span>{createdOn.toDateString()}</span> */}
-              <span>{createdOn}</span>
+              <span>{phoneNumber}</span>
             </div>
           ),
-          searchValue: "",
-          sortValue: createdOn
-          // sortValue: String(createdOn.getTime())
+          searchValue: phoneNumber,
+          sortValue: phoneNumber
         },
         {
           contents: (
             <div className="flex-left table-data">
-              {/* <span>
+              <span>
+                {new Date(createdOn).toLocaleDateString("en-US", dateOptions)}
+              </span>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: createdOn
+        },
+        {
+          contents: (
+            <div className="flex-left table-data">
+              <span>
                 {lastLogin
-                  ? `${lastLogin} day${lastLogin === 1 ? "" : "s"} ago`
-                  : "Today"}
-              </span> */}
+                  ? ago
+                    ? `${ago} day${ago === 1 ? "" : "s"} ago`
+                    : "Today"
+                  : "Never"}
+              </span>
               <span>{lastLogin}</span>
             </div>
           ),
