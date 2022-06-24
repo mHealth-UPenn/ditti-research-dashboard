@@ -19,7 +19,6 @@ interface StudiesState {
   studies: Study[];
   columns: Column[];
   loading: boolean;
-  fading: boolean;
 }
 
 class Studies extends React.Component<StudiesProps, StudiesState> {
@@ -57,15 +56,13 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         width: 10
       }
     ],
-    loading: true,
-    fading: false
+    loading: true
   };
 
   async componentDidMount() {
-    makeRequest("/admin/study?app=1").then((studies) => {
-      this.setState({ studies, loading: false, fading: true });
-      setTimeout(() => this.setState({ fading: false }), 500);
-    });
+    makeRequest("/admin/study?app=1").then((studies) =>
+      this.setState({ studies, loading: false })
+    );
   }
 
   getData = (): TableData[][] => {
@@ -125,15 +122,16 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
 
   render() {
     const { handleClick } = this.props;
-    const { columns, loading, fading } = this.state;
+    const { columns, loading } = this.state;
 
     return (
       <div className="page-container">
         <Navbar handleClick={handleClick} active="Studies" />
         <div className="page-content bg-white">
           <div style={{ position: "relative", height: "100%", width: "100%" }}>
-            {loading || fading ? <SmallLoader loading={loading} /> : null}
-            {loading ? null : (
+            {loading ? (
+              <SmallLoader />
+            ) : (
               <Table
                 columns={columns}
                 control={

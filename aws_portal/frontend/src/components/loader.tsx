@@ -1,18 +1,12 @@
 import * as React from "react";
 import { Component } from "react";
 
-interface LoaderStyle {
-  alignItems: string;
-  backgroundColor: string;
-  display: string;
-  justifyContent: string;
-  height: string;
-  position: string;
-  width: string;
+interface LoaderProps {
+  style: React.CSSProperties;
 }
 
-interface LoaderProps {
-  style: LoaderStyle;
+interface SmallLoaderState {
+  style: React.CSSProperties;
 }
 
 interface FullLoaderProps {
@@ -20,8 +14,8 @@ interface FullLoaderProps {
 }
 
 interface FullLoaderState {
-  loadingStyle: LoaderStyle;
-  fadingStyle: LoaderStyle;
+  loadingStyle: React.CSSProperties;
+  fadingStyle: React.CSSProperties;
 }
 
 class Loader extends React.Component<LoaderProps, any> {
@@ -42,12 +36,9 @@ class Loader extends React.Component<LoaderProps, any> {
   }
 }
 
-export class SmallLoader extends React.Component<
-  FullLoaderProps,
-  FullLoaderState
-> {
+export class SmallLoader extends React.Component<any, SmallLoaderState> {
   state = {
-    loadingStyle: {
+    style: {
       alignItems: "center",
       backgroundColor: "white",
       display: "flex",
@@ -55,24 +46,11 @@ export class SmallLoader extends React.Component<
       height: "100%",
       position: "absolute",
       width: "100%"
-    },
-    fadingStyle: {
-      alignItems: "center",
-      backgroundColor: "white",
-      display: "flex",
-      justifyContent: "center",
-      height: "100%",
-      opacity: 0,
-      position: "absolute",
-      transition: "opacity 500ms ease-in",
-      width: "100%"
-    }
+    } as React.CSSProperties
   };
 
   render() {
-    const { loadingStyle, fadingStyle } = this.state;
-    const style = this.props.loading ? loadingStyle : fadingStyle;
-    return <Loader style={style} />;
+    return <Loader style={this.state.style} />;
   }
 }
 
@@ -89,7 +67,7 @@ export class FullLoader extends React.Component<
       height: "100%",
       position: "absolute",
       width: "100%"
-    },
+    } as React.CSSProperties,
     fadingStyle: {
       alignItems: "center",
       backgroundColor: "white",
@@ -100,7 +78,7 @@ export class FullLoader extends React.Component<
       position: "absolute",
       transition: "opacity 500ms ease-in",
       width: "100%"
-    }
+    } as React.CSSProperties
   };
 
   render() {

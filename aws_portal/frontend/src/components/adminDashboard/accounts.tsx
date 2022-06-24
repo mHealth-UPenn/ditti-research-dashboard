@@ -20,7 +20,6 @@ interface AccountsState {
   accounts: Account[];
   columns: Column[];
   loading: boolean;
-  fading: boolean;
 }
 
 class Accounts extends React.Component<AccountsProps, AccountsState> {
@@ -63,10 +62,9 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
   };
 
   componentDidMount() {
-    makeRequest("/admin/account?app=1").then((accounts) => {
-      this.setState({ accounts, loading: false, fading: true });
-      setTimeout(() => this.setState({ fading: false }), 500);
-    });
+    makeRequest("/admin/account?app=1").then((accounts) =>
+      this.setState({ accounts, loading: false })
+    );
   }
 
   getData = (): TableData[][] => {
@@ -155,8 +153,9 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         <Navbar handleClick={handleClick} active="Accounts" />
         <div className="page-content bg-white">
           <div className="loader-container">
-            {loading || fading ? <SmallLoader loading={loading} /> : null}
-            {loading ? null : (
+            {loading ? (
+              <SmallLoader />
+            ) : (
               <Table
                 columns={columns}
                 control={

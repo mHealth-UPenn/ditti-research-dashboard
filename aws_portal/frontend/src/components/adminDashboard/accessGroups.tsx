@@ -19,7 +19,6 @@ interface AccessGroupsState {
   accessGroups: AccessGroup[];
   columns: Column[];
   loading: boolean;
-  fading: boolean;
 }
 
 class AccessGroups extends React.Component<
@@ -60,15 +59,13 @@ class AccessGroups extends React.Component<
         width: 10
       }
     ],
-    loading: true,
-    fading: false
+    loading: true
   };
 
   async componentDidMount() {
-    makeRequest("/admin/access-group?app=1").then((accessGroups) => {
-      this.setState({ accessGroups, loading: false, fading: true });
-      setTimeout(() => this.setState({ fading: false }), 500);
-    });
+    makeRequest("/admin/access-group?app=1").then((accessGroups) =>
+      this.setState({ accessGroups, loading: false })
+    );
   }
 
   getData = (): TableData[][] => {
@@ -128,15 +125,16 @@ class AccessGroups extends React.Component<
 
   render() {
     const { handleClick } = this.props;
-    const { columns, loading, fading } = this.state;
+    const { columns, loading } = this.state;
 
     return (
       <div className="page-container">
         <Navbar handleClick={handleClick} active="Access Groups" />
         <div className="page-content bg-white">
           <div style={{ position: "relative", height: "100%", width: "100%" }}>
-            {loading || fading ? <SmallLoader loading={loading} /> : null}
-            {loading ? null : (
+            {loading ? (
+              <SmallLoader />
+            ) : (
               <Table
                 columns={columns}
                 control={

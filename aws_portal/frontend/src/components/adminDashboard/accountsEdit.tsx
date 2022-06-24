@@ -14,8 +14,6 @@ import {
 import Select from "../fields/select";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import AccessGroups from "./accessGroups";
-import { idText } from "typescript";
 
 interface AccountsEditProps {
   accountId: number;
@@ -42,7 +40,6 @@ interface AccountsEditState extends AccountPrefill {
   columnsAccessGroups: Column[];
   columnsStudies: Column[];
   loading: boolean;
-  fading: boolean;
 }
 
 class AccountsEdit extends React.Component<
@@ -100,7 +97,6 @@ class AccountsEdit extends React.Component<
       }
     ],
     loading: true,
-    fading: false,
     firstName: "",
     lastName: "",
     email: "",
@@ -122,12 +118,9 @@ class AccountsEdit extends React.Component<
     const prefill = this.getPrefill().then((prefill: AccountPrefill) =>
       this.setState({ ...prefill })
     );
-    const promises = [accessGroups, roles, studies, prefill];
 
-    Promise.all(promises).then(() => {
-      this.setState({ loading: false, fading: true });
-      setTimeout(() => this.setState({ fading: false }), 500);
-    });
+    const promises = [accessGroups, roles, studies, prefill];
+    Promise.all(promises).then(() => this.setState({ loading: false }));
   }
 
   getPrefill = async (): Promise<AccountPrefill> => {
@@ -458,7 +451,6 @@ class AccountsEdit extends React.Component<
       columnsAccessGroups,
       columnsStudies,
       loading,
-      fading,
       email,
       firstName,
       lastName
@@ -520,10 +512,9 @@ class AccountsEdit extends React.Component<
                 <div className="admin-form-field">
                   <span>Assign Account to Access Group</span>
                   <div className="loader-container">
-                    {loading || fading ? (
-                      <SmallLoader loading={loading} />
-                    ) : null}
-                    {loading ? null : (
+                    {loading ? (
+                      <SmallLoader />
+                    ) : (
                       <Table
                         columns={columnsAccessGroups}
                         control={<React.Fragment />}
@@ -542,10 +533,9 @@ class AccountsEdit extends React.Component<
                 <div className="admin-form-field">
                   <span>Assign Account to Studies</span>
                   <div className="loader-container">
-                    {loading || fading ? (
-                      <SmallLoader loading={loading} />
-                    ) : null}
-                    {loading ? null : (
+                    {loading ? (
+                      <SmallLoader />
+                    ) : (
                       <Table
                         columns={columnsStudies}
                         control={<React.Fragment />}
