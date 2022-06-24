@@ -28,6 +28,7 @@ interface AccountPrefill {
   email: string;
   firstName: string;
   lastName: string;
+  phoneNumber: string;
   accessGroupsSelected: AccessGroup[];
   rolesSelected: RoleSelected[];
   studiesSelected: Study[];
@@ -100,6 +101,7 @@ class AccountsEdit extends React.Component<
     firstName: "",
     lastName: "",
     email: "",
+    phoneNumber: "",
     rolesSelected: [],
     accessGroupsSelected: [],
     studiesSelected: []
@@ -131,6 +133,7 @@ class AccountsEdit extends React.Component<
           firstName: "",
           lastName: "",
           email: "",
+          phoneNumber: "",
           accessGroupsSelected: [],
           rolesSelected: [],
           studiesSelected: []
@@ -147,6 +150,7 @@ class AccountsEdit extends React.Component<
       firstName: account.firstName,
       lastName: account.lastName,
       email: account.email,
+      phoneNumber: account.phoneNumber,
       accessGroupsSelected: account.accessGroups,
       rolesSelected: roles,
       studiesSelected: account.studies
@@ -330,6 +334,7 @@ class AccountsEdit extends React.Component<
       email,
       firstName,
       lastName,
+      phoneNumber,
       rolesSelected,
       studiesSelected
     } = this.state;
@@ -350,6 +355,7 @@ class AccountsEdit extends React.Component<
       email: email,
       first_name: firstName,
       last_name: lastName,
+      phone_number: phoneNumber,
       studies: studies
     };
 
@@ -452,6 +458,7 @@ class AccountsEdit extends React.Component<
       columnsStudies,
       loading,
       email,
+      phoneNumber,
       firstName,
       lastName
     } = this.state;
@@ -504,6 +511,20 @@ class AccountsEdit extends React.Component<
                     prefill={email}
                     label="Email"
                     onKeyup={(text: string) => this.setState({ email: text })}
+                    feedback=""
+                  />
+                </div>
+                <div className="admin-form-field">
+                  <TextField
+                    id="phoneNumber"
+                    svg={<React.Fragment />}
+                    type="text"
+                    placeholder=""
+                    prefill={phoneNumber}
+                    label="Phone Number"
+                    onKeyup={(text: string) =>
+                      this.setState({ phoneNumber: text })
+                    }
                     feedback=""
                   />
                 </div>

@@ -138,6 +138,7 @@ class Account(db.Model):
     first_name = db.Column(db.String, nullable=False)
     last_name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False, unique=True)
+    phone_number = db.Column(db.String, nullable=True, unique=True)
     is_confirmed = db.Column(db.Boolean, default=False, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
     _password = db.Column(db.String, nullable=False)
@@ -239,6 +240,7 @@ class Account(db.Model):
             'firstName': self.first_name,
             'lastName': self.last_name,
             'email': self.email,
+            'phoneNumber': self.phone_number,
             'isConfirmed': self.is_confirmed,
             'accessGroups': [j.access_group.meta for j in self.access_groups],
             'studies': [s.meta for s in self.studies]

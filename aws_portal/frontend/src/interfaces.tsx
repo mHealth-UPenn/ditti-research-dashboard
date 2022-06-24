@@ -5,6 +5,7 @@ export interface Account {
   firstName: string;
   lastName: string;
   email: string;
+  phoneNumber: string;
   isConfirmed: boolean;
   accessGroups: AccessGroup[];
   studies: Study[];
