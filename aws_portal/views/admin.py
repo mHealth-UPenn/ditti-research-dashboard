@@ -71,12 +71,14 @@ def account_edit():
                 if join.access_group_id not in a_ids:
                     db.session.delete(join)
 
+            a_ids = [join.access_group_id for join in account.access_groups]
             for entry in data['access_groups']:
-                access_group = AccessGroup.query.get(entry['id'])
-                JoinAccountAccessGroup(
-                    access_group=access_group,
-                    account=account
-                )
+                if entry['id'] not in a_ids:
+                    access_group = AccessGroup.query.get(entry['id'])
+                    JoinAccountAccessGroup(
+                        access_group=access_group,
+                        account=account
+                    )
 
         if 'studies' in data:
             for join in account.studies:
@@ -85,10 +87,12 @@ def account_edit():
                 if join.study_id not in s_ids:
                     db.session.delete(join)
 
+            s_ids = [join.study_id for join in account.studies]
             for entry in data['studies']:
-                study = Study.query.get(entry['id'])
-                role = Role.query.get(entry['role']['id'])
-                JoinAccountStudy(account=account, role=role, study=study)
+                if entry['id'] not in s_ids:
+                    study = Study.query.get(entry['id'])
+                    role = Role.query.get(entry['role']['id'])
+                    JoinAccountStudy(account=account, role=role, study=study)
 
         db.session.commit()
         msg = 'Account Edited Successfully'
@@ -197,7 +201,7 @@ def access_group_create():
         access_group.app = app
 
         for entry in data['accounts']:
-            account = Account.query.get(entry)
+            account = Account.query.get(entry['id'])
             JoinAccountAccessGroup(account=account, access_group=access_group)
 
         for entry in data['permissions']:
@@ -234,13 +238,14 @@ def access_group_edit():
 
         if 'accounts' in data:
             for join in access_group.accounts:
-                if join.account_id not in data['accounts']:
+                a_ids = [a['id'] for a in data['accounts']]
+                if join.account_id not in a_ids:
                     db.session.delete(join)
 
             ids = [j.account_id for j in access_group.accounts]
             for entry in data['accounts']:
-                if entry not in ids:
-                    account = Account.query.get(entry)
+                if entry['id'] not in ids:
+                    account = Account.query.get(entry['id'])
                     JoinAccountAccessGroup(
                         account=account,
                         access_group=access_group

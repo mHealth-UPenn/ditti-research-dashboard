@@ -235,7 +235,7 @@ def test_access_group_create(post):
             'name': 'baz',
             'app': 2,
             'accounts': [
-                2
+                {'id': 2}
             ],
             'permissions': [
                 {
@@ -292,7 +292,8 @@ def test_access_group_edit_accounts(post):
         'id': 2,
         'edit': {
             'accounts': [
-                1, 3
+                {'id': 1},
+                {'id': 3}
             ]
         }
     }
