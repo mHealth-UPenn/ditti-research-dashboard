@@ -7,17 +7,6 @@ import Select from "../fields/select";
 import { App, Study } from "../../interfaces";
 import { makeRequest } from "../../utils";
 
-// const appsRaw: App[] = [
-//   {
-//     id: 1,
-//     name: "Ditti App Dashboard"
-//   },
-//   {
-//     id: 2,
-//     name: "Admin Dashboard"
-//   }
-// ];
-
 interface AccessGroupsEditProps {
   accessGroupId: number;
 }

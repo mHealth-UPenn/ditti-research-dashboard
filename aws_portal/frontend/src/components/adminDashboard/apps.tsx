@@ -6,15 +6,6 @@ import AppsEdit from "./appsEdit";
 import { makeRequest } from "../../utils";
 import { App } from "../../interfaces";
 
-// const data = [
-//   {
-//     name: "Ditti App"
-//   },
-//   {
-//     name: "Admin Dashboard"
-//   }
-// ];
-
 interface AppsProps {
   handleClick: (
     name: string[],

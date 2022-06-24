@@ -7,27 +7,6 @@ import { AccessGroup } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 
-// const data = [
-//   {
-//     app: "Ditti App",
-//     name: "Ditti App Staff",
-//     roles: ["Coordinator", "Manager"],
-//     studies: ["MSBI", "ART OSA"]
-//   },
-//   {
-//     app: "Ditti App",
-//     name: "Ditti App Admins",
-//     roles: ["Admin", "Super Admin"],
-//     studies: ["MSBI", "ART OSA"]
-//   },
-//   {
-//     app: "Admin Dashboard",
-//     name: "Admins",
-//     roles: ["Admin", "Super Admin"],
-//     studies: []
-//   }
-// ];
-
 interface AccessGroupsProps {
   handleClick: (
     name: string[],

@@ -7,45 +7,6 @@ import Navbar from "./navbar";
 import StudiesEdit from "./studiesEdit";
 import { SmallLoader } from "../loader";
 
-// const data = [
-//   {
-//     acronym: "MSBI",
-//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-//     dittiID: "mb",
-//     email: "mhealth@pennmedicine.upenn.edu"
-//   },
-//   {
-//     acronym: "MSBI",
-//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-//     dittiID: "mb",
-//     email: "mhealth@pennmedicine.upenn.edu"
-//   },
-//   {
-//     acronym: "MSBI",
-//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-//     dittiID: "mb",
-//     email: "mhealth@pennmedicine.upenn.edu"
-//   },
-//   {
-//     acronym: "MSBI",
-//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-//     dittiID: "mb",
-//     email: "mhealth@pennmedicine.upenn.edu"
-//   },
-//   {
-//     acronym: "MSBI",
-//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-//     dittiID: "mb",
-//     email: "mhealth@pennmedicine.upenn.edu"
-//   },
-//   {
-//     acronym: "MSBI",
-//     name: "Multicomponent Behavioral Intervention for Insomnia (MBSI-I) in Older Adults with Mild Cognitive Impairment (ActRelaxed)",
-//     dittiID: "mb",
-//     email: "mhealth@pennmedicine.upenn.edu"
-//   }
-// ];
-
 interface StudiesProps {
   handleClick: (
     name: string[],

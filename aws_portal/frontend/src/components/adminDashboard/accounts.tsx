@@ -8,45 +8,6 @@ import { makeRequest } from "../../utils";
 import { Account } from "../../interfaces";
 import { SmallLoader } from "../loader";
 
-// const data = [
-//   {
-//     name: "John Smith1",
-//     email: "john.smith1@pennmedicine.upenn.edu",
-//     createdOn: new Date("Jan 1, 2022"),
-//     lastLogin: 21
-//   },
-//   {
-//     name: "John Smith2",
-//     email: "john.smith2@pennmedicine.upenn.edu",
-//     createdOn: new Date("Feb 6, 2022"),
-//     lastLogin: 1
-//   },
-//   {
-//     name: "John Smith3",
-//     email: "john.smith3@pennmedicine.upenn.edu",
-//     createdOn: new Date("Apr 2, 2022"),
-//     lastLogin: 354
-//   },
-//   {
-//     name: "Jane Doe2",
-//     email: "jane.doe2@pennmedicine.upenn.edu",
-//     createdOn: new Date("Jan 1, 2022"),
-//     lastLogin: 0
-//   },
-//   {
-//     name: "Jane Doe3",
-//     email: "jane.doe3@pennmedicine.upenn.edu",
-//     createdOn: new Date("Dec 31, 2021"),
-//     lastLogin: 12
-//   },
-//   {
-//     name: "Jane Doe4",
-//     email: "jane.doe4@pennmedicine.upenn.edu",
-//     createdOn: new Date("Oct 1, 2021"),
-//     lastLogin: 44
-//   }
-// ];
-
 interface AccountsProps {
   handleClick: (
     name: string[],
