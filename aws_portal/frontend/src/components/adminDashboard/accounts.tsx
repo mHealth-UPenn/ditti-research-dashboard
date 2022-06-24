@@ -74,7 +74,6 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
   }
 
   getData = (): TableData[][] => {
-    // const pad = Math.max(...accounts.map((a) => String(a.lastLogin).length));
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
       month: "short",
@@ -151,7 +150,6 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
           ),
           searchValue: "",
           sortValue: ""
-          // sortValue: String(lastLogin).padStart(pad, "0")
         },
         {
           contents: (
