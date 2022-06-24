@@ -124,7 +124,7 @@ class Roles extends React.Component<RolesProps, RolesState> {
                 data={this.getData()}
                 includeControl={true}
                 includeSearch={true}
-                paginationPer={2}
+                paginationPer={10}
                 sortDefault=""
               />
             )}

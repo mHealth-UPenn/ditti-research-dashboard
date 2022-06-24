@@ -12,14 +12,9 @@ interface StudiesEditProps {
 }
 
 interface StudiesEditState {
-  roles: Role[];
-  columnsRoles: Column[];
-  loading: boolean;
-  fading: boolean;
   name: string;
   acronym: string;
   dittiId: string;
-  rolesSelected: Role[];
 }
 
 class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
@@ -32,38 +27,13 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
       : {
           name: "",
           acronym: "",
-          dittiId: "",
-          rolesSelected: []
+          dittiId: ""
         };
 
     this.state = {
-      roles: [],
-      columnsRoles: [
-        {
-          name: "Name",
-          sortable: true,
-          searchable: false,
-          width: 25
-        },
-        {
-          name: "Permissions",
-          sortable: false,
-          searchable: false,
-          width: 65
-        },
-        {
-          name: "",
-          sortable: false,
-          searchable: false,
-          width: 10
-        }
-      ],
-      loading: true,
-      fading: false,
       name: prefill.name,
       acronym: prefill.acronym,
-      dittiId: prefill.dittiId,
-      rolesSelected: prefill.rolesSelected
+      dittiId: prefill.dittiId
     };
   }
 
@@ -71,97 +41,19 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     return {
       name: "",
       acronym: "",
-      dittiId: "",
-      rolesSelected: []
+      dittiId: ""
     };
   }
 
-  componentDidMount() {
-    makeRequest("/admin/role?app=1").then((roles) => {
-      this.setState({ roles, loading: false, fading: true });
-      setTimeout(() => this.setState({ fading: false }), 500);
-    });
-  }
-
-  getRolesData = (): TableData[][] => {
-    return this.state.roles.map((role: Role) => {
-      const { id, name, permissions } = role;
-
-      return [
-        {
-          contents: (
-            <div className="flex-left table-data">
-              <span>{name}</span>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: name
-        },
-        {
-          contents: (
-            <div className="flex-left table-data">
-              <span>
-                {permissions
-                  .map((p) => p.action + " - " + p.resource)
-                  .join(", ")}
-              </span>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: (
-            <div className="flex-left table-control">
-              <ToggleButton
-                key={id}
-                id={id}
-                getActive={this.isActiveRole}
-                add={this.addRole}
-                remove={this.removeRole}
-              />
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        }
-      ];
-    });
-  };
-
-  isActiveRole = (id: number): boolean => {
-    return this.state.rolesSelected.some((r) => r.id == id);
-  };
-
-  addRole = (id: number, callback: () => void): void => {
-    const { rolesSelected } = this.state;
-    const role = this.state.roles.filter((r) => r.id == id)[0];
-
-    if (role) {
-      rolesSelected.push(role);
-      this.setState({ rolesSelected }, callback);
-    }
-  };
-
-  removeRole = (id: number, callback: () => void): void => {
-    const rolesSelected = this.state.rolesSelected.filter((r) => r.id != id);
-    this.setState({ rolesSelected }, callback);
-  };
-
   create = (): void => {
-    const { acronym, dittiId, name, rolesSelected } = this.state;
-
-    const roles = rolesSelected.map((r) => {
-      return { id: r.id };
-    });
+    const { acronym, dittiId, name } = this.state;
 
     const body = {
       app: 1,
       create: {
         acronym: acronym,
         ditti_id: dittiId,
-        name: name,
-        roles: roles
+        name: name
       }
     };
 
@@ -183,35 +75,9 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     console.log(res.msg);
   };
 
-  getRolesSummary = () => {
-    const { rolesSelected } = this.state;
-
-    return rolesSelected.map((role, i) => {
-      const permissions = role.permissions.map((permission, j) => {
-        return (
-          <span key={j}>
-            &nbsp;&nbsp;&nbsp;&nbsp;
-            {permission.action + " - " + permission.resource}
-            <br />
-          </span>
-        );
-      });
-
-      return (
-        <span key={i}>
-          {i ? <br /> : ""}
-          {role.name}
-          <br />
-          {permissions}
-        </span>
-      );
-    });
-  };
-
   render() {
     const { studyId } = this.props;
-    const { columnsRoles, loading, fading, name, acronym, dittiId } =
-      this.state;
+    const { name, acronym, dittiId } = this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -261,28 +127,6 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
                   />
                 </div>
               </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <span>Add Roles to Study</span>
-                  <div className="loader-container">
-                    {loading || fading ? (
-                      <SmallLoader loading={loading} />
-                    ) : null}
-                    {loading ? null : (
-                      <Table
-                        columns={columnsRoles}
-                        control={<React.Fragment />}
-                        controlWidth={0}
-                        data={this.getRolesData()}
-                        includeControl={false}
-                        includeSearch={false}
-                        paginationPer={2}
-                        sortDefault="Name"
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -294,11 +138,6 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
             Acronym: {acronym}
             <br />
             Ditti ID: {dittiId}
-            <br />
-            <br />
-            Roles:
-            <br />
-            {this.getRolesSummary()}
             <br />
           </span>
           <button className="button-primary" onClick={this.create}>

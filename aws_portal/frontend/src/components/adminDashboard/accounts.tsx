@@ -177,7 +177,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
                 data={this.getData()}
                 includeControl={true}
                 includeSearch={true}
-                paginationPer={2}
+                paginationPer={10}
                 sortDefault=""
               />
             )}

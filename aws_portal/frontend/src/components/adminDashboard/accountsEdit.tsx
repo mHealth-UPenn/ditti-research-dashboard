@@ -497,7 +497,7 @@ class AccountsEdit extends React.Component<
                         data={this.getAccessGroupsData()}
                         includeControl={false}
                         includeSearch={false}
-                        paginationPer={2}
+                        paginationPer={4}
                         sortDefault="Name"
                       />
                     )}
@@ -519,7 +519,7 @@ class AccountsEdit extends React.Component<
                         data={this.getStudiesData()}
                         includeControl={false}
                         includeSearch={false}
-                        paginationPer={2}
+                        paginationPer={4}
                         sortDefault="Name"
                       />
                     )}

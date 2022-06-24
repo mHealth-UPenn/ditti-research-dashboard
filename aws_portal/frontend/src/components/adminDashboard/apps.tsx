@@ -99,7 +99,7 @@ class Apps extends React.Component<AppsProps, AppsState> {
             data={this.getData()}
             includeControl={true}
             includeSearch={true}
-            paginationPer={2}
+            paginationPer={4}
             sortDefault=""
           />
         </div>
