@@ -91,7 +91,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
         phoneNumber
       } = a;
       const name = firstName + " " + lastName;
-      const ago = Math.ceil(
+      const ago = Math.floor(
         Math.abs(new Date().getTime() - new Date(lastLogin).getTime()) /
           (1000 * 60 * 60 * 24)
       );
@@ -145,7 +145,6 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
                     : "Today"
                   : "Never"}
               </span>
-              <span>{lastLogin}</span>
             </div>
           ),
           searchValue: "",

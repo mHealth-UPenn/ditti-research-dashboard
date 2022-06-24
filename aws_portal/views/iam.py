@@ -35,6 +35,9 @@ def login():
 
     if account is not None and account.check_password(auth.password):
         access_token = create_access_token(account)
+        account.last_login = datetime.now()
+        db.session.commit()
+
         res = jsonify({'msg': 'Login Successful'})
         set_access_cookies(res, access_token)
 
