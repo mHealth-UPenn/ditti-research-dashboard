@@ -147,7 +147,6 @@ class Column:
         self.__switch = False
 
     def __eq__(self, other):
-        print(self.__col, other)
         return Attr(self.__col).eq(other)
 
     def __ne__(self, other):
