@@ -47,3 +47,17 @@ export interface Study {
 export interface ResponseBody {
   msg: string;
 }
+
+export interface User {
+  __typename: string;
+  tap_permission: boolean;
+  _lastChangedAt: number;
+  _version: number;
+  information: string;
+  user_permission_id: string;
+  exp_time: string;
+  updatedAt: string;
+  team_email: string;
+  createdAt: string;
+  id: string;
+}

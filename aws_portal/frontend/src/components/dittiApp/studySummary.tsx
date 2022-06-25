@@ -4,6 +4,7 @@ import { Study } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import "./studySummary.css";
+import Subjects from "./subjects";
 
 interface StudyContact {
   fullName: string;
@@ -13,6 +14,11 @@ interface StudyContact {
 }
 
 interface StudySummaryProps {
+  handleClick: (
+    name: string[],
+    view: React.ReactElement,
+    replace: boolean
+  ) => void;
   studyId: number;
 }
 
@@ -48,6 +54,7 @@ class StudySummary extends React.Component<
   }
 
   render() {
+    const { handleClick, studyId } = this.props;
     const { loading, studyContacts } = this.state;
     const { dittiId, email, name } = this.state.studyDetails;
 
@@ -76,7 +83,19 @@ class StudySummary extends React.Component<
                       <button className="button-primary">
                         Enroll subject +
                       </button>
-                      <button className="button-secondary">
+                      <button
+                        className="button-secondary"
+                        onClick={() =>
+                          handleClick(
+                            ["Subjects"],
+                            <Subjects
+                              handleClick={handleClick}
+                              studyId={studyId}
+                            />,
+                            false
+                          )
+                        }
+                      >
                         View all subjects
                       </button>
                     </div>

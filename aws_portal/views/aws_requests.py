@@ -9,8 +9,8 @@ blueprint = Blueprint('aws', __name__, url_prefix='/aws')
 
 @blueprint.route('/scan')
 @auth_required('Read')
-def scan():
-    app = request.args.get('app')
+def scan():  # TODO update unit test
+    app = 'DittiApp'  # TODO fix hard-coded app
     key = request.args.get('key')
     query = request.args.get('query')
 
@@ -18,12 +18,7 @@ def scan():
         return jsonify({'msg': 'Invalid Query'})
 
     res = Query(app, key, query).scan()
-    res = {
-        'msg': 'Scan Successful',
-        'res': res['Items']
-    }
-
-    return jsonify(res)
+    return jsonify(res['Items'])
 
 
 @blueprint.route('/user/create', methods=['POST'])

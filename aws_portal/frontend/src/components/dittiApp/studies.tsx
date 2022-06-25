@@ -40,14 +40,11 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
     console.log(res.msg);
   };
 
-  handleClick = (id: number): void => {
+  handleClickStudy = (id: number): void => {
+    const { handleClick } = this.props;
     const study: Study = this.state.studies.filter((s: Study) => s.id == id)[0];
-    if (study)
-      this.props.handleClick(
-        [study.acronym],
-        <StudySummary studyId={study.id} />,
-        false
-      );
+    const view = <StudySummary handleClick={handleClick} studyId={study.id} />;
+    if (study) handleClick([study.acronym], view, false);
   };
 
   render() {
@@ -66,7 +63,7 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
                   <div className="study-row-name">
                     <span
                       className="link"
-                      onClick={() => this.handleClick(s.id)}
+                      onClick={() => this.handleClickStudy(s.id)}
                     >
                       {s.acronym}
                     </span>
