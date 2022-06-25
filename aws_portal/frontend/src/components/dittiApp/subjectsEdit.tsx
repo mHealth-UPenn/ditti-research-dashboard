@@ -4,6 +4,7 @@ import TextField from "../fields/textField";
 import { ResponseBody, User, UserDetails } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
+import CheckField from "../fields/checkField";
 
 interface SubjectsEditProps {
   dittiId: string;
@@ -104,6 +105,14 @@ class SubjectsEdit extends React.Component<
     const { tap_permission, information, user_permission_id, exp_time } =
       this.state;
 
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    };
+
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
         <div className="page-content bg-white">
@@ -154,7 +163,14 @@ class SubjectsEdit extends React.Component<
                     feedback=""
                   />
                 </div>
-                <div className="admin-form-field">Tapping Access</div>
+                <div className="admin-form-field">
+                  <CheckField
+                    id="tapping-access"
+                    prefill={tap_permission}
+                    label="Tapping Access"
+                    onChange={(val) => this.setState({ tap_permission: val })}
+                  />
+                </div>
               </div>
               <div className="admin-form-row">
                 <div className="admin-form-field">
@@ -187,7 +203,10 @@ class SubjectsEdit extends React.Component<
             <br />
             Expires on:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{exp_time}
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            {exp_time
+              ? new Date(exp_time).toLocaleDateString("en-US", dateOptions)
+              : ""}
             <br />
             <br />
             Tapping access:

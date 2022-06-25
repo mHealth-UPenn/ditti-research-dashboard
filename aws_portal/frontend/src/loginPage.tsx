@@ -72,7 +72,7 @@ class LoginPage extends React.Component<any, LoginPageState> {
           <div className="login-menu-content">
             <h1>Geriatric Sleep Research Lab</h1>
             <h3>AWS Data Portal</h3>
-            <div className="login-field border-light">
+            <div className="login-field">
               <TextField
                 id="login-email"
                 type=""
@@ -85,7 +85,7 @@ class LoginPage extends React.Component<any, LoginPageState> {
                 <Person />
               </TextField>
             </div>
-            <div className="login-field border-light">
+            <div className="login-field">
               <TextField
                 id="login-password"
                 type="password"
