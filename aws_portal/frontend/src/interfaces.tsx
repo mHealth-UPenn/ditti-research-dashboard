@@ -48,16 +48,19 @@ export interface ResponseBody {
   msg: string;
 }
 
-export interface User {
-  __typename: string;
+export interface UserDetails {
   tap_permission: boolean;
-  _lastChangedAt: number;
-  _version: number;
   information: string;
   user_permission_id: string;
   exp_time: string;
-  updatedAt: string;
   team_email: string;
+}
+
+export interface User extends UserDetails {
+  __typename: string;
+  _lastChangedAt: number;
+  _version: number;
   createdAt: string;
+  updatedAt: string;
   id: string;
 }

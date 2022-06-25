@@ -5,6 +5,7 @@ import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import "./studySummary.css";
 import Subjects from "./subjects";
+import SubjectsEdit from "./subjectsEdit";
 
 interface StudyContact {
   fullName: string;
@@ -80,7 +81,16 @@ class StudySummary extends React.Component<
                   <div className="study-subjects-header">
                     <div className="study-subjects-title">Active Subjects</div>
                     <div className="study-subjects-buttons">
-                      <button className="button-primary">
+                      <button
+                        className="button-primary"
+                        onClick={() =>
+                          handleClick(
+                            ["Enroll"],
+                            <SubjectsEdit dittiId={0} studyId={studyId} />,
+                            false
+                          )
+                        }
+                      >
                         Enroll subject +
                       </button>
                       <button
