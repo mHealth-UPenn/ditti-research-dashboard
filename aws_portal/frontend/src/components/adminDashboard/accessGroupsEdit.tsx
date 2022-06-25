@@ -330,9 +330,15 @@ class AccessGroupsEdit extends React.Component<
             {this.getPermissionsSummary()}
             <br />
           </span>
-          <button className="button-primary" onClick={this.post}>
-            Create
-          </button>
+          {accessGroupId ? (
+            <button className="button-primary" onClick={this.post}>
+              Update
+            </button>
+          ) : (
+            <button className="button-primary" onClick={this.post}>
+              Create
+            </button>
+          )}
         </div>
       </div>
     );
