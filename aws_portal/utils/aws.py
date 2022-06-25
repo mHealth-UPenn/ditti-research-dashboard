@@ -147,6 +147,7 @@ class Column:
         self.__switch = False
 
     def __eq__(self, other):
+        print(self.__col, other)
         return Attr(self.__col).eq(other)
 
     def __ne__(self, other):
@@ -211,7 +212,7 @@ class Query:
     conditionals = r'(==|!=|<=|>=|<<|>>|BETWEEN|BEGINS|CONTAINS|~~|~)'
     comparitors = r'(AND|OR)'
     values = r'((?<=")[\w\d\-:.]+(?="))'
-    keys = r'[a-z_]+(?=([^"]*"[^"]*")*[^"]*$)'
+    keys = r'[a-zA-Z_]+(?=")'
 
     def __init__(self, app, key, query):
         self.check_query(query)
@@ -219,10 +220,24 @@ class Query:
         self.app = app
         self.key = key
 
-    def scan(self, **kwargs):
-        return Scanner(self.app, self.key)\
-            .query(self.expression)\
-            .scan(**kwargs)
+    def scan(self, **kwargs):  # TODO update unit test
+        scanner = Scanner(self.app, self.key).query(self.expression)
+        res = scanner.scan(ReturnConsumedCapacity='TOTAL', **kwargs)
+        units = res['ConsumedCapacity']['CapacityUnits']
+        items = res['Items']
+
+        while 'LastEvaluatedKey' in res:
+            last = res['LastEvaluatedKey']
+            res = scanner.scan(
+              ExclusiveStartKey=last,
+              ReturnConsumedCapacity='TOTAL',
+              **kwargs
+            )
+
+            units = units + res['ConsumedCapacity']['CapacityUnits']
+            items.extend(res['Items'])
+
+        return {'Items': items, 'ConsumedCapacity': units}
 
     @classmethod
     def check_query(cls, query):
@@ -302,7 +317,8 @@ class Query:
 
     @classmethod
     def get_expression_from_string(cls, string):
-        key = re.search(cls.keys, string).group(0)
+        popped = re.sub(cls.conditionals, '', string)
+        key = re.search(cls.keys, popped).group(0)
         condition = re.search(cls.conditionals, string).group(0)
         values = re.findall(cls.values, string) or ['']
 
