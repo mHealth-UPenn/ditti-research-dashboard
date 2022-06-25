@@ -41,16 +41,10 @@ class AccessGroups extends React.Component<
         width: 20
       },
       {
-        name: "Roles",
+        name: "Permissions",
         searchable: false,
         sortable: false,
-        width: 25
-      },
-      {
-        name: "Studies",
-        searchable: true,
-        sortable: false,
-        width: 25
+        width: 50
       },
       {
         name: "",
@@ -70,7 +64,7 @@ class AccessGroups extends React.Component<
 
   getData = (): TableData[][] => {
     return this.state.accessGroups.map((ag: AccessGroup) => {
-      const { app, id, name } = ag;
+      const { app, id, name, permissions } = ag;
 
       return [
         {
@@ -94,16 +88,16 @@ class AccessGroups extends React.Component<
         {
           contents: (
             <div className="flex-left table-data">
-              <span>roles</span>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: (
-            <div className="flex-left table-data">
-              <span>studies</span>
+              <span>
+                {permissions
+                  .map(
+                    (p) =>
+                      (p.action == "*" ? "All Actions" : p.action) +
+                      " - " +
+                      (p.resource == "*" ? "All Resources" : p.resource)
+                  )
+                  .join(", ")}
+              </span>
             </div>
           ),
           searchValue: "",
