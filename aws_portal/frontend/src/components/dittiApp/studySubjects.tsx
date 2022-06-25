@@ -54,7 +54,6 @@ class StudySubjects extends React.Component<
   getSubjectSummary = (s: StudySubject): React.ReactElement => {
     let summaryTaps: React.ReactElement[];
 
-    console.log(s.dittiId, s.tapPermission);
     if (s.tapPermission) {
       summaryTaps = [6, 5, 4, 3, 2, 1, 0].map((i) => {
         const today = new Date(new Date().setHours(9, 0, 0, 0));
@@ -123,11 +122,17 @@ class StudySubjects extends React.Component<
 
   render() {
     const { loading, studySubjects } = this.state;
+    const activeSubjects = studySubjects.filter(
+      (s: StudySubject) => new Date() < new Date(s.expiresOn)
+    );
+
     return loading ? (
       <SmallLoader />
     ) : (
       <React.Fragment>
-        {studySubjects.map(this.getSubjectSummary)}
+        {activeSubjects.length
+          ? activeSubjects.map(this.getSubjectSummary)
+          : "No active subjects"}
       </React.Fragment>
     );
   }
