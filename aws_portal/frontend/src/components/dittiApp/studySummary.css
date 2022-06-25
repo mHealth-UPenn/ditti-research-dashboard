@@ -1,0 +1,22 @@
+.study-subjects-header {
+  display: flex;
+  height: 3rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.study-subjects-title {
+  font-weight: bold;
+  font-size: 1.5rem;
+  flex-grow: 1;
+}
+
+.study-subjects-buttons {
+  display: flex;
+  gap: 0.5rem;
+  height: 3rem;
+}
+
+.study-subjects-buttons button {
+  width: 12rem;
+}

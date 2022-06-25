@@ -75,10 +75,10 @@ def get_study_contacts():
 
     for join in joins:
         account = {
-            'FullName': join.account.full_name,
-            'Email': join.account.email,
-            'PhoneNumber': None,
-            'Role': join.role.name
+            'fullName': join.account.full_name,
+            'email': join.account.email,
+            'phoneNumber': join.account.phone_number,
+            'role': join.role.name
         }
 
         res.append(account)

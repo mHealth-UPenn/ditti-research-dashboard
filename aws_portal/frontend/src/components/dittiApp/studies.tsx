@@ -4,6 +4,7 @@ import { ResponseBody, Study } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import "./studies.css";
+import StudySummary from "./studySummary";
 
 interface StudiesViewProps {
   handleClick: (
@@ -39,6 +40,16 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
     console.log(res.msg);
   };
 
+  handleClick = (id: number): void => {
+    const study: Study = this.state.studies.filter((s: Study) => s.id == id)[0];
+    if (study)
+      this.props.handleClick(
+        [study.acronym],
+        <StudySummary studyId={study.id} />,
+        false
+      );
+  };
+
   render() {
     const { loading, studies } = this.state;
 
@@ -53,7 +64,12 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
               studies.map((s: Study) => (
                 <div key={s.id} className="border-light-b study-row">
                   <div className="study-row-name">
-                    <span className="link">{s.acronym}</span>
+                    <span
+                      className="link"
+                      onClick={() => this.handleClick(s.id)}
+                    >
+                      {s.acronym}
+                    </span>
                   </div>
                   <div className="study-row-summary">Summary Info</div>
                 </div>
