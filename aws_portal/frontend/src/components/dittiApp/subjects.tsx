@@ -62,7 +62,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
 
   componentDidMount() {
     makeRequest(
-      '/aws/scan?app=2&key=User&query=user_permission_idBEGINS"mb"'
+      `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.props.studyDetails.dittiId}"`
     ).then((users: User[]) => this.setState({ users, loading: false }));
   }
 

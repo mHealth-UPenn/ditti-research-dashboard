@@ -82,7 +82,7 @@ class SubjectsEdit extends React.Component<
 
     const id = this.props.dittiId;
     const body = {
-      app: "DittiApp",
+      app: 2,
       study: this.props.studyId,
       ...(id ? { user_permission_id: id, edit: data } : { create: data })
     };
