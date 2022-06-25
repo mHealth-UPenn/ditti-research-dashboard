@@ -1,0 +1,8 @@
+.study-row {
+  display: flex;
+  padding-bottom: 0.5rem;
+}
+
+.study-row-name {
+  flex-grow: 1;
+}

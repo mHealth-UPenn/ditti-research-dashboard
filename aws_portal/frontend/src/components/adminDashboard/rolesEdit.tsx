@@ -22,6 +22,10 @@ export const actionsRaw = [
   {
     id: 3,
     text: "Delete"
+  },
+  {
+    id: 5,
+    text: "*"
   }
 ];
 
@@ -37,6 +41,10 @@ export const resourcesRaw = [
   {
     id: 2,
     text: "Taps"
+  },
+  {
+    id: 4,
+    text: "*"
   }
 ];
 

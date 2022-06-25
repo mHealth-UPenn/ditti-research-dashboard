@@ -46,7 +46,7 @@ class Dashboard extends React.Component<any, DashboardState> {
         breadcrumbs: ["Ditti App"],
         name: "Ditti App",
         id: 1,
-        view: <StudiesView />
+        view: <StudiesView handleClick={this.setView} />
       },
       {
         breadcrumbs: ["Admin Dashboard", "Accounts"],
