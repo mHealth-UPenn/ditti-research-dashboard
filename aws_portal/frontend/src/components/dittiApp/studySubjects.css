@@ -1,5 +1,6 @@
 .subject-summary {
   display: flex;
+  margin-bottom: 2rem;
 }
 
 .subject-summary-name {

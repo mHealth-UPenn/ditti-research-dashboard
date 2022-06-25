@@ -10,6 +10,7 @@ interface StudySubject {
   id: string;
   dittiId: string;
   expiresOn: string;
+  tapPermission: boolean;
 }
 
 interface StudySubjectsProps {
@@ -38,10 +39,12 @@ class StudySubjects extends React.Component<
       `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.props.studyPrefix}"`
     ).then((users: User[]) => {
       const studySubjects: StudySubject[] = users.map((u) => {
+        console.log(u);
         return {
           id: u.id,
           dittiId: u.user_permission_id,
-          expiresOn: u.exp_time
+          expiresOn: u.exp_time,
+          tapPermission: u.tap_permission === false ? false : true
         };
       });
       this.setState({ studySubjects, loading: false });
@@ -49,46 +52,59 @@ class StudySubjects extends React.Component<
   }
 
   getSubjectSummary = (s: StudySubject): React.ReactElement => {
-    const summaryTaps = [6, 5, 4, 3, 2, 1, 0].map((i) => {
+    let summaryTaps: React.ReactElement[];
+
+    console.log(s.dittiId, s.tapPermission);
+    if (s.tapPermission) {
+      summaryTaps = [6, 5, 4, 3, 2, 1, 0].map((i) => {
+        const today = new Date(new Date().setHours(9, 0, 0, 0));
+        const start = sub(today, { days: i });
+        const end = add(start, { days: 1 });
+        const taps = this.props
+          .getTaps()
+          .filter(
+            (t) =>
+              t.tapUserId == s.id &&
+              isWithinInterval(new Date(t.time), { start, end })
+          ).length;
+
+        const weekday = i
+          ? start.toLocaleString("en-US", { weekday: "narrow" })
+          : "Today";
+
+        return (
+          <div key={i} className="subject-summary-taps-day border-light-l">
+            <span>{weekday}</span>
+            <span>{taps}</span>
+          </div>
+        );
+      });
+
       const today = new Date(new Date().setHours(9, 0, 0, 0));
-      const start = sub(today, { days: i });
-      const end = add(start, { days: 1 });
-      const taps = this.props
+      const start = sub(today, { days: 7 });
+      const totalTaps = this.props
         .getTaps()
-        .filter((t) =>
-          isWithinInterval(new Date(t.time), { start, end })
+        .filter(
+          (t) =>
+            t.tapUserId == s.id &&
+            isWithinInterval(new Date(t.time), { start, end: new Date() })
         ).length;
 
-      const weekday = i
-        ? start.toLocaleString("en-US", { weekday: "narrow" })
-        : "Today";
-
-      return (
-        <div key={i} className="subject-summary-taps-day border-light-l">
-          <span>{weekday}</span>
-          <span>{taps}</span>
+      summaryTaps.push(
+        <div className="subject-summary-taps-day border-light-l">
+          <span>
+            <b>Total</b>
+          </span>
+          <span>
+            <b>{totalTaps}</b>
+          </span>
         </div>
       );
-    });
-
-    const today = new Date(new Date().setHours(9, 0, 0, 0));
-    const start = sub(today, { days: 7 });
-    const totalTaps = this.props
-      .getTaps()
-      .filter((t) =>
-        isWithinInterval(new Date(t.time), { start, end: new Date() })
-      ).length;
-
-    summaryTaps.push(
-      <div className="subject-summary-taps-day border-light-l">
-        <span>
-          <b>Total</b>
-        </span>
-        <span>
-          <b>{totalTaps}</b>
-        </span>
-      </div>
-    );
+    } else {
+      summaryTaps = [
+        <div className="subject-summary-no-access">No tapping access</div>
+      ];
+    }
 
     const expiresOn = differenceInDays(new Date(s.expiresOn), new Date());
 
