@@ -311,9 +311,15 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
             <br />
             {this.getPermissionsSummary()}
           </span>
-          <button className="button-primary" onClick={this.post}>
-            Create
-          </button>
+          {roleId ? (
+            <button className="button-primary" onClick={this.post}>
+              Update
+            </button>
+          ) : (
+            <button className="button-primary" onClick={this.post}>
+              Create
+            </button>
+          )}
         </div>
       </div>
     );
