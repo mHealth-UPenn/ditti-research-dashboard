@@ -127,11 +127,12 @@ class SubjectsEdit extends React.Component<
                     id="dittiId"
                     type="text"
                     placeholder=""
-                    prefill={user_permission_id}
+                    prefill={user_permission_id.replace(studyPrefix, "")}
                     label="Ditti ID"
-                    onKeyup={(text: string) =>
-                      this.setState({ user_permission_id: text })
-                    }
+                    onKeyup={(text: string) => {
+                      const user_permission_id = studyPrefix + text;
+                      this.setState({ user_permission_id });
+                    }}
                     feedback=""
                   >
                     <div className="disabled bg-light border-light-r">
@@ -193,7 +194,7 @@ class SubjectsEdit extends React.Component<
           <span>
             Ditti ID:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{studyPrefix + user_permission_id}
+            &nbsp;&nbsp;&nbsp;&nbsp;{user_permission_id}
             <br />
             <br />
             Team email:
