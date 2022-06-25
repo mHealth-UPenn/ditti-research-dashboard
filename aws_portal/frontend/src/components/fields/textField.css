@@ -1,12 +1,10 @@
 .text-field-container {
   display: flex;
   flex-direction: column;
-  flex-grow: 1;
 }
 
 .text-field-content {
   display: flex;
-  flex-grow: 1;
   height: 3rem;
 }
 
@@ -22,6 +20,7 @@
 
 .text-field-input input {
   border: none;
+  font-family: 'Lato';
   font-size: 1rem;
   flex-grow: 1;
   margin-left: 1em;
@@ -44,4 +43,9 @@
   height: 1.25rem;
   margin: auto;
   padding-left: 1rem;
+}
+
+.text-field-input input:disabled {
+  color: #666699;
+  font-style: italic;
 }

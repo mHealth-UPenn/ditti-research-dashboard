@@ -3,6 +3,7 @@ import { Component } from "react";
 import TextField from "../fields/textField";
 import { ResponseBody, User, UserDetails } from "../../interfaces";
 import { makeRequest } from "../../utils";
+import "./subjectsEdit.css";
 
 interface SubjectsEditProps {
   dittiId: string;
@@ -100,13 +101,8 @@ class SubjectsEdit extends React.Component<
 
   render() {
     const { dittiId, studyEmail, studyPrefix } = this.props;
-    const {
-      tap_permission,
-      information,
-      user_permission_id,
-      exp_time,
-      team_email
-    } = this.state;
+    const { tap_permission, information, user_permission_id, exp_time } =
+      this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -118,39 +114,43 @@ class SubjectsEdit extends React.Component<
               </h1>
               <div className="admin-form-row">
                 <div className="admin-form-field">
-                  <div>
-                    <TextField
-                      id="dittiId"
-                      type="text"
-                      placeholder=""
-                      prefill={user_permission_id}
-                      label="Ditti ID"
-                      onKeyup={(text: string) =>
-                        this.setState({ user_permission_id: text })
-                      }
-                      feedback=""
-                    >
-                      <div>
+                  <TextField
+                    id="dittiId"
+                    type="text"
+                    placeholder=""
+                    prefill={user_permission_id}
+                    label="Ditti ID"
+                    onKeyup={(text: string) =>
+                      this.setState({ user_permission_id: text })
+                    }
+                    feedback=""
+                  >
+                    <div className="disabled bg-light border-light-r">
+                      <span>
                         <i>{studyPrefix}</i>
-                      </div>
-                    </TextField>
-                  </div>
+                      </span>
+                    </div>
+                  </TextField>
                 </div>
                 <div className="admin-form-field">
-                  <div>
-                    <i>{studyEmail}</i>
-                  </div>
+                  <TextField
+                    label="Team Email"
+                    prefill={studyEmail}
+                    disabled={true}
+                  />
                 </div>
               </div>
               <div className="admin-form-row">
                 <div className="admin-form-field">
                   <TextField
                     id="expiresOn"
-                    type="text"
+                    type="datetime-local"
                     placeholder=""
-                    prefill={exp_time}
+                    prefill={exp_time.replace("Z", "")}
                     label="Expires On"
-                    onKeyup={() => null}
+                    onKeyup={(text: string) =>
+                      this.setState({ exp_time: text + ":00.000Z" })
+                    }
                     feedback=""
                   />
                 </div>
@@ -175,12 +175,14 @@ class SubjectsEdit extends React.Component<
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Study Summary</h1>
           <span>
-            Ditti ID: {user_permission_id}
+            Ditti ID:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{studyPrefix + user_permission_id}
             <br />
             <br />
             Team email:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{team_email}
+            &nbsp;&nbsp;&nbsp;&nbsp;{studyEmail}
             <br />
             <br />
             Expires on:

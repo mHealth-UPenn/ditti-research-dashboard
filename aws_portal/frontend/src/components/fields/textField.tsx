@@ -3,13 +3,14 @@ import { Component } from "react";
 import "./textField.css";
 
 interface TextFieldProps {
-  id: string;
-  type: string;
-  placeholder: string;
-  prefill: string;
-  label: string;
-  onKeyup: (text: string) => void;
-  feedback: string;
+  id?: string;
+  type?: string;
+  placeholder?: string;
+  prefill?: string;
+  label?: string;
+  onKeyup?: (text: string) => void;
+  feedback?: string;
+  disabled?: boolean;
 }
 
 interface TextFieldState {
@@ -22,8 +23,16 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
   };
 
   render() {
-    const { id, type, placeholder, prefill, label, onKeyup, feedback } =
-      this.props;
+    const {
+      id,
+      type,
+      placeholder,
+      prefill,
+      label,
+      onKeyup,
+      feedback,
+      disabled
+    } = this.props;
 
     return (
       <div className="text-field-container">
@@ -32,14 +41,23 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
             {label}
           </label>
         ) : null}
-        <div className="text-field-content border-light">
+        <div
+          className={
+            "text-field-content border-light" + (disabled ? " bg-light" : "")
+          }
+        >
           {this.props.children ? this.props.children : null}
           <div className="text-field-input">
             <input
               type={type ? type : "text"}
-              placeholder={placeholder}
-              defaultValue={prefill}
-              onKeyUp={(e) => onKeyup((e.target as HTMLInputElement).value)}
+              placeholder={placeholder ? placeholder : ""}
+              defaultValue={prefill ? prefill : ""}
+              onChange={
+                onKeyup
+                  ? (e) => onKeyup((e.target as HTMLInputElement).value)
+                  : () => null
+              }
+              disabled={disabled}
             />
           </div>
         </div>
