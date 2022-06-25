@@ -78,3 +78,10 @@ export interface Tap extends TapDetails {
   createdAt: string;
   id: string;
 }
+
+export interface StudySubject {
+  id: string;
+  dittiId: string;
+  expiresOn: string;
+  tapPermission: boolean;
+}

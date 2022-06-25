@@ -1,17 +1,11 @@
 import * as React from "react";
 import { Component } from "react";
-import { TapDetails, User } from "../../interfaces";
+import { StudySubject, TapDetails, User } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
-
-interface StudySubject {
-  id: string;
-  dittiId: string;
-  expiresOn: string;
-  tapPermission: boolean;
-}
+import SubjectVisuals from "./subjectVisuals";
 
 interface StudySubjectsProps {
   studyPrefix: string;
@@ -110,7 +104,22 @@ class StudySubjects extends React.Component<
     return (
       <div key={s.id} className="subject-summary">
         <div className="subject-summary-name">
-          <span>{s.dittiId}</span>
+          <span
+            className="link"
+            onClick={() =>
+              this.props.handleClick(
+                [s.dittiId],
+                <SubjectVisuals
+                  getTaps={this.props.getTaps}
+                  handleClick={this.props.handleClick}
+                  subject={s}
+                />,
+                false
+              )
+            }
+          >
+            {s.dittiId}
+          </span>
           <span>
             <i>Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
           </span>
