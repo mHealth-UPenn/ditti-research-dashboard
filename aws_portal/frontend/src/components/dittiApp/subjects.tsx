@@ -5,6 +5,7 @@ import Table from "../table/table";
 import { makeRequest } from "../../utils";
 import { User } from "../../interfaces";
 import { SmallLoader } from "../loader";
+import SubjectsEdit from "./subjectsEdit";
 
 interface SubjectsProps {
   handleClick: (
@@ -123,13 +124,16 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
             <div className="flex-left table-control">
               <button
                 className="button-secondary"
-                // onClick={() =>
-                //   this.props.handleClick(
-                //     ["Edit", user_permission_id],
-                //     <SubjectsEdit accountId={id} />,
-                //     false
-                //   )
-                // }
+                onClick={() =>
+                  this.props.handleClick(
+                    ["Edit", user_permission_id],
+                    <SubjectsEdit
+                      dittiId={user_permission_id}
+                      studyId={this.props.studyId}
+                    />,
+                    false
+                  )
+                }
               >
                 Edit Details
               </button>
@@ -143,7 +147,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   };
 
   render() {
-    const { handleClick } = this.props;
+    const { handleClick, studyId } = this.props;
     const { columns, loading } = this.state;
 
     return (
@@ -157,13 +161,13 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
               control={
                 <button
                   className="button-primary"
-                  // onClick={() =>
-                  //   handleClick(
-                  //     ["Create"],
-                  //     <SubjectsEdit accountId={0} />,
-                  //     false
-                  //   )
-                  // }
+                  onClick={() =>
+                    handleClick(
+                      ["Create"],
+                      <SubjectsEdit dittiId="" studyId={studyId} />,
+                      false
+                    )
+                  }
                 >
                   Create&nbsp;<b>+</b>
                 </button>

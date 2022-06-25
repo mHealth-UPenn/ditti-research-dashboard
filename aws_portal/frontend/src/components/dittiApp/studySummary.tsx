@@ -86,7 +86,7 @@ class StudySummary extends React.Component<
                         onClick={() =>
                           handleClick(
                             ["Enroll"],
-                            <SubjectsEdit dittiId={0} studyId={studyId} />,
+                            <SubjectsEdit dittiId="" studyId={studyId} />,
                             false
                           )
                         }

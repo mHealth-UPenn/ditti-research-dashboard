@@ -47,7 +47,7 @@ def user_create():
 @auth_required('Edit', 'User')
 def user_edit():
     msg = 'User Successfully Edited'
-    app = request.json.get('app')
+    app = 'DittiApp'  # TODO fix hard-coded app
     user_permission_id = request.json.get('user_permission_id')
 
     if re.search(r'[^\dA-Za-z]', user_permission_id) is not None:

@@ -5,7 +5,7 @@ import { ResponseBody, User, UserDetails } from "../../interfaces";
 import { makeRequest } from "../../utils";
 
 interface SubjectsEditProps {
-  dittiId: number;
+  dittiId: string;
   studyId: number;
 }
 
@@ -36,8 +36,7 @@ class SubjectsEdit extends React.Component<
     const id = this.props.dittiId;
     return id
       ? makeRequest(
-          `/aws/scan?app=DittiApp&key=User&query=user_permission_id=="${id}"` +
-            id
+          `/aws/scan?app=2&key=User&query=user_permission_id=="${id}"`
         ).then(this.makePrefill)
       : {
           tap_permission: false,
