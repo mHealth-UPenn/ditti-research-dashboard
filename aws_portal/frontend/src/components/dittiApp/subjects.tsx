@@ -3,7 +3,7 @@ import { Component } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { makeRequest } from "../../utils";
-import { User } from "../../interfaces";
+import { Study, User } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
 
@@ -13,7 +13,7 @@ interface SubjectsProps {
     view: React.ReactElement,
     replace: boolean
   ) => void;
-  studyId: number;
+  studyDetails: Study;
 }
 
 interface SubjectsState {
@@ -67,6 +67,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   }
 
   getData = (): TableData[][] => {
+    const { id, dittiId, email } = this.props.studyDetails;
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
       month: "short",
@@ -129,7 +130,9 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
                     ["Edit", user_permission_id],
                     <SubjectsEdit
                       dittiId={user_permission_id}
-                      studyId={this.props.studyId}
+                      studyId={id}
+                      studyEmail={email}
+                      studyPrefix={dittiId}
                     />,
                     false
                   )
@@ -147,7 +150,8 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   };
 
   render() {
-    const { handleClick, studyId } = this.props;
+    const { handleClick } = this.props;
+    const { id, dittiId, email } = this.props.studyDetails;
     const { columns, loading } = this.state;
 
     return (
@@ -164,7 +168,12 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
                   onClick={() =>
                     handleClick(
                       ["Create"],
-                      <SubjectsEdit dittiId="" studyId={studyId} />,
+                      <SubjectsEdit
+                        dittiId=""
+                        studyId={id}
+                        studyEmail={email}
+                        studyPrefix={dittiId}
+                      />,
                       false
                     )
                   }

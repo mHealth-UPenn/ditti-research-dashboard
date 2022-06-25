@@ -7,6 +7,8 @@ import { makeRequest } from "../../utils";
 interface SubjectsEditProps {
   dittiId: string;
   studyId: number;
+  studyPrefix: string;
+  studyEmail: string;
 }
 
 interface SubjectsEditState extends UserDetails {
@@ -97,7 +99,7 @@ class SubjectsEdit extends React.Component<
   };
 
   render() {
-    const { dittiId } = this.props;
+    const { dittiId, studyEmail, studyPrefix } = this.props;
     const {
       tap_permission,
       information,
@@ -116,30 +118,29 @@ class SubjectsEdit extends React.Component<
               </h1>
               <div className="admin-form-row">
                 <div className="admin-form-field">
-                  <TextField
-                    id="dittiId"
-                    svg={<React.Fragment />}
-                    type="text"
-                    placeholder=""
-                    prefill={user_permission_id}
-                    label="Ditti ID"
-                    onKeyup={(text: string) =>
-                      this.setState({ user_permission_id: text })
-                    }
-                    feedback=""
-                  />
+                  <div>
+                    <TextField
+                      id="dittiId"
+                      svg={<React.Fragment />}
+                      type="text"
+                      placeholder=""
+                      prefill={user_permission_id}
+                      label="Ditti ID"
+                      onKeyup={(text: string) =>
+                        this.setState({ user_permission_id: text })
+                      }
+                      feedback=""
+                    >
+                      <div>
+                        <i>{studyPrefix}</i>
+                      </div>
+                    </TextField>
+                  </div>
                 </div>
                 <div className="admin-form-field">
-                  <TextField
-                    id="email"
-                    svg={<React.Fragment />}
-                    type="text"
-                    placeholder=""
-                    prefill={team_email}
-                    label="Team email"
-                    onKeyup={() => null}
-                    feedback=""
-                  />
+                  <div>
+                    <i>{studyEmail}</i>
+                  </div>
                 </div>
               </div>
               <div className="admin-form-row">

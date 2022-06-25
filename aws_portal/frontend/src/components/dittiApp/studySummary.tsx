@@ -86,7 +86,12 @@ class StudySummary extends React.Component<
                         onClick={() =>
                           handleClick(
                             ["Enroll"],
-                            <SubjectsEdit dittiId="" studyId={studyId} />,
+                            <SubjectsEdit
+                              dittiId=""
+                              studyId={studyId}
+                              studyPrefix={dittiId}
+                              studyEmail={email}
+                            />,
                             false
                           )
                         }
@@ -100,7 +105,7 @@ class StudySummary extends React.Component<
                             ["Subjects"],
                             <Subjects
                               handleClick={handleClick}
-                              studyId={studyId}
+                              studyDetails={this.state.studyDetails}
                             />,
                             false
                           )

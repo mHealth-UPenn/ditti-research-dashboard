@@ -35,6 +35,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
         ) : null}
         <div className="text-field-content border-light">
           {svg ? svg : null}
+          {this.props.children ? this.props.children : null}
           <input
             type={type ? type : "text"}
             className="text-field-input"
