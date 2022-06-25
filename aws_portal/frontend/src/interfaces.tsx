@@ -64,3 +64,17 @@ export interface User extends UserDetails {
   updatedAt: string;
   id: string;
 }
+
+export interface TapDetails {
+  time: string;
+  tapUserId: string;
+}
+
+export interface Tap extends TapDetails {
+  __typename: string;
+  _lastChangedAt: string;
+  _version: number;
+  updatedAt: string;
+  createdAt: string;
+  id: string;
+}

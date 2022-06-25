@@ -57,6 +57,8 @@ def get_taps():  # TODO update unit test
     query = reduce(g, ids, '')
     res = Query('DittiApp', 'Tap', query).scan()
 
+    return jsonify(res['Items'])
+
 
 @blueprint.route('/user/create', methods=['POST'])
 @auth_required('Create', 'User')

@@ -1,8 +1,9 @@
 import * as React from "react";
 import { Component } from "react";
-import { Study } from "../../interfaces";
+import { Study, TapDetails } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
+import StudySubjects from "./studySubjects";
 import "./studySummary.css";
 import Subjects from "./subjects";
 import SubjectsEdit from "./subjectsEdit";
@@ -15,6 +16,7 @@ interface StudyContact {
 }
 
 interface StudySummaryProps {
+  getTaps: () => TapDetails[];
   handleClick: (
     name: string[],
     view: React.ReactElement,
@@ -36,6 +38,7 @@ class StudySummary extends React.Component<
   state = {
     studyContacts: [],
     studyDetails: {} as Study,
+    studySubjects: [],
     loading: true
   };
 
@@ -55,7 +58,7 @@ class StudySummary extends React.Component<
   }
 
   render() {
-    const { handleClick, studyId } = this.props;
+    const { getTaps, handleClick, studyId } = this.props;
     const { loading, studyContacts } = this.state;
     const { dittiId, email, name } = this.state.studyDetails;
 
@@ -115,7 +118,13 @@ class StudySummary extends React.Component<
                       </button>
                     </div>
                   </div>
-                  <div className="study-subjects-list">Study subjects list</div>
+                  <div className="study-subjects-list">
+                    <StudySubjects
+                      getTaps={getTaps}
+                      handleClick={handleClick}
+                      studyPrefix={dittiId}
+                    />
+                  </div>
                 </div>
               </div>
             )}

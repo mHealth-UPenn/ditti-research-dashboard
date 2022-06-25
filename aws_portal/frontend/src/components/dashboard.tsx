@@ -7,6 +7,8 @@ import Home from "./home";
 import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
+import { Tap, TapDetails } from "../interfaces";
+import { makeRequest } from "../utils";
 
 // interface DashboardProps {}
 
@@ -21,6 +23,7 @@ interface DashboardState {
   history: { name: string; view: React.ReactElement }[][];
   studies: { name: string; id: number }[];
   view: React.ReactElement;
+  taps: TapDetails[];
 }
 
 class Dashboard extends React.Component<any, DashboardState> {
@@ -36,7 +39,8 @@ class Dashboard extends React.Component<any, DashboardState> {
       breadcrumbs: [{ name: "Home", view: view }],
       studies: studies,
       history: [],
-      view: view
+      view: view,
+      taps: []
     };
   }
 
@@ -46,7 +50,13 @@ class Dashboard extends React.Component<any, DashboardState> {
         breadcrumbs: ["Ditti App"],
         name: "Ditti App",
         id: 1,
-        view: <StudiesView handleClick={this.setView} />
+        view: (
+          <StudiesView
+            getTapsAsync={this.getTapsAsync}
+            getTaps={this.getTaps}
+            handleClick={this.setView}
+          />
+        )
       },
       {
         breadcrumbs: ["Admin Dashboard", "Accounts"],
@@ -62,6 +72,29 @@ class Dashboard extends React.Component<any, DashboardState> {
       { name: "MSBI", id: 1 },
       { name: "ART OSA", id: 2 }
     ];
+  };
+
+  getTapsAsync = async (): Promise<TapDetails[]> => {
+    let { taps } = this.state;
+
+    if (!taps.length) {
+      taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
+        return res.map((tap: Tap) => {
+          return {
+            tapUserId: tap.tapUserId,
+            time: tap.time
+          };
+        });
+      });
+
+      this.setState({ taps });
+    }
+
+    return taps;
+  };
+
+  getTaps = (): TapDetails[] => {
+    return this.state.taps;
   };
 
   setView = (name: string[], view: React.ReactElement, replace?: boolean) => {
