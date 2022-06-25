@@ -38,10 +38,7 @@ class TableControl extends React.Component<TableControlProps, any> {
               onKeyup={onSearch}
               feedback=""
             >
-              <div
-                className="table-search-svg bg-dark"
-                style={{ margin: "-0.75rem 1rem -0.75rem -0.25rem" }}
-              >
+              <div className="table-search-svg bg-dark">
                 <Search />
               </div>
             </TextField>

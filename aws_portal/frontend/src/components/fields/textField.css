@@ -40,12 +40,6 @@
   position: absolute;
 }
 
-.text-field-content svg {
-  height: 1.25rem;
-  margin: auto;
-  padding-left: 1rem;
-}
-
 .text-field-input input:disabled {
   color: #666699;
   font-style: italic;
