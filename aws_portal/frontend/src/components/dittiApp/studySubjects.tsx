@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
-import { StudySubject, TapDetails, User } from "../../interfaces";
+import { Study, StudySubject, TapDetails, User } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
@@ -15,6 +15,7 @@ interface StudySubjectsProps {
     view: React.ReactElement,
     replace: boolean
   ) => void;
+  studyDetails: Study;
 }
 
 interface StudySubjectsState {
@@ -112,6 +113,7 @@ class StudySubjects extends React.Component<
                 <SubjectVisuals
                   getTaps={this.props.getTaps}
                   handleClick={this.props.handleClick}
+                  studyDetails={this.props.studyDetails}
                   subject={s}
                 />,
                 false

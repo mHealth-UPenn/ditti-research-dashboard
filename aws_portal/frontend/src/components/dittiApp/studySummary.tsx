@@ -59,8 +59,8 @@ class StudySummary extends React.Component<
 
   render() {
     const { getTaps, handleClick, studyId } = this.props;
-    const { loading, studyContacts } = this.state;
-    const { dittiId, email, name } = this.state.studyDetails;
+    const { loading, studyContacts, studyDetails } = this.state;
+    const { dittiId, email, name } = studyDetails;
 
     return (
       <div className="card-container">
@@ -122,6 +122,7 @@ class StudySummary extends React.Component<
                     <StudySubjects
                       getTaps={getTaps}
                       handleClick={handleClick}
+                      studyDetails={studyDetails}
                       studyPrefix={dittiId}
                     />
                   </div>

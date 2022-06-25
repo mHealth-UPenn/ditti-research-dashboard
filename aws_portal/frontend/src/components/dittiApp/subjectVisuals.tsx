@@ -1,7 +1,8 @@
 import * as React from "react";
 import { Component } from "react";
-import { StudySubject, TapDetails } from "../../interfaces";
+import { Study, StudySubject, TapDetails } from "../../interfaces";
 import TextField from "../fields/textField";
+import SubjectsEdit from "./subjectsEdit";
 
 interface SubjectVisualsProps {
   getTaps: () => TapDetails[];
@@ -10,6 +11,7 @@ interface SubjectVisualsProps {
     view: React.ReactElement,
     replace: boolean
   ) => void;
+  studyDetails: Study;
   subject: StudySubject;
 }
 
@@ -18,6 +20,7 @@ interface SubjectVisualsProps {
 class SubjectVisuals extends React.Component<SubjectVisualsProps, any> {
   render() {
     const { dittiId, expiresOn } = this.props.subject;
+    const { studyDetails } = this.props;
 
     return (
       <div className="card-container">
@@ -25,8 +28,27 @@ class SubjectVisuals extends React.Component<SubjectVisualsProps, any> {
           <div className="card-m bg-white shadow">
             <div className="subject-header">
               <div className="card-title">{dittiId}</div>
-              <div>
-                Expires on: <b>{expiresOn}</b>
+              <div className="subject-hedaer-info">
+                <div>
+                  Expires on: <b>{expiresOn}</b>
+                </div>
+                <button
+                  className="button-secondary button-lg"
+                  onClick={() =>
+                    this.props.handleClick(
+                      ["Edit"],
+                      <SubjectsEdit
+                        dittiId={dittiId}
+                        studyId={studyDetails.id}
+                        studyEmail={studyDetails.email}
+                        studyPrefix={studyDetails.dittiId}
+                      />,
+                      false
+                    )
+                  }
+                >
+                  Edit Details
+                </button>
               </div>
             </div>
             <div className="subject-display-container">
