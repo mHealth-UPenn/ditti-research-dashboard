@@ -121,7 +121,6 @@ class SubjectsEdit extends React.Component<
                   <div>
                     <TextField
                       id="dittiId"
-                      svg={<React.Fragment />}
                       type="text"
                       placeholder=""
                       prefill={user_permission_id}
@@ -147,7 +146,6 @@ class SubjectsEdit extends React.Component<
                 <div className="admin-form-field">
                   <TextField
                     id="expiresOn"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={exp_time}
@@ -162,7 +160,6 @@ class SubjectsEdit extends React.Component<
                 <div className="admin-form-field">
                   <TextField
                     id="information"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={information}

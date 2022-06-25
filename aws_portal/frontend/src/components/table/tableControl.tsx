@@ -31,21 +31,20 @@ class TableControl extends React.Component<TableControlProps, any> {
           <div className="table-search">
             <TextField
               id="table-search-input"
-              svg={
-                <div
-                  className="table-search-svg bg-dark"
-                  style={{ margin: "-0.75rem 1rem -0.75rem -0.25rem" }}
-                >
-                  <Search />
-                </div>
-              }
               type="text"
               placeholder="Search..."
               prefill=""
               label=""
               onKeyup={onSearch}
               feedback=""
-            />
+            >
+              <div
+                className="table-search-svg bg-dark"
+                style={{ margin: "-0.75rem 1rem -0.75rem -0.25rem" }}
+              >
+                <Search />
+              </div>
+            </TextField>
           </div>
         ) : (
           ""

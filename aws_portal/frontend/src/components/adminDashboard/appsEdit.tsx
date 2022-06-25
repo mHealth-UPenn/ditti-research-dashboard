@@ -38,7 +38,6 @@ class AppsEdit extends React.Component<AppsEditProps, AppsEditState> {
                 <div className="admin-form-field">
                   <TextField
                     id="name"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={name}

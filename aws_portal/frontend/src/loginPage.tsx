@@ -75,26 +75,28 @@ class LoginPage extends React.Component<any, LoginPageState> {
             <div className="login-field border-light">
               <TextField
                 id="login-email"
-                svg={<Person />}
                 type=""
                 placeholder="Email"
                 prefill=""
                 label=""
                 onKeyup={(text: string) => this.setState({ email: text })}
                 feedback="Invalid email address"
-              />
+              >
+                <Person />
+              </TextField>
             </div>
             <div className="login-field border-light">
               <TextField
                 id="login-password"
-                svg={<Key />}
                 type="password"
                 placeholder="Password"
                 prefill=""
                 label=""
                 onKeyup={(text: string) => this.setState({ password: text })}
                 feedback="Invalid password"
-              />
+              >
+                <Key />
+              </TextField>
             </div>
             <div className="login-buttons">
               <button

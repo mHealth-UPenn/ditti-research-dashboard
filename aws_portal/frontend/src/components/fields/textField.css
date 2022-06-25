@@ -7,7 +7,7 @@
 .text-field-content {
   display: flex;
   flex-grow: 1;
-  padding: 0.75rem 0.25rem;
+  height: 3rem;
 }
 
 .text-field-label {
@@ -16,12 +16,19 @@
 }
 
 .text-field-input {
-  border: none;
-  padding: 0;
+  display: flex;
   flex-grow: 1;
 }
 
-.text-field-input:focus {
+.text-field-input input {
+  border: none;
+  font-size: 1rem;
+  flex-grow: 1;
+  margin-left: 1em;
+  padding: 0;
+}
+
+.text-field-input input:focus {
   outline: none;
 }
 
@@ -36,5 +43,5 @@
 .text-field-content svg {
   height: 1.25rem;
   margin: auto;
-  padding: 0 0.75rem;
+  padding-left: 1rem;
 }

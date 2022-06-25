@@ -475,7 +475,6 @@ class AccountsEdit extends React.Component<
                 <div className="admin-form-field">
                   <TextField
                     id="first-name"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={firstName}
@@ -489,7 +488,6 @@ class AccountsEdit extends React.Component<
                 <div className="admin-form-field">
                   <TextField
                     id="last-name"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={lastName}
@@ -505,7 +503,6 @@ class AccountsEdit extends React.Component<
                 <div className="admin-form-field">
                   <TextField
                     id="email"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={email}
@@ -517,7 +514,6 @@ class AccountsEdit extends React.Component<
                 <div className="admin-form-field">
                   <TextField
                     id="phoneNumber"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={phoneNumber}

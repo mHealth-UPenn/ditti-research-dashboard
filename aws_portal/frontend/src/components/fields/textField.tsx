@@ -4,7 +4,6 @@ import "./textField.css";
 
 interface TextFieldProps {
   id: string;
-  svg: React.ReactElement;
   type: string;
   placeholder: string;
   prefill: string;
@@ -23,7 +22,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
   };
 
   render() {
-    const { id, svg, type, placeholder, prefill, label, onKeyup, feedback } =
+    const { id, type, placeholder, prefill, label, onKeyup, feedback } =
       this.props;
 
     return (
@@ -34,15 +33,15 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
           </label>
         ) : null}
         <div className="text-field-content border-light">
-          {svg ? svg : null}
           {this.props.children ? this.props.children : null}
-          <input
-            type={type ? type : "text"}
-            className="text-field-input"
-            placeholder={placeholder}
-            defaultValue={prefill}
-            onKeyUp={(e) => onKeyup((e.target as HTMLInputElement).value)}
-          />
+          <div className="text-field-input">
+            <input
+              type={type ? type : "text"}
+              placeholder={placeholder}
+              defaultValue={prefill}
+              onKeyUp={(e) => onKeyup((e.target as HTMLInputElement).value)}
+            />
+          </div>
         </div>
         {feedback ? (
           <span className="text-field-feedback">{feedback}</span>

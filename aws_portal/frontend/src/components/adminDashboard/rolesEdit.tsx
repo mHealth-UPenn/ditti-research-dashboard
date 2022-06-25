@@ -276,7 +276,6 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
                 <div className="admin-form-field">
                   <TextField
                     id="name"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={name}

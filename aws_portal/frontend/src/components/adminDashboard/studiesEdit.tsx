@@ -91,7 +91,6 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
                 <div className="admin-form-field">
                   <TextField
                     id="name"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={name}
@@ -103,7 +102,6 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
                 <div className="admin-form-field">
                   <TextField
                     id="email"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={email}
@@ -117,7 +115,6 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
                 <div className="admin-form-field">
                   <TextField
                     id="acronym"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={acronym}
@@ -129,7 +126,6 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
                 <div className="admin-form-field">
                   <TextField
                     id="dittiId"
-                    svg={<React.Fragment />}
                     type="text"
                     placeholder=""
                     prefill={dittiId}
