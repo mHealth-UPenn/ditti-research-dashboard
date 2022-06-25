@@ -12,13 +12,15 @@ interface StudiesEditState {
   name: string;
   acronym: string;
   dittiId: string;
+  email: string;
 }
 
 class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
   state = {
     name: "",
     acronym: "",
-    dittiId: ""
+    dittiId: "",
+    email: ""
   };
 
   componentDidMount() {
@@ -34,7 +36,8 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
       : {
           name: "",
           acronym: "",
-          dittiId: ""
+          dittiId: "",
+          email: ""
         };
   };
 
@@ -44,14 +47,16 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     return {
       name: study.name,
       acronym: study.acronym,
-      dittiId: study.dittiId
+      dittiId: study.dittiId,
+      email: study.email
     };
   };
 
   post = (): void => {
-    const { acronym, dittiId, name } = this.state;
-    const data = { acronym, ditti_id: dittiId, name };
+    const { acronym, dittiId, email, name } = this.state;
+    const data = { acronym, ditti_id: dittiId, email, name };
     const id = this.props.studyId;
+    console.log(data);
     const body = {
       app: 1,
       ...(id ? { id: id, edit: data } : { create: data })
@@ -72,7 +77,7 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
 
   render() {
     const { studyId } = this.props;
-    const { name, acronym, dittiId } = this.state;
+    const { name, acronym, dittiId, email } = this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -92,6 +97,18 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
                     prefill={name}
                     label="Name"
                     onKeyup={(text: string) => this.setState({ name: text })}
+                    feedback=""
+                  />
+                </div>
+                <div className="admin-form-field">
+                  <TextField
+                    id="email"
+                    svg={<React.Fragment />}
+                    type="text"
+                    placeholder=""
+                    prefill={email}
+                    label="Team Email"
+                    onKeyup={(text: string) => this.setState({ email: text })}
                     feedback=""
                   />
                 </div>
@@ -129,6 +146,8 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
           <h1 className="border-white-b">Study Summary</h1>
           <span>
             Name: {name}
+            <br />
+            Team Email: {email}
             <br />
             Acronym: {acronym}
             <br />

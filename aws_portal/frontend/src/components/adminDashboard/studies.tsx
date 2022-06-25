@@ -67,7 +67,7 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
 
   getData = (): TableData[][] => {
     return this.state.studies.map((s: Study) => {
-      const { acronym, dittiId, id, name } = s;
+      const { acronym, dittiId, email, id, name } = s;
 
       return [
         {
@@ -100,11 +100,11 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
         {
           contents: (
             <div className="flex-left table-data">
-              <span>email</span>
+              <span>{email}</span>
             </div>
           ),
-          searchValue: "email",
-          sortValue: "email"
+          searchValue: email,
+          sortValue: email
         },
         {
           contents: (

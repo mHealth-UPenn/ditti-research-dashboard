@@ -91,12 +91,14 @@ studies = [
     {
         'name': 'foo',
         'acronym': 'FOO',
-        'ditti_id': 'FO'
+        'ditti_id': 'FO',
+        'email': 'foo@email.com'
     },
     {
         'name': 'bar',
         'acronym': 'BAR',
-        'ditti_id': 'BR'
+        'ditti_id': 'BR',
+        'email': 'bar@email.com'
     }
 ]
 

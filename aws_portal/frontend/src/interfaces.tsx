@@ -40,6 +40,7 @@ export interface Study {
   name: string;
   acronym: string;
   dittiId: string;
+  email: string;
   role: Role;
 }
 

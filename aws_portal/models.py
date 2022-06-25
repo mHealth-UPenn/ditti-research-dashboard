@@ -520,6 +520,7 @@ class Study(db.Model):
     name = db.Column(db.String, nullable=False, unique=True)
     acronym = db.Column(db.String, nullable=False, unique=True)
     ditti_id = db.Column(db.String, nullable=False, unique=True)
+    email = db.Column(db.String, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
     roles = db.relationship('JoinStudyRole', cascade='all, delete-orphan')
@@ -531,6 +532,7 @@ class Study(db.Model):
             'name': self.name,
             'acronym': self.acronym,
             'dittiId': self.ditti_id,
+            'email': self.email,
             'roles': [r.meta for r in self.roles]
         }
 

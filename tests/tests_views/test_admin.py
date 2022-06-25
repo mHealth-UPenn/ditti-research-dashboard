@@ -162,7 +162,8 @@ def test_study_create(post):
         'create': {
             'name': 'baz',
             'acronym': 'BAZ',
-            'ditti_id': 'BZ'
+            'ditti_id': 'BZ',
+            'email': 'baz@email.com'
         }
     }
 
@@ -178,6 +179,7 @@ def test_study_create(post):
     assert foo.name == 'baz'
     assert foo.acronym == 'BAZ'
     assert foo.ditti_id == 'BZ'
+    assert foo.email == 'baz@email.com'
 
 
 def test_study_edit(post):
