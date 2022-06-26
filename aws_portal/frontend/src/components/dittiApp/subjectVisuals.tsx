@@ -7,7 +7,13 @@ import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
 import { ReactComponent as Right } from "../../icons/arrowRight.svg";
 import { ReactComponent as ZoomIn } from "../../icons/zoomIn.svg";
 import { ReactComponent as ZoomOut } from "../../icons/zoomOut.svg";
-import { add, differenceInMinutes, isWithinInterval, sub } from "date-fns";
+import {
+  add,
+  differenceInMinutes,
+  format,
+  isWithinInterval,
+  sub
+} from "date-fns";
 import "./subjectVisuals.css";
 import { dummyData } from "../dummyData";
 
@@ -108,7 +114,7 @@ class SubjectVisuals extends React.Component<
     const groups: { start: Date; stop: Date; taps: TapDetails[] }[] = [];
     while (i < stop) {
       const groupStart = i;
-      i = add(i, { minutes: difference / 60 });
+      i = add(i, { minutes: difference / 50 });
 
       const groupTaps = tapsFiltered.filter((t) =>
         isWithinInterval(new Date(t.time), { start: groupStart, end: i })
@@ -170,10 +176,10 @@ class SubjectVisuals extends React.Component<
 
     const xTicks: { time: Date; width: string }[] = [];
 
-    Array.from(Array(21).keys())
+    Array.from(Array(11).keys())
       .slice(1)
       .forEach((i) => {
-        const ix = Math.ceil((i / 20) * groups.length) - 1;
+        const ix = Math.ceil((i / 10) * groups.length) - 1;
         const time = groups[ix].start;
         const last = xTicks[xTicks.length - 1];
         const tick = { time, width: (ix / groups.length) * 100 + "%" };
@@ -197,11 +203,7 @@ class SubjectVisuals extends React.Component<
               left: `calc(${xt.width} - 0.5rem)`
             }}
           >
-            {xt.time.toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              hour12: false,
-              minute: "2-digit"
-            })}
+            {format(xt.time, "E MMM d'\n'h:mm a")}
           </div>
         </React.Fragment>
       );

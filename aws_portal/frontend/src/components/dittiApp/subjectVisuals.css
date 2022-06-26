@@ -29,6 +29,7 @@
 
 .subject-display {
   margin-bottom: 1rem;
+  margin-right: 4rem;
 }
 
 .taps-display {
@@ -54,6 +55,7 @@
 .y-axis-label {
   align-items: center;
   display: flex;
+  font-weight: bold;
 }
 
 .y-axis-label span {
@@ -74,7 +76,7 @@
 
 .taps-display-bottom {
   display: flex;
-  height: 6rem;
+  height: 7.5rem;
 }
 
 .x-axis-pad {
@@ -89,6 +91,7 @@
 
 .x-axis-label {
   align-items: end;
+  font-weight: bold;
   justify-content: center;
   display: flex;
   flex-grow: 1;
@@ -105,6 +108,7 @@
   top: 0.25rem;
   transform: rotate(60deg);
   transform-origin: left;
+  white-space: pre;
 }
 
 .hline {
