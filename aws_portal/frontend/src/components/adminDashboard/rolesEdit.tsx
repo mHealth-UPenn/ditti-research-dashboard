@@ -267,46 +267,44 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
         <div className="page-content bg-white">
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {roleId ? "Edit " : "Create "} Role
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="name"
-                    type="text"
-                    placeholder=""
-                    prefill={name}
-                    label="Name"
-                    onKeyup={(text: string) => this.setState({ name: text })}
-                    feedback=""
-                  />
+          {loading ? (
+            <SmallLoader />
+          ) : (
+            <div className="admin-form">
+              <div className="admin-form-content">
+                <h1 className="border-light-b">
+                  {roleId ? "Edit " : "Create "} Role
+                </h1>
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <TextField
+                      id="name"
+                      type="text"
+                      placeholder=""
+                      prefill={name}
+                      label="Name"
+                      onKeyup={(text: string) => this.setState({ name: text })}
+                      feedback=""
+                    />
+                  </div>
                 </div>
-              </div>
-              <div style={{ marginLeft: "2rem", marginBottom: "0.5rem" }}>
-                <b>Add Permissions to Role</b>
-              </div>
-              {loading ? (
-                <div style={{ marginBottom: "2rem" }}>
-                  <SmallLoader />
+                <div style={{ marginLeft: "2rem", marginBottom: "0.5rem" }}>
+                  <b>Add Permissions to Role</b>
                 </div>
-              ) : (
-                this.getPermissionFields()
-              )}
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <button
-                    className="button-secondary button-lg"
-                    onClick={this.addPermission}
-                  >
-                    Add Permission
-                  </button>
+                {this.getPermissionFields()}
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <button
+                      className="button-secondary button-lg"
+                      onClick={this.addPermission}
+                    >
+                      Add Permission
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Role Summary</h1>

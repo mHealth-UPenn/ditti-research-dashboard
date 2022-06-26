@@ -466,71 +466,71 @@ class AccountsEdit extends React.Component<
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
         <div className="page-content bg-white">
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {accountId ? "Edit " : "Create "} Account
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="first-name"
-                    type="text"
-                    placeholder=""
-                    prefill={firstName}
-                    label="First Name"
-                    onKeyup={(text: string) =>
-                      this.setState({ firstName: text })
-                    }
-                    feedback=""
-                  />
+          {loading ? (
+            <SmallLoader />
+          ) : (
+            <div className="admin-form">
+              <div className="admin-form-content">
+                <h1 className="border-light-b">
+                  {accountId ? "Edit " : "Create "} Account
+                </h1>
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <TextField
+                      id="first-name"
+                      type="text"
+                      placeholder=""
+                      prefill={firstName}
+                      label="First Name"
+                      onKeyup={(text: string) =>
+                        this.setState({ firstName: text })
+                      }
+                      feedback=""
+                    />
+                  </div>
+                  <div className="admin-form-field">
+                    <TextField
+                      id="last-name"
+                      type="text"
+                      placeholder=""
+                      prefill={lastName}
+                      label="Last Name"
+                      onKeyup={(text: string) =>
+                        this.setState({ lastName: text })
+                      }
+                      feedback=""
+                    />
+                  </div>
                 </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="last-name"
-                    type="text"
-                    placeholder=""
-                    prefill={lastName}
-                    label="Last Name"
-                    onKeyup={(text: string) =>
-                      this.setState({ lastName: text })
-                    }
-                    feedback=""
-                  />
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <TextField
+                      id="email"
+                      type="text"
+                      placeholder=""
+                      prefill={email}
+                      label="Email"
+                      onKeyup={(text: string) => this.setState({ email: text })}
+                      feedback=""
+                    />
+                  </div>
+                  <div className="admin-form-field">
+                    <TextField
+                      id="phoneNumber"
+                      type="text"
+                      placeholder=""
+                      prefill={phoneNumber}
+                      label="Phone Number"
+                      onKeyup={(text: string) =>
+                        this.setState({ phoneNumber: text })
+                      }
+                      feedback=""
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="email"
-                    type="text"
-                    placeholder=""
-                    prefill={email}
-                    label="Email"
-                    onKeyup={(text: string) => this.setState({ email: text })}
-                    feedback=""
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="phoneNumber"
-                    type="text"
-                    placeholder=""
-                    prefill={phoneNumber}
-                    label="Phone Number"
-                    onKeyup={(text: string) =>
-                      this.setState({ phoneNumber: text })
-                    }
-                    feedback=""
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <span>Assign Account to Access Group</span>
-                  {loading ? (
-                    <SmallLoader />
-                  ) : (
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <span>Assign Account to Access Group</span>
                     <Table
                       columns={columnsAccessGroups}
                       control={<React.Fragment />}
@@ -541,15 +541,11 @@ class AccountsEdit extends React.Component<
                       paginationPer={4}
                       sortDefault="Name"
                     />
-                  )}
+                  </div>
                 </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <span>Assign Account to Studies</span>
-                  {loading ? (
-                    <SmallLoader />
-                  ) : (
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <span>Assign Account to Studies</span>
                     <Table
                       columns={columnsStudies}
                       control={<React.Fragment />}
@@ -560,11 +556,11 @@ class AccountsEdit extends React.Component<
                       paginationPer={4}
                       sortDefault="Name"
                     />
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Account Summary</h1>

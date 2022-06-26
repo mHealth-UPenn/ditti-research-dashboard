@@ -253,32 +253,32 @@ class AccessGroupsEdit extends React.Component<
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
         <div className="page-content bg-white">
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {accessGroupId ? "Edit " : "Create "} Access Group
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="name"
-                    type="text"
-                    placeholder=""
-                    prefill={name}
-                    label="Name"
-                    onKeyup={(text: string) => this.setState({ name: text })}
-                    feedback=""
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <div style={{ marginBottom: "0.5rem" }}>
-                    <b>App</b>
+          {loading ? (
+            <SmallLoader />
+          ) : (
+            <div className="admin-form">
+              <div className="admin-form-content">
+                <h1 className="border-light-b">
+                  {accessGroupId ? "Edit " : "Create "} Access Group
+                </h1>
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <TextField
+                      id="name"
+                      type="text"
+                      placeholder=""
+                      prefill={name}
+                      label="Name"
+                      onKeyup={(text: string) => this.setState({ name: text })}
+                      feedback=""
+                    />
                   </div>
-                  {loading ? (
-                    <SmallLoader />
-                  ) : (
+                </div>
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <div style={{ marginBottom: "0.5rem" }}>
+                      <b>App</b>
+                    </div>
                     <div className="border-light">
                       <Select
                         id={accessGroupId}
@@ -290,31 +290,25 @@ class AccessGroupsEdit extends React.Component<
                         getDefault={this.getSelectedApp}
                       />
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
-              <div style={{ marginLeft: "2rem", marginBottom: "0.5rem" }}>
-                <b>Add Permissions to Access Group</b>
-              </div>
-              {loading ? (
-                <div style={{ marginBottom: "2rem" }}>
-                  <SmallLoader />
+                <div style={{ marginLeft: "2rem", marginBottom: "0.5rem" }}>
+                  <b>Add Permissions to Access Group</b>
                 </div>
-              ) : (
-                this.getPermissionFields()
-              )}
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <button
-                    className="button-secondary button-lg"
-                    onClick={this.addPermission}
-                  >
-                    Add Permission
-                  </button>
+                {this.getPermissionFields()}
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <button
+                      className="button-secondary button-lg"
+                      onClick={this.addPermission}
+                    >
+                      Add Permission
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Access Group Summary</h1>

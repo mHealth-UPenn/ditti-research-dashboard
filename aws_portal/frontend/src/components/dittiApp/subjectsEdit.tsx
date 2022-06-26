@@ -5,6 +5,7 @@ import { ResponseBody, User, UserDetails } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
 import CheckField from "../fields/checkField";
+import { SmallLoader } from "../loader";
 
 interface SubjectsEditProps {
   dittiId: string;
@@ -102,8 +103,13 @@ class SubjectsEdit extends React.Component<
 
   render() {
     const { dittiId, studyEmail, studyPrefix } = this.props;
-    const { tap_permission, information, user_permission_id, exp_time } =
-      this.state;
+    const {
+      tap_permission,
+      information,
+      user_permission_id,
+      exp_time,
+      loading
+    } = this.state;
 
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -116,78 +122,82 @@ class SubjectsEdit extends React.Component<
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
         <div className="page-content bg-white">
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {dittiId ? "Edit " : "Enroll "} Subject
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="dittiId"
-                    type="text"
-                    placeholder=""
-                    prefill={user_permission_id.replace(studyPrefix, "")}
-                    label="Ditti ID"
-                    onKeyup={(text: string) => {
-                      const user_permission_id = studyPrefix + text;
-                      this.setState({ user_permission_id });
-                    }}
-                    feedback=""
-                  >
-                    <div className="disabled bg-light border-light-r">
-                      <span>
-                        <i>{studyPrefix}</i>
-                      </span>
-                    </div>
-                  </TextField>
+          {loading ? (
+            <SmallLoader />
+          ) : (
+            <div className="admin-form">
+              <div className="admin-form-content">
+                <h1 className="border-light-b">
+                  {dittiId ? "Edit " : "Enroll "} Subject
+                </h1>
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <TextField
+                      id="dittiId"
+                      type="text"
+                      placeholder=""
+                      prefill={user_permission_id.replace(studyPrefix, "")}
+                      label="Ditti ID"
+                      onKeyup={(text: string) => {
+                        const user_permission_id = studyPrefix + text;
+                        this.setState({ user_permission_id });
+                      }}
+                      feedback=""
+                    >
+                      <div className="disabled bg-light border-light-r">
+                        <span>
+                          <i>{studyPrefix}</i>
+                        </span>
+                      </div>
+                    </TextField>
+                  </div>
+                  <div className="admin-form-field">
+                    <TextField
+                      label="Team Email"
+                      prefill={studyEmail}
+                      disabled={true}
+                    />
+                  </div>
                 </div>
-                <div className="admin-form-field">
-                  <TextField
-                    label="Team Email"
-                    prefill={studyEmail}
-                    disabled={true}
-                  />
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <TextField
+                      id="expiresOn"
+                      type="datetime-local"
+                      placeholder=""
+                      prefill={exp_time.replace("Z", "")}
+                      label="Expires On"
+                      onKeyup={(text: string) =>
+                        this.setState({ exp_time: text + ":00.000Z" })
+                      }
+                      feedback=""
+                    />
+                  </div>
+                  <div className="admin-form-field">
+                    <CheckField
+                      id="tapping-access"
+                      prefill={tap_permission}
+                      label="Tapping Access"
+                      onChange={(val) => this.setState({ tap_permission: val })}
+                    />
+                  </div>
                 </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="expiresOn"
-                    type="datetime-local"
-                    placeholder=""
-                    prefill={exp_time.replace("Z", "")}
-                    label="Expires On"
-                    onKeyup={(text: string) =>
-                      this.setState({ exp_time: text + ":00.000Z" })
-                    }
-                    feedback=""
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <CheckField
-                    id="tapping-access"
-                    prefill={tap_permission}
-                    label="Tapping Access"
-                    onChange={(val) => this.setState({ tap_permission: val })}
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="information"
-                    type="text"
-                    placeholder=""
-                    prefill={information}
-                    label="About sleep template (optional)"
-                    onKeyup={() => null}
-                    feedback=""
-                  />
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <TextField
+                      id="information"
+                      type="text"
+                      placeholder=""
+                      prefill={information}
+                      label="About sleep template (optional)"
+                      onKeyup={() => null}
+                      feedback=""
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Study Summary</h1>

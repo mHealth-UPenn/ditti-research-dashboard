@@ -3,16 +3,21 @@ import { Component } from "react";
 import TextField from "../fields/textField";
 import { ResponseBody, Role, Study } from "../../interfaces";
 import { makeRequest } from "../../utils";
+import { SmallLoader } from "../loader";
+
+interface StudyPrefill {
+  name: string;
+  acronym: string;
+  dittiId: string;
+  email: string;
+}
 
 interface StudiesEditProps {
   studyId: number;
 }
 
-interface StudiesEditState {
-  name: string;
-  acronym: string;
-  dittiId: string;
-  email: string;
+interface StudiesEditState extends StudyPrefill {
+  loading: boolean;
 }
 
 class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
@@ -20,16 +25,17 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     name: "",
     acronym: "",
     dittiId: "",
-    email: ""
+    email: "",
+    loading: true
   };
 
   componentDidMount() {
-    this.getPrefill().then((prefill: StudiesEditState) =>
-      this.setState({ ...prefill })
+    this.getPrefill().then((prefill: StudyPrefill) =>
+      this.setState({ ...prefill, loading: false })
     );
   }
 
-  getPrefill = async (): Promise<StudiesEditState> => {
+  getPrefill = async (): Promise<StudyPrefill> => {
     const id = this.props.studyId;
     return id
       ? makeRequest("/admin/study?app=1&id=" + id).then(this.makePrefill)
@@ -41,7 +47,7 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
         };
   };
 
-  makePrefill = (res: Study[]): StudiesEditState => {
+  makePrefill = (res: Study[]): StudyPrefill => {
     const study = res[0];
 
     return {
@@ -56,7 +62,6 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     const { acronym, dittiId, email, name } = this.state;
     const data = { acronym, ditti_id: dittiId, email, name };
     const id = this.props.studyId;
-    console.log(data);
     const body = {
       app: 1,
       ...(id ? { id: id, edit: data } : { create: data })
@@ -77,66 +82,74 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
 
   render() {
     const { studyId } = this.props;
-    const { name, acronym, dittiId, email } = this.state;
+    const { name, acronym, dittiId, email, loading } = this.state;
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
         <div className="page-content bg-white">
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {studyId ? "Edit " : "Create "} Study
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="name"
-                    type="text"
-                    placeholder=""
-                    prefill={name}
-                    label="Name"
-                    onKeyup={(text: string) => this.setState({ name: text })}
-                    feedback=""
-                  />
+          {loading ? (
+            <SmallLoader />
+          ) : (
+            <div className="admin-form">
+              <div className="admin-form-content">
+                <h1 className="border-light-b">
+                  {studyId ? "Edit " : "Create "} Study
+                </h1>
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <TextField
+                      id="name"
+                      type="text"
+                      placeholder=""
+                      prefill={name}
+                      label="Name"
+                      onKeyup={(text: string) => this.setState({ name: text })}
+                      feedback=""
+                    />
+                  </div>
+                  <div className="admin-form-field">
+                    <TextField
+                      id="email"
+                      type="text"
+                      placeholder=""
+                      prefill={email}
+                      label="Team Email"
+                      onKeyup={(text: string) => this.setState({ email: text })}
+                      feedback=""
+                    />
+                  </div>
                 </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="email"
-                    type="text"
-                    placeholder=""
-                    prefill={email}
-                    label="Team Email"
-                    onKeyup={(text: string) => this.setState({ email: text })}
-                    feedback=""
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="acronym"
-                    type="text"
-                    placeholder=""
-                    prefill={acronym}
-                    label="Acronym"
-                    onKeyup={(text: string) => this.setState({ acronym: text })}
-                    feedback=""
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="dittiId"
-                    type="text"
-                    placeholder=""
-                    prefill={dittiId}
-                    label="Ditti ID"
-                    onKeyup={(text: string) => this.setState({ dittiId: text })}
-                    feedback=""
-                  />
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <TextField
+                      id="acronym"
+                      type="text"
+                      placeholder=""
+                      prefill={acronym}
+                      label="Acronym"
+                      onKeyup={(text: string) =>
+                        this.setState({ acronym: text })
+                      }
+                      feedback=""
+                    />
+                  </div>
+                  <div className="admin-form-field">
+                    <TextField
+                      id="dittiId"
+                      type="text"
+                      placeholder=""
+                      prefill={dittiId}
+                      label="Ditti ID"
+                      onKeyup={(text: string) =>
+                        this.setState({ dittiId: text })
+                      }
+                      feedback=""
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Study Summary</h1>
