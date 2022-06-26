@@ -32,8 +32,75 @@
 }
 
 .taps-display {
+  align-items: end;
+  display: flex;
   height: 24rem;
   width: 100%;
+}
+
+.taps-display-top {
   display: flex;
+}
+
+.y-axis {
+  display: flex;
+  flex-shrink: 0;
+  position: relative;
+  width: 4rem;
+}
+
+.y-axis-label {
+  align-items: center;
+  display: flex;
+}
+
+.y-axis-label span {
+  display: block;
+  transform: rotate(-90deg);
+}
+
+.y-axis-tick {
+  position: absolute;
+  right: 0rem;
+  width: 0.5rem;
+}
+
+.y-axis-tick-label {
+  position: absolute;
+  right: 0.75rem;
+}
+
+.taps-display-bottom {
+  display: flex;
+  height: 6rem;
+}
+
+.x-axis-pad {
+  width: 4rem;
+}
+
+.x-axis {
+  display: flex;
+  flex-grow: 1;
+  position: relative;
+}
+
+.x-axis-label {
   align-items: end;
+  justify-content: center;
+  display: flex;
+  flex-grow: 1;
+}
+
+.x-axis-tick {
+  position: absolute;
+  top: 0rem;
+  height: 0.5rem;
+}
+
+.x-axis-tick-label {
+  position: absolute;
+  top: 0.75rem;
+  transform: rotate(60deg);
+  transform-origin: left;
 }

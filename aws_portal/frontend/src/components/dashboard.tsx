@@ -75,20 +75,20 @@ class Dashboard extends React.Component<any, DashboardState> {
   };
 
   getTapsAsync = async (): Promise<TapDetails[]> => {
-    let { taps } = this.state;
+    const { taps } = this.state;
 
-    if (!taps.length) {
-      taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
-        return res.map((tap: Tap) => {
-          return {
-            tapUserId: tap.tapUserId,
-            time: tap.time
-          };
-        });
-      });
+    // if (!taps.length) {
+    //   taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
+    //     return res.map((tap: Tap) => {
+    //       return {
+    //         tapUserId: tap.tapUserId,
+    //         time: tap.time
+    //       };
+    //     });
+    //   });
 
-      this.setState({ taps });
-    }
+    //   this.setState({ taps });
+    // }
 
     return taps;
   };

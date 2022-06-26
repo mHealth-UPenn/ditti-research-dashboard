@@ -7,6 +7,7 @@ interface TextFieldProps {
   type?: string;
   placeholder?: string;
   prefill?: string;
+  value?: string;
   label?: string;
   onKeyup?: (text: string) => void;
   feedback?: string;
@@ -51,7 +52,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
             <input
               type={type ? type : "text"}
               placeholder={placeholder ? placeholder : ""}
-              value={prefill ? prefill : ""}
+              defaultValue={prefill ? prefill : ""}
               onChange={
                 onKeyup
                   ? (e) => onKeyup((e.target as HTMLInputElement).value)
