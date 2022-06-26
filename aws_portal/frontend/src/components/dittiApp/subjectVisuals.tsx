@@ -240,7 +240,7 @@ class SubjectVisuals extends React.Component<
                   <span>Start:</span>
                   <TextField
                     type="datetime-local"
-                    prefill={start.toISOString().substring(0, 16)}
+                    value={start.toISOString().substring(0, 16)}
                     onKeyup={this.setStart}
                   />
                 </div>
@@ -248,7 +248,7 @@ class SubjectVisuals extends React.Component<
                   <span>Stop:</span>
                   <TextField
                     type="datetime-local"
-                    prefill={stop.toISOString().substring(0, 16)}
+                    value={stop.toISOString().substring(0, 16)}
                     onKeyup={this.setStop}
                   />
                 </div>

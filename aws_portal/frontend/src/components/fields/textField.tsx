@@ -32,7 +32,8 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
       label,
       onKeyup,
       feedback,
-      disabled
+      disabled,
+      value
     } = this.props;
 
     return (
@@ -53,6 +54,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
               type={type ? type : "text"}
               placeholder={placeholder ? placeholder : ""}
               defaultValue={prefill ? prefill : ""}
+              value={value ? value : undefined}
               onChange={
                 onKeyup
                   ? (e) => onKeyup((e.target as HTMLInputElement).value)
