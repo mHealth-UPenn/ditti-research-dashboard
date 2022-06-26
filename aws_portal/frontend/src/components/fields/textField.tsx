@@ -53,7 +53,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
             <input
               type={type ? type : "text"}
               placeholder={placeholder ? placeholder : ""}
-              defaultValue={prefill ? prefill : ""}
+              defaultValue={prefill ? prefill : undefined}
               value={value ? value : undefined}
               onChange={
                 onKeyup

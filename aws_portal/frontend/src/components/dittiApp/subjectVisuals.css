@@ -35,6 +35,8 @@
   align-items: end;
   display: flex;
   height: 24rem;
+  margin-bottom: -2px;
+  margin-left: -2px;
   width: 100%;
 }
 
@@ -61,7 +63,7 @@
 
 .y-axis-tick {
   position: absolute;
-  right: 0rem;
+  right: 2px;
   width: 0.5rem;
 }
 
@@ -94,7 +96,7 @@
 
 .x-axis-tick {
   position: absolute;
-  top: 0rem;
+  top: 2px;
   height: 0.5rem;
 }
 
@@ -103,4 +105,21 @@
   top: 0.75rem;
   transform: rotate(60deg);
   transform-origin: left;
+}
+
+.hline {
+  border: 1px dashed #b3b3cc44;
+  width: 100%;
+  position: absolute;
+  z-index: 0;
+}
+
+.vline {
+  height: 100%;
+  position: absolute;
+  z-index: 0;
+}
+
+.bar {
+  z-index: 1;
 }

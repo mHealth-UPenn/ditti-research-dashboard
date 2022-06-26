@@ -38,15 +38,17 @@ class SubjectVisuals extends React.Component<
 
   decrement = (): void => {
     let { start, stop } = this.state;
-    start = sub(start, { hours: 1 });
-    stop = sub(stop, { hours: 1 });
+    const difference = differenceInMinutes(stop, start);
+    start = sub(start, { minutes: difference / 6 });
+    stop = sub(stop, { minutes: difference / 6 });
     this.setState({ start, stop });
   };
 
   increment = (): void => {
     let { start, stop } = this.state;
-    start = add(start, { hours: 1 });
-    stop = add(stop, { hours: 1 });
+    const difference = differenceInMinutes(stop, start);
+    start = add(start, { minutes: difference / 6 });
+    stop = add(stop, { minutes: difference / 6 });
     this.setState({ start, stop });
   };
 
@@ -66,20 +68,34 @@ class SubjectVisuals extends React.Component<
     this.setState({ start, stop });
   };
 
+  zoomIn = (): void => {
+    let { start, stop } = this.state;
+    start = add(start, { minutes: 20 });
+    stop = sub(stop, { minutes: 20 });
+    this.setState({ start, stop });
+  };
+
+  zoomOut = (): void => {
+    let { start, stop } = this.state;
+    start = sub(start, { minutes: 20 });
+    stop = add(stop, { minutes: 20 });
+    this.setState({ start, stop });
+  };
+
   getTapsDisplay = (): React.ReactElement => {
-    const start = this.state.start;
-    const end = this.state.stop;
+    const { start, stop } = this.state;
+    const difference = differenceInMinutes(stop, start);
     const taps = this.getTaps().filter(
       (t) =>
         t.tapUserId == this.props.subject.id &&
-        isWithinInterval(new Date(t.time), { start, end })
+        isWithinInterval(new Date(t.time), { start, end: stop })
     );
 
     let i = start;
     const groups: { start: Date; stop: Date; taps: TapDetails[] }[] = [];
-    while (i < end) {
+    while (i < stop) {
       const groupStart = i;
-      i = add(i, { minutes: 5 });
+      i = add(i, { minutes: difference / 60 });
 
       const groupTaps = taps.filter((t) =>
         isWithinInterval(new Date(t.time), { start: groupStart, end: i })
@@ -90,19 +106,21 @@ class SubjectVisuals extends React.Component<
     }
 
     const maxTaps = Math.max(...groups.map((g) => g.taps.length));
-    const barWidth = 100 / groups.length + "%";
-
+    const mody = Math.ceil(maxTaps / 15);
     const yTicks: { count: number; height: string }[] = [];
-    Array.from(Array(16).keys())
+
+    Array.from(Array(maxTaps + 1).keys())
       .slice(1)
       .forEach((i) => {
-        const count = Math.ceil((i / 15) * maxTaps);
+        if (i % mody) return;
         const last = yTicks[yTicks.length - 1];
-        const tick = { count, height: (count / maxTaps) * 100 + "%" };
-        if (!last || count != last.count) yTicks.push(tick);
+        const height = maxTaps ? (i / maxTaps) * 100 + "%" : "100%";
+        const tick = { count: i, height };
+        if (!last || i != last.count) yTicks.push(tick);
       });
 
     const xTicks: { time: Date; width: string }[] = [];
+
     Array.from(Array(21).keys())
       .slice(1)
       .forEach((i) => {
@@ -112,6 +130,28 @@ class SubjectVisuals extends React.Component<
         const tick = { time, width: (ix / groups.length) * 100 + "%" };
         if (!last || time != last.time) xTicks.push(tick);
       });
+
+    const hLines: string[] = [];
+
+    Array.from(Array(maxTaps + 1).keys())
+      .slice(1)
+      .forEach((i) => {
+        if (i % 4) return;
+        const last = hLines[hLines.length - 1];
+        const height = maxTaps ? (i / maxTaps) * 100 + "%" : "100%";
+        if (!last || height != last) hLines.push(height);
+      });
+
+    const vLines: string[] = [];
+
+    let j = new Date(add(start, { hours: 1 }).setMinutes(0, 0, 0));
+    while (j < stop) {
+      const thisDifference = differenceInMinutes(j, start);
+      vLines.push((thisDifference / difference) * 100 + "%");
+      j = new Date(add(j, { hours: 1 }).setMinutes(0, 0, 0));
+    }
+
+    const barWidth = 100 / groups.length + "%";
 
     return (
       <div className="taps-display-container">
@@ -145,14 +185,37 @@ class SubjectVisuals extends React.Component<
               })}
             </div>
           </div>
-          <div className="taps-display border-dark">
+          <div
+            className="taps-display border-dark"
+            style={{ position: "relative" }}
+          >
             {groups.map((g, i) => {
-              const height = (g.taps.length / maxTaps) * 100 + "%";
+              const height = maxTaps
+                ? (g.taps.length / maxTaps) * 100 + "%"
+                : "0%";
               return (
                 <div
                   key={i}
                   style={{ height, width: barWidth }}
-                  className="bg-dark"
+                  className="bg-dark bar"
+                ></div>
+              );
+            })}
+            {hLines.map((hl, i) => {
+              return (
+                <div
+                  key={i}
+                  className="border-light-b hline"
+                  style={{ bottom: hl }}
+                ></div>
+              );
+            })}
+            {vLines.map((vl, i) => {
+              return (
+                <div
+                  key={i}
+                  className="border-light-r vline"
+                  style={{ left: vl }}
                 ></div>
               );
             })}
@@ -264,6 +327,18 @@ class SubjectVisuals extends React.Component<
                     onClick={this.increment}
                   >
                     Right
+                  </button>
+                  <button
+                    className="button-secondary button-large"
+                    onClick={this.zoomIn}
+                  >
+                    Zoom in
+                  </button>
+                  <button
+                    className="button-secondary button-large"
+                    onClick={this.zoomOut}
+                  >
+                    Zoom out
                   </button>
                 </div>
               </div>
