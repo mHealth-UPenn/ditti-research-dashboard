@@ -10,6 +10,7 @@ import { ReactComponent as ZoomOut } from "../../icons/zoomOut.svg";
 import {
   add,
   differenceInMinutes,
+  differenceInMilliseconds,
   format,
   isWithinInterval,
   sub
@@ -49,18 +50,91 @@ class SubjectVisuals extends React.Component<
     super(props);
     const { id } = props.subject;
     // const taps = props.getTaps().filter((t: TapDetails) => t.tapUserId == id);
-    const taps = this.getTaps();
+    const taps = this.getTaps().sort((a, b) =>
+      differenceInMilliseconds(new Date(a.time), new Date(b.time))
+    );
 
     this.state = {
       start: sub(new Date(new Date().setHours(3, 0, 0, 0)), { hours: 6 }),
       stop: new Date(new Date().setHours(3, 0, 0, 0)),
       taps: taps,
-      bouts: []
+      bouts: this.getBouts(taps)
     };
   }
 
   getTaps = (): TapDetails[] => {
     return dummyData;
+  };
+
+  getBouts = (taps: TapDetails[]): Bout[] => {
+    const bouts: Bout[] = [];
+    let first: Date;
+    let current: Date;
+    let last: Date;
+    let group: Date[];
+    let count = 0;
+
+    taps.forEach((t) => {
+      // on first iteration
+      if (!count) {
+        first = new Date(t.time);
+        group = [first];
+        count = 1;
+        return;
+      }
+
+      current = new Date(t.time);
+
+      // if this tap is less than one minute after the first tap
+      if (differenceInMilliseconds(current, first) < 60000) {
+        last = current;
+        group.push(current);
+        count += 1;
+      }
+
+      // else if there were 5 taps or more in the first minute and less than 30 minutes have passed between this tap and the last tap
+      // then the bout begins at the first tap
+      else if (
+        count >= 5 &&
+        differenceInMilliseconds(current, last) < 1800000
+      ) {
+        last = current;
+        group.push(current);
+        count += 1;
+      }
+
+      // else if there were 5 taps or more in the first minute and more than 30 minutes have passed
+      // then the bout ends at 30 minutes after the last tap
+      else if (count >= 5 && differenceInMilliseconds(last, first) > 60000) {
+        bouts.push({
+          start: first,
+          stop: add(last, { minutes: 30 }),
+          rate: count / differenceInMinutes(last, first)
+        });
+        first = new Date(t.time);
+        group = [first];
+        count = 1;
+      }
+
+      // else if there were less than 5 taps in the first minute or tapping lasted for less than one minute
+      // then no bout has begun
+      else {
+        group = group.filter(
+          (t) => differenceInMilliseconds(current, t) < 60000
+        );
+
+        if (group.length) {
+          first = group[0];
+          count = group.length;
+        } else {
+          first = new Date(t.time);
+          group = [first];
+          count = 1;
+        }
+      }
+    });
+
+    return bouts;
   };
 
   decrement = (): void => {
