@@ -11,6 +11,12 @@ import { add, differenceInMinutes, isWithinInterval, sub } from "date-fns";
 import "./subjectVisuals.css";
 import { dummyData } from "../dummyData";
 
+interface Bout {
+  start: Date;
+  stop: Date;
+  rate: number;
+}
+
 interface SubjectVisualsProps {
   getTaps: () => TapDetails[];
   handleClick: (
@@ -25,16 +31,27 @@ interface SubjectVisualsProps {
 interface SubjectVisualsState {
   start: Date;
   stop: Date;
+  taps: TapDetails[];
+  bouts: Bout[];
 }
 
 class SubjectVisuals extends React.Component<
   SubjectVisualsProps,
   SubjectVisualsState
 > {
-  state = {
-    start: sub(new Date(new Date().setHours(3, 0, 0, 0)), { hours: 6 }),
-    stop: new Date(new Date().setHours(3, 0, 0, 0))
-  };
+  constructor(props: SubjectVisualsProps) {
+    super(props);
+    const { id } = props.subject;
+    // const taps = props.getTaps().filter((t: TapDetails) => t.tapUserId == id);
+    const taps = this.getTaps();
+
+    this.state = {
+      start: sub(new Date(new Date().setHours(3, 0, 0, 0)), { hours: 6 }),
+      stop: new Date(new Date().setHours(3, 0, 0, 0)),
+      taps: taps,
+      bouts: []
+    };
+  }
 
   getTaps = (): TapDetails[] => {
     return dummyData;
@@ -81,12 +98,10 @@ class SubjectVisuals extends React.Component<
   };
 
   getTapsDisplay = (): React.ReactElement => {
-    const { start, stop } = this.state;
+    const { start, stop, taps } = this.state;
     const difference = differenceInMinutes(stop, start);
-    const taps = this.getTaps().filter(
-      (t) =>
-        t.tapUserId == this.props.subject.id &&
-        isWithinInterval(new Date(t.time), { start, end: stop })
+    const tapsFiltered = taps.filter((t) =>
+      isWithinInterval(new Date(t.time), { start, end: stop })
     );
 
     let i = start;
@@ -95,7 +110,7 @@ class SubjectVisuals extends React.Component<
       const groupStart = i;
       i = add(i, { minutes: difference / 60 });
 
-      const groupTaps = taps.filter((t) =>
+      const groupTaps = tapsFiltered.filter((t) =>
         isWithinInterval(new Date(t.time), { start: groupStart, end: i })
       );
 
@@ -104,6 +119,19 @@ class SubjectVisuals extends React.Component<
     }
 
     const maxTaps = Math.max(...groups.map((g) => g.taps.length));
+    const barWidth = 100 / groups.length + "%";
+
+    const bars = groups.map((g, i) => {
+      const height = maxTaps ? (g.taps.length / maxTaps) * 100 + "%" : "0%";
+      return (
+        <div
+          key={i}
+          style={{ height, width: barWidth }}
+          className="bg-dark bar"
+        ></div>
+      );
+    });
+
     const mody = Math.ceil(maxTaps / 15);
     const yTicks: { count: number; height: string }[] = [];
 
@@ -117,6 +145,29 @@ class SubjectVisuals extends React.Component<
         if (!last || i != last.count) yTicks.push(tick);
       });
 
+    const yTickElems = yTicks.map((yt, i) => {
+      return (
+        <React.Fragment>
+          <div
+            key={i}
+            className="border-dark-t y-axis-tick"
+            style={{
+              bottom: `calc(${yt.height} - 1px)`
+            }}
+          ></div>
+          <div
+            key={i + "label"}
+            className="y-axis-tick-label"
+            style={{
+              bottom: `calc(${yt.height} - 0.5rem)`
+            }}
+          >
+            {yt.count}
+          </div>
+        </React.Fragment>
+      );
+    });
+
     const xTicks: { time: Date; width: string }[] = [];
 
     Array.from(Array(21).keys())
@@ -129,6 +180,33 @@ class SubjectVisuals extends React.Component<
         if (!last || time != last.time) xTicks.push(tick);
       });
 
+    const xTickElems = xTicks.map((xt, i) => {
+      return (
+        <React.Fragment>
+          <div
+            key={i}
+            className="border-dark-r x-axis-tick"
+            style={{
+              left: `calc(${xt.width} - 1px)`
+            }}
+          ></div>
+          <div
+            key={i + "label"}
+            className="x-axis-tick-label"
+            style={{
+              left: `calc(${xt.width} - 0.5rem)`
+            }}
+          >
+            {xt.time.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              hour12: false,
+              minute: "2-digit"
+            })}
+          </div>
+        </React.Fragment>
+      );
+    });
+
     const hLines: string[] = [];
 
     Array.from(Array(maxTaps + 1).keys())
@@ -140,6 +218,10 @@ class SubjectVisuals extends React.Component<
         if (!last || height != last) hLines.push(height);
       });
 
+    const hLineElems = hLines.map((hl, i) => {
+      return <div key={i} className="hline" style={{ bottom: hl }}></div>;
+    });
+
     const vLines: string[] = [];
 
     let j = new Date(add(start, { hours: 1 }).setMinutes(0, 0, 0));
@@ -149,7 +231,15 @@ class SubjectVisuals extends React.Component<
       j = new Date(add(j, { hours: 1 }).setMinutes(0, 0, 0));
     }
 
-    const barWidth = 100 / groups.length + "%";
+    const vlineElems = vLines.map((vl, i) => {
+      return (
+        <div
+          key={i}
+          className="border-light-r vline"
+          style={{ left: vl }}
+        ></div>
+      );
+    });
 
     return (
       <div className="taps-display-container">
@@ -158,61 +248,15 @@ class SubjectVisuals extends React.Component<
             <div className="y-axis-label">
               <span>Taps</span>
             </div>
-            <div>
-              {yTicks.map((yt, i) => {
-                return (
-                  <React.Fragment>
-                    <div
-                      key={i}
-                      className="border-dark-t y-axis-tick"
-                      style={{
-                        bottom: `calc(${yt.height} - 1px)`
-                      }}
-                    ></div>
-                    <div
-                      key={i + "label"}
-                      className="y-axis-tick-label"
-                      style={{
-                        bottom: `calc(${yt.height} - 0.5rem)`
-                      }}
-                    >
-                      {yt.count}
-                    </div>
-                  </React.Fragment>
-                );
-              })}
-            </div>
+            <div>{yTickElems}</div>
           </div>
           <div
             className="taps-display border-dark"
             style={{ position: "relative" }}
           >
-            {groups.map((g, i) => {
-              const height = maxTaps
-                ? (g.taps.length / maxTaps) * 100 + "%"
-                : "0%";
-              return (
-                <div
-                  key={i}
-                  style={{ height, width: barWidth }}
-                  className="bg-dark bar"
-                ></div>
-              );
-            })}
-            {hLines.map((hl, i) => {
-              return (
-                <div key={i} className="hline" style={{ bottom: hl }}></div>
-              );
-            })}
-            {vLines.map((vl, i) => {
-              return (
-                <div
-                  key={i}
-                  className="border-light-r vline"
-                  style={{ left: vl }}
-                ></div>
-              );
-            })}
+            {bars}
+            {hLineElems}
+            {vlineElems}
           </div>
         </div>
         <div className="taps-display-bottom">
@@ -221,34 +265,7 @@ class SubjectVisuals extends React.Component<
             <div className="x-axis-label">
               <span>Time</span>
             </div>
-            <div>
-              {xTicks.map((xt, i) => {
-                return (
-                  <React.Fragment>
-                    <div
-                      key={i}
-                      className="border-dark-r x-axis-tick"
-                      style={{
-                        left: `calc(${xt.width} - 1px)`
-                      }}
-                    ></div>
-                    <div
-                      key={i + "label"}
-                      className="x-axis-tick-label"
-                      style={{
-                        left: `calc(${xt.width} - 0.5rem)`
-                      }}
-                    >
-                      {xt.time.toLocaleTimeString("en-US", {
-                        hour: "2-digit",
-                        hour12: false,
-                        minute: "2-digit"
-                      })}
-                    </div>
-                  </React.Fragment>
-                );
-              })}
-            </div>
+            <div>{xTickElems}</div>
           </div>
         </div>
       </div>
