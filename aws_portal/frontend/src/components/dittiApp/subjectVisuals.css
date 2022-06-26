@@ -16,7 +16,7 @@
 
 .subject-display-controls {
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
   margin-bottom: 1rem;
 }
 
@@ -102,7 +102,7 @@
 
 .x-axis-tick-label {
   position: absolute;
-  top: 0.75rem;
+  top: 0.25rem;
   transform: rotate(60deg);
   transform-origin: left;
 }
@@ -121,5 +121,23 @@
 }
 
 .bar {
+  border-left: 1px solid white;
   z-index: 1;
+}
+
+.subject-display-buttons {
+  display: flex;
+  flex-grow: 1;
+  justify-content: right;
+  gap: 0.25rem;
+}
+
+.subject-display-buttons button {
+  display: flex;
+  padding: 0;
+  width: 50px;
+}
+
+.subject-display-buttons .svg-fill {
+  fill: white;
 }

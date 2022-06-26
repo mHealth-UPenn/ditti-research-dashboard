@@ -3,13 +3,11 @@ import { Component } from "react";
 import { Study, StudySubject, TapDetails } from "../../interfaces";
 import TextField from "../fields/textField";
 import SubjectsEdit from "./subjectsEdit";
-import {
-  add,
-  differenceInMinutes,
-  isValid,
-  isWithinInterval,
-  sub
-} from "date-fns";
+import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
+import { ReactComponent as Right } from "../../icons/arrowRight.svg";
+import { ReactComponent as ZoomIn } from "../../icons/zoomIn.svg";
+import { ReactComponent as ZoomOut } from "../../icons/zoomOut.svg";
+import { add, differenceInMinutes, isWithinInterval, sub } from "date-fns";
 import "./subjectVisuals.css";
 import { dummyData } from "../dummyData";
 
@@ -59,18 +57,12 @@ class SubjectVisuals extends React.Component<
   };
 
   setStart = (text: string) => {
-    if (
-      isValid(new Date(text)) &&
-      new Date(text) < sub(this.state.stop, { hours: 1 })
-    )
+    if (new Date(text) && new Date(text) < sub(this.state.stop, { hours: 1 }))
       this.setState({ start: new Date(text) });
   };
 
   setStop = (text: string) => {
-    if (
-      isValid(new Date(text)) &&
-      new Date(text) > add(this.state.start, { hours: 1 })
-    )
+    if (new Date(text) && new Date(text) > add(this.state.start, { hours: 1 }))
       this.setState({ stop: new Date(text) });
   };
 
@@ -324,30 +316,21 @@ class SubjectVisuals extends React.Component<
                   />
                 </div>
                 <div className="subject-display-buttons">
-                  <button
-                    className="button-secondary button-large"
-                    onClick={this.decrement}
-                  >
-                    Left
+                  <button className="button-secondary" onClick={this.decrement}>
+                    <Left />
+                  </button>
+                  <button className="button-secondary" onClick={this.increment}>
+                    <Right />
                   </button>
                   <button
-                    className="button-secondary button-large"
-                    onClick={this.increment}
-                  >
-                    Right
-                  </button>
-                  <button
-                    className="button-secondary button-large"
+                    className="button-secondary"
                     onClick={this.zoomIn}
                     disabled={differenceInMinutes(stop, start) < 100}
                   >
-                    Zoom in
+                    <ZoomIn style={{ height: "66%", margin: "auto" }} />
                   </button>
-                  <button
-                    className="button-secondary button-large"
-                    onClick={this.zoomOut}
-                  >
-                    Zoom out
+                  <button className="button-secondary" onClick={this.zoomOut}>
+                    <ZoomOut style={{ height: "66%", margin: "auto" }} />
                   </button>
                 </div>
               </div>
