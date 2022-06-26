@@ -3,7 +3,13 @@ import { Component } from "react";
 import { Study, StudySubject, TapDetails } from "../../interfaces";
 import TextField from "../fields/textField";
 import SubjectsEdit from "./subjectsEdit";
-import { add, differenceInMinutes, isWithinInterval, sub } from "date-fns";
+import {
+  add,
+  differenceInMinutes,
+  isValid,
+  isWithinInterval,
+  sub
+} from "date-fns";
 import "./subjectVisuals.css";
 import { dummyData } from "../dummyData";
 
@@ -53,26 +59,26 @@ class SubjectVisuals extends React.Component<
   };
 
   setStart = (text: string) => {
-    let { start, stop } = this.state;
-    const difference = differenceInMinutes(stop, start);
-    start = new Date(text);
-    stop = add(start, { minutes: difference });
-    this.setState({ start, stop });
+    if (
+      isValid(new Date(text)) &&
+      new Date(text) < sub(this.state.stop, { hours: 1 })
+    )
+      this.setState({ start: new Date(text) });
   };
 
   setStop = (text: string) => {
-    let { start, stop } = this.state;
-    const difference = differenceInMinutes(stop, start);
-    stop = new Date(text);
-    start = sub(stop, { minutes: difference });
-    this.setState({ start, stop });
+    if (
+      isValid(new Date(text)) &&
+      new Date(text) > add(this.state.start, { hours: 1 })
+    )
+      this.setState({ stop: new Date(text) });
   };
 
   zoomIn = (): void => {
     let { start, stop } = this.state;
     start = add(start, { minutes: 20 });
     stop = sub(stop, { minutes: 20 });
-    this.setState({ start, stop });
+    if (differenceInMinutes(stop, start) > 60) this.setState({ start, stop });
   };
 
   zoomOut = (): void => {
@@ -203,11 +209,7 @@ class SubjectVisuals extends React.Component<
             })}
             {hLines.map((hl, i) => {
               return (
-                <div
-                  key={i}
-                  className="border-light-b hline"
-                  style={{ bottom: hl }}
-                ></div>
+                <div key={i} className="hline" style={{ bottom: hl }}></div>
               );
             })}
             {vLines.map((vl, i) => {
@@ -265,6 +267,12 @@ class SubjectVisuals extends React.Component<
     const { dittiId, expiresOn } = this.props.subject;
     const { studyDetails } = this.props;
     const { start, stop } = this.state;
+    const adjustedStart = new Date(
+      start.getTime() - start.getTimezoneOffset() * 60000
+    );
+    const adjustedStop = new Date(
+      stop.getTime() - stop.getTimezoneOffset() * 60000
+    );
 
     return (
       <div className="card-container">
@@ -303,7 +311,7 @@ class SubjectVisuals extends React.Component<
                   <span>Start:</span>
                   <TextField
                     type="datetime-local"
-                    value={start.toISOString().substring(0, 16)}
+                    value={adjustedStart.toISOString().substring(0, 16)}
                     onKeyup={this.setStart}
                   />
                 </div>
@@ -311,7 +319,7 @@ class SubjectVisuals extends React.Component<
                   <span>Stop:</span>
                   <TextField
                     type="datetime-local"
-                    value={stop.toISOString().substring(0, 16)}
+                    value={adjustedStop.toISOString().substring(0, 16)}
                     onKeyup={this.setStop}
                   />
                 </div>
@@ -331,6 +339,7 @@ class SubjectVisuals extends React.Component<
                   <button
                     className="button-secondary button-large"
                     onClick={this.zoomIn}
+                    disabled={differenceInMinutes(stop, start) < 100}
                   >
                     Zoom in
                   </button>
