@@ -1,0 +1,39 @@
+.subject-header {
+  margin-bottom: 1rem;
+}
+
+.subject-header-info {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.subject-display-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.subject-display-controls {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.subject-display-field {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: bold;
+}
+
+.subject-display {
+  margin-bottom: 1rem;
+}
+
+.taps-display {
+  height: 24rem;
+  width: 100%;
+  display: flex;
+  align-items: end;
+}

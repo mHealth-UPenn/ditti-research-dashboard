@@ -3,6 +3,9 @@ import { Component } from "react";
 import { Study, StudySubject, TapDetails } from "../../interfaces";
 import TextField from "../fields/textField";
 import SubjectsEdit from "./subjectsEdit";
+import { add, differenceInMinutes, isWithinInterval, sub } from "date-fns";
+import "./subjectVisuals.css";
+import { dummyData } from "../dummyData";
 
 interface SubjectVisualsProps {
   getTaps: () => TapDetails[];
@@ -15,12 +18,96 @@ interface SubjectVisualsProps {
   subject: StudySubject;
 }
 
-// interface SubjectVisualsState {}
+interface SubjectVisualsState {
+  start: Date;
+  stop: Date;
+}
 
-class SubjectVisuals extends React.Component<SubjectVisualsProps, any> {
+class SubjectVisuals extends React.Component<
+  SubjectVisualsProps,
+  SubjectVisualsState
+> {
+  state = {
+    start: sub(new Date(new Date().setHours(3, 0, 0, 0)), { hours: 6 }),
+    stop: new Date(new Date().setHours(3, 0, 0, 0))
+  };
+
+  getTaps = (): TapDetails[] => {
+    return dummyData;
+  };
+
+  decrement = (): void => {
+    let { start, stop } = this.state;
+    start = sub(start, { hours: 1 });
+    stop = sub(stop, { hours: 1 });
+    this.setState({ start, stop });
+  };
+
+  increment = (): void => {
+    let { start, stop } = this.state;
+    start = add(start, { hours: 1 });
+    stop = add(stop, { hours: 1 });
+    this.setState({ start, stop });
+  };
+
+  setStart = (text: string) => {
+    let { start, stop } = this.state;
+    const difference = differenceInMinutes(stop, start);
+    start = new Date(text);
+    stop = add(start, { minutes: difference });
+    this.setState({ start, stop });
+  };
+
+  setStop = (text: string) => {
+    let { start, stop } = this.state;
+    const difference = differenceInMinutes(stop, start);
+    stop = new Date(text);
+    start = sub(stop, { minutes: difference });
+    this.setState({ start, stop });
+  };
+
+  getTapsDisplay = (): React.ReactElement => {
+    const start = this.state.start;
+    const end = this.state.stop;
+    const taps = this.getTaps().filter(
+      (t) =>
+        t.tapUserId == this.props.subject.id &&
+        isWithinInterval(new Date(t.time), { start, end })
+    );
+
+    let i = start;
+    const groups: { start: Date; stop: Date; taps: TapDetails[] }[] = [];
+    while (i < end) {
+      const groupStart = i;
+      i = add(i, { minutes: 5 });
+
+      const groupTaps = taps.filter((t) =>
+        isWithinInterval(new Date(t.time), { start: groupStart, end: i })
+      );
+
+      const group = { start: groupStart, stop: i, taps: groupTaps };
+      groups.push(group);
+    }
+
+    const maxTaps = Math.max(...groups.map((g) => g.taps.length));
+    const width = 100 / groups.length + "%";
+
+    return (
+      <div className="taps-display border-dark">
+        {groups.map((g, i) => {
+          const height = (g.taps.length / maxTaps) * 100 + "%";
+          return (
+            <div key={i} style={{ height, width }} className="bg-dark"></div>
+          );
+        })}
+      </div>
+    );
+  };
+
   render() {
     const { dittiId, expiresOn } = this.props.subject;
     const { studyDetails } = this.props;
+    const { start, stop } = this.state;
 
     return (
       <div className="card-container">
@@ -28,7 +115,7 @@ class SubjectVisuals extends React.Component<SubjectVisualsProps, any> {
           <div className="card-m bg-white shadow">
             <div className="subject-header">
               <div className="card-title">{dittiId}</div>
-              <div className="subject-hedaer-info">
+              <div className="subject-header-info">
                 <div>
                   Expires on: <b>{expiresOn}</b>
                 </div>
@@ -46,24 +133,56 @@ class SubjectVisuals extends React.Component<SubjectVisualsProps, any> {
                       false
                     )
                   }
+                  style={{ width: "12rem" }}
                 >
                   Edit Details
                 </button>
               </div>
             </div>
             <div className="subject-display-container">
-              <div className="subjet-display-title">Visual Summary</div>
+              <div className="subject-display-title">Visual Summary</div>
               <div className="subject-display-controls">
-                <div>
-                  <TextField id="start" label="Start:" type="datetime-local" />
+                <div className="subject-display-field">
+                  <span>Start:</span>
+                  <TextField
+                    type="datetime-local"
+                    prefill={start.toISOString().substring(0, 16)}
+                    onKeyup={this.setStart}
+                  />
                 </div>
-                <div>
-                  <TextField id="end" label="Stop:" type="datetime-local" />
+                <div className="subject-display-field">
+                  <span>Stop:</span>
+                  <TextField
+                    type="datetime-local"
+                    prefill={stop.toISOString().substring(0, 16)}
+                    onKeyup={this.setStop}
+                  />
+                </div>
+                <div className="subject-display-buttons">
+                  <button
+                    className="button-secondary button-large"
+                    onClick={this.decrement}
+                  >
+                    Left
+                  </button>
+                  <button
+                    className="button-secondary button-large"
+                    onClick={this.increment}
+                  >
+                    Right
+                  </button>
                 </div>
               </div>
-              <div className="subject-display">Display</div>
+              <div className="subject-display">{this.getTapsDisplay()}</div>
             </div>
-            <button className="button-primary button-lg">Download CSV</button>
+            <div className="flex-center">
+              <button
+                className="button-primary button-lg"
+                style={{ width: "12rem" }}
+              >
+                Download CSV
+              </button>
+            </div>
           </div>
           <div className="card-s bg-white shadow">
             <div className="card-title">7-day summary</div>
