@@ -9,6 +9,7 @@ import Subjects from "./subjects";
 import SubjectsEdit from "./subjectsEdit";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
+import { getTapsByStudy } from "../../utils";
 
 interface StudyContact {
   fullName: string;
@@ -61,45 +62,8 @@ class StudySummary extends React.Component<
   downloadExcel = async (): Promise<void> => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
-    let taps = this.props.getTaps().sort((a, b) => {
-      if (a.tapUserId < b.tapUserId) return -1;
-      if (a.tapUserId > b.tapUserId) return 1;
-      return 0;
-    });
-
-    const unique = taps
-      .map((t) => t.tapUserId)
-      .filter((v, i, arr) => arr.indexOf(v) === i);
-
-    let users: User[] = await makeRequest(
-      `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.state.studyDetails.dittiId}"`
-    );
-
-    users = users
-      .filter((u) => unique.includes(u.id))
-      .sort((a, b) => {
-        if (a.id < b.id) return -1;
-        if (a.id > b.id) return 1;
-        return 0;
-      });
-
-    const data: (string | Date)[][] = [];
-
-    let i = 0;
-    while (taps[i].tapUserId != users[0].id) i += 1;
-    taps = taps.slice(i);
-
-    let skip = false;
-    for (const t of taps) {
-      if (!skip && t.tapUserId != users[0].id) users.shift();
-      skip = t.tapUserId != users[0].id;
-
-      if (!skip) {
-        const date = new Date(t.time);
-        const time = date.getTime() - date.getTimezoneOffset() * 60000;
-        data.push([users[0].user_permission_id, new Date(time)]);
-      }
-    }
+    const taps = this.props.getTaps();
+    const data = await getTapsByStudy(taps, this.state.studyDetails.dittiId);
 
     sheet.columns = [
       { header: "Ditti ID", width: 10 },

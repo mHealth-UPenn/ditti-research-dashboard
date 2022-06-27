@@ -1,3 +1,5 @@
+import { TapDetails, User } from "./interfaces";
+
 const getCookie = (name: string): string => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -37,4 +39,51 @@ export const makeRequest = async (url: string, opts?: any): Promise<any> => {
       else return await res.json();
     }
   );
+};
+
+export const getTapsByStudy = async (
+  tapDetails: TapDetails[],
+  id: string
+): Promise<(string | Date)[][]> => {
+  let taps = tapDetails.sort((a, b) => {
+    if (a.tapUserId < b.tapUserId) return -1;
+    if (a.tapUserId > b.tapUserId) return 1;
+    return 0;
+  });
+
+  const unique = taps
+    .map((t) => t.tapUserId)
+    .filter((v, i, arr) => arr.indexOf(v) === i);
+
+  let users: User[] = await makeRequest(
+    `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${id}"`
+  );
+
+  users = users
+    .filter((u) => unique.includes(u.id))
+    .sort((a, b) => {
+      if (a.id < b.id) return -1;
+      if (a.id > b.id) return 1;
+      return 0;
+    });
+
+  const data: (string | Date)[][] = [];
+
+  let i = 0;
+  while (taps[i].tapUserId != users[0].id) i += 1;
+  taps = taps.slice(i);
+
+  let skip = false;
+  for (const t of taps) {
+    if (!skip && t.tapUserId != users[0].id) users.shift();
+    skip = t.tapUserId != users[0].id;
+
+    if (!skip) {
+      const date = new Date(t.time);
+      const time = date.getTime() - date.getTimezoneOffset() * 60000;
+      data.push([users[0].user_permission_id, new Date(time)]);
+    }
+  }
+
+  return data;
 };
