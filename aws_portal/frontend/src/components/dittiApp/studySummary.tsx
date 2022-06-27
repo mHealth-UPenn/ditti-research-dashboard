@@ -9,7 +9,7 @@ import Subjects from "./subjects";
 import SubjectsEdit from "./subjectsEdit";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
-import { getTapsByStudy } from "../../utils";
+import { mapTaps } from "../../utils";
 
 interface StudyContact {
   fullName: string;
@@ -63,7 +63,11 @@ class StudySummary extends React.Component<
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
     const taps = this.props.getTaps();
-    const data = await getTapsByStudy(taps, this.state.studyDetails.dittiId);
+    const users: User[] = await makeRequest(
+      `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.state.studyDetails.dittiId}"`
+    );
+    const mapped = mapTaps(taps, users);
+    const data = mapped.map((x) => [x.dittiId, x.time]);
 
     sheet.columns = [
       { header: "Ditti ID", width: 10 },

@@ -1,10 +1,12 @@
 import * as React from "react";
 import { Component } from "react";
-import { ResponseBody, Study, TapDetails } from "../../interfaces";
-import { makeRequest } from "../../utils";
+import { ResponseBody, Study, TapDetails, User } from "../../interfaces";
+import { mapTaps, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import "./studies.css";
 import StudySummary from "./studySummary";
+import { sub } from "date-fns";
+import { dummyData } from "../dummyData";
 
 interface StudiesViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
@@ -18,12 +20,14 @@ interface StudiesViewProps {
 
 interface StudiesViewState {
   studies: Study[];
+  mappedTaps: { dittiId: string; time: Date }[];
   loading: boolean;
 }
 
 class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
   state = {
     studies: [],
+    mappedTaps: [],
     loading: true
   };
 
@@ -32,10 +36,20 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
       (studies: Study[]) => this.setState({ studies })
     );
 
-    const taps = this.props.getTapsAsync();
-    const promises = [studies, taps];
+    const _1week = sub(new Date(), { weeks: 1 }).toISOString();
+    const users = makeRequest(
+      `/aws/scan?app=2&key=User&query=exp_time>>"${_1week}"`
+    ).then((activeUsers: User[]) => {
+      const mappedTaps = mapTaps(dummyData, activeUsers);
+      this.setState({ mappedTaps });
+    });
 
-    Promise.all(promises).then(() => this.setState({ loading: false }));
+    const taps = this.props.getTapsAsync();
+    const promises = [studies, taps, users];
+
+    Promise.all(promises).then(() => {
+      this.setState({ loading: false });
+    });
   }
 
   handleClickStudy = (id: number): void => {
@@ -62,28 +76,53 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
             {loading ? (
               <SmallLoader />
             ) : (
-              studies.map((s: Study) => (
-                <div key={s.id} className="border-light-b study-row">
-                  <div className="study-row-name">
-                    <span
-                      className="link"
-                      onClick={() => this.handleClickStudy(s.id)}
-                    >
-                      {s.acronym}
-                    </span>
-                  </div>
-                  <div className="study-row-summary">
-                    <div className="study-row-summary-l">
-                      <div>24 hours:</div>
-                      <div>1 week:</div>
+              studies.map((s: Study) => {
+                const lastWeek = this.state.mappedTaps
+                  .filter(
+                    (t: { dittiId: string; time: Date }) =>
+                      t.time > sub(new Date(), { weeks: 1 }) &&
+                      t.dittiId.startsWith(s.dittiId)
+                  )
+                  .map((t: { dittiId: string; time: Date }) => t.dittiId)
+                  .filter((v, i, arr) => arr.indexOf(v) == i).length;
+
+                const last24hrs = this.state.mappedTaps
+                  .filter(
+                    (t: { dittiId: string; time: Date }) =>
+                      t.time > sub(new Date(), { weeks: 1 }) &&
+                      t.dittiId.startsWith(s.dittiId)
+                  )
+                  .map((t: { dittiId: string; time: Date }) => t.dittiId)
+                  .filter((v, i, arr) => arr.indexOf(v) == i).length;
+
+                return (
+                  <div key={s.id} className="border-light-b study-row">
+                    <div
+                      className={
+                        "icon " + (last24hrs ? "icon-success" : "icon-gray")
+                      }
+                    ></div>
+                    <div className="study-row-name">
+                      <span
+                        className="link"
+                        onClick={() => this.handleClickStudy(s.id)}
+                      >
+                        {s.acronym}
+                      </span>
                     </div>
-                    <div className="study-row-summary-r">
-                      <div>a</div>
-                      <div>b</div>
+                    <div className="study-row-summary">
+                      <div className="study-row-summary-l">
+                        <div>24 hours:</div>
+                        <div>1 week:</div>
+                      </div>
+                      <div className="study-row-summary-r">
+                        <div>{lastWeek} active subjects</div>
+                        <div>{last24hrs} active subjects</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

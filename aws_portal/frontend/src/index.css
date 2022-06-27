@@ -390,3 +390,23 @@ div:hover > .link-svg .svg-stroke {
   position: relative;
   width: 100%;
 }
+
+.icon {
+  border-radius: 0.5rem;
+  width: 0;
+  height: 0;
+  margin: 3px;
+  margin-right: 0.5rem;
+}
+
+.icon-success {
+  border: 0.5rem solid limegreen;
+}
+
+.icon-danger {
+  border: 0.5rem solid red;
+}
+
+.icon-gray {
+  border: 0.5rem solid gray;
+}
