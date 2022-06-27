@@ -348,6 +348,53 @@ class SubjectVisuals extends React.Component<
     );
   };
 
+  getBoutsDisplay = (): React.ReactElement => {
+    const { start, stop } = this.state;
+    const difference = differenceInMilliseconds(stop, start);
+    const bouts = this.state.bouts.filter(
+      (b) => start < b.stop && b.start < stop
+    );
+
+    console.log(bouts);
+    const boutElems = bouts.map((b) => {
+      const left =
+        start < b.start
+          ? (differenceInMilliseconds(b.start, start) / difference) * 100
+          : 0;
+
+      const width =
+        b.stop < stop
+          ? (differenceInMilliseconds(b.stop, start) / difference) * 100 - left
+          : 100 - left;
+      return (
+        <div
+          className="bout bg-dark"
+          style={{ left: left + "%", width: `calc(${width + "%"} - 1rem)` }}
+        >
+          <span>
+            {b.rate.toLocaleString("en-US", { maximumSignificantDigits: 2 }) +
+              " taps/min"}
+          </span>
+        </div>
+      );
+    });
+
+    return (
+      <div className="bouts-display-container">
+        <div className="y-axis">
+          <div className="y-axis-label">
+            <span>
+              Tapping
+              <br />
+              Bouts
+            </span>
+          </div>
+        </div>
+        <div className="bouts-display border-dark">{boutElems}</div>
+      </div>
+    );
+  };
+
   render() {
     const { dittiId, expiresOn } = this.props.subject;
     const { studyDetails } = this.props;
@@ -427,7 +474,10 @@ class SubjectVisuals extends React.Component<
                   </button>
                 </div>
               </div>
-              <div className="subject-display">{this.getTapsDisplay()}</div>
+              <div className="subject-display">
+                {this.getTapsDisplay()}
+                {this.getBoutsDisplay()}
+              </div>
             </div>
             <div className="flex-center">
               <button

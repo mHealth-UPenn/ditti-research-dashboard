@@ -32,6 +32,10 @@
   margin-right: 4rem;
 }
 
+.taps-display-container {
+  margin-bottom: 1rem;
+}
+
 .taps-display {
   align-items: end;
   display: flex;
@@ -56,6 +60,7 @@
   align-items: center;
   display: flex;
   font-weight: bold;
+  text-align: center;
 }
 
 .y-axis-label span {
@@ -144,4 +149,24 @@
 
 .subject-display-buttons .svg-fill {
   fill: white;
+}
+
+.bouts-display-container {
+  display: flex;
+}
+
+.bouts-display {
+  flex-grow: 1;
+  height: 4rem;
+  position: relative;
+}
+
+.bout {
+  border: 0.5rem solid #33334d;
+  position: absolute;
+  height: 3rem;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
