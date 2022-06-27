@@ -6,6 +6,7 @@ import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
 import SubjectVisuals from "./subjectVisuals";
+import { dummyData } from "../dummyData";
 
 interface StudySubjectsProps {
   studyPrefix: string;
@@ -54,13 +55,13 @@ class StudySubjects extends React.Component<
         const today = new Date(new Date().setHours(9, 0, 0, 0));
         const start = sub(today, { days: i });
         const end = add(start, { days: 1 });
-        const taps = this.props
-          .getTaps()
-          .filter(
-            (t) =>
-              t.tapUserId == s.id &&
-              isWithinInterval(new Date(t.time), { start, end })
-          ).length;
+        // const taps = this.props
+        //   .getTaps()
+        const taps = dummyData.filter(
+          (t) =>
+            t.tapUserId == s.id &&
+            isWithinInterval(new Date(t.time), { start, end })
+        ).length;
 
         hasTapsToday = !i && taps > 0;
 
