@@ -75,6 +75,7 @@
 }
 
 .y-axis-tick-label {
+  font-size: 0.9rem;
   position: absolute;
   right: 0.75rem;
 }
@@ -109,6 +110,7 @@
 }
 
 .x-axis-tick-label {
+  font-size: 0.9rem;
   position: absolute;
   top: 0.25rem;
   transform: rotate(60deg);
@@ -163,6 +165,7 @@
 
 .bout {
   border: 0.5rem solid #33334d;
+  font-size: 0.9rem;
   position: absolute;
   height: 2rem;
   overflow: hidden;

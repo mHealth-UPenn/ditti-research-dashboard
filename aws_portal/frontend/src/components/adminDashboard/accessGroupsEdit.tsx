@@ -313,9 +313,14 @@ class AccessGroupsEdit extends React.Component<
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Access Group Summary</h1>
           <span>
-            Name: {name}
+            Name:
             <br />
-            App: {appSelected.name}
+            &nbsp;&nbsp;&nbsp;&nbsp;{name}
+            <br />
+            <br />
+            App:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{appSelected.name}
             <br />
             <br />
             Permissions:

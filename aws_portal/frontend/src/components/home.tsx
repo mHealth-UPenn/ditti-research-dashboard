@@ -31,14 +31,15 @@ class Home extends React.Component<any, HomeProps> {
               },
               i: number
             ) => (
-              <div key={i} className="card-s bg-white shadow">
+              <div
+                key={i}
+                className="card-s bg-white shadow"
+                onClick={() => this.props.handleClick(a.breadcrumbs, a.view)}
+              >
                 <div className="app-name">
                   <span>{a.name}</span>
                 </div>
-                <div
-                  className="app-button link-svg"
-                  onClick={() => this.props.handleClick(a.breadcrumbs, a.view)}
-                >
+                <div className="app-button link-svg">
                   <Right />
                 </div>
               </div>

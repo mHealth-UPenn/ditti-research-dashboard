@@ -1,8 +1,13 @@
 body {
   margin: 0;
   font-family: "Lato", sans-serif;
+  font-size: 1.1rem;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  font-size: 0.9rem;
 }
 
 button svg {
@@ -24,7 +29,7 @@ select {
   border: 0;
   border-radius: 0;
   font-family: "Lato", sans-serif;
-  font-size: 1rem;
+  font-size: 1.1rem;
   flex-grow: 1;
   height: 100%;
   margin-right: 1rem;
@@ -265,15 +270,15 @@ h1 {
   stroke: #666699;
 }
 
-.link-svg:hover {
+div:hover > .link-svg {
   cursor: pointer;
 }
 
-.link-svg:hover .svg-fill {
+div:hover > .link-svg .svg-fill {
   fill: #52527a;
 }
 
-.link-svg:hover .svg-stroke {
+div:hover > .link-svg .svg-stroke {
   stroke: #52527a;
 }
 

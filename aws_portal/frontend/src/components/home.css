@@ -6,3 +6,7 @@
 .app-button {
   float: right;
 }
+
+.card-row > div:hover {
+  cursor: pointer;
+}

@@ -57,7 +57,7 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
     return (
       <div className="card-container">
         <div className="card-row">
-          <div className="card-l bg-white shadow">
+          <div className="card-m bg-white shadow">
             <div className="card-title">Studies</div>
             {loading ? (
               <SmallLoader />
@@ -72,7 +72,16 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
                       {s.acronym}
                     </span>
                   </div>
-                  <div className="study-row-summary">Summary Info</div>
+                  <div className="study-row-summary">
+                    <div className="study-row-summary-l">
+                      <div>24 hours:</div>
+                      <div>1 week:</div>
+                    </div>
+                    <div className="study-row-summary-r">
+                      <div>a</div>
+                      <div>b</div>
+                    </div>
+                  </div>
                 </div>
               ))
             )}

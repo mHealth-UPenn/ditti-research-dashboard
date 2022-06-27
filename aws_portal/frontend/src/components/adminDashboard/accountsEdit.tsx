@@ -565,8 +565,15 @@ class AccountsEdit extends React.Component<
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Account Summary</h1>
           <span>
+            Name:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;
             {firstName || lastName ? firstName + " " + lastName : <i>Name</i>}
             <br />
+            <br />
+            Email:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;
             {email ? email : <i>Email</i>}
             <br />
             <br />

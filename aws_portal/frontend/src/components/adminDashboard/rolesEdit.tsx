@@ -309,7 +309,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Role Summary</h1>
           <span>
-            Name: {name}
+            Name:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{name}
             <br />
             <br />
             Permissions:

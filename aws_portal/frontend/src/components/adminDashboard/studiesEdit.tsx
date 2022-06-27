@@ -154,13 +154,24 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Study Summary</h1>
           <span>
-            Name: {name}
+            Name:
             <br />
-            Team Email: {email}
+            &nbsp;&nbsp;&nbsp;&nbsp;{name}
             <br />
-            Acronym: {acronym}
             <br />
-            Ditti ID: {dittiId}
+            Team Email:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{email}
+            <br />
+            <br />
+            Acronym:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{acronym}
+            <br />
+            <br />
+            Ditti ID:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
             <br />
           </span>
           {studyId ? (
