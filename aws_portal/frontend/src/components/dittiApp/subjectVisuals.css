@@ -39,7 +39,7 @@
 .taps-display {
   align-items: end;
   display: flex;
-  height: 24rem;
+  height: 16rem;
   margin-bottom: -2px;
   margin-left: -2px;
   width: 100%;
@@ -157,14 +157,14 @@
 
 .bouts-display {
   flex-grow: 1;
-  height: 4rem;
+  height: 3rem;
   position: relative;
 }
 
 .bout {
   border: 0.5rem solid #33334d;
   position: absolute;
-  height: 3rem;
+  height: 2rem;
   overflow: hidden;
   text-align: center;
   text-overflow: ellipsis;
