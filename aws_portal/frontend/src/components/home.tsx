@@ -33,7 +33,7 @@ class Home extends React.Component<any, HomeProps> {
             ) => (
               <div
                 key={i}
-                className="card-s bg-white shadow"
+                className="card-s hover-pointer bg-white shadow"
                 onClick={() => this.props.handleClick(a.breadcrumbs, a.view)}
               >
                 <div className="app-name">

@@ -416,3 +416,7 @@ div:hover > .link-svg .svg-stroke {
 .icon-gray {
   border: 0.5rem solid gray;
 }
+
+.hover-pointer:hover {
+  cursor: pointer;
+}

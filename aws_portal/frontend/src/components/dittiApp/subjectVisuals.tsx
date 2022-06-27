@@ -190,15 +190,15 @@ class SubjectVisuals extends React.Component<
 
   zoomIn = (): void => {
     let { start, stop } = this.state;
-    start = add(start, { minutes: 20 });
-    stop = sub(stop, { minutes: 20 });
+    start = add(start, { hours: 1 });
+    stop = sub(stop, { hours: 1 });
     if (differenceInMinutes(stop, start) > 60) this.setState({ start, stop });
   };
 
   zoomOut = (): void => {
     let { start, stop } = this.state;
-    start = sub(start, { minutes: 20 });
-    stop = add(stop, { minutes: 20 });
+    start = sub(start, { hours: 1 });
+    stop = add(stop, { hours: 1 });
     this.setState({ start, stop });
   };
 
@@ -313,7 +313,7 @@ class SubjectVisuals extends React.Component<
     Array.from(Array(maxTaps + 1).keys())
       .slice(1)
       .forEach((i) => {
-        if (i % 4) return;
+        if (i % 10) return;
         const last = hLines[hLines.length - 1];
         const height = maxTaps ? (i / maxTaps) * 100 + "%" : "100%";
         if (!last || height != last) hLines.push(height);
@@ -489,7 +489,7 @@ class SubjectVisuals extends React.Component<
                   <button
                     className="button-secondary"
                     onClick={this.zoomIn}
-                    disabled={differenceInMinutes(stop, start) < 100}
+                    disabled={differenceInMinutes(stop, start) < 180}
                   >
                     <ZoomIn style={{ height: "66%", margin: "auto" }} />
                   </button>
