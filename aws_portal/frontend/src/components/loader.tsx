@@ -36,23 +36,11 @@ class Loader extends React.Component<LoaderProps, any> {
   }
 }
 
-export class SmallLoader extends React.Component<any, SmallLoaderState> {
-  state = {
-    style: {
-      alignItems: "center",
-      backgroundColor: "white",
-      display: "flex",
-      justifyContent: "center",
-      height: "100%",
-      position: "absolute",
-      width: "100%"
-    } as React.CSSProperties
-  };
-
+export class SmallLoader extends React.Component<any, any> {
   render() {
     return (
       <div className="loader-container">
-        <Loader style={this.state.style} />
+        <Loader style={{}} />
       </div>
     );
   }
