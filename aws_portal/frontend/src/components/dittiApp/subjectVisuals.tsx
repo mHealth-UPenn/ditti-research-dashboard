@@ -15,6 +15,8 @@ import {
   isWithinInterval,
   sub
 } from "date-fns";
+import { Workbook } from "exceljs";
+import { saveAs } from "file-saver";
 import "./subjectVisuals.css";
 import { dummyData } from "../dummyData";
 
@@ -132,6 +134,32 @@ class SubjectVisuals extends React.Component<
     });
 
     return bouts;
+  };
+
+  downloadExcel = async (): Promise<void> => {
+    const workbook = new Workbook();
+    const sheet = workbook.addWorksheet("Sheet 1");
+
+    const data = this.state.taps.map((t) => {
+      const date = new Date(t.time);
+      const time = date.getTime() - date.getTimezoneOffset() * 60000;
+      return [this.props.subject.dittiId, new Date(time)];
+    });
+
+    sheet.columns = [
+      { header: "Ditti ID", width: 10 },
+      { header: "Taps", width: 20 }
+    ];
+
+    sheet.getColumn("B").numFmt = "DD/MM/YYYY HH:mm:ss";
+    sheet.addRows(data);
+
+    workbook.xlsx.writeBuffer().then((data) => {
+      const blob = new Blob([data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      });
+      saveAs(blob, "fileName.xlsx");
+    });
   };
 
   decrement = (): void => {
@@ -352,7 +380,6 @@ class SubjectVisuals extends React.Component<
       (b) => start < b.stop && b.start < stop
     );
 
-    console.log(bouts);
     const boutElems = bouts.map((b) => {
       const left =
         start < b.start
@@ -480,6 +507,7 @@ class SubjectVisuals extends React.Component<
               <button
                 className="button-primary button-lg"
                 style={{ width: "12rem" }}
+                onClick={this.downloadExcel}
               >
                 Download CSV
               </button>

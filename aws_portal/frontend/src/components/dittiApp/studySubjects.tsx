@@ -34,7 +34,6 @@ class StudySubjects extends React.Component<
       `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.props.studyPrefix}"`
     ).then((users: User[]) => {
       const studySubjects: StudySubject[] = users.map((u) => {
-        console.log(u);
         return {
           id: u.id,
           dittiId: u.user_permission_id,

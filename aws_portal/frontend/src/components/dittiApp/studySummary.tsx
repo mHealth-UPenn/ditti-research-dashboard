@@ -1,12 +1,14 @@
 import * as React from "react";
 import { Component } from "react";
-import { Study, TapDetails } from "../../interfaces";
+import { Study, StudySubject, TapDetails, User } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import StudySubjects from "./studySubjects";
 import "./studySummary.css";
 import Subjects from "./subjects";
 import SubjectsEdit from "./subjectsEdit";
+import { Workbook } from "exceljs";
+import { saveAs } from "file-saver";
 
 interface StudyContact {
   fullName: string;
@@ -38,7 +40,6 @@ class StudySummary extends React.Component<
   state = {
     studyContacts: [],
     studyDetails: {} as Study,
-    studySubjects: [],
     loading: true
   };
 
@@ -57,6 +58,65 @@ class StudySummary extends React.Component<
     Promise.all(promises).then(() => this.setState({ loading: false }));
   }
 
+  downloadExcel = async (): Promise<void> => {
+    const workbook = new Workbook();
+    const sheet = workbook.addWorksheet("Sheet 1");
+    let taps = this.props.getTaps().sort((a, b) => {
+      if (a.tapUserId < b.tapUserId) return -1;
+      if (a.tapUserId > b.tapUserId) return 1;
+      return 0;
+    });
+
+    const unique = taps
+      .map((t) => t.tapUserId)
+      .filter((v, i, arr) => arr.indexOf(v) === i);
+
+    let users: User[] = await makeRequest(
+      `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.state.studyDetails.dittiId}"`
+    );
+
+    users = users
+      .filter((u) => unique.includes(u.id))
+      .sort((a, b) => {
+        if (a.id < b.id) return -1;
+        if (a.id > b.id) return 1;
+        return 0;
+      });
+
+    const data: (string | Date)[][] = [];
+
+    let i = 0;
+    while (taps[i].tapUserId != users[0].id) i += 1;
+    taps = taps.slice(i);
+
+    let skip = false;
+    for (const t of taps) {
+      if (!skip && t.tapUserId != users[0].id) users.shift();
+      skip = t.tapUserId != users[0].id;
+
+      if (!skip) {
+        const date = new Date(t.time);
+        const time = date.getTime() - date.getTimezoneOffset() * 60000;
+        data.push([users[0].user_permission_id, new Date(time)]);
+      }
+    }
+
+    sheet.columns = [
+      { header: "Ditti ID", width: 10 },
+      { header: "Taps", width: 20 }
+    ];
+
+    sheet.getColumn("B").numFmt = "DD/MM/YYYY HH:mm:ss";
+    sheet.addRows(data);
+
+    workbook.xlsx.writeBuffer().then((data) => {
+      const blob = new Blob([data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      });
+      saveAs(blob, "fileName.xlsx");
+    });
+  };
+
   render() {
     const { getTaps, handleClick, studyId } = this.props;
     const { loading, studyContacts, studyDetails } = this.state;
@@ -71,7 +131,15 @@ class StudySummary extends React.Component<
             ) : (
               <div>
                 <div className="card-header">
-                  <div className="card-title">{name}</div>
+                  <div className="card-title">
+                    <span>{name}</span>
+                    <button
+                      className="button-primary"
+                      onClick={this.downloadExcel}
+                    >
+                      Download Excel
+                    </button>
+                  </div>
                   <span>
                     Study email: <b>{email}</b>
                   </span>
