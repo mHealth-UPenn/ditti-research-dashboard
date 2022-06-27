@@ -99,11 +99,12 @@ class StudySummary extends React.Component<
             ) : (
               <div>
                 <div className="card-header">
-                  <div className="card-title">
+                  <div className="card-title flex-space">
                     <span>{name}</span>
                     <button
-                      className="button-primary"
+                      className="button-primary button-lg"
                       onClick={this.downloadExcel}
+                      style={{ width: "12rem" }}
                     >
                       Download Excel
                     </button>

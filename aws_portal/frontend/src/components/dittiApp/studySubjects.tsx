@@ -47,6 +47,7 @@ class StudySubjects extends React.Component<
 
   getSubjectSummary = (s: StudySubject): React.ReactElement => {
     let summaryTaps: React.ReactElement[];
+    let hasTapsToday = false;
 
     if (s.tapPermission) {
       summaryTaps = [6, 5, 4, 3, 2, 1, 0].map((i) => {
@@ -60,6 +61,8 @@ class StudySubjects extends React.Component<
               t.tapUserId == s.id &&
               isWithinInterval(new Date(t.time), { start, end })
           ).length;
+
+        hasTapsToday = !i && taps > 0;
 
         const weekday = i
           ? start.toLocaleString("en-US", { weekday: "narrow" })
@@ -84,7 +87,7 @@ class StudySubjects extends React.Component<
         ).length;
 
       summaryTaps.push(
-        <div className="subject-summary-taps-day border-light-l">
+        <div key={"total"} className="subject-summary-taps-day border-light-l">
           <span>
             <b>Total</b>
           </span>
@@ -95,14 +98,19 @@ class StudySubjects extends React.Component<
       );
     } else {
       summaryTaps = [
-        <div className="subject-summary-no-access">No tapping access</div>
+        <div key={0} className="subject-summary-no-access">
+          No tapping access
+        </div>
       ];
     }
 
     const expiresOn = differenceInDays(new Date(s.expiresOn), new Date());
 
     return (
-      <div key={s.id} className="subject-summary">
+      <div key={s.id} className="subject-summary border-light-b">
+        <div
+          className={"icon " + (hasTapsToday ? "icon-success" : "icon-gray")}
+        ></div>
         <div className="subject-summary-name">
           <span
             className="link"
