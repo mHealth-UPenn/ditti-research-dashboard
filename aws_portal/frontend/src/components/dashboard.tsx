@@ -7,7 +7,7 @@ import Home from "./home";
 import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
-import { Tap, TapDetails } from "../interfaces";
+import { TapDetails } from "../interfaces";
 import { makeRequest } from "../utils";
 
 // interface DashboardProps {}
@@ -20,10 +20,11 @@ interface DashboardState {
     view: React.ReactElement;
   }[];
   breadcrumbs: { name: string; view: React.ReactElement }[];
+  flashMessages: { id: number; element: React.ReactElement }[];
   history: { name: string; view: React.ReactElement }[][];
   studies: { name: string; id: number }[];
-  view: React.ReactElement;
   taps: TapDetails[];
+  view: React.ReactElement;
 }
 
 class Dashboard extends React.Component<any, DashboardState> {
@@ -37,10 +38,11 @@ class Dashboard extends React.Component<any, DashboardState> {
     this.state = {
       apps: apps,
       breadcrumbs: [{ name: "Home", view: view }],
-      studies: studies,
+      flashMessages: [],
       history: [],
-      view: view,
-      taps: []
+      studies: studies,
+      taps: [],
+      view: view
     };
   }
 
@@ -107,6 +109,7 @@ class Dashboard extends React.Component<any, DashboardState> {
     for (const b of this.state.breadcrumbs) {
       if (b.name === name[0]) {
         let breadcrumbs = this.state.breadcrumbs;
+
         breadcrumbs = breadcrumbs.slice(0, i + 1);
         this.setState({ breadcrumbs });
         break;
@@ -119,6 +122,7 @@ class Dashboard extends React.Component<any, DashboardState> {
             view: parseInt(i) === name.length - 1 ? view : <React.Fragment />
           });
         }
+
         this.setState({ breadcrumbs });
         break;
       }
@@ -135,14 +139,42 @@ class Dashboard extends React.Component<any, DashboardState> {
 
     if (breadcrumbs) {
       const view = breadcrumbs[breadcrumbs.length - 1].view;
-      this.setState({ history });
-      this.setState({ breadcrumbs });
-      this.setState({ view });
+      this.setState({ breadcrumbs, history, view });
     }
   };
 
+  flashMessage = (msg: React.ReactElement, type: string): void => {
+    const { flashMessages } = this.state;
+    const id = flashMessages.length
+      ? flashMessages[flashMessages.length - 1].id + 1
+      : 0;
+
+    const element = (
+      <div key={id} className={"shadow flash-message flash-message-" + type}>
+        <div className="flash-message-content">
+          <span>{msg}</span>
+        </div>
+        <div
+          className="flash-message-close"
+          onClick={() => this.popMessage(id)}
+        >
+          <span>x</span>
+        </div>
+      </div>
+    );
+
+    flashMessages.push({ id, element });
+    this.setState({ flashMessages });
+  };
+
+  popMessage = (id: number): void => {
+    let { flashMessages } = this.state;
+    flashMessages = flashMessages.filter((fm) => fm.id != id);
+    this.setState({ flashMessages });
+  };
+
   render() {
-    const { breadcrumbs, history, studies, view } = this.state;
+    const { breadcrumbs, flashMessages, history, studies, view } = this.state;
 
     return (
       <main className="bg-light dashboard-container">
@@ -162,6 +194,9 @@ class Dashboard extends React.Component<any, DashboardState> {
               handleClick={this.setView}
               hasHistory={history.length > 0}
             />
+            <div className="flash-message-container">
+              {flashMessages.map((fm) => fm.element)}
+            </div>
             {view}
           </div>
         </div>

@@ -87,6 +87,7 @@ export interface StudySubject {
 }
 
 export interface ViewProps {
+  flashMessage?: (msg: string, type: string) => void;
   goBack?: () => void;
   handleClick?: (
     name: string[],

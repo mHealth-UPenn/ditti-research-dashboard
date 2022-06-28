@@ -227,11 +227,23 @@ class AccessGroupsEdit extends React.Component<
   };
 
   handleSuccess = (res: ResponseBody) => {
-    console.log(res.msg);
+    const goBack = this.props.goBack ? this.props.goBack : () => null;
+    const flashMessage = this.props.flashMessage
+      ? this.props.flashMessage
+      : () => null;
+
+    goBack();
+    flashMessage(res.msg, "success");
   };
 
   handleFailure = (res: ResponseBody) => {
-    console.log(res.msg);
+    const goBack = this.props.goBack ? this.props.goBack : () => null;
+    const flashMessage = this.props.flashMessage
+      ? this.props.flashMessage
+      : () => null;
+
+    goBack();
+    flashMessage("An unexpected error occured:<br />" + res.msg, "danger");
   };
 
   getPermissionsSummary = (): React.ReactElement => {
