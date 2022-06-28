@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
-import { Study, StudySubject, TapDetails } from "../../interfaces";
+import { Study, StudySubject, TapDetails, ViewProps } from "../../interfaces";
 import TextField from "../fields/textField";
 import SubjectsEdit from "./subjectsEdit";
 import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
@@ -26,13 +26,8 @@ interface Bout {
   rate: number;
 }
 
-interface SubjectVisualsProps {
+interface SubjectVisualsProps extends ViewProps {
   getTaps: () => TapDetails[];
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
   studyDetails: Study;
   subject: StudySubject;
 }
@@ -420,6 +415,10 @@ class SubjectVisuals extends React.Component<
   };
 
   render() {
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     const { dittiId, expiresOn } = this.props.subject;
     const { studyDetails } = this.props;
     const { start, stop } = this.state;
@@ -443,7 +442,7 @@ class SubjectVisuals extends React.Component<
                 <button
                   className="button-secondary button-lg"
                   onClick={() =>
-                    this.props.handleClick(
+                    handleClick(
                       ["Edit"],
                       <SubjectsEdit
                         dittiId={dittiId}

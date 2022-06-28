@@ -1,6 +1,12 @@
 import * as React from "react";
 import { Component } from "react";
-import { Study, StudySubject, TapDetails, User } from "../../interfaces";
+import {
+  Study,
+  StudySubject,
+  TapDetails,
+  User,
+  ViewProps
+} from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
@@ -8,14 +14,9 @@ import "./studySubjects.css";
 import SubjectVisuals from "./subjectVisuals";
 import { dummyData } from "../dummyData";
 
-interface StudySubjectsProps {
+interface StudySubjectsProps extends ViewProps {
   studyPrefix: string;
   getTaps: () => TapDetails[];
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
   studyDetails: Study;
 }
 
@@ -47,6 +48,10 @@ class StudySubjects extends React.Component<
   }
 
   getSubjectSummary = (s: StudySubject): React.ReactElement => {
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     let summaryTaps: React.ReactElement[];
     let hasTapsToday = false;
 
@@ -116,11 +121,11 @@ class StudySubjects extends React.Component<
           <span
             className="link"
             onClick={() =>
-              this.props.handleClick(
+              handleClick(
                 [s.dittiId],
                 <SubjectVisuals
                   getTaps={this.props.getTaps}
-                  handleClick={this.props.handleClick}
+                  handleClick={handleClick}
                   studyDetails={this.props.studyDetails}
                   subject={s}
                 />,

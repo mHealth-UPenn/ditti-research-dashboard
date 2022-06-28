@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
-import { Study, StudySubject, TapDetails, User } from "../../interfaces";
+import { Study, TapDetails, User, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import StudySubjects from "./studySubjects";
@@ -18,13 +18,8 @@ interface StudyContact {
   role: string;
 }
 
-interface StudySummaryProps {
+interface StudySummaryProps extends ViewProps {
   getTaps: () => TapDetails[];
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
   studyId: number;
 }
 
@@ -86,7 +81,11 @@ class StudySummary extends React.Component<
   };
 
   render() {
-    const { getTaps, handleClick, studyId } = this.props;
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
+    const { getTaps, studyId } = this.props;
     const { loading, studyContacts, studyDetails } = this.state;
     const { dittiId, email, name } = studyDetails;
 

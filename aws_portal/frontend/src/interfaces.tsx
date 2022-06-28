@@ -85,3 +85,12 @@ export interface StudySubject {
   expiresOn: string;
   tapPermission: boolean;
 }
+
+export interface ViewProps {
+  goBack?: () => void;
+  handleClick?: (
+    name: string[],
+    view: React.ReactElement,
+    replace: boolean
+  ) => void;
+}

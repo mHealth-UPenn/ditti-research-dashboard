@@ -2,7 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
 import Select from "../fields/select";
-import { Permission, ResponseBody, Role } from "../../interfaces";
+import { Permission, ResponseBody, Role, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 
@@ -53,7 +53,7 @@ interface RolesPrefill {
   permissions: Permission[];
 }
 
-interface RolesEditProps {
+interface RolesEditProps extends ViewProps {
   roleId: number;
 }
 

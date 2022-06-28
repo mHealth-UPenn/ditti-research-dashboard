@@ -4,14 +4,10 @@ import Accounts from "./accounts";
 import Studies from "./studies";
 import AccessGroups from "./accessGroups";
 import Roles from "./roles";
+import { ViewProps } from "../../interfaces";
 
-interface NavbarProps {
+interface NavbarProps extends ViewProps {
   active: string;
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
 }
 
 interface NavbarState {
@@ -57,7 +53,10 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
   }
 
   render() {
-    const { handleClick } = this.props;
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     const { views } = this.state;
 
     return (

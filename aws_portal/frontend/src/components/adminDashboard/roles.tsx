@@ -1,19 +1,11 @@
 import * as React from "react";
 import { Component } from "react";
-import { Role } from "../../interfaces";
+import { Role, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
 import RolesEdit from "./rolesEdit";
 import { SmallLoader } from "../loader";
-
-interface RolesProps {
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
-}
 
 interface RolesState {
   roles: Role[];
@@ -21,7 +13,7 @@ interface RolesState {
   loading: boolean;
 }
 
-class Roles extends React.Component<RolesProps, RolesState> {
+class Roles extends React.Component<ViewProps, RolesState> {
   state = {
     roles: [],
     columns: [
@@ -54,6 +46,10 @@ class Roles extends React.Component<RolesProps, RolesState> {
   }
 
   getData = (): TableData[][] => {
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     return this.state.roles.map((r: Role) => {
       const { id, name, permissions } = r;
 
@@ -86,11 +82,7 @@ class Roles extends React.Component<RolesProps, RolesState> {
               <button
                 className="button-secondary"
                 onClick={() =>
-                  this.props.handleClick(
-                    ["Edit", name],
-                    <RolesEdit roleId={id} />,
-                    false
-                  )
+                  handleClick(["Edit", name], <RolesEdit roleId={id} />, false)
                 }
               >
                 Edit
@@ -106,7 +98,10 @@ class Roles extends React.Component<RolesProps, RolesState> {
   };
 
   render() {
-    const { handleClick } = this.props;
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     const { columns, loading } = this.state;
 
     return (

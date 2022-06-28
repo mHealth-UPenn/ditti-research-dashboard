@@ -9,13 +9,14 @@ import {
   Permission,
   ResponseBody,
   Role,
-  Study
+  Study,
+  ViewProps
 } from "../../interfaces";
 import Select from "../fields/select";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 
-interface AccountsEditProps {
+interface AccountsEditProps extends ViewProps {
   accountId: number;
 }
 

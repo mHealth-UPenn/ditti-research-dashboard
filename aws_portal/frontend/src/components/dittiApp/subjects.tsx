@@ -3,16 +3,11 @@ import { Component } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { makeRequest } from "../../utils";
-import { Study, User } from "../../interfaces";
+import { Study, User, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
 
-interface SubjectsProps {
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
+interface SubjectsProps extends ViewProps {
   studyDetails: Study;
 }
 
@@ -67,6 +62,10 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   }
 
   getData = (): TableData[][] => {
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     const { id, dittiId, email } = this.props.studyDetails;
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -126,7 +125,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
               <button
                 className="button-secondary"
                 onClick={() =>
-                  this.props.handleClick(
+                  handleClick(
                     ["Edit", user_permission_id],
                     <SubjectsEdit
                       dittiId={user_permission_id}
@@ -150,7 +149,10 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   };
 
   render() {
-    const { handleClick } = this.props;
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     const { id, dittiId, email } = this.props.studyDetails;
     const { columns, loading } = this.state;
 

@@ -5,16 +5,8 @@ import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import Navbar from "./navbar";
 import { makeRequest } from "../../utils";
-import { Account } from "../../interfaces";
+import { Account, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
-
-interface AccountsProps {
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
-}
 
 interface AccountsState {
   accounts: Account[];
@@ -22,7 +14,7 @@ interface AccountsState {
   loading: boolean;
 }
 
-class Accounts extends React.Component<AccountsProps, AccountsState> {
+class Accounts extends React.Component<ViewProps, AccountsState> {
   state = {
     accounts: [],
     columns: [
@@ -74,6 +66,10 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
   }
 
   getData = (): TableData[][] => {
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
       month: "short",
@@ -156,7 +152,7 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
               <button
                 className="button-secondary"
                 onClick={() =>
-                  this.props.handleClick(
+                  handleClick(
                     ["Edit", name],
                     <AccountsEdit accountId={id} />,
                     false
@@ -176,7 +172,10 @@ class Accounts extends React.Component<AccountsProps, AccountsState> {
   };
 
   render() {
-    const { handleClick } = this.props;
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     const { columns, loading, fading } = this.state;
 
     return (

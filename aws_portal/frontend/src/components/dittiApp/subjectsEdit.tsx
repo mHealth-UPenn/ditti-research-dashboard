@@ -1,13 +1,13 @@
 import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
-import { ResponseBody, User, UserDetails } from "../../interfaces";
+import { ResponseBody, User, UserDetails, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
 import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
 
-interface SubjectsEditProps {
+interface SubjectsEditProps extends ViewProps {
   dittiId: string;
   studyId: number;
   studyPrefix: string;

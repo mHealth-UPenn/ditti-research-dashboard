@@ -1,8 +1,9 @@
 import * as React from "react";
 import { Component } from "react";
+import { ViewProps } from "../../interfaces";
 import TextField from "../fields/textField";
 
-interface AppsEditProps {
+interface AppsEditProps extends ViewProps {
   appId: number;
 }
 

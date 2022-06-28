@@ -3,17 +3,9 @@ import { Component } from "react";
 import Navbar from "./navbar";
 import Table, { Column, TableData } from "../table/table";
 import AccessGroupsEdit from "./accessGroupsEdit";
-import { AccessGroup } from "../../interfaces";
+import { AccessGroup, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-
-interface AccessGroupsProps {
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
-}
 
 interface AccessGroupsState {
   accessGroups: AccessGroup[];
@@ -21,10 +13,7 @@ interface AccessGroupsState {
   loading: boolean;
 }
 
-class AccessGroups extends React.Component<
-  AccessGroupsProps,
-  AccessGroupsState
-> {
+class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
   state = {
     accessGroups: [],
     columns: [
@@ -63,6 +52,10 @@ class AccessGroups extends React.Component<
   }
 
   getData = (): TableData[][] => {
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     return this.state.accessGroups.map((ag: AccessGroup) => {
       const { app, id, name, permissions } = ag;
 
@@ -109,7 +102,7 @@ class AccessGroups extends React.Component<
               <button
                 className="button-secondary"
                 onClick={() =>
-                  this.props.handleClick(
+                  handleClick(
                     ["Edit", name],
                     <AccessGroupsEdit accessGroupId={id} />,
                     false
@@ -129,7 +122,10 @@ class AccessGroups extends React.Component<
   };
 
   render() {
-    const { handleClick } = this.props;
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     const { columns, loading } = this.state;
 
     return (

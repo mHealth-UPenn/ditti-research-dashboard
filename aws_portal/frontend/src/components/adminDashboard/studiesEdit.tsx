@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
-import { ResponseBody, Role, Study } from "../../interfaces";
+import { ResponseBody, Role, Study, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 
@@ -12,7 +12,7 @@ interface StudyPrefill {
   email: string;
 }
 
-interface StudiesEditProps {
+interface StudiesEditProps extends ViewProps {
   studyId: number;
 }
 

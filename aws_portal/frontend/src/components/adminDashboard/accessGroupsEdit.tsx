@@ -2,7 +2,13 @@ import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
 import Select from "../fields/select";
-import { AccessGroup, App, Permission, ResponseBody } from "../../interfaces";
+import {
+  AccessGroup,
+  App,
+  Permission,
+  ResponseBody,
+  ViewProps
+} from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { actionsRaw, resourcesRaw } from "./rolesEdit";
 import { SmallLoader } from "../loader";
@@ -13,7 +19,7 @@ interface AccessGroupPrefill {
   permissions: Permission[];
 }
 
-interface AccessGroupsEditProps {
+interface AccessGroupsEditProps extends ViewProps {
   accessGroupId: number;
 }
 

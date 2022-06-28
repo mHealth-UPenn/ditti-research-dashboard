@@ -4,15 +4,7 @@ import Navbar from "./navbar";
 import Table, { TableData } from "../table/table";
 import AppsEdit from "./appsEdit";
 import { makeRequest } from "../../utils";
-import { App } from "../../interfaces";
-
-interface AppsProps {
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
-}
+import { App, ViewProps } from "../../interfaces";
 
 interface AppsState {
   apps: App[];
@@ -23,7 +15,7 @@ interface AppsState {
   }[];
 }
 
-class Apps extends React.Component<AppsProps, AppsState> {
+class Apps extends React.Component<ViewProps, AppsState> {
   state = {
     apps: [],
     columns: [
@@ -76,7 +68,10 @@ class Apps extends React.Component<AppsProps, AppsState> {
   };
 
   render() {
-    const { handleClick } = this.props;
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     const { columns } = this.state;
 
     return (

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
-import { ResponseBody, Study, TapDetails, User } from "../../interfaces";
+import { Study, TapDetails, User, ViewProps } from "../../interfaces";
 import { mapTaps, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import "./studies.css";
@@ -8,14 +8,9 @@ import StudySummary from "./studySummary";
 import { sub } from "date-fns";
 import { dummyData } from "../dummyData";
 
-interface StudiesViewProps {
+interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
   getTaps: () => TapDetails[];
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
 }
 
 interface StudiesViewState {
@@ -53,7 +48,11 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
   }
 
   handleClickStudy = (id: number): void => {
-    const { getTaps, handleClick } = this.props;
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
+    const { getTaps } = this.props;
     const study: Study = this.state.studies.filter((s: Study) => s.id == id)[0];
     const view = (
       <StudySummary

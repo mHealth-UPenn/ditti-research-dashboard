@@ -1,19 +1,11 @@
 import * as React from "react";
 import { Component } from "react";
-import { Study } from "../../interfaces";
+import { Study, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
 import StudiesEdit from "./studiesEdit";
 import { SmallLoader } from "../loader";
-
-interface StudiesProps {
-  handleClick: (
-    name: string[],
-    view: React.ReactElement,
-    replace: boolean
-  ) => void;
-}
 
 interface StudiesState {
   studies: Study[];
@@ -21,7 +13,7 @@ interface StudiesState {
   loading: boolean;
 }
 
-class Studies extends React.Component<StudiesProps, StudiesState> {
+class Studies extends React.Component<ViewProps, StudiesState> {
   state = {
     studies: [],
     columns: [
@@ -66,6 +58,10 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
   }
 
   getData = (): TableData[][] => {
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     return this.state.studies.map((s: Study) => {
       const { acronym, dittiId, email, id, name } = s;
 
@@ -112,7 +108,7 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
               <button
                 className="button-secondary"
                 onClick={() =>
-                  this.props.handleClick(
+                  handleClick(
                     ["Edit", name],
                     <StudiesEdit studyId={id} />,
                     false
@@ -132,7 +128,10 @@ class Studies extends React.Component<StudiesProps, StudiesState> {
   };
 
   render() {
-    const { handleClick } = this.props;
+    const handleClick = this.props.handleClick
+      ? this.props.handleClick
+      : () => null;
+
     const { columns, loading } = this.state;
 
     return (
