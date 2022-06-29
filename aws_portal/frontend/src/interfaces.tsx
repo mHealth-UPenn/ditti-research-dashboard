@@ -87,9 +87,9 @@ export interface StudySubject {
 }
 
 export interface ViewProps {
-  flashMessage?: (msg: string, type: string) => void;
-  goBack?: () => void;
-  handleClick?: (
+  flashMessage: (msg: React.ReactElement, type: string) => void;
+  goBack: () => void;
+  handleClick: (
     name: string[],
     view: React.ReactElement,
     replace: boolean

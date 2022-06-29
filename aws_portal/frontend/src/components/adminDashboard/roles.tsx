@@ -46,9 +46,7 @@ class Roles extends React.Component<ViewProps, RolesState> {
   }
 
   getData = (): TableData[][] => {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
+    const { flashMessage, goBack, handleClick } = this.props;
 
     return this.state.roles.map((r: Role) => {
       const { id, name, permissions } = r;
@@ -82,7 +80,16 @@ class Roles extends React.Component<ViewProps, RolesState> {
               <button
                 className="button-secondary"
                 onClick={() =>
-                  handleClick(["Edit", name], <RolesEdit roleId={id} />, false)
+                  handleClick(
+                    ["Edit", name],
+                    <RolesEdit
+                      roleId={id}
+                      flashMessage={flashMessage}
+                      goBack={goBack}
+                      handleClick={handleClick}
+                    />,
+                    false
+                  )
                 }
               >
                 Edit
@@ -98,41 +105,52 @@ class Roles extends React.Component<ViewProps, RolesState> {
   };
 
   render() {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
+    const { flashMessage, goBack, handleClick } = this.props;
     const { columns, loading } = this.state;
+
+    const tableControl = (
+      <button
+        className="button-primary"
+        onClick={() =>
+          handleClick(
+            ["Create"],
+            <RolesEdit
+              roleId={0}
+              flashMessage={flashMessage}
+              goBack={goBack}
+              handleClick={handleClick}
+            />,
+            false
+          )
+        }
+      >
+        Create&nbsp;<b>+</b>
+      </button>
+    );
 
     return (
       <div className="page-container">
-        <Navbar handleClick={handleClick} active="Roles" />
+        <Navbar
+          active="Roles"
+          flashMessage={flashMessage}
+          goBack={goBack}
+          handleClick={handleClick}
+        />
         <div className="page-content bg-white">
-          <div style={{ position: "relative", height: "100%", width: "100%" }}>
-            {loading ? (
-              <SmallLoader />
-            ) : (
-              <Table
-                columns={columns}
-                control={
-                  <button
-                    className="button-primary"
-                    onClick={() =>
-                      handleClick(["Create"], <RolesEdit roleId={0} />, false)
-                    }
-                  >
-                    Create&nbsp;<b>+</b>
-                  </button>
-                }
-                controlWidth={10}
-                data={this.getData()}
-                includeControl={true}
-                includeSearch={true}
-                paginationPer={10}
-                sortDefault=""
-              />
-            )}
-          </div>
+          {loading ? (
+            <SmallLoader />
+          ) : (
+            <Table
+              columns={columns}
+              control={tableControl}
+              controlWidth={10}
+              data={this.getData()}
+              includeControl={true}
+              includeSearch={true}
+              paginationPer={10}
+              sortDefault=""
+            />
+          )}
         </div>
       </div>
     );

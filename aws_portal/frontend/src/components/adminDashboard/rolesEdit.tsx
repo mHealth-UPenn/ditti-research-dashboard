@@ -143,6 +143,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     const id = permissions.length
       ? permissions[permissions.length - 1].id + 1
       : 0;
+
     permissions.push({ id: id, action: "", resource: "" });
     this.setState({ permissions });
   };
@@ -151,6 +152,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     const permissions = this.state.permissions.filter(
       (p: Permission) => p.id != id
     );
+
     this.setState({ permissions });
   };
 
@@ -178,6 +180,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     if (permission) {
       const actionText = permission.action;
       const action = actionsRaw.filter((a) => a.text == actionText)[0];
+
       if (action) return action.id;
       else return 0;
     } else {
@@ -209,6 +212,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     if (permission) {
       const resourceText = permission.resource;
       const resource = resourcesRaw.filter((a) => a.text == resourceText)[0];
+
       if (resource) return resource.id;
       else return 0;
     } else {
@@ -231,15 +235,29 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
 
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/role/edit" : "/admin/role/create";
+
     makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
-    console.log(res.msg);
+    const { goBack, flashMessage } = this.props;
+
+    goBack();
+    flashMessage(<span>{res.msg}</span>, "success");
   };
 
   handleFailure = (res: ResponseBody) => {
-    console.log(res.msg);
+    const { flashMessage } = this.props;
+
+    const msg = (
+      <span>
+        <b>An unexpected error occured:</b>
+        <br />
+        {res.msg}
+      </span>
+    );
+
+    flashMessage(msg, "danger");
   };
 
   getPermissionsSummary = (): React.ReactElement => {

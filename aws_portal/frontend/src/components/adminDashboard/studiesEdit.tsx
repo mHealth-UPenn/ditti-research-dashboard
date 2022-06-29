@@ -69,15 +69,29 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
 
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/study/edit" : "/admin/study/create";
+
     makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
-    console.log(res.msg);
+    const { goBack, flashMessage } = this.props;
+
+    goBack();
+    flashMessage(<span>{res.msg}</span>, "success");
   };
 
   handleFailure = (res: ResponseBody) => {
-    console.log(res.msg);
+    const { flashMessage } = this.props;
+
+    const msg = (
+      <span>
+        <b>An unexpected error occured:</b>
+        <br />
+        {res.msg}
+      </span>
+    );
+
+    flashMessage(msg, "danger");
   };
 
   render() {

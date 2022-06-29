@@ -62,10 +62,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   }
 
   getData = (): TableData[][] => {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
+    const { flashMessage, goBack, handleClick } = this.props;
     const { id, dittiId, email } = this.props.studyDetails;
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -132,6 +129,9 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
                       studyId={id}
                       studyEmail={email}
                       studyPrefix={dittiId}
+                      flashMessage={flashMessage}
+                      goBack={goBack}
+                      handleClick={handleClick}
                     />,
                     false
                   )
@@ -149,12 +149,32 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   };
 
   render() {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
+    const { flashMessage, goBack, handleClick } = this.props;
     const { id, dittiId, email } = this.props.studyDetails;
     const { columns, loading } = this.state;
+
+    const tableControl = (
+      <button
+        className="button-primary"
+        onClick={() =>
+          handleClick(
+            ["Create"],
+            <SubjectsEdit
+              dittiId=""
+              studyId={id}
+              studyEmail={email}
+              studyPrefix={dittiId}
+              flashMessage={flashMessage}
+              goBack={goBack}
+              handleClick={handleClick}
+            />,
+            false
+          )
+        }
+      >
+        Create&nbsp;<b>+</b>
+      </button>
+    );
 
     return (
       <div className="page-container">
@@ -164,25 +184,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
           ) : (
             <Table
               columns={columns}
-              control={
-                <button
-                  className="button-primary"
-                  onClick={() =>
-                    handleClick(
-                      ["Create"],
-                      <SubjectsEdit
-                        dittiId=""
-                        studyId={id}
-                        studyEmail={email}
-                        studyPrefix={dittiId}
-                      />,
-                      false
-                    )
-                  }
-                >
-                  Create&nbsp;<b>+</b>
-                </button>
-              }
+              control={tableControl}
               controlWidth={10}
               data={this.getData()}
               includeControl={true}

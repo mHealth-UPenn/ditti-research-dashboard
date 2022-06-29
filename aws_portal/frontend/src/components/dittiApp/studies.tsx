@@ -48,19 +48,18 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
   }
 
   handleClickStudy = (id: number): void => {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
-    const { getTaps } = this.props;
+    const { flashMessage, getTaps, goBack, handleClick } = this.props;
     const study: Study = this.state.studies.filter((s: Study) => s.id == id)[0];
     const view = (
       <StudySummary
-        getTaps={getTaps}
+        flashMessage={flashMessage}
         handleClick={handleClick}
+        getTaps={getTaps}
+        goBack={goBack}
         studyId={study.id}
       />
     );
+
     if (study) handleClick([study.acronym], view, false);
   };
 

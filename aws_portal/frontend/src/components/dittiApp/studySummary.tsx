@@ -50,8 +50,9 @@ class StudySummary extends React.Component<
       "/db/get-study-details?app=2&study=" + studyId
     ).then((studyDetails: Study) => this.setState({ studyDetails }));
 
-    const promises = [studyContacts, studyDetails];
-    Promise.all(promises).then(() => this.setState({ loading: false }));
+    Promise.all([studyContacts, studyDetails]).then(() =>
+      this.setState({ loading: false })
+    );
   }
 
   downloadExcel = async (): Promise<void> => {
@@ -81,11 +82,7 @@ class StudySummary extends React.Component<
   };
 
   render() {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
-    const { getTaps, studyId } = this.props;
+    const { flashMessage, getTaps, goBack, handleClick, studyId } = this.props;
     const { loading, studyContacts, studyDetails } = this.state;
     const { dittiId, email, name } = studyDetails;
 
@@ -126,7 +123,10 @@ class StudySummary extends React.Component<
                           handleClick(
                             ["Enroll"],
                             <SubjectsEdit
+                              flashMessage={flashMessage}
                               dittiId=""
+                              goBack={goBack}
+                              handleClick={handleClick}
                               studyId={studyId}
                               studyPrefix={dittiId}
                               studyEmail={email}
@@ -143,6 +143,8 @@ class StudySummary extends React.Component<
                           handleClick(
                             ["Subjects"],
                             <Subjects
+                              flashMessage={flashMessage}
+                              goBack={goBack}
                               handleClick={handleClick}
                               studyDetails={this.state.studyDetails}
                             />,
@@ -156,6 +158,8 @@ class StudySummary extends React.Component<
                   </div>
                   <div className="study-subjects-list">
                     <StudySubjects
+                      flashMessage={flashMessage}
+                      goBack={goBack}
                       getTaps={getTaps}
                       handleClick={handleClick}
                       studyDetails={studyDetails}

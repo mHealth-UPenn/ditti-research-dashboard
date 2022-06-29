@@ -44,12 +44,12 @@ class AccessGroupsEdit extends React.Component<
     const apps = makeRequest("/admin/app?app=1").then((apps) =>
       this.setState({ apps })
     );
+
     const prefill = this.getPrefill().then((prefill) => {
       this.setState({ ...prefill });
     });
 
-    const promises = [apps, prefill];
-    Promise.all(promises).then(() => {
+    Promise.all([apps, prefill]).then(() => {
       if (!this.state.permissions) this.addPermission();
       this.setState({ loading: false });
     });
@@ -135,6 +135,7 @@ class AccessGroupsEdit extends React.Component<
     const id = permissions.length
       ? permissions[permissions.length - 1].id + 1
       : 0;
+
     permissions.push({ id: id, action: "", resource: "" });
     this.setState({ permissions });
   };
@@ -143,6 +144,7 @@ class AccessGroupsEdit extends React.Component<
     const permissions = this.state.permissions.filter(
       (p: Permission) => p.id != id
     );
+
     this.setState({ permissions });
   };
 
@@ -170,6 +172,7 @@ class AccessGroupsEdit extends React.Component<
     if (permission) {
       const actionText = permission.action;
       const action = actionsRaw.filter((a) => a.text == actionText)[0];
+
       if (action) return action.id;
       else return 0;
     } else {
@@ -201,6 +204,7 @@ class AccessGroupsEdit extends React.Component<
     if (permission) {
       const resourceText = permission.resource;
       const resource = resourcesRaw.filter((a) => a.text == resourceText)[0];
+
       if (resource) return resource.id;
       else return 0;
     } else {
@@ -223,27 +227,29 @@ class AccessGroupsEdit extends React.Component<
 
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/access-group/edit" : "/admin/access-group/create";
+
     makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
-    const goBack = this.props.goBack ? this.props.goBack : () => null;
-    const flashMessage = this.props.flashMessage
-      ? this.props.flashMessage
-      : () => null;
+    const { goBack, flashMessage } = this.props;
 
     goBack();
-    flashMessage(res.msg, "success");
+    flashMessage(<span>{res.msg}</span>, "success");
   };
 
   handleFailure = (res: ResponseBody) => {
-    const goBack = this.props.goBack ? this.props.goBack : () => null;
-    const flashMessage = this.props.flashMessage
-      ? this.props.flashMessage
-      : () => null;
+    const { flashMessage } = this.props;
 
-    goBack();
-    flashMessage("An unexpected error occured:<br />" + res.msg, "danger");
+    const msg = (
+      <span>
+        <b>An unexpected error occured:</b>
+        <br />
+        {res.msg}
+      </span>
+    );
+
+    flashMessage(msg, "danger");
   };
 
   getPermissionsSummary = (): React.ReactElement => {

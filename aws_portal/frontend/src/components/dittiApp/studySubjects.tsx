@@ -48,10 +48,7 @@ class StudySubjects extends React.Component<
   }
 
   getSubjectSummary = (s: StudySubject): React.ReactElement => {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
+    const { flashMessage, getTaps, goBack, handleClick } = this.props;
     let summaryTaps: React.ReactElement[];
     let hasTapsToday = false;
 
@@ -124,7 +121,9 @@ class StudySubjects extends React.Component<
               handleClick(
                 [s.dittiId],
                 <SubjectVisuals
-                  getTaps={this.props.getTaps}
+                  flashMessage={flashMessage}
+                  getTaps={getTaps}
+                  goBack={goBack}
                   handleClick={handleClick}
                   studyDetails={this.props.studyDetails}
                   subject={s}

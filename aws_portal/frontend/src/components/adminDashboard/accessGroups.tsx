@@ -52,9 +52,7 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
   }
 
   getData = (): TableData[][] => {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
+    const { flashMessage, goBack, handleClick } = this.props;
 
     return this.state.accessGroups.map((ag: AccessGroup) => {
       const { app, id, name, permissions } = ag;
@@ -104,7 +102,12 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
                 onClick={() =>
                   handleClick(
                     ["Edit", name],
-                    <AccessGroupsEdit accessGroupId={id} />,
+                    <AccessGroupsEdit
+                      accessGroupId={id}
+                      flashMessage={flashMessage}
+                      goBack={goBack}
+                      handleClick={handleClick}
+                    />,
                     false
                   )
                 }
@@ -122,45 +125,52 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
   };
 
   render() {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
+    const { flashMessage, goBack, handleClick } = this.props;
     const { columns, loading } = this.state;
+
+    const tableControl = (
+      <button
+        className="button-primary"
+        onClick={() =>
+          handleClick(
+            ["Create"],
+            <AccessGroupsEdit
+              accessGroupId={0}
+              flashMessage={flashMessage}
+              goBack={goBack}
+              handleClick={handleClick}
+            />,
+            false
+          )
+        }
+      >
+        Create&nbsp;<b>+</b>
+      </button>
+    );
 
     return (
       <div className="page-container">
-        <Navbar handleClick={handleClick} active="Access Groups" />
+        <Navbar
+          handleClick={handleClick}
+          active="Access Groups"
+          flashMessage={flashMessage}
+          goBack={goBack}
+        />
         <div className="page-content bg-white">
-          <div style={{ position: "relative", height: "100%", width: "100%" }}>
-            {loading ? (
-              <SmallLoader />
-            ) : (
-              <Table
-                columns={columns}
-                control={
-                  <button
-                    className="button-primary"
-                    onClick={() =>
-                      handleClick(
-                        ["Create"],
-                        <AccessGroupsEdit accessGroupId={0} />,
-                        false
-                      )
-                    }
-                  >
-                    Create&nbsp;<b>+</b>
-                  </button>
-                }
-                controlWidth={10}
-                data={this.getData()}
-                includeControl={true}
-                includeSearch={true}
-                paginationPer={10}
-                sortDefault=""
-              />
-            )}
-          </div>
+          {loading ? (
+            <SmallLoader />
+          ) : (
+            <Table
+              columns={columns}
+              control={tableControl}
+              controlWidth={10}
+              data={this.getData()}
+              includeControl={true}
+              includeSearch={true}
+              paginationPer={10}
+              sortDefault=""
+            />
+          )}
         </div>
       </div>
     );

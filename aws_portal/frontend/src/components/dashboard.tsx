@@ -57,6 +57,8 @@ class Dashboard extends React.Component<any, DashboardState> {
             getTapsAsync={this.getTapsAsync}
             getTaps={this.getTaps}
             handleClick={this.setView}
+            goBack={this.goBack}
+            flashMessage={this.flashMessage}
           />
         )
       },
@@ -64,7 +66,13 @@ class Dashboard extends React.Component<any, DashboardState> {
         breadcrumbs: ["Admin Dashboard", "Accounts"],
         name: "Admin Dashboard",
         id: 2,
-        view: <Accounts handleClick={this.setView} />
+        view: (
+          <Accounts
+            handleClick={this.setView}
+            goBack={this.goBack}
+            flashMessage={this.flashMessage}
+          />
+        )
       }
     ];
   };

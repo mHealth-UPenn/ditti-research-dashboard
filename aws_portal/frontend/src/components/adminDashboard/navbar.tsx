@@ -18,27 +18,52 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
   constructor(props: NavbarProps) {
     super(props);
 
+    const { flashMessage, goBack, handleClick } = props;
     const { active } = props;
     const views = [
       {
         active: false,
         name: "Accounts",
-        view: <Accounts handleClick={props.handleClick} />
+        view: (
+          <Accounts
+            handleClick={handleClick}
+            flashMessage={flashMessage}
+            goBack={goBack}
+          />
+        )
       },
       {
         active: false,
         name: "Studies",
-        view: <Studies handleClick={props.handleClick} />
+        view: (
+          <Studies
+            handleClick={handleClick}
+            flashMessage={flashMessage}
+            goBack={goBack}
+          />
+        )
       },
       {
         active: false,
         name: "Roles",
-        view: <Roles handleClick={props.handleClick} />
+        view: (
+          <Roles
+            handleClick={handleClick}
+            flashMessage={flashMessage}
+            goBack={goBack}
+          />
+        )
       },
       {
         active: false,
         name: "Access Groups",
-        view: <AccessGroups handleClick={props.handleClick} />
+        view: (
+          <AccessGroups
+            handleClick={handleClick}
+            flashMessage={flashMessage}
+            goBack={goBack}
+          />
+        )
       }
     ];
 
@@ -53,10 +78,6 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
   }
 
   render() {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
     const { views } = this.state;
 
     return (
@@ -68,7 +89,7 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
               "page-header-button" +
               (v.active ? " bg-dark" : " link-no-underline")
             }
-            onClick={() => handleClick([v.name], v.view, true)}
+            onClick={() => this.props.handleClick([v.name], v.view, true)}
           >
             {v.name}
           </div>

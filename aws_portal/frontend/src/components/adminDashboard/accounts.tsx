@@ -66,9 +66,7 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
   }
 
   getData = (): TableData[][] => {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
+    const { flashMessage, goBack, handleClick } = this.props;
 
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -154,7 +152,12 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
                 onClick={() =>
                   handleClick(
                     ["Edit", name],
-                    <AccountsEdit accountId={id} />,
+                    <AccountsEdit
+                      accountId={id}
+                      flashMessage={flashMessage}
+                      goBack={goBack}
+                      handleClick={handleClick}
+                    />,
                     false
                   )
                 }
@@ -172,35 +175,44 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
   };
 
   render() {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
+    const { flashMessage, goBack, handleClick } = this.props;
+    const { columns, loading } = this.state;
 
-    const { columns, loading, fading } = this.state;
+    const tableControl = (
+      <button
+        className="button-primary"
+        onClick={() =>
+          handleClick(
+            ["Create"],
+            <AccountsEdit
+              accountId={0}
+              flashMessage={flashMessage}
+              goBack={goBack}
+              handleClick={handleClick}
+            />,
+            false
+          )
+        }
+      >
+        Create&nbsp;<b>+</b>
+      </button>
+    );
 
     return (
       <div className="page-container">
-        <Navbar handleClick={handleClick} active="Accounts" />
+        <Navbar
+          active="Accounts"
+          flashMessage={flashMessage}
+          goBack={goBack}
+          handleClick={handleClick}
+        />
         <div className="page-content bg-white">
           {loading ? (
             <SmallLoader />
           ) : (
             <Table
               columns={columns}
-              control={
-                <button
-                  className="button-primary"
-                  onClick={() =>
-                    handleClick(
-                      ["Create"],
-                      <AccountsEdit accountId={0} />,
-                      false
-                    )
-                  }
-                >
-                  Create&nbsp;<b>+</b>
-                </button>
-              }
+              control={tableControl}
               controlWidth={10}
               data={this.getData()}
               includeControl={true}

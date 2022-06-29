@@ -58,9 +58,7 @@ class Studies extends React.Component<ViewProps, StudiesState> {
   }
 
   getData = (): TableData[][] => {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
+    const { flashMessage, goBack, handleClick } = this.props;
 
     return this.state.studies.map((s: Study) => {
       const { acronym, dittiId, email, id, name } = s;
@@ -110,7 +108,12 @@ class Studies extends React.Component<ViewProps, StudiesState> {
                 onClick={() =>
                   handleClick(
                     ["Edit", name],
-                    <StudiesEdit studyId={id} />,
+                    <StudiesEdit
+                      studyId={id}
+                      flashMessage={flashMessage}
+                      goBack={goBack}
+                      handleClick={handleClick}
+                    />,
                     false
                   )
                 }
@@ -128,15 +131,37 @@ class Studies extends React.Component<ViewProps, StudiesState> {
   };
 
   render() {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
+    const { flashMessage, goBack, handleClick } = this.props;
     const { columns, loading } = this.state;
+
+    const tableControl = (
+      <button
+        className="button-primary"
+        onClick={() =>
+          handleClick(
+            ["Create"],
+            <StudiesEdit
+              studyId={0}
+              flashMessage={flashMessage}
+              goBack={goBack}
+              handleClick={handleClick}
+            />,
+            false
+          )
+        }
+      >
+        Create&nbsp;<b>+</b>
+      </button>
+    );
 
     return (
       <div className="page-container">
-        <Navbar handleClick={handleClick} active="Studies" />
+        <Navbar
+          active="Studies"
+          flashMessage={flashMessage}
+          goBack={goBack}
+          handleClick={handleClick}
+        />
         <div className="page-content bg-white">
           <div style={{ position: "relative", height: "100%", width: "100%" }}>
             {loading ? (
@@ -144,20 +169,7 @@ class Studies extends React.Component<ViewProps, StudiesState> {
             ) : (
               <Table
                 columns={columns}
-                control={
-                  <button
-                    className="button-primary"
-                    onClick={() =>
-                      handleClick(
-                        ["Create"],
-                        <StudiesEdit studyId={0} />,
-                        false
-                      )
-                    }
-                  >
-                    Create&nbsp;<b>+</b>
-                  </button>
-                }
+                control={tableControl}
                 controlWidth={10}
                 data={this.getData()}
                 includeControl={true}

@@ -45,7 +45,7 @@ class SubjectVisuals extends React.Component<
 > {
   constructor(props: SubjectVisualsProps) {
     super(props);
-    const { id } = props.subject;
+    // const { id } = props.subject;
     // const taps = props.getTaps().filter((t: TapDetails) => t.tapUserId == id);
     const taps = this.getTaps().sort((a, b) =>
       differenceInMilliseconds(new Date(a.time), new Date(b.time))
@@ -247,16 +247,14 @@ class SubjectVisuals extends React.Component<
 
     const yTickElems = yTicks.map((yt, i) => {
       return (
-        <React.Fragment>
+        <React.Fragment key={i}>
           <div
-            key={i}
             className="border-dark-t y-axis-tick"
             style={{
               bottom: `calc(${yt.height} - 1px)`
             }}
           ></div>
           <div
-            key={i + "label"}
             className="y-axis-tick-label"
             style={{
               bottom: `calc(${yt.height} - 0.5rem)`
@@ -415,16 +413,13 @@ class SubjectVisuals extends React.Component<
   };
 
   render() {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
+    const { flashMessage, goBack, handleClick, studyDetails } = this.props;
     const { dittiId, expiresOn } = this.props.subject;
-    const { studyDetails } = this.props;
     const { start, stop } = this.state;
     const adjustedStart = new Date(
       start.getTime() - start.getTimezoneOffset() * 60000
     );
+
     const adjustedStop = new Date(
       stop.getTime() - stop.getTimezoneOffset() * 60000
     );
@@ -449,6 +444,9 @@ class SubjectVisuals extends React.Component<
                         studyId={studyDetails.id}
                         studyEmail={studyDetails.email}
                         studyPrefix={studyDetails.dittiId}
+                        flashMessage={flashMessage}
+                        goBack={goBack}
+                        handleClick={handleClick}
                       />,
                       false
                     )

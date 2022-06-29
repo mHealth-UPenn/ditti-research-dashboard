@@ -112,12 +112,15 @@ class AccountsEdit extends React.Component<
     const accessGroups = makeRequest("/admin/access-group?app=1").then(
       (accessGroups: AccessGroup[]) => this.setState({ accessGroups })
     );
+
     const roles = makeRequest("/admin/role?app=1").then((roles: Role[]) =>
       this.setState({ roles })
     );
+
     const studies = makeRequest("/admin/study?app=1").then((studies: Study[]) =>
       this.setState({ studies })
     );
+
     const prefill = this.getPrefill().then((prefill: AccountPrefill) =>
       this.setState({ ...prefill })
     );
@@ -264,16 +267,19 @@ class AccountsEdit extends React.Component<
     const rolesSelected: RoleSelected[] = this.state.rolesSelected.filter(
       (x: RoleSelected) => x.study != studyId
     );
+
     rolesSelected.push({ study: studyId, role: roleId });
     this.setState({ rolesSelected });
   };
 
   getSelectedRole = (id: number) => {
     const { rolesSelected } = this.state;
+
     if (rolesSelected.some((x: RoleSelected) => x.study == id)) {
       const roleSelected: RoleSelected = rolesSelected.filter(
         (x: RoleSelected) => x.study == id
       )[0];
+
       return roleSelected.role;
     } else {
       return 0;
@@ -302,6 +308,7 @@ class AccountsEdit extends React.Component<
     const accessGroupsSelected = this.state.accessGroupsSelected.filter(
       (ag: AccessGroup) => ag.id != id
     );
+
     this.setState({ accessGroupsSelected }, callback);
   };
 
@@ -326,6 +333,7 @@ class AccountsEdit extends React.Component<
     const studiesSelected = this.state.studiesSelected.filter(
       (s: Study) => s.id != id
     );
+
     this.setState({ studiesSelected }, callback);
   };
 
@@ -365,17 +373,32 @@ class AccountsEdit extends React.Component<
       app: 1,
       ...(id ? { id: id, edit: data } : { create: data })
     };
+
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/account/edit" : "/admin/account/create";
+
     makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
-    console.log(res.msg);
+    const { flashMessage, goBack } = this.props;
+
+    goBack();
+    flashMessage(<span>{res.msg}</span>, "success");
   };
 
   handleFailure = (res: ResponseBody) => {
-    console.log(res.msg);
+    const { flashMessage, goBack } = this.props;
+
+    const msg = (
+      <span>
+        <b>An unexpected error occured:</b>
+        <br />
+        {res.msg}
+      </span>
+    );
+
+    flashMessage(msg, "danger");
   };
 
   getAccessGroupsSummary = () => {

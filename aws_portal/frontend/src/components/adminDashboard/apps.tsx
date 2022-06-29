@@ -68,15 +68,17 @@ class Apps extends React.Component<ViewProps, AppsState> {
   };
 
   render() {
-    const handleClick = this.props.handleClick
-      ? this.props.handleClick
-      : () => null;
-
+    const { flashMessage, goBack, handleClick } = this.props;
     const { columns } = this.state;
 
     return (
       <div className="page-container">
-        <Navbar handleClick={handleClick} active="Apps" />
+        <Navbar
+          handleClick={handleClick}
+          active="Apps"
+          flashMessage={flashMessage}
+          goBack={goBack}
+        />
         <div className="page-content bg-white">
           <Table
             columns={columns}
@@ -84,7 +86,16 @@ class Apps extends React.Component<ViewProps, AppsState> {
               <button
                 className="button-primary"
                 onClick={() =>
-                  handleClick(["Create"], <AppsEdit appId={0} />, false)
+                  handleClick(
+                    ["Create"],
+                    <AppsEdit
+                      appId={0}
+                      flashMessage={flashMessage}
+                      goBack={goBack}
+                      handleClick={handleClick}
+                    />,
+                    false
+                  )
                 }
               >
                 Create&nbsp;<b>+</b>
