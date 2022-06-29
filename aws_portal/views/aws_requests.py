@@ -41,7 +41,9 @@ def get_taps():  # TODO update unit test
         app_id = request.args['app']
         permissions = current_user.get_permissions(app_id)
         current_user.validate_ask('View', 'All Studies', permissions)
-        studies = Study.query.all()
+        res = Query('DittiApp', 'Tap').scan()
+
+        return jsonify(res['Items'])
 
     except ValueError:
         studies = Study.query\
@@ -59,6 +61,37 @@ def get_taps():  # TODO update unit test
     ids = [x['id'] for x in res['Items']]
     query = reduce(g, ids, '')
     res = Query('DittiApp', 'Tap', query).scan()
+
+    return jsonify(res['Items'])
+
+
+@blueprint.route('/get-users')
+@auth_required('View', 'User')
+def get_users():  # TODO: create unit test
+    def f(left, right):
+        q = 'user_permission_idBEGINS"%s"' % right
+        return left + ('OR' if left else '') + q
+
+    try:
+        app_id = request.args['app']
+        permissions = current_user.get_permissions(app_id)
+        current_user.validate_ask('View', 'All Studies', permissions)
+        res = Query('DittiApp', 'User').scan()
+
+        return jsonify(res['Items'])
+
+    except ValueError:
+        studies = Study.query\
+            .join(JoinAccountStudy)\
+            .filter(JoinAccountStudy.account_id == current_user.id)\
+            .all()
+
+    except Exception:
+        studies = []
+
+    prefixes = [s.ditti_id for s in studies]
+    query = reduce(f, prefixes, '')
+    res = Query('DittiApp', 'User', query).scan()
 
     return jsonify(res['Items'])
 
