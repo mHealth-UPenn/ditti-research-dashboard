@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
-import { Study, TapDetails, User, ViewProps } from "../../interfaces";
+import { Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import StudySubjects from "./studySubjects";
@@ -9,7 +9,7 @@ import Subjects from "./subjects";
 import SubjectsEdit from "./subjectsEdit";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
-import { mapTaps } from "../../utils";
+import { format } from "date-fns";
 
 interface StudyContact {
   fullName: string;
@@ -59,11 +59,12 @@ class StudySummary extends React.Component<
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
     const taps = this.props.getTaps();
-    const users: User[] = await makeRequest(
-      `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.state.studyDetails.dittiId}"`
-    );
-    const mapped = mapTaps(taps, users);
-    const data = mapped.map((x) => [x.dittiId, x.time]);
+    const id = this.state.studyDetails.acronym;
+    const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
+    const data = taps.map((t) => {
+      const time = t.time.getTime() - t.time.getTimezoneOffset() * 60000;
+      return [t.dittiId, new Date(time)];
+    });
 
     sheet.columns = [
       { header: "Ditti ID", width: 10 },
@@ -77,7 +78,8 @@ class StudySummary extends React.Component<
       const blob = new Blob([data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       });
-      saveAs(blob, "fileName.xlsx");
+
+      saveAs(blob, fileName + ".xlsx");
     });
   };
 

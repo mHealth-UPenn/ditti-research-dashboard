@@ -79,13 +79,28 @@ def get_users():  # TODO: create unit test
         q = 'user_permission_idBEGINS"%s"' % right
         return left + ('OR' if left else '') + q
 
+    def map_users(user):
+        information = user['information'] if 'information' in user else ''
+
+        return {
+            'tapPermission': user['tap_permission'],
+            'information': information,
+            'userPermissionId': user['user_permission_id'],
+            'expTime': user['exp_time'],
+            'teamEmail': user['team_email'],
+            'createdAt': user['createdAt']
+        }
+
+    users = None
+
     try:
         app_id = request.args['app']
         permissions = current_user.get_permissions(app_id)
         current_user.validate_ask('View', 'All Studies', permissions)
-        res = Query('DittiApp', 'User').scan()
+        users = Query('DittiApp', 'User').scan()['Items']
+        res = map(map_users, users)
 
-        return jsonify(res['Items'])
+        return jsonify(list(res))
 
     except ValueError:
         studies = Study.query\
@@ -102,9 +117,10 @@ def get_users():  # TODO: create unit test
 
     prefixes = [s.ditti_id for s in studies]
     query = reduce(f, prefixes, '')
-    res = Query('DittiApp', 'User', query).scan()
+    users = Query('DittiApp', 'User', query).scan()['Items']
+    res = map(map_users, users)
 
-    return jsonify(res['Items'])
+    return jsonify(list(res))
 
 
 @blueprint.route('/user/create', methods=['POST'])

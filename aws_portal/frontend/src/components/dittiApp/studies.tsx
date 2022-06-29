@@ -1,18 +1,11 @@
 import * as React from "react";
 import { Component } from "react";
-import {
-  Study,
-  TapDetails,
-  User,
-  UserDetails,
-  ViewProps
-} from "../../interfaces";
-import { mapTaps, makeRequest } from "../../utils";
+import { Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
+import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import "./studies.css";
 import StudySummary from "./studySummary";
 import { sub } from "date-fns";
-import { dummyData } from "../dummyData";
 
 interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
@@ -21,43 +14,33 @@ interface StudiesViewProps extends ViewProps {
 
 interface StudiesViewState {
   studies: Study[];
-  taps: TapDetails[];
   users: UserDetails[];
   loading: boolean;
 }
 
 class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
-  state = {
-    studies: [],
-    taps: [],
-    users: [],
-    loading: true
-  };
+  state = { studies: [], users: [], loading: true };
 
   componentDidMount() {
     const studies = makeRequest("/db/get-studies?app=2").then(
-      (studies: Study[]) => this.setState({ studies })
+      (studies: Study[]) => this.setState({ studies, loading: false })
     );
 
-    const _1week = sub(new Date(), { weeks: 1 }).toISOString();
-    const users = makeRequest(
-      `/aws/scan?app=2&key=User&query=exp_time>>"${_1week}"`
-    ).then((activeUsers: User[]) => {
-      const mappedTaps = mapTaps(dummyData, activeUsers);
-      this.setState({ mappedTaps });
-    });
+    const users = makeRequest("/aws/get-users?app=2").then(
+      (users: UserDetails[]) => this.setState({ users })
+    );
 
     const taps = this.props.getTapsAsync();
-    const promises = [studies, taps, users];
 
-    Promise.all(promises).then(() => {
-      this.setState({ loading: false });
-    });
+    Promise.all([studies, taps, users]).then(() =>
+      this.setState({ loading: false })
+    );
   }
 
   handleClickStudy = (id: number): void => {
     const { flashMessage, getTaps, goBack, handleClick } = this.props;
     const study: Study = this.state.studies.filter((s: Study) => s.id == id)[0];
+
     const view = (
       <StudySummary
         flashMessage={flashMessage}
@@ -72,33 +55,33 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
   };
 
   render() {
-    const { loading, studies } = this.state;
-
     return (
       <div className="card-container">
         <div className="card-row">
           <div className="card-m bg-white shadow">
             <div className="card-title">Studies</div>
-            {loading ? (
+            {this.state.loading ? (
               <SmallLoader />
             ) : (
-              studies.map((s: Study) => {
-                const lastWeek = this.state.mappedTaps
+              this.state.studies.map((s: Study) => {
+                const lastWeek = this.props
+                  .getTaps()
                   .filter(
-                    (t: { dittiId: string; time: Date }) =>
+                    (t) =>
                       t.time > sub(new Date(), { weeks: 1 }) &&
                       t.dittiId.startsWith(s.dittiId)
                   )
-                  .map((t: { dittiId: string; time: Date }) => t.dittiId)
+                  .map((t) => t.dittiId)
                   .filter((v, i, arr) => arr.indexOf(v) == i).length;
 
-                const last24hrs = this.state.mappedTaps
+                const last24hrs = this.props
+                  .getTaps()
                   .filter(
-                    (t: { dittiId: string; time: Date }) =>
+                    (t) =>
                       t.time > sub(new Date(), { weeks: 1 }) &&
                       t.dittiId.startsWith(s.dittiId)
                   )
-                  .map((t: { dittiId: string; time: Date }) => t.dittiId)
+                  .map((t) => t.dittiId)
                   .filter((v, i, arr) => arr.indexOf(v) == i).length;
 
                 return (

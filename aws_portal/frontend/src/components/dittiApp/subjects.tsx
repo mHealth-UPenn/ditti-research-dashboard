@@ -3,7 +3,7 @@ import { Component } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { makeRequest } from "../../utils";
-import { Study, User, ViewProps } from "../../interfaces";
+import { Study, User, UserDetails, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
 

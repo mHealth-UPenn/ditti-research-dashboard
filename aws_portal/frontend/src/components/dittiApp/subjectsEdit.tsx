@@ -24,18 +24,20 @@ class SubjectsEdit extends React.Component<
   SubjectsEditState
 > {
   state = {
-    tap_permission: false,
+    tapPermission: false,
     information: "",
-    user_permission_id: "",
-    exp_time: "",
-    team_email: "",
+    userPermissionId: "",
+    expTime: "",
+    teamEmail: "",
+    createdAt: "",
     loading: true
   };
 
   componentDidMount() {
-    this.getPrefill().then((prefill: UserDetails) =>
-      this.setState({ ...prefill, loading: false })
-    );
+    this.getPrefill().then((prefill: UserDetails) => {
+      console.log(prefill);
+      this.setState({ ...prefill, loading: false });
+    });
   }
 
   getPrefill = async (): Promise<UserDetails> => {
@@ -45,41 +47,36 @@ class SubjectsEdit extends React.Component<
           `/aws/scan?app=2&key=User&query=user_permission_id=="${id}"`
         ).then(this.makePrefill)
       : {
-          tap_permission: false,
+          tapPermission: false,
           information: "",
-          user_permission_id: "",
-          exp_time: "",
-          team_email: ""
+          userPermissionId: "",
+          expTime: "",
+          teamEmail: "",
+          createdAt: ""
         };
   };
 
-  makePrefill = (res: User[]): UserDetails => {
-    const user = res[0];
-
+  makePrefill = (user: User[]): UserDetails => {
     return {
-      tap_permission: user.tap_permission,
-      information: user.information,
-      user_permission_id: user.user_permission_id,
-      exp_time: user.exp_time,
-      team_email: user.team_email
+      tapPermission: user[0].tap_permission,
+      information: user[0].information,
+      userPermissionId: user[0].user_permission_id,
+      expTime: user[0].exp_time,
+      teamEmail: user[0].team_email,
+      createdAt: user[0].createdAt
     };
   };
 
   post = async (): Promise<void> => {
-    const {
-      tap_permission,
-      information,
-      user_permission_id,
-      exp_time,
-      team_email
-    } = this.state;
+    const { tapPermission, information, userPermissionId, expTime, teamEmail } =
+      this.state;
 
     const data = {
-      tap_permission,
-      information,
-      user_permission_id,
-      exp_time,
-      team_email
+      tap_permission: tapPermission,
+      information: information,
+      user_permission_id: userPermissionId,
+      exp_time: expTime,
+      team_email: teamEmail
     };
 
     const id = this.props.dittiId;
@@ -121,10 +118,11 @@ class SubjectsEdit extends React.Component<
   render() {
     const { dittiId, studyEmail, studyPrefix } = this.props;
     const {
-      tap_permission,
+      tapPermission,
       information,
-      user_permission_id,
-      exp_time,
+      userPermissionId,
+      expTime,
+      teamEmail,
       loading
     } = this.state;
 
@@ -155,11 +153,11 @@ class SubjectsEdit extends React.Component<
                       id="dittiId"
                       type="text"
                       placeholder=""
-                      prefill={user_permission_id.replace(studyPrefix, "")}
+                      prefill={userPermissionId.replace(studyPrefix, "")}
                       label="Ditti ID"
                       onKeyup={(text: string) => {
                         const user_permission_id = studyPrefix + text;
-                        this.setState({ user_permission_id });
+                        this.setState({ userPermissionId });
                       }}
                       feedback=""
                     >
@@ -184,10 +182,10 @@ class SubjectsEdit extends React.Component<
                       id="expiresOn"
                       type="datetime-local"
                       placeholder=""
-                      prefill={exp_time.replace("Z", "")}
+                      prefill={expTime.replace("Z", "")}
                       label="Expires On"
                       onKeyup={(text: string) =>
-                        this.setState({ exp_time: text + ":00.000Z" })
+                        this.setState({ expTime: text + ":00.000Z" })
                       }
                       feedback=""
                     />
@@ -195,9 +193,9 @@ class SubjectsEdit extends React.Component<
                   <div className="admin-form-field">
                     <CheckField
                       id="tapping-access"
-                      prefill={tap_permission}
+                      prefill={tapPermission}
                       label="Tapping Access"
-                      onChange={(val) => this.setState({ tap_permission: val })}
+                      onChange={(val) => this.setState({ tapPermission: val })}
                     />
                   </div>
                 </div>
@@ -223,7 +221,7 @@ class SubjectsEdit extends React.Component<
           <span>
             Ditti ID:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{user_permission_id}
+            &nbsp;&nbsp;&nbsp;&nbsp;{userPermissionId}
             <br />
             <br />
             Team email:
@@ -234,14 +232,14 @@ class SubjectsEdit extends React.Component<
             Expires on:
             <br />
             &nbsp;&nbsp;&nbsp;&nbsp;
-            {exp_time
-              ? new Date(exp_time).toLocaleDateString("en-US", dateOptions)
+            {expTime
+              ? new Date(expTime).toLocaleDateString("en-US", dateOptions)
               : ""}
             <br />
             <br />
             Tapping access:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{tap_permission ? "Yes" : "No"}
+            &nbsp;&nbsp;&nbsp;&nbsp;{tapPermission ? "Yes" : "No"}
             <br />
             <br />
             About sleep template:

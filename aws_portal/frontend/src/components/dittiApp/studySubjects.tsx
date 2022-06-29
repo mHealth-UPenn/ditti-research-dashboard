@@ -2,9 +2,9 @@ import * as React from "react";
 import { Component } from "react";
 import {
   Study,
-  StudySubject,
   TapDetails,
   User,
+  UserDetails,
   ViewProps
 } from "../../interfaces";
 import { makeRequest } from "../../utils";
@@ -21,7 +21,7 @@ interface StudySubjectsProps extends ViewProps {
 }
 
 interface StudySubjectsState {
-  studySubjects: StudySubject[];
+  users: UserDetails[];
   loading: boolean;
 }
 
@@ -29,41 +29,44 @@ class StudySubjects extends React.Component<
   StudySubjectsProps,
   StudySubjectsState
 > {
-  state = { studySubjects: [], loading: true };
+  state = { users: [], loading: true };
 
   componentDidMount() {
     makeRequest(
       `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.props.studyPrefix}"`
-    ).then((users: User[]) => {
-      const studySubjects: StudySubject[] = users.map((u) => {
+    ).then((res: User[]) => {
+      const users: UserDetails[] = res.map((user) => {
         return {
-          id: u.id,
-          dittiId: u.user_permission_id,
-          expiresOn: u.exp_time,
-          tapPermission: u.tap_permission === false ? false : true
+          tapPermission: user.tap_permission,
+          information: user.information,
+          userPermissionId: user.user_permission_id,
+          expTime: user.exp_time,
+          teamEmail: user.team_email,
+          createdAt: user.createdAt
         };
       });
-      this.setState({ studySubjects, loading: false });
+
+      this.setState({ users, loading: false });
     });
   }
 
-  getSubjectSummary = (s: StudySubject): React.ReactElement => {
+  getSubjectSummary = (user: UserDetails): React.ReactElement => {
     const { flashMessage, getTaps, goBack, handleClick } = this.props;
     let summaryTaps: React.ReactElement[];
     let hasTapsToday = false;
 
-    if (s.tapPermission) {
+    if (user.tapPermission) {
       summaryTaps = [6, 5, 4, 3, 2, 1, 0].map((i) => {
         const today = new Date(new Date().setHours(9, 0, 0, 0));
         const start = sub(today, { days: i });
         const end = add(start, { days: 1 });
-        // const taps = this.props
-        //   .getTaps()
-        const taps = dummyData.filter(
-          (t) =>
-            t.tapUserId == s.id &&
-            isWithinInterval(new Date(t.time), { start, end })
-        ).length;
+        const taps = this.props
+          .getTaps()
+          .filter(
+            (t) =>
+              t.dittiId == user.userPermissionId &&
+              isWithinInterval(new Date(t.time), { start, end })
+          ).length;
 
         hasTapsToday = !i && taps > 0;
 
@@ -85,7 +88,7 @@ class StudySubjects extends React.Component<
         .getTaps()
         .filter(
           (t) =>
-            t.tapUserId == s.id &&
+            t.dittiId == user.userPermissionId &&
             isWithinInterval(new Date(t.time), { start, end: new Date() })
         ).length;
 
@@ -107,10 +110,13 @@ class StudySubjects extends React.Component<
       ];
     }
 
-    const expiresOn = differenceInDays(new Date(s.expiresOn), new Date());
+    const expiresOn = differenceInDays(new Date(user.expTime), new Date());
 
     return (
-      <div key={s.id} className="subject-summary border-light-b">
+      <div
+        key={user.userPermissionId}
+        className="subject-summary border-light-b"
+      >
         <div
           className={"icon " + (hasTapsToday ? "icon-success" : "icon-gray")}
         ></div>
@@ -119,20 +125,20 @@ class StudySubjects extends React.Component<
             className="link"
             onClick={() =>
               handleClick(
-                [s.dittiId],
+                [user.userPermissionId],
                 <SubjectVisuals
                   flashMessage={flashMessage}
                   getTaps={getTaps}
                   goBack={goBack}
                   handleClick={handleClick}
                   studyDetails={this.props.studyDetails}
-                  subject={s}
+                  user={user}
                 />,
                 false
               )
             }
           >
-            {s.dittiId}
+            {user.userPermissionId}
           </span>
           <span>
             <i>Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
@@ -144,17 +150,17 @@ class StudySubjects extends React.Component<
   };
 
   render() {
-    const { loading, studySubjects } = this.state;
-    const activeSubjects = studySubjects.filter(
-      (s: StudySubject) => new Date() < new Date(s.expiresOn)
+    const { users, loading } = this.state;
+    const activeUsers = users.filter(
+      (u: UserDetails) => new Date() < new Date(u.expTime)
     );
 
     return loading ? (
       <SmallLoader />
     ) : (
       <React.Fragment>
-        {activeSubjects.length
-          ? activeSubjects.map(this.getSubjectSummary)
+        {activeUsers.length
+          ? activeUsers.map(this.getSubjectSummary)
           : "No active subjects"}
       </React.Fragment>
     );

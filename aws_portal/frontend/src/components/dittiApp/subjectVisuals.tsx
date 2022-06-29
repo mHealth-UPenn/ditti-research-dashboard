@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
-import { Study, StudySubject, TapDetails, ViewProps } from "../../interfaces";
+import { Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import TextField from "../fields/textField";
 import SubjectsEdit from "./subjectsEdit";
 import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
@@ -18,7 +18,6 @@ import {
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import "./subjectVisuals.css";
-import { dummyData } from "../dummyData";
 
 interface Bout {
   start: Date;
@@ -29,7 +28,7 @@ interface Bout {
 interface SubjectVisualsProps extends ViewProps {
   getTaps: () => TapDetails[];
   studyDetails: Study;
-  subject: StudySubject;
+  user: UserDetails;
 }
 
 interface SubjectVisualsState {
@@ -45,11 +44,8 @@ class SubjectVisuals extends React.Component<
 > {
   constructor(props: SubjectVisualsProps) {
     super(props);
-    // const { id } = props.subject;
-    // const taps = props.getTaps().filter((t: TapDetails) => t.tapUserId == id);
-    const taps = this.getTaps().sort((a, b) =>
-      differenceInMilliseconds(new Date(a.time), new Date(b.time))
-    );
+    const { userPermissionId } = props.user;
+    const taps = props.getTaps().filter((t) => t.dittiId == userPermissionId);
 
     this.state = {
       start: sub(new Date(new Date().setHours(3, 0, 0, 0)), { hours: 6 }),
@@ -58,10 +54,6 @@ class SubjectVisuals extends React.Component<
       bouts: this.getBouts(taps)
     };
   }
-
-  getTaps = (): TapDetails[] => {
-    return dummyData;
-  };
 
   getBouts = (taps: TapDetails[]): Bout[] => {
     const bouts: Bout[] = [];
@@ -74,13 +66,13 @@ class SubjectVisuals extends React.Component<
     taps.forEach((t) => {
       // on first iteration
       if (!count) {
-        first = new Date(t.time);
+        first = t.time;
         group = [first];
         count = 1;
         return;
       }
 
-      current = new Date(t.time);
+      current = t.time;
 
       // if this tap is less than one minute after the first tap
       if (differenceInMilliseconds(current, first) < 60000) {
@@ -105,7 +97,7 @@ class SubjectVisuals extends React.Component<
           stop: add(last, { minutes: 10 }),
           rate: count / differenceInMinutes(last, first)
         });
-        first = new Date(t.time);
+        first = current;
         group = [first];
         count = 1;
       }
@@ -121,7 +113,7 @@ class SubjectVisuals extends React.Component<
           first = group[0];
           count = group.length;
         } else {
-          first = new Date(t.time);
+          first = current;
           group = [first];
           count = 1;
         }
@@ -134,11 +126,11 @@ class SubjectVisuals extends React.Component<
   downloadExcel = async (): Promise<void> => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
-
+    const id = this.props.user.userPermissionId;
+    const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
     const data = this.state.taps.map((t) => {
-      const date = new Date(t.time);
-      const time = date.getTime() - date.getTimezoneOffset() * 60000;
-      return [this.props.subject.dittiId, new Date(time)];
+      const time = t.time.getTime() - t.time.getTimezoneOffset() * 60000;
+      return [t.dittiId, new Date(time)];
     });
 
     sheet.columns = [
@@ -153,13 +145,15 @@ class SubjectVisuals extends React.Component<
       const blob = new Blob([data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       });
-      saveAs(blob, "fileName.xlsx");
+
+      saveAs(blob, fileName + ".xlsx");
     });
   };
 
   decrement = (): void => {
     let { start, stop } = this.state;
     const difference = differenceInMinutes(stop, start);
+
     start = sub(start, { minutes: difference / 6 });
     stop = sub(stop, { minutes: difference / 6 });
     this.setState({ start, stop });
@@ -168,6 +162,7 @@ class SubjectVisuals extends React.Component<
   increment = (): void => {
     let { start, stop } = this.state;
     const difference = differenceInMinutes(stop, start);
+
     start = add(start, { minutes: difference / 6 });
     stop = add(stop, { minutes: difference / 6 });
     this.setState({ start, stop });
@@ -185,6 +180,7 @@ class SubjectVisuals extends React.Component<
 
   zoomIn = (): void => {
     let { start, stop } = this.state;
+
     start = add(start, { hours: 1 });
     stop = sub(stop, { hours: 1 });
     if (differenceInMinutes(stop, start) > 60) this.setState({ start, stop });
@@ -192,6 +188,7 @@ class SubjectVisuals extends React.Component<
 
   zoomOut = (): void => {
     let { start, stop } = this.state;
+
     start = sub(start, { hours: 1 });
     stop = add(stop, { hours: 1 });
     this.setState({ start, stop });
@@ -201,7 +198,7 @@ class SubjectVisuals extends React.Component<
     const { start, stop, taps } = this.state;
     const difference = differenceInMinutes(stop, start);
     const tapsFiltered = taps.filter((t) =>
-      isWithinInterval(new Date(t.time), { start, end: stop })
+      isWithinInterval(t.time, { start, end: stop })
     );
 
     let i = start;
@@ -211,14 +208,14 @@ class SubjectVisuals extends React.Component<
       i = add(i, { minutes: difference / 50 });
 
       const groupTaps = tapsFiltered.filter((t) =>
-        isWithinInterval(new Date(t.time), { start: groupStart, end: i })
+        isWithinInterval(t.time, { start: groupStart, end: i })
       );
 
       const group = { start: groupStart, stop: i, taps: groupTaps };
       groups.push(group);
     }
 
-    const maxTaps = Math.max(...groups.map((g) => g.taps.length));
+    const maxTaps = Math.max(10, ...groups.map((g) => g.taps.length));
     const barWidth = 100 / groups.length + "%";
 
     const bars = groups.map((g, i) => {
@@ -391,6 +388,8 @@ class SubjectVisuals extends React.Component<
           <span>
             {b.rate.toLocaleString("en-US", { maximumSignificantDigits: 2 }) +
               " taps/min"}
+            <br />
+            {differenceInMinutes(b.stop, b.start) + " mins"}
           </span>
         </div>
       );
@@ -414,7 +413,7 @@ class SubjectVisuals extends React.Component<
 
   render() {
     const { flashMessage, goBack, handleClick, studyDetails } = this.props;
-    const { dittiId, expiresOn } = this.props.subject;
+    const { userPermissionId, expTime } = this.props.user;
     const { start, stop } = this.state;
     const adjustedStart = new Date(
       start.getTime() - start.getTimezoneOffset() * 60000
@@ -424,15 +423,42 @@ class SubjectVisuals extends React.Component<
       stop.getTime() - stop.getTimezoneOffset() * 60000
     );
 
+    const expTimeDate = new Date(expTime);
+    const expTimeAdjusted = new Date(
+      expTimeDate.getTime() - expTimeDate.getTimezoneOffset() * 60000
+    );
+
+    const dateOpts = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    };
+
+    const expTimeFormatted = expTimeAdjusted.toLocaleDateString(
+      "en-US",
+      dateOpts as Intl.DateTimeFormatOptions
+    );
+
     return (
       <div className="card-container">
         <div className="card-row">
           <div className="card-m bg-white shadow">
             <div className="subject-header">
-              <div className="card-title">{dittiId}</div>
+              <div className="card-title flex-space">
+                <span>{userPermissionId}</span>
+                <button
+                  className="button-primary button-lg"
+                  style={{ width: "12rem" }}
+                  onClick={this.downloadExcel}
+                >
+                  Download Excel
+                </button>
+              </div>
               <div className="subject-header-info">
                 <div>
-                  Expires on: <b>{expiresOn}</b>
+                  Expires on: <b>{expTimeFormatted}</b>
                 </div>
                 <button
                   className="button-secondary button-lg"
@@ -440,7 +466,7 @@ class SubjectVisuals extends React.Component<
                     handleClick(
                       ["Edit"],
                       <SubjectsEdit
-                        dittiId={dittiId}
+                        dittiId={userPermissionId}
                         studyId={studyDetails.id}
                         studyEmail={studyDetails.email}
                         studyPrefix={studyDetails.dittiId}
@@ -499,15 +525,6 @@ class SubjectVisuals extends React.Component<
                 {this.getTapsDisplay()}
                 {this.getBoutsDisplay()}
               </div>
-            </div>
-            <div className="flex-center">
-              <button
-                className="button-primary button-lg"
-                style={{ width: "12rem" }}
-                onClick={this.downloadExcel}
-              >
-                Download CSV
-              </button>
             </div>
           </div>
           <div className="card-s bg-white shadow">

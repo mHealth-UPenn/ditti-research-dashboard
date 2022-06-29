@@ -49,18 +49,24 @@ export interface ResponseBody {
 }
 
 export interface UserDetails {
+  tapPermission: boolean;
+  information: string;
+  userPermissionId: string;
+  expTime: string;
+  teamEmail: string;
+  createdAt: string;
+}
+
+export interface User {
   tap_permission: boolean;
   information: string;
   user_permission_id: string;
   exp_time: string;
   team_email: string;
-}
-
-export interface User extends UserDetails {
+  createdAt: string;
   __typename: string;
   _lastChangedAt: number;
   _version: number;
-  createdAt: string;
   updatedAt: string;
   id: string;
 }
@@ -71,21 +77,8 @@ export interface TapDetails {
 }
 
 export interface Tap {
-  __typename: string;
-  _lastChangedAt: string;
-  _version: number;
-  updatedAt: string;
-  createdAt: string;
-  id: string;
-  tapUserId: string;
-  time: string;
-}
-
-export interface StudySubject {
-  id: string;
   dittiId: string;
-  expiresOn: string;
-  tapPermission: boolean;
+  time: string;
 }
 
 export interface ViewProps {
