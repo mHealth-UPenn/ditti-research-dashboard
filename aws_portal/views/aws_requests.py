@@ -4,6 +4,7 @@ import re
 import traceback
 from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import current_user
+import pandas as pd
 from aws_portal.models import JoinAccountStudy, Study
 from aws_portal.utils.auth import auth_required
 from aws_portal.utils.aws import MutationClient, Query, Updater
@@ -33,17 +34,11 @@ def get_taps():  # TODO update unit test
         q = 'user_permission_idBEGINS"%s"' % right
         return left + ('OR' if left else '') + q
 
-    def g(left, right):
-        q = 'tapUserId=="%s"' % right
-        return left + ('OR' if left else '') + q
-
     try:
         app_id = request.args['app']
         permissions = current_user.get_permissions(app_id)
         current_user.validate_ask('View', 'All Studies', permissions)
-        res = Query('DittiApp', 'Tap').scan()
-
-        return jsonify(res['Items'])
+        users = Query('DittiApp', 'User').scan()
 
     except ValueError:
         studies = Study.query\
@@ -51,18 +46,30 @@ def get_taps():  # TODO update unit test
             .filter(JoinAccountStudy.account_id == current_user.id)\
             .all()
 
-    except Exception:
-        studies = []
+        prefixes = [s.ditti_id for s in studies]
+        query = reduce(f, prefixes, '')
+        users = Query('DittiApp', 'User', query).scan()['Items']
 
-    prefixes = [s.ditti_id for s in studies]
-    query = reduce(f, prefixes, '')
-    res = Query('DittiApp', 'User', query).scan()
+    except Exception as e:
+        exc = traceback.format_exc()
+        logger.warn(exc)
+        msg = 'Query failed: %s' % e
 
-    ids = [x['id'] for x in res['Items']]
-    query = reduce(g, ids, '')
-    res = Query('DittiApp', 'Tap', query).scan()
+        return make_response({'msg': msg}, 500)
 
-    return jsonify(res['Items'])
+    taps = Query('DittiApp', 'Tap').scan()['Items']
+
+    df_users = pd.DataFrame(users, columns=['id', 'user_permission_id'])\
+        .rename(columns={'user_permission_id': 'dittiId'})
+
+    df_taps = pd.DataFrame(taps, columns=['tapUserId', 'time'])\
+        .rename(columns={'tapUserId': 'id'})
+
+    res = pd.merge(df_users, df_taps, on='id')\
+        .drop('id', axis=1)\
+        .to_dict('records')
+
+    return jsonify(res)
 
 
 @blueprint.route('/get-users')
@@ -86,8 +93,12 @@ def get_users():  # TODO: create unit test
             .filter(JoinAccountStudy.account_id == current_user.id)\
             .all()
 
-    except Exception:
-        studies = []
+    except Exception as e:
+        exc = traceback.format_exc()
+        logger.warn(exc)
+        msg = 'Query failed: %s' % e
+
+        return make_response({'msg': msg}, 500)
 
     prefixes = [s.ditti_id for s in studies]
     query = reduce(f, prefixes, '')
