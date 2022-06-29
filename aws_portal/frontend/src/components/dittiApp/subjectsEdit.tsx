@@ -6,6 +6,7 @@ import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
 import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
+import AsyncButton from "../buttons/asyncButton";
 
 interface SubjectsEditProps extends ViewProps {
   dittiId: string;
@@ -64,7 +65,7 @@ class SubjectsEdit extends React.Component<
     };
   };
 
-  post = (): void => {
+  post = async (): Promise<void> => {
     const {
       tap_permission,
       information,
@@ -91,7 +92,9 @@ class SubjectsEdit extends React.Component<
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/aws/user/edit" : "/aws/user/create";
 
-    makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
+    await makeRequest(url, opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
@@ -132,6 +135,8 @@ class SubjectsEdit extends React.Component<
       hour: "2-digit",
       minute: "2-digit"
     };
+
+    const buttonText = dittiId ? "Update" : "Create";
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -244,15 +249,7 @@ class SubjectsEdit extends React.Component<
             &nbsp;&nbsp;&nbsp;&nbsp;None
             <br />
           </span>
-          {dittiId ? (
-            <button className="button-primary" onClick={this.post}>
-              Update
-            </button>
-          ) : (
-            <button className="button-primary" onClick={this.post}>
-              Enroll
-            </button>
-          )}
+          <AsyncButton onClick={this.post} text={buttonText} type="primary" />
           <div style={{ marginTop: "1.5rem" }}>
             <i>
               After enrolling a subject, log in on your smartphone using their

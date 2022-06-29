@@ -15,7 +15,7 @@ import {
 import Select from "../fields/select";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import { renderToString } from "react-dom/server";
+import AsyncButton from "../buttons/asyncButton";
 
 interface AccountsEditProps extends ViewProps {
   accountId: number;
@@ -338,7 +338,7 @@ class AccountsEdit extends React.Component<
     this.setState({ studiesSelected }, callback);
   };
 
-  post = (): void => {
+  post = async (): Promise<void> => {
     const {
       accessGroupsSelected,
       email,
@@ -378,7 +378,9 @@ class AccountsEdit extends React.Component<
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/account/edit" : "/admin/account/create";
 
-    makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
+    await makeRequest(url, opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
@@ -487,6 +489,8 @@ class AccountsEdit extends React.Component<
       firstName,
       lastName
     } = this.state;
+
+    const buttonText = accountId ? "Update" : "Create";
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -611,15 +615,7 @@ class AccountsEdit extends React.Component<
             {this.getStudiesSummary()}
             <br />
           </span>
-          {accountId ? (
-            <button className="button-primary" onClick={this.post}>
-              Update
-            </button>
-          ) : (
-            <button className="button-primary" onClick={this.post}>
-              Create
-            </button>
-          )}
+          <AsyncButton onClick={this.post} text={buttonText} type="primary" />
         </div>
       </div>
     );

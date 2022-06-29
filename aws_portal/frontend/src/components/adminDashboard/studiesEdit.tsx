@@ -1,9 +1,10 @@
 import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
-import { ResponseBody, Role, Study, ViewProps } from "../../interfaces";
+import { ResponseBody, Study, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
+import AsyncButton from "../buttons/asyncButton";
 
 interface StudyPrefill {
   name: string;
@@ -58,7 +59,7 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     };
   };
 
-  post = (): void => {
+  post = async (): Promise<void> => {
     const { acronym, dittiId, email, name } = this.state;
     const data = { acronym, ditti_id: dittiId, email, name };
     const id = this.props.studyId;
@@ -70,7 +71,9 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/study/edit" : "/admin/study/create";
 
-    makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
+    await makeRequest(url, opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
@@ -97,6 +100,7 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
   render() {
     const { studyId } = this.props;
     const { name, acronym, dittiId, email, loading } = this.state;
+    const buttonText = studyId ? "Update" : "Create";
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -188,15 +192,7 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
             &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
             <br />
           </span>
-          {studyId ? (
-            <button className="button-primary" onClick={this.post}>
-              Update
-            </button>
-          ) : (
-            <button className="button-primary" onClick={this.post}>
-              Create
-            </button>
-          )}
+          <AsyncButton onClick={this.post} text={buttonText} type="primary" />
         </div>
       </div>
     );

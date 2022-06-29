@@ -334,7 +334,10 @@ div:hover > .link-svg .svg-stroke {
 }
 
 .admin-form-summary button {
+  align-items: center;
   flex-shrink: 0;
+  display: flex;
+  justify-content: center;
   height: 3rem;
   margin-top: 2rem;
 }
@@ -358,6 +361,11 @@ div:hover > .link-svg .svg-stroke {
   height: 80px;
 }
 
+.lds-ring-small {
+  width: 20px;
+  height: 20px;
+}
+
 .lds-ring div {
   box-sizing: border-box;
   display: block;
@@ -369,6 +377,14 @@ div:hover > .link-svg .svg-stroke {
   border-radius: 50%;
   animation: lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
   border-color: #b3b3cc transparent transparent transparent;
+}
+
+.lds-ring-small div {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  border: 4px solid white;
+  border-color: white transparent transparent transparent;
 }
 
 .lds-ring div:nth-child(1) {

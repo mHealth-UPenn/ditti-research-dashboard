@@ -12,6 +12,7 @@ import {
 import { makeRequest } from "../../utils";
 import { actionsRaw, resourcesRaw } from "./rolesEdit";
 import { SmallLoader } from "../loader";
+import AsyncButton from "../buttons/asyncButton";
 
 interface AccessGroupPrefill {
   name: string;
@@ -212,7 +213,7 @@ class AccessGroupsEdit extends React.Component<
     }
   };
 
-  post = (): void => {
+  post = async (): Promise<void> => {
     const { appSelected, name, permissions } = this.state;
     const ps = permissions.map((p: Permission) => {
       return { action: p.action, resource: p.resource };
@@ -228,7 +229,9 @@ class AccessGroupsEdit extends React.Component<
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/access-group/edit" : "/admin/access-group/create";
 
-    makeRequest(url, opts).then(this.handleSuccess).catch(this.handleFailure);
+    await makeRequest(url, opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
@@ -273,6 +276,7 @@ class AccessGroupsEdit extends React.Component<
   render() {
     const { accessGroupId } = this.props;
     const { name, loading, apps, appSelected } = this.state;
+    const buttonText = accessGroupId ? "Update" : "Create";
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
@@ -352,15 +356,7 @@ class AccessGroupsEdit extends React.Component<
             {this.getPermissionsSummary()}
             <br />
           </span>
-          {accessGroupId ? (
-            <button className="button-primary" onClick={this.post}>
-              Update
-            </button>
-          ) : (
-            <button className="button-primary" onClick={this.post}>
-              Create
-            </button>
-          )}
+          <AsyncButton onClick={this.post} text={buttonText} type="primary" />
         </div>
       </div>
     );
