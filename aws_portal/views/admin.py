@@ -79,6 +79,7 @@ def account_create():
 @blueprint.route('/account/edit', methods=['POST'])
 @auth_required('Edit', 'Account')
 def account_edit():
+    raise Exception('wow')
     try:
         data = request.json['edit']
         account_id = request.json['id']

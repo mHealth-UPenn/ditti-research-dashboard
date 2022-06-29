@@ -106,9 +106,9 @@ class SubjectsEdit extends React.Component<
 
     const msg = (
       <span>
-        <b>An unexpected error occured:</b>
+        <b>An unexpected error occured</b>
         <br />
-        {res.msg}
+        {res.msg ? res.msg : "Internal server error"}
       </span>
     );
 
