@@ -15,6 +15,7 @@ import {
 import Select from "../fields/select";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
+import { renderToString } from "react-dom/server";
 
 interface AccountsEditProps extends ViewProps {
   accountId: number;
@@ -388,7 +389,7 @@ class AccountsEdit extends React.Component<
   };
 
   handleFailure = (res: ResponseBody) => {
-    const { flashMessage, goBack } = this.props;
+    const { flashMessage } = this.props;
 
     const msg = (
       <span>

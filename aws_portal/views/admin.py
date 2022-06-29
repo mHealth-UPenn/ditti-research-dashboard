@@ -1,7 +1,8 @@
 from datetime import datetime
+import logging
 import traceback
 import uuid
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, make_response, request
 from aws_portal.extensions import db
 from aws_portal.models import (
     AccessGroup, Account, App, JoinAccessGroupPermission,
@@ -12,30 +13,40 @@ from aws_portal.utils.auth import auth_required
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint('admin', __name__, url_prefix='/admin')
+logger = logging.getLogger(__name__)
 
 
 @blueprint.route('/account')
 @auth_required('Read', 'Account')
 def account():
-    i = request.args.get('id')
+    try:
+        i = request.args.get('id')
 
-    if i:
-        accounts = [Account.query.get(i)]
+        if i:
+            accounts = [Account.query.get(i)]
 
-    else:
-        accounts = Account.query.all()
+        else:
+            accounts = Account.query.all()
 
-    res = [a.meta for a in accounts]
-    return jsonify(res)
+        res = [a.meta for a in accounts]
+        return jsonify(res)
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
 
 @blueprint.route('/account/create', methods=['POST'])
 @auth_required('Create', 'Account')
 def account_create():
-    data = request.json['create']
-    account = Account()
-
     try:
+        data = request.json['create']
+        account = Account()
+
         populate_model(account, data)
         account.public_id = str(uuid.uuid4())
         account.password = str(uuid.uuid4())
@@ -54,9 +65,13 @@ def account_create():
         db.session.commit()
         msg = 'Account Created Successfully'
 
-    except ValueError:
-        msg = traceback.format_exc()
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
@@ -64,11 +79,11 @@ def account_create():
 @blueprint.route('/account/edit', methods=['POST'])
 @auth_required('Edit', 'Account')
 def account_edit():
-    data = request.json['edit']
-    account_id = request.json['id']
-    account = Account.query.get(account_id)
-
     try:
+        data = request.json['edit']
+        account_id = request.json['id']
+        account = Account.query.get(account_id)
+
         populate_model(account, data)
 
         if 'access_groups' in data:
@@ -104,18 +119,21 @@ def account_edit():
         db.session.commit()
         msg = 'Account Edited Successfully'
 
-    except ValueError:
-        msg = traceback.format_exc()
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
 
 @blueprint.route('/account/archive', methods=['POST'])
 def account_archive():
-    account_id = request.json['id']
-
     try:
+        account_id = request.json['id']
         account = Account.query.get(account_id)
         account.is_archived = True
         db.session.commit()
@@ -131,60 +149,76 @@ def account_archive():
 @blueprint.route('/study')
 @auth_required('Read', 'Study')
 def study():
-    i = request.args.get('id')
+    try:
+        i = request.args.get('id')
 
-    if i:
-        studies = [Study.query.get(i)]
+        if i:
+            studies = [Study.query.get(i)]
 
-    else:
-        studies = Study.query.all()
+        else:
+            studies = Study.query.all()
 
-    res = [s.meta for s in studies]
-    return jsonify(res)
+        res = [s.meta for s in studies]
+        return jsonify(res)
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
 
 @blueprint.route('/study/create', methods=['POST'])
 @auth_required('Create', 'Study')
 def study_create():
-    data = request.json['create']
-    study = Study()
-
     try:
+        data = request.json['create']
+        study = Study()
+
         populate_model(study, data)
         db.session.add(study)
         db.session.commit()
         msg = 'Study Created Successfully'
 
-    except ValueError:
-        msg = traceback.format_exc()
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
 
 @blueprint.route('/study/edit', methods=['POST'])
 def study_edit():
-    data = request.json['edit']
-    study_id = request.json['id']
-    study = Study.query.get(study_id)
-
     try:
+        data = request.json['edit']
+        study_id = request.json['id']
+        study = Study.query.get(study_id)
+
         populate_model(study, data)
         db.session.commit()
         msg = 'Study Edited Successfully'
 
-    except ValueError:
-        msg = traceback.format_exc()
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
 
 @blueprint.route('/study/archive', methods=['POST'])
 def study_archive():
-    study_id = request.json['id']
-
     try:
+        study_id = request.json['id']
         study = Study.query.get(study_id)
         study.is_archived = True
         db.session.commit()
@@ -199,24 +233,33 @@ def study_archive():
 
 @blueprint.route('/access-group')
 def access_group():
-    i = request.args.get('id')
+    try:
+        i = request.args.get('id')
 
-    if i:
-        access_groups = [AccessGroup.query.get(i)]
+        if i:
+            access_groups = [AccessGroup.query.get(i)]
 
-    else:
-        access_groups = AccessGroup.query.all()
+        else:
+            access_groups = AccessGroup.query.all()
 
-    res = [a.meta for a in access_groups]
-    return jsonify(res)
+        res = [a.meta for a in access_groups]
+        return jsonify(res)
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
 
 @blueprint.route('/access-group/create', methods=['POST'])
 def access_group_create():
-    data = request.json['create']
-    access_group = AccessGroup()
-
     try:
+        data = request.json['create']
+        access_group = AccessGroup()
+
         populate_model(access_group, data)
         app = App.query.get(data['app'])
         access_group.app = app
@@ -240,20 +283,24 @@ def access_group_create():
         db.session.commit()
         msg = 'Access Group Created Successfully'
 
-    except ValueError:
-        msg = traceback.format_exc()
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
 
 @blueprint.route('/access-group/edit', methods=['POST'])
 def access_group_edit():
-    data = request.json['edit']
-    access_group_id = request.json['id']
-    access_group = AccessGroup.query.get(access_group_id)
-
     try:
+        data = request.json['edit']
+        access_group_id = request.json['id']
+        access_group = AccessGroup.query.get(access_group_id)
+
         populate_model(access_group, data)
 
         if 'app' in data:
@@ -281,18 +328,21 @@ def access_group_edit():
         db.session.commit()
         msg = 'Access Group Edited Successfully'
 
-    except ValueError:
-        msg = traceback.format_exc()
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
 
 @blueprint.route('/access-group/archive', methods=['POST'])
 def access_group_archive():
-    access_group_id = request.json['id']
-
     try:
+        access_group_id = request.json['id']
         access_group = AccessGroup.query.get(access_group_id)
         access_group.is_archived = True
         db.session.commit()
@@ -307,24 +357,33 @@ def access_group_archive():
 
 @blueprint.route('/role')
 def role():
-    i = request.args.get('id')
+    try:
+        i = request.args.get('id')
 
-    if i:
-        roles = [Role.query.get(i)]
+        if i:
+            roles = [Role.query.get(i)]
 
-    else:
-        roles = Role.query.all()
+        else:
+            roles = Role.query.all()
 
-    res = [r.meta for r in roles]
-    return jsonify(res)
+        res = [r.meta for r in roles]
+        return jsonify(res)
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
 
 @blueprint.route('/role/create', methods=['POST'])
 def role_create():
-    data = request.json['create']
-    role = Role()
-
     try:
+        data = request.json['create']
+        role = Role()
+
         populate_model(role, data)
 
         for entry in data['permissions']:
@@ -343,20 +402,24 @@ def role_create():
         db.session.commit()
         msg = 'Role Created Successfully'
 
-    except ValueError:
-        msg = traceback.format_exc()
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
 
 @blueprint.route('/role/edit', methods=['POST'])
 def role_edit():
-    data = request.json['edit']
-    role_id = request.json['id']
-    role = Role.query.get(role_id)
-
     try:
+        data = request.json['edit']
+        role_id = request.json['id']
+        role = Role.query.get(role_id)
+
         populate_model(role, data)
 
         role.permissions = []
@@ -376,9 +439,13 @@ def role_edit():
         db.session.commit()
         msg = 'Role Edited Successfully'
 
-    except ValueError:
-        msg = traceback.format_exc()
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
@@ -401,9 +468,13 @@ def app_create():
         db.session.commit()
         msg = 'App Created Successfully'
 
-    except ValueError:
-        msg = traceback.format_exc()
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
@@ -420,8 +491,12 @@ def app_edit():
         db.session.commit()
         msg = 'App Edited Successfully'
 
-    except ValueError:
-        msg = traceback.format_exc()
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})

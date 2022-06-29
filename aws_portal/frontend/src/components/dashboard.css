@@ -29,6 +29,7 @@
   min-height: 3rem;
   justify-content: space-between;
   width: 36rem;
+  z-index: 1;
 }
 
 .flash-message-content {
@@ -38,6 +39,7 @@
 .flash-message-close {
   align-items: center;
   display: flex;
+  flex-shrink: 0;
   font-weight: bold;
   justify-content: center;
   height: 3rem;
