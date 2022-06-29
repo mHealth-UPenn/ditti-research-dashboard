@@ -213,9 +213,14 @@ class Query:
     values = r'((?<=")[\w\d\-:.]+(?="))'
     keys = r'[a-zA-Z_]+(?=")'
 
-    def __init__(self, app, key, query):
-        self.check_query(query)
-        self.expression = self.build_query(query)
+    def __init__(self, app, key, query=None):
+        if query is not None:
+            self.check_query(query)
+            self.expression = self.build_query(query)
+
+        else:
+            self.expression = None
+
         self.app = app
         self.key = key
 

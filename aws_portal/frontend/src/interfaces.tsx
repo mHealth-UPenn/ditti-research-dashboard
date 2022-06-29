@@ -66,17 +66,19 @@ export interface User extends UserDetails {
 }
 
 export interface TapDetails {
-  time: string;
-  tapUserId: string;
+  dittiId: string;
+  time: Date;
 }
 
-export interface Tap extends TapDetails {
+export interface Tap {
   __typename: string;
   _lastChangedAt: string;
   _version: number;
   updatedAt: string;
   createdAt: string;
   id: string;
+  tapUserId: string;
+  time: string;
 }
 
 export interface StudySubject {

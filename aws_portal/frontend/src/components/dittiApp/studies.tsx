@@ -1,6 +1,12 @@
 import * as React from "react";
 import { Component } from "react";
-import { Study, TapDetails, User, ViewProps } from "../../interfaces";
+import {
+  Study,
+  TapDetails,
+  User,
+  UserDetails,
+  ViewProps
+} from "../../interfaces";
 import { mapTaps, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import "./studies.css";
@@ -15,14 +21,16 @@ interface StudiesViewProps extends ViewProps {
 
 interface StudiesViewState {
   studies: Study[];
-  mappedTaps: { dittiId: string; time: Date }[];
+  taps: TapDetails[];
+  users: UserDetails[];
   loading: boolean;
 }
 
 class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
   state = {
     studies: [],
-    mappedTaps: [],
+    taps: [],
+    users: [],
     loading: true
   };
 
