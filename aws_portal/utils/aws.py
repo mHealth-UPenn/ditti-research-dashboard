@@ -111,9 +111,9 @@ class Updater:
         return self.__key
 
     def set_expression(self, exp):
-        e = reduce(lambda l, r: l + f' {r}=:{r[0]},', exp.keys(), 'set')[:-1]
-        a = {':%s' % k[0]: str(v) for k, v in exp.items()}
-        self.__update_expression = e
+        e = reduce(lambda l, r: l + f' {r}=:{r[0] + r[1]},', exp.keys(), 'SET')
+        a = {':%s' % k[0] + k[1]: v for k, v in exp.items()}
+        self.__update_expression = e[:-1]
         self.__expression_attribute_values = a
 
     def get_update_expression(self):
