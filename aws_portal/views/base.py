@@ -1,9 +1,13 @@
+import logging
 import os
 import traceback
-from flask import Blueprint, current_app, jsonify, send_from_directory
+from flask import (
+  Blueprint, current_app, jsonify, make_response, send_from_directory
+)
 from aws_portal.extensions import db
 
 blueprint = Blueprint('base', __name__)
+logger = logging.getLogger(__name__)
 
 
 @blueprint.route('/')
@@ -43,6 +47,10 @@ def healthy():
             db.engine.execute('SELECT 1')
 
         except Exception:
-            res = {'msg': traceback.format_exc()}
+            exc = traceback.format_exc()
+            msg = exc.splitlines()[-1]
+            logger.warn(exc)
+
+            return make_response({'msg': msg}, 500)
 
     return jsonify(res)

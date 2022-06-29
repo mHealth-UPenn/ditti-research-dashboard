@@ -1,12 +1,15 @@
 from functools import reduce
+import logging
 import re
-from flask import Blueprint, jsonify, request
+import traceback
+from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import current_user
 from aws_portal.models import JoinAccountStudy, Study
 from aws_portal.utils.auth import auth_required
 from aws_portal.utils.aws import MutationClient, Query, Updater
 
 blueprint = Blueprint('aws', __name__, url_prefix='/aws')
+logger = logging.getLogger(__name__)
 
 
 @blueprint.route('/scan')
@@ -77,7 +80,11 @@ def user_create():
         client.post_mutation()
 
     except Exception as e:
+        exc = traceback.format_exc()
+        logger.warn(exc)
         msg = 'User creation failed: %s' % e
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
@@ -112,6 +119,10 @@ def user_edit():
         updater.update()
 
     except Exception as e:
+        exc = traceback.format_exc()
+        logger.warn(exc)
         msg = 'User Edit Failed: %s' % e
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
