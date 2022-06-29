@@ -132,8 +132,7 @@ class StudySummary extends React.Component<
                               studyId={studyId}
                               studyPrefix={dittiId}
                               studyEmail={email}
-                            />,
-                            false
+                            />
                           )
                         }
                       >
@@ -149,8 +148,7 @@ class StudySummary extends React.Component<
                               goBack={goBack}
                               handleClick={handleClick}
                               studyDetails={this.state.studyDetails}
-                            />,
-                            false
+                            />
                           )
                         }
                       >

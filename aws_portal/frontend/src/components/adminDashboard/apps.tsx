@@ -93,8 +93,7 @@ class Apps extends React.Component<ViewProps, AppsState> {
                       flashMessage={flashMessage}
                       goBack={goBack}
                       handleClick={handleClick}
-                    />,
-                    false
+                    />
                   )
                 }
               >

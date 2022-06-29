@@ -87,8 +87,7 @@ class Roles extends React.Component<ViewProps, RolesState> {
                       flashMessage={flashMessage}
                       goBack={goBack}
                       handleClick={handleClick}
-                    />,
-                    false
+                    />
                   )
                 }
               >
@@ -119,8 +118,7 @@ class Roles extends React.Component<ViewProps, RolesState> {
               flashMessage={flashMessage}
               goBack={goBack}
               handleClick={handleClick}
-            />,
-            false
+            />
           )
         }
       >

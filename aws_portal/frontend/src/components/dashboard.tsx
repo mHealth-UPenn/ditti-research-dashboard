@@ -7,10 +7,8 @@ import Home from "./home";
 import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
-import { Study, Tap, TapDetails, UserDetails } from "../interfaces";
-import { makeRequest } from "../utils";
+import { TapDetails, UserDetails } from "../interfaces";
 import { dummyData } from "./dummyData";
-import { SmallLoader } from "./loader";
 import { differenceInMilliseconds } from "date-fns";
 
 interface DashboardState {
@@ -106,23 +104,18 @@ class Dashboard extends React.Component<any, DashboardState> {
   };
 
   setView = (name: string[], view: React.ReactElement, replace?: boolean) => {
-    const { breadcrumbs, history } = this.state;
+    let { breadcrumbs } = this.state;
+    const { history } = this.state;
 
     history.push(breadcrumbs.slice(0));
-    this.setState({ history });
     if (replace) breadcrumbs.pop();
 
     let i = 0;
-    for (const b of this.state.breadcrumbs) {
+    for (const b of breadcrumbs) {
       if (b.name === name[0]) {
-        let breadcrumbs = this.state.breadcrumbs;
-
         breadcrumbs = breadcrumbs.slice(0, i + 1);
-        this.setState({ breadcrumbs });
         break;
-      } else if (i === this.state.breadcrumbs.length - 1) {
-        const breadcrumbs = this.state.breadcrumbs;
-
+      } else if (i === breadcrumbs.length - 1) {
         for (const i in name) {
           breadcrumbs.push({
             name: name[i],
@@ -130,14 +123,40 @@ class Dashboard extends React.Component<any, DashboardState> {
           });
         }
 
-        this.setState({ breadcrumbs });
         break;
       }
 
       i++;
     }
 
-    this.setState({ view });
+    this.setState({ breadcrumbs, history, view });
+  };
+
+  setStudy = (name: string, view: React.ReactElement): void => {
+    const { history } = this.state;
+    let { breadcrumbs } = this.state;
+    history.push(breadcrumbs.slice(0));
+
+    breadcrumbs = breadcrumbs.slice(0, 2);
+
+    if (breadcrumbs.length == 1) {
+      const appView = (
+        <StudiesView
+          getTapsAsync={this.getTapsAsync}
+          getTaps={this.getTaps}
+          handleClick={this.setView}
+          goBack={this.goBack}
+          flashMessage={this.flashMessage}
+        />
+      );
+
+      breadcrumbs.push({ name: "Ditti App", view: appView });
+    }
+
+    breadcrumbs.push({ name: name, view: view });
+    this.setState({ breadcrumbs, history, view: <React.Fragment /> }, () =>
+      this.setState({ view })
+    );
   };
 
   goBack = () => {
@@ -146,7 +165,12 @@ class Dashboard extends React.Component<any, DashboardState> {
 
     if (breadcrumbs) {
       const view = breadcrumbs[breadcrumbs.length - 1].view;
-      this.setState({ breadcrumbs, history, view });
+
+      if (breadcrumbs.length == this.state.breadcrumbs.length)
+        this.setState({ breadcrumbs, history, view: <React.Fragment /> }, () =>
+          this.setState({ view })
+        );
+      else this.setState({ breadcrumbs, history, view });
     }
   };
 
@@ -193,7 +217,13 @@ class Dashboard extends React.Component<any, DashboardState> {
             maxHeight: "calc(100vh - 4rem)"
           }}
         >
-          <StudiesMenu />
+          <StudiesMenu
+            setView={this.setStudy}
+            flashMessage={this.flashMessage}
+            handleClick={this.setView}
+            getTaps={this.getTaps}
+            goBack={this.goBack}
+          />
           <div className="dashboard-content">
             <Navbar
               breadcrumbs={breadcrumbs}

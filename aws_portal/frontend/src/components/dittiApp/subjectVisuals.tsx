@@ -473,8 +473,7 @@ class SubjectVisuals extends React.Component<
                         flashMessage={flashMessage}
                         goBack={goBack}
                         handleClick={handleClick}
-                      />,
-                      false
+                      />
                     )
                   }
                   style={{ width: "12rem" }}

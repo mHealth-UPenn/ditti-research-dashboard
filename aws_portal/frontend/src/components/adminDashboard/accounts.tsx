@@ -157,8 +157,7 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
                       flashMessage={flashMessage}
                       goBack={goBack}
                       handleClick={handleClick}
-                    />,
-                    false
+                    />
                   )
                 }
               >
@@ -189,8 +188,7 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
               flashMessage={flashMessage}
               goBack={goBack}
               handleClick={handleClick}
-            />,
-            false
+            />
           )
         }
       >

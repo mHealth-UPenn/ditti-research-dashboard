@@ -113,8 +113,7 @@ class Studies extends React.Component<ViewProps, StudiesState> {
                       flashMessage={flashMessage}
                       goBack={goBack}
                       handleClick={handleClick}
-                    />,
-                    false
+                    />
                   )
                 }
               >
@@ -145,8 +144,7 @@ class Studies extends React.Component<ViewProps, StudiesState> {
               flashMessage={flashMessage}
               goBack={goBack}
               handleClick={handleClick}
-            />,
-            false
+            />
           )
         }
       >

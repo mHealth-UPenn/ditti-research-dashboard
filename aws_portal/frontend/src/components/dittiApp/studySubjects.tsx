@@ -133,8 +133,7 @@ class StudySubjects extends React.Component<
                   handleClick={handleClick}
                   studyDetails={this.props.studyDetails}
                   user={user}
-                />,
-                false
+                />
               )
             }
           >

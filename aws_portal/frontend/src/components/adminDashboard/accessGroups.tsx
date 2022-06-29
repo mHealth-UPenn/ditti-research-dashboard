@@ -107,8 +107,7 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
                       flashMessage={flashMessage}
                       goBack={goBack}
                       handleClick={handleClick}
-                    />,
-                    false
+                    />
                   )
                 }
               >
@@ -139,8 +138,7 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
               flashMessage={flashMessage}
               goBack={goBack}
               handleClick={handleClick}
-            />,
-            false
+            />
           )
         }
       >

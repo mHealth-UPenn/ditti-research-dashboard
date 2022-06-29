@@ -1,16 +1,22 @@
 import * as React from "react";
 import { Component } from "react";
-import { Study } from "../interfaces";
+import { Study, TapDetails, ViewProps } from "../interfaces";
 import { makeRequest } from "../utils";
+import StudySummary from "./dittiApp/studySummary";
 import { SmallLoader } from "./loader";
 import "./studiesMenu.css";
+
+interface StudiesMenuProps extends ViewProps {
+  getTaps: () => TapDetails[];
+  setView: (name: string, view: React.ReactElement) => void;
+}
 
 interface StudiesMenuState {
   studies: Study[];
   loading: boolean;
 }
 
-class StudiesMenu extends React.Component<any, StudiesMenuState> {
+class StudiesMenu extends React.Component<StudiesMenuProps, StudiesMenuState> {
   state = { studies: [], loading: true };
 
   componentDidMount() {
@@ -20,6 +26,7 @@ class StudiesMenu extends React.Component<any, StudiesMenuState> {
   }
 
   render() {
+    const { flashMessage, handleClick, getTaps, goBack } = this.props;
     const { studies, loading } = this.state;
 
     return (
@@ -33,7 +40,23 @@ class StudiesMenu extends React.Component<any, StudiesMenuState> {
           ) : (
             <ul>
               {studies.map((s: Study, i: number) => (
-                <li key={i} className="link" id={"study-menu-" + s.id}>
+                <li
+                  key={i}
+                  className="link"
+                  id={"study-menu-" + s.id}
+                  onClick={() =>
+                    this.props.setView(
+                      s.acronym,
+                      <StudySummary
+                        flashMessage={flashMessage}
+                        handleClick={handleClick}
+                        getTaps={getTaps}
+                        goBack={goBack}
+                        studyId={s.id}
+                      />
+                    )
+                  }
+                >
                   {s.name}
                 </li>
               ))}

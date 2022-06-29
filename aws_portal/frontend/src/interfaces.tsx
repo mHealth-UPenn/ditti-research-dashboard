@@ -87,6 +87,6 @@ export interface ViewProps {
   handleClick: (
     name: string[],
     view: React.ReactElement,
-    replace: boolean
+    replace?: boolean
   ) => void;
 }

@@ -132,8 +132,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
                       flashMessage={flashMessage}
                       goBack={goBack}
                       handleClick={handleClick}
-                    />,
-                    false
+                    />
                   )
                 }
               >
@@ -167,8 +166,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
               flashMessage={flashMessage}
               goBack={goBack}
               handleClick={handleClick}
-            />,
-            false
+            />
           )
         }
       >
