@@ -5,8 +5,18 @@
 }
 
 .text-field-content {
+  align-items: center;
   display: flex;
+  flex-grow: 1;
   height: 3rem;
+}
+
+.text-field-content > div {
+  height: 100%;
+}
+
+.text-field-content > svg {
+  padding-left: 1rem;
 }
 
 .text-field-label {

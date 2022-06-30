@@ -35,6 +35,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
       disabled,
       value
     } = this.props;
+    console.log(prefill, value);
 
     return (
       <div className="text-field-container">
@@ -54,7 +55,7 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
               type={type ? type : "text"}
               placeholder={placeholder ? placeholder : ""}
               defaultValue={prefill ? prefill : undefined}
-              value={value ? value : undefined}
+              value={value}
               onChange={
                 onKeyup
                   ? (e) => onKeyup((e.target as HTMLInputElement).value)

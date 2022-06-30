@@ -7,6 +7,23 @@ from aws_portal.models import App, Study
 logger = logging.getLogger(__name__)
 
 
+def validate_password(data, password):
+    if len(password) < 8:
+        return 'Minimum password length is 8 characters'
+
+    if 64 < len(password):
+        return 'Maximum password length is 64 characters'
+
+    for k, v in data.items():
+        if type(v) is not str or k == 'password':
+            continue
+
+        if password in v.lower():
+            return f'The password is too similar to "{k}:" {v}'
+
+    return 'valid'
+
+
 def auth_required(action, _resource=None):
     def decorator(func):
         @wraps(func)

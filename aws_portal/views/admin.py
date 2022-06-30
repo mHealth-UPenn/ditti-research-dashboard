@@ -9,7 +9,7 @@ from aws_portal.models import (
     JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission, Permission,
     Role, Study
 )
-from aws_portal.utils.auth import auth_required
+from aws_portal.utils.auth import auth_required, validate_password
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint('admin', __name__, url_prefix='/admin')
@@ -45,11 +45,20 @@ def account():
 def account_create():
     try:
         data = request.json['create']
+        password = data['password']
+
+        if not password:
+            msg = 'A password was not provided.'
+            return make_response({'msg': msg}, 400)
+
+        valid = validate_password(data, password)
+        if valid != 'valid':
+            return make_response({'msg': valid}, 400)
+
         account = Account()
 
         populate_model(account, data)
         account.public_id = str(uuid.uuid4())
-        account.password = str(uuid.uuid4())
         account.created_on = datetime.utcnow()
 
         for entry in data['access_groups']:
@@ -83,6 +92,16 @@ def account_edit():
         data = request.json['edit']
         account_id = request.json['id']
         account = Account.query.get(account_id)
+        password = data['password']
+
+        if not password:
+            del password
+
+        else:
+            valid = validate_password(data, password)
+
+            if valid != 'valid':
+                return make_response({'msg': valid}, 400)
 
         populate_model(account, data)
 

@@ -42,6 +42,7 @@ interface AccountsEditState extends AccountPrefill {
   studies: Study[];
   columnsAccessGroups: Column[];
   columnsStudies: Column[];
+  password: string;
   loading: boolean;
 }
 
@@ -106,7 +107,8 @@ class AccountsEdit extends React.Component<
     phoneNumber: "",
     rolesSelected: [],
     accessGroupsSelected: [],
-    studiesSelected: []
+    studiesSelected: [],
+    password: ""
   };
 
   componentDidMount() {
@@ -346,7 +348,8 @@ class AccountsEdit extends React.Component<
       lastName,
       phoneNumber,
       rolesSelected,
-      studiesSelected
+      studiesSelected,
+      password
     } = this.state;
 
     const accessGroups = accessGroupsSelected.map((ag: AccessGroup) => {
@@ -366,7 +369,8 @@ class AccountsEdit extends React.Component<
       first_name: firstName,
       last_name: lastName,
       phone_number: phoneNumber,
-      studies: studies
+      studies: studies,
+      password: password
     };
 
     const id = this.props.accountId;
@@ -554,6 +558,18 @@ class AccountsEdit extends React.Component<
                         this.setState({ phoneNumber: text })
                       }
                       feedback=""
+                    />
+                  </div>
+                </div>
+                <div className="admin-form-row">
+                  <div className="admin-form-field">
+                    <TextField
+                      id="password"
+                      type="password"
+                      label={accountId ? "Change password" : "Password"}
+                      onKeyup={(text: string) =>
+                        this.setState({ password: text })
+                      }
                     />
                   </div>
                 </div>

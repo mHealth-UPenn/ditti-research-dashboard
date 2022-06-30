@@ -1,11 +1,12 @@
 from datetime import datetime
 from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import (
-    create_access_token, get_jwt, jwt_required, set_access_cookies,
-    unset_jwt_cookies, verify_jwt_in_request
+    create_access_token, current_user, get_jwt, jwt_required,
+    set_access_cookies, unset_jwt_cookies, verify_jwt_in_request
 )
 from aws_portal.extensions import db
 from aws_portal.models import Account, BlockedToken
+from aws_portal.utils.auth import validate_password
 
 blueprint = Blueprint('iam', __name__, url_prefix='/iam')
 
@@ -15,10 +16,10 @@ def check_login():
     check = verify_jwt_in_request(optional=True)
 
     if check is None:
-        return make_response({'msg': 'Unauthorized'}, 401)
+        return jsonify({'msg': 'Unauthorized'})
 
-    res = {'msg': 'User is logged in'}
-    return jsonify(res)
+    msg = 'Login successful' if current_user.is_confirmed else 'First login'
+    return jsonify({'msg': msg})
 
 
 @blueprint.route('/login', methods=['POST'])
@@ -38,7 +39,8 @@ def login():
         account.last_login = datetime.now()
         db.session.commit()
 
-        res = jsonify({'msg': 'Login Successful'})
+        msg = 'Login successful' if account.is_confirmed else 'First login'
+        res = jsonify({'msg': msg})
         set_access_cookies(res, access_token)
 
         return res
@@ -58,3 +60,21 @@ def logout():
     unset_jwt_cookies(res)
 
     return res
+
+
+@blueprint.route('/set-password', methods=['POST'])
+@jwt_required()
+def set_password():
+    password = request.json['password']
+    valid = validate_password(current_user.meta, password)
+
+    if current_user.check_password(password):
+        msg = 'A different password must be entered'
+        return make_response({'msg': msg}, 400)
+
+    if valid != 'valid':
+        return make_response({'msg': valid}, 400)
+
+    current_user.password = password
+    db.session.commit()
+    return jsonify({'msg': 'Password set successful'})
