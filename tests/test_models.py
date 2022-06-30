@@ -28,7 +28,9 @@ def app():
 class TestPermission:
     def test_duplicate(self, app):
         with pytest.raises(IntegrityError):
-            foo = Permission(action='foo', resource='baz')
+            foo = Permission()
+            foo.action = 'foo'
+            foo.resource = 'baz'
             db.session.add(foo)
             db.session.commit()
 

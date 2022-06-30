@@ -3,7 +3,7 @@ import logging
 import os
 import uuid
 from flask import current_app
-from sqlalchemy import func, tuple_
+from sqlalchemy import func, select, tuple_
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.sql.schema import UniqueConstraint
@@ -60,7 +60,9 @@ def init_admin_group():
         )
 
     access_group = AccessGroup(name='Admin', app=app)
-    permission = Permission(action='*', resource='*')
+    permission = Permission()
+    permission.action = '*'
+    permission.resource = '*'
     join = JoinAccessGroupPermission(
         access_group=access_group,
         permission=permission
@@ -457,23 +459,86 @@ class JoinRolePermission(db.Model):
         return '<JoinRolePermission %s-%s>' % self.primary_key
 
 
+class Action(db.Model):
+    __tablename__ = 'action'
+    id = db.Column(db.Integer, primary_key=True)
+    value = db.Column(db.String, nullable=False, unique=True)
+
+    def __repr__(self):
+        return '<Action %s>' % self.value
+
+
+class Resource(db.Model):
+    __tablename__ = 'resource'
+    id = db.Column(db.Integer, primary_key=True)
+    value = db.Column(db.String, nullable=False, unique=True)
+
+    def __repr__(self):
+        return '<Resource %s>' % self.value
+
+
 class Permission(db.Model):
     __tablename__ = 'permission'
-    __table_args__ = (UniqueConstraint('action', 'resource'),)
+    __table_args__ = (UniqueConstraint('_action_id', '_resource_id'),)
     id = db.Column(db.Integer, primary_key=True)
-    action = db.Column(db.String, nullable=False)
-    resource = db.Column(db.String, nullable=False)
 
-    @validates('action')
+    _action_id = db.Column(
+        db.Integer,
+        db.ForeignKey('action.id', ondelete='CASCADE')
+    )
+
+    _resource_id = db.Column(
+        db.Integer,
+        db.ForeignKey('resource.id', ondelete='CASCADE')
+    )
+
+    _action = db.relationship('Action')
+    _resource = db.relationship('Resource')
+
+    @hybrid_property
+    def action(self):
+        return self._action.value
+
+    @action.setter
+    def action(self, value):
+        q = Action.query.filter(Action.value == value)
+        action = q.first() or Action(value=value)
+        db.session.add(action)
+        self._action = action
+
+    @action.expression
+    def action(cls):
+        return select(Action.value)\
+            .where(Action.id == cls._action_id)\
+            .scalar_subquery()
+
+    @hybrid_property
+    def resource(self):
+        return self._resource.value
+
+    @resource.setter
+    def resource(self, value):
+        q = Resource.query.filter(Resource.value == value)
+        resource = q.first() or Resource(value=value)
+        db.session.add(resource)
+        self._resource = resource
+
+    @resource.expression
+    def resource(cls):
+        return select(Resource.value)\
+            .where(Resource.id == cls._resource_id)\
+            .scalar_subquery()
+
+    @validates('_action_id')
     def validate_action(self, key, val):
-        if self.action is not None:
+        if self._action_id is not None:
             raise ValueError('permission.action cannot be modified.')
 
         return val
 
-    @validates('resource')
+    @validates('_resource_id')
     def validate_resource(self, key, val):
-        if self.resource:
+        if self._resource_id is not None:
             raise ValueError('permission.resource cannot be modified.')
 
         return val
@@ -484,7 +549,14 @@ class Permission(db.Model):
 
     @definition.expression
     def definition(cls):
-        return tuple_(cls.action, cls.resource)
+        return tuple_(
+            select(Action.value)
+            .where(Action.id == cls._action_id)
+            .scalar_subquery(),
+            select(Resource.value)
+            .where(Resource.id == cls._resource_id)
+            .scalar_subquery()
+        )
 
     @property
     def meta(self):

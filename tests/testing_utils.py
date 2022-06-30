@@ -125,7 +125,10 @@ def create_tables():
         db.session.add(Account(**account))
 
     for permission in permissions:
-        db.session.add(Permission(**permission))
+        p = Permission()
+        p.action = permission['action']
+        p.resource = permission['resource']
+        db.session.add(p)
 
     for role in roles:
         db.session.add(Role(**role))
