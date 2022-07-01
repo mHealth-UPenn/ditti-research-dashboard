@@ -218,7 +218,12 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
 
   handleSuccess = (res: ResponseBody) => {
     const { flashMessage } = this.props;
+
+    this.setState({ loading: true });
     flashMessage(<span>{res.msg}</span>, "success");
+    makeRequest("/admin/account?app=1").then((accounts) =>
+      this.setState({ accounts, loading: false })
+    );
   };
 
   handleFailure = (res: ResponseBody) => {

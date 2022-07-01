@@ -153,7 +153,12 @@ class Roles extends React.Component<ViewProps, RolesState> {
 
   handleSuccess = (res: ResponseBody) => {
     const { flashMessage } = this.props;
+
+    this.setState({ loading: true });
     flashMessage(<span>{res.msg}</span>, "success");
+    makeRequest("/admin/role?app=1").then((roles) =>
+      this.setState({ roles, loading: false })
+    );
   };
 
   handleFailure = (res: ResponseBody) => {

@@ -174,7 +174,12 @@ class Studies extends React.Component<ViewProps, StudiesState> {
 
   handleSuccess = (res: ResponseBody) => {
     const { flashMessage } = this.props;
+
+    this.setState({ loading: true });
     flashMessage(<span>{res.msg}</span>, "success");
+    makeRequest("/admin/study?app=1").then((studies) =>
+      this.setState({ studies, loading: false })
+    );
   };
 
   handleFailure = (res: ResponseBody) => {

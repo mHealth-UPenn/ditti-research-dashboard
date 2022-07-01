@@ -168,7 +168,12 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
 
   handleSuccess = (res: ResponseBody) => {
     const { flashMessage } = this.props;
+
+    this.setState({ loading: true });
     flashMessage(<span>{res.msg}</span>, "success");
+    makeRequest("/admin/access-group?app=1").then((accessGroups) =>
+      this.setState({ accessGroups, loading: false })
+    );
   };
 
   handleFailure = (res: ResponseBody) => {
