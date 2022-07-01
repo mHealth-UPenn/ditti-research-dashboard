@@ -465,6 +465,13 @@ class Action(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.String, nullable=False, unique=True)
 
+    @property
+    def meta(self):
+        return {
+            'id': self.id,
+            'value': self.value
+        }
+
     def __repr__(self):
         return '<Action %s>' % self.value
 
@@ -473,6 +480,13 @@ class Resource(db.Model):
     __tablename__ = 'resource'
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.String, nullable=False, unique=True)
+
+    @property
+    def meta(self):
+        return {
+            'id': self.id,
+            'value': self.value
+        }
 
     def __repr__(self):
         return '<Resource %s>' % self.value

@@ -4,13 +4,13 @@ import TextField from "../fields/textField";
 import Select from "../fields/select";
 import {
   AccessGroup,
+  ActionResource,
   App,
   Permission,
   ResponseBody,
   ViewProps
 } from "../../interfaces";
 import { makeRequest } from "../../utils";
-import { actionsRaw, resourcesRaw } from "./rolesEdit";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 
@@ -25,6 +25,8 @@ interface AccessGroupsEditProps extends ViewProps {
 }
 
 interface AccessGroupsEditState extends AccessGroupPrefill {
+  actions: ActionResource[];
+  resources: ActionResource[];
   apps: App[];
   loading: boolean;
 }
@@ -34,6 +36,8 @@ class AccessGroupsEdit extends React.Component<
   AccessGroupsEditState
 > {
   state = {
+    actions: [],
+    resources: [],
     apps: [],
     loading: true,
     name: "",
@@ -42,6 +46,14 @@ class AccessGroupsEdit extends React.Component<
   };
 
   componentDidMount() {
+    const actions = makeRequest("/admin/action?app=1").then(
+      (actions: ActionResource[]) => this.setState({ actions })
+    );
+
+    const resources = makeRequest("/admin/resource?app=1").then(
+      (resources: ActionResource[]) => this.setState({ resources })
+    );
+
     const apps = makeRequest("/admin/app?app=1").then((apps) =>
       this.setState({ apps })
     );
@@ -50,7 +62,7 @@ class AccessGroupsEdit extends React.Component<
       this.setState({ ...prefill });
     });
 
-    Promise.all([apps, prefill]).then(() => {
+    Promise.all([actions, resources, apps, prefill]).then(() => {
       if (!this.state.permissions) this.addPermission();
       this.setState({ loading: false });
     });
@@ -87,7 +99,7 @@ class AccessGroupsEdit extends React.Component<
   };
 
   getPermissionFields = (): React.ReactElement => {
-    const { permissions } = this.state;
+    const { actions, resources, permissions } = this.state;
 
     return (
       <React.Fragment>
@@ -97,8 +109,8 @@ class AccessGroupsEdit extends React.Component<
               <div className="admin-form-field border-light">
                 <Select
                   id={p.id}
-                  opts={actionsRaw.map((a) => {
-                    return { value: a.id, label: a.text };
+                  opts={actions.map((a: ActionResource) => {
+                    return { value: a.id, label: a.value };
                   })}
                   placeholder="Action"
                   callback={this.selectAction}
@@ -108,8 +120,8 @@ class AccessGroupsEdit extends React.Component<
               <div className="admin-form-field border-light">
                 <Select
                   id={p.id}
-                  opts={resourcesRaw.map((r) => {
-                    return { value: r.id, label: r.text };
+                  opts={resources.map((r: ActionResource) => {
+                    return { value: r.id, label: r.value };
                   })}
                   placeholder="Permission"
                   callback={this.selectResource}
@@ -150,7 +162,9 @@ class AccessGroupsEdit extends React.Component<
   };
 
   selectAction = (actionId: number, permissionId: number): void => {
-    const action = actionsRaw.filter((a) => a.id == actionId)[0];
+    const action: ActionResource = this.state.actions.filter(
+      (a: ActionResource) => a.id == actionId
+    )[0];
 
     if (action) {
       const { permissions } = this.state;
@@ -159,7 +173,7 @@ class AccessGroupsEdit extends React.Component<
       )[0];
 
       if (permission) {
-        permission.action = action.text;
+        permission.action = action.value;
         this.setState({ permissions });
       }
     }
@@ -172,7 +186,9 @@ class AccessGroupsEdit extends React.Component<
 
     if (permission) {
       const actionText = permission.action;
-      const action = actionsRaw.filter((a) => a.text == actionText)[0];
+      const action: ActionResource = this.state.actions.filter(
+        (a: ActionResource) => a.value == actionText
+      )[0];
 
       if (action) return action.id;
       else return 0;
@@ -182,7 +198,9 @@ class AccessGroupsEdit extends React.Component<
   };
 
   selectResource = (resourceId: number, permissionId: number): void => {
-    const resource = resourcesRaw.filter((a) => a.id == resourceId)[0];
+    const resource: ActionResource = this.state.resources.filter(
+      (r: ActionResource) => r.id == resourceId
+    )[0];
 
     if (resource) {
       const { permissions } = this.state;
@@ -191,7 +209,7 @@ class AccessGroupsEdit extends React.Component<
       )[0];
 
       if (permission) {
-        permission.resource = resource.text;
+        permission.resource = resource.value;
         this.setState({ permissions });
       }
     }
@@ -204,7 +222,9 @@ class AccessGroupsEdit extends React.Component<
 
     if (permission) {
       const resourceText = permission.resource;
-      const resource = resourcesRaw.filter((a) => a.text == resourceText)[0];
+      const resource: ActionResource = this.state.resources.filter(
+        (r: ActionResource) => r.value == resourceText
+      )[0];
 
       if (resource) return resource.id;
       else return 0;

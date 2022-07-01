@@ -5,9 +5,9 @@ import uuid
 from flask import Blueprint, jsonify, make_response, request
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission,
+    AccessGroup, Account, Action, App, JoinAccessGroupPermission,
     JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission, Permission,
-    Role, Study
+    Resource, Role, Study
 )
 from aws_portal.utils.auth import auth_required, validate_password
 from aws_portal.utils.db import populate_model
@@ -556,3 +556,37 @@ def app_edit():
         return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
+
+
+@blueprint.route('/action')
+@auth_required('View', 'Admin Dashboard')
+def action():
+    try:
+        actions = Action.query.all()
+        res = [a.meta for a in actions]
+        return jsonify(res)
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
+
+
+@blueprint.route('/resource')
+@auth_required('View', 'Admin Dashboard')
+def resource():
+    try:
+        resources = Resource.query.all()
+        res = [r.meta for r in resources]
+        return jsonify(res)
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)

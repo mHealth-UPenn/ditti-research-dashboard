@@ -620,7 +620,7 @@ COPY public.resource (id, value) FROM stdin;
 6	Accounts
 7	Studies
 8	Roles
-9	AccessGroups
+9	Access Groups
 \.
 
 

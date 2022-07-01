@@ -44,6 +44,11 @@ export interface Study {
   role: Role;
 }
 
+export interface ActionResource {
+  id: number;
+  value: string;
+}
+
 export interface ResponseBody {
   msg: string;
 }

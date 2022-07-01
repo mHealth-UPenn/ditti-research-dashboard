@@ -2,60 +2,16 @@ import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
 import Select from "../fields/select";
-import { Permission, ResponseBody, Role, ViewProps } from "../../interfaces";
+import {
+  ActionResource,
+  Permission,
+  ResponseBody,
+  Role,
+  ViewProps
+} from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
-
-export const actionsRaw = [
-  {
-    id: 4,
-    text: "View"
-  },
-  {
-    id: 1,
-    text: "Create"
-  },
-  {
-    id: 2,
-    text: "Edit"
-  },
-  {
-    id: 3,
-    text: "Delete"
-  },
-  {
-    id: 5,
-    text: "*"
-  }
-];
-
-export const resourcesRaw = [
-  {
-    id: 3,
-    text: "Accounts"
-  },
-  {
-    id: 1,
-    text: "Users"
-  },
-  {
-    id: 2,
-    text: "Taps"
-  },
-  {
-    id: 4,
-    text: "*"
-  },
-  {
-    id: 5,
-    text: "Ditti App Dashboard"
-  },
-  {
-    id: 6,
-    text: "Admin Dashboard"
-  }
-];
 
 interface RolesPrefill {
   name: string;
@@ -67,23 +23,37 @@ interface RolesEditProps extends ViewProps {
 }
 
 interface RolesEditState extends RolesPrefill {
+  actions: ActionResource[];
+  resources: ActionResource[];
   loading: boolean;
 }
 
 class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   state = {
+    actions: [],
+    resources: [],
     loading: true,
     name: "",
     permissions: []
   };
 
   componentDidMount() {
-    this.getPrefill().then((prefill: RolesPrefill) =>
-      this.setState({ ...prefill }, () => {
-        if (!this.state.permissions) this.addPermission();
-        this.setState({ loading: false });
-      })
+    const actions = makeRequest("/admin/action?app=1").then(
+      (actions: ActionResource[]) => this.setState({ actions })
     );
+
+    const resources = makeRequest("/admin/resource?app=1").then(
+      (resources: ActionResource[]) => this.setState({ resources })
+    );
+
+    const prefill = this.getPrefill().then((prefill: RolesPrefill) =>
+      this.setState({ ...prefill })
+    );
+
+    Promise.all([actions, resources, prefill]).then(() => {
+      if (!this.state.permissions) this.addPermission();
+      this.setState({ loading: false });
+    });
   }
 
   getPrefill = async (): Promise<RolesPrefill> => {
@@ -103,7 +73,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   };
 
   getPermissionFields = (): React.ReactElement => {
-    const { permissions } = this.state;
+    const { actions, resources, permissions } = this.state;
 
     return (
       <React.Fragment>
@@ -113,8 +83,8 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
               <div className="admin-form-field border-light">
                 <Select
                   id={p.id}
-                  opts={actionsRaw.map((a) => {
-                    return { value: a.id, label: a.text };
+                  opts={actions.map((a: ActionResource) => {
+                    return { value: a.id, label: a.value };
                   })}
                   placeholder="Action"
                   callback={this.selectAction}
@@ -124,8 +94,8 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
               <div className="admin-form-field border-light">
                 <Select
                   id={p.id}
-                  opts={resourcesRaw.map((r) => {
-                    return { value: r.id, label: r.text };
+                  opts={resources.map((r: ActionResource) => {
+                    return { value: r.id, label: r.value };
                   })}
                   placeholder="Permission"
                   callback={this.selectResource}
@@ -166,7 +136,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   };
 
   selectAction = (actionId: number, permissionId: number): void => {
-    const action = actionsRaw.filter((a) => a.id == actionId)[0];
+    const action: ActionResource = this.state.actions.filter(
+      (a: ActionResource) => a.id == actionId
+    )[0];
 
     if (action) {
       const { permissions } = this.state;
@@ -175,7 +147,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
       )[0];
 
       if (permission) {
-        permission.action = action.text;
+        permission.action = action.value;
         this.setState({ permissions });
       }
     }
@@ -188,7 +160,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
 
     if (permission) {
       const actionText = permission.action;
-      const action = actionsRaw.filter((a) => a.text == actionText)[0];
+      const action: ActionResource = this.state.actions.filter(
+        (a: ActionResource) => a.value == actionText
+      )[0];
 
       if (action) return action.id;
       else return 0;
@@ -198,7 +172,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   };
 
   selectResource = (resourceId: number, permissionId: number): void => {
-    const resource = resourcesRaw.filter((a) => a.id == resourceId)[0];
+    const resource: ActionResource = this.state.resources.filter(
+      (r: ActionResource) => r.id == resourceId
+    )[0];
 
     if (resource) {
       const { permissions } = this.state;
@@ -207,7 +183,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
       )[0];
 
       if (permission) {
-        permission.resource = resource.text;
+        permission.resource = resource.value;
         this.setState({ permissions });
       }
     }
@@ -220,7 +196,9 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
 
     if (permission) {
       const resourceText = permission.resource;
-      const resource = resourcesRaw.filter((a) => a.text == resourceText)[0];
+      const resource: ActionResource = this.state.resources.filter(
+        (r: ActionResource) => r.value == resourceText
+      )[0];
 
       if (resource) return resource.id;
       else return 0;
