@@ -14,13 +14,6 @@ def validate_password(data, password):
     if 64 < len(password):
         return 'Maximum password length is 64 characters'
 
-    for k, v in data.items():
-        if type(v) is not str or k == 'password':
-            continue
-
-        if password in v.lower():
-            return f'The password is too similar to "{k}:" {v}'
-
     return 'valid'
 
 
