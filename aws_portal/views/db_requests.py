@@ -4,13 +4,12 @@ from sqlalchemy.sql import tuple_
 from aws_portal.models import (
     AccessGroup, App, JoinAccountAccessGroup, JoinAccountStudy, Study
 )
-from aws_portal.utils.auth import auth_required
 
 blueprint = Blueprint('db', __name__, url_prefix='/db')
 
 
 @blueprint.route('/get-apps')
-@auth_required('View', 'Ditti App Dashboard')
+@jwt_required()
 def get_apps():
     apps = App.query\
         .join(AccessGroup, AccessGroup.app_id == App.id)\
@@ -22,7 +21,7 @@ def get_apps():
 
 
 @blueprint.route('/get-studies')
-@auth_required('View', 'Ditti App Dashboard')
+@jwt_required()
 def get_studies():  # TODO rewrite unit test
     try:
         app_id = request.args['app']
@@ -43,7 +42,7 @@ def get_studies():  # TODO rewrite unit test
 
 
 @blueprint.route('/get-study-details')
-@auth_required('View', 'Ditti App Dashboard')
+@jwt_required()
 def get_study_details():
     study_id = request.args['study']
     study = Study.query\
@@ -57,7 +56,7 @@ def get_study_details():
 
 
 @blueprint.route('/get-study-contacts')
-@auth_required('View', 'Ditti App Dashboard')
+@jwt_required()
 def get_study_contacts():
     study_id = request.args['study']
     study = Study.query\
