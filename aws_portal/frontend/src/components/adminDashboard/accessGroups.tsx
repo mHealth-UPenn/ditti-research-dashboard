@@ -158,9 +158,12 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
   delete = (id: number): void => {
     const body = { app: 1, id };
     const opts = { method: "POST", body: JSON.stringify(body) };
-    makeRequest("/admin/access-group/archive", opts)
-      .then(this.handleSuccess)
-      .catch(this.handleFailure);
+    const msg = "Are you sure you want to archive this access group?";
+
+    if (confirm(msg))
+      makeRequest("/admin/access-group/archive", opts)
+        .then(this.handleSuccess)
+        .catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {

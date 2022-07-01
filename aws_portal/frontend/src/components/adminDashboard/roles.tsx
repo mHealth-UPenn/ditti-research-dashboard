@@ -143,9 +143,12 @@ class Roles extends React.Component<ViewProps, RolesState> {
   delete = (id: number): void => {
     const body = { app: 1, id };
     const opts = { method: "POST", body: JSON.stringify(body) };
-    makeRequest("/admin/role/archive", opts)
-      .then(this.handleSuccess)
-      .catch(this.handleFailure);
+    const msg = "Are you sure you want to archive this role?";
+
+    if (confirm(msg))
+      makeRequest("/admin/role/archive", opts)
+        .then(this.handleSuccess)
+        .catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {

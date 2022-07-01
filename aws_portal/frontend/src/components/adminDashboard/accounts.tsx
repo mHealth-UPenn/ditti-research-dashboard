@@ -208,9 +208,12 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
   delete = (id: number): void => {
     const body = { app: 1, id };
     const opts = { method: "POST", body: JSON.stringify(body) };
-    makeRequest("/admin/account/archive", opts)
-      .then(this.handleSuccess)
-      .catch(this.handleFailure);
+    const msg = "Are you sure you want to archive this account?";
+
+    if (confirm(msg))
+      makeRequest("/admin/account/archive", opts)
+        .then(this.handleSuccess)
+        .catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {

@@ -164,9 +164,12 @@ class Studies extends React.Component<ViewProps, StudiesState> {
   delete = (id: number): void => {
     const body = { app: 1, id };
     const opts = { method: "POST", body: JSON.stringify(body) };
-    makeRequest("/admin/study/archive", opts)
-      .then(this.handleSuccess)
-      .catch(this.handleFailure);
+    const msg = "Are you sure you want to archive this study?";
+
+    if (confirm(msg))
+      makeRequest("/admin/study/archive", opts)
+        .then(this.handleSuccess)
+        .catch(this.handleFailure);
   };
 
   handleSuccess = (res: ResponseBody) => {
