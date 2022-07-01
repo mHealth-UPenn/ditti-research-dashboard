@@ -1,6 +1,6 @@
 from functools import wraps
 import logging
-from flask import jsonify, request
+from flask import make_response, request
 from flask_jwt_extended import current_user, verify_jwt_in_request
 from aws_portal.models import App, Study
 
@@ -45,7 +45,7 @@ def auth_required(action, _resource=None):
                 s = current_user, ask
                 logger.warning('Unauthorized request from %s: %s' % s)
 
-                return jsonify({'msg': 'Unauthorized Request'})
+                return make_response({'msg': 'Unauthorized Request'}, 403)
 
             return func(*args, **kwargs)
 

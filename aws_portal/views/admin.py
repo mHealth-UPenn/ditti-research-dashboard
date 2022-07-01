@@ -281,12 +281,16 @@ def access_group():
         i = request.args.get('id')
 
         if i:
-            access_groups = [AccessGroup.query.get(i)]
+            access_groups = AccessGroup.query.filter(
+                ~AccessGroup.is_archived & AccessGroup.id == i
+            )
 
         else:
-            access_groups = AccessGroup.query.all()
+            access_groups = AccessGroup.query.filter(
+                ~AccessGroup.is_archived
+            )
 
-        res = [a.meta for a in access_groups]
+        res = [a.meta for a in access_groups.all()]
         return jsonify(res)
 
     except Exception:

@@ -3,7 +3,7 @@ import { Component } from "react";
 import Navbar from "./navbar";
 import Table, { Column, TableData } from "../table/table";
 import AccessGroupsEdit from "./accessGroupsEdit";
-import { AccessGroup, ViewProps } from "../../interfaces";
+import { AccessGroup, ResponseBody, ViewProps } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 
@@ -132,7 +132,9 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
                   Edit
                 </button>
               ) : null}
-              <button className="button-danger">Delete</button>
+              <button className="button-danger" onClick={() => this.delete(id)}>
+                Delete
+              </button>
             </div>
           ),
           searchValue: "",
@@ -140,6 +142,33 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
         }
       ];
     });
+  };
+
+  delete = (id: number): void => {
+    const body = { app: 1, id };
+    const opts = { method: "POST", body: JSON.stringify(body) };
+    makeRequest("/admin/access-group/archive", opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
+  };
+
+  handleSuccess = (res: ResponseBody) => {
+    const { flashMessage } = this.props;
+    flashMessage(<span>{res.msg}</span>, "success");
+  };
+
+  handleFailure = (res: ResponseBody) => {
+    const { flashMessage } = this.props;
+
+    const msg = (
+      <span>
+        <b>An unexpected error occured</b>
+        <br />
+        {res.msg ? res.msg : "Internal server error"}
+      </span>
+    );
+
+    flashMessage(msg, "danger");
   };
 
   render() {
