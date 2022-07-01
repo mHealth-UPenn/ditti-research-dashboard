@@ -120,10 +120,10 @@ def get_study_contacts():
 @jwt_required()
 def get_account_details():
     res = {
-        'FirstName': current_user.first_name,
-        'LastName': current_user.last_name,
-        'Email': current_user.email,
-        'PhoneNumber': current_user.phone_number
+        'firstName': current_user.first_name,
+        'lastName': current_user.last_name,
+        'email': current_user.email,
+        'phoneNumber': current_user.phone_number
     }
 
     return jsonify(res)

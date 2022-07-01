@@ -95,3 +95,10 @@ export interface ViewProps {
     replace?: boolean
   ) => void;
 }
+
+export interface AccountDetails {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+}

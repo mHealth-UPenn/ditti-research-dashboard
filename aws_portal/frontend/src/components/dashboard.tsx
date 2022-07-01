@@ -9,6 +9,7 @@ import "./dashboard.css";
 import { TapDetails, UserDetails } from "../interfaces";
 import { dummyData } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
+import { makeRequest } from "../utils";
 
 interface DashboardState {
   breadcrumbs: { name: string; view: React.ReactElement }[];
@@ -177,7 +178,7 @@ class Dashboard extends React.Component<any, DashboardState> {
 
     return (
       <main className="bg-light dashboard-container">
-        <Header name="John Smith" email="john.smith@pennmedicine.upenn.edu" />
+        <Header />
         <div
           style={{
             display: "flex",
