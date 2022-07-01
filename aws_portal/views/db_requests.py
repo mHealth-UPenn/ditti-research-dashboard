@@ -3,9 +3,11 @@ import traceback
 from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import current_user, jwt_required
 from sqlalchemy.sql import tuple_
+from aws_portal.extensions import db
 from aws_portal.models import (
     AccessGroup, Account, App, JoinAccountAccessGroup, JoinAccountStudy, Study
 )
+from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint('db', __name__, url_prefix='/db')
 logger = logging.getLogger(__name__)
@@ -127,3 +129,22 @@ def get_account_details():
     }
 
     return jsonify(res)
+
+
+@blueprint.route('/edit-account-details', methods=['POST'])
+@jwt_required()
+def edit_account_details():
+    try:
+        populate_model(current_user, request.json)
+        db.session.commit()
+        msg = 'Account details updated successfully'
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
+
+    return jsonify({'msg': msg})

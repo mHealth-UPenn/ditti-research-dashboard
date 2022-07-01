@@ -31,8 +31,14 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
   }
 
   post = async (): Promise<void> => {
-    const { email, firstName, lastName } = this.state;
-    const body = { email, first_name: firstName, last_name: lastName };
+    const { email, firstName, lastName, phoneNumber } = this.state;
+    const body = {
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      phone_number: phoneNumber
+    };
+
     const opts = { method: "POST", body: JSON.stringify(body) };
 
     await makeRequest("/db/edit-account-details", opts)
@@ -73,7 +79,8 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
   };
 
   render() {
-    const { edit, editPassword, email, firstName, lastName } = this.state;
+    const { edit, editPassword, email, firstName, lastName, phoneNumber } =
+      this.state;
 
     return (
       <div className="account-menu-container bg-white border-light-l">
@@ -138,6 +145,22 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
                 <b>Email</b>
                 <br />
                 &nbsp;&nbsp;&nbsp;&nbsp;{email}
+              </span>
+            )}
+          </div>
+          <div className="account-menu-field">
+            {edit ? (
+              <TextField
+                id="phoneNumber"
+                label="Phone Number"
+                prefill={phoneNumber}
+                onKeyup={(text: string) => this.setState({ phoneNumber: text })}
+              ></TextField>
+            ) : (
+              <span>
+                <b>Phone Number</b>
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;{phoneNumber}
               </span>
             )}
           </div>
