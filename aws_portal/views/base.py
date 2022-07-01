@@ -1,23 +1,11 @@
 import logging
 import os
 import traceback
-from flask import (
-  Blueprint, current_app, jsonify, make_response, send_from_directory
-)
+from flask import Blueprint, current_app, jsonify, make_response
 from aws_portal.extensions import db
 
 blueprint = Blueprint('base', __name__)
 logger = logging.getLogger(__name__)
-
-
-@blueprint.route('/')
-def serve():
-    return send_from_directory(current_app.static_folder, 'index.html')
-
-
-@blueprint.route('/login')
-def login():
-    return send_from_directory(current_app.static_folder, 'index.html')
 
 
 @blueprint.route('/healthy')

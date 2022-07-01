@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route('/account')
-@auth_required('Read', 'Account')
+@auth_required('View', 'Admin Dashboard')
 def account():
     try:
         i = request.args.get('id')
@@ -41,7 +41,8 @@ def account():
 
 
 @blueprint.route('/account/create', methods=['POST'])
-@auth_required('Create', 'Account')
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Create', 'Accounts')
 def account_create():
     try:
         data = request.json['create']
@@ -86,7 +87,8 @@ def account_create():
 
 
 @blueprint.route('/account/edit', methods=['POST'])
-@auth_required('Edit', 'Account')
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Edit', 'Accounts')
 def account_edit():
     try:
         data = request.json['edit']
@@ -150,6 +152,8 @@ def account_edit():
 
 
 @blueprint.route('/account/archive', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Archive', 'Accounts')
 def account_archive():
     try:
         account_id = request.json['id']
@@ -166,7 +170,7 @@ def account_archive():
 
 
 @blueprint.route('/study')
-@auth_required('Read', 'Study')
+@auth_required('View', 'Admin Dashboard')
 def study():
     try:
         i = request.args.get('id')
@@ -190,7 +194,8 @@ def study():
 
 
 @blueprint.route('/study/create', methods=['POST'])
-@auth_required('Create', 'Study')
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Create', 'Studies')
 def study_create():
     try:
         data = request.json['create']
@@ -213,6 +218,8 @@ def study_create():
 
 
 @blueprint.route('/study/edit', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Edit', 'Studies')
 def study_edit():
     try:
         data = request.json['edit']
@@ -235,6 +242,8 @@ def study_edit():
 
 
 @blueprint.route('/study/archive', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Archive', 'Studies')
 def study_archive():
     try:
         study_id = request.json['id']
@@ -251,6 +260,7 @@ def study_archive():
 
 
 @blueprint.route('/access-group')
+@auth_required('View', 'Admin Dashboard')
 def access_group():
     try:
         i = request.args.get('id')
@@ -274,6 +284,8 @@ def access_group():
 
 
 @blueprint.route('/access-group/create', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Create', 'AccessGroups')
 def access_group_create():
     try:
         data = request.json['create']
@@ -314,6 +326,8 @@ def access_group_create():
 
 
 @blueprint.route('/access-group/edit', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Edit', 'AccessGroups')
 def access_group_edit():
     try:
         data = request.json['edit']
@@ -359,6 +373,8 @@ def access_group_edit():
 
 
 @blueprint.route('/access-group/archive', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Archive', 'AccessGroups')
 def access_group_archive():
     try:
         access_group_id = request.json['id']
@@ -375,6 +391,7 @@ def access_group_archive():
 
 
 @blueprint.route('/role')
+@auth_required('View', 'Admin Dashboard')
 def role():
     try:
         i = request.args.get('id')
@@ -398,6 +415,8 @@ def role():
 
 
 @blueprint.route('/role/create', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Create', 'Roles')
 def role_create():
     try:
         data = request.json['create']
@@ -433,6 +452,8 @@ def role_create():
 
 
 @blueprint.route('/role/edit', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Edit', 'Roles')
 def role_edit():
     try:
         data = request.json['edit']
@@ -470,6 +491,7 @@ def role_edit():
 
 
 @blueprint.route('/app')
+@auth_required('View', 'Admin Dashboard')
 def app():
     apps = App.query.all()
     res = [a.meta for a in apps]
@@ -477,6 +499,8 @@ def app():
 
 
 @blueprint.route('/app/create', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Create', 'Apps')
 def app_create():
     data = request.json['create']
     app = App()
@@ -499,6 +523,8 @@ def app_create():
 
 
 @blueprint.route('/app/edit', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Edit', 'Apps')
 def app_edit():
     data = request.json['edit']
     app_id = request.json['id']

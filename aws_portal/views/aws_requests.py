@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route('/scan')
-@auth_required('Read')
+@auth_required('View', 'Ditti App Dashboard')
 def scan():  # TODO update unit test
     app = 'DittiApp'  # TODO fix hard-coded app
     key = request.args.get('key')
@@ -28,7 +28,7 @@ def scan():  # TODO update unit test
 
 
 @blueprint.route('/get-taps')
-@auth_required('View', 'Taps')
+@auth_required('View', 'Ditti App Dashboard')
 def get_taps():  # TODO update unit test
     def f(left, right):
         q = 'user_permission_idBEGINS"%s"' % right
@@ -73,7 +73,7 @@ def get_taps():  # TODO update unit test
 
 
 @blueprint.route('/get-users')
-@auth_required('View', 'User')
+@auth_required('View', 'Ditti App Dashboard')
 def get_users():  # TODO: create unit test
     def f(left, right):
         q = 'user_permission_idBEGINS"%s"' % right
@@ -124,7 +124,8 @@ def get_users():  # TODO: create unit test
 
 
 @blueprint.route('/user/create', methods=['POST'])
-@auth_required('Create', 'User')
+@auth_required('View', 'Ditti App Dashboard')
+@auth_required('Create', 'Users')
 def user_create():
     msg = 'User Created Successfully'
 
@@ -150,7 +151,8 @@ def user_create():
 
 
 @blueprint.route('/user/edit', methods=['POST'])
-@auth_required('Edit', 'User')
+@auth_required('View', 'Ditti App Dashboard')
+@auth_required('Edit', 'Users')
 def user_edit():
     msg = 'User Successfully Edited'
     app = 'DittiApp'  # TODO fix hard-coded app
