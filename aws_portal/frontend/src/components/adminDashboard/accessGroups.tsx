@@ -4,10 +4,12 @@ import Navbar from "./navbar";
 import Table, { Column, TableData } from "../table/table";
 import AccessGroupsEdit from "./accessGroupsEdit";
 import { AccessGroup, ViewProps } from "../../interfaces";
-import { makeRequest } from "../../utils";
+import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 
 interface AccessGroupsState {
+  canCreate: boolean;
+  canEdit: boolean;
   accessGroups: AccessGroup[];
   columns: Column[];
   loading: boolean;
@@ -15,6 +17,8 @@ interface AccessGroupsState {
 
 class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
   state = {
+    canCreate: false,
+    canEdit: false,
     accessGroups: [],
     columns: [
       {
@@ -46,15 +50,28 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
   };
 
   async componentDidMount() {
-    makeRequest("/admin/access-group?app=1").then((accessGroups) =>
-      this.setState({ accessGroups, loading: false })
+    const create = getAccess(1, "Create", "Access Groups")
+      .then(() => this.setState({ canCreate: true }))
+      .catch(() => this.setState({ canCreate: false }));
+
+    const edit = getAccess(1, "Edit", "Access Groups")
+      .then(() => this.setState({ canEdit: true }))
+      .catch(() => this.setState({ canEdit: false }));
+
+    const accessGroups = makeRequest("/admin/access-group?app=1").then(
+      (accessGroups) => this.setState({ accessGroups })
+    );
+
+    Promise.all([create, edit, accessGroups]).then(() =>
+      this.setState({ loading: false })
     );
   }
 
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick } = this.props;
+    const { canEdit, accessGroups } = this.state;
 
-    return this.state.accessGroups.map((ag: AccessGroup) => {
+    return accessGroups.map((ag: AccessGroup) => {
       const { app, id, name, permissions } = ag;
 
       return [
@@ -97,22 +114,24 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
         {
           contents: (
             <div className="flex-left table-control">
-              <button
-                className="button-secondary"
-                onClick={() =>
-                  handleClick(
-                    ["Edit", name],
-                    <AccessGroupsEdit
-                      accessGroupId={id}
-                      flashMessage={flashMessage}
-                      goBack={goBack}
-                      handleClick={handleClick}
-                    />
-                  )
-                }
-              >
-                Edit
-              </button>
+              {canEdit ? (
+                <button
+                  className="button-secondary"
+                  onClick={() =>
+                    handleClick(
+                      ["Edit", name],
+                      <AccessGroupsEdit
+                        accessGroupId={id}
+                        flashMessage={flashMessage}
+                        goBack={goBack}
+                        handleClick={handleClick}
+                      />
+                    )
+                  }
+                >
+                  Edit
+                </button>
+              ) : null}
               <button className="button-danger">Delete</button>
             </div>
           ),
@@ -125,9 +144,9 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
 
   render() {
     const { flashMessage, goBack, handleClick } = this.props;
-    const { columns, loading } = this.state;
+    const { canCreate, columns, loading } = this.state;
 
-    const tableControl = (
+    const tableControl = canCreate ? (
       <button
         className="button-primary"
         onClick={() =>
@@ -144,6 +163,8 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
       >
         Create&nbsp;<b>+</b>
       </button>
+    ) : (
+      <React.Fragment />
     );
 
     return (

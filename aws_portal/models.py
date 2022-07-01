@@ -226,6 +226,7 @@ class Account(db.Model):
 
     def validate_ask(self, action, resource, permissions):
         query = Permission.definition == tuple_(action, resource)
+        query = query | (Permission.definition == tuple_(action, '*'))
         query = query | (Permission.definition == tuple_('*', resource))
         query = query | (Permission.definition == tuple_('*', '*'))
         valid = permissions.filter(query).first()

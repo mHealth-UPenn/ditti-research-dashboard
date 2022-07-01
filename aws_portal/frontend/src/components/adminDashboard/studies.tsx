@@ -1,13 +1,15 @@
 import * as React from "react";
 import { Component } from "react";
 import { Study, ViewProps } from "../../interfaces";
-import { makeRequest } from "../../utils";
+import { getAccess, makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
 import StudiesEdit from "./studiesEdit";
 import { SmallLoader } from "../loader";
 
 interface StudiesState {
+  canCreate: boolean;
+  canEdit: boolean;
   studies: Study[];
   columns: Column[];
   loading: boolean;
@@ -15,6 +17,8 @@ interface StudiesState {
 
 class Studies extends React.Component<ViewProps, StudiesState> {
   state = {
+    canCreate: false,
+    canEdit: false,
     studies: [],
     columns: [
       {
@@ -52,15 +56,28 @@ class Studies extends React.Component<ViewProps, StudiesState> {
   };
 
   async componentDidMount() {
-    makeRequest("/admin/study?app=1").then((studies) =>
-      this.setState({ studies, loading: false })
+    const create = getAccess(1, "Create", "Studies")
+      .then(() => this.setState({ canCreate: true }))
+      .catch(() => this.setState({ canCreate: false }));
+
+    const edit = getAccess(1, "Edit", "Studies")
+      .then(() => this.setState({ canEdit: true }))
+      .catch(() => this.setState({ canEdit: false }));
+
+    const studies = makeRequest("/admin/study?app=1").then((studies) =>
+      this.setState({ studies })
+    );
+
+    Promise.all([create, edit, studies]).then(() =>
+      this.setState({ loading: false })
     );
   }
 
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick } = this.props;
+    const { canEdit, studies } = this.state;
 
-    return this.state.studies.map((s: Study) => {
+    return studies.map((s: Study) => {
       const { acronym, dittiId, email, id, name } = s;
 
       return [
@@ -103,22 +120,24 @@ class Studies extends React.Component<ViewProps, StudiesState> {
         {
           contents: (
             <div className="flex-left table-control">
-              <button
-                className="button-secondary"
-                onClick={() =>
-                  handleClick(
-                    ["Edit", name],
-                    <StudiesEdit
-                      studyId={id}
-                      flashMessage={flashMessage}
-                      goBack={goBack}
-                      handleClick={handleClick}
-                    />
-                  )
-                }
-              >
-                Edit
-              </button>
+              {canEdit ? (
+                <button
+                  className="button-secondary"
+                  onClick={() =>
+                    handleClick(
+                      ["Edit", name],
+                      <StudiesEdit
+                        studyId={id}
+                        flashMessage={flashMessage}
+                        goBack={goBack}
+                        handleClick={handleClick}
+                      />
+                    )
+                  }
+                >
+                  Edit
+                </button>
+              ) : null}
               <button className="button-danger">Delete</button>
             </div>
           ),
@@ -131,9 +150,9 @@ class Studies extends React.Component<ViewProps, StudiesState> {
 
   render() {
     const { flashMessage, goBack, handleClick } = this.props;
-    const { columns, loading } = this.state;
+    const { canCreate, columns, loading } = this.state;
 
-    const tableControl = (
+    const tableControl = canCreate ? (
       <button
         className="button-primary"
         onClick={() =>
@@ -150,6 +169,8 @@ class Studies extends React.Component<ViewProps, StudiesState> {
       >
         Create&nbsp;<b>+</b>
       </button>
+    ) : (
+      <React.Fragment />
     );
 
     return (

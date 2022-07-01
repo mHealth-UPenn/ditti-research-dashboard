@@ -195,7 +195,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
         Create&nbsp;<b>+</b>
       </button>
     ) : (
-      <div className="flex-left table-control"></div>
+      <React.Fragment />
     );
 
     return (

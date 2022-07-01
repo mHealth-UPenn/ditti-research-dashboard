@@ -4,11 +4,13 @@ import AccountsEdit from "./accountsEdit";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import Navbar from "./navbar";
-import { makeRequest } from "../../utils";
+import { getAccess, makeRequest } from "../../utils";
 import { Account, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 
 interface AccountsState {
+  canCreate: boolean;
+  canEdit: boolean;
   accounts: Account[];
   columns: Column[];
   loading: boolean;
@@ -16,6 +18,8 @@ interface AccountsState {
 
 class Accounts extends React.Component<ViewProps, AccountsState> {
   state = {
+    canCreate: false,
+    canEdit: false,
     accounts: [],
     columns: [
       {
@@ -59,14 +63,27 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
     fading: false
   };
 
-  componentDidMount() {
-    makeRequest("/admin/account?app=1").then((accounts) =>
-      this.setState({ accounts, loading: false })
+  async componentDidMount() {
+    const create = getAccess(1, "Create", "Accounts")
+      .then(() => this.setState({ canCreate: true }))
+      .catch(() => this.setState({ canCreate: false }));
+
+    const edit = getAccess(1, "Edit", "Accounts")
+      .then(() => this.setState({ canEdit: true }))
+      .catch(() => this.setState({ canEdit: false }));
+
+    const accounts = makeRequest("/admin/account?app=1").then((accounts) =>
+      this.setState({ accounts })
+    );
+
+    Promise.all([create, edit, accounts]).then(() =>
+      this.setState({ loading: false })
     );
   }
 
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick } = this.props;
+    const { canEdit, accounts } = this.state;
 
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -74,7 +91,7 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
       day: "numeric"
     };
 
-    return this.state.accounts.map((a: Account) => {
+    return accounts.map((a: Account) => {
       const {
         createdOn,
         email,
@@ -147,22 +164,24 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
         {
           contents: (
             <div className="flex-left table-control">
-              <button
-                className="button-secondary"
-                onClick={() =>
-                  handleClick(
-                    ["Edit", name],
-                    <AccountsEdit
-                      accountId={id}
-                      flashMessage={flashMessage}
-                      goBack={goBack}
-                      handleClick={handleClick}
-                    />
-                  )
-                }
-              >
-                Edit
-              </button>
+              {canEdit ? (
+                <button
+                  className="button-secondary"
+                  onClick={() =>
+                    handleClick(
+                      ["Edit", name],
+                      <AccountsEdit
+                        accountId={id}
+                        flashMessage={flashMessage}
+                        goBack={goBack}
+                        handleClick={handleClick}
+                      />
+                    )
+                  }
+                >
+                  Edit
+                </button>
+              ) : null}
               <button className="button-danger">Delete</button>
             </div>
           ),
@@ -175,9 +194,9 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
 
   render() {
     const { flashMessage, goBack, handleClick } = this.props;
-    const { columns, loading } = this.state;
+    const { canCreate, columns, loading } = this.state;
 
-    const tableControl = (
+    const tableControl = canCreate ? (
       <button
         className="button-primary"
         onClick={() =>
@@ -194,6 +213,8 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
       >
         Create&nbsp;<b>+</b>
       </button>
+    ) : (
+      <React.Fragment />
     );
 
     return (

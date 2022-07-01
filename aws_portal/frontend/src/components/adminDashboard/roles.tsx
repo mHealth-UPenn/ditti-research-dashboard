@@ -1,13 +1,15 @@
 import * as React from "react";
 import { Component } from "react";
 import { Role, ViewProps } from "../../interfaces";
-import { makeRequest } from "../../utils";
+import { getAccess, makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
 import RolesEdit from "./rolesEdit";
 import { SmallLoader } from "../loader";
 
 interface RolesState {
+  canCreate: boolean;
+  canEdit: boolean;
   roles: Role[];
   columns: Column[];
   loading: boolean;
@@ -15,6 +17,8 @@ interface RolesState {
 
 class Roles extends React.Component<ViewProps, RolesState> {
   state = {
+    canCreate: false,
+    canEdit: false,
     roles: [],
     columns: [
       {
@@ -40,15 +44,28 @@ class Roles extends React.Component<ViewProps, RolesState> {
   };
 
   async componentDidMount() {
-    makeRequest("/admin/role?app=1").then((roles) =>
-      this.setState({ roles, loading: false })
+    const create = getAccess(1, "Create", "Roles")
+      .then(() => this.setState({ canCreate: true }))
+      .catch(() => this.setState({ canCreate: false }));
+
+    const edit = getAccess(1, "Edit", "Roles")
+      .then(() => this.setState({ canEdit: true }))
+      .catch(() => this.setState({ canEdit: false }));
+
+    const roles = makeRequest("/admin/role?app=1").then((roles) =>
+      this.setState({ roles })
+    );
+
+    Promise.all([create, edit, roles]).then(() =>
+      this.setState({ loading: false })
     );
   }
 
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick } = this.props;
+    const { canEdit, roles } = this.state;
 
-    return this.state.roles.map((r: Role) => {
+    return roles.map((r: Role) => {
       const { id, name, permissions } = r;
 
       return [
@@ -77,22 +94,24 @@ class Roles extends React.Component<ViewProps, RolesState> {
         {
           contents: (
             <div className="flex-left table-control">
-              <button
-                className="button-secondary"
-                onClick={() =>
-                  handleClick(
-                    ["Edit", name],
-                    <RolesEdit
-                      roleId={id}
-                      flashMessage={flashMessage}
-                      goBack={goBack}
-                      handleClick={handleClick}
-                    />
-                  )
-                }
-              >
-                Edit
-              </button>
+              {canEdit ? (
+                <button
+                  className="button-secondary"
+                  onClick={() =>
+                    handleClick(
+                      ["Edit", name],
+                      <RolesEdit
+                        roleId={id}
+                        flashMessage={flashMessage}
+                        goBack={goBack}
+                        handleClick={handleClick}
+                      />
+                    )
+                  }
+                >
+                  Edit
+                </button>
+              ) : null}
               <button className="button-danger">Delete</button>
             </div>
           ),
@@ -105,9 +124,9 @@ class Roles extends React.Component<ViewProps, RolesState> {
 
   render() {
     const { flashMessage, goBack, handleClick } = this.props;
-    const { columns, loading } = this.state;
+    const { canCreate, columns, loading } = this.state;
 
-    const tableControl = (
+    const tableControl = canCreate ? (
       <button
         className="button-primary"
         onClick={() =>
@@ -124,6 +143,8 @@ class Roles extends React.Component<ViewProps, RolesState> {
       >
         Create&nbsp;<b>+</b>
       </button>
+    ) : (
+      <React.Fragment />
     );
 
     return (

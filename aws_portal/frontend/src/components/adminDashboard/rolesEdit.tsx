@@ -50,6 +50,10 @@ export const resourcesRaw = [
   {
     id: 5,
     text: "Ditti App Dashboard"
+  },
+  {
+    id: 6,
+    text: "Admin Dashboard"
   }
 ];
 
