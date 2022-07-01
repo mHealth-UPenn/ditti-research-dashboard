@@ -18,6 +18,8 @@ import {
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import "./subjectVisuals.css";
+import { getAccess } from "../../utils";
+import { SmallLoader } from "../loader";
 
 interface Bout {
   start: Date;
@@ -32,10 +34,12 @@ interface SubjectVisualsProps extends ViewProps {
 }
 
 interface SubjectVisualsState {
+  canEdit: boolean;
   start: Date;
   stop: Date;
   taps: TapDetails[];
   bouts: Bout[];
+  loading: boolean;
 }
 
 class SubjectVisuals extends React.Component<
@@ -48,11 +52,19 @@ class SubjectVisuals extends React.Component<
     const taps = props.getTaps().filter((t) => t.dittiId == userPermissionId);
 
     this.state = {
+      canEdit: false,
       start: sub(new Date(new Date().setHours(3, 0, 0, 0)), { hours: 6 }),
       stop: new Date(new Date().setHours(3, 0, 0, 0)),
       taps: taps,
-      bouts: this.getBouts(taps)
+      bouts: this.getBouts(taps),
+      loading: true
     };
+  }
+
+  componentDidMount() {
+    getAccess(2, "Edit", "Users", this.props.studyDetails.id)
+      .then(() => this.setState({ canEdit: true, loading: false }))
+      .catch(() => this.setState({ canEdit: false, loading: false }));
   }
 
   getBouts = (taps: TapDetails[]): Bout[] => {
@@ -414,7 +426,7 @@ class SubjectVisuals extends React.Component<
   render() {
     const { flashMessage, goBack, handleClick, studyDetails } = this.props;
     const { userPermissionId, expTime } = this.props.user;
-    const { start, stop } = this.state;
+    const { canEdit, start, stop, loading } = this.state;
     const adjustedStart = new Date(
       start.getTime() - start.getTimezoneOffset() * 60000
     );
@@ -445,86 +457,103 @@ class SubjectVisuals extends React.Component<
       <div className="card-container">
         <div className="card-row">
           <div className="card-m bg-white shadow">
-            <div className="subject-header">
-              <div className="card-title flex-space">
-                <span>{userPermissionId}</span>
-                <button
-                  className="button-primary button-lg"
-                  style={{ width: "12rem" }}
-                  onClick={this.downloadExcel}
-                >
-                  Download Excel
-                </button>
-              </div>
-              <div className="subject-header-info">
-                <div>
-                  Expires on: <b>{expTimeFormatted}</b>
+            {loading ? (
+              <SmallLoader />
+            ) : (
+              <React.Fragment>
+                <div className="subject-header">
+                  <div className="card-title flex-space">
+                    <span>{userPermissionId}</span>
+                    <button
+                      className="button-primary button-lg"
+                      style={{ width: "12rem" }}
+                      onClick={this.downloadExcel}
+                    >
+                      Download Excel
+                    </button>
+                  </div>
+                  <div className="subject-header-info">
+                    <div>
+                      Expires on: <b>{expTimeFormatted}</b>
+                    </div>
+                    {canEdit ? (
+                      <button
+                        className="button-secondary button-lg"
+                        onClick={() =>
+                          handleClick(
+                            ["Edit"],
+                            <SubjectsEdit
+                              dittiId={userPermissionId}
+                              studyId={studyDetails.id}
+                              studyEmail={studyDetails.email}
+                              studyPrefix={studyDetails.dittiId}
+                              flashMessage={flashMessage}
+                              goBack={goBack}
+                              handleClick={handleClick}
+                            />
+                          )
+                        }
+                        style={{ width: "12rem" }}
+                      >
+                        Edit Details
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
-                <button
-                  className="button-secondary button-lg"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit"],
-                      <SubjectsEdit
-                        dittiId={userPermissionId}
-                        studyId={studyDetails.id}
-                        studyEmail={studyDetails.email}
-                        studyPrefix={studyDetails.dittiId}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick}
+                <div className="subject-display-container">
+                  <div className="subject-display-title">Visual Summary</div>
+                  <div className="subject-display-controls">
+                    <div className="subject-display-field">
+                      <span>Start:</span>
+                      <TextField
+                        type="datetime-local"
+                        value={adjustedStart.toISOString().substring(0, 16)}
+                        onKeyup={this.setStart}
                       />
-                    )
-                  }
-                  style={{ width: "12rem" }}
-                >
-                  Edit Details
-                </button>
-              </div>
-            </div>
-            <div className="subject-display-container">
-              <div className="subject-display-title">Visual Summary</div>
-              <div className="subject-display-controls">
-                <div className="subject-display-field">
-                  <span>Start:</span>
-                  <TextField
-                    type="datetime-local"
-                    value={adjustedStart.toISOString().substring(0, 16)}
-                    onKeyup={this.setStart}
-                  />
+                    </div>
+                    <div className="subject-display-field">
+                      <span>Stop:</span>
+                      <TextField
+                        type="datetime-local"
+                        value={adjustedStop.toISOString().substring(0, 16)}
+                        onKeyup={this.setStop}
+                      />
+                    </div>
+                    <div className="subject-display-buttons">
+                      <button
+                        className="button-secondary"
+                        onClick={this.decrement}
+                      >
+                        <Left />
+                      </button>
+                      <button
+                        className="button-secondary"
+                        onClick={this.increment}
+                      >
+                        <Right />
+                      </button>
+                      <button
+                        className="button-secondary"
+                        onClick={this.zoomIn}
+                        disabled={differenceInMinutes(stop, start) < 180}
+                      >
+                        <ZoomIn style={{ height: "66%", margin: "auto" }} />
+                      </button>
+                      <button
+                        className="button-secondary"
+                        onClick={this.zoomOut}
+                      >
+                        <ZoomOut style={{ height: "66%", margin: "auto" }} />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="subject-display">
+                    {this.getTapsDisplay()}
+                    {this.getBoutsDisplay()}
+                  </div>
                 </div>
-                <div className="subject-display-field">
-                  <span>Stop:</span>
-                  <TextField
-                    type="datetime-local"
-                    value={adjustedStop.toISOString().substring(0, 16)}
-                    onKeyup={this.setStop}
-                  />
-                </div>
-                <div className="subject-display-buttons">
-                  <button className="button-secondary" onClick={this.decrement}>
-                    <Left />
-                  </button>
-                  <button className="button-secondary" onClick={this.increment}>
-                    <Right />
-                  </button>
-                  <button
-                    className="button-secondary"
-                    onClick={this.zoomIn}
-                    disabled={differenceInMinutes(stop, start) < 180}
-                  >
-                    <ZoomIn style={{ height: "66%", margin: "auto" }} />
-                  </button>
-                  <button className="button-secondary" onClick={this.zoomOut}>
-                    <ZoomOut style={{ height: "66%", margin: "auto" }} />
-                  </button>
-                </div>
-              </div>
-              <div className="subject-display">
-                {this.getTapsDisplay()}
-                {this.getBoutsDisplay()}
-              </div>
-            </div>
+              </React.Fragment>
+            )}
           </div>
           <div className="card-s bg-white shadow">
             <div className="card-title">7-day summary</div>
