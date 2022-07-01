@@ -2,7 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
-import { makeRequest } from "../../utils";
+import { getAccess, makeRequest } from "../../utils";
 import { Study, User, UserDetails, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
@@ -12,6 +12,8 @@ interface SubjectsProps extends ViewProps {
 }
 
 interface SubjectsState {
+  canCreate: boolean;
+  canEdit: boolean;
   users: User[];
   columns: Column[];
   loading: boolean;
@@ -19,6 +21,8 @@ interface SubjectsState {
 
 class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   state = {
+    canCreate: false,
+    canEdit: false,
     users: [],
     columns: [
       {
@@ -56,14 +60,30 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   };
 
   componentDidMount() {
-    makeRequest(
-      `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.props.studyDetails.dittiId}"`
-    ).then((users: User[]) => this.setState({ users, loading: false }));
+    const { dittiId, id } = this.props.studyDetails;
+
+    const create = getAccess(2, "Create", "Users", id)
+      .then(() => this.setState({ canCreate: true }))
+      .catch(() => this.setState({ canCreate: false }));
+
+    const edit = getAccess(2, "Edit", "Users", id)
+      .then(() => this.setState({ canCreate: true }))
+      .catch(() => this.setState({ canCreate: false }));
+
+    const url = `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${dittiId}"`;
+    const users = makeRequest(url).then((users: User[]) =>
+      this.setState({ users })
+    );
+
+    Promise.all([create, edit, users]).then(() =>
+      this.setState({ loading: false })
+    );
   }
 
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick } = this.props;
     const { id, dittiId, email } = this.props.studyDetails;
+    const { canEdit, users } = this.state;
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
       month: "short",
@@ -72,7 +92,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
       minute: "2-digit"
     };
 
-    return this.state.users.map((u: User) => {
+    return users.map((u: User) => {
       const { tap_permission, user_permission_id, exp_time, createdAt } = u;
 
       return [
@@ -119,25 +139,27 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
         {
           contents: (
             <div className="flex-left table-control">
-              <button
-                className="button-secondary"
-                onClick={() =>
-                  handleClick(
-                    ["Edit", user_permission_id],
-                    <SubjectsEdit
-                      dittiId={user_permission_id}
-                      studyId={id}
-                      studyEmail={email}
-                      studyPrefix={dittiId}
-                      flashMessage={flashMessage}
-                      goBack={goBack}
-                      handleClick={handleClick}
-                    />
-                  )
-                }
-              >
-                Edit Details
-              </button>
+              {canEdit ? (
+                <button
+                  className="button-secondary"
+                  onClick={() =>
+                    handleClick(
+                      ["Edit", user_permission_id],
+                      <SubjectsEdit
+                        dittiId={user_permission_id}
+                        studyId={id}
+                        studyEmail={email}
+                        studyPrefix={dittiId}
+                        flashMessage={flashMessage}
+                        goBack={goBack}
+                        handleClick={handleClick}
+                      />
+                    )
+                  }
+                >
+                  Edit Details
+                </button>
+              ) : null}
             </div>
           ),
           searchValue: "",
@@ -150,9 +172,9 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   render() {
     const { flashMessage, goBack, handleClick } = this.props;
     const { id, dittiId, email } = this.props.studyDetails;
-    const { columns, loading } = this.state;
+    const { canEdit, columns, loading } = this.state;
 
-    const tableControl = (
+    const tableControl = canEdit ? (
       <button
         className="button-primary"
         onClick={() =>
@@ -172,6 +194,8 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
       >
         Create&nbsp;<b>+</b>
       </button>
+    ) : (
+      <div className="flex-left table-control"></div>
     );
 
     return (
