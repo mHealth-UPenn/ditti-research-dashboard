@@ -74,7 +74,7 @@ class TestMutationClient:
         foo.post_mutation()
 
         query = 'user_permission_id=="foo"'
-        bar = Query('DittiApp', 'User', query)
+        bar = Query('User', query)
         res = bar.scan()
         assert len(res['Items']) == 1
         assert 'exp_time' in res['Items'][0]
@@ -90,7 +90,7 @@ class TestMutationClient:
 
         connection = Connection()
         connection.open_connection('dynamodb')
-        loader = Loader('DittiApp', 'User')
+        loader = Loader('User')
         loader.connect(connection)
         loader.load_table()
         res = loader.table.delete_item(Key={'id': res['Items'][0]['id']})
@@ -111,19 +111,18 @@ class TestConnection:
 
 class TestLoader:
     def test_get_tablename(self):
-        for app in Loader.config.keys():
-            for k, v in Loader.config[app].items():
-                assert Loader.get_tablename(app, k) == v
+        for k, v in Loader.config.items():
+            assert Loader.get_tablename(k) == v
 
     def test_load_table(self):
         connection = Connection()
         connection.open_connection('dynamodb')
-        loader = Loader('DittiApp', 'User')
+        loader = Loader('User')
         loader.connect(connection)
         assert loader.table is None
 
         loader.load_table()
-        tablename = Loader.get_tablename('DittiApp', 'User')
+        tablename = Loader.get_tablename('User')
         assert loader.table is not None
         assert loader.table.name == tablename
 
@@ -131,11 +130,11 @@ class TestLoader:
 class TestUpdater:
     def test_set_key_from_query(self):
         query = 'user_permission_id=="abc123"'
-        foo = Query('DittiApp', 'User', query)
+        foo = Query('User', query)
         res = foo.scan()
         assert len(res['Items']) == 1
 
-        baz = Updater('DittiApp', 'User')
+        baz = Updater('User')
         baz.set_key_from_query(query)
         bar = res['Items'][0]['id']
         assert baz.get_key() == {'id': bar}
@@ -144,7 +143,7 @@ class TestUpdater:
         foo = Updater()
         exp = {'information': 'foo'}
         foo.set_expression(exp)
-        bar = 'set information=:i'
+        bar = 'SET information=:in'
         baz = {':i': 'foo'}
         assert foo.get_update_expression() == bar
         assert foo.get_expression_attribute_values() == baz
@@ -155,17 +154,17 @@ class TestUpdater:
         with pytest.raises(ValueError) as e:
             foo.update()
 
-        assert str(e.value) == 'app, tablekey, and key must be set'
+        assert str(e.value) == 'tablekey and key must be set'
 
     def test_update(self):
         query = 'user_permission_id=="abc123"'
-        foo = Query('DittiApp', 'User', query)
+        foo = Query('User', query)
         res = foo.scan()
         assert len(res['Items']) == 1
         assert 'information' in res['Items'][0]
         assert res['Items'][0]['information'] == ''
 
-        bar = Updater('DittiApp', 'User')
+        bar = Updater('User')
         bar.set_key_from_query(query)
         exp = {'information': 'foo'}
         bar.set_expression(exp)
@@ -232,12 +231,12 @@ class TestColumn:
 class TestScanner:
     def test_query(self):
         exp = Column('user_permission_id') == 'abc123'
-        res = Scanner('DittiApp', 'User').query(exp).scan()
+        res = Scanner('User').query(exp).scan()
         assert res['Count'] == 1
         assert res['ResponseMetadata']['HTTPStatusCode'] == 200
 
     def test_scan(self):
-        res = Scanner('DittiApp', 'User').scan()
+        res = Scanner('User').scan()
         assert res['Count']
         assert res['ResponseMetadata']['HTTPStatusCode'] == 200
 
@@ -245,7 +244,7 @@ class TestScanner:
 class TestQuery:
     def test_scan(self):
         abc123 = 'user_permission_id=="abc123"'
-        res = Query('DittiApp', 'User', abc123).scan()
+        res = Query('User', abc123).scan()
         assert res['Count'] == 1
         assert res['ResponseMetadata']['HTTPStatusCode'] == 200
 

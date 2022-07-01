@@ -67,26 +67,23 @@ class Connection:
 
 class Loader:
     config = {
-        'DittiApp': {
-            'User': os.getenv('AWS_TABLENAME_USER'),
-            'Tap': os.getenv('AWS_TABLENAME_TAP')
-        }
+        'User': os.getenv('AWS_TABLENAME_USER'),
+        'Tap': os.getenv('AWS_TABLENAME_TAP')
     }
 
-    def __init__(self, app, tablekey):
-        self.__app = app
+    def __init__(self, tablekey):
         self.__tablekey = tablekey
         self.__table = None
 
     @classmethod
-    def get_tablename(cls, app, tablekey):
-        return cls.config[app][tablekey]
+    def get_tablename(cls, tablekey):
+        return cls.config[tablekey]
 
     def connect(self, connection):
         self.__session = connection.session
 
     def load_table(self):
-        tablename = self.get_tablename(self.__app, self.__tablekey)
+        tablename = self.get_tablename(self.__tablekey)
         self.__table = self.__session.Table(tablename)
 
     @property
@@ -95,15 +92,14 @@ class Loader:
 
 
 class Updater:
-    def __init__(self, app=None, tablekey=None):
-        self.app = app
+    def __init__(self, tablekey=None):
         self.tablekey = tablekey
         self.__key = None
         self.__update_expression = None
         self.__expression_attribute_values = None
 
     def set_key_from_query(self, q, pk='id'):
-        res = Query(self.app, self.tablekey, q).scan()
+        res = Query(self.tablekey, q).scan()
         key = res['Items'][0][pk]
         self.__key = {pk: key}
 
@@ -123,12 +119,12 @@ class Updater:
         return self.__expression_attribute_values
 
     def update(self):
-        if not (self.app and self.tablekey and self.__key):
-            raise ValueError('app, tablekey, and key must be set')
+        if not (self.tablekey and self.__key):
+            raise ValueError('tablekey and key must be set')
 
         connection = Connection()
         connection.open_connection('dynamodb')
-        loader = Loader(self.app, self.tablekey)
+        loader = Loader(self.tablekey)
         loader.connect(connection)
         loader.load_table()
         res = loader.table.update_item(
@@ -179,8 +175,8 @@ class Column:
 
 
 class Scanner:
-    def __init__(self, app, tablekey):
-        self.__loader = Loader(app, tablekey)
+    def __init__(self, tablekey):
+        self.__loader = Loader(tablekey)
         self.__filter = None
 
     def query(self, expression):
@@ -213,7 +209,7 @@ class Query:
     values = r'((?<=")[\w\d\-:.]+(?="))'
     keys = r'[a-zA-Z_]+(?=")'
 
-    def __init__(self, app, key, query=None):
+    def __init__(self, key, query=None):
         if query is not None:
             self.check_query(query)
             self.expression = self.build_query(query)
@@ -221,11 +217,10 @@ class Query:
         else:
             self.expression = None
 
-        self.app = app
         self.key = key
 
     def scan(self, **kwargs):  # TODO update unit test
-        scanner = Scanner(self.app, self.key).query(self.expression)
+        scanner = Scanner(self.key).query(self.expression)
         res = scanner.scan(ReturnConsumedCapacity='TOTAL', **kwargs)
         units = res['ConsumedCapacity']['CapacityUnits']
         items = res['Items']

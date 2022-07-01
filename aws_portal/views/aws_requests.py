@@ -16,14 +16,13 @@ logger = logging.getLogger(__name__)
 @blueprint.route('/scan')
 @auth_required('View', 'Ditti App Dashboard')
 def scan():  # TODO update unit test
-    app = 'DittiApp'  # TODO fix hard-coded app
     key = request.args.get('key')
     query = request.args.get('query')
 
     if re.search(Query.invalid_chars, query) is not None:
         return jsonify({'msg': 'Invalid Query'})
 
-    res = Query(app, key, query).scan()
+    res = Query(key, query).scan()
     return jsonify(res['Items'])
 
 
@@ -38,7 +37,7 @@ def get_taps():  # TODO update unit test
         app_id = request.args['app']
         permissions = current_user.get_permissions(app_id)
         current_user.validate_ask('View', 'All Studies', permissions)
-        users = Query('DittiApp', 'User').scan()
+        users = Query('User').scan()
 
     except ValueError:
         studies = Study.query\
@@ -48,7 +47,7 @@ def get_taps():  # TODO update unit test
 
         prefixes = [s.ditti_id for s in studies]
         query = reduce(f, prefixes, '')
-        users = Query('DittiApp', 'User', query).scan()['Items']
+        users = Query('User', query).scan()['Items']
 
     except Exception as e:
         exc = traceback.format_exc()
@@ -57,7 +56,7 @@ def get_taps():  # TODO update unit test
 
         return make_response({'msg': msg}, 500)
 
-    taps = Query('DittiApp', 'Tap').scan()['Items']
+    taps = Query('Tap').scan()['Items']
 
     df_users = pd.DataFrame(users, columns=['id', 'user_permission_id'])\
         .rename(columns={'user_permission_id': 'dittiId'})
@@ -97,7 +96,7 @@ def get_users():  # TODO: create unit test
         app_id = request.args['app']
         permissions = current_user.get_permissions(app_id)
         current_user.validate_ask('View', 'All Studies', permissions)
-        users = Query('DittiApp', 'User').scan()['Items']
+        users = Query('User').scan()['Items']
         res = map(map_users, users)
 
         return jsonify(list(res))
@@ -117,7 +116,7 @@ def get_users():  # TODO: create unit test
 
     prefixes = [s.ditti_id for s in studies]
     query = reduce(f, prefixes, '')
-    users = Query('DittiApp', 'User', query).scan()['Items']
+    users = Query('User', query).scan()['Items']
     res = map(map_users, users)
 
     return jsonify(list(res))
@@ -155,7 +154,6 @@ def user_create():
 @auth_required('Edit', 'Users')
 def user_edit():
     msg = 'User Successfully Edited'
-    app = 'DittiApp'  # TODO fix hard-coded app
     user_permission_id = request.json.get('user_permission_id')
 
     if re.search(r'[^\dA-Za-z]', user_permission_id) is not None:
@@ -169,13 +167,13 @@ def user_edit():
         return jsonify({'msg': 'Invalid study acronym: %s' % acronym})
 
     query = 'user_permission_id=="%s"' % user_permission_id
-    res = Query(app, 'User', query).scan()
+    res = Query('User', query).scan()
 
     if not res['Items']:
         return jsonify({'msg': 'Ditti ID not found: %s' % user_permission_id})
 
     try:
-        updater = Updater(app, 'User')
+        updater = Updater('User')
         updater.set_key_from_query(query)
         updater.set_expression(request.json.get('edit'))
         updater.update()
