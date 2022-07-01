@@ -411,10 +411,13 @@ class AccountsEdit extends React.Component<
   getAccessGroupsSummary = () => {
     return this.state.accessGroupsSelected.map((ag: AccessGroup, i) => {
       const permissions = ag.permissions.map((p: Permission, i: number) => {
+        const action = p.action == "*" ? "All Actions" : p.action;
+        const resource = p.resource == "*" ? "All Resources" : p.resource;
+
         return (
           <span key={i}>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            {p.action + " - " + p.resource}
+            {action + " - " + resource}
             <br />
           </span>
         );
@@ -452,10 +455,13 @@ class AccountsEdit extends React.Component<
 
         if (role) {
           permissions = role.permissions.map((p, j) => {
+            const action = p.action == "*" ? "All Actions" : p.action;
+            const resource = p.resource == "*" ? "All Resources" : p.resource;
+
             return (
               <span key={j}>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                {p.action + " - " + p.resource}
+                {action + " - " + resource}
                 <br />
               </span>
             );

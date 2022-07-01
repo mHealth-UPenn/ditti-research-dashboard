@@ -279,10 +279,13 @@ class AccessGroupsEdit extends React.Component<
     return (
       <React.Fragment>
         {this.state.permissions.map((p: Permission) => {
+          const action = p.action == "*" ? "All Actions" : p.action;
+          const resource = p.resource == "*" ? "All Resources" : p.resource;
+
           return p.action || p.resource ? (
             <span key={p.id}>
               &nbsp;&nbsp;&nbsp;&nbsp;
-              {p.action + " - " + p.resource}
+              {action + " - " + resource}
               <br />
             </span>
           ) : (

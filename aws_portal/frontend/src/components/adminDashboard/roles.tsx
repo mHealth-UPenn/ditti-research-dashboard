@@ -83,7 +83,12 @@ class Roles extends React.Component<ViewProps, RolesState> {
             <div className="flex-left table-data">
               <span>
                 {permissions
-                  .map((p) => p.action + " - " + p.resource)
+                  .map((p) => {
+                    const action = p.action == "*" ? "All Actions" : p.action;
+                    const resource =
+                      p.resource == "*" ? "All Resources" : p.resource;
+                    return action + " - " + resource;
+                  })
                   .join(", ")}
               </span>
             </div>

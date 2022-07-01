@@ -253,10 +253,13 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     return (
       <React.Fragment>
         {this.state.permissions.map((p: Permission) => {
-          return p.action || p.resource ? (
+          const action = p.action == "*" ? "All Actions" : p.action;
+          const resource = p.resource == "*" ? "All Resources" : p.resource;
+
+          return action || resource ? (
             <span key={p.id}>
               &nbsp;&nbsp;&nbsp;&nbsp;
-              {p.action + " - " + p.resource}
+              {action + " - " + resource}
               <br />
             </span>
           ) : (
