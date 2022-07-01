@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Component } from "react";
 import { Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
-import { makeRequest } from "../../utils";
+import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import StudySubjects from "./studySubjects";
 import "./studySummary.css";
@@ -24,6 +24,7 @@ interface StudySummaryProps extends ViewProps {
 }
 
 interface StudySummaryState {
+  canCreate: boolean;
   studyContacts: StudyContact[];
   studyDetails: Study;
   loading: boolean;
@@ -34,6 +35,7 @@ class StudySummary extends React.Component<
   StudySummaryState
 > {
   state = {
+    canCreate: false,
     studyContacts: [],
     studyDetails: {} as Study,
     loading: true
@@ -41,6 +43,10 @@ class StudySummary extends React.Component<
 
   componentDidMount() {
     const { studyId } = this.props;
+
+    const create = getAccess(2, "Create", "Users", studyId)
+      .then(() => this.setState({ canCreate: true }))
+      .catch(() => this.setState({ canCreate: false }));
 
     const studyContacts = makeRequest(
       "/db/get-study-contacts?app=2&study=" + studyId
@@ -50,7 +56,7 @@ class StudySummary extends React.Component<
       "/db/get-study-details?app=2&study=" + studyId
     ).then((studyDetails: Study) => this.setState({ studyDetails }));
 
-    Promise.all([studyContacts, studyDetails]).then(() =>
+    Promise.all([create, studyContacts, studyDetails]).then(() =>
       this.setState({ loading: false })
     );
   }
@@ -85,7 +91,7 @@ class StudySummary extends React.Component<
 
   render() {
     const { flashMessage, getTaps, goBack, handleClick, studyId } = this.props;
-    const { loading, studyContacts, studyDetails } = this.state;
+    const { canCreate, loading, studyContacts, studyDetails } = this.state;
     const { dittiId, email, name } = studyDetails;
 
     return (
@@ -119,25 +125,27 @@ class StudySummary extends React.Component<
                   <div className="study-subjects-header">
                     <div className="study-subjects-title">Active Subjects</div>
                     <div className="study-subjects-buttons">
-                      <button
-                        className="button-primary"
-                        onClick={() =>
-                          handleClick(
-                            ["Enroll"],
-                            <SubjectsEdit
-                              flashMessage={flashMessage}
-                              dittiId=""
-                              goBack={goBack}
-                              handleClick={handleClick}
-                              studyId={studyId}
-                              studyPrefix={dittiId}
-                              studyEmail={email}
-                            />
-                          )
-                        }
-                      >
-                        Enroll subject +
-                      </button>
+                      {canCreate ? (
+                        <button
+                          className="button-primary"
+                          onClick={() =>
+                            handleClick(
+                              ["Enroll"],
+                              <SubjectsEdit
+                                flashMessage={flashMessage}
+                                dittiId=""
+                                goBack={goBack}
+                                handleClick={handleClick}
+                                studyId={studyId}
+                                studyPrefix={dittiId}
+                                studyEmail={email}
+                              />
+                            )
+                          }
+                        >
+                          Enroll subject +
+                        </button>
+                      ) : null}
                       <button
                         className="button-secondary"
                         onClick={() =>
