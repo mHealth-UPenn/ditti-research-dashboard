@@ -79,6 +79,17 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
     flashMessage(msg, "danger");
   };
 
+  hide = () => {
+    this.props.hideMenu();
+    this.setState({
+      ...this.props.accountDetails,
+      edit: false,
+      editPassword: false,
+      setPassword: "",
+      confirmPassword: ""
+    });
+  };
+
   render() {
     const { edit, editPassword, email, firstName, lastName, phoneNumber } =
       this.state;
@@ -213,10 +224,7 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
             </React.Fragment>
           ) : null}
         </div>
-        <div
-          className="account-menu-footer bg-dark"
-          onClick={this.props.hideMenu}
-        >
+        <div className="account-menu-footer bg-dark" onClick={this.hide}>
           <Right />
         </div>
       </div>
