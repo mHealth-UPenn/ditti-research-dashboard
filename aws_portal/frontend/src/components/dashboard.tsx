@@ -178,7 +178,11 @@ class Dashboard extends React.Component<any, DashboardState> {
 
     return (
       <main className="bg-light dashboard-container">
-        <Header />
+        <Header
+          handleClick={this.setView}
+          goBack={this.goBack}
+          flashMessage={this.flashMessage}
+        />
         <div
           style={{
             display: "flex",

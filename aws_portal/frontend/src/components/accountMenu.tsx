@@ -1,11 +1,13 @@
 import * as React from "react";
 import { Component } from "react";
-import { AccountDetails } from "../interfaces";
+import { AccountDetails, ResponseBody, ViewProps } from "../interfaces";
 import TextField from "./fields/textField";
 import { ReactComponent as Right } from "../icons/arrowRight.svg";
 import "./accountMenu.css";
+import { makeRequest } from "../utils";
+import AsyncButton from "./buttons/asyncButton";
 
-interface AccountMenuProps {
+interface AccountMenuProps extends ViewProps {
   accountDetails: AccountDetails;
 }
 
@@ -28,6 +30,48 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
     };
   }
 
+  post = async (): Promise<void> => {
+    const { email, firstName, lastName } = this.state;
+    const body = { email, first_name: firstName, last_name: lastName };
+    const opts = { method: "POST", body: JSON.stringify(body) };
+
+    await makeRequest("/db/edit-account-details", opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
+  };
+
+  setPassword = (): Promise<ResponseBody> => {
+    const { setPassword, confirmPassword } = this.state;
+    if (!(setPassword == confirmPassword)) throw "Passwords do not match";
+    const body = JSON.stringify({ password: setPassword });
+    const opts = { method: "POST", body: body };
+    return makeRequest("/iam/set-password", opts);
+  };
+
+  trySetPassword = async (): Promise<void> => {
+    this.setPassword().then(this.handleSuccess, this.handleFailure);
+  };
+
+  handleSuccess = (res: ResponseBody) => {
+    const { flashMessage } = this.props;
+    flashMessage(<span>{res.msg}</span>, "success");
+    this.setState({ edit: false, editPassword: false });
+  };
+
+  handleFailure = (res: ResponseBody) => {
+    const { flashMessage } = this.props;
+
+    const msg = (
+      <span>
+        <b>An unexpected error occured</b>
+        <br />
+        {res.msg ? res.msg : "Internal server error"}
+      </span>
+    );
+
+    flashMessage(msg, "danger");
+  };
+
   render() {
     const { edit, editPassword, email, firstName, lastName } = this.state;
 
@@ -39,16 +83,11 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
               <b>Account Details</b>
             </span>
             {edit ? (
-              <button
-                className="button-primary"
-                onClick={() => this.setState({ edit: !edit })}
-              >
-                Save
-              </button>
+              <AsyncButton onClick={this.post} text="Save" type="primary" />
             ) : (
               <button
                 className="button-primary"
-                onClick={() => this.setState({ edit: !edit })}
+                onClick={() => this.setState({ edit: true })}
               >
                 Edit
               </button>
@@ -111,16 +150,15 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
               <b>Password</b>
             </span>
             {editPassword ? (
-              <button
-                className="button-primary"
-                onClick={() => this.setState({ editPassword: !editPassword })}
-              >
-                Save
-              </button>
+              <AsyncButton
+                onClick={this.trySetPassword}
+                text="Save"
+                type="primary"
+              />
             ) : (
               <button
                 className="button-primary"
-                onClick={() => this.setState({ editPassword: !editPassword })}
+                onClick={() => this.setState({ editPassword: true })}
               >
                 Change
               </button>

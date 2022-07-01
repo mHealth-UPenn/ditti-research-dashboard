@@ -2,7 +2,7 @@ import * as React from "react";
 import { Component } from "react";
 import "./header.css";
 import { makeRequest } from "../utils";
-import { AccountDetails } from "../interfaces";
+import { AccountDetails, ViewProps } from "../interfaces";
 import AccountMenu from "./accountMenu";
 
 interface HeaderState {
@@ -11,7 +11,7 @@ interface HeaderState {
   showMenu: boolean;
 }
 
-class Header extends React.Component<any, HeaderState> {
+class Header extends React.Component<ViewProps, HeaderState> {
   state = {
     accountDetails: {} as AccountDetails,
     loading: true,
@@ -26,6 +26,7 @@ class Header extends React.Component<any, HeaderState> {
   }
 
   render() {
+    const { handleClick, goBack, flashMessage } = this.props;
     const { accountDetails, loading, showMenu } = this.state;
     const { email, firstName, lastName } = accountDetails;
     const name = firstName + " " + lastName;
@@ -49,7 +50,12 @@ class Header extends React.Component<any, HeaderState> {
           </div>
         </div>
         {!loading && showMenu ? (
-          <AccountMenu accountDetails={accountDetails} />
+          <AccountMenu
+            accountDetails={accountDetails}
+            handleClick={handleClick}
+            goBack={goBack}
+            flashMessage={flashMessage}
+          />
         ) : null}
       </React.Fragment>
     );
