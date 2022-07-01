@@ -20,10 +20,12 @@ logger = logging.getLogger(__name__)
 @auth_required('View', 'Admin Dashboard')
 def account():
     try:
-        i = int(request.args.get('id'))
+        i = request.args.get('id')
 
         if i:
-            q = Account.query.filter(~Account.is_archived & Account.id == i)
+            q = Account.query.filter(
+                ~Account.is_archived & Account.id == int(i)
+            )
 
         else:
             q = Account.query.filter(~Account.is_archived)
@@ -184,10 +186,10 @@ def account_archive():
 @auth_required('View', 'Admin Dashboard')
 def study():
     try:
-        i = int(request.args.get('id'))
+        i = request.args.get('id')
 
         if i:
-            q = Study.query.filter(~Study.is_archived & Study.id == i)
+            q = Study.query.filter(~Study.is_archived & Study.id == int(i))
 
         else:
             q = Study.query.filter(~Study.is_archived)
@@ -278,11 +280,11 @@ def study_archive():
 @auth_required('View', 'Admin Dashboard')
 def access_group():
     try:
-        i = int(request.args.get('id'))
+        i = request.args.get('id')
 
         if i:
             q = AccessGroup.query.filter(
-                ~AccessGroup.is_archived & AccessGroup.id == i
+                ~AccessGroup.is_archived & AccessGroup.id == int(i)
             )
 
         else:
@@ -417,10 +419,10 @@ def access_group_archive():
 @auth_required('View', 'Admin Dashboard')
 def role():
     try:
-        i = int(request.args.get('id'))
+        i = request.args.get('id')
 
         if i:
-            q = Role.query.filter(~Role.is_archived & Role.id == i)
+            q = Role.query.filter(~Role.is_archived & Role.id == int(i))
 
         else:
             q = Role.query.filter(~Role.is_archived)

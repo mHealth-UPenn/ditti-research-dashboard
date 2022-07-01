@@ -373,7 +373,8 @@ ALTER SEQUENCE public.resource_id_seq OWNED BY public.resource.id;
 
 CREATE TABLE public.role (
     id integer NOT NULL,
-    name character varying NOT NULL
+    name character varying NOT NULL,
+    is_archived boolean NOT NULL
 );
 
 
@@ -628,7 +629,7 @@ COPY public.resource (id, value) FROM stdin;
 -- Data for Name: role; Type: TABLE DATA; Schema: public; Owner: user
 --
 
-COPY public.role (id, name) FROM stdin;
+COPY public.role (id, name, is_archived) FROM stdin;
 \.
 
 

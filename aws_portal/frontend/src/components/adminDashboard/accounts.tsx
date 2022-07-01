@@ -5,7 +5,7 @@ import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import Navbar from "./navbar";
 import { getAccess, makeRequest } from "../../utils";
-import { Account, ViewProps } from "../../interfaces";
+import { Account, ResponseBody, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 
 interface AccountsState {
@@ -182,7 +182,9 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
                   Edit
                 </button>
               ) : null}
-              <button className="button-danger">Delete</button>
+              <button className="button-danger" onClick={() => this.delete(id)}>
+                Delete
+              </button>
             </div>
           ),
           searchValue: "",
@@ -190,6 +192,33 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
         }
       ];
     });
+  };
+
+  delete = (id: number): void => {
+    const body = { app: 1, id };
+    const opts = { method: "POST", body: JSON.stringify(body) };
+    makeRequest("/admin/account/archive", opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
+  };
+
+  handleSuccess = (res: ResponseBody) => {
+    const { flashMessage } = this.props;
+    flashMessage(<span>{res.msg}</span>, "success");
+  };
+
+  handleFailure = (res: ResponseBody) => {
+    const { flashMessage } = this.props;
+
+    const msg = (
+      <span>
+        <b>An unexpected error occured</b>
+        <br />
+        {res.msg ? res.msg : "Internal server error"}
+      </span>
+    );
+
+    flashMessage(msg, "danger");
   };
 
   render() {

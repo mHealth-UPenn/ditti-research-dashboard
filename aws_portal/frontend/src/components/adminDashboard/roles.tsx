@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
-import { Role, ViewProps } from "../../interfaces";
+import { ResponseBody, Role, ViewProps } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
@@ -117,7 +117,9 @@ class Roles extends React.Component<ViewProps, RolesState> {
                   Edit
                 </button>
               ) : null}
-              <button className="button-danger">Delete</button>
+              <button className="button-danger" onClick={() => this.delete(id)}>
+                Delete
+              </button>
             </div>
           ),
           searchValue: "",
@@ -125,6 +127,33 @@ class Roles extends React.Component<ViewProps, RolesState> {
         }
       ];
     });
+  };
+
+  delete = (id: number): void => {
+    const body = { app: 1, id };
+    const opts = { method: "POST", body: JSON.stringify(body) };
+    makeRequest("/admin/role/archive", opts)
+      .then(this.handleSuccess)
+      .catch(this.handleFailure);
+  };
+
+  handleSuccess = (res: ResponseBody) => {
+    const { flashMessage } = this.props;
+    flashMessage(<span>{res.msg}</span>, "success");
+  };
+
+  handleFailure = (res: ResponseBody) => {
+    const { flashMessage } = this.props;
+
+    const msg = (
+      <span>
+        <b>An unexpected error occured</b>
+        <br />
+        {res.msg ? res.msg : "Internal server error"}
+      </span>
+    );
+
+    flashMessage(msg, "danger");
   };
 
   render() {
