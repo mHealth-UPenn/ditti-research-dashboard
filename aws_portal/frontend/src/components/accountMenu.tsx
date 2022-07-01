@@ -9,6 +9,7 @@ import AsyncButton from "./buttons/asyncButton";
 
 interface AccountMenuProps extends ViewProps {
   accountDetails: AccountDetails;
+  hideMenu: () => void;
 }
 
 interface AccountMenuState extends AccountDetails {
@@ -212,7 +213,10 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
             </React.Fragment>
           ) : null}
         </div>
-        <div className="account-menu-footer bg-dark">
+        <div
+          className="account-menu-footer bg-dark"
+          onClick={this.props.hideMenu}
+        >
           <Right />
         </div>
       </div>

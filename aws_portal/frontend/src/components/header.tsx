@@ -15,7 +15,7 @@ class Header extends React.Component<ViewProps, HeaderState> {
   state = {
     accountDetails: {} as AccountDetails,
     loading: true,
-    showMenu: true
+    showMenu: false
   };
 
   componentDidMount() {
@@ -42,9 +42,12 @@ class Header extends React.Component<ViewProps, HeaderState> {
           </div>
           <div className="header-profile">
             <span>
-              {name}&nbsp;&nbsp;|&nbsp;&nbsp;{email}
+              {name ? name : ""}&nbsp;&nbsp;|&nbsp;&nbsp;{email ? email : ""}
             </span>
-            <div className="header-profile-icon">
+            <div
+              className="header-profile-icon"
+              onClick={() => this.setState({ showMenu: !showMenu })}
+            >
               <span>{initials}</span>
             </div>
           </div>
@@ -55,6 +58,7 @@ class Header extends React.Component<ViewProps, HeaderState> {
             handleClick={handleClick}
             goBack={goBack}
             flashMessage={flashMessage}
+            hideMenu={() => this.setState({ showMenu: false })}
           />
         ) : null}
       </React.Fragment>
