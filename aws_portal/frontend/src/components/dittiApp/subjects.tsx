@@ -67,8 +67,8 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
       .catch(() => this.setState({ canCreate: false }));
 
     const edit = getAccess(2, "Edit", "Users", id)
-      .then(() => this.setState({ canCreate: true }))
-      .catch(() => this.setState({ canCreate: false }));
+      .then(() => this.setState({ canEdit: true }))
+      .catch(() => this.setState({ canEdit: false }));
 
     const url = `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${dittiId}"`;
     const users = makeRequest(url).then((users: User[]) =>
@@ -172,9 +172,9 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   render() {
     const { flashMessage, goBack, handleClick } = this.props;
     const { id, dittiId, email } = this.props.studyDetails;
-    const { canEdit, columns, loading } = this.state;
+    const { canCreate, columns, loading } = this.state;
 
-    const tableControl = canEdit ? (
+    const tableControl = canCreate ? (
       <button
         className="button-primary"
         onClick={() =>
