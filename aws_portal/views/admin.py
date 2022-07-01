@@ -132,8 +132,15 @@ def account_edit():
 
             s_ids = [join.study_id for join in account.studies]
             for entry in data['studies']:
-                if entry['id'] not in s_ids:
-                    study = Study.query.get(entry['id'])
+                study = Study.query.get(entry['id'])
+
+                if entry['id'] in s_ids:
+                    join = JoinAccountStudy.query.get((account.id, study.id))
+
+                    if join.role.id != int(entry['role']['id']):
+                        join.role = Role.query.get(entry['role']['id'])
+
+                else:
                     role = Role.query.get(entry['role']['id'])
                     JoinAccountStudy(account=account, role=role, study=study)
 

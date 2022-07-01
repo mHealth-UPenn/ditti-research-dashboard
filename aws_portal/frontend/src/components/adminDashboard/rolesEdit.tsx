@@ -14,7 +14,7 @@ export const actionsRaw = [
   },
   {
     id: 1,
-    text: "Add"
+    text: "Create"
   },
   {
     id: 2,
