@@ -45,11 +45,21 @@ def get_studies():  # TODO rewrite unit test
 @jwt_required()
 def get_study_details():
     study_id = request.args['study']
-    study = Study.query\
-        .join(JoinAccountStudy)\
-        .filter(
-            JoinAccountStudy.primary_key == tuple_(current_user.id, study_id)
-        ).first()
+    app_id = request.args['app']
+
+    try:
+        permissions = current_user.get_permissions(app_id)
+        current_user.validate_ask('View', 'All Studies', permissions)
+        study = Study.query.get(study_id)
+
+    except ValueError:
+        study = Study.query\
+            .join(JoinAccountStudy)\
+            .filter(
+                JoinAccountStudy.primary_key == tuple_(
+                  current_user.id, study_id
+                )
+            ).first()
 
     res = study.meta if study is not None else {}
     return jsonify(res)
@@ -59,11 +69,21 @@ def get_study_details():
 @jwt_required()
 def get_study_contacts():
     study_id = request.args['study']
-    study = Study.query\
-        .join(JoinAccountStudy)\
-        .filter(
-            JoinAccountStudy.primary_key == tuple_(current_user.id, study_id)
-        ).first()
+    app_id = request.args['app']
+
+    try:
+        permissions = current_user.get_permissions(app_id)
+        current_user.validate_ask('View', 'All Studies', permissions)
+        study = Study.query.get(study_id)
+
+    except ValueError:
+        study = Study.query\
+            .join(JoinAccountStudy)\
+            .filter(
+                JoinAccountStudy.primary_key == tuple_(
+                  current_user.id, study_id
+                )
+            ).first()
 
     res = []
     if study is None:
