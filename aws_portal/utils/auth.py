@@ -7,7 +7,7 @@ from aws_portal.models import App, Study
 logger = logging.getLogger(__name__)
 
 
-def validate_password(data, password):
+def validate_password(password):
     if len(password) < 8:
         return 'Minimum password length is 8 characters'
 
