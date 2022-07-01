@@ -10,6 +10,7 @@ import { SmallLoader } from "../loader";
 interface StudiesState {
   canCreate: boolean;
   canEdit: boolean;
+  canArchive: boolean;
   studies: Study[];
   columns: Column[];
   loading: boolean;
@@ -19,6 +20,7 @@ class Studies extends React.Component<ViewProps, StudiesState> {
   state = {
     canCreate: false,
     canEdit: false,
+    canArchive: false,
     studies: [],
     columns: [
       {
@@ -64,18 +66,22 @@ class Studies extends React.Component<ViewProps, StudiesState> {
       .then(() => this.setState({ canEdit: true }))
       .catch(() => this.setState({ canEdit: false }));
 
+    const archive = getAccess(1, "Archive", "Studies")
+      .then(() => this.setState({ canArchive: true }))
+      .catch(() => this.setState({ canArchive: false }));
+
     const studies = makeRequest("/admin/study?app=1").then((studies) =>
       this.setState({ studies })
     );
 
-    Promise.all([create, edit, studies]).then(() =>
+    Promise.all([create, edit, archive, studies]).then(() =>
       this.setState({ loading: false })
     );
   }
 
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick } = this.props;
-    const { canEdit, studies } = this.state;
+    const { canEdit, canArchive, studies } = this.state;
 
     return studies.map((s: Study) => {
       const { acronym, dittiId, email, id, name } = s;
@@ -138,9 +144,14 @@ class Studies extends React.Component<ViewProps, StudiesState> {
                   Edit
                 </button>
               ) : null}
-              <button className="button-danger" onClick={() => this.delete(id)}>
-                Delete
-              </button>
+              {canArchive ? (
+                <button
+                  className="button-danger"
+                  onClick={() => this.delete(id)}
+                >
+                  Archive
+                </button>
+              ) : null}
             </div>
           ),
           searchValue: "",

@@ -11,6 +11,7 @@ import { SmallLoader } from "../loader";
 interface AccountsState {
   canCreate: boolean;
   canEdit: boolean;
+  canArchive: boolean;
   accounts: Account[];
   columns: Column[];
   loading: boolean;
@@ -20,6 +21,7 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
   state = {
     canCreate: false,
     canEdit: false,
+    canArchive: false,
     accounts: [],
     columns: [
       {
@@ -72,18 +74,22 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
       .then(() => this.setState({ canEdit: true }))
       .catch(() => this.setState({ canEdit: false }));
 
+    const archive = getAccess(1, "Archive", "Accounts")
+      .then(() => this.setState({ canArchive: true }))
+      .catch(() => this.setState({ canArchive: false }));
+
     const accounts = makeRequest("/admin/account?app=1").then((accounts) =>
       this.setState({ accounts })
     );
 
-    Promise.all([create, edit, accounts]).then(() =>
+    Promise.all([create, edit, archive, accounts]).then(() =>
       this.setState({ loading: false })
     );
   }
 
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick } = this.props;
-    const { canEdit, accounts } = this.state;
+    const { canEdit, canArchive, accounts } = this.state;
 
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -182,9 +188,14 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
                   Edit
                 </button>
               ) : null}
-              <button className="button-danger" onClick={() => this.delete(id)}>
-                Delete
-              </button>
+              {canArchive ? (
+                <button
+                  className="button-danger"
+                  onClick={() => this.delete(id)}
+                >
+                  Archive
+                </button>
+              ) : null}
             </div>
           ),
           searchValue: "",

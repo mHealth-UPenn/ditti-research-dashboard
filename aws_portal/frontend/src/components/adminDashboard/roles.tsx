@@ -10,6 +10,7 @@ import { SmallLoader } from "../loader";
 interface RolesState {
   canCreate: boolean;
   canEdit: boolean;
+  canArchive: boolean;
   roles: Role[];
   columns: Column[];
   loading: boolean;
@@ -19,6 +20,7 @@ class Roles extends React.Component<ViewProps, RolesState> {
   state = {
     canCreate: false,
     canEdit: false,
+    canArchive: false,
     roles: [],
     columns: [
       {
@@ -52,18 +54,22 @@ class Roles extends React.Component<ViewProps, RolesState> {
       .then(() => this.setState({ canEdit: true }))
       .catch(() => this.setState({ canEdit: false }));
 
+    const archive = getAccess(1, "Archive", "Roles")
+      .then(() => this.setState({ canArchive: true }))
+      .catch(() => this.setState({ canArchive: false }));
+
     const roles = makeRequest("/admin/role?app=1").then((roles) =>
       this.setState({ roles })
     );
 
-    Promise.all([create, edit, roles]).then(() =>
+    Promise.all([create, edit, archive, roles]).then(() =>
       this.setState({ loading: false })
     );
   }
 
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick } = this.props;
-    const { canEdit, roles } = this.state;
+    const { canEdit, canArchive, roles } = this.state;
 
     return roles.map((r: Role) => {
       const { id, name, permissions } = r;
@@ -117,9 +123,14 @@ class Roles extends React.Component<ViewProps, RolesState> {
                   Edit
                 </button>
               ) : null}
-              <button className="button-danger" onClick={() => this.delete(id)}>
-                Delete
-              </button>
+              {canArchive ? (
+                <button
+                  className="button-danger"
+                  onClick={() => this.delete(id)}
+                >
+                  Archive
+                </button>
+              ) : null}
             </div>
           ),
           searchValue: "",

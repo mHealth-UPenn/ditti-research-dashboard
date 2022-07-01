@@ -536,7 +536,7 @@ COPY public.action (id, value) FROM stdin;
 2	View
 3	Create
 4	Edit
-5	Delete
+5	Archive
 \.
 
 

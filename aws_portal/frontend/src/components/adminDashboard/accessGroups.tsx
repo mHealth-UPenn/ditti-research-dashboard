@@ -10,6 +10,7 @@ import { SmallLoader } from "../loader";
 interface AccessGroupsState {
   canCreate: boolean;
   canEdit: boolean;
+  canArchive: boolean;
   accessGroups: AccessGroup[];
   columns: Column[];
   loading: boolean;
@@ -19,6 +20,7 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
   state = {
     canCreate: false,
     canEdit: false,
+    canArchive: false,
     accessGroups: [],
     columns: [
       {
@@ -58,18 +60,22 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
       .then(() => this.setState({ canEdit: true }))
       .catch(() => this.setState({ canEdit: false }));
 
+    const archive = getAccess(1, "Archive", "Access Groups")
+      .then(() => this.setState({ canArchive: true }))
+      .catch(() => this.setState({ canArchive: false }));
+
     const accessGroups = makeRequest("/admin/access-group?app=1").then(
       (accessGroups) => this.setState({ accessGroups })
     );
 
-    Promise.all([create, edit, accessGroups]).then(() =>
+    Promise.all([create, edit, archive, accessGroups]).then(() =>
       this.setState({ loading: false })
     );
   }
 
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick } = this.props;
-    const { canEdit, accessGroups } = this.state;
+    const { canEdit, canArchive, accessGroups } = this.state;
 
     return accessGroups.map((ag: AccessGroup) => {
       const { app, id, name, permissions } = ag;
@@ -132,9 +138,14 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
                   Edit
                 </button>
               ) : null}
-              <button className="button-danger" onClick={() => this.delete(id)}>
-                Delete
-              </button>
+              {canArchive ? (
+                <button
+                  className="button-danger"
+                  onClick={() => this.delete(id)}
+                >
+                  Archive
+                </button>
+              ) : null}
             </div>
           ),
           searchValue: "",

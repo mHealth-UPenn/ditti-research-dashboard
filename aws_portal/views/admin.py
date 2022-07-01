@@ -24,7 +24,7 @@ def account():
 
         if i:
             q = Account.query.filter(
-                ~Account.is_archived & Account.id == int(i)
+                ~Account.is_archived & (Account.id == int(i))
             )
 
         else:
@@ -189,7 +189,7 @@ def study():
         i = request.args.get('id')
 
         if i:
-            q = Study.query.filter(~Study.is_archived & Study.id == int(i))
+            q = Study.query.filter(~Study.is_archived & (Study.id == int(i)))
 
         else:
             q = Study.query.filter(~Study.is_archived)
@@ -284,7 +284,7 @@ def access_group():
 
         if i:
             q = AccessGroup.query.filter(
-                ~AccessGroup.is_archived & AccessGroup.id == int(i)
+                ~AccessGroup.is_archived & (AccessGroup.id == int(i))
             )
 
         else:
@@ -422,7 +422,7 @@ def role():
         i = request.args.get('id')
 
         if i:
-            q = Role.query.filter(~Role.is_archived & Role.id == int(i))
+            q = Role.query.filter(~Role.is_archived & (Role.id == int(i)))
 
         else:
             q = Role.query.filter(~Role.is_archived)
