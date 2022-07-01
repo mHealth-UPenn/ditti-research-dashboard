@@ -90,6 +90,11 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
     });
   };
 
+  logout = async (): Promise<void> => {
+    await makeRequest("/iam/logout", { method: "POST" });
+    location.reload();
+  };
+
   render() {
     const { edit, editPassword, email, firstName, lastName, phoneNumber } =
       this.state;
@@ -223,6 +228,15 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
               </div>
             </React.Fragment>
           ) : null}
+          <div
+            className="border-light-b"
+            style={{ marginBottom: "2rem" }}
+          ></div>
+          <div className="logout-button">
+            <button className="button-danger" onClick={this.logout}>
+              Logout
+            </button>
+          </div>
         </div>
         <div className="account-menu-footer bg-dark" onClick={this.hide}>
           <Right />
