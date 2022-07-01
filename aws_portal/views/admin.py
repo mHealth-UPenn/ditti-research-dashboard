@@ -97,7 +97,7 @@ def account_edit():
         password = data['password']
 
         if not password:
-            del password
+            del data['password']
 
         else:
             valid = validate_password(data, password)

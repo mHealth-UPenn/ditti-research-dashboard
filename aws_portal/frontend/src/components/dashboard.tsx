@@ -1,6 +1,5 @@
 import * as React from "react";
 import { Component } from "react";
-import Accounts from "./adminDashboard/accounts";
 import StudiesView from "./dittiApp/studies";
 import Header from "./header";
 import Home from "./home";
@@ -12,12 +11,6 @@ import { dummyData } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
 
 interface DashboardState {
-  apps: {
-    breadcrumbs: string[];
-    name: string;
-    id: number;
-    view: React.ReactElement;
-  }[];
   breadcrumbs: { name: string; view: React.ReactElement }[];
   flashMessages: { id: number; element: React.ReactElement }[];
   history: { name: string; view: React.ReactElement }[][];
@@ -30,11 +23,17 @@ class Dashboard extends React.Component<any, DashboardState> {
   constructor(props: any) {
     super(props);
 
-    const apps = this.getApps();
-    const view = <Home apps={apps} handleClick={this.setView} />;
+    const view = (
+      <Home
+        getTapsAsync={this.getTapsAsync}
+        getTaps={this.getTaps}
+        handleClick={this.setView}
+        goBack={this.goBack}
+        flashMessage={this.flashMessage}
+      />
+    );
 
     this.state = {
-      apps: apps,
       breadcrumbs: [{ name: "Home", view: view }],
       flashMessages: [],
       history: [],
@@ -43,37 +42,6 @@ class Dashboard extends React.Component<any, DashboardState> {
       view: view
     };
   }
-
-  getApps = () => {
-    return [
-      {
-        breadcrumbs: ["Ditti App"],
-        name: "Ditti App",
-        id: 1,
-        view: (
-          <StudiesView
-            getTapsAsync={this.getTapsAsync}
-            getTaps={this.getTaps}
-            handleClick={this.setView}
-            goBack={this.goBack}
-            flashMessage={this.flashMessage}
-          />
-        )
-      },
-      {
-        breadcrumbs: ["Admin Dashboard", "Accounts"],
-        name: "Admin Dashboard",
-        id: 2,
-        view: (
-          <Accounts
-            handleClick={this.setView}
-            goBack={this.goBack}
-            flashMessage={this.flashMessage}
-          />
-        )
-      }
-    ];
-  };
 
   getTapsAsync = async (): Promise<TapDetails[]> => {
     // let { taps } = this.state;

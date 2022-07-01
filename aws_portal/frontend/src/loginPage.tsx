@@ -34,17 +34,23 @@ class LoginPage extends React.Component<any, LoginPageState> {
   };
 
   componentDidMount() {
-    makeRequest("/iam/check-login").then((res: ResponseBody) => {
-      const set = { loading: false, fading: true };
+    makeRequest("/iam/check-login")
+      .then((res: ResponseBody) => {
+        const set = { loading: false, fading: true };
 
-      if (res.msg == "First login")
-        this.setState({ ...set, firstLogin: true, loggedIn: true });
-      else if (res.msg == "Login successful")
-        this.setState({ ...set, firstLogin: false, loggedIn: true });
-      else this.setState({ ...set, loggedIn: false });
+        if (res.msg == "First login")
+          this.setState({ ...set, firstLogin: true, loggedIn: true });
+        else if (res.msg == "Login successful")
+          this.setState({ ...set, firstLogin: false, loggedIn: true });
+        else this.setState({ ...set, loggedIn: false });
 
-      setTimeout(() => this.setState({ fading: false }), 500);
-    });
+        setTimeout(() => this.setState({ fading: false }), 500);
+      })
+      .catch((res: ResponseBody) => {
+        console.log(res.msg);
+        this.setState({ loading: false, fading: true, loggedIn: false });
+        setTimeout(() => this.setState({ fading: false }), 500);
+      });
   }
 
   logIn = (): Promise<ResponseBody> => {
