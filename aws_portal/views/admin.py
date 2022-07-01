@@ -20,15 +20,15 @@ logger = logging.getLogger(__name__)
 @auth_required('View', 'Admin Dashboard')
 def account():
     try:
-        i = request.args.get('id')
+        i = int(request.args.get('id'))
 
         if i:
-            accounts = [Account.query.get(i)]
+            q = Account.query.filter(~Account.is_archived & Account.id == i)
 
         else:
-            accounts = Account.query.all()
+            q = Account.query.filter(~Account.is_archived)
 
-        res = [a.meta for a in accounts]
+        res = [a.meta for a in q.all()]
         return jsonify(res)
 
     except Exception:
@@ -184,15 +184,15 @@ def account_archive():
 @auth_required('View', 'Admin Dashboard')
 def study():
     try:
-        i = request.args.get('id')
+        i = int(request.args.get('id'))
 
         if i:
-            studies = [Study.query.get(i)]
+            q = Study.query.filter(~Study.is_archived & Study.id == i)
 
         else:
-            studies = Study.query.all()
+            q = Study.query.filter(~Study.is_archived)
 
-        res = [s.meta for s in studies]
+        res = [s.meta for s in q.all()]
         return jsonify(res)
 
     except Exception:
@@ -278,19 +278,17 @@ def study_archive():
 @auth_required('View', 'Admin Dashboard')
 def access_group():
     try:
-        i = request.args.get('id')
+        i = int(request.args.get('id'))
 
         if i:
-            access_groups = AccessGroup.query.filter(
+            q = AccessGroup.query.filter(
                 ~AccessGroup.is_archived & AccessGroup.id == i
             )
 
         else:
-            access_groups = AccessGroup.query.filter(
-                ~AccessGroup.is_archived
-            )
+            q = AccessGroup.query.filter(~AccessGroup.is_archived)
 
-        res = [a.meta for a in access_groups.all()]
+        res = [a.meta for a in q.all()]
         return jsonify(res)
 
     except Exception:
@@ -419,15 +417,15 @@ def access_group_archive():
 @auth_required('View', 'Admin Dashboard')
 def role():
     try:
-        i = request.args.get('id')
+        i = int(request.args.get('id'))
 
         if i:
-            roles = [Role.query.get(i)]
+            q = Role.query.filter(~Role.is_archived & Role.id == i)
 
         else:
-            roles = Role.query.all()
+            q = Role.query.filter(~Role.is_archived)
 
-        res = [r.meta for r in roles]
+        res = [r.meta for r in q.all()]
         return jsonify(res)
 
     except Exception:

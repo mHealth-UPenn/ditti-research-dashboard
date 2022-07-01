@@ -1,11 +1,14 @@
-from flask import Blueprint, jsonify, request
+import logging
+import traceback
+from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import current_user, jwt_required
 from sqlalchemy.sql import tuple_
 from aws_portal.models import (
-    AccessGroup, App, JoinAccountAccessGroup, JoinAccountStudy, Study
+    AccessGroup, Account, App, JoinAccountAccessGroup, JoinAccountStudy, Study
 )
 
 blueprint = Blueprint('db', __name__, url_prefix='/db')
+logger = logging.getLogger(__name__)
 
 
 @blueprint.route('/get-apps')
@@ -27,18 +30,23 @@ def get_studies():  # TODO rewrite unit test
         app_id = request.args['app']
         permissions = current_user.get_permissions(app_id)
         current_user.validate_ask('View', 'All Studies', permissions)
-        studies = Study.query.all()
+        q = Study.query.filter(~Study.is_archived)
 
     except ValueError:
-        studies = Study.query\
+        q = Study.query\
+            .filter(~Study.is_archived)\
             .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == current_user.id)\
-            .all()
+            .filter(JoinAccountStudy.account_id == current_user.id)
 
     except Exception:
-        studies = []
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
 
-    return jsonify([s.meta for s in studies])
+        return make_response({'msg': msg}, 500)
+
+    res = [s.meta for s in q.all()]
+    return jsonify(res)
 
 
 @blueprint.route('/get-study-details')
@@ -81,7 +89,7 @@ def get_study_contacts():
             .join(JoinAccountStudy)\
             .filter(
                 JoinAccountStudy.primary_key == tuple_(
-                  current_user.id, study_id
+                    current_user.id, study_id
                 )
             ).first()
 
@@ -89,9 +97,11 @@ def get_study_contacts():
     if study is None:
         return jsonify(res)
 
-    joins = JoinAccountStudy.query.filter(
-        JoinAccountStudy.study_id == study_id
-    ).all()
+    joins = JoinAccountStudy.query\
+        .filter(JoinAccountStudy.study_id == study_id)\
+        .join(Account)\
+        .filter(~Account.is_archived)\
+        .all()
 
     for join in joins:
         account = {
@@ -113,7 +123,7 @@ def get_account_details():
         'FirstName': current_user.first_name,
         'LastName': current_user.last_name,
         'Email': current_user.email,
-        'PhoneNumber': None
+        'PhoneNumber': current_user.phone_number
     }
 
     return jsonify(res)
