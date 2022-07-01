@@ -407,6 +407,7 @@ class Role(db.Model):
     __tablename__ = 'role'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
     permissions = db.relationship(
         'JoinRolePermission',

@@ -170,8 +170,12 @@ def account_archive():
         msg = 'Account Archived Successfully'
 
     except Exception:
-        msg = traceback.format_exc()
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
@@ -260,8 +264,12 @@ def study_archive():
         msg = 'Study Archived Successfully'
 
     except Exception:
-        msg = traceback.format_exc()
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
@@ -292,7 +300,7 @@ def access_group():
 
 @blueprint.route('/access-group/create', methods=['POST'])
 @auth_required('View', 'Admin Dashboard')
-@auth_required('Create', 'AccessGroups')
+@auth_required('Create', 'Access Groups')
 def access_group_create():
     try:
         data = request.json['create']
@@ -335,7 +343,7 @@ def access_group_create():
 
 @blueprint.route('/access-group/edit', methods=['POST'])
 @auth_required('View', 'Admin Dashboard')
-@auth_required('Edit', 'AccessGroups')
+@auth_required('Edit', 'Access Groups')
 def access_group_edit():
     try:
         data = request.json['edit']
@@ -383,7 +391,7 @@ def access_group_edit():
 
 @blueprint.route('/access-group/archive', methods=['POST'])
 @auth_required('View', 'Admin Dashboard')
-@auth_required('Archive', 'AccessGroups')
+@auth_required('Archive', 'Access Groups')
 def access_group_archive():
     try:
         access_group_id = request.json['id']
@@ -393,8 +401,12 @@ def access_group_archive():
         msg = 'Access Group Archived Successfully'
 
     except Exception:
-        msg = traceback.format_exc()
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
 
@@ -501,6 +513,28 @@ def role_edit():
     return jsonify({'msg': msg})
 
 
+@blueprint.route('/role/archive', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Archive', 'Role')
+def role_archive():  # TODO: create unit test
+    try:
+        role_id = request.json['id']
+        role = Role.query.get(role_id)
+        role.is_archived = True
+        db.session.commit()
+        msg = 'Role Archived Successfully'
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
+
+    return jsonify({'msg': msg})
+
+
 @blueprint.route('/app')
 @auth_required('View', 'Admin Dashboard')
 def app():
@@ -560,7 +594,7 @@ def app_edit():
 
 @blueprint.route('/action')
 @auth_required('View', 'Admin Dashboard')
-def action():
+def action():  # TODO: write unit test
     try:
         actions = Action.query.all()
         res = [a.meta for a in actions]
@@ -577,7 +611,7 @@ def action():
 
 @blueprint.route('/resource')
 @auth_required('View', 'Admin Dashboard')
-def resource():
+def resource():  # TODO: write unit test
     try:
         resources = Resource.query.all()
         res = [r.meta for r in resources]
