@@ -78,3 +78,22 @@ def set_password():
     current_user.password = password
     db.session.commit()
     return jsonify({'msg': 'Password set successful'})
+
+
+@blueprint.route('/get-access')
+@jwt_required()
+def get_access():  # TODO: write unit test
+    msg = 'Authorized'
+    app_id = request.args.get('app')
+    study_id = request.args.get('study')
+    action = request.args.get('action')
+    resource = request.args.get('resource')
+    permissions = current_user.get_permissions(app_id, study_id)
+
+    try:
+        current_user.validate_ask(action, resource, permissions)
+
+    except ValueError:
+        msg = 'Unauthorized'
+
+    return jsonify({'msg': msg})
