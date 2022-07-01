@@ -2,11 +2,11 @@ import * as React from "react";
 import { Component } from "react";
 import "./home.css";
 import { ReactComponent as Right } from "../icons/right.svg";
-import { makeRequest } from "../utils";
-import { ResponseBody, TapDetails, ViewProps } from "../interfaces";
+import { TapDetails, ViewProps } from "../interfaces";
 import StudiesView from "./dittiApp/studies";
 import Accounts from "./adminDashboard/accounts";
 import { SmallLoader } from "./loader";
+import { getAccess } from "../utils";
 
 interface HomeProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
@@ -54,27 +54,17 @@ class Home extends React.Component<HomeProps, HomeState> {
   };
 
   componentDidMount() {
-    const admin = makeRequest("/iam/get-access?app=1").then(
-      (res: ResponseBody) => {
-        if (res.msg != "Authorized") {
-          let apps = this.state.apps;
+    const admin = getAccess(1, "View", "Admin Dashboard").catch(() => {
+      let apps = this.state.apps;
+      apps = apps.filter((app) => app.name != "Admin Dashboard");
+      this.setState({ apps });
+    });
 
-          apps = apps.filter((app) => app.name != "Admin Dashboard");
-          this.setState({ apps });
-        }
-      }
-    );
-
-    const ditti = makeRequest("/iam/get-access?app=2").then(
-      (res: ResponseBody) => {
-        if (res.msg != "Authorized") {
-          let apps = this.state.apps;
-
-          apps = apps.filter((app) => app.name != "Ditti App Dashboard");
-          this.setState({ apps });
-        }
-      }
-    );
+    const ditti = getAccess(2, "View", "Ditti App Dashboard").catch(() => {
+      let apps = this.state.apps;
+      apps = apps.filter((app) => app.name != "Ditti App Dashboard");
+      this.setState({ apps });
+    });
 
     Promise.all([admin, ditti]).then(() => this.setState({ loading: false }));
   }

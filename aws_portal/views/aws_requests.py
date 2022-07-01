@@ -28,6 +28,7 @@ def scan():  # TODO update unit test
 
 @blueprint.route('/get-taps')
 @auth_required('View', 'Ditti App Dashboard')
+@auth_required('View', 'Taps')
 def get_taps():  # TODO update unit test
     def f(left, right):
         q = 'user_permission_idBEGINS"%s"' % right
@@ -73,6 +74,7 @@ def get_taps():  # TODO update unit test
 
 @blueprint.route('/get-users')
 @auth_required('View', 'Ditti App Dashboard')
+@auth_required('View', 'Users')
 def get_users():  # TODO: create unit test
     def f(left, right):
         q = 'user_permission_idBEGINS"%s"' % right

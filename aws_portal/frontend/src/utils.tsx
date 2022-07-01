@@ -1,3 +1,5 @@
+import { ResponseBody } from "./interfaces";
+
 const getCookie = (name: string): string => {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
@@ -37,4 +39,16 @@ export const makeRequest = async (url: string, opts?: any): Promise<any> => {
       else return await res.json();
     }
   );
+};
+
+export const getAccess = async (
+  app: number,
+  action: string,
+  resource: string,
+  study?: number
+): Promise<void> => {
+  let url = `/iam/get-access?app=${app}&action=${action}&resource=${resource}`;
+  if (study) url += `&study=${study}`;
+  const res: ResponseBody = await makeRequest(url);
+  if (res.msg != "Authorized") throw "Unauthorized";
 };

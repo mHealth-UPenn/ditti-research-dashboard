@@ -76,6 +76,7 @@ def set_password():
         return make_response({'msg': valid}, 400)
 
     current_user.password = password
+    current_user.is_confirmed = True
     db.session.commit()
     return jsonify({'msg': 'Password set successful'})
 

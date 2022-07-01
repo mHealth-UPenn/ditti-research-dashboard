@@ -303,7 +303,8 @@ def access_group_create():
 
             if permission is None:
                 permission = Permission()
-                populate_model(permission, entry)
+                permission.action = entry['action']
+                permission.resource = entry['resource']
 
             JoinAccessGroupPermission(
                 access_group=access_group,
@@ -351,7 +352,8 @@ def access_group_edit():
 
                 if permission is None:
                     permission = Permission()
-                    populate_model(permission, entry)
+                    permission.action = entry['action']
+                    permission.resource = entry['resource']
 
                 JoinAccessGroupPermission(
                     access_group=access_group,
@@ -432,7 +434,8 @@ def role_create():
 
             if permission is None:
                 permission = Permission()
-                populate_model(permission, entry)
+                permission.action = entry['action']
+                permission.resource = entry['resource']
 
             JoinRolePermission(role=role, permission=permission)
 
@@ -471,7 +474,8 @@ def role_edit():
 
             if permission is None:
                 permission = Permission()
-                populate_model(permission, entry)
+                permission.action = entry['action']
+                permission.resource = entry['resource']
 
             JoinRolePermission(role=role, permission=permission)
 
