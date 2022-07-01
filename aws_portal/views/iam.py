@@ -66,7 +66,7 @@ def logout():
 @jwt_required()
 def set_password():
     password = request.json['password']
-    valid = validate_password(current_user.meta, password)
+    valid = validate_password(password)
 
     if current_user.check_password(password):
         msg = 'A different password must be entered'

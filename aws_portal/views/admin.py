@@ -54,7 +54,7 @@ def account_create():
             msg = 'A password was not provided.'
             return make_response({'msg': msg}, 400)
 
-        valid = validate_password(data, password)
+        valid = validate_password(password)
         if valid != 'valid':
             return make_response({'msg': valid}, 400)
 
@@ -102,7 +102,7 @@ def account_edit():
             del data['password']
 
         else:
-            valid = validate_password(data, password)
+            valid = validate_password(password)
 
             if valid != 'valid':
                 return make_response({'msg': valid}, 400)
