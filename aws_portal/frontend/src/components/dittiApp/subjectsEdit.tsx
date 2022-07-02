@@ -266,7 +266,7 @@ class SubjectsEdit extends React.Component<
           )}
         </div>
         <div className="admin-form-summary bg-dark">
-          <h1 className="border-white-b">Study Summary</h1>
+          <h1 className="border-white-b">Subject Summary</h1>
           <span>
             Ditti ID:
             <br />

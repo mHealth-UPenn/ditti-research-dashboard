@@ -149,16 +149,24 @@ class Table extends React.Component<TableProps, TableState> {
 
     const rowsRendered = (
       <React.Fragment>
-        {data
-          .slice((page - 1) * paginationPer, page * paginationPer)
-          .map((row, i) => (
-            <TableRow
-              key={i}
-              data={row.map((cell) => {
-                return { contents: cell.contents, width: cell.width };
-              })}
-            />
-          ))}
+        {data.length ? (
+          data
+            .slice((page - 1) * paginationPer, page * paginationPer)
+            .map((row, i) => (
+              <TableRow
+                key={i}
+                data={row.map((cell) => {
+                  return { contents: cell.contents, width: cell.width };
+                })}
+              />
+            ))
+        ) : (
+          <tr className="bg-light">
+            <td className="border-light-t border-light-r no-data">
+              <i>No data to display</i>
+            </td>
+          </tr>
+        )}
       </React.Fragment>
     );
 

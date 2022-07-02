@@ -129,3 +129,11 @@ th .sort-active .svg-fill {
   justify-content: center;
   width: 3rem;
 }
+
+.no-data {
+  align-items: center;
+  color: #666699;
+  display: flex;
+  padding-left: 1rem;
+  width: 100%;
+}

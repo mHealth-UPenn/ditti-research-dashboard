@@ -65,6 +65,7 @@ h1 {
 }
 
 .card-row {
+  align-items: baseline;
   display: flex;
 }
 

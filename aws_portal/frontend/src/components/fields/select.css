@@ -1,0 +1,8 @@
+.select-placeholder {
+  background-color: white;
+  color: #B3B3CC;
+  margin-left: 1rem;
+  pointer-events: none;
+  position: absolute;
+  user-select: none;
+}

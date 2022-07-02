@@ -11,7 +11,7 @@
 .study-row-summary-l {
   display: flex;
   flex-direction: column;
-  align-items: end;
+  align-items: flex-end;
 }
 
 .study-row-summary-r {

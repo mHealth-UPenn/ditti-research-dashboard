@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Component } from "react";
+import "./select.css";
 
 interface SelectProps {
   id: number;
@@ -44,21 +45,12 @@ export default class Select extends React.Component<SelectProps, SelectState> {
         }}
       >
         {value === "0" ? (
-          <div
-            style={{
-              position: "absolute",
-              marginLeft: "1rem",
-              backgroundColor: "white",
-              color: "#B3B3CC"
-            }}
-          >
-            {placeholder}
-          </div>
+          <div className="select-placeholder">{placeholder}</div>
         ) : null}
         <select
           onChange={this.changeValue}
           value={value}
-          style={{ minHeight: "2.5rem" }}
+          style={{ minHeight: "3rem" }}
         >
           {opts.map((opt, i) => (
             <option key={i} value={opt.value}>

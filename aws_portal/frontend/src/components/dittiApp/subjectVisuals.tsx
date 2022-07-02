@@ -53,8 +53,8 @@ class SubjectVisuals extends React.Component<
 
     this.state = {
       canEdit: false,
-      start: sub(new Date(new Date().setHours(3, 0, 0, 0)), { hours: 6 }),
-      stop: new Date(new Date().setHours(3, 0, 0, 0)),
+      start: sub(new Date(new Date().setHours(9, 0, 0, 0)), { hours: 24 }),
+      stop: new Date(new Date().setHours(9, 0, 0, 0)),
       taps: taps,
       bouts: this.getBouts(taps),
       loading: true
@@ -217,7 +217,7 @@ class SubjectVisuals extends React.Component<
     const groups: { start: Date; stop: Date; taps: TapDetails[] }[] = [];
     while (i < stop) {
       const groupStart = i;
-      i = add(i, { minutes: difference / 50 });
+      i = add(i, { minutes: difference / 60 });
 
       const groupTaps = tapsFiltered.filter((t) =>
         isWithinInterval(t.time, { start: groupStart, end: i })
@@ -277,10 +277,10 @@ class SubjectVisuals extends React.Component<
 
     const xTicks: { time: Date; width: string }[] = [];
 
-    Array.from(Array(11).keys())
+    Array.from(Array(16).keys())
       .slice(1)
       .forEach((i) => {
-        const ix = Math.ceil((i / 10) * groups.length) - 1;
+        const ix = Math.ceil((i / 15) * groups.length) - 1;
         const time = groups[ix].start;
         const last = xTicks[xTicks.length - 1];
         const tick = { time, width: (ix / groups.length) * 100 + "%" };
@@ -315,7 +315,7 @@ class SubjectVisuals extends React.Component<
     Array.from(Array(maxTaps + 1).keys())
       .slice(1)
       .forEach((i) => {
-        if (i % 10) return;
+        if (i % 20) return;
         const last = hLines[hLines.length - 1];
         const height = maxTaps ? (i / maxTaps) * 100 + "%" : "100%";
         if (!last || height != last) hLines.push(height);
@@ -325,12 +325,14 @@ class SubjectVisuals extends React.Component<
       return <div key={i} className="hline" style={{ bottom: hl }}></div>;
     });
 
-    const vLines: string[] = [];
+    const vLines: { left: string; bold: boolean }[] = [];
 
     let j = new Date(add(start, { hours: 1 }).setMinutes(0, 0, 0));
     while (j < stop) {
       const thisDifference = differenceInMinutes(j, start);
-      vLines.push((thisDifference / difference) * 100 + "%");
+      const bold = Boolean(j.getHours() % 24);
+      const left = (thisDifference / difference) * 100 + "%";
+      vLines.push({ left, bold });
       j = new Date(add(j, { hours: 1 }).setMinutes(0, 0, 0));
     }
 
@@ -338,8 +340,12 @@ class SubjectVisuals extends React.Component<
       return (
         <div
           key={i}
-          className="border-light-r vline"
-          style={{ left: vl }}
+          className="vline border-light-r"
+          style={{
+            left: vl.left,
+            borderRightWidth: vl.bold ? "1px" : "3px",
+            borderRightStyle: vl.bold ? "dashed" : "solid"
+          }}
         ></div>
       );
     });
@@ -456,7 +462,7 @@ class SubjectVisuals extends React.Component<
     return (
       <div className="card-container">
         <div className="card-row">
-          <div className="card-m bg-white shadow">
+          <div className="card-l bg-white shadow">
             {loading ? (
               <SmallLoader />
             ) : (
@@ -554,9 +560,6 @@ class SubjectVisuals extends React.Component<
                 </div>
               </React.Fragment>
             )}
-          </div>
-          <div className="card-s bg-white shadow">
-            <div className="card-title">7-day summary</div>
           </div>
         </div>
       </div>

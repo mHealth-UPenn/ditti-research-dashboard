@@ -37,7 +37,7 @@
 }
 
 .taps-display {
-  align-items: end;
+  align-items: flex-end;
   display: flex;
   height: 16rem;
   margin-bottom: -2px;
@@ -78,6 +78,7 @@
   font-size: 0.9rem;
   position: absolute;
   right: 0.75rem;
+  user-select: none;
 }
 
 .taps-display-bottom {
@@ -96,7 +97,7 @@
 }
 
 .x-axis-label {
-  align-items: end;
+  align-items: flex-end;
   font-weight: bold;
   justify-content: center;
   display: flex;
@@ -116,6 +117,7 @@
   transform: rotate(60deg);
   transform-origin: left;
   white-space: pre;
+  user-select: none;
 }
 
 .hline {

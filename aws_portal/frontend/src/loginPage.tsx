@@ -49,14 +49,13 @@ class LoginPage extends React.Component<any, LoginPageState> {
         setTimeout(() => this.setState({ fading: false }), 500);
       })
       .catch((res: ResponseBody) => {
-        const msg =
-          res.msg == "Token has expired" ? (
+        if (res.msg == "Token has expired") {
+          const msg = (
             <span>Your session has expired. Please log in again</span>
-          ) : (
-            <span>{res.msg}</span>
           );
+          this.flashMessage(msg, "danger");
+        }
 
-        this.flashMessage(msg, "danger");
         this.setState({ loading: false, fading: true, loggedIn: false });
         setTimeout(() => this.setState({ fading: false }), 500);
       });
