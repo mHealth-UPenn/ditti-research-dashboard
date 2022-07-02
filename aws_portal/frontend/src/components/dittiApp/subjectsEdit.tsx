@@ -1,12 +1,19 @@
 import * as React from "react";
 import { Component } from "react";
 import TextField from "../fields/textField";
-import { ResponseBody, User, UserDetails, ViewProps } from "../../interfaces";
+import {
+  AboutSleepTemplate,
+  ResponseBody,
+  User,
+  UserDetails,
+  ViewProps
+} from "../../interfaces";
 import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
 import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
+import Select from "../fields/select";
 
 interface SubjectsEditProps extends ViewProps {
   dittiId: string;
@@ -16,6 +23,8 @@ interface SubjectsEditProps extends ViewProps {
 }
 
 interface SubjectsEditState extends UserDetails {
+  aboutSleepTemplates: AboutSleepTemplate[];
+  aboutSleepTemplateSelected: AboutSleepTemplate;
   loading: boolean;
 }
 
@@ -30,12 +39,24 @@ class SubjectsEdit extends React.Component<
     expTime: "",
     teamEmail: "",
     createdAt: "",
+    aboutSleepTemplates: [],
+    aboutSleepTemplateSelected: {} as AboutSleepTemplate,
     loading: true
   };
 
   componentDidMount() {
-    this.getPrefill().then((prefill: UserDetails) =>
-      this.setState({ ...prefill, loading: false })
+    const aboutSleepTemplates = makeRequest(
+      "/db/get-about-sleep-templates"
+    ).then((aboutSleepTemplates: AboutSleepTemplate[]) =>
+      this.setState({ aboutSleepTemplates })
+    );
+
+    const prefill = this.getPrefill().then((prefill: UserDetails) =>
+      this.setState({ ...prefill })
+    );
+
+    Promise.all([aboutSleepTemplates, prefill]).then(() =>
+      this.setState({ loading: false })
     );
   }
 
@@ -56,6 +77,14 @@ class SubjectsEdit extends React.Component<
   };
 
   makePrefill = (user: User[]): UserDetails => {
+    const aboutSleepTemplateSelected: AboutSleepTemplate =
+      this.state.aboutSleepTemplates.filter(
+        (ast: AboutSleepTemplate) => ast.text == user[0].information
+      )[0];
+
+    if (aboutSleepTemplateSelected)
+      this.setState({ aboutSleepTemplateSelected });
+
     return {
       tapPermission: user[0].tap_permission,
       information: user[0].information,
@@ -67,12 +96,11 @@ class SubjectsEdit extends React.Component<
   };
 
   post = async (): Promise<void> => {
-    const { tapPermission, information, userPermissionId, expTime, teamEmail } =
-      this.state;
+    const { tapPermission, userPermissionId, expTime, teamEmail } = this.state;
 
     const data = {
       tap_permission: tapPermission,
-      information: information,
+      information: this.state.aboutSleepTemplateSelected.text,
       user_permission_id: userPermissionId,
       exp_time: expTime,
       team_email: teamEmail
@@ -114,9 +142,25 @@ class SubjectsEdit extends React.Component<
     flashMessage(msg, "danger");
   };
 
+  selectAboutSleepTemplate = (id: number): void => {
+    const aboutSleepTemplateSelected = this.state.aboutSleepTemplates.filter(
+      (a: AboutSleepTemplate) => a.id == id
+    )[0];
+
+    if (aboutSleepTemplateSelected)
+      this.setState({ aboutSleepTemplateSelected });
+  };
+
+  getSelectedAboutSleepTemplate = (): number => {
+    const { aboutSleepTemplateSelected } = this.state;
+    return aboutSleepTemplateSelected ? aboutSleepTemplateSelected.id : 0;
+  };
+
   render() {
     const { dittiId, studyEmail, studyPrefix } = this.props;
     const {
+      aboutSleepTemplates,
+      aboutSleepTemplateSelected,
       tapPermission,
       information,
       userPermissionId,
@@ -155,8 +199,7 @@ class SubjectsEdit extends React.Component<
                       prefill={userPermissionId.replace(studyPrefix, "")}
                       label="Ditti ID"
                       onKeyup={(text: string) => {
-                        const user_permission_id = studyPrefix + text;
-                        this.setState({ userPermissionId });
+                        this.setState({ userPermissionId: studyPrefix + text });
                       }}
                       feedback=""
                     >
@@ -200,15 +243,22 @@ class SubjectsEdit extends React.Component<
                 </div>
                 <div className="admin-form-row">
                   <div className="admin-form-field">
-                    <TextField
-                      id="information"
-                      type="text"
-                      placeholder=""
-                      prefill={information}
-                      label="About sleep template (optional)"
-                      onKeyup={() => null}
-                      feedback=""
-                    />
+                    <div style={{ marginBottom: "0.5rem" }}>
+                      <b>About Sleep Template</b>
+                    </div>
+                    <div className="border-light">
+                      <Select
+                        id={0}
+                        opts={aboutSleepTemplates.map(
+                          (a: AboutSleepTemplate) => {
+                            return { value: a.id, label: a.name };
+                          }
+                        )}
+                        placeholder="Select template..."
+                        callback={this.selectAboutSleepTemplate}
+                        getDefault={this.getSelectedAboutSleepTemplate}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -243,7 +293,7 @@ class SubjectsEdit extends React.Component<
             <br />
             About sleep template:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;None
+            &nbsp;&nbsp;&nbsp;&nbsp;{aboutSleepTemplateSelected.name}
             <br />
           </span>
           <AsyncButton onClick={this.post} text={buttonText} type="primary" />

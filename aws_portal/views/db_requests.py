@@ -5,7 +5,8 @@ from flask_jwt_extended import current_user, jwt_required
 from sqlalchemy.sql import tuple_
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccountAccessGroup, JoinAccountStudy, Study
+    AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,
+    JoinAccountStudy, Study
 )
 from aws_portal.utils.db import populate_model
 
@@ -148,3 +149,22 @@ def edit_account_details():
         return make_response({'msg': msg}, 500)
 
     return jsonify({'msg': msg})
+
+
+@blueprint.route('/get-about-sleep-templates')
+@jwt_required()
+def get_about_sleep_templates():
+    try:
+        about_sleep_templates = AboutSleepTemplate.query.filter(
+            ~AboutSleepTemplate.is_archived
+        )
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+
+        return make_response({'msg': msg}, 500)
+
+    res = [a.meta for a in about_sleep_templates]
+    return jsonify(res)
