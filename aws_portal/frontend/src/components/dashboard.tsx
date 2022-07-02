@@ -204,9 +204,11 @@ class Dashboard extends React.Component<any, DashboardState> {
               handleClick={this.setView}
               hasHistory={history.length > 0}
             />
-            <div className="flash-message-container">
-              {flashMessages.map((fm) => fm.element)}
-            </div>
+            {flashMessages.length ? (
+              <div className="flash-message-container">
+                {flashMessages.map((fm) => fm.element)}
+              </div>
+            ) : null}
             {view}
           </div>
         </div>

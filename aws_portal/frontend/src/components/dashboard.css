@@ -12,12 +12,13 @@
 }
 
 .flash-message-container {
-  align-items: center;
+  align-items: stretch;
   flex-direction: column;
+  left: calc(50% - 18rem);
   position: absolute;
   display: flex;
   padding-top: 2rem;
-  width: 100%;
+  width: 36rem;
 }
 
 .flash-message {

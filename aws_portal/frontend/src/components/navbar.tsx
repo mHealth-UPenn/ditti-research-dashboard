@@ -22,18 +22,24 @@ class Navbar extends React.Component<NavbarProps, any> {
         <div className="navbar-content">
           {breadcrumbs.map((b, i, arr) => {
             if (i === arr.length - 1 || b.view.type === React.Fragment) {
-              return <span key={i}>{b.name}&nbsp;&nbsp;/&nbsp;&nbsp;</span>;
+              return (
+                <div key={i}>
+                  <span>{b.name}&nbsp;&nbsp;/&nbsp;&nbsp;</span>
+                </div>
+              );
             } else {
               return (
-                <span key={i}>
-                  <span
+                <React.Fragment key={i}>
+                  <div
                     className="link-no-underline"
                     onClick={() => handleClick([b.name], b.view)}
                   >
-                    {b.name}
-                  </span>
-                  <span>&nbsp;&nbsp;/&nbsp;&nbsp;</span>
-                </span>
+                    <span>{b.name}</span>
+                  </div>
+                  <div>
+                    <span>&nbsp;&nbsp;/&nbsp;&nbsp;</span>
+                  </div>
+                </React.Fragment>
               );
             }
           })}
