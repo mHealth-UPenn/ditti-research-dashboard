@@ -5,6 +5,7 @@ import Studies from "./studies";
 import AccessGroups from "./accessGroups";
 import Roles from "./roles";
 import { ViewProps } from "../../interfaces";
+import AboutSleepTemplates from "./aboutSleepTemplates";
 
 interface NavbarProps extends ViewProps {
   active: string;
@@ -59,6 +60,17 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
         name: "Access Groups",
         view: (
           <AccessGroups
+            handleClick={handleClick}
+            flashMessage={flashMessage}
+            goBack={goBack}
+          />
+        )
+      },
+      {
+        active: false,
+        name: "About Sleep Templates",
+        view: (
+          <AboutSleepTemplates
             handleClick={handleClick}
             flashMessage={flashMessage}
             goBack={goBack}

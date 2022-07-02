@@ -27,7 +27,8 @@ SET default_table_access_method = heap;
 CREATE TABLE public.about_sleep_template (
     id integer NOT NULL,
     name character varying NOT NULL,
-    text character varying NOT NULL
+    text character varying NOT NULL,
+    is_archived boolean NOT NULL
 );
 
 
@@ -514,7 +515,7 @@ ALTER TABLE ONLY public.study ALTER COLUMN id SET DEFAULT nextval('public.study_
 -- Data for Name: about_sleep_template; Type: TABLE DATA; Schema: public; Owner: user
 --
 
-COPY public.about_sleep_template (id, name, text) FROM stdin;
+COPY public.about_sleep_template (id, name, text, is_archived) FROM stdin;
 \.
 
 

@@ -37,7 +37,10 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
     } = this.props;
 
     return (
-      <div className="text-field-container">
+      <div
+        className="text-field-container"
+        style={type == "textarea" ? { height: "24rem" } : {}}
+      >
         {label ? (
           <label className="text-field-label" htmlFor={id}>
             {label}
@@ -50,18 +53,29 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
         >
           {this.props.children ? this.props.children : null}
           <div className="text-field-input">
-            <input
-              type={type ? type : "text"}
-              placeholder={placeholder ? placeholder : ""}
-              defaultValue={prefill ? prefill : undefined}
-              value={value}
-              onChange={
-                onKeyup
-                  ? (e) => onKeyup((e.target as HTMLInputElement).value)
-                  : () => null
-              }
-              disabled={disabled}
-            />
+            {type == "textarea" ? (
+              <textarea
+                defaultValue={prefill ? prefill : undefined}
+                onChange={
+                  onKeyup
+                    ? (e) => onKeyup((e.target as HTMLTextAreaElement).value)
+                    : () => null
+                }
+              ></textarea>
+            ) : (
+              <input
+                type={type ? type : "text"}
+                placeholder={placeholder ? placeholder : ""}
+                defaultValue={prefill ? prefill : undefined}
+                value={value}
+                onChange={
+                  onKeyup
+                    ? (e) => onKeyup((e.target as HTMLInputElement).value)
+                    : () => null
+                }
+                disabled={disabled}
+              />
+            )}
           </div>
         </div>
         {feedback ? (

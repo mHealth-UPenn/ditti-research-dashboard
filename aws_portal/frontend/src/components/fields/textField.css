@@ -38,7 +38,16 @@
   padding: 0;
 }
 
-.text-field-input input:focus {
+.text-field-input textarea {
+  border: none;
+  flex-grow: 1;
+  font-family: monospace;
+  font-size: 1rem;
+  resize: none;
+}
+
+.text-field-input input:focus,
+.text-field-input textarea:focus {
   outline: none;
 }
 

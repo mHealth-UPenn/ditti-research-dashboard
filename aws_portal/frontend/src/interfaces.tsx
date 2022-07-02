@@ -44,6 +44,12 @@ export interface Study {
   role: Role;
 }
 
+export interface AboutSleepTemplate {
+  id: number;
+  name: string;
+  text: string;
+}
+
 export interface ActionResource {
   id: number;
   value: string;

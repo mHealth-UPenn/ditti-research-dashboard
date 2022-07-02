@@ -5,9 +5,9 @@ import uuid
 from flask import Blueprint, jsonify, make_response, request
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, Action, App, JoinAccessGroupPermission,
-    JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission, Permission,
-    Resource, Role, Study
+    AboutSleepTemplate, AccessGroup, Account, Action, App,
+    JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
+    JoinRolePermission, Permission, Resource, Role, Study
 )
 from aws_portal.utils.auth import auth_required, validate_password
 from aws_portal.utils.db import populate_model
@@ -628,3 +628,106 @@ def resource():  # TODO: write unit test
         db.session.rollback()
 
         return make_response({'msg': msg}, 500)
+
+
+@blueprint.route('/about-sleep-template')
+@auth_required('View', 'Admin Dashboard')
+def about_sleep_template():
+    try:
+        i = request.args.get('id')
+
+        if i:
+            q = AboutSleepTemplate.query.filter(
+              ~AboutSleepTemplate.is_archived &
+              (AboutSleepTemplate.id == int(i))
+            )
+
+        else:
+            q = AboutSleepTemplate.query.filter(
+              ~AboutSleepTemplate.is_archived
+            )
+
+        res = [s.meta for s in q.all()]
+        return jsonify(res)
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
+
+
+@blueprint.route('/about-sleep-template/create', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Create', 'Studies')
+def about_sleep_template_create():
+    try:
+        data = request.json['create']
+        about_sleep_template = AboutSleepTemplate()
+
+        populate_model(about_sleep_template, data)
+        db.session.add(about_sleep_template)
+        db.session.commit()
+        msg = 'About sleep template Created Successfully'
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
+
+    return jsonify({'msg': msg})
+
+
+@blueprint.route('/about-sleep-template/edit', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Edit', 'Studies')
+def about_sleep_template_edit():
+    try:
+        data = request.json['edit']
+        about_sleep_template_id = request.json['id']
+        about_sleep_template = AboutSleepTemplate.query.get(
+          about_sleep_template_id
+        )
+
+        populate_model(about_sleep_template, data)
+        db.session.commit()
+        msg = 'About sleep template Edited Successfully'
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
+
+    return jsonify({'msg': msg})
+
+
+@blueprint.route('/about-sleep-template/archive', methods=['POST'])
+@auth_required('View', 'Admin Dashboard')
+@auth_required('Archive', 'Studies')
+def about_sleep_template_archive():
+    try:
+        about_sleep_template_id = request.json['id']
+        about_sleep_template = AboutSleepTemplate.query.get(
+          about_sleep_template_id
+        )
+        about_sleep_template.is_archived = True
+        db.session.commit()
+        msg = 'About sleep template Archived Successfully'
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({'msg': msg}, 500)
+
+    return jsonify({'msg': msg})
