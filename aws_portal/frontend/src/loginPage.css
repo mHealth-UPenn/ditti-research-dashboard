@@ -57,3 +57,7 @@
   padding: 0 1.5rem;
   text-decoration: none;
 }
+
+.login-flash-message-container {
+  margin-bottom: 3rem;
+}

@@ -34,10 +34,9 @@ class SubjectsEdit extends React.Component<
   };
 
   componentDidMount() {
-    this.getPrefill().then((prefill: UserDetails) => {
-      console.log(prefill);
-      this.setState({ ...prefill, loading: false });
-    });
+    this.getPrefill().then((prefill: UserDetails) =>
+      this.setState({ ...prefill, loading: false })
+    );
   }
 
   getPrefill = async (): Promise<UserDetails> => {

@@ -11,6 +11,7 @@ import { FullLoader } from "./components/loader";
 import { ResponseBody } from "./interfaces";
 
 interface LoginPageState {
+  flashMessages: { id: number; element: React.ReactElement }[];
   email: string;
   password: string;
   firstLogin: boolean;
@@ -23,6 +24,7 @@ interface LoginPageState {
 
 class LoginPage extends React.Component<any, LoginPageState> {
   state = {
+    flashMessages: [] as { id: number; element: React.ReactElement }[],
     email: "",
     password: "",
     firstLogin: false,
@@ -38,16 +40,23 @@ class LoginPage extends React.Component<any, LoginPageState> {
       .then((res: ResponseBody) => {
         const set = { loading: false, fading: true };
 
-        if (res.msg == "First login")
-          this.setState({ ...set, firstLogin: true, loggedIn: true });
-        else if (res.msg == "Login successful")
+        if (res.msg == "Login successful")
           this.setState({ ...set, firstLogin: false, loggedIn: true });
+        else if (res.msg == "First login")
+          this.setState({ ...set, firstLogin: true, loggedIn: true });
         else this.setState({ ...set, loggedIn: false });
 
         setTimeout(() => this.setState({ fading: false }), 500);
       })
       .catch((res: ResponseBody) => {
-        console.log(res.msg);
+        const msg =
+          res.msg == "Token has expired" ? (
+            <span>Your session has expired. Please log in again</span>
+          ) : (
+            <span>{res.msg}</span>
+          );
+
+        this.flashMessage(msg, "danger");
         this.setState({ loading: false, fading: true, loggedIn: false });
         setTimeout(() => this.setState({ fading: false }), 500);
       });
@@ -62,7 +71,7 @@ class LoginPage extends React.Component<any, LoginPageState> {
   };
 
   tryLogIn = (): void => {
-    this.logIn().then(this.handleLogin, this.handleException);
+    this.logIn().then(this.handleLogin, this.handleFailure);
   };
 
   setPassword = (): Promise<ResponseBody> => {
@@ -74,7 +83,7 @@ class LoginPage extends React.Component<any, LoginPageState> {
   };
 
   trySetPassword = (): void => {
-    this.setPassword().then(this.handleLogin, this.handleException);
+    this.setPassword().then(this.handleLogin, this.handleFailure);
   };
 
   handleLogin = (res: ResponseBody): void => {
@@ -82,12 +91,44 @@ class LoginPage extends React.Component<any, LoginPageState> {
     else this.setState({ firstLogin: false, loggedIn: true });
   };
 
-  handleException = (res: ResponseBody): void => {
-    console.log(res.msg);
+  handleFailure = (res: ResponseBody) => {
+    const msg = <span>{res.msg ? res.msg : "Internal server error"}</span>;
+    this.flashMessage(msg, "danger");
+  };
+
+  flashMessage = (msg: React.ReactElement, type: string): void => {
+    const { flashMessages } = this.state;
+    const id = flashMessages.length
+      ? flashMessages[flashMessages.length - 1].id + 1
+      : 0;
+
+    const element = (
+      <div key={id} className={"shadow flash-message flash-message-" + type}>
+        <div className="flash-message-content">
+          <span>{msg}</span>
+        </div>
+        <div
+          className="flash-message-close"
+          onClick={() => this.popMessage(id)}
+        >
+          <span>x</span>
+        </div>
+      </div>
+    );
+
+    flashMessages.push({ id, element });
+    this.setState({ flashMessages });
+  };
+
+  popMessage = (id: number): void => {
+    let { flashMessages } = this.state;
+    flashMessages = flashMessages.filter((fm) => fm.id != id);
+    this.setState({ flashMessages });
   };
 
   render() {
     const {
+      flashMessages,
       loading,
       email,
       password,
@@ -176,6 +217,9 @@ class LoginPage extends React.Component<any, LoginPageState> {
           <div className="login-menu-content">
             <h1>Geriatric Sleep Research Lab</h1>
             <h3>AWS Data Portal</h3>
+            <div className="login-flash-message-container">
+              {flashMessages.map((fm) => fm.element)}
+            </div>
             {firstLogin ? setPasswordFields : loginFields}
           </div>
         </div>

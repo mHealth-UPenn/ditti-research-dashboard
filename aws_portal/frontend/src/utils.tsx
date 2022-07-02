@@ -35,8 +35,13 @@ export const makeRequest = async (url: string, opts?: any): Promise<any> => {
 
   return fetch(process.env.REACT_APP_FLASK_SERVER + url, opts ? opts : {}).then(
     async (res) => {
-      if (res.status != 200) throw await res.json();
-      else return await res.json();
+      const body: ResponseBody = await res.json();
+
+      if (res.status != 200)
+        if (body.msg == "Token has expired" && url != "/iam/check-login")
+          location.reload();
+        else throw body;
+      else return body;
     }
   );
 };

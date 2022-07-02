@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import (
     create_access_token, current_user, get_jwt, jwt_required,
-    set_access_cookies, unset_jwt_cookies, verify_jwt_in_request
+    set_access_cookies, unset_jwt_cookies
 )
 from aws_portal.extensions import db
 from aws_portal.models import Account, BlockedToken
@@ -12,12 +12,8 @@ blueprint = Blueprint('iam', __name__, url_prefix='/iam')
 
 
 @blueprint.route('/check-login')
+@jwt_required()
 def check_login():
-    check = verify_jwt_in_request(optional=True)
-
-    if check is None:
-        return jsonify({'msg': 'Unauthorized'})
-
     msg = 'Login successful' if current_user.is_confirmed else 'First login'
     return jsonify({'msg': msg})
 

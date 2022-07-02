@@ -35,7 +35,6 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
       disabled,
       value
     } = this.props;
-    console.log(prefill, value);
 
     return (
       <div className="text-field-container">
