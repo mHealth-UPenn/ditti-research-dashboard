@@ -3,6 +3,7 @@ import logging
 import traceback
 import uuid
 from flask import Blueprint, jsonify, make_response, request
+from sqlalchemy import tuple_
 from aws_portal.extensions import db
 from aws_portal.models import (
     AboutSleepTemplate, AccessGroup, Account, Action, App,
@@ -317,7 +318,7 @@ def access_group_create():
         for entry in data['permissions']:
             action = entry['action']
             resource = entry['resource']
-            q = Permission.definition == (action, resource)
+            q = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(q).first()
 
             if permission is None:
@@ -366,7 +367,7 @@ def access_group_edit():
             for entry in data['permissions']:
                 action = entry['action']
                 resource = entry['resource']
-                q = Permission.definition == (action, resource)
+                q = Permission.definition == tuple_(action, resource)
                 permission = Permission.query.filter(q).first()
 
                 if permission is None:
@@ -452,7 +453,7 @@ def role_create():
         for entry in data['permissions']:
             action = entry['action']
             resource = entry['resource']
-            q = Permission.definition == (action, resource)
+            q = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(q).first()
 
             if permission is None:
@@ -492,7 +493,7 @@ def role_edit():
         for entry in data['permissions']:
             action = entry['action']
             resource = entry['resource']
-            q = Permission.definition == (action, resource)
+            q = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(q).first()
 
             if permission is None:
