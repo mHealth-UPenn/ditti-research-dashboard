@@ -10,6 +10,7 @@ class Default:
     JWT_TOKEN_LOCATION = 'cookies'
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
     JWT_CSRF_CHECK_FORM = True
+    JWT_CSRF_IN_COOKIES = False
 
     SQLALCHEMY_DATABASE_URI = os.getenv('FLASK_DB')
     SQLALCHEMY_TRACK_MODIFICATIONS = False

@@ -57,6 +57,7 @@ export interface ActionResource {
 
 export interface ResponseBody {
   msg: string;
+  csrfAccessToken: string;
 }
 
 export interface UserDetails {

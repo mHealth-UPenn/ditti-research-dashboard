@@ -30,6 +30,7 @@ kappa==0.6.0
 Mako==1.2.0
 MarkupSafe==2.1.1
 packaging==21.3
+pandas==1.4.3
 pep517==0.12.0
 pip-tools==6.6.2
 placebo==0.9.0

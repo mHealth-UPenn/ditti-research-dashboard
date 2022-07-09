@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import (
-    create_access_token, current_user, get_jwt, jwt_required,
+    create_access_token, current_user, get_csrf_token, get_jwt, jwt_required,
     set_access_cookies, unset_jwt_cookies
 )
 from aws_portal.extensions import db
@@ -15,7 +15,7 @@ blueprint = Blueprint('iam', __name__, url_prefix='/iam')
 @jwt_required()
 def check_login():
     msg = 'Login successful' if current_user.is_confirmed else 'First login'
-    return jsonify({'msg': msg})
+    return jsonify({'msg': msg, 'csrfAccessToken': get_jwt()['csrf']})
 
 
 @blueprint.route('/login', methods=['POST'])
@@ -36,7 +36,8 @@ def login():
         db.session.commit()
 
         msg = 'Login successful' if account.is_confirmed else 'First login'
-        res = jsonify({'msg': msg})
+        csrf_access_token = get_csrf_token(access_token)
+        res = jsonify({'msg': msg, 'csrfAccessToken': csrf_access_token})
         set_access_cookies(res, access_token)
 
         return res

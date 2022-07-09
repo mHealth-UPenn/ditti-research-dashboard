@@ -50,7 +50,6 @@ class LoginPage extends React.Component<any, LoginPageState> {
     id?: ReturnType<typeof setInterval>
   ): Promise<string> => {
     return await makeRequest("/healthy").then((res: ResponseBody) => {
-      console.log(res.msg);
       if (res.msg == "OK") {
         if (id) clearInterval(id);
         this.checkLogIn();
