@@ -36,23 +36,31 @@ class LoginPage extends React.Component<any, LoginPageState> {
   };
 
   componentDidMount() {
-    const id: ReturnType<typeof setInterval> = setInterval(
-      () => this.checkHealthy(id),
-      2000
-    );
+    this.checkHealthy().then((msg: string) => {
+      if (msg != "OK") {
+        const id: ReturnType<typeof setInterval> = setInterval(
+          () => this.checkHealthy(id),
+          2000
+        );
+      }
+    });
   }
 
-  checkHealthy = (id: ReturnType<typeof setInterval>) => {
-    makeRequest("/healthy").then((res: ResponseBody) => {
+  checkHealthy = async (
+    id?: ReturnType<typeof setInterval>
+  ): Promise<string> => {
+    return await makeRequest("/healthy").then((res: ResponseBody) => {
       console.log(res.msg);
       if (res.msg == "OK") {
-        clearInterval(id);
+        if (id) clearInterval(id);
         this.checkLogIn();
       }
+
+      return res.msg;
     });
   };
 
-  checkLogIn = async () => {
+  checkLogIn = () => {
     makeRequest("/iam/check-login")
       .then((res: ResponseBody) => {
         const set = { loading: false, fading: true };

@@ -52,7 +52,7 @@ def create_app(testing=False):
             exp_timestamp = get_jwt()['exp']
             now = datetime.now(timezone.utc)
             exp = now + timedelta(minutes=15)
-            target_timestamp = datetime.timestamp(exp)
+            target_timestamp = int(datetime.timestamp(exp))
 
             if target_timestamp > exp_timestamp:
                 access_token = create_access_token(current_user)
