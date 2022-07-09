@@ -95,12 +95,15 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-aws apigateway put-method-response \
-    --rest-api-id $REST_API_ID \
-    --resource-id $RESOURCE_ID \
-    --http-method ANY \
-    --status-code 200 \
-    --response-parameters "method.response.header.Access-Control-Allow-Credentials=true","method.response.header.Access-Control-Allow-Headers=true","method.response.header.Access-Control-Allow-Methods=true","method.response.header.Access-Control-Allow-Origin=true"
+RESPONSES=$(aws apigateway get-method --rest-api-id $REST_API_ID --resource-id $RESOURCE_ID --http-method ANY | jq -rc ".methodResponses")
+if [ $RESPONSES = 'null' ]; then
+    aws apigateway put-method-response \
+        --rest-api-id $REST_API_ID \
+        --resource-id $RESOURCE_ID \
+        --http-method ANY \
+        --status-code 200 \
+        --response-parameters "method.response.header.Access-Control-Allow-Credentials=true","method.response.header.Access-Control-Allow-Headers=true","method.response.header.Access-Control-Allow-Methods=true","method.response.header.Access-Control-Allow-Origin=true"
+fi
 
 aws apigateway put-integration-response \
     --rest-api-id $REST_API_ID \
