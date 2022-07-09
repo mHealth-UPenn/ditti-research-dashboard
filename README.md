@@ -135,7 +135,7 @@ Create an access policy on your S3 bucket that allows your CloudFront distributi
 1. Navigate to the ECR dashboard (https://us-east-1.console.aws.amazon.com/ecr) and click **Create repository**.
 2. Enter a name for your repository and click **Create repository**.
 
-### Create a Relational Database Service instance.
+### Create a Relational Database Service Instance
 
 The following steps will create a database with the cheapest configuration available, which is sufficient for small and intermittent workloads.
 
@@ -164,14 +164,21 @@ Create an inbound rule on your database's VPC that allows inbound requests.
 6. In the **Source** dropdown menu of the rule that you just added, select **Anywhere-IPv4**.
 7. Click **Save rules**.
 
-### Create All Database Tables.
+### Initialize the Database
 
-From a command line that supports bash, export the SQLAlchemy database URI (postgresql://postgres:**Password**@**Database Endpoint**/postgres) as an environment vairable named FLASK_DB. Replace **Password** with the master password that you created your database with. **Database Endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**. Then, enter the python interpreter and run the following code:
+:warning: **Only run these commands once**. Running any of these commands a second time can have unintended consequences.
 
-```python
-from aws_portal.app import *
-with create_app().app_context():
-    db.create_all()
+From a command line that supports bash, export the SQLAlchemy database URI (postgresql://postgres:**Password**@**Database Endpoint**/postgres) as an environment vairable named FLASK_DB. Replace **Password** with the master password that you created your database with. **Database Endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**. Then, use a postgres docker container to initialize the remote database using the `default.sql` file. Replace **Password** with the password you used to create the database with in step 4 of "Create a Relational Database Service Instance" and **URI** with the SQLAlchemy database URI.
+
+```sh
+docker run -dit --env-file postgres.env --name temp-db postgres
+docker exec -it temp-db psql -U postgres -W Password -h URI < default.sql
+```
+
+Run the flash command to create an admin account. Replace **URI** with the SQLAlchemt database URI.
+
+```sh
+flask init-admin --uri URI
 ```
 
 ### Deploy the Flask Backend to Lambda
