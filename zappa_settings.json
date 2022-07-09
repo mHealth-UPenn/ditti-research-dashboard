@@ -4,7 +4,7 @@
         "aws_region": "us-east-1",
         "environment_variables": {
             "FLASK_CONFIG": "Production",
-            "AWS_SECRET_NAME": "aws-portal-secret"
+            "AWS_SECRET_NAME": "secret-aws-portal"
         },
         "events": [{
             "function": "rds_stopper.stop",
