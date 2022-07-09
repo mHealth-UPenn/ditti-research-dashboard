@@ -85,13 +85,16 @@ def init_admin_account():
         raise ValueError('An admin account already exists: %s' % admin)
 
     query = AccessGroup.name == 'Admin'
-    access_group = AccessGroup.query.filter(query).first()
+    admin_group = AccessGroup.query.filter(query).first()
 
-    if access_group is None:
+    if admin_group is None:
         raise ValueError(
             'The admin access group has not been created. It can be created us'
             + 'ing `flask init-access-group`'
         )
+
+    query = AccessGroup.name == 'Ditti Admin'
+    ditti_group = AccessGroup.query.filter(query).first()
 
     admin = Account(
         public_id=str(uuid.uuid4()),
@@ -104,8 +107,17 @@ def init_admin_account():
 
     db.session.flush()
     admin.password = password
-    join = JoinAccountAccessGroup(account=admin, access_group=access_group)
-    db.session.add(join)
+    admin_join = JoinAccountAccessGroup(
+        account=admin, access_group=admin_group
+    )
+    db.session.add(admin_join)
+
+    if ditti_group is not None:
+        ditti_join = JoinAccountAccessGroup(
+            account=admin, access_group=ditti_group
+        )
+        db.session.add(ditti_join)
+
     db.session.add(admin)
     db.session.commit()
 
