@@ -24,7 +24,11 @@ def healthy():
         if status != 'available':
             available = False
 
-            if status == 'starting':
+            if status == 'stopped':
+                client.start_db_instance(DBInstanceIdentifier=rds_id)
+                res['msg'] = 'STARTING'
+
+            elif status == 'starting':
                 res['msg'] = 'STARTING'
 
             else:

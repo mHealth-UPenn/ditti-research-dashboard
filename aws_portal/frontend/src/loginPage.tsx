@@ -36,6 +36,23 @@ class LoginPage extends React.Component<any, LoginPageState> {
   };
 
   componentDidMount() {
+    const id: ReturnType<typeof setInterval> = setInterval(
+      () => this.checkHealthy(id),
+      2000
+    );
+  }
+
+  checkHealthy = (id: ReturnType<typeof setInterval>) => {
+    makeRequest("/healthy").then((res: ResponseBody) => {
+      console.log(res.msg);
+      if (res.msg == "OK") {
+        clearInterval(id);
+        this.checkLogIn();
+      }
+    });
+  };
+
+  checkLogIn = async () => {
     makeRequest("/iam/check-login")
       .then((res: ResponseBody) => {
         const set = { loading: false, fading: true };
@@ -59,7 +76,7 @@ class LoginPage extends React.Component<any, LoginPageState> {
         this.setState({ loading: false, fading: true, loggedIn: false });
         setTimeout(() => this.setState({ fading: false }), 500);
       });
-  }
+  };
 
   logIn = (): Promise<ResponseBody> => {
     const { email, password } = this.state;
@@ -227,7 +244,12 @@ class LoginPage extends React.Component<any, LoginPageState> {
 
     return (
       <React.Fragment>
-        {loading || fading ? <FullLoader loading={loading} /> : null}
+        {loading || fading ? (
+          <FullLoader
+            loading={loading}
+            msg={"Starting the database... This may take up to 6 minutes"}
+          />
+        ) : null}
         <div>{loggedIn && !firstLogin ? <Dashboard /> : page}</div>
       </React.Fragment>
     );

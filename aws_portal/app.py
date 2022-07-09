@@ -34,14 +34,6 @@ def create_app(testing=False):
         for k, v in secret.items():
             os.environ[k] = v
 
-        client = boto3.client('rds')
-        rds_id = os.getenv('AWS_DB_INSTANCE_IDENTIFIER')
-        res = client.describe_db_instances(DBInstanceIdentifier=rds_id)
-        status = res['DBInstances'][0]['DBInstanceStatus']
-
-        if status not in ['available', 'starting']:
-            client.start_db_instance(DBInstanceIdentifier=rds_id)
-
     CORS(
       app,
       allow_headers=['authorization', 'content-type', 'x-csrf-token'],

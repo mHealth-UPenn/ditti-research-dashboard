@@ -3,14 +3,12 @@ import { Component } from "react";
 
 interface LoaderProps {
   style: React.CSSProperties;
-}
-
-interface SmallLoaderState {
-  style: React.CSSProperties;
+  msg?: string;
 }
 
 interface FullLoaderProps {
   loading: boolean;
+  msg: string;
 }
 
 interface FullLoaderState {
@@ -20,6 +18,8 @@ interface FullLoaderState {
 
 class Loader extends React.Component<LoaderProps, any> {
   render() {
+    const { msg } = this.props;
+
     return (
       <div
         id="loader"
@@ -31,6 +31,7 @@ class Loader extends React.Component<LoaderProps, any> {
           <div></div>
           <div></div>
         </div>
+        {msg ? <span>{msg}</span> : null}
       </div>
     );
   }
@@ -55,6 +56,8 @@ export class FullLoader extends React.Component<
       alignItems: "center",
       backgroundColor: "white",
       display: "flex",
+      flexDirection: "column",
+      gap: "2rem",
       justifyContent: "center",
       height: "100%",
       position: "absolute",
@@ -64,6 +67,8 @@ export class FullLoader extends React.Component<
       alignItems: "center",
       backgroundColor: "white",
       display: "flex",
+      flexDirection: "column",
+      gap: "2rem",
       justifyContent: "center",
       height: "100%",
       opacity: 0,
@@ -75,7 +80,8 @@ export class FullLoader extends React.Component<
 
   render() {
     const { loadingStyle, fadingStyle } = this.state;
-    const style = this.props.loading ? loadingStyle : fadingStyle;
-    return <Loader style={style} />;
+    const { loading, msg } = this.props;
+    const style = loading ? loadingStyle : fadingStyle;
+    return <Loader style={style} msg={msg} />;
   }
 }
