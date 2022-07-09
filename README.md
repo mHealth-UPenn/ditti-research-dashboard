@@ -14,6 +14,13 @@ Ensure Docker is installed and running. Create an empty PostgreSQL database usin
 docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
 ```
 
+Initialize the database (only must be done once per postgres container)
+
+```sh
+docker exec -it aws-pg psql -U user -d postgres < default.sql
+flask init-admin
+```
+
 Save the following AWS credentials and variables in a file named `secret-aws.env`.
 
 | Name               | Value                        |
@@ -23,23 +30,21 @@ Save the following AWS credentials and variables in a file named `secret-aws.env
 | AWS_TABLENAME_USER | The DynamoDB User table name |
 | AWS_TABLENAME_TAP  | The DynamoDB Tap table name  |
 
-Activate the Python virtual environment, install dependencies, and export credentials automatically with the development deploy script.
+Activate the Python virtual environment, install dependencies, and export credentials automatically with the development deploy script and run the app.
 
 ```sh
 source deploy-dev.sh
-```
-
-Build the React frontend.
-
-```sh
-./react-build-dev.sh
-```
-
-Run the app.
-
-```sh
 flask run
 ```
+
+Run the React frontend.
+
+```sh
+cd aws_portal/frontend
+npm run start
+```
+
+The app can now be accessed at `localhost:3000`. `localhost` must be used for JWT token authentication to work properly in the development environment.
 
 ## Testing
 
