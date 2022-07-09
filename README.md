@@ -173,16 +173,14 @@ Create an inbound rule on your database's VPC that allows inbound requests.
 
 :warning: **Only run these commands once**. Running any of these commands a second time can have unintended consequences.
 
-From a command line that supports bash, export the SQLAlchemy database URI (postgresql://postgres:**Password**@**Database Endpoint**/postgres) as an environment vairable named FLASK_DB. Replace **Password** with the master password that you created your database with. **Database Endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**.
-
-Then, use a postgres docker container to initialize the remote database using the `default.sql` file. Replace **Password** with the master password that you created your database with and **URI** with the SQLAlchemy database URI.
+Then, use a postgres docker container to initialize the remote database using the `default.sql` file. Replace **Password** with the master password that you created your database with. **Database Endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**.
 
 ```sh
-docker run -dit --env-file postgres.env --name temp-db postgres
-docker exec -it temp-db psql -U postgres -W Password -h URI < default.sql
+docker run -dit --env-file postgres.env -e PGPASSWORD=Password --name temp-db postgres
+docker exec -i temp-db psql -U postgres -d postgres -h Database Endpoint < default.sql
 ```
 
-Run the flask command to create an admin account. Replace **URI** with the SQLAlchemy database URI.
+Run the flask command to create an admin account. Replace **URI** with the SQLAlchemy database URI (postgresql://postgres:**Password**@**Database Endpoint**/postgres).
 
 ```sh
 flask init-admin --uri URI
