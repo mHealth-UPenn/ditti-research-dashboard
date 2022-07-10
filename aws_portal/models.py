@@ -76,9 +76,9 @@ def init_admin_group():
     return access_group
 
 
-def init_admin_account():
-    email = os.getenv('FLASK_ADMIN_EMAIL')
-    password = os.getenv('FLASK_ADMIN_PASSWORD')
+def init_admin_account(email=None, password=None):
+    email = email or os.getenv('FLASK_ADMIN_EMAIL')
+    password = password or os.getenv('FLASK_ADMIN_PASSWORD')
     admin = Account.query.filter(Account.email == email).first()
 
     if admin is not None:

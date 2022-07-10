@@ -180,10 +180,10 @@ docker run -dit --env-file postgres.env -e PGPASSWORD=Password --name temp-db po
 docker exec -i temp-db psql -U postgres -d postgres -h Database Endpoint < default.sql
 ```
 
-Run the flask command to create an admin account. Replace **URI** with the SQLAlchemy database URI (postgresql://postgres:**Password**@**Database Endpoint**/postgres).
+Run the flask command to create an admin account. Replace **URI** with the SQLAlchemy database URI (postgresql://postgres:**Password**@**Database Endpoint**/postgres). Replace **Admin Email** and **Admin Password** with your desired admin login credentials.
 
 ```sh
-flask init-admin --uri URI
+flask init-admin --uri URI --email Admin Email --password Admin Password
 ```
 
 ### Deploy the Flask Backend to Lambda

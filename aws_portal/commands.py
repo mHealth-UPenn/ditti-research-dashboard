@@ -30,12 +30,14 @@ def init_admin_group_click(uri):
 
 @click.command('init-admin')
 @click.option('--uri', default=None, help='Overrides the SQLAlchemy URI.')
+@click.option('--email', default=None)
+@click.option('--password', default=None)
 @with_appcontext
-def init_admin_account_click(uri):
+def init_admin_account_click(uri, email, password):
     if uri is not None:
         current_app.config['SQLALCHEMY_DATABASE_URI'] = uri
 
-    admin = init_admin_account()
+    admin = init_admin_account(email, password)
     click.echo(repr(admin))
 
 
