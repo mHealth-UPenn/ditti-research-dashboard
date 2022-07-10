@@ -173,7 +173,7 @@ Create an inbound rule on your database's VPC that allows inbound requests.
 
 :warning: **Only run these commands once**. Running any of these commands a second time can have unintended consequences.
 
-Then, use a postgres docker container to initialize the remote database using the `default.sql` file. Replace **Password** with the master password that you created your database with. **Database Endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**.
+Then, use a postgres docker container to initialize the remote database using the `default.sql` file. Replace **Password** with the master password that you created your database with. **Database Endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**. Note that the database endpoint will only be available after the database finishes creating.
 
 ```sh
 docker run -dit --env-file postgres.env -e PGPASSWORD=Password --name temp-db postgres

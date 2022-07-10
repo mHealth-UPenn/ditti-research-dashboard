@@ -11,7 +11,6 @@
             "expression": "rate(1 hour)"
         }],
         "log_level": "INFO",
-        "profile_name": "default",
         "project_name": "aws-portal",
         "runtime": "python3.8",
         "tags": {
