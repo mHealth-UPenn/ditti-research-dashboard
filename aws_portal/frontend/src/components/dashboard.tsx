@@ -6,8 +6,8 @@ import Home from "./home";
 import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
-import { TapDetails, UserDetails } from "../interfaces";
-import { dummyData } from "./dummyData";
+import { Tap, TapDetails, UserDetails } from "../interfaces";
+// import { dummyData } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
 import { makeRequest } from "../utils";
 
@@ -45,25 +45,25 @@ class Dashboard extends React.Component<any, DashboardState> {
   }
 
   getTapsAsync = async (): Promise<TapDetails[]> => {
-    // let { taps } = this.state;
+    let { taps } = this.state;
 
-    // if (!taps.length) {
-    //   taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
-    //     return res.map((tap) => {
-    //       return { dittiId: tap.dittiId, time: new Date(tap.time) };
-    //     });
-    //   });
+    if (!taps.length) {
+      taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
+        return res.map((tap) => {
+          return { dittiId: tap.dittiId, time: new Date(tap.time) };
+        });
+      });
 
-    //   taps = taps.sort((a, b) =>
-    //     differenceInMilliseconds(new Date(a.time), new Date(b.time))
-    //   );
+      taps = taps.sort((a, b) =>
+        differenceInMilliseconds(new Date(a.time), new Date(b.time))
+      );
 
-    //   this.setState({ taps });
-    // }
-    const taps = dummyData.sort((a, b) =>
-      differenceInMilliseconds(new Date(a.time), new Date(b.time))
-    );
-    this.setState({ taps });
+      this.setState({ taps });
+    }
+    // const taps = dummyData.sort((a, b) =>
+    //   differenceInMilliseconds(new Date(a.time), new Date(b.time))
+    // );
+    // this.setState({ taps });
 
     return taps;
   };

@@ -12,7 +12,6 @@ import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
 import SubjectVisuals from "./subjectVisuals";
-import { dummyData } from "../dummyData";
 
 interface StudySubjectsProps extends ViewProps {
   studyPrefix: string;

@@ -18,8 +18,8 @@ def client(app):
         yield client
 
 
-def test_healthy(client):
-    res = client.get('/healthy')
+def test_touch(client):
+    res = client.get('/touch')
     data = json.loads(res.data)
     assert res.status_code == 200
     assert 'msg' in data

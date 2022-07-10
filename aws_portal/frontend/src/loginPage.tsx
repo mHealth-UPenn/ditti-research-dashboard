@@ -17,6 +17,7 @@ interface LoginPageState {
   firstLogin: boolean;
   loggedIn: boolean;
   loading: boolean;
+  loadingDb: boolean;
   setPassword: string;
   confirmPassword: string;
   fading: boolean;
@@ -30,26 +31,26 @@ class LoginPage extends React.Component<any, LoginPageState> {
     firstLogin: false,
     loggedIn: false,
     loading: true,
+    loadingDb: false,
     setPassword: "",
     confirmPassword: "",
     fading: false
   };
 
   componentDidMount() {
-    this.checkHealthy().then((msg: string) => {
+    this.touch().then((msg: string) => {
       if (msg != "OK") {
+        this.setState({ loadingDb: true });
         const id: ReturnType<typeof setInterval> = setInterval(
-          () => this.checkHealthy(id),
+          () => this.touch(id),
           2000
         );
       }
     });
   }
 
-  checkHealthy = async (
-    id?: ReturnType<typeof setInterval>
-  ): Promise<string> => {
-    return await makeRequest("/healthy").then((res: ResponseBody) => {
+  touch = async (id?: ReturnType<typeof setInterval>): Promise<string> => {
+    return await makeRequest("/touch").then((res: ResponseBody) => {
       if (res.msg == "OK") {
         if (id) clearInterval(id);
         this.checkLogIn();
@@ -62,7 +63,7 @@ class LoginPage extends React.Component<any, LoginPageState> {
   checkLogIn = () => {
     makeRequest("/iam/check-login")
       .then((res: ResponseBody) => {
-        const set = { loading: false, fading: true };
+        const set = { loading: false, loadingDb: false, fading: true };
 
         if (res.msg == "Login successful")
           this.setState({ ...set, firstLogin: false, loggedIn: true });
@@ -153,6 +154,7 @@ class LoginPage extends React.Component<any, LoginPageState> {
     const {
       flashMessages,
       loading,
+      loadingDb,
       email,
       password,
       fading,
@@ -254,7 +256,11 @@ class LoginPage extends React.Component<any, LoginPageState> {
         {loading || fading ? (
           <FullLoader
             loading={loading}
-            msg={"Starting the database... This may take up to 6 minutes"}
+            msg={
+              loadingDb
+                ? "Starting the database... This may take up to 6 minutes"
+                : ""
+            }
           />
         ) : null}
         <div>{loggedIn && !firstLogin ? <Dashboard /> : page}</div>

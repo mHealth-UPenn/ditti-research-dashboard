@@ -8,8 +8,8 @@ blueprint = Blueprint('base', __name__)
 logger = logging.getLogger(__name__)
 
 
-@blueprint.route('/healthy')
-def healthy():
+@blueprint.route('/touch')
+def touch():
     res = {'msg': 'OK'}
     available = True
 
