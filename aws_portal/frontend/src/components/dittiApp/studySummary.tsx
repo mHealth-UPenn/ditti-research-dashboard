@@ -156,6 +156,7 @@ class StudySummary extends React.Component<
                               goBack={goBack}
                               handleClick={handleClick}
                               studyDetails={this.state.studyDetails}
+                              getTaps={getTaps}
                             />
                           )
                         }

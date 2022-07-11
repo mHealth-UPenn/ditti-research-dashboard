@@ -3,12 +3,20 @@ import { Component } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { getAccess, makeRequest } from "../../utils";
-import { Study, User, UserDetails, ViewProps } from "../../interfaces";
+import {
+  Study,
+  TapDetails,
+  User,
+  UserDetails,
+  ViewProps
+} from "../../interfaces";
 import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
+import SubjectVisuals from "./subjectVisuals";
 
 interface SubjectsProps extends ViewProps {
   studyDetails: Study;
+  getTaps: () => TapDetails[];
 }
 
 interface SubjectsState {
@@ -81,7 +89,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   }
 
   getData = (): TableData[][] => {
-    const { flashMessage, goBack, handleClick } = this.props;
+    const { flashMessage, goBack, handleClick, getTaps } = this.props;
     const { id, dittiId, email } = this.props.studyDetails;
     const { canEdit, users } = this.state;
     const dateOptions: Intl.DateTimeFormatOptions = {
@@ -93,13 +101,50 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
     };
 
     return users.map((u: User) => {
-      const { tap_permission, user_permission_id, exp_time, createdAt } = u;
+      const {
+        tap_permission,
+        user_permission_id,
+        exp_time,
+        createdAt,
+        information,
+        team_email
+      } = u;
+
+      const user: UserDetails = {
+        tapPermission: tap_permission,
+        userPermissionId: user_permission_id,
+        expTime: exp_time,
+        createdAt: createdAt,
+        information: information,
+        teamEmail: team_email
+      };
 
       return [
         {
           contents: (
             <div className="flex-left table-data">
-              <span>{user_permission_id}</span>
+              {u.tap_permission ? (
+                <span
+                  className="link"
+                  onClick={() =>
+                    handleClick(
+                      [user_permission_id],
+                      <SubjectVisuals
+                        flashMessage={flashMessage}
+                        getTaps={getTaps}
+                        goBack={goBack}
+                        handleClick={handleClick}
+                        studyDetails={this.props.studyDetails}
+                        user={user}
+                      />
+                    )
+                  }
+                >
+                  {user_permission_id}
+                </span>
+              ) : (
+                user_permission_id
+              )}
             </div>
           ),
           searchValue: user_permission_id,
