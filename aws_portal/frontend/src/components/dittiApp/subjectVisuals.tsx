@@ -95,7 +95,10 @@ class SubjectVisuals extends React.Component<
 
       // else if there were 5 taps or more in the first minute and less than 30 minutes have passed between this tap and the last tap
       // then the bout begins at the first tap
-      else if (count >= 5 && differenceInMilliseconds(current, last) < 600000) {
+      else if (
+        count >= 5 &&
+        differenceInMilliseconds(current, last) < 1800000
+      ) {
         last = current;
         group.push(current);
         count += 1;
@@ -106,7 +109,7 @@ class SubjectVisuals extends React.Component<
       else if (count >= 5 && differenceInMilliseconds(last, first) > 60000) {
         bouts.push({
           start: first,
-          stop: add(last, { minutes: 10 }),
+          stop: add(last, { minutes: 30 }),
           rate: count / differenceInMinutes(last, first)
         });
         first = current;
