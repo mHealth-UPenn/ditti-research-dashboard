@@ -9,6 +9,7 @@ import { Buffer } from "buffer";
 import { makeRequest } from "./utils";
 import { FullLoader } from "./components/loader";
 import { ResponseBody } from "./interfaces";
+import AsyncButton from "./components/buttons/asyncButton";
 
 interface LoginPageState {
   flashMessages: { id: number; element: React.ReactElement }[];
@@ -94,8 +95,8 @@ class LoginPage extends React.Component<any, LoginPageState> {
     return makeRequest("/iam/login", opts);
   };
 
-  tryLogIn = (): void => {
-    this.logIn().then(this.handleLogin, this.handleFailure);
+  tryLogIn = async (): Promise<void> => {
+    await this.logIn().then(this.handleLogin, this.handleFailure);
   };
 
   setPassword = (): Promise<ResponseBody> => {
@@ -223,9 +224,7 @@ class LoginPage extends React.Component<any, LoginPageState> {
           </TextField>
         </div>
         <div className="login-buttons">
-          <button className="button-primary button-lg" onClick={this.tryLogIn}>
-            Sign In
-          </button>
+          <AsyncButton text="Sign In" type="primary" onClick={this.tryLogIn} />
         </div>
       </React.Fragment>
     );

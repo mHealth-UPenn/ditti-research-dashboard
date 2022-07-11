@@ -45,17 +45,13 @@
 }
 
 .login-buttons {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-}
-
-.login-buttons > a {
-  align-items: center;
   display: flex;
   height: 3rem;
-  padding: 0 1.5rem;
-  text-decoration: none;
+  width: 8rem;
+}
+
+.login-buttons button {
+  flex-grow: 1;
 }
 
 .login-flash-message-container {
