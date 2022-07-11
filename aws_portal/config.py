@@ -29,7 +29,7 @@ class Production(Default):
 
 class Debug(Default):
     DEBUG = True
-    LOG_LEVEL = 'INFO'
+    LOG_LEVEL = 'DEBUG'
 
 
 class Testing(Default):

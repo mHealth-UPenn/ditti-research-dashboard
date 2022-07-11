@@ -38,7 +38,7 @@ def get_taps():  # TODO update unit test
         app_id = request.args['app']
         permissions = current_user.get_permissions(app_id)
         current_user.validate_ask('View', 'All Studies', permissions)
-        users = Query('User').scan()
+        users = Query('User').scan()['Items']
 
     except ValueError:
         studies = Study.query\

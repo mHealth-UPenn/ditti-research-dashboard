@@ -66,18 +66,16 @@ class Connection:
 
 
 class Loader:
-    config = {
-        'User': os.getenv('AWS_TABLENAME_USER'),
-        'Tap': os.getenv('AWS_TABLENAME_TAP')
-    }
-
     def __init__(self, tablekey):
         self.__tablekey = tablekey
         self.__table = None
+        self.config = {
+            'User': os.getenv('AWS_TABLENAME_USER'),
+            'Tap': os.getenv('AWS_TABLENAME_TAP')
+        }
 
-    @classmethod
-    def get_tablename(cls, tablekey):
-        return cls.config[tablekey]
+    def get_tablename(self, tablekey):
+        return self.config[tablekey]
 
     def connect(self, connection):
         self.__session = connection.session
