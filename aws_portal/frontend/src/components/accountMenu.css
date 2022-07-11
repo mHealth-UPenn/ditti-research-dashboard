@@ -1,8 +1,5 @@
 .account-menu-container {
   border-top: 1px solid white;
-  height: calc(calc(100vh - 4rem) - 1px);
-  overflow: scroll;
-  overflow-x: hidden;
   position: absolute;
   right: 0;
   top: 4rem;
@@ -11,8 +8,10 @@
 }
 
 .account-menu-content {
-  padding: 2rem;
-  padding-bottom: 0;
+  overflow: scroll;
+  max-height: calc(calc(100vh - 9rem) - 1px);
+  padding-top: 2rem;
+  padding-left: 2rem;
 }
 
 .account-menu-field {
