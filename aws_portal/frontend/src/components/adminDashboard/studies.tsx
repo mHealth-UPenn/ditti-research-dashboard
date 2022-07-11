@@ -131,7 +131,7 @@ class Studies extends React.Component<ViewProps, StudiesState> {
                   className="button-secondary"
                   onClick={() =>
                     handleClick(
-                      ["Edit", name],
+                      ["Edit", acronym],
                       <StudiesEdit
                         studyId={id}
                         flashMessage={flashMessage}

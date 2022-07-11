@@ -1,6 +1,7 @@
 .studies-menu-container {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   width: 16rem;
 }
 

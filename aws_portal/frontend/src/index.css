@@ -65,7 +65,7 @@ h1 {
 }
 
 .card-row {
-  align-items: baseline;
+  align-items: flex-start;
   display: flex;
 }
 
@@ -88,6 +88,7 @@ h1 {
 }
 
 .card-title {
+  align-items: center;
   font-size: 1.5rem;
   font-weight: bold;
   margin-bottom: 1rem;
@@ -332,6 +333,8 @@ div:hover > .link-svg .svg-stroke {
   flex-grow: 1;
   overflow: scroll;
   overflow-x: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .admin-form-summary button {

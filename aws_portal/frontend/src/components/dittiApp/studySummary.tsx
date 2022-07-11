@@ -108,7 +108,7 @@ class StudySummary extends React.Component<
                     <button
                       className="button-primary button-lg"
                       onClick={this.downloadExcel}
-                      style={{ width: "12rem" }}
+                      style={{ flexShrink: 0, width: "12rem" }}
                     >
                       Download Excel
                     </button>

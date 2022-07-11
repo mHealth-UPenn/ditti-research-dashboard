@@ -57,7 +57,7 @@ class StudiesMenu extends React.Component<StudiesMenuProps, StudiesMenuState> {
                     )
                   }
                 >
-                  {s.name}
+                  {s.acronym}
                 </li>
               ))}
             </ul>
