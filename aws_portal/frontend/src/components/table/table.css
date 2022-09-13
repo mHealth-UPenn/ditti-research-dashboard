@@ -78,9 +78,11 @@ th .sort-active .svg-fill {
 
 .table-data span {
   display: block;
+  margin-right: -3rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  width: 100%;
 }
 
 .table-pagination {

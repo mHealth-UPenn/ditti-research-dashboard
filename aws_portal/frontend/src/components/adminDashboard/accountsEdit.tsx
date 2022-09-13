@@ -79,19 +79,13 @@ class AccountsEdit extends React.Component<
         name: "Name",
         sortable: true,
         searchable: false,
-        width: 30
-      },
-      {
-        name: "Access Group",
-        sortable: true,
-        searchable: false,
-        width: 30
+        width: 45
       },
       {
         name: "Role",
         sortable: false,
         searchable: false,
-        width: 30
+        width: 45
       },
       {
         name: "",
@@ -219,15 +213,6 @@ class AccountsEdit extends React.Component<
           ),
           searchValue: "",
           sortValue: name
-        },
-        {
-          contents: (
-            <div className="flex-left table-data">
-              <span>accessGroup</span>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: "accessGroup"
         },
         {
           contents: (

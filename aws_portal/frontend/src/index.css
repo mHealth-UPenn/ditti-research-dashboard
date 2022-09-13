@@ -296,13 +296,6 @@ div:hover > .link-svg .svg-stroke {
   box-shadow: 8px 8px 8px #00000016;
 }
 
-.admin-form {
-  display: flex;
-}
-
-.admin-form-content {
-  flex-grow: 1;
-}
 
 .admin-form-field {
   display: flex;
@@ -324,6 +317,7 @@ div:hover > .link-svg .svg-stroke {
 .admin-form-summary {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   max-height: calc(100vh - 14rem - 1px);
   padding: 3rem;
   width: 18rem;

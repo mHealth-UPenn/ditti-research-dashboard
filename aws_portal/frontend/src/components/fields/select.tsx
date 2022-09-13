@@ -50,7 +50,7 @@ export default class Select extends React.Component<SelectProps, SelectState> {
         <select
           onChange={this.changeValue}
           value={value}
-          style={{ minHeight: "3rem" }}
+          style={{ minHeight: "calc(3rem - 2px)" }}
         >
           {opts.map((opt, i) => (
             <option key={i} value={opt.value}>
