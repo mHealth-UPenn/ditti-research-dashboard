@@ -22,18 +22,6 @@ def create_app(testing=False):
 
     app = Flask(__name__, static_url_path='', static_folder='frontend/build')
 
-    if flask_config == 'Production':
-        import json
-        import boto3
-
-        client = boto3.client('secretsmanager')
-        secret_id = os.getenv('AWS_SECRET_NAME')
-        res = client.get_secret_value(SecretId=secret_id)
-        secret = json.loads(res['SecretString'])
-
-        for k, v in secret.items():
-            os.environ[k] = v
-
     CORS(
       app,
       allow_headers=['authorization', 'content-type', 'x-csrf-token'],

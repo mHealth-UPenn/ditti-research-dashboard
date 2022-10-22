@@ -14,6 +14,12 @@ Ensure Docker is installed and running. Create an empty PostgreSQL database usin
 docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
 ```
 
+Activate the Python virtual environment, install dependencies, and export credentials automatically with the development deploy script.
+
+```sh
+source deploy-dev.sh
+```
+
 Initialize the database (only must be done once per postgres container)
 
 ```sh
@@ -30,10 +36,9 @@ Save the following AWS credentials and variables in a file named `secret-aws.env
 | AWS_TABLENAME_USER | The DynamoDB User table name |
 | AWS_TABLENAME_TAP  | The DynamoDB Tap table name  |
 
-Activate the Python virtual environment, install dependencies, and export credentials automatically with the development deploy script and run the app.
+Run the app.
 
 ```sh
-source deploy-dev.sh
 flask run
 ```
 
