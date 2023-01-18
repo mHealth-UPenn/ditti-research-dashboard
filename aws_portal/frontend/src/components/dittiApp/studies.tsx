@@ -7,11 +7,20 @@ import "./studies.css";
 import StudySummary from "./studySummary";
 import { sub } from "date-fns";
 
+/**
+ * getTapsAsync: queries AWS for tap data
+ * getTaps: get tap data locally after querying AWS
+ */
 interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
   getTaps: () => TapDetails[];
 }
 
+/**
+ * studies: all studies the user has access to
+ * users: this is unused
+ * loading: whether to show the loader
+ */
 interface StudiesViewState {
   studies: Study[];
   users: UserDetails[];
@@ -22,6 +31,8 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
   state = { studies: [], users: [], loading: true };
 
   componentDidMount() {
+
+    // get all studies that the user has access to
     const studies = makeRequest("/db/get-studies?app=2").then(
       (studies: Study[]) => this.setState({ studies, loading: false })
     );
@@ -30,17 +41,26 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
       (users: UserDetails[]) => this.setState({ users })
     );
 
+    // get all tap data 
     const taps = this.props.getTapsAsync();
 
+    // when all promises resolve, hide the loader
     Promise.all([studies, taps, users]).then(() =>
       this.setState({ loading: false })
     );
   }
 
+  /**
+   * Handle when a user clicks on a study
+   * @param id - the study's database primary key
+   */
   handleClickStudy = (id: number): void => {
     const { flashMessage, getTaps, goBack, handleClick } = this.props;
+
+    // get the study
     const study: Study = this.state.studies.filter((s: Study) => s.id == id)[0];
 
+    // set the view
     const view = (
       <StudySummary
         flashMessage={flashMessage}
@@ -63,7 +83,11 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
             {this.state.loading ? (
               <SmallLoader />
             ) : (
+
+              // for each study the user has access to
               this.state.studies.map((s: Study) => {
+
+                // count the number of taps that were recorded in the last 7 days
                 const lastWeek = this.props
                   .getTaps()
                   .filter(
@@ -74,6 +98,7 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
                   .map((t) => t.dittiId)
                   .filter((v, i, arr) => arr.indexOf(v) == i).length;
 
+                // count the number of taps that were recorded in the last 24 hours
                 const last24hrs = this.props
                   .getTaps()
                   .filter(
@@ -86,11 +111,15 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
 
                 return (
                   <div key={s.id} className="border-light-b study-row">
+
+                    {/* active tapping icon */}
                     <div
                       className={
                         "icon " + (last24hrs ? "icon-success" : "icon-gray")
                       }
                     ></div>
+
+                    {/* link to study summary */}
                     <div className="study-row-name">
                       <span
                         className="link"
@@ -99,6 +128,8 @@ class StudiesView extends React.Component<StudiesViewProps, StudiesViewState> {
                         {s.acronym}
                       </span>
                     </div>
+
+                    {/* display the number of taps in the last 7 days and 24 hours */}
                     <div className="study-row-summary">
                       <div className="study-row-summary-l">
                         <div>24 hours:</div>

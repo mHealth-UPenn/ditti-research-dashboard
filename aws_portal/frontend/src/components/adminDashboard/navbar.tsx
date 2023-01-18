@@ -7,10 +7,16 @@ import Roles from "./roles";
 import { ViewProps } from "../../interfaces";
 import AboutSleepTemplates from "./aboutSleepTemplates";
 
+/**
+ * active: the active view
+ */
 interface NavbarProps extends ViewProps {
   active: string;
 }
 
+/**
+ * views: an array of admin views, their names, and whether any are the active view
+ */
 interface NavbarState {
   views: { active: boolean; name: string; view: React.ReactElement }[];
 }
@@ -79,6 +85,7 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
       }
     ];
 
+    // set the current view as active
     for (const v of views) {
       if (v.name === active) {
         v.active = true;
@@ -94,6 +101,8 @@ class Navbar extends React.Component<NavbarProps, NavbarState> {
 
     return (
       <div className="page-header bg-white border-dark-b">
+
+        {/* if the view is active, highlight it using bg-dark */}
         {views.map((v, i) => (
           <div
             key={i}

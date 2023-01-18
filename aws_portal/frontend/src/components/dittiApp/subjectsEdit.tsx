@@ -15,6 +15,12 @@ import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 import Select from "../fields/select";
 
+/**
+ * dittiId: the subject's ditti id
+ * studyId: the study's database primary key
+ * studyPrefix: the study's ditti prefix
+ * studyEmail: the study's team email
+ */
 interface SubjectsEditProps extends ViewProps {
   dittiId: string;
   studyId: number;
@@ -22,6 +28,11 @@ interface SubjectsEditProps extends ViewProps {
   studyEmail: string;
 }
 
+/**
+ * aboutSleepTemplates: all available about sleep templates
+ * aboutSleepTemplateSelected: the sleep template to show to this user
+ * loading: whether to show the loader
+ */
 interface SubjectsEditState extends UserDetails {
   aboutSleepTemplates: AboutSleepTemplate[];
   aboutSleepTemplateSelected: AboutSleepTemplate;
@@ -45,23 +56,33 @@ class SubjectsEdit extends React.Component<
   };
 
   componentDidMount() {
+
+    // get all about sleep templates
     const aboutSleepTemplates = makeRequest(
       "/db/get-about-sleep-templates"
     ).then((aboutSleepTemplates: AboutSleepTemplate[]) =>
       this.setState({ aboutSleepTemplates })
     );
 
+    // get the form's prefill
     const prefill = this.getPrefill().then((prefill: UserDetails) =>
       this.setState({ ...prefill })
     );
 
+    // when all promises finish, hide the loader
     Promise.all([aboutSleepTemplates, prefill]).then(() =>
       this.setState({ loading: false })
     );
   }
 
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
   getPrefill = async (): Promise<UserDetails> => {
     const id = this.props.dittiId;
+
+    // if editing an existing entry, return prefill data, else return empty data
     return id
       ? makeRequest(
           `/aws/scan?app=2&key=User&query=user_permission_id=="${id}"`
@@ -76,6 +97,11 @@ class SubjectsEdit extends React.Component<
         };
   };
 
+  /**
+   * Map the data returned from the backend to form prefill data
+   * @param res - the response body
+   * @returns - the form prefill data
+   */
   makePrefill = (user: User[]): UserDetails => {
     const aboutSleepTemplateSelected: AboutSleepTemplate =
       this.state.aboutSleepTemplates.filter(
@@ -95,6 +121,10 @@ class SubjectsEdit extends React.Component<
     };
   };
 
+  /**
+   * POST changes to the backend. Make a request to create an entry if creating
+   * a new entry, else make a request to edit an exiting entry
+   */
   post = async (): Promise<void> => {
     const { tapPermission, userPermissionId, expTime, teamEmail } = this.state;
 
@@ -108,7 +138,7 @@ class SubjectsEdit extends React.Component<
 
     const id = this.props.dittiId;
     const body = {
-      app: 2,
+      app: 2,  // Ditti Dashboard = 2
       study: this.props.studyId,
       ...(id ? { user_permission_id: id, edit: data } : { create: data })
     };
@@ -121,16 +151,26 @@ class SubjectsEdit extends React.Component<
       .catch(this.handleFailure);
   };
 
+  /**
+   * Handle a successful response
+   * @param res - the response body
+   */
   handleSuccess = (res: ResponseBody) => {
     const { goBack, flashMessage } = this.props;
 
+    // go back to the list view and flash a message
     goBack();
     flashMessage(<span>{res.msg}</span>, "success");
   };
 
+  /**
+   * Handle a failed response
+   * @param res - the response body
+   */
   handleFailure = (res: ResponseBody) => {
     const { flashMessage } = this.props;
 
+    // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
         <b>An unexpected error occured</b>
@@ -142,6 +182,10 @@ class SubjectsEdit extends React.Component<
     flashMessage(msg, "danger");
   };
 
+  /**
+   * Assign an about sleep template to the user
+   * @param id - the template's database primary key
+   */
   selectAboutSleepTemplate = (id: number): void => {
     const aboutSleepTemplateSelected = this.state.aboutSleepTemplates.filter(
       (a: AboutSleepTemplate) => a.id == id
@@ -151,6 +195,10 @@ class SubjectsEdit extends React.Component<
       this.setState({ aboutSleepTemplateSelected });
   };
 
+  /**
+   * Get the about sleep template that is selected
+   * @returns - the template's database primary key
+   */
   getSelectedAboutSleepTemplate = (): number => {
     const { aboutSleepTemplateSelected } = this.state;
     return aboutSleepTemplateSelected ? aboutSleepTemplateSelected.id : 0;
@@ -177,11 +225,14 @@ class SubjectsEdit extends React.Component<
       minute: "2-digit"
     };
 
+    // if dittiId is 0, the user is enrolling a new subject
     const buttonText = dittiId ? "Update" : "Create";
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
         <div className="page-content bg-white">
+
+          {/* the enroll subject form */}
           {loading ? (
             <SmallLoader />
           ) : (
@@ -203,6 +254,8 @@ class SubjectsEdit extends React.Component<
                       }}
                       feedback=""
                     >
+
+                      {/* superimpose the study prefix on the form field */}
                       <div className="disabled bg-light border-light-r">
                         <span>
                           <i>{studyPrefix}</i>
@@ -210,6 +263,8 @@ class SubjectsEdit extends React.Component<
                       </div>
                     </TextField>
                   </div>
+
+                  {/* don't allow the user to edit the team email */}
                   <div className="admin-form-field">
                     <TextField
                       label="Team Email"
@@ -218,6 +273,8 @@ class SubjectsEdit extends React.Component<
                     />
                   </div>
                 </div>
+
+                {/* the raw timestamp includes ":00.000Z" */}
                 <div className="admin-form-row">
                   <div className="admin-form-field">
                     <TextField
@@ -265,6 +322,8 @@ class SubjectsEdit extends React.Component<
             </div>
           )}
         </div>
+
+        {/* the subject summary */}
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Subject Summary</h1>
           <span>

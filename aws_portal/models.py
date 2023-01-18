@@ -13,6 +13,16 @@ logger = logging.getLogger(__name__)
 
 
 def init_db():
+    """
+    Create all database tables. This can only be run in a testing environment
+    or if the database is hosted locally.
+
+    Raises
+    ------
+    RuntimeError
+        If this function is called outside of a testing environment or if the
+        database URI does not contain 'localhost.'
+    """
     db_uri = current_app.config['SQLALCHEMY_DATABASE_URI']
 
     if current_app.config['TESTING']:
@@ -30,6 +40,18 @@ def init_db():
 
 
 def init_admin_app():
+    """
+    Initialize the admin dashboard app database entry.
+
+    Returns
+    -------
+    App
+
+    Raises
+    ------
+    ValueError
+        If an entry for the admin dashboard app already exists.
+    """
     query = App.name == 'Admin Dashboard'
     app = App.query.filter(query).first()
 
@@ -44,6 +66,19 @@ def init_admin_app():
 
 
 def init_admin_group():
+    """
+    Initialize the admin access group.
+
+    Returns
+    -------
+    AccessGroup
+
+    Raises
+    ------
+    ValueError
+        If an entry for the admin access group already exists or if an entry
+        for the admin dashboard app does not exist.
+    """
     query = AccessGroup.name == 'Admin'
     access_group = AccessGroup.query.filter(query).first()
 
@@ -77,6 +112,24 @@ def init_admin_group():
 
 
 def init_admin_account(email=None, password=None):
+    """
+    Initialize the admin account
+
+    Args
+    ----
+    email: str (optional)
+    password: str (optional)
+
+    Returns
+    -------
+    Account
+
+    Raises
+    ------
+    ValueError
+        If an entry for the admin account already exists or if an entry for the
+        admin access group does not exist.
+    """
     email = email or os.getenv('FLASK_ADMIN_EMAIL')
     password = password or os.getenv('FLASK_ADMIN_PASSWORD')
     admin = Account.query.filter(Account.email == email).first()
@@ -112,7 +165,10 @@ def init_admin_account(email=None, password=None):
     )
     db.session.add(admin_join)
 
+    # if an entry for the Ditti Admin group exists
     if ditti_group is not None:
+
+        # add the admin account to it
         ditti_join = JoinAccountAccessGroup(
             account=admin, access_group=ditti_group
         )
@@ -144,6 +200,29 @@ def check_if_token_revoked(jwt_header, jwt_payload):
 
 
 class Account(db.Model):
+    """
+    The account table mappeing class.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    public_id: sqlalchemy.Column
+        A random string to be used for JWT authentication, e.g.,
+        `public_id=str(uuid.uuid4())`.
+    created_on: sqlalchemy.Column
+        The timestamp of the account's creation, e.g., `datetime.utcnow()`.
+        The created_on value cannot be modified.
+    last_login: sqlalchemy.Column
+    first_name: sqlalchemy.Column
+    last_name: sqlalchemy.Column
+    email: sqlalchemy.Column
+    phone_number: sqlalchemy.Column
+    is_confirmed: sqlalchemy.Column
+        Whether the account holder has logged in and set their password.
+    is_archived: sqlalchemy.Column
+    access_groups: sqlalchemy.orm.relationship
+    studies: sqlalchemy.orm.relationship
+    """
     __tablename__ = 'account'
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String, nullable=False, unique=True)
@@ -157,6 +236,7 @@ class Account(db.Model):
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
     _password = db.Column(db.String, nullable=False)
 
+    # ignore archived access groups
     access_groups = db.relationship(
         'JoinAccountAccessGroup',
         back_populates='account',
@@ -170,6 +250,7 @@ class Account(db.Model):
         )
     )
 
+    # ignore archived studies
     studies = db.relationship(
         'JoinAccountStudy',
         back_populates='account',
@@ -185,6 +266,9 @@ class Account(db.Model):
 
     @validates('created_on')
     def validate_created_on(self, key, val):
+        """
+        Make the created_on column read-only.
+        """
         if self.created_on:
             raise ValueError('Account.created_on cannot be modified.')
 
@@ -192,6 +276,9 @@ class Account(db.Model):
 
     @hybrid_property
     def full_name(self):
+        """
+        str: The full name of the account holder
+        """
         return f'{self.first_name} {self.last_name}'
 
     @full_name.expression
@@ -200,18 +287,53 @@ class Account(db.Model):
 
     @hybrid_property
     def password(self):
+        """
+        str: The account holder's password
+        """
         return self._password
 
     @password.setter
     def password(self, val):
+        """
+        Hashes the password using bcrypt
+        """
         password_hash = bcrypt.generate_password_hash(val).decode('utf-8')
         self._password = password_hash
         return True
 
     def check_password(self, val):
+        """
+        Whether a password matches the account holder's password.
+
+        Args
+        ----
+        val: str
+            The password to check.
+
+        Returns
+        -------
+        bool
+        """
         return bcrypt.check_password_hash(self._password, val)
 
     def get_permissions(self, app_id, study_id=None):
+        """
+        Get all of an account's permissions for an app and optionally for a
+        study.
+
+        Args
+        ----
+        app_id: int
+            The app's primary key.
+        study_id: int (optional)
+            The study's primary key.
+
+        Returns
+        -------
+        """
+
+        # query all permissions that are granted to the account by access
+        # groups that grant access to the app
         q1 = Permission.query.join(JoinAccessGroupPermission)\
             .join(AccessGroup)\
             .filter(AccessGroup.app_id == app_id)\
@@ -221,7 +343,11 @@ class Account(db.Model):
                 (JoinAccountAccessGroup.account_id == self.id)
         )
 
+        # if a study id was passed and the study is not archived
         if study_id and not Study.query.get(study_id).is_archived:
+
+            # query all permissions that are granted to the account by the
+            # study
             q2 = Permission.query.join(JoinRolePermission)\
                 .join(Role)\
                 .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)\
@@ -229,25 +355,52 @@ class Account(db.Model):
                     JoinAccountStudy.primary_key == tuple_(self.id, study_id)
             )
 
+            # return the union of all permission for the app and study
             permissions = q1.union(q2)
 
         else:
+
+            # return all permissions for the app
             permissions = q1
 
         return permissions
 
     def validate_ask(self, action, resource, permissions):
+        """
+        Validate a request using a set of permissions
+
+        Args
+        ----
+        action: str
+        resource: str
+        permissions:
+
+        Raises
+        ------
+        ValueError
+            If the account has no permissions that satisfy the request.
+        """
+
+        # build a query using the requested action and resource
         query = Permission.definition == tuple_(action, resource)
+
+        # also check if the account has wildcard permissions
         query = query | (Permission.definition == tuple_(action, '*'))
         query = query | (Permission.definition == tuple_('*', resource))
         query = query | (Permission.definition == tuple_('*', '*'))
+
+        # filter the account's permissions
         valid = permissions.filter(query).first()
 
+        # if no permissions were found
         if valid is None:
             raise ValueError('Unauthorized Ask')
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return {
             'id': self.id,
             'createdOn': self.created_on,
@@ -266,6 +419,16 @@ class Account(db.Model):
 
 
 class JoinAccountAccessGroup(db.Model):
+    """
+    The join_account_access_group table mapping class.
+
+    Vars
+    ----
+    account_id: sqlalchemy.Column
+    access_group_id: sqlalchemy.Column
+    account: sqlalchemy.orm.relationship
+    access_group: sqlalchemy.orm.relationship
+    """
     __tablename__ = 'join_account_access_group'
 
     account_id = db.Column(
@@ -285,6 +448,9 @@ class JoinAccountAccessGroup(db.Model):
 
     @hybrid_property
     def primary_key(self):
+        """
+        tuple of int: an entry's primary key.
+        """
         return self.account_id, self.access_group_id
 
     @primary_key.expression
@@ -296,6 +462,19 @@ class JoinAccountAccessGroup(db.Model):
 
 
 class JoinAccountStudy(db.Model):
+    """
+    The join_account_study table mapping class.
+
+    Vars
+    ----
+    account_id: sqlalchemy.Column
+    study_id: sqlalchemy.Column
+    account: sqlalchemy.orm.relationship
+    study: sqlalchemy.orm.relationship
+    role_id: sqlalchemy.Column
+        The primary key of the role that an account is assigned for a study.
+    role: sqlalchemy.orm.relationship
+    """
     __tablename__ = 'join_account_study'
 
     account_id = db.Column(
@@ -323,6 +502,9 @@ class JoinAccountStudy(db.Model):
 
     @hybrid_property
     def primary_key(self):
+        """
+        tuple of int: an entry's primary key.
+        """
         return self.account_id, self.study_id
 
     @primary_key.expression
@@ -331,6 +513,9 @@ class JoinAccountStudy(db.Model):
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return {
             **self.study.meta,
             'role': self.role.meta
@@ -341,6 +526,21 @@ class JoinAccountStudy(db.Model):
 
 
 class AccessGroup(db.Model):
+    """
+    The access_group table mapping class.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    name: sqlalchemy.Column
+    is_archived: sqlalchemy.Column
+    app_id: sqlalchemy.Column
+        The primary key of the app that an access group grants permissions for.
+    app: sqlalchemy.orm.relationship
+    accounts: sqlalchemy.orm.relationship
+    permissions: sqlalchemy.orm.relationship
+        The permissions that an access group grants for an app.
+    """
     __tablename__ = 'access_group'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
@@ -349,6 +549,7 @@ class AccessGroup(db.Model):
     app_id = db.Column(db.Integer, db.ForeignKey('app.id', ondelete='CASCADE'))
     app = db.relationship('App')
 
+    # ignore archived accounts
     accounts = db.relationship(
         'JoinAccountAccessGroup',
         back_populates='access_group',
@@ -370,6 +571,9 @@ class AccessGroup(db.Model):
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return {
             'id': self.id,
             'name': self.name,
@@ -382,6 +586,16 @@ class AccessGroup(db.Model):
 
 
 class JoinAccessGroupPermission(db.Model):
+    """
+    The join_access_group_permission table mapping class.
+
+    Vars
+    ----
+    access_group_id: sqlalchemy.Column
+    permission_id: sqlalchemy.Column
+    access_group: sqlalchemy.orm.relationship
+    permission: sqlalchemy.orm.relationship
+    """
     __tablename__ = 'join_access_group_permission'
 
     access_group_id = db.Column(
@@ -401,6 +615,9 @@ class JoinAccessGroupPermission(db.Model):
 
     @hybrid_property
     def primary_key(self):
+        """
+        tuple of int: an entry's primary key
+        """
         return self.access_group_id, self.permission_id
 
     @primary_key.expression
@@ -409,6 +626,9 @@ class JoinAccessGroupPermission(db.Model):
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return self.permission.meta
 
     def __repr__(self):
@@ -416,6 +636,16 @@ class JoinAccessGroupPermission(db.Model):
 
 
 class Role(db.Model):
+    """
+    The role table mapping class.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    name: sqlalchemy.Column
+    is_archived: sqlalchemy.Column
+    permissions: sqlalchemy.orm.relationship
+    """
     __tablename__ = 'role'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
@@ -429,6 +659,9 @@ class Role(db.Model):
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return {
             'id': self.id,
             'name': self.name,
@@ -440,6 +673,16 @@ class Role(db.Model):
 
 
 class JoinRolePermission(db.Model):
+    """
+    The join_role_permission table mapping class.
+
+    Vars
+    ----
+    role_id: sqlalchemy.Column
+    permission_id: sqlalchemy.Column
+    role: sqlalchemy.orm.relationship
+    permission: sqlalchemy.orm.relationship
+    """
     __tablename__ = 'join_role_permission'
 
     role_id = db.Column(
@@ -459,6 +702,9 @@ class JoinRolePermission(db.Model):
 
     @hybrid_property
     def primary_key(self):
+        """
+        tuple of int: an entry's primary key.
+        """
         return self.role_id, self.permission_id
 
     @primary_key.expression
@@ -467,6 +713,9 @@ class JoinRolePermission(db.Model):
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return self.permission.meta
 
     def __repr__(self):
@@ -474,12 +723,23 @@ class JoinRolePermission(db.Model):
 
 
 class Action(db.Model):
+    """
+    The action table mapping class.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    value: sqlalchemy.Column
+    """
     __tablename__ = 'action'
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.String, nullable=False, unique=True)
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return {
             'id': self.id,
             'value': self.value
@@ -490,12 +750,23 @@ class Action(db.Model):
 
 
 class Resource(db.Model):
+    """
+    The resource table mapping class.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    value: sqlalchemy.Column
+    """
     __tablename__ = 'resource'
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.String, nullable=False, unique=True)
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return {
             'id': self.id,
             'value': self.value
@@ -506,7 +777,16 @@ class Resource(db.Model):
 
 
 class Permission(db.Model):
+    """
+    The permission table mapping class.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    """
     __tablename__ = 'permission'
+
+    # ensure the action-resource combination is unique.
     __table_args__ = (UniqueConstraint('_action_id', '_resource_id'),)
     id = db.Column(db.Integer, primary_key=True)
 
@@ -525,11 +805,16 @@ class Permission(db.Model):
 
     @hybrid_property
     def action(self):
+        """
+        str: an entry's action
+        """
         return self._action.value
 
     @action.setter
     def action(self, value):
         q = Action.query.filter(Action.value == value)
+
+        # if the action does not exist, create a new action
         action = q.first() or Action(value=value)
         db.session.add(action)
         self._action = action
@@ -542,11 +827,16 @@ class Permission(db.Model):
 
     @hybrid_property
     def resource(self):
+        """
+        str: an entry's resource
+        """
         return self._resource.value
 
     @resource.setter
     def resource(self, value):
         q = Resource.query.filter(Resource.value == value)
+
+        # if the resource does not exist, create a new resource
         resource = q.first() or Resource(value=value)
         db.session.add(resource)
         self._resource = resource
@@ -559,6 +849,9 @@ class Permission(db.Model):
 
     @validates('_action_id')
     def validate_action(self, key, val):
+        """
+        Ensure an entry's action cannot be modified.
+        """
         if self._action_id is not None:
             raise ValueError('permission.action cannot be modified.')
 
@@ -566,6 +859,9 @@ class Permission(db.Model):
 
     @validates('_resource_id')
     def validate_resource(self, key, val):
+        """
+        Ensure an entry's resource cannot be modified.
+        """
         if self._resource_id is not None:
             raise ValueError('permission.resource cannot be modified.')
 
@@ -573,6 +869,9 @@ class Permission(db.Model):
 
     @hybrid_property
     def definition(self):
+        """
+        tuple of str: an entry's (action, resource) definition
+        """
         return self.action, self.resource
 
     @definition.expression
@@ -588,6 +887,9 @@ class Permission(db.Model):
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return {
             'id': self.id,
             'action': self.action,
@@ -599,12 +901,23 @@ class Permission(db.Model):
 
 
 class App(db.Model):
+    """
+    The app table mapping class.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    name: sqlalchemy.Column
+    """
     __tablename__ = 'app'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return {
             'id': self.id,
             'name': self.name
@@ -615,6 +928,19 @@ class App(db.Model):
 
 
 class Study(db.Model):
+    """
+    The study table mapping class.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    name: sqlalchemy.Column
+    acronym: sqlalchemy.Column
+    ditti_id: sqlalchemy.Column
+    email: sqlalchemy.Column
+    is_archived: sqlalchemy.Column
+    roles: sqlalchemy.orm.relationship
+    """
     __tablename__ = 'study'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
@@ -627,6 +953,9 @@ class Study(db.Model):
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return {
             'id': self.id,
             'name': self.name,
@@ -641,6 +970,16 @@ class Study(db.Model):
 
 
 class JoinStudyRole(db.Model):
+    """
+    The join_study_role table mapping class.
+
+    Vars
+    ----
+    study_id: sqlalchemy.Column
+    role_id: sqlalchemy.Column
+    study: sqlalchemy.orm.relationship
+    role: sqlalchemy.orm.relationship
+    """
     __tablename__ = 'join_study_role'
 
     study_id = db.Column(
@@ -660,6 +999,9 @@ class JoinStudyRole(db.Model):
 
     @hybrid_property
     def primary_key(self):
+        """
+        tuple of int: an entry's primary key.
+        """
         return self.study_id, self.role_id
 
     @primary_key.expression
@@ -668,6 +1010,9 @@ class JoinStudyRole(db.Model):
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return self.role.meta
 
     def __repr__(self):
@@ -675,6 +1020,17 @@ class JoinStudyRole(db.Model):
 
 
 class BlockedToken(db.Model):
+    """
+    The blocked_token table mapping class. This is used to log users out using
+    JWT tokens.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    jti: sqlalchemy.Column
+        The token to block.
+    created_on: sqlalchemy.Column
+    """
     __tablename__ = 'blocked_token'
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String, nullable=False)
@@ -685,6 +1041,16 @@ class BlockedToken(db.Model):
 
 
 class AboutSleepTemplate(db.Model):
+    """
+    The about_sleep_template table mapping class.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    name: sqlalchemy.Column
+    text: sqlalchemy.Column
+    is_archived: sqlalchemy.Column
+    """
     __tablename__ = 'about_sleep_template'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
@@ -693,6 +1059,9 @@ class AboutSleepTemplate(db.Model):
 
     @property
     def meta(self):
+        """
+        dict: an entry's metadata.
+        """
         return {
             'id': self.id,
             'name': self.name,

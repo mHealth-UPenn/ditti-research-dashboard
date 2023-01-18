@@ -6,11 +6,19 @@ import StudySummary from "./dittiApp/studySummary";
 import { SmallLoader } from "./loader";
 import "./studiesMenu.css";
 
+/**
+ * getTaps: get tap data
+ * setView: set the current view
+ */
 interface StudiesMenuProps extends ViewProps {
   getTaps: () => TapDetails[];
   setView: (name: string, view: React.ReactElement) => void;
 }
 
+/**
+ * studies: all studies the user has access to
+ * loading: whether to show the loader
+ */
 interface StudiesMenuState {
   studies: Study[];
   loading: boolean;
@@ -20,6 +28,8 @@ class StudiesMenu extends React.Component<StudiesMenuProps, StudiesMenuState> {
   state = { studies: [], loading: true };
 
   componentDidMount() {
+
+    // get the studies that the user has access to
     makeRequest("/db/get-studies?app=2").then((studies: Study[]) =>
       this.setState({ studies, loading: false })
     );
@@ -39,6 +49,8 @@ class StudiesMenu extends React.Component<StudiesMenuProps, StudiesMenuState> {
             <SmallLoader />
           ) : (
             <ul>
+
+              {/* render a list of studies */}
               {studies.map((s: Study, i: number) => (
                 <li
                   key={i}

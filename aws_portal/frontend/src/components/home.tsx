@@ -8,11 +8,19 @@ import Accounts from "./adminDashboard/accounts";
 import { SmallLoader } from "./loader";
 import { getAccess } from "../utils";
 
+/**
+ * getTapsAsync: queries AWS for tap data
+ * getTaps: get tap data locally after querying AWS
+ */
 interface HomeProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
   getTaps: () => TapDetails[];
 }
 
+/**
+ * apps: the apps that the user has access to
+ * loading: whether to show the laoder
+ */
 interface HomeState {
   apps: {
     breadcrumbs: string[];
@@ -23,6 +31,9 @@ interface HomeState {
 }
 
 class Home extends React.Component<HomeProps, HomeState> {
+
+  // apps are hardcoded here because for now there is no real need to add more
+  // than two
   state = {
     apps: [
       {
@@ -54,21 +65,29 @@ class Home extends React.Component<HomeProps, HomeState> {
   };
 
   componentDidMount() {
+
+    // check whether the user can view the admin dashboard
     const admin = getAccess(1, "View", "Admin Dashboard").catch(() => {
       let apps = this.state.apps;
       apps = apps.filter((app) => app.name != "Admin Dashboard");
       this.setState({ apps });
     });
 
+    // check whether the user can view the ditti app dashboard
     const ditti = getAccess(2, "View", "Ditti App Dashboard").catch(() => {
       let apps = this.state.apps;
       apps = apps.filter((app) => app.name != "Ditti App Dashboard");
       this.setState({ apps });
     });
 
+    // when all promises resolve, hide the loader
     Promise.all([admin, ditti]).then(() => this.setState({ loading: false }));
   }
 
+  /**
+   * Render the apps on the page
+   * @returns - apps to be rendered on the page
+   */
   getApps() {
     return this.state.apps.map((app, i) => (
       <div

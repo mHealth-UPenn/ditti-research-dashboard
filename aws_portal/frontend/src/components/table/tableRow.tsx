@@ -1,6 +1,9 @@
 import * as React from "react";
 import { Component } from "react";
 
+/**
+ * data: the row's cells
+ */
 interface TableRowProps {
   data: { contents: React.ReactElement; width: number }[];
 }

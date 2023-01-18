@@ -2,6 +2,12 @@ import * as React from "react";
 import { Component } from "react";
 import "./checkField.css";
 
+/**
+ * id (optional): an optional html id
+ * prefill (optional): whether the field is checked
+ * label (optional): the field's label text
+ * onChange (optional): a callback function when the field is clicked
+ */
 interface CheckFieldProps {
   id?: string;
   prefill?: boolean;

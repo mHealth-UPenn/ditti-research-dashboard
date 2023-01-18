@@ -20,6 +20,30 @@ logger = logging.getLogger(__name__)
 @blueprint.route('/account')
 @auth_required('View', 'Admin Dashboard')
 def account():
+    """
+    Get one account or a list of all accounts. This will return one account if
+    the account's database primary key is passed as a URL option
+
+    Options
+    -------
+    app: 1
+    id: str
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...Account data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         i = request.args.get('id')
 
@@ -47,14 +71,63 @@ def account():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Create', 'Accounts')
 def account_create():
+    """
+    Create a new account.
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        create: {
+            ...Account data,
+            access_groups: [
+                {
+                    id: int
+                },
+                ...
+            ],
+            studies: [
+                {
+                    id: int,
+                    role: {
+                        id: inte
+                    }
+                },
+                ...
+            ]
+        }
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Account Created Successfully'
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: 'A password was not provided' or
+            'Minimum password length is 8 characters' or
+            'Maximum password length is 64 characters'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         data = request.json['create']
         password = data['password']
 
+        # a password must be included
         if not password:
             msg = 'A password was not provided.'
             return make_response({'msg': msg}, 400)
 
+        # the password must be valid
         valid = validate_password(password)
         if valid != 'valid':
             return make_response({'msg': valid}, 400)
@@ -65,10 +138,12 @@ def account_create():
         account.public_id = str(uuid.uuid4())
         account.created_on = datetime.utcnow()
 
+        # add access groups
         for entry in data['access_groups']:
             access_group = AccessGroup.query.get(entry['id'])
             JoinAccountAccessGroup(access_group=access_group, account=account)
 
+        # add studies
         for entry in data['studies']:
             study = Study.query.get(entry['id'])
             role = Role.query.get(entry['role']['id'])
@@ -93,15 +168,68 @@ def account_create():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Edit', 'Accounts')
 def account_edit():
+    """
+    Edit an existing account
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int,
+        edit: {
+            ...Account data,
+            access_groups: [
+                {
+                    id: int
+                },
+                ...
+            ],
+            studies: [
+                {
+                    id: int,
+                    role: {
+                        id: inte
+                    }
+                },
+                ...
+            ]
+        }
+    }
+
+    All data in the request body are optional. Any attributes that are excluded
+    from the request body will not be changed.
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Account Edited Successfully'
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: 'A password was not provided' or
+            'Minimum password length is 8 characters' or
+            'Maximum password length is 64 characters'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         data = request.json['edit']
         account_id = request.json['id']
         account = Account.query.get(account_id)
         password = data['password']
 
+        # avoid updating the account with an empty password
         if not password:
             del data['password']
 
+        # if there is a new password, it must be valid
         else:
             valid = validate_password(password)
 
@@ -110,13 +238,17 @@ def account_edit():
 
         populate_model(account, data)
 
+        # if a list of access groups were provided
         if 'access_groups' in data:
+
+            # remove access groups that are not in the new list
             for join in account.access_groups:
                 a_ids = [a['id'] for a in data['access_groups']]
 
                 if join.access_group_id not in a_ids:
                     db.session.delete(join)
 
+            # add new access groups
             a_ids = [join.access_group_id for join in account.access_groups]
             for entry in data['access_groups']:
                 if entry['id'] not in a_ids:
@@ -126,7 +258,10 @@ def account_edit():
                         account=account
                     )
 
+        # if a list of studies were provided
         if 'studies' in data:
+
+            # remove studies that are not in the new list
             for join in account.studies:
                 s_ids = [s['id'] for s in data['studies']]
 
@@ -137,12 +272,15 @@ def account_edit():
             for entry in data['studies']:
                 study = Study.query.get(entry['id'])
 
+                # if the study is not new
                 if entry['id'] in s_ids:
                     join = JoinAccountStudy.query.get((account.id, study.id))
 
+                    # update the role
                     if join.role.id != int(entry['role']['id']):
                         join.role = Role.query.get(entry['role']['id'])
 
+                # add the study
                 else:
                     role = Role.query.get(entry['role']['id'])
                     JoinAccountStudy(account=account, role=role, study=study)
@@ -165,6 +303,30 @@ def account_edit():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Archive', 'Accounts')
 def account_archive():
+    """
+    Archive an account. This action has the same effect as deleting an entry
+    from the database. However, archived items are only filtered from queries
+    and can be retrieved.
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Account Archived Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         account_id = request.json['id']
         account = Account.query.get(account_id)
@@ -186,6 +348,30 @@ def account_archive():
 @blueprint.route('/study')
 @auth_required('View', 'Admin Dashboard')
 def study():
+    """
+    Get one study or a list of all studies. This will return one study if the
+    study's database primary key is passed as a URL option
+
+    Options
+    -------
+    app: 1
+    id: str
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...Study data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         i = request.args.get('id')
 
@@ -211,6 +397,30 @@ def study():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Create', 'Studies')
 def study_create():
+    """
+    Create a new study.
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        create: {
+            ...Study data
+        }
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Study Created Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         data = request.json['create']
         study = Study()
@@ -235,6 +445,34 @@ def study_create():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Edit', 'Studies')
 def study_edit():
+    """
+    Edit an existing study
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int,
+        edit: {
+            ...Study data
+        }
+    }
+
+    All data in the request body are optional. Any attributes that are excluded
+    from the request body will not be changed.
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Study Edited Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         data = request.json['edit']
         study_id = request.json['id']
@@ -259,6 +497,30 @@ def study_edit():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Archive', 'Studies')
 def study_archive():
+    """
+    Archive a study. This action has the same effect as deleting an entry
+    from the database. However, archived items are only filtered from queries
+    and can be retrieved.
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Study Archived Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         study_id = request.json['id']
         study = Study.query.get(study_id)
@@ -280,6 +542,30 @@ def study_archive():
 @blueprint.route('/access-group')
 @auth_required('View', 'Admin Dashboard')
 def access_group():
+    """
+    Get one access group or a list of all studies. This will return one access
+    group if the access groups's database primary key is passed as a URL option
+
+    Options
+    -------
+    app: 1
+    id: str
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...Access group data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         i = request.args.get('id')
 
@@ -307,6 +593,37 @@ def access_group():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Create', 'Access Groups')
 def access_group_create():
+    """
+    Create a new access group.
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        create: {
+            ...Access group data
+            permissions: [
+                {
+                    action: str,
+                    resource: str
+                },
+                ...
+            ]
+        }
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Access Group Created Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         data = request.json['create']
         access_group = AccessGroup()
@@ -315,12 +632,14 @@ def access_group_create():
         app = App.query.get(data['app'])
         access_group.app = app
 
+        # add permissions
         for entry in data['permissions']:
             action = entry['action']
             resource = entry['resource']
             q = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(q).first()
 
+            # only create a permission if it does not already exist
             if permission is None:
                 permission = Permission()
                 permission.action = entry['action']
@@ -350,6 +669,41 @@ def access_group_create():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Edit', 'Access Groups')
 def access_group_edit():
+    """
+    Edit an existing access group.
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int,
+        edit: {
+            ...Access group data
+            permissions: [
+                {
+                    action: str,
+                    resource: str
+                },
+                ...
+            ]
+        }
+    }
+
+    All data in the request body are optional. Any attributes that are excluded
+    from the request body will not be changed.
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Access Group Created Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         data = request.json['edit']
         access_group_id = request.json['id']
@@ -357,11 +711,15 @@ def access_group_edit():
 
         populate_model(access_group, data)
 
+        # if a new app is provided
         if 'app' in data:
             app = App.query.get(data['app'])
             access_group.app = app
 
+        # if new permissions are provided
         if 'permissions' in data:
+
+            # remove all existing permissions without deleting them
             access_group.permissions = []
 
             for entry in data['permissions']:
@@ -370,6 +728,7 @@ def access_group_edit():
                 q = Permission.definition == tuple_(action, resource)
                 permission = Permission.query.filter(q).first()
 
+                # only create a new permission if it doens't already exist
                 if permission is None:
                     permission = Permission()
                     permission.action = entry['action']
@@ -398,6 +757,30 @@ def access_group_edit():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Archive', 'Access Groups')
 def access_group_archive():
+    """
+    Archive an access group. This action has the same effect as deleting an entry
+    from the database. However, archived items are only filtered from queries
+    and can be retrieved.
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Access Group Archived Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         access_group_id = request.json['id']
         access_group = AccessGroup.query.get(access_group_id)
@@ -419,6 +802,30 @@ def access_group_archive():
 @blueprint.route('/role')
 @auth_required('View', 'Admin Dashboard')
 def role():
+    """
+    Get one role or a list of all studies. This will return one role if the
+    role's database primary key is passed as a URL option
+
+    Options
+    -------
+    app: 1
+    id: str
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...Role data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         i = request.args.get('id')
 
@@ -444,18 +851,51 @@ def role():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Create', 'Roles')
 def role_create():
+    """
+    Create a new role.
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        create: {
+            ...Role data,
+            permissions: [
+                {
+                    action: str,
+                    resource: str
+                },
+                ...
+            ]
+        }
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Role Created Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         data = request.json['create']
         role = Role()
 
         populate_model(role, data)
 
+        # add permissions
         for entry in data['permissions']:
             action = entry['action']
             resource = entry['resource']
             q = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(q).first()
 
+            # only create a permission if it does not already exist
             if permission is None:
                 permission = Permission()
                 permission.action = entry['action']
@@ -482,6 +922,41 @@ def role_create():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Edit', 'Roles')
 def role_edit():
+    """
+    Edit an existing role.
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int,
+        edit: {
+            ...Role data,
+            permissions: [
+                {
+                    action: str,
+                    resource: str
+                },
+                ...
+            ]
+        }
+    }
+
+    Permissions are required and other data is optional. If no permissions are
+    provided, then the role will be updated with no permissions
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Role Edited Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         data = request.json['edit']
         role_id = request.json['id']
@@ -489,13 +964,17 @@ def role_edit():
 
         populate_model(role, data)
 
+        # remove all existing permissions without deleting them
         role.permissions = []
+
+        # add permissions
         for entry in data['permissions']:
             action = entry['action']
             resource = entry['resource']
             q = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(q).first()
 
+            # only create a permission if it does not already exist
             if permission is None:
                 permission = Permission()
                 permission.action = entry['action']
@@ -522,6 +1001,30 @@ def role_edit():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Archive', 'Role')
 def role_archive():  # TODO: create unit test
+    """
+    Archive a role. This action has the same effect as deleting an entry
+    from the database. However, archived items are only filtered from queries
+    and can be retrieved.
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'Role Archived Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         role_id = request.json['id']
         role = Role.query.get(role_id)
@@ -600,6 +1103,24 @@ def app_edit():
 @blueprint.route('/action')
 @auth_required('View', 'Admin Dashboard')
 def action():  # TODO: write unit test
+    """
+    Get all actions
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...Action data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         actions = Action.query.all()
         res = [a.meta for a in actions]
@@ -617,6 +1138,24 @@ def action():  # TODO: write unit test
 @blueprint.route('/resource')
 @auth_required('View', 'Admin Dashboard')
 def resource():  # TODO: write unit test
+    """
+    Get all resources
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...Resource data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         resources = Resource.query.all()
         res = [r.meta for r in resources]
@@ -634,6 +1173,31 @@ def resource():  # TODO: write unit test
 @blueprint.route('/about-sleep-template')
 @auth_required('View', 'Admin Dashboard')
 def about_sleep_template():
+    """
+    Get one about sleep template or a list of all studies. This will return one
+    about sleep template if the about sleep template's database primary key is
+    passed as a URL option
+
+    Options
+    -------
+    app: 1
+    id: str
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...About Sleep Template data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         i = request.args.get('id')
 
@@ -664,6 +1228,30 @@ def about_sleep_template():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Create', 'Studies')
 def about_sleep_template_create():
+    """
+    Create a new about sleep template.
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        create: {
+            ...About sleep template data
+        }
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'About sleep template Created Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         data = request.json['create']
         about_sleep_template = AboutSleepTemplate()
@@ -688,6 +1276,34 @@ def about_sleep_template_create():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Edit', 'Studies')
 def about_sleep_template_edit():
+    """
+    Edit an existing about sleep template
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int,
+        edit: {
+            ...About sleep template data
+        }
+    }
+
+    All data in the request body are optional. Any attributes that are excluded
+    from the request body will not be changed.
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'About sleep template Edited Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         data = request.json['edit']
         about_sleep_template_id = request.json['id']
@@ -714,6 +1330,30 @@ def about_sleep_template_edit():
 @auth_required('View', 'Admin Dashboard')
 @auth_required('Archive', 'Studies')
 def about_sleep_template_archive():
+    """
+    Archive an about sleep template. This action has the same effect as
+    deleting an entry from the database. However, archived items are only
+    filtered from queries and can be retrieved.
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: 'About sleep template Archived Successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         about_sleep_template_id = request.json['id']
         about_sleep_template = AboutSleepTemplate.query.get(

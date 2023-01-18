@@ -3,6 +3,7 @@ NOBUILD=0
 NOCACHE=0
 TAG=latest
 
+# parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --no-tests)
@@ -29,6 +30,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# export deployment env variables
 if [ -f secret-deploy.env ]; then
     export $(cat secret-deploy.env | xargs)
 else
@@ -39,13 +41,19 @@ fi
 DOCKER_SERVER=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 DOCKER_IMAGE=${DOCKER_SERVER}/${AWS_ECR_REPO_NAME}:${TAG}
 
+# if --no-build was not used
 if [ $NOBUILD -eq 0 ]; then
+
+    # login docker
     aws ecr get-login-password | docker login --username AWS --password-stdin ${DOCKER_SERVER}
     if [ $? -ne 0 ]; then
         exit 1
     fi
 
+    # if --no-tests was not used
     if [ $NOTESTS -eq 0 ]; then
+
+        # run tests
         pytest
 
         if [ $? -ne 0 ]; then
@@ -55,6 +63,7 @@ if [ $NOBUILD -eq 0 ]; then
         echo "Skipping tests..."
     fi
 
+    # include the zappa settings file in the docker image
     zappa save-python-settings-file
     if [ $NOCACHE -eq 1 ]; then
         docker build --no-cache -t ${DOCKER_IMAGE} .
@@ -67,23 +76,32 @@ if [ $NOBUILD -eq 0 ]; then
         exit 1
     fi
 
+    # push the docker image
     docker push ${DOCKER_IMAGE}
     if [ $? -ne 0 ]; then
         exit 1
     fi
 fi
 
+# check if the app has been deployed yet
 zappa status app &> /dev/null
 if [ $? -eq 1 ]; then
+
+    # deploy the app
     zappa deploy app -d ${DOCKER_IMAGE}
 else
+
+    # update the app
     zappa update app -d ${DOCKER_IMAGE}
 fi
 
 echo "Enabling CORS..."
+
+# save the CORS policy as a JSON string with the CloudFront domain as the only allowed origin
 RESPONSE_PARAMETERS=$(jq -jrc --arg origin "'$AWS_CLOUDFRONT_DOMAIN_NAME'" \
     '. += { "method.response.header.Access-Control-Allow-Origin": $origin }' <<< "$(cat cors.json)")
 
+# extract the REST API ID and resource ID from the zappa app status
 ZAPPA_STATUS=$(zappa status app -j)
 if [ $? -ne 0 ]; then
     exit 1
@@ -95,7 +113,10 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# check if a method response already exists on the API gateway
 RESPONSES=$(aws apigateway get-method --rest-api-id $REST_API_ID --resource-id $RESOURCE_ID --http-method ANY | jq -rc ".methodResponses")
+
+# if not, create one
 if [ $RESPONSES = 'null' ]; then
     aws apigateway put-method-response \
         --rest-api-id $REST_API_ID \
@@ -105,6 +126,7 @@ if [ $RESPONSES = 'null' ]; then
         --response-parameters "method.response.header.Access-Control-Allow-Credentials=true","method.response.header.Access-Control-Allow-Headers=true","method.response.header.Access-Control-Allow-Methods=true","method.response.header.Access-Control-Allow-Origin=true"
 fi
 
+# enable CORS on the API gateway's method response
 aws apigateway put-integration-response \
     --rest-api-id $REST_API_ID \
     --resource-id $RESOURCE_ID \

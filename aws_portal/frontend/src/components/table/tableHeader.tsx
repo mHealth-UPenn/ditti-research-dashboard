@@ -4,6 +4,10 @@ import { ReactComponent as Ascending } from "../../icons/sortAscending.svg";
 import { ReactComponent as Descending } from "../../icons/sortDescending.svg";
 import { Header } from "./table";
 
+/**
+ * headers: the table's headers
+ * onSort: callback function when the user sorts
+ */
 interface TableHeaderProps {
   headers: Header[];
   onSort: (name: string, ascending: boolean) => void;
@@ -30,6 +34,8 @@ class TableHeader extends React.Component<TableHeaderProps, any> {
           >
             <div>
               <span>{h.name}</span>
+
+              {/* sort buttons */}
               {h.sortable ? (
                 <div className="sort">
                   <div className={h.ascending == 0 ? "sort-active" : ""}>

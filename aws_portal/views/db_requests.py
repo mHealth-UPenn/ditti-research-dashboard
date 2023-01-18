@@ -29,6 +29,28 @@ def get_apps():
 @blueprint.route('/get-studies')
 @jwt_required()
 def get_studies():  # TODO rewrite unit test
+    """
+    Get the data of all studies that the user has access to
+
+    Options
+    -------
+    app: 2
+
+    Response Syntax (200)
+    ---------------
+    [
+        {
+            ...Study data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         app_id = request.args['app']
         permissions = current_user.get_permissions(app_id)
@@ -55,10 +77,27 @@ def get_studies():  # TODO rewrite unit test
 @blueprint.route('/get-study-details')
 @jwt_required()
 def get_study_details():
+    """
+    Get the details of a given study
+
+    Options
+    -------
+    app: 2
+    study: int
+
+    Response Syntax (200)
+    ---------------------
+    {
+        ...Study data
+    }
+    """
     study_id = request.args['study']
     app_id = request.args['app']
 
     try:
+
+        # if the user has permissions to view all studies, a join table might
+        # not exist. Just get the study
         permissions = current_user.get_permissions(app_id)
         current_user.validate_ask('View', 'All Studies', permissions)
         study = Study.query.get(study_id)
@@ -79,10 +118,36 @@ def get_study_details():
 @blueprint.route('/get-study-contacts')
 @jwt_required()
 def get_study_contacts():
+    """
+    Get the contacts of a given study. This will return the contact information
+    of only accounts that are explictly given access to a study. Accounts that
+    can access a study through permission to view all studies only will not be
+    included
+
+    Options
+    -------
+    app: 2
+    study: int
+
+    Response Syntax (200)
+    ---------------------
+    [
+        {
+            fullName: str,
+            email: str,
+            phoneNumber: str,
+            role: str
+        },
+        ...
+    ]
+    """
     study_id = request.args['study']
     app_id = request.args['app']
 
     try:
+
+        # if the user has permissions to view all studies, a join table might
+        # not exist. Just get the study
         permissions = current_user.get_permissions(app_id)
         current_user.validate_ask('View', 'All Studies', permissions)
         study = Study.query.get(study_id)
@@ -96,10 +161,12 @@ def get_study_contacts():
                 )
             ).first()
 
+    # if the user does not have access to the study, return an empty list
     res = []
     if study is None:
         return jsonify(res)
 
+    # get all accounts that have access to this study
     joins = JoinAccountStudy.query\
         .filter(JoinAccountStudy.study_id == study_id)\
         .join(Account)\
@@ -122,6 +189,18 @@ def get_study_contacts():
 @blueprint.route('/get-account-details')
 @jwt_required()
 def get_account_details():
+    """
+    Get the current user's account details
+
+    Response Syntax (200)
+    ---------------------
+    {
+        firstName: str,
+        lastName: str,
+        email: str,
+        phoneNumber: str
+    }
+    """
     res = {
         'firstName': current_user.first_name,
         'lastName': current_user.last_name,
@@ -135,6 +214,30 @@ def get_account_details():
 @blueprint.route('/edit-account-details', methods=['POST'])
 @jwt_required()
 def edit_account_details():
+    """
+    Edit the current user's account details
+
+    Request Syntax
+    --------------
+    {
+        ...Account data
+    }
+
+    All data in the request body are optional. Any attributes that are excluded
+    from the request body will not be changed.
+
+    Response Syntax (200)
+    ---------------------
+    {
+        msg: 'Account details updated successfully'
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         populate_model(current_user, request.json)
         db.session.commit()
@@ -154,6 +257,24 @@ def edit_account_details():
 @blueprint.route('/get-about-sleep-templates')
 @jwt_required()
 def get_about_sleep_templates():
+    """
+    Get all about sleep templates
+
+    Response Syntax (200)
+    ---------------
+    [
+        {
+            ...About sleep template data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
     try:
         about_sleep_templates = AboutSleepTemplate.query.filter(
             ~AboutSleepTemplate.is_archived

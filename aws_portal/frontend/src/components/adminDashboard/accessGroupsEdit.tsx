@@ -14,16 +14,28 @@ import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 
+/**
+ * The form's prefill
+ */
 interface AccessGroupPrefill {
   name: string;
   appSelected: App;
   permissions: Permission[];
 }
 
+/**
+ * accessGroupId: the database primary key, 0 if creating a new entry
+ */
 interface AccessGroupsEditProps extends ViewProps {
   accessGroupId: number;
 }
 
+/**
+ * actions: all available actions for selection
+ * resources: all available resources for selection
+ * apps: all available apps for selection
+ * loading: whether to show the loader
+ */
 interface AccessGroupsEditState extends AccessGroupPrefill {
   actions: ActionResource[];
   resources: ActionResource[];
@@ -46,30 +58,42 @@ class AccessGroupsEdit extends React.Component<
   };
 
   componentDidMount() {
+
+    // get all available actions
     const actions = makeRequest("/admin/action?app=1").then(
       (actions: ActionResource[]) => this.setState({ actions })
     );
 
+    // get all available resources
     const resources = makeRequest("/admin/resource?app=1").then(
       (resources: ActionResource[]) => this.setState({ resources })
     );
 
+    // get all available apps
     const apps = makeRequest("/admin/app?app=1").then((apps) =>
       this.setState({ apps })
     );
 
+    // set any form prefill data
     const prefill = this.getPrefill().then((prefill) => {
       this.setState({ ...prefill });
     });
 
+    // when all promises are complete, hide the loader
     Promise.all([actions, resources, apps, prefill]).then(() => {
       if (!this.state.permissions) this.addPermission();
       this.setState({ loading: false });
     });
   }
 
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
   getPrefill = async (): Promise<AccessGroupPrefill> => {
     const id = this.props.accessGroupId;
+
+    // if editing an existing entry, return prefill data, else return empty data
     return id
       ? makeRequest("/admin/access-group?app=1&id=" + id).then(this.makePrefill)
       : {
@@ -79,6 +103,11 @@ class AccessGroupsEdit extends React.Component<
         };
   };
 
+  /**
+   * Map the data returned from the backend to form prefill data
+   * @param res - the response body
+   * @returns - the form prefill data
+   */
   makePrefill = (res: AccessGroup[]): AccessGroupPrefill => {
     const accessGroup = res[0];
     return {
@@ -88,16 +117,28 @@ class AccessGroupsEdit extends React.Component<
     };
   };
 
+  /**
+   * Change the selected app when one is chosen from the dropdown menu
+   * @param id - the database primary key
+   */
   selectApp = (id: number): void => {
     const appSelected = this.state.apps.filter((a: App) => a.id == id)[0];
     if (appSelected) this.setState({ appSelected });
   };
 
+  /**
+   * Get the currently selected app
+   * @returns - the database primary key
+   */
   getSelectedApp = (): number => {
     const { appSelected } = this.state;
     return appSelected ? appSelected.id : 0;
   };
 
+  /**
+   * Get the action and resource dropdown menus for each permission
+   * @returns - the permission fields
+   */
   getPermissionFields = (): React.ReactElement => {
     const { actions, resources, permissions } = this.state;
 
@@ -143,16 +184,26 @@ class AccessGroupsEdit extends React.Component<
     );
   };
 
+  /**
+   * Add a new permission and pair of action and resource dropdown menus
+   */
   addPermission = (): void => {
     const permissions: Permission[] = this.state.permissions;
+
+    // set the key to 0 or the last field's id + 1
     const id = permissions.length
       ? permissions[permissions.length - 1].id + 1
       : 0;
 
+    // add the permission field to the page
     permissions.push({ id: id, action: "", resource: "" });
     this.setState({ permissions });
   };
 
+  /**
+   * Remove a permission and pair of action and resource dropdown menus
+   * @param id - the database primary key
+   */
   removePermission = (id: number): void => {
     const permissions = this.state.permissions.filter(
       (p: Permission) => p.id != id
@@ -161,31 +212,51 @@ class AccessGroupsEdit extends React.Component<
     this.setState({ permissions });
   };
 
+  /**
+   * Select a new action for a given permission
+   * @param actionId - the action's database primary key
+   * @param permissionId - the permission's database primary key
+   */
   selectAction = (actionId: number, permissionId: number): void => {
+
+    // get the new action
     const action: ActionResource = this.state.actions.filter(
       (a: ActionResource) => a.id == actionId
     )[0];
 
     if (action) {
       const { permissions } = this.state;
+
+      // get the permission
       const permission: Permission = permissions.filter(
         (p: Permission) => p.id == permissionId
       )[0];
 
       if (permission) {
+
+        // set the new action
         permission.action = action.value;
         this.setState({ permissions });
       }
     }
   };
 
+  /**
+   * Get the selected action for a given permission
+   * @param id - the permission's database primary key
+   * @returns - the action's database primary key
+   */
   getSelectedAction = (id: number): number => {
+
+    // get the permission
     const permission: Permission = this.state.permissions.filter(
       (p: Permission) => p.id == id
     )[0];
 
     if (permission) {
       const actionText = permission.action;
+
+      // get the action
       const action: ActionResource = this.state.actions.filter(
         (a: ActionResource) => a.value == actionText
       )[0];
@@ -197,31 +268,51 @@ class AccessGroupsEdit extends React.Component<
     }
   };
 
+  /**
+   * Select a new resource for a given permission
+   * @param resourceId - the resource's database primary key
+   * @param permissionId - the permission's database primary key
+   */
   selectResource = (resourceId: number, permissionId: number): void => {
+
+    // get the new resource
     const resource: ActionResource = this.state.resources.filter(
       (r: ActionResource) => r.id == resourceId
     )[0];
 
     if (resource) {
       const { permissions } = this.state;
+
+      // get the permission
       const permission: Permission = permissions.filter(
         (p: Permission) => p.id == permissionId
       )[0];
 
       if (permission) {
+
+        // set the new resource
         permission.resource = resource.value;
         this.setState({ permissions });
       }
     }
   };
 
+  /**
+   * Get the currently selected resource for a given permission
+   * @param id - the permission's database primary key
+   * @returns - the permission's database primary key
+   */
   getSelectedResource = (id: number): number => {
+
+    // get the permission
     const permission: Permission = this.state.permissions.filter(
       (p: Permission) => p.id == id
     )[0];
 
     if (permission) {
       const resourceText = permission.resource;
+
+      // get the resource
       const resource: ActionResource = this.state.resources.filter(
         (r: ActionResource) => r.value == resourceText
       )[0];
@@ -233,6 +324,10 @@ class AccessGroupsEdit extends React.Component<
     }
   };
 
+  /**
+   * POST changes to the backend. Make a request to create an entry if creating
+   * a new entry, else make a request to edit an exiting entry
+   */
   post = async (): Promise<void> => {
     const { appSelected, name, permissions } = this.state;
     const ps = permissions.map((p: Permission) => {
@@ -242,7 +337,7 @@ class AccessGroupsEdit extends React.Component<
     const id = this.props.accessGroupId;
     const data = { app: appSelected.id, name: name, permissions: ps };
     const body = {
-      app: 1,
+      app: 1,  // Admin Dashboard = 1
       ...(id ? { id: id, edit: data } : { create: data })
     };
 
@@ -254,16 +349,26 @@ class AccessGroupsEdit extends React.Component<
       .catch(this.handleFailure);
   };
 
+  /**
+   * Handle a successful response
+   * @param res - the response body
+   */
   handleSuccess = (res: ResponseBody) => {
     const { goBack, flashMessage } = this.props;
 
+    // go back to the list view and flash a message
     goBack();
     flashMessage(<span>{res.msg}</span>, "success");
   };
 
+  /**
+   * Handle a failed response
+   * @param res - the response body
+   */
   handleFailure = (res: ResponseBody) => {
     const { flashMessage } = this.props;
 
+    // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
         <b>An unexpected error occured</b>
@@ -275,13 +380,20 @@ class AccessGroupsEdit extends React.Component<
     flashMessage(msg, "danger");
   };
 
+  /**
+   * Compile the access group's permissions as HTML for the entry summary
+   * @returns - the permissions summary
+   */
   getPermissionsSummary = (): React.ReactElement => {
     return (
       <React.Fragment>
         {this.state.permissions.map((p: Permission) => {
+
+          // handle wildcard permissions
           const action = p.action == "*" ? "All Actions" : p.action;
           const resource = p.resource == "*" ? "All Resources" : p.resource;
 
+          // don't compile empty permissions that have no action or resource selected
           return p.action || p.resource ? (
             <span key={p.id}>
               &nbsp;&nbsp;&nbsp;&nbsp;
@@ -303,6 +415,8 @@ class AccessGroupsEdit extends React.Component<
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
+
+        {/* the edit/create form */}
         <div className="page-content bg-white">
           {loading ? (
             <SmallLoader />
@@ -361,6 +475,8 @@ class AccessGroupsEdit extends React.Component<
             </div>
           )}
         </div>
+
+        {/* the edit/create summary */}
         <div className="admin-form-summary bg-dark">
           <h1 className="border-white-b">Access Group Summary</h1>
           <span>

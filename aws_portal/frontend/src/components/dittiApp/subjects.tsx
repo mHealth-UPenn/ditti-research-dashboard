@@ -14,11 +14,22 @@ import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
 import SubjectVisuals from "./subjectVisuals";
 
+/**
+ * studyDetails: the details of the study that subjects will be listed for
+ * getTaps: get tap data
+ */
 interface SubjectsProps extends ViewProps {
   studyDetails: Study;
   getTaps: () => TapDetails[];
 }
 
+/**
+ * canCreate: whether the current user can enroll subjects
+ * canEdit: whether the current user can edit subjects
+ * users: the rows of the subjects table
+ * columns: the columns of the subjects table
+ * loading: whether to show the loader
+ */
 interface SubjectsState {
   canCreate: boolean;
   canEdit: boolean;
@@ -70,24 +81,32 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
   componentDidMount() {
     const { dittiId, id } = this.props.studyDetails;
 
+    // get whether the user can enroll subjects
     const create = getAccess(2, "Create", "Users", id)
       .then(() => this.setState({ canCreate: true }))
       .catch(() => this.setState({ canCreate: false }));
 
+    // get whether the user can edit subjects
     const edit = getAccess(2, "Edit", "Users", id)
       .then(() => this.setState({ canEdit: true }))
       .catch(() => this.setState({ canEdit: false }));
 
+    // get all of the study's users
     const url = `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${dittiId}"`;
     const users = makeRequest(url).then((users: User[]) =>
       this.setState({ users })
     );
 
+    // when all promises complete, hide the loader
     Promise.all([create, edit, users]).then(() =>
       this.setState({ loading: false })
     );
   }
 
+  /**
+   * Get the data for the subjects table
+   * @returns - The table's contents, consisting of rows of table cells
+   */
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick, getTaps } = this.props;
     const { id, dittiId, email } = this.props.studyDetails;
@@ -123,6 +142,8 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
         {
           contents: (
             <div className="flex-left table-data">
+
+              {/* if the user has tap permission, link to a subject visuals page */}
               {u.tap_permission ? (
                 <span
                   className="link"
@@ -184,6 +205,8 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
         {
           contents: (
             <div className="flex-left table-control">
+
+              {/* if the user can edit, link to the edit subject page */}
               {canEdit ? (
                 <button
                   className="button-secondary"
@@ -219,6 +242,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
     const { id, dittiId, email } = this.props.studyDetails;
     const { canCreate, columns, loading } = this.state;
 
+    // if the user can enroll subjects, include an enroll button
     const tableControl = canCreate ? (
       <button
         className="button-primary"

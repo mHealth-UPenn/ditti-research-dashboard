@@ -17,15 +17,25 @@ import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 
+/**
+ * accountId: the database primary key, 0 if creating a new entry
+ */
 interface AccountsEditProps extends ViewProps {
   accountId: number;
 }
 
+/**
+ * study: the database primary key of study the role is selected for
+ * role: the role's database primary key
+ */
 interface RoleSelected {
   study: number;
   role: number;
 }
 
+/**
+ * the form's prefill
+ */
 interface AccountPrefill {
   email: string;
   firstName: string;
@@ -36,6 +46,15 @@ interface AccountPrefill {
   studiesSelected: Study[];
 }
 
+/**
+ * accessGroups: all available access groups for selection
+ * roles: all available roles for selection
+ * studies: all available studies for selection
+ * columnsAccessGroups: columns for the access groups table
+ * columnsStudies: columns for the studies table
+ * password: the password to be set
+ * loading: whether to show the loader
+ */
 interface AccountsEditState extends AccountPrefill {
   accessGroups: AccessGroup[];
   roles: Role[];
@@ -106,28 +125,40 @@ class AccountsEdit extends React.Component<
   };
 
   componentDidMount() {
+
+    // get all access groups
     const accessGroups = makeRequest("/admin/access-group?app=1").then(
       (accessGroups: AccessGroup[]) => this.setState({ accessGroups })
     );
 
+    // get all roles
     const roles = makeRequest("/admin/role?app=1").then((roles: Role[]) =>
       this.setState({ roles })
     );
 
+    // get all studies
     const studies = makeRequest("/admin/study?app=1").then((studies: Study[]) =>
       this.setState({ studies })
     );
 
+    // set the form prefill data
     const prefill = this.getPrefill().then((prefill: AccountPrefill) =>
       this.setState({ ...prefill })
     );
 
+    // when all requests are complete, hide the loader
     const promises = [accessGroups, roles, studies, prefill];
     Promise.all(promises).then(() => this.setState({ loading: false }));
   }
 
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
   getPrefill = async (): Promise<AccountPrefill> => {
     const id = this.props.accountId;
+
+    // if editing an existing entry, return prefill data, else return empty data
     return id
       ? makeRequest("/admin/account?app=1&id=" + id).then(this.makePrefill)
       : {
@@ -141,6 +172,11 @@ class AccountsEdit extends React.Component<
         };
   };
 
+  /**
+   * Map the data returned from the backend to form prefill data
+   * @param res - the response body
+   * @returns - the form prefill data
+   */
   makePrefill = (res: Account[]): AccountPrefill => {
     const account = res[0];
     const roles = account.studies.map((s): RoleSelected => {
@@ -158,7 +194,13 @@ class AccountsEdit extends React.Component<
     };
   };
 
+  /**
+   * Get the contents for the access groups table
+   * @returns - the table contents
+   */
   getAccessGroupsData = (): TableData[][] => {
+
+    // map each table row to table cells for each column
     return this.state.accessGroups.map((ag: AccessGroup) => {
       const { id, name, app } = ag;
 
@@ -200,7 +242,13 @@ class AccountsEdit extends React.Component<
     });
   };
 
+  /**
+   * Get the contents for the studies table
+   * @returns - the table contents
+   */
   getStudiesData = (): TableData[][] => {
+
+    // map each table row to table cells for each column
     return this.state.studies.map((s) => {
       const { id, name } = s;
 
@@ -251,19 +299,34 @@ class AccountsEdit extends React.Component<
     });
   };
 
+  /**
+   * Assign a role to the user for a given study
+   * @param roleId - the role's database primary key
+   * @param studyId - the study's database primary key
+   */
   selectRole = (roleId: number, studyId: number): void => {
+
+    // get all roles that have been selected for other studies
     const rolesSelected: RoleSelected[] = this.state.rolesSelected.filter(
       (x: RoleSelected) => x.study != studyId
     );
 
+    // add this role
     rolesSelected.push({ study: studyId, role: roleId });
     this.setState({ rolesSelected });
   };
 
+  /**
+   * Get the assigned role for a given study
+   * @param id - the study's database primary key
+   * @returns - the role's database primary key
+   */
   getSelectedRole = (id: number) => {
     const { rolesSelected } = this.state;
 
     if (rolesSelected.some((x: RoleSelected) => x.study == id)) {
+
+      // get the role selected for this study
       const roleSelected: RoleSelected = rolesSelected.filter(
         (x: RoleSelected) => x.study == id
       )[0];
@@ -274,24 +337,43 @@ class AccountsEdit extends React.Component<
     }
   };
 
+  /**
+   * Check if a given access group is currently assigned to the user
+   * @param id - the database primary key of the access group to check
+   * @returns - whether the access group is selected
+   */
   isActiveAccessGroup = (id: number): boolean => {
     return this.state.accessGroupsSelected.some(
       (ag: AccessGroup) => ag.id == id
     );
   };
 
+  /**
+   * Assign a new access group to the user
+   * @param id - the access group's database primary key
+   * @param callback
+   */
   addAccessGroup = (id: number, callback: () => void): void => {
     const { accessGroups, accessGroupsSelected } = this.state;
+
+    // get the access group
     const accessGroup = accessGroups.filter(
       (ag: AccessGroup) => ag.id == id
     )[0];
 
     if (accessGroup) {
+
+      // add it to the selected access groups
       accessGroupsSelected.push(accessGroup);
       this.setState({ accessGroupsSelected }, callback);
     }
   };
 
+  /**
+   * Remove an access group
+   * @param id - the access group's database primary key
+   * @param callback 
+   */
   removeAccessGroup = (id: number, callback: () => void): void => {
     const accessGroupsSelected = this.state.accessGroupsSelected.filter(
       (ag: AccessGroup) => ag.id != id
@@ -300,23 +382,42 @@ class AccountsEdit extends React.Component<
     this.setState({ accessGroupsSelected }, callback);
   };
 
+  /**
+   * Check a given study is assigned to the user
+   * @param id - the study's database primary key
+   * @returns - whether the study is assigned to the user
+   */
   isActiveStudy = (id: number): boolean => {
     return this.state.studiesSelected.some((s: Study) => s.id == id);
   };
 
+  /**
+   * Assign a study to the user
+   * @param id - the study's database primary key
+   * @param callback 
+   */
   addStudy = (id: number, callback: () => void): void => {
     const { studies, studiesSelected } = this.state;
+
+    // get the study
     const study = Object.assign(
       {},
       studies.filter((s: Study) => s.id == id)[0]
     );
 
     if (study) {
+
+      // add it to the selected studies
       studiesSelected.push(study);
       this.setState({ studiesSelected }, callback);
     }
   };
 
+  /**
+   * Remove a study
+   * @param id - the study's database primary key
+   * @param callback 
+   */
   removeStudy = (id: number, callback: () => void): void => {
     const studiesSelected = this.state.studiesSelected.filter(
       (s: Study) => s.id != id
@@ -325,6 +426,10 @@ class AccountsEdit extends React.Component<
     this.setState({ studiesSelected }, callback);
   };
 
+  /**
+   * POST changes to the backend. Make a request to create an entry if creating
+   * a new entry, else make a request to edit an exiting entry
+   */
   post = async (): Promise<void> => {
     const {
       accessGroupsSelected,
@@ -337,10 +442,12 @@ class AccountsEdit extends React.Component<
       password
     } = this.state;
 
+    // get all access groups that are assigned to the user
     const accessGroups = accessGroupsSelected.map((ag: AccessGroup) => {
       return { id: ag.id };
     });
 
+    // get all studies and roles that are assigned to the user
     const studies = studiesSelected.map((s: Study) => {
       const role: RoleSelected = rolesSelected.filter(
         (r: RoleSelected) => r.study == s.id
@@ -360,7 +467,7 @@ class AccountsEdit extends React.Component<
 
     const id = this.props.accountId;
     const body = {
-      app: 1,
+      app: 1,  // Admin Dashboard = 1
       ...(id ? { id: id, edit: data } : { create: data })
     };
 
@@ -372,16 +479,26 @@ class AccountsEdit extends React.Component<
       .catch(this.handleFailure);
   };
 
+  /**
+   * Handle a successful response
+   * @param res - the response body
+   */
   handleSuccess = (res: ResponseBody) => {
     const { flashMessage, goBack } = this.props;
 
+    // go back to the list view and flash a message
     goBack();
     flashMessage(<span>{res.msg}</span>, "success");
   };
 
+  /**
+   * Handle a failed response
+   * @param res - the response body
+   */
   handleFailure = (res: ResponseBody) => {
     const { flashMessage } = this.props;
 
+    // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
         <b>An unexpected error occured</b>
@@ -393,8 +510,14 @@ class AccountsEdit extends React.Component<
     flashMessage(msg, "danger");
   };
 
+  /**
+   * Compile the user's access groups as HTML for the entry summary
+   * @returns - the user's access group summary
+   */
   getAccessGroupsSummary = () => {
     return this.state.accessGroupsSelected.map((ag: AccessGroup, i) => {
+
+      // the permissions of each access group
       const permissions = ag.permissions.map((p: Permission, i: number) => {
         const action = p.action == "*" ? "All Actions" : p.action;
         const resource = p.resource == "*" ? "All Resources" : p.resource;
@@ -408,6 +531,7 @@ class AccountsEdit extends React.Component<
         );
       });
 
+      // each access group and its permissions
       return (
         <span key={i}>
           {i ? <br /> : ""}
@@ -422,6 +546,10 @@ class AccountsEdit extends React.Component<
     });
   };
 
+  /**
+   * Compile the user's studies as HTML for the entry summary
+   * @returns - the user's study summary
+   */
   getStudiesSummary = () => {
     let role: Role;
     let permissions: React.ReactElement[];
@@ -431,14 +559,19 @@ class AccountsEdit extends React.Component<
       role = {} as Role;
       permissions = [<React.Fragment key={0} />];
 
+      // get the selected role for each study
       const selectedRole: RoleSelected = rolesSelected.filter(
         (sr: RoleSelected) => sr.study == s.id
       )[0];
 
       if (selectedRole) {
+
+        // get the selected role's data
         role = roles.filter((r: Role) => r.id == selectedRole.role)[0];
 
         if (role) {
+
+          // list the permissions for each selected role
           permissions = role.permissions.map((p, j) => {
             const action = p.action == "*" ? "All Actions" : p.action;
             const resource = p.resource == "*" ? "All Resources" : p.resource;
@@ -454,6 +587,7 @@ class AccountsEdit extends React.Component<
         }
       }
 
+      // list each study, its assigned role, and the role's permissions
       return (
         <span key={i}>
           {i ? <br /> : ""}
@@ -489,6 +623,8 @@ class AccountsEdit extends React.Component<
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
+
+        {/* the edit/create form */}
         <div className="page-content bg-white">
           {loading ? (
             <SmallLoader />
@@ -599,6 +735,8 @@ class AccountsEdit extends React.Component<
           )}
         </div>
         <div className="admin-form-summary bg-dark">
+
+          {/* the edit/create summary */}
           <h1 className="border-white-b">Account Summary</h1>
           <span>
             Name:

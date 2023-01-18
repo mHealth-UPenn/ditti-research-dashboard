@@ -1,16 +1,28 @@
 import * as React from "react";
 import { Component } from "react";
 
+/**
+ * style: the loader's style
+ * msg: an optional message to display under the loader
+ */
 interface LoaderProps {
   style: React.CSSProperties;
   msg?: string;
 }
 
+/**
+ * loading: whether the loader is not fading
+ * msg: a message to display under the loader
+ */
 interface FullLoaderProps {
   loading: boolean;
   msg: string;
 }
 
+/**
+ * loadingStyle: the style as the loader is displayed
+ * fadingStyle: the style as the loader is fading
+ */
 interface FullLoaderState {
   loadingStyle: React.CSSProperties;
   fadingStyle: React.CSSProperties;

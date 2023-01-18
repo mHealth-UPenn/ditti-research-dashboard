@@ -5,6 +5,12 @@ import { makeRequest } from "../utils";
 import { AccountDetails, ViewProps } from "../interfaces";
 import AccountMenu from "./accountMenu";
 
+/**
+ * accountDetails: the current user's account information
+ * loading: whether the user's account data is being retrieved and the account
+ *          menu should be hidden
+ * showMenu: whether to show the account menu
+ */
 interface HeaderState {
   accountDetails: AccountDetails;
   loading: boolean;
@@ -19,6 +25,8 @@ class Header extends React.Component<ViewProps, HeaderState> {
   };
 
   componentDidMount() {
+
+    // get the user's account information
     makeRequest("/db/get-account-details").then(
       (accountDetails: AccountDetails) =>
         this.setState({ accountDetails, loading: false })
@@ -36,6 +44,8 @@ class Header extends React.Component<ViewProps, HeaderState> {
 
     return (
       <React.Fragment>
+
+        {/* the header */}
         <div className="bg-dark header-container">
           <div className="header-brand">
             <span>AWS Data Portal</span>
@@ -44,6 +54,8 @@ class Header extends React.Component<ViewProps, HeaderState> {
             <span>
               {name ? name : ""}&nbsp;&nbsp;|&nbsp;&nbsp;{email ? email : ""}
             </span>
+
+            {/* clicking on this icon shows the account menu */}
             <div
               className="header-profile-icon"
               onClick={() => this.setState({ showMenu: !showMenu })}
@@ -52,6 +64,8 @@ class Header extends React.Component<ViewProps, HeaderState> {
             </div>
           </div>
         </div>
+
+        {/* the account menu */}
         {!loading && showMenu ? (
           <AccountMenu
             accountDetails={accountDetails}

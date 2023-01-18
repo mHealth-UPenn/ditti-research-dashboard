@@ -8,6 +8,12 @@ import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
 import { ReactComponent as Right } from "../../icons/arrowRight.svg";
 import "./table.css";
 
+/**
+ * name: the name to display in the column header
+ * searchable: whether the column is searchable
+ * sortable: whether the column is sortable
+ * width: the column's display width
+ */
 export interface Column {
   name: string;
   searchable: boolean;
@@ -15,6 +21,12 @@ export interface Column {
   width: number;
 }
 
+/**
+ * ascending: unsorted, descending, or ascending
+ * name: the header's name to display
+ * sortable: whether the header's column is sortable
+ * width: the column's display width
+ */
 export interface Header {
   ascending: -1 | 0 | 1;
   name: string;
@@ -22,11 +34,24 @@ export interface Header {
   width: number;
 }
 
+/**
+ * A table cell to be passed to the table
+ * contents: the contents of the cell to render
+ * sortValue: the value to sort the cell on
+ */
 export interface TableData {
   contents: React.ReactElement;
   sortValue: string;
 }
 
+/**
+ * A table cell as it used for rendering purposes
+ * contents: the contents of the cell to render
+ * searchable: whether the cell is in a searchable column
+ * searchValue: the value used for searching
+ * sortable: whether the cell is in a searchable column
+ * width: the column's display width
+ */
 interface Row {
   contents: React.ReactElement;
   searchable: boolean;
@@ -36,6 +61,16 @@ interface Row {
   width: number;
 }
 
+/**
+ * columns: the table columns
+ * control: a control element (e.g., a create button)
+ * controlWidth: the control's display width
+ * data: an array of rows that are arrays of table cells
+ * includeControl: whether to show the control element
+ * includeSearch: whether to show the search bar
+ * paginationPer: the number of rows to show per page
+ * sortDefault: the name of the default sort column
+ */
 interface TableProps {
   columns: Column[];
   control: React.ReactElement;
@@ -47,6 +82,14 @@ interface TableProps {
   sortDefault: string;
 }
 
+/**
+ * rows: an array of rows that are arrays of table cells
+ * rowsFiltered: rows to render if the user is using the search bar
+ * rowsRendered: rows that are currently displayed
+ * headers: the table's headers
+ * page: the current page to display
+ * totalPages: the total number of pages that can be displayed
+ */
 interface TableState {
   rows: Row[][];
   rowsFiltered: Row[][];
@@ -61,6 +104,8 @@ class Table extends React.Component<TableProps, TableState> {
     super(props);
 
     const { columns, data, paginationPer, sortDefault } = props;
+
+    // map the table cells that were passed as props
     const rows = data.map((row) =>
       row.map((cell, i) => {
         return {
@@ -68,7 +113,7 @@ class Table extends React.Component<TableProps, TableState> {
           searchable: columns[i].searchable,
           searchValue: renderToString(cell.contents)
             .replace(/<(.+?)>/, "")
-            .toLowerCase(),
+            .toLowerCase(),  // remove all html tags for searchable data
           sortable: columns[i].sortable,
           sortValue: cell.sortValue,
           width: columns[i].width
@@ -76,17 +121,23 @@ class Table extends React.Component<TableProps, TableState> {
       })
     );
 
+    // start with an empty table
     const rowsRendered = <React.Fragment />;
+
+    // map the columns to a set of headers
     const headers = columns.map((c): Header => {
       return {
-        ascending: c.name === sortDefault ? 1 : -1,
+        ascending: c.name === sortDefault ? 1 : -1,  // default sort is descending
         name: c.name,
         sortable: c.sortable,
         width: c.width
       };
     });
 
+    // start on page 1
     const page = 1;
+
+    // get the total number of pages
     const totalPages = Math.ceil(data.length / paginationPer);
 
     this.state = {
@@ -100,14 +151,23 @@ class Table extends React.Component<TableProps, TableState> {
   }
 
   componentDidMount() {
+
+    // render page 1 of the table's rows
     this.renderRows(1, this.state.rows);
   }
 
+  /**
+   * Filter the table from the search bar
+   * @param text - the text in the search bar
+   */
   onSearch = (text: string) => {
     const { paginationPer } = this.props;
     const { rows } = this.state;
 
+    // always set the page to page 1 when searching
     const page = 1;
+
+    // filter the table's rows
     const rowsFiltered = rows.filter((row) =>
       row.some(
         (cell) =>
@@ -115,19 +175,27 @@ class Table extends React.Component<TableProps, TableState> {
       )
     );
 
+    // get the total number of pages using the number of filtered rows
     const totalPages = Math.ceil(rowsFiltered.length / paginationPer);
 
     this.setState({ page, rowsFiltered, totalPages });
     this.renderRows(page, rowsFiltered);
   };
 
+  /**
+   * Sort the table
+   * @param name - the name of the column to sort the table on
+   * @param ascending - whether the sort is ascending
+   */
   onSort = (name: string, ascending: boolean) => {
     const { headers, page, rowsFiltered } = this.state;
 
+    // set this header to ascending/descending and all others to unsorted
     for (const h of headers) {
       h.ascending = h.name === name ? (ascending ? 1 : 0) : -1;
     }
 
+    // sort all rows using the cell corresponding to this header's index
     const i = headers.findIndex((h) => h.name === name);
     rowsFiltered.sort((a, b) => {
       if (a[i].sortValue < b[i].sortValue) return ascending ? 1 : -1;
@@ -139,19 +207,35 @@ class Table extends React.Component<TableProps, TableState> {
     this.renderRows(page, rowsFiltered);
   };
 
+  /**
+   * Show a new page
+   * @param page - the page to show
+   */
   paginate = (page: number) => {
+
+    // render rows using the new page
     this.renderRows(page, this.state.rowsFiltered);
     this.setState({ page });
   };
 
+  /**
+   * Rander the table's rows
+   * @param page - the page to render
+   * @param data - the rows to render (necessary for rendering a filtered set
+   *               of rows)
+   */
   renderRows(page: number, data: Row[][]) {
     const { paginationPer } = this.props;
 
     const rowsRendered = (
       <React.Fragment>
+
+        {/* if there is data to display in the table */}
         {data.length ? (
+
+          // render each row
           data
-            .slice((page - 1) * paginationPer, page * paginationPer)
+            .slice((page - 1) * paginationPer, page * paginationPer)  // this page
             .map((row, i) => (
               <TableRow
                 key={i}
@@ -162,6 +246,8 @@ class Table extends React.Component<TableProps, TableState> {
             ))
         ) : (
           <tr className="bg-light">
+
+            {/* empty table message */}
             <td className="border-light-t border-light-r no-data">
               <i>No data to display</i>
             </td>
@@ -187,6 +273,8 @@ class Table extends React.Component<TableProps, TableState> {
 
     return (
       <div className="table-container">
+
+        {/* the table control */}
         {includeControl || includeSearch ? (
           <TableControl
             control={control}
@@ -198,14 +286,24 @@ class Table extends React.Component<TableProps, TableState> {
         ) : (
           ""
         )}
+
+        {/* the table */}
         <table className="border-light-t border-light-b border-light-l">
+
+          {/*  the table header */}
           <thead>
             <TableHeader headers={headers} onSort={this.onSort} />
           </thead>
+
+          {/* the table body */}
           <tbody>{rowsRendered}</tbody>
         </table>
+
+        {/* table pagination */}
         <div className="table-pagination">
           <div className="table-pagination-control">
+
+            {/* last page button */}
             <div
               className={
                 "pagination-button bg-light border-light-t border-light-l border-light-b" +
@@ -215,6 +313,8 @@ class Table extends React.Component<TableProps, TableState> {
             >
               <Left />
             </div>
+
+            {/* next page button */}
             <div
               className={
                 "pagination-button bg-light border-light" +
@@ -224,10 +324,14 @@ class Table extends React.Component<TableProps, TableState> {
             >
               <Right />
             </div>
+
+            {/* current page */}
             <span>
               Page {page} of {totalPages || 1}
             </span>
           </div>
+
+          {/* X items if 1 page or X of Y items if multiple pages */}
           <span>
             {totalPages
               ? `${(page - 1) * paginationPer + 1} - ${Math.min(

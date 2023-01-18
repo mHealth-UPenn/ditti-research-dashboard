@@ -20,8 +20,10 @@ def create_app(testing=False):
     else:
         flask_config = os.getenv('FLASK_CONFIG', 'Development')
 
+    # set the static folder as the react frontend
     app = Flask(__name__, static_url_path='', static_folder='frontend/build')
 
+    # configure CORS
     CORS(
       app,
       allow_headers=['authorization', 'content-type', 'x-csrf-token'],
@@ -29,11 +31,13 @@ def create_app(testing=False):
       supports_credentials=True
     )
 
+    # configure and initialize the app
     app.config.from_object('aws_portal.config.%s' % flask_config)
     register_blueprints(app)
     register_commands(app)
     register_extensions(app)
 
+    # after each request refresh JWTs that expire within 15 minutes
     @app.after_request
     def refresh_expiring_jwts(response):
         try:
@@ -42,7 +46,10 @@ def create_app(testing=False):
             exp = now + timedelta(minutes=15)
             target_timestamp = int(datetime.timestamp(exp))
 
+            # if the user's JWT expires within 15 minutes
             if target_timestamp > exp_timestamp:
+
+                # create a new token for the user
                 access_token = create_access_token(current_user)
                 set_access_cookies(response, access_token)
 

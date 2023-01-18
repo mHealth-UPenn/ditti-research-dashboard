@@ -2,6 +2,17 @@ import * as React from "react";
 import { Component } from "react";
 import "./textField.css";
 
+/**
+ * id (optional): an optional html id
+ * type (optional): text, number, date, etc.
+ * placeholder (optional): an optional placeholder
+ * prefill (optional): a default value (which cannot be changed)
+ * value (optional): the field's value (which can be changed)
+ * label (optional): the field's label
+ * onKeyup (optional): a callback function on keyup
+ * feedback (optional): feedback when an error is made
+ * disabled (optional): whether to disable the field
+ */
 interface TextFieldProps {
   id?: string;
   type?: string;
@@ -14,6 +25,9 @@ interface TextFieldProps {
   disabled?: boolean;
 }
 
+/**
+ * text: the text to display
+ */
 interface TextFieldState {
   text: string;
 }
@@ -41,6 +55,8 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
         className="text-field-container"
         style={type == "textarea" ? { height: "24rem" } : {}}
       >
+
+        {/* if a label was passed as a prop */}
         {label ? (
           <label className="text-field-label" htmlFor={id}>
             {label}
@@ -51,8 +67,14 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
             "text-field-content border-light" + (disabled ? " bg-light" : "")
           }
         >
+
+          {/* place children here as prefix icons (e.g., a password icon) */}
           {this.props.children ? this.props.children : null}
+
+          {/* the input */}
           <div className="text-field-input">
+
+            {/* textares require a unique e.target class */}
             {type == "textarea" ? (
               <textarea
                 defaultValue={prefill ? prefill : undefined}
@@ -78,6 +100,8 @@ class TextField extends React.Component<TextFieldProps, TextFieldState> {
             )}
           </div>
         </div>
+
+        {/* feedback on error */}
         {feedback ? (
           <span className="text-field-feedback">{feedback}</span>
         ) : null}

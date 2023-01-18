@@ -6,6 +6,9 @@ import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 
+/**
+ * The form's prefill
+ */
 interface StudyPrefill {
   name: string;
   acronym: string;
@@ -13,10 +16,16 @@ interface StudyPrefill {
   email: string;
 }
 
+/**
+ * studyId: the database primary key, 0 if creating a new entry
+ */
 interface StudiesEditProps extends ViewProps {
   studyId: number;
 }
 
+/**
+ * loading: whether to show the loader
+ */
 interface StudiesEditState extends StudyPrefill {
   loading: boolean;
 }
@@ -31,13 +40,21 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
   };
 
   componentDidMount() {
+
+    // set any form prefill data and hide the loader
     this.getPrefill().then((prefill: StudyPrefill) =>
       this.setState({ ...prefill, loading: false })
     );
   }
 
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
   getPrefill = async (): Promise<StudyPrefill> => {
     const id = this.props.studyId;
+
+    // if editing an existing entry, return prefill data, else return empty data
     return id
       ? makeRequest("/admin/study?app=1&id=" + id).then(this.makePrefill)
       : {
@@ -48,6 +65,11 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
         };
   };
 
+  /**
+   * Map the data returned from the backend to form prefill data
+   * @param res - the response body
+   * @returns - the form prefill data
+   */
   makePrefill = (res: Study[]): StudyPrefill => {
     const study = res[0];
 
@@ -59,12 +81,16 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     };
   };
 
+  /**
+   * POST changes to the backend. Make a request to create an entry if creating
+   * a new entry, else make a request to edit an exiting entry
+   */
   post = async (): Promise<void> => {
     const { acronym, dittiId, email, name } = this.state;
     const data = { acronym, ditti_id: dittiId, email, name };
     const id = this.props.studyId;
     const body = {
-      app: 1,
+      app: 1,  // Admin Dashboard = 1
       ...(id ? { id: id, edit: data } : { create: data })
     };
 
@@ -76,16 +102,26 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
       .catch(this.handleFailure);
   };
 
+  /**
+   * Handle a successful response
+   * @param res - the response body
+   */
   handleSuccess = (res: ResponseBody) => {
     const { goBack, flashMessage } = this.props;
 
+    // go back to the list view and flash a message
     goBack();
     flashMessage(<span>{res.msg}</span>, "success");
   };
 
+  /**
+   * Handle a failed response
+   * @param res - the response body
+   */
   handleFailure = (res: ResponseBody) => {
     const { flashMessage } = this.props;
 
+    // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
         <b>An unexpected error occured</b>
@@ -104,6 +140,8 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
+
+        {/* the edit/create form */}
         <div className="page-content bg-white">
           {loading ? (
             <SmallLoader />
@@ -170,6 +208,8 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
           )}
         </div>
         <div className="admin-form-summary bg-dark">
+
+          {/* the edit/create summary */}
           <h1 className="border-white-b">Study Summary</h1>
           <span>
             Name:

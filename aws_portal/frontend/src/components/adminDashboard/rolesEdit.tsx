@@ -13,15 +13,26 @@ import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 
+/**
+ * The form's prefill
+ */
 interface RolesPrefill {
   name: string;
   permissions: Permission[];
 }
 
+/**
+ * roleId: the database primary key, 0 if creating a new entry
+ */
 interface RolesEditProps extends ViewProps {
   roleId: number;
 }
 
+/**
+ * actions: all available actions for selection
+ * resources: all available resources for selection
+ * loading: whether to show the loader
+ */
 interface RolesEditState extends RolesPrefill {
   actions: ActionResource[];
   resources: ActionResource[];
@@ -38,31 +49,47 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   };
 
   componentDidMount() {
+
+    // get all available actions
     const actions = makeRequest("/admin/action?app=1").then(
       (actions: ActionResource[]) => this.setState({ actions })
     );
 
+    // get all available resources
     const resources = makeRequest("/admin/resource?app=1").then(
       (resources: ActionResource[]) => this.setState({ resources })
     );
 
+    // set any form prefill data
     const prefill = this.getPrefill().then((prefill: RolesPrefill) =>
       this.setState({ ...prefill })
     );
 
+    // when all promises are complete, hide the loader
     Promise.all([actions, resources, prefill]).then(() => {
       if (!this.state.permissions) this.addPermission();
       this.setState({ loading: false });
     });
   }
 
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
   getPrefill = async (): Promise<RolesPrefill> => {
     const id = this.props.roleId;
+
+    // if editing an existing entry, return prefill data, else return empty data
     return id
       ? makeRequest("/admin/role?app=1&id=" + id).then(this.makePrefill)
       : { name: "", permissions: [] };
   };
 
+  /**
+   * Map the data returned from the backend to form prefill data
+   * @param res - the response body
+   * @returns - the form prefill data
+   */
   makePrefill = (res: Role[]): RolesPrefill => {
     const role = res[0];
 
@@ -72,6 +99,10 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     };
   };
 
+  /**
+   * Get the action and resource dropdown menus for each permission
+   * @returns - the permission fields
+   */
   getPermissionFields = (): React.ReactElement => {
     const { actions, resources, permissions } = this.state;
 
@@ -117,16 +148,26 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     );
   };
 
+  /**
+   * Add a new permission and pair of action and resource dropdown menus
+   */
   addPermission = (): void => {
     const permissions: Permission[] = this.state.permissions;
+
+    // set the key to 0 or the last field's id + 1
     const id = permissions.length
       ? permissions[permissions.length - 1].id + 1
       : 0;
 
+    // add the permission field to the page
     permissions.push({ id: id, action: "", resource: "" });
     this.setState({ permissions });
   };
 
+  /**
+   * Remove a permission and pair of action and resource dropdown menus
+   * @param id - the database primary key
+   */
   removePermission = (id: number): void => {
     const permissions = this.state.permissions.filter(
       (p: Permission) => p.id != id
@@ -135,31 +176,51 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     this.setState({ permissions });
   };
 
+  /**
+   * Select a new action for a given permission
+   * @param actionId - the action's database primary key
+   * @param permissionId - the permission's database primary key
+   */
   selectAction = (actionId: number, permissionId: number): void => {
+
+    // get the new action
     const action: ActionResource = this.state.actions.filter(
       (a: ActionResource) => a.id == actionId
     )[0];
 
     if (action) {
       const { permissions } = this.state;
+
+      // get the permission
       const permission: Permission = permissions.filter(
         (p: Permission) => p.id == permissionId
       )[0];
 
       if (permission) {
+
+        // set the new action
         permission.action = action.value;
         this.setState({ permissions });
       }
     }
   };
 
+  /**
+   * Get the selected action for a given permission
+   * @param id - the permission's database primary key
+   * @returns - the action's database primary key
+   */
   getSelectedAction = (id: number): number => {
+
+    // get the permission
     const permission: Permission = this.state.permissions.filter(
       (p: Permission) => p.id == id
     )[0];
 
     if (permission) {
       const actionText = permission.action;
+
+      // get the action
       const action: ActionResource = this.state.actions.filter(
         (a: ActionResource) => a.value == actionText
       )[0];
@@ -171,31 +232,51 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     }
   };
 
+  /**
+   * Select a new resource for a given permission
+   * @param resourceId - the resource's database primary key
+   * @param permissionId - the permission's database primary key
+   */
   selectResource = (resourceId: number, permissionId: number): void => {
+
+    // get the new resource
     const resource: ActionResource = this.state.resources.filter(
       (r: ActionResource) => r.id == resourceId
     )[0];
 
     if (resource) {
       const { permissions } = this.state;
+
+      // get the permission
       const permission: Permission = permissions.filter(
         (p: Permission) => p.id == permissionId
       )[0];
 
       if (permission) {
+
+        // set the new resource
         permission.resource = resource.value;
         this.setState({ permissions });
       }
     }
   };
 
+  /**
+   * Get the currently selected resource for a given permission
+   * @param id - the permission's database primary key
+   * @returns - the permission's database primary key
+   */
   getSelectedResource = (id: number): number => {
+
+    // get the permission
     const permission: Permission = this.state.permissions.filter(
       (p: Permission) => p.id == id
     )[0];
 
     if (permission) {
       const resourceText = permission.resource;
+
+      // get the resource
       const resource: ActionResource = this.state.resources.filter(
         (r: ActionResource) => r.value == resourceText
       )[0];
@@ -207,6 +288,10 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     }
   };
 
+  /**
+   * POST changes to the backend. Make a request to create an entry if creating
+   * a new entry, else make a request to edit an exiting entry
+   */
   post = async (): Promise<void> => {
     const { name, permissions } = this.state;
     const ps = permissions.map((p: Permission) => {
@@ -216,7 +301,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     const data = { name, permissions: ps };
     const id = this.props.roleId;
     const body = {
-      app: 1,
+      app: 1,  // Admin Dashboard = 1
       ...(id ? { id: id, edit: data } : { create: data })
     };
 
@@ -228,16 +313,26 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
       .catch(this.handleFailure);
   };
 
+  /**
+   * Handle a successful response
+   * @param res - the response body
+   */
   handleSuccess = (res: ResponseBody) => {
     const { goBack, flashMessage } = this.props;
 
+    // go back to the list view and flash a message
     goBack();
     flashMessage(<span>{res.msg}</span>, "success");
   };
 
+  /**
+   * Handle a failed response
+   * @param res - the response body
+   */
   handleFailure = (res: ResponseBody) => {
     const { flashMessage } = this.props;
 
+    // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
         <b>An unexpected error occured</b>
@@ -249,13 +344,20 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     flashMessage(msg, "danger");
   };
 
+  /**
+   * Compile the role's permissions as HTML for the entry summary
+   * @returns - the permissions summary
+   */
   getPermissionsSummary = (): React.ReactElement => {
     return (
       <React.Fragment>
         {this.state.permissions.map((p: Permission) => {
+
+          // handle wildcard permissions
           const action = p.action == "*" ? "All Actions" : p.action;
           const resource = p.resource == "*" ? "All Resources" : p.resource;
 
+          // don't compile empty permissions that have no action or resource selected
           return action || resource ? (
             <span key={p.id}>
               &nbsp;&nbsp;&nbsp;&nbsp;
@@ -277,6 +379,8 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
 
     return (
       <div className="page-container" style={{ flexDirection: "row" }}>
+
+        {/* the edit/create form */}
         <div className="page-content bg-white">
           {loading ? (
             <SmallLoader />
@@ -318,6 +422,8 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
           )}
         </div>
         <div className="admin-form-summary bg-dark">
+
+          {/* the edit/create summary */}
           <h1 className="border-white-b">Role Summary</h1>
           <span>
             Name:

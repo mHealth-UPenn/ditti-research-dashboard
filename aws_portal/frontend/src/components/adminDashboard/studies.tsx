@@ -7,6 +7,14 @@ import Navbar from "./navbar";
 import StudiesEdit from "./studiesEdit";
 import { SmallLoader } from "../loader";
 
+/**
+ * canCreate: whether the user has permissions to create
+ * canEdit: whether the user has permissions to edit
+ * canArchive: whether the user permissions to archive
+ * studies: an array of rows to display in the table
+ * columns: an array of columns to display in the table
+ * loading: whether to display the loading screen
+ */
 interface StudiesState {
   canCreate: boolean;
   canEdit: boolean;
@@ -58,34 +66,45 @@ class Studies extends React.Component<ViewProps, StudiesState> {
   };
 
   async componentDidMount() {
+    // check whether the user has permission to create
     const create = getAccess(1, "Create", "Studies")
       .then(() => this.setState({ canCreate: true }))
       .catch(() => this.setState({ canCreate: false }));
 
+    // check whether the user has permissions to edit
     const edit = getAccess(1, "Edit", "Studies")
       .then(() => this.setState({ canEdit: true }))
       .catch(() => this.setState({ canEdit: false }));
 
+    // check whether the user has permissions to archive
     const archive = getAccess(1, "Archive", "Studies")
       .then(() => this.setState({ canArchive: true }))
       .catch(() => this.setState({ canArchive: false }));
 
+    // get the table's data
     const studies = makeRequest("/admin/study?app=1").then((studies) =>
       this.setState({ studies })
     );
 
+    // when all requests are complete, hide the loading screen
     Promise.all([create, edit, archive, studies]).then(() =>
       this.setState({ loading: false })
     );
   }
 
+  /**
+   * Get the table's contents
+   * @returns The table's contents, consisting of rows of table cells
+   */
   getData = (): TableData[][] => {
     const { flashMessage, goBack, handleClick } = this.props;
     const { canEdit, canArchive, studies } = this.state;
 
+    // iterate over the table's rows
     return studies.map((s: Study) => {
       const { acronym, dittiId, email, id, name } = s;
 
+      // map each row to a set of cells for each table column
       return [
         {
           contents: (
@@ -161,9 +180,17 @@ class Studies extends React.Component<ViewProps, StudiesState> {
     });
   };
 
+  /**
+   * Delete a table entry and archive it in the database
+   * @param id - the entry's database primary key
+   */
   delete = (id: number): void => {
-    const body = { app: 1, id };
+
+    // prepare the request
+    const body = { app: 1, id };  // Admin Dashboard = 1
     const opts = { method: "POST", body: JSON.stringify(body) };
+
+    // confirm deletion
     const msg = "Are you sure you want to archive this study?";
 
     if (confirm(msg))
@@ -172,19 +199,31 @@ class Studies extends React.Component<ViewProps, StudiesState> {
         .catch(this.handleFailure);
   };
 
+  /**
+   * Handle a successful response
+   * @param res - the response body
+   */
   handleSuccess = (res: ResponseBody) => {
     const { flashMessage } = this.props;
 
+    // show the loading screen
     this.setState({ loading: true });
     flashMessage(<span>{res.msg}</span>, "success");
+
+    // refresh the table's data
     makeRequest("/admin/study?app=1").then((studies) =>
       this.setState({ studies, loading: false })
     );
   };
 
+  /**
+   * Handle a failed response
+   * @param res - the response body
+   */
   handleFailure = (res: ResponseBody) => {
     const { flashMessage } = this.props;
 
+    // flash the message returned from the endpoint or "Internal server error"
     const msg = (
       <span>
         <b>An unexpected error occured</b>
@@ -200,6 +239,7 @@ class Studies extends React.Component<ViewProps, StudiesState> {
     const { flashMessage, goBack, handleClick } = this.props;
     const { canCreate, columns, loading } = this.state;
 
+    // if the user has permission to create, show the create button
     const tableControl = canCreate ? (
       <button
         className="button-primary"

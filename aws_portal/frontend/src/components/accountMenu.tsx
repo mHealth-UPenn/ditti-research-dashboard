@@ -7,11 +7,21 @@ import "./accountMenu.css";
 import { makeRequest } from "../utils";
 import AsyncButton from "./buttons/asyncButton";
 
+/**
+ * accountDetails: the current user's data
+ * hideMenu: a function to hide the user menu
+ */
 interface AccountMenuProps extends ViewProps {
   accountDetails: AccountDetails;
   hideMenu: () => void;
 }
 
+/**
+ * setPassword: the set password field value when the user changes their password
+ * confirmPassword: the confirm password field value when the user changes their password
+ * edit: whether the menu fields are editable
+ * editPassword: whether the password fields are editable
+ */
 interface AccountMenuState extends AccountDetails {
   setPassword: string;
   confirmPassword: string;
@@ -31,6 +41,9 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
     };
   }
 
+  /**
+   * Make a POST request with changes
+   */
   post = async (): Promise<void> => {
     const { email, firstName, lastName, phoneNumber } = this.state;
     const body = {
@@ -47,8 +60,14 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
       .catch(this.handleFailure);
   };
 
+  /**
+   * Set a user's password during their first login
+   * @returns - A response from the set password endpoint
+   */
   setPassword = (): Promise<ResponseBody> => {
     const { setPassword, confirmPassword } = this.state;
+
+    // if the user's password doesn't match the confirm password field
     if (!(setPassword == confirmPassword)) throw "Passwords do not match";
     const body = JSON.stringify({ password: setPassword });
     const opts = { method: "POST", body: body };
@@ -59,15 +78,24 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
     this.setPassword().then(this.handleSuccess, this.handleFailure);
   };
 
+  /**
+   * Handle a successful response
+   * @param res - The response from the login endpoint
+   */
   handleSuccess = (res: ResponseBody) => {
     const { flashMessage } = this.props;
     flashMessage(<span>{res.msg}</span>, "success");
     this.setState({ edit: false, editPassword: false });
   };
 
+  /**
+   * Handle a failed response
+   * @param res - The response from the login endpoint
+   */
   handleFailure = (res: ResponseBody) => {
     const { flashMessage } = this.props;
 
+    // flash the message from the server or "Internal server error"
     const msg = (
       <span>
         <b>An unexpected error occured</b>
@@ -79,6 +107,9 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
     flashMessage(msg, "danger");
   };
 
+  /**
+   * Hide the account menu
+   */
   hide = () => {
     this.props.hideMenu();
     this.setState({
@@ -90,8 +121,13 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
     });
   };
 
+  /**
+   * Logout the user
+   */
   logout = async (): Promise<void> => {
     await makeRequest("/iam/logout", { method: "POST" });
+
+    // refresh the window to show the login page
     location.reload();
   };
 
