@@ -1,10 +1,11 @@
 from functools import reduce
-import http
 import json
 import os
 import re
+import requests
 import boto3
 from boto3.dynamodb.conditions import Attr
+from requests_aws4auth import AWS4Auth
 
 
 class MutationClient:
@@ -19,11 +20,6 @@ class MutationClient:
         used to validate the mutation request
     """
     f_string = 'mutation($in:%(inp)s!){%(fun)s(input:$in){%(var)s}}'
-    headers = {
-        'Content-type': 'application/graphql',
-        'x-api-key': os.getenv('APP_SYNC_API_KEY'),
-        'host': os.getenv('APP_SYNC_HOST')
-    }
 
     def __init__(self):
         self.__body = None
@@ -49,8 +45,13 @@ class MutationClient:
         """
         Initialize an HTTP connection to AppSync
         """
-        host = self.headers['host']
-        self.__conn = http.client.HTTPSConnection(host, 443)
+        self.__conn = requests.Session()
+        self.__conn.auth = AWS4Auth(
+            os.getenv('APPSYNC_ACCESS_KEY'),
+            os.getenv('APPSYNC_SECRET_KEY'),
+            'us-east-1',
+            'appsync'
+        )
 
     def set_mutation(self, inp, fun, var):
         """
@@ -68,12 +69,10 @@ class MutationClient:
         """
         fmt = {'inp': inp, 'fun': fun, 'var': ' '.join(var.keys())}
         query = self.f_string % fmt
-        body = {
+        self.__body = {
             'query': query,
             'variables': '{"in": %s}' % json.dumps(var)
         }
-
-        self.__body = json.dumps(body)
 
     def post_mutation(self):
         """
@@ -94,11 +93,13 @@ class MutationClient:
         if self.__body is None:
             raise ValueError('Mutation is not set. Call set_mutation() first.')
 
-        self.__conn.request('POST', '/graphql', self.__body, self.headers)
-        res = self.__conn.getresponse()
-        res = res.read().decode('utf-8')
+        res = self.__conn.request(
+            'POST',
+            os.getenv('APP_SYNC_HOST'),
+            json=self.__body
+        )
 
-        return res
+        return res.text
 
 
 class Connection:

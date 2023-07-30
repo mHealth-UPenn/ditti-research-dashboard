@@ -23,18 +23,19 @@ source deploy-dev.sh
 Initialize the database (only must be done once per postgres container)
 
 ```sh
-docker exec -it aws-pg psql -U user -d postgres < default.sql
+docker exec -i aws-pg psql -U user -d postgres < default.sql
 flask init-admin
 ```
 
 Save the following AWS credentials and variables in a file named `secret-aws.env`.
 
-| Name               | Value                        |
-| ------------------ | ---------------------------- |
-| APP_SYNC_API_KEY   | The AppSync API Key          |
-| APP_SYNC_HOST      | The AppSync host             |
-| AWS_TABLENAME_USER | The DynamoDB User table name |
-| AWS_TABLENAME_TAP  | The DynamoDB Tap table name  |
+| Name                | Value                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------ |
+| APP_SYNC_HOST       | The AppSync host                                                                           |
+| AWS_TABLENAME_USER  | The DynamoDB User table name                                                               |
+| AWS_TABLENAME_TAP   | The DynamoDB Tap table name                                                                |
+| APPSYNC_ACCESS_KEY  | The access key of a user with permissions to make graphql queries to the AppSync instance  |
+| APPSYNC_SECRET_KEY  | The secret key of the same user                                                            |
 
 Run the app.
 
