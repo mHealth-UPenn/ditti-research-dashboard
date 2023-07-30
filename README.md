@@ -209,6 +209,46 @@ docker stop test-db
 docker rm test-db
 ```
 
+### Create a User for Accessing AppSync
+
+1. Navigate to the IAM dashboard (https://us-east-1.console.aws.amazon.com/iamv2/home) and click **Users** in the menu to the left of the page.
+2. Click **Add Users**.
+3. Create a name for the user (e.g., aws-portal-appsync-access) and click **Next**.
+4. Under **Permissions options**, select **Attach policies directly**.
+5. Under **Permissions policies**, click **Create policy**.
+6. The the right of the header **Policy editor**, select **JSON**.
+7. Delete the text under **Policy editor** and replace it with the following. Replace **AppSync ARN** with the ARN of your App Sync instance. This can be retrieved from the AppSync instance's dashboard under **Settings > API ARN**.
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "appsync:GraphQL"
+            ],
+            "Resource": [
+                "AppSync ARN/*"
+            ],
+            "Effect": "Allow"
+        }
+    ]
+}
+```
+
+8. Click **Next**.
+9. Create a name for the policy (e.g., aws-portal-appsync-access) and click **Create Policy**.
+10. Return to the previos window or tab where you were creating the user. To the right of the **Permissions policies** header, click the **refresh button**.
+11. Search for the policy you just created, select it, and click **Next**.
+12. Click **Create user**.
+13. In the IAM Users page, locate and click on the user you just created.
+14. Select the **Security credentials** tab.
+15. To the right of the **Access keys** header, click **Create access key**.
+16. Under **Use case**, select **Application running on AWS compute service**.
+17. Select **I understand the above recommendation and want to proceed to create an access key.** and click **Next**.
+18. Enter a description tag (e.g., aws-portal-appsync-access) and click **Create access key**.
+19. Save the **Access key** and **Secret access key** in a secure location.
+
 ### Create a Secret Using Secrets Manager
 
 1. Navigate to the Secrets Manager dashboard (https://us-east-1.console.aws.amazon.com/secretsmanager) and click **Store a new secret**.
@@ -217,12 +257,13 @@ docker rm test-db
 
 | Key                        | Value                                                                                          |
 | -------------------------- | ---------------------------------------------------------------------------------------------- |
-| APP_SYNC_API_KEY           | The AppSync API Key                                                                            |
 | APP_SYNC_HOST              | The AppSync host                                                                               |
 | AWS_TABLENAME_USER         | The DynamoDB User table name                                                                   |
 | AWS_TABLENAME_TAP          | The DynamoDB Tap table name                                                                    |
 | AWS_DB_INSTANCE_IDENTIFIER | The DB identifier of your database instance                                                    |
 | FLASK_DB                   | The SQLAlchemy database URI: postgresql://postgres:**Password**@**Database Endpoint**/postgres |
+| APPSYNC_ACCESS_KEY         | The access key of a user with permissions to make graphql queries to the AppSync instance      |
+| APPSYNC_SECRET_KEY         | The secret key of the same user                                                                |
 
 5. Click **Next**.
 6. For **Secret name**, enter **secret-aws-portal** and click **Next**.
