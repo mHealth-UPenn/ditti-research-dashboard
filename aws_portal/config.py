@@ -8,6 +8,8 @@ class Default:
     LOG_LEVEL = os.getenv('FLASK_LOG_LEVEL', 'INFO')
 
     JWT_TOKEN_LOCATION = 'cookies'
+    JWT_COOKIE_SAMESITE = 'None'
+    JWT_COOKIE_SECURE = True
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
     JWT_CSRF_CHECK_FORM = True
     JWT_CSRF_IN_COOKIES = False
@@ -22,9 +24,6 @@ class Development(Default):
 
 class Production(Default):
     ENV = 'production'
-
-    JWT_COOKIE_SAMESITE = 'None'
-    JWT_COOKIE_SECURE = True
 
 
 class Debug(Default):
