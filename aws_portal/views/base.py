@@ -2,6 +2,7 @@ import logging
 import os
 import traceback
 from flask import Blueprint, current_app, jsonify, make_response
+from sqlalchemy import text
 from aws_portal.extensions import db
 
 blueprint = Blueprint('base', __name__)
@@ -59,7 +60,8 @@ def touch():
 
         # check that the database is healthy
         try:
-            db.engine.execute('SELECT 1')
+            with db.engine.connect() as conn:
+                conn.execute(text('SELECT 1'))
 
         except Exception:
             exc = traceback.format_exc()

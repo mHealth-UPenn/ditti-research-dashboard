@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import os
-from flask import Flask
+from flask import Flask, request, Response, jsonify
 from flask_cors import CORS
 from flask_jwt_extended.utils import (
     create_access_token, current_user, get_jwt, set_access_cookies
@@ -26,8 +26,8 @@ def create_app(testing=False):
     # configure CORS
     CORS(
       app,
-      allow_headers=['authorization', 'content-type', 'x-csrf-token'],
-      origins=os.getenv('AWS_CLOUDFRONT_DOMAIN_NAME', '*'),
+      allow_headers=['Authorization', 'Content-Type', 'X-CSRF-Token'],
+      origins=os.getenv('AWS_CLOUDFRONT_DOMAIN_NAME', 'http://localhost:3000'),
       supports_credentials=True
     )
 
