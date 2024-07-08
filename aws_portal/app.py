@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import os
-from flask import Flask
+from flask import Flask, Response
 from flask_jwt_extended.utils import (
     create_access_token, current_user, get_jwt, set_access_cookies
 )
@@ -29,7 +29,7 @@ def create_app(testing=False):
 
     # after each request refresh JWTs that expire within 15 minutes
     @app.after_request
-    def refresh_expiring_jwts(response):
+    def refresh_expiring_jwts(response: Response):
         try:
             exp_timestamp = get_jwt()['exp']
             now = datetime.now(timezone.utc)
@@ -41,7 +41,7 @@ def create_app(testing=False):
 
                 # create a new token for the user
                 access_token = create_access_token(current_user)
-                set_access_cookies(response, access_token)
+                response.json["jwt"] = access_token
 
             return response
 

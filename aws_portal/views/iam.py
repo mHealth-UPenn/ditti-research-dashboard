@@ -84,17 +84,20 @@ def login():
 
         msg = 'Login successful' if account.is_confirmed else 'First login'
         csrf_access_token = get_csrf_token(access_token)
-        res = jsonify({'msg': msg, 'csrfAccessToken': csrf_access_token})
-        set_access_cookies(res, access_token)
+        res = {
+            'msg': msg,
+            'csrfAccessToken': csrf_access_token,
+            'jwt': access_token
+        }
 
-        return res
+        return jsonify(res)
 
     return make_response({'msg': 'Invalid login credentials'},  403)
 
 
 @blueprint.route('/logout', methods=['POST'])
 @jwt_required()
-def logout():
+def logout():  # TODO: remove
     """
     Log the user out
 

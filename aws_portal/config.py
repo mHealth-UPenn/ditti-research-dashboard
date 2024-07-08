@@ -7,13 +7,12 @@ class Default:
     DEBUG = True
     SECRET_KEY = os.getenv('FLASK_SECRET_KEY', 'secret')
 
-    CORS_ALLOW_HEADERS = ['Content-Type', 'X-CSRF-Token']
+    CORS_ALLOW_HEADERS = ['Authorization', 'Content-Type', 'X-CSRF-Token']
 
-    JWT_TOKEN_LOCATION = 'cookies'
+    JWT_TOKEN_LOCATION = 'headers'
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
     JWT_CSRF_CHECK_FORM = True
     JWT_CSRF_IN_COOKIES = False
-    # JWT_COOKIE_SECURE = False
 
     SQLALCHEMY_DATABASE_URI = os.getenv('FLASK_DB')
     SQLALCHEMY_TRACK_MODIFICATIONS = False

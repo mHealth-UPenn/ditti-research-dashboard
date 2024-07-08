@@ -7,14 +7,14 @@ const crossorigin = Boolean(process.env.CROSSORIGIN)
 export const makeRequest = async (url: string, opts?: any): Promise<any> => {
 
   // set credentials and crossorigin options
-  if (opts) {
-    // opts.credentials = "include";
-    opts.crossorigin = crossorigin;
-  } else
-    opts = {
-      // credentials: "include",
-      corssorigin: crossorigin
-    };
+  if (opts) opts.crossorigin = crossorigin;
+  else opts = {crossorigin: crossorigin}
+
+  const jwt = localStorage.getItem("jwt");
+  if (jwt) {
+    if (opts.headers) opts.headers["Authorization"] = `Bearer ${jwt}`;
+    else opts.headers = {"Authorization": `Bearer ${jwt}`};
+  }
 
   // if making a POST request
   if (opts && opts.method == "POST") {
@@ -38,6 +38,9 @@ export const makeRequest = async (url: string, opts?: any): Promise<any> => {
       // save the CSRF token for the next request
       if (res.status == 200 && body.csrfAccessToken)
         csrfAccessToken = body.csrfAccessToken;
+
+      if (res.status == 200 && body.jwt)
+        localStorage.setItem("jwt", body.jwt);
 
       if (res.status != 200)
 

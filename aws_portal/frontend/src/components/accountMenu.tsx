@@ -125,7 +125,7 @@ class AccountMenu extends React.Component<AccountMenuProps, AccountMenuState> {
    * Logout the user
    */
   logout = async (): Promise<void> => {
-    await makeRequest("/iam/logout", { method: "POST" });
+    localStorage.removeItem("jwt");
 
     // refresh the window to show the login page
     location.reload();
