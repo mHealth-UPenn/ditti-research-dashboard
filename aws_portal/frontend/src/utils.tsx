@@ -1,18 +1,19 @@
 import { ResponseBody } from "./interfaces";
 
 let csrfAccessToken = "";
+const crossorigin = Boolean(process.env.CROSSORIGIN)
 
 // make a request with options
 export const makeRequest = async (url: string, opts?: any): Promise<any> => {
 
   // set credentials and crossorigin options
   if (opts) {
-    opts.credentials = "include";
-    opts.crossorigin = true;
+    // opts.credentials = "include";
+    opts.crossorigin = crossorigin;
   } else
     opts = {
-      credentials: "include",
-      corssorigin: true
+      // credentials: "include",
+      corssorigin: crossorigin
     };
 
   // if making a POST request

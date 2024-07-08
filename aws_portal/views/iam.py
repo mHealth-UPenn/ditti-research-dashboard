@@ -1,5 +1,7 @@
 from datetime import datetime
+import os
 from flask import Blueprint, jsonify, make_response, request
+from flask_cors import cross_origin
 from flask_jwt_extended import (
     create_access_token, current_user, get_csrf_token, get_jwt, jwt_required,
     set_access_cookies, unset_jwt_cookies
@@ -31,6 +33,10 @@ def check_login():
 
 
 @blueprint.route('/login', methods=['POST'])
+@cross_origin(
+    allow_headers=['Authorization', 'Content-Type', 'X-CSRF-Token'],
+    supports_credentials=True
+)
 def login():
     """
     Login the user and return a CSRF token for the user's session. This
