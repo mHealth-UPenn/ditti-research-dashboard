@@ -107,12 +107,16 @@ class LoginPage extends React.Component<any, LoginPageState> {
           this.setState({ ...set, firstLogin: true, loggedIn: true });
 
         // if the user is not logged in
-        else this.setState({ ...set, loggedIn: false });
+        else {
+          this.setState({ ...set, loggedIn: false });
+          if (localStorage.getItem("jwt")) localStorage.removeItem("jwt");
+        }
 
         // let the loading screen fade out for 0.5 seconds
         setTimeout(() => this.setState({ fading: false }), 500);
       })
       .catch((res: ResponseBody) => {
+        if (localStorage.getItem("jwt")) localStorage.removeItem("jwt");
 
         // if the user was logged in and their token expired
         if (res.msg == "Token has expired") {
@@ -134,6 +138,8 @@ class LoginPage extends React.Component<any, LoginPageState> {
    */
   logIn = (): Promise<ResponseBody> => {
     const { email, password } = this.state;
+    console.log(email)
+    console.log(password)
     const auth = Buffer.from(email + ":" + password).toString("base64");
     const headers = { Authorization: "Basic " + auth };
     const opts = { method: "POST", headers: headers };
