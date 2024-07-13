@@ -1,4 +1,5 @@
 from datetime import timedelta
+from time import sleep
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required
 import pytest
@@ -40,7 +41,8 @@ def timeout_client(app):
 
 def test_refresh_expiring_jwts(timeout_client):
     res = login_test_account('foo', timeout_client)
-    old_token = get_cookie_from_response(res, 'access_token_cookie')
-    res = timeout_client.get('/test/get')
-    new_token = get_cookie_from_response(res, 'access_token_cookie')
-    assert old_token['access_token_cookie'] != new_token['access_token_cookie']
+    old_token = res.json["jwt"]
+    headers = {"Authorization": "Bearer " + old_token}
+    res = timeout_client.get('/test/get', headers=headers)
+    new_token = res.json["jwt"]
+    assert old_token != new_token

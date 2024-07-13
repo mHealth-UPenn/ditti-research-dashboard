@@ -1,7 +1,7 @@
 from functools import wraps
 import logging
-from flask import make_response, request
-from flask_jwt_extended import current_user, verify_jwt_in_request
+from flask import current_app, make_response, request
+from flask_jwt_extended import current_user, decode_token, verify_jwt_in_request
 from aws_portal.models import App, Study
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,19 @@ def auth_required(action, _resource=None):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            verify_jwt_in_request()
+            _, jwt_data = verify_jwt_in_request()
+
+            # Check CSRF token
+            csrf_methods = current_app.config["JWT_CSRF_METHODS"]
+            csrf_header = current_app.config["JWT_ACCESS_CSRF_HEADER_NAME"]
+            if request.method in csrf_methods:
+                try:
+                    csrf_token = jwt_data["csrf"]
+                    if csrf_token != request.headers[csrf_header]:
+                        raise ValueError
+                except (ValueError, KeyError):
+                    return make_response({"msg": "Missing CSRF token"}, 403)
+
             data = request.args or request.json
             app_id = data.get('app')
             study_id = data.get('study')

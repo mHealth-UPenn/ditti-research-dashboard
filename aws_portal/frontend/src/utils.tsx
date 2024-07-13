@@ -22,11 +22,11 @@ export const makeRequest = async (url: string, opts?: any): Promise<any> => {
     // set the content type and CSRF token headers
     if (opts.headers) {
       opts.headers["Content-Type"] = "application/json";
-      opts.headers["X-CSRF-Token"] = csrfAccessToken;
+      opts.headers["X-CSRF-TOKEN"] = csrfAccessToken;
     } else
       opts.headers = {
         "Content-Type": "application/json",
-        "X-CSRF-Token": csrfAccessToken
+        "X-CSRF-TOKEN": csrfAccessToken
       };
   }
 

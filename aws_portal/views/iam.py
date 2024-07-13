@@ -34,7 +34,7 @@ def check_login():
 
 @blueprint.route('/login', methods=['POST'])
 @cross_origin(
-    allow_headers=['Authorization', 'Content-Type', 'X-CSRF-Token'],
+    allow_headers=['Authorization', 'Content-Type', 'X-CSRF-TOKEN'],
     supports_credentials=True
 )
 def login():

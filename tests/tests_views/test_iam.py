@@ -91,19 +91,13 @@ def test_login(client):
     data = json.loads(res.data)
     assert res.status_code == 200
     assert 'msg' in data
-    assert data['msg'] == 'Login Successful'
+    assert data['msg'] == 'Login successful'
 
-    access_cookie = get_cookie_from_response(res, 'access_token_cookie')
+    access_cookie = res.json["jwt"]
     assert access_cookie is not None
-    assert access_cookie['path'] == '/'
-    assert access_cookie['httponly'] is True
-    assert 'samesite' not in access_cookie
 
-    csrf_cookie = get_cookie_from_response(res, 'csrf_access_token')
+    csrf_cookie = res.json["csrfAccessToken"]
     assert csrf_cookie is not None
-    assert csrf_cookie['path'] == '/'
-    assert 'httponly' not in csrf_cookie
-    assert 'samesite' not in csrf_cookie
 
 
 def test_logout(client):
@@ -111,19 +105,13 @@ def test_logout(client):
     data = json.loads(res.data)
     assert res.status_code == 200
     assert 'msg' in data
-    assert data['msg'] == 'Login Successful'
+    assert data['msg'] == 'Login successful'
 
-    access_cookie = get_cookie_from_response(res, 'access_token_cookie')
+    access_cookie = res.json["jwt"]
     assert access_cookie is not None
-    assert access_cookie['path'] == '/'
-    assert access_cookie['httponly'] is True
-    assert 'samesite' not in access_cookie
 
-    csrf_cookie = get_cookie_from_response(res, 'csrf_access_token')
+    csrf_cookie = res.json["csrfAccessToken"]
     assert csrf_cookie is not None
-    assert csrf_cookie['path'] == '/'
-    assert 'httponly' not in csrf_cookie
-    assert 'samesite' not in csrf_cookie
 
     headers = get_csrf_headers(res)
     res = client.post('/iam/logout', headers=headers)
@@ -136,5 +124,5 @@ def test_logout(client):
     old_token = decode_token(access_cookie['access_token_cookie'])['jti']
     assert old_token == blocked_token.jti
 
-    access_cookie = get_cookie_from_response(res, 'access_token_cookie')
+    access_cookie = res.json["jwt"]
     assert access_cookie['access_token_cookie'] == ''

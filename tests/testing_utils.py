@@ -2,6 +2,7 @@ from base64 import b64encode
 from datetime import datetime
 import os
 import uuid
+from flask import current_app
 from flask_jwt_extended.utils import decode_token
 from aws_portal.extensions import bcrypt, db
 from aws_portal.models import (
@@ -43,6 +44,7 @@ accounts = [
         'first_name': 'John',
         'last_name': 'Smith',
         'email': 'foo@email.com',
+        'is_confirmed': True,
         '_password': bcrypt.generate_password_hash('foo').decode('utf-8')
     },
     {
@@ -272,6 +274,10 @@ def login_admin_account(client):
     return res
 
 
+def get_jwt_from_response(response):
+    pass
+
+
 def get_cookie_from_response(response, cookie_name):
     cookie_headers = response.headers.getlist("Set-Cookie")
 
@@ -293,16 +299,20 @@ def get_cookie_from_response(response, cookie_name):
 
 
 def get_csrf_headers(res, headers=None):
-    cookie = get_cookie_from_response(res, 'csrf_access_token')
+    cookie = res.json["csrfAccessToken"]
     headers = headers or {}
-    headers.update({'X-CSRF-TOKEN': cookie['csrf_access_token']})
+    header_name = current_app.config["JWT_ACCESS_CSRF_HEADER_NAME"]
+    headers.update({header_name: cookie})
+
+    if "jwt" in res.json:
+        headers.update({"Authorization": "Bearer " + res.json["jwt"]})
 
     return headers
 
 
 def get_account_from_response(res):
-    access_token = get_cookie_from_response(res, 'access_token_cookie')
-    public_id = decode_token(access_token['access_token_cookie'])['sub']
+    access_token = res.json["jwt"]
+    public_id = decode_token(access_token)['sub']
     account = Account.query.filter(Account.public_id == public_id).first()
 
     return account

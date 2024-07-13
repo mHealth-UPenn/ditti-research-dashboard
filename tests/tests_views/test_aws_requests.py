@@ -48,11 +48,12 @@ def post(client):
 
 def test_scan_invalid(client):
     res = login_admin_account(client)
+    headers = {"Authorization": "Bearer " + res.json["jwt"]}
     opts = '?app=DittiApp'
     opts = opts + '&group=1'
     opts = opts + '&key=User'
     opts = opts + '&query=user_permission_id=="^abc123"'
-    res = client.get('/aws/scan' + opts)
+    res = client.get('/aws/scan' + opts, headers=headers)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Invalid Query'
@@ -60,11 +61,12 @@ def test_scan_invalid(client):
 
 def test_scan(client):
     res = login_admin_account(client)
+    headers = {"Authorization": "Bearer " + res.json["jwt"]}
     opts = '?app=DittiApp'
     opts = opts + '&group=1'
     opts = opts + '&key=User'
     opts = opts + '&query=user_permission_id=="abc123"'
-    res = client.get('/aws/scan' + opts)
+    res = client.get('/aws/scan' + opts, headers=headers)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Scan Successful'

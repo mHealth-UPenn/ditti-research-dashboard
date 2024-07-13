@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import json
 import os
 from flask import Flask, Response
 from flask_jwt_extended.utils import (
@@ -41,7 +42,9 @@ def create_app(testing=False):
 
                 # create a new token for the user
                 access_token = create_access_token(current_user)
-                response.json["jwt"] = access_token
+                data = response.json
+                data["jwt"] = access_token
+                response.data = json.dumps(data)
 
             return response
 
