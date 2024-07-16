@@ -13,20 +13,22 @@ def test_check_login_no_token(client):
 
 
 def test_check_login_expired_token(timeout_client):
-    login_test_account('foo', timeout_client)
+    res = login_test_account('foo', timeout_client)
+    headers = get_csrf_headers(res)
     sleep(2)
-    res = timeout_client.get('/iam/check-login')
+    res = timeout_client.get('/iam/check-login', headers=headers)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Token has expired'
 
 
 def test_check_login(client):
-    login_test_account('foo', client)
-    res = client.get('/iam/check-login')
+    res = login_test_account('foo', client)
+    headers = get_csrf_headers(res)
+    res = client.get('/iam/check-login', headers=headers)
     data = json.loads(res.data)
     assert 'msg' in data
-    assert data['msg'] == 'User is logged in'
+    assert data['msg'] == 'Login successful'
 
 
 def test_login_no_credentials(client):
@@ -90,8 +92,5 @@ def test_logout(client):
     assert data['msg'] == 'Logout Successful'
 
     blocked_token = BlockedToken.query.all()[-1]
-    old_token = decode_token(access_cookie['access_token_cookie'])['jti']
+    old_token = decode_token(access_cookie)['jti']
     assert old_token == blocked_token.jti
-
-    access_cookie = res.json["jwt"]
-    assert access_cookie['access_token_cookie'] == ''

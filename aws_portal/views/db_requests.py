@@ -8,6 +8,7 @@ from aws_portal.models import (
     AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,
     JoinAccountStudy, Study
 )
+# from aws_portal.utils.auth import auth_required
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint('db', __name__, url_prefix='/db')
@@ -28,6 +29,7 @@ def get_apps():
 
 @blueprint.route('/get-studies')
 @jwt_required()
+# @auth_required("View", "Ditti App Dashboard")
 def get_studies():  # TODO rewrite unit test
     """
     Get the data of all studies that the user has access to
@@ -76,6 +78,7 @@ def get_studies():  # TODO rewrite unit test
 
 @blueprint.route('/get-study-details')
 @jwt_required()
+# @auth_required("View", "Ditti App Dashboard")
 def get_study_details():
     """
     Get the details of a given study
@@ -117,6 +120,7 @@ def get_study_details():
 
 @blueprint.route('/get-study-contacts')
 @jwt_required()
+# @auth_required("View", "Ditti App Dashboard")
 def get_study_contacts():
     """
     Get the contacts of a given study. This will return the contact information
@@ -188,6 +192,7 @@ def get_study_contacts():
 
 @blueprint.route('/get-account-details')
 @jwt_required()
+# @auth_required("View", "Ditti App Dashboard")
 def get_account_details():
     """
     Get the current user's account details
@@ -213,6 +218,7 @@ def get_account_details():
 
 @blueprint.route('/edit-account-details', methods=['POST'])
 @jwt_required()
+# @auth_required("View", "Ditti App Dashboard")
 def edit_account_details():
     """
     Edit the current user's account details
@@ -256,6 +262,7 @@ def edit_account_details():
 
 @blueprint.route('/get-about-sleep-templates')
 @jwt_required()
+# @auth_required("View", "Ditti App Dashboard")
 def get_about_sleep_templates():
     """
     Get all about sleep templates

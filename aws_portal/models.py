@@ -342,6 +342,10 @@ class Account(db.Model):
                 (~AccessGroup.is_archived) &
                 (JoinAccountAccessGroup.account_id == self.id)
         )
+        print(app_id)
+        for a in AccessGroup.query.all():
+            print(a.meta)
+        print(q1.all())
 
         # if a study id was passed and the study is not archived
         if study_id and not Study.query.get(study_id).is_archived:

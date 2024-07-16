@@ -40,7 +40,7 @@ def test_populate_model_skip_lists(app):
 
 
 def test_populate_model_skip_joins(app):
-    account = Account.query.get(1)
+    account = Account.query.get(2)
     study = Study.query.get(1)
     assert len(account.studies) == 1
     assert account.studies[0].study is study
@@ -48,7 +48,7 @@ def test_populate_model_skip_joins(app):
     data = {'studies': 'foo'}
     populate_model(account, data)
     db.session.commit()
-    account = Account.query.get(1)
+    account = Account.query.get(2)
     assert len(account.studies) == 1
     assert account.studies[0].study is study
 

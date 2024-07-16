@@ -2,6 +2,8 @@ from datetime import timedelta
 from functools import partial
 import os
 import boto3
+from flask import Blueprint, jsonify
+from flask_jwt_extended import jwt_required
 from moto import mock_aws
 import pytest
 from aws_portal.app import create_app
@@ -9,6 +11,7 @@ from aws_portal.extensions import db
 from aws_portal.models import (
     init_admin_account, init_admin_app, init_admin_group, init_db
 )
+from aws_portal.utils.auth import auth_required
 from tests.testing_utils import (
     create_joins, create_tables, get_csrf_headers, login_admin_account, login_test_account
 )
@@ -18,6 +21,38 @@ os.environ["AWS_TABLENAME_USER"] = "testing_table_user"
 os.environ["AWS_TABLENAME_TAP"] = "testing_table_tap"
 os.environ["APPSYNC_ACCESS_KEY"] = "testing"
 os.environ["APPSYNC_SECRET_KEY"] = "testing"
+
+blueprint = Blueprint('test', __name__, url_prefix='/test')
+
+
+@blueprint.route('/get')
+@jwt_required()
+def get():
+    return jsonify({'msg': 'OK'})
+
+
+@blueprint.route('/get-auth-required-action')
+@auth_required('foo')
+def get_auth_required_action():
+    return jsonify({'msg': 'OK'})
+
+
+@blueprint.route('/get-auth-required-resource')
+@auth_required('bar', 'baz')
+def get_auth_required_resource():
+    return jsonify({'msg': 'OK'})
+
+
+@blueprint.route('/post-auth-required-action', methods=['POST'])
+@auth_required('foo')
+def post_auth_required_action():
+    return jsonify({'msg': 'OK'})
+
+
+@blueprint.route('/post-auth-required-resource', methods=['POST'])
+@auth_required('bar', 'baz')
+def post_auth_required_resource():
+    return jsonify({'msg': 'OK'})
 
 
 @pytest.fixture(scope="function")
@@ -50,6 +85,7 @@ def with_mocked_tables():
 @pytest.fixture
 def app(with_mocked_tables):
     app = create_app(testing=True)
+    app.register_blueprint(blueprint)
     with app.app_context():
         init_db()
         init_admin_app()

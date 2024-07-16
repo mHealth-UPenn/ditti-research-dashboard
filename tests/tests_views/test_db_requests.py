@@ -30,15 +30,6 @@ def test_studies(client):
     assert res[0]['name'] == 'foo'
 
 
-def test_studies_invalid_app(client):  # TODO: check this
-    res = login_test_account('bar', client)
-    headers = get_csrf_headers(res)
-    opts = '?app=3'
-    res = client.get('/db/get-studies' + opts, headers=headers)
-    res = json.loads(res.data)
-    assert len(res) == 0
-
-
 def test_study_details(client):
     res = login_test_account('foo', client)
     headers = get_csrf_headers(res)

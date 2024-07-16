@@ -1,9 +1,6 @@
-from datetime import timedelta
 import json
 from time import sleep
 from flask import Blueprint, jsonify
-import pytest
-from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
     AccessGroup, App, JoinAccountAccessGroup, JoinAccountStudy, Study, init_db
@@ -13,8 +10,6 @@ from tests.testing_utils import (
     create_joins, create_tables, get_account_from_response, get_csrf_headers,
     login_test_account
 )
-
-blueprint = Blueprint('test', __name__, url_prefix='/test')
 
 
 def get_user_app_id(account):
@@ -32,57 +27,6 @@ def get_user_study_id(account):
         .first()
 
     return foo.id
-
-
-@blueprint.route('/get-auth-required-action')
-@auth_required('foo')
-def get_auth_required_action():
-    return jsonify({'msg': 'OK'})
-
-
-@blueprint.route('/get-auth-required-resource')
-@auth_required('bar', 'baz')
-def get_auth_required_resource():
-    return jsonify({'msg': 'OK'})
-
-
-@blueprint.route('/post-auth-required-action', methods=['POST'])
-@auth_required('foo')
-def post_auth_required_action():
-    return jsonify({'msg': 'OK'})
-
-
-@blueprint.route('/post-auth-required-resource', methods=['POST'])
-@auth_required('bar', 'baz')
-def post_auth_required_resource():
-    return jsonify({'msg': 'OK'})
-
-
-@pytest.fixture
-def app():
-    app = create_app(testing=True)
-    app.register_blueprint(blueprint)
-
-    with app.app_context():
-        init_db()
-        create_tables()
-        create_joins()
-        db.session.commit()
-
-        yield app
-
-
-@pytest.fixture
-def client(app):
-    with app.test_client() as client:
-        yield client
-
-
-@pytest.fixture
-def timeout_client(app):
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=1)
-    with app.test_client() as client:
-        yield client
 
 
 def test_get_auth_required_no_token(client):
