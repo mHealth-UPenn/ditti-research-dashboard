@@ -2,9 +2,7 @@ from datetime import datetime, timedelta, timezone, UTC
 import json
 import os
 from flask import Flask, Response
-from flask_jwt_extended.utils import (
-    create_access_token, current_user, get_jwt, set_access_cookies
-)
+from flask_jwt_extended.utils import create_access_token, current_user, get_jwt
 from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
     init_db_click
@@ -15,15 +13,15 @@ from aws_portal.views import admin, aws_requests, base, db_requests, iam
 
 def create_app(testing=False):
     # set the static folder as the react frontend
-    app = Flask(__name__, static_url_path='', static_folder='frontend/build')
+    app = Flask(__name__, static_url_path="", static_folder="frontend/build")
 
     if testing:
-        flask_config = 'Testing'
+        flask_config = "Testing"
     else:
-        flask_config = os.getenv('FLASK_CONFIG', 'Default')
+        flask_config = os.getenv("FLASK_CONFIG", "Default")
 
     # configure and initialize the app
-    app.config.from_object('aws_portal.config.%s' % flask_config)
+    app.config.from_object("aws_portal.config.%s" % flask_config)
     register_blueprints(app)
     register_commands(app)
     register_extensions(app)
@@ -32,12 +30,12 @@ def create_app(testing=False):
     @app.after_request
     def refresh_expiring_jwts(response: Response):
         try:
-            exp_timestamp = get_jwt()['exp']
+            exp_timestamp = get_jwt()["exp"]
             now = datetime.now(timezone.utc)
             exp = now + timedelta(minutes=15)
             target_timestamp = int(datetime.timestamp(exp))
 
-            # if the user's JWT expires within 15 minutes
+            # if the user"s JWT expires within 15 minutes
             if target_timestamp > exp_timestamp:
 
                 # create a new token for the user

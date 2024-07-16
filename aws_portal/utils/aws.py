@@ -19,7 +19,7 @@ class MutationClient:
     headers: dict
         used to validate the mutation request
     """
-    f_string = 'mutation($in:%(inp)s!){%(fun)s(input:$in){%(var)s}}'
+    f_string = "mutation($in:%(inp)s!){%(fun)s(input:$in){%(var)s}}"
 
     def __init__(self):
         self.__body = None
@@ -47,10 +47,10 @@ class MutationClient:
         """
         self.__conn = requests.Session()
         self.__conn.auth = AWS4Auth(
-            os.getenv('APPSYNC_ACCESS_KEY'),
-            os.getenv('APPSYNC_SECRET_KEY'),
-            'us-east-1',
-            'appsync'
+            os.getenv("APPSYNC_ACCESS_KEY"),
+            os.getenv("APPSYNC_SECRET_KEY"),
+            "us-east-1",
+            "appsync"
         )
 
     def set_mutation(self, inp, fun, var):
@@ -67,7 +67,7 @@ class MutationClient:
         var: str
             the value of the variable
         """
-        fmt = {'inp': inp, 'fun': fun, 'var': ' '.join(var.keys())}
+        fmt = {"inp": inp, "fun": fun, "var": " ".join(var.keys())}
         query = self.f_string % fmt
         self.__body = {
             "query": query,
@@ -91,11 +91,11 @@ class MutationClient:
             self.open_connection()
 
         if self.__body is None:
-            raise ValueError('Mutation is not set. Call set_mutation() first.')
+            raise ValueError("Mutation is not set. Call set_mutation() first.")
 
         res = self.__conn.request(
-            'POST',
-            os.getenv('APP_SYNC_HOST'),
+            "POST",
+            os.getenv("APP_SYNC_HOST"),
             json=self.__body
         )
 
@@ -140,8 +140,8 @@ class Loader:
         self.__tablekey = tablekey
         self.__table = None
         self.config = {
-            'User': os.getenv('AWS_TABLENAME_USER'),
-            'Tap': os.getenv('AWS_TABLENAME_TAP')
+            "User": os.getenv("AWS_TABLENAME_USER"),
+            "Tap": os.getenv("AWS_TABLENAME_TAP")
         }
 
     def get_tablename(self, tablekey):
@@ -182,7 +182,7 @@ class Loader:
 
 class Updater:
     """
-    Updates an item's value on a dynamodb table
+    Updates an item"s value on a dynamodb table
 
     Args
     ----
@@ -194,7 +194,7 @@ class Updater:
         self.__update_expression = None
         self.__expression_attribute_values = None
 
-    def set_key_from_query(self, q, pk='id'):
+    def set_key_from_query(self, q, pk="id"):
         """
         Set the primary key of the item to update using the primary key of the
         first result from a query. This function assumes the query is against a
@@ -205,10 +205,10 @@ class Updater:
         q: str
             The query to make
         pk: str (optional)
-            The name of the table's primary key, default 'id'
+            The name of the table"s primary key, default "id"
         """
         res = Query(self.tablekey, q).scan()
-        key = res['Items'][0][pk]
+        key = res["Items"][0][pk]
         self.__key = {pk: key}
 
     def get_key(self):
@@ -231,8 +231,8 @@ class Updater:
             to update and the value is the new value to update the column
             with. Any number of key, value pairs can be passed to this function
         """
-        e = reduce(lambda l, r: l + f' {r}=:{r[0] + r[1]},', exp.keys(), 'SET')
-        a = {':%s' % k[0] + k[1]: v for k, v in exp.items()}
+        e = reduce(lambda l, r: l + f" {r}=:{r[0] + r[1]},", exp.keys(), "SET")
+        a = {":%s" % k[0] + k[1]: v for k, v in exp.items()}
         self.__update_expression = e[:-1]
         self.__expression_attribute_values = a
 
@@ -267,10 +267,10 @@ class Updater:
             The return value of DynamoDB.Table.update_items
         """
         if not (self.tablekey and self.__key):
-            raise ValueError('tablekey and key must be set')
+            raise ValueError("tablekey and key must be set")
 
         connection = Connection()
-        connection.open_connection('dynamodb')
+        connection.open_connection("dynamodb")
         loader = Loader(self.tablekey)
         loader.connect(connection)
         loader.load_table()
@@ -278,7 +278,7 @@ class Updater:
             Key=self.__key,
             UpdateExpression=self.__update_expression,
             ExpressionAttributeValues=self.__expression_attribute_values,
-            ReturnValues='UPDATED_NEW'
+            ReturnValues="UPDATED_NEW"
         )
 
         return res
@@ -377,11 +377,11 @@ class Scanner:
 
         # if a filter was set
         if self.__filter is not None:
-            kwargs.update({'FilterExpression': self.__filter})
+            kwargs.update({"FilterExpression": self.__filter})
 
         if connection is None:
             connection = Connection()
-            connection.open_connection('dynamodb')
+            connection.open_connection("dynamodb")
 
         self.__loader.connect(connection)
         self.__loader.load_table()
@@ -400,7 +400,7 @@ class Query:
         The short name of the table (User, Tap, etc.)
     query: str (optional)
         The expression to query the table with, for example:
-            '(a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))'
+            "(a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))"
         Valid conditionals include:
             == - equals
             != - not equals
@@ -408,7 +408,7 @@ class Query:
             >= - greater than or equal to
             << - less than
             >> - greater than
-            BETWEEN - between two values, e.g., 'fooBETWEEN"bar""baz"'
+            BETWEEN - between two values, e.g., "fooBETWEEN"bar""baz""
             BEGINS - will return results that begin with a given value
             CONTAINS - will return results that contain a given value
             ~~ - will return results that are true
@@ -432,12 +432,12 @@ class Query:
     keys: str
         a regex string for keys
     """
-    invalid_chars = r'[^\w|\d|=|"|\-|:|\.|<|>|(|)|~|!]'
-    blocks = r'((?<=\()[\w\d=<>"\-:.$~!]+(?=\)))'
-    conditionals = r'(==|!=|<=|>=|<<|>>|BETWEEN|BEGINS|CONTAINS|~~|~)'
-    comparitors = r'(AND|OR)'
-    values = r'((?<=")[\w\d\-:.]+(?="))'
-    keys = r'[a-zA-Z_]+(?=")'
+    invalid_chars = r"[^\w|\d|=|\"|\-|:|\.|<|>|(|)|~|!]"
+    blocks = r"((?<=\()[\w\d=<>\"\-:.$~!]+(?=\)))"
+    conditionals = r"(==|!=|<=|>=|<<|>>|BETWEEN|BEGINS|CONTAINS|~~|~)"
+    comparitors = r"(AND|OR)"
+    values = r"((?<=\")[\w\d\-:.]+(?=\"))"
+    keys = r"[a-zA-Z_]+(?=\")"
 
     def __init__(self, key, query=None):
         if query is not None:
@@ -467,24 +467,24 @@ class Query:
             }
         """
         scanner = Scanner(self.key).query(self.expression)
-        res = scanner.scan(ReturnConsumedCapacity='TOTAL', **kwargs)
-        units = res['ConsumedCapacity']['CapacityUnits']
-        items = res['Items']
+        res = scanner.scan(ReturnConsumedCapacity="TOTAL", **kwargs)
+        units = res["ConsumedCapacity"]["CapacityUnits"]
+        items = res["Items"]
 
         # iteratively scan the entire table
-        while 'LastEvaluatedKey' in res:
-            last = res['LastEvaluatedKey']
+        while "LastEvaluatedKey" in res:
+            last = res["LastEvaluatedKey"]
             res = scanner.scan(
               ExclusiveStartKey=last,
-              ReturnConsumedCapacity='TOTAL',
+              ReturnConsumedCapacity="TOTAL",
               **kwargs
             )
 
             # tally the consumed read units
-            units = units + res['ConsumedCapacity']['CapacityUnits']
-            items.extend(res['Items'])
+            units = units + res["ConsumedCapacity"]["CapacityUnits"]
+            items.extend(res["Items"])
 
-        return {'Items': items, 'ConsumedCapacity': units}
+        return {"Items": items, "ConsumedCapacity": units}
 
     @classmethod
     def check_query(cls, query):
@@ -511,7 +511,7 @@ class Query:
             pos = match.start(0)
 
             raise ValueError(
-                'Query contains invalid string at position %s: %s'
+                "Query contains invalid string at position %s: %s"
                 % (pos, string)
             )
 
@@ -553,11 +553,11 @@ class Query:
         -------
         list of str
             a list of subexpressions sorted in the order of evaluation. Nested
-            subexpressions are replaced with '$X' in following subexpressions,
+            subexpressions are replaced with "$X" in following subexpressions,
             where X is the index of the nested subexpression. For example, the
-            expression '(a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))' will
+            expression "(a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))" will
             return:
-                ['a=="a"ORa=="b"', 'b=="b"ORb=="c"', 'b=="a"AND$1', '$0AND$2']
+                ["a=="a"ORa=="b"", "b=="b"ORb=="c"", "b=="a"AND$1", "$0AND$2"]
         """
 
         # an empty list on the first call
@@ -572,10 +572,10 @@ class Query:
             blocks.append(query)
             return blocks
 
-        # replace nested subqueries with '$X'
+        # replace nested subqueries with "$X"
         for i, block in enumerate(match):
             _i = i + len(blocks)
-            query = query.replace(f'({block})', '$%s' % _i)
+            query = query.replace(f"({block})", "$%s" % _i)
 
         blocks.extend(match)
         return cls.build_blocks(query, blocks=blocks)
@@ -615,10 +615,10 @@ class Query:
                 continue
 
             # if this subexpression is a nested subexpression
-            if '$' in string:
+            if "$" in string:
 
                 # get the index and subexpression
-                ix = int(string.replace('$', ''))
+                ix = int(string.replace("$", ""))
                 _expression = expressions[ix]
 
             else:
@@ -635,10 +635,10 @@ class Query:
             # the last item will be the comparitor with the previous expression
             comparison = strings[i - 1]
 
-            if comparison == 'OR':
+            if comparison == "OR":
                 expression = expression | _expression
 
-            elif comparison == 'AND':
+            elif comparison == "AND":
                 expression = expression & _expression
 
         expressions.append(expression)
@@ -664,50 +664,50 @@ class Query:
         """
 
         # remove conditionals
-        popped = re.sub(cls.conditionals, '', string)
+        popped = re.sub(cls.conditionals, "", string)
 
-        # get the subexpression's key
+        # get the subexpression"s key
         print(cls.keys, popped, re.search(cls.keys, popped))
         key = re.search(cls.keys, popped).group(0)
 
-        # get the subexpression's conditional
+        # get the subexpression"s conditional
         condition = re.search(cls.conditionals, string).group(0)
 
         # get the subexpressions values
-        values = re.findall(cls.values, string) or ['']
+        values = re.findall(cls.values, string) or [""]
 
         # build the expression
-        if condition == '==':
+        if condition == "==":
             expression = Column(key) == values.pop()
 
-        elif condition == '!=':
+        elif condition == "!=":
             expression = Column(key) != values.pop()
 
-        elif condition == '<=':
+        elif condition == "<=":
             expression = Column(key) <= values.pop()
 
-        elif condition == '>=':
+        elif condition == ">=":
             expression = Column(key) >= values.pop()
 
-        elif condition == '<<':
+        elif condition == "<<":
             expression = Column(key) < values.pop()
 
-        elif condition == '>>':
+        elif condition == ">>":
             expression = Column(key) > values.pop()
 
-        elif condition == 'BETWEEN':
+        elif condition == "BETWEEN":
             expression = Column(key).between(*values)
 
-        elif condition == 'BEGINS':
+        elif condition == "BEGINS":
             expression = Column(key).begins_with(values.pop())
 
-        elif condition == 'CONTAINS':
+        elif condition == "CONTAINS":
             expression = Column(key).contains(values.pop())
 
-        elif condition == '~':
+        elif condition == "~":
             expression = ~Column(key)
 
-        elif condition == '~~':
+        elif condition == "~~":
             expression = ~~Column(key)
 
         return expression

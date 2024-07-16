@@ -13,16 +13,16 @@ from aws_portal.models import (
 from aws_portal.utils.auth import auth_required, validate_password
 from aws_portal.utils.db import populate_model
 
-blueprint = Blueprint('admin', __name__, url_prefix='/admin')
+blueprint = Blueprint("admin", __name__, url_prefix="/admin")
 logger = logging.getLogger(__name__)
 
 
-@blueprint.route('/account')
-@auth_required('View', 'Admin Dashboard')
+@blueprint.route("/account")
+@auth_required("View", "Admin Dashboard")
 def account():
     """
     Get one account or a list of all accounts. This will return one account if
-    the account's database primary key is passed as a URL option
+    the account"s database primary key is passed as a URL option
 
     Options
     -------
@@ -45,7 +45,7 @@ def account():
     }
     """
     try:
-        i = request.args.get('id')
+        i = request.args.get("id")
 
         if i:
             q = Account.query.filter(
@@ -64,12 +64,12 @@ def account():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
 
-@blueprint.route('/account/create', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Create', 'Accounts')
+@blueprint.route("/account/create", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "Accounts")
 def account_create():
     """
     Create a new account.
@@ -101,15 +101,15 @@ def account_create():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Account Created Successfully'
+        msg: "Account Created Successfully"
     }
 
     Response syntax (400)
     ---------------------
     {
-        msg: 'A password was not provided' or
-            'Minimum password length is 8 characters' or
-            'Maximum password length is 64 characters'
+        msg: "A password was not provided" or
+            "Minimum password length is 8 characters" or
+            "Maximum password length is 64 characters"
     }
 
     Response syntax (500)
@@ -119,18 +119,18 @@ def account_create():
     }
     """
     try:
-        data = request.json['create']
-        password = data['password']
+        data = request.json["create"]
+        password = data["password"]
 
         # a password must be included
         if not password:
-            msg = 'A password was not provided.'
-            return make_response({'msg': msg}, 400)
+            msg = "A password was not provided."
+            return make_response({"msg": msg}, 400)
 
         # the password must be valid
         valid = validate_password(password)
-        if valid != 'valid':
-            return make_response({'msg': valid}, 400)
+        if valid != "valid":
+            return make_response({"msg": valid}, 400)
 
         account = Account()
 
@@ -139,19 +139,19 @@ def account_create():
         account.created_on = datetime.now(UTC)
 
         # add access groups
-        for entry in data['access_groups']:
-            access_group = AccessGroup.query.get(entry['id'])
+        for entry in data["access_groups"]:
+            access_group = AccessGroup.query.get(entry["id"])
             JoinAccountAccessGroup(access_group=access_group, account=account)
 
         # add studies
-        for entry in data['studies']:
-            study = Study.query.get(entry['id'])
-            role = Role.query.get(entry['role']['id'])
+        for entry in data["studies"]:
+            study = Study.query.get(entry["id"])
+            role = Role.query.get(entry["role"]["id"])
             JoinAccountStudy(account=account, role=role, study=study)
 
         db.session.add(account)
         db.session.commit()
-        msg = 'Account Created Successfully'
+        msg = "Account Created Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -159,14 +159,14 @@ def account_create():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/account/edit', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Edit', 'Accounts')
+@blueprint.route("/account/edit", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "Accounts")
 def account_edit():
     """
     Edit an existing account
@@ -202,15 +202,15 @@ def account_edit():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Account Edited Successfully'
+        msg: "Account Edited Successfully"
     }
 
     Response syntax (400)
     ---------------------
     {
-        msg: 'A password was not provided' or
-            'Minimum password length is 8 characters' or
-            'Maximum password length is 64 characters'
+        msg: "A password was not provided" or
+            "Minimum password length is 8 characters" or
+            "Maximum password length is 64 characters"
     }
 
     Response syntax (500)
@@ -220,15 +220,15 @@ def account_edit():
     }
     """
     try:
-        data = request.json['edit']
-        account_id = request.json['id']
+        data = request.json["edit"]
+        account_id = request.json["id"]
         account = Account.query.get(account_id)
 
         try:
-            password = data['password']
+            password = data["password"]
             # avoid updating the account with an empty password
             if not password:
-                del data['password']
+                del data["password"]
         except KeyError:
             pass
 
@@ -236,60 +236,60 @@ def account_edit():
         else:
             valid = validate_password(password)
 
-            if valid != 'valid':
-                return make_response({'msg': valid}, 400)
+            if valid != "valid":
+                return make_response({"msg": valid}, 400)
 
         populate_model(account, data)
 
         # if a list of access groups were provided
-        if 'access_groups' in data:
+        if "access_groups" in data:
 
             # remove access groups that are not in the new list
             for join in account.access_groups:
-                a_ids = [a['id'] for a in data['access_groups']]
+                a_ids = [a["id"] for a in data["access_groups"]]
 
                 if join.access_group_id not in a_ids:
                     db.session.delete(join)
 
             # add new access groups
             a_ids = [join.access_group_id for join in account.access_groups]
-            for entry in data['access_groups']:
-                if entry['id'] not in a_ids:
-                    access_group = AccessGroup.query.get(entry['id'])
+            for entry in data["access_groups"]:
+                if entry["id"] not in a_ids:
+                    access_group = AccessGroup.query.get(entry["id"])
                     JoinAccountAccessGroup(
                         access_group=access_group,
                         account=account
                     )
 
         # if a list of studies were provided
-        if 'studies' in data:
+        if "studies" in data:
 
             # remove studies that are not in the new list
             for join in account.studies:
-                s_ids = [s['id'] for s in data['studies']]
+                s_ids = [s["id"] for s in data["studies"]]
 
                 if join.study_id not in s_ids:
                     db.session.delete(join)
 
             s_ids = [join.study_id for join in account.studies]
-            for entry in data['studies']:
-                study = Study.query.get(entry['id'])
+            for entry in data["studies"]:
+                study = Study.query.get(entry["id"])
 
                 # if the study is not new
-                if entry['id'] in s_ids:
+                if entry["id"] in s_ids:
                     join = JoinAccountStudy.query.get((account.id, study.id))
 
                     # update the role
-                    if join.role.id != int(entry['role']['id']):
-                        join.role = Role.query.get(entry['role']['id'])
+                    if join.role.id != int(entry["role"]["id"]):
+                        join.role = Role.query.get(entry["role"]["id"])
 
                 # add the study
                 else:
-                    role = Role.query.get(entry['role']['id'])
+                    role = Role.query.get(entry["role"]["id"])
                     JoinAccountStudy(account=account, role=role, study=study)
 
         db.session.commit()
-        msg = 'Account Edited Successfully'
+        msg = "Account Edited Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -297,14 +297,14 @@ def account_edit():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/account/archive', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Archive', 'Accounts')
+@blueprint.route("/account/archive", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "Accounts")
 def account_archive():
     """
     Archive an account. This action has the same effect as deleting an entry
@@ -321,7 +321,7 @@ def account_archive():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Account Archived Successfully'
+        msg: "Account Archived Successfully"
     }
 
     Response syntax (500)
@@ -331,11 +331,11 @@ def account_archive():
     }
     """
     try:
-        account_id = request.json['id']
+        account_id = request.json["id"]
         account = Account.query.get(account_id)
         account.is_archived = True
         db.session.commit()
-        msg = 'Account Archived Successfully'
+        msg = "Account Archived Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -343,17 +343,17 @@ def account_archive():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/study')
-@auth_required('View', 'Admin Dashboard')
+@blueprint.route("/study")
+@auth_required("View", "Admin Dashboard")
 def study():
     """
     Get one study or a list of all studies. This will return one study if the
-    study's database primary key is passed as a URL option
+    study"s database primary key is passed as a URL option
 
     Options
     -------
@@ -376,7 +376,7 @@ def study():
     }
     """
     try:
-        i = request.args.get('id')
+        i = request.args.get("id")
 
         if i:
             q = Study.query.filter(~Study.is_archived & (Study.id == int(i)))
@@ -393,12 +393,12 @@ def study():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
 
-@blueprint.route('/study/create', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Create', 'Studies')
+@blueprint.route("/study/create", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "Studies")
 def study_create():
     """
     Create a new study.
@@ -415,7 +415,7 @@ def study_create():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Study Created Successfully'
+        msg: "Study Created Successfully"
     }
 
     Response syntax (500)
@@ -425,13 +425,13 @@ def study_create():
     }
     """
     try:
-        data = request.json['create']
+        data = request.json["create"]
         study = Study()
 
         populate_model(study, data)
         db.session.add(study)
         db.session.commit()
-        msg = 'Study Created Successfully'
+        msg = "Study Created Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -439,14 +439,14 @@ def study_create():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/study/edit', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Edit', 'Studies')
+@blueprint.route("/study/edit", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "Studies")
 def study_edit():
     """
     Edit an existing study
@@ -467,7 +467,7 @@ def study_edit():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Study Edited Successfully'
+        msg: "Study Edited Successfully"
     }
 
     Response syntax (500)
@@ -477,13 +477,13 @@ def study_edit():
     }
     """
     try:
-        data = request.json['edit']
-        study_id = request.json['id']
+        data = request.json["edit"]
+        study_id = request.json["id"]
         study = Study.query.get(study_id)
 
         populate_model(study, data)
         db.session.commit()
-        msg = 'Study Edited Successfully'
+        msg = "Study Edited Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -491,14 +491,14 @@ def study_edit():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/study/archive', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Archive', 'Studies')
+@blueprint.route("/study/archive", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "Studies")
 def study_archive():
     """
     Archive a study. This action has the same effect as deleting an entry
@@ -515,7 +515,7 @@ def study_archive():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Study Archived Successfully'
+        msg: "Study Archived Successfully"
     }
 
     Response syntax (500)
@@ -525,11 +525,11 @@ def study_archive():
     }
     """
     try:
-        study_id = request.json['id']
+        study_id = request.json["id"]
         study = Study.query.get(study_id)
         study.is_archived = True
         db.session.commit()
-        msg = 'Study Archived Successfully'
+        msg = "Study Archived Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -537,17 +537,17 @@ def study_archive():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/access-group')
-@auth_required('View', 'Admin Dashboard')
+@blueprint.route("/access-group")
+@auth_required("View", "Admin Dashboard")
 def access_group():
     """
     Get one access group or a list of all studies. This will return one access
-    group if the access groups's database primary key is passed as a URL option
+    group if the access groups"s database primary key is passed as a URL option
 
     Options
     -------
@@ -570,7 +570,7 @@ def access_group():
     }
     """
     try:
-        i = request.args.get('id')
+        i = request.args.get("id")
 
         if i:
             q = AccessGroup.query.filter(
@@ -589,12 +589,12 @@ def access_group():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
 
-@blueprint.route('/access-group/create', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Create', 'Access Groups')
+@blueprint.route("/access-group/create", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "Access Groups")
 def access_group_create():
     """
     Create a new access group.
@@ -618,7 +618,7 @@ def access_group_create():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Access Group Created Successfully'
+        msg: "Access Group Created Successfully"
     }
 
     Response syntax (500)
@@ -628,25 +628,25 @@ def access_group_create():
     }
     """
     try:
-        data = request.json['create']
+        data = request.json["create"]
         access_group = AccessGroup()
 
         populate_model(access_group, data)
-        app = App.query.get(data['app'])
+        app = App.query.get(data["app"])
         access_group.app = app
 
         # add permissions
-        for entry in data['permissions']:
-            action = entry['action']
-            resource = entry['resource']
+        for entry in data["permissions"]:
+            action = entry["action"]
+            resource = entry["resource"]
             q = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(q).first()
 
             # only create a permission if it does not already exist
             if permission is None:
                 permission = Permission()
-                permission.action = entry['action']
-                permission.resource = entry['resource']
+                permission.action = entry["action"]
+                permission.resource = entry["resource"]
 
             JoinAccessGroupPermission(
                 access_group=access_group,
@@ -655,7 +655,7 @@ def access_group_create():
 
         db.session.add(access_group)
         db.session.commit()
-        msg = 'Access Group Created Successfully'
+        msg = "Access Group Created Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -663,14 +663,14 @@ def access_group_create():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/access-group/edit', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Edit', 'Access Groups')
+@blueprint.route("/access-group/edit", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "Access Groups")
 def access_group_edit():
     """
     Edit an existing access group.
@@ -698,7 +698,7 @@ def access_group_edit():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Access Group Created Successfully'
+        msg: "Access Group Created Successfully"
     }
 
     Response syntax (500)
@@ -708,34 +708,34 @@ def access_group_edit():
     }
     """
     try:
-        data = request.json['edit']
-        access_group_id = request.json['id']
+        data = request.json["edit"]
+        access_group_id = request.json["id"]
         access_group = AccessGroup.query.get(access_group_id)
 
         populate_model(access_group, data)
 
         # if a new app is provided
-        if 'app' in data:
-            app = App.query.get(data['app'])
+        if "app" in data:
+            app = App.query.get(data["app"])
             access_group.app = app
 
         # if new permissions are provided
-        if 'permissions' in data:
+        if "permissions" in data:
 
             # remove all existing permissions without deleting them
             access_group.permissions = []
 
-            for entry in data['permissions']:
-                action = entry['action']
-                resource = entry['resource']
+            for entry in data["permissions"]:
+                action = entry["action"]
+                resource = entry["resource"]
                 q = Permission.definition == tuple_(action, resource)
                 permission = Permission.query.filter(q).first()
 
-                # only create a new permission if it doens't already exist
+                # only create a new permission if it doens"t already exist
                 if permission is None:
                     permission = Permission()
-                    permission.action = entry['action']
-                    permission.resource = entry['resource']
+                    permission.action = entry["action"]
+                    permission.resource = entry["resource"]
 
                 JoinAccessGroupPermission(
                     access_group=access_group,
@@ -743,7 +743,7 @@ def access_group_edit():
                 )
 
         db.session.commit()
-        msg = 'Access Group Edited Successfully'
+        msg = "Access Group Edited Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -751,14 +751,14 @@ def access_group_edit():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/access-group/archive', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Archive', 'Access Groups')
+@blueprint.route("/access-group/archive", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "Access Groups")
 def access_group_archive():
     """
     Archive an access group. This action has the same effect as deleting an entry
@@ -775,7 +775,7 @@ def access_group_archive():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Access Group Archived Successfully'
+        msg: "Access Group Archived Successfully"
     }
 
     Response syntax (500)
@@ -785,11 +785,11 @@ def access_group_archive():
     }
     """
     try:
-        access_group_id = request.json['id']
+        access_group_id = request.json["id"]
         access_group = AccessGroup.query.get(access_group_id)
         access_group.is_archived = True
         db.session.commit()
-        msg = 'Access Group Archived Successfully'
+        msg = "Access Group Archived Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -797,17 +797,17 @@ def access_group_archive():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/role')
-@auth_required('View', 'Admin Dashboard')
+@blueprint.route("/role")
+@auth_required("View", "Admin Dashboard")
 def role():
     """
     Get one role or a list of all studies. This will return one role if the
-    role's database primary key is passed as a URL option
+    role"s database primary key is passed as a URL option
 
     Options
     -------
@@ -830,7 +830,7 @@ def role():
     }
     """
     try:
-        i = request.args.get('id')
+        i = request.args.get("id")
 
         if i:
             q = Role.query.filter(~Role.is_archived & (Role.id == int(i)))
@@ -847,12 +847,12 @@ def role():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
 
-@blueprint.route('/role/create', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Create', 'Roles')
+@blueprint.route("/role/create", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "Roles")
 def role_create():
     """
     Create a new role.
@@ -876,7 +876,7 @@ def role_create():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Role Created Successfully'
+        msg: "Role Created Successfully"
     }
 
     Response syntax (500)
@@ -886,29 +886,29 @@ def role_create():
     }
     """
     try:
-        data = request.json['create']
+        data = request.json["create"]
         role = Role()
 
         populate_model(role, data)
 
         # add permissions
-        for entry in data['permissions']:
-            action = entry['action']
-            resource = entry['resource']
+        for entry in data["permissions"]:
+            action = entry["action"]
+            resource = entry["resource"]
             q = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(q).first()
 
             # only create a permission if it does not already exist
             if permission is None:
                 permission = Permission()
-                permission.action = entry['action']
-                permission.resource = entry['resource']
+                permission.action = entry["action"]
+                permission.resource = entry["resource"]
 
             JoinRolePermission(role=role, permission=permission)
 
         db.session.add(role)
         db.session.commit()
-        msg = 'Role Created Successfully'
+        msg = "Role Created Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -916,14 +916,14 @@ def role_create():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/role/edit', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Edit', 'Roles')
+@blueprint.route("/role/edit", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "Roles")
 def role_edit():
     """
     Edit an existing role.
@@ -951,7 +951,7 @@ def role_edit():
     Response syntax (200)
     ---------------------
     {
-        msg: 'Role Edited Successfully'
+        msg: "Role Edited Successfully"
     }
 
     Response syntax (500)
@@ -961,8 +961,8 @@ def role_edit():
     }
     """
     try:
-        data = request.json['edit']
-        role_id = request.json['id']
+        data = request.json["edit"]
+        role_id = request.json["id"]
         role = Role.query.get(role_id)
 
         populate_model(role, data)
@@ -971,23 +971,23 @@ def role_edit():
         role.permissions = []
 
         # add permissions
-        for entry in data['permissions']:
-            action = entry['action']
-            resource = entry['resource']
+        for entry in data["permissions"]:
+            action = entry["action"]
+            resource = entry["resource"]
             q = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(q).first()
 
             # only create a permission if it does not already exist
             if permission is None:
                 permission = Permission()
-                permission.action = entry['action']
-                permission.resource = entry['resource']
+                permission.action = entry["action"]
+                permission.resource = entry["resource"]
 
             JoinRolePermission(role=role, permission=permission)
 
         db.session.add(role)
         db.session.commit()
-        msg = 'Role Edited Successfully'
+        msg = "Role Edited Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -995,14 +995,14 @@ def role_edit():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/role/archive', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Archive', 'Role')
+@blueprint.route("/role/archive", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "Role")
 def role_archive():  # TODO: create unit test
     """
     Archive a role. This action has the same effect as deleting an entry
@@ -1019,7 +1019,7 @@ def role_archive():  # TODO: create unit test
     Response syntax (200)
     ---------------------
     {
-        msg: 'Role Archived Successfully'
+        msg: "Role Archived Successfully"
     }
 
     Response syntax (500)
@@ -1029,11 +1029,11 @@ def role_archive():  # TODO: create unit test
     }
     """
     try:
-        role_id = request.json['id']
+        role_id = request.json["id"]
         role = Role.query.get(role_id)
         role.is_archived = True
         db.session.commit()
-        msg = 'Role Archived Successfully'
+        msg = "Role Archived Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -1041,31 +1041,31 @@ def role_archive():  # TODO: create unit test
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/app')
-@auth_required('View', 'Admin Dashboard')
+@blueprint.route("/app")
+@auth_required("View", "Admin Dashboard")
 def app():
     apps = App.query.all()
     res = [a.meta for a in apps]
     return jsonify(res)
 
 
-@blueprint.route('/app/create', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Create', 'Apps')
+@blueprint.route("/app/create", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "Apps")
 def app_create():
-    data = request.json['create']
+    data = request.json["create"]
     app = App()
 
     try:
         populate_model(app, data)
         db.session.add(app)
         db.session.commit()
-        msg = 'App Created Successfully'
+        msg = "App Created Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -1073,24 +1073,24 @@ def app_create():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/app/edit', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Edit', 'Apps')
+@blueprint.route("/app/edit", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "Apps")
 def app_edit():
-    data = request.json['edit']
-    app_id = request.json['id']
+    data = request.json["edit"]
+    app_id = request.json["id"]
     app = App.query.get(app_id)
 
     try:
         populate_model(app, data)
         db.session.add(app)
         db.session.commit()
-        msg = 'App Edited Successfully'
+        msg = "App Edited Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -1098,13 +1098,13 @@ def app_edit():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/action')
-@auth_required('View', 'Admin Dashboard')
+@blueprint.route("/action")
+@auth_required("View", "Admin Dashboard")
 def action():  # TODO: write unit test
     """
     Get all actions
@@ -1135,11 +1135,11 @@ def action():  # TODO: write unit test
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
 
-@blueprint.route('/resource')
-@auth_required('View', 'Admin Dashboard')
+@blueprint.route("/resource")
+@auth_required("View", "Admin Dashboard")
 def resource():  # TODO: write unit test
     """
     Get all resources
@@ -1170,15 +1170,15 @@ def resource():  # TODO: write unit test
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
 
-@blueprint.route('/about-sleep-template')
-@auth_required('View', 'Admin Dashboard')
+@blueprint.route("/about-sleep-template")
+@auth_required("View", "Admin Dashboard")
 def about_sleep_template():
     """
     Get one about sleep template or a list of all studies. This will return one
-    about sleep template if the about sleep template's database primary key is
+    about sleep template if the about sleep template"s database primary key is
     passed as a URL option
 
     Options
@@ -1202,7 +1202,7 @@ def about_sleep_template():
     }
     """
     try:
-        i = request.args.get('id')
+        i = request.args.get("id")
 
         if i:
             q = AboutSleepTemplate.query.filter(
@@ -1224,12 +1224,12 @@ def about_sleep_template():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
 
-@blueprint.route('/about-sleep-template/create', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Create', 'Studies')
+@blueprint.route("/about-sleep-template/create", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "Studies")
 def about_sleep_template_create():
     """
     Create a new about sleep template.
@@ -1246,7 +1246,7 @@ def about_sleep_template_create():
     Response syntax (200)
     ---------------------
     {
-        msg: 'About sleep template Created Successfully'
+        msg: "About sleep template Created Successfully"
     }
 
     Response syntax (500)
@@ -1256,13 +1256,13 @@ def about_sleep_template_create():
     }
     """
     try:
-        data = request.json['create']
+        data = request.json["create"]
         about_sleep_template = AboutSleepTemplate()
 
         populate_model(about_sleep_template, data)
         db.session.add(about_sleep_template)
         db.session.commit()
-        msg = 'About sleep template Created Successfully'
+        msg = "About sleep template Created Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -1270,14 +1270,14 @@ def about_sleep_template_create():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/about-sleep-template/edit', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Edit', 'Studies')
+@blueprint.route("/about-sleep-template/edit", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "Studies")
 def about_sleep_template_edit():
     """
     Edit an existing about sleep template
@@ -1298,7 +1298,7 @@ def about_sleep_template_edit():
     Response syntax (200)
     ---------------------
     {
-        msg: 'About sleep template Edited Successfully'
+        msg: "About sleep template Edited Successfully"
     }
 
     Response syntax (500)
@@ -1308,15 +1308,15 @@ def about_sleep_template_edit():
     }
     """
     try:
-        data = request.json['edit']
-        about_sleep_template_id = request.json['id']
+        data = request.json["edit"]
+        about_sleep_template_id = request.json["id"]
         about_sleep_template = AboutSleepTemplate.query.get(
           about_sleep_template_id
         )
 
         populate_model(about_sleep_template, data)
         db.session.commit()
-        msg = 'About sleep template Edited Successfully'
+        msg = "About sleep template Edited Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -1324,14 +1324,14 @@ def about_sleep_template_edit():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/about-sleep-template/archive', methods=['POST'])
-@auth_required('View', 'Admin Dashboard')
-@auth_required('Archive', 'Studies')
+@blueprint.route("/about-sleep-template/archive", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "Studies")
 def about_sleep_template_archive():
     """
     Archive an about sleep template. This action has the same effect as
@@ -1348,7 +1348,7 @@ def about_sleep_template_archive():
     Response syntax (200)
     ---------------------
     {
-        msg: 'About sleep template Archived Successfully'
+        msg: "About sleep template Archived Successfully"
     }
 
     Response syntax (500)
@@ -1358,13 +1358,13 @@ def about_sleep_template_archive():
     }
     """
     try:
-        about_sleep_template_id = request.json['id']
+        about_sleep_template_id = request.json["id"]
         about_sleep_template = AboutSleepTemplate.query.get(
           about_sleep_template_id
         )
         about_sleep_template.is_archived = True
         db.session.commit()
-        msg = 'About sleep template Archived Successfully'
+        msg = "About sleep template Archived Successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -1372,6 +1372,6 @@ def about_sleep_template_archive():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})

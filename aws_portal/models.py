@@ -21,21 +21,21 @@ def init_db():
     ------
     RuntimeError
         If this function is called outside of a testing environment or if the
-        database URI does not contain 'localhost.'
+        database URI does not contain "localhost."
     """
-    db_uri = current_app.config['SQLALCHEMY_DATABASE_URI']
+    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
 
-    if current_app.config['TESTING']:
+    if current_app.config["TESTING"]:
         db.drop_all()
         db.create_all()
 
-    elif 'localhost' in db_uri:
+    elif "localhost" in db_uri:
         db.create_all()
 
     else:
         raise RuntimeError(
-            'init_db requires either a testing evironment or a localhost datab'
-            + 'ase URI.'
+            "init_db requires either a testing evironment or a localhost datab"
+            + "ase URI."
         )
 
 
@@ -52,13 +52,13 @@ def init_admin_app():
     ValueError
         If an entry for the admin dashboard app already exists.
     """
-    query = App.name == 'Admin Dashboard'
+    query = App.name == "Admin Dashboard"
     app = App.query.filter(query).first()
 
     if app is not None:
-        raise ValueError('This app already exists: %s' % app)
+        raise ValueError("This app already exists: %s" % app)
 
-    app = App(name='Admin Dashboard')
+    app = App(name="Admin Dashboard")
     db.session.add(app)
     db.session.commit()
 
@@ -79,25 +79,25 @@ def init_admin_group():
         If an entry for the admin access group already exists or if an entry
         for the admin dashboard app does not exist.
     """
-    query = AccessGroup.name == 'Admin'
+    query = AccessGroup.name == "Admin"
     access_group = AccessGroup.query.filter(query).first()
 
     if access_group is not None:
-        raise ValueError('This access group already exists: %s' % access_group)
+        raise ValueError("This access group already exists: %s" % access_group)
 
-    query = App.name == 'Admin Dashboard'
+    query = App.name == "Admin Dashboard"
     app = App.query.filter(query).first()
 
     if app is None:
         raise ValueError(
-            'The admin dashboard app has not been created. It can be created u'
-            + 'sing `flask init-admin-app`'
+            "The admin dashboard app has not been created. It can be created u"
+            + "sing `flask init-admin-app`"
         )
 
-    access_group = AccessGroup(name='Admin', app=app)
+    access_group = AccessGroup(name="Admin", app=app)
     permission = Permission()
-    permission.action = '*'
-    permission.resource = '*'
+    permission.action = "*"
+    permission.resource = "*"
     join = JoinAccessGroupPermission(
         access_group=access_group,
         permission=permission
@@ -130,30 +130,30 @@ def init_admin_account(email=None, password=None):
         If an entry for the admin account already exists or if an entry for the
         admin access group does not exist.
     """
-    email = email or os.getenv('FLASK_ADMIN_EMAIL')
-    password = password or os.getenv('FLASK_ADMIN_PASSWORD')
+    email = email or os.getenv("FLASK_ADMIN_EMAIL")
+    password = password or os.getenv("FLASK_ADMIN_PASSWORD")
     admin = Account.query.filter(Account.email == email).first()
 
     if admin is not None:
-        raise ValueError('An admin account already exists: %s' % admin)
+        raise ValueError("An admin account already exists: %s" % admin)
 
-    query = AccessGroup.name == 'Admin'
+    query = AccessGroup.name == "Admin"
     admin_group = AccessGroup.query.filter(query).first()
 
     if admin_group is None:
         raise ValueError(
-            'The admin access group has not been created. It can be created us'
-            + 'ing `flask init-access-group`'
+            "The admin access group has not been created. It can be created us"
+            + "ing `flask init-access-group`"
         )
 
-    query = AccessGroup.name == 'Ditti Admin'
+    query = AccessGroup.name == "Ditti Admin"
     ditti_group = AccessGroup.query.filter(query).first()
 
     admin = Account(
         public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
-        first_name='AWS',
-        last_name='Admin',
+        first_name="AWS",
+        last_name="Admin",
         email=email,
         is_confirmed=True
     )
@@ -193,8 +193,8 @@ def user_lookup_callback(_jwt_header, jwt_data):
 
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload):
-    jti = jwt_payload['jti']
-    print('checking %s' % jti)
+    jti = jwt_payload["jti"]
+    print("checking %s" % jti)
     token = BlockedToken.query.filter(BlockedToken.jti == jti).first()
     return token is not None
 
@@ -210,7 +210,7 @@ class Account(db.Model):
         A random string to be used for JWT authentication, e.g.,
         `public_id=str(uuid.uuid4())`.
     created_on: sqlalchemy.Column
-        The timestamp of the account's creation, e.g., `datetime.now(UTC)`.
+        The timestamp of the account"s creation, e.g., `datetime.now(UTC)`.
         The created_on value cannot be modified.
     last_login: sqlalchemy.Column
     first_name: sqlalchemy.Column
@@ -223,7 +223,7 @@ class Account(db.Model):
     access_groups: sqlalchemy.orm.relationship
     studies: sqlalchemy.orm.relationship
     """
-    __tablename__ = 'account'
+    __tablename__ = "account"
     id = db.Column(db.Integer, primary_key=True)
     public_id = db.Column(db.String, nullable=False, unique=True)
     created_on = db.Column(db.DateTime, nullable=False)
@@ -238,39 +238,39 @@ class Account(db.Model):
 
     # ignore archived access groups
     access_groups = db.relationship(
-        'JoinAccountAccessGroup',
-        back_populates='account',
-        cascade='all, delete-orphan',
+        "JoinAccountAccessGroup",
+        back_populates="account",
+        cascade="all, delete-orphan",
         primaryjoin=(
-            'and_(' +
-            '   Account.id == JoinAccountAccessGroup.account_id,' +
-            '   JoinAccountAccessGroup.access_group_id == AccessGroup.id,' +
-            '   AccessGroup.is_archived == False' +
-            ')'
+            "and_(" +
+            "   Account.id == JoinAccountAccessGroup.account_id," +
+            "   JoinAccountAccessGroup.access_group_id == AccessGroup.id," +
+            "   AccessGroup.is_archived == False" +
+            ")"
         )
     )
 
     # ignore archived studies
     studies = db.relationship(
-        'JoinAccountStudy',
-        back_populates='account',
-        cascade='all, delete-orphan',
+        "JoinAccountStudy",
+        back_populates="account",
+        cascade="all, delete-orphan",
         primaryjoin=(
-            'and_(' +
-            '   Account.id == JoinAccountStudy.account_id,' +
-            '   JoinAccountStudy.study_id == Study.id,' +
-            '   Study.is_archived == False' +
-            ')'
+            "and_(" +
+            "   Account.id == JoinAccountStudy.account_id," +
+            "   JoinAccountStudy.study_id == Study.id," +
+            "   Study.is_archived == False" +
+            ")"
         )
     )
 
-    @validates('created_on')
+    @validates("created_on")
     def validate_created_on(self, key, val):
         """
         Make the created_on column read-only.
         """
         if self.created_on:
-            raise ValueError('Account.created_on cannot be modified.')
+            raise ValueError("Account.created_on cannot be modified.")
 
         return val
 
@@ -279,16 +279,16 @@ class Account(db.Model):
         """
         str: The full name of the account holder
         """
-        return f'{self.first_name} {self.last_name}'
+        return f"{self.first_name} {self.last_name}"
 
     @full_name.expression
     def full_name(cls):
-        return func.concat(cls.first_name, ' ', cls.last_name)
+        return func.concat(cls.first_name, " ", cls.last_name)
 
     @hybrid_property
     def password(self):
         """
-        str: The account holder's password
+        str: The account holder"s password
         """
         return self._password
 
@@ -297,13 +297,13 @@ class Account(db.Model):
         """
         Hashes the password using bcrypt
         """
-        password_hash = bcrypt.generate_password_hash(val).decode('utf-8')
+        password_hash = bcrypt.generate_password_hash(val).decode("utf-8")
         self._password = password_hash
         return True
 
     def check_password(self, val):
         """
-        Whether a password matches the account holder's password.
+        Whether a password matches the account holder"s password.
 
         Args
         ----
@@ -318,15 +318,15 @@ class Account(db.Model):
 
     def get_permissions(self, app_id, study_id=None):
         """
-        Get all of an account's permissions for an app and optionally for a
+        Get all of an account"s permissions for an app and optionally for a
         study.
 
         Args
         ----
         app_id: int
-            The app's primary key.
+            The app"s primary key.
         study_id: int (optional)
-            The study's primary key.
+            The study"s primary key.
 
         Returns
         -------
@@ -389,37 +389,37 @@ class Account(db.Model):
         query = Permission.definition == tuple_(action, resource)
 
         # also check if the account has wildcard permissions
-        query = query | (Permission.definition == tuple_(action, '*'))
-        query = query | (Permission.definition == tuple_('*', resource))
-        query = query | (Permission.definition == tuple_('*', '*'))
+        query = query | (Permission.definition == tuple_(action, "*"))
+        query = query | (Permission.definition == tuple_("*", resource))
+        query = query | (Permission.definition == tuple_("*", "*"))
 
-        # filter the account's permissions
+        # filter the account"s permissions
         valid = permissions.filter(query).first()
 
         # if no permissions were found
         if valid is None:
-            raise ValueError('Unauthorized Ask')
+            raise ValueError("Unauthorized Ask")
 
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return {
-            'id': self.id,
-            'createdOn': self.created_on,
-            'lastLogin': self.last_login,
-            'firstName': self.first_name,
-            'lastName': self.last_name,
-            'email': self.email,
-            'phoneNumber': self.phone_number,
-            'isConfirmed': self.is_confirmed,
-            'accessGroups': [j.access_group.meta for j in self.access_groups],
-            'studies': [s.meta for s in self.studies]
+            "id": self.id,
+            "createdOn": self.created_on,
+            "lastLogin": self.last_login,
+            "firstName": self.first_name,
+            "lastName": self.last_name,
+            "email": self.email,
+            "phoneNumber": self.phone_number,
+            "isConfirmed": self.is_confirmed,
+            "accessGroups": [j.access_group.meta for j in self.access_groups],
+            "studies": [s.meta for s in self.studies]
         }
 
     def __repr__(self):
-        return '<Account %s>' % self.email
+        return "<Account %s>" % self.email
 
 
 class JoinAccountAccessGroup(db.Model):
@@ -433,27 +433,27 @@ class JoinAccountAccessGroup(db.Model):
     account: sqlalchemy.orm.relationship
     access_group: sqlalchemy.orm.relationship
     """
-    __tablename__ = 'join_account_access_group'
+    __tablename__ = "join_account_access_group"
 
     account_id = db.Column(
         db.Integer,
-        db.ForeignKey('account.id'),
+        db.ForeignKey("account.id"),
         primary_key=True
     )
 
     access_group_id = db.Column(
         db.Integer,
-        db.ForeignKey('access_group.id', ondelete='CASCADE'),
+        db.ForeignKey("access_group.id", ondelete="CASCADE"),
         primary_key=True
     )
 
-    account = db.relationship('Account', back_populates='access_groups')
-    access_group = db.relationship('AccessGroup', back_populates='accounts')
+    account = db.relationship("Account", back_populates="access_groups")
+    access_group = db.relationship("AccessGroup", back_populates="accounts")
 
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        tuple of int: an entry"s primary key.
         """
         return self.account_id, self.access_group_id
 
@@ -462,7 +462,7 @@ class JoinAccountAccessGroup(db.Model):
         return tuple_(cls.account_id, cls.access_group_id)
 
     def __repr__(self):
-        return '<JoinAccountAccessGroup %s-%s>' % self.primary_key
+        return "<JoinAccountAccessGroup %s-%s>" % self.primary_key
 
 
 class JoinAccountStudy(db.Model):
@@ -479,35 +479,35 @@ class JoinAccountStudy(db.Model):
         The primary key of the role that an account is assigned for a study.
     role: sqlalchemy.orm.relationship
     """
-    __tablename__ = 'join_account_study'
+    __tablename__ = "join_account_study"
 
     account_id = db.Column(
         db.Integer,
-        db.ForeignKey('account.id'),
+        db.ForeignKey("account.id"),
         primary_key=True
     )
 
     study_id = db.Column(
         db.Integer,
-        db.ForeignKey('study.id', ondelete='CASCADE'),
+        db.ForeignKey("study.id", ondelete="CASCADE"),
         primary_key=True
     )
 
-    account = db.relationship('Account', back_populates='studies')
-    study = db.relationship('Study')
+    account = db.relationship("Account", back_populates="studies")
+    study = db.relationship("Study")
 
     role_id = db.Column(
         db.Integer,
-        db.ForeignKey('role.id', ondelete='CASCADE'),
+        db.ForeignKey("role.id", ondelete="CASCADE"),
         nullable=False
     )
 
-    role = db.relationship('Role')
+    role = db.relationship("Role")
 
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        tuple of int: an entry"s primary key.
         """
         return self.account_id, self.study_id
 
@@ -518,15 +518,15 @@ class JoinAccountStudy(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return {
             **self.study.meta,
-            'role': self.role.meta
+            "role": self.role.meta
         }
 
     def __repr__(self):
-        return '<JoinAccountStudy %s-%s>' % self.primary_key
+        return "<JoinAccountStudy %s-%s>" % self.primary_key
 
 
 class AccessGroup(db.Model):
@@ -545,48 +545,48 @@ class AccessGroup(db.Model):
     permissions: sqlalchemy.orm.relationship
         The permissions that an access group grants for an app.
     """
-    __tablename__ = 'access_group'
+    __tablename__ = "access_group"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
-    app_id = db.Column(db.Integer, db.ForeignKey('app.id', ondelete='CASCADE'))
-    app = db.relationship('App')
+    app_id = db.Column(db.Integer, db.ForeignKey("app.id", ondelete="CASCADE"))
+    app = db.relationship("App")
 
     # ignore archived accounts
     accounts = db.relationship(
-        'JoinAccountAccessGroup',
-        back_populates='access_group',
-        cascade='all, delete-orphan',
+        "JoinAccountAccessGroup",
+        back_populates="access_group",
+        cascade="all, delete-orphan",
         primaryjoin=(
-            'and_(' +
-            '   AccessGroup.id == JoinAccountAccessGroup.access_group_id,' +
-            '   JoinAccountAccessGroup.account_id == Account.id,' +
-            '   Account.is_archived == False' +
-            ')'
+            "and_(" +
+            "   AccessGroup.id == JoinAccountAccessGroup.access_group_id," +
+            "   JoinAccountAccessGroup.account_id == Account.id," +
+            "   Account.is_archived == False" +
+            ")"
         )
     )
 
     permissions = db.relationship(
-        'JoinAccessGroupPermission',
-        back_populates='access_group',
-        cascade='all, delete-orphan'
+        "JoinAccessGroupPermission",
+        back_populates="access_group",
+        cascade="all, delete-orphan"
     )
 
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return {
-            'id': self.id,
-            'name': self.name,
-            'app': self.app.meta,
-            'permissions': [p.meta for p in self.permissions]
+            "id": self.id,
+            "name": self.name,
+            "app": self.app.meta,
+            "permissions": [p.meta for p in self.permissions]
         }
 
     def __repr__(self):
-        return '<AccessGroup %s>' % self.name
+        return "<AccessGroup %s>" % self.name
 
 
 class JoinAccessGroupPermission(db.Model):
@@ -600,27 +600,27 @@ class JoinAccessGroupPermission(db.Model):
     access_group: sqlalchemy.orm.relationship
     permission: sqlalchemy.orm.relationship
     """
-    __tablename__ = 'join_access_group_permission'
+    __tablename__ = "join_access_group_permission"
 
     access_group_id = db.Column(
         db.Integer,
-        db.ForeignKey('access_group.id', ondelete='CASCADE'),
+        db.ForeignKey("access_group.id", ondelete="CASCADE"),
         primary_key=True
     )
 
     permission_id = db.Column(
         db.Integer,
-        db.ForeignKey('permission.id', ondelete='CASCADE'),
+        db.ForeignKey("permission.id", ondelete="CASCADE"),
         primary_key=True
     )
 
-    access_group = db.relationship('AccessGroup', back_populates='permissions')
-    permission = db.relationship('Permission')
+    access_group = db.relationship("AccessGroup", back_populates="permissions")
+    permission = db.relationship("Permission")
 
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key
+        tuple of int: an entry"s primary key
         """
         return self.access_group_id, self.permission_id
 
@@ -631,12 +631,12 @@ class JoinAccessGroupPermission(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return self.permission.meta
 
     def __repr__(self):
-        return '<JoinAccessGroupPermission %s-%s>' % self.primary_key
+        return "<JoinAccessGroupPermission %s-%s>" % self.primary_key
 
 
 class Role(db.Model):
@@ -650,30 +650,30 @@ class Role(db.Model):
     is_archived: sqlalchemy.Column
     permissions: sqlalchemy.orm.relationship
     """
-    __tablename__ = 'role'
+    __tablename__ = "role"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
     permissions = db.relationship(
-        'JoinRolePermission',
-        back_populates='role',
-        cascade='all, delete-orphan'
+        "JoinRolePermission",
+        back_populates="role",
+        cascade="all, delete-orphan"
     )
 
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return {
-            'id': self.id,
-            'name': self.name,
-            'permissions': [p.meta for p in self.permissions]
+            "id": self.id,
+            "name": self.name,
+            "permissions": [p.meta for p in self.permissions]
         }
 
     def __repr__(self):
-        return '<Role %s>' % self.name
+        return "<Role %s>" % self.name
 
 
 class JoinRolePermission(db.Model):
@@ -687,27 +687,27 @@ class JoinRolePermission(db.Model):
     role: sqlalchemy.orm.relationship
     permission: sqlalchemy.orm.relationship
     """
-    __tablename__ = 'join_role_permission'
+    __tablename__ = "join_role_permission"
 
     role_id = db.Column(
         db.Integer,
-        db.ForeignKey('role.id', ondelete='CASCADE'),
+        db.ForeignKey("role.id", ondelete="CASCADE"),
         primary_key=True
     )
 
     permission_id = db.Column(
         db.Integer,
-        db.ForeignKey('permission.id', ondelete='CASCADE'),
+        db.ForeignKey("permission.id", ondelete="CASCADE"),
         primary_key=True
     )
 
-    role = db.relationship('Role', back_populates='permissions')
-    permission = db.relationship('Permission')
+    role = db.relationship("Role", back_populates="permissions")
+    permission = db.relationship("Permission")
 
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        tuple of int: an entry"s primary key.
         """
         return self.role_id, self.permission_id
 
@@ -718,12 +718,12 @@ class JoinRolePermission(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return self.permission.meta
 
     def __repr__(self):
-        return '<JoinRolePermission %s-%s>' % self.primary_key
+        return "<JoinRolePermission %s-%s>" % self.primary_key
 
 
 class Action(db.Model):
@@ -735,22 +735,22 @@ class Action(db.Model):
     id: sqlalchemy.Column
     value: sqlalchemy.Column
     """
-    __tablename__ = 'action'
+    __tablename__ = "action"
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.String, nullable=False, unique=True)
 
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return {
-            'id': self.id,
-            'value': self.value
+            "id": self.id,
+            "value": self.value
         }
 
     def __repr__(self):
-        return '<Action %s>' % self.value
+        return "<Action %s>" % self.value
 
 
 class Resource(db.Model):
@@ -762,22 +762,22 @@ class Resource(db.Model):
     id: sqlalchemy.Column
     value: sqlalchemy.Column
     """
-    __tablename__ = 'resource'
+    __tablename__ = "resource"
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.String, nullable=False, unique=True)
 
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return {
-            'id': self.id,
-            'value': self.value
+            "id": self.id,
+            "value": self.value
         }
 
     def __repr__(self):
-        return '<Resource %s>' % self.value
+        return "<Resource %s>" % self.value
 
 
 class Permission(db.Model):
@@ -788,29 +788,29 @@ class Permission(db.Model):
     ----
     id: sqlalchemy.Column
     """
-    __tablename__ = 'permission'
+    __tablename__ = "permission"
 
     # ensure the action-resource combination is unique.
-    __table_args__ = (UniqueConstraint('_action_id', '_resource_id'),)
+    __table_args__ = (UniqueConstraint("_action_id", "_resource_id"),)
     id = db.Column(db.Integer, primary_key=True)
 
     _action_id = db.Column(
         db.Integer,
-        db.ForeignKey('action.id', ondelete='CASCADE')
+        db.ForeignKey("action.id", ondelete="CASCADE")
     )
 
     _resource_id = db.Column(
         db.Integer,
-        db.ForeignKey('resource.id', ondelete='CASCADE')
+        db.ForeignKey("resource.id", ondelete="CASCADE")
     )
 
-    _action = db.relationship('Action')
-    _resource = db.relationship('Resource')
+    _action = db.relationship("Action")
+    _resource = db.relationship("Resource")
 
     @hybrid_property
     def action(self):
         """
-        str: an entry's action
+        str: an entry"s action
         """
         return self._action.value
 
@@ -832,7 +832,7 @@ class Permission(db.Model):
     @hybrid_property
     def resource(self):
         """
-        str: an entry's resource
+        str: an entry"s resource
         """
         return self._resource.value
 
@@ -851,30 +851,30 @@ class Permission(db.Model):
             .where(Resource.id == cls._resource_id)\
             .scalar_subquery()
 
-    @validates('_action_id')
+    @validates("_action_id")
     def validate_action(self, key, val):
         """
-        Ensure an entry's action cannot be modified.
+        Ensure an entry"s action cannot be modified.
         """
         if self._action_id is not None:
-            raise ValueError('permission.action cannot be modified.')
+            raise ValueError("permission.action cannot be modified.")
 
         return val
 
-    @validates('_resource_id')
+    @validates("_resource_id")
     def validate_resource(self, key, val):
         """
-        Ensure an entry's resource cannot be modified.
+        Ensure an entry"s resource cannot be modified.
         """
         if self._resource_id is not None:
-            raise ValueError('permission.resource cannot be modified.')
+            raise ValueError("permission.resource cannot be modified.")
 
         return val
 
     @hybrid_property
     def definition(self):
         """
-        tuple of str: an entry's (action, resource) definition
+        tuple of str: an entry"s (action, resource) definition
         """
         return self.action, self.resource
 
@@ -892,16 +892,16 @@ class Permission(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return {
-            'id': self.id,
-            'action': self.action,
-            'resource': self.resource
+            "id": self.id,
+            "action": self.action,
+            "resource": self.resource
         }
 
     def __repr__(self):
-        return '<Permission %s %s>' % self.definition
+        return "<Permission %s %s>" % self.definition
 
 
 class App(db.Model):
@@ -913,22 +913,22 @@ class App(db.Model):
     id: sqlalchemy.Column
     name: sqlalchemy.Column
     """
-    __tablename__ = 'app'
+    __tablename__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
 
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return {
-            'id': self.id,
-            'name': self.name
+            "id": self.id,
+            "name": self.name
         }
 
     def __repr__(self):
-        return '<App %s>' % self.name
+        return "<App %s>" % self.name
 
 
 class Study(db.Model):
@@ -945,7 +945,7 @@ class Study(db.Model):
     is_archived: sqlalchemy.Column
     roles: sqlalchemy.orm.relationship
     """
-    __tablename__ = 'study'
+    __tablename__ = "study"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
     acronym = db.Column(db.String, nullable=False, unique=True)
@@ -953,24 +953,24 @@ class Study(db.Model):
     email = db.Column(db.String, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
-    roles = db.relationship('JoinStudyRole', cascade='all, delete-orphan')
+    roles = db.relationship("JoinStudyRole", cascade="all, delete-orphan")
 
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return {
-            'id': self.id,
-            'name': self.name,
-            'acronym': self.acronym,
-            'dittiId': self.ditti_id,
-            'email': self.email,
-            'roles': [r.meta for r in self.roles]
+            "id": self.id,
+            "name": self.name,
+            "acronym": self.acronym,
+            "dittiId": self.ditti_id,
+            "email": self.email,
+            "roles": [r.meta for r in self.roles]
         }
 
     def __repr__(self):
-        return '<Study %s>' % self.acronym
+        return "<Study %s>" % self.acronym
 
 
 class JoinStudyRole(db.Model):
@@ -984,27 +984,27 @@ class JoinStudyRole(db.Model):
     study: sqlalchemy.orm.relationship
     role: sqlalchemy.orm.relationship
     """
-    __tablename__ = 'join_study_role'
+    __tablename__ = "join_study_role"
 
     study_id = db.Column(
         db.Integer,
-        db.ForeignKey('study.id'),
+        db.ForeignKey("study.id"),
         primary_key=True
     )
 
     role_id = db.Column(
         db.Integer,
-        db.ForeignKey('role.id', ondelete='CASCADE'),
+        db.ForeignKey("role.id", ondelete="CASCADE"),
         primary_key=True
     )
 
-    study = db.relationship('Study', back_populates='roles')
-    role = db.relationship('Role')
+    study = db.relationship("Study", back_populates="roles")
+    role = db.relationship("Role")
 
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        tuple of int: an entry"s primary key.
         """
         return self.study_id, self.role_id
 
@@ -1015,12 +1015,12 @@ class JoinStudyRole(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return self.role.meta
 
     def __repr__(self):
-        return '<JoinStudyRole %s-%s>' % self.primary_key
+        return "<JoinStudyRole %s-%s>" % self.primary_key
 
 
 class BlockedToken(db.Model):
@@ -1035,13 +1035,13 @@ class BlockedToken(db.Model):
         The token to block.
     created_on: sqlalchemy.Column
     """
-    __tablename__ = 'blocked_token'
+    __tablename__ = "blocked_token"
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String, nullable=False)
     created_on = db.Column(db.DateTime, nullable=False)
 
     def __repr__(self):
-        return '<BlockedToken %s>' % self.id
+        return "<BlockedToken %s>" % self.id
 
 
 class AboutSleepTemplate(db.Model):
@@ -1055,7 +1055,7 @@ class AboutSleepTemplate(db.Model):
     text: sqlalchemy.Column
     is_archived: sqlalchemy.Column
     """
-    __tablename__ = 'about_sleep_template'
+    __tablename__ = "about_sleep_template"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
     text = db.Column(db.String, nullable=False)
@@ -1064,13 +1064,13 @@ class AboutSleepTemplate(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry's metadata.
+        dict: an entry"s metadata.
         """
         return {
-            'id': self.id,
-            'name': self.name,
-            'text': self.text
+            "id": self.id,
+            "name": self.name,
+            "text": self.text
         }
 
     def __repr__(self):
-        return '<AboutSleepTemplate %s>' % self.name
+        return "<AboutSleepTemplate %s>" % self.name

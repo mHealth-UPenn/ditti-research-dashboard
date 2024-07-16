@@ -11,107 +11,107 @@ from aws_portal.models import (
     JoinStudyRole, Permission, Role, Study
 )
 
-uri = os.getenv('FLASK_DB')
-if 'localhost' not in uri:
+uri = os.getenv("FLASK_DB")
+if "localhost" not in uri:
     raise Exception(
-        'The SQLAlchemy URI does not point to localhost. Run `source deploy-' +
-        'dev.sh` before running pytest. Current URI:',
+        "The SQLAlchemy URI does not point to localhost. Run `source deploy-" +
+        "dev.sh` before running pytest. Current URI:",
         uri
     )
 
 apps = [
     {
-        'name': 'foo'
+        "name": "foo"
     },
     {
-        'name': 'bar'
+        "name": "bar"
     }
 ]
 
 access_groups = [
     {
-        'name': 'foo'
+        "name": "foo"
     },
     {
-        'name': 'bar'
+        "name": "bar"
     }
 ]
 
 accounts = [
     {
-        'public_id': str(uuid.uuid4()),
-        'created_on': datetime.now(UTC),
-        'first_name': 'John',
-        'last_name': 'Smith',
-        'email': 'foo@email.com',
-        'is_confirmed': True,
-        '_password': bcrypt.generate_password_hash('foo').decode('utf-8')
+        "public_id": str(uuid.uuid4()),
+        "created_on": datetime.now(UTC),
+        "first_name": "John",
+        "last_name": "Smith",
+        "email": "foo@email.com",
+        "is_confirmed": True,
+        "_password": bcrypt.generate_password_hash("foo").decode("utf-8")
     },
     {
-        'public_id': str(uuid.uuid4()),
-        'created_on': datetime.now(UTC),
-        'first_name': 'Jane',
-        'last_name': 'Doe',
-        'email': 'bar@email.com',
-        '_password': bcrypt.generate_password_hash('bar').decode('utf-8')
+        "public_id": str(uuid.uuid4()),
+        "created_on": datetime.now(UTC),
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "email": "bar@email.com",
+        "_password": bcrypt.generate_password_hash("bar").decode("utf-8")
     }
 ]
 
 permissions = [
     {
-        'action': 'foo',
-        'resource': 'baz'
+        "action": "foo",
+        "resource": "baz"
     },
     {
-        'action': 'bar',
-        'resource': 'baz'
+        "action": "bar",
+        "resource": "baz"
     },
     {
-        'action': 'bar',
-        'resource': 'qux'
+        "action": "bar",
+        "resource": "qux"
     },
     {
-        'action': 'Edit',
-        'resource': 'User'
+        "action": "Edit",
+        "resource": "User"
     },
     {
-        'action': 'Create',
-        'resource': 'User'
+        "action": "Create",
+        "resource": "User"
     }
 ]
 
 roles = [
     {
-        'name': 'foo'
+        "name": "foo"
     },
     {
-        'name': 'bar'
+        "name": "bar"
     }
 ]
 
 studies = [
     {
-        'name': 'foo',
-        'acronym': 'FOO',
-        'ditti_id': 'FO',
-        'email': 'foo@email.com'
+        "name": "foo",
+        "acronym": "FOO",
+        "ditti_id": "FO",
+        "email": "foo@email.com"
     },
     {
-        'name': 'bar',
-        'acronym': 'BAR',
-        'ditti_id': 'BR',
-        'email': 'bar@email.com'
+        "name": "bar",
+        "acronym": "BAR",
+        "ditti_id": "BR",
+        "email": "bar@email.com"
     }
 ]
 
 blocked_tokens = [
     {
-        'jti': 'foo',
-        'created_on': datetime.now(UTC)
+        "jti": "foo",
+        "created_on": datetime.now(UTC)
     },
     {
-        'jti': 'bar',
-        'created_on': datetime.now(UTC)
+        "jti": "bar",
+        "created_on": datetime.now(UTC)
     }
 ]
 
@@ -128,8 +128,8 @@ def create_tables():
 
     for permission in permissions:
         p = Permission()
-        p.action = permission['action']
-        p.resource = permission['resource']
+        p.action = permission["action"]
+        p.resource = permission["resource"]
         db.session.add(p)
 
     for role in roles:
@@ -143,18 +143,18 @@ def create_tables():
 
 
 def create_joins():
-    q1 = AccessGroup.name == 'foo'
-    q2 = App.name == 'foo'
+    q1 = AccessGroup.name == "foo"
+    q2 = App.name == "foo"
     access_group = AccessGroup.query.filter(q1).first()
     access_group.app = App.query.filter(q2).first()
 
-    q1 = AccessGroup.name == 'bar'
-    q2 = App.name == 'bar'
+    q1 = AccessGroup.name == "bar"
+    q2 = App.name == "bar"
     access_group = AccessGroup.query.filter(q1).first()
     access_group.app = App.query.filter(q2).first()
 
-    q1 = AccessGroup.name == 'foo'
-    q2 = Permission.definition == ('foo', 'baz')
+    q1 = AccessGroup.name == "foo"
+    q2 = Permission.definition == ("foo", "baz")
     foo = JoinAccessGroupPermission(
         access_group=AccessGroup.query.filter(q1).first(),
         permission=Permission.query.filter(q2).first()
@@ -162,8 +162,8 @@ def create_joins():
 
     db.session.add(foo)
 
-    q1 = AccessGroup.name == 'bar'
-    q2 = Permission.definition == ('bar', 'baz')
+    q1 = AccessGroup.name == "bar"
+    q2 = Permission.definition == ("bar", "baz")
     foo = JoinAccessGroupPermission(
         access_group=AccessGroup.query.filter(q1).first(),
         permission=Permission.query.filter(q2).first()
@@ -171,10 +171,10 @@ def create_joins():
 
     db.session.add(foo)
 
-    q1 = Role.name == 'foo'
-    q2 = Permission.definition == ('foo', 'baz')
-    q3 = Permission.definition == ('Edit', 'User')
-    q4 = Permission.definition == ('Create', 'User')
+    q1 = Role.name == "foo"
+    q2 = Permission.definition == ("foo", "baz")
+    q3 = Permission.definition == ("Edit", "User")
+    q4 = Permission.definition == ("Create", "User")
     foo = JoinRolePermission(
         role=Role.query.filter(q1).first(),
         permission=Permission.query.filter(q2).first()
@@ -194,8 +194,8 @@ def create_joins():
     db.session.add(bar)
     db.session.add(baz)
 
-    q1 = Role.name == 'bar'
-    q2 = Permission.definition == ('bar', 'qux')
+    q1 = Role.name == "bar"
+    q2 = Permission.definition == ("bar", "qux")
     foo = JoinRolePermission(
         role=Role.query.filter(q1).first(),
         permission=Permission.query.filter(q2).first()
@@ -203,18 +203,18 @@ def create_joins():
 
     db.session.add(foo)
 
-    foo = Role.query.filter(Role.name == 'foo').first()
-    bar = Study.query.filter(Study.name == 'foo').first()
+    foo = Role.query.filter(Role.name == "foo").first()
+    bar = Study.query.filter(Study.name == "foo").first()
     baz = JoinStudyRole(role=foo, study=bar)
     db.session.add(baz)
 
-    foo = Role.query.filter(Role.name == 'bar').first()
-    bar = Study.query.filter(Study.name == 'bar').first()
+    foo = Role.query.filter(Role.name == "bar").first()
+    bar = Study.query.filter(Study.name == "bar").first()
     baz = JoinStudyRole(role=foo, study=bar)
     db.session.add(baz)
 
-    q1 = Account.email == 'foo@email.com'
-    q2 = AccessGroup.name == 'foo'
+    q1 = Account.email == "foo@email.com"
+    q2 = AccessGroup.name == "foo"
     foo = JoinAccountAccessGroup(
         account=Account.query.filter(q1).first(),
         access_group=AccessGroup.query.filter(q2).first()
@@ -222,8 +222,8 @@ def create_joins():
 
     db.session.add(foo)
 
-    q1 = Account.email == 'bar@email.com'
-    q2 = AccessGroup.name == 'bar'
+    q1 = Account.email == "bar@email.com"
+    q2 = AccessGroup.name == "bar"
     foo = JoinAccountAccessGroup(
         account=Account.query.filter(q1).first(),
         access_group=AccessGroup.query.filter(q2).first()
@@ -231,9 +231,9 @@ def create_joins():
 
     db.session.add(foo)
 
-    q1 = Account.email == 'foo@email.com'
-    q2 = Study.name == 'foo'
-    q3 = Role.name == 'foo'
+    q1 = Account.email == "foo@email.com"
+    q2 = Study.name == "foo"
+    q3 = Role.name == "foo"
     foo = JoinAccountStudy(
         account=Account.query.filter(q1).first(),
         study=Study.query.filter(q2).first(),
@@ -242,9 +242,9 @@ def create_joins():
 
     db.session.add(foo)
 
-    q1 = Account.email == 'bar@email.com'
-    q2 = Study.name == 'bar'
-    q3 = Role.name == 'bar'
+    q1 = Account.email == "bar@email.com"
+    q2 = Study.name == "bar"
+    q3 = Role.name == "bar"
     foo = JoinAccountStudy(
         account=Account.query.filter(q1).first(),
         study=Study.query.filter(q2).first(),
@@ -255,54 +255,30 @@ def create_joins():
 
 
 def login_test_account(name, client, password=None):
-    q1 = Account.email == '%s@email.com' % name
+    q1 = Account.email == "%s@email.com" % name
     foo = Account.query.filter(q1).first()
-    cred = b64encode(f'{foo.email}:{password or name}'.encode())
-    headers = {'Authorization': 'Basic %s' % cred.decode()}
-    res = client.post('/iam/login', headers=headers)
+    cred = b64encode(f"{foo.email}:{password or name}".encode())
+    headers = {"Authorization": "Basic %s" % cred.decode()}
+    res = client.post("/iam/login", headers=headers)
 
     return res
 
 
 def login_admin_account(client):
-    email = os.getenv('FLASK_ADMIN_EMAIL')
-    password = os.getenv('FLASK_ADMIN_PASSWORD')
-    cred = b64encode(f'{email}:{password}'.encode())
-    headers = {'Authorization': 'Basic %s' % cred.decode()}
-    res = client.post('/iam/login', headers=headers)
+    email = os.getenv("FLASK_ADMIN_EMAIL")
+    password = os.getenv("FLASK_ADMIN_PASSWORD")
+    cred = b64encode(f"{email}:{password}".encode())
+    headers = {"Authorization": "Basic %s" % cred.decode()}
+    res = client.post("/iam/login", headers=headers)
 
     return res
 
 
-def get_jwt_from_response(response):
-    pass
-
-
-def get_cookie_from_response(response, cookie_name):
-    cookie_headers = response.headers.getlist("Set-Cookie")
-
-    for header in cookie_headers:
-        attributes = header.split(";")
-
-        if cookie_name in attributes[0]:
-            cookie = {}
-
-            for attr in attributes:
-                split = attr.split("=")
-                key = split[0].strip().lower()
-                val = split[1] if len(split) > 1 else True
-                cookie[key] = val
-
-            return cookie
-
-    return None
-
-
-def get_csrf_headers(res, headers=None):
-    cookie = res.json["csrfAccessToken"]
+def get_auth_headers(res, headers=None):
+    csrf_token = res.json["csrfAccessToken"]
     headers = headers or {}
-    header_name = current_app.config["JWT_ACCESS_CSRF_HEADER_NAME"]
-    headers.update({header_name: cookie})
+    csrf_header_name = current_app.config["JWT_ACCESS_CSRF_HEADER_NAME"]
+    headers.update({csrf_header_name: csrf_token})
 
     if "jwt" in res.json:
         headers.update({"Authorization": "Bearer " + res.json["jwt"]})
@@ -312,7 +288,7 @@ def get_csrf_headers(res, headers=None):
 
 def get_account_from_response(res):
     access_token = res.json["jwt"]
-    public_id = decode_token(access_token)['sub']
+    public_id = decode_token(access_token)["sub"]
     account = Account.query.filter(Account.public_id == public_id).first()
 
     return account

@@ -4,45 +4,45 @@ from time import sleep
 from flask_jwt_extended import decode_token
 from aws_portal.extensions import db
 from aws_portal.models import Account, BlockedToken
-from tests.testing_utils import get_csrf_headers, login_test_account
+from tests.testing_utils import get_auth_headers, login_test_account
 
 
 def test_check_login_no_token(client):
-    res = client.get('/iam/check-login')
+    res = client.get("/iam/check-login")
     assert res.status_code == 401
 
 
 def test_check_login_expired_token(timeout_client):
-    res = login_test_account('foo', timeout_client)
-    headers = get_csrf_headers(res)
+    res = login_test_account("foo", timeout_client)
+    headers = get_auth_headers(res)
     sleep(2)
-    res = timeout_client.get('/iam/check-login', headers=headers)
+    res = timeout_client.get("/iam/check-login", headers=headers)
     data = json.loads(res.data)
-    assert 'msg' in data
-    assert data['msg'] == 'Token has expired'
+    assert "msg" in data
+    assert data["msg"] == "Token has expired"
 
 
 def test_check_login(client):
-    res = login_test_account('foo', client)
-    headers = get_csrf_headers(res)
-    res = client.get('/iam/check-login', headers=headers)
+    res = login_test_account("foo", client)
+    headers = get_auth_headers(res)
+    res = client.get("/iam/check-login", headers=headers)
     data = json.loads(res.data)
-    assert 'msg' in data
-    assert data['msg'] == 'Login successful'
+    assert "msg" in data
+    assert data["msg"] == "Login successful"
 
 
 def test_login_no_credentials(client):
-    res = client.post('/iam/login')
+    res = client.post("/iam/login")
     assert res.status_code == 401
 
 
 def test_login_invalid_credentials(client):
-    res = login_test_account('foo', client, 'bar')
+    res = login_test_account("foo", client, "bar")
     assert res.status_code == 403
 
 
 def test_login_archived_account(client):
-    q1 = Account.email == 'foo@email.com'
+    q1 = Account.email == "foo@email.com"
     foo = Account.query.filter(q1).first()
     assert foo is not None
 
@@ -51,46 +51,46 @@ def test_login_archived_account(client):
     foo = Account.query.filter(q1).first()
     assert foo.is_archived
 
-    cred = b64encode('foo@email.com:foo'.encode())
-    headers = {'Authorization': 'Basic %s' % cred.decode()}
-    res = client.post('/iam/login', headers=headers)
+    cred = b64encode("foo@email.com:foo".encode())
+    headers = {"Authorization": "Basic %s" % cred.decode()}
+    res = client.post("/iam/login", headers=headers)
     assert res.status_code == 403
 
 
 def test_login(client):
-    res = login_test_account('foo', client)
+    res = login_test_account("foo", client)
     data = json.loads(res.data)
     assert res.status_code == 200
-    assert 'msg' in data
-    assert data['msg'] == 'Login successful'
+    assert "msg" in data
+    assert data["msg"] == "Login successful"
 
-    access_cookie = res.json["jwt"]
-    assert access_cookie is not None
+    access_token = res.json["jwt"]
+    assert access_token is not None
 
-    csrf_cookie = res.json["csrfAccessToken"]
-    assert csrf_cookie is not None
+    csrf_token = res.json["csrfAccessToken"]
+    assert csrf_token is not None
 
 
 def test_logout(client):
-    res = login_test_account('foo', client)
+    res = login_test_account("foo", client)
     data = json.loads(res.data)
     assert res.status_code == 200
-    assert 'msg' in data
-    assert data['msg'] == 'Login successful'
+    assert "msg" in data
+    assert data["msg"] == "Login successful"
 
-    access_cookie = res.json["jwt"]
-    assert access_cookie is not None
+    access_token = res.json["jwt"]
+    assert access_token is not None
 
-    csrf_cookie = res.json["csrfAccessToken"]
-    assert csrf_cookie is not None
+    csrf_token = res.json["csrfAccessToken"]
+    assert csrf_token is not None
 
-    headers = get_csrf_headers(res)
-    res = client.post('/iam/logout', headers=headers)
+    headers = get_auth_headers(res)
+    res = client.post("/iam/logout", headers=headers)
     data = json.loads(res.data)
     assert res.status_code == 200
-    assert 'msg' in data
-    assert data['msg'] == 'Logout Successful'
+    assert "msg" in data
+    assert data["msg"] == "Logout Successful"
 
     blocked_token = BlockedToken.query.all()[-1]
-    old_token = decode_token(access_cookie)['jti']
+    old_token = decode_token(access_token)["jti"]
     assert old_token == blocked_token.jti

@@ -18,15 +18,15 @@ def validate_password(password):
     
     Returns
     -------
-    str: 'valid' or an error message
+    str: "valid" or an error message
     """
     if len(password) < 8:
-        return 'Minimum password length is 8 characters'
+        return "Minimum password length is 8 characters"
 
     if 64 < len(password):
-        return 'Maximum password length is 64 characters'
+        return "Maximum password length is 64 characters"
 
-    return 'valid'
+    return "valid"
 
 
 def auth_required(action, _resource=None):
@@ -57,9 +57,9 @@ def auth_required(action, _resource=None):
                     return make_response({"msg": "Missing CSRF token"}, 403)
 
             data = request.args or request.json
-            app_id = data.get('app')
-            study_id = data.get('study')
-            resource = _resource or data.get('resource')
+            app_id = data.get("app")
+            study_id = data.get("study")
+            resource = _resource or data.get("resource")
 
             # check whether the user has permissions
             try:
@@ -74,12 +74,12 @@ def auth_required(action, _resource=None):
                 # log an error
                 app = App.query.get(app_id) if study_id else None
                 study = Study.query.get(study_id) if study_id else None
-                ask = '%s -> %s -> %s -> %s' % (app, study, action, resource)
+                ask = "%s -> %s -> %s -> %s" % (app, study, action, resource)
                 s = current_user, ask
-                logger.warning('Unauthorized request from %s: %s' % s)
+                logger.warning("Unauthorized request from %s: %s" % s)
 
                 # return 403
-                return make_response({'msg': 'Unauthorized Request'}, 403)
+                return make_response({"msg": "Unauthorized Request"}, 403)
 
             # return the view as normal
             return func(*args, **kwargs)

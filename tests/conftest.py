@@ -13,7 +13,8 @@ from aws_portal.models import (
 )
 from aws_portal.utils.auth import auth_required
 from tests.testing_utils import (
-    create_joins, create_tables, get_csrf_headers, login_admin_account, login_test_account
+    create_joins, create_tables, get_auth_headers, login_admin_account,
+    login_test_account
 )
 
 os.environ["APP_SYNC_HOST"] = "https://testing"
@@ -22,37 +23,37 @@ os.environ["AWS_TABLENAME_TAP"] = "testing_table_tap"
 os.environ["APPSYNC_ACCESS_KEY"] = "testing"
 os.environ["APPSYNC_SECRET_KEY"] = "testing"
 
-blueprint = Blueprint('test', __name__, url_prefix='/test')
+blueprint = Blueprint("test", __name__, url_prefix="/test")
 
 
-@blueprint.route('/get')
+@blueprint.route("/get")
 @jwt_required()
 def get():
-    return jsonify({'msg': 'OK'})
+    return jsonify({"msg": "OK"})
 
 
-@blueprint.route('/get-auth-required-action')
-@auth_required('foo')
+@blueprint.route("/get-auth-required-action")
+@auth_required("foo")
 def get_auth_required_action():
-    return jsonify({'msg': 'OK'})
+    return jsonify({"msg": "OK"})
 
 
-@blueprint.route('/get-auth-required-resource')
-@auth_required('bar', 'baz')
+@blueprint.route("/get-auth-required-resource")
+@auth_required("bar", "baz")
 def get_auth_required_resource():
-    return jsonify({'msg': 'OK'})
+    return jsonify({"msg": "OK"})
 
 
-@blueprint.route('/post-auth-required-action', methods=['POST'])
-@auth_required('foo')
+@blueprint.route("/post-auth-required-action", methods=["POST"])
+@auth_required("foo")
 def post_auth_required_action():
-    return jsonify({'msg': 'OK'})
+    return jsonify({"msg": "OK"})
 
 
-@blueprint.route('/post-auth-required-resource', methods=['POST'])
-@auth_required('bar', 'baz')
+@blueprint.route("/post-auth-required-resource", methods=["POST"])
+@auth_required("bar", "baz")
 def post_auth_required_resource():
-    return jsonify({'msg': 'OK'})
+    return jsonify({"msg": "OK"})
 
 
 @pytest.fixture(scope="function")
@@ -106,18 +107,18 @@ def client(app):
 @pytest.fixture
 def get_admin(client):
     res = login_admin_account(client)
-    headers = get_csrf_headers(res)
+    headers = get_auth_headers(res)
     get = partial(client.get, headers=headers)
     yield get
 
 
 @pytest.fixture
 def post(client):
-    res = login_test_account('foo', client)
-    headers = get_csrf_headers(res)
+    res = login_test_account("foo", client)
+    headers = get_auth_headers(res)
     post = partial(
         client.post,
-        content_type='application/json',
+        content_type="application/json",
         headers=headers
     )
 
@@ -127,10 +128,10 @@ def post(client):
 @pytest.fixture
 def post_admin(client):
     res = login_admin_account(client)
-    headers = get_csrf_headers(res)
+    headers = get_auth_headers(res)
     post = partial(
         client.post,
-        content_type='application/json',
+        content_type="application/json",
         headers=headers
     )
 
@@ -139,6 +140,6 @@ def post_admin(client):
 
 @pytest.fixture
 def timeout_client(app):
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=1)
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=1)
     with app.test_client() as client:
         yield client

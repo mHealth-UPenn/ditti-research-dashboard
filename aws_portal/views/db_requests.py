@@ -11,11 +11,11 @@ from aws_portal.models import (
 # from aws_portal.utils.auth import auth_required
 from aws_portal.utils.db import populate_model
 
-blueprint = Blueprint('db', __name__, url_prefix='/db')
+blueprint = Blueprint("db", __name__, url_prefix="/db")
 logger = logging.getLogger(__name__)
 
 
-@blueprint.route('/get-apps')
+@blueprint.route("/get-apps")
 @jwt_required()
 def get_apps():
     apps = App.query\
@@ -27,7 +27,7 @@ def get_apps():
     return jsonify([a.meta for a in apps])
 
 
-@blueprint.route('/get-studies')
+@blueprint.route("/get-studies")
 @jwt_required()
 # @auth_required("View", "Ditti App Dashboard")
 def get_studies():  # TODO rewrite unit test
@@ -54,9 +54,9 @@ def get_studies():  # TODO rewrite unit test
     }
     """
     try:
-        app_id = request.args['app']
+        app_id = request.args["app"]
         permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask('View', 'All Studies', permissions)
+        current_user.validate_ask("View", "All Studies", permissions)
         q = Study.query.filter(~Study.is_archived)
 
     except ValueError:
@@ -70,13 +70,13 @@ def get_studies():  # TODO rewrite unit test
         msg = exc.splitlines()[-1]
         logger.warn(exc)
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
     res = [s.meta for s in q.all()]
     return jsonify(res)
 
 
-@blueprint.route('/get-study-details')
+@blueprint.route("/get-study-details")
 @jwt_required()
 # @auth_required("View", "Ditti App Dashboard")
 def get_study_details():
@@ -94,15 +94,15 @@ def get_study_details():
         ...Study data
     }
     """
-    study_id = request.args['study']
-    app_id = request.args['app']
+    study_id = request.args["study"]
+    app_id = request.args["app"]
 
     try:
 
         # if the user has permissions to view all studies, a join table might
         # not exist. Just get the study
         permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask('View', 'All Studies', permissions)
+        current_user.validate_ask("View", "All Studies", permissions)
         study = Study.query.get(study_id)
 
     except ValueError:
@@ -118,7 +118,7 @@ def get_study_details():
     return jsonify(res)
 
 
-@blueprint.route('/get-study-contacts')
+@blueprint.route("/get-study-contacts")
 @jwt_required()
 # @auth_required("View", "Ditti App Dashboard")
 def get_study_contacts():
@@ -145,15 +145,15 @@ def get_study_contacts():
         ...
     ]
     """
-    study_id = request.args['study']
-    app_id = request.args['app']
+    study_id = request.args["study"]
+    app_id = request.args["app"]
 
     try:
 
         # if the user has permissions to view all studies, a join table might
         # not exist. Just get the study
         permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask('View', 'All Studies', permissions)
+        current_user.validate_ask("View", "All Studies", permissions)
         study = Study.query.get(study_id)
 
     except ValueError:
@@ -179,10 +179,10 @@ def get_study_contacts():
 
     for join in joins:
         account = {
-            'fullName': join.account.full_name,
-            'email': join.account.email,
-            'phoneNumber': join.account.phone_number,
-            'role': join.role.name
+            "fullName": join.account.full_name,
+            "email": join.account.email,
+            "phoneNumber": join.account.phone_number,
+            "role": join.role.name
         }
 
         res.append(account)
@@ -190,12 +190,12 @@ def get_study_contacts():
     return jsonify(res)
 
 
-@blueprint.route('/get-account-details')
+@blueprint.route("/get-account-details")
 @jwt_required()
 # @auth_required("View", "Ditti App Dashboard")
 def get_account_details():
     """
-    Get the current user's account details
+    Get the current user"s account details
 
     Response Syntax (200)
     ---------------------
@@ -207,21 +207,21 @@ def get_account_details():
     }
     """
     res = {
-        'firstName': current_user.first_name,
-        'lastName': current_user.last_name,
-        'email': current_user.email,
-        'phoneNumber': current_user.phone_number
+        "firstName": current_user.first_name,
+        "lastName": current_user.last_name,
+        "email": current_user.email,
+        "phoneNumber": current_user.phone_number
     }
 
     return jsonify(res)
 
 
-@blueprint.route('/edit-account-details', methods=['POST'])
+@blueprint.route("/edit-account-details", methods=["POST"])
 @jwt_required()
 # @auth_required("View", "Ditti App Dashboard")
 def edit_account_details():
     """
-    Edit the current user's account details
+    Edit the current user"s account details
 
     Request Syntax
     --------------
@@ -235,7 +235,7 @@ def edit_account_details():
     Response Syntax (200)
     ---------------------
     {
-        msg: 'Account details updated successfully'
+        msg: "Account details updated successfully"
     }
 
     Response syntax (500)
@@ -247,7 +247,7 @@ def edit_account_details():
     try:
         populate_model(current_user, request.json)
         db.session.commit()
-        msg = 'Account details updated successfully'
+        msg = "Account details updated successfully"
 
     except Exception:
         exc = traceback.format_exc()
@@ -255,12 +255,12 @@ def edit_account_details():
         logger.warn(exc)
         db.session.rollback()
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
-    return jsonify({'msg': msg})
+    return jsonify({"msg": msg})
 
 
-@blueprint.route('/get-about-sleep-templates')
+@blueprint.route("/get-about-sleep-templates")
 @jwt_required()
 # @auth_required("View", "Ditti App Dashboard")
 def get_about_sleep_templates():
@@ -292,7 +292,7 @@ def get_about_sleep_templates():
         msg = exc.splitlines()[-1]
         logger.warn(exc)
 
-        return make_response({'msg': msg}, 500)
+        return make_response({"msg": msg}, 500)
 
     res = [a.meta for a in about_sleep_templates]
     return jsonify(res)

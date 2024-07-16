@@ -30,15 +30,15 @@ def runner(app):
 
 def test_init_db(runner):
     res = runner.invoke(init_db_click)
-    assert res.output == 'Database successfully initialized.\n'
+    assert res.output == "Database successfully initialized.\n"
 
 
 def test_init_admin_app(runner):
     res = runner.invoke(init_admin_app_click)
-    q1 = App.name == 'Admin Dashboard'
+    q1 = App.name == "Admin Dashboard"
     foo = App.query.filter(q1).first()
     assert foo is not None
-    assert res.output == repr(foo) + '\n'
+    assert res.output == repr(foo) + "\n"
 
 
 def test_init_admin_app_duplicate(runner):
@@ -50,13 +50,13 @@ def test_init_admin_app_duplicate(runner):
 def test_init_admin_group(runner):
     runner.invoke(init_admin_app_click)
     res = runner.invoke(init_admin_group_click)
-    q1 = AccessGroup.name == 'Admin'
-    q2 = Permission.definition == tuple_('*', '*')
+    q1 = AccessGroup.name == "Admin"
+    q2 = Permission.definition == tuple_("*", "*")
     foo = AccessGroup.query.filter(q1).first()
     bar = Permission.query.filter(q2).first()
     baz = JoinAccessGroupPermission.query.get((foo.id, bar.id))
     assert foo is not None
-    assert res.output == repr(foo) + '\n'
+    assert res.output == repr(foo) + "\n"
     assert bar is not None
     assert baz is not None
 
@@ -77,13 +77,13 @@ def test_init_admin_account(runner):
     runner.invoke(init_admin_app_click)
     runner.invoke(init_admin_group_click)
     res = runner.invoke(init_admin_account_click)
-    q1 = Account.email == os.getenv('FLASK_ADMIN_EMAIL')
-    q2 = AccessGroup.name == 'Admin'
+    q1 = Account.email == os.getenv("FLASK_ADMIN_EMAIL")
+    q2 = AccessGroup.name == "Admin"
     foo = Account.query.filter(q1).first()
     bar = AccessGroup.query.filter(q2).first()
     baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
     assert foo is not None
-    assert res.output == repr(foo) + '\n'
+    assert res.output == repr(foo) + "\n"
     assert bar is not None
     assert baz is not None
 
