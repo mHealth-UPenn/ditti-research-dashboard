@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import os
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -61,7 +61,7 @@ class TestAccount:
         with pytest.raises(ValueError):
             q1 = Account.email == 'foo@email.com'
             foo = Account.query.filter(q1).first()
-            foo.created_on = datetime.utcnow()
+            foo.created_on = datetime.now(UTC)
             db.session.commit()
 
     def test_full_name(self, app):

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 import traceback
 import uuid
@@ -136,7 +136,7 @@ def account_create():
 
         populate_model(account, data)
         account.public_id = str(uuid.uuid4())
-        account.created_on = datetime.utcnow()
+        account.created_on = datetime.now(UTC)
 
         # add access groups
         for entry in data['access_groups']:

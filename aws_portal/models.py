@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import logging
 import os
 import uuid
@@ -151,7 +151,7 @@ def init_admin_account(email=None, password=None):
 
     admin = Account(
         public_id=str(uuid.uuid4()),
-        created_on=datetime.utcnow(),
+        created_on=datetime.now(UTC),
         first_name='AWS',
         last_name='Admin',
         email=email,
@@ -210,7 +210,7 @@ class Account(db.Model):
         A random string to be used for JWT authentication, e.g.,
         `public_id=str(uuid.uuid4())`.
     created_on: sqlalchemy.Column
-        The timestamp of the account's creation, e.g., `datetime.utcnow()`.
+        The timestamp of the account's creation, e.g., `datetime.now(UTC)`.
         The created_on value cannot be modified.
     last_login: sqlalchemy.Column
     first_name: sqlalchemy.Column

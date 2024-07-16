@@ -1,55 +1,15 @@
-from functools import partial
 from flask import json
+from moto import mock_aws
 import pytest
-from aws_portal.app import create_app
-from aws_portal.extensions import db
-from aws_portal.models import (
-    init_admin_account, init_admin_app, init_admin_group, init_db
-)
 from aws_portal.utils.aws import Connection, Loader, Query
-from tests.testing_utils import (
-    create_joins, create_tables, get_csrf_headers, login_admin_account,
-    login_test_account
-)
+from tests.testing_utils import login_admin_account
 
 
-@pytest.fixture
-def app():
-    app = create_app(testing=True)
-    with app.app_context():
-        init_db()
-        init_admin_app()
-        init_admin_group()
-        init_admin_account()
-        create_tables()
-        create_joins()
-        db.session.commit()
-        yield app
-
-
-@pytest.fixture
-def client(app):
-    with app.test_client() as client:
-        yield client
-
-
-@pytest.fixture
-def post(client):
-    res = login_test_account('foo', client)
-    headers = get_csrf_headers(res)
-    post = partial(
-        client.post,
-        content_type='application/json',
-        headers=headers
-    )
-
-    yield post
-
-
+@mock_aws
 def test_scan_invalid(client):
     res = login_admin_account(client)
     headers = {"Authorization": "Bearer " + res.json["jwt"]}
-    opts = '?app=DittiApp'
+    opts = '?app=1'
     opts = opts + '&group=1'
     opts = opts + '&key=User'
     opts = opts + '&query=user_permission_id=="^abc123"'
@@ -59,26 +19,26 @@ def test_scan_invalid(client):
     assert data['msg'] == 'Invalid Query'
 
 
+@mock_aws
 def test_scan(client):
     res = login_admin_account(client)
     headers = {"Authorization": "Bearer " + res.json["jwt"]}
-    opts = '?app=DittiApp'
+    opts = '?app=1'
     opts = opts + '&group=1'
     opts = opts + '&key=User'
     opts = opts + '&query=user_permission_id=="abc123"'
     res = client.get('/aws/scan' + opts, headers=headers)
     data = json.loads(res.data)
-    assert 'msg' in data
-    assert data['msg'] == 'Scan Successful'
-    assert 'res' in data
-    assert len(data['res']) == 1
+    assert len(data) == 1
 
 
-def test_user_create(post):
+@mock_aws
+@pytest.mark.skip(reason="Must create mock for requests")
+def test_user_create(post_admin):
     data = {
         'group': 2,
         'study': 1,
-        'app': 'DittiApp',
+        'app': 1,
         'create': {
             'exp_time': '1900-01-01T09:00:00.000Z',
             'tap_permission': True,
@@ -89,13 +49,13 @@ def test_user_create(post):
     }
 
     data = json.dumps(data)
-    res = post('/aws/user/create', data=data)
+    res = post_admin('/aws/user/create', data=data)
     res = json.loads(res.data)
     assert 'msg' in res
     assert res['msg'] == 'User Created Successfully'
 
     query = 'user_permission_id=="foo"'
-    bar = Query('DittiApp', 'User', query)
+    bar = Query('User', query)
     res = bar.scan()
     assert len(res['Items']) == 1
     assert 'exp_time' in res['Items'][0]
@@ -120,11 +80,12 @@ def test_user_create(post):
     assert len(res['Items']) == 0
 
 
-def test_user_edit_invalid_acronym(post):
+@mock_aws
+def test_user_edit_invalid_acronym(post_admin):
     data = {
         'group': 2,
         'study': 1,
-        'app': 'DittiApp',
+        'app': 1,
         'user_permission_id': 'QU000',
         'edit': {
             'information': 'foo'
@@ -132,17 +93,18 @@ def test_user_edit_invalid_acronym(post):
     }
 
     data = json.dumps(data)
-    res = post('/aws/user/edit', data=data)
+    res = post_admin('/aws/user/edit', data=data)
     res = json.loads(res.data)
     assert 'msg' in res
     assert res['msg'] == 'Invalid study acronym: QU'
 
 
-def test_user_edit_invalid_id(post):
+@mock_aws
+def test_user_edit_invalid_id(post_admin):
     data = {
         'group': 2,
         'study': 1,
-        'app': 'DittiApp',
+        'app': 1,
         'user_permission_id': 'FO000#',
         'edit': {
             'information': 'foo'
@@ -150,17 +112,18 @@ def test_user_edit_invalid_id(post):
     }
 
     data = json.dumps(data)
-    res = post('/aws/user/edit', data=data)
+    res = post_admin('/aws/user/edit', data=data)
     res = json.loads(res.data)
     assert 'msg' in res
     assert res['msg'] == 'Invalid Ditti ID: FO000#'
 
 
-def test_user_edit_id_not_found(post):
+@mock_aws
+def test_user_edit_id_not_found(post_admin):
     data = {
         'group': 2,
         'study': 1,
-        'app': 'DittiApp',
+        'app': 1,
         'user_permission_id': 'FO001',
         'edit': {
             'information': 'foo'
@@ -168,25 +131,27 @@ def test_user_edit_id_not_found(post):
     }
 
     data = json.dumps(data)
-    res = post('/aws/user/edit', data=data)
+    res = post_admin('/aws/user/edit', data=data)
     res = json.loads(res.data)
     assert 'msg' in res
     assert res['msg'] == 'Ditti ID not found: FO001'
 
 
+@mock_aws
+@pytest.mark.skip(reason="Must create mock for requests")
 def test_user_edit(post):
     query = 'user_permission_id=="FO000"'
     data = {
         'group': 2,
         'study': 1,
-        'app': 'DittiApp',
+        'app': 1,
         'user_permission_id': 'FO000',
         'edit': {
             'information': 'foo'
         }
     }
 
-    res = Query('DittiApp', 'User', query).scan()
+    res = Query('User', query).scan()
     assert len(res['Items']) == 1
     assert 'information' in res['Items'][0]
     assert res['Items'][0]['information'] == ''
@@ -197,7 +162,7 @@ def test_user_edit(post):
     assert 'msg' in res
     assert res['msg'] == 'User Successfully Edited'
 
-    res = Query('DittiApp', 'User', query).scan()
+    res = Query('User', query).scan()
     assert len(res['Items']) == 1
     assert 'information' in res['Items'][0]
     assert res['Items'][0]['information'] == 'foo'
@@ -210,7 +175,7 @@ def test_user_edit(post):
     assert 'msg' in res
     assert res['msg'] == 'User Successfully Edited'
 
-    res = Query('DittiApp', 'User', query).scan()
+    res = Query('User', query).scan()
     assert len(res['Items']) == 1
     assert 'information' in res['Items'][0]
     assert res['Items'][0]['information'] == ''

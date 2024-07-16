@@ -1,7 +1,16 @@
+from functools import partial
 import os
 import boto3
 from moto import mock_aws
 import pytest
+from aws_portal.app import create_app
+from aws_portal.extensions import db
+from aws_portal.models import (
+    init_admin_account, init_admin_app, init_admin_group, init_db
+)
+from tests.testing_utils import (
+    create_joins, create_tables, get_csrf_headers, login_admin_account, login_test_account
+)
 
 os.environ["APP_SYNC_HOST"] = "https://testing"
 os.environ["AWS_TABLENAME_USER"] = "testing_table_user"
@@ -35,3 +44,49 @@ def with_mocked_tables():
         )
 
         yield client
+
+
+@pytest.fixture
+def app(with_mocked_tables):
+    app = create_app(testing=True)
+    with app.app_context():
+        init_db()
+        init_admin_app()
+        init_admin_group()
+        init_admin_account()
+        create_tables()
+        create_joins()
+        db.session.commit()
+        yield app
+
+
+@pytest.fixture
+def client(app):
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.fixture
+def post(client):
+    res = login_test_account('foo', client)
+    headers = get_csrf_headers(res)
+    post = partial(
+        client.post,
+        content_type='application/json',
+        headers=headers
+    )
+
+    yield post
+
+
+@pytest.fixture
+def post_admin(client):
+    res = login_admin_account(client)
+    headers = get_csrf_headers(res)
+    post = partial(
+        client.post,
+        content_type='application/json',
+        headers=headers
+    )
+
+    yield post

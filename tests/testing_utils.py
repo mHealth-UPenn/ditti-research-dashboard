@@ -1,5 +1,5 @@
 from base64 import b64encode
-from datetime import datetime
+from datetime import datetime, UTC
 import os
 import uuid
 from flask import current_app
@@ -40,7 +40,7 @@ access_groups = [
 accounts = [
     {
         'public_id': str(uuid.uuid4()),
-        'created_on': datetime.utcnow(),
+        'created_on': datetime.now(UTC),
         'first_name': 'John',
         'last_name': 'Smith',
         'email': 'foo@email.com',
@@ -49,7 +49,7 @@ accounts = [
     },
     {
         'public_id': str(uuid.uuid4()),
-        'created_on': datetime.utcnow(),
+        'created_on': datetime.now(UTC),
         'first_name': 'Jane',
         'last_name': 'Doe',
         'email': 'bar@email.com',
@@ -107,11 +107,11 @@ studies = [
 blocked_tokens = [
     {
         'jti': 'foo',
-        'created_on': datetime.utcnow()
+        'created_on': datetime.now(UTC)
     },
     {
         'jti': 'bar',
-        'created_on': datetime.utcnow()
+        'created_on': datetime.now(UTC)
     }
 ]
 

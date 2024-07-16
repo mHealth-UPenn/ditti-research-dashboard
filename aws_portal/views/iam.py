@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 import os
 from flask import Blueprint, jsonify, make_response, request
 from flask_cors import cross_origin
@@ -110,7 +110,7 @@ def logout():  # TODO: remove
 
     # block the user's token
     jti = get_jwt()['jti']
-    blocked_token = BlockedToken(jti=jti, created_on=datetime.utcnow())
+    blocked_token = BlockedToken(jti=jti, created_on=datetime.now(UTC))
     db.session.add(blocked_token)
     db.session.commit()
 
