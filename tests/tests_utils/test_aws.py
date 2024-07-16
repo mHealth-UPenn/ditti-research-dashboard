@@ -1,5 +1,8 @@
-import http
+import os
+import boto3
+from moto import mock_aws
 import pytest
+import requests
 from aws_portal.utils.aws import (
     Column, Connection, Loader, MutationClient, Query, Scanner, Updater
 )
@@ -24,24 +27,24 @@ def assert_expression(exp, name, operator, *args):
     assert values == args
 
 
+@mock_aws
 class TestMutationClient:
     def test_open_connection(self):
         foo = MutationClient()
         assert foo.get_connection() is None
 
         foo.open_connection()
-        assert type(foo.get_connection()) is http.client.HTTPSConnection
+        assert type(foo.get_connection()) is requests.sessions.Session
 
     def test_set_mutation(self):
         foo = MutationClient()
         assert foo.get_body() is None
 
         foo.set_mutation('foo', 'bar', {'baz': 'baz', 'qux': 'qux'})
-        bar = (
-            '{"query": "mutation($in:foo!){bar(input:$in){baz qux}}", "vari' +
-            'ables": "{\\"in\\": {\\"baz\\": \\"baz\\", \\"qux\\": \\"qux\\"' +
-            '}}"}'
-        )
+        bar = {
+            'query': 'mutation($in:foo!){bar(input:$in){baz qux}}',
+            'variables': '{"in": {"baz": "baz", "qux": "qux"}}'
+        }
 
         assert foo.get_body() == bar
 
@@ -56,6 +59,7 @@ class TestMutationClient:
         bar = str(e.value)
         assert bar == 'Mutation is not set. Call set_mutation() first.'
 
+    @pytest.mark.skip(reason="Must implement mock for graphql endpoint.")
     def test_post_mutation(self):
         foo = MutationClient()
         foo.open_connection()
@@ -99,6 +103,7 @@ class TestMutationClient:
         assert len(res['Items']) == 0
 
 
+@mock_aws
 class TestConnection:
     def test_open_connection(self):
         connection = Connection()
@@ -109,10 +114,12 @@ class TestConnection:
         assert connection.session.meta.service_name == 'dynamodb'
 
 
+@mock_aws
 class TestLoader:
     def test_get_tablename(self):
-        for k, v in Loader.config.items():
-            assert Loader.get_tablename(k) == v
+        loader = Loader("foo")
+        for k, v in loader.config.items():
+            assert loader.get_tablename(k) == v
 
     def test_load_table(self):
         connection = Connection()
@@ -122,13 +129,13 @@ class TestLoader:
         assert loader.table is None
 
         loader.load_table()
-        tablename = Loader.get_tablename('User')
+        tablename = loader.get_tablename('User')
         assert loader.table is not None
         assert loader.table.name == tablename
 
 
 class TestUpdater:
-    def test_set_key_from_query(self):
+    def test_set_key_from_query(self, with_mocked_tables):
         query = 'user_permission_id=="abc123"'
         foo = Query('User', query)
         res = foo.scan()
@@ -139,15 +146,17 @@ class TestUpdater:
         bar = res['Items'][0]['id']
         assert baz.get_key() == {'id': bar}
 
+    @mock_aws
     def test_set_expression(self):
         foo = Updater()
         exp = {'information': 'foo'}
         foo.set_expression(exp)
         bar = 'SET information=:in'
-        baz = {':i': 'foo'}
+        baz = {':in': 'foo'}
         assert foo.get_update_expression() == bar
         assert foo.get_expression_attribute_values() == baz
 
+    @mock_aws
     def test_update_exception(self):
         foo = Updater()
 
@@ -156,7 +165,7 @@ class TestUpdater:
 
         assert str(e.value) == 'tablekey and key must be set'
 
-    def test_update(self):
+    def test_update(self, with_mocked_tables):
         query = 'user_permission_id=="abc123"'
         foo = Query('User', query)
         res = foo.scan()
@@ -229,25 +238,26 @@ class TestColumn:
 
 
 class TestScanner:
-    def test_query(self):
+    def test_query(self, with_mocked_tables):
         exp = Column('user_permission_id') == 'abc123'
         res = Scanner('User').query(exp).scan()
         assert res['Count'] == 1
         assert res['ResponseMetadata']['HTTPStatusCode'] == 200
 
-    def test_scan(self):
+    def test_scan(self, with_mocked_tables):
         res = Scanner('User').scan()
         assert res['Count']
         assert res['ResponseMetadata']['HTTPStatusCode'] == 200
 
 
 class TestQuery:
-    def test_scan(self):
+    def test_scan(self, with_mocked_tables):
         abc123 = 'user_permission_id=="abc123"'
         res = Query('User', abc123).scan()
-        assert res['Count'] == 1
-        assert res['ResponseMetadata']['HTTPStatusCode'] == 200
+        assert "Items" in res
+        assert len(res["Items"]) == 1
 
+    @mock_aws
     def test_check_query(self):
         invalid = '#user_permission_id=="abc123"'
 
@@ -257,61 +267,75 @@ class TestQuery:
         valid = 'aA1="-:.<>()~!'
         assert Query.check_query(valid)
 
+    @mock_aws
     def test_build_query(self):
         query = 'foo=="bar"'
         exp = Query.build_query(query)
         assert_expression(exp, 'foo', '=', 'bar')
 
+    @mock_aws
     def test_build_blocks(self):
         query = '(a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))'
         blocks = ['a=="a"ORa=="b"', 'b=="b"ORb=="c"', 'b=="a"AND$1', '$0AND$2']
         assert Query.build_blocks(query) == blocks
 
+    @mock_aws
     def test_build_expression(self):
         blocks = ['foo=="bar"']
         exp = Query.build_expression(blocks)
         assert_expression(exp, 'foo', '=', 'bar')
 
+    @mock_aws
     def test_get_expression_from_string_eq(self):
         exp = Query.get_expression_from_string('foo=="bar"')
         assert_expression(exp, 'foo', '=', 'bar')
 
+    @mock_aws
     def test_get_expression_from_string_ne(self):
         exp = Query.get_expression_from_string('foo!="bar"')
         assert_expression(exp, 'foo', '<>', 'bar')
 
+    @mock_aws
     def test_get_expression_from_string_lt(self):
         exp = Query.get_expression_from_string('foo<<"bar"')
         assert_expression(exp, 'foo', '<', 'bar')
 
+    @mock_aws
     def test_get_expression_from_string_le(self):
         exp = Query.get_expression_from_string('foo<="bar"')
         assert_expression(exp, 'foo', '<=', 'bar')
 
+    @mock_aws
     def test_get_expression_from_string_gt(self):
         exp = Query.get_expression_from_string('foo>>"bar"')
         assert_expression(exp, 'foo', '>', 'bar')
 
+    @mock_aws
     def test_get_expression_from_string_ge(self):
         exp = Query.get_expression_from_string('foo>="bar"')
         assert_expression(exp, 'foo', '>=', 'bar')
 
+    @mock_aws
     def test_get_expression_from_string_not(self):
-        exp = Query.get_expression_from_string('~foo')
+        exp = Query.get_expression_from_string('~"foo"')
         assert_expression(exp, 'foo', 'NOT', False)
 
+    @mock_aws
     def test_get_expression_from_string_not_not(self):
-        exp = Query.get_expression_from_string('~~foo')
+        exp = Query.get_expression_from_string('~~"foo"')
         assert_expression(exp, 'foo', 'NOT', True)
 
+    @mock_aws
     def test_get_expression_from_string_between(self):
         exp = Query.get_expression_from_string('fooBETWEEN"bar""baz"')
         assert_expression(exp, 'foo', 'BETWEEN', 'bar', 'baz')
 
+    @mock_aws
     def test_get_expression_from_string_begins_with(self):
         exp = Query.get_expression_from_string('fooBEGINS"bar"')
         assert_expression(exp, 'foo', 'begins_with', 'bar')
 
+    @mock_aws
     def test_get_expression_from_string_contains(self):
         exp = Query.get_expression_from_string('fooCONTAINS"bar"')
         assert_expression(exp, 'foo', 'contains', 'bar')

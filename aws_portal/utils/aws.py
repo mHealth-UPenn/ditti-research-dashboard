@@ -70,8 +70,8 @@ class MutationClient:
         fmt = {'inp': inp, 'fun': fun, 'var': ' '.join(var.keys())}
         query = self.f_string % fmt
         self.__body = {
-            'query': query,
-            'variables': '{"in": %s}' % json.dumps(var)
+            "query": query,
+            "variables": "{\"in\": %s}" % json.dumps(var)
         }
 
     def post_mutation(self):
@@ -667,6 +667,7 @@ class Query:
         popped = re.sub(cls.conditionals, '', string)
 
         # get the subexpression's key
+        print(cls.keys, popped, re.search(cls.keys, popped))
         key = re.search(cls.keys, popped).group(0)
 
         # get the subexpression's conditional
