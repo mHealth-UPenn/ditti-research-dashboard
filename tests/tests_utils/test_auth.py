@@ -76,9 +76,7 @@ def test_get_auth_required_after_logout(client):
 def test_get_auth_required_after_logout_with_fake(client):
     res = login_test_account("foo", client)
     headers = get_auth_headers(res)
-    # headers = get_auth_headers(res)
     client.post("/iam/logout", headers=headers)
-    # access_token = res.json["jwt"]
 
     account = get_account_from_response(res)
     app = get_user_app_id(account)

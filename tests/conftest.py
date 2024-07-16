@@ -105,6 +105,14 @@ def client(app):
 
 
 @pytest.fixture
+def get(client):
+    res = login_test_account("foo", client)
+    headers = get_auth_headers(res)
+    get = partial(client.get, headers=headers)
+    yield get
+
+
+@pytest.fixture
 def get_admin(client):
     res = login_admin_account(client)
     headers = get_auth_headers(res)

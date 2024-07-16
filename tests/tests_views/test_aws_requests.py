@@ -6,28 +6,24 @@ from tests.testing_utils import login_admin_account
 
 
 @mock_aws
-def test_scan_invalid(client):
-    res = login_admin_account(client)
-    headers = {"Authorization": "Bearer " + res.json["jwt"]}
+def test_scan_invalid(get_admin):
     opts = "?app=1"
     opts = opts + "&group=1"
     opts = opts + "&key=User"
     opts = opts + "&query=user_permission_id==\"^abc123\""
-    res = client.get("/aws/scan" + opts, headers=headers)
+    res = get_admin("/aws/scan" + opts)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Invalid Query"
 
 
 @mock_aws
-def test_scan(client):
-    res = login_admin_account(client)
-    headers = {"Authorization": "Bearer " + res.json["jwt"]}
+def test_scan(get_admin):
     opts = "?app=1"
     opts = opts + "&group=1"
     opts = opts + "&key=User"
     opts = opts + "&query=user_permission_id==\"abc123\""
-    res = client.get("/aws/scan" + opts, headers=headers)
+    res = get_admin("/aws/scan" + opts)
     data = json.loads(res.data)
     assert len(data) == 1
 

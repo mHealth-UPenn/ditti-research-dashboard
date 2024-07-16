@@ -22,10 +22,8 @@ def test_check_login_expired_token(timeout_client):
     assert data["msg"] == "Token has expired"
 
 
-def test_check_login(client):
-    res = login_test_account("foo", client)
-    headers = get_auth_headers(res)
-    res = client.get("/iam/check-login", headers=headers)
+def test_check_login(get):
+    res = get("/iam/check-login")
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Login successful"
