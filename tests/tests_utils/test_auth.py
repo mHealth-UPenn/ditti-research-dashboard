@@ -10,8 +10,8 @@ from aws_portal.models import (
 )
 from aws_portal.utils.auth import auth_required
 from tests.testing_utils import (
-    create_joins, create_tables, get_account_from_response,
-    get_cookie_from_response, get_csrf_headers, login_test_account
+    create_joins, create_tables, get_account_from_response, get_csrf_headers,
+    login_test_account
 )
 
 blueprint = Blueprint('test', __name__, url_prefix='/test')

@@ -1,20 +1,7 @@
 import pytest
-from aws_portal.app import create_app
 from aws_portal.extensions import db
-from aws_portal.models import AccessGroup, Account, App, Study, init_db
+from aws_portal.models import AccessGroup, Account, App, Study
 from aws_portal.utils.db import populate_model
-from tests.testing_utils import create_joins, create_tables
-
-
-@pytest.fixture
-def app():
-    app = create_app(testing=True)
-    with app.app_context():
-        init_db()
-        create_tables()
-        create_joins()
-        db.session.commit()
-        yield app
 
 
 def test_populate_model(app):

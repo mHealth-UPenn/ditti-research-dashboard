@@ -1,3 +1,4 @@
+from datetime import timedelta
 from functools import partial
 import os
 import boto3
@@ -98,3 +99,10 @@ def post_admin(client):
     )
 
     yield post
+
+
+@pytest.fixture
+def timeout_client(app):
+    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=1)
+    with app.test_client() as client:
+        yield client

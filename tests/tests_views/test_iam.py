@@ -1,41 +1,10 @@
 from base64 import b64encode
-from datetime import timedelta
 import json
 from time import sleep
-import pytest
 from flask_jwt_extended import decode_token
-from aws_portal.app import create_app
 from aws_portal.extensions import db
-from aws_portal.models import Account, BlockedToken, init_db
-from tests.testing_utils import (
-    get_cookie_from_response, get_csrf_headers, login_test_account
-)
-from tests.test_models import create_joins, create_tables
-
-
-@pytest.fixture
-def app():
-    app = create_app(testing=True)
-    with app.app_context():
-        init_db()
-        create_tables()
-        create_joins()
-        db.session.commit()
-
-        yield app
-
-
-@pytest.fixture
-def client(app):
-    with app.test_client() as client:
-        yield client
-
-
-@pytest.fixture
-def timeout_client(app):
-    app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(seconds=1)
-    with app.test_client() as client:
-        yield client
+from aws_portal.models import Account, BlockedToken
+from tests.testing_utils import get_csrf_headers, login_test_account
 
 
 def test_check_login_no_token(client):

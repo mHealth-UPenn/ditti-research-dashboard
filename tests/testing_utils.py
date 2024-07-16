@@ -136,7 +136,6 @@ def create_tables():
         db.session.add(Role(**role))
 
     for study in studies:
-        print(study)
         db.session.add(Study(**study))
 
     for blocked_token in blocked_tokens:
