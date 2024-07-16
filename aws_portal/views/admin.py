@@ -223,11 +223,14 @@ def account_edit():
         data = request.json['edit']
         account_id = request.json['id']
         account = Account.query.get(account_id)
-        password = data['password']
 
-        # avoid updating the account with an empty password
-        if not password:
-            del data['password']
+        try:
+            password = data['password']
+            # avoid updating the account with an empty password
+            if not password:
+                del data['password']
+        except KeyError:
+            pass
 
         # if there is a new password, it must be valid
         else:

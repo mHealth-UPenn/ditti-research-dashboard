@@ -1,68 +1,29 @@
-from functools import partial
 import json
-import pytest
-from aws_portal.app import create_app
-from aws_portal.extensions import db
 from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study,
-    init_admin_account, init_admin_app, init_admin_group, init_db
+    AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study
 )
-from tests.testing_utils import (
-    create_joins, create_tables, get_csrf_headers, login_admin_account
-)
-
-
-@pytest.fixture
-def app():
-    app = create_app(testing=True)
-    with app.app_context():
-        init_db()
-        init_admin_app()
-        init_admin_group()
-        init_admin_account()
-        create_tables()
-        create_joins()
-        db.session.commit()
-        yield app
-
-
-@pytest.fixture
-def client(app):
-    with app.test_client() as client:
-        yield client
-
-
-@pytest.fixture
-def post(client):
-    res = login_admin_account(client)
-    headers = get_csrf_headers(res)
-    post = partial(
-        client.post,
-        content_type='application/json',
-        headers=headers
-    )
-
-    yield post
+from tests.testing_utils import get_csrf_headers, login_admin_account
 
 
 def test_account(client):
     res = login_admin_account(client)
+    headers = get_csrf_headers(res)
     opts = '?app=1'
-    res = client.get('/admin/account' + opts)
+    res = client.get('/admin/account' + opts, headers=headers)
     data = json.loads(res.data)
     assert len(data) == 3
-    assert data[1]['email'] == 'foo@email.com'
-    assert data[2]['email'] == 'bar@email.com'
+    assert data[0]['email'] == 'foo@email.com'
+    assert data[1]['email'] == 'bar@email.com'
 
 
-def test_account_create(post):
+def test_account_create(post_admin):
     data = {
         'app': 1,
         'create': {
             'first_name': 'foo',
             'last_name': 'bar',
             'email': 'baz@email.com',
-            'password': 'foo',
+            'password': 'foo123456',
             'access_groups': [
                 {'id': 1}
             ],
@@ -78,7 +39,7 @@ def test_account_create(post):
     }
 
     data = json.dumps(data)
-    res = post('/admin/account/create', data=data)
+    res = post_admin('/admin/account/create', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Account Created Successfully'
@@ -94,7 +55,7 @@ def test_account_create(post):
     assert foo.studies[0].role_id == 1
 
 
-def test_account_edit(post):
+def test_account_edit(post_admin):
     data = {
         'app': 1,
         'id': 1,
@@ -116,7 +77,7 @@ def test_account_edit(post):
     }
 
     data = json.dumps(data)
-    res = post('/admin/account/edit', data=data)
+    res = post_admin('/admin/account/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Account Edited Successfully'
@@ -130,14 +91,14 @@ def test_account_edit(post):
     assert foo.studies[0].role_id == 2
 
 
-def test_account_archive(post):
+def test_account_archive(post_admin):
     data = {
         'app': 1,
         'id': 1
     }
 
     data = json.dumps(data)
-    res = post('/admin/account/archive', data=data)
+    res = post_admin('/admin/account/archive', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Account Archived Successfully'
@@ -146,17 +107,16 @@ def test_account_archive(post):
     assert foo.is_archived
 
 
-def test_study(client):
-    res = login_admin_account(client)
+def test_study(get_admin):
     opts = '?app=1'
-    res = client.get('/admin/study' + opts)
+    res = get_admin('/admin/study' + opts)
     data = json.loads(res.data)
     assert len(data) == 2
     assert data[0]['name'] == 'foo'
     assert data[1]['name'] == 'bar'
 
 
-def test_study_create(post):
+def test_study_create(post_admin):
     data = {
         'app': 1,
         'create': {
@@ -168,7 +128,7 @@ def test_study_create(post):
     }
 
     data = json.dumps(data)
-    res = post('/admin/study/create', data=data)
+    res = post_admin('/admin/study/create', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Study Created Successfully'
@@ -182,7 +142,7 @@ def test_study_create(post):
     assert foo.email == 'baz@email.com'
 
 
-def test_study_edit(post):
+def test_study_edit(post_admin):
     data = {
         'app': 1,
         'id': 1,
@@ -193,7 +153,7 @@ def test_study_edit(post):
     }
 
     data = json.dumps(data)
-    res = post('/admin/study/edit', data=data)
+    res = post_admin('/admin/study/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Study Edited Successfully'
@@ -203,14 +163,14 @@ def test_study_edit(post):
     assert foo.acronym == 'QUX'
 
 
-def test_study_archive(post):
+def test_study_archive(post_admin):
     data = {
         'app': 1,
         'id': 1
     }
 
     data = json.dumps(data)
-    res = post('/admin/study/archive', data=data)
+    res = post_admin('/admin/study/archive', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Study Archived Successfully'
@@ -219,17 +179,16 @@ def test_study_archive(post):
     assert foo.is_archived
 
 
-def test_access_group(client):
-    res = login_admin_account(client)
+def test_access_group(get_admin):
     opts = '?app=1'
-    res = client.get('/admin/access-group' + opts)
+    res = get_admin('/admin/access-group' + opts)
     data = json.loads(res.data)
     assert len(data) == 3
     assert data[1]['name'] == 'foo'
     assert data[2]['name'] == 'bar'
 
 
-def test_access_group_create(post):
+def test_access_group_create(post_admin):
     data = {
         'app': 1,
         'create': {
@@ -245,7 +204,7 @@ def test_access_group_create(post):
     }
 
     data = json.dumps(data)
-    res = post('/admin/access-group/create', data=data)
+    res = post_admin('/admin/access-group/create', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Access Group Created Successfully'
@@ -258,7 +217,7 @@ def test_access_group_create(post):
     assert foo.permissions[0].permission.action == 'foo'
 
 
-def test_access_group_edit(post):
+def test_access_group_edit(post_admin):
     data = {
         'app': 1,
         'id': 2,
@@ -269,7 +228,7 @@ def test_access_group_edit(post):
     }
 
     data = json.dumps(data)
-    res = post('/admin/access-group/edit', data=data)
+    res = post_admin('/admin/access-group/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Access Group Edited Successfully'
@@ -282,7 +241,7 @@ def test_access_group_edit(post):
     assert foo.permissions[0].permission.action == 'foo'
 
 
-def test_access_group_edit_permissions(post):
+def test_access_group_edit_permissions(post_admin):
     data = {
         'app': 1,
         'id': 2,
@@ -300,7 +259,7 @@ def test_access_group_edit_permissions(post):
     assert foo is not None
 
     data = json.dumps(data)
-    res = post('/admin/access-group/edit', data=data)
+    res = post_admin('/admin/access-group/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Access Group Edited Successfully'
@@ -313,14 +272,14 @@ def test_access_group_edit_permissions(post):
     assert foo is None
 
 
-def test_access_group_archive(post):
+def test_access_group_archive(post_admin):
     data = {
         'app': 1,
         'id': 1
     }
 
     data = json.dumps(data)
-    res = post('/admin/access-group/archive', data=data)
+    res = post_admin('/admin/access-group/archive', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Access Group Archived Successfully'
@@ -329,17 +288,16 @@ def test_access_group_archive(post):
     assert foo.is_archived
 
 
-def test_role(client):
-    res = login_admin_account(client)
+def test_role(get_admin):
     opts = '?app=1'
-    res = client.get('/admin/role' + opts)
+    res = get_admin('/admin/role' + opts)
     data = json.loads(res.data)
     assert len(data) == 2
     assert data[0]['name'] == 'foo'
     assert data[1]['name'] == 'bar'
 
 
-def test_role_create(post):
+def test_role_create(post_admin):
     data = {
         'app': 1,
         'create': {
@@ -354,7 +312,7 @@ def test_role_create(post):
     }
 
     data = json.dumps(data)
-    res = post('/admin/role/create', data=data)
+    res = post_admin('/admin/role/create', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Role Created Successfully'
@@ -368,7 +326,7 @@ def test_role_create(post):
     assert foo.permissions[0].permission.resource == 'baz'
 
 
-def test_role_edit(post):
+def test_role_edit(post_admin):
     data = {
         'app': 1,
         'id': 1,
@@ -384,7 +342,7 @@ def test_role_edit(post):
     }
 
     data = json.dumps(data)
-    res = post('/admin/role/edit', data=data)
+    res = post_admin('/admin/role/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'Role Edited Successfully'
@@ -398,17 +356,16 @@ def test_role_edit(post):
     assert foo.permissions[0].permission.resource == 'qux'
 
 
-def test_app(client):
-    res = login_admin_account(client)
+def test_app(get_admin):
     opts = '?app=1'
-    res = client.get('/admin/app' + opts)
+    res = get_admin('/admin/app' + opts)
     data = json.loads(res.data)
     assert len(data) == 3
     assert data[1]['name'] == 'foo'
     assert data[2]['name'] == 'bar'
 
 
-def test_app_create(post):
+def test_app_create(post_admin):
     data = {
         'app': 1,
         'create': {
@@ -417,7 +374,7 @@ def test_app_create(post):
     }
 
     data = json.dumps(data)
-    res = post('/admin/app/create', data=data)
+    res = post_admin('/admin/app/create', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'App Created Successfully'
@@ -428,7 +385,7 @@ def test_app_create(post):
     assert foo.name == 'baz'
 
 
-def test_app_edit(post):
+def test_app_edit(post_admin):
     data = {
         'app': 1,
         'id': 1,
@@ -438,7 +395,7 @@ def test_app_edit(post):
     }
 
     data = json.dumps(data)
-    res = post('/admin/app/edit', data=data)
+    res = post_admin('/admin/app/edit', data=data)
     data = json.loads(res.data)
     assert 'msg' in data
     assert data['msg'] == 'App Edited Successfully'
