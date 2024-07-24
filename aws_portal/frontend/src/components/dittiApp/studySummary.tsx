@@ -90,13 +90,13 @@ class StudySummary extends React.Component<
 
     // localize tap timestamps
     const data = taps.map((t) => {
-      const time = t.time.getTime() - t.time.getTimezoneOffset() * 60000;
-      return [t.dittiId, new Date(time)];
+      return [t.dittiId, new Date(t.time), t.timeZone];
     });
 
     sheet.columns = [
       { header: "Ditti ID", width: 10 },
-      { header: "Taps", width: 20 }
+      { header: "Taps", width: 20 },
+      { header: "Time zone", width: 20 }
     ];
 
     sheet.getColumn("B").numFmt = "DD/MM/YYYY HH:mm:ss";

@@ -158,6 +158,7 @@ export interface User {
 export interface TapDetails {
   dittiId: string;
   time: Date;
+  timeZone: string;
 }
 
 /**
@@ -166,6 +167,7 @@ export interface TapDetails {
 export interface Tap {
   dittiId: string;
   time: string;
+  timeZone: string;
 }
 
 /**

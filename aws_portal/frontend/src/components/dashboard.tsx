@@ -65,7 +65,7 @@ class Dashboard extends React.Component<any, DashboardState> {
     if (!taps.length) {
       taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
         return res.map((tap) => {
-          return { dittiId: tap.dittiId, time: new Date(tap.time) };
+          return { dittiId: tap.dittiId, time: new Date(tap.time), timeZone: tap.timeZone };
         });
       });
 

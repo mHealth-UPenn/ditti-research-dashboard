@@ -133,7 +133,7 @@ def get_taps():  # TODO update unit test
     df_users = pd.DataFrame(users, columns=["id", "user_permission_id"])\
         .rename(columns={"user_permission_id": "dittiId"})
 
-    df_taps = pd.DataFrame(taps, columns=["tapUserId", "time"])\
+    df_taps = pd.DataFrame(taps, columns=["tapUserId", "time", "timeZone"])\
         .rename(columns={"tapUserId": "id"})
 
     # merge on only the users that were returned earlier
