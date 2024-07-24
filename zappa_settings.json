@@ -12,7 +12,7 @@
         }],
         "log_level": "INFO",
         "project_name": "aws-portal",
-        "runtime": "python3.8",
+        "runtime": "python3.12",
         "tags": {
           "app": "aws-portal"
         },

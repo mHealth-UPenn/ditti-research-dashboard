@@ -22,7 +22,18 @@ class Default:
 class Production(Default):
     ENV = "production"
     DEBUG = False
+
+    CORS_ALLOW_HEADERS = [
+        "Content-Type",
+        "X-Amz-Date",
+        "Authorization",
+        "X-Api-Key",
+        "X-Amz-Security-Token",
+        "X-CSRF-TOKEN"
+    ]
+
     CORS_ORIGINS = os.getenv("AWS_CLOUDFRONT_DOMAIN_NAME")
+    CORS_SUPPORTS_CREDENTIALS = True
 
 
 class Testing(Default):

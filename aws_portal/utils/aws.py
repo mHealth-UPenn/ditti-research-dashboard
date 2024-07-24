@@ -667,7 +667,6 @@ class Query:
         popped = re.sub(cls.conditionals, "", string)
 
         # get the subexpression"s key
-        print(cls.keys, popped, re.search(cls.keys, popped))
         key = re.search(cls.keys, popped).group(0)
 
         # get the subexpression"s conditional

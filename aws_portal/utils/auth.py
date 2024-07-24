@@ -63,9 +63,7 @@ def auth_required(action, _resource=None):
 
             # check whether the user has permissions
             try:
-                print("here")
                 permissions = current_user.get_permissions(app_id, study_id)
-                print("permissions: " + str([p.meta for p in permissions]))
                 current_user.validate_ask(action, resource, permissions)
 
             # when the user does not have permission

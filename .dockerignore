@@ -1,6 +1,7 @@
 aws_portal/frontend/*
 .vscode/
 env/
+tests/
 *.env
 *.sh
 Dockerfile
