@@ -29,4 +29,6 @@ x.py
 y.py
 z.py
 zappa_settings.py
-dummyData.tsx
+
+**/dummyData*
+**/dummyUsers*
