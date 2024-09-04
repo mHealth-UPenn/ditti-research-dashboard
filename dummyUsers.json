@@ -1,0 +1,66 @@
+[
+    {
+        "tapPermission": true,
+        "information": "string",
+        "userPermissionId": "msii001",
+        "expTime": "2025-01-01T00:00:00.000Z",
+        "teamEmail": "msii@fakeemail.com",
+        "createdAt": ""
+    },
+    {
+        "tapPermission": true,
+        "information": "string",
+        "userPermissionId": "msii002",
+        "expTime": "2025-01-01T00:00:00.000Z",
+        "teamEmail": "msii@fakeemail.com",
+        "createdAt": ""
+    },
+    {
+        "tapPermission": true,
+        "information": "string",
+        "userPermissionId": "msii003",
+        "expTime": "2025-01-01T00:00:00.000Z",
+        "teamEmail": "msii@fakeemail.com",
+        "createdAt": ""
+    },
+    {
+        "tapPermission": true,
+        "information": "string",
+        "userPermissionId": "msii004",
+        "expTime": "2025-01-01T00:00:00.000Z",
+        "teamEmail": "msii@fakeemail.com",
+        "createdAt": ""
+    },
+    {
+        "tapPermission": true,
+        "information": "string",
+        "userPermissionId": "msii005",
+        "expTime": "2025-01-01T00:00:00.000Z",
+        "teamEmail": "msii@fakeemail.com",
+        "createdAt": ""
+    },
+    {
+        "tapPermission": true,
+        "information": "string",
+        "userPermissionId": "msii006",
+        "expTime": "2025-01-01T00:00:00.000Z",
+        "teamEmail": "msii@fakeemail.com",
+        "createdAt": ""
+    },
+    {
+        "tapPermission": true,
+        "information": "string",
+        "userPermissionId": "msii007",
+        "expTime": "2025-01-01T00:00:00.000Z",
+        "teamEmail": "msii@fakeemail.com",
+        "createdAt": ""
+    },
+    {
+        "tapPermission": true,
+        "information": "string",
+        "userPermissionId": "msii008",
+        "expTime": "2025-01-01T00:00:00.000Z",
+        "teamEmail": "msii@fakeemail.com",
+        "createdAt": ""
+    }
+]

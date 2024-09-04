@@ -7,7 +7,7 @@ import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
 import { Tap, TapDetails, UserDetails } from "../interfaces";
-// import { dummyData } from "./dummyData";
+import { dummyTaps } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
 import { makeRequest } from "../utils";
 
@@ -59,29 +59,29 @@ class Dashboard extends React.Component<any, DashboardState> {
    * @returns - tap data
    */
   getTapsAsync = async (): Promise<TapDetails[]> => {
-    let { taps } = this.state;
+    // let { taps } = this.state;
 
-    // if AWS has not been queried yet
-    if (!taps.length) {
-      taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
-        return res.map((tap) => {
-          return { dittiId: tap.dittiId, time: new Date(tap.time) };
-        });
-      });
+    // // if AWS has not been queried yet
+    // if (!taps.length) {
+    //   taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
+    //     return res.map((tap) => {
+    //       return { dittiId: tap.dittiId, time: new Date(tap.time) };
+    //     });
+    //   });
 
-      // sort taps by timestamp
-      taps = taps.sort((a, b) =>
-        differenceInMilliseconds(new Date(a.time), new Date(b.time))
-      );
+    //   // sort taps by timestamp
+    //   taps = taps.sort((a, b) =>
+    //     differenceInMilliseconds(new Date(a.time), new Date(b.time))
+    //   );
 
-      this.setState({ taps });
-    }
+    //   this.setState({ taps });
+    // }
 
     // uncomment when using dummy data
-    // const taps = dummyData.sort((a, b) =>
-    //   differenceInMilliseconds(new Date(a.time), new Date(b.time))
-    // );
-    // this.setState({ taps });
+    const taps = dummyTaps.sort((a, b) =>
+      differenceInMilliseconds(new Date(a.time), new Date(b.time))
+    );
+    this.setState({ taps });
 
     return taps;
   };

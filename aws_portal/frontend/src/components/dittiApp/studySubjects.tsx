@@ -12,6 +12,8 @@ import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
 import SubjectVisuals from "./subjectVisuals";
+import { dummyUsers } from "../dummyData";
+import { loadavg } from "os";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -42,24 +44,25 @@ class StudySubjects extends React.Component<
   componentDidMount() {
 
     // get all users that are enrolled in this study
-    makeRequest(
-      `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.props.studyPrefix}"`
-    ).then((res: User[]) => {
+    // makeRequest(
+    //   `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.props.studyPrefix}"`
+    // ).then((res: User[]) => {
 
-      // map the user data to user details
-      const users: UserDetails[] = res.map((user) => {
-        return {
-          tapPermission: user.tap_permission,
-          information: user.information,
-          userPermissionId: user.user_permission_id,
-          expTime: user.exp_time,
-          teamEmail: user.team_email,
-          createdAt: user.createdAt
-        };
-      });
+    //   // map the user data to user details
+    //   const users: UserDetails[] = res.map((user) => {
+    //     return {
+    //       tapPermission: user.tap_permission,
+    //       information: user.information,
+    //       userPermissionId: user.user_permission_id,
+    //       expTime: user.exp_time,
+    //       teamEmail: user.team_email,
+    //       createdAt: user.createdAt
+    //     };
+    //   });
 
-      this.setState({ users, loading: false });
-    });
+    //   this.setState({ users, loading: false });
+    // });
+    this.setState({ users: dummyUsers, loading: false });
   }
 
   /**
