@@ -55,7 +55,7 @@ for user in users:
             while num_timestamps < 30:
                 num_timestamps = random.randint(10, 100)
                 timestamps = generate_timestamps(start_time, num_timestamps, 3, 5)
-                taps.extend({"user_permission_id": user["user_permission_id"], "time": t.isoformat()} for t in timestamps)
+                taps.extend({"dittiId": user["user_permission_id"], "time": f"new Date(\"{t.isoformat()}\")"} for t in timestamps)
                 start_time = start_time + datetime.timedelta(minutes=random.randint(20, 60))
 
 with open("dummyData.json", "w") as f:
