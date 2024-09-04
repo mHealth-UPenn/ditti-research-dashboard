@@ -10,8 +10,8 @@ import { ReactComponent as Check } from "../../icons/check.svg";
 interface ToggleButtonProps {
   id: number;
   getActive: (id: number) => boolean;
-  add: (id: number, callback: () => void) => void;
-  remove: (id: number, callback: () => void) => void;
+  add: (id: number, callback: (active: boolean) => void) => void;
+  remove: (id: number, callback: (active: boolean) => void) => void;
 }
 
 const ToggleButton: React.FC<ToggleButtonProps> = ({ id, getActive, add, remove }) => {
@@ -21,10 +21,8 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({ id, getActive, add, remove 
   /**
    * Update the button's active state
    */
-  const update = () => {
-    // get whether the toggled item is currently active
-    const currentActive = getActive(id);
-    setActive(currentActive);
+  const update = (active: boolean) => {
+    setActive(active);
   };
 
   return active ? (
