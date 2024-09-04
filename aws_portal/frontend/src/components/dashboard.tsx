@@ -28,13 +28,13 @@ const reducer = (state: DashboardState, action: Action) => {
     }
     case "GO_BACK": {
       const history = [...state.history];
-  
+
       // get the last set of breadcrumbs
       const breadcrumbs = history.pop();
-  
+
       // if there was any history to begin with
       if (breadcrumbs) {
-  
+
         // set the last view in the history as the new view
         const view = breadcrumbs[breadcrumbs.length - 1].view;
         return { ...state, breadcrumbs, history, view };
@@ -46,27 +46,26 @@ const reducer = (state: DashboardState, action: Action) => {
       const { msg, variant } = action;
       const flashMessages = [...state.flashMessages];
       const ref = createRef<HTMLDivElement>();
-  
+
       // set the element's key to 0 or the last message's key + 1
       const id = flashMessages.length
         ? flashMessages[flashMessages.length - 1].id + 1
         : 0;
-  
+
       const element = (
         <div
           key={id}
           className={"shadow flash-message flash-message-" + variant}
-          ref={ref}
         >
           <div className="flash-message-content">
             <span>{msg}</span>
           </div>
-          <div className="flash-message-close">
+          <div className="flash-message-close" ref={ref}>
             <span>x</span>
           </div>
         </div>
       );
-  
+
       // add the message to the page
       flashMessages.push({ id, element, ref });
       return { ...state, flashMessages };
@@ -81,28 +80,28 @@ const reducer = (state: DashboardState, action: Action) => {
       const { name, view, replace } = action;
       let breadcrumbs = [...state.breadcrumbs];
       const history = [...state.history];
-  
+
       // add the current view to the history stack
       history.push(breadcrumbs.slice(0));
-  
+
       // if replacing the top breadcrumb
       if (replace) breadcrumbs.pop();
-  
+
       // for each breadcrumb
       let i = 0;
       for (const b of breadcrumbs) {
-  
+
         // if this breadcrumb matches the first name to be used as breadcrumbs
         if (b.name === name[0]) {
-  
+
           // then remove the following breadcrumbs to continue from this point
           breadcrumbs = breadcrumbs.slice(0, i + 1);
           break;
         } else if (i === breadcrumbs.length - 1) {
-  
+
           // else add each name to the breadcrumbs
           for (const i in name) {
-  
+
             // add the view only for the last name
             breadcrumbs.push({
               name: name[i],
@@ -189,11 +188,7 @@ const Dashboard: React.FC = () => {
     flashMessages.forEach(flashMessage => {
       const div = flashMessage.ref.current;
       if (div && !div.onclick) {
-        const id = flashMessages.length
-          ? flashMessages[flashMessages.length - 1].id + 1
-          : 0;
-
-        div.onclick = () => popMessage(id);
+        div.onclick = () => popMessage(flashMessage.id);
       }
     });
   }, [flashMessages]);
