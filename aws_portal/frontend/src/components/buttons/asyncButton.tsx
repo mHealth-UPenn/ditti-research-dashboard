@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Component } from "react";
+import { useState } from "react";
 
 /**
  * onClick: the function to handle clicks
@@ -12,47 +12,35 @@ interface AsyncButtonProps {
   type: string;
 }
 
-/**
- * loading: whether to show the loader
- */
-interface AsyncButtonState {
-  loading: boolean;
-}
-
-class AsyncButton extends React.Component<AsyncButtonProps, AsyncButtonState> {
-  state = { loading: false };
+const AsyncButton: React.FC<AsyncButtonProps> = ({ onClick, text, type }) => {
+  const [loading, setLoading] = useState<boolean>(false);
 
   /**
    * Show the loader, call the onClick function, and hide the loader when the
    * promise is complete
    */
-  handleClick = (): void => {
-    this.setState({ loading: true }, () =>
-      this.props.onClick().then(() => this.setState({ loading: false }))
-    );
+  const handleClick = (): void => {
+    setLoading(true);
+    onClick().then(() => setLoading(false));
   };
 
-  render() {
-    const { text, type } = this.props;
+  const loader = (
+    <div className="lds-ring lds-ring-small">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  );
 
-    const loader = (
-      <div className="lds-ring lds-ring-small">
-        <div></div>
-        <div></div>
-        <div></div>
-        <div></div>
-      </div>
-    );
-
-    return (
-      <button
-        className={"button button-large button-" + type}
-        onClick={this.handleClick}
-      >
-        {this.state.loading ? loader : text}
-      </button>
-    );
-  }
-}
+  return (
+    <button
+      className={"button button-large button-" + type}
+      onClick={handleClick}
+    >
+      {loading ? loader : text}
+    </button>
+  );
+};
 
 export default AsyncButton;

@@ -1,5 +1,4 @@
-import * as React from "react";
-import { Component } from "react";
+import React, { useEffect, useState } from "react";
 import TextField from "../fields/textField";
 import { ResponseBody, Study, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
@@ -23,45 +22,37 @@ interface StudiesEditProps extends ViewProps {
   studyId: number;
 }
 
-/**
- * loading: whether to show the loader
- */
-interface StudiesEditState extends StudyPrefill {
-  loading: boolean;
-}
-
-class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
-  state = {
+const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage }) => {
+  const [state, setState] = useState<StudyPrefill & { loading: boolean }>({
     name: "",
     acronym: "",
     dittiId: "",
     email: "",
-    loading: true
-  };
+    loading: true,
+  });
 
-  componentDidMount() {
-
+  useEffect(() => {
     // set any form prefill data and hide the loader
-    this.getPrefill().then((prefill: StudyPrefill) =>
-      this.setState({ ...prefill, loading: false })
+    getPrefill().then((prefill: StudyPrefill) =>
+      setState(prevState => ({ ...prevState, ...prefill, loading: false }))
     );
-  }
+  }, [studyId]);
 
   /**
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  getPrefill = async (): Promise<StudyPrefill> => {
-    const id = this.props.studyId;
+  const getPrefill = async (): Promise<StudyPrefill> => {
+    const id = studyId;
 
     // if editing an existing entry, return prefill data, else return empty data
     return id
-      ? makeRequest("/admin/study?app=1&id=" + id).then(this.makePrefill)
+      ? makeRequest("/admin/study?app=1&id=" + id).then(makePrefill)
       : {
           name: "",
           acronym: "",
           dittiId: "",
-          email: ""
+          email: "",
         };
   };
 
@@ -70,45 +61,42 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
    * @param res - the response body
    * @returns - the form prefill data
    */
-  makePrefill = (res: Study[]): StudyPrefill => {
+  const makePrefill = (res: Study[]): StudyPrefill => {
     const study = res[0];
-
     return {
       name: study.name,
       acronym: study.acronym,
       dittiId: study.dittiId,
-      email: study.email
+      email: study.email,
     };
   };
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating
-   * a new entry, else make a request to edit an exiting entry
+   * a new entry, else make a request to edit an existing entry
    */
-  post = async (): Promise<void> => {
-    const { acronym, dittiId, email, name } = this.state;
+  const post = async (): Promise<void> => {
+    const { acronym, dittiId, email, name } = state;
     const data = { acronym, ditti_id: dittiId, email, name };
-    const id = this.props.studyId;
+    const id = studyId;
     const body = {
-      app: 1,  // Admin Dashboard = 1
-      ...(id ? { id: id, edit: data } : { create: data })
+      app: 1, // Admin Dashboard = 1
+      ...(id ? { id: id, edit: data } : { create: data }),
     };
 
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/study/edit" : "/admin/study/create";
 
     await makeRequest(url, opts)
-      .then(this.handleSuccess)
-      .catch(this.handleFailure);
+      .then(handleSuccess)
+      .catch(handleFailure);
   };
 
   /**
    * Handle a successful response
    * @param res - the response body
    */
-  handleSuccess = (res: ResponseBody) => {
-    const { goBack, flashMessage } = this.props;
-
+  const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
     goBack();
     flashMessage(<span>{res.msg}</span>, "success");
@@ -118,13 +106,11 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
    * Handle a failed response
    * @param res - the response body
    */
-  handleFailure = (res: ResponseBody) => {
-    const { flashMessage } = this.props;
-
+  const handleFailure = (res: ResponseBody) => {
     // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
-        <b>An unexpected error occured</b>
+        <b>An unexpected error occurred</b>
         <br />
         {res.msg ? res.msg : "Internal server error"}
       </span>
@@ -133,110 +119,109 @@ class StudiesEdit extends React.Component<StudiesEditProps, StudiesEditState> {
     flashMessage(msg, "danger");
   };
 
-  render() {
-    const { studyId } = this.props;
-    const { name, acronym, dittiId, email, loading } = this.state;
-    const buttonText = studyId ? "Update" : "Create";
+  const { name, acronym, dittiId, email, loading } = state;
+  const buttonText = studyId ? "Update" : "Create";
 
-    return (
-      <div className="page-container" style={{ flexDirection: "row" }}>
-
-        {/* the edit/create form */}
-        <div className="page-content bg-white">
-          {loading ? (
-            <SmallLoader />
-          ) : (
-            <div className="admin-form">
-              <div className="admin-form-content">
-                <h1 className="border-light-b">
-                  {studyId ? "Edit " : "Create "} Study
-                </h1>
-                <div className="admin-form-row">
-                  <div className="admin-form-field">
-                    <TextField
-                      id="name"
-                      type="text"
-                      placeholder=""
-                      prefill={name}
-                      label="Name"
-                      onKeyup={(text: string) => this.setState({ name: text })}
-                      feedback=""
-                    />
-                  </div>
-                  <div className="admin-form-field">
-                    <TextField
-                      id="email"
-                      type="text"
-                      placeholder=""
-                      prefill={email}
-                      label="Team Email"
-                      onKeyup={(text: string) => this.setState({ email: text })}
-                      feedback=""
-                    />
-                  </div>
+  return (
+    <div className="page-container" style={{ flexDirection: "row" }}>
+      {/* the edit/create form */}
+      <div className="page-content bg-white">
+        {loading ? (
+          <SmallLoader />
+        ) : (
+          <div className="admin-form">
+            <div className="admin-form-content">
+              <h1 className="border-light-b">
+                {studyId ? "Edit " : "Create "} Study
+              </h1>
+              <div className="admin-form-row">
+                <div className="admin-form-field">
+                  <TextField
+                    id="name"
+                    type="text"
+                    placeholder=""
+                    prefill={name}
+                    label="Name"
+                    onKeyup={(text: string) =>
+                      setState(prevState => ({ ...prevState, name: text }))
+                    }
+                    feedback=""
+                  />
                 </div>
-                <div className="admin-form-row">
-                  <div className="admin-form-field">
-                    <TextField
-                      id="acronym"
-                      type="text"
-                      placeholder=""
-                      prefill={acronym}
-                      label="Acronym"
-                      onKeyup={(text: string) =>
-                        this.setState({ acronym: text })
-                      }
-                      feedback=""
-                    />
-                  </div>
-                  <div className="admin-form-field">
-                    <TextField
-                      id="dittiId"
-                      type="text"
-                      placeholder=""
-                      prefill={dittiId}
-                      label="Ditti ID"
-                      onKeyup={(text: string) =>
-                        this.setState({ dittiId: text })
-                      }
-                      feedback=""
-                    />
-                  </div>
+                <div className="admin-form-field">
+                  <TextField
+                    id="email"
+                    type="text"
+                    placeholder=""
+                    prefill={email}
+                    label="Team Email"
+                    onKeyup={(text: string) =>
+                      setState(prevState => ({ ...prevState, email: text }))
+                    }
+                    feedback=""
+                  />
+                </div>
+              </div>
+              <div className="admin-form-row">
+                <div className="admin-form-field">
+                  <TextField
+                    id="acronym"
+                    type="text"
+                    placeholder=""
+                    prefill={acronym}
+                    label="Acronym"
+                    onKeyup={(text: string) =>
+                      setState(prevState => ({ ...prevState, acronym: text }))
+                    }
+                    feedback=""
+                  />
+                </div>
+                <div className="admin-form-field">
+                  <TextField
+                    id="dittiId"
+                    type="text"
+                    placeholder=""
+                    prefill={dittiId}
+                    label="Ditti ID"
+                    onKeyup={(text: string) =>
+                      setState(prevState => ({ ...prevState, dittiId: text }))
+                    }
+                    feedback=""
+                  />
                 </div>
               </div>
             </div>
-          )}
-        </div>
-        <div className="admin-form-summary bg-dark">
-
-          {/* the edit/create summary */}
-          <h1 className="border-white-b">Study Summary</h1>
-          <span>
-            Name:
-            <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{name}
-            <br />
-            <br />
-            Team Email:
-            <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{email}
-            <br />
-            <br />
-            Acronym:
-            <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{acronym}
-            <br />
-            <br />
-            Ditti ID:
-            <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
-            <br />
-          </span>
-          <AsyncButton onClick={this.post} text={buttonText} type="primary" />
-        </div>
+          </div>
+        )}
       </div>
-    );
-  }
-}
+      <div className="admin-form-summary bg-dark">
+        {/* the edit/create summary */}
+        <h1 className="border-white-b">Study Summary</h1>
+        <span>
+          Name:
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;{name}
+          <br />
+          <br />
+          Team Email:
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;{email}
+          <br />
+          <br />
+          Acronym:
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;{acronym}
+          <br />
+          <br />
+          Ditti ID:
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
+          <br />
+        </span>
+        <AsyncButton onClick={post} text={buttonText} type="primary" />
+      </div>
+    </div>
+  );
+};
 
 export default StudiesEdit;

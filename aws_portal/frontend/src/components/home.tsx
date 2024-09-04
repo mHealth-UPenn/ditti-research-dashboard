@@ -1,5 +1,4 @@
-import * as React from "react";
-import { Component } from "react";
+import React, { useEffect, useState } from "react";
 import "./home.css";
 import { ReactComponent as Right } from "../icons/right.svg";
 import { TapDetails, ViewProps } from "../interfaces";
@@ -18,82 +17,65 @@ interface HomeProps extends ViewProps {
 }
 
 /**
- * apps: the apps that the user has access to
- * loading: whether to show the laoder
+ * Home component: renders available apps for the user
  */
-interface HomeState {
-  apps: {
-    breadcrumbs: string[];
-    name: string;
-    view: React.ReactElement;
-  }[];
-  loading: boolean;
-}
-
-class Home extends React.Component<HomeProps, HomeState> {
-
+const Home: React.FC<HomeProps> = (props) => {
   // apps are hardcoded here because for now there is no real need to add more
   // than two
-  state = {
-    apps: [
-      {
-        breadcrumbs: ["Ditti App"],
-        name: "Ditti App Dashboard",
-        view: (
-          <StudiesView
-            getTapsAsync={this.props.getTapsAsync}
-            getTaps={this.props.getTaps}
-            handleClick={this.props.handleClick}
-            goBack={this.props.goBack}
-            flashMessage={this.props.flashMessage}
-          />
-        )
-      },
-      {
-        breadcrumbs: ["Admin Dashboard", "Accounts"],
-        name: "Admin Dashboard",
-        view: (
-          <Accounts
-            handleClick={this.props.handleClick}
-            goBack={this.props.goBack}
-            flashMessage={this.props.flashMessage}
-          />
-        )
-      }
-    ],
-    loading: true
-  };
+  const [apps, setApps] = useState([
+    {
+      breadcrumbs: ["Ditti App"],
+      name: "Ditti App Dashboard",
+      view: (
+        <StudiesView
+          getTapsAsync={props.getTapsAsync}
+          getTaps={props.getTaps}
+          handleClick={props.handleClick}
+          goBack={props.goBack}
+          flashMessage={props.flashMessage}
+        />
+      ),
+    },
+    {
+      breadcrumbs: ["Admin Dashboard", "Accounts"],
+      name: "Admin Dashboard",
+      view: (
+        <Accounts
+          handleClick={props.handleClick}
+          goBack={props.goBack}
+          flashMessage={props.flashMessage}
+        />
+      ),
+    },
+  ]);
 
-  componentDidMount() {
+  const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
     // check whether the user can view the admin dashboard
     const admin = getAccess(1, "View", "Admin Dashboard").catch(() => {
-      let apps = this.state.apps;
-      apps = apps.filter((app) => app.name != "Admin Dashboard");
-      this.setState({ apps });
+      setApps((prevApps) => prevApps.filter((app) => app.name !== "Admin Dashboard"));
     });
 
     // check whether the user can view the ditti app dashboard
     const ditti = getAccess(2, "View", "Ditti App Dashboard").catch(() => {
-      let apps = this.state.apps;
-      apps = apps.filter((app) => app.name != "Ditti App Dashboard");
-      this.setState({ apps });
+      setApps((prevApps) => prevApps.filter((app) => app.name !== "Ditti App Dashboard"));
     });
 
     // when all promises resolve, hide the loader
-    Promise.all([admin, ditti]).then(() => this.setState({ loading: false }));
-  }
+    Promise.all([admin, ditti]).then(() => setLoading(false));
+  }, []);
 
   /**
    * Render the apps on the page
    * @returns - apps to be rendered on the page
    */
-  getApps() {
-    return this.state.apps.map((app, i) => (
+  const getApps = () => {
+    return apps.map((app, i) => (
       <div
         key={i}
         className="card-s hover-pointer bg-white shadow"
-        onClick={() => this.props.handleClick(app.breadcrumbs, app.view)}
+        onClick={() => props.handleClick(app.breadcrumbs, app.view)}
       >
         <div className="app-name">
           <span>{app.name}</span>
@@ -103,23 +85,21 @@ class Home extends React.Component<HomeProps, HomeState> {
         </div>
       </div>
     ));
-  }
+  };
 
-  render() {
-    return (
-      <div className="card-container">
-        <div className="card-row">
-          {this.state.loading ? (
-            <div className="card-s bg-white shadow">
-              <SmallLoader />
-            </div>
-          ) : (
-            this.getApps()
-          )}
-        </div>
+  return (
+    <div className="card-container">
+      <div className="card-row">
+        {loading ? (
+          <div className="card-s bg-white shadow">
+            <SmallLoader />
+          </div>
+        ) : (
+          getApps()
+        )}
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default Home;

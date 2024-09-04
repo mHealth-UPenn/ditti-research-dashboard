@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Component } from "react";
+import { useState, useEffect } from "react";
 import { ResponseBody, Role, ViewProps } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
@@ -7,88 +7,68 @@ import Navbar from "./navbar";
 import RolesEdit from "./rolesEdit";
 import { SmallLoader } from "../loader";
 
-/**
- * canCreate: whether the user has permissions to create
- * canEdit: whether the user has permissions to edit
- * canArchive: whether the user permissions to archive
- * roles: an array of rows to display in the table
- * columns: an array of columns to display in the table
- * loading: whether to display the loading screen
- */
-interface RolesState {
-  canCreate: boolean;
-  canEdit: boolean;
-  canArchive: boolean;
-  roles: Role[];
-  columns: Column[];
-  loading: boolean;
-}
+const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
+  const [canCreate, setCanCreate] = useState<boolean>(false);
+  const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [canArchive, setCanArchive] = useState<boolean>(false);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [columns] = useState<Column[]>([
+    {
+      name: "Name",
+      searchable: true,
+      sortable: true,
+      width: 15
+    },
+    {
+      name: "Permissions",
+      searchable: false,
+      sortable: false,
+      width: 75
+    },
+    {
+      name: "",
+      searchable: false,
+      sortable: false,
+      width: 10
+    }
+  ]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-class Roles extends React.Component<ViewProps, RolesState> {
-  state = {
-    canCreate: false,
-    canEdit: false,
-    canArchive: false,
-    roles: [],
-    columns: [
-      {
-        name: "Name",
-        searchable: true,
-        sortable: true,
-        width: 15
-      },
-      {
-        name: "Permissions",
-        searchable: false,
-        sortable: false,
-        width: 75
-      },
-      {
-        name: "",
-        searchable: false,
-        sortable: false,
-        width: 10
-      }
-    ],
-    loading: true
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      // check whether the user has permission to create
+      const create = getAccess(1, "Create", "Roles")
+        .then(() => setCanCreate(true))
+        .catch(() => setCanCreate(false));
 
-  async componentDidMount() {
+      // check whether the user has permissions to edit
+      const edit = getAccess(1, "Edit", "Roles")
+        .then(() => setCanEdit(true))
+        .catch(() => setCanEdit(false));
 
-    // check whether the user has permission to create
-    const create = getAccess(1, "Create", "Roles")
-      .then(() => this.setState({ canCreate: true }))
-      .catch(() => this.setState({ canCreate: false }));
+      // check whether the user has permissions to archive
+      const archive = getAccess(1, "Archive", "Roles")
+        .then(() => setCanArchive(true))
+        .catch(() => setCanArchive(false));
 
-    // check whether the user has permissions to edit
-    const edit = getAccess(1, "Edit", "Roles")
-      .then(() => this.setState({ canEdit: true }))
-      .catch(() => this.setState({ canEdit: false }));
+      // get the table's data
+      const rolesData = makeRequest("/admin/role?app=1").then((roles) => {
+        setRoles(roles);
+      });
 
-    // check whether the user has permissions to archive
-    const archive = getAccess(1, "Archive", "Roles")
-      .then(() => this.setState({ canArchive: true }))
-      .catch(() => this.setState({ canArchive: false }));
-
-    // get the table's data
-    const roles = makeRequest("/admin/role?app=1").then((roles) =>
-      this.setState({ roles })
-    );
-
-    // when all requests are complete, hide the loading screen
-    Promise.all([create, edit, archive, roles]).then(() =>
-      this.setState({ loading: false })
-    );
-  }
+      // when all requests are complete, hide the loading screen
+      Promise.all([create, edit, archive, rolesData]).then(() => {
+        setLoading(false);
+      });
+    };
+    fetchData();
+  }, []);
 
   /**
    * Get the table's contents
    * @returns The table's contents, consisting of rows of table cells
    */
-  getData = (): TableData[][] => {
-    const { flashMessage, goBack, handleClick } = this.props;
-    const { canEdit, canArchive, roles } = this.state;
-
+  const getData = (): TableData[][] => {
     // iterate over the table's rows
     return roles.map((r: Role) => {
       const { id, name, permissions } = r;
@@ -110,9 +90,9 @@ class Roles extends React.Component<ViewProps, RolesState> {
               <span>
                 {permissions
                   .map((p) => {
-                    const action = p.action == "*" ? "All Actions" : p.action;
+                    const action = p.action === "*" ? "All Actions" : p.action;
                     const resource =
-                      p.resource == "*" ? "All Resources" : p.resource;
+                      p.resource === "*" ? "All Resources" : p.resource;
                     return action + " - " + resource;
                   })
                   .join(", ")}
@@ -146,7 +126,7 @@ class Roles extends React.Component<ViewProps, RolesState> {
               {canArchive ? (
                 <button
                   className="button-danger"
-                  onClick={() => this.delete(id)}
+                  onClick={() => deleteRole(id)}
                 >
                   Archive
                 </button>
@@ -164,10 +144,9 @@ class Roles extends React.Component<ViewProps, RolesState> {
    * Delete a table entry and archive it in the database
    * @param id - the entry's database primary key
    */
-  delete = (id: number): void => {
-
+  const deleteRole = (id: number): void => {
     // prepare the request
-    const body = { app: 1, id };  // Admin Dashboard = 1
+    const body = { app: 1, id }; // Admin Dashboard = 1
     const opts = { method: "POST", body: JSON.stringify(body) };
 
     // confirm deletion
@@ -175,38 +154,36 @@ class Roles extends React.Component<ViewProps, RolesState> {
 
     if (confirm(msg))
       makeRequest("/admin/role/archive", opts)
-        .then(this.handleSuccess)
-        .catch(this.handleFailure);
+        .then(handleSuccess)
+        .catch(handleFailure);
   };
 
   /**
    * Handle a successful response
    * @param res - the response body
    */
-  handleSuccess = (res: ResponseBody) => {
-    const { flashMessage } = this.props;
-
-    // show the loading screen
-    this.setState({ loading: true });
+  const handleSuccess = (res: ResponseBody) => {
     flashMessage(<span>{res.msg}</span>, "success");
 
+    // show the loading screen
+    setLoading(true);
+
     // refresh the table's data
-    makeRequest("/admin/role?app=1").then((roles) =>
-      this.setState({ roles, loading: false })
-    );
+    makeRequest("/admin/role?app=1").then((roles) => {
+      setRoles(roles);
+      setLoading(false);
+    });
   };
 
   /**
    * Handle a failed response
    * @param res - the response body
    */
-  handleFailure = (res: ResponseBody) => {
-    const { flashMessage } = this.props;
-
+  const handleFailure = (res: ResponseBody) => {
     // flash the message returned from the endpoint or "Internal server error"
     const msg = (
       <span>
-        <b>An unexpected error occured</b>
+        <b>An unexpected error occurred</b>
         <br />
         {res.msg ? res.msg : "Internal server error"}
       </span>
@@ -215,59 +192,54 @@ class Roles extends React.Component<ViewProps, RolesState> {
     flashMessage(msg, "danger");
   };
 
-  render() {
-    const { flashMessage, goBack, handleClick } = this.props;
-    const { canCreate, columns, loading } = this.state;
+  // if the user has permission to create, show the create button
+  const tableControl = canCreate ? (
+    <button
+      className="button-primary"
+      onClick={() =>
+        handleClick(
+          ["Create"],
+          <RolesEdit
+            roleId={0}
+            flashMessage={flashMessage}
+            goBack={goBack}
+            handleClick={handleClick}
+          />
+        )
+      }
+    >
+      Create&nbsp;<b>+</b>
+    </button>
+  ) : (
+    <></>
+  );
 
-    // if the user has permission to create, show the create button
-    const tableControl = canCreate ? (
-      <button
-        className="button-primary"
-        onClick={() =>
-          handleClick(
-            ["Create"],
-            <RolesEdit
-              roleId={0}
-              flashMessage={flashMessage}
-              goBack={goBack}
-              handleClick={handleClick}
-            />
-          )
-        }
-      >
-        Create&nbsp;<b>+</b>
-      </button>
-    ) : (
-      <React.Fragment />
-    );
-
-    return (
-      <div className="page-container">
-        <Navbar
-          active="Roles"
-          flashMessage={flashMessage}
-          goBack={goBack}
-          handleClick={handleClick}
-        />
-        <div className="page-content bg-white">
-          {loading ? (
-            <SmallLoader />
-          ) : (
-            <Table
-              columns={columns}
-              control={tableControl}
-              controlWidth={10}
-              data={this.getData()}
-              includeControl={true}
-              includeSearch={true}
-              paginationPer={10}
-              sortDefault=""
-            />
-          )}
-        </div>
+  return (
+    <div className="page-container">
+      <Navbar
+        active="Roles"
+        flashMessage={flashMessage}
+        goBack={goBack}
+        handleClick={handleClick}
+      />
+      <div className="page-content bg-white">
+        {loading ? (
+          <SmallLoader />
+        ) : (
+          <Table
+            columns={columns}
+            control={tableControl}
+            controlWidth={10}
+            data={getData()}
+            includeControl={true}
+            includeSearch={true}
+            paginationPer={10}
+            sortDefault=""
+          />
+        )}
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default Roles;

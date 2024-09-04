@@ -1,5 +1,4 @@
-import * as React from "react";
-import { Component } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./navbar";
 import Table, { Column, TableData } from "../table/table";
 import AccessGroupsEdit from "./accessGroupsEdit";
@@ -7,99 +6,82 @@ import { AccessGroup, ResponseBody, ViewProps } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 
-/**
- * canCreate: whether the user has permissions to create
- * canEdit: whether the user has permissions to edit
- * canArchive: whether the user permissions to archive
- * accessGroups: an array of rows to display in the table
- * columns: an array of columns to display in the table
- * loading: whether to display the loading screen
- */
-interface AccessGroupsState {
-  canCreate: boolean;
-  canEdit: boolean;
-  canArchive: boolean;
-  accessGroups: AccessGroup[];
-  columns: Column[];
-  loading: boolean;
-}
+const AccessGroups: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
+  // State
+  const [canCreate, setCanCreate] = useState(false);
+  const [canEdit, setCanEdit] = useState(false);
+  const [canArchive, setCanArchive] = useState(false);
+  const [accessGroups, setAccessGroups] = useState<AccessGroup[]>([]);
+  const [loading, setLoading] = useState(true);
 
-class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
-  state = {
-    canCreate: false,
-    canEdit: false,
-    canArchive: false,
-    accessGroups: [],
-    columns: [
-      {
-        name: "Name",
-        searchable: true,
-        sortable: true,
-        width: 20
-      },
-      {
-        name: "App",
-        searchable: true,
-        sortable: true,
-        width: 20
-      },
-      {
-        name: "Permissions",
-        searchable: false,
-        sortable: false,
-        width: 50
-      },
-      {
-        name: "",
-        searchable: false,
-        sortable: false,
-        width: 10
+  const columns: Column[] = [
+    {
+      name: "Name",
+      searchable: true,
+      sortable: true,
+      width: 20,
+    },
+    {
+      name: "App",
+      searchable: true,
+      sortable: true,
+      width: 20,
+    },
+    {
+      name: "Permissions",
+      searchable: false,
+      sortable: false,
+      width: 50,
+    },
+    {
+      name: "",
+      searchable: false,
+      sortable: false,
+      width: 10,
+    },
+  ];
+
+  useEffect(() => {
+    // Check user permissions and fetch data on component mount
+    const fetchData = async () => {
+      try {
+        await getAccess(1, "Create", "Access Groups");
+        setCanCreate(true);
+      } catch {
+        setCanCreate(false);
       }
-    ],
-    loading: true
-  };
 
-  async componentDidMount() {
+      try {
+        await getAccess(1, "Edit", "Access Groups");
+        setCanEdit(true);
+      } catch {
+        setCanEdit(false);
+      }
 
-    // check whether the user has permission to create
-    const create = getAccess(1, "Create", "Access Groups")
-      .then(() => this.setState({ canCreate: true }))
-      .catch(() => this.setState({ canCreate: false }));
+      try {
+        await getAccess(1, "Archive", "Access Groups");
+        setCanArchive(true);
+      } catch {
+        setCanArchive(false);
+      }
 
-    // check whether the user has permissions to edit
-    const edit = getAccess(1, "Edit", "Access Groups")
-      .then(() => this.setState({ canEdit: true }))
-      .catch(() => this.setState({ canEdit: false }));
+      try {
+        const accessGroups = await makeRequest("/admin/access-group?app=1");
+        setAccessGroups(accessGroups);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // check whether the user has permissions to archive
-    const archive = getAccess(1, "Archive", "Access Groups")
-      .then(() => this.setState({ canArchive: true }))
-      .catch(() => this.setState({ canArchive: false }));
+    fetchData();
+  }, []);
 
-    // get the table's data
-    const accessGroups = makeRequest("/admin/access-group?app=1").then(
-      (accessGroups) => this.setState({ accessGroups })
-    );
-
-    // when all requests are complete, hide the loading screen
-    Promise.all([create, edit, archive, accessGroups]).then(() =>
-      this.setState({ loading: false })
-    );
-  }
-
-  /**
-   * Get the table's contents
-   * @returns The table's contents, consisting of rows of table cells
-   */
-  getData = (): TableData[][] => {
-    const { flashMessage, goBack, handleClick } = this.props;
-    const { canEdit, canArchive, accessGroups } = this.state;
-
-    // iterate over the table's rows
+  const getData = (): TableData[][] => {
+    // Iterate over the table's rows
     return accessGroups.map((ag: AccessGroup) => {
       const { app, id, name, permissions } = ag;
 
-      // map each row to a set of cells for each table column
+      // Map each row to a set of cells for each table column
       return [
         {
           contents: (
@@ -108,7 +90,7 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
             </div>
           ),
           searchValue: name,
-          sortValue: name
+          sortValue: name,
         },
         {
           contents: (
@@ -117,7 +99,7 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
             </div>
           ),
           searchValue: app.name,
-          sortValue: app.name
+          sortValue: app.name,
         },
         {
           contents: (
@@ -135,7 +117,7 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
             </div>
           ),
           searchValue: "",
-          sortValue: ""
+          sortValue: "",
         },
         {
           contents: (
@@ -161,7 +143,7 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
               {canArchive ? (
                 <button
                   className="button-danger"
-                  onClick={() => this.delete(id)}
+                  onClick={() => deleteAccessGroup(id)}
                 >
                   Archive
                 </button>
@@ -169,59 +151,41 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
             </div>
           ),
           searchValue: "",
-          sortValue: ""
-        }
+          sortValue: "",
+        },
       ];
     });
   };
 
-  /**
-   * Delete a table entry and archive it in the database
-   * @param id - the entry's database primary key
-   */
-  delete = (id: number): void => {
-
-    // prepare the request
-    const body = { app: 1, id };  // Admin Dashboard = 1
+  const deleteAccessGroup = (id: number) => {
+    // Prepare the request
+    const body = { app: 1, id }; // Admin Dashboard = 1
     const opts = { method: "POST", body: JSON.stringify(body) };
 
-    // confirm deletion
+    // Confirm deletion
     const msg = "Are you sure you want to archive this access group?";
-
-    if (confirm(msg))
+    if (confirm(msg)) {
       makeRequest("/admin/access-group/archive", opts)
-        .then(this.handleSuccess)
-        .catch(this.handleFailure);
+        .then(handleSuccess)
+        .catch(handleFailure);
+    }
   };
 
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  handleSuccess = (res: ResponseBody) => {
-    const { flashMessage } = this.props;
-
-    // show the loading screen
-    this.setState({ loading: true });
+  const handleSuccess = (res: ResponseBody) => {
     flashMessage(<span>{res.msg}</span>, "success");
+    setLoading(true);
 
-    // refresh the table's data
-    makeRequest("/admin/access-group?app=1").then((accessGroups) =>
-      this.setState({ accessGroups, loading: false })
-    );
+    // Refresh the table's data
+    makeRequest("/admin/access-group?app=1").then((accessGroups) => {
+      setAccessGroups(accessGroups);
+      setLoading(false);
+    });
   };
 
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  handleFailure = (res: ResponseBody) => {
-    const { flashMessage } = this.props;
-
-    // flash the message returned from the endpoint or "Internal server error"
+  const handleFailure = (res: ResponseBody) => {
     const msg = (
       <span>
-        <b>An unexpected error occured</b>
+        <b>An unexpected error occurred</b>
         <br />
         {res.msg ? res.msg : "Internal server error"}
       </span>
@@ -230,59 +194,52 @@ class AccessGroups extends React.Component<ViewProps, AccessGroupsState> {
     flashMessage(msg, "danger");
   };
 
-  render() {
-    const { flashMessage, goBack, handleClick } = this.props;
-    const { canCreate, columns, loading } = this.state;
+  // If the user has permission to create, show the create button
+  const tableControl = canCreate ? (
+    <button
+      className="button-primary"
+      onClick={() =>
+        handleClick(
+          ["Create"],
+          <AccessGroupsEdit
+            accessGroupId={0}
+            flashMessage={flashMessage}
+            goBack={goBack}
+            handleClick={handleClick}
+          />
+        )
+      }
+    >
+      Create&nbsp;<b>+</b>
+    </button>
+  ) : <React.Fragment />;
 
-    // if the user has permission to create, show the create button
-    const tableControl = canCreate ? (
-      <button
-        className="button-primary"
-        onClick={() =>
-          handleClick(
-            ["Create"],
-            <AccessGroupsEdit
-              accessGroupId={0}
-              flashMessage={flashMessage}
-              goBack={goBack}
-              handleClick={handleClick}
-            />
-          )
-        }
-      >
-        Create&nbsp;<b>+</b>
-      </button>
-    ) : (
-      <React.Fragment />
-    );
-
-    return (
-      <div className="page-container">
-        <Navbar
-          handleClick={handleClick}
-          active="Access Groups"
-          flashMessage={flashMessage}
-          goBack={goBack}
-        />
-        <div className="page-content bg-white">
-          {loading ? (
-            <SmallLoader />
-          ) : (
-            <Table
-              columns={columns}
-              control={tableControl}
-              controlWidth={10}
-              data={this.getData()}
-              includeControl={true}
-              includeSearch={true}
-              paginationPer={10}
-              sortDefault=""
-            />
-          )}
-        </div>
+  return (
+    <div className="page-container">
+      <Navbar
+        handleClick={handleClick}
+        active="Access Groups"
+        flashMessage={flashMessage}
+        goBack={goBack}
+      />
+      <div className="page-content bg-white">
+        {loading ? (
+          <SmallLoader />
+        ) : (
+          <Table
+            columns={columns}
+            control={tableControl}
+            controlWidth={10}
+            data={getData()}
+            includeControl={true}
+            includeSearch={true}
+            paginationPer={10}
+            sortDefault=""
+          />
+        )}
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default AccessGroups;

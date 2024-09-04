@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Component } from "react";
 
 /**
  * data: the row's cells
@@ -8,26 +7,20 @@ interface TableRowProps {
   data: { contents: React.ReactElement; width: number }[];
 }
 
-// interface TableRowState {}
-
-class TableRow extends React.Component<TableRowProps, any> {
-  render() {
-    const { data } = this.props;
-
-    return (
-      <tr>
-        {data.map((cell, i) => (
-          <td
-            key={i}
-            className="border-light-t border-light-r"
-            style={{ width: cell.width + "%" }}
-          >
-            {cell.contents}
-          </td>
-        ))}
-      </tr>
-    );
-  }
-}
+const TableRow: React.FC<TableRowProps> = ({ data }) => {
+  return (
+    <tr>
+      {data.map((cell, i) => (
+        <td
+          key={i}
+          className="border-light-t border-light-r"
+          style={{ width: cell.width + "%" }}
+        >
+          {cell.contents}
+        </td>
+      ))}
+    </tr>
+  );
+};
 
 export default TableRow;

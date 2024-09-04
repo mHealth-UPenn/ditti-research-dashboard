@@ -1,19 +1,10 @@
-import * as React from "react";
-import { Component } from "react";
-import {
-  Study,
-  TapDetails,
-  User,
-  UserDetails,
-  ViewProps
-} from "../../interfaces";
-import { makeRequest } from "../../utils";
+import React, { useState, useEffect } from "react";
+import { Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
 import SubjectVisuals from "./subjectVisuals";
 import { dummyUsers } from "../dummyData";
-import { loadavg } from "os";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -26,26 +17,15 @@ interface StudySubjectsProps extends ViewProps {
   studyDetails: Study;
 }
 
-/**
- * users: all ditti app users that are enrolled in this study
- * loader: whether to show the loader
- */
-interface StudySubjectsState {
-  users: UserDetails[];
-  loading: boolean;
-}
+const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
+  const [users, setUsers] = useState<UserDetails[]>([]);
+  const [loading, setLoading] = useState(true);
 
-class StudySubjects extends React.Component<
-  StudySubjectsProps,
-  StudySubjectsState
-> {
-  state = { users: [], loading: true };
-
-  componentDidMount() {
-
+  useEffect(() => {
+    // For fetching users enrolled in the study
     // get all users that are enrolled in this study
     // makeRequest(
-    //   `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${this.props.studyPrefix}"`
+    //   `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${props.studyPrefix}"`
     // ).then((res: User[]) => {
 
     //   // map the user data to user details
@@ -60,24 +40,27 @@ class StudySubjects extends React.Component<
     //     };
     //   });
 
-    //   this.setState({ users, loading: false });
+    //   setUsers(users);
+    //   setLoading(false);
     // });
-    this.setState({ users: dummyUsers, loading: false });
-  }
+
+    // Using dummyUsers for this example
+    setUsers(dummyUsers);
+    setLoading(false);
+  }, [props.studyPrefix]);
 
   /**
    * Render recent summary tap data for a user
    * @param user 
    * @returns 
    */
-  getSubjectSummary = (user: UserDetails): React.ReactElement => {
-    const { flashMessage, getTaps, goBack, handleClick } = this.props;
+  const getSubjectSummary = (user: UserDetails): React.ReactElement => {
+    const { flashMessage, getTaps, goBack, handleClick } = props;
     let summaryTaps: React.ReactElement[];
     let hasTapsToday = false;
 
     // if the user has access to tapping
     if (user.tapPermission) {
-
       // for each day of the week
       summaryTaps = [6, 5, 4, 3, 2, 1, 0].map((i) => {
         const today = new Date(new Date().setHours(9, 0, 0, 0));
@@ -89,11 +72,11 @@ class StudySubjects extends React.Component<
         const end = add(start, { days: 1 });
 
         // get taps and filter for only taps between start and end
-        const taps = this.props
+        const taps = props
           .getTaps()
           .filter(
             (t) =>
-              t.dittiId == user.userPermissionId &&
+              t.dittiId === user.userPermissionId &&
               isWithinInterval(new Date(t.time), { start, end })
           ).length;
 
@@ -117,11 +100,11 @@ class StudySubjects extends React.Component<
 
       // get all taps starting from 7 days ago
       const start = sub(today, { days: 7 });
-      const totalTaps = this.props
+      const totalTaps = props
         .getTaps()
         .filter(
           (t) =>
-            t.dittiId == user.userPermissionId &&
+            t.dittiId === user.userPermissionId &&
             isWithinInterval(new Date(t.time), { start, end: new Date() })
         ).length;
 
@@ -151,7 +134,6 @@ class StudySubjects extends React.Component<
         key={user.userPermissionId}
         className="subject-summary border-light-b"
       >
-
         {/* active tapping icon */}
         <div
           className={"icon " + (hasTapsToday ? "icon-success" : "icon-gray")}
@@ -169,7 +151,7 @@ class StudySubjects extends React.Component<
                   getTaps={getTaps}
                   goBack={goBack}
                   handleClick={handleClick}
-                  studyDetails={this.props.studyDetails}
+                  studyDetails={props.studyDetails}
                   user={user}
                 />
               )
@@ -190,24 +172,18 @@ class StudySubjects extends React.Component<
     );
   };
 
-  render() {
-    const { users, loading } = this.state;
+  // all users whose ids have not expired
+  const activeUsers = users.filter(
+    (u: UserDetails) => new Date() < new Date(u.expTime)
+  );
 
-    // all users whose ids have not expired
-    const activeUsers = users.filter(
-      (u: UserDetails) => new Date() < new Date(u.expTime)
-    );
-
-    return loading ? (
-      <SmallLoader />
-    ) : (
-      <React.Fragment>
-        {activeUsers.length
-          ? activeUsers.map(this.getSubjectSummary)
-          : "No active subjects"}
-      </React.Fragment>
-    );
-  }
-}
+  return loading ? (
+    <SmallLoader />
+  ) : (
+    <React.Fragment>
+      {activeUsers.length ? activeUsers.map(getSubjectSummary) : "No active subjects"}
+    </React.Fragment>
+  );
+};
 
 export default StudySubjects;

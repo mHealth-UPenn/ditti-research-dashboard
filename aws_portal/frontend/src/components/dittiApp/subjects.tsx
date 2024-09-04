@@ -1,5 +1,4 @@
-import * as React from "react";
-import { Component } from "react";
+import React, { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { getAccess, makeRequest } from "../../utils";
@@ -23,94 +22,74 @@ interface SubjectsProps extends ViewProps {
   getTaps: () => TapDetails[];
 }
 
-/**
- * canCreate: whether the current user can enroll subjects
- * canEdit: whether the current user can edit subjects
- * users: the rows of the subjects table
- * columns: the columns of the subjects table
- * loading: whether to show the loader
- */
-interface SubjectsState {
-  canCreate: boolean;
-  canEdit: boolean;
-  users: User[];
-  columns: Column[];
-  loading: boolean;
-}
+const Subjects: React.FC<SubjectsProps> = (props) => {
+  const [canCreate, setCanCreate] = useState<boolean>(false);
+  const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
-class Subjects extends React.Component<SubjectsProps, SubjectsState> {
-  state = {
-    canCreate: false,
-    canEdit: false,
-    users: [],
-    columns: [
-      {
-        name: "Ditti ID",
-        searchable: true,
-        sortable: true,
-        width: 15
-      },
-      {
-        name: "Expires On",
-        searchable: false,
-        sortable: true,
-        width: 30
-      },
-      {
-        name: "Created On",
-        searchable: false,
-        sortable: true,
-        width: 30
-      },
-      {
-        name: "Tapping Access",
-        searchable: false,
-        sortable: true,
-        width: 15
-      },
-      {
-        name: "",
-        searchable: false,
-        sortable: false,
-        width: 10
-      }
-    ],
-    loading: true
-  };
+  const columns: Column[] = [
+    {
+      name: "Ditti ID",
+      searchable: true,
+      sortable: true,
+      width: 15
+    },
+    {
+      name: "Expires On",
+      searchable: false,
+      sortable: true,
+      width: 30
+    },
+    {
+      name: "Created On",
+      searchable: false,
+      sortable: true,
+      width: 30
+    },
+    {
+      name: "Tapping Access",
+      searchable: false,
+      sortable: true,
+      width: 15
+    },
+    {
+      name: "",
+      searchable: false,
+      sortable: false,
+      width: 10
+    }
+  ];
 
-  componentDidMount() {
-    const { dittiId, id } = this.props.studyDetails;
+  useEffect(() => {
+    const { dittiId, id } = props.studyDetails;
 
     // get whether the user can enroll subjects
     const create = getAccess(2, "Create", "Users", id)
-      .then(() => this.setState({ canCreate: true }))
-      .catch(() => this.setState({ canCreate: false }));
+      .then(() => setCanCreate(true))
+      .catch(() => setCanCreate(false));
 
     // get whether the user can edit subjects
     const edit = getAccess(2, "Edit", "Users", id)
-      .then(() => this.setState({ canEdit: true }))
-      .catch(() => this.setState({ canEdit: false }));
+      .then(() => setCanEdit(true))
+      .catch(() => setCanEdit(false));
 
     // get all of the study's users
     const url = `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${dittiId}"`;
-    const users = makeRequest(url).then((users: User[]) =>
-      this.setState({ users })
-    );
+    const usersRequest = makeRequest(url).then((users: User[]) => setUsers(users));
 
     // when all promises complete, hide the loader
-    Promise.all([create, edit, users]).then(() =>
-      this.setState({ loading: false })
-    );
-  }
+    Promise.all([create, edit, usersRequest]).then(() => setLoading(false));
+
+  }, [props.studyDetails]);
 
   /**
    * Get the data for the subjects table
    * @returns - The table's contents, consisting of rows of table cells
    */
-  getData = (): TableData[][] => {
-    const { flashMessage, goBack, handleClick, getTaps } = this.props;
-    const { id, dittiId, email } = this.props.studyDetails;
-    const { canEdit, users } = this.state;
+  const getData = (): TableData[][] => {
+    const { flashMessage, goBack, handleClick, getTaps } = props;
+    const { id, dittiId, email } = props.studyDetails;
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
       month: "short",
@@ -155,7 +134,7 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
                         getTaps={getTaps}
                         goBack={goBack}
                         handleClick={handleClick}
-                        studyDetails={this.props.studyDetails}
+                        studyDetails={props.studyDetails}
                         user={user}
                       />
                     )
@@ -237,57 +216,54 @@ class Subjects extends React.Component<SubjectsProps, SubjectsState> {
     });
   };
 
-  render() {
-    const { flashMessage, goBack, handleClick } = this.props;
-    const { id, dittiId, email } = this.props.studyDetails;
-    const { canCreate, columns, loading } = this.state;
+  const { flashMessage, goBack, handleClick } = props;
+  const { id, dittiId, email } = props.studyDetails;
 
-    // if the user can enroll subjects, include an enroll button
-    const tableControl = canCreate ? (
-      <button
-        className="button-primary"
-        onClick={() =>
-          handleClick(
-            ["Create"],
-            <SubjectsEdit
-              dittiId=""
-              studyId={id}
-              studyEmail={email}
-              studyPrefix={dittiId}
-              flashMessage={flashMessage}
-              goBack={goBack}
-              handleClick={handleClick}
-            />
-          )
-        }
-      >
-        Create&nbsp;<b>+</b>
-      </button>
-    ) : (
-      <React.Fragment />
-    );
+  // if the user can enroll subjects, include an enroll button
+  const tableControl = canCreate ? (
+    <button
+      className="button-primary"
+      onClick={() =>
+        handleClick(
+          ["Create"],
+          <SubjectsEdit
+            dittiId=""
+            studyId={id}
+            studyEmail={email}
+            studyPrefix={dittiId}
+            flashMessage={flashMessage}
+            goBack={goBack}
+            handleClick={handleClick}
+          />
+        )
+      }
+    >
+      Create&nbsp;<b>+</b>
+    </button>
+  ) : (
+    <React.Fragment />
+  );
 
-    return (
-      <div className="page-container">
-        <div className="page-content bg-white">
-          {loading ? (
-            <SmallLoader />
-          ) : (
-            <Table
-              columns={columns}
-              control={tableControl}
-              controlWidth={10}
-              data={this.getData()}
-              includeControl={true}
-              includeSearch={true}
-              paginationPer={10}
-              sortDefault=""
-            />
-          )}
-        </div>
+  return (
+    <div className="page-container">
+      <div className="page-content bg-white">
+        {loading ? (
+          <SmallLoader />
+        ) : (
+          <Table
+            columns={columns}
+            control={tableControl}
+            controlWidth={10}
+            data={getData()}
+            includeControl={true}
+            includeSearch={true}
+            paginationPer={10}
+            sortDefault=""
+          />
+        )}
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default Subjects;

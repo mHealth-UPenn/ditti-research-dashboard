@@ -1,5 +1,4 @@
-import * as React from "react";
-import { Component } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import TextField from "../fields/textField";
 import SubjectsEdit from "./subjectsEdit";
@@ -44,59 +43,36 @@ interface SubjectVisualsProps extends ViewProps {
   user: UserDetails;
 }
 
-/**
- * canEdit: whether the user can edit subjects
- * start: the start time of the display
- * stop: the stop time of the display
- * taps: taps to display
- * bouts: bouts to display
- * loading: whether to show the loader
- */
-interface SubjectVisualsState {
-  canEdit: boolean;
-  start: Date;
-  stop: Date;
-  taps: TapDetails[];
-  bouts: Bout[];
-  loading: boolean;
-}
+const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
+  getTaps,
+  studyDetails,
+  user,
+  flashMessage,
+  goBack,
+  handleClick
+}) => {
+  const [canEdit, setCanEdit] = useState(false);
+  const [start, setStart] = useState(sub(new Date(new Date().setHours(9, 0, 0, 0)), { hours: 24 }));
+  const [stop, setStop] = useState(new Date(new Date().setHours(9, 0, 0, 0)));
+  const [taps, setTaps] = useState(() => getTaps().filter((t) => t.dittiId === user.userPermissionId));
+  const [bouts, setBouts] = useState<Bout[]>([]);
+  const [loading, setLoading] = useState(true);
 
-class SubjectVisuals extends React.Component<
-  SubjectVisualsProps,
-  SubjectVisualsState
-> {
-  constructor(props: SubjectVisualsProps) {
-    super(props);
-    const { userPermissionId } = props.user;
+  useEffect(() => {
+    setBouts(getBouts(taps));
 
-    // get this subject's taps only
-    const taps = props.getTaps().filter((t) => t.dittiId == userPermissionId);
+    getAccess(2, "Edit", "Users", studyDetails.id)
+      .then(() => {
+        setCanEdit(true);
+        setLoading(false);
+      })
+      .catch(() => {
+        setCanEdit(false);
+        setLoading(false);
+      });
+  }, [studyDetails.id, taps]);
 
-    // start from 9am yesterday to 9am today
-    this.state = {
-      canEdit: false,
-      start: sub(new Date(new Date().setHours(9, 0, 0, 0)), { hours: 24 }),
-      stop: new Date(new Date().setHours(9, 0, 0, 0)),
-      taps: taps,
-      bouts: this.getBouts(taps),
-      loading: true
-    };
-  }
-
-  componentDidMount() {
-
-    // get whether the user can edit subjects then hide the loader
-    getAccess(2, "Edit", "Users", this.props.studyDetails.id)
-      .then(() => this.setState({ canEdit: true, loading: false }))
-      .catch(() => this.setState({ canEdit: false, loading: false }));
-  }
-
-  /**
-   * Get all bouts from a set of taps
-   * @param taps - the taps to calculate bouts for
-   * @returns - the bouts for this set of taps
-   */
-  getBouts = (taps: TapDetails[]): Bout[] => {
+  const getBouts = (taps: TapDetails[]): Bout[] => {
     const bouts: Bout[] = [];
     let first: Date;
     let current: Date;
@@ -170,15 +146,12 @@ class SubjectVisuals extends React.Component<
     return bouts;
   };
 
-  /**
-   * Download all of the subject's data as excel
-   */
-  downloadExcel = async (): Promise<void> => {
+  const downloadExcel = async (): Promise<void> => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
-    const id = this.props.user.userPermissionId;
+    const id = user.userPermissionId;
     const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
-    const data = this.state.taps.map((t) => {
+    const data = taps.map((t) => {
 
       // localize tap timestamps
       const time = t.time.getTime() - t.time.getTimezoneOffset() * 60000;
@@ -198,84 +171,52 @@ class SubjectVisuals extends React.Component<
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       });
 
-      // dowload the excel file
+      // download the excel file
       saveAs(blob, fileName + ".xlsx");
     });
   };
 
-  /**
-   * Move the display left by 1/6 of the current time window. For example, if
-   * the current time window is 60 minutes, the move left by 10 minutes.
-   */
-  decrement = (): void => {
-    let { start, stop } = this.state;
+  const decrement = (): void => {
     const difference = differenceInMinutes(stop, start);
 
-    start = sub(start, { minutes: difference / 6 });
-    stop = sub(stop, { minutes: difference / 6 });
-    this.setState({ start, stop });
+    setStart(sub(start, { minutes: difference / 6 }));
+    setStop(sub(stop, { minutes: difference / 6 }));
   };
 
-  /**
-   * Move the display right by 1/6 of the current time window. For example, if
-   * the current time window is 60 minutes, the move right by 10 minutes.
-   */
-  increment = (): void => {
-    let { start, stop } = this.state;
+  const increment = (): void => {
     const difference = differenceInMinutes(stop, start);
 
-    start = add(start, { minutes: difference / 6 });
-    stop = add(stop, { minutes: difference / 6 });
-    this.setState({ start, stop });
+    setStart(add(start, { minutes: difference / 6 }));
+    setStop(add(stop, { minutes: difference / 6 }));
   };
 
-  /**
-   * Set the start time of the display window
-   * @param text - output from an HTML5 date field
-   */
-  setStart = (text: string) => {
-    if (new Date(text) && new Date(text) < sub(this.state.stop, { hours: 1 }))
-      this.setState({ start: new Date(text) });
+  const updateStart = (text: string): void => {
+    const newStart = new Date(text);
+    if (newStart && newStart < sub(stop, { hours: 1 })) {
+      setStart(new Date(text));
+    }
   };
 
-  /**
-   * Set the stop time of the display window
-   * @param text - output from an HTML5 date field
-   */
-  setStop = (text: string) => {
-    if (new Date(text) && new Date(text) > add(this.state.start, { hours: 1 }))
-      this.setState({ stop: new Date(text) });
+  const updateStop = (text: string): void => {
+    const newStop = new Date(text);
+    if (newStop && newStop > add(start, { hours: 1 })) {
+      setStop(new Date(text));
+    }
   };
 
-  /**
-   * Decrease the window size by two hours, one hour on each side. If the
-   * resulting window size is 60 minutes or less, don't zoom in
-   */
-  zoomIn = (): void => {
-    let { start, stop } = this.state;
-
-    start = add(start, { hours: 1 });
-    stop = sub(stop, { hours: 1 });
-    if (differenceInMinutes(stop, start) > 60) this.setState({ start, stop });
+  const zoomIn = (): void => {
+    if (differenceInMinutes(stop, start) > 60) {
+      setStart(add(start, { hours: 1 }));
+      setStop(sub(stop, { hours: 1 }));
+    }
   };
 
-  /**
-   * Increase the window size by two hours, one hour on each side
-   */
-  zoomOut = (): void => {
-    let { start, stop } = this.state;
-
-    start = sub(start, { hours: 1 });
-    stop = add(stop, { hours: 1 });
-    this.setState({ start, stop });
+  const zoomOut = (): void => {
+    setStart(sub(start, { hours: 1 }));
+    setStop(add(stop, { hours: 1 }));
   };
 
-  /**
-   * Render the taps display
-   * @returns - the taps display
-   */
-  getTapsDisplay = (): React.ReactElement => {
-    const { start, stop, taps } = this.state;
+  const getTapsDisplay = (): React.ReactElement => {
     const difference = differenceInMinutes(stop, start);
 
     // get all taps that are within the time window
@@ -320,7 +261,7 @@ class SubjectVisuals extends React.Component<
       );
     });
 
-    // to mody assign the spacing required to render 10 evenly-spaced ticks
+    // to modify assign the spacing required to render 10 evenly-spaced ticks
     const mody = Math.ceil(maxTaps / 10);
     const yTicks: { count: number; height: string }[] = [];
 
@@ -334,7 +275,7 @@ class SubjectVisuals extends React.Component<
         const last = yTicks[yTicks.length - 1];
         const height = maxTaps ? (i / maxTaps) * 100 + "%" : "100%";
         const tick = { count: i, height };
-        if (!last || i != last.count) yTicks.push(tick);
+        if (!last || i !== last.count) yTicks.push(tick);
       });
 
     // render the y-axis ticks
@@ -373,22 +314,20 @@ class SubjectVisuals extends React.Component<
         const time = groups[ix].start;
         const last = xTicks[xTicks.length - 1];
         const tick = { time, width: (ix / groups.length) * 100 + "%" };
-        if (!last || time != last.time) xTicks.push(tick);
+        if (!last || time !== last.time) xTicks.push(tick);
       });
 
     // render the x-axis ticks
     const xTickElems = xTicks.map((xt, i) => {
       return (
-        <React.Fragment>
+        <React.Fragment key={i}>
           <div
-            key={i}
             className="border-dark-r x-axis-tick"
             style={{
               left: `calc(${xt.width} - 1px)`
             }}
           ></div>
           <div
-            key={i + "label"}
             className="x-axis-tick-label"
             style={{
               left: `calc(${xt.width} - 0.5rem)`
@@ -411,9 +350,9 @@ class SubjectVisuals extends React.Component<
         if (i % 20) return;
         const last = hLines[hLines.length - 1];
 
-        // the lines position on the display
+        // the line's position on the display
         const height = maxTaps ? (i / maxTaps) * 100 + "%" : "100%";
-        if (!last || height != last) hLines.push(height);
+        if (!last || height !== last) hLines.push(height);
       });
 
     // render the horizontal lines
@@ -464,7 +403,7 @@ class SubjectVisuals extends React.Component<
             <div>{yTickElems}</div>
           </div>
 
-          {/* the dispaly */}
+          {/* the display */}
           <div
             className="taps-display border-dark"
             style={{ position: "relative" }}
@@ -489,21 +428,16 @@ class SubjectVisuals extends React.Component<
     );
   };
 
-  /**
-   * Render the bouts display
-   * @returns - the bouts display
-   */
-  getBoutsDisplay = (): React.ReactElement => {
-    const { start, stop } = this.state;
+  const getBoutsDisplay = (): React.ReactElement => {
     const difference = differenceInMilliseconds(stop, start);
 
     // get all bouts that are within the time window
-    const bouts = this.state.bouts.filter(
+    const boutsFiltered = bouts.filter(
       (b) => start < b.stop && b.start < stop
     );
 
     // render the shaded bouts in the bouts display
-    const boutElems = bouts.map((b) => {
+    const boutElems = boutsFiltered.map((b, index) => {
 
       // if the bout starts after the start of the time window, find its
       // starting position as a percentage of the bouts display
@@ -520,6 +454,7 @@ class SubjectVisuals extends React.Component<
           : 100 - left;
       return (
         <div
+          key={index}
           className="bout bg-dark"
           style={{ left: left + "%", width: `calc(${width + "%"} - 1rem)` }}
         >
@@ -551,163 +486,155 @@ class SubjectVisuals extends React.Component<
     );
   };
 
-  render() {
-    const { flashMessage, goBack, handleClick, studyDetails } = this.props;
-    const { userPermissionId, expTime } = this.props.user;
-    const { canEdit, start, stop, loading } = this.state;
+  const adjustedStart = new Date(
+    start.getTime() - start.getTimezoneOffset() * 60000
+  );
 
-    // localize the start and stop times for display purposes
-    const adjustedStart = new Date(
-      start.getTime() - start.getTimezoneOffset() * 60000
-    );
+  const adjustedStop = new Date(
+    stop.getTime() - stop.getTimezoneOffset() * 60000
+  );
 
-    const adjustedStop = new Date(
-      stop.getTime() - stop.getTimezoneOffset() * 60000
-    );
+  const expTimeDate = new Date(user.expTime);
+  const expTimeAdjusted = new Date(
+    expTimeDate.getTime() - expTimeDate.getTimezoneOffset() * 60000
+  );
 
-    // localize the subject's expiry date
-    const expTimeDate = new Date(expTime);
-    const expTimeAdjusted = new Date(
-      expTimeDate.getTime() - expTimeDate.getTimezoneOffset() * 60000
-    );
+  const dateOpts = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  };
 
-    const dateOpts = {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
-    };
+  const expTimeFormatted = expTimeAdjusted.toLocaleDateString(
+    "en-US",
+    dateOpts as Intl.DateTimeFormatOptions
+  );
 
-    const expTimeFormatted = expTimeAdjusted.toLocaleDateString(
-      "en-US",
-      dateOpts as Intl.DateTimeFormatOptions
-    );
+  return (
+    <div className="card-container">
+      <div className="card-row">
+        <div className="card-l bg-white shadow">
+          {loading ? (
+            <SmallLoader />
+          ) : (
+            <React.Fragment>
 
-    return (
-      <div className="card-container">
-        <div className="card-row">
-          <div className="card-l bg-white shadow">
-            {loading ? (
-              <SmallLoader />
-            ) : (
-              <React.Fragment>
+              {/* the subject's details */}
+              <div className="subject-header">
+                <div className="card-title flex-space">
+                  <span>{user.userPermissionId}</span>
 
-                {/* the subject's details */}
-                <div className="subject-header">
-                  <div className="card-title flex-space">
-                    <span>{userPermissionId}</span>
+                  {/* download the subject's data as excel */}
+                  <button
+                    className="button-primary button-lg"
+                    style={{ width: "12rem" }}
+                    onClick={downloadExcel}
+                  >
+                    Download Excel
+                  </button>
+                </div>
+                <div className="subject-header-info">
+                  <div>
+                    Expires on: <b>{expTimeFormatted}</b>
+                  </div>
 
-                    {/* download the subject's data as excel */}
+                  {/* if the user can edit, show the edit button */}
+                  {canEdit ? (
                     <button
-                      className="button-primary button-lg"
+                      className="button-secondary button-lg"
+                      onClick={() =>
+                        handleClick(
+                          ["Edit"],
+                          <SubjectsEdit
+                            dittiId={user.userPermissionId}
+                            studyId={studyDetails.id}
+                            studyEmail={studyDetails.email}
+                            studyPrefix={studyDetails.dittiId}
+                            flashMessage={flashMessage}
+                            goBack={goBack}
+                            handleClick={handleClick}
+                          />
+                        )
+                      }
                       style={{ width: "12rem" }}
-                      onClick={this.downloadExcel}
                     >
-                      Download Excel
+                      Edit Details
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+
+              {/* the display and controls */}
+              <div className="subject-display-container">
+                <div className="subject-display-title">Visual Summary</div>
+
+                {/* display controls */}
+                <div className="subject-display-controls">
+                  
+                  {/* control the start time */}
+                  <div className="subject-display-field">
+                    <span>Start:</span>
+                    <TextField
+                      type="datetime-local"
+                      value={adjustedStart.toISOString().substring(0, 16)}
+                      onKeyup={updateStart}
+                    />
+                  </div>
+
+                  {/* control the end time */}
+                  <div className="subject-display-field">
+                    <span>Stop:</span>
+                    <TextField
+                      type="datetime-local"
+                      value={adjustedStop.toISOString().substring(0, 16)}
+                      onKeyup={updateStop}
+                    />
+                  </div>
+
+                  {/* move and zoom the window */}
+                  <div className="subject-display-buttons">
+                    <button
+                      className="button-secondary"
+                      onClick={decrement}
+                    >
+                      <Left />
+                    </button>
+                    <button
+                      className="button-secondary"
+                      onClick={increment}
+                    >
+                      <Right />
+                    </button>
+                    <button
+                      className="button-secondary"
+                      onClick={zoomIn}
+                      disabled={differenceInMinutes(stop, start) < 180}
+                    >
+                      <ZoomIn style={{ height: "66%", margin: "auto" }} />
+                    </button>
+                    <button
+                      className="button-secondary"
+                      onClick={zoomOut}
+                    >
+                      <ZoomOut style={{ height: "66%", margin: "auto" }} />
                     </button>
                   </div>
-                  <div className="subject-header-info">
-                    <div>
-                      Expires on: <b>{expTimeFormatted}</b>
-                    </div>
-
-                    {/* if the user can edit, show the edit button */}
-                    {canEdit ? (
-                      <button
-                        className="button-secondary button-lg"
-                        onClick={() =>
-                          handleClick(
-                            ["Edit"],
-                            <SubjectsEdit
-                              dittiId={userPermissionId}
-                              studyId={studyDetails.id}
-                              studyEmail={studyDetails.email}
-                              studyPrefix={studyDetails.dittiId}
-                              flashMessage={flashMessage}
-                              goBack={goBack}
-                              handleClick={handleClick}
-                            />
-                          )
-                        }
-                        style={{ width: "12rem" }}
-                      >
-                        Edit Details
-                      </button>
-                    ) : null}
-                  </div>
                 </div>
 
-                {/* the display and controls */}
-                <div className="subject-display-container">
-                  <div className="subject-display-title">Visual Summary</div>
-
-                  {/* display controls */}
-                  <div className="subject-display-controls">
-                    
-                    {/* control the start time */}
-                    <div className="subject-display-field">
-                      <span>Start:</span>
-                      <TextField
-                        type="datetime-local"
-                        value={adjustedStart.toISOString().substring(0, 16)}
-                        onKeyup={this.setStart}
-                      />
-                    </div>
-
-                    {/* control the end time */}
-                    <div className="subject-display-field">
-                      <span>Stop:</span>
-                      <TextField
-                        type="datetime-local"
-                        value={adjustedStop.toISOString().substring(0, 16)}
-                        onKeyup={this.setStop}
-                      />
-                    </div>
-
-                    {/* move and zoom the window */}
-                    <div className="subject-display-buttons">
-                      <button
-                        className="button-secondary"
-                        onClick={this.decrement}
-                      >
-                        <Left />
-                      </button>
-                      <button
-                        className="button-secondary"
-                        onClick={this.increment}
-                      >
-                        <Right />
-                      </button>
-                      <button
-                        className="button-secondary"
-                        onClick={this.zoomIn}
-                        disabled={differenceInMinutes(stop, start) < 180}
-                      >
-                        <ZoomIn style={{ height: "66%", margin: "auto" }} />
-                      </button>
-                      <button
-                        className="button-secondary"
-                        onClick={this.zoomOut}
-                      >
-                        <ZoomOut style={{ height: "66%", margin: "auto" }} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* the taps and bouts displays */}
-                  <div className="subject-display">
-                    {this.getTapsDisplay()}
-                    {this.getBoutsDisplay()}
-                  </div>
+                {/* the taps and bouts displays */}
+                <div className="subject-display">
+                  {getTapsDisplay()}
+                  {getBoutsDisplay()}
                 </div>
-              </React.Fragment>
-            )}
-          </div>
+              </div>
+            </React.Fragment>
+          )}
         </div>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default SubjectVisuals;

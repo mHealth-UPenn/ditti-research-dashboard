@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Component } from "react";
+import { useState, useEffect } from "react";
 import "./select.css";
 
 /**
@@ -17,68 +17,54 @@ interface SelectProps {
   getDefault: (id: number) => number;
 }
 
-/**
- * value: the string to display as the selected option
- */
-interface SelectState {
-  value: string;
-}
+const Select: React.FC<SelectProps> = ({ id, opts, placeholder, callback, getDefault }) => {
+  const [value, setValue] = useState<string>("");
 
-export default class Select extends React.Component<SelectProps, SelectState> {
-  constructor(props: SelectProps) {
-    super(props);
-
-    // set the default value
-    this.state = {
-      value: String(props.getDefault(props.id))
-    };
-  }
+  // set the default value
+  useEffect(() => {
+    setValue(String(getDefault(id)));
+  }, [getDefault, id]);
 
   /**
    * Change the displayed value when an option is selected and call the
    * callback function
    * @param e - the select field's change event
    */
-  changeValue = (e: React.ChangeEvent<HTMLSelectElement>): void => {
-    const { callback, id } = this.props;
+  const changeValue = (e: React.ChangeEvent<HTMLSelectElement>): void => {
     const value = e.target.value;
-    this.setState({ value }, () => callback(parseInt(value), id));
+    setValue(value);
+    callback(parseInt(value), id);
   };
 
-  render() {
-    let { opts } = this.props;
-    const { placeholder } = this.props;
-    const { value } = this.state;
+  // always start with a blank option
+  const updatedOpts = [{ value: 0, label: "" }].concat(opts);
 
-    // always start with a blank option
-    opts = [{ value: 0, label: "" }].concat(opts);
-
-    return (
-      <div
-        style={{
-          alignItems: "center",
-          display: "flex",
-          flexGrow: 1,
-          position: "relative"
-        }}
+  return (
+    <div
+      style={{
+        alignItems: "center",
+        display: "flex",
+        flexGrow: 1,
+        position: "relative"
+      }}
+    >
+      {/* if the blank option is selected, show the placeholder */}
+      {value === "0" && (
+        <div className="select-placeholder">{placeholder}</div>
+      )}
+      <select
+        onChange={changeValue}
+        value={value}
+        style={{ minHeight: "calc(3rem - 2px)" }}
       >
+        {updatedOpts.map((opt, i) => (
+          <option key={i} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+};
 
-        {/* if the blank option is selected, show the placeholder */}
-        {value === "0" ? (
-          <div className="select-placeholder">{placeholder}</div>
-        ) : null}
-        <select
-          onChange={this.changeValue}
-          value={value}
-          style={{ minHeight: "calc(3rem - 2px)" }}
-        >
-          {opts.map((opt, i) => (
-            <option key={i} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-}
+export default Select;

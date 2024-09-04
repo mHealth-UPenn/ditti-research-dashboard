@@ -1,5 +1,4 @@
-import * as React from "react";
-import { Component } from "react";
+import React, { useState, useEffect } from "react";
 import TextField from "../fields/textField";
 import Select from "../fields/select";
 import {
@@ -28,60 +27,47 @@ interface RolesEditProps extends ViewProps {
   roleId: number;
 }
 
-/**
- * actions: all available actions for selection
- * resources: all available resources for selection
- * loading: whether to show the loader
- */
-interface RolesEditState extends RolesPrefill {
-  actions: ActionResource[];
-  resources: ActionResource[];
-  loading: boolean;
-}
+const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) => {
+  const [actions, setActions] = useState<ActionResource[]>([]);
+  const [resources, setResources] = useState<ActionResource[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [name, setName] = useState<string>("");
+  const [permissions, setPermissions] = useState<Permission[]>([]);
 
-class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
-  state = {
-    actions: [],
-    resources: [],
-    loading: true,
-    name: "",
-    permissions: []
-  };
-
-  componentDidMount() {
+  useEffect(() => {
 
     // get all available actions
-    const actions = makeRequest("/admin/action?app=1").then(
-      (actions: ActionResource[]) => this.setState({ actions })
+    const fetchActions = makeRequest("/admin/action?app=1").then(
+      (actions: ActionResource[]) => setActions(actions)
     );
 
     // get all available resources
-    const resources = makeRequest("/admin/resource?app=1").then(
-      (resources: ActionResource[]) => this.setState({ resources })
+    const fetchResources = makeRequest("/admin/resource?app=1").then(
+      (resources: ActionResource[]) => setResources(resources)
     );
 
     // set any form prefill data
-    const prefill = this.getPrefill().then((prefill: RolesPrefill) =>
-      this.setState({ ...prefill })
-    );
+    const prefill = getPrefill().then((prefill: RolesPrefill) => {
+      setName(prefill.name);
+      setPermissions(prefill.permissions);
+    });
 
     // when all promises are complete, hide the loader
-    Promise.all([actions, resources, prefill]).then(() => {
-      if (!this.state.permissions) this.addPermission();
-      this.setState({ loading: false });
+    Promise.all([fetchActions, fetchResources, prefill]).then(() => {
+      setLoading(false);
     });
-  }
+  }, []);
 
   /**
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  getPrefill = async (): Promise<RolesPrefill> => {
-    const id = this.props.roleId;
+  const getPrefill = async (): Promise<RolesPrefill> => {
+    const id = roleId;
 
     // if editing an existing entry, return prefill data, else return empty data
     return id
-      ? makeRequest("/admin/role?app=1&id=" + id).then(this.makePrefill)
+      ? makeRequest("/admin/role?app=1&id=" + id).then(makePrefill)
       : { name: "", permissions: [] };
   };
 
@@ -90,7 +76,7 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
    * @param res - the response body
    * @returns - the form prefill data
    */
-  makePrefill = (res: Role[]): RolesPrefill => {
+  const makePrefill = (res: Role[]): RolesPrefill => {
     const role = res[0];
 
     return {
@@ -103,47 +89,45 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
    * Get the action and resource dropdown menus for each permission
    * @returns - the permission fields
    */
-  getPermissionFields = (): React.ReactElement => {
-    const { actions, resources, permissions } = this.state;
-
+  const getPermissionFields = (): React.ReactElement => {
     return (
       <React.Fragment>
-        {permissions.map((p: Permission) => {
-          return (
-            <div key={p.id} className="admin-form-row">
-              <div className="admin-form-field border-light">
-                <Select
-                  id={p.id}
-                  opts={actions.map((a: ActionResource) => {
-                    return { value: a.id, label: a.value };
-                  })}
-                  placeholder="Action"
-                  callback={this.selectAction}
-                  getDefault={this.getSelectedAction}
-                />
-              </div>
-              <div className="admin-form-field border-light">
-                <Select
-                  id={p.id}
-                  opts={resources.map((r: ActionResource) => {
-                    return { value: r.id, label: r.value };
-                  })}
-                  placeholder="Permission"
-                  callback={this.selectResource}
-                  getDefault={this.getSelectedResource}
-                />
-              </div>
-              <div className="admin-form-field" style={{ flexGrow: 0 }}>
-                <button
-                  className="button-secondary button-lg"
-                  onClick={() => this.removePermission(p.id)}
-                >
-                  Remove
-                </button>
-              </div>
+        {permissions.map((p: Permission) => (
+          <div key={p.id} className="admin-form-row">
+            <div className="admin-form-field border-light">
+              <Select
+                id={p.id}
+                opts={actions.map((a: ActionResource) => ({
+                  value: a.id,
+                  label: a.value
+                }))}
+                placeholder="Action"
+                callback={selectAction}
+                getDefault={getSelectedAction}
+              />
             </div>
-          );
-        })}
+            <div className="admin-form-field border-light">
+              <Select
+                id={p.id}
+                opts={resources.map((r: ActionResource) => ({
+                  value: r.id,
+                  label: r.value
+                }))}
+                placeholder="Permission"
+                callback={selectResource}
+                getDefault={getSelectedResource}
+              />
+            </div>
+            <div className="admin-form-field" style={{ flexGrow: 0 }}>
+              <button
+                className="button-secondary button-lg"
+                onClick={() => removePermission(p.id)}
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
       </React.Fragment>
     );
   };
@@ -151,29 +135,17 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
   /**
    * Add a new permission and pair of action and resource dropdown menus
    */
-  addPermission = (): void => {
-    const permissions: Permission[] = this.state.permissions;
-
-    // set the key to 0 or the last field's id + 1
-    const id = permissions.length
-      ? permissions[permissions.length - 1].id + 1
-      : 0;
-
-    // add the permission field to the page
-    permissions.push({ id: id, action: "", resource: "" });
-    this.setState({ permissions });
+  const addPermission = (): void => {
+    const id = permissions.length ? permissions[permissions.length - 1].id + 1 : 0;
+    setPermissions([...permissions, { id: id, action: "", resource: "" }]);
   };
 
   /**
    * Remove a permission and pair of action and resource dropdown menus
    * @param id - the database primary key
    */
-  removePermission = (id: number): void => {
-    const permissions = this.state.permissions.filter(
-      (p: Permission) => p.id != id
-    );
-
-    this.setState({ permissions });
+  const removePermission = (id: number): void => {
+    setPermissions(permissions.filter((p: Permission) => p.id !== id));
   };
 
   /**
@@ -181,27 +153,15 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
    * @param actionId - the action's database primary key
    * @param permissionId - the permission's database primary key
    */
-  selectAction = (actionId: number, permissionId: number): void => {
-
-    // get the new action
-    const action: ActionResource = this.state.actions.filter(
-      (a: ActionResource) => a.id == actionId
-    )[0];
+  const selectAction = (actionId: number, permissionId: number): void => {
+    const action = actions.find((a: ActionResource) => a.id === actionId);
 
     if (action) {
-      const { permissions } = this.state;
-
-      // get the permission
-      const permission: Permission = permissions.filter(
-        (p: Permission) => p.id == permissionId
-      )[0];
-
-      if (permission) {
-
-        // set the new action
-        permission.action = action.value;
-        this.setState({ permissions });
-      }
+      setPermissions(
+        permissions.map((p: Permission) =>
+          p.id === permissionId ? { ...p, action: action.value } : p
+        )
+      );
     }
   };
 
@@ -210,26 +170,10 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
    * @param id - the permission's database primary key
    * @returns - the action's database primary key
    */
-  getSelectedAction = (id: number): number => {
-
-    // get the permission
-    const permission: Permission = this.state.permissions.filter(
-      (p: Permission) => p.id == id
-    )[0];
-
-    if (permission) {
-      const actionText = permission.action;
-
-      // get the action
-      const action: ActionResource = this.state.actions.filter(
-        (a: ActionResource) => a.value == actionText
-      )[0];
-
-      if (action) return action.id;
-      else return 0;
-    } else {
-      return 0;
-    }
+  const getSelectedAction = (id: number): number => {
+    const permission = permissions.find((p: Permission) => p.id === id);
+    const action = actions.find((a: ActionResource) => a.value === permission?.action);
+    return action ? action.id : 0;
   };
 
   /**
@@ -237,27 +181,15 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
    * @param resourceId - the resource's database primary key
    * @param permissionId - the permission's database primary key
    */
-  selectResource = (resourceId: number, permissionId: number): void => {
-
-    // get the new resource
-    const resource: ActionResource = this.state.resources.filter(
-      (r: ActionResource) => r.id == resourceId
-    )[0];
+  const selectResource = (resourceId: number, permissionId: number): void => {
+    const resource = resources.find((r: ActionResource) => r.id === resourceId);
 
     if (resource) {
-      const { permissions } = this.state;
-
-      // get the permission
-      const permission: Permission = permissions.filter(
-        (p: Permission) => p.id == permissionId
-      )[0];
-
-      if (permission) {
-
-        // set the new resource
-        permission.resource = resource.value;
-        this.setState({ permissions });
-      }
+      setPermissions(
+        permissions.map((p: Permission) =>
+          p.id === permissionId ? { ...p, resource: resource.value } : p
+        )
+      );
     }
   };
 
@@ -266,40 +198,24 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
    * @param id - the permission's database primary key
    * @returns - the permission's database primary key
    */
-  getSelectedResource = (id: number): number => {
-
-    // get the permission
-    const permission: Permission = this.state.permissions.filter(
-      (p: Permission) => p.id == id
-    )[0];
-
-    if (permission) {
-      const resourceText = permission.resource;
-
-      // get the resource
-      const resource: ActionResource = this.state.resources.filter(
-        (r: ActionResource) => r.value == resourceText
-      )[0];
-
-      if (resource) return resource.id;
-      else return 0;
-    } else {
-      return 0;
-    }
+  const getSelectedResource = (id: number): number => {
+    const permission = permissions.find((p: Permission) => p.id === id);
+    const resource = resources.find((r: ActionResource) => r.value === permission?.resource);
+    return resource ? resource.id : 0;
   };
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating
-   * a new entry, else make a request to edit an exiting entry
+   * a new entry, else make a request to edit an existing entry
    */
-  post = async (): Promise<void> => {
-    const { name, permissions } = this.state;
-    const ps = permissions.map((p: Permission) => {
-      return { action: p.action, resource: p.resource };
-    });
+  const post = async (): Promise<void> => {
+    const ps = permissions.map((p: Permission) => ({
+      action: p.action,
+      resource: p.resource
+    }));
 
     const data = { name, permissions: ps };
-    const id = this.props.roleId;
+    const id = roleId;
     const body = {
       app: 1,  // Admin Dashboard = 1
       ...(id ? { id: id, edit: data } : { create: data })
@@ -309,17 +225,15 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     const url = id ? "/admin/role/edit" : "/admin/role/create";
 
     await makeRequest(url, opts)
-      .then(this.handleSuccess)
-      .catch(this.handleFailure);
+      .then(handleSuccess)
+      .catch(handleFailure);
   };
 
   /**
    * Handle a successful response
    * @param res - the response body
    */
-  handleSuccess = (res: ResponseBody) => {
-    const { goBack, flashMessage } = this.props;
-
+  const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
     goBack();
     flashMessage(<span>{res.msg}</span>, "success");
@@ -329,13 +243,11 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
    * Handle a failed response
    * @param res - the response body
    */
-  handleFailure = (res: ResponseBody) => {
-    const { flashMessage } = this.props;
-
+  const handleFailure = (res: ResponseBody) => {
     // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
-        <b>An unexpected error occured</b>
+        <b>An unexpected error occurred</b>
         <br />
         {res.msg ? res.msg : "Internal server error"}
       </span>
@@ -348,14 +260,14 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
    * Compile the role's permissions as HTML for the entry summary
    * @returns - the permissions summary
    */
-  getPermissionsSummary = (): React.ReactElement => {
+  const getPermissionsSummary = (): React.ReactElement => {
     return (
       <React.Fragment>
-        {this.state.permissions.map((p: Permission) => {
+        {permissions.map((p: Permission) => {
 
           // handle wildcard permissions
-          const action = p.action == "*" ? "All Actions" : p.action;
-          const resource = p.resource == "*" ? "All Resources" : p.resource;
+          const action = p.action === "*" ? "All Actions" : p.action;
+          const resource = p.resource === "*" ? "All Resources" : p.resource;
 
           // don't compile empty permissions that have no action or resource selected
           return action || resource ? (
@@ -372,74 +284,70 @@ class RolesEdit extends React.Component<RolesEditProps, RolesEditState> {
     );
   };
 
-  render() {
-    const { roleId } = this.props;
-    const { loading, name } = this.state;
-    const buttonText = roleId ? "Update" : "Create";
+  const buttonText = roleId ? "Update" : "Create";
 
-    return (
-      <div className="page-container" style={{ flexDirection: "row" }}>
+  return (
+    <div className="page-container" style={{ flexDirection: "row" }}>
 
-        {/* the edit/create form */}
-        <div className="page-content bg-white">
-          {loading ? (
-            <SmallLoader />
-          ) : (
-            <div className="admin-form">
-              <div className="admin-form-content">
-                <h1 className="border-light-b">
-                  {roleId ? "Edit " : "Create "} Role
-                </h1>
-                <div className="admin-form-row">
-                  <div className="admin-form-field">
-                    <TextField
-                      id="name"
-                      type="text"
-                      placeholder=""
-                      prefill={name}
-                      label="Name"
-                      onKeyup={(text: string) => this.setState({ name: text })}
-                      feedback=""
-                    />
-                  </div>
+      {/* the edit/create form */}
+      <div className="page-content bg-white">
+        {loading ? (
+          <SmallLoader />
+        ) : (
+          <div className="admin-form">
+            <div className="admin-form-content">
+              <h1 className="border-light-b">
+                {roleId ? "Edit " : "Create "} Role
+              </h1>
+              <div className="admin-form-row">
+                <div className="admin-form-field">
+                  <TextField
+                    id="name"
+                    type="text"
+                    placeholder=""
+                    prefill={name}
+                    label="Name"
+                    onKeyup={(text: string) => setName(text)}
+                    feedback=""
+                  />
                 </div>
-                <div style={{ marginLeft: "2rem", marginBottom: "0.5rem" }}>
-                  <b>Add Permissions to Role</b>
-                </div>
-                {this.getPermissionFields()}
-                <div className="admin-form-row">
-                  <div className="admin-form-field">
-                    <button
-                      className="button-secondary button-lg"
-                      onClick={this.addPermission}
-                    >
-                      Add Permission
-                    </button>
-                  </div>
+              </div>
+              <div style={{ marginLeft: "2rem", marginBottom: "0.5rem" }}>
+                <b>Add Permissions to Role</b>
+              </div>
+              {getPermissionFields()}
+              <div className="admin-form-row">
+                <div className="admin-form-field">
+                  <button
+                    className="button-secondary button-lg"
+                    onClick={addPermission}
+                  >
+                    Add Permission
+                  </button>
                 </div>
               </div>
             </div>
-          )}
-        </div>
-        <div className="admin-form-summary bg-dark">
-
-          {/* the edit/create summary */}
-          <h1 className="border-white-b">Role Summary</h1>
-          <span>
-            Name:
-            <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{name}
-            <br />
-            <br />
-            Permissions:
-            <br />
-            {this.getPermissionsSummary()}
-          </span>
-          <AsyncButton onClick={this.post} text={buttonText} type="primary" />
-        </div>
+          </div>
+        )}
       </div>
-    );
-  }
-}
+      <div className="admin-form-summary bg-dark">
+
+        {/* the edit/create summary */}
+        <h1 className="border-white-b">Role Summary</h1>
+        <span>
+          Name:
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;{name}
+          <br />
+          <br />
+          Permissions:
+          <br />
+          {getPermissionsSummary()}
+        </span>
+        <AsyncButton onClick={post} text={buttonText} type="primary" />
+      </div>
+    </div>
+  );
+};
 
 export default RolesEdit;

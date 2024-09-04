@@ -1,5 +1,4 @@
-import * as React from "react";
-import { Component } from "react";
+import React, { useState } from "react";
 import "./textField.css";
 
 /**
@@ -26,88 +25,77 @@ interface TextFieldProps {
 }
 
 /**
- * text: the text to display
+ * Functional component version of TextField
  */
-interface TextFieldState {
-  text: string;
-}
+const TextField: React.FC<TextFieldProps> = ({
+  id,
+  type,
+  placeholder,
+  prefill,
+  label,
+  onKeyup,
+  feedback,
+  disabled,
+  value,
+  children,
+}) => {
+  const [text, setText] = useState(prefill || "");
 
-class TextField extends React.Component<TextFieldProps, TextFieldState> {
-  state = {
-    text: ""
+  const handleKeyUp = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const inputValue = e.target.value;
+    setText(inputValue);
+    if (onKeyup) {
+      onKeyup(inputValue);
+    }
   };
 
-  render() {
-    const {
-      id,
-      type,
-      placeholder,
-      prefill,
-      label,
-      onKeyup,
-      feedback,
-      disabled,
-      value
-    } = this.props;
-
-    return (
+  return (
+    <div
+      className="text-field-container"
+      style={type === "textarea" ? { height: "24rem" } : {}}
+    >
+      {/* if a label was passed as a prop */}
+      {label ? (
+        <label className="text-field-label" htmlFor={id}>
+          {label}
+        </label>
+      ) : null}
       <div
-        className="text-field-container"
-        style={type == "textarea" ? { height: "24rem" } : {}}
+        className={
+          "text-field-content border-light" + (disabled ? " bg-light" : "")
+        }
       >
+        {/* place children here as prefix icons (e.g., a password icon) */}
+        {children || null}
 
-        {/* if a label was passed as a prop */}
-        {label ? (
-          <label className="text-field-label" htmlFor={id}>
-            {label}
-          </label>
-        ) : null}
-        <div
-          className={
-            "text-field-content border-light" + (disabled ? " bg-light" : "")
-          }
-        >
-
-          {/* place children here as prefix icons (e.g., a password icon) */}
-          {this.props.children ? this.props.children : null}
-
-          {/* the input */}
-          <div className="text-field-input">
-
-            {/* textares require a unique e.target class */}
-            {type == "textarea" ? (
-              <textarea
-                defaultValue={prefill ? prefill : undefined}
-                onChange={
-                  onKeyup
-                    ? (e) => onKeyup((e.target as HTMLTextAreaElement).value)
-                    : () => null
-                }
-              ></textarea>
-            ) : (
-              <input
-                type={type ? type : "text"}
-                placeholder={placeholder ? placeholder : ""}
-                defaultValue={prefill ? prefill : undefined}
-                value={value}
-                onChange={
-                  onKeyup
-                    ? (e) => onKeyup((e.target as HTMLInputElement).value)
-                    : () => null
-                }
-                disabled={disabled}
-              />
-            )}
-          </div>
+        {/* the input */}
+        <div className="text-field-input">
+          {/* textares require a unique e.target class */}
+          {type === "textarea" ? (
+            <textarea
+              defaultValue={prefill ? prefill : undefined}
+              onChange={handleKeyUp}
+              disabled={disabled}
+            ></textarea>
+          ) : (
+            <input
+              type={type || "text"}
+              placeholder={placeholder || ""}
+              defaultValue={prefill || undefined}
+              value={value ?? text} // Use value if provided, otherwise fall back to internal state
+              onChange={handleKeyUp}
+              disabled={disabled}
+            />
+          )}
         </div>
-
-        {/* feedback on error */}
-        {feedback ? (
-          <span className="text-field-feedback">{feedback}</span>
-        ) : null}
       </div>
-    );
-  }
-}
+
+      {/* feedback on error */}
+      {feedback ? (
+        <span className="text-field-feedback">{feedback}</span>
+      ) : null}
+    </div>
+  );
+};
 
 export default TextField;

@@ -1,6 +1,5 @@
-import * as React from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { renderToString } from "react-dom/server";
-import { Component } from "react";
 import TableControl from "./tableControl";
 import TableHeader from "./tableHeader";
 import TableRow from "./tableRow";
@@ -82,269 +81,183 @@ interface TableProps {
   sortDefault: string;
 }
 
-/**
- * rows: an array of rows that are arrays of table cells
- * rowsFiltered: rows to render if the user is using the search bar
- * rowsRendered: rows that are currently displayed
- * headers: the table's headers
- * page: the current page to display
- * totalPages: the total number of pages that can be displayed
- */
-interface TableState {
-  rows: Row[][];
-  rowsFiltered: Row[][];
-  rowsRendered: React.ReactElement;
-  headers: Header[];
-  page: number;
-  totalPages: number;
-}
+const Table: React.FC<TableProps> = ({
+  columns,
+  control,
+  controlWidth,
+  data,
+  includeControl,
+  includeSearch,
+  paginationPer,
+  sortDefault
+}) => {
+  const [rows, setRows] = useState<Row[][]>(() =>
+    data.map((row) =>
+      row.map((cell, i) => ({
+        contents: cell.contents,
+        searchable: columns[i].searchable,
+        searchValue: renderToString(cell.contents)
+          .replace(/<(.+?)>/g, "")
+          .toLowerCase(),
+        sortable: columns[i].sortable,
+        sortValue: cell.sortValue,
+        width: columns[i].width
+      }))
+    )
+  );
 
-class Table extends React.Component<TableProps, TableState> {
-  constructor(props: TableProps) {
-    super(props);
+  const [rowsFiltered, setRowsFiltered] = useState<Row[][]>(rows);
+  const [rowsRendered, setRowsRendered] = useState<React.ReactElement>(
+    <React.Fragment />
+  );
+  const [headers, setHeaders] = useState<Header[]>(
+    columns.map((c) => ({
+      ascending: c.name === sortDefault ? 1 : -1,
+      name: c.name,
+      sortable: c.sortable,
+      width: c.width
+    }))
+  );
+  const [page, setPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(
+    Math.ceil(data.length / paginationPer)
+  );
 
-    const { columns, data, paginationPer, sortDefault } = props;
+  useEffect(() => {
+    renderRows(1, rows);
+  }, [rows]);
 
-    // map the table cells that were passed as props
-    const rows = data.map((row) =>
-      row.map((cell, i) => {
-        return {
-          contents: cell.contents,
-          searchable: columns[i].searchable,
-          searchValue: renderToString(cell.contents)
-            .replace(/<(.+?)>/, "")
-            .toLowerCase(),  // remove all html tags for searchable data
-          sortable: columns[i].sortable,
-          sortValue: cell.sortValue,
-          width: columns[i].width
-        };
-      })
-    );
+  const onSearch = useCallback(
+    (text: string) => {
+      const filtered = rows.filter((row) =>
+        row.some(
+          (cell) =>
+            cell.searchable && cell.searchValue.includes(text.toLowerCase())
+        )
+      );
 
-    // start with an empty table
-    const rowsRendered = <React.Fragment />;
+      setRowsFiltered(filtered);
+      setPage(1);
+      setTotalPages(Math.ceil(filtered.length / paginationPer));
+      renderRows(1, filtered);
+    },
+    [rows, paginationPer]
+  );
 
-    // map the columns to a set of headers
-    const headers = columns.map((c): Header => {
-      return {
-        ascending: c.name === sortDefault ? 1 : -1,  // default sort is descending
-        name: c.name,
-        sortable: c.sortable,
-        width: c.width
-      };
-    });
+  const onSort = useCallback(
+    (name: string, ascending: boolean) => {
+      const updatedHeaders: Header[] = headers.map((header) => ({
+        ...header,
+        ascending: header.name === name ? (ascending ? 1 : 0) : -1
+      }));
 
-    // start on page 1
-    const page = 1;
+      const sortedRows = [...rowsFiltered].sort((a, b) => {
+        const index = updatedHeaders.findIndex((h) => h.name === name);
+        if (a[index].sortValue < b[index].sortValue) return ascending ? 1 : -1;
+        else if (a[index].sortValue > b[index].sortValue) return ascending ? -1 : 1;
+        else return 0;
+      });
 
-    // get the total number of pages
-    const totalPages = Math.ceil(data.length / paginationPer);
+      setHeaders(updatedHeaders);
+      setRowsFiltered(sortedRows);
+      renderRows(page, sortedRows);
+    },
+    [headers, page, rowsFiltered]
+  );
 
-    this.state = {
-      rows,
-      rowsFiltered: rows,
-      rowsRendered,
-      headers,
-      page,
-      totalPages
-    };
-  }
+  const paginate = useCallback(
+    (newPage: number) => {
+      renderRows(newPage, rowsFiltered);
+      setPage(newPage);
+    },
+    [rowsFiltered]
+  );
 
-  componentDidMount() {
+  const renderRows = useCallback(
+    (currentPage: number, dataToRender: Row[][]) => {
+      const fragment = (
+        <React.Fragment>
+          {dataToRender.length ? (
+            dataToRender
+              .slice((currentPage - 1) * paginationPer, currentPage * paginationPer)
+              .map((row, i) => (
+                <TableRow
+                  key={i}
+                  data={row.map((cell) => ({
+                    contents: cell.contents,
+                    width: cell.width
+                  }))}
+                />
+              ))
+          ) : (
+            <tr className="bg-light">
+              <td className="border-light-t border-light-r no-data">
+                <i>No data to display</i>
+              </td>
+            </tr>
+          )}
+        </React.Fragment>
+      );
+      setRowsRendered(fragment);
+    },
+    [paginationPer]
+  );
 
-    // render page 1 of the table's rows
-    this.renderRows(1, this.state.rows);
-  }
+  return (
+    <div className="table-container">
+      {includeControl || includeSearch ? (
+        <TableControl
+          control={control}
+          controlWidth={controlWidth}
+          includeControl={includeControl}
+          includeSearch={includeSearch}
+          onSearch={onSearch}
+        />
+      ) : null}
 
-  /**
-   * Filter the table from the search bar
-   * @param text - the text in the search bar
-   */
-  onSearch = (text: string) => {
-    const { paginationPer } = this.props;
-    const { rows } = this.state;
+      <table className="border-light-t border-light-b border-light-l">
+        <thead>
+          <TableHeader headers={headers} onSort={onSort} />
+        </thead>
+        <tbody>{rowsRendered}</tbody>
+      </table>
 
-    // always set the page to page 1 when searching
-    const page = 1;
-
-    // filter the table's rows
-    const rowsFiltered = rows.filter((row) =>
-      row.some(
-        (cell) =>
-          cell.searchable && cell.searchValue.includes(text.toLowerCase())
-      )
-    );
-
-    // get the total number of pages using the number of filtered rows
-    const totalPages = Math.ceil(rowsFiltered.length / paginationPer);
-
-    this.setState({ page, rowsFiltered, totalPages });
-    this.renderRows(page, rowsFiltered);
-  };
-
-  /**
-   * Sort the table
-   * @param name - the name of the column to sort the table on
-   * @param ascending - whether the sort is ascending
-   */
-  onSort = (name: string, ascending: boolean) => {
-    const { headers, page, rowsFiltered } = this.state;
-
-    // set this header to ascending/descending and all others to unsorted
-    for (const h of headers) {
-      h.ascending = h.name === name ? (ascending ? 1 : 0) : -1;
-    }
-
-    // sort all rows using the cell corresponding to this header's index
-    const i = headers.findIndex((h) => h.name === name);
-    rowsFiltered.sort((a, b) => {
-      if (a[i].sortValue < b[i].sortValue) return ascending ? 1 : -1;
-      else if (a[i].sortValue > b[i].sortValue) return ascending ? -1 : 1;
-      else return 0;
-    });
-
-    this.setState({ headers, rowsFiltered });
-    this.renderRows(page, rowsFiltered);
-  };
-
-  /**
-   * Show a new page
-   * @param page - the page to show
-   */
-  paginate = (page: number) => {
-
-    // render rows using the new page
-    this.renderRows(page, this.state.rowsFiltered);
-    this.setState({ page });
-  };
-
-  /**
-   * Rander the table's rows
-   * @param page - the page to render
-   * @param data - the rows to render (necessary for rendering a filtered set
-   *               of rows)
-   */
-  renderRows(page: number, data: Row[][]) {
-    const { paginationPer } = this.props;
-
-    const rowsRendered = (
-      <React.Fragment>
-
-        {/* if there is data to display in the table */}
-        {data.length ? (
-
-          // render each row
-          data
-            .slice((page - 1) * paginationPer, page * paginationPer)  // this page
-            .map((row, i) => (
-              <TableRow
-                key={i}
-                data={row.map((cell) => {
-                  return { contents: cell.contents, width: cell.width };
-                })}
-              />
-            ))
-        ) : (
-          <tr className="bg-light">
-
-            {/* empty table message */}
-            <td className="border-light-t border-light-r no-data">
-              <i>No data to display</i>
-            </td>
-          </tr>
-        )}
-      </React.Fragment>
-    );
-
-    this.setState({ rowsRendered });
-  }
-
-  render() {
-    const {
-      control,
-      controlWidth,
-      includeControl,
-      includeSearch,
-      paginationPer
-    } = this.props;
-
-    const { headers, page, rowsFiltered, rowsRendered, totalPages } =
-      this.state;
-
-    return (
-      <div className="table-container">
-
-        {/* the table control */}
-        {includeControl || includeSearch ? (
-          <TableControl
-            control={control}
-            controlWidth={controlWidth}
-            includeControl={includeControl}
-            includeSearch={includeSearch}
-            onSearch={this.onSearch}
-          />
-        ) : (
-          ""
-        )}
-
-        {/* the table */}
-        <table className="border-light-t border-light-b border-light-l">
-
-          {/*  the table header */}
-          <thead>
-            <TableHeader headers={headers} onSort={this.onSort} />
-          </thead>
-
-          {/* the table body */}
-          <tbody>{rowsRendered}</tbody>
-        </table>
-
-        {/* table pagination */}
-        <div className="table-pagination">
-          <div className="table-pagination-control">
-
-            {/* last page button */}
-            <div
-              className={
-                "pagination-button bg-light border-light-t border-light-l border-light-b" +
-                (page > 1 ? " pagination-button-active" : "")
-              }
-              onClick={() => page > 1 && this.paginate(page - 1)}
-            >
-              <Left />
-            </div>
-
-            {/* next page button */}
-            <div
-              className={
-                "pagination-button bg-light border-light" +
-                (page < totalPages ? " pagination-button-active" : "")
-              }
-              onClick={() => page < totalPages && this.paginate(page + 1)}
-            >
-              <Right />
-            </div>
-
-            {/* current page */}
-            <span>
-              Page {page} of {totalPages || 1}
-            </span>
+      <div className="table-pagination">
+        <div className="table-pagination-control">
+          <div
+            className={
+              "pagination-button bg-light border-light-t border-light-l border-light-b" +
+              (page > 1 ? " pagination-button-active" : "")
+            }
+            onClick={() => page > 1 && paginate(page - 1)}
+          >
+            <Left />
           </div>
-
-          {/* X items if 1 page or X of Y items if multiple pages */}
+          <div
+            className={
+              "pagination-button bg-light border-light" +
+              (page < totalPages ? " pagination-button-active" : "")
+            }
+            onClick={() => page < totalPages && paginate(page + 1)}
+          >
+            <Right />
+          </div>
           <span>
-            {totalPages
-              ? `${(page - 1) * paginationPer + 1} - ${Math.min(
-                  rowsFiltered.length,
-                  page * paginationPer
-                )} of `
-              : ""}
-            {rowsFiltered.length} item{rowsFiltered.length === 1 ? "" : "s"}
+            Page {page} of {totalPages || 1}
           </span>
         </div>
+        <span>
+          {totalPages
+            ? `${(page - 1) * paginationPer + 1} - ${Math.min(
+                rowsFiltered.length,
+                page * paginationPer
+              )} of `
+            : ""}
+          {rowsFiltered.length} item{rowsFiltered.length === 1 ? "" : "s"}
+        </span>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default Table;

@@ -1,5 +1,4 @@
-import * as React from "react";
-import { Component } from "react";
+import React, { useEffect, useState } from "react";
 import AccountsEdit from "./accountsEdit";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
@@ -9,113 +8,104 @@ import { Account, ResponseBody, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 
 /**
- * canCreate: whether the user has permissions to create
- * canEdit: whether the user has permissions to edit
- * canArchive: whether the user permissions to archive
- * accounts: an array of rows to display in the table
- * columns: an array of columns to display in the table
- * loading: whether to display the loading screen
+ * Functional component representing Accounts.
  */
-interface AccountsState {
-  canCreate: boolean;
-  canEdit: boolean;
-  canArchive: boolean;
-  accounts: Account[];
-  columns: Column[];
-  loading: boolean;
-}
+const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
+  const [canCreate, setCanCreate] = useState(false);
+  const [canEdit, setCanEdit] = useState(false);
+  const [canArchive, setCanArchive] = useState(false);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [columns] = useState<Column[]>([
+    {
+      name: "Name",
+      searchable: true,
+      sortable: true,
+      width: 20
+    },
+    {
+      name: "Email",
+      searchable: true,
+      sortable: true,
+      width: 25
+    },
+    {
+      name: "Phone Number",
+      searchable: true,
+      sortable: true,
+      width: 15
+    },
+    {
+      name: "Created On",
+      searchable: false,
+      sortable: true,
+      width: 15
+    },
+    {
+      name: "Last Login",
+      searchable: false,
+      sortable: true,
+      width: 15
+    },
+    {
+      name: "",
+      searchable: false,
+      sortable: false,
+      width: 10
+    }
+  ]);
+  const [loading, setLoading] = useState(true);
 
-class Accounts extends React.Component<ViewProps, AccountsState> {
-  state = {
-    canCreate: false,
-    canEdit: false,
-    canArchive: false,
-    accounts: [],
-    columns: [
-      {
-        name: "Name",
-        searchable: true,
-        sortable: true,
-        width: 20
-      },
-      {
-        name: "Email",
-        searchable: true,
-        sortable: true,
-        width: 25
-      },
-      {
-        name: "Phone Number",
-        searchable: true,
-        sortable: true,
-        width: 15
-      },
-      {
-        name: "Created On",
-        searchable: false,
-        sortable: true,
-        width: 15
-      },
-      {
-        name: "Last Login",
-        searchable: false,
-        sortable: true,
-        width: 15
-      },
-      {
-        name: "",
-        searchable: false,
-        sortable: false,
-        width: 10
+  useEffect(() => {
+    // Check user permissions
+    const fetchPermissions = async () => {
+      try {
+        await getAccess(1, "Create", "Accounts");
+        setCanCreate(true);
+      } catch {
+        setCanCreate(false);
       }
-    ],
-    loading: true,
-    fading: false
-  };
 
-  async componentDidMount() {
+      try {
+        await getAccess(1, "Edit", "Accounts");
+        setCanEdit(true);
+      } catch {
+        setCanEdit(false);
+      }
 
-    // check whether the user has permission to create
-    const create = getAccess(1, "Create", "Accounts")
-      .then(() => this.setState({ canCreate: true }))
-      .catch(() => this.setState({ canCreate: false }));
+      try {
+        await getAccess(1, "Archive", "Accounts");
+        setCanArchive(true);
+      } catch {
+        setCanArchive(false);
+      }
+    };
 
-    // check whether the user has permissions to edit
-    const edit = getAccess(1, "Edit", "Accounts")
-      .then(() => this.setState({ canEdit: true }))
-      .catch(() => this.setState({ canEdit: false }));
+    // Fetch account data
+    const fetchAccounts = async () => {
+      try {
+        const accounts = await makeRequest("/admin/account?app=1");
+        setAccounts(accounts);
+      } catch (error) {
+        console.error("Error fetching accounts:", error);
+      }
+    };
 
-    // check whether the user has permissions to archive
-    const archive = getAccess(1, "Archive", "Accounts")
-      .then(() => this.setState({ canArchive: true }))
-      .catch(() => this.setState({ canArchive: false }));
-
-    // get the table's data
-    const accounts = makeRequest("/admin/account?app=1").then((accounts) =>
-      this.setState({ accounts })
-    );
-
-    // when all requests are complete, hide the loading screen
-    Promise.all([create, edit, archive, accounts]).then(() =>
-      this.setState({ loading: false })
-    );
-  }
+    Promise.all([fetchPermissions(), fetchAccounts()]).then(() => {
+      setLoading(false);
+    });
+  }, []);
 
   /**
    * Get the table's contents
    * @returns The table's contents, consisting of rows of table cells
    */
-  getData = (): TableData[][] => {
-    const { flashMessage, goBack, handleClick } = this.props;
-    const { canEdit, canArchive, accounts } = this.state;
-
+  const getData = (): TableData[][] => {
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
       month: "short",
       day: "numeric"
     };
 
-    // iterate over the table's rows
     return accounts.map((a: Account) => {
       const {
         createdOn,
@@ -128,13 +118,11 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
       } = a;
       const name = firstName + " " + lastName;
 
-      // the number of days since the user's last login
       const ago = Math.floor(
         Math.abs(new Date().getTime() - new Date(lastLogin).getTime()) /
           (1000 * 60 * 60 * 24)
       );
 
-      // map each row to a set of cells for each table column
       return [
         {
           contents: (
@@ -213,7 +201,7 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
               {canArchive ? (
                 <button
                   className="button-danger"
-                  onClick={() => this.delete(id)}
+                  onClick={() => deleteAccount(id)}
                 >
                   Archive
                 </button>
@@ -231,46 +219,38 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
    * Delete a table entry and archive it in the database
    * @param id - the entry's database primary key
    */
-  delete = (id: number): void => {
-
-    // prepare the request
+  const deleteAccount = (id: number): void => {
     const body = { app: 1, id };  // Admin Dashboard = 1
     const opts = { method: "POST", body: JSON.stringify(body) };
 
-    // confirm deletion
     const msg = "Are you sure you want to archive this account?";
 
-    if (confirm(msg))
+    if (confirm(msg)) {
       makeRequest("/admin/account/archive", opts)
-        .then(this.handleSuccess)
-        .catch(this.handleFailure);
+        .then(handleSuccess)
+        .catch(handleFailure);
+    }
   };
 
   /**
    * Handle a successful response
    * @param res - the response body
    */
-  handleSuccess = (res: ResponseBody) => {
-    const { flashMessage } = this.props;
-
-    // show the loading screen
-    this.setState({ loading: true });
+  const handleSuccess = (res: ResponseBody) => {
     flashMessage(<span>{res.msg}</span>, "success");
+    setLoading(true);
 
-    // refresh the table's data
+    // Refresh the table's data
     makeRequest("/admin/account?app=1").then((accounts) =>
-      this.setState({ accounts, loading: false })
-    );
+      setAccounts(accounts)
+    ).finally(() => setLoading(false));
   };
 
   /**
    * Handle a failed response
    * @param res - the response body
    */
-  handleFailure = (res: ResponseBody) => {
-    const { flashMessage } = this.props;
-
-    // flash the message returned from the endpoint or "Internal server error"
+  const handleFailure = (res: ResponseBody) => {
     const msg = (
       <span>
         <b>An unexpected error occured</b>
@@ -282,59 +262,52 @@ class Accounts extends React.Component<ViewProps, AccountsState> {
     flashMessage(msg, "danger");
   };
 
-  render() {
-    const { flashMessage, goBack, handleClick } = this.props;
-    const { canCreate, columns, loading } = this.state;
+  // If the user has permission to create, show the create button
+  const tableControl = canCreate ? (
+    <button
+      className="button-primary"
+      onClick={() =>
+        handleClick(
+          ["Create"],
+          <AccountsEdit
+            accountId={0}
+            flashMessage={flashMessage}
+            goBack={goBack}
+            handleClick={handleClick}
+          />
+        )
+      }
+    >
+      Create&nbsp;<b>+</b>
+    </button>
+  ) : <React.Fragment />;
 
-    // if the user has permission to create, show the create button
-    const tableControl = canCreate ? (
-      <button
-        className="button-primary"
-        onClick={() =>
-          handleClick(
-            ["Create"],
-            <AccountsEdit
-              accountId={0}
-              flashMessage={flashMessage}
-              goBack={goBack}
-              handleClick={handleClick}
-            />
-          )
-        }
-      >
-        Create&nbsp;<b>+</b>
-      </button>
-    ) : (
-      <React.Fragment />
-    );
-
-    return (
-      <div className="page-container">
-        <Navbar
-          active="Accounts"
-          flashMessage={flashMessage}
-          goBack={goBack}
-          handleClick={handleClick}
-        />
-        <div className="page-content bg-white">
-          {loading ? (
-            <SmallLoader />
-          ) : (
-            <Table
-              columns={columns}
-              control={tableControl}
-              controlWidth={10}
-              data={this.getData()}
-              includeControl={true}
-              includeSearch={true}
-              paginationPer={10}
-              sortDefault=""
-            />
-          )}
-        </div>
+  return (
+    <div className="page-container">
+      <Navbar
+        active="Accounts"
+        flashMessage={flashMessage}
+        goBack={goBack}
+        handleClick={handleClick}
+      />
+      <div className="page-content bg-white">
+        {loading ? (
+          <SmallLoader />
+        ) : (
+          <Table
+            columns={columns}
+            control={tableControl}
+            controlWidth={10}
+            data={getData()}
+            includeControl={true}
+            includeSearch={true}
+            paginationPer={10}
+            sortDefault=""
+          />
+        )}
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
 
 export default Accounts;
