@@ -9,12 +9,14 @@ import { sub } from "date-fns";
 interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
   getTaps: () => TapDetails[];
-  getAudioFiles: () => Promise<AudioFile[]>;
+  getAudioFilesAsync: () => Promise<AudioFile[]>;
+  getAudioFiles: () => AudioFile[];
 }
 
 const StudiesView: React.FC<StudiesViewProps> = ({
   getTapsAsync,
   getTaps,
+  getAudioFilesAsync,
   getAudioFiles,
   flashMessage,
   goBack,
@@ -33,14 +35,12 @@ const StudiesView: React.FC<StudiesViewProps> = ({
 
         // get all tap and audio file data
         const tapsPromise = getTapsAsync();
-        const audioFilesPromise = getAudioFiles();
+        const audioFilesPromise = getAudioFilesAsync();
 
         // when all promises resolve, hide the loader
-        await Promise.all(
+        Promise.all(
           [studiesPromise, tapsPromise, usersPromise, audioFilesPromise]
-        );
-        setLoading(false);
-        console.log(await getAudioFiles());
+        ).then(() => setLoading(false));
       } catch (error) {
         console.error("Error fetching data: ", error);
         setLoading(false);
@@ -73,6 +73,45 @@ const StudiesView: React.FC<StudiesViewProps> = ({
       handleClick([study.acronym], view, false);
     }
   };
+
+  const audioFileCard = (
+    <div className="card-s bg-white shadow">
+      <div className="card-title">Audio Files</div>
+      {loading ? (
+        <SmallLoader />
+      ) : (
+        <div>
+          <div style={{ marginBottom: "1rem" }}>
+            <button
+              className="button-primary button-lg"
+              onClick={() => handleClick(
+                ["Audio File", "Upload"],
+                <React.Fragment />
+              )}
+              style={{ marginRight: "0.5rem" }}
+            >
+              Upload +
+            </button>
+            <button
+              className="button-secondary button-lg"
+              onClick={() => handleClick(
+                ["Audio File"],
+                <React.Fragment />
+              )}
+            >
+              View All
+            </button>
+          </div>
+          <div>
+            <div className="flex-space border-light-b" style={{ paddingBottom: "0.5rem" }}>
+              <span><b>All files</b></span>
+              <span><b>{getAudioFiles().length} files</b></span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="card-container">
@@ -139,6 +178,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
             })
           )}
         </div>
+        {audioFileCard}
       </div>
     </div>
   );

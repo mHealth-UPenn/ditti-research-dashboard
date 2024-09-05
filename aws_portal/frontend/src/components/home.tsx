@@ -14,7 +14,8 @@ import { getAccess } from "../utils";
 interface HomeProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
   getTaps: () => TapDetails[];
-  getAudioFiles: () => Promise<AudioFile[]>;
+  getAudioFilesAsync: () => Promise<AudioFile[]>;
+  getAudioFiles: () => AudioFile[];
 }
 
 /**
@@ -23,6 +24,7 @@ interface HomeProps extends ViewProps {
 const Home: React.FC<HomeProps> = ({
   getTapsAsync,
   getTaps,
+  getAudioFilesAsync,
   getAudioFiles,
   flashMessage,
   goBack,
@@ -38,6 +40,7 @@ const Home: React.FC<HomeProps> = ({
         <StudiesView
           getTapsAsync={getTapsAsync}
           getTaps={getTaps}
+          getAudioFilesAsync={getAudioFilesAsync}
           getAudioFiles={getAudioFiles}
           handleClick={handleClick}
           goBack={goBack}

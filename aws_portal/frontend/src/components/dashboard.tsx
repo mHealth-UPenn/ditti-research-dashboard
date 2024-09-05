@@ -182,6 +182,7 @@ const Dashboard: React.FC = () => {
       <Home
         getTapsAsync={getTapsAsync}
         getTaps={getTaps}
+        getAudioFilesAsync={getAudioFilesAsync}
         getAudioFiles={getAudioFiles}
         handleClick={setView}
         goBack={goBack}
@@ -226,21 +227,21 @@ const Dashboard: React.FC = () => {
     return taps;
   };
 
-  const getAudioFiles = async (): Promise<AudioFile[]> => {
-    let { audioFiles } = state;
+  const getTaps = (): TapDetails[] => taps;
 
+  const getAudioFilesAsync = async (): Promise<AudioFile[]> => {
     // if AWS has not been queried yet
     if (!audioFiles.length) {
-      audioFiles = await makeRequest("/aws/get-audio-files?app=2")
-        .then((res: AudioFile[]) => res);
-
-      dispatch({ type: "SET_AUDIO_FILES", audioFiles })
+      const newAudioFiles = await makeRequest("/aws/get-audio-files?app=2");
+      dispatch({ type: "SET_AUDIO_FILES", audioFiles: newAudioFiles })
     }
 
     return audioFiles;
   };
 
-  const getTaps = (): TapDetails[] => taps;
+  const getAudioFiles = () => {
+    return audioFiles
+  };
 
   const setView = (
     name: string[], view: React.ReactElement, replace: boolean | null = null
@@ -253,6 +254,7 @@ const Dashboard: React.FC = () => {
       <StudiesView
         getTapsAsync={getTapsAsync}
         getTaps={getTaps}
+        getAudioFilesAsync={getAudioFilesAsync}
         getAudioFiles={getAudioFiles}
         handleClick={setView}
         goBack={goBack}
