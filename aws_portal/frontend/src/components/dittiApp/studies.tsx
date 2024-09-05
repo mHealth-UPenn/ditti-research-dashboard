@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
+import { AudioFile, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import "./studies.css";
@@ -9,11 +9,13 @@ import { sub } from "date-fns";
 interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
   getTaps: () => TapDetails[];
+  getAudioFiles: () => Promise<AudioFile[]>;
 }
 
 const StudiesView: React.FC<StudiesViewProps> = ({
   getTapsAsync,
   getTaps,
+  getAudioFiles,
   flashMessage,
   goBack,
   handleClick
@@ -27,15 +29,18 @@ const StudiesView: React.FC<StudiesViewProps> = ({
       try {
         // get all studies that the user has access to
         const studiesPromise = makeRequest("/db/get-studies?app=2").then(setStudies);
-
         const usersPromise = makeRequest("/aws/get-users?app=2").then(setUsers);
 
-        // get all tap data 
+        // get all tap and audio file data
         const tapsPromise = getTapsAsync();
+        const audioFilesPromise = getAudioFiles();
 
         // when all promises resolve, hide the loader
-        await Promise.all([studiesPromise, tapsPromise, usersPromise]);
+        await Promise.all(
+          [studiesPromise, tapsPromise, usersPromise, audioFilesPromise]
+        );
         setLoading(false);
+        console.log(await getAudioFiles());
       } catch (error) {
         console.error("Error fetching data: ", error);
         setLoading(false);

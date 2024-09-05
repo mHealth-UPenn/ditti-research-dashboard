@@ -197,3 +197,24 @@ export interface AccountDetails {
   email: string;
   phoneNumber: string;
 }
+
+/**
+ * An audio file's data as it is stored on DynamoDB
+ * id (optional): the audio file's unique ID
+ * fileName: the filename as it appears on S3
+ * title: the title as it appears on the Ditti App
+ * category: nature, music, voice, audio, etc.
+ * availability: "all" or an individual User ID
+ * studies: a list of studies the audio file is available for, empty if it is
+ *  available for all
+ * length: the length of the audio file in seconds
+ */
+export interface AudioFile {
+  id?: string;
+  fileName: string;
+  title: string;
+  category: string;
+  availability: string;
+  studies: string[];
+  length: number;
+}

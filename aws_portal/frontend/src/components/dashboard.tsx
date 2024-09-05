@@ -5,7 +5,7 @@ import Home from "./home";
 import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
-import { Tap, TapDetails, UserDetails } from "../interfaces";
+import { AudioFile, Tap, TapDetails, UserDetails } from "../interfaces";
 import { dummyTaps } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
 import { makeRequest } from "../utils";
@@ -17,7 +17,8 @@ type Action =
   | { type: "CLOSE_MESSAGE"; id: number }
   | { type: "SET_VIEW"; name: string[]; view: React.ReactElement; replace: boolean | null }
   | { type: "SET_STUDY"; name: string; view: React.ReactElement; appView: React.ReactElement }
-  | { type: "SET_TAPS"; taps: TapDetails[] };
+  | { type: "SET_TAPS"; taps: TapDetails[] }
+  | { type: "SET_AUDIO_FILES"; audioFiles: AudioFile[] };
 
 
 const reducer = (state: DashboardState, action: Action) => {
@@ -134,6 +135,9 @@ const reducer = (state: DashboardState, action: Action) => {
       taps.sort((a, b) => differenceInMilliseconds(a.time, b.time));
       return { ...state, taps };
     }
+    case "SET_AUDIO_FILES": {
+      return { ...state, audioFiles: action.audioFiles };
+    }
     default:
       return state;
   }
@@ -154,6 +158,7 @@ interface DashboardState {
   history: { name: string; view: React.ReactElement }[][];
   taps: TapDetails[];
   users: UserDetails[];
+  audioFiles: AudioFile[];
   view: React.ReactElement;
 }
 
@@ -163,19 +168,21 @@ const initialState: DashboardState = {
   history: [],
   taps: [],
   users: [],
+  audioFiles: [],
   view: <React.Fragment />,
 };
 
 
 const Dashboard: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { breadcrumbs, flashMessages, history, taps, users, view } = state;
+  const { breadcrumbs, flashMessages, history, taps, audioFiles, view } = state;
 
   useEffect(() => {
     const view = (
       <Home
         getTapsAsync={getTapsAsync}
         getTaps={getTaps}
+        getAudioFiles={getAudioFiles}
         handleClick={setView}
         goBack={goBack}
         flashMessage={flashMessage}
@@ -219,6 +226,20 @@ const Dashboard: React.FC = () => {
     return taps;
   };
 
+  const getAudioFiles = async (): Promise<AudioFile[]> => {
+    let { audioFiles } = state;
+
+    // if AWS has not been queried yet
+    if (!audioFiles.length) {
+      audioFiles = await makeRequest("/aws/get-audio-files?app=2")
+        .then((res: AudioFile[]) => res);
+
+      dispatch({ type: "SET_AUDIO_FILES", audioFiles })
+    }
+
+    return audioFiles;
+  };
+
   const getTaps = (): TapDetails[] => taps;
 
   const setView = (
@@ -232,6 +253,7 @@ const Dashboard: React.FC = () => {
       <StudiesView
         getTapsAsync={getTapsAsync}
         getTaps={getTaps}
+        getAudioFiles={getAudioFiles}
         handleClick={setView}
         goBack={goBack}
         flashMessage={flashMessage}

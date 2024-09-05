@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./home.css";
 import { ReactComponent as Right } from "../icons/right.svg";
-import { TapDetails, ViewProps } from "../interfaces";
+import { AudioFile, TapDetails, ViewProps } from "../interfaces";
 import StudiesView from "./dittiApp/studies";
 import Accounts from "./adminDashboard/accounts";
 import { SmallLoader } from "./loader";
@@ -14,12 +14,20 @@ import { getAccess } from "../utils";
 interface HomeProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
   getTaps: () => TapDetails[];
+  getAudioFiles: () => Promise<AudioFile[]>;
 }
 
 /**
  * Home component: renders available apps for the user
  */
-const Home: React.FC<HomeProps> = (props) => {
+const Home: React.FC<HomeProps> = ({
+  getTapsAsync,
+  getTaps,
+  getAudioFiles,
+  flashMessage,
+  goBack,
+  handleClick
+}) => {
   // apps are hardcoded here because for now there is no real need to add more
   // than two
   const [apps, setApps] = useState([
@@ -28,11 +36,12 @@ const Home: React.FC<HomeProps> = (props) => {
       name: "Ditti App Dashboard",
       view: (
         <StudiesView
-          getTapsAsync={props.getTapsAsync}
-          getTaps={props.getTaps}
-          handleClick={props.handleClick}
-          goBack={props.goBack}
-          flashMessage={props.flashMessage}
+          getTapsAsync={getTapsAsync}
+          getTaps={getTaps}
+          getAudioFiles={getAudioFiles}
+          handleClick={handleClick}
+          goBack={goBack}
+          flashMessage={flashMessage}
         />
       ),
     },
@@ -41,9 +50,9 @@ const Home: React.FC<HomeProps> = (props) => {
       name: "Admin Dashboard",
       view: (
         <Accounts
-          handleClick={props.handleClick}
-          goBack={props.goBack}
-          flashMessage={props.flashMessage}
+          handleClick={handleClick}
+          goBack={goBack}
+          flashMessage={flashMessage}
         />
       ),
     },
@@ -75,7 +84,7 @@ const Home: React.FC<HomeProps> = (props) => {
       <div
         key={i}
         className="card-s hover-pointer bg-white shadow"
-        onClick={() => props.handleClick(app.breadcrumbs, app.view)}
+        onClick={() => handleClick(app.breadcrumbs, app.view)}
       >
         <div className="app-name">
           <span>{app.name}</span>
