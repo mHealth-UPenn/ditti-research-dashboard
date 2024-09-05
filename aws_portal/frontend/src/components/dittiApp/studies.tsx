@@ -5,6 +5,7 @@ import { SmallLoader } from "../loader";
 import "./studies.css";
 import StudySummary from "./studySummary";
 import { sub } from "date-fns";
+import AudioFileUpload from "./audioFileUpload";
 
 interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
@@ -86,7 +87,11 @@ const StudiesView: React.FC<StudiesViewProps> = ({
               className="button-primary button-lg"
               onClick={() => handleClick(
                 ["Audio File", "Upload"],
-                <React.Fragment />
+                <AudioFileUpload
+                  goBack={goBack}
+                  flashMessage={flashMessage}
+                  handleClick={handleClick}
+                />
               )}
               style={{ marginRight: "0.5rem" }}
             >
