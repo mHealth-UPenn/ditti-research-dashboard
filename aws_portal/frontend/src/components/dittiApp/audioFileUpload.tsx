@@ -1,16 +1,8 @@
 import React, { useState, useEffect } from "react";
 import TextField from "../fields/textField";
-import {
-  Study,
-  AboutSleepTemplate,
-  ResponseBody,
-  User,
-  UserDetails,
-  ViewProps
-} from "../../interfaces";
+import { Study, ResponseBody, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
-import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 import Select from "../fields/select";

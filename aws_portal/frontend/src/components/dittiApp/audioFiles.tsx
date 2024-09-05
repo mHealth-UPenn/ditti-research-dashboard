@@ -1,0 +1,221 @@
+import React, { useEffect, useState } from "react";
+import { Column, TableData } from "../table/table";
+import Table from "../table/table";
+import { getAccess, makeRequest } from "../../utils";
+import {
+  AudioFile,
+  Study,
+  TapDetails,
+  User,
+  UserDetails,
+  ViewProps
+} from "../../interfaces";
+import { SmallLoader } from "../loader";
+import SubjectsEdit from "./subjectsEdit";
+import SubjectVisuals from "./subjectVisuals";
+import AudioFileUpload from "./audioFileUpload";
+
+interface AudioFilesProps extends ViewProps {
+  getAudioFiles: () => AudioFile[];
+}
+
+
+const AudioFiles: React.FC<AudioFilesProps> = ({
+  handleClick,
+  goBack,
+  flashMessage,
+  getAudioFiles,
+}) => {
+  const [canCreate, setCanCreate] = useState<boolean>(false);
+  const [canDelete, setCanDelete] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const columns: Column[] = [
+    {
+      name: "Title",
+      searchable: true,
+      sortable: true,
+      width: 20
+    },
+    {
+      name: "Category",
+      searchable: true,
+      sortable: true,
+      width: 20
+    },
+    {
+      name: "Availability",
+      searchable: false,
+      sortable: true,
+      width: 20
+    },
+    {
+      name: "Studies",
+      searchable: true,
+      sortable: true,
+      width: 20
+    },
+    {
+      name: "Length",
+      searchable: false,
+      sortable: false,
+      width: 10
+    },
+    {
+      name: "",
+      searchable: false,
+      sortable: false,
+      width: 10
+    }
+  ];
+
+  useEffect(() => {
+    // Get whether user can upload audio files
+    const create = getAccess(2, "Create", "Users")
+      .then(() => setCanCreate(true))
+      .catch(() => setCanCreate(false));
+
+    // get whether the user can edit subjects
+    const edit = getAccess(2, "Delete", "AudioFiles")
+      .then(() => setCanDelete(true))
+      .catch(() => setCanDelete(false));
+
+    // when all promises complete, hide the loader
+    Promise.all([create, edit]).then(() => setLoading(false));
+
+  }, []);
+
+  /**
+   * Get the data for the audio file table
+   * @returns - The table's contents, consisting of rows of table cells
+   */
+  const getData = (): TableData[][] => {
+    const data: TableData[][] = getAudioFiles().map((audioFile) => {
+      const {
+        title,
+        category,
+        availability,
+        studies,
+        length
+      } = audioFile;
+
+      return [
+        {
+          contents: (
+            <div className="flex-left table-data">
+                <span>{title}</span>
+            </div>
+          ),
+          searchValue: title,
+          sortValue: title ? title : ""
+        },
+        {
+          contents: (
+            <div className="flex-left table-data">
+              <span>{category}</span>
+            </div>
+          ),
+          searchValue: category,
+          sortValue: category ? category : ""
+        },
+        {
+          contents: (
+            <div className="flex-left table-data">
+              <span>
+                {availability === "all" ? "All users" : "Individual user"}
+              </span>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: availability === "all" ? "All users" : "Individual user"
+        },
+        {
+          contents: (
+            <div className="flex-left table-data">
+              <span>{studies?.length ? studies.join(", ") : "All studies"}</span>
+            </div>
+          ),
+          searchValue: studies?.join(),
+          sortValue: studies?.length ? studies.join() : "All studies"
+        },
+        {
+          contents: (
+            <div className="flex-left table-data">
+              <span>
+                {length
+                  ? `${parseInt((length / 60).toString())}:${(length % 60).toString().padStart(2, "0")}`
+                  : ""}
+                </span>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: "",
+        },
+        {
+          contents: (
+            <div className="flex-left table-control">
+
+              {/* if the user can edit, link to the edit subject page */}
+              {canDelete ? (
+                <button
+                  className="button-danger"
+                  onClick={() => ""}
+                >
+                  Delete
+                </button>
+              ) : null}
+            </div>
+          ),
+          searchValue: "",
+          sortValue: ""
+        }
+      ];
+    });
+
+    return data;
+  };
+
+  // if the user can enroll subjects, include an enroll button
+  const tableControl = canCreate ? (
+    <button
+      className="button-primary"
+      onClick={() =>
+        handleClick(
+          ["Upload"],
+          <AudioFileUpload
+            goBack={goBack}
+            flashMessage={flashMessage}
+            handleClick={handleClick}
+          />
+        )
+      }
+    >
+      Upload
+    </button>
+  ) : (
+    <React.Fragment />
+  );
+
+  return (
+    <div className="page-container">
+      <div className="page-content bg-white">
+        {loading ? (
+          <SmallLoader />
+        ) : (
+          <Table
+            columns={columns}
+            control={tableControl}
+            controlWidth={10}
+            data={getData()}
+            includeControl={true}
+            includeSearch={true}
+            paginationPer={10}
+            sortDefault=""
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default AudioFiles;

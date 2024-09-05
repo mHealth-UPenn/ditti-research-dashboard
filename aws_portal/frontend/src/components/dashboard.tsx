@@ -1,4 +1,4 @@
-import React, { createRef, RefObject, useEffect, useReducer } from "react";
+import React, { createRef, RefObject, useEffect, useReducer, useRef } from "react";
 import StudiesView from "./dittiApp/studies";
 import Header from "./header";
 import Home from "./home";
@@ -176,6 +176,8 @@ const initialState: DashboardState = {
 const Dashboard: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { breadcrumbs, flashMessages, history, taps, audioFiles, view } = state;
+  const tapRef = useRef<TapDetails[]>();
+  const audioFileRef = useRef<AudioFile[]>();
 
   useEffect(() => {
     const view = (
@@ -200,6 +202,14 @@ const Dashboard: React.FC = () => {
       }
     });
   }, [flashMessages]);
+
+  useEffect(() => {
+    tapRef.current = taps;
+  }, [taps])
+
+  useEffect(() => {
+    audioFileRef.current = audioFiles;
+  }, [audioFiles])
 
   const getTapsAsync = async (): Promise<TapDetails[]> => {
     // let { taps } = this.state;
@@ -227,21 +237,19 @@ const Dashboard: React.FC = () => {
     return taps;
   };
 
-  const getTaps = (): TapDetails[] => taps;
+  const getTaps = (): TapDetails[] => tapRef.current || [];
 
   const getAudioFilesAsync = async (): Promise<AudioFile[]> => {
     // if AWS has not been queried yet
     if (!audioFiles.length) {
       const newAudioFiles = await makeRequest("/aws/get-audio-files?app=2");
-      dispatch({ type: "SET_AUDIO_FILES", audioFiles: newAudioFiles })
+      dispatch({ type: "SET_AUDIO_FILES", audioFiles: newAudioFiles });
     }
 
     return audioFiles;
   };
 
-  const getAudioFiles = () => {
-    return audioFiles
-  };
+  const getAudioFiles = () => audioFileRef.current || [];
 
   const setView = (
     name: string[], view: React.ReactElement, replace: boolean | null = null

@@ -6,6 +6,7 @@ import "./studies.css";
 import StudySummary from "./studySummary";
 import { sub } from "date-fns";
 import AudioFileUpload from "./audioFileUpload";
+import AudioFiles from "./audioFiles";
 
 interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
@@ -101,7 +102,12 @@ const StudiesView: React.FC<StudiesViewProps> = ({
               className="button-secondary button-lg"
               onClick={() => handleClick(
                 ["Audio File"],
-                <React.Fragment />
+                <AudioFiles
+                  goBack={goBack}
+                  flashMessage={flashMessage}
+                  handleClick={handleClick}
+                  getAudioFiles={getAudioFiles}
+                />
               )}
             >
               View All

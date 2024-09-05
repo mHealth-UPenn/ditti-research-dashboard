@@ -395,6 +395,7 @@ def get_audio_files():  # TODO update unit test
             category: str,
             availability: str,
             studies: list[str],
+            length: int,
         },
         ...
     ]
@@ -433,6 +434,10 @@ def get_audio_files():  # TODO update unit test
                 pass
             try:
                 audio_file["studies"] = item["studies"]
+            except KeyError:
+                pass
+            try:
+                audio_file["length"] = int(item["length"])
             except KeyError:
                 pass
             res.append(audio_file)
