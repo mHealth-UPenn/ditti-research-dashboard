@@ -1,10 +1,15 @@
 from functools import reduce
 import logging
+import os
 import re
 import traceback
+
+import boto3
+from botocore.exceptions import ClientError
 from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import current_user
 import pandas as pd
+
 from aws_portal.models import JoinAccountStudy, Study
 from aws_portal.utils.auth import auth_required
 from aws_portal.utils.aws import MutationClient, Query, Updater
@@ -364,6 +369,192 @@ def user_edit():
         logger.warn(exc)
         msg = "User Edit Failed: %s" % e
 
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg})
+
+
+@blueprint.route("/get-audio-files")
+@auth_required("View", "Ditti App Dashboard")
+@auth_required("View", "Audio Files")
+def get_audio_files():  # TODO update unit test
+    """
+    Get all audio files from DynamoDB.
+
+    Options
+    -------
+    app: 2
+
+    Response Syntax (200)
+    ---------------------
+    [
+        {
+            id: str,
+            fileName: str,
+            title: str,
+            category: str,
+            availability: str,
+            studies: list[str],
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        audio_files = Query("AudioFile").scan()["Items"]
+
+    except Exception as e:
+        exc = traceback.format_exc()
+        logger.warn(exc)
+        msg = "Query failed: %s" % e
+        return make_response({"msg": msg}, 500)
+
+    return jsonify(audio_files)
+
+
+@blueprint.route("/audio-file/create", methods=["POST"])
+@auth_required("View", "Ditti App Dashboard")
+@auth_required("Create", "Audio File")
+def audio_file_create():
+    """
+    Create a new audio file. Upon insertion into DynamoDB, this endpoint also
+    returns a presigned URL for uploading the audio file directly from the
+    client.
+
+    Request Syntax
+    --------------
+    {
+        app: 2,
+        create: {
+            fileName: str,
+            title: str,
+            category: str,
+            availability: str,
+            studies: list[str],
+            length: int,
+        }
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "Audio File Created Successfully",
+        url: a presigned URL for uploading to S3
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    msg = "Audio File Created Successfully"
+    bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
+    url = None
+
+    # Try to generate a presigned URL first
+    try:
+        key = request.json.get("create").get("fileName")
+        client = boto3.client("s3")
+        url = client.generate_presigned_post(
+            Bucket=bucket, Key=key, ExpiresIn=60
+        )["url"]
+
+    except ClientError as e:
+        exc = traceback.format_exc()
+        logger.warn(exc)
+        msg = "Generation of presigned upload URL failed: %s" % e
+        return make_response({"msg": msg}, 500)
+
+    try:
+        create = request.json.get("create")
+
+        # Add the bucket name the mutation body
+        create["bucket"] = bucket
+        client = MutationClient()
+        client.open_connection()
+        client.set_mutation(
+            "CreateAudioFileInput",
+            "createAudioFile",
+            create
+        )
+
+        client.post_mutation()
+
+    except Exception as e:
+        exc = traceback.format_exc()
+        logger.warn(exc)
+        msg = "Creation of Audio File failed: %s" % e
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg, "url": url})
+
+
+@blueprint.route("/audio-file/delete", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Delete", "Audio File")
+def audio_file_delete():
+    """
+    Permanently deletes an audio file. This endpoint first deletes the audio
+    file from S3 then deletes the audio file from DynamoDB. If the deletion from
+    S3 fails, the audio file is not deleted from DynamoDB.
+
+    Request syntax
+    --------------
+    {
+        app: 2,
+        id: str
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "Audio File Deleted Successfully"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+
+        # Get the audio file
+        audio_file_id = request.json["id"]
+        audio_file = Query("AudioFile", f"id=={audio_file_id}").scan()["Items"]
+
+        # Try deleting the audio file from S3
+        key = audio_file["fileName"]
+        bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
+        client = boto3.client("s3")
+        deleted = client.delete_object(Bucket=bucket, Key=key)["DeleteMarker"]
+
+        # Return an error if the audio file was not deleted
+        if not deleted:
+            msg = "Audio file not deleted"
+            return make_response({"msg": msg}, 500)
+
+        # Delete the audio file from DynamoDB
+        client = MutationClient()
+        client.open_connection()
+        client.set_mutation(
+            "DeleteAudioFileInput",
+            "deleteAudioFile",
+            {"id": audio_file_id}
+        )
+
+        client.post_mutation()
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
         return make_response({"msg": msg}, 500)
 
     return jsonify({"msg": msg})
