@@ -211,10 +211,10 @@ export interface AccountDetails {
  */
 export interface AudioFile {
   id?: string;
-  fileName: string;
-  title: string;
-  category: string;
-  availability: string;
-  studies: string[];
-  length: number;
+  fileName?: string;
+  title?: string;
+  category?: string;
+  availability?: string;
+  studies?: string[];
+  length?: number;
 }

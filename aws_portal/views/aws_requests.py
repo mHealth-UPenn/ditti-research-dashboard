@@ -405,8 +405,37 @@ def get_audio_files():  # TODO update unit test
         msg: a formatted traceback if an uncaught error was thrown
     }
     """
+    res = []
+
     try:
-        audio_files = Query("AudioFile").scan()["Items"]
+        result = Query("AudioFile").scan()["Items"]
+        for item in result:
+            audio_file = dict()
+            try:
+                audio_file["id"] = item["id"]
+            except KeyError:
+                pass
+            try:
+                audio_file["fileName"] = item["fileName"]
+            except KeyError:
+                pass
+            try:
+                audio_file["title"] = item["title"]
+            except KeyError:
+                pass
+            try:
+                audio_file["category"] = item["category"]
+            except KeyError:
+                pass
+            try:
+                audio_file["availability"] = item["availability"]
+            except KeyError:
+                pass
+            try:
+                audio_file["studies"] = item["studies"]
+            except KeyError:
+                pass
+            res.append(audio_file)
 
     except Exception as e:
         exc = traceback.format_exc()
@@ -414,7 +443,7 @@ def get_audio_files():  # TODO update unit test
         msg = "Query failed: %s" % e
         return make_response({"msg": msg}, 500)
 
-    return jsonify(audio_files)
+    return jsonify(res)
 
 
 @blueprint.route("/audio-file/create", methods=["POST"])
