@@ -33,20 +33,20 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
   }, []);
 
   return (
-    <div className="bg-white studies-menu-container border-dark-r">
-      <div className="studies-menu-header border-dark-b">
+    <div className="bg-white flex flex-col flex-shrink-0 w-64 border-r border-solid border-[#33334D]">
+      <div className="flex items-center font-bold h-16 pl-8 border-b border-solid border-[#33334D]">
         <span>Studies</span>
       </div>
-      <div className="studies-menu-content">
+      <div className="p-8">
         {loading ? (
           <SmallLoader />
         ) : (
-          <ul>
+          <ul className="m-0 p-0 list-none">
             {/* render a list of studies */}
             {studies.map((s: Study, i: number) => (
               <li
                 key={i}
-                className="link"
+                className="mb-4 text-[#666699] cursor-pointer underline"
                 id={"study-menu-" + s.id}
                 onClick={() =>
                   setView(

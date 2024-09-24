@@ -17,15 +17,15 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ breadcrumbs, handleBack, handleClick, hasHistory }) => {
   return (
-    <div className="bg-white border-dark-b navbar-container">
+    <div className="bg-white flex items-center h-16 flex-shrink-0 select-none border-b border-solid border-[#33334D]">
 
       {/* the back button */}
-      <div className={hasHistory ? "link-svg" : ""} onClick={handleBack}>
+      <div className={"h-10 mx-8" + (hasHistory ? " link-svg" : "")} onClick={handleBack}>
         <Back />
       </div>
 
       {/* the breadcrumbs */}
-      <div className="navbar-content">
+      <div className="flex items-center h-12">
         {breadcrumbs.map((b, i, arr) => {
 
           // if this is the last breadcrumb or if there is no view associated with it
@@ -33,7 +33,7 @@ const Navbar: React.FC<NavbarProps> = ({ breadcrumbs, handleBack, handleClick, h
 
             // don't make the breadcrumb clickable
             return (
-              <div key={i}>
+              <div key={i} className="flex items-center">
                 <span>{b.name}&nbsp;&nbsp;/&nbsp;&nbsp;</span>
               </div>
             );
@@ -41,7 +41,7 @@ const Navbar: React.FC<NavbarProps> = ({ breadcrumbs, handleBack, handleClick, h
             return (
               <React.Fragment key={i}>
                 <div
-                  className="link-no-underline"
+                  className="flex items-center text-[#666699] cursor-pointer"
                   onClick={() => handleClick([b.name], b.view)}
                 >
                   <span>{b.name}</span>

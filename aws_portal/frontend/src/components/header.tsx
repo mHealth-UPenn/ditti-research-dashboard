@@ -29,18 +29,18 @@ const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
   return (
     <React.Fragment>
       {/* the header */}
-      <div className="bg-dark header-container">
-        <div className="header-brand">
+      <div className="bg-[#33334d] text-white flex items-center justify-between flex-shrink-0 h-16">
+        <div className="text-2xl ml-8">
           <span>AWS Data Portal</span>
         </div>
-        <div className="header-profile">
-          <span>
+        <div className="flex items-center mr-8">
+          <span className="absolute right-[6.5rem]">
             {name ? name : ""}&nbsp;&nbsp;|&nbsp;&nbsp;{email ? email : ""}
           </span>
 
           {/* clicking on this icon shows the account menu */}
           <div
-            className="header-profile-icon"
+            className="border-solid border-white border-2 rounded-[50%] p-2 relative select-none"
             onClick={() => setShowMenu(!showMenu)}
           >
             <span>{initials}</span>
