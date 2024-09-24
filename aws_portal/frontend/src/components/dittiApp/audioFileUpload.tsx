@@ -100,133 +100,139 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   };
 
   return (
-    <div className="page-container" style={{ flexDirection: "row" }}>
-      <div className="page-content bg-white">
+    <div className="flex flex-col h-[calc(100vh-8rem)] overflow-scroll overflow-x-hidden bg-white lg:bg-transparent lg:flex-row xl:p-12">
+      <div className="p-12 flex-grow bg-white">
         {/* the enroll subject form */}
-        {loading ? (
-          <SmallLoader />
-        ) : (
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                Upload Audio File
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="category"
-                    type="text"
-                    placeholder=""
-                    label="Category"
-                    onKeyup={setCategory}
-                    feedback=""
-                  />
-                </div>
-
-                <div className="admin-form-field" />
+        {
+          loading ?
+          <SmallLoader /> :
+          <>
+            <h1 className="text-xl font-bold border-b border-solid border-[#B3B3CC]">
+              Upload Audio File
+            </h1>
+            <div className="flex">
+              <div className="flex flex-grow flex-col mb-8 xl:mx-8">
+                <TextField
+                  id="category"
+                  type="text"
+                  placeholder=""
+                  label="Category"
+                  onKeyup={setCategory}
+                  feedback=""
+                />
               </div>
 
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <RadioField
-                    id="availabilityRadio"
-                    label="Availability"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => console.log(e.target.value)}
-                    values={["All Users", "Individual"]}
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="availability"
-                    type="text"
-                    placeholder=""
-                    label="Ditti ID"
-                    onKeyup={setAvailability}
-                    feedback=""
-                  />
-                </div>
+              <div className="flex flex-grow flex-col mb-8 xl:mx-8" />
+            </div>
+
+            <div className="flex">
+              <div className="flex flex-grow flex-col mb-8 xl:mx-8">
+                <RadioField
+                  id="availabilityRadio"
+                  label="Availability"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => console.log(e.target.value)}
+                  values={["All Users", "Individual"]}
+                />
               </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="studiesRadio"
-                    type="text"
-                    placeholder=""
-                    label="Studies"
-                    onKeyup={() => ""}
-                    feedback=""
-                  />
+              <div className="flex flex-grow flex-col mb-8 xl:mx-8">
+                <TextField
+                  id="availability"
+                  type="text"
+                  placeholder=""
+                  label="Ditti ID"
+                  onKeyup={setAvailability}
+                  feedback=""
+                />
+              </div>
+            </div>
+            <div className="flex">
+              <div className="flex flex-grow flex-col mb-8 xl:mx-8">
+                <TextField
+                  id="studiesRadio"
+                  type="text"
+                  placeholder=""
+                  label="Studies"
+                  onKeyup={() => ""}
+                  feedback=""
+                />
+              </div>
+              <div className="flex flex-grow flex-col mb-8 xl:mx-8">
+                <div style={{ marginBottom: "0.5rem" }}>
+                  <b>Select studies...</b>
                 </div>
-                <div className="admin-form-field">
-                  <div style={{ marginBottom: "0.5rem" }}>
-                    <b>Select studies...</b>
-                  </div>
-                  <div className="border-light">
-                    <Select
-                      id={0}
-                      opts={studies.map(
-                        s => {return { value: s.id, label: s.acronym }}
-                      )}
-                      placeholder="Select study..."
-                      callback={selectStudy}
-                      getDefault={() => -1}
-                    />
-                  </div>
+                <div className="border-light">
+                  <Select
+                    id={0}
+                    opts={studies.map(
+                      s => {return { value: s.id, label: s.acronym }}
+                    )}
+                    placeholder="Select study..."
+                    callback={selectStudy}
+                    getDefault={() => -1}
+                  />
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          </>
+        }
       </div>
 
       {/* the subject summary */}
-      <div className="admin-form-summary bg-dark">
-        <h1 className="border-white-b">Audio File Summary</h1>
-        <span>
-          Title:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{title}
-          <br />
-          <br />
-          Category:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{category}
-          <br />
-          <br />
-          Availability
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;
-          {availability === ""
-            ? "All users"
-            : `Individual - ${availability}`}
-          <br />
-          <br />
-          Studies:
-          <br />
-          {selectedStudies.length ? (
-            selectedStudies.map((s, i) => {
-              return (
-                <span key={`study-${i}`}>
-                  &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}
-                </span>
-              );
-            })
-          ) : (
-            <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span>
-          )}
-          <br />
-          <br />
-          File:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;filename.mp3 - 8.2mb
-          <br />
-        </span>
-        <AsyncButton onClick={post} text="Upload" type="primary" />
-        <div style={{ marginTop: "1.5rem" }}>
-          <i>
-          Audio file details cannot be changed after upload. The file must be
-          deleted and uploaded again.
-          </i>
+      <div className="flex flex-col flex-shrink-0 p-8 w-full lg:w-[18rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)] xl:p-12">
+        <h1 className="border-b border-solid border-white text-xl font-bold">Audio File Summary</h1>
+        <div className="flex flex-col md:flex-row lg:flex-col lg:max-h-[calc(100vh-16rem)]">
+          <div className="flex-grow mb-8 lg:overflow-y-scroll">
+            Title:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{title}
+            <br />
+            <br />
+            Category:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{category}
+            <br />
+            <br />
+            Availability
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            {availability === ""
+              ? "All users"
+              : `Individual - ${availability}`}
+            <br />
+            <br />
+            Studies:
+            <br />
+            {selectedStudies.length ? (
+              selectedStudies.map((s, i) => {
+                return (
+                  <span key={`study-${i}`}>
+                    &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}
+                  </span>
+                );
+              })
+            ) : (
+              <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span>
+            )}
+            <br />
+            <br />
+            File:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;filename.mp3 - 8.2mb
+            <br />
+          </div>
+          <div className="flex flex-col md:w-1/2 lg:w-full justify-end">
+            <AsyncButton
+              className="p-4"
+              onClick={post}
+              text="Upload"
+              type="primary"/>
+            <div className="mt-6 text-sm">
+              <i>
+              Audio file details cannot be changed after upload. The file must be
+              deleted and uploaded again.
+              </i>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -10,9 +10,15 @@ interface AsyncButtonProps {
   onClick: () => Promise<any>;
   text: string;
   type: string;
+  className?: string;
 }
 
-const AsyncButton: React.FC<AsyncButtonProps> = ({ onClick, text, type }) => {
+const AsyncButton: React.FC<AsyncButtonProps> = ({
+  onClick,
+  text,
+  type,
+  className
+}) => {
   const [loading, setLoading] = useState<boolean>(false);
 
   /**
@@ -35,7 +41,7 @@ const AsyncButton: React.FC<AsyncButtonProps> = ({ onClick, text, type }) => {
 
   return (
     <button
-      className={"button button-large button-" + type}
+      className={"button button-large button-" + type + (className ? ` ${className}` : "")}
       onClick={handleClick}
     >
       {loading ? loader : text}
