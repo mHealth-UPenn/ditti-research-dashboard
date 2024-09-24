@@ -100,8 +100,8 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] overflow-scroll overflow-x-hidden bg-white lg:bg-transparent lg:flex-row xl:p-12">
-      <div className="p-12 flex-grow bg-white">
+    <div className="flex flex-col h-[calc(100vh-8rem)] overflow-scroll overflow-x-hidden bg-white lg:bg-transparent lg:flex-row xl:px-12">
+      <div className="p-12 flex-grow bg-white lg:overflow-y-scroll">
         {/* the enroll subject form */}
         {
           loading ?
@@ -178,9 +178,9 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       </div>
 
       {/* the subject summary */}
-      <div className="flex flex-col flex-shrink-0 p-8 w-full lg:w-[18rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)] xl:p-12">
+      <div className="flex flex-col flex-shrink-0 p-8 w-full lg:w-[20rem] xl:w-[24rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)] xl:p-12">
         <h1 className="border-b border-solid border-white text-xl font-bold">Audio File Summary</h1>
-        <div className="flex flex-col md:flex-row lg:flex-col lg:max-h-[calc(100vh-16rem)]">
+        <div className="flex flex-col md:flex-row lg:flex-col lg:max-h-[calc(100vh-17rem)] lg:h-full lg:justify-between">
           <div className="flex-grow mb-8 lg:overflow-y-scroll">
             Title:
             <br />
