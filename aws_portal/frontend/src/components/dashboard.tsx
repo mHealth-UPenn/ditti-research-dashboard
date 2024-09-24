@@ -280,7 +280,7 @@ const Dashboard: React.FC = () => {
   const popMessage = (id: number) => dispatch({ type: "CLOSE_MESSAGE", id });
 
   return (
-    <main className="bg-light dashboard-container">
+    <main className="bg-[#F0F0F5] dashboard-container">
 
       {/* header with the account menu  */}
       <Header
