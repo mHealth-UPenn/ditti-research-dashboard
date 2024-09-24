@@ -86,13 +86,13 @@ const Home: React.FC<HomeProps> = ({
     return apps.map((app, i) => (
       <div
         key={i}
-        className="card-s hover-pointer bg-white shadow"
+        className="p-6 m-8 w-[24rem] bg-white shadow cursor-pointer bg-white shadow"
         onClick={() => handleClick(app.breadcrumbs, app.view)}
       >
-        <div className="app-name">
+        <div className="text-lg font-bold mb-24">
           <span>{app.name}</span>
         </div>
-        <div className="app-button link-svg">
+        <div className="float-right link-svg">
           <Right />
         </div>
       </div>
@@ -100,10 +100,10 @@ const Home: React.FC<HomeProps> = ({
   };
 
   return (
-    <div className="card-container">
-      <div className="card-row">
+    <div className="flex flex-col p-6 max-h-[calc(calc(100vh-8rem)-1px)] overflow-scroll overflow-x-hidden">
+      <div className="flex items-start flex-wrap">
         {loading ? (
-          <div className="card-s bg-white shadow">
+          <div className="p-6 m-8 w-[24rem] bg-white shadow">
             <SmallLoader />
           </div>
         ) : (

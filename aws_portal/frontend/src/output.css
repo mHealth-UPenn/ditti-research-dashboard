@@ -678,8 +678,16 @@ video {
   right: 6.5rem;
 }
 
+.float-right {
+  float: right;
+}
+
 .m-0 {
   margin: 0px;
+}
+
+.m-8 {
+  margin: 2rem;
 }
 
 .mx-8 {
@@ -713,6 +721,10 @@ video {
   margin-bottom: 1rem;
 }
 
+.mb-24 {
+  margin-bottom: 6rem;
+}
+
 .flex {
   display: flex;
 }
@@ -741,12 +753,40 @@ video {
   height: 3rem;
 }
 
+.max-h-\[calc\(100vh-11rem\)-1px\] {
+  max-height: calc(100vh - 11rem)-1px;
+}
+
+.max-h-\[calc\(calc\(100vh-11rem\)-1px\)\] {
+  max-height: calc(calc(100vh - 11rem) - 1px);
+}
+
+.max-h-\[calc\(calc\(100vh-8rem\)-1px\)\] {
+  max-height: calc(calc(100vh - 8rem) - 1px);
+}
+
 .w-16 {
   width: 4rem;
 }
 
 .w-64 {
   width: 16rem;
+}
+
+.w-\[calc\(calc\(100\%-18rem\)\/2\)\] {
+  width: calc(calc(100% - 18rem) / 2);
+}
+
+.w-\[calc\(calc\(100\%-18rem\)\)\] {
+  width: calc(calc(100% - 18rem));
+}
+
+.w-\[20rem\] {
+  width: 20rem;
+}
+
+.w-\[24rem\] {
+  width: 24rem;
 }
 
 .flex-shrink-0 {
@@ -775,12 +815,24 @@ video {
   flex-direction: column;
 }
 
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.items-start {
+  align-items: flex-start;
+}
+
 .items-center {
   align-items: center;
 }
 
 .justify-between {
   justify-content: space-between;
+}
+
+.overflow-scroll {
+  overflow: scroll;
 }
 
 .overflow-x-hidden {
@@ -853,6 +905,10 @@ video {
   padding: 2rem;
 }
 
+.p-6 {
+  padding: 1.5rem;
+}
+
 .pl-8 {
   padding-left: 2rem;
 }
@@ -860,6 +916,11 @@ video {
 .text-2xl {
   font-size: 1.5rem;
   line-height: 2rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
 }
 
 .font-bold {
