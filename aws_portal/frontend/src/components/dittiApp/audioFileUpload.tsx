@@ -6,6 +6,7 @@ import "./subjectsEdit.css";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 import Select from "../fields/select";
+import RadioField from "../fields/radioField";
 
 
 const AudioFileUpload: React.FC<ViewProps> = ({
@@ -113,17 +114,6 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               <div className="admin-form-row">
                 <div className="admin-form-field">
                   <TextField
-                    id="title"
-                    type="text"
-                    placeholder=""
-                    label="Title"
-                    onKeyup={setTitle}
-                    feedback=""
-                  />
-                </div>
-
-                <div className="admin-form-field">
-                  <TextField
                     id="category"
                     type="text"
                     placeholder=""
@@ -132,17 +122,17 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                     feedback=""
                   />
                 </div>
+
+                <div className="admin-form-field" />
               </div>
 
               <div className="admin-form-row">
                 <div className="admin-form-field">
-                  <TextField
+                  <RadioField
                     id="availabilityRadio"
-                    type="text"
-                    placeholder=""
                     label="Availability"
-                    onKeyup={() => ""}
-                    feedback=""
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => console.log(e.target.value)}
+                    values={["All Users", "Individual"]}
                   />
                 </div>
                 <div className="admin-form-field">
