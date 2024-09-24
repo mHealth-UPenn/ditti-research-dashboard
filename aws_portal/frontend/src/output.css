@@ -678,6 +678,10 @@ video {
   margin: 2rem;
 }
 
+.m-6 {
+  margin: 1.5rem;
+}
+
 .mx-8 {
   margin-left: 2rem;
   margin-right: 2rem;
@@ -761,6 +765,22 @@ video {
 
 .w-0 {
   width: 0px;
+}
+
+.w-\[48rem\] {
+  width: 48rem;
+}
+
+.w-\[36rem\] {
+  width: 36rem;
+}
+
+.w-\[12rem\] {
+  width: 12rem;
+}
+
+.w-\[2rem\] {
+  width: 2rem;
 }
 
 .flex-shrink-0 {
@@ -893,6 +913,11 @@ video {
 
 .text-lg {
   font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
   line-height: 1.75rem;
 }
 
@@ -1411,6 +1436,10 @@ div:hover > .link-svg .svg-stroke {
 
   .xl\:w-64 {
     width: 16rem;
+  }
+
+  .xl\:w-48 {
+    width: 12rem;
   }
 
   .xl\:pl-8 {
