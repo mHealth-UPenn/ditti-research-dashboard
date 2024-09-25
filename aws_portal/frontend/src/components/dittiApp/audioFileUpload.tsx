@@ -1,4 +1,4 @@
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect, ChangeEvent, createRef } from "react";
 import TextField from "../fields/textField";
 import { Study, ResponseBody, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
@@ -14,14 +14,16 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   goBack,
   flashMessage,
 }) => {
-  const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [availability, setAvailability] = useState("All Users");
   const [dittiId, setDittiId] = useState("");
   const [studiesRadio, setStudiesRadio] = useState("All Studies");
   const [studies, setStudies] = useState<Study[]>([]);
   const [selectedStudies, setSelectedStudies] = useState<Set<number>>(new Set());
+  const [files, setFiles] = useState<{ name: string; size: string; }[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const fileInputRef = createRef<HTMLInputElement>();
 
   // Initialize the list of studies
   useEffect(() => {
@@ -35,7 +37,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
    */
   const post = async (): Promise<void> => {
     const data = {
-      title,
+      // title,
       category,
       fileName: "fileName",
       availability,
@@ -110,6 +112,28 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       setSelectedStudies(new Set());
     }
   };
+
+  const handleClickChooseFiles = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleSelectFiles = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles([...e.target.files].map( file => {
+        const size = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+        const name = file.name.split(".").slice(0, -1).join();
+        return { name, size };
+      }));
+    }
+  };
+
+  const handleTitleKeyup = (text: string, i: number) => {
+    const updatedFiles = [...files];
+    files[i].name = text;
+    setFiles(updatedFiles);
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] overflow-scroll overflow-x-hidden bg-white lg:bg-transparent lg:flex-row xl:px-12">
@@ -204,6 +228,49 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   </div>
                 </div>
               }
+              <div className="flex flex-col md:flex-row">
+                <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    className="hidden"
+                    accept=".mp3"
+                    onChange={handleSelectFiles} />
+                  <label
+                    htmlFor="audio-file-upload"
+                    className="mb-2 font-bold">
+                    Select audio files
+                  </label>
+                  <button
+                    className="button button-large button-secondary p-4"
+                    onClick={handleClickChooseFiles}>
+                    Choose files
+                  </button>
+                </div>
+                  {
+                    Boolean(files.length) &&
+                    <div className="flex flex-col md:flex-row">
+                      {files.map((file, i) =>
+                        <div key={i}>
+                          <div className="flex justify-between w-full mb-1 md:pr-4 xl:mx-8 md:w-1/2">
+                            <span className="font-bold">{file.name}</span>
+                            <span>{file.size}</span>
+                          </div>
+                          <div className="flex w-full flex-col mb-4 md:pr-4 xl:mx-8 md:w-1/2">
+                            <TextField
+                              id={`file-${file.name}`}
+                              type="text"
+                              value={file.name}
+                              onKeyup={(text: string) => handleTitleKeyup(text, i)}>
+                                <span className="flex items-center px-2 bg-light h-full">Title</span>
+                            </TextField>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  }
+              </div>
             </div>
           </>
         }
@@ -216,7 +283,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
           <div className="flex-grow mb-8 lg:overflow-y-scroll">
             Title:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{title}
+            {/* &nbsp;&nbsp;&nbsp;&nbsp;{title} */}
             <br />
             <br />
             Category:
