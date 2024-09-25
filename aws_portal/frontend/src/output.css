@@ -1564,3 +1564,9 @@ div:hover > .link-svg .svg-stroke {
     padding-left: 2rem;
   }
 }
+
+@media (min-width: 1536px) {
+  .\32xl\:w-\[28rem\] {
+    width: 28rem;
+  }
+}

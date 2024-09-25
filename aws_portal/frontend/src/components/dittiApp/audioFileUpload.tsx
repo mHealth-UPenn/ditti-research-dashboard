@@ -149,7 +149,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
 
             {/* Category field */}
             <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
+              <div className="flex w-full flex-col mb-8">
                 <TextField
                   id="category"
                   type="text"
@@ -197,7 +197,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               </div>
               <div className="flex w-full flex-col mb-8 md:w-1/2">
                 <div style={{ marginBottom: "0.5rem" }}>
-                  <b>Select studies...</b>
+                  <b>Add study...</b>
                 </div>
                 <div className={"border-light" + (studiesRadio === "All Studies" ? " bg-light" : "")}>
                   <Select
@@ -211,33 +211,33 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   />
                 </div>
               </div>
-              {
-                Boolean(selectedStudies.size) &&
-                <div className="flex flex-col md:flex-row">
-                  <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
-                    <div className="mb-1">
-                      <b>Selected studies</b>
-                    </div>
-                    {
-                      studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
-                        <div key={i} className="flex items-center justify-between">
-                          <span className="truncate">{`${s.acronym}: ${s.name}`}</span>
-                          <div
-                            className="p-2 cursor-pointer"
-                            onClick={() => removeStudy(s.id)}>
-                            <CloseIcon color="warning" />
-                          </div>
-                        </div>
-                      )
-                    }
-                  </div>
-                </div>
-              }
             </div>
+            {
+              Boolean(selectedStudies.size) &&
+              <div className="flex flex-col md:flex-row">
+                <div className="flex w-full flex-col mb-8">
+                  <div className="mb-1">
+                    <b>Selected studies</b>
+                  </div>
+                  {
+                    studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
+                      <div key={i} className="flex items-center justify-between">
+                        <span className="truncate">{`${s.acronym}: ${s.name}`}</span>
+                        <div
+                          className="p-2 cursor-pointer"
+                          onClick={() => removeStudy(s.id)}>
+                          <CloseIcon color="warning" />
+                        </div>
+                      </div>
+                    )
+                  }
+                </div>
+              </div>
+            }
 
             {/* Select audio files field */}
             <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
+              <div className="flex w-full flex-col mb-8">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -287,20 +287,20 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       </div>
 
       {/* the subject summary */}
-      <div className="flex flex-col flex-shrink-0 px-16 py-12 w-full lg:px-8 lg:w-[20rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)]">
+      <div className="flex flex-col flex-shrink-0 px-16 py-12 w-full lg:px-8 lg:w-[20rem] 2xl:w-[28rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)]">
         <h1 className="border-b border-solid border-white text-xl font-bold">Audio File Summary</h1>
         <div className="flex flex-col md:flex-row lg:flex-col lg:max-h-[calc(100vh-17rem)] lg:h-full lg:justify-between">
-          <div className="flex-grow mb-8 lg:overflow-y-scroll">
+          <div className="flex-grow mb-8 lg:overflow-y-scroll truncate">
             Files:
             <br />
             {/* &nbsp;&nbsp;&nbsp;&nbsp;{title} */}
             {
               files.map((file, i) =>
                 <span key={i}>
-                  {Boolean(i) && <br />}
+                  {Boolean(i) && <><br /><br /></>}
                   &nbsp;&nbsp;&nbsp;&nbsp;{file.title}
                   <br />
-                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{file.name} - {file.size}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{file.size} - {file.name}
                 </span>
               )
             }
@@ -314,29 +314,23 @@ const AudioFileUpload: React.FC<ViewProps> = ({
             Availability
             <br />
             &nbsp;&nbsp;&nbsp;&nbsp;
-            {availability === ""
-              ? "All users"
-              : `Individual - ${availability}`}
+            {availability === "All Users"
+              ? "All Users"
+              : `Individual - ${dittiId}`}
             <br />
             <br />
             Studies:
             <br />
             {
-              selectedStudies.size ?
+              studiesRadio === "All Studies" ?
+              <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span> :
               studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
                 <span key={`study-${i}`}>
                   {Boolean(i) && <br />}
                   &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}: {s.name}
                 </span>
-              ) :
-              <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span>
+              )
             }
-            <br />
-            <br />
-            File:
-            <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;filename.mp3 - 8.2mb
-            <br />
           </div>
           <div className="flex flex-col md:w-1/2 lg:w-full justify-end">
             <AsyncButton

@@ -82,7 +82,7 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
 
   return (
     <div className="bg-white flex flex-col flex-shrink-0 border-r border-solid border-[#33334D] w-16 xl:w-64">
-      <div className="items-center font-bold h-16 xl:pl-8 border-b border-solid border-[#33334D]">
+      <div className="flex items-center font-bold h-16 xl:pl-8 border-b border-solid border-[#33334D]">
         <div className="flex flex-grow items-center justify-center h-full cursor-pointer xl:hidden" onClick={drawerOpen ? handleClickClose : handleClickMenu}>
           {drawerOpen ? <CloseIcon /> : <MenuIcon />}
         </div>
