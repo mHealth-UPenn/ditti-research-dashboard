@@ -82,7 +82,7 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
 
   return (
     <div className="bg-white flex flex-col flex-shrink-0 border-r border-solid border-[#33334D] w-16 xl:w-64">
-      <div className="flex items-center font-bold h-16 xl:pl-8 border-b border-solid border-[#33334D]">
+      <div className="items-center font-bold h-16 xl:pl-8 border-b border-solid border-[#33334D]">
         <div className="flex flex-grow items-center justify-center h-full cursor-pointer xl:hidden" onClick={drawerOpen ? handleClickClose : handleClickMenu}>
           {drawerOpen ? <CloseIcon /> : <MenuIcon />}
         </div>
@@ -91,7 +91,7 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
       <div className="p-8 hidden xl:flex">
         {loading ? <SmallLoader /> : studiesList}
       </div>
-      <div ref={drawerRef} className="w-0 overflow-hidden p-0 flex flex-col w-64 bg-white z-10 flex-grow border-r border-solid border-[#33334D]">
+      <div ref={drawerRef} className="w-0 overflow-hidden p-0 flex flex-col bg-white z-10 flex-grow border-r border-solid border-[#33334D]">
         <span className="mb-4 font-bold">Studies</span>
         {loading ? <SmallLoader /> : studiesList}
       </div>
