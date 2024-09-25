@@ -20,7 +20,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const [studiesRadio, setStudiesRadio] = useState("All Studies");
   const [studies, setStudies] = useState<Study[]>([]);
   const [selectedStudies, setSelectedStudies] = useState<Set<number>>(new Set());
-  const [files, setFiles] = useState<{ name: string; size: string; }[]>([]);
+  const [files, setFiles] = useState<{ name: string; title: string; size: string; }[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fileInputRef = createRef<HTMLInputElement>();
@@ -123,20 +123,20 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     if (e.target.files) {
       setFiles([...e.target.files].map( file => {
         const size = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
-        const name = file.name.split(".").slice(0, -1).join();
-        return { name, size };
+        const title = file.name.split(".").slice(0, -1).join();
+        return { name: file.name, title, size };
       }));
     }
   };
 
   const handleTitleKeyup = (text: string, i: number) => {
     const updatedFiles = [...files];
-    files[i].name = text;
+    files[i].title = text;
     setFiles(updatedFiles);
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] overflow-scroll overflow-x-hidden bg-white lg:bg-transparent lg:flex-row xl:px-12">
+    <div className="flex flex-col h-[calc(100vh-8rem)] overflow-scroll overflow-x-hidden bg-white lg:bg-transparent lg:flex-row">
       <div className="p-12 flex-grow bg-white lg:overflow-y-scroll">
         {/* the enroll subject form */}
         {
@@ -146,8 +146,10 @@ const AudioFileUpload: React.FC<ViewProps> = ({
             <h1 className="text-xl font-bold border-b border-solid border-[#B3B3CC]">
               Upload Audio File
             </h1>
+
+            {/* Category field */}
             <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
+              <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
                 <TextField
                   id="category"
                   type="text"
@@ -159,8 +161,9 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               </div>
             </div>
 
+            {/* Availability & Ditti ID fields */}
             <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
+              <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
                 <RadioField
                   id="availability-radio"
                   label="Availability"
@@ -169,7 +172,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   prefill="All Users"
                 />
               </div>
-              <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
+              <div className="flex w-full flex-col mb-8 md:w-1/2">
                 <TextField
                   id="availability"
                   type="text"
@@ -180,8 +183,10 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                 />
               </div>
             </div>
+
+            {/* Studies & select studies fields */}
             <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
+              <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
                 <RadioField
                   id="studies-radio"
                   label="Studies"
@@ -190,7 +195,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   prefill="All Studies"
                 />
               </div>
-              <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
+              <div className="flex w-full flex-col mb-8 md:w-1/2">
                 <div style={{ marginBottom: "0.5rem" }}>
                   <b>Select studies...</b>
                 </div>
@@ -209,7 +214,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               {
                 Boolean(selectedStudies.size) &&
                 <div className="flex flex-col md:flex-row">
-                  <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
+                  <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
                     <div className="mb-1">
                       <b>Selected studies</b>
                     </div>
@@ -228,62 +233,77 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   </div>
                 </div>
               }
-              <div className="flex flex-col md:flex-row">
-                <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    className="hidden"
-                    accept=".mp3"
-                    onChange={handleSelectFiles} />
-                  <label
-                    htmlFor="audio-file-upload"
-                    className="mb-2 font-bold">
-                    Select audio files
-                  </label>
-                  <button
-                    className="button button-large button-secondary p-4"
-                    onClick={handleClickChooseFiles}>
-                    Choose files
-                  </button>
-                </div>
-                  {
-                    Boolean(files.length) &&
-                    <div className="flex flex-col md:flex-row">
-                      {files.map((file, i) =>
-                        <div key={i}>
-                          <div className="flex justify-between w-full mb-1 md:pr-4 xl:mx-8 md:w-1/2">
-                            <span className="font-bold">{file.name}</span>
-                            <span>{file.size}</span>
-                          </div>
-                          <div className="flex w-full flex-col mb-4 md:pr-4 xl:mx-8 md:w-1/2">
-                            <TextField
-                              id={`file-${file.name}`}
-                              type="text"
-                              value={file.name}
-                              onKeyup={(text: string) => handleTitleKeyup(text, i)}>
-                                <span className="flex items-center px-2 bg-light h-full">Title</span>
-                            </TextField>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  }
+            </div>
+
+            {/* Select audio files field */}
+            <div className="flex flex-col md:flex-row">
+              <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  accept=".mp3"
+                  onChange={handleSelectFiles} />
+                <label
+                  htmlFor="audio-file-upload"
+                  className="mb-2 font-bold">
+                  Select audio files
+                </label>
+                <button
+                  className="button button-large button-secondary p-4"
+                  onClick={handleClickChooseFiles}>
+                  Choose files
+                </button>
               </div>
             </div>
+            {
+              Boolean(files.length) &&
+              <div className="flex flex-col md:flex-row">
+                <div className="flex flex-col w-full">
+                  <span className="font-bold mb-1">Audio files</span>
+                  {files.map((file, i) =>
+                    <div key={i} className="w-full">
+                      <div className="flex justify-between w-full mb-1">
+                        <span className="truncate">{file.name}</span>
+                        <span className="w-max flex-shrink-0">{file.size}</span>
+                      </div>
+                      <div className="flex w-full flex-col mb-4">
+                        <TextField
+                          id={`file-${file.name}`}
+                          type="text"
+                          value={file.title}
+                          onKeyup={(text: string) => handleTitleKeyup(text, i)}>
+                            <span className="flex items-center font-bold px-2 bg-light h-full">Title</span>
+                        </TextField>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            }
           </>
         }
       </div>
 
       {/* the subject summary */}
-      <div className="flex flex-col flex-shrink-0 px-16 py-8 w-full lg:px-8 lg:w-[20rem] xl:w-[24rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)] xl:p-12">
+      <div className="flex flex-col flex-shrink-0 px-16 py-12 w-full lg:px-8 lg:w-[20rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)]">
         <h1 className="border-b border-solid border-white text-xl font-bold">Audio File Summary</h1>
         <div className="flex flex-col md:flex-row lg:flex-col lg:max-h-[calc(100vh-17rem)] lg:h-full lg:justify-between">
           <div className="flex-grow mb-8 lg:overflow-y-scroll">
-            Title:
+            Files:
             <br />
             {/* &nbsp;&nbsp;&nbsp;&nbsp;{title} */}
+            {
+              files.map((file, i) =>
+                <span key={i}>
+                  {Boolean(i) && <br />}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{file.title}
+                  <br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{file.name} - {file.size}
+                </span>
+              )
+            }
             <br />
             <br />
             Category:
@@ -326,7 +346,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               type="primary"/>
             <div className="mt-6 text-sm">
               <i>
-              Audio file details cannot be changed after upload. The file must be
+              Audio file details cannot be changed after upload. The files must be
               deleted and uploaded again.
               </i>
             </div>
