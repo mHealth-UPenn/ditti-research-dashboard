@@ -13,16 +13,26 @@ interface SelectProps {
   id: number;
   opts: { value: number; label: string }[];
   placeholder: string;
+  disabled?: boolean;
   callback: (selected: number, id: number) => void;
-  getDefault: (id: number) => number;
+  getDefault?: (id: number) => number;
 }
 
-const Select: React.FC<SelectProps> = ({ id, opts, placeholder, callback, getDefault }) => {
+const Select: React.FC<SelectProps> = ({
+  id,
+  opts,
+  placeholder,
+  disabled,
+  callback,
+  getDefault,
+}) => {
   const [value, setValue] = useState<string>("");
 
   // set the default value
   useEffect(() => {
-    setValue(String(getDefault(id)));
+    if (getDefault) {
+      setValue(String(getDefault(id)));
+    }
   }, [getDefault, id]);
 
   /**
@@ -45,7 +55,7 @@ const Select: React.FC<SelectProps> = ({ id, opts, placeholder, callback, getDef
         alignItems: "center",
         display: "flex",
         flexGrow: 1,
-        position: "relative"
+        position: "relative",
       }}
     >
       {/* if the blank option is selected, show the placeholder */}
@@ -56,6 +66,8 @@ const Select: React.FC<SelectProps> = ({ id, opts, placeholder, callback, getDef
         onChange={changeValue}
         value={value}
         style={{ minHeight: "calc(3rem - 2px)" }}
+        disabled={disabled}
+        className={disabled ? "bg-transparent" : ""}
       >
         {updatedOpts.map((opt, i) => (
           <option key={i} value={opt.value}>

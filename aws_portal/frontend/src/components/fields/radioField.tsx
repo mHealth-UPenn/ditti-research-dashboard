@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { ChangeEvent, createRef, RefObject } from "react";
 import "./radioField.css";
 
 /**
@@ -9,10 +9,10 @@ import "./radioField.css";
  */
 interface RadioFieldProps {
   id?: string;
-  prefill?: boolean;
+  prefill?: string;
   label?: string;
   values: string[];
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
 const RadioField: React.FC<RadioFieldProps> = ({
@@ -22,27 +22,40 @@ const RadioField: React.FC<RadioFieldProps> = ({
     values,
     onChange
 }) => {
+  const radioButtons = values.map((v, i) => {
+    const ref = createRef<HTMLInputElement>();
+    return (
+      <div key={i} className="flex items-center">
+        <label
+          htmlFor={`${id}-${v}`}
+          className="p-2 cursor-pointer"
+          >
+          {v}
+        </label>
+        <input
+          ref={ref}
+          id={`${id}-${v}`}
+          className="cursor-pointer"
+          type="radio"
+          defaultChecked={v === prefill}
+          name={id}
+          value={v}
+          onChange={onChange} />
+      </div>
+    );
+  });
+
   return (
-    <div className="radio-field-container">
-      {label && (
-        <span className="radio-field-main-label">
+    <div className="flex flex-col w-full">
+      {
+        label &&
+        <span className="font-bold mb-1">
           {label}
         </span>
-      )}
-      {values.map((v, i) =>
-        <div className="radio-field-input-container" key={i}>
-          <label htmlFor={id} className="radio-field-label">
-            {v}
-          </label>
-          <input
-            type="radio"
-            // checked={prefill}
-            name={id}
-            value={v}
-            onChange={onChange || (e => null)}
-          />
-        </div>
-      )}
+      }
+      <div className="flex justify-evenly select-none">
+        {radioButtons}
+      </div>
     </div>
   );
 };

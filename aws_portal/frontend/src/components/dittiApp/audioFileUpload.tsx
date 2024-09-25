@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import TextField from "../fields/textField";
 import { Study, ResponseBody, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
@@ -7,6 +7,7 @@ import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 import Select from "../fields/select";
 import RadioField from "../fields/radioField";
+import CloseIcon from '@mui/icons-material/Close';
 
 
 const AudioFileUpload: React.FC<ViewProps> = ({
@@ -15,9 +16,11 @@ const AudioFileUpload: React.FC<ViewProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
-  const [availability, setAvailability] = useState("");
+  const [availability, setAvailability] = useState("All Users");
+  const [dittiId, setDittiId] = useState("");
+  const [studiesRadio, setStudiesRadio] = useState("All Studies");
   const [studies, setStudies] = useState<Study[]>([]);
-  const [selectedStudies, setSelectedStudies] = useState<Study[]>([]);
+  const [selectedStudies, setSelectedStudies] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 
   // Initialize the list of studies
@@ -76,27 +79,36 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     flashMessage(msg, "danger");
   };
 
-  /**
-   * Assign an about sleep template to the user
-   * @param id - the template's database primary key
-   */
   const selectStudy = (id: number): void => {
-    const selectedStudy = studies.filter(study => study.id === id)[0];
-    if (selectedStudy) {
-      const updatedSelectedStudies = [...selectedStudies];
-      updatedSelectedStudies.push(selectedStudy);
-      setSelectedStudies(updatedSelectedStudies);
+    const updatedSelectedStudies = selectedStudies;
+    updatedSelectedStudies.add(id);
+    setSelectedStudies(updatedSelectedStudies);
+
+    // Set studies to force re-render
+    setStudies([...studies]);
+  };
+
+  const removeStudy = (id: number): void => {
+    const updatedSelectedStudies = selectedStudies
+    updatedSelectedStudies.delete(id);
+    setSelectedStudies(updatedSelectedStudies);
+    setStudies([...studies]);
+  };
+
+  const handleClickAvailability = (e: ChangeEvent<HTMLInputElement>) => {
+    setAvailability(e.target.value);
+
+    if (e.target.value == "All Users") {
+      setDittiId("");
     }
   };
 
-  /**
-   * Assign an about sleep template to the user
-   * @param id - the template's database primary key
-   */
-  const removeStudy = (id: number): void => {
-    const updatedSelectedStudies = selectedStudies
-      .filter(study => study.id !== id);
-    setSelectedStudies(updatedSelectedStudies);
+  const handleClickStudies = (e: ChangeEvent<HTMLInputElement>) => {
+    setStudiesRadio(e.target.value);
+
+    if (e.target.value === "All Studies") {
+      setSelectedStudies(new Set());
+    }
   };
 
   return (
@@ -110,8 +122,8 @@ const AudioFileUpload: React.FC<ViewProps> = ({
             <h1 className="text-xl font-bold border-b border-solid border-[#B3B3CC]">
               Upload Audio File
             </h1>
-            <div className="flex">
-              <div className="flex flex-grow flex-col mb-8 xl:mx-8">
+            <div className="flex flex-col md:flex-row">
+              <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
                 <TextField
                   id="category"
                   type="text"
@@ -121,64 +133,84 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   feedback=""
                 />
               </div>
-
-              <div className="flex flex-grow flex-col mb-8 xl:mx-8" />
             </div>
 
-            <div className="flex">
-              <div className="flex flex-grow flex-col mb-8 xl:mx-8">
+            <div className="flex flex-col md:flex-row">
+              <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
                 <RadioField
-                  id="availabilityRadio"
+                  id="availability-radio"
                   label="Availability"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => console.log(e.target.value)}
+                  onChange={handleClickAvailability}
                   values={["All Users", "Individual"]}
+                  prefill="All Users"
                 />
               </div>
-              <div className="flex flex-grow flex-col mb-8 xl:mx-8">
+              <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
                 <TextField
                   id="availability"
                   type="text"
-                  placeholder=""
                   label="Ditti ID"
-                  onKeyup={setAvailability}
-                  feedback=""
+                  value={dittiId}
+                  onKeyup={setDittiId}
+                  disabled={availability === "All Users"}
                 />
               </div>
             </div>
-            <div className="flex">
-              <div className="flex flex-grow flex-col mb-8 xl:mx-8">
-                <TextField
-                  id="studiesRadio"
-                  type="text"
-                  placeholder=""
+            <div className="flex flex-col md:flex-row">
+              <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
+                <RadioField
+                  id="studies-radio"
                   label="Studies"
-                  onKeyup={() => ""}
-                  feedback=""
+                  onChange={handleClickStudies}
+                  values={["All Studies", "Select Studies"]}
+                  prefill="All Studies"
                 />
               </div>
-              <div className="flex flex-grow flex-col mb-8 xl:mx-8">
+              <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
                 <div style={{ marginBottom: "0.5rem" }}>
                   <b>Select studies...</b>
                 </div>
-                <div className="border-light">
+                <div className={"border-light" + (studiesRadio === "All Studies" ? " bg-light" : "")}>
                   <Select
                     id={0}
                     opts={studies.map(
                       s => {return { value: s.id, label: s.acronym }}
                     )}
-                    placeholder="Select study..."
+                    placeholder="Select studies..."
                     callback={selectStudy}
-                    getDefault={() => -1}
+                    disabled={studiesRadio === "All Studies"}
                   />
                 </div>
               </div>
+              {
+                Boolean(selectedStudies.size) &&
+                <div className="flex flex-col md:flex-row">
+                  <div className="flex w-full flex-col mb-8 md:pr-4 xl:mx-8 md:w-1/2">
+                    <div className="mb-1">
+                      <b>Selected studies</b>
+                    </div>
+                    {
+                      studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
+                        <div key={i} className="flex items-center justify-between">
+                          <span className="truncate">{`${s.acronym}: ${s.name}`}</span>
+                          <div
+                            className="p-2 cursor-pointer"
+                            onClick={() => removeStudy(s.id)}>
+                            <CloseIcon color="warning" />
+                          </div>
+                        </div>
+                      )
+                    }
+                  </div>
+                </div>
+              }
             </div>
           </>
         }
       </div>
 
       {/* the subject summary */}
-      <div className="flex flex-col flex-shrink-0 p-8 w-full lg:w-[20rem] xl:w-[24rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)] xl:p-12">
+      <div className="flex flex-col flex-shrink-0 px-16 py-8 w-full lg:px-8 lg:w-[20rem] xl:w-[24rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)] xl:p-12">
         <h1 className="border-b border-solid border-white text-xl font-bold">Audio File Summary</h1>
         <div className="flex flex-col md:flex-row lg:flex-col lg:max-h-[calc(100vh-17rem)] lg:h-full lg:justify-between">
           <div className="flex-grow mb-8 lg:overflow-y-scroll">
@@ -202,17 +234,16 @@ const AudioFileUpload: React.FC<ViewProps> = ({
             <br />
             Studies:
             <br />
-            {selectedStudies.length ? (
-              selectedStudies.map((s, i) => {
-                return (
-                  <span key={`study-${i}`}>
-                    &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}
-                  </span>
-                );
-              })
-            ) : (
+            {
+              selectedStudies.size ?
+              studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
+                <span key={`study-${i}`}>
+                  {Boolean(i) && <br />}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}: {s.name}
+                </span>
+              ) :
               <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span>
-            )}
+            }
             <br />
             <br />
             File:
