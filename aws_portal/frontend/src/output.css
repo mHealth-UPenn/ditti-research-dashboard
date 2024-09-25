@@ -687,6 +687,11 @@ video {
   margin-right: 2rem;
 }
 
+.mx-4 {
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+
 .mb-1 {
   margin-bottom: 0.25rem;
 }
@@ -1483,6 +1488,16 @@ div:hover > .link-svg .svg-stroke {
 }
 
 @media (min-width: 768px) {
+  .md\:mx-4 {
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  .md\:mx-12 {
+    margin-left: 3rem;
+    margin-right: 3rem;
+  }
+
   .md\:w-1\/2 {
     width: 50%;
   }
@@ -1497,6 +1512,39 @@ div:hover > .link-svg .svg-stroke {
 }
 
 @media (min-width: 1024px) {
+  .lg\:m-4 {
+    margin: 1rem;
+  }
+
+  .lg\:mx-16 {
+    margin-left: 4rem;
+    margin-right: 4rem;
+  }
+
+  .lg\:mx-4 {
+    margin-left: 1rem;
+    margin-right: 1rem;
+  }
+
+  .lg\:mx-\[12rem\] {
+    margin-left: 12rem;
+    margin-right: 12rem;
+  }
+
+  .lg\:mx-\[8rem\] {
+    margin-left: 8rem;
+    margin-right: 8rem;
+  }
+
+  .lg\:mx-\[6rem\] {
+    margin-left: 6rem;
+    margin-right: 6rem;
+  }
+
+  .lg\:flex {
+    display: flex;
+  }
+
   .lg\:h-full {
     height: 100%;
   }
@@ -1544,6 +1592,21 @@ div:hover > .link-svg .svg-stroke {
 }
 
 @media (min-width: 1280px) {
+  .xl\:mx-\[16rem\] {
+    margin-left: 16rem;
+    margin-right: 16rem;
+  }
+
+  .xl\:mx-\[12rem\] {
+    margin-left: 12rem;
+    margin-right: 12rem;
+  }
+
+  .xl\:mx-\[10rem\] {
+    margin-left: 10rem;
+    margin-right: 10rem;
+  }
+
   .xl\:block {
     display: block;
   }
@@ -1566,6 +1629,11 @@ div:hover > .link-svg .svg-stroke {
 }
 
 @media (min-width: 1536px) {
+  .\32xl\:mx-\[20rem\] {
+    margin-left: 20rem;
+    margin-right: 20rem;
+  }
+
   .\32xl\:w-\[28rem\] {
     width: 28rem;
   }

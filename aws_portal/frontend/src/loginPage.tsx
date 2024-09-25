@@ -261,9 +261,9 @@ const LoginPage: React.FC = () => {
 
   // the login page
   const page = (
-    <div className="login-container bg-light">
+    <div className="flex h-screen lg:mx-[6rem] xl:mx-[10rem] 2xl:mx-[20rem] bg-light">
       <div className="login-image-container">
-        <img className="login-image" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
+        <img className="hidden lg:flex login-image" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
       </div>
       <div className="login-menu bg-white">
         <div className="login-menu-content">
