@@ -152,6 +152,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       const urls = await getPresignedUrls();
       await uploadFiles(urls);
       await insertFiles();
+      goBack();
       flashMessage(<span>All files successfully uploaded.</span>, "success");
     } catch (error) {
       const axiosError = error as AxiosError
