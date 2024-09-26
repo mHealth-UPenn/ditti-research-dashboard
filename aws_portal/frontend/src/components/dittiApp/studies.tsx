@@ -106,7 +106,6 @@ const StudiesView: React.FC<StudiesViewProps> = ({
                   goBack={goBack}
                   flashMessage={flashMessage}
                   handleClick={handleClick}
-                  getAudioFiles={getAudioFiles}
                 />
               )}
             >

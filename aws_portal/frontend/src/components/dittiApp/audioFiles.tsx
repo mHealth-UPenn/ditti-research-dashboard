@@ -2,32 +2,19 @@ import React, { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { getAccess, makeRequest } from "../../utils";
-import {
-  AudioFile,
-  Study,
-  TapDetails,
-  User,
-  UserDetails,
-  ViewProps
-} from "../../interfaces";
+import { AudioFile, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
-import SubjectsEdit from "./subjectsEdit";
-import SubjectVisuals from "./subjectVisuals";
 import AudioFileUpload from "./audioFileUpload";
 
-interface AudioFilesProps extends ViewProps {
-  getAudioFiles: () => AudioFile[];
-}
 
-
-const AudioFiles: React.FC<AudioFilesProps> = ({
+const AudioFiles: React.FC<ViewProps> = ({
   handleClick,
   goBack,
   flashMessage,
-  getAudioFiles,
 }) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canDelete, setCanDelete] = useState<boolean>(false);
+  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const columns: Column[] = [
@@ -71,17 +58,24 @@ const AudioFiles: React.FC<AudioFilesProps> = ({
 
   useEffect(() => {
     // Get whether user can upload audio files
-    const create = getAccess(2, "Create", "Users")
+    const getCreate = getAccess(2, "Create", "Users")
       .then(() => setCanCreate(true))
       .catch(() => setCanCreate(false));
 
     // get whether the user can edit subjects
-    const edit = getAccess(2, "Delete", "AudioFiles")
+    const getEdit = getAccess(2, "Delete", "AudioFiles")
       .then(() => setCanDelete(true))
       .catch(() => setCanDelete(false));
 
+    const getAudioFiles = makeRequest("/aws/get-audio-files?app=2");
+
     // when all promises complete, hide the loader
-    Promise.all([create, edit]).then(() => setLoading(false));
+    Promise.all([getCreate, getEdit, getAudioFiles]).then(
+      ([create, edit, audioFilesData]) => {
+        setAudioFiles(audioFilesData);
+        setLoading(false);
+      }
+    );
 
   }, []);
 
@@ -96,6 +90,15 @@ const AudioFiles: React.FC<AudioFilesProps> = ({
           }
         );
         flashMessage(<span>Audio file deleted successfully</span>, "success");
+        setLoading(true);
+        makeRequest("/aws/get-audio-files?app=2")
+          .then(audioFilesData => {
+            setAudioFiles(audioFilesData);
+            setLoading(false);
+          })
+          .catch(() => {
+            flashMessage(<span>And error occured while reloading the page. Please refresh and try again.</span>, "danger");
+          });
       } catch (error) {
         console.error(error);
         const e = error as { msg: string };
@@ -109,7 +112,7 @@ const AudioFiles: React.FC<AudioFilesProps> = ({
    * @returns - The table's contents, consisting of rows of table cells
    */
   const getData = (): TableData[][] => {
-    const data: TableData[][] = getAudioFiles().map((audioFile) => {
+    const data: TableData[][] = audioFiles.map((audioFile) => {
       const {
         id,
         _version,
