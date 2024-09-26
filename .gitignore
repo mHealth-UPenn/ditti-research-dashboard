@@ -32,3 +32,5 @@ zappa_settings.py
 
 **/dummyData*
 **/dummyUsers*
+
+**/src/output.css
