@@ -11,6 +11,14 @@ import CloseIcon from "@mui/icons-material/Close";
 import axios, { AxiosError } from "axios";
 
 
+interface IFile {
+  name: string;
+  title: string;
+  size: string;
+  length: number;
+}
+
+
 const AudioFileUpload: React.FC<ViewProps> = ({
   goBack,
   flashMessage,
@@ -21,7 +29,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const [studiesRadio, setStudiesRadio] = useState("All Studies");
   const [studies, setStudies] = useState<Study[]>([]);
   const [selectedStudies, setSelectedStudies] = useState<Set<number>>(new Set());
-  const [files, setFiles] = useState<{ name: string; title: string; size: string; }[]>([]);
+  const [files, setFiles] = useState<IFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
 
@@ -215,15 +223,49 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     }
   };
 
-  const handleSelectFiles = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles([...e.target.files].map( file => {
-        const size = (file.size / (1024 * 1024)).toFixed(1) + " MB";
-        const title = file.name.split(".").slice(0, -1).join();
-        return { name: file.name, title, size };
-      }));
+  const getAudioDuration = (file: File): Promise<number> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
 
-      setSelectedFiles(Array.from(e.target.files));
+      // When the file has been read, create an audio element to determine its duration
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        const result = e.target?.result as string; // We know this will be a string (data URL)
+        const audio = new Audio(result);
+
+        // Ensure the audio metadata is loaded to get the duration
+        audio.addEventListener("loadedmetadata", () => {
+          resolve(audio.duration); // `audio.duration` is a number in seconds
+        });
+
+        // Handle errors during the process
+        audio.addEventListener("error", () => {
+          reject(new Error("Error loading audio file"));
+        });
+      };
+
+      // Handle errors while reading the file
+      reader.onerror = () => {
+        reject(new Error("File reading failed"));
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const handleSelectFiles = async (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const arr = Array.from(e.target.files);
+      const files = await Promise.all(
+        arr.map(async file => {
+          const size = (file.size / (1024 * 1024)).toFixed(1) + " MB";
+          const title = file.name.split(".").slice(0, -1).join();
+          const length = await getAudioDuration(file);
+          return { name: file.name, title, size, length };
+        })
+      );
+
+      setFiles(files);
+      setSelectedFiles(arr);
     }
   };
 
@@ -231,6 +273,20 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     const updatedFiles = [...files];
     files[i].title = text;
     setFiles(updatedFiles);
+  }
+
+  const formatDuration = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+  
+    // If there are hours, include them in the output (HH:MM:SS)
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } 
+  
+    // Otherwise, just return MM:SS
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
   }
 
   return (
@@ -364,7 +420,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                     <div key={i} className="w-full">
                       <div className="flex justify-between w-full mb-1">
                         <span className="truncate">{file.name}</span>
-                        <span className="w-max flex-shrink-0">{file.size}</span>
+                        <span className="w-max flex-shrink-0">{file.size} - {formatDuration(file.length)}</span>
                       </div>
                       <div className="flex w-full flex-col mb-4">
                         <TextField
@@ -398,7 +454,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   {Boolean(i) && <><br /><br /></>}
                   &nbsp;&nbsp;&nbsp;&nbsp;{file.title}
                   <br />
-                  &nbsp;&nbsp;&nbsp;&nbsp;{file.size} - {file.name}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{file.size} - {formatDuration(file.length)}
                 </span>
               )
             }
