@@ -157,11 +157,11 @@ const AudioFiles: React.FC<ViewProps> = ({
         {
           contents: (
             <div className="flex-left table-data">
-              <span>{studies?.length ? studies.join(", ") : "All studies"}</span>
+              <span>{(studies?.length && studies[0] !== "all") ? studies.join(", ") : "All studies"}</span>
             </div>
           ),
           searchValue: studies?.join(),
-          sortValue: studies?.length ? studies.join() : "All studies"
+          sortValue: (studies?.length && studies[0] !== "all") ? studies.join(", ") : "All studies"
         },
         {
           contents: (
