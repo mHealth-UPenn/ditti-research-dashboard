@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ChangeEvent, createRef } from "react";
 import TextField from "../fields/textField";
-import { Study, ResponseBody, ViewProps } from "../../interfaces";
+import { Study, ResponseBody, ViewProps, AudioFile } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
 import { SmallLoader } from "../loader";
@@ -16,6 +16,7 @@ interface IFile {
   title: string;
   size: string;
   length: number;
+  exists: boolean;
 }
 
 
@@ -34,14 +35,30 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [existingFiles, setExistingFiles] = useState<Set<string>>(new Set());
+  const [canUpload, setCanUpload] = useState(false);
+  const [categoryFeedback, setCategoryFeedback] = useState<string>("");
+  const [availabilityFeedback, setAvailabilityFeedback] = useState<string>("");
+  const [studiesFeedback, setStudiesFeedback] = useState<string>("");
 
   const fileInputRef = createRef<HTMLInputElement>();
 
-  // Initialize the list of studies
+  // Initialize the list of studies and audio files
   useEffect(() => {
-    makeRequest("/db/get-studies?app=2")
-      .then(setStudies)
-      .then(() => setLoading(false));
+    const studiesPromise = makeRequest("/db/get-studies?app=2");
+    const audioFilesPromise = makeRequest("/aws/get-audio-files?app=2");
+    Promise.all([studiesPromise, audioFilesPromise]).then(
+      ([studies, audioFiles]) => {
+        const existing: Set<string> = new Set();
+        (audioFiles as AudioFile[]).forEach(af => {
+          if (af.fileName) existing.add(af.fileName)
+        });
+
+        setStudies(studies);
+        setExistingFiles(existing);
+        setLoading(false);
+      }
+    );
   }, []);
 
   /**
@@ -145,7 +162,29 @@ const AudioFileUpload: React.FC<ViewProps> = ({
    * @returns 
    */
   const handleUpload = async () => {
-    if (selectedFiles.length === 0) return;
+    // Validate the form
+    let isValid = true;
+    setCategoryFeedback("");
+    setAvailabilityFeedback("");
+    setStudiesFeedback("");
+
+    if (category === "") {
+      setCategoryFeedback("Enter a category.");
+      isValid = false;
+    }
+    if (availability === "Individual" && dittiId === "") {
+      setAvailabilityFeedback("Enter a Ditti ID or select All Users");
+      isValid = false;
+    }
+    if (studiesRadio === "Select Studies" && !selectedStudies.size) {
+      setStudiesFeedback("Select at least one study or All Studies.");
+      isValid = false;
+    }
+    if (selectedFiles.length === 0 || !isValid) {
+      flashMessage(<span>Please fix errors in the form.</span>, "danger");
+      return;
+    }
+
     setUploading(true);
 
     try {
@@ -264,12 +303,19 @@ const AudioFileUpload: React.FC<ViewProps> = ({
           const size = (file.size / (1024 * 1024)).toFixed(1) + " MB";
           const title = file.name.split(".").slice(0, -1).join();
           const length = await getAudioDuration(file);
-          return { name: file.name, title, size, length };
+          const exists = existingFiles.has(file.name);
+          return { name: file.name, title, size, length, exists };
         })
       );
 
       setFiles(files);
       setSelectedFiles(arr);
+      
+      if (!files.some(file => file.exists)) {
+        setCanUpload(true);
+      }
+    } else {
+      setCanUpload(false);
     }
   };
 
@@ -318,7 +364,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   placeholder=""
                   label="Category"
                   onKeyup={setCategory}
-                  feedback=""
+                  feedback={categoryFeedback}
                 />
               </div>
             </div>
@@ -342,6 +388,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   value={dittiId}
                   onKeyup={setDittiId}
                   disabled={availability === "All Users"}
+                  feedback={availabilityFeedback}
                 />
               </div>
             </div>
@@ -369,9 +416,11 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                     )}
                     placeholder="Select studies..."
                     callback={selectStudy}
-                    disabled={studiesRadio === "All Studies"}
-                  />
+                    disabled={studiesRadio === "All Studies"}/>
                 </div>
+
+                {/* feedback on error TODO: Fix the select field so this does not have to be here */}
+                {studiesFeedback !== "" && <span className="text-sm text-[red]">{studiesFeedback}</span>}
               </div>
             </div>
             {
@@ -419,6 +468,8 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                 </button>
               </div>
             </div>
+
+            {/* Selected audio files list */}
             {
               Boolean(files.length) &&
               <div className="flex flex-col md:flex-row">
@@ -431,13 +482,21 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                         <span className="w-max flex-shrink-0">{file.size} - {formatDuration(file.length)}</span>
                       </div>
                       <div className="flex w-full flex-col mb-4">
-                        <TextField
-                          id={`file-${file.name}`}
-                          type="text"
-                          value={file.title}
-                          onKeyup={(text: string) => handleTitleKeyup(text, i)}>
-                            <span className="flex items-center font-bold px-2 bg-light h-full">Title</span>
-                        </TextField>
+                        {
+                          file.exists ?
+                          <span className="text-sm text-[red]">
+                            An audio file with this name already exists.<br />
+                            Rename this file or delete the existing file and try
+                            again.
+                          </span> :
+                          <TextField
+                            id={`file-${file.name}`}
+                            type="text"
+                            value={file.title}
+                            onKeyup={(text: string) => handleTitleKeyup(text, i)}>
+                              <span className="flex items-center font-bold px-2 bg-light h-full">Title</span>
+                          </TextField>
+                        }
                       </div>
                     </div>
                   )}
@@ -511,7 +570,8 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               className="p-4"
               onClick={handleUpload}
               text="Upload"
-              type="primary"/>
+              type="primary"
+              disabled={!canUpload}/>
             <div className="mt-6 text-sm">
               <i>
               Audio file details cannot be changed after upload. The files must be

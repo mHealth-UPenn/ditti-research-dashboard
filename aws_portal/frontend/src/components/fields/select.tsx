@@ -56,8 +56,7 @@ const Select: React.FC<SelectProps> = ({
         display: "flex",
         flexGrow: 1,
         position: "relative",
-      }}
-    >
+      }}>
       {/* if the blank option is selected, show the placeholder */}
       {value === "0" && (
         <div className="select-placeholder">{placeholder}</div>
@@ -67,8 +66,7 @@ const Select: React.FC<SelectProps> = ({
         value={value}
         style={{ minHeight: "calc(3rem - 2px)" }}
         disabled={disabled}
-        className={disabled ? "bg-transparent" : ""}
-      >
+        className={disabled ? "bg-transparent" : ""}>
         {updatedOpts.map((opt, i) => (
           <option key={i} value={opt.value}>
             {opt.label}

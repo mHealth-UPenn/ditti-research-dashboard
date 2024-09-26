@@ -11,13 +11,15 @@ interface AsyncButtonProps {
   text: string;
   type: string;
   className?: string;
+  disabled?: boolean;
 }
 
 const AsyncButton: React.FC<AsyncButtonProps> = ({
   onClick,
   text,
   type,
-  className
+  className,
+  disabled,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -43,6 +45,7 @@ const AsyncButton: React.FC<AsyncButtonProps> = ({
     <button
       className={"button button-large button-" + type + (className ? ` ${className}` : "")}
       onClick={handleClick}
+      disabled={disabled || false}
     >
       {loading ? loader : text}
     </button>

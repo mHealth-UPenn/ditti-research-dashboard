@@ -91,9 +91,10 @@ const TextField: React.FC<TextFieldProps> = ({
       </div>
 
       {/* feedback on error */}
-      {feedback ? (
-        <span className="text-field-feedback">{feedback}</span>
-      ) : null}
+      <span
+        className={"text-sm text-[red]" + (feedback && feedback !== "" ? "" : "hidden")}>
+          {feedback}
+      </span>
     </div>
   );
 };
