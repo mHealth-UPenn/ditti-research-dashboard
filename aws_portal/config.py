@@ -18,6 +18,13 @@ class Default:
     SQLALCHEMY_DATABASE_URI = os.getenv("FLASK_DB")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    APP_SYNC_HOST = os.getenv("APP_SYNC_HOST")
+    AWS_TABLENAME_USER = os.getenv("AWS_TABLENAME_USER")
+    AWS_TABLENAME_TAP = os.getenv("AWS_TABLENAME_TAP")
+    AWS_TABLENAME_AUDIO_FILE = os.getenv("AWS_TABLENAME_AUDIO_FILE")
+    AWS_TABLENAME_AUDIO_TAP = os.getenv("AWS_TABLENAME_AUDIO_TAP")
+    AWS_AUDIO_FILE_BUCKET = os.getenv("AWS_AUDIO_FILE_BUCKET")
+
 
 class Production(Default):
     ENV = "production"

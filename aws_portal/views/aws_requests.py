@@ -5,8 +5,8 @@ import re
 import traceback
 
 import boto3
-from botocore.exceptions import ClientError
-from flask import Blueprint, jsonify, make_response, request
+from botocore.exceptions import ClientError, NoCredentialsError
+from flask import Blueprint, current_app, jsonify, make_response, request
 from flask_jwt_extended import current_user
 import pandas as pd
 
@@ -592,3 +592,61 @@ def audio_file_delete():
         return make_response({"msg": msg}, 500)
 
     return jsonify({"msg": msg})
+
+
+@blueprint.route("/audio-file/get-presigned-urls", methods=["POST"])
+def audio_file_generate_presigned_urls():
+    """
+    Generates a list of presigned URLs for a given set of filenames.
+
+    Request syntax
+    --------------
+    {
+        app: 2,
+        filenames: [
+            str,
+            ...
+        ]
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        urls: [
+            str,
+            ...
+        ]
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        error: AWS credentials not available
+    }
+    {
+        error: Unknown error while generating presigned URLs.
+    }
+    """
+    try:
+        client = boto3.client("s3")
+        filenames = request.json["filenames"]
+        urls = []
+
+        for filename in filenames:
+            presigned_url = client.generate_presigned_url(
+                "put_object",
+                Params={
+                    "Bucket": current_app.config["AWS_AUDIO_FILE_BUCKET"],
+                    "Key": filename
+                },
+                ExpiresIn=3600,
+            )
+            urls.append(presigned_url)
+
+        return jsonify({"urls": urls})
+
+    except NoCredentialsError:
+        return jsonify({"error": "AWS credentials not available"}), 500
+    
+    except ClientError:
+        return jsonify({"error": "Unknown error while generating presigned URLs"}), 500
