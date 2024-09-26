@@ -246,6 +246,8 @@ const AudioFileUpload: React.FC<ViewProps> = ({
 
   const handleClickAvailability = (e: ChangeEvent<HTMLInputElement>) => {
     setAvailability(e.target.value);
+    setStudiesRadio("All Studies");
+    setSelectedStudies(new Set());
 
     if (e.target.value == "All Users") {
       setDittiId("");
@@ -254,6 +256,8 @@ const AudioFileUpload: React.FC<ViewProps> = ({
 
   const handleClickStudies = (e: ChangeEvent<HTMLInputElement>) => {
     setStudiesRadio(e.target.value);
+    setAvailability("All Users");
+    setDittiId("");
 
     if (e.target.value === "All Studies") {
       setSelectedStudies(new Set());
@@ -377,7 +381,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   label="Availability"
                   onChange={handleClickAvailability}
                   values={["All Users", "Individual"]}
-                  prefill="All Users"
+                  checked={availability}
                 />
               </div>
               <div className="flex w-full flex-col mb-8 md:w-1/2">
@@ -401,7 +405,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   label="Studies"
                   onChange={handleClickStudies}
                   values={["All Studies", "Select Studies"]}
-                  prefill="All Studies"
+                  checked={studiesRadio}
                 />
               </div>
               <div className="flex w-full flex-col mb-8 md:w-1/2">

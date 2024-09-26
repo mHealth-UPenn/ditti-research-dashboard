@@ -11,6 +11,7 @@ interface RadioFieldProps {
   id?: string;
   prefill?: string;
   label?: string;
+  checked?: string;
   values: string[];
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
@@ -19,6 +20,7 @@ const RadioField: React.FC<RadioFieldProps> = ({
     id,
     prefill,
     label,
+    checked,
     values,
     onChange
 }) => {
@@ -38,6 +40,7 @@ const RadioField: React.FC<RadioFieldProps> = ({
           className="cursor-pointer"
           type="radio"
           defaultChecked={v === prefill}
+          checked={v === checked}
           name={id}
           value={v}
           onChange={onChange} />
