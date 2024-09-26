@@ -212,27 +212,25 @@ const Dashboard: React.FC = () => {
   }, [audioFiles])
 
   const getTapsAsync = async (): Promise<TapDetails[]> => {
-    // let { taps } = this.state;
+    // if AWS has not been queried yet
+    if (!taps.length) {
+      let updatedTaps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
+        return res.map((tap) => {
+          return { dittiId: tap.dittiId, time: new Date(tap.time) };
+        });
+      });
 
-    // // if AWS has not been queried yet
-    // if (!taps.length) {
-    //   taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
-    //     return res.map((tap) => {
-    //       return { dittiId: tap.dittiId, time: new Date(tap.time) };
-    //     });
-    //   });
+      // sort taps by timestamp
+      updatedTaps = taps.sort((a, b) =>
+        differenceInMilliseconds(new Date(a.time), new Date(b.time))
+      );
 
-    //   // sort taps by timestamp
-    //   taps = taps.sort((a, b) =>
-    //     differenceInMilliseconds(new Date(a.time), new Date(b.time))
-    //   );
-
-    //   this.setState({ taps });
-    // }
+      dispatch({ type: "SET_TAPS", taps: updatedTaps });
+    }
 
     // uncomment when using dummy data
-    const taps = dummyTaps;
-    dispatch({ type: "SET_TAPS", taps });
+    // const taps = dummyTaps;
+    // dispatch({ type: "SET_TAPS", taps });
 
     return taps;
   };

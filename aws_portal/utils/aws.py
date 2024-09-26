@@ -93,7 +93,7 @@ class MutationClient:
             variables[f"category{index}"] = item["category"]
             variables[f"fileName{index}"] = item["fileName"]
             variables[f"studies{index}"] = item["studies"] if isinstance(item["studies"], list) else [item["studies"]]
-            variables[f"length{index}"] = item["length"]
+            variables[f"length{index}"] = int(item["length"])
             variables[f"title{index}"] = item["title"]
         
         # Close the variable declaration section

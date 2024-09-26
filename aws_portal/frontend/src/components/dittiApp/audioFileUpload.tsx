@@ -138,7 +138,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
         category: category,
         fileName: file.name,
         studies: selected.length ? selected : ["all"],
-        length: 10,
+        length: files[i].length,
         title: files[i].title,
       }));
 
