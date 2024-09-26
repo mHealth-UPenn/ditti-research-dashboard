@@ -32,8 +32,8 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const [files, setFiles] = useState<IFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
-
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const fileInputRef = createRef<HTMLInputElement>();
 
@@ -146,6 +146,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
    */
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
+    setUploading(true);
 
     try {
       const urls = await getPresignedUrls();
@@ -156,6 +157,8 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       const axiosError = error as AxiosError
       console.error("Error uploading files:", error);
       flashMessage(<span>Error uploading files: {axiosError.message}</span>, "danger");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -288,6 +291,10 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     // Otherwise, just return MM:SS
     return `${minutes}:${secs.toString().padStart(2, '0')}`;
   }
+
+  const percentComplete = uploadProgress.length ? Math.floor(
+    uploadProgress.reduce((a, b) => a + b) / uploadProgress.length
+  ) : 0;
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)] overflow-scroll overflow-x-hidden bg-white lg:bg-transparent lg:flex-row">
@@ -486,6 +493,18 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               )
             }
           </div>
+          {
+            // Upload progres bar
+            uploading &&
+            <div className="flex flex-col w-full mb-4">
+              <div className="flex justify-between mb-1 w-full">
+                <span>Uploading...</span>
+                <span>{percentComplete}%</span>
+              </div>
+              <span className={`h-[4px] bg-white transition-all duration-500`}
+                style={{ width: percentComplete ? `${percentComplete}%` : 0 }}/>
+            </div>
+          }
           <div className="flex flex-col md:w-1/2 lg:w-full justify-end">
             <AsyncButton
               className="p-4"
