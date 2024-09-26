@@ -1,4 +1,5 @@
 from functools import reduce
+import json
 import logging
 import os
 import re
@@ -456,29 +457,29 @@ def get_audio_files():  # TODO update unit test
 @auth_required("Create", "Audio File")
 def audio_file_create():
     """
-    Create a new audio file. Upon insertion into DynamoDB, this endpoint also
-    returns a presigned URL for uploading the audio file directly from the
-    client.
+    Insert new audio files into DynamoDB.
 
     Request Syntax
     --------------
     {
         app: 2,
-        create: {
-            fileName: str,
-            title: str,
-            category: str,
-            availability: str,
-            studies: list[str],
-            length: int,
-        }
+        create: [
+            {
+                fileName: str,
+                title: str,
+                category: str,
+                availability: str,
+                studies: list[str],
+                length: int,
+            },
+            ...
+        ]
     }
 
     Response syntax (200)
     ---------------------
     {
-        msg: "Audio File Created Successfully",
-        url: a presigned URL for uploading to S3
+        msg: "Audio File Created Successfully"
     }
 
     Response syntax (500)
@@ -488,49 +489,35 @@ def audio_file_create():
     }
     """
     msg = "Audio File Created Successfully"
-    bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
-    url = None
-
-    # Try to generate a presigned URL first
-    try:
-        key = request.json.get("create").get("fileName")
-        client = boto3.client("s3")
-        url = client.generate_presigned_post(
-            Bucket=bucket, Key=key, ExpiresIn=60
-        )["url"]
-
-    except ClientError as e:
-        exc = traceback.format_exc()
-        logger.warn(exc)
-        msg = "Generation of presigned upload URL failed: %s" % e
-        return make_response({"msg": msg}, 500)
 
     try:
-        create = request.json.get("create")
+        items = request.json.get("create")
 
         # Add the bucket name the mutation body
-        create["bucket"] = bucket
+        for item in items:
+            item["bucket"] = current_app.config["AWS_AUDIO_FILE_BUCKET"]
+
         client = MutationClient()
         client.open_connection()
-        client.set_mutation(
-            "CreateAudioFileInput",
-            "createAudioFile",
-            create
-        )
+        client.set_mutation_v2(items)
+        res = client.post_mutation()
+        data = json.loads(res)
 
-        client.post_mutation()
+        if "data" not in data or not data["data"]:
+            raise Exception(data["errors"][0]["message"])
+
 
     except Exception as e:
         exc = traceback.format_exc()
-        logger.warn(exc)
+        logger.warning(exc)
         msg = "Creation of Audio File failed: %s" % e
         return make_response({"msg": msg}, 500)
 
-    return jsonify({"msg": msg, "url": url})
+    return jsonify({"msg": msg})
 
 
 @blueprint.route("/audio-file/delete", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
+@auth_required("View", "Ditti App Dashboard")
 @auth_required("Delete", "Audio File")
 def audio_file_delete():
     """

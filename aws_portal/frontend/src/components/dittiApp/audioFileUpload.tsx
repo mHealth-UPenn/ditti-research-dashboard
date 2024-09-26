@@ -102,6 +102,34 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     }
   };
 
+  const insertFiles = async (): Promise<void> => {
+    try {
+      const selected = studies
+        .filter(s => selectedStudies.has(s.id))
+        .map(s => s.acronym);
+
+      const data = selectedFiles.map((file, i) => ({
+        availability: availability === "All Users" ? "all" : dittiId,
+        category: category,
+        fileName: file.name,
+        studies: selected.length ? selected : ["all"],
+        length: 10,
+        title: files[i].title,
+      }));
+
+      const body = {
+        app: 2,  // Ditti Dashboard = 2
+        create: data
+      };
+
+      const opts = { method: "POST", body: JSON.stringify(body) };
+      await makeRequest("/aws/audio-file/create", opts);
+    } catch (error) {
+      const e = error as { msg: string };
+      throw new AxiosError(e.msg);
+    }
+  };
+
   /**
    * Handles when the user clicks "Upload." This function does nothing if the
    * user did not select any files. This function attempts to get presigned URLs
@@ -114,6 +142,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     try {
       const urls = await getPresignedUrls();
       await uploadFiles(urls);
+      await insertFiles();
       flashMessage(<span>All files successfully uploaded.</span>, "success");
     } catch (error) {
       const axiosError = error as AxiosError
@@ -121,29 +150,6 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       flashMessage(<span>Error uploading files: {axiosError.message}</span>, "danger");
     }
   };
-
-  // /**
-  //  * POST changes to the backend.
-  //  */
-  // const post = async (): Promise<void> => {
-  //   const data = {
-  //     // title,
-  //     category,
-  //     fileName: "fileName",
-  //     availability,
-  //     studies,
-  //   };
-
-  //   const body = {
-  //     app: 2,  // Ditti Dashboard = 2
-  //     create: data
-  //   };
-
-  //   const opts = { method: "POST", body: JSON.stringify(body) };
-  //   await makeRequest("aws/audio-file/create", opts)
-  //     .then(handleSuccess)
-  //     .catch(handleFailure);
-  // };
 
   /**
    * Handle a successful response

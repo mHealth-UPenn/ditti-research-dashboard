@@ -74,6 +74,57 @@ class MutationClient:
             "variables": "{\"in\": %s}" % json.dumps(var)
         }
 
+    def set_mutation_v2(self, items):
+        # Declare variables in the query
+        query = "mutation (\n"
+        variables = {}
+        
+        # Build variable declarations and operations
+        for i, item in enumerate(items):
+            index = i + 1  # Start indexing at 1 for unique variables
+            
+            # Add variable declarations to the query
+            query += f"$availability{index}: String!, $bucket{index}: String!, $category{index}: String!, "
+            query += f"$fileName{index}: String!, $studies{index}: [String]!, $length{index}: Int!, $title{index}: String!,\n"
+            
+            # Prepare variables to be sent in the POST request
+            variables[f"availability{index}"] = item["availability"]
+            variables[f"bucket{index}"] = item["bucket"]
+            variables[f"category{index}"] = item["category"]
+            variables[f"fileName{index}"] = item["fileName"]
+            variables[f"studies{index}"] = item["studies"] if isinstance(item["studies"], list) else [item["studies"]]
+            variables[f"length{index}"] = item["length"]
+            variables[f"title{index}"] = item["title"]
+        
+        # Close the variable declaration section
+        query = query.rstrip(',\n')  # Remove the trailing comma and newline
+        query += ") {\n"
+
+        # Build the operations inside the mutation block
+        for i in range(len(items)):
+            index = i + 1
+            query += """
+                CreateAudioFileOperation%(index)s: createAudioFile(input: {
+                    availability: $availability%(index)s, 
+                    bucket: $bucket%(index)s, 
+                    category: $category%(index)s, 
+                    fileName: $fileName%(index)s, 
+                    studies: $studies%(index)s, 
+                    length: $length%(index)s, 
+                    title: $title%(index)s
+                }) {
+                    id
+                }
+            """ % {"index": index}
+        
+        # Close the mutation block
+        query += "\n}"
+
+        self.__body = {
+            "query": query,
+            "variables": variables
+        }
+
     def post_mutation(self):
         """
         POST the mutation request
