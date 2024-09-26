@@ -7,7 +7,8 @@ import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 import Select from "../fields/select";
 import RadioField from "../fields/radioField";
-import CloseIcon from '@mui/icons-material/Close';
+import CloseIcon from "@mui/icons-material/Close";
+import axios, { AxiosError } from "axios";
 
 
 const AudioFileUpload: React.FC<ViewProps> = ({
@@ -21,6 +22,9 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const [studies, setStudies] = useState<Study[]>([]);
   const [selectedStudies, setSelectedStudies] = useState<Set<number>>(new Set());
   const [files, setFiles] = useState<{ name: string; title: string; size: string; }[]>([]);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<number[]>([]);
+
   const [loading, setLoading] = useState(true);
 
   const fileInputRef = createRef<HTMLInputElement>();
@@ -32,28 +36,100 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       .then(() => setLoading(false));
   }, []);
 
-  /**
-   * POST changes to the backend.
-   */
-  const post = async (): Promise<void> => {
-    const data = {
-      // title,
-      category,
-      fileName: "fileName",
-      availability,
-      studies,
-    };
+  const getPresignedUrls = async () => {
+    const files = selectedFiles.map(file => (
+      { name: file.name, type: file.type }
+    ));
 
-    const body = {
-      app: 2,  // Ditti Dashboard = 2
-      create: data
-    };
-
-    const opts = { method: "POST", body: JSON.stringify(body) };
-    await makeRequest("aws/audio-file/create", opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    try {
+      const res = await makeRequest(
+        "/aws/audio-file/get-presigned-urls",
+        {
+          method: "POST",
+          body: JSON.stringify({ app: 2, files })
+        }
+      )
+      return res.urls as string[];
+    } catch (error) {
+      console.log(error);
+      const e = error as { msg: string };
+      throw new AxiosError(e.msg);
+    }
   };
+
+  const uploadFiles = async (urls: string[]) => {
+    const progressArray: number[] = new Array(selectedFiles.length).fill(0);
+    setUploadProgress(progressArray);
+
+    const uploadPromises = selectedFiles.map((file, index) => {
+      return axios.put(
+        urls[index],
+        file, {
+          headers: {
+            "Content-Type": file.type,
+          },
+          onUploadProgress: (progressEvent) => {
+            let progress;
+
+            if (progressEvent.total) {
+              progress = (progressEvent.loaded / progressEvent.total) * 100;
+            } else {
+              progress = 100;
+            }
+
+            progressArray[index] = progress;
+            console.log(`${file.name}: ${progress}%`);
+            setUploadProgress([...progressArray]);
+          },
+        }
+      );
+    });
+
+    const responses = await Promise.all(uploadPromises);
+    const errors = responses.filter(res => res.status !== 200);
+
+    if (errors.length) {
+      const error = errors.map(res => res.data.error).join("\n");
+      throw Error(error);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (selectedFiles.length === 0) return;
+
+    try {
+      const urls = await getPresignedUrls();
+      await uploadFiles(urls);
+      flashMessage(<span>All files successfully uploaded.</span>, "success");
+    } catch (error) {
+      const axiosError = error as AxiosError
+      console.error("Error uploading files:", error);
+      flashMessage(<span>Error uploading files: {axiosError.message}</span>, "danger");
+    }
+  };
+
+  // /**
+  //  * POST changes to the backend.
+  //  */
+  // const post = async (): Promise<void> => {
+  //   const data = {
+  //     // title,
+  //     category,
+  //     fileName: "fileName",
+  //     availability,
+  //     studies,
+  //   };
+
+  //   const body = {
+  //     app: 2,  // Ditti Dashboard = 2
+  //     create: data
+  //   };
+
+  //   const opts = { method: "POST", body: JSON.stringify(body) };
+  //   await makeRequest("aws/audio-file/create", opts)
+  //     .then(handleSuccess)
+  //     .catch(handleFailure);
+  // };
 
   /**
    * Handle a successful response
@@ -122,10 +198,12 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const handleSelectFiles = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setFiles([...e.target.files].map( file => {
-        const size = (file.size / (1024 * 1024)).toFixed(1) + ' MB';
+        const size = (file.size / (1024 * 1024)).toFixed(1) + " MB";
         const title = file.name.split(".").slice(0, -1).join();
         return { name: file.name, title, size };
       }));
+
+      setSelectedFiles(Array.from(e.target.files));
     }
   };
 
@@ -335,7 +413,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
           <div className="flex flex-col md:w-1/2 lg:w-full justify-end">
             <AsyncButton
               className="p-4"
-              onClick={post}
+              onClick={handleUpload}
               text="Upload"
               type="primary"/>
             <div className="mt-6 text-sm">

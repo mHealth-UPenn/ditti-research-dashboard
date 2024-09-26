@@ -595,6 +595,8 @@ def audio_file_delete():
 
 
 @blueprint.route("/audio-file/get-presigned-urls", methods=["POST"])
+@auth_required("View", "Ditti App Dashboard")
+@auth_required("Create", "Audio File")
 def audio_file_generate_presigned_urls():
     """
     Generates a list of presigned URLs for a given set of filenames.
@@ -603,9 +605,11 @@ def audio_file_generate_presigned_urls():
     --------------
     {
         app: 2,
-        filenames: [
-            str,
-            ...
+        files: [
+            {
+                name: str,
+                type: str
+            }
         ]
     }
 
@@ -621,23 +625,24 @@ def audio_file_generate_presigned_urls():
     Response syntax (500)
     ---------------------
     {
-        error: AWS credentials not available
+        msg: AWS credentials not available
     }
     {
-        error: Unknown error while generating presigned URLs.
+        msg: Unknown error while generating presigned URLs.
     }
     """
     try:
         client = boto3.client("s3")
-        filenames = request.json["filenames"]
+        files = request.json["files"]
         urls = []
 
-        for filename in filenames:
+        for file in files:
             presigned_url = client.generate_presigned_url(
                 "put_object",
                 Params={
                     "Bucket": current_app.config["AWS_AUDIO_FILE_BUCKET"],
-                    "Key": filename
+                    "Key": file["name"],
+                    "ContentType": file["type"]
                 },
                 ExpiresIn=3600,
             )
@@ -646,7 +651,7 @@ def audio_file_generate_presigned_urls():
         return jsonify({"urls": urls})
 
     except NoCredentialsError:
-        return jsonify({"error": "AWS credentials not available"}), 500
+        return jsonify({"msg": "AWS credentials not available"}), 500
     
     except ClientError:
-        return jsonify({"error": "Unknown error while generating presigned URLs"}), 500
+        return jsonify({"msg": "Unknown error while generating presigned URLs"}), 500
