@@ -85,6 +85,25 @@ const AudioFiles: React.FC<AudioFilesProps> = ({
 
   }, []);
 
+  const handleDelete = async (id: string, _version: number, name: string) => {
+    if (confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
+      try {
+        await makeRequest(
+          "/aws/audio-file/delete",
+          {
+            method: "POST",
+            body: JSON.stringify({ app: 2, id, _version })
+          }
+        );
+        flashMessage(<span>Audio file deleted successfully</span>, "success");
+      } catch (error) {
+        console.error(error);
+        const e = error as { msg: string };
+        flashMessage(<span>An unexpected error occured: {e.msg}</span>, "danger");
+      }
+    }
+  }
+
   /**
    * Get the data for the audio file table
    * @returns - The table's contents, consisting of rows of table cells
@@ -92,6 +111,9 @@ const AudioFiles: React.FC<AudioFilesProps> = ({
   const getData = (): TableData[][] => {
     const data: TableData[][] = getAudioFiles().map((audioFile) => {
       const {
+        id,
+        _version,
+        fileName,
         title,
         category,
         availability,
@@ -159,7 +181,7 @@ const AudioFiles: React.FC<AudioFilesProps> = ({
               {canDelete ? (
                 <button
                   className="button-danger"
-                  onClick={() => ""}
+                  onClick={() => handleDelete(id || "", _version || 0, fileName || "")}
                 >
                   Delete
                 </button>

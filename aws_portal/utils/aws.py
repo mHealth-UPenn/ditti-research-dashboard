@@ -149,6 +149,7 @@ class MutationClient:
             os.getenv("APP_SYNC_HOST"),
             json=self.__body
         )
+        print(res.text)
 
         return res.text
 

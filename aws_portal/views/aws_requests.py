@@ -391,6 +391,7 @@ def get_audio_files():  # TODO update unit test
     [
         {
             id: str,
+            _version: int,
             fileName: str,
             title: str,
             category: str,
@@ -412,9 +413,21 @@ def get_audio_files():  # TODO update unit test
     try:
         result = Query("AudioFile").scan()["Items"]
         for item in result:
+
+            # Skip deleted audio files
+            try:
+                if item["_deleted"]:
+                    continue
+            except KeyError:
+                pass
+
             audio_file = dict()
             try:
                 audio_file["id"] = item["id"]
+            except KeyError:
+                pass
+            try:
+                audio_file["_version"] = item["_version"]
             except KeyError:
                 pass
             try:
@@ -529,7 +542,8 @@ def audio_file_delete():
     --------------
     {
         app: 2,
-        id: str
+        id: str,
+        _version: int
     }
 
     Response syntax (200)
@@ -544,22 +558,30 @@ def audio_file_delete():
         msg: a formatted traceback if an uncaught error was thrown
     }
     """
+    msg = "Audio file successfully deleted."
+
     try:
 
         # Get the audio file
         audio_file_id = request.json["id"]
-        audio_file = Query("AudioFile", f"id=={audio_file_id}").scan()["Items"]
+        version = request.json["_version"]
+        audio_file = Query("AudioFile", f"id==\"{audio_file_id}\"").scan()["Items"][0]
 
         # Try deleting the audio file from S3
-        key = audio_file["fileName"]
-        bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
-        client = boto3.client("s3")
-        deleted = client.delete_object(Bucket=bucket, Key=key)["DeleteMarker"]
+        try:
+            key = audio_file["fileName"]
+            bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
+            client = boto3.client("s3")
+            deleted = client.delete_object(Bucket=bucket, Key=key)["DeleteMarker"]
 
-        # Return an error if the audio file was not deleted
-        if not deleted:
-            msg = "Audio file not deleted"
-            return make_response({"msg": msg}, 500)
+            # Return an error if the audio file was not deleted
+            if not deleted:
+                msg = "Audio file not deleted"
+                return make_response({"msg": msg}, 500)
+
+        # Automatically delete entries with no fileName
+        except KeyError:
+            pass
 
         # Delete the audio file from DynamoDB
         client = MutationClient()
@@ -567,7 +589,7 @@ def audio_file_delete():
         client.set_mutation(
             "DeleteAudioFileInput",
             "deleteAudioFile",
-            {"id": audio_file_id}
+            {"id": audio_file_id, "_version": int(version)}
         )
 
         client.post_mutation()
@@ -575,7 +597,7 @@ def audio_file_delete():
     except Exception:
         exc = traceback.format_exc()
         msg = exc.splitlines()[-1]
-        logger.warn(exc)
+        logger.warning(exc)
         return make_response({"msg": msg}, 500)
 
     return jsonify({"msg": msg})

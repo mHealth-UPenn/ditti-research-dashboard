@@ -211,6 +211,7 @@ export interface AccountDetails {
  */
 export interface AudioFile {
   id?: string;
+  _version?: number;
   fileName?: string;
   title?: string;
   category?: string;
