@@ -36,9 +36,13 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       .then(() => setLoading(false));
   }, []);
 
+  /**
+   * Get a set of presigned URLs for uploading audio files to S3.
+   * @returns string[]: The array of presigned URLs
+   */
   const getPresignedUrls = async () => {
     const files = selectedFiles.map(file => (
-      { name: file.name, type: file.type }
+      { key: file.name, type: file.type }
     ));
 
     try {
@@ -51,12 +55,17 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       )
       return res.urls as string[];
     } catch (error) {
-      console.log(error);
       const e = error as { msg: string };
       throw new AxiosError(e.msg);
     }
   };
 
+  /**
+   * Upload all selected audio files using a set of presigned URLs. This
+   * function uses axios to update upload progress for each file. Files
+   * are uploaded in parallel and an error is thrown if any fail.
+   * @param urls string[]
+   */
   const uploadFiles = async (urls: string[]) => {
     const progressArray: number[] = new Array(selectedFiles.length).fill(0);
     setUploadProgress(progressArray);
@@ -78,7 +87,6 @@ const AudioFileUpload: React.FC<ViewProps> = ({
             }
 
             progressArray[index] = progress;
-            console.log(`${file.name}: ${progress}%`);
             setUploadProgress([...progressArray]);
           },
         }
@@ -94,6 +102,12 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     }
   };
 
+  /**
+   * Handles when the user clicks "Upload." This function does nothing if the
+   * user did not select any files. This function attempts to get presigned URLs
+   * for all selected files and attempts to upload them using these files.
+   * @returns 
+   */
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 

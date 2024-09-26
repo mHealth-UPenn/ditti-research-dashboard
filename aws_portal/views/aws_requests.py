@@ -599,7 +599,8 @@ def audio_file_delete():
 @auth_required("Create", "Audio File")
 def audio_file_generate_presigned_urls():
     """
-    Generates a list of presigned URLs for a given set of filenames.
+    Generates a list of presigned URLs for a given set of files. The request
+    body must include a key for uploading to S3 and its MIME type.
 
     Request syntax
     --------------
@@ -607,7 +608,7 @@ def audio_file_generate_presigned_urls():
         app: 2,
         files: [
             {
-                name: str,
+                key: str,
                 type: str
             }
         ]
@@ -641,7 +642,7 @@ def audio_file_generate_presigned_urls():
                 "put_object",
                 Params={
                     "Bucket": current_app.config["AWS_AUDIO_FILE_BUCKET"],
-                    "Key": file["name"],
+                    "Key": file["key"],
                     "ContentType": file["type"]
                 },
                 ExpiresIn=3600,
