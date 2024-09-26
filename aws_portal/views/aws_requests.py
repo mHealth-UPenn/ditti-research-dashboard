@@ -467,7 +467,7 @@ def get_audio_files():  # TODO update unit test
 
 @blueprint.route("/audio-file/create", methods=["POST"])
 @auth_required("View", "Ditti App Dashboard")
-@auth_required("Create", "Audio File")
+@auth_required("Create", "Audio Files")
 def audio_file_create():
     """
     Insert new audio files into DynamoDB.
@@ -531,7 +531,7 @@ def audio_file_create():
 
 @blueprint.route("/audio-file/delete", methods=["POST"])
 @auth_required("View", "Ditti App Dashboard")
-@auth_required("Delete", "Audio File")
+@auth_required("Delete", "Audio Files")
 def audio_file_delete():
     """
     Permanently deletes an audio file. This endpoint first deletes the audio
@@ -605,7 +605,7 @@ def audio_file_delete():
 
 @blueprint.route("/audio-file/get-presigned-urls", methods=["POST"])
 @auth_required("View", "Ditti App Dashboard")
-@auth_required("Create", "Audio File")
+@auth_required("Create", "Audio Files")
 def audio_file_generate_presigned_urls():
     """
     Generates a list of presigned URLs for a given set of files. The request
