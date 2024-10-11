@@ -472,7 +472,6 @@ COPY public.action (id, value) FROM stdin;
 3	Create
 4	Edit
 5	Archive
-6   Delete
 \.
 
 
@@ -561,11 +560,10 @@ COPY public.resource (id, value) FROM stdin;
 3	Ditti App Dashboard
 4	All Studies
 5	Users
-6   Audio Files
-7	Accounts
-8	Studies
-9	Roles
-10	Access Groups
+6	Accounts
+7	Studies
+8	Roles
+9	Access Groups
 \.
 
 
