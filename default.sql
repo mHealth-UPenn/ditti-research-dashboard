@@ -1,9 +1,60 @@
 --
+-- PostgreSQL database cluster dump
+--
+
+SET default_transaction_read_only = off;
+
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+
+--
+-- Drop databases (except postgres and template1)
+--
+
+DROP DATABASE pg;
+
+
+
+
+--
+-- Drop roles
+--
+
+DROP ROLE "user";
+
+
+--
+-- Roles
+--
+
+CREATE ROLE "user";
+ALTER ROLE "user" WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:86eBkKfwp/xbGbIAHwt+Pw==$q4vC0uQYv9uFoXgx95pi6GfzroA00rFRrFj3cEoWwxY=:3EhBgyZgR3H+y+5PGsmWwl2xu7oq++LeLQKNP+lG5oE=';
+
+--
+-- User Configurations
+--
+
+
+
+
+
+
+
+
+--
+-- Databases
+--
+
+--
+-- Database "template1" dump
+--
+
+--
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 14.3 (Debian 14.3-1.pgdg110+1)
--- Dumped by pg_dump version 14.3 (Debian 14.3-1.pgdg110+1)
+-- Dumped from database version 16.3 (Debian 16.3-1.pgdg120+1)
+-- Dumped by pg_dump version 16.3 (Debian 16.3-1.pgdg120+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -16,12 +67,175 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+UPDATE pg_catalog.pg_database SET datistemplate = false WHERE datname = 'template1';
+DROP DATABASE template1;
+--
+-- Name: template1; Type: DATABASE; Schema: -; Owner: user
+--
+
+CREATE DATABASE template1 WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
+
+
+ALTER DATABASE template1 OWNER TO "user";
+
+\connect template1
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: DATABASE template1; Type: COMMENT; Schema: -; Owner: user
+--
+
+COMMENT ON DATABASE template1 IS 'default template for new databases';
+
+
+--
+-- Name: template1; Type: DATABASE PROPERTIES; Schema: -; Owner: user
+--
+
+ALTER DATABASE template1 IS_TEMPLATE = true;
+
+
+\connect template1
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: DATABASE template1; Type: ACL; Schema: -; Owner: user
+--
+
+REVOKE CONNECT,TEMPORARY ON DATABASE template1 FROM PUBLIC;
+GRANT CONNECT ON DATABASE template1 TO PUBLIC;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
+--
+-- Database "pg" dump
+--
+
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 16.3 (Debian 16.3-1.pgdg120+1)
+-- Dumped by pg_dump version 16.3 (Debian 16.3-1.pgdg120+1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: pg; Type: DATABASE; Schema: -; Owner: user
+--
+
+CREATE DATABASE pg WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
+
+
+ALTER DATABASE pg OWNER TO "user";
+
+\connect pg
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- PostgreSQL database dump complete
+--
+
+--
+-- Database "postgres" dump
+--
+
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 16.3 (Debian 16.3-1.pgdg120+1)
+-- Dumped by pg_dump version 16.3 (Debian 16.3-1.pgdg120+1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+DROP DATABASE postgres;
+--
+-- Name: postgres; Type: DATABASE; Schema: -; Owner: user
+--
+
+CREATE DATABASE postgres WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVIDER = libc LOCALE = 'en_US.utf8';
+
+
+ALTER DATABASE postgres OWNER TO "user";
+
+\connect postgres
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: DATABASE postgres; Type: COMMENT; Schema: -; Owner: user
+--
+
+COMMENT ON DATABASE postgres IS 'default administrative connection database';
+
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: about_sleep_template; Type: TABLE; Schema: public
+-- Name: about_sleep_template; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.about_sleep_template (
@@ -31,8 +245,11 @@ CREATE TABLE public.about_sleep_template (
     is_archived boolean NOT NULL
 );
 
+
+ALTER TABLE public.about_sleep_template OWNER TO "user";
+
 --
--- Name: about_sleep_template_id_seq; Type: SEQUENCE; Schema: public
+-- Name: about_sleep_template_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
 
 CREATE SEQUENCE public.about_sleep_template_id_seq
@@ -43,15 +260,18 @@ CREATE SEQUENCE public.about_sleep_template_id_seq
     NO MAXVALUE
     CACHE 1;
 
+
+ALTER SEQUENCE public.about_sleep_template_id_seq OWNER TO "user";
+
 --
--- Name: about_sleep_template_id_seq; Type: SEQUENCE OWNED BY; Schema: public
+-- Name: about_sleep_template_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
 --
 
 ALTER SEQUENCE public.about_sleep_template_id_seq OWNED BY public.about_sleep_template.id;
 
 
 --
--- Name: access_group; Type: TABLE; Schema: public
+-- Name: access_group; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.access_group (
@@ -61,8 +281,11 @@ CREATE TABLE public.access_group (
     app_id integer
 );
 
+
+ALTER TABLE public.access_group OWNER TO "user";
+
 --
--- Name: access_group_id_seq; Type: SEQUENCE; Schema: public
+-- Name: access_group_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
 
 CREATE SEQUENCE public.access_group_id_seq
@@ -73,15 +296,18 @@ CREATE SEQUENCE public.access_group_id_seq
     NO MAXVALUE
     CACHE 1;
 
+
+ALTER SEQUENCE public.access_group_id_seq OWNER TO "user";
+
 --
--- Name: access_group_id_seq; Type: SEQUENCE OWNED BY; Schema: public
+-- Name: access_group_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
 --
 
 ALTER SEQUENCE public.access_group_id_seq OWNED BY public.access_group.id;
 
 
 --
--- Name: account; Type: TABLE; Schema: public
+-- Name: account; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.account (
@@ -98,8 +324,11 @@ CREATE TABLE public.account (
     _password character varying NOT NULL
 );
 
+
+ALTER TABLE public.account OWNER TO "user";
+
 --
--- Name: account_id_seq; Type: SEQUENCE; Schema: public
+-- Name: account_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
 
 CREATE SEQUENCE public.account_id_seq
@@ -110,15 +339,18 @@ CREATE SEQUENCE public.account_id_seq
     NO MAXVALUE
     CACHE 1;
 
+
+ALTER SEQUENCE public.account_id_seq OWNER TO "user";
+
 --
--- Name: account_id_seq; Type: SEQUENCE OWNED BY; Schema: public
+-- Name: account_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
 --
 
 ALTER SEQUENCE public.account_id_seq OWNED BY public.account.id;
 
 
 --
--- Name: action; Type: TABLE; Schema: public
+-- Name: action; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.action (
@@ -126,8 +358,11 @@ CREATE TABLE public.action (
     value character varying NOT NULL
 );
 
+
+ALTER TABLE public.action OWNER TO "user";
+
 --
--- Name: action_id_seq; Type: SEQUENCE; Schema: public
+-- Name: action_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
 
 CREATE SEQUENCE public.action_id_seq
@@ -138,15 +373,18 @@ CREATE SEQUENCE public.action_id_seq
     NO MAXVALUE
     CACHE 1;
 
+
+ALTER SEQUENCE public.action_id_seq OWNER TO "user";
+
 --
--- Name: action_id_seq; Type: SEQUENCE OWNED BY; Schema: public
+-- Name: action_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
 --
 
 ALTER SEQUENCE public.action_id_seq OWNED BY public.action.id;
 
 
 --
--- Name: app; Type: TABLE; Schema: public
+-- Name: app; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.app (
@@ -154,8 +392,11 @@ CREATE TABLE public.app (
     name character varying NOT NULL
 );
 
+
+ALTER TABLE public.app OWNER TO "user";
+
 --
--- Name: app_id_seq; Type: SEQUENCE; Schema: public
+-- Name: app_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
 
 CREATE SEQUENCE public.app_id_seq
@@ -166,15 +407,18 @@ CREATE SEQUENCE public.app_id_seq
     NO MAXVALUE
     CACHE 1;
 
+
+ALTER SEQUENCE public.app_id_seq OWNER TO "user";
+
 --
--- Name: app_id_seq; Type: SEQUENCE OWNED BY; Schema: public
+-- Name: app_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
 --
 
 ALTER SEQUENCE public.app_id_seq OWNED BY public.app.id;
 
 
 --
--- Name: blocked_token; Type: TABLE; Schema: public
+-- Name: blocked_token; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.blocked_token (
@@ -183,8 +427,11 @@ CREATE TABLE public.blocked_token (
     created_on timestamp without time zone NOT NULL
 );
 
+
+ALTER TABLE public.blocked_token OWNER TO "user";
+
 --
--- Name: blocked_token_id_seq; Type: SEQUENCE; Schema: public
+-- Name: blocked_token_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
 
 CREATE SEQUENCE public.blocked_token_id_seq
@@ -195,15 +442,18 @@ CREATE SEQUENCE public.blocked_token_id_seq
     NO MAXVALUE
     CACHE 1;
 
+
+ALTER SEQUENCE public.blocked_token_id_seq OWNER TO "user";
+
 --
--- Name: blocked_token_id_seq; Type: SEQUENCE OWNED BY; Schema: public
+-- Name: blocked_token_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
 --
 
 ALTER SEQUENCE public.blocked_token_id_seq OWNED BY public.blocked_token.id;
 
 
 --
--- Name: join_access_group_permission; Type: TABLE; Schema: public
+-- Name: join_access_group_permission; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.join_access_group_permission (
@@ -211,8 +461,11 @@ CREATE TABLE public.join_access_group_permission (
     permission_id integer NOT NULL
 );
 
+
+ALTER TABLE public.join_access_group_permission OWNER TO "user";
+
 --
--- Name: join_account_access_group; Type: TABLE; Schema: public
+-- Name: join_account_access_group; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.join_account_access_group (
@@ -220,8 +473,11 @@ CREATE TABLE public.join_account_access_group (
     access_group_id integer NOT NULL
 );
 
+
+ALTER TABLE public.join_account_access_group OWNER TO "user";
+
 --
--- Name: join_account_study; Type: TABLE; Schema: public
+-- Name: join_account_study; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.join_account_study (
@@ -230,8 +486,11 @@ CREATE TABLE public.join_account_study (
     role_id integer NOT NULL
 );
 
+
+ALTER TABLE public.join_account_study OWNER TO "user";
+
 --
--- Name: join_role_permission; Type: TABLE; Schema: public
+-- Name: join_role_permission; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.join_role_permission (
@@ -239,8 +498,11 @@ CREATE TABLE public.join_role_permission (
     permission_id integer NOT NULL
 );
 
+
+ALTER TABLE public.join_role_permission OWNER TO "user";
+
 --
--- Name: join_study_role; Type: TABLE; Schema: public
+-- Name: join_study_role; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.join_study_role (
@@ -248,8 +510,11 @@ CREATE TABLE public.join_study_role (
     role_id integer NOT NULL
 );
 
+
+ALTER TABLE public.join_study_role OWNER TO "user";
+
 --
--- Name: permission; Type: TABLE; Schema: public
+-- Name: permission; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.permission (
@@ -258,8 +523,11 @@ CREATE TABLE public.permission (
     _resource_id integer
 );
 
+
+ALTER TABLE public.permission OWNER TO "user";
+
 --
--- Name: permission_id_seq; Type: SEQUENCE; Schema: public
+-- Name: permission_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
 
 CREATE SEQUENCE public.permission_id_seq
@@ -270,15 +538,18 @@ CREATE SEQUENCE public.permission_id_seq
     NO MAXVALUE
     CACHE 1;
 
+
+ALTER SEQUENCE public.permission_id_seq OWNER TO "user";
+
 --
--- Name: permission_id_seq; Type: SEQUENCE OWNED BY; Schema: public
+-- Name: permission_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
 --
 
 ALTER SEQUENCE public.permission_id_seq OWNED BY public.permission.id;
 
 
 --
--- Name: resource; Type: TABLE; Schema: public
+-- Name: resource; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.resource (
@@ -286,8 +557,11 @@ CREATE TABLE public.resource (
     value character varying NOT NULL
 );
 
+
+ALTER TABLE public.resource OWNER TO "user";
+
 --
--- Name: resource_id_seq; Type: SEQUENCE; Schema: public
+-- Name: resource_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
 
 CREATE SEQUENCE public.resource_id_seq
@@ -298,15 +572,18 @@ CREATE SEQUENCE public.resource_id_seq
     NO MAXVALUE
     CACHE 1;
 
+
+ALTER SEQUENCE public.resource_id_seq OWNER TO "user";
+
 --
--- Name: resource_id_seq; Type: SEQUENCE OWNED BY; Schema: public
+-- Name: resource_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
 --
 
 ALTER SEQUENCE public.resource_id_seq OWNED BY public.resource.id;
 
 
 --
--- Name: role; Type: TABLE; Schema: public
+-- Name: role; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.role (
@@ -315,8 +592,11 @@ CREATE TABLE public.role (
     is_archived boolean NOT NULL
 );
 
+
+ALTER TABLE public.role OWNER TO "user";
+
 --
--- Name: role_id_seq; Type: SEQUENCE; Schema: public
+-- Name: role_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
 
 CREATE SEQUENCE public.role_id_seq
@@ -327,15 +607,18 @@ CREATE SEQUENCE public.role_id_seq
     NO MAXVALUE
     CACHE 1;
 
+
+ALTER SEQUENCE public.role_id_seq OWNER TO "user";
+
 --
--- Name: role_id_seq; Type: SEQUENCE OWNED BY; Schema: public
+-- Name: role_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
 --
 
 ALTER SEQUENCE public.role_id_seq OWNED BY public.role.id;
 
 
 --
--- Name: study; Type: TABLE; Schema: public
+-- Name: study; Type: TABLE; Schema: public; Owner: user
 --
 
 CREATE TABLE public.study (
@@ -347,8 +630,11 @@ CREATE TABLE public.study (
     is_archived boolean NOT NULL
 );
 
+
+ALTER TABLE public.study OWNER TO "user";
+
 --
--- Name: study_id_seq; Type: SEQUENCE; Schema: public
+-- Name: study_id_seq; Type: SEQUENCE; Schema: public; Owner: user
 --
 
 CREATE SEQUENCE public.study_id_seq
@@ -359,85 +645,88 @@ CREATE SEQUENCE public.study_id_seq
     NO MAXVALUE
     CACHE 1;
 
+
+ALTER SEQUENCE public.study_id_seq OWNER TO "user";
+
 --
--- Name: study_id_seq; Type: SEQUENCE OWNED BY; Schema: public
+-- Name: study_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
 --
 
 ALTER SEQUENCE public.study_id_seq OWNED BY public.study.id;
 
 
 --
--- Name: about_sleep_template id; Type: DEFAULT; Schema: public
+-- Name: about_sleep_template id; Type: DEFAULT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.about_sleep_template ALTER COLUMN id SET DEFAULT nextval('public.about_sleep_template_id_seq'::regclass);
 
 
 --
--- Name: access_group id; Type: DEFAULT; Schema: public
+-- Name: access_group id; Type: DEFAULT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.access_group ALTER COLUMN id SET DEFAULT nextval('public.access_group_id_seq'::regclass);
 
 
 --
--- Name: account id; Type: DEFAULT; Schema: public
+-- Name: account id; Type: DEFAULT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.account ALTER COLUMN id SET DEFAULT nextval('public.account_id_seq'::regclass);
 
 
 --
--- Name: action id; Type: DEFAULT; Schema: public
+-- Name: action id; Type: DEFAULT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.action ALTER COLUMN id SET DEFAULT nextval('public.action_id_seq'::regclass);
 
 
 --
--- Name: app id; Type: DEFAULT; Schema: public
+-- Name: app id; Type: DEFAULT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.app ALTER COLUMN id SET DEFAULT nextval('public.app_id_seq'::regclass);
 
 
 --
--- Name: blocked_token id; Type: DEFAULT; Schema: public
+-- Name: blocked_token id; Type: DEFAULT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.blocked_token ALTER COLUMN id SET DEFAULT nextval('public.blocked_token_id_seq'::regclass);
 
 
 --
--- Name: permission id; Type: DEFAULT; Schema: public
+-- Name: permission id; Type: DEFAULT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.permission ALTER COLUMN id SET DEFAULT nextval('public.permission_id_seq'::regclass);
 
 
 --
--- Name: resource id; Type: DEFAULT; Schema: public
+-- Name: resource id; Type: DEFAULT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.resource ALTER COLUMN id SET DEFAULT nextval('public.resource_id_seq'::regclass);
 
 
 --
--- Name: role id; Type: DEFAULT; Schema: public
+-- Name: role id; Type: DEFAULT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.role ALTER COLUMN id SET DEFAULT nextval('public.role_id_seq'::regclass);
 
 
 --
--- Name: study id; Type: DEFAULT; Schema: public
+-- Name: study id; Type: DEFAULT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.study ALTER COLUMN id SET DEFAULT nextval('public.study_id_seq'::regclass);
 
 
 --
--- Data for Name: about_sleep_template; Type: TABLE DATA; Schema: public
+-- Data for Name: about_sleep_template; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.about_sleep_template (id, name, text, is_archived) FROM stdin;
@@ -445,7 +734,7 @@ COPY public.about_sleep_template (id, name, text, is_archived) FROM stdin;
 
 
 --
--- Data for Name: access_group; Type: TABLE DATA; Schema: public
+-- Data for Name: access_group; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.access_group (id, name, is_archived, app_id) FROM stdin;
@@ -455,7 +744,7 @@ COPY public.access_group (id, name, is_archived, app_id) FROM stdin;
 
 
 --
--- Data for Name: account; Type: TABLE DATA; Schema: public
+-- Data for Name: account; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.account (id, public_id, created_on, last_login, first_name, last_name, email, phone_number, is_confirmed, is_archived, _password) FROM stdin;
@@ -463,7 +752,7 @@ COPY public.account (id, public_id, created_on, last_login, first_name, last_nam
 
 
 --
--- Data for Name: action; Type: TABLE DATA; Schema: public
+-- Data for Name: action; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.action (id, value) FROM stdin;
@@ -472,11 +761,12 @@ COPY public.action (id, value) FROM stdin;
 3	Create
 4	Edit
 5	Archive
+6	Delete
 \.
 
 
 --
--- Data for Name: app; Type: TABLE DATA; Schema: public
+-- Data for Name: app; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.app (id, name) FROM stdin;
@@ -486,7 +776,7 @@ COPY public.app (id, name) FROM stdin;
 
 
 --
--- Data for Name: blocked_token; Type: TABLE DATA; Schema: public
+-- Data for Name: blocked_token; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.blocked_token (id, jti, created_on) FROM stdin;
@@ -494,7 +784,7 @@ COPY public.blocked_token (id, jti, created_on) FROM stdin;
 
 
 --
--- Data for Name: join_access_group_permission; Type: TABLE DATA; Schema: public
+-- Data for Name: join_access_group_permission; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.join_access_group_permission (access_group_id, permission_id) FROM stdin;
@@ -507,7 +797,7 @@ COPY public.join_access_group_permission (access_group_id, permission_id) FROM s
 
 
 --
--- Data for Name: join_account_access_group; Type: TABLE DATA; Schema: public
+-- Data for Name: join_account_access_group; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.join_account_access_group (account_id, access_group_id) FROM stdin;
@@ -515,7 +805,7 @@ COPY public.join_account_access_group (account_id, access_group_id) FROM stdin;
 
 
 --
--- Data for Name: join_account_study; Type: TABLE DATA; Schema: public
+-- Data for Name: join_account_study; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.join_account_study (account_id, study_id, role_id) FROM stdin;
@@ -523,7 +813,7 @@ COPY public.join_account_study (account_id, study_id, role_id) FROM stdin;
 
 
 --
--- Data for Name: join_role_permission; Type: TABLE DATA; Schema: public
+-- Data for Name: join_role_permission; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.join_role_permission (role_id, permission_id) FROM stdin;
@@ -531,7 +821,7 @@ COPY public.join_role_permission (role_id, permission_id) FROM stdin;
 
 
 --
--- Data for Name: join_study_role; Type: TABLE DATA; Schema: public
+-- Data for Name: join_study_role; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.join_study_role (study_id, role_id) FROM stdin;
@@ -539,7 +829,7 @@ COPY public.join_study_role (study_id, role_id) FROM stdin;
 
 
 --
--- Data for Name: permission; Type: TABLE DATA; Schema: public
+-- Data for Name: permission; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.permission (id, _action_id, _resource_id) FROM stdin;
@@ -551,7 +841,7 @@ COPY public.permission (id, _action_id, _resource_id) FROM stdin;
 
 
 --
--- Data for Name: resource; Type: TABLE DATA; Schema: public
+-- Data for Name: resource; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.resource (id, value) FROM stdin;
@@ -564,11 +854,12 @@ COPY public.resource (id, value) FROM stdin;
 7	Studies
 8	Roles
 9	Access Groups
+10	Audio File
 \.
 
 
 --
--- Data for Name: role; Type: TABLE DATA; Schema: public
+-- Data for Name: role; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.role (id, name, is_archived) FROM stdin;
@@ -576,7 +867,7 @@ COPY public.role (id, name, is_archived) FROM stdin;
 
 
 --
--- Data for Name: study; Type: TABLE DATA; Schema: public
+-- Data for Name: study; Type: TABLE DATA; Schema: public; Owner: user
 --
 
 COPY public.study (id, name, acronym, ditti_id, email, is_archived) FROM stdin;
@@ -584,77 +875,77 @@ COPY public.study (id, name, acronym, ditti_id, email, is_archived) FROM stdin;
 
 
 --
--- Name: about_sleep_template_id_seq; Type: SEQUENCE SET; Schema: public
+-- Name: about_sleep_template_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
 SELECT pg_catalog.setval('public.about_sleep_template_id_seq', 1, true);
 
 
 --
--- Name: access_group_id_seq; Type: SEQUENCE SET; Schema: public
+-- Name: access_group_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
 SELECT pg_catalog.setval('public.access_group_id_seq', 1, true);
 
 
 --
--- Name: account_id_seq; Type: SEQUENCE SET; Schema: public
+-- Name: account_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
 SELECT pg_catalog.setval('public.account_id_seq', 2, true);
 
 
 --
--- Name: action_id_seq; Type: SEQUENCE SET; Schema: public
+-- Name: action_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.action_id_seq', 5, true);
+SELECT pg_catalog.setval('public.action_id_seq', 6, true);
 
 
 --
--- Name: app_id_seq; Type: SEQUENCE SET; Schema: public
+-- Name: app_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
 SELECT pg_catalog.setval('public.app_id_seq', 1, true);
 
 
 --
--- Name: blocked_token_id_seq; Type: SEQUENCE SET; Schema: public
+-- Name: blocked_token_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
 SELECT pg_catalog.setval('public.blocked_token_id_seq', 1, false);
 
 
 --
--- Name: permission_id_seq; Type: SEQUENCE SET; Schema: public
+-- Name: permission_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
 SELECT pg_catalog.setval('public.permission_id_seq', 4, true);
 
 
 --
--- Name: resource_id_seq; Type: SEQUENCE SET; Schema: public
+-- Name: resource_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
-SELECT pg_catalog.setval('public.resource_id_seq', 9, true);
+SELECT pg_catalog.setval('public.resource_id_seq', 10, true);
 
 
 --
--- Name: role_id_seq; Type: SEQUENCE SET; Schema: public
+-- Name: role_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
 SELECT pg_catalog.setval('public.role_id_seq', 1, false);
 
 
 --
--- Name: study_id_seq; Type: SEQUENCE SET; Schema: public
+-- Name: study_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 
 SELECT pg_catalog.setval('public.study_id_seq', 1, false);
 
 
 --
--- Name: about_sleep_template about_sleep_template_name_key; Type: CONSTRAINT; Schema: public
+-- Name: about_sleep_template about_sleep_template_name_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.about_sleep_template
@@ -662,7 +953,7 @@ ALTER TABLE ONLY public.about_sleep_template
 
 
 --
--- Name: about_sleep_template about_sleep_template_pkey; Type: CONSTRAINT; Schema: public
+-- Name: about_sleep_template about_sleep_template_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.about_sleep_template
@@ -670,7 +961,7 @@ ALTER TABLE ONLY public.about_sleep_template
 
 
 --
--- Name: access_group access_group_name_key; Type: CONSTRAINT; Schema: public
+-- Name: access_group access_group_name_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.access_group
@@ -678,7 +969,7 @@ ALTER TABLE ONLY public.access_group
 
 
 --
--- Name: access_group access_group_pkey; Type: CONSTRAINT; Schema: public
+-- Name: access_group access_group_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.access_group
@@ -686,7 +977,7 @@ ALTER TABLE ONLY public.access_group
 
 
 --
--- Name: account account_email_key; Type: CONSTRAINT; Schema: public
+-- Name: account account_email_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.account
@@ -694,7 +985,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- Name: account account_phone_number_key; Type: CONSTRAINT; Schema: public
+-- Name: account account_phone_number_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.account
@@ -702,7 +993,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- Name: account account_pkey; Type: CONSTRAINT; Schema: public
+-- Name: account account_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.account
@@ -710,7 +1001,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- Name: account account_public_id_key; Type: CONSTRAINT; Schema: public
+-- Name: account account_public_id_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.account
@@ -718,7 +1009,7 @@ ALTER TABLE ONLY public.account
 
 
 --
--- Name: action action_pkey; Type: CONSTRAINT; Schema: public
+-- Name: action action_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.action
@@ -726,7 +1017,7 @@ ALTER TABLE ONLY public.action
 
 
 --
--- Name: action action_value_key; Type: CONSTRAINT; Schema: public
+-- Name: action action_value_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.action
@@ -734,7 +1025,7 @@ ALTER TABLE ONLY public.action
 
 
 --
--- Name: app app_name_key; Type: CONSTRAINT; Schema: public
+-- Name: app app_name_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.app
@@ -742,7 +1033,7 @@ ALTER TABLE ONLY public.app
 
 
 --
--- Name: app app_pkey; Type: CONSTRAINT; Schema: public
+-- Name: app app_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.app
@@ -750,7 +1041,7 @@ ALTER TABLE ONLY public.app
 
 
 --
--- Name: blocked_token blocked_token_pkey; Type: CONSTRAINT; Schema: public
+-- Name: blocked_token blocked_token_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.blocked_token
@@ -758,7 +1049,7 @@ ALTER TABLE ONLY public.blocked_token
 
 
 --
--- Name: join_access_group_permission join_access_group_permission_pkey; Type: CONSTRAINT; Schema: public
+-- Name: join_access_group_permission join_access_group_permission_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_access_group_permission
@@ -766,7 +1057,7 @@ ALTER TABLE ONLY public.join_access_group_permission
 
 
 --
--- Name: join_account_access_group join_account_access_group_pkey; Type: CONSTRAINT; Schema: public
+-- Name: join_account_access_group join_account_access_group_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_account_access_group
@@ -774,7 +1065,7 @@ ALTER TABLE ONLY public.join_account_access_group
 
 
 --
--- Name: join_account_study join_account_study_pkey; Type: CONSTRAINT; Schema: public
+-- Name: join_account_study join_account_study_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_account_study
@@ -782,7 +1073,7 @@ ALTER TABLE ONLY public.join_account_study
 
 
 --
--- Name: join_role_permission join_role_permission_pkey; Type: CONSTRAINT; Schema: public
+-- Name: join_role_permission join_role_permission_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_role_permission
@@ -790,7 +1081,7 @@ ALTER TABLE ONLY public.join_role_permission
 
 
 --
--- Name: join_study_role join_study_role_pkey; Type: CONSTRAINT; Schema: public
+-- Name: join_study_role join_study_role_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_study_role
@@ -798,7 +1089,7 @@ ALTER TABLE ONLY public.join_study_role
 
 
 --
--- Name: permission permission__action_id__resource_id_key; Type: CONSTRAINT; Schema: public
+-- Name: permission permission__action_id__resource_id_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.permission
@@ -806,7 +1097,7 @@ ALTER TABLE ONLY public.permission
 
 
 --
--- Name: permission permission_pkey; Type: CONSTRAINT; Schema: public
+-- Name: permission permission_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.permission
@@ -814,7 +1105,7 @@ ALTER TABLE ONLY public.permission
 
 
 --
--- Name: resource resource_pkey; Type: CONSTRAINT; Schema: public
+-- Name: resource resource_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.resource
@@ -822,7 +1113,7 @@ ALTER TABLE ONLY public.resource
 
 
 --
--- Name: resource resource_value_key; Type: CONSTRAINT; Schema: public
+-- Name: resource resource_value_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.resource
@@ -830,7 +1121,7 @@ ALTER TABLE ONLY public.resource
 
 
 --
--- Name: role role_pkey; Type: CONSTRAINT; Schema: public
+-- Name: role role_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.role
@@ -838,7 +1129,7 @@ ALTER TABLE ONLY public.role
 
 
 --
--- Name: study study_acronym_key; Type: CONSTRAINT; Schema: public
+-- Name: study study_acronym_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.study
@@ -846,7 +1137,7 @@ ALTER TABLE ONLY public.study
 
 
 --
--- Name: study study_ditti_id_key; Type: CONSTRAINT; Schema: public
+-- Name: study study_ditti_id_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.study
@@ -854,7 +1145,7 @@ ALTER TABLE ONLY public.study
 
 
 --
--- Name: study study_name_key; Type: CONSTRAINT; Schema: public
+-- Name: study study_name_key; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.study
@@ -862,7 +1153,7 @@ ALTER TABLE ONLY public.study
 
 
 --
--- Name: study study_pkey; Type: CONSTRAINT; Schema: public
+-- Name: study study_pkey; Type: CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.study
@@ -870,7 +1161,7 @@ ALTER TABLE ONLY public.study
 
 
 --
--- Name: access_group access_group_app_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: access_group access_group_app_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.access_group
@@ -878,7 +1169,7 @@ ALTER TABLE ONLY public.access_group
 
 
 --
--- Name: join_access_group_permission join_access_group_permission_access_group_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_access_group_permission join_access_group_permission_access_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_access_group_permission
@@ -886,7 +1177,7 @@ ALTER TABLE ONLY public.join_access_group_permission
 
 
 --
--- Name: join_access_group_permission join_access_group_permission_permission_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_access_group_permission join_access_group_permission_permission_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_access_group_permission
@@ -894,7 +1185,7 @@ ALTER TABLE ONLY public.join_access_group_permission
 
 
 --
--- Name: join_account_access_group join_account_access_group_access_group_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_account_access_group join_account_access_group_access_group_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_account_access_group
@@ -902,7 +1193,7 @@ ALTER TABLE ONLY public.join_account_access_group
 
 
 --
--- Name: join_account_access_group join_account_access_group_account_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_account_access_group join_account_access_group_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_account_access_group
@@ -910,7 +1201,7 @@ ALTER TABLE ONLY public.join_account_access_group
 
 
 --
--- Name: join_account_study join_account_study_account_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_account_study join_account_study_account_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_account_study
@@ -918,7 +1209,7 @@ ALTER TABLE ONLY public.join_account_study
 
 
 --
--- Name: join_account_study join_account_study_role_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_account_study join_account_study_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_account_study
@@ -926,7 +1217,7 @@ ALTER TABLE ONLY public.join_account_study
 
 
 --
--- Name: join_account_study join_account_study_study_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_account_study join_account_study_study_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_account_study
@@ -934,7 +1225,7 @@ ALTER TABLE ONLY public.join_account_study
 
 
 --
--- Name: join_role_permission join_role_permission_permission_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_role_permission join_role_permission_permission_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_role_permission
@@ -942,7 +1233,7 @@ ALTER TABLE ONLY public.join_role_permission
 
 
 --
--- Name: join_role_permission join_role_permission_role_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_role_permission join_role_permission_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_role_permission
@@ -950,7 +1241,7 @@ ALTER TABLE ONLY public.join_role_permission
 
 
 --
--- Name: join_study_role join_study_role_role_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_study_role join_study_role_role_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_study_role
@@ -958,7 +1249,7 @@ ALTER TABLE ONLY public.join_study_role
 
 
 --
--- Name: join_study_role join_study_role_study_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: join_study_role join_study_role_study_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.join_study_role
@@ -966,7 +1257,7 @@ ALTER TABLE ONLY public.join_study_role
 
 
 --
--- Name: permission permission__action_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: permission permission__action_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.permission
@@ -974,7 +1265,7 @@ ALTER TABLE ONLY public.permission
 
 
 --
--- Name: permission permission__resource_id_fkey; Type: FK CONSTRAINT; Schema: public
+-- Name: permission permission__resource_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: user
 --
 
 ALTER TABLE ONLY public.permission
@@ -983,5 +1274,9 @@ ALTER TABLE ONLY public.permission
 
 --
 -- PostgreSQL database dump complete
+--
+
+--
+-- PostgreSQL database cluster dump complete
 --
 
