@@ -30,7 +30,7 @@ y.py
 z.py
 zappa_settings.py
 
-**/dummyData*
-**/dummyUsers*
+**/dummyData.json
+**/dummyUsers.json
 
 **/src/output.css
