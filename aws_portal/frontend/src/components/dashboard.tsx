@@ -5,7 +5,7 @@ import Home from "./home";
 import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
-import { AudioFile, Tap, TapDetails, UserDetails } from "../interfaces";
+import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails, UserDetails } from "../interfaces";
 import { dummyTaps } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
 import { makeRequest } from "../utils";
@@ -18,6 +18,7 @@ type Action =
   | { type: "SET_VIEW"; name: string[]; view: React.ReactElement; replace: boolean | null }
   | { type: "SET_STUDY"; name: string; view: React.ReactElement; appView: React.ReactElement }
   | { type: "SET_TAPS"; taps: TapDetails[] }
+  | { type: "SET_AUDIO_TAPS"; audioTaps: AudioTapDetails[] }
   | { type: "SET_AUDIO_FILES"; audioFiles: AudioFile[] };
 
 
@@ -135,6 +136,11 @@ const reducer = (state: DashboardState, action: Action) => {
       taps.sort((a, b) => differenceInMilliseconds(a.time, b.time));
       return { ...state, taps };
     }
+    case "SET_AUDIO_TAPS": {
+      const { audioTaps } = action;
+      audioTaps.sort((a, b) => differenceInMilliseconds(a.time, b.time));
+      return { ...state, audioTaps };
+    }
     case "SET_AUDIO_FILES": {
       return { ...state, audioFiles: action.audioFiles };
     }
@@ -157,6 +163,7 @@ interface DashboardState {
   flashMessages: { id: number; element: React.ReactElement; ref: RefObject<HTMLDivElement> }[];
   history: { name: string; view: React.ReactElement }[][];
   taps: TapDetails[];
+  audioTaps: AudioTapDetails[];
   users: UserDetails[];
   audioFiles: AudioFile[];
   view: React.ReactElement;
@@ -167,6 +174,7 @@ const initialState: DashboardState = {
   flashMessages: [],
   history: [],
   taps: [],
+  audioTaps: [],
   users: [],
   audioFiles: [],
   view: <React.Fragment />,
@@ -175,8 +183,9 @@ const initialState: DashboardState = {
 
 const Dashboard: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { breadcrumbs, flashMessages, history, taps, audioFiles, view } = state;
+  const { breadcrumbs, flashMessages, history, taps, audioTaps, audioFiles, view } = state;
   const tapRef = useRef<TapDetails[]>();
+  const audioTapRef = useRef<AudioTapDetails[]>();
   const audioFileRef = useRef<AudioFile[]>();
 
   useEffect(() => {
@@ -184,6 +193,8 @@ const Dashboard: React.FC = () => {
       <Home
         getTapsAsync={getTapsAsync}
         getTaps={getTaps}
+        getAudioTapsAsync={getAudioTapsAsync}
+        getAudioTaps={getAudioTaps}
         getAudioFilesAsync={getAudioFilesAsync}
         getAudioFiles={getAudioFiles}
         handleClick={setView}
@@ -237,6 +248,38 @@ const Dashboard: React.FC = () => {
 
   const getTaps = (): TapDetails[] => tapRef.current || [];
 
+  const getAudioTapsAsync = async (): Promise<AudioTapDetails[]> => {
+    // if AWS has not been queried yet
+    if (!audioTaps.length) {
+      let updatedAudioTaps: AudioTapDetails[] = await makeRequest("/aws/get-audio-taps?app=2").then((res: AudioTap[]) => {
+        return res.map((at) => {
+          return {
+            dittiId: at.dittiId,
+            audioFileTitle: at.audioFileTitle,
+            time: new Date(at.time),
+            timezone: at.timezone,
+            action: at.action,
+          };
+        });
+      });
+
+      // sort taps by timestamp
+      updatedAudioTaps = updatedAudioTaps.sort((a, b) =>
+        differenceInMilliseconds(new Date(a.time), new Date(b.time))
+      );
+
+      dispatch({ type: "SET_AUDIO_TAPS", audioTaps: updatedAudioTaps });
+    }
+
+    // uncomment when using dummy data
+    // const audioTaps = dummyAudioTaps;
+    // dispatch({ type: "SET_AUDIO_TAPS", audioTaps });
+
+    return audioTaps;
+  };
+
+  const getAudioTaps = (): AudioTapDetails[] => audioTapRef.current || [];
+
   const getAudioFilesAsync = async (): Promise<AudioFile[]> => {
     // if AWS has not been queried yet
     if (!audioFiles.length) {
@@ -260,6 +303,8 @@ const Dashboard: React.FC = () => {
       <StudiesView
         getTapsAsync={getTapsAsync}
         getTaps={getTaps}
+        getAudioTapsAsync={getAudioTapsAsync}
+        getAudioTaps={getAudioTaps}
         getAudioFilesAsync={getAudioFilesAsync}
         getAudioFiles={getAudioFiles}
         handleClick={setView}

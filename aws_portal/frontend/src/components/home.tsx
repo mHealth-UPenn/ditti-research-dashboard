@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./home.css";
 import { ReactComponent as Right } from "../icons/right.svg";
-import { AudioFile, TapDetails, ViewProps } from "../interfaces";
+import { AudioFile, AudioTapDetails, TapDetails, ViewProps } from "../interfaces";
 import StudiesView from "./dittiApp/studies";
 import Accounts from "./adminDashboard/accounts";
 import { SmallLoader } from "./loader";
@@ -14,6 +14,8 @@ import { getAccess } from "../utils";
 interface HomeProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
   getTaps: () => TapDetails[];
+  getAudioTapsAsync: () => Promise<AudioTapDetails[]>;
+  getAudioTaps: () => AudioTapDetails[];
   getAudioFilesAsync: () => Promise<AudioFile[]>;
   getAudioFiles: () => AudioFile[];
 }
@@ -24,6 +26,8 @@ interface HomeProps extends ViewProps {
 const Home: React.FC<HomeProps> = ({
   getTapsAsync,
   getTaps,
+  getAudioTapsAsync,
+  getAudioTaps,
   getAudioFilesAsync,
   getAudioFiles,
   flashMessage,
@@ -40,6 +44,8 @@ const Home: React.FC<HomeProps> = ({
         <StudiesView
           getTapsAsync={getTapsAsync}
           getTaps={getTaps}
+          getAudioTapsAsync={getAudioTapsAsync}
+          getAudioTaps={getAudioTaps}
           getAudioFilesAsync={getAudioFilesAsync}
           getAudioFiles={getAudioFiles}
           handleClick={handleClick}

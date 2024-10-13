@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
+import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import TextField from "../fields/textField";
 import SubjectsEdit from "./subjectsEdit";
 import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
@@ -39,12 +39,14 @@ interface Bout {
  */
 interface SubjectVisualsProps extends ViewProps {
   getTaps: () => TapDetails[];
+  getAudioTaps: () => AudioTapDetails[];
   studyDetails: Study;
   user: UserDetails;
 }
 
 const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
   getTaps,
+  getAudioTaps,
   studyDetails,
   user,
   flashMessage,

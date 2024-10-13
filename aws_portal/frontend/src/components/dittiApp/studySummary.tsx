@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
+import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import StudySubjects from "./studySubjects";
@@ -26,12 +26,14 @@ interface StudyContact {
  */
 interface StudySummaryProps extends ViewProps {
   getTaps: () => TapDetails[];
+  getAudioTaps: () => AudioTapDetails[];
   studyId: number;
 }
 
 const StudySummary: React.FC<StudySummaryProps> = ({
   flashMessage,
   getTaps,
+  getAudioTaps,  // TODO: implement into excel download
   goBack,
   handleClick,
   studyId
@@ -175,6 +177,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
                             handleClick={handleClick}
                             studyDetails={studyDetails}
                             getTaps={getTaps}
+                            getAudioTaps={getAudioTaps}
                           />
                         )
                       }
@@ -190,6 +193,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
                     flashMessage={flashMessage}
                     goBack={goBack}
                     getTaps={getTaps}
+                    getAudioTaps={getAudioTaps}
                     handleClick={handleClick}
                     studyDetails={studyDetails}
                     studyPrefix={dittiId}

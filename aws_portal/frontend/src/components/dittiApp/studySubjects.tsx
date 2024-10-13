@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
+import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
@@ -14,6 +14,7 @@ import { dummyUsers } from "../dummyData";
 interface StudySubjectsProps extends ViewProps {
   studyPrefix: string;
   getTaps: () => TapDetails[];
+  getAudioTaps: () => AudioTapDetails[];  // TODO: Implement into subject summary
   studyDetails: Study;
 }
 
@@ -55,7 +56,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
    * @returns 
    */
   const getSubjectSummary = (user: UserDetails): React.ReactElement => {
-    const { flashMessage, getTaps, goBack, handleClick } = props;
+    const { flashMessage, getTaps, getAudioTaps, goBack, handleClick } = props;
     let summaryTaps: React.ReactElement[];
     let hasTapsToday = false;
 
@@ -149,6 +150,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
                 <SubjectVisuals
                   flashMessage={flashMessage}
                   getTaps={getTaps}
+                  getAudioTaps={getAudioTaps}
                   goBack={goBack}
                   handleClick={handleClick}
                   studyDetails={props.studyDetails}

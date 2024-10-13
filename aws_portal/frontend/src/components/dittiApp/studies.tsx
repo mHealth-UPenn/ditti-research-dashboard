@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AudioFile, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
+import { AudioFile, AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import "./studies.css";
@@ -11,6 +11,8 @@ import AudioFiles from "./audioFiles";
 interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
   getTaps: () => TapDetails[];
+  getAudioTapsAsync: () => Promise<AudioTapDetails[]>;
+  getAudioTaps: () => AudioTapDetails[];
   getAudioFilesAsync: () => Promise<AudioFile[]>;
   getAudioFiles: () => AudioFile[];
 }
@@ -18,6 +20,8 @@ interface StudiesViewProps extends ViewProps {
 const StudiesView: React.FC<StudiesViewProps> = ({
   getTapsAsync,
   getTaps,
+  getAudioTapsAsync,
+  getAudioTaps,
   getAudioFilesAsync,
   getAudioFiles,
   flashMessage,
@@ -37,11 +41,12 @@ const StudiesView: React.FC<StudiesViewProps> = ({
 
         // get all tap and audio file data
         const tapsPromise = getTapsAsync();
+        const audioTapsPromise = getAudioTapsAsync();
         const audioFilesPromise = getAudioFilesAsync();
 
         // when all promises resolve, hide the loader
         Promise.all(
-          [studiesPromise, tapsPromise, usersPromise, audioFilesPromise]
+          [studiesPromise, tapsPromise, audioTapsPromise, usersPromise, audioFilesPromise]
         ).then(() => setLoading(false));
       } catch (error) {
         console.error("Error fetching data: ", error);
@@ -50,7 +55,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
     };
 
     fetchData();
-  }, [getTapsAsync]);
+  }, [getTapsAsync, getAudioTapsAsync, getAudioFilesAsync]);
 
   /**
    * Handle when a user clicks on a study
@@ -67,6 +72,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
           flashMessage={flashMessage}
           handleClick={handleClick}
           getTaps={getTaps}
+          getAudioTaps={getAudioTaps}
           goBack={goBack}
           studyId={study.id}
         />

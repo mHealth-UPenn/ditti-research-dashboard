@@ -3,6 +3,7 @@ import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { getAccess, makeRequest } from "../../utils";
 import {
+  AudioTapDetails,
   Study,
   TapDetails,
   User,
@@ -20,6 +21,7 @@ import SubjectVisuals from "./subjectVisuals";
 interface SubjectsProps extends ViewProps {
   studyDetails: Study;
   getTaps: () => TapDetails[];
+  getAudioTaps: () => AudioTapDetails[];
 }
 
 const Subjects: React.FC<SubjectsProps> = (props) => {
@@ -88,7 +90,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
    * @returns - The table's contents, consisting of rows of table cells
    */
   const getData = (): TableData[][] => {
-    const { flashMessage, goBack, handleClick, getTaps } = props;
+    const { flashMessage, goBack, handleClick, getTaps, getAudioTaps } = props;
     const { id, dittiId, email } = props.studyDetails;
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
@@ -132,6 +134,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
                       <SubjectVisuals
                         flashMessage={flashMessage}
                         getTaps={getTaps}
+                        getAudioTaps={getAudioTaps}
                         goBack={goBack}
                         handleClick={handleClick}
                         studyDetails={props.studyDetails}

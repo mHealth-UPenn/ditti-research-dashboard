@@ -168,6 +168,22 @@ export interface Tap {
   time: string;
 }
 
+export interface AudioTapDetails {
+  dittiId: string;
+  audioFileTitle: string;
+  time: Date;
+  timezone: string;
+  action: string;
+}
+
+export interface AudioTap {
+  dittiId: string;
+  audioFileTitle: string;
+  time: string;
+  timezone: string;
+  action: string;
+}
+
 /**
  * The default props for all dashboard views
  * flashMessage: any messages to flash on the page
