@@ -150,6 +150,57 @@ def get_taps():  # TODO update unit test
     return jsonify(res)
 
 
+@blueprint.route("/get-audio-taps")
+@auth_required("View", "Ditti App Dashboard")
+@auth_required("View", "Taps")
+def get_audio_taps():  # TODO write unit test
+    # add expressions to the query to return all taps for multiple studies
+    def f(left, right):
+        q = "user_permission_idBEGINS\"%s\"" % right
+        return left + ("OR" if left else "") + q
+
+    try:
+        # if the user has permission to view all studies, get all users
+        app_id = request.args["app"]
+        permissions = current_user.get_permissions(app_id)
+        current_user.validate_ask("View", "All Studies", permissions)
+        users = Query("User").scan()["Items"]
+
+    except ValueError:
+        # get users only for the studies the user as access to
+        studies = Study.query\
+            .join(JoinAccountStudy)\
+            .filter(JoinAccountStudy.account_id == current_user.id)\
+            .all()
+
+        prefixes = [s.ditti_id for s in studies]
+        query = reduce(f, prefixes, "")
+        users = Query("User", query).scan()["Items"]
+
+    except Exception as e:
+        exc = traceback.format_exc()
+        logger.warn(exc)
+        msg = "Query failed: %s" % e
+
+        return make_response({"msg": msg}, 500)
+
+    # get all taps
+    taps = Query("AudioTap").scan()["Items"]
+    df_users = pd.DataFrame(users, columns=["id", "user_permission_id"])\
+        .rename(columns={"user_permission_id": "dittiId"})
+    df_taps = pd.DataFrame(taps, columns=["audioTapUserId", "time"])\
+        .rename(columns={"audioTapUserId": "id"})
+
+
+    # merge on only the users that were returned earlier
+    res = pd.merge(df_users, df_taps, on="id")\
+        .drop("id", axis=1)\
+        .to_dict("records")
+    print(res)
+
+    return jsonify(res)
+
+
 @blueprint.route("/get-users")
 @auth_required("View", "Ditti App Dashboard")
 @auth_required("View", "Users")

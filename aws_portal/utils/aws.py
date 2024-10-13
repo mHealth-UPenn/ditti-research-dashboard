@@ -194,7 +194,8 @@ class Loader:
         self.config = {
             "User": os.getenv("AWS_TABLENAME_USER"),
             "Tap": os.getenv("AWS_TABLENAME_TAP"),
-            "AudioFile": os.getenv("AWS_TABLENAME_AUDIO_FILE")
+            "AudioFile": os.getenv("AWS_TABLENAME_AUDIO_FILE"),
+            "AudioTap": os.getenv("AWS_TABLENAME_AUDIO_TAP")
         }
 
     def get_tablename(self, tablekey):
