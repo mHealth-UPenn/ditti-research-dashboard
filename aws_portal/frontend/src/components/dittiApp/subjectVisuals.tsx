@@ -57,6 +57,7 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
   const [start, setStart] = useState(sub(new Date(new Date().setHours(9, 0, 0, 0)), { hours: 24 }));
   const [stop, setStop] = useState(new Date(new Date().setHours(9, 0, 0, 0)));
   const [taps, setTaps] = useState(() => getTaps().filter((t) => t.dittiId === user.userPermissionId));
+  const [audioTaps, setAudioTaps] = useState(() => getAudioTaps().filter((t) => t.dittiId === user.userPermissionId));
   const [bouts, setBouts] = useState<Bout[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -154,7 +155,6 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
     const id = user.userPermissionId;
     const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
     const data = taps.map((t) => {
-
       // localize tap timestamps
       const time = t.time.getTime() - t.time.getTimezoneOffset() * 60000;
       return [t.dittiId, new Date(time)];
@@ -473,7 +473,7 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
     });
 
     return (
-      <div className="bouts-display-container">
+      <div className="bouts-display-container mb-2">
         <div className="y-axis">
           <div className="y-axis-label">
             <span>
@@ -484,6 +484,43 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
           </div>
         </div>
         <div className="bouts-display border-dark">{boutElems}</div>
+      </div>
+    );
+  };
+
+  const getAudioTapsDisplay = (): React.ReactElement => {
+    const difference = differenceInMilliseconds(stop, start);
+
+    // get all audio taps that are within the time window
+    const audioTapsFiltered = audioTaps.filter(
+      (b) => start < b.time && b.time < stop
+    );
+    console.log(audioTapsFiltered.length)
+
+    const audioTapElems = audioTapsFiltered.map((at, index) => {
+      const left =
+        start < at.time
+          ? (differenceInMilliseconds(at.time, start) / difference) * 100
+          : 0;
+
+      return (
+        <div
+          key={index}
+          className="audio-tap bg-dark absolute h-full"
+          style={{ left: left + "%", width: "2px" }} />
+      );
+    });
+
+    return (
+      <div className="bouts-display-container">
+        <div className="y-axis">
+          <div className="y-axis-label">
+            <span>
+              Audio Taps
+            </span>
+          </div>
+        </div>
+        <div className="bouts-display border-dark relative">{audioTapElems}</div>
       </div>
     );
   };
@@ -574,7 +611,7 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
 
                 {/* display controls */}
                 <div className="subject-display-controls">
-                  
+
                   {/* control the start time */}
                   <div className="subject-display-field">
                     <span>Start:</span>
@@ -629,6 +666,7 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
                 <div className="subject-display">
                   {getTapsDisplay()}
                   {getBoutsDisplay()}
+                  {getAudioTapsDisplay()}
                 </div>
               </div>
             </React.Fragment>

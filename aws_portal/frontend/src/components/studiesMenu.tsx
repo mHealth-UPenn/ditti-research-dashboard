@@ -1,5 +1,5 @@
 import React, { createRef, useEffect, useState } from "react";
-import { Study, TapDetails, ViewProps } from "../interfaces";
+import { AudioTapDetails, Study, TapDetails, ViewProps } from "../interfaces";
 import { makeRequest } from "../utils";
 import StudySummary from "./dittiApp/studySummary";
 import { SmallLoader } from "./loader";
@@ -14,6 +14,7 @@ import CloseIcon from '@mui/icons-material/Close';
  */
 interface StudiesMenuProps extends ViewProps {
   getTaps: () => TapDetails[];
+  getAudioTaps: () => AudioTapDetails[];
   setView: (name: string, view: React.ReactElement) => void;
 }
 
@@ -21,6 +22,7 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
   flashMessage,
   handleClick,
   getTaps,
+  getAudioTaps,
   goBack,
   setView,
 }) => {
@@ -68,6 +70,7 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
                 flashMessage={flashMessage}
                 handleClick={handleClick}
                 getTaps={getTaps}
+                getAudioTaps={getAudioTaps}
                 goBack={goBack}
                 studyId={s.id}
               />

@@ -6,7 +6,7 @@ import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
 import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails, UserDetails } from "../interfaces";
-import { dummyTaps } from "./dummyData";
+import { dummyAudioTaps, dummyTaps } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
 import { makeRequest } from "../utils";
 
@@ -219,6 +219,10 @@ const Dashboard: React.FC = () => {
   }, [taps])
 
   useEffect(() => {
+    audioTapRef.current = audioTaps;
+  }, [audioTaps])
+
+  useEffect(() => {
     audioFileRef.current = audioFiles;
   }, [audioFiles])
 
@@ -239,7 +243,7 @@ const Dashboard: React.FC = () => {
       dispatch({ type: "SET_TAPS", taps: updatedTaps });
     }
 
-    // uncomment when using dummy data
+    // // uncomment when using dummy data
     // const taps = dummyTaps;
     // dispatch({ type: "SET_TAPS", taps });
 
@@ -271,7 +275,7 @@ const Dashboard: React.FC = () => {
       dispatch({ type: "SET_AUDIO_TAPS", audioTaps: updatedAudioTaps });
     }
 
-    // uncomment when using dummy data
+    // // uncomment when using dummy data
     // const audioTaps = dummyAudioTaps;
     // dispatch({ type: "SET_AUDIO_TAPS", audioTaps });
 
@@ -339,6 +343,7 @@ const Dashboard: React.FC = () => {
           flashMessage={flashMessage}
           handleClick={setView}
           getTaps={getTaps}
+          getAudioTaps={getAudioTaps}
           goBack={goBack}
         />
 
