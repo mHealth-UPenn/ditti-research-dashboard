@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
+import { AudioTapDetails, Study, TapDetails, User, UserDetails, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
 import SubjectVisuals from "./subjectVisuals";
 import { dummyUsers } from "../dummyData";
+import { makeRequest } from "../../utils";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -25,29 +26,29 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
   useEffect(() => {
     // For fetching users enrolled in the study
     // get all users that are enrolled in this study
-    // makeRequest(
-    //   `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${props.studyPrefix}"`
-    // ).then((res: User[]) => {
+    makeRequest(
+      `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${props.studyPrefix}"`
+    ).then((res: User[]) => {
 
-    //   // map the user data to user details
-    //   const users: UserDetails[] = res.map((user) => {
-    //     return {
-    //       tapPermission: user.tap_permission,
-    //       information: user.information,
-    //       userPermissionId: user.user_permission_id,
-    //       expTime: user.exp_time,
-    //       teamEmail: user.team_email,
-    //       createdAt: user.createdAt
-    //     };
-    //   });
+      // map the user data to user details
+      const users: UserDetails[] = res.map((user) => {
+        return {
+          tapPermission: user.tap_permission,
+          information: user.information,
+          userPermissionId: user.user_permission_id,
+          expTime: user.exp_time,
+          teamEmail: user.team_email,
+          createdAt: user.createdAt
+        };
+      });
 
-    //   setUsers(users);
-    //   setLoading(false);
-    // });
+      setUsers(users);
+      setLoading(false);
+    });
 
     // Using dummyUsers for this example
-    setUsers(dummyUsers);
-    setLoading(false);
+    // setUsers(dummyUsers);
+    // setLoading(false);
   }, [props.studyPrefix]);
 
   /**
