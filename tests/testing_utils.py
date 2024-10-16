@@ -1,14 +1,17 @@
 from base64 import b64encode
-from datetime import datetime, UTC
+from datetime import datetime, timedelta, UTC
 import os
 import uuid
+
 from flask import current_app
 from flask_jwt_extended.utils import decode_token
+
 from aws_portal.extensions import bcrypt, db
 from aws_portal.models import (
     AccessGroup, Account, App, BlockedToken, JoinAccessGroupPermission,
     JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
-    JoinStudyRole, Permission, Role, Study
+    JoinStudyRole, Permission, Role, Study, StudySubject, JoinStudySubjectApi,
+    JoinStudySubjectStudy, Api
 )
 
 uri = os.getenv("FLASK_DB")
@@ -115,6 +118,28 @@ blocked_tokens = [
     }
 ]
 
+study_subjects = [
+    {
+        "created_on": datetime.now(UTC),
+        "email": "foo@email.com",
+        "is_confirmed": True,
+    },
+    {
+        "created_on": datetime.now(UTC),
+        "email": "bar@email.com",
+        "is_confirmed": True,
+    }
+]
+
+apis = [
+    {
+        "name": "foo",
+    },
+    {
+        "name": "bar",
+    }
+]
+
 
 def create_tables():
     for app in apps:
@@ -140,6 +165,12 @@ def create_tables():
 
     for blocked_token in blocked_tokens:
         db.session.add(BlockedToken(**blocked_token))
+
+    for study_subject in study_subjects:
+        db.session.add(StudySubject(**study_subject))
+
+    for api in apis:
+        db.session.add(Api(**api))
 
 
 def create_joins():
@@ -249,6 +280,51 @@ def create_joins():
         account=Account.query.filter(q1).first(),
         study=Study.query.filter(q2).first(),
         role=Role.query.filter(q3).first()
+    )
+
+    db.session.add(foo)
+
+    q1 = StudySubject.email == "foo@email.com"
+    q2 = Study.name == "foo"
+    foo = JoinStudySubjectStudy(
+        study_subject=StudySubject.query.filter(q1).first(),
+        study=Study.query.filter(q2).first(),
+        expires_on=datetime.now(UTC) + timedelta(days=14),
+    )
+
+    db.session.add(foo)
+
+    q1 = StudySubject.email == "bar@email.com"
+    q2 = Study.name == "bar"
+    foo = JoinStudySubjectStudy(
+        study_subject=StudySubject.query.filter(q1).first(),
+        study=Study.query.filter(q2).first(),
+        expires_on=datetime.now(UTC) + timedelta(days=14),
+    )
+
+
+    q1 = StudySubject.email == "foo@email.com"
+    q2 = Api.name == "foo"
+    foo = JoinStudySubjectApi(
+        study_subject=StudySubject.query.filter(q1).first(),
+        api=Api.query.filter(q2).first(),
+        api_user_uuid="foo",
+        scope=["foo", "bar"],
+        access_key_uuid=str(uuid.uuid4()),
+        refresh_key_uuid=str(uuid.uuid4()),
+    )
+
+    db.session.add(foo)
+
+    q1 = StudySubject.email == "bar@email.com"
+    q2 = Api.name == "bar"
+    foo = JoinStudySubjectApi(
+        study_subject=StudySubject.query.filter(q1).first(),
+        api=Api.query.filter(q2).first(),
+        api_user_uuid="foo",
+        scope=["foo", "bar"],
+        access_key_uuid=str(uuid.uuid4()),
+        refresh_key_uuid=str(uuid.uuid4()),
     )
 
     db.session.add(foo)

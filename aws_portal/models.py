@@ -1281,7 +1281,7 @@ class Api(db.Model):
     name: sqlalchemy.Column
     is_archived: sqlalchemy.Column
     """
-    __tablename__ = "app"
+    __tablename__ = "api"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
