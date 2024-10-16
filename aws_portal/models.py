@@ -938,6 +938,12 @@ class Study(db.Model):
     acronym: sqlalchemy.Column
     ditti_id: sqlalchemy.Column
     email: sqlalchemy.Column
+    default_expiry_delta: sqlalchemy.Column
+        The default amount of time in number of days that a subject is enrolled
+        in the study. A subject's expires_on column will be automatically set
+        according to this value.
+    consent_information: sqlalchemt.Column
+        The consent text to show to a study subject.
     is_archived: sqlalchemy.Column
     roles: sqlalchemy.orm.relationship
     """
@@ -948,6 +954,8 @@ class Study(db.Model):
     ditti_id = db.Column(db.String, nullable=False, unique=True)
     email = db.Column(db.String, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
+    default_expiry_delta = db.Column(db.Integer)
+    consent_information = db.Column(db.String)
 
     roles = db.relationship("JoinStudyRole", cascade="all, delete-orphan")
 

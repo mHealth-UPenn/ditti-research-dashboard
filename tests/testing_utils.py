@@ -97,13 +97,17 @@ studies = [
         "name": "foo",
         "acronym": "FOO",
         "ditti_id": "FO",
-        "email": "foo@email.com"
+        "email": "foo@email.com",
+        "default_expiry_delta": 14,
+        "consent_information": "foo",
     },
     {
         "name": "bar",
         "acronym": "BAR",
         "ditti_id": "BR",
-        "email": "bar@email.com"
+        "email": "bar@email.com",
+        "default_expiry_delta": 14,
+        "consent_information": "foo",
     }
 ]
 
