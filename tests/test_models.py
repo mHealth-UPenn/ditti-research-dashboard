@@ -1,14 +1,17 @@
 from datetime import datetime, UTC
 import os
+
 import pytest
 from sqlalchemy.exc import IntegrityError
+
 from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
     AccessGroup, Account, App, JoinAccessGroupPermission,
     JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
-    JoinStudyRole, Permission, Role, Study, init_admin_account,
-    init_admin_app, init_admin_group, init_db
+    JoinStudyRole, Permission, Role, Study, StudySubject, JoinStudySubjectApi,
+    JoinStudySubjectStudy, Api, init_admin_account, init_admin_app,
+    init_admin_group, init_db
 )
 from tests.testing_utils import create_joins, create_tables
 
@@ -232,10 +235,36 @@ class TestDeletions:
         assert "bar: %s" % bar == "bar: %s" % None
         assert "baz: %s" % baz == "baz: %s" % None
 
+    def test_delete_study_with_enrolled_subject(self, app):
+        with pytest.raises(IntegrityError):
+            q1 = Study.name == "foo"
+            foo = Study.query.filter(q1).first()
+            assert "foo: %s" % foo != "foo: %s" % None
+
+            foo_id = foo.id
+            q2 = JoinStudySubjectStudy.study_id == foo_id
+            bar = JoinStudySubjectStudy.query.filter(q2).first()
+            assert "bar: %s" % bar != "bar: %s" % None
+
+            db.session.delete(foo)
+            db.session.commit()
+
     def test_delete_study(self, app):
         q1 = Study.name == "foo"
         foo = Study.query.filter(q1).first()
         assert "foo: %s" % foo != "foo: %s" % None
+
+        # First delete all enrolled subjects
+        foo_id = foo.id
+        q2 = JoinStudySubjectStudy.study_id == foo_id
+        bar = JoinStudySubjectStudy.query.filter(q2).all()
+        assert len(bar) == 1
+
+        for join in bar:
+            db.session.delete(join)
+        db.session.commit()
+        bar = JoinStudySubjectStudy.query.filter(q2).all()
+        assert len(bar) == 0
 
         foo_id = foo.id
         q2 = JoinAccountStudy.study_id == foo_id
@@ -253,6 +282,66 @@ class TestDeletions:
         assert "foo: %s" % foo == "foo: %s" % None
         assert "bar: %s" % bar == "bar: %s" % None
         assert "baz: %s" % baz == "baz: %s" % None
+
+    def test_delete_study_subject(self, app):
+        q1 = StudySubject.email == "foo@email.com"
+        foo = StudySubject.query.filter(q1).first()
+        assert "foo: %s" % foo != "foo: %s" % None
+
+        foo_id = foo.id
+        q3 = JoinStudySubjectStudy.study_subject_id == foo_id
+        q2 = JoinStudySubjectApi.study_subject_id == foo_id
+        baz = JoinStudySubjectStudy.query.filter(q3).first()
+        bar = JoinStudySubjectApi.query.filter(q2).first()
+        assert "bar: %s" % bar != "bar: %s" % None
+        assert "baz: %s" % baz != "baz: %s" % None
+
+        db.session.delete(foo)
+        db.session.commit()
+        foo = StudySubject.query.filter(q1).first()
+        baz = JoinStudySubjectStudy.query.filter(q3).first()
+        bar = JoinStudySubjectApi.query.filter(q2).first()
+        assert "foo: %s" % foo == "foo: %s" % None
+        assert "bar: %s" % bar == "bar: %s" % None
+        assert "baz: %s" % baz == "baz: %s" % None
+
+    def test_delete_api_with_enrolled_subject(self, app):
+        with pytest.raises(IntegrityError):
+            q1 = Api.name == "foo"
+            foo = Api.query.filter(q1).first()
+            assert "foo: %s" % foo != "foo: %s" % None
+
+            foo_id = foo.id
+            q2 = JoinStudySubjectApi.api_id == foo_id
+            bar = JoinStudySubjectApi.query.filter(q2).first()
+            assert "bar: %s" % bar != "bar: %s" % None
+
+            db.session.delete(foo)
+            db.session.commit()
+
+    def test_delete_api(self, app):
+        q1 = Api.name == "foo"
+        foo = Api.query.filter(q1).first()
+        assert "foo: %s" % foo != "foo: %s" % None
+
+        # First delete all enrolled subjects
+        foo_id = foo.id
+        q2 = JoinStudySubjectApi.api_id == foo_id
+        bar = JoinStudySubjectApi.query.filter(q2).all()
+        assert len(bar) == 1
+
+        for join in bar:
+            db.session.delete(join)
+        db.session.commit()
+        bar = JoinStudySubjectApi.query.filter(q2).all()
+        assert len(bar) == 0
+
+        db.session.delete(foo)
+        db.session.commit()
+        foo = Api.query.filter(q1).filter().first()
+        bar = JoinStudySubjectApi.query.filter(q2).first()
+        assert "foo: %s" % foo == "foo: %s" % None
+        assert "bar: %s" % bar == "bar: %s" % None
 
 
 class TestArchives:
@@ -311,8 +400,30 @@ class TestArchives:
         assert len(bar.studies) == 1
         assert bar.studies[0].study is foo
 
+        q2 = StudySubject.email == "bar@email.com"
+        baz = StudySubject.query.filter(q2).first()
+        assert "baz: %s" % baz != "baz: %s" % None
+        assert len(baz.studies) == 1
+        assert baz.studies[0].study is foo
+
         foo.is_archived = True
         db.session.commit()
         assert foo.is_archived
         assert len(bar.studies) == 0
-        assert len(bar.studies) == 0
+        assert len(baz.studies) == 0
+
+    def test_archive_api(self, app):
+        q1 = Api.name == "bar"
+        foo = Api.query.filter(q1).first()
+        assert "foo: %s" % foo != "foo: %s" % None
+
+        q2 = StudySubject.email == "bar@email.com"
+        baz = StudySubject.query.filter(q2).first()
+        assert "baz: %s" % baz != "baz: %s" % None
+        assert len(baz.apis) == 1
+        assert baz.apis[0].api is foo
+
+        foo.is_archived = True
+        db.session.commit()
+        assert foo.is_archived
+        assert len(baz.apis) == 0
