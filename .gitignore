@@ -17,7 +17,6 @@ __pycache__/
 .postgresql/
 .vscode/
 env/
-migrations/
 *.env
 *logfile
 
