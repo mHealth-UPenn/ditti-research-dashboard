@@ -1526,3 +1526,58 @@ def study_subject_create():
         logger.warning(exc)
         db.session.rollback()
         return make_response({"msg": msg}, 500)
+
+@blueprint.route("/study_subject/archive", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "Study Subjects")
+def study_subject_archive():
+    """
+    Archive a study subject.
+
+    Request syntax
+    --------------
+    {
+        app: int,
+        id: int
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "Study Subject Archived Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg:    "Study Subject ID not provided" or
+                "Study Subject with ID X does not exist"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: "Internal server error message"
+    }
+    """
+    try:
+        study_subject_id = request.json.get("id")
+        if not study_subject_id:
+            return make_response({"msg": "Study Subject ID not provided"}, 400)
+
+        study_subject = StudySubject.query.get(study_subject_id)
+        if study_subject is None:
+            return make_response({"msg": f"Study Subject with ID {study_subject_id} does not exist"}, 400)
+
+        study_subject.is_archived = True
+        db.session.commit()
+        msg = "Study Subject Archived Successfully"
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warning(exc)
+        db.session.rollback()
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg}), 200

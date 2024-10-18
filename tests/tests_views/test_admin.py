@@ -455,3 +455,56 @@ def test_study_subject_create(post_admin):
     assert join_api.scope == ["read", "write"]
     assert join_api.access_key_uuid == "access-key-uuid-1"
     assert join_api.refresh_key_uuid == "refresh-key-uuid-1"
+
+def test_study_subject_archive(post_admin):
+    create_data = {
+        "app": 1,
+        "create": {
+            "email": "study_subject@email.com",
+            "studies": [
+                {
+                    "id": 2,
+                    "expires_on": "2025-06-30T12:00:00Z",
+                    "did_consent": False
+                }
+            ],
+            "apis": [
+                {
+                    "id": 2,
+                    "api_user_uuid": "api-user-uuid-2",
+                    "scope": ["read"],
+                    "access_key_uuid": "access-key-uuid-2",
+                    "refresh_key_uuid": "refresh-key-uuid-2"
+                }
+            ]
+        }
+    }
+
+    # Create the StudySubject
+    res_create = post_admin("/admin/study_subject/create", data=json.dumps(create_data))
+    data_create = json.loads(res_create.data)
+    assert "msg" in data_create
+    assert data_create["msg"] == "Study Subject Created Successfully"
+
+    # Retrieve the created StudySubject's ID
+    subject = StudySubject.query.filter(StudySubject.email == "study_subject@email.com").first()
+    assert subject is not None
+    subject_id = subject.id
+
+    # Define the payload for archiving the StudySubject
+    archive_data = {
+        "app": 1,
+        "id": subject_id
+    }
+
+    # Send POST request to archive StudySubject
+    res_archive = post_admin("/admin/study_subject/archive", data=json.dumps(archive_data))
+    data_archive = json.loads(res_archive.data)
+    
+    # Assert response
+    assert "msg" in data_archive
+    assert data_archive["msg"] == "Study Subject Archived Successfully"
+
+    # Query the database to verify archiving
+    archived_subject = StudySubject.query.get(subject_id)
+    assert archived_subject.is_archived is True
