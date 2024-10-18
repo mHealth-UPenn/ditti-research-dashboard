@@ -93,6 +93,330 @@ def edit_study_subject(post_admin, subject_id, edit_payload):
         pytest.fail(f"Exception during edit_study_subject: {e}")
 
 # ===========================
+# Specific Success Tests
+# ===========================
+
+def test_study_subject_create(post_admin, create_studies, create_apis):
+    """
+    Test creating a StudySubject with valid data.
+    """
+    data = {
+        "app": 1,
+        "create": {
+            "email": "study_subject_create@example.com",
+            "studies": [
+                {
+                    "id": 1,
+                    "expires_on": "2024-12-31T23:59:59Z",
+                    "did_consent": True
+                }
+            ],
+            "apis": [
+                {
+                    "id": 1,
+                    "api_user_uuid": "api-user-uuid-1",
+                    "scope": ["read", "write"],
+                    "access_key_uuid": "access-key-uuid-1",
+                    "refresh_key_uuid": "refresh-key-uuid-1"
+                }
+            ]
+        }
+    }
+
+    # Send POST request to create StudySubject
+    res = post_admin("/admin/study_subject/create", data=json.dumps(data))
+    data_res = json.loads(res.data)
+    
+    # Assert response
+    assert res.status_code == 200
+    assert "msg" in data_res
+    assert data_res["msg"] == "Study Subject Created Successfully"
+
+    # Query the database to verify creation
+    subject = StudySubject.query.filter(StudySubject.email == "study_subject_create@example.com").first()
+    assert subject is not None
+    assert subject.email == "study_subject_create@example.com"
+    assert not subject.is_confirmed
+    assert not subject.is_archived
+    assert len(subject.studies) == 1
+    join_study = subject.studies[0]
+    assert join_study.study_id == 1
+    assert join_study.did_consent is True
+    assert join_study.expires_on.replace(tzinfo=timezone.utc) == datetime(2024, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+    assert len(subject.apis) == 1
+    join_api = subject.apis[0]
+    assert join_api.api_id == 1
+    assert join_api.api_user_uuid == "api-user-uuid-1"
+    assert join_api.scope == ["read", "write"]
+    assert join_api.access_key_uuid == "access-key-uuid-1"
+    assert join_api.refresh_key_uuid == "refresh-key-uuid-1"
+
+def test_study_subject_archive(post_admin, create_study_subject, create_studies, create_apis):
+    """
+    Test archiving a StudySubject.
+    """
+    create_data = {
+        "app": 1,
+        "create": {
+            "email": "study_subject_archive@example.com",
+            "studies": [
+                {
+                    "id": 2,
+                    "expires_on": "2025-06-30T12:00:00Z",
+                    "did_consent": False
+                }
+            ],
+            "apis": [
+                {
+                    "id": 2,
+                    "api_user_uuid": "api-user-uuid-2",
+                    "scope": ["read"],
+                    "access_key_uuid": "access-key-uuid-2",
+                    "refresh_key_uuid": "refresh-key-uuid-2"
+                }
+            ]
+        }
+    }
+
+    # Create the StudySubject
+    res_create = post_admin("/admin/study_subject/create", data=json.dumps(create_data))
+    data_create = json.loads(res_create.data)
+    assert res_create.status_code == 200
+    assert "msg" in data_create
+    assert data_create["msg"] == "Study Subject Created Successfully"
+
+    # Retrieve the created StudySubject's ID
+    subject = StudySubject.query.filter(StudySubject.email == "study_subject_archive@example.com").first()
+    assert subject is not None
+    subject_id = subject.id
+
+    # Define the payload for archiving the StudySubject
+    archive_data = {
+        "app": 1,
+        "id": subject_id
+    }
+
+    # Send POST request to archive StudySubject
+    res_archive = post_admin("/admin/study_subject/archive", data=json.dumps(archive_data))
+    data_archive = json.loads(res_archive.data)
+    
+    # Assert response
+    assert res_archive.status_code == 200
+    assert "msg" in data_archive
+    assert data_archive["msg"] == "Study Subject Archived Successfully"
+
+    # Query the database to verify archiving
+    archived_subject = StudySubject.query.get(subject_id)
+    assert archived_subject.is_archived is True
+
+def test_study_subject_edit_remove_studies(post_admin, create_study_subject):
+    """
+    Test editing a StudySubject by removing all associated studies.
+    """
+    # Create a StudySubject with studies
+    subject = create_study_subject(
+        email="remove_studies@example.com",
+        studies=[
+            get_study_entry(1, "2024-12-31T23:59:59Z", True),
+            get_study_entry(2, "2025-06-30T12:00:00Z", False)
+        ],
+        apis=[]
+    )
+    subject_id = subject.id
+
+    # Define the payload to remove all studies
+    edit_data = {
+        "app": 1,
+        "id": subject_id,
+        "edit": {
+            "studies": []
+        }
+    }
+
+    # Send edit request
+    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
+
+    # Assert response
+    assert res_edit.status_code == 200
+    assert "msg" in data_edit
+    assert data_edit["msg"] == "Study Subject Edited Successfully"
+
+    # Verify removal in the database
+    edited_subject = StudySubject.query.get(subject_id)
+    assert len(edited_subject.studies) == 0
+
+def test_study_subject_edit_remove_apis(post_admin, create_study_subject):
+    """
+    Test editing a StudySubject by removing all associated APIs.
+    """
+    # Create a StudySubject with APIs
+    subject = create_study_subject(
+        email="remove_apis@example.com",
+        studies=[],
+        apis=[
+            get_api_entry(1, "api-user-uuid-remove1", ["read"], "access-key-uuid-remove1", "refresh-key-uuid-remove1"),
+            get_api_entry(2, "api-user-uuid-remove2", ["write"], "access-key-uuid-remove2", "refresh-key-uuid-remove2")
+        ]
+    )
+    subject_id = subject.id
+
+    # Define the payload to remove all APIs
+    edit_data = {
+        "app": 1,
+        "id": subject_id,
+        "edit": {
+            "apis": []
+        }
+    }
+
+    # Send edit request
+    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
+
+    # Assert response
+    assert res_edit.status_code == 200
+    assert "msg" in data_edit
+    assert data_edit["msg"] == "Study Subject Edited Successfully"
+
+    # Verify removal in the database
+    edited_subject = StudySubject.query.get(subject_id)
+    assert len(edited_subject.apis) == 0
+
+def test_study_subject_edit_invalid_scope_type(post_admin, create_study_subject):
+    """
+    Test editing a StudySubject with 'scope' not being a list in API association.
+    """
+    # Create a StudySubject to edit
+    subject = create_study_subject(
+        email="invalid_scope_type@example.com",
+        studies=[],
+        apis=[]
+    )
+    subject_id = subject.id
+
+    # Define the payload with 'scope' as a string instead of a list
+    edit_data = {
+        "app": 1,
+        "id": subject_id,
+        "edit": {
+            "apis": [
+                {
+                    "id": 1,
+                    "api_user_uuid": "updated-api-user-uuid",
+                    "scope": "read",  # String instead of a list
+                    "access_key_uuid": "updated-access-key-uuid",
+                    "refresh_key_uuid": "updated-refresh-key-uuid"
+                }
+            ]
+        }
+    }
+
+    # Send edit request
+    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
+
+    # Assert response
+    assert "msg" in data_edit
+
+    # Verify that 'scope' is converted to a list
+    edited_subject = StudySubject.query.get(subject_id)
+    assert len(edited_subject.apis) == 1
+    join_api = edited_subject.apis[0]
+    assert join_api.scope == ["read"]
+
+def test_study_subject_edit_associate_existing_api(post_admin, create_study_subject):
+    """
+    Test editing a StudySubject by associating it with an API that is already associated.
+    """
+    # Create a StudySubject with an API
+    subject = create_study_subject(
+        email="existing_api_association@example.com",
+        studies=[],
+        apis=[
+            get_api_entry(1, "existing-api-user-uuid", ["read"], "existing-access-key-uuid", "existing-refresh-key-uuid")
+        ]
+    )
+    subject_id = subject.id
+
+    # Define the payload to associate with the same API again
+    edit_data = {
+        "app": 1,
+        "id": subject_id,
+        "edit": {
+            "apis": [
+                {
+                    "id": 1,  # Already associated
+                    "api_user_uuid": "updated-api-user-uuid",
+                    "scope": ["read", "write"],
+                    "access_key_uuid": "updated-access-key-uuid",
+                    "refresh_key_uuid": "updated-refresh-key-uuid"
+                }
+            ]
+        }
+    }
+
+    # Send edit request
+    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
+
+    # Assert response
+    assert res_edit.status_code == 200
+    assert "msg" in data_edit
+    assert data_edit["msg"] == "Study Subject Edited Successfully"
+
+    # Verify API update in the database
+    edited_subject = StudySubject.query.get(subject_id)
+    assert len(edited_subject.apis) == 1
+    join_api = edited_subject.apis[0]
+    assert join_api.api_id == 1
+    assert join_api.api_user_uuid == "updated-api-user-uuid"
+    assert join_api.scope == ["read", "write"]
+    assert join_api.access_key_uuid == "updated-access-key-uuid"
+    assert join_api.refresh_key_uuid == "updated-refresh-key-uuid"
+
+def test_study_subject_edit_add_existing_study(post_admin, create_study_subject):
+    """
+    Test editing a StudySubject by adding a study that is already associated.
+    """
+    # Create a StudySubject with a study
+    subject = create_study_subject(
+        email="existing_study_add@example.com",
+        studies=[
+            get_study_entry(1, "2024-12-31T23:59:59Z", True)
+        ],
+        apis=[]
+    )
+    subject_id = subject.id
+
+    # Define the payload to add the same study again
+    edit_data = {
+        "app": 1,
+        "id": subject_id,
+        "edit": {
+            "studies": [
+                {
+                    "id": 1,  # Already associated
+                    "expires_on": "2025-12-31T23:59:59Z",
+                    "did_consent": False
+                }
+            ]
+        }
+    }
+
+    # Send edit request
+    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
+
+    # Assert response
+    assert res_edit.status_code == 200
+    assert "msg" in data_edit
+    assert data_edit["msg"] == "Study Subject Edited Successfully"
+
+    # Verify study update in the database
+    edited_subject = StudySubject.query.get(subject_id)
+    assert len(edited_subject.studies) == 1
+    join_study = edited_subject.studies[0]
+    assert join_study.study_id == 1
+    assert join_study.did_consent is False
+    assert join_study.expires_on.replace(tzinfo=timezone.utc) == datetime(2025, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+
+# ===========================
 # Parameterized Success Tests
 # ===========================
 
@@ -428,214 +752,3 @@ def test_study_subject_edit_errors(
         assert res_edit.status_code == 400
         assert "msg" in data_edit
         assert data_edit["msg"] == expected_msg
-
-# ===========================
-# Specific Success Tests
-# ===========================
-
-def test_study_subject_edit_remove_studies(post_admin, create_study_subject):
-    """
-    Test editing a StudySubject by removing all associated studies.
-    """
-    # Create a StudySubject with studies
-    subject = create_study_subject(
-        email="remove_studies@example.com",
-        studies=[
-            get_study_entry(1, "2024-12-31T23:59:59Z", True),
-            get_study_entry(2, "2025-06-30T12:00:00Z", False)
-        ],
-        apis=[]
-    )
-    subject_id = subject.id
-
-    # Define the payload to remove all studies
-    edit_data = {
-        "app": 1,
-        "id": subject_id,
-        "edit": {
-            "studies": []
-        }
-    }
-
-    # Send edit request
-    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
-
-    # Assert response
-    assert res_edit.status_code == 200
-    assert "msg" in data_edit
-    assert data_edit["msg"] == "Study Subject Edited Successfully"
-
-    # Verify removal in the database
-    edited_subject = StudySubject.query.get(subject_id)
-    assert len(edited_subject.studies) == 0
-
-def test_study_subject_edit_remove_apis(post_admin, create_study_subject):
-    """
-    Test editing a StudySubject by removing all associated APIs.
-    """
-    # Create a StudySubject with APIs
-    subject = create_study_subject(
-        email="remove_apis@example.com",
-        studies=[],
-        apis=[
-            get_api_entry(1, "api-user-uuid-remove1", ["read"], "access-key-uuid-remove1", "refresh-key-uuid-remove1"),
-            get_api_entry(2, "api-user-uuid-remove2", ["write"], "access-key-uuid-remove2", "refresh-key-uuid-remove2")
-        ]
-    )
-    subject_id = subject.id
-
-    # Define the payload to remove all APIs
-    edit_data = {
-        "app": 1,
-        "id": subject_id,
-        "edit": {
-            "apis": []
-        }
-    }
-
-    # Send edit request
-    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
-
-    # Assert response
-    assert res_edit.status_code == 200
-    assert "msg" in data_edit
-    assert data_edit["msg"] == "Study Subject Edited Successfully"
-
-    # Verify removal in the database
-    edited_subject = StudySubject.query.get(subject_id)
-    assert len(edited_subject.apis) == 0
-
-def test_study_subject_edit_invalid_scope_type(post_admin, create_study_subject):
-    """
-    Test editing a StudySubject with 'scope' not being a list in API association.
-    """
-    # Create a StudySubject to edit
-    subject = create_study_subject(
-        email="invalid_scope_type@example.com",
-        studies=[],
-        apis=[]
-    )
-    subject_id = subject.id
-
-    # Define the payload with 'scope' as a string instead of a list
-    edit_data = {
-        "app": 1,
-        "id": subject_id,
-        "edit": {
-            "apis": [
-                {
-                    "id": 1,
-                    "api_user_uuid": "updated-api-user-uuid",
-                    "scope": "read",  # String instead of a list
-                    "access_key_uuid": "updated-access-key-uuid",
-                    "refresh_key_uuid": "updated-refresh-key-uuid"
-                }
-            ]
-        }
-    }
-
-    # Send edit request
-    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
-
-    # Assert response
-    assert "msg" in data_edit
-
-    # Verify that 'scope' is converted to a list
-    edited_subject = StudySubject.query.get(subject_id)
-    assert len(edited_subject.apis) == 1
-    join_api = edited_subject.apis[0]
-    assert join_api.scope == ["read"]
-
-def test_study_subject_edit_associate_existing_api(post_admin, create_study_subject):
-    """
-    Test editing a StudySubject by associating it with an API that is already associated.
-    """
-    # Create a StudySubject with an API
-    subject = create_study_subject(
-        email="existing_api_association@example.com",
-        studies=[],
-        apis=[
-            get_api_entry(1, "existing-api-user-uuid", ["read"], "existing-access-key-uuid", "existing-refresh-key-uuid")
-        ]
-    )
-    subject_id = subject.id
-
-    # Define the payload to associate with the same API again
-    edit_data = {
-        "app": 1,
-        "id": subject_id,
-        "edit": {
-            "apis": [
-                {
-                    "id": 1,  # Already associated
-                    "api_user_uuid": "updated-api-user-uuid",
-                    "scope": ["read", "write"],
-                    "access_key_uuid": "updated-access-key-uuid",
-                    "refresh_key_uuid": "updated-refresh-key-uuid"
-                }
-            ]
-        }
-    }
-
-    # Send edit request
-    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
-
-    # Assert response
-    assert res_edit.status_code == 200
-    assert "msg" in data_edit
-    assert data_edit["msg"] == "Study Subject Edited Successfully"
-
-    # Verify API update in the database
-    edited_subject = StudySubject.query.get(subject_id)
-    assert len(edited_subject.apis) == 1
-    join_api = edited_subject.apis[0]
-    assert join_api.api_id == 1
-    assert join_api.api_user_uuid == "updated-api-user-uuid"
-    assert join_api.scope == ["read", "write"]
-    assert join_api.access_key_uuid == "updated-access-key-uuid"
-    assert join_api.refresh_key_uuid == "updated-refresh-key-uuid"
-
-def test_study_subject_edit_add_existing_study(post_admin, create_study_subject):
-    """
-    Test editing a StudySubject by adding a study that is already associated.
-    """
-    # Create a StudySubject with a study
-    subject = create_study_subject(
-        email="existing_study_add@example.com",
-        studies=[
-            get_study_entry(1, "2024-12-31T23:59:59Z", True)
-        ],
-        apis=[]
-    )
-    subject_id = subject.id
-
-    # Define the payload to add the same study again
-    edit_data = {
-        "app": 1,
-        "id": subject_id,
-        "edit": {
-            "studies": [
-                {
-                    "id": 1,  # Already associated
-                    "expires_on": "2025-12-31T23:59:59Z",
-                    "did_consent": False
-                }
-            ]
-        }
-    }
-
-    # Send edit request
-    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
-
-    # Assert response
-    assert res_edit.status_code == 200
-    assert "msg" in data_edit
-    assert data_edit["msg"] == "Study Subject Edited Successfully"
-
-    # Verify study update in the database
-    edited_subject = StudySubject.query.get(subject_id)
-    assert len(edited_subject.studies) == 1
-    join_study = edited_subject.studies[0]
-    assert join_study.study_id == 1
-    assert join_study.did_consent is False
-    assert join_study.expires_on.replace(tzinfo=timezone.utc) == datetime(2025, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
