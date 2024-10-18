@@ -92,6 +92,17 @@ def edit_study_subject(post_admin, subject_id, edit_payload):
         traceback.print_exc()
         pytest.fail(f"Exception during edit_study_subject: {e}")
 
+def get_admin_study_subject(get_admin, study_subject_id=None):
+    """
+    Helper function to send a GET request to the study_subject endpoint.
+    """
+    if study_subject_id:
+        params = {"id": str(study_subject_id)}
+    else:
+        params = {}
+    res = get_admin("/admin/study_subject", query_string=params)
+    return res
+
 # ===========================
 # Specific Success Tests
 # ===========================
@@ -752,3 +763,182 @@ def test_study_subject_edit_errors(
         assert res_edit.status_code == 400
         assert "msg" in data_edit
         assert data_edit["msg"] == expected_msg
+
+def test_study_subject_get_all(get_admin, post_admin, create_study_subject):
+    """
+    Test retrieving all non-archived StudySubjects.
+    """
+    # Get existing StudySubjects length
+    res = get_admin_study_subject(get_admin, study_subject_id=None)
+    if res.data:
+        data_res = json.loads(res.data)
+    else:
+        data_res = []
+    existing_len = len(data_res)
+
+    # Create multiple StudySubjects
+    subject1 = create_study_subject(
+        email="get_all_subject1@example.com",
+        studies=[],
+        apis=[]
+    )
+    subject2 = create_study_subject(
+        email="get_all_subject2@example.com",
+        studies=[],
+        apis=[]
+    )
+    subject3 = create_study_subject(
+        email="get_all_subject3@example.com",
+        studies=[],
+        apis=[]
+    )
+
+    # Archive one StudySubject
+    subject3.is_archived = True
+    db.session.commit()
+
+    # Send GET request without 'id' to retrieve all StudySubjects
+    res = get_admin_study_subject(get_admin, study_subject_id=None)
+    
+    # Check if response is empty
+    if res.data:
+        data_res = json.loads(res.data)
+    else:
+        data_res = []
+
+    # Assert response
+    assert res.status_code == 200
+    assert isinstance(data_res, list)
+    assert (len(data_res) - existing_len) == 2  # Only two new non-archived subjects should be returned
+    emails = [subject["email"] for subject in data_res]
+    assert "get_all_subject1@example.com" in emails
+    assert "get_all_subject2@example.com" in emails
+    assert "get_all_subject3@example.com" not in emails
+
+def test_study_subject_get_by_id(get_admin, create_study_subject):
+    """
+    Test retrieving a specific StudySubject by ID.
+    """
+    # Create a StudySubject
+    subject = create_study_subject(
+        email="get_by_id_subject@example.com",
+        studies=[],
+        apis=[]
+    )
+    subject_id = subject.id
+
+    # Send GET request with 'id' to retrieve the specific StudySubject
+    res = get_admin_study_subject(get_admin, study_subject_id=subject_id)
+    
+    # Check if response is empty
+    if res.data:
+        data_res = json.loads(res.data)
+    else:
+        data_res = []
+
+    # Assert response
+    assert res.status_code == 200
+    assert isinstance(data_res, list)
+    assert len(data_res) == 1
+    retrieved_subject = data_res[0]
+    assert retrieved_subject["email"] == "get_by_id_subject@example.com"
+    assert retrieved_subject["id"] == subject_id
+
+def test_study_subject_get_invalid_id_format(get_admin):
+    """
+    Test retrieving StudySubject with an invalid ID format.
+    """
+    # Send GET request with non-integer 'id'
+    res = get_admin_study_subject(get_admin, study_subject_id="invalid_id")
+    if res.data:
+        data_res = json.loads(res.data)
+    else:
+        data_res = {}
+
+    # Assert response
+    assert res.status_code == 400
+    assert "msg" in data_res
+    assert data_res["msg"] == "Invalid ID format. ID must be an integer."
+
+def test_study_subject_get_non_existent_id(get_admin):
+    """
+    Test retrieving StudySubject with a non-existent ID.
+    """
+    # Assume ID 9999 does not exist
+    res = get_admin_study_subject(get_admin, study_subject_id=9999)
+    if res.data:
+        data_res = json.loads(res.data)
+    else:
+        data_res = []
+
+    # Assert response
+    assert res.status_code == 200
+    assert isinstance(data_res, list)
+    assert len(data_res) == 0
+
+def test_study_subject_get_archived_not_returned(get_admin, create_study_subject):
+    """
+    Test that archived StudySubjects are not returned in the list.
+    """
+    # Get existing StudySubjects length
+    res = get_admin_study_subject(get_admin, study_subject_id=None)
+    if res.data:
+        data_res = json.loads(res.data)
+    else:
+        data_res = []
+    existing_len = len(data_res)
+
+    # Create StudySubjects
+    subject1 = create_study_subject(
+        email="archived_not_returned1@example.com",
+        studies=[],
+        apis=[]
+    )
+    subject2 = create_study_subject(
+        email="archived_not_returned2@example.com",
+        studies=[],
+        apis=[]
+    )
+
+    # Archive one StudySubject
+    subject2.is_archived = True
+    db.session.commit()
+
+    # Send GET request without 'id' to retrieve all StudySubjects
+    res = get_admin_study_subject(get_admin, study_subject_id=None)
+    if res.data:
+        data_res = json.loads(res.data)
+    else:
+        data_res = []
+
+    # Assert response
+    assert res.status_code == 200
+    assert isinstance(data_res, list)
+    assert (len(data_res) - existing_len) == 1  # Only one new non-archived subject should be returned
+    assert data_res[-1]["email"] == "archived_not_returned1@example.com"
+
+def test_study_subject_get_archived_by_id(get_admin, create_study_subject):
+    """
+    Test retrieving an archived StudySubject by ID.
+    """
+    # Create and archive a StudySubject
+    subject = create_study_subject(
+        email="archived_by_id@example.com",
+        studies=[],
+        apis=[]
+    )
+    subject.is_archived = True
+    db.session.commit()
+    subject_id = subject.id
+
+    # Send GET request with 'id' to retrieve the archived StudySubject
+    res = get_admin_study_subject(get_admin, study_subject_id=subject_id)
+    if res.data:
+        data_res = json.loads(res.data)
+    else:
+        data_res = []
+
+    # Assert response
+    assert res.status_code == 200
+    assert isinstance(data_res, list)
+    assert len(data_res) == 0  # Archived subject should not be returned

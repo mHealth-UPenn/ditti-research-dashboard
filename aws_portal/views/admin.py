@@ -1377,6 +1377,69 @@ def about_sleep_template_archive():
 
     return jsonify({"msg": msg})
 
+@blueprint.route("/study_subject")
+# @auth_required("View", "Admin Dashboard")
+def study_subject():
+    """
+    Get one study subject or a list of all study subjects. This will return one
+    study subject if the study subject's database primary key is passed as a URL option.
+
+    Options
+    -------
+    app: 1
+    id: str
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...Study Subject data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        # Retrieve the 'id' parameter from the query string
+        study_subject_id = request.args.get("id")
+
+        if study_subject_id:
+            # Attempt to convert 'id' to integer
+            try:
+                study_subject_id = int(study_subject_id)
+            except ValueError:
+                return make_response({"msg": "Invalid ID format. ID must be an integer."}, 400)
+
+            # Query for the specific StudySubject, excluding archived entries
+            query = StudySubject.query.filter(
+                ~StudySubject.is_archived & (StudySubject.id == study_subject_id)
+            )
+        else:
+            # Query for all non-archived StudySubjects
+            query = StudySubject.query.filter(~StudySubject.is_archived)
+
+        # Execute the query and serialize the results
+        res = [a.meta for a in query.all()]
+        return jsonify(res)
+        # study_subjects = query.all()
+        # res = [ss.meta for ss in study_subjects]
+
+        # return jsonify(res), 200
+
+    except Exception:
+        # Capture and log the traceback
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({"msg": msg}, 500)
+
 @blueprint.route("/study_subject/create", methods=["POST"])
 @auth_required("View", "Admin Dashboard")
 @auth_required("Create", "Study Subjects")
@@ -1773,3 +1836,10 @@ def study_subject_edit():
         return make_response({"msg": msg}, 500)
 
     return jsonify({"msg": msg})
+
+# api (Fitbit)
+# api create
+# api edit
+# api archive
+
+# app 1 is admin dashboard, app 2 is ditti dashboard
