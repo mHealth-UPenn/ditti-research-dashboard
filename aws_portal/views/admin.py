@@ -6,9 +6,10 @@ from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AboutSleepTemplate, AccessGroup, Account, Action, App,
+    AboutSleepTemplate, AccessGroup, Account, Action, App, Api,
     JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
-    JoinRolePermission, Permission, Resource, Role, Study
+    JoinRolePermission, Permission, Resource, Role, Study, StudySubject,
+    JoinStudySubjectStudy, JoinStudySubjectApi
 )
 from aws_portal.utils.auth import auth_required, validate_password
 from aws_portal.utils.db import populate_model
@@ -1375,3 +1376,153 @@ def about_sleep_template_archive():
         return make_response({"msg": msg}, 500)
 
     return jsonify({"msg": msg})
+
+@blueprint.route("/study_subject/create", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "Study Subjects")
+def study_subject_create():
+    """
+    Create a new study subject.
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        create: {
+            email: str,
+            studies: [
+                { 
+                    id: int,
+                    expires_o": str,
+                    did_consent: bool
+                },
+                ...
+            ],
+            apis: [
+                {
+                    id: int,
+                    api_user_uuid: str,
+                    scope: str[],
+                    access_key_uuid: str,
+                    refresh_key_uuid: str
+                },
+                ...
+            ]
+        }
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "Study Subject Created Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg:    "Email was not provided" or
+                "Email already exists" or
+                "Invalid study ID: X" or
+                "Invalid API ID: Y" or
+                "Invalid date format for expires_on: YYYY-MM-DDTHH:MM:SSZ"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: "Internal server error message"
+    }
+    """
+    try:
+        data = request.json.get("create")
+        if not data:
+            return make_response({"msg": "No data provided"}, 400)
+
+        email = data.get("email")
+        if not email:
+            return make_response({"msg": "Email was not provided"}, 400)
+
+        if StudySubject.query.filter(StudySubject.email == email).first():
+            return make_response({"msg": "Email already exists"}, 400)
+
+        # Initialize StudySubject instance
+        study_subject = StudySubject()
+        
+        # Populate non-relationship fields using populate_model
+        populate_model(study_subject, data)
+
+        # Set default values if not provided
+        study_subject.created_on = datetime.now(UTC)
+        study_subject.is_confirmed = False
+        study_subject.is_archived = False
+
+        # Add study associations
+        studies_data = data.get("studies", [])
+        for study_entry in studies_data:
+            study_id = study_entry.get("id")
+            if not study_id:
+                return make_response({"msg": "Study ID is required in studies"}, 400)
+            study = Study.query.get(study_id)
+            if study is None:
+                return make_response({"msg": f"Invalid study ID: {study_id}"}, 400)
+            if study.is_archived:
+                return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
+
+            did_consent = study_entry.get("did_consent", False)
+            expires_on_str = study_entry.get("expires_on")
+            if not expires_on_str:
+                return make_response({"msg": f"'expires_on' is required for study ID {study_id}"}, 400)
+            try:
+                expires_on = datetime.fromisoformat(expires_on_str.replace("Z", "+00:00"))
+            except ValueError:
+                return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+
+            join_study = JoinStudySubjectStudy(
+                study_subject=study_subject,
+                study=study,
+                did_consent=did_consent,
+                expires_on=expires_on
+            )
+            db.session.add(join_study)
+
+        # Add API associations
+        apis_data = data.get("apis", [])
+        for api_entry in apis_data:
+            api_id = api_entry.get("id")
+            if not api_id:
+                return make_response({"msg": "API ID is required in apis"}, 400)
+            api = Api.query.get(api_id)
+            if api is None:
+                return make_response({"msg": f"Invalid API ID: {api_id}"}, 400)
+            if api.is_archived:
+                return make_response({"msg": f"Cannot associate with archived API ID: {api_id}"}, 400)
+
+            api_user_uuid = api_entry.get("api_user_uuid")
+            if not api_user_uuid:
+                return make_response({"msg": f"'api_user_uuid' is required in apis {api_id}"}, 400)
+            scope = api_entry.get("scope", [])
+            access_key_uuid = api_entry.get("access_key_uuid")
+            refresh_key_uuid = api_entry.get("refresh_key_uuid")
+
+            join_api = JoinStudySubjectApi(
+                study_subject=study_subject,
+                api=api,
+                api_user_uuid=api_user_uuid,
+                scope=scope,
+                access_key_uuid=access_key_uuid,
+                refresh_key_uuid=refresh_key_uuid
+            )
+            db.session.add(join_api)
+
+        db.session.add(study_subject)
+        db.session.commit()
+
+        return jsonify({"msg": "Study Subject Created Successfully"}), 200
+
+    # Other server errors return 500
+    except Exception as e:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warning(exc)
+        db.session.rollback()
+        return make_response({"msg": msg}, 500)

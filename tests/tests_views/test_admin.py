@@ -1,6 +1,8 @@
+from datetime import datetime, timezone
 import json
 from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study
+    AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study,
+    StudySubject
 )
 from tests.testing_utils import get_auth_headers, login_admin_account
 
@@ -402,3 +404,54 @@ def test_app_edit(post_admin):
 
     foo = App.query.get(1)
     assert foo.name == "baz"
+
+def test_study_subject_create(post_admin):
+    data = {
+        "app": 1,
+        "create": {
+            "email": "study_subject@email.com",
+            "studies": [
+                {
+                    "id": 1,
+                    "expires_on": "2024-12-31T23:59:59Z",
+                    "did_consent": True
+                }
+            ],
+            "apis": [
+                {
+                    "id": 1,
+                    "api_user_uuid": "api-user-uuid-1",
+                    "scope": ["read", "write"],
+                    "access_key_uuid": "access-key-uuid-1",
+                    "refresh_key_uuid": "refresh-key-uuid-1"
+                }
+            ]
+        }
+    }
+
+    # Send POST request to create StudySubject
+    res = post_admin("/admin/study_subject/create", data=json.dumps(data))
+    data = json.loads(res.data)
+    
+    # Assert response
+    assert "msg" in data
+    assert data["msg"] == "Study Subject Created Successfully"
+
+    # Query the database to verify creation
+    subject = StudySubject.query.filter(StudySubject.email == "study_subject@email.com").first()
+    assert subject is not None
+    assert subject.email == "study_subject@email.com"
+    assert not subject.is_confirmed
+    assert not subject.is_archived
+    assert len(subject.studies) == 1
+    join_study = subject.studies[0]
+    assert join_study.study_id == 1
+    assert join_study.did_consent is True
+    assert join_study.expires_on.replace(tzinfo=timezone.utc) == datetime(2024, 12, 31, 23, 59, 59, tzinfo=timezone.utc)
+    assert len(subject.apis) == 1
+    join_api = subject.apis[0]
+    assert join_api.api_id == 1
+    assert join_api.api_user_uuid == "api-user-uuid-1"
+    assert join_api.scope == ["read", "write"]
+    assert join_api.access_key_uuid == "access-key-uuid-1"
+    assert join_api.refresh_key_uuid == "refresh-key-uuid-1"
