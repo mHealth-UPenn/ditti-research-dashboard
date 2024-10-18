@@ -508,3 +508,4 @@ def test_study_subject_archive(post_admin):
     # Query the database to verify archiving
     archived_subject = StudySubject.query.get(subject_id)
     assert archived_subject.is_archived is True
+

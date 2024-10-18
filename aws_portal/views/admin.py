@@ -1500,7 +1500,9 @@ def study_subject_create():
             api_user_uuid = api_entry.get("api_user_uuid")
             if not api_user_uuid:
                 return make_response({"msg": f"'api_user_uuid' is required in apis {api_id}"}, 400)
-            scope = api_entry.get("scope", [])
+            # string: wrap it in a list, empty: [], list: list
+            # scope should probably be nonnullable in JoinStudySubjectApi
+            scope = [scope] if isinstance(scope := api_entry.get("scope", []), str) else scope
             access_key_uuid = api_entry.get("access_key_uuid")
             refresh_key_uuid = api_entry.get("refresh_key_uuid")
 
@@ -1581,3 +1583,193 @@ def study_subject_archive():
         return make_response({"msg": msg}, 500)
 
     return jsonify({"msg": msg}), 200
+
+# study_subject_edit()
+@blueprint.route("/study_subject/edit", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "Study Subjects")
+def study_subject_edit():
+    """
+    Edit an existing study subject
+    
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int,
+        edit: {
+            email: str,  # Optional
+            studies: [
+                {
+                    id: int,
+                    expires_on: str,  # ISO 8601 format, e.g., "2024-12-31T23:59:59Z"
+                    did_consent: bool
+                },
+                ...
+            ],
+            apis: [
+                {
+                    id: int,
+                    api_user_uuid: str,
+                    scope: str[],
+                    access_key_uuid: str,
+                    refresh_key_uuid: str
+                },
+                ...
+            ]
+        }
+    }
+
+    All data in the request body are optional. Any attributes that are excluded
+    from the request body will not be changed.
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "Study Subject Edited Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: "Study Subject with ID X does not exist" or
+             "Email already exists" or
+             "Invalid study ID: Y" or
+             "Invalid API ID: Z" or
+             "Invalid date format for expires_on: YYYY-MM-DDTHH:MM:SSZ"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: "Internal server error message"
+    }
+    """
+    try:
+        data = request.json.get("edit")
+        study_subject_id = request.json.get("id")
+
+        if not study_subject_id:
+            return make_response({"msg": "Study Subject ID not provided"}, 400)
+
+        study_subject = StudySubject.query.get(study_subject_id)
+        if not study_subject:
+            return make_response({"msg": f"Study Subject with ID {study_subject_id} does not exist"}, 400)
+
+        # Update email if provided
+        if data and "email" in data:
+            new_email = data["email"]
+            if new_email != study_subject.email:
+                if StudySubject.query.filter(StudySubject.email == new_email).first():
+                    return make_response({"msg": "Email already exists"}, 400)
+                study_subject.email = new_email
+
+        # Update other non-relationship fields using populate_model
+        if data:
+            populate_model(study_subject, data)
+
+        # Update studies if provided
+        if data and "studies" in data:
+            # Remove studies not in the new list
+            try:
+                new_study_ids = [s["id"] for s in data["studies"]]
+            except KeyError:
+                return make_response({"msg": "Study ID is required in studies"}, 400)
+            for join in list(study_subject.studies):
+                if join.study_id not in new_study_ids:
+                    db.session.delete(join)
+
+            # Add or update studies
+            for study_entry in data["studies"]:
+                study_id = study_entry.get("id")
+                if not study_id:
+                    return make_response({"msg": "Study ID is required in studies"}, 400)
+                study = Study.query.get(study_id)
+                if study is None:
+                    return make_response({"msg": f"Invalid study ID: {study_id}"}, 400)
+                if study.is_archived:
+                    return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
+
+                did_consent = study_entry.get("did_consent", False)
+                expires_on_str = study_entry.get("expires_on")
+                if not expires_on_str:
+                    return make_response({"msg": f"'expires_on' is required for study ID {study_id}"}, 400)
+                try:
+                    expires_on = datetime.fromisoformat(expires_on_str.replace("Z", "+00:00"))
+                except ValueError:
+                    return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+
+                join = JoinStudySubjectStudy.query.get((study_subject_id, study_id))
+                if join:
+                    # Update existing association
+                    join.did_consent = did_consent
+                    join.expires_on = expires_on
+                else:
+                    # Create new association
+                    new_join = JoinStudySubjectStudy(
+                        study_subject=study_subject,
+                        study=study,
+                        did_consent=did_consent,
+                        expires_on=expires_on
+                    )
+                    db.session.add(new_join)
+
+        # Update APIs if provided
+        if data and "apis" in data:
+            # Remove APIs not in the new list
+            try:
+                new_api_ids = [a["id"] for a in data["apis"]]
+            except KeyError:
+                return make_response({"msg": "API ID is required in apis"}, 400)
+            for join in list(study_subject.apis):
+                if join.api_id not in new_api_ids:
+                    db.session.delete(join)
+
+            # Add or update APIs
+            for api_entry in data["apis"]:
+                api_id = api_entry.get("id")
+                if not api_id:
+                    return make_response({"msg": "API ID is required in apis"}, 400)
+                api = Api.query.get(api_id)
+                if api is None:
+                    return make_response({"msg": f"Invalid API ID: {api_id}"}, 400)
+                if api.is_archived:
+                    return make_response({"msg": f"Cannot associate with archived API ID: {api_id}"}, 400)
+
+                api_user_uuid = api_entry.get("api_user_uuid")
+                if not api_user_uuid:
+                    return make_response({"msg": f"'api_user_uuid' is required for API ID {api_id}"}, 400)
+                scope = [scope] if isinstance(scope := api_entry.get("scope", []), str) else scope
+                access_key_uuid = api_entry.get("access_key_uuid")
+                refresh_key_uuid = api_entry.get("refresh_key_uuid")
+
+                join_api = JoinStudySubjectApi.query.get((study_subject_id, api_id))
+                if join_api:
+                    # Update existing association
+                    join_api.api_user_uuid = api_user_uuid
+                    join_api.scope = scope
+                    join_api.access_key_uuid = access_key_uuid
+                    join_api.refresh_key_uuid = refresh_key_uuid
+                else:
+                    # Create new association
+                    new_join_api = JoinStudySubjectApi(
+                        study_subject=study_subject,
+                        api=api,
+                        api_user_uuid=api_user_uuid,
+                        scope=scope,
+                        access_key_uuid=access_key_uuid,
+                        refresh_key_uuid=refresh_key_uuid
+                    )
+                    db.session.add(new_join_api)
+
+        db.session.commit()
+        msg = "Study Subject Edited Successfully"
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg})
