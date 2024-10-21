@@ -1837,9 +1837,243 @@ def study_subject_edit():
 
     return jsonify({"msg": msg})
 
-# api (Fitbit)
-# api create
-# api edit
-# api archive
+@blueprint.route("/api")
+@auth_required("View", "Admin Dashboard")
+def api():
+    """
+    Get one API or a list of all APIs. This will return one API if the API's
+    database primary key is passed as a URL option.
 
-# app 1 is admin dashboard, app 2 is ditti dashboard
+    Options
+    -------
+    app: int
+    id: str
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...API data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        api_id = request.args.get("id")
+
+        if api_id:
+            query = Api.query.filter(
+                ~Api.is_archived & (Api.id == int(api_id))
+            )
+        else:
+            query = Api.query.filter(~Api.is_archived)
+
+        res = [api.meta for api in query.all()]
+        return jsonify(res)
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({"msg": msg}, 500)
+
+
+@blueprint.route("/api/create", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "APIs")
+def api_create():
+    """
+    Create a new API.
+    
+    Request syntax
+    --------------
+    {
+        app: int,
+        create: {
+            name: str
+        }
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "API Created Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: "API name was not provided" or "API name already exists"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        data = request.json.get("create")
+        if not data:
+            return make_response({"msg": "No data provided"}, 400)
+
+        name = data.get("name")
+        if not name:
+            return make_response({"msg": "API name was not provided"}, 400)
+
+        # Check if an API with the same name already exists
+        if Api.query.filter_by(name=name).first():
+            return make_response({"msg": "API name already exists"}, 400)
+
+        api = Api()
+        populate_model(api, data)
+        db.session.add(api)
+        db.session.commit()
+        msg = "API Created Successfully"
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg})
+
+
+@blueprint.route("/api/edit", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "APIs")
+def api_edit():
+    """
+    Edit an existing API.
+
+    Request syntax
+    --------------
+    {
+        app: int,
+        id: int,
+        edit: {
+            name: str
+        }
+    }
+
+    All data in the request body are optional. Any attributes that are excluded
+    from the request body will not be changed.
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "API Edited Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: "API with the same name already exists" or "API with ID X does not exist"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        data = request.json.get("edit")
+        api_id = request.json.get("id")
+        if not api_id:
+            return make_response({"msg": "API ID not provided"}, 400)
+
+        api = Api.query.get(api_id)
+        if not api:
+            return make_response({"msg": f"API with ID {api_id} does not exist"}, 400)
+
+        if data and "name" in data:
+            new_name = data["name"]
+            if new_name != api.name:
+                # Check if another API with the same name exists
+                existing_api = Api.query.filter(
+                    Api.name == new_name, Api.id != api_id
+                ).first()
+                if existing_api:
+                    return make_response({"msg": "API with the same name already exists"}, 400)
+
+        populate_model(api, data)
+        db.session.commit()
+        msg = "API Edited Successfully"
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg})
+
+
+@blueprint.route("/api/archive", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "APIs")
+def api_archive():
+    """
+    Archive an API. This action has the same effect as deleting an entry
+    from the database. However, archived items are only filtered from queries
+    and can be retrieved.
+
+    Request syntax
+    --------------
+    {
+        app: int,
+        id: int
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "API Archived Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: "API with ID X does not exist"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        api_id = request.json.get("id")
+        if not api_id:
+            return make_response({"msg": "API ID not provided"}, 400)
+
+        api = Api.query.get(api_id)
+        if not api:
+            return make_response({"msg": f"API with ID {api_id} does not exist"}, 400)
+
+        api.is_archived = True
+        db.session.commit()
+        msg = "API Archived Successfully"
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg})
