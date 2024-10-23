@@ -75,8 +75,11 @@ const StudySummary: React.FC<StudySummaryProps> = ({
     const id = studyDetails.acronym;
     const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
 
-    // localize tap timestamps
-    const data = taps.map((t) => {
+    const data = taps.filter((t) =>
+      // Retrieve taps from only the current study
+      t.dittiId.startsWith(studyDetails.dittiId)
+    ).map((t) => {
+      // Localize timestamps
       const time = t.time.getTime() - t.time.getTimezoneOffset() * 60000;
       return [t.dittiId, new Date(time)];
     });
