@@ -196,7 +196,6 @@ def get_audio_taps():  # TODO write unit test
     res = pd.merge(df_users, df_taps, on="id")\
         .drop("id", axis=1)\
         .to_dict("records")
-    print(res)
 
     return jsonify(res)
 

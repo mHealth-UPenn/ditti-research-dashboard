@@ -194,7 +194,6 @@ def user_lookup_callback(_jwt_header, jwt_data):
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload):
     jti = jwt_payload["jti"]
-    print("checking %s" % jti)
     token = BlockedToken.query.filter(BlockedToken.jti == jti).first()
     return token is not None
 
