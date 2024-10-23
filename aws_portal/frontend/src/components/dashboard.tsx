@@ -229,15 +229,15 @@ const Dashboard: React.FC = () => {
   const getTapsAsync = async (): Promise<TapDetails[]> => {
     // if AWS has not been queried yet
     if (!taps.length) {
-      let updatedTaps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
+      let updatedTaps: TapDetails[] = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
         return res.map((tap) => {
           return { dittiId: tap.dittiId, time: new Date(tap.time) };
         });
       });
 
       // sort taps by timestamp
-      updatedTaps = taps.sort((a, b) =>
-        differenceInMilliseconds(new Date(a.time), new Date(b.time))
+      updatedTaps = updatedTaps.sort((a, b) =>
+        differenceInMilliseconds(a.time, b.time)
       );
 
       dispatch({ type: "SET_TAPS", taps: updatedTaps });
@@ -269,7 +269,7 @@ const Dashboard: React.FC = () => {
 
       // sort taps by timestamp
       updatedAudioTaps = updatedAudioTaps.sort((a, b) =>
-        differenceInMilliseconds(new Date(a.time), new Date(b.time))
+        differenceInMilliseconds(a.time, b.time)
       );
 
       dispatch({ type: "SET_AUDIO_TAPS", audioTaps: updatedAudioTaps });
