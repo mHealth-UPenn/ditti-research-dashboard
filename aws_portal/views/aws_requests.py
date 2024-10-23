@@ -135,12 +135,20 @@ def get_taps():  # TODO update unit test
 
     # get all taps
     taps = Query("Tap").scan()["Items"]
+    for tap in taps:
+        if "timeZone" not in tap:
+            print(tap)
 
     df_users = pd.DataFrame(users, columns=["id", "user_permission_id"])\
         .rename(columns={"user_permission_id": "dittiId"})
 
-    df_taps = pd.DataFrame(taps, columns=["tapUserId", "time", "timezone"])\
-        .rename(columns={"tapUserId": "id"})
+    df_taps = pd.DataFrame(taps, columns=["tapUserId", "time", "timeZone"])\
+        .rename(columns={"tapUserId": "id", "timeZone": "timezone"})
+
+    # Old versions of the app record UTC timestamps
+    # Fill missing timezone values with the UTC timezone
+    df_taps["timezone"] = df_taps["timezone"]\
+        .fillna("GMT Universal Coordinated Time")
 
     # merge on only the users that were returned earlier
     res = pd.merge(df_users, df_taps, on="id")\
@@ -184,17 +192,37 @@ def get_audio_taps():  # TODO write unit test
 
         return make_response({"msg": msg}, 500)
 
-    # get all taps
-    taps = Query("AudioTap").scan()["Items"]
+    # Get all audio files
+    audio_files = Query("AudioFile").scan()["Items"]
+
+    # Get all taps
+    audio_taps = Query("AudioTap").scan()["Items"]
+
     df_users = pd.DataFrame(users, columns=["id", "user_permission_id"])\
-        .rename(columns={"user_permission_id": "dittiId"})
-    df_taps = pd.DataFrame(taps, columns=["audioTapUserId", "time"])\
-        .rename(columns={"audioTapUserId": "id"})
+        .rename(columns={"id": "userId", "user_permission_id": "dittiId"})
 
+    df_audio_files = pd.DataFrame(audio_files, columns=["id", "title"])\
+        .rename(columns={"id": "audioFileId", "title": "audioFileTitle"})
 
-    # merge on only the users that were returned earlier
-    res = pd.merge(df_users, df_taps, on="id")\
-        .drop("id", axis=1)\
+    df_audio_taps = pd.DataFrame(
+        audio_taps,
+        columns=[
+            "audioTapUserId",
+            "audioTapAudioFileId",
+            "time",
+            "timeZone",
+            "action",
+        ]
+    ).rename(columns={
+        "audioTapUserId": "userId",
+        "audioTapAudioFileId": "audioFileId",
+        "timeZone": "timezone",
+    })
+
+    # Merge on only the users that were returned earlier
+    res = df_users.merge(df_audio_taps, on="userId")\
+        .merge(df_audio_files, on="audioFileId")\
+        .drop(["userId", "audioFileId"], axis=1)\
         .to_dict("records")
 
     return jsonify(res)

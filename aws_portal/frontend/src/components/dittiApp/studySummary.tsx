@@ -72,21 +72,36 @@ const StudySummary: React.FC<StudySummaryProps> = ({
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
     const taps = getTaps();
+    const audioTaps = getAudioTaps();
     const id = studyDetails.acronym;
     const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
 
-    const data = taps.filter((t) =>
+    const tapsData = taps.filter(t =>
       // Retrieve taps from only the current study
       t.dittiId.startsWith(studyDetails.dittiId)
-    ).map((t) => {
-      // Localize timestamps
-      const time = t.time.getTime() - t.time.getTimezoneOffset() * 60000;
-      return [t.dittiId, new Date(time)];
+    ).map(t => {
+      return [t.dittiId, t.time, t.timezone, "", ""];
     });
+
+    const audioTapsData = audioTaps.filter(t =>
+      // Retrieve taps from only the current study
+      t.dittiId.startsWith(studyDetails.dittiId)
+    ).map(t => {
+      return [t.dittiId, t.time, t.timezone, t.action, t.audioFileTitle];
+    });
+
+    const data = tapsData.concat(audioTapsData).sort((a, b) => {
+      if (a[1] > b[1]) return 1;
+      else if (a[1] < b[1]) return -1;
+      else return 0;
+    })
 
     sheet.columns = [
       { header: "Ditti ID", width: 10 },
-      { header: "Taps", width: 20 }
+      { header: "Taps", width: 20 },
+      { header: "Timezone", width: 30 },
+      { header: "Audio Tap Action", width: 15 },
+      { header: "Audio File Title", width: 20 },
     ];
 
     sheet.getColumn("B").numFmt = "DD/MM/YYYY HH:mm:ss";
