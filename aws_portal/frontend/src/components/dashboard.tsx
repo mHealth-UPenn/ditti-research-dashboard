@@ -231,7 +231,11 @@ const Dashboard: React.FC = () => {
     if (!taps.length) {
       let updatedTaps: TapDetails[] = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
         return res.map((tap) => {
-          return { dittiId: tap.dittiId, time: new Date(tap.time) };
+          return {
+            dittiId: tap.dittiId,
+            time: new Date(tap.time),
+            timezone: tap.timezone,
+          };
         });
       });
 
