@@ -25,18 +25,15 @@ def init_db():
     """
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
 
+    if "localhost" not in db_uri:
+        raise RuntimeError("init_db requires a localhost database URI.")
+
     if current_app.config["TESTING"]:
         db.drop_all()
         db.create_all()
 
-    elif "localhost" in db_uri:
-        db.create_all()
-
     else:
-        raise RuntimeError(
-            "init_db requires either a testing evironment or a localhost datab"
-            + "ase URI."
-        )
+        db.create_all()
 
 
 def init_admin_app():
