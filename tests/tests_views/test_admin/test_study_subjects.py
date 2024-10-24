@@ -97,9 +97,9 @@ def get_admin_study_subject(get_admin, study_subject_id=None):
     Helper function to send a GET request to the study_subject endpoint.
     """
     if study_subject_id:
-        params = {"id": str(study_subject_id)}
+        params = {"app": 1, "id": str(study_subject_id)}
     else:
-        params = {}
+        params = {"app": 1}
     res = get_admin("/admin/study_subject", query_string=params)
     return res
 
