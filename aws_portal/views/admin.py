@@ -1426,10 +1426,6 @@ def study_subject():
         # Execute the query and serialize the results
         res = [a.meta for a in query.all()]
         return jsonify(res)
-        # study_subjects = query.all()
-        # res = [ss.meta for ss in study_subjects]
-
-        # return jsonify(res), 200
 
     except Exception:
         # Capture and log the traceback
