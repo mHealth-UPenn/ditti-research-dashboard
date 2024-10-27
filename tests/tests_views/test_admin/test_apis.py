@@ -12,6 +12,7 @@ def create_api_payload(name):
     Helper function to create an API payload.
     """
     return {
+        "app": 1,
         "create": {
             "name": name
         }
@@ -22,6 +23,7 @@ def edit_api_payload(api_id, name=None):
     Helper function to create an API edit payload.
     """
     payload = {
+        "app": 1,
         "id": api_id,
         "edit": {}
     }
@@ -34,6 +36,7 @@ def archive_api_payload(api_id):
     Helper function to create an API archive payload.
     """
     return {
+        "app": 1,
         "id": api_id
     }
 
@@ -58,9 +61,9 @@ def get_admin_api(get_admin, api_id=None):
     Helper function to send a GET request to the API endpoint.
     """
     if api_id:
-        params = {"id": str(api_id)}
+        params = {"app": 1, "id": str(api_id)}
     else:
-        params = {}
+        params = {"app": 1}
     res = get_admin("/admin/api", query_string=params)
     return res
 
@@ -180,7 +183,7 @@ def test_api_create_missing_name(post_admin):
     """
     Test creating an API without providing a name.
     """
-    data = {"create": {}}
+    data = {"app": 1, "create": {}}
     res = post_admin("/admin/api/create", data=json.dumps(data))
     data_res = json.loads(res.data)
 
@@ -248,7 +251,7 @@ def test_api_create_no_data(post_admin):
     """
     Test creating an API with no data provided.
     """
-    data = {}
+    data = {"app": 1}
     res = post_admin("/admin/api/create", data=json.dumps(data))
     data_res = json.loads(res.data)
 
@@ -261,7 +264,7 @@ def test_api_edit_no_id(post_admin):
     """
     Test editing an API without providing an ID.
     """
-    edit_data = {"edit": {"name": "New Name"}}
+    edit_data = {"app": 1, "edit": {"name": "New Name"}}
     res = post_admin("/admin/api/edit", data=json.dumps(edit_data))
     data_res = json.loads(res.data)
 
@@ -274,7 +277,7 @@ def test_api_archive_no_id(post_admin):
     """
     Test archiving an API without providing an ID.
     """
-    archive_data = {}
+    archive_data = {"app": 1}
     res = post_admin("/admin/api/archive", data=json.dumps(archive_data))
     data_res = json.loads(res.data)
 
@@ -332,8 +335,8 @@ def test_api_edit_parameterized(
 @pytest.mark.parametrize(
     "test_name, edit_data, expected_msg",
     [
-        ("Missing ID", {"edit": {"name": "New Name"}}, "API ID not provided"),
-        ("Non-existent ID", {"id": 9999, "edit": {"name": "New Name"}}, "API with ID 9999 does not exist"),
+        ("Missing ID", {"app": 1, "edit": {"name": "New Name"}}, "API ID not provided"),
+        ("Non-existent ID", {"app": 1, "id": 9999, "edit": {"name": "New Name"}}, "API with ID 9999 does not exist"),
         ("Duplicate Name", None, "API with the same name already exists"),
     ]
 )

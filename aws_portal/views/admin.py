@@ -1837,7 +1837,7 @@ def study_subject_edit():
     return jsonify({"msg": msg})
 
 @blueprint.route("/api")
-# @auth_required("View", "Admin Dashboard")
+@auth_required("View", "Admin Dashboard")
 def api():
     """
     Get one API or a list of all APIs. This will return one API if the API's
@@ -1845,7 +1845,7 @@ def api():
 
     Options
     -------
-    app: int
+    app: 1
     id: str
 
     Response syntax (200)
@@ -1886,8 +1886,8 @@ def api():
 
 
 @blueprint.route("/api/create", methods=["POST"])
-# @auth_required("View", "Admin Dashboard")
-# @auth_required("Create", "APIs")
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "APIs")
 def api_create():
     """
     Create a new API.
@@ -1895,7 +1895,7 @@ def api_create():
     Request syntax
     --------------
     {
-        app: int,
+        app: 1,
         create: {
             name: str
         }
@@ -1950,8 +1950,8 @@ def api_create():
 
 
 @blueprint.route("/api/edit", methods=["POST"])
-# @auth_required("View", "Admin Dashboard")
-# @auth_required("Edit", "APIs")
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "APIs")
 def api_edit():
     """
     Edit an existing API.
@@ -1959,7 +1959,7 @@ def api_edit():
     Request syntax
     --------------
     {
-        app: int,
+        app: 1,
         id: int,
         edit: {
             name: str
@@ -2022,8 +2022,8 @@ def api_edit():
 
 
 @blueprint.route("/api/archive", methods=["POST"])
-# @auth_required("View", "Admin Dashboard")
-# @auth_required("Archive", "APIs")
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "APIs")
 def api_archive():
     """
     Archive an API. This action has the same effect as deleting an entry
@@ -2033,7 +2033,7 @@ def api_archive():
     Request syntax
     --------------
     {
-        app: int,
+        app: 1,
         id: int
     }
 
