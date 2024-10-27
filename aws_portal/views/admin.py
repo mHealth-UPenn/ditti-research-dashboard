@@ -1378,7 +1378,7 @@ def about_sleep_template_archive():
     return jsonify({"msg": msg})
 
 @blueprint.route("/study_subject")
-# @auth_required("View", "Admin Dashboard")
+@auth_required("View", "Admin Dashboard")
 def study_subject():
     """
     Get one study subject or a list of all study subjects. This will return one
@@ -1647,7 +1647,6 @@ def study_subject_archive():
 
     return jsonify({"msg": msg}), 200
 
-# study_subject_edit()
 @blueprint.route("/study_subject/edit", methods=["POST"])
 @auth_required("View", "Admin Dashboard")
 @auth_required("Edit", "Study Subjects")
