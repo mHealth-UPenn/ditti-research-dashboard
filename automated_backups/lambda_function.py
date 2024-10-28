@@ -297,34 +297,34 @@ def handler():
     audio_files = get_all_items(config["AWS_TABLENAME_AUDIO_FILE"], dynamodb)
     audio_taps = get_all_items(config["AWS_TABLENAME_AUDIO_TAP"], dynamodb)
 
-    # # Convert DynamoDB items to pandas DataFrames and handle necessary type conversions
-    # df = create_dataframe(user_permissions, taps, audio_files, audio_taps)
+    # Convert DynamoDB items to pandas DataFrames and handle necessary type conversions
+    df = create_dataframe(user_permissions, taps, audio_files, audio_taps)
 
-    # # Call the function to save and upload the final DataFrame
-    # save_and_upload_backup(df, config["AWS_BACKUP_BUCKET"])
+    # Call the function to save and upload the final DataFrame
+    save_and_upload_backup(df, config["AWS_BACKUP_BUCKET"])
 
-    # # Get IDs of old items in Tap and AudioTap tables
-    # old_tap_ids = get_old_data_ids(taps, "time")
-    # old_audio_tap_ids = get_old_data_ids(audio_taps, "time")
+    # Get IDs of old items in Tap and AudioTap tables
+    old_tap_ids = get_old_data_ids(taps, "time")
+    old_audio_tap_ids = get_old_data_ids(audio_taps, "time")
 
-    # # Delete old items
-    # delete_old_data(config["APP_SYNC_HOST"], "Tap", old_tap_ids)
-    # delete_old_data(config["APP_SYNC_HOST"], "AudioTap", old_audio_tap_ids)
+    # Delete old items
+    delete_old_data(config["APP_SYNC_HOST"], "Tap", old_tap_ids)
+    delete_old_data(config["APP_SYNC_HOST"], "AudioTap", old_audio_tap_ids)
 
-    # # Retrieve emails from the account table
-    # emails = query_emails(config["FLASK_DB"])
+    # Retrieve emails from the account table
+    emails = query_emails(config["FLASK_DB"])
 
-    # # Define the email subject and body text
-    # email_subject = "Data Download Notification"
-    # email_body = "This is your data download. In two months data will be deleted. Please save this file."
+    # Define the email subject and body text
+    email_subject = "Data Download Notification"
+    email_body = "This is your data download. In two months data will be deleted. Please save this file."
 
-    # # Send emails with attachment
-    # send_email_with_attachment(
-    #     emails,
-    #     email_subject,
-    #     email_body,
-    #     file_name="Backup_<timestamp>.xlsx",
-    #     bucket_name=config["AWS_BACKUP_BUCKET"]
-    # )
+    # Send emails with attachment
+    send_email_with_attachment(
+        emails,
+        email_subject,
+        email_body,
+        file_name="Backup_<timestamp>.xlsx",
+        bucket_name=config["AWS_BACKUP_BUCKET"]
+    )
 
-    # upload_log_to_s3(bucket_name=config["AWS_BACKUP_BUCKET"], s3_log_filename=f"{log_filename}")
+    upload_log_to_s3(bucket_name=config["AWS_BACKUP_BUCKET"], s3_log_filename=f"{log_filename}")
