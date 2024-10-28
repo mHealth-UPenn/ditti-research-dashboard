@@ -15,22 +15,44 @@ from psycopg2.extras import RealDictCursor
 # Use a common timestamp across the whole job
 job_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
-# Set up logger to write to a file
+# Custom JSON formatter
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        log_entry = {
+            "timestamp": datetime.fromtimestamp(record.created).isoformat() + "Z",
+            "level": record.levelname,
+            "message": record.getMessage()
+        }
+
+        # Add any extra fields in record if they exist
+        exclude = {"message", "args", "levelname", "created", "exc_info", "exc_text"}
+        log_entry.update(
+            {
+                k: v for k, v in record.__dict__.items()
+                if k not in exclude
+            }
+        )
+
+        return json.dumps(log_entry)
+
+# Set up logger to write JSON log entries to a file
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-formatter = logging.Formatter("[%(asctime)s %(module)s.%(funcName)s %(lineno)d %(levelname)s] %(message)s")
+
+# JSON Formatter
+json_formatter = JsonFormatter()
 
 # Stream handler for console output
 stream_handler = logging.StreamHandler(sys.stdout)
 stream_handler.setLevel(logging.INFO)
-stream_handler.setFormatter(formatter)
+stream_handler.setFormatter(json_formatter)
 logger.addHandler(stream_handler)
 
-# File handler for log file output
-log_filename = f"log_{job_timestamp}.log"
+# File handler for JSON log file output
+log_filename = f"log_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
 file_handler = logging.FileHandler(log_filename)
 file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(formatter)
+file_handler.setFormatter(json_formatter)
 logger.addHandler(file_handler)
 
 
@@ -275,34 +297,34 @@ def handler():
     audio_files = get_all_items(config["AWS_TABLENAME_AUDIO_FILE"], dynamodb)
     audio_taps = get_all_items(config["AWS_TABLENAME_AUDIO_TAP"], dynamodb)
 
-    # Convert DynamoDB items to pandas DataFrames and handle necessary type conversions
-    df = create_dataframe(user_permissions, taps, audio_files, audio_taps)
+    # # Convert DynamoDB items to pandas DataFrames and handle necessary type conversions
+    # df = create_dataframe(user_permissions, taps, audio_files, audio_taps)
 
-    # Call the function to save and upload the final DataFrame
-    save_and_upload_backup(df, config["AWS_BACKUP_BUCKET"])
+    # # Call the function to save and upload the final DataFrame
+    # save_and_upload_backup(df, config["AWS_BACKUP_BUCKET"])
 
-    # Get IDs of old items in Tap and AudioTap tables
-    old_tap_ids = get_old_data_ids(taps, "time")
-    old_audio_tap_ids = get_old_data_ids(audio_taps, "time")
+    # # Get IDs of old items in Tap and AudioTap tables
+    # old_tap_ids = get_old_data_ids(taps, "time")
+    # old_audio_tap_ids = get_old_data_ids(audio_taps, "time")
 
-    # Delete old items
-    delete_old_data(config["APP_SYNC_HOST"], "Tap", old_tap_ids)
-    delete_old_data(config["APP_SYNC_HOST"], "AudioTap", old_audio_tap_ids)
+    # # Delete old items
+    # delete_old_data(config["APP_SYNC_HOST"], "Tap", old_tap_ids)
+    # delete_old_data(config["APP_SYNC_HOST"], "AudioTap", old_audio_tap_ids)
 
-    # Retrieve emails from the account table
-    emails = query_emails(config["FLASK_DB"])
+    # # Retrieve emails from the account table
+    # emails = query_emails(config["FLASK_DB"])
 
-    # Define the email subject and body text
-    email_subject = "Data Download Notification"
-    email_body = "This is your data download. In two months data will be deleted. Please save this file."
+    # # Define the email subject and body text
+    # email_subject = "Data Download Notification"
+    # email_body = "This is your data download. In two months data will be deleted. Please save this file."
 
-    # Send emails with attachment
-    send_email_with_attachment(
-        emails,
-        email_subject,
-        email_body,
-        file_name="Backup_<timestamp>.xlsx",
-        bucket_name=config["AWS_BACKUP_BUCKET"]
-    )
+    # # Send emails with attachment
+    # send_email_with_attachment(
+    #     emails,
+    #     email_subject,
+    #     email_body,
+    #     file_name="Backup_<timestamp>.xlsx",
+    #     bucket_name=config["AWS_BACKUP_BUCKET"]
+    # )
 
-    upload_log_to_s3(bucket_name=config["AWS_BACKUP_BUCKET"], s3_log_filename=f"{log_filename}")
+    # upload_log_to_s3(bucket_name=config["AWS_BACKUP_BUCKET"], s3_log_filename=f"{log_filename}")
