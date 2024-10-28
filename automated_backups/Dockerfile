@@ -2,9 +2,9 @@
 FROM public.ecr.aws/lambda/python:3.12
 
 # Install OS-level dependencies and PostgreSQL client
-RUN yum install -y \
+RUN microdnf install -y \
     postgresql-libs \
-    && yum clean all
+    && microdnf clean all
 
 # Install Python dependencies
 COPY requirements.txt .

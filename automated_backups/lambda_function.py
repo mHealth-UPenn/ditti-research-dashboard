@@ -17,23 +17,46 @@ job_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
 
 # Custom JSON formatter
 class JsonFormatter(logging.Formatter):
+    exclude = {
+        "name",
+        "msg",
+        "args",
+        "levelname",
+        "levelno",
+        "pathname",
+        "filename",
+        "module",
+        "exc_info",
+        "exc_text",
+        "stack_info",
+        "lineno",
+        "funcName",
+        "created",
+        "msecs",
+        "relativeCreated",
+        "thread",
+        "threadName",
+        "processName",
+        "process",
+        "taskName"
+    }
+
     def format(self, record):
         log_entry = {
             "timestamp": datetime.fromtimestamp(record.created).isoformat() + "Z",
             "level": record.levelname,
-            "message": record.getMessage()
+            "message": record.getMessage(),
         }
 
         # Add any extra fields in record if they exist
-        exclude = {"message", "args", "levelname", "created", "exc_info", "exc_text"}
         log_entry.update(
             {
                 k: v for k, v in record.__dict__.items()
-                if k not in exclude
+                if k not in self.exclude
             }
         )
 
-        return json.dumps(log_entry)
+        return json.dumps(log_entry, indent=4)
 
 # Set up logger to write JSON log entries to a file
 logger = logging.getLogger(__name__)
@@ -287,7 +310,8 @@ def upload_log_to_s3(bucket_name, s3_log_filename):
         logger.error(f"Failed to upload log file to S3: {e}")
 
 
-def handler():
+def handler(event, context):
+    logger.info("Starting data backup job", extra={"job_timestamp": job_timestamp})
     # Initialize DynamoDB client
     dynamodb = boto3.client("dynamodb", region_name=os.getenv("AWS_REGION"))
 
@@ -326,5 +350,6 @@ def handler():
         file_name="Backup_<timestamp>.xlsx",
         bucket_name=config["AWS_BACKUP_BUCKET"]
     )
+
 
     upload_log_to_s3(bucket_name=config["AWS_BACKUP_BUCKET"], s3_log_filename=f"{log_filename}")
