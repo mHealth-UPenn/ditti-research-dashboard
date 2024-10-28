@@ -1,14 +1,37 @@
 import boto3
 from datetime import datetime, timedelta
 import json
+import logging
 import os
 import requests
+import sys
 
 import boto3
 from botocore.exceptions import ClientError
 import pandas as pd
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+# Use a common timestamp across the whole job
+job_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+
+# Set up logger to write to a file
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+formatter = logging.Formatter("[%(asctime)s %(module)s.%(funcName)s %(lineno)d %(levelname)s] %(message)s")
+
+# Stream handler for console output
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setLevel(logging.INFO)
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
+# File handler for log file output
+log_filename = f"log_{job_timestamp}.log"
+file_handler = logging.FileHandler(log_filename)
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 
 def get_secret():
@@ -232,6 +255,16 @@ def send_email_with_attachment(
             print(f"Failed to send email to {recipient}: {e.response["Error"]["Message"]}")
 
 
+# Function to upload log file to S3
+def upload_log_to_s3(bucket_name, s3_log_filename):
+    s3 = boto3.client("s3")
+    try:
+        s3.upload_file(log_filename, bucket_name, s3_log_filename)
+        logger.info(f"Log file {log_filename} uploaded to S3 bucket {bucket_name} as {s3_log_filename}")
+    except Exception as e:
+        logger.error(f"Failed to upload log file to S3: {e}")
+
+
 def handler():
     # Initialize DynamoDB client
     dynamodb = boto3.client("dynamodb", region_name=os.getenv("AWS_REGION"))
@@ -271,3 +304,5 @@ def handler():
         file_name="Backup_<timestamp>.xlsx",
         bucket_name=config["AWS_BACKUP_BUCKET"]
     )
+
+    upload_log_to_s3(bucket_name=config["AWS_BACKUP_BUCKET"], s3_log_filename=f"{log_filename}")
