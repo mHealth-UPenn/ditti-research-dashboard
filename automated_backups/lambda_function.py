@@ -12,8 +12,10 @@ import pandas as pd
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
+TESTING = os.getenv("TESTING") is not None
+
 # Use a common timestamp across the whole job
-job_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+job_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 
 # Custom JSON formatter
 class JsonFormatter(logging.Formatter):
@@ -59,7 +61,7 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(log_entry, indent=4)
 
 # Set up logger to write JSON log entries to a file
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("logger")
 logger.setLevel(logging.INFO)
 
 # JSON Formatter
@@ -72,7 +74,7 @@ stream_handler.setFormatter(json_formatter)
 logger.addHandler(stream_handler)
 
 # File handler for JSON log file output
-log_filename = f"log_{datetime.now().strftime('%Y%m%d%H%M%S')}.json"
+log_filename = f"log_{job_timestamp}.json"
 file_handler = logging.FileHandler(log_filename)
 file_handler.setLevel(logging.INFO)
 file_handler.setFormatter(json_formatter)
@@ -89,7 +91,7 @@ def get_secret():
 
     try:
         # Fetch the secret
-        secret_name = "secret-aws-portal"
+        secret_name = os.getenv("AWS_SECRET_NAME")
         response = client.get_secret_value(SecretId=secret_name)
 
         # Parse and return the secret
@@ -100,11 +102,16 @@ def get_secret():
             # Decode binary secret if it's not a string
             config = json.loads(response["SecretBinary"].decode("utf-8"))
 
+        logger.info(
+            "Configuration retrieved from SecretsManager",
+            extra={"secret_name": secret_name, "num_keys": len(config.keys())}
+        )
+
         return config
 
     except Exception as e:
-        print(f"Error retrieving secret: {e}")
-        return None
+        logger.error(f"Error retrieving secret: {e}")
+        raise RuntimeError(e)
 
 # Load secret into config variable
 config = get_secret()
@@ -124,63 +131,92 @@ def get_all_items(table_name, dynamodb):
             )
             items.extend(response["Items"])
 
+        logger.info(
+            "Items retrieved from DynamoDB",
+            extra={"table_name": table_name, "num_items": len(items)}
+        )
+
         return items
 
     except Exception as e:
-        print(f"Error retrieving items from table {table_name}: {e}")
-        return None
+        logger.error(f"Error retrieving items from table {table_name}: {e}")
+        raise RuntimeError(e)
 
 
 def save_and_upload_backup(df, bucket_name):
     # Generate timestamped file name
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    file_name = f"Backup_{timestamp}.xlsx"
+    file_name = f"Backup_{job_timestamp}.xlsx"
     df.to_excel(file_name, index=False)
 
-    # Initialize S3 client and upload the file
-    s3 = boto3.client("s3")
-    s3.upload_file(file_name, bucket_name, file_name)
-    print(f"File {file_name} uploaded to bucket {bucket_name}")
+    try:
+        # Initialize S3 client and upload the file
+        s3 = boto3.client("s3")
+        s3.upload_file(file_name, bucket_name, file_name)
+        logger.info(
+            "File uploaded to bucket",
+            extra={"file_name": file_name, "bucket_name": bucket_name}
+        )
+
+        return file_name
+
+    except ClientError as e:
+        logger.error(
+            f"Error uploading file to bucket due to client error",
+            extra={
+                "file_name": file_name,
+                "bucket_name": bucket_name,
+                "client_error_message": e.response["Error"]["Message"]
+            }
+        )
+
+        raise RuntimeError(e)
+
+
+def get_item_value(item, key, item_type="S"):
+    try:
+        return item[key][item_type]
+    except KeyError:
+        return None
 
 
 def create_dataframe(user_permissions, taps, audio_taps, audio_files):
     user_df = pd.DataFrame([{
-        "User ID": item["user_permission_id"]["S"]
+        "user_id": get_item_value(item, "id"),
+        "User ID": get_item_value(item, "user_permission_id"),
     } for item in user_permissions])
 
     tap_df = pd.DataFrame([{
-        "User ID": item["user"]["S"],
-        "Timestamp": item["time"]["S"],
-        "Timezone": item["timeZone"]["S"]
+        "user_id": get_item_value(item, "tapUserId"),
+        "Timestamp": get_item_value(item, "time"),
+        "Timezone": get_item_value(item, "timeZone"),
     } for item in taps])
 
     audio_tap_df = pd.DataFrame([{
-        "User ID": item["user"]["S"],
-        "Timestamp": item["time"]["S"],
-        "Timezone": item["timeZone"]["S"],
-        "Audio Action": item["action"]["S"]
+        "user_id": get_item_value(item, "audioTapUserId"),
+        "audio_file_id": get_item_value(item, "audioTapAudioFileId"),
+        "Timestamp": get_item_value(item, "time"),
+        "Timezone": get_item_value(item, "timeZone"),
+        "Audio Action": get_item_value(item, "action"),
     } for item in audio_taps])
 
     audio_file_df = pd.DataFrame([{
-        "Audio Filename": item["fileName"]["S"]
+        "audio_file_id": get_item_value(item, "id"),
+        "Audio Filename": get_item_value(item, "fileName"),
     } for item in audio_files])
 
     # Join data by "User ID"
-    merged_df = pd.merge(user_df, tap_df, on="User ID", how="left")
-    merged_df = pd.merge(merged_df, audio_tap_df, on="User ID", how="left")
-    merged_df = pd.merge(
-        merged_df,
-        audio_file_df,
-        left_index=True,
-        right_index=True,
-        how="left"
-    )
+    tap_df = tap_df.merge(user_df, on="user_id")
 
-    # Final dataframe with only required columns
-    final_df = merged_df[
-        ["User ID", "Timestamp", "Timezone", "Audio Action", "Audio Filename"]
-    ]
-    return  final_df
+    # Join audiofiles by "Audio File ID"
+    audio_tap_df = audio_tap_df.merge(user_df, on="user_id")\
+        .merge(audio_file_df, on="audio_file_id")
+
+    # Stack taps and audio taps into a single dataframe
+    df = pd.concat([tap_df, audio_tap_df])\
+        .sort_values(by=["User ID", "Timestamp"])\
+        .drop(columns=["user_id", "audio_file_id"])
+
+    return df
 
 
 def delete_old_data(appsync_host, table_name, id_list):
@@ -210,50 +246,67 @@ def delete_old_data(appsync_host, table_name, id_list):
             print(f"Failed to delete item with ID {item_id} from {table_name}: {response.text}")
 
 
-def get_old_data_ids(items, date_field):
-    cutoff_date = datetime.now() - timedelta(days=90)
-    return [
-        item["id"]["S"] for item in items
-        if datetime.strptime(item[date_field]["S"], "%Y-%m-%dT%H:%M:%SZ") < cutoff_date
+def get_ids_to_delete(items, date_field, days=90):
+    cutoff_date = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
+    ids_to_delete = [
+        item["id"]["S"] for item in items if item[date_field]["S"] < cutoff_date
     ]
 
+    logger.info(
+        "Retrieved IDs of items to delete",
+        extra={
+            "items": items[0]["__typename"]["S"],
+            "cutoff_date": cutoff_date,
+            "num_items": len(ids_to_delete),
+        }
+    )
 
+    return ids_to_delete
+
+
+# TODO: Implement when database is always available
+# def query_emails(db_uri):
+#     try:
+#         # Connect to the PostgreSQL database
+#         conn = psycopg2.connect(db_uri)
+#         cursor = conn.cursor(cursor_factory=RealDictCursor)
+
+#         # Execute the query
+#         cursor.execute("SELECT email FROM account")
+#         emails = cursor.fetchall()
+
+#         # Extract email addresses from query result
+#         email_list = [row["email"] for row in emails]
+
+#         # Close the connection
+#         cursor.close()
+#         conn.close()
+
+#         logger.info(
+#             "Emails retrieved from database",
+#             extra={"num_emails": len(email_list)}
+#         )
+
+#         return email_list
+
+#     except Exception as e:
+#         logger.error(f"Error retrieving emails: {e}")
+#         raise RuntimeError(e)
+
+
+# Temporary workaround for getting research coordinator emails
 def query_emails(db_uri):
-    try:
-        # Connect to the PostgreSQL database
-        conn = psycopg2.connect(db_uri)
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        # Execute the query
-        cursor.execute("SELECT email FROM account")
-        emails = cursor.fetchall()
-        
-        # Extract email addresses from query result
-        email_list = [row["email"] for row in emails]
-        
-        # Close the connection
-        cursor.close()
-        conn.close()
-        
-        return email_list
+    emails = config["STUDY_COORDINATOR_EMAILS"].split(",")
+    logger.warning("Emails retrieved from Secrets Manager. Update email retrieval to query database in future when database is always available.")
 
-    except Exception as e:
-        print(f"Error querying emails: {e}")
-        return None
+    if TESTING:
+        emails = [os.getenv("TEST_EMAIL")]
+
+    return emails
 
 
-def send_email_with_attachment(
-    recipients,
-    subject,
-    body_text,
-    file_name,
-    bucket_name
-):
+def send_email_with_attachment(recipients, subject, body_text, file_name):
     ses_client = boto3.client("ses", region_name=config["AWS_REGION"])
-    s3_client = boto3.client("s3")
-
-    # Download the Excel file from S3
-    s3_client.download_file(bucket_name, file_name, file_name)
 
     # Read the file content
     with open(file_name, "rb") as file:
@@ -290,14 +343,25 @@ def send_email_with_attachment(
             response = ses_client.send_raw_email(
                 Source=msg["Source"],
                 Destinations=msg["Destination"]["ToAddresses"],
-                RawMessage={
-                    "Data": msg
+                RawMessage={"Data": msg}
+            )
+
+            logger.info(
+                "Email sent",
+                extra={
+                    "recipient": recipient,
+                    "message_id": response["MessageId"]
                 }
             )
-            print(f"Email sent to {recipient}: MessageId {response["MessageId"]}")
 
         except ClientError as e:
-            print(f"Failed to send email to {recipient}: {e.response["Error"]["Message"]}")
+            logger.warning(
+                "Failed to send email due to client error",
+                extra={
+                    "recipient": recipient,
+                    "client_error_message": e.response["Error"]["Message"]
+                }
+            )
 
 
 # Function to upload log file to S3
@@ -312,44 +376,38 @@ def upload_log_to_s3(bucket_name, s3_log_filename):
 
 def handler(event, context):
     logger.info("Starting data backup job", extra={"job_timestamp": job_timestamp})
-    # Initialize DynamoDB client
-    dynamodb = boto3.client("dynamodb", region_name=os.getenv("AWS_REGION"))
+    # # Initialize DynamoDB client
+    # dynamodb = boto3.client("dynamodb", region_name=os.getenv("AWS_REGION"))
 
-    # Retrieve all items from each table
-    user_permissions = get_all_items(config["AWS_TABLENAME_USER"], dynamodb)
-    taps = get_all_items(config["AWS_TABLENAME_TAP"], dynamodb)
-    audio_files = get_all_items(config["AWS_TABLENAME_AUDIO_FILE"], dynamodb)
-    audio_taps = get_all_items(config["AWS_TABLENAME_AUDIO_TAP"], dynamodb)
+    # # Retrieve all items from each table
+    # user_permissions = get_all_items(config["AWS_TABLENAME_USER"], dynamodb)
+    # taps = get_all_items(config["AWS_TABLENAME_TAP"], dynamodb)
+    # audio_taps = get_all_items(config["AWS_TABLENAME_AUDIO_TAP"], dynamodb)
+    # audio_files = get_all_items(config["AWS_TABLENAME_AUDIO_FILE"], dynamodb)
 
-    # Convert DynamoDB items to pandas DataFrames and handle necessary type conversions
-    df = create_dataframe(user_permissions, taps, audio_files, audio_taps)
+    # # Convert DynamoDB items to pandas DataFrames and handle necessary type conversions
+    # df = create_dataframe(user_permissions, taps, audio_taps, audio_files)
 
-    # Call the function to save and upload the final DataFrame
-    save_and_upload_backup(df, config["AWS_BACKUP_BUCKET"])
+    # # Call the function to save and upload the final DataFrame
+    df = pd.DataFrame()
+    file_name = save_and_upload_backup(df, config["AWS_BACKUP_BUCKET"])
 
-    # Get IDs of old items in Tap and AudioTap tables
-    old_tap_ids = get_old_data_ids(taps, "time")
-    old_audio_tap_ids = get_old_data_ids(audio_taps, "time")
+    # # Get IDs of old items in Tap and AudioTap tables
+    # old_tap_ids = get_ids_to_delete(taps, "time")
+    # old_audio_tap_ids = get_ids_to_delete(audio_taps, "time")
 
-    # Delete old items
-    delete_old_data(config["APP_SYNC_HOST"], "Tap", old_tap_ids)
-    delete_old_data(config["APP_SYNC_HOST"], "AudioTap", old_audio_tap_ids)
+    # # Delete old items
+    # delete_old_data(config["APP_SYNC_HOST"], "Tap", old_tap_ids)
+    # delete_old_data(config["APP_SYNC_HOST"], "AudioTap", old_audio_tap_ids)
 
     # Retrieve emails from the account table
     emails = query_emails(config["FLASK_DB"])
 
     # Define the email subject and body text
-    email_subject = "Data Download Notification"
-    email_body = "This is your data download. In two months data will be deleted. Please save this file."
+    email_subject = "[Ditti] Data Download Notification"
+    email_body = "This is your latest data download from the Penn Ditti app. Data will be deleted from AWS after 90 days. Please save this file."
 
     # Send emails with attachment
-    send_email_with_attachment(
-        emails,
-        email_subject,
-        email_body,
-        file_name="Backup_<timestamp>.xlsx",
-        bucket_name=config["AWS_BACKUP_BUCKET"]
-    )
+    send_email_with_attachment(emails, email_subject, email_body, file_name)
 
-
-    upload_log_to_s3(bucket_name=config["AWS_BACKUP_BUCKET"], s3_log_filename=f"{log_filename}")
+    # upload_log_to_s3(bucket_name=config["AWS_BACKUP_BUCKET"], s3_log_filename=f"{log_filename}")
