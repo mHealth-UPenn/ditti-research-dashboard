@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { createRef, useEffect, useState } from "react";
 import "./loginPage.css";
 import TextField from "./components/fields/textField";
 import { ReactComponent as Person } from "./icons/person.svg";
@@ -9,6 +9,7 @@ import { makeRequest } from "./utils";
 import { FullLoader } from "./components/loader";
 import { ResponseBody } from "./interfaces";
 import AsyncButton from "./components/buttons/asyncButton";
+import FlashMessage from "./components/flashMessage/flashMessage";
 
 /**
  * flashMessages: messages to show above the login form fields
@@ -23,7 +24,7 @@ import AsyncButton from "./components/buttons/asyncButton";
  * fading: whether to show the loading screen's 0.5 second fade-out
  */
 const LoginPage: React.FC = () => {
-  const [flashMessages, setFlashMessages] = useState<{ id: number; element: React.ReactElement }[]>([]);
+  const [flashMessages, setFlashMessages] = useState<{ id: number; element: React.ReactElement; ref: React.RefObject<HTMLDivElement> }[]>([]);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [firstLogin, setFirstLogin] = useState<boolean>(false);
@@ -33,6 +34,16 @@ const LoginPage: React.FC = () => {
   const [setPasswordField, setSetPasswordField] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [fading, setFading] = useState<boolean>(false);
+
+  useEffect(() => {
+    flashMessages.forEach(flashMessage => {
+      const div = flashMessage.ref.current;
+      if (div && !div.onclick) {
+        console.log(flashMessage.id)
+        div.onclick = () => popMessage(flashMessage.id);
+      }
+    });
+  }, [flashMessages]);
 
   useEffect(() => {
     // check the app's status
@@ -172,20 +183,16 @@ const LoginPage: React.FC = () => {
   const flashMessage = (msg: React.ReactElement, type: string): void => {
     // set the element's key to 0 or the last message's key + 1
     const id = flashMessages.length ? flashMessages[flashMessages.length - 1].id + 1 : 0;
+    const ref = createRef<HTMLDivElement>();
+    console.log(id)
 
-    const element = (
-      <div key={id} className={"shadow flash-message flash-message-" + type}>
-        <div className="flash-message-content">
-          <span>{msg}</span>
-        </div>
-        <div className="flash-message-close" onClick={() => popMessage(id)}>
-          <span>x</span>
-        </div>
-      </div>
-    );
+    const element = 
+      <FlashMessage key={id} variant={type} closeRef={ref}>
+        {msg}
+      </FlashMessage>;
 
     // add the message to the page
-    setFlashMessages([...flashMessages, { id, element }]);
+    setFlashMessages(prevFlashMessages => [...prevFlashMessages, { id, element, ref }]);
   };
 
   /**
@@ -193,7 +200,9 @@ const LoginPage: React.FC = () => {
    * @param id - The id of the message to remove
    */
   const popMessage = (id: number): void => {
-    setFlashMessages(flashMessages.filter((fm) => fm.id !== id));
+    console.log(id)
+    console.log(flashMessages)
+    setFlashMessages(prevFlashMessages => prevFlashMessages.filter((fm) => fm.id !== id));
   };
 
   // the login form fields to be shown on a user's first login

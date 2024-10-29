@@ -9,6 +9,7 @@ import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails, UserDetails } fr
 import { dummyAudioTaps, dummyTaps } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
 import { makeRequest } from "../utils";
+import FlashMessage from "./flashMessage/flashMessage";
 
 type Action =
   | { type: "INIT"; name: string; view: React.ReactElement }
@@ -54,19 +55,10 @@ const reducer = (state: DashboardState, action: Action) => {
         ? flashMessages[flashMessages.length - 1].id + 1
         : 0;
 
-      const element = (
-        <div
-          key={id}
-          className={"shadow flash-message flash-message-" + variant}
-        >
-          <div className="flash-message-content">
-            <span>{msg}</span>
-          </div>
-          <div className="flash-message-close" ref={ref}>
-            <span>x</span>
-          </div>
-        </div>
-      );
+      const element =
+        <FlashMessage key={id} variant={variant} closeRef={ref}>
+          {msg}
+        </FlashMessage>;
 
       // add the message to the page
       flashMessages.push({ id, element, ref });
