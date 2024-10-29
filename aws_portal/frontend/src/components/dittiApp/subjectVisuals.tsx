@@ -495,7 +495,6 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
     const audioTapsFiltered = audioTaps.filter(
       (b) => start < b.time && b.time < stop
     );
-    console.log(audioTapsFiltered.length)
 
     const audioTapElems = audioTapsFiltered.map((at, index) => {
       const left =
