@@ -39,7 +39,6 @@ const LoginPage: React.FC = () => {
     flashMessages.forEach(flashMessage => {
       const div = flashMessage.ref.current;
       if (div && !div.onclick) {
-        console.log(flashMessage.id)
         div.onclick = () => popMessage(flashMessage.id);
       }
     });
@@ -184,7 +183,6 @@ const LoginPage: React.FC = () => {
     // set the element's key to 0 or the last message's key + 1
     const id = flashMessages.length ? flashMessages[flashMessages.length - 1].id + 1 : 0;
     const ref = createRef<HTMLDivElement>();
-    console.log(id)
 
     const element = 
       <FlashMessage key={id} variant={type} closeRef={ref}>
@@ -200,8 +198,6 @@ const LoginPage: React.FC = () => {
    * @param id - The id of the message to remove
    */
   const popMessage = (id: number): void => {
-    console.log(id)
-    console.log(flashMessages)
     setFlashMessages(prevFlashMessages => prevFlashMessages.filter((fm) => fm.id !== id));
   };
 
