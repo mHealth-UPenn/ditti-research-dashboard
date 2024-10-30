@@ -146,7 +146,7 @@ class DataFactory {
 
     const userIds = this.users.map(u => u.userPermissionId);
     const audioFileNames = this.audioFiles.map(af => af.fileName)
-      .filter(s => s !== undefined);
+      .filter((s): s is string => s !== undefined);
     [this.taps, this.audioTaps] = generateTaps(userIds, audioFileNames);
   }
 }

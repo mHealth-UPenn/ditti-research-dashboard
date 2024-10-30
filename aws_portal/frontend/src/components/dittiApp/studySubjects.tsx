@@ -6,6 +6,7 @@ import "./studySubjects.css";
 import SubjectVisuals from "./subjectVisuals";
 import { makeRequest } from "../../utils";
 import { APP_ENV } from "../../environment";
+import dataFactory from "../../dataFactory";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -26,12 +27,11 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
   useEffect(() => {
     // For fetching users enrolled in the study
     // get all users that are enrolled in this study
-    makeRequest(
-      `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${props.studyPrefix}"`
-    ).then((res: User[]) => {
-      let users: UserDetails[];
-
-      if (APP_ENV === "production") {
+    let users: UserDetails[];
+    if (APP_ENV === "production") {
+      makeRequest(
+        `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${props.studyPrefix}"`
+      ).then((res: User[]) => {
         // map the user data to user details
         users = res.map((user) => {
           return {
@@ -43,13 +43,15 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
             createdAt: user.createdAt
           };
         });
-      } else {
-        users = [];
-      }
-
+        
+        setUsers(users);
+        setLoading(false);
+      });
+    } else {
+      users = dataFactory.users;
       setUsers(users);
       setLoading(false);
-    });
+    }
 
   }, [props.studyPrefix]);
 

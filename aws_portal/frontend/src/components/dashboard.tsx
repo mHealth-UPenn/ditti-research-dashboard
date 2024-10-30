@@ -1,4 +1,4 @@
-import React, { createRef, RefObject, useEffect, useReducer, useRef } from "react";
+import React, { createRef, useEffect, useReducer, useRef } from "react";
 import StudiesView from "./dittiApp/studies";
 import Header from "./header";
 import Home from "./home";
@@ -10,6 +10,7 @@ import { differenceInMilliseconds } from "date-fns";
 import { makeRequest } from "../utils";
 import FlashMessage, { FlashMessageVariant } from "./flashMessage/flashMessage";
 import { APP_ENV } from "../environment";
+import dataFactory from "../dataFactory";
 
 type Action =
   | { type: "INIT"; name: string; view: React.ReactElement }
@@ -241,14 +242,14 @@ const Dashboard: React.FC = () => {
           });
         });
       } else {
-        updatedTaps = [];
+        updatedTaps = dataFactory.taps;
       }
 
       // sort taps by timestamp
-      updatedTaps = taps.sort((a, b) =>
+      updatedTaps = updatedTaps.sort((a, b) =>
         differenceInMilliseconds(new Date(a.time), new Date(b.time))
       );
-
+    
       dispatch({ type: "SET_TAPS", taps: updatedTaps });
     }
 
@@ -275,7 +276,7 @@ const Dashboard: React.FC = () => {
           });
         });
       } else {
-        updatedAudioTaps = [];
+        updatedAudioTaps = dataFactory.audioTaps;
       }
 
       // sort taps by timestamp
@@ -299,7 +300,7 @@ const Dashboard: React.FC = () => {
       if (APP_ENV === "production") {
         newAudioFiles = await makeRequest("/aws/get-audio-files?app=2");
       } else {
-        newAudioFiles = [];
+        newAudioFiles = dataFactory.audioFiles;
       }
 
       dispatch({ type: "SET_AUDIO_FILES", audioFiles: newAudioFiles });

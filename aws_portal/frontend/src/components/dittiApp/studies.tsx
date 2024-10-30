@@ -8,6 +8,7 @@ import { sub } from "date-fns";
 import AudioFileUpload from "./audioFileUpload";
 import AudioFiles from "./audioFiles";
 import { APP_ENV } from "../../environment";
+import dataFactory from "../../dataFactory";
 
 interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
@@ -43,8 +44,9 @@ const StudiesView: React.FC<StudiesViewProps> = ({
         if (APP_ENV === "production") {
           usersPromise = makeRequest("/aws/get-users?app=2").then(setUsers);
         } else {
-          usersPromise = new Promise<UserDetails[]>(resolve => resolve([]))
-            .then(setUsers);
+          usersPromise = new Promise<UserDetails[]>(
+            resolve => resolve(dataFactory.users)
+          ).then(setUsers);
         }
 
         // get all tap and audio file data
@@ -147,6 +149,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
           // for each study the user has access to
           studies.map((s) => {
             // count the number of taps that were recorded in the last 7 days
+            console.log(getTaps()[0])
             const lastWeek = getTaps()
               .filter(
                 (t) =>
