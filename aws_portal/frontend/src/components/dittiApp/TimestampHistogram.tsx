@@ -6,6 +6,7 @@ import { AxisLeft, AxisBottom } from '@visx/axis';
 import { bin as d3Histogram } from 'd3-array';
 import { Bounds } from '@visx/brush/lib/types';
 import { Group } from '@visx/group';
+import { GridRows, GridColumns } from '@visx/grid';
 
 interface HistogramProps {
   timestamps: number[];
@@ -13,7 +14,12 @@ interface HistogramProps {
 
 
 const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
-  const [zoomDomain, setZoomDomain] = useState<[Date, Date] | null>(null);
+  const now = new Date();
+  const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
+  const previousNoon = new Date(todayNoon);
+  previousNoon.setDate(previousNoon.getDate() - 1);
+
+  const [zoomDomain, setZoomDomain] = useState<[Date, Date]>([previousNoon, todayNoon]);
   const [minRangeReached, setMinRangeReached] = useState(false);
   const [maxRangeReached, setMaxRangeReached] = useState(false);
 
@@ -21,14 +27,9 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
   const height = 400;
   const margin = { top: 20, right: 30, bottom: 30, left: 40 };
 
-  const now = new Date();
-  const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
-  const previousNoon = new Date(todayNoon);
-  previousNoon.setDate(previousNoon.getDate() - 1);
-
   const xScale = useMemo(() => {
     const scale = scaleTime({
-      domain: zoomDomain ?? [previousNoon, todayNoon],
+      domain: zoomDomain,
       range: [margin.left, width - margin.right],
     });
     return scale;
@@ -44,9 +45,11 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
     return bins;
   }, [timestamps, xScale]);
 
+  const numYVals = Math.max(...histogramData.map((bin) => bin.length));
+
   const yScale = useMemo(() => {
     return scaleLinear({
-      domain: [0, Math.max(...histogramData.map((bin) => bin.length)) + 10],
+      domain: [0, numYVals + 10 - numYVals % 10],
       range: [height - margin.bottom, margin.top],
     });
   }, [histogramData]);
@@ -67,10 +70,10 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
     setZoomDomain([new Date(domain[0]), new Date(domain[1])]);
   };
 
-  const resetZoom = () => setZoomDomain(null);
+  const resetZoom = () => setZoomDomain([previousNoon, todayNoon]);
 
   const panLeft = () => {
-    const [left, right] = zoomDomain ?? [previousNoon, todayNoon];
+    const [left, right] = zoomDomain;
     const leftTimestamp = left.getTime();
     const rightTimestamp = right.getTime();
     const panAmount = (rightTimestamp - leftTimestamp) / 2;
@@ -80,7 +83,7 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
   };
 
   const panRight = () => {
-    const [left, right] = zoomDomain ?? [previousNoon, todayNoon];
+    const [left, right] = zoomDomain;
     const leftTimestamp = left.getTime();
     const rightTimestamp = right.getTime();
     const panAmount = (rightTimestamp - leftTimestamp) / 2;
@@ -90,7 +93,7 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
   };
 
   const zoomIn = () => {
-    const [left, right] = zoomDomain ?? [previousNoon, todayNoon];
+    const [left, right] = zoomDomain;
     const leftTimestamp = left.getTime();
     const rightTimestamp = right.getTime();
     let range = rightTimestamp - leftTimestamp;
@@ -110,7 +113,7 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
   };
 
   const zoomOut = () => {
-    const [left, right] = zoomDomain ?? [previousNoon, todayNoon];
+    const [left, right] = zoomDomain;
     const leftTimestamp = left.getTime();
     const rightTimestamp = right.getTime();
     let range = rightTimestamp - leftTimestamp;
@@ -161,6 +164,19 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
 
       <svg width={width} height={height}>
         <rect width={width} height={height} fill="white" />
+        <GridRows
+          scale={yScale}
+          left={margin.left}
+          width={width - margin.left - margin.right}
+          height={height - margin.bottom}
+          stroke="#e0e0e0"
+          numTicks={numYVals / 10} />
+        <GridColumns
+          scale={xScale}
+          top={margin.top}
+          width={width - margin.left - margin.right}
+          height={height - margin.bottom}
+          stroke="#e0e0e0" />
 
         <Brush
           xScale={xScale}
@@ -188,7 +204,10 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
           }
 
           <AxisBottom top={height - margin.bottom} scale={xScale} />
-          <AxisLeft left={margin.left} scale={yScale} />
+          <AxisLeft
+            left={margin.left}
+            scale={yScale}
+            numTicks={numYVals / 10} />
         </Group>
       </svg>
     </React.Fragment>
