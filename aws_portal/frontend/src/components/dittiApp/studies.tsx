@@ -7,6 +7,7 @@ import StudySummary from "./studySummary";
 import { sub } from "date-fns";
 import AudioFileUpload from "./audioFileUpload";
 import AudioFiles from "./audioFiles";
+import { APP_ENV } from "../../environment";
 
 interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
@@ -37,7 +38,14 @@ const StudiesView: React.FC<StudiesViewProps> = ({
       try {
         // get all studies that the user has access to
         const studiesPromise = makeRequest("/db/get-studies?app=2").then(setStudies);
-        const usersPromise = makeRequest("/aws/get-users?app=2").then(setUsers);
+
+        let usersPromise: Promise<any>;
+        if (APP_ENV === "production") {
+          usersPromise = makeRequest("/aws/get-users?app=2").then(setUsers);
+        } else {
+          usersPromise = new Promise<UserDetails[]>(resolve => resolve([]))
+            .then(setUsers);
+        }
 
         // get all tap and audio file data
         const tapsPromise = getTapsAsync();

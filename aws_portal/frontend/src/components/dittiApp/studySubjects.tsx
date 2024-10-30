@@ -4,8 +4,8 @@ import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
 import SubjectVisuals from "./subjectVisuals";
-import { dummyUsers } from "../dummyData";
 import { makeRequest } from "../../utils";
+import { APP_ENV } from "../../environment";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -29,26 +29,28 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
     makeRequest(
       `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${props.studyPrefix}"`
     ).then((res: User[]) => {
+      let users: UserDetails[];
 
-      // map the user data to user details
-      const users: UserDetails[] = res.map((user) => {
-        return {
-          tapPermission: user.tap_permission,
-          information: user.information,
-          userPermissionId: user.user_permission_id,
-          expTime: user.exp_time,
-          teamEmail: user.team_email,
-          createdAt: user.createdAt
-        };
-      });
+      if (APP_ENV === "production") {
+        // map the user data to user details
+        users = res.map((user) => {
+          return {
+            tapPermission: user.tap_permission,
+            information: user.information,
+            userPermissionId: user.user_permission_id,
+            expTime: user.exp_time,
+            teamEmail: user.team_email,
+            createdAt: user.createdAt
+          };
+        });
+      } else {
+        users = [];
+      }
 
       setUsers(users);
       setLoading(false);
     });
 
-    // Using dummyUsers for this example
-    // setUsers(dummyUsers);
-    // setLoading(false);
   }, [props.studyPrefix]);
 
   /**

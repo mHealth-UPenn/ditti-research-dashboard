@@ -6,10 +6,10 @@ import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
 import { AudioFile, AudioTap, AudioTapDetails, IFlashMessage, Tap, TapDetails, UserDetails } from "../interfaces";
-import { dummyAudioTaps, dummyTaps } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
 import { makeRequest } from "../utils";
 import FlashMessage, { FlashMessageVariant } from "./flashMessage/flashMessage";
+import { APP_ENV } from "../environment";
 
 type Action =
   | { type: "INIT"; name: string; view: React.ReactElement }
@@ -232,11 +232,17 @@ const Dashboard: React.FC = () => {
   const getTapsAsync = async (): Promise<TapDetails[]> => {
     // if AWS has not been queried yet
     if (!taps.length) {
-      let updatedTaps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
-        return res.map((tap) => {
-          return { dittiId: tap.dittiId, time: new Date(tap.time) };
+      let updatedTaps: TapDetails[];
+
+      if (APP_ENV === "production") {
+        updatedTaps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
+          return res.map((tap) => {
+            return { dittiId: tap.dittiId, time: new Date(tap.time) };
+          });
         });
-      });
+      } else {
+        updatedTaps = [];
+      }
 
       // sort taps by timestamp
       updatedTaps = taps.sort((a, b) =>
@@ -246,10 +252,6 @@ const Dashboard: React.FC = () => {
       dispatch({ type: "SET_TAPS", taps: updatedTaps });
     }
 
-    // // uncomment when using dummy data
-    // const taps = dummyTaps;
-    // dispatch({ type: "SET_TAPS", taps });
-
     return taps;
   };
 
@@ -258,17 +260,23 @@ const Dashboard: React.FC = () => {
   const getAudioTapsAsync = async (): Promise<AudioTapDetails[]> => {
     // if AWS has not been queried yet
     if (!audioTaps.length) {
-      let updatedAudioTaps: AudioTapDetails[] = await makeRequest("/aws/get-audio-taps?app=2").then((res: AudioTap[]) => {
-        return res.map((at) => {
-          return {
-            dittiId: at.dittiId,
-            audioFileTitle: at.audioFileTitle,
-            time: new Date(at.time),
-            timezone: at.timezone,
-            action: at.action,
-          };
+      let updatedAudioTaps: AudioTapDetails[];
+
+      if (APP_ENV == "production") {
+        updatedAudioTaps = await makeRequest("/aws/get-audio-taps?app=2").then((res: AudioTap[]) => {
+          return res.map((at) => {
+            return {
+              dittiId: at.dittiId,
+              audioFileTitle: at.audioFileTitle,
+              time: new Date(at.time),
+              timezone: at.timezone,
+              action: at.action,
+            };
+          });
         });
-      });
+      } else {
+        updatedAudioTaps = [];
+      }
 
       // sort taps by timestamp
       updatedAudioTaps = updatedAudioTaps.sort((a, b) =>
@@ -278,10 +286,6 @@ const Dashboard: React.FC = () => {
       dispatch({ type: "SET_AUDIO_TAPS", audioTaps: updatedAudioTaps });
     }
 
-    // // uncomment when using dummy data
-    // const audioTaps = dummyAudioTaps;
-    // dispatch({ type: "SET_AUDIO_TAPS", audioTaps });
-
     return audioTaps;
   };
 
@@ -290,7 +294,14 @@ const Dashboard: React.FC = () => {
   const getAudioFilesAsync = async (): Promise<AudioFile[]> => {
     // if AWS has not been queried yet
     if (!audioFiles.length) {
-      const newAudioFiles = await makeRequest("/aws/get-audio-files?app=2");
+      let newAudioFiles: AudioFile[];
+
+      if (APP_ENV === "production") {
+        newAudioFiles = await makeRequest("/aws/get-audio-files?app=2");
+      } else {
+        newAudioFiles = [];
+      }
+
       dispatch({ type: "SET_AUDIO_FILES", audioFiles: newAudioFiles });
     }
 
