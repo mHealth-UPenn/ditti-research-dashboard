@@ -43,12 +43,10 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
   handleClick
 }) => {
   const [canEdit, setCanEdit] = useState(false);
-  const [start, setStart] = useState(sub(new Date(new Date().setHours(9, 0, 0, 0)), { hours: 24 }));
-  const [stop, setStop] = useState(new Date(new Date().setHours(9, 0, 0, 0)));
-  const [taps, setTaps] = useState(() => getTaps().filter((t) => t.dittiId === user.userPermissionId));
-  const [audioTaps, setAudioTaps] = useState(() => getAudioTaps().filter((t) => t.dittiId === user.userPermissionId));
   const [loading, setLoading] = useState(true);
 
+  const taps = getTaps().filter((t) => t.dittiId === user.userPermissionId);
+  
   useEffect(() => {
     getAccess(2, "Edit", "Users", studyDetails.id)
       .then(() => {
@@ -59,7 +57,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
         setCanEdit(false);
         setLoading(false);
       });
-  }, [studyDetails.id, taps]);
+  }, [studyDetails.id]);
 
   const downloadExcel = async (): Promise<void> => {
     const workbook = new Workbook();
@@ -109,64 +107,60 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
   );
 
   return (
-    <div className="card-container">
-      <div className="card-row">
-        <div className="card-l bg-white shadow">
-          {loading ? (
-            <SmallLoader />
-          ) : (
-            <React.Fragment>
+    <div className="bg-white p-8 h-[calc(calc(100vh-8rem)-1px)] overflow-scroll overflow-x-hidden">
+      {loading ? (
+        <SmallLoader />
+      ) : (
+        <React.Fragment>
 
-              {/* the subject's details */}
-              <div className="subject-header">
-                <div className="card-title flex-space">
-                  <span>{user.userPermissionId}</span>
-
-                  {/* download the subject's data as excel */}
-                  <button
-                    className="button-primary button-lg"
-                    style={{ width: "12rem" }}
-                    onClick={downloadExcel}
-                  >
-                    Download Excel
-                  </button>
-                </div>
-                <div className="subject-header-info">
-                  <div>
-                    Expires on: <b>{expTimeFormatted}</b>
-                  </div>
-
-                  {/* if the user can edit, show the edit button */}
-                  {canEdit ? (
-                    <button
-                      className="button-secondary button-lg"
-                      onClick={() =>
-                        handleClick(
-                          ["Edit"],
-                          <SubjectsEdit
-                            dittiId={user.userPermissionId}
-                            studyId={studyDetails.id}
-                            studyEmail={studyDetails.email}
-                            studyPrefix={studyDetails.dittiId}
-                            flashMessage={flashMessage}
-                            goBack={goBack}
-                            handleClick={handleClick}
-                          />
-                        )
-                      }
-                      style={{ width: "12rem" }}
-                    >
-                      Edit Details
-                    </button>
-                  ) : null}
-                </div>
+          {/* the subject's details */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold">{user.userPermissionId}</span>
+                <span>
+                  Expires on: <b>{expTimeFormatted}</b>
+                </span>
               </div>
 
-              <TimestampHistogram timestamps={getTaps().map(t => t.time.getTime())} />
-            </React.Fragment>
-          )}
-        </div>
-      </div>
+              <div className="flex flex-col">
+                {/* download the subject's data as excel */}
+                <button
+                  className="button-primary button-lg mb-2"
+                  style={{ width: "12rem" }}
+                  onClick={downloadExcel}
+                >
+                  Download Excel
+                </button>
+                {/* if the user can edit, show the edit button */}
+                {canEdit ? (
+                  <button
+                    className="button-secondary button-lg"
+                    onClick={() =>
+                      handleClick(
+                        ["Edit"],
+                        <SubjectsEdit
+                          dittiId={user.userPermissionId}
+                          studyId={studyDetails.id}
+                          studyEmail={studyDetails.email}
+                          studyPrefix={studyDetails.dittiId}
+                          flashMessage={flashMessage}
+                          goBack={goBack}
+                          handleClick={handleClick}
+                        />
+                      )
+                    }
+                  >
+                    Edit Details
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          <TimestampHistogram timestamps={getTaps().map(t => t.time.getTime())} />
+        </React.Fragment>
+      )}
     </div>
   );
 };

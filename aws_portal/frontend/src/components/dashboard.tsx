@@ -363,7 +363,7 @@ const Dashboard: React.FC = () => {
         />
 
         {/* main dashboard */}
-        <div className="flex flex-col flex-grow max-w-[calc(100vw-16rem) overflow-x-hidden relative">
+        <div className="flex flex-col flex-grow max-w-[calc(100vw-16rem) overflow-hidden relative">
 
           {/* navigation bar */}
           <Navbar

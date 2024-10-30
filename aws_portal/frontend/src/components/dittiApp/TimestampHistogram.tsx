@@ -7,6 +7,10 @@ import { bin as d3Histogram } from 'd3-array';
 import { Bounds } from '@visx/brush/lib/types';
 import { Group } from '@visx/group';
 import { GridRows, GridColumns } from '@visx/grid';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import AddIcon from '@mui/icons-material/Add';
+import RemoveIcon from '@mui/icons-material/Remove';
 
 interface HistogramProps {
   timestamps: number[];
@@ -134,82 +138,89 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
 
   return (
     <React.Fragment>
-      <button
-        className="button button-lg button-primary font-bold"
-        onClick={resetZoom}>
-          Reset
-      </button>
-      <button
-        className="button button-lg button-primary font-bold"
-        onClick={panLeft}>
-          Left
-      </button>
-      <button
-        className="button button-lg button-primary font-bold"
-        onClick={panRight}>
-          Right
-      </button>
-      <button
-        className="button button-lg button-primary font-bold"
-        onClick={zoomIn}
-        disabled={minRangeReached}>
-          Zoom In
-      </button>
-      <button
-        className="button button-lg button-primary font-bold"
-        onClick={zoomOut}
-        disabled={maxRangeReached}>
-          Zoom Out
-      </button>
+      <div className="flex justify-between">
+        <button
+          className="button button-lg button-primary font-bold"
+          onClick={resetZoom}>
+            Reset
+        </button>
 
-      <svg width={width} height={height}>
-        <rect width={width} height={height} fill="white" />
-        <GridRows
-          scale={yScale}
-          left={margin.left}
-          width={width - margin.left - margin.right}
-          height={height - margin.bottom}
-          stroke="#e0e0e0"
-          numTicks={numYVals / 10} />
-        <GridColumns
-          scale={xScale}
-          top={margin.top}
-          width={width - margin.left - margin.right}
-          height={height - margin.bottom}
-          stroke="#e0e0e0" />
+        <div>
+          <button
+            className="button button-lg button-secondary mr-[1px]"
+            onClick={panLeft}>
+              <KeyboardArrowLeftIcon />
+          </button>
+          <button
+            className="button button-lg button-secondary mr-2"
+            onClick={panRight}>
+              <KeyboardArrowRightIcon />
+          </button>
+          <button
+            className="button button-lg button-secondary mr-[1px]"
+            onClick={zoomIn}
+            disabled={minRangeReached}>
+              <AddIcon />
+          </button>
+          <button
+            className="button button-lg button-secondary"
+            onClick={zoomOut}
+            disabled={maxRangeReached}>
+              <RemoveIcon />
+          </button>
+        </div>
+      </div>
 
-        <Brush
-          xScale={xScale}
-          yScale={yScale}
-          width={width - margin.left - margin.right}
-          height={height - margin.bottom}
-          onBrushEnd={(bounds: Bounds | null) => {
-            if (bounds) {
-              onZoomChange([bounds.x0, bounds.x1]);
-            }
-          }}
-          resetOnEnd={true} />
-
-        <Group>
-          {
-            histogramData.map((bin, index) => (
-              <Bar
-                key={`bar-${index}`}
-                x={xScale(bin.x0 ? bin.x0 : 0) ?? 0}
-                y={yScale(bin.length)}
-                height={yScale(0) - yScale(bin.length)}
-                width={Math.max(0, xScale(bin.x1 ? bin.x1 : 0) - xScale(bin.x0 ? bin.x0 : 0) - 1)}
-                fill="#33334D" />
-            ))
-          }
-
-          <AxisBottom top={height - margin.bottom} scale={xScale} />
-          <AxisLeft
-            left={margin.left}
+      <div className="flex justify-center">
+        <svg width={width} height={height}>
+          <rect width={width} height={height} fill="white" />
+          <GridRows
             scale={yScale}
+            left={margin.left}
+            width={width - margin.left - margin.right}
+            height={height - margin.bottom}
+            stroke="#e0e0e0"
             numTicks={numYVals / 10} />
-        </Group>
-      </svg>
+          <GridColumns
+            scale={xScale}
+            top={margin.top}
+            width={width - margin.left - margin.right}
+            height={height - margin.bottom}
+            stroke="#e0e0e0" />
+
+          <Brush
+            xScale={xScale}
+            yScale={yScale}
+            width={width - margin.left - margin.right}
+            height={height - margin.bottom}
+            onBrushEnd={(bounds: Bounds | null) => {
+              if (bounds) {
+                onZoomChange([bounds.x0, bounds.x1]);
+              }
+            }}
+            resetOnEnd={true} />
+
+          <Group>
+            {
+              histogramData.map((bin, index) => (
+                <Bar
+                  key={`bar-${index}`}
+                  x={xScale(bin.x0 ? bin.x0 : 0) ?? 0}
+                  y={yScale(bin.length)}
+                  height={yScale(0) - yScale(bin.length)}
+                  width={Math.max(0, xScale(bin.x1 ? bin.x1 : 0) - xScale(bin.x0 ? bin.x0 : 0) - 1)}
+                  fill="#33334D" />
+              ))
+            }
+
+            <AxisBottom top={height - margin.bottom} scale={xScale} />
+            <AxisLeft
+              left={margin.left}
+              scale={yScale}
+              numTicks={numYVals / 10} />
+          </Group>
+        </svg>
+      </div>
     </React.Fragment>
   );
 };
