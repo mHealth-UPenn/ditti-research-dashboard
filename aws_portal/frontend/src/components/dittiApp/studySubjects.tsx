@@ -3,7 +3,7 @@ import { AudioTapDetails, Study, TapDetails, User, UserDetails, ViewProps } from
 import { SmallLoader } from "../loader";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
-import SubjectVisuals from "./subjectVisuals";
+import SubjectVisuals from "./subjectVisualsV2";
 import { makeRequest } from "../../utils";
 import { APP_ENV } from "../../environment";
 import dataFactory from "../../dataFactory";

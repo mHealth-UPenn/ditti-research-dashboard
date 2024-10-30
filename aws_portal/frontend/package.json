@@ -15,8 +15,10 @@
     "@types/node": "^16.11.26",
     "@types/react": "^17.0.43",
     "@types/react-dom": "^17.0.14",
+    "@visx/visx": "^3.11.0",
     "axios": "^1.7.7",
     "buffer": "^6.0.3",
+    "d3": "^7.9.0",
     "date-fns": "^2.28.0",
     "exceljs": "^4.3.0",
     "file-saver": "^2.0.5",
@@ -54,6 +56,7 @@
     ]
   },
   "devDependencies": {
+    "@types/d3": "^7.4.3",
     "@typescript-eslint/eslint-plugin": "^5.17.0",
     "@typescript-eslint/parser": "^5.17.0",
     "eslint": "^8.12.0",

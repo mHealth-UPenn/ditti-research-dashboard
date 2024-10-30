@@ -12,7 +12,7 @@ import {
 } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
-import SubjectVisuals from "./subjectVisuals";
+import SubjectVisuals from "./subjectVisualsV2";
 
 /**
  * studyDetails: the details of the study that subjects will be listed for
