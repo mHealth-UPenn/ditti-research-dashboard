@@ -1,3 +1,5 @@
+import { FlashMessageVariant } from "./components/flashMessage/flashMessage";
+
 /**
  * id: the database primary key
  * createdOn: the timestamp when the account was created
@@ -191,7 +193,7 @@ export interface AudioTap {
  * handleClick: a function to handle when the user clicks a nav link on the nav bar
  */
 export interface ViewProps {
-  flashMessage: (msg: React.ReactElement, type: string) => void;
+  flashMessage: (msg: React.ReactElement, type: FlashMessageVariant) => void;
   goBack: () => void;
   handleClick: (
     name: string[],

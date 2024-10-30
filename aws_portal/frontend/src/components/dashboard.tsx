@@ -9,12 +9,12 @@ import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails, UserDetails } fr
 import { dummyAudioTaps, dummyTaps } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
 import { makeRequest } from "../utils";
-import FlashMessage from "./flashMessage/flashMessage";
+import FlashMessage, { FlashMessageVariant } from "./flashMessage/flashMessage";
 
 type Action =
   | { type: "INIT"; name: string; view: React.ReactElement }
   | { type: "GO_BACK" }
-  | { type: "FLASH_MESSAGE"; msg: React.ReactElement; variant: string }
+  | { type: "FLASH_MESSAGE"; msg: React.ReactElement; variant: FlashMessageVariant }
   | { type: "CLOSE_MESSAGE"; id: number }
   | { type: "SET_VIEW"; name: string[]; view: React.ReactElement; replace: boolean | null }
   | { type: "SET_STUDY"; name: string; view: React.ReactElement; appView: React.ReactElement }
@@ -312,7 +312,7 @@ const Dashboard: React.FC = () => {
 
   const goBack = () => dispatch({ type: "GO_BACK" });
 
-  const flashMessage = (msg: React.ReactElement, variant: string) => {
+  const flashMessage = (msg: React.ReactElement, variant: FlashMessageVariant) => {
     dispatch({ type: "FLASH_MESSAGE", msg, variant });
   };
 

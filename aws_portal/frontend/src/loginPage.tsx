@@ -9,7 +9,7 @@ import { makeRequest } from "./utils";
 import { FullLoader } from "./components/loader";
 import { ResponseBody } from "./interfaces";
 import AsyncButton from "./components/buttons/asyncButton";
-import FlashMessage from "./components/flashMessage/flashMessage";
+import FlashMessage, { FlashMessageVariant } from "./components/flashMessage/flashMessage";
 
 /**
  * flashMessages: messages to show above the login form fields
@@ -179,7 +179,7 @@ const LoginPage: React.FC = () => {
    * @param msg - The content of the message
    * @param type - The type of message (success, info, danger, etc.)
    */
-  const flashMessage = (msg: React.ReactElement, type: string): void => {
+  const flashMessage = (msg: React.ReactElement, type: FlashMessageVariant): void => {
     // set the element's key to 0 or the last message's key + 1
     const id = flashMessages.length ? flashMessages[flashMessages.length - 1].id + 1 : 0;
     const ref = createRef<HTMLDivElement>();
