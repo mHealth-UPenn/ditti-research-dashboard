@@ -16,18 +16,21 @@ export type FlashMessageVariant = "success" | "info" | "danger";
 
 interface FlashMessageProps {
   variant: FlashMessageVariant;
+  containerRef: React.RefObject<HTMLDivElement>;
   closeRef: React.RefObject<HTMLDivElement>;
 }
 
 
 const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
   variant,
+  containerRef,
   closeRef,
   children,
 }) => {
   return (
     <div
-      className={`flex justify-between shadow-lg rounded-lg ${variantsBgMap[variant]} ${variantsTextMap[variant]}`}>
+      className={`flex justify-between shadow-lg rounded-lg opacity-100 transition-all duration-[2s] ${variantsBgMap[variant]} ${variantsTextMap[variant]}`}
+      ref={containerRef}>
         <div className="p-4">
           <span>{children}</span>
         </div>

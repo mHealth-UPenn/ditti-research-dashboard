@@ -7,9 +7,10 @@ import Dashboard from "./components/dashboard";
 import { Buffer } from "buffer";
 import { makeRequest } from "./utils";
 import { FullLoader } from "./components/loader";
-import { ResponseBody } from "./interfaces";
+import { IFlashMessage, ResponseBody } from "./interfaces";
 import AsyncButton from "./components/buttons/asyncButton";
 import FlashMessage, { FlashMessageVariant } from "./components/flashMessage/flashMessage";
+
 
 /**
  * flashMessages: messages to show above the login form fields
@@ -24,7 +25,7 @@ import FlashMessage, { FlashMessageVariant } from "./components/flashMessage/fla
  * fading: whether to show the loading screen's 0.5 second fade-out
  */
 const LoginPage: React.FC = () => {
-  const [flashMessages, setFlashMessages] = useState<{ id: number; element: React.ReactElement; ref: React.RefObject<HTMLDivElement> }[]>([]);
+  const [flashMessages, setFlashMessages] = useState<IFlashMessage[]>([]);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [firstLogin, setFirstLogin] = useState<boolean>(false);
@@ -37,9 +38,15 @@ const LoginPage: React.FC = () => {
 
   useEffect(() => {
     flashMessages.forEach(flashMessage => {
-      const div = flashMessage.ref.current;
-      if (div && !div.onclick) {
-        div.onclick = () => popMessage(flashMessage.id);
+      const closeDiv = flashMessage.closeRef.current;
+      if (closeDiv && !closeDiv.onclick) {
+        closeDiv.onclick = () => popMessage(flashMessage.id);
+      }
+
+      const containerDiv = flashMessage.containerRef.current;
+      if (containerDiv) {
+        setTimeout(() => containerDiv.style.opacity = "0", 3000);
+        setTimeout(() => popMessage(flashMessage.id), 5000)
       }
     });
   }, [flashMessages]);
@@ -182,15 +189,16 @@ const LoginPage: React.FC = () => {
   const flashMessage = (msg: React.ReactElement, type: FlashMessageVariant): void => {
     // set the element's key to 0 or the last message's key + 1
     const id = flashMessages.length ? flashMessages[flashMessages.length - 1].id + 1 : 0;
-    const ref = createRef<HTMLDivElement>();
+    const containerRef = createRef<HTMLDivElement>();
+    const closeRef = createRef<HTMLDivElement>();
 
     const element = 
-      <FlashMessage key={id} variant={type} closeRef={ref}>
+      <FlashMessage key={id} variant={type} containerRef={containerRef} closeRef={closeRef}>
         {msg}
       </FlashMessage>;
 
     // add the message to the page
-    setFlashMessages(prevFlashMessages => [...prevFlashMessages, { id, element, ref }]);
+    setFlashMessages(prevFlashMessages => [...prevFlashMessages, { id, element, containerRef, closeRef }]);
   };
 
   /**

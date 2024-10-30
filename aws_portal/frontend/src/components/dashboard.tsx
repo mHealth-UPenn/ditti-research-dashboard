@@ -5,7 +5,7 @@ import Home from "./home";
 import Navbar from "./navbar";
 import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
-import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails, UserDetails } from "../interfaces";
+import { AudioFile, AudioTap, AudioTapDetails, IFlashMessage, Tap, TapDetails, UserDetails } from "../interfaces";
 import { dummyAudioTaps, dummyTaps } from "./dummyData";
 import { differenceInMilliseconds } from "date-fns";
 import { makeRequest } from "../utils";
@@ -48,7 +48,8 @@ const reducer = (state: DashboardState, action: Action) => {
     case "FLASH_MESSAGE": {
       const { msg, variant } = action;
       const flashMessages = [...state.flashMessages];
-      const ref = createRef<HTMLDivElement>();
+      const containerRef = createRef<HTMLDivElement>();
+      const closeRef = createRef<HTMLDivElement>();
 
       // set the element's key to 0 or the last message's key + 1
       const id = flashMessages.length
@@ -56,12 +57,16 @@ const reducer = (state: DashboardState, action: Action) => {
         : 0;
 
       const element =
-        <FlashMessage key={id} variant={variant} closeRef={ref}>
-          {msg}
+        <FlashMessage
+          key={id}
+          variant={variant}
+          containerRef={containerRef}
+          closeRef={closeRef}>
+            {msg}
         </FlashMessage>;
 
       // add the message to the page
-      flashMessages.push({ id, element, ref });
+      flashMessages.push({ id, element, containerRef, closeRef });
       return { ...state, flashMessages };
     }
     case "CLOSE_MESSAGE": {
@@ -152,7 +157,7 @@ const reducer = (state: DashboardState, action: Action) => {
  */
 interface DashboardState {
   breadcrumbs: { name: string; view: React.ReactElement }[];
-  flashMessages: { id: number; element: React.ReactElement; ref: RefObject<HTMLDivElement> }[];
+  flashMessages: IFlashMessage[];
   history: { name: string; view: React.ReactElement }[][];
   taps: TapDetails[];
   audioTaps: AudioTapDetails[];
@@ -199,9 +204,15 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     flashMessages.forEach(flashMessage => {
-      const div = flashMessage.ref.current;
-      if (div && !div.onclick) {
-        div.onclick = () => popMessage(flashMessage.id);
+      const closeDiv = flashMessage.closeRef.current;
+      if (closeDiv && !closeDiv.onclick) {
+        closeDiv.onclick = () => popMessage(flashMessage.id);
+      }
+
+      const containerDiv = flashMessage.containerRef.current;
+      if (containerDiv) {
+        setTimeout(() => containerDiv.style.opacity = "0", 3000);
+        setTimeout(() => popMessage(flashMessage.id), 5000)
       }
     });
   }, [flashMessages]);
