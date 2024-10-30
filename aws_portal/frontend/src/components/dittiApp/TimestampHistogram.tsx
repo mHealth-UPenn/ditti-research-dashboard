@@ -11,6 +11,7 @@ import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
+import ReplayIcon from '@mui/icons-material/Replay';
 
 interface HistogramProps {
   timestamps: number[];
@@ -49,11 +50,24 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
     return bins;
   }, [timestamps, xScale]);
 
-  const numYVals = Math.max(...histogramData.map((bin) => bin.length));
+  const maxBinSize = Math.max(...histogramData.map((bin) => bin.length));
+  const numYVals =
+    maxBinSize > 200
+    ? (maxBinSize - maxBinSize % 50) + 100
+    : (
+      maxBinSize > 100
+      ? (maxBinSize - maxBinSize % 50) + 50
+      : (maxBinSize - maxBinSize % 10) + 10
+    )
 
+  const numYTicks =
+    numYVals > 100
+    ? numYVals / 50
+    : Math.max(2, numYVals / 10);
+    
   const yScale = useMemo(() => {
     return scaleLinear({
-      domain: [0, numYVals + 10 - numYVals % 10],
+      domain: [0, numYVals],
       range: [height - margin.bottom, margin.top],
     });
   }, [histogramData]);
@@ -138,37 +152,34 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
 
   return (
     <React.Fragment>
-      <div className="flex justify-between">
+      <div className="flex justify-end">
         <button
-          className="button button-lg button-primary font-bold"
-          onClick={resetZoom}>
-            Reset
+          className="button button-lg button-secondary mr-[1px]"
+          onClick={panLeft}>
+            <KeyboardArrowLeftIcon />
         </button>
-
-        <div>
-          <button
-            className="button button-lg button-secondary mr-[1px]"
-            onClick={panLeft}>
-              <KeyboardArrowLeftIcon />
-          </button>
-          <button
-            className="button button-lg button-secondary mr-2"
-            onClick={panRight}>
-              <KeyboardArrowRightIcon />
-          </button>
-          <button
-            className="button button-lg button-secondary mr-[1px]"
-            onClick={zoomIn}
-            disabled={minRangeReached}>
-              <AddIcon />
-          </button>
-          <button
-            className="button button-lg button-secondary"
-            onClick={zoomOut}
-            disabled={maxRangeReached}>
-              <RemoveIcon />
-          </button>
-        </div>
+        <button
+          className="button button-lg button-secondary mr-2"
+          onClick={panRight}>
+            <KeyboardArrowRightIcon />
+        </button>
+        <button
+          className="button button-lg button-secondary mr-[1px]"
+          onClick={zoomIn}
+          disabled={minRangeReached}>
+            <AddIcon />
+        </button>
+        <button
+          className="button button-lg button-secondary mr-2"
+          onClick={zoomOut}
+          disabled={maxRangeReached}>
+            <RemoveIcon />
+        </button>
+        <button
+          className="button button-lg button-primary"
+          onClick={resetZoom}>
+            <ReplayIcon />
+        </button>
       </div>
 
       <div className="flex justify-center">
@@ -180,7 +191,7 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
             width={width - margin.left - margin.right}
             height={height - margin.bottom}
             stroke="#e0e0e0"
-            numTicks={numYVals / 10} />
+            numTicks={numYTicks} />
           <GridColumns
             scale={xScale}
             top={margin.top}
@@ -217,7 +228,7 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
             <AxisLeft
               left={margin.left}
               scale={yScale}
-              numTicks={numYVals / 10} />
+              numTicks={numYTicks} />
           </Group>
         </svg>
       </div>
