@@ -1,13 +1,17 @@
-# if no python virtual environment, create one
-if [ ! -f env/bin/activate ]; then
-    echo "Initializing Python virtual environment..."
-	python3 -m venv env;
-fi
+if [[ "$1" != "conda" ]]; then
+    # if no python virtual environment, create one
+    if [ ! -f env/bin/activate ]; then
+        echo "Initializing Python virtual environment..."
+        python3 -m venv env
+    fi
 
-# enter the python virtual environment
-if [[ "$VIRTUAL_ENV" == "" ]]; then
-    echo "Entering Python virtual environment..."
-    source env/bin/activate
+    # enter the python virtual environment
+    if [[ "$VIRTUAL_ENV" == "" ]]; then
+        echo "Entering Python virtual environment..."
+        source env/bin/activate
+    fi
+else
+    echo "Skipping Python virtual environment setup."
 fi
 
 # install missing python packages
@@ -33,3 +37,7 @@ fi
 
 # export development env variables
 export $(cat flask.env | xargs)
+
+# export development cognito and fitbit env variables
+export $(cat cognito.env | xargs)
+export $(cat fitbit.env | xargs)
