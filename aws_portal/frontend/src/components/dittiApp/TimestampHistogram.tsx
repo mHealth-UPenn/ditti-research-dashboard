@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { scaleTime, scaleLinear } from '@visx/scale';
 import { Bar } from '@visx/shape';
 import { Brush } from '@visx/brush';
 import { AxisLeft, AxisBottom } from '@visx/axis';
 import { bin as d3Histogram } from 'd3-array';
 import { Bounds } from '@visx/brush/lib/types';
-import { Group } from '@visx/group';
 import { GridRows, GridColumns } from '@visx/grid';
+import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import AddIcon from '@mui/icons-material/Add';
@@ -52,7 +52,7 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
 
   const maxBinSize = Math.max(...histogramData.map((bin) => bin.length));
   const numYVals =
-    maxBinSize > 200
+    maxBinSize > 300
     ? (maxBinSize - maxBinSize % 50) + 100
     : (
       maxBinSize > 100
@@ -149,12 +149,33 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
     const newRight = new Date(rightTimestamp + range / 2);
     setZoomDomain([newLeft, newRight]);
   };
+  
+  const {
+    showTooltip,
+    hideTooltip,
+    tooltipLeft,
+    tooltipTop,
+    tooltipData,
+    tooltipOpen,
+  } = useTooltip();
+
+  const handleMouseEnter = useCallback(
+    (target: SVGRectElement, numTaps: number) => {
+      showTooltip({
+        tooltipLeft: target.x.baseVal.value,
+        tooltipTop: target.y.baseVal.value - margin.top / 2,
+        tooltipData: `${numTaps} taps`,
+      })
+    }, [xScale, showTooltip]
+  );
+
+  const handleMouseLeave = useCallback(hideTooltip, [hideTooltip]);
 
   return (
-    <React.Fragment>
+    <>
       <div className="flex justify-end">
         <button
-          className="button button-lg button-secondary mr-[1px]"
+          className="button button-lg button-secondary"
           onClick={panLeft}>
             <KeyboardArrowLeftIcon />
         </button>
@@ -164,7 +185,7 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
             <KeyboardArrowRightIcon />
         </button>
         <button
-          className="button button-lg button-secondary mr-[1px]"
+          className="button button-lg button-secondary"
           onClick={zoomIn}
           disabled={minRangeReached}>
             <AddIcon />
@@ -183,45 +204,47 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
       </div>
 
       <div className="flex justify-center">
-        <svg width={width} height={height}>
-          <rect width={width} height={height} fill="white" />
-          <GridRows
-            scale={yScale}
-            left={margin.left}
-            width={width - margin.left - margin.right}
-            height={height - margin.bottom}
-            stroke="#e0e0e0"
-            numTicks={numYTicks} />
-          <GridColumns
-            scale={xScale}
-            top={margin.top}
-            width={width - margin.left - margin.right}
-            height={height - margin.bottom}
-            stroke="#e0e0e0" />
+        <div className="relative">
+          <svg width={width} height={height}>
+            <rect width={width} height={height} fill="white" />
+            <GridRows
+              scale={yScale}
+              left={margin.left}
+              width={width - margin.left - margin.right}
+              height={height - margin.bottom}
+              stroke="#e0e0e0"
+              numTicks={numYTicks} />
+            <GridColumns
+              scale={xScale}
+              top={margin.top}
+              width={width - margin.left - margin.right}
+              height={height - margin.bottom}
+              stroke="#e0e0e0" />
 
-          <Brush
-            xScale={xScale}
-            yScale={yScale}
-            width={width - margin.left - margin.right}
-            height={height - margin.bottom}
-            onBrushEnd={(bounds: Bounds | null) => {
-              if (bounds) {
-                onZoomChange([bounds.x0, bounds.x1]);
-              }
-            }}
-            resetOnEnd={true} />
+            <Brush
+              xScale={xScale}
+              yScale={yScale}
+              width={width - margin.left - margin.right}
+              height={height - margin.bottom}
+              onBrushEnd={(bounds: Bounds | null) => {
+                if (bounds) {
+                  onZoomChange([bounds.x0, bounds.x1]);
+                }
+              }}
+              resetOnEnd={true} />
 
-          <Group>
             {
-              histogramData.map((bin, index) => (
+              histogramData.map((bin, index) =>
                 <Bar
                   key={`bar-${index}`}
                   x={xScale(bin.x0 ? bin.x0 : 0) ?? 0}
                   y={yScale(bin.length)}
                   height={yScale(0) - yScale(bin.length)}
                   width={Math.max(0, xScale(bin.x1 ? bin.x1 : 0) - xScale(bin.x0 ? bin.x0 : 0) - 1)}
-                  fill="#33334D" />
-              ))
+                  fill="#33334D"
+                  onMouseEnter={(e) => handleMouseEnter(e.target as SVGRectElement, bin.length)}
+                  onMouseLeave={handleMouseLeave} />
+              )
             }
 
             <AxisBottom top={height - margin.bottom} scale={xScale} />
@@ -229,10 +252,29 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
               left={margin.left}
               scale={yScale}
               numTicks={numYTicks} />
-          </Group>
-        </svg>
+          </svg>
+          {
+            tooltipOpen &&
+            <Tooltip
+              key={Math.random()}
+              left={(tooltipLeft || 0)}
+              top={(tooltipTop || 0)}
+              style={{
+                ...defaultStyles,
+                ...{
+                  color: "black",
+                  borderTopWidth: 1,
+                  borderTopStyle: "solid",
+                  borderTopColor: "#33334D",
+                  borderRadius: 0,
+                }
+              }}>
+                {tooltipData}
+            </Tooltip>
+          }
+        </div>
       </div>
-    </React.Fragment>
+    </>
   );
 };
 
