@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { scaleTime, scaleLinear } from '@visx/scale';
 import { Bar } from '@visx/shape';
 import { Brush } from '@visx/brush';
@@ -18,6 +18,47 @@ interface HistogramProps {
 }
 
 
+const getWidthFromScreenSize = () => {
+  if (window.innerWidth > 1600) {
+    return 1200;
+  } else if (window.innerWidth > 1400) {
+    return 1000;
+  } else if (window.innerWidth > 1000) {
+    return 800;
+  }
+  return 600;
+}
+
+
+const useResponsiveWidth = () => {
+  const [responsiveWidth, setReactiveWidth] = useState(getWidthFromScreenSize());
+
+  useEffect(() => {
+      window.addEventListener("resize", () => {
+          setReactiveWidth(getWidthFromScreenSize());
+      });
+      return () => {
+          window.removeEventListener("resize", () => {
+              setReactiveWidth(getWidthFromScreenSize());
+          })
+      }
+  }, []);
+
+  return responsiveWidth;
+}
+
+
+const getTicksFromWidth = (width: number) => {
+  console.log(width);
+  if (width >= 1000) {
+    return 50;
+  } else if (width >= 800) {
+    return 40;
+  }
+  return 20;
+}
+
+
 const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
   const now = new Date();
   const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
@@ -28,27 +69,26 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
   const [minRangeReached, setMinRangeReached] = useState(false);
   const [maxRangeReached, setMaxRangeReached] = useState(false);
 
-  const width = 600;
+  const width = useResponsiveWidth();
   const height = 400;
   const margin = { top: 20, right: 30, bottom: 30, left: 40 };
 
   const xScale = useMemo(() => {
-    const scale = scaleTime({
+    return scaleTime({
       domain: zoomDomain,
       range: [margin.left, width - margin.right],
     });
-    return scale;
-  }, [zoomDomain]);
+  }, [zoomDomain, width]);
 
   const histogramData = useMemo(() => {
     const domain = xScale.domain();
-    const thresholds = xScale.ticks(40).map(t => t.getTime());
+    const ticks = getTicksFromWidth(width);
+    const thresholds = xScale.ticks(ticks).map(t => t.getTime());
     const bins = d3Histogram()
       .domain([domain[0].getTime(), domain[1].getTime()])
       .thresholds(thresholds)(timestamps);
-
     return bins;
-  }, [timestamps, xScale]);
+  }, [timestamps, xScale, width]);
 
   const maxBinSize = Math.max(...histogramData.map((bin) => bin.length));
   const numYVals =
@@ -160,9 +200,9 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
   } = useTooltip();
 
   const handleMouseEnter = useCallback(
-    (target: SVGRectElement, numTaps: number) => {
+    (target: SVGRectElement, numTaps: number, width: number) => {
       showTooltip({
-        tooltipLeft: target.x.baseVal.value,
+        tooltipLeft: target.x.baseVal.value + width / 2 + 1,
         tooltipTop: target.y.baseVal.value - margin.top / 2,
         tooltipData: `${numTaps} taps`,
       })
@@ -234,16 +274,20 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
               resetOnEnd={true} />
 
             {
-              histogramData.map((bin, index) =>
-                <Bar
-                  key={`bar-${index}`}
-                  x={xScale(bin.x0 ? bin.x0 : 0) ?? 0}
-                  y={yScale(bin.length)}
-                  height={yScale(0) - yScale(bin.length)}
-                  width={Math.max(0, xScale(bin.x1 ? bin.x1 : 0) - xScale(bin.x0 ? bin.x0 : 0) - 1)}
-                  fill="#33334D"
-                  onMouseEnter={(e) => handleMouseEnter(e.target as SVGRectElement, bin.length)}
-                  onMouseLeave={handleMouseLeave} />
+              histogramData.map((bin, index) => {
+                const width = Math.max(0, xScale(bin.x1 ? bin.x1 : 0) - xScale(bin.x0 ? bin.x0 : 0) - 1);
+                return (
+                  <Bar
+                    key={`bar-${index}`}
+                    x={xScale(bin.x0 ? bin.x0 : 0) ?? 0}
+                    y={yScale(bin.length)}
+                    height={yScale(0) - yScale(bin.length)}
+                    width={width}
+                    fill="#33334D"
+                    onMouseEnter={(e) => handleMouseEnter(e.target as SVGRectElement, bin.length, width)}
+                    onMouseLeave={handleMouseLeave} />
+                  );
+                }
               )
             }
 

@@ -1,19 +1,7 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
-import TextField from "../fields/textField";
 import SubjectsEdit from "./subjectsEdit";
-import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
-import { ReactComponent as Right } from "../../icons/arrowRight.svg";
-import { ReactComponent as ZoomIn } from "../../icons/zoomIn.svg";
-import { ReactComponent as ZoomOut } from "../../icons/zoomOut.svg";
-import {
-  add,
-  differenceInMinutes,
-  differenceInMilliseconds,
-  format,
-  isWithinInterval,
-  sub
-} from "date-fns";
+import { format } from "date-fns";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import "./subjectVisuals.css";
@@ -107,60 +95,62 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
   );
 
   return (
-    <div className="bg-white p-8 h-[calc(calc(100vh-8rem)-1px)] overflow-scroll overflow-x-hidden">
-      {loading ? (
-        <SmallLoader />
-      ) : (
-        <React.Fragment>
+    <div className="bg-white md:bg-[transparent] max-h-[calc(calc(100vh-8rem)-1px)] overflow-scroll overflow-x-hidden">
+      <div className="bg-white p-8 md:mx-8 md:my-16 md:shadow-lg lg:mx-16">
+        {loading ? (
+          <SmallLoader />
+        ) : (
+          <React.Fragment>
 
-          {/* the subject's details */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex flex-col">
-                <span className="text-2xl font-bold">{user.userPermissionId}</span>
-                <span>
-                  Expires on: <b>{expTimeFormatted}</b>
-                </span>
-              </div>
+            {/* the subject's details */}
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex flex-col">
+                  <span className="text-2xl font-bold">{user.userPermissionId}</span>
+                  <span>
+                    Expires on: <b>{expTimeFormatted}</b>
+                  </span>
+                </div>
 
-              <div className="flex flex-col">
-                {/* download the subject's data as excel */}
-                <button
-                  className="button-primary button-lg mb-2"
-                  style={{ width: "12rem" }}
-                  onClick={downloadExcel}
-                >
-                  Download Excel
-                </button>
-                {/* if the user can edit, show the edit button */}
-                {canEdit ? (
+                <div className="flex flex-col">
+                  {/* download the subject's data as excel */}
                   <button
-                    className="button-secondary button-lg"
-                    onClick={() =>
-                      handleClick(
-                        ["Edit"],
-                        <SubjectsEdit
-                          dittiId={user.userPermissionId}
-                          studyId={studyDetails.id}
-                          studyEmail={studyDetails.email}
-                          studyPrefix={studyDetails.dittiId}
-                          flashMessage={flashMessage}
-                          goBack={goBack}
-                          handleClick={handleClick}
-                        />
-                      )
-                    }
+                    className="button-primary button-lg mb-2"
+                    style={{ width: "12rem" }}
+                    onClick={downloadExcel}
                   >
-                    Edit Details
+                    Download Excel
                   </button>
-                ) : null}
+                  {/* if the user can edit, show the edit button */}
+                  {canEdit ? (
+                    <button
+                      className="button-secondary button-lg"
+                      onClick={() =>
+                        handleClick(
+                          ["Edit"],
+                          <SubjectsEdit
+                            dittiId={user.userPermissionId}
+                            studyId={studyDetails.id}
+                            studyEmail={studyDetails.email}
+                            studyPrefix={studyDetails.dittiId}
+                            flashMessage={flashMessage}
+                            goBack={goBack}
+                            handleClick={handleClick}
+                          />
+                        )
+                      }
+                    >
+                      Edit Details
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
 
-          <TimestampHistogram timestamps={getTaps().map(t => t.time.getTime())} />
-        </React.Fragment>
-      )}
+            <TimestampHistogram timestamps={getTaps().map(t => t.time.getTime())} />
+          </React.Fragment>
+        )}
+      </div>
     </div>
   );
 };
