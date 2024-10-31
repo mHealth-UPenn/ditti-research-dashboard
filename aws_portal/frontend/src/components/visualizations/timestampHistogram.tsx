@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { scaleTime, scaleLinear } from '@visx/scale';
+import React, { useMemo, useCallback, useContext } from 'react';
+import { scaleLinear } from '@visx/scale';
 import { Bar } from '@visx/shape';
 import { Brush } from '@visx/brush';
 import { AxisLeft, AxisBottom } from '@visx/axis';
@@ -7,49 +7,15 @@ import { bin as d3Histogram } from 'd3-array';
 import { Bounds } from '@visx/brush/lib/types';
 import { GridRows, GridColumns } from '@visx/grid';
 import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import ReplayIcon from '@mui/icons-material/Replay';
 
-interface HistogramProps {
+import { useVisualizationContext } from '../../contexts/visualizationContext';
+
+interface TimestampHistogramProps {
   timestamps: number[];
 }
 
 
-const getWidthFromScreenSize = () => {
-  if (window.innerWidth > 1600) {
-    return 1200;
-  } else if (window.innerWidth > 1400) {
-    return 1000;
-  } else if (window.innerWidth > 1000) {
-    return 800;
-  }
-  return 600;
-}
-
-
-const useResponsiveWidth = () => {
-  const [responsiveWidth, setReactiveWidth] = useState(getWidthFromScreenSize());
-
-  useEffect(() => {
-      window.addEventListener("resize", () => {
-          setReactiveWidth(getWidthFromScreenSize());
-      });
-      return () => {
-          window.removeEventListener("resize", () => {
-              setReactiveWidth(getWidthFromScreenSize());
-          })
-      }
-  }, []);
-
-  return responsiveWidth;
-}
-
-
 const getTicksFromWidth = (width: number) => {
-  console.log(width);
   if (width >= 1000) {
     return 50;
   } else if (width >= 800) {
@@ -59,26 +25,16 @@ const getTicksFromWidth = (width: number) => {
 }
 
 
-const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
-  const now = new Date();
-  const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
-  const previousNoon = new Date(todayNoon);
-  previousNoon.setDate(previousNoon.getDate() - 1);
-
-  const [zoomDomain, setZoomDomain] = useState<[Date, Date]>([previousNoon, todayNoon]);
-  const [minRangeReached, setMinRangeReached] = useState(false);
-  const [maxRangeReached, setMaxRangeReached] = useState(false);
-
-  const width = useResponsiveWidth();
-  const height = 400;
-  const margin = { top: 20, right: 30, bottom: 50, left: 60 };
-
-  const xScale = useMemo(() => {
-    return scaleTime({
-      domain: zoomDomain,
-      range: [margin.left, width - margin.right],
-    });
-  }, [zoomDomain, width]);
+const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) => {
+  const {
+    width,
+    height,
+    margin,
+    xScale,
+    onZoomChange,
+  } = useVisualizationContext();
+  // Guard against null xScale
+  if (!xScale) return <></>;
 
   const histogramData = useMemo(() => {
     const domain = xScale.domain();
@@ -111,84 +67,6 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
       range: [height - margin.bottom, margin.top],
     });
   }, [histogramData]);
-
-  const onZoomChange = (domain: [number, number]) => {
-    const [left, right] = domain;
-    let range = right - left;
-
-    // If the resulting range is less than or equal to 30 minutes
-    if (range <= 1800000) {
-      range = 1800000;
-      setMinRangeReached(true);
-    } else {
-      setMinRangeReached(false);
-    }
-    setMaxRangeReached(false);
-
-    setZoomDomain([new Date(domain[0]), new Date(domain[1])]);
-  };
-
-  const resetZoom = () => setZoomDomain([previousNoon, todayNoon]);
-
-  const panLeft = () => {
-    const [left, right] = zoomDomain;
-    const leftTimestamp = left.getTime();
-    const rightTimestamp = right.getTime();
-    const panAmount = (rightTimestamp - leftTimestamp) / 2;
-    const newLeft = new Date(leftTimestamp - panAmount);
-    const newRight = new Date(rightTimestamp - panAmount);
-    setZoomDomain([newLeft, newRight]);
-  };
-
-  const panRight = () => {
-    const [left, right] = zoomDomain;
-    const leftTimestamp = left.getTime();
-    const rightTimestamp = right.getTime();
-    const panAmount = (rightTimestamp - leftTimestamp) / 2;
-    const newLeft = new Date(leftTimestamp + panAmount);
-    const newRight = new Date(rightTimestamp + panAmount);
-    setZoomDomain([newLeft, newRight]);
-  };
-
-  const zoomIn = () => {
-    const [left, right] = zoomDomain;
-    const leftTimestamp = left.getTime();
-    const rightTimestamp = right.getTime();
-    let range = rightTimestamp - leftTimestamp;
-
-    // If the resulting range is less than or equal to 30 minutes
-    if (range <= 1800000) {
-      range = 1800000;
-      setMinRangeReached(true);
-    } else {
-      setMinRangeReached(false);
-    }
-    setMaxRangeReached(false);
-
-    const newLeft = new Date(leftTimestamp + range / 4);
-    const newRight = new Date(rightTimestamp - range / 4);
-    setZoomDomain([newLeft, newRight]);
-  };
-
-  const zoomOut = () => {
-    const [left, right] = zoomDomain;
-    const leftTimestamp = left.getTime();
-    const rightTimestamp = right.getTime();
-    let range = rightTimestamp - leftTimestamp;
-
-    // If the resulting range is greater than or equal to 7 days
-    if (range >= 518400000) {
-      range = 1800000;
-      setMaxRangeReached(true);
-    } else {
-      setMaxRangeReached(false);
-    }
-    setMinRangeReached(false);
-
-    const newLeft = new Date(leftTimestamp - range / 2);
-    const newRight = new Date(rightTimestamp + range / 2);
-    setZoomDomain([newLeft, newRight]);
-  };
   
   const {
     showTooltip,
@@ -213,36 +91,6 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
 
   return (
     <>
-      <div className="flex justify-end">
-        <button
-          className="button button-lg button-secondary"
-          onClick={panLeft}>
-            <KeyboardArrowLeftIcon />
-        </button>
-        <button
-          className="button button-lg button-secondary mr-2"
-          onClick={panRight}>
-            <KeyboardArrowRightIcon />
-        </button>
-        <button
-          className="button button-lg button-secondary"
-          onClick={zoomIn}
-          disabled={minRangeReached}>
-            <AddIcon />
-        </button>
-        <button
-          className="button button-lg button-secondary mr-2"
-          onClick={zoomOut}
-          disabled={maxRangeReached}>
-            <RemoveIcon />
-        </button>
-        <button
-          className="button button-lg button-primary"
-          onClick={resetZoom}>
-            <ReplayIcon />
-        </button>
-      </div>
-
       <div className="flex justify-center">
         <div className="relative">
           <svg width={width} height={height}>
@@ -330,4 +178,4 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
   );
 };
 
-export default Histogram;
+export default TimestampHistogram;

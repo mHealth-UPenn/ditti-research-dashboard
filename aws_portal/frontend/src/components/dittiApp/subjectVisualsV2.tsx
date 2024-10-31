@@ -8,6 +8,8 @@ import "./subjectVisuals.css";
 import { getAccess } from "../../utils";
 import { SmallLoader } from "../loader";
 import TimestampHistogram from "../visualizations/timestampHistogram";
+import VisualizationController from "../visualizations/visualizationController";
+import TapVisualizationButtons from "../visualizations/tapVisualizationButtons";
 
 /**
  * getTaps: get tap data
@@ -147,7 +149,10 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
               </div>
             </div>
 
-            <TimestampHistogram timestamps={getTaps().map(t => t.time.getTime())} />
+            <VisualizationController>
+              <TapVisualizationButtons />
+              <TimestampHistogram timestamps={getTaps().map(t => t.time.getTime())} />
+            </VisualizationController>
           </React.Fragment>
         )}
       </div>
