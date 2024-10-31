@@ -1,65 +1,66 @@
 import React from "react";
 import { Line } from "@visx/shape";
-import { Group } from "@visx/group";
-import { Text } from "@visx/text";
-import { AxisBottom } from "@visx/axis";
-import { ScaleTime } from "d3";
+import { AxisBottom, AxisLeft } from "@visx/axis";
+import { scaleLinear } from '@visx/scale';
+import { useVisualizationContext } from "../../contexts/visualizationContext";
 
 type GroupData = {
-  start: Date;
-  stop?: Date;
+  start: number;
+  stop?: number;
   label?: string;
 };
 
 type TimelineProps = {
   groups: GroupData[];
-  width: number;
-  height: number;
-  margin: { top: number; right: number; bottom: number; left: number };
-  xScale: ScaleTime<number, number>;
 };
 
 
-const Timeline: React.FC<TimelineProps> = ({
-  groups,
-  width,
-  height,
-  margin,  // = { top: 20, right: 20, bottom: 50, left: 40 },
-  xScale
-}) => {
-  const innerHeight = height - margin.top - margin.bottom;
+const Timeline: React.FC<TimelineProps> = ({ groups }) => {
+  const {
+    width,
+    margin,
+    xScale,
+  } = useVisualizationContext();
+  if (!xScale) return <></>;
 
-  const visualizations = groups.map((group, index) => {
-    const startX = xScale(group.start);
-    const stopX = group.stop ? xScale(group.stop) : startX;
-    const y = index * 30; // Spacing each group vertically
+  margin.top = 40;
+  const height = margin.top + margin.bottom;
+  const start = xScale.domain()[0].getTime();
+  const stop = xScale.domain()[1].getTime();
 
-    return (
-      <Group key={index}>
-        {group.stop ? (
-          // Draw a line if `stop` exists
-          <Line from={{ x: startX, y }} to={{ x: stopX, y }} stroke="black" strokeWidth={2} />
-        ) : (
-          // Draw a point if only `start` exists
-          <circle cx={startX} cy={y} r={5} fill="black" />
-        )}
-        {/* Display label if provided */}
-        {group.label && (
-          <Text x={startX} y={y - 10} dy=".33em" fontSize={10} textAnchor="middle">
-            {group.label}
-          </Text>
-        )}
-      </Group>
-    );
-  })
+  const visualizations = groups
+    .filter(group =>
+      (start <= group.start && group.start <= stop)
+      || (group.stop && start <= group.stop && group.stop <= stop)
+      || (group.stop && group.start <= start && stop <= group.stop)
+    ).map(group => {
+      const startX = Math.max(margin.left, xScale(group.start));
+      const stopX = group.stop ? Math.min(xScale(group.stop), width - margin.right) : startX;
+      const y = margin.top;
+
+      if (group.stop) {
+        return (
+          <>
+            {group.start >= start && <circle cx={startX} cy={y} r={5} fill="black" />}
+            <Line from={{ x: startX, y }} to={{ x: stopX, y }} stroke="black" strokeWidth={2} />
+            {stop >= group.stop && <circle cx={stopX} cy={y} r={5} fill="black" />}
+          </>
+        );
+      }
+      return <circle cx={startX} cy={y} r={5} fill="black" />;
+  });
 
   return (
     <svg width={width} height={height}>
-      <Group left={margin.left} top={margin.top}>
-        {visualizations}
-        {/* Time axis */}
-        <AxisBottom top={innerHeight} scale={xScale} />
-      </Group>
+      {visualizations}
+      <AxisBottom top={margin.top} scale={xScale} />
+      <AxisLeft
+        left={margin.left}
+        scale={scaleLinear({domain: [0, 0], range: [margin.top, margin.top]})}
+        numTicks={0}
+        label="Bouts"
+        labelClassName="text-lg font-bold"
+        labelOffset={30} />
     </svg>
   );
 };

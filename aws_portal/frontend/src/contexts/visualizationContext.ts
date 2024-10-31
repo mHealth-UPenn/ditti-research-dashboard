@@ -9,6 +9,7 @@ interface IVisualizationContext {
   height: number;
   margin: { top: number; right: number; bottom: number; left: number };
   xScale: ScaleTime<number, number> | null;
+  xTicks: number;
   onZoomChange: (domain: [number, number]) => void;
   resetZoom: () => void;
   panLeft: () => void;

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import SubjectsEdit from "./subjectsEdit";
 import { format } from "date-fns";
@@ -10,6 +10,7 @@ import { SmallLoader } from "../loader";
 import TimestampHistogram from "../visualizations/timestampHistogram";
 import VisualizationController from "../visualizations/visualizationController";
 import TapVisualizationButtons from "../visualizations/tapVisualizationButtons";
+import BoutsTimeline from "../visualizations/boutsTimeline";
 
 /**
  * getTaps: get tap data
@@ -96,6 +97,10 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     dateOpts as Intl.DateTimeFormatOptions
   );
 
+  const timestamps = useMemo(
+    () => getTaps().map(t => t.time.getTime()), [getTaps]
+  );
+
   return (
     <div className="bg-white md:bg-[transparent] max-h-[calc(calc(100vh-8rem)-1px)] overflow-scroll overflow-x-hidden">
       <div className="bg-white p-8 md:mx-8 md:my-16 md:shadow-lg lg:mx-16">
@@ -151,7 +156,8 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
 
             <VisualizationController>
               <TapVisualizationButtons />
-              <TimestampHistogram timestamps={getTaps().map(t => t.time.getTime())} />
+              <TimestampHistogram timestamps={timestamps} />
+              <BoutsTimeline timestamps={timestamps} />
             </VisualizationController>
           </React.Fragment>
         )}

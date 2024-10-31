@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren } from 'react';
 import useVisualizationController from '../../hooks/useVisualizationController';
 import VisualizationContext from '../../contexts/visualizationContext';
 
@@ -14,6 +14,7 @@ const VisualizationController = ({
     height,
     margin,
     xScale,
+    xTicks,
     onZoomChange,
     resetZoom,
     panLeft,
@@ -23,23 +24,28 @@ const VisualizationController = ({
   } = useVisualizationController();
 
   return (
-    <VisualizationContext.Provider value={{
-        zoomDomain,
-        minRangeReached,
-        maxRangeReached,
-        width,
-        height,
-        margin,
-        xScale,
-        onZoomChange,
-        resetZoom,
-        panLeft,
-        panRight,
-        zoomIn,
-        zoomOut,
-      }}>
-        {children}
-    </VisualizationContext.Provider>
+    <div className="flex justify-center">
+      <div className="relative">
+        <VisualizationContext.Provider value={{
+            zoomDomain,
+            minRangeReached,
+            maxRangeReached,
+            width,
+            height,
+            margin,
+            xScale,
+            xTicks,
+            onZoomChange,
+            resetZoom,
+            panLeft,
+            panRight,
+            zoomIn,
+            zoomOut,
+          }}>
+            {children}
+        </VisualizationContext.Provider>
+      </div>
+    </div>
   );
 };
 

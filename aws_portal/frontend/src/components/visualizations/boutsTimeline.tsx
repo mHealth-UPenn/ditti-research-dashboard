@@ -63,7 +63,7 @@ const BoutsTimeline: React.FC<BoutsTimelineProps> = ({ timestamps }) => {
       // minutes have passed then the bout ends at 10 minutes after the last
       // tap
       else if (count >= 5 && (last - first) > 60000) {
-        bouts.push({
+        _bouts.push({
           start: first,
           stop: last + 1800000,
           label: `${count / (last - first) / (60 * 60 * 1000)} taps/min`
@@ -91,9 +91,7 @@ const BoutsTimeline: React.FC<BoutsTimelineProps> = ({ timestamps }) => {
     return _bouts;
   }, [timestamps]);
 
-  return (
-    <></>
-  );
+  return <Timeline groups={bouts} />;
 };
 
 export default BoutsTimeline;

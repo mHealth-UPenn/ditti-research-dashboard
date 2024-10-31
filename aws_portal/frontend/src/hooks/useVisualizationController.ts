@@ -18,30 +18,21 @@ const useResponsiveWidth = () => {
   const [responsiveWidth, setReactiveWidth] = useState(getWidthFromScreenSize());
 
   useEffect(() => {
-      window.addEventListener("resize", () => {
-          setReactiveWidth(getWidthFromScreenSize());
-      });
-      return () => {
-          window.removeEventListener("resize", () => {
-              setReactiveWidth(getWidthFromScreenSize());
-          })
-      }
+    window.addEventListener("resize", () => {
+      setReactiveWidth(getWidthFromScreenSize());
+    });
+    return () => {
+      window.removeEventListener("resize", () => {
+        setReactiveWidth(getWidthFromScreenSize());
+      })
+    }
   }, []);
 
   return responsiveWidth;
 }
 
 
-const getTicksFromWidth = (width: number) => {
-  if (width >= 1000) {
-    return 50;
-  } else if (width >= 800) {
-    return 40;
-  }
-  return 20;
-}
-
-
+// TODO: extend to customize default values when needed in future vizualizations
 const useVisualizationController = () => {
   const now = new Date();
   const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
@@ -63,6 +54,15 @@ const useVisualizationController = () => {
     });
   }, [zoomDomain, width]);
 
+  const xTicks = useMemo(() => {
+    if (width >= 1000) {
+      return 50;
+    } else if (width >= 800) {
+      return 40;
+    }
+    return 20;
+  }, [width])
+
   const onZoomChange = (domain: [number, number]) => {
     const [left, right] = domain;
     let range = right - left;
@@ -79,7 +79,11 @@ const useVisualizationController = () => {
     setZoomDomain([new Date(domain[0]), new Date(domain[1])]);
   };
 
-  const resetZoom = () => setZoomDomain([previousNoon, todayNoon]);
+  const resetZoom = () => {
+    setMinRangeReached(false);
+    setMaxRangeReached(false);
+    setZoomDomain([previousNoon, todayNoon])
+  };
 
   const panLeft = () => {
     const [left, right] = zoomDomain;
@@ -149,6 +153,7 @@ const useVisualizationController = () => {
     height,
     margin,
     xScale,
+    xTicks,
     onZoomChange,
     resetZoom,
     panLeft,

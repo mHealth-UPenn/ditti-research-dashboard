@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useContext } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { scaleLinear } from '@visx/scale';
 import { Bar } from '@visx/shape';
 import { Brush } from '@visx/brush';
@@ -15,22 +15,13 @@ interface TimestampHistogramProps {
 }
 
 
-const getTicksFromWidth = (width: number) => {
-  if (width >= 1000) {
-    return 50;
-  } else if (width >= 800) {
-    return 40;
-  }
-  return 20;
-}
-
-
 const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) => {
   const {
     width,
     height,
     margin,
     xScale,
+    xTicks,
     onZoomChange,
   } = useVisualizationContext();
   // Guard against null xScale
@@ -38,8 +29,7 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
 
   const histogramData = useMemo(() => {
     const domain = xScale.domain();
-    const ticks = getTicksFromWidth(width);
-    const thresholds = xScale.ticks(ticks).map(t => t.getTime());
+    const thresholds = xScale.ticks(xTicks).map(t => t.getTime());
     const bins = d3Histogram()
       .domain([domain[0].getTime(), domain[1].getTime()])
       .thresholds(thresholds)(timestamps);
@@ -84,96 +74,92 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
         tooltipTop: target.y.baseVal.value - margin.top / 2,
         tooltipData: `${numTaps} taps`,
       })
-    }, [xScale, showTooltip]
+    }, [showTooltip]
   );
 
   const handleMouseLeave = useCallback(hideTooltip, [hideTooltip]);
 
   return (
     <>
-      <div className="flex justify-center">
-        <div className="relative">
-          <svg width={width} height={height}>
-            <rect width={width} height={height} fill="white" />
-            <GridRows
-              scale={yScale}
-              left={margin.left}
-              width={width - margin.left - margin.right}
-              height={height - margin.bottom}
-              stroke="#e0e0e0"
-              numTicks={numYTicks} />
-            <GridColumns
-              scale={xScale}
-              top={margin.top}
-              width={width - margin.left - margin.right}
-              height={height - margin.bottom}
-              stroke="#e0e0e0" />
+      <svg width={width} height={height}>
+        <rect width={width} height={height} fill="white" />
+        <GridRows
+          scale={yScale}
+          left={margin.left}
+          width={width - margin.left - margin.right}
+          height={height - margin.bottom}
+          stroke="#e0e0e0"
+          numTicks={numYTicks} />
+        <GridColumns
+          scale={xScale}
+          top={margin.top}
+          width={width - margin.left - margin.right}
+          height={height - margin.bottom - margin.top}
+          stroke="#e0e0e0" />
 
-            <Brush
-              xScale={xScale}
-              yScale={yScale}
-              width={width - margin.left - margin.right}
-              height={height - margin.bottom}
-              onBrushEnd={(bounds: Bounds | null) => {
-                if (bounds) {
-                  onZoomChange([bounds.x0, bounds.x1]);
-                }
-              }}
-              resetOnEnd={true} />
-
-            {
-              histogramData.map((bin, index) => {
-                const width = Math.max(0, xScale(bin.x1 ? bin.x1 : 0) - xScale(bin.x0 ? bin.x0 : 0) - 1);
-                return (
-                  <Bar
-                    key={`bar-${index}`}
-                    x={xScale(bin.x0 ? bin.x0 : 0) ?? 0}
-                    y={yScale(bin.length)}
-                    height={yScale(0) - yScale(bin.length)}
-                    width={width}
-                    fill="#33334D"
-                    onMouseEnter={(e) => handleMouseEnter(e.target as SVGRectElement, bin.length, width)}
-                    onMouseLeave={handleMouseLeave} />
-                  );
-                }
-              )
+        <Brush
+          xScale={xScale}
+          yScale={yScale}
+          width={width - margin.left - margin.right}
+          height={height - margin.bottom}
+          onBrushEnd={(bounds: Bounds | null) => {
+            if (bounds) {
+              onZoomChange([bounds.x0, bounds.x1]);
             }
+          }}
+          resetOnEnd={true} />
 
-            <AxisBottom
-              top={height - margin.bottom}
-              scale={xScale}
-              label="Time"
-              labelClassName="text-lg font-bold"
-              labelOffset={20} />
-            <AxisLeft
-              left={margin.left}
-              scale={yScale}
-              numTicks={numYTicks}
-              label="Taps"
-              labelClassName="text-lg font-bold"
-              labelOffset={30} />
-          </svg>
-          {
-            tooltipOpen &&
-            <Tooltip
-              key={Math.random()}
-              left={(tooltipLeft || 0)}
-              top={(tooltipTop || 0)}
-              style={{
-                ...defaultStyles,
-                ...{
-                  color: "black",
-                  borderTopWidth: 1,
-                  borderTopStyle: "solid",
-                  borderTopColor: "#33334D",
-                  borderRadius: 0,
-                }
-              }}>
-                {tooltipData}
-            </Tooltip>
-          }
-        </div>
-      </div>
+        {
+          histogramData.map((bin, index) => {
+            const width = Math.max(0, xScale(bin.x1 ? bin.x1 : 0) - xScale(bin.x0 ? bin.x0 : 0) - 1);
+            return (
+              <Bar
+                key={`bar-${index}`}
+                x={xScale(bin.x0 ? bin.x0 : 0) ?? 0}
+                y={yScale(bin.length)}
+                height={yScale(0) - yScale(bin.length)}
+                width={width}
+                fill="#33334D"
+                onMouseEnter={(e) => handleMouseEnter(e.target as SVGRectElement, bin.length, width)}
+                onMouseLeave={handleMouseLeave} />
+              );
+            }
+          )
+        }
+
+        <AxisBottom
+          top={height - margin.bottom}
+          scale={xScale}
+          label="Time"
+          labelClassName="text-lg font-bold"
+          labelOffset={20} />
+        <AxisLeft
+          left={margin.left}
+          scale={yScale}
+          numTicks={numYTicks}
+          label="Taps"
+          labelClassName="text-lg font-bold"
+          labelOffset={30} />
+      </svg>
+      {
+        tooltipOpen &&
+        <Tooltip
+          key={Math.random()}
+          left={(tooltipLeft || 0)}
+          top={(tooltipTop || 0)}
+          style={{
+            ...defaultStyles,
+            ...{
+              color: "black",
+              borderTopWidth: 1,
+              borderTopStyle: "solid",
+              borderTopColor: "#33334D",
+              borderRadius: 0,
+            }
+          }}>
+            {tooltipData}
+        </Tooltip>
+      }
     </>
   );
 };
