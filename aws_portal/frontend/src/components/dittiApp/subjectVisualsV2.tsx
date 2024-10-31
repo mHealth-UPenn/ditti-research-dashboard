@@ -121,11 +121,10 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
                   </span>
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col md:flex-row">
                   {/* download the subject's data as excel */}
                   <button
-                    className="button-primary button-lg mb-2"
-                    style={{ width: "12rem" }}
+                    className="button-secondary button-lg mb-2 md:mb-0 md:mr-2"
                     onClick={downloadExcel}
                   >
                     Download Excel
@@ -158,7 +157,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
 
             <VisualizationController>
               <TapVisualizationButtons />
-              <div className="flex flex-col justify-center">
+              <div className="flex flex-col items-center select-none">
                 <TimestampHistogram timestamps={timestamps} />
                 <BoutsTimeline timestamps={timestamps} />
                 <AudioTapsTimeline audioTaps={audioTaps} />

@@ -101,7 +101,7 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
         <Brush
           xScale={xScale}
           yScale={yScale}
-          width={width - margin.left - margin.right}
+          width={width}
           height={height - margin.bottom}
           onBrushEnd={(bounds: Bounds | null) => {
             if (bounds) {
@@ -143,11 +143,12 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
         tooltipOpen &&
         <Tooltip
           key={Math.random()}
-          left={(tooltipLeft || 0)}
-          top={(tooltipTop || 0)}
+          left={(tooltipLeft || 0) - 1}
+          top={(tooltipTop || 0) + 15}
           style={{
             ...defaultStyles,
             ...{
+              height: 25,
               color: "black",
               borderTopWidth: 1,
               borderTopStyle: "solid",
