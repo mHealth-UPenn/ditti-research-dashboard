@@ -180,6 +180,28 @@ def init_admin_account(email=None, password=None):
     return admin
 
 
+def init_api(click):
+    """
+    Insert Fitbit API entry.
+    """
+
+    # # Ensure all tables are created
+    # db.create_all()
+
+    # Check if the API entry already exists
+    api_name = "Fitbit"
+    existing_api = Api.query.filter_by(name=api_name).first()
+    if existing_api:
+        click.echo(f"API '{api_name}' already exists with ID "
+                   f"{existing_api.id}.")
+    else:
+        # Create a new API entry
+        new_api = Api(name=api_name, is_archived=False)
+        db.session.add(new_api)
+        db.session.commit()
+        click.echo(f"API '{api_name}' has been created with ID {new_api.id}.")
+
+
 @jwt.user_identity_loader
 def user_identity_lookup(account):
     return account.public_id

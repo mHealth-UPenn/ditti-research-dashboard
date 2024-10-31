@@ -5,10 +5,11 @@ from flask import Flask, Response
 from flask_jwt_extended.utils import create_access_token, current_user, get_jwt
 from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
-    init_db_click
+    init_db_click, init_api_click
 )
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate
 from aws_portal.views import admin, aws_requests, base, db_requests, iam
+from aws_portal.views.cognito import cognito, fitbit
 
 
 def create_app(testing=False):
@@ -58,6 +59,8 @@ def register_blueprints(app):
     app.register_blueprint(base.blueprint)
     app.register_blueprint(db_requests.blueprint)
     app.register_blueprint(iam.blueprint)
+    app.register_blueprint(cognito.blueprint)
+    app.register_blueprint(fitbit.blueprint)
 
 
 def register_commands(app):
@@ -65,6 +68,7 @@ def register_commands(app):
     app.cli.add_command(init_admin_group_click)
     app.cli.add_command(init_admin_account_click)
     app.cli.add_command(init_db_click)
+    app.cli.add_command(init_api_click)
 
 
 def register_extensions(app):
