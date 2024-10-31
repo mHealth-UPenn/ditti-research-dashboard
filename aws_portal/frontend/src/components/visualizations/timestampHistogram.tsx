@@ -80,7 +80,7 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
   const handleMouseLeave = useCallback(hideTooltip, [hideTooltip]);
 
   return (
-    <>
+    <div className="relative">
       <svg width={width} height={height}>
         <rect width={width} height={height} fill="white" />
         <GridRows
@@ -160,7 +160,7 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
             {tooltipData}
         </Tooltip>
       }
-    </>
+    </div>
   );
 };
 

@@ -24,28 +24,24 @@ const VisualizationController = ({
   } = useVisualizationController();
 
   return (
-    <div className="flex justify-center">
-      <div className="relative">
-        <VisualizationContext.Provider value={{
-            zoomDomain,
-            minRangeReached,
-            maxRangeReached,
-            width,
-            height,
-            margin,
-            xScale,
-            xTicks,
-            onZoomChange,
-            resetZoom,
-            panLeft,
-            panRight,
-            zoomIn,
-            zoomOut,
-          }}>
-            {children}
-        </VisualizationContext.Provider>
-      </div>
-    </div>
+    <VisualizationContext.Provider value={{
+        zoomDomain,
+        minRangeReached,
+        maxRangeReached,
+        width,
+        height,
+        margin,
+        xScale,
+        xTicks,
+        onZoomChange,
+        resetZoom,
+        panLeft,
+        panRight,
+        zoomIn,
+        zoomOut,
+      }}>
+        {children}
+    </VisualizationContext.Provider>
   );
 };
 

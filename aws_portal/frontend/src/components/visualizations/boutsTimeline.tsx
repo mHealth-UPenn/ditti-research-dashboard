@@ -66,7 +66,7 @@ const BoutsTimeline: React.FC<BoutsTimelineProps> = ({ timestamps }) => {
         _bouts.push({
           start: first,
           stop: last + 1800000,
-          label: `${count / (last - first) / (60 * 60 * 1000)} taps/min`
+          label: `${(count / ((last - first) / (60 * 1000))).toFixed(1)} taps/min`
         });
         first = current;
         group = [first];

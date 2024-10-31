@@ -156,8 +156,10 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
 
             <VisualizationController>
               <TapVisualizationButtons />
-              <TimestampHistogram timestamps={timestamps} />
-              <BoutsTimeline timestamps={timestamps} />
+              <div className="flex flex-col justify-center">
+                <TimestampHistogram timestamps={timestamps} />
+                <BoutsTimeline timestamps={timestamps} />
+              </div>
             </VisualizationController>
           </React.Fragment>
         )}
