@@ -13,10 +13,15 @@ type GroupData = {
 
 type TimelineProps = {
   groups: GroupData[];
+  title: string;
+  hideAxis?: boolean;
 };
 
 
-const Timeline: React.FC<TimelineProps> = ({ groups }) => {
+const Timeline: React.FC<TimelineProps> = ({
+  groups,
+  title
+}) => {
   const {
     width,
     margin,
@@ -24,7 +29,6 @@ const Timeline: React.FC<TimelineProps> = ({ groups }) => {
   } = useVisualizationContext();
   if (!xScale) return <></>;
 
-  margin.top = 50;
   const height = margin.top + margin.bottom;
   const start = xScale.domain()[0].getTime();
   const stop = xScale.domain()[1].getTime();
@@ -59,6 +63,18 @@ const Timeline: React.FC<TimelineProps> = ({ groups }) => {
       const startX = Math.max(margin.left, xScale(group.start));
       const stopX = group.stop ? Math.min(xScale(group.stop), width - margin.right) : startX;
       const y = margin.top;
+      const tooltipRect =
+        group.label
+        ?
+          <rect
+            x={startX - 10}
+            y={margin.top - 15}
+            width={stopX - startX + 20}
+            height={30}
+            fill="transparent"
+            onMouseEnter={(e) => group.label && handleMouseEnter(e.target as SVGRectElement, group.label)}
+            onMouseLeave={handleMouseLeave} />
+        : <></>
 
       if (group.stop) {
         return (
@@ -66,18 +82,16 @@ const Timeline: React.FC<TimelineProps> = ({ groups }) => {
             {group.start >= start && <circle cx={startX} cy={y} r={5} fill="black" />}
             <Line from={{ x: startX, y }} to={{ x: stopX, y }} stroke="black" strokeWidth={2} />
             {stop >= group.stop && <circle cx={stopX} cy={y} r={5} fill="black" />}
-            <rect
-              x={startX - 10}
-              y={margin.top - 15}
-              width={stopX - startX + 20}
-              height={30}
-              fill="transparent"
-              onMouseEnter={(e) => group.label && handleMouseEnter(e.target as SVGRectElement, group.label)}
-              onMouseLeave={handleMouseLeave} />
+            {tooltipRect}
           </>
         );
       }
-      return <circle cx={startX} cy={y} r={5} fill="black" />;
+      return (
+        <>
+          <circle cx={startX} cy={y} r={5} fill="black" />
+          {tooltipRect}
+        </>
+      );
   });
 
   return (
@@ -88,7 +102,7 @@ const Timeline: React.FC<TimelineProps> = ({ groups }) => {
           left={margin.left}
           scale={scaleLinear({domain: [0, 0], range: [margin.top, margin.top]})}
           numTicks={0}
-          label="Bouts"
+          label={title}
           labelClassName="text-lg font-bold"
           labelOffset={30} />
         {visualizations}

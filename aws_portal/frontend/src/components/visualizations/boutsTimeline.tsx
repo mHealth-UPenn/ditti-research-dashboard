@@ -91,7 +91,7 @@ const BoutsTimeline: React.FC<BoutsTimelineProps> = ({ timestamps }) => {
     return _bouts;
   }, [timestamps]);
 
-  return <Timeline groups={bouts} />;
+  return <Timeline groups={bouts} title="Bouts" hideAxis={true} />;
 };
 
 export default BoutsTimeline;

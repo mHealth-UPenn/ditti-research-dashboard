@@ -11,6 +11,7 @@ import TimestampHistogram from "../visualizations/timestampHistogram";
 import VisualizationController from "../visualizations/visualizationController";
 import TapVisualizationButtons from "../visualizations/tapVisualizationButtons";
 import BoutsTimeline from "../visualizations/boutsTimeline";
+import AudioTapsTimeline from "../visualizations/audioTapsTimeline";
 
 /**
  * getTaps: get tap data
@@ -37,7 +38,8 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
   const [loading, setLoading] = useState(true);
 
   const taps = getTaps().filter((t) => t.dittiId === user.userPermissionId);
-  
+  const audioTaps = getAudioTaps().filter((at) => at.dittiId === user.userPermissionId);
+
   useEffect(() => {
     getAccess(2, "Edit", "Users", studyDetails.id)
       .then(() => {
@@ -159,6 +161,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
               <div className="flex flex-col justify-center">
                 <TimestampHistogram timestamps={timestamps} />
                 <BoutsTimeline timestamps={timestamps} />
+                <AudioTapsTimeline audioTaps={audioTaps} />
               </div>
             </VisualizationController>
           </React.Fragment>

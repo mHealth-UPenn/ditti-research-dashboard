@@ -45,7 +45,7 @@ const useVisualizationController = () => {
 
   const width = useResponsiveWidth();
   const height = 400;
-  const margin = { top: 20, right: 30, bottom: 50, left: 60 };
+  const margin = { top: 50, right: 30, bottom: 25, left: 60 };
 
   const xScale = useMemo(() => {
     return scaleTime({

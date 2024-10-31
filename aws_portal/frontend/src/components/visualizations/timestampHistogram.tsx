@@ -26,6 +26,7 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
   } = useVisualizationContext();
   // Guard against null xScale
   if (!xScale) return <></>;
+  console.log(margin, height);
 
   const histogramData = useMemo(() => {
     const domain = xScale.domain();
@@ -129,10 +130,7 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
 
         <AxisBottom
           top={height - margin.bottom}
-          scale={xScale}
-          label="Time"
-          labelClassName="text-lg font-bold"
-          labelOffset={20} />
+          scale={xScale} />
         <AxisLeft
           left={margin.left}
           scale={yScale}
