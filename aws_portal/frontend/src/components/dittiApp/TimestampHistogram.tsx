@@ -71,7 +71,7 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
 
   const width = useResponsiveWidth();
   const height = 400;
-  const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+  const margin = { top: 20, right: 30, bottom: 50, left: 60 };
 
   const xScale = useMemo(() => {
     return scaleTime({
@@ -291,11 +291,19 @@ const Histogram: React.FC<HistogramProps> = ({ timestamps }) => {
               )
             }
 
-            <AxisBottom top={height - margin.bottom} scale={xScale} />
+            <AxisBottom
+              top={height - margin.bottom}
+              scale={xScale}
+              label="Time"
+              labelClassName="text-lg font-bold"
+              labelOffset={20} />
             <AxisLeft
               left={margin.left}
               scale={yScale}
-              numTicks={numYTicks} />
+              numTicks={numYTicks}
+              label="Taps"
+              labelClassName="text-lg font-bold"
+              labelOffset={30} />
           </svg>
           {
             tooltipOpen &&
