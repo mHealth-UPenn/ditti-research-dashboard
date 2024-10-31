@@ -7,7 +7,7 @@ import { saveAs } from "file-saver";
 import "./subjectVisuals.css";
 import { getAccess } from "../../utils";
 import { SmallLoader } from "../loader";
-import TimestampHistogram from "./TimestampHistogram";
+import TimestampHistogram from "../visualizations/timestampHistogram";
 
 /**
  * getTaps: get tap data
