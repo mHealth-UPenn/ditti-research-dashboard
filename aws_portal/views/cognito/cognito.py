@@ -91,7 +91,8 @@ def cognito_callback():
             algorithms=["RS256"],
             audience=current_app.config["COGNITO_CLIENT_ID"],
             issuer=f"https://cognito-idp.{current_app.config["COGNITO_DOMAIN"].split(
-                ".")[2]}.amazonaws.com/{current_app.config["COGNITO_USER_POOL_ID"]}"
+                ".")[2]}.amazonaws.com/{current_app.config["COGNITO_USER_POOL_ID"]}",
+            leeway=60
         )
 
         # Verify the token_use claim
