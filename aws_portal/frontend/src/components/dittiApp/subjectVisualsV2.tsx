@@ -12,6 +12,12 @@ import VisualizationController from "../visualizations/visualizationController";
 import TapVisualizationButtons from "../visualizations/tapVisualizationButtons";
 import BoutsTimeline from "../visualizations/boutsTimeline";
 import AudioTapsTimeline from "../visualizations/audioTapsTimeline";
+import ViewContainer from "../containers/viewContainer";
+import Card from "../cards/card";
+import CardHeader from "../cards/cardHeader";
+import CardTitle from "../cards/cardTitle";
+import CardSubtitle from "../cards/cardSubtilte";
+import Button from "../buttons/button";
 
 /**
  * getTaps: get tap data
@@ -103,70 +109,67 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     () => getTaps().map(t => t.time.getTime()), [getTaps]
   );
 
-  return (
-    <div className="bg-white md:bg-[transparent] max-h-[calc(calc(100vh-8rem)-1px)] overflow-scroll overflow-x-hidden">
-      <div className="bg-white p-8 md:mx-8 md:my-16 md:shadow-lg lg:mx-16">
-        {loading ? (
+  const handleClickEditDetails = () =>
+    handleClick(
+      ["Edit"],
+      <SubjectsEdit
+        dittiId={user.userPermissionId}
+        studyId={studyDetails.id}
+        studyEmail={studyDetails.email}
+        studyPrefix={studyDetails.dittiId}
+        flashMessage={flashMessage}
+        goBack={goBack}
+        handleClick={handleClick}
+      />
+    );
+
+  if (loading) {
+    return (
+      <ViewContainer>
+        <Card>
           <SmallLoader />
-        ) : (
-          <React.Fragment>
+        </Card>
+      </ViewContainer>
+    );
+  }
 
-            {/* the subject's details */}
-            <div className="mb-8">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex flex-col">
-                  <span className="text-2xl font-bold">{user.userPermissionId}</span>
-                  <span>
-                    Expires on: <b>{expTimeFormatted}</b>
-                  </span>
-                </div>
+  return (
+    <ViewContainer>
+      <Card>
+        {/* the subject's details */}
+        <CardHeader>
+          <div className="flex flex-col">
+            <CardTitle>{user.userPermissionId}</CardTitle>
+            <CardSubtitle>Expires on: {expTimeFormatted}</CardSubtitle>
+          </div>
 
-                <div className="flex flex-col md:flex-row">
-                  {/* download the subject's data as excel */}
-                  <button
-                    className="button-secondary button-lg mb-2 md:mb-0 md:mr-2"
-                    onClick={downloadExcel}
-                  >
-                    Download Excel
-                  </button>
-                  {/* if the user can edit, show the edit button */}
-                  {canEdit ? (
-                    <button
-                      className="button-secondary button-lg"
-                      onClick={() =>
-                        handleClick(
-                          ["Edit"],
-                          <SubjectsEdit
-                            dittiId={user.userPermissionId}
-                            studyId={studyDetails.id}
-                            studyEmail={studyDetails.email}
-                            studyPrefix={studyDetails.dittiId}
-                            flashMessage={flashMessage}
-                            goBack={goBack}
-                            handleClick={handleClick}
-                          />
-                        )
-                      }
-                    >
-                      Edit Details
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-col md:flex-row">
+            {/* download the subject's data as excel */}
+            <Button
+              variant="secondary"
+              className="mb-2 md:mr-2"
+              onClick={downloadExcel}>
+                Download Excel
+            </Button>
+            {/* if the user can edit, show the edit button */}
+            {canEdit &&
+              <Button variant="secondary" onClick={handleClickEditDetails}>
+                Edit Details
+              </Button>
+            }
+          </div>
+        </CardHeader>
 
-            <VisualizationController>
-              <TapVisualizationButtons />
-              <div className="flex flex-col items-center select-none">
-                <TimestampHistogram timestamps={timestamps} />
-                <BoutsTimeline timestamps={timestamps} />
-                <AudioTapsTimeline audioTaps={audioTaps} />
-              </div>
-            </VisualizationController>
-          </React.Fragment>
-        )}
-      </div>
-    </div>
+        <VisualizationController>
+          <TapVisualizationButtons />
+          <div className="flex flex-col items-center select-none">
+            <TimestampHistogram timestamps={timestamps} />
+            <BoutsTimeline timestamps={timestamps} />
+            <AudioTapsTimeline audioTaps={audioTaps} />
+          </div>
+        </VisualizationController>
+      </Card>
+    </ViewContainer>
   );
 };
 

@@ -10,6 +10,7 @@ const VisualizationController = ({
     zoomDomain,
     minRangeReached,
     maxRangeReached,
+    parentRef,
     width,
     height,
     margin,
@@ -28,6 +29,7 @@ const VisualizationController = ({
         zoomDomain,
         minRangeReached,
         maxRangeReached,
+        parentRef,
         width,
         height,
         margin,
@@ -40,7 +42,11 @@ const VisualizationController = ({
         zoomIn,
         zoomOut,
       }}>
-        {children}
+        <div className="w-full flex items-center">
+          <div ref={parentRef} className="w-[400px] md:w-[600px] lg:w-[700px] xl:w-[800px] 2xl:w-[1100px]">
+            {children}
+          </div>
+        </div>
     </VisualizationContext.Provider>
   );
 };

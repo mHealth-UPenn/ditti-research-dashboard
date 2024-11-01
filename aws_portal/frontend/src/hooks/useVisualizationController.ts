@@ -1,35 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { scaleTime } from '@visx/scale';
-
-
-const getWidthFromScreenSize = () => {
-  if (window.innerWidth > 1600) {
-    return 1200;
-  } else if (window.innerWidth > 1400) {
-    return 1000;
-  } else if (window.innerWidth > 1000) {
-    return 800;
-  }
-  return 600;
-}
-
-
-const useResponsiveWidth = () => {
-  const [responsiveWidth, setReactiveWidth] = useState(getWidthFromScreenSize());
-
-  useEffect(() => {
-    window.addEventListener("resize", () => {
-      setReactiveWidth(getWidthFromScreenSize());
-    });
-    return () => {
-      window.removeEventListener("resize", () => {
-        setReactiveWidth(getWidthFromScreenSize());
-      })
-    }
-  }, []);
-
-  return responsiveWidth;
-}
+import { useParentSize } from '@visx/responsive'
 
 
 // TODO: extend to customize default values when needed in future vizualizations
@@ -43,7 +14,7 @@ const useVisualizationController = () => {
   const [minRangeReached, setMinRangeReached] = useState(false);
   const [maxRangeReached, setMaxRangeReached] = useState(false);
 
-  const width = useResponsiveWidth();
+  const { parentRef, width } = useParentSize();
   const height = 400;
   const margin = { top: 50, right: 30, bottom: 25, left: 60 };
 
@@ -149,6 +120,7 @@ const useVisualizationController = () => {
     zoomDomain,
     minRangeReached,
     maxRangeReached,
+    parentRef,
     width,
     height,
     margin,

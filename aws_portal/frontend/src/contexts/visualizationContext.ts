@@ -1,10 +1,11 @@
 import { ScaleTime } from "d3";
-import { createContext, useContext } from "react";
+import { createContext, RefObject, useContext } from "react";
 
 interface IVisualizationContext {
   zoomDomain: [Date, Date] | null;  // Ensure different types can be added in the future by enforcing type checks now
   minRangeReached: boolean;
   maxRangeReached: boolean;
+  parentRef: RefObject<HTMLDivElement>;
   width: number;
   height: number;
   margin: { top: number; right: number; bottom: number; left: number };
