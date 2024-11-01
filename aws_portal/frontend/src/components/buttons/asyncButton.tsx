@@ -9,10 +9,17 @@ import { useState } from "react";
 interface AsyncButtonProps {
   onClick: () => Promise<any>;
   text: string;
-  type: string;
+  type: "primary" | "secondary" | "danger";
   className?: string;
   disabled?: boolean;
 }
+
+const variantMap = {
+  primary: "bg-primary",
+  secondary: "bg-secondary",
+  danger: "bg-danger",
+}
+
 
 const AsyncButton: React.FC<AsyncButtonProps> = ({
   onClick,
@@ -43,11 +50,10 @@ const AsyncButton: React.FC<AsyncButtonProps> = ({
 
   return (
     <button
-      className={"button button-large button-" + type + (className ? ` ${className}` : "")}
+      className={`${variantMap[type]} px-6 py-4 ${className}`}
       onClick={handleClick}
-      disabled={disabled || false}
-    >
-      {loading ? loader : text}
+      disabled={disabled || false}>
+        {loading ? loader : text}
     </button>
   );
 };

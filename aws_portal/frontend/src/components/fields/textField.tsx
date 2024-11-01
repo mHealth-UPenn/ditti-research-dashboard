@@ -68,13 +68,13 @@ const TextField: React.FC<TextFieldProps> = ({
             {/* textares require a unique e.target class */}
             {type === "textarea" ? (
               <textarea
-                className="w-full focus:outline-none"
+                className={`w-full focus:outline-none ${disabled && "italic text-[#666699]"}`}
                 defaultValue={prefill ? prefill : undefined}
                 onChange={handleKeyUp}
                 disabled={disabled} />
             ) : (
               <input
-                className="w-full focus:outline-none"
+                className={`w-full focus:outline-none ${disabled && "italic text-[#666699]"}`}
                 type={type || "text"}
                 placeholder={placeholder || ""}
                 defaultValue={prefill || undefined}

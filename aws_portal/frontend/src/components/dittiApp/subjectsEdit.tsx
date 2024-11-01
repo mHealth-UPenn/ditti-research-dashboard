@@ -13,6 +13,16 @@ import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 import Select from "../fields/select";
+import FormView from "../containers/forms/formView";
+import Form from "../containers/forms/form";
+import FormSummary from "../containers/forms/formSummary";
+import FormTitle from "../text/formTitle";
+import FormRow from "../containers/forms/formRow";
+import FormField from "../containers/forms/formField";
+import FormSummaryTitle from "../text/formSummaryTitle";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
+import FormSummaryButton from "../containers/forms/formSummaryButton";
+import FormSummarySubtext from "../containers/forms/formSummarySubtext";
 
 /**
  * dittiId: the subject's ditti id
@@ -197,102 +207,81 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   const buttonText = dittiId ? "Update" : "Create";
 
   return (
-    <div className="page-container" style={{ flexDirection: "row" }}>
-      <div className="page-content bg-white">
-        {/* the enroll subject form */}
-        {loading ? (
-          <SmallLoader />
-        ) : (
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {dittiId ? "Edit " : "Enroll "} Subject
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="dittiId"
-                    type="text"
-                    placeholder=""
-                    prefill={state.userPermissionId.replace(studyPrefix, "")}
-                    label="Ditti ID"
-                    onKeyup={(text: string) => {
-                      setState(prev => ({ ...prev, userPermissionId: studyPrefix + text }));
-                    }}
-                    feedback=""
-                  >
-                    {/* superimpose the study prefix on the form field */}
-                    <div className="disabled bg-light border-light-r">
-                      <span>
-                        <i>{studyPrefix}</i>
-                      </span>
-                    </div>
-                  </TextField>
+    <FormView>
+      <Form>
+        <FormTitle>{dittiId ? "Edit " : "Enroll "} Subject</FormTitle>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="dittiId"
+              type="text"
+              placeholder=""
+              prefill={state.userPermissionId.replace(studyPrefix, "")}
+              label="Ditti ID"
+              onKeyup={(text: string) => {
+                setState(prev => ({ ...prev, userPermissionId: studyPrefix + text }));
+              }}
+              feedback="">
+                {/* superimpose the study prefix on the form field */}
+                <div className="flex items-center text-[#666699] h-full px-2 bg-light border-r border-light">
+                  <i>{studyPrefix}</i>
                 </div>
+            </TextField>
+          </FormField>
 
-                {/* don't allow the user to edit the team email */}
-                <div className="admin-form-field">
-                  <TextField
-                    label="Team Email"
-                    prefill={studyEmail}
-                    disabled={true}
-                  />
-                </div>
-              </div>
+          {/* don't allow the user to edit the team email */}
+          <FormField>
+            <TextField
+              label="Team Email"
+              prefill={studyEmail}
+              disabled={true} />
+          </FormField>
+        </FormRow>
 
-              {/* the raw timestamp includes ":00.000Z" */}
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="expiresOn"
-                    type="datetime-local"
-                    placeholder=""
-                    prefill={state.expTime.replace("Z", "")}
-                    label="Expires On"
-                    onKeyup={(text: string) =>
-                      setState(prev => ({ ...prev, expTime: text + ":00.000Z" }))
-                    }
-                    feedback=""
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <CheckField
-                    id="tapping-access"
-                    prefill={state.tapPermission}
-                    label="Tapping Access"
-                    onChange={(val) => setState(prev => ({ ...prev, tapPermission: val }))}
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <div style={{ marginBottom: "0.5rem" }}>
-                    <b>About Sleep Template</b>
-                  </div>
-                  <div className="border-light">
-                    <Select
-                      id={0}
-                      opts={aboutSleepTemplates.map(
-                        (a: AboutSleepTemplate) => {
-                          return { value: a.id, label: a.name };
-                        }
-                      )}
-                      placeholder="Select template..."
-                      callback={selectAboutSleepTemplate}
-                      getDefault={getSelectedAboutSleepTemplate}
-                    />
-                  </div>
-                </div>
-              </div>
+        {/* the raw timestamp includes ":00.000Z" */}
+        <FormRow>
+          <FormField>
+            <TextField
+              id="expiresOn"
+              type="datetime-local"
+              placeholder=""
+              prefill={state.expTime.replace("Z", "")}
+              label="Expires On"
+              onKeyup={(text: string) =>
+                setState(prev => ({ ...prev, expTime: text + ":00.000Z" }))
+              }
+              feedback="" />
+          </FormField>
+          <FormField>
+            <CheckField
+              id="tapping-access"
+              prefill={state.tapPermission}
+              label="Tapping Access"
+              onChange={(val) => setState(prev => ({ ...prev, tapPermission: val }))} />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <div className="mb-1">About Sleep Template</div>
+            <div className="border-light">
+              <Select
+                id={0}
+                opts={aboutSleepTemplates.map(
+                  (a: AboutSleepTemplate) => {
+                    return { value: a.id, label: a.name };
+                  }
+                )}
+                placeholder="Select template..."
+                callback={selectAboutSleepTemplate}
+                getDefault={getSelectedAboutSleepTemplate} />
             </div>
-          </div>
-        )}
-      </div>
+          </FormField>
+        </FormRow>
+      </Form>
 
-      {/* the subject summary */}
-      <div className="admin-form-summary bg-dark">
-        <h1 className="border-white-b">Subject Summary</h1>
-        <span>
+      <FormSummary>
+        <FormSummaryTitle>Subject Summary</FormSummaryTitle>
+        <FormSummaryContent>
           Ditti ID:
           <br />
           &nbsp;&nbsp;&nbsp;&nbsp;{state.userPermissionId}
@@ -320,16 +309,16 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
           <br />
           &nbsp;&nbsp;&nbsp;&nbsp;{aboutSleepTemplateSelected.name}
           <br />
-        </span>
-        <AsyncButton onClick={post} text={buttonText} type="primary" />
-        <div style={{ marginTop: "1.5rem" }}>
-          <i>
-            After enrolling a subject, log in on your smartphone using their
-            Ditti ID to ensure their account was created successfully.
-          </i>
-        </div>
-      </div>
-    </div>
+        </FormSummaryContent>
+        <FormSummaryButton>
+          <AsyncButton onClick={post} text={buttonText} type="primary" />
+        </FormSummaryButton>
+        <FormSummarySubtext>
+          After enrolling a subject, log in on your smartphone using their
+          Ditti ID to ensure their account was created successfully.
+        </FormSummarySubtext>
+      </FormSummary>
+    </FormView>
   );
 };
 

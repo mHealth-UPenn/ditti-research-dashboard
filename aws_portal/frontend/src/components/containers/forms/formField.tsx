@@ -3,7 +3,7 @@ import { PropsWithChildren } from "react";
 
 const FormField = ({ children }: PropsWithChildren<unknown>) => {
   return (
-    <div className="flex w-full flex-col mb-8">
+    <div className="flex w-full flex-col mb-8 px-4">
       {children}
     </div>
   );

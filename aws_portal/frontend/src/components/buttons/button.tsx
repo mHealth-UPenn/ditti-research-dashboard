@@ -20,7 +20,7 @@ const Button = ({
 }: PropsWithChildren<ButtonProps>) => {
   return (
     <button
-      className={`${variantMap[variant]} button-lg mb-2 ${className}`}
+      className={`${variantMap[variant]} px-6 py-4 ${className}`}
       onClick={onClick}>
         {children}
     </button>

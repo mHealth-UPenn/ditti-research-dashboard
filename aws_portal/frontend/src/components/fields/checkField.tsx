@@ -16,9 +16,9 @@ interface CheckFieldProps {
 
 const CheckField: React.FC<CheckFieldProps> = ({ id, prefill, label, onChange }) => {
   return (
-    <div className="check-field-container">
+    <div>
       {label ? (
-        <label className="check-field-label" htmlFor={id}>
+        <label className="mr-4" htmlFor={id}>
           {label}
         </label>
       ) : null}
