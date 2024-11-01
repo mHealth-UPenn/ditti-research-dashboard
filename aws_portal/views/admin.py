@@ -74,7 +74,7 @@ def account():
 def account_create():
     """
     Create a new account.
-    
+
     Request syntax
     --------------
     {
@@ -171,7 +171,7 @@ def account_create():
 def account_edit():
     """
     Edit an existing account
-    
+
     Request syntax
     --------------
     {
@@ -403,7 +403,7 @@ def study():
 def study_create():
     """
     Create a new study.
-    
+
     Request syntax
     --------------
     {
@@ -451,7 +451,7 @@ def study_create():
 def study_edit():
     """
     Edit an existing study
-    
+
     Request syntax
     --------------
     {
@@ -599,7 +599,7 @@ def access_group():
 def access_group_create():
     """
     Create a new access group.
-    
+
     Request syntax
     --------------
     {
@@ -675,7 +675,7 @@ def access_group_create():
 def access_group_edit():
     """
     Edit an existing access group.
-    
+
     Request syntax
     --------------
     {
@@ -857,7 +857,7 @@ def role():
 def role_create():
     """
     Create a new role.
-    
+
     Request syntax
     --------------
     {
@@ -928,7 +928,7 @@ def role_create():
 def role_edit():
     """
     Edit an existing role.
-    
+
     Request syntax
     --------------
     {
@@ -1207,13 +1207,13 @@ def about_sleep_template():
 
         if i:
             q = AboutSleepTemplate.query.filter(
-              ~AboutSleepTemplate.is_archived &
-              (AboutSleepTemplate.id == int(i))
+                ~AboutSleepTemplate.is_archived &
+                (AboutSleepTemplate.id == int(i))
             )
 
         else:
             q = AboutSleepTemplate.query.filter(
-              ~AboutSleepTemplate.is_archived
+                ~AboutSleepTemplate.is_archived
             )
 
         res = [s.meta for s in q.all()]
@@ -1234,7 +1234,7 @@ def about_sleep_template():
 def about_sleep_template_create():
     """
     Create a new about sleep template.
-    
+
     Request syntax
     --------------
     {
@@ -1282,7 +1282,7 @@ def about_sleep_template_create():
 def about_sleep_template_edit():
     """
     Edit an existing about sleep template
-    
+
     Request syntax
     --------------
     {
@@ -1312,7 +1312,7 @@ def about_sleep_template_edit():
         data = request.json["edit"]
         about_sleep_template_id = request.json["id"]
         about_sleep_template = AboutSleepTemplate.query.get(
-          about_sleep_template_id
+            about_sleep_template_id
         )
 
         populate_model(about_sleep_template, data)
@@ -1361,7 +1361,7 @@ def about_sleep_template_archive():
     try:
         about_sleep_template_id = request.json["id"]
         about_sleep_template = AboutSleepTemplate.query.get(
-          about_sleep_template_id
+            about_sleep_template_id
         )
         about_sleep_template.is_archived = True
         db.session.commit()
@@ -1377,8 +1377,10 @@ def about_sleep_template_archive():
 
     return jsonify({"msg": msg})
 
+
 @blueprint.route("/study_subject")
 @auth_required("View", "Admin Dashboard")
+@auth_required("View", "Study Subjects")
 def study_subject():
     """
     Get one study subject or a list of all study subjects. This will return one
@@ -1417,7 +1419,8 @@ def study_subject():
 
             # Query for the specific StudySubject, excluding archived entries
             query = StudySubject.query.filter(
-                ~StudySubject.is_archived & (StudySubject.id == study_subject_id)
+                ~StudySubject.is_archived & (
+                    StudySubject.id == study_subject_id)
             )
         else:
             # Query for all non-archived StudySubjects
@@ -1435,6 +1438,7 @@ def study_subject():
         db.session.rollback()
 
         return make_response({"msg": msg}, 500)
+
 
 @blueprint.route("/study_subject/create", methods=["POST"])
 @auth_required("View", "Admin Dashboard")
@@ -1506,13 +1510,12 @@ def study_subject_create():
 
         # Initialize StudySubject instance
         study_subject = StudySubject()
-        
+
         # Populate non-relationship fields using populate_model
         populate_model(study_subject, data)
 
         # Set default values if not provided
         study_subject.created_on = datetime.now(UTC)
-        study_subject.is_confirmed = False
         study_subject.is_archived = False
 
         # Add study associations
@@ -1532,7 +1535,8 @@ def study_subject_create():
             if not expires_on_str:
                 return make_response({"msg": f"'expires_on' is required for study ID {study_id}"}, 400)
             try:
-                expires_on = datetime.fromisoformat(expires_on_str.replace("Z", "+00:00"))
+                expires_on = datetime.fromisoformat(
+                    expires_on_str.replace("Z", "+00:00"))
             except ValueError:
                 return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
 
@@ -1561,7 +1565,8 @@ def study_subject_create():
                 return make_response({"msg": f"'api_user_uuid' is required in apis {api_id}"}, 400)
             # string: wrap it in a list, empty: [], list: list
             # scope should probably be nonnullable in JoinStudySubjectApi
-            scope = [scope] if isinstance(scope := api_entry.get("scope", []), str) else scope
+            scope = [scope] if isinstance(
+                scope := api_entry.get("scope", []), str) else scope
             access_key_uuid = api_entry.get("access_key_uuid")
             refresh_key_uuid = api_entry.get("refresh_key_uuid")
 
@@ -1587,6 +1592,7 @@ def study_subject_create():
         logger.warning(exc)
         db.session.rollback()
         return make_response({"msg": msg}, 500)
+
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
 @auth_required("View", "Admin Dashboard")
@@ -1643,13 +1649,14 @@ def study_subject_archive():
 
     return jsonify({"msg": msg}), 200
 
+
 @blueprint.route("/study_subject/edit", methods=["POST"])
 @auth_required("View", "Admin Dashboard")
 @auth_required("Edit", "Study Subjects")
 def study_subject_edit():
     """
     Edit an existing study subject
-    
+
     Request syntax
     --------------
     {
@@ -1753,11 +1760,13 @@ def study_subject_edit():
                 if not expires_on_str:
                     return make_response({"msg": f"'expires_on' is required for study ID {study_id}"}, 400)
                 try:
-                    expires_on = datetime.fromisoformat(expires_on_str.replace("Z", "+00:00"))
+                    expires_on = datetime.fromisoformat(
+                        expires_on_str.replace("Z", "+00:00"))
                 except ValueError:
                     return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
 
-                join = JoinStudySubjectStudy.query.get((study_subject_id, study_id))
+                join = JoinStudySubjectStudy.query.get(
+                    (study_subject_id, study_id))
                 if join:
                     # Update existing association
                     join.did_consent = did_consent
@@ -1797,11 +1806,13 @@ def study_subject_edit():
                 api_user_uuid = api_entry.get("api_user_uuid")
                 if not api_user_uuid:
                     return make_response({"msg": f"'api_user_uuid' is required for API ID {api_id}"}, 400)
-                scope = [scope] if isinstance(scope := api_entry.get("scope", []), str) else scope
+                scope = [scope] if isinstance(
+                    scope := api_entry.get("scope", []), str) else scope
                 access_key_uuid = api_entry.get("access_key_uuid")
                 refresh_key_uuid = api_entry.get("refresh_key_uuid")
 
-                join_api = JoinStudySubjectApi.query.get((study_subject_id, api_id))
+                join_api = JoinStudySubjectApi.query.get(
+                    (study_subject_id, api_id))
                 if join_api:
                     # Update existing association
                     join_api.api_user_uuid = api_user_uuid
@@ -1832,8 +1843,10 @@ def study_subject_edit():
 
     return jsonify({"msg": msg})
 
+
 @blueprint.route("/api")
 @auth_required("View", "Admin Dashboard")
+@auth_required("View", "APIs")
 def api():
     """
     Get one API or a list of all APIs. This will return one API if the API's
@@ -1887,7 +1900,7 @@ def api():
 def api_create():
     """
     Create a new API.
-    
+
     Request syntax
     --------------
     {
