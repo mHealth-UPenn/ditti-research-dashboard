@@ -1,14 +1,15 @@
-from flask import Blueprint, current_app, redirect, request, session, jsonify, make_response
+import base64
+import logging
+import os
+import requests
+import time
+import uuid
+from flask import Blueprint, current_app, jsonify, make_response, redirect, request, session
 from oauthlib.oauth2 import WebApplicationClient
 from aws_portal.extensions import db, study_subject_secrets_manager
 from aws_portal.models import Api, JoinStudySubjectApi
-import uuid
-import logging
-import time
-import os
-import base64
-import hashlib
-import requests
+from aws_portal.utils.cognito import cognito_auth_required
+from aws_portal.utils.fitbit import generate_code_verifier, create_code_challenge
 
 blueprint = Blueprint("cognito_fitbit", __name__, url_prefix="/cognito/fitbit")
 logger = logging.getLogger(__name__)
@@ -17,33 +18,9 @@ FITBIT_AUTHORIZATION_BASE_URL = 'https://www.fitbit.com/oauth2/authorize'
 FITBIT_TOKEN_URL = 'https://api.fitbit.com/oauth2/token'
 
 
-def generate_code_verifier(length=128):
-    """
-    Generates a high-entropy cryptographic random string for PKCE.
-    """
-    if not 43 <= length <= 128:
-        raise ValueError("length must be between 43 and 128 characters")
-    code_verifier = base64.urlsafe_b64encode(
-        os.urandom(length)).rstrip(b'=').decode('utf-8')
-    return code_verifier[:length]
-
-
-def create_code_challenge(code_verifier):
-    """
-    Creates a S256 code challenge from the code_verifier.
-    """
-    code_challenge = hashlib.sha256(code_verifier.encode('utf-8')).digest()
-    code_challenge = base64.urlsafe_b64encode(
-        code_challenge).rstrip(b'=').decode('utf-8')
-    return code_challenge
-
-
 @blueprint.route("/authorize")
+@cognito_auth_required
 def fitbit_authorize():
-    # Check if user is authenticated
-    if "study_subject_id" not in session:
-        return redirect("/cognito/login")
-
     fitbit_client_id = current_app.config['FITBIT_CLIENT_ID']
     fitbit_redirect_uri = current_app.config['FITBIT_REDIRECT_URI']
     # We only want sleep data so only request the 'sleep' scope
@@ -79,6 +56,7 @@ def fitbit_authorize():
 
 
 @blueprint.route("/callback")
+@cognito_auth_required
 def fitbit_callback():
     fitbit_client_id = current_app.config['FITBIT_CLIENT_ID']
     fitbit_client_secret = current_app.config['FITBIT_CLIENT_SECRET']
@@ -158,7 +136,7 @@ def fitbit_callback():
             api_user_uuid=token.get("user_id"),
             access_key_uuid=str(uuid.uuid4()),
             refresh_key_uuid=str(uuid.uuid4()),
-            scope=token.get("scope", "").split()
+            scope=token.get("scope", "")
         )
         db.session.add(join_entry)
     else:
@@ -210,5 +188,6 @@ def fitbit_callback():
 
 
 @blueprint.route("/success")
+@cognito_auth_required
 def fitbit_success():
     return jsonify({"msg": "Fitbit authorization successful."})

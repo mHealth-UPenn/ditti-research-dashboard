@@ -1,13 +1,37 @@
+import base64
+import hashlib
+import os
 from flask import current_app
 from aws_portal.extensions import study_subject_secrets_manager
 import logging
 import time
 import requests
-from oauthlib.oauth2 import OAuth2Session as OAuth2Client
+from oauthlib.oauth2 import WebApplicationClient
 
 logger = logging.getLogger(__name__)
 
 FITBIT_TOKEN_URL = "https://api.fitbit.com/oauth2/token"
+
+
+def generate_code_verifier(length=128):
+    """
+    Generates a high-entropy cryptographic random string for PKCE.
+    """
+    if not 43 <= length <= 128:
+        raise ValueError("length must be between 43 and 128 characters")
+    code_verifier = base64.urlsafe_b64encode(
+        os.urandom(length)).rstrip(b'=').decode('utf-8')
+    return code_verifier[:length]
+
+
+def create_code_challenge(code_verifier):
+    """
+    Creates a S256 code challenge from the code_verifier.
+    """
+    code_challenge = hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    code_challenge = base64.urlsafe_b64encode(
+        code_challenge).rstrip(b'=').decode('utf-8')
+    return code_challenge
 
 
 def get_fitbit_oauth_session(join_entry):
@@ -52,7 +76,7 @@ def get_fitbit_oauth_session(join_entry):
     }
 
     # Create an OAuth2Client
-    client = OAuth2Client(client_id=fitbit_client_id, token=token)
+    client = WebApplicationClient(client_id=fitbit_client_id, token=token)
 
     # Define a method to refresh the token
     def refresh_token():
