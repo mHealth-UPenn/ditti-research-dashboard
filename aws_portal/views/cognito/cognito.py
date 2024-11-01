@@ -95,7 +95,9 @@ def logout():
         redirect(
             f"https://{current_app.config['COGNITO_DOMAIN']}/logout"
             f"?client_id={current_app.config['COGNITO_CLIENT_ID']}"
-            f"&logout_uri={current_app.config['COGNITO_LOGOUT_REDIRECT_URI']}"
+            f"&response_type=code"
+            f"&scope=openid+email"
+            f"&redirect_uri={current_app.config['COGNITO_REDIRECT_URI']}"
         )
     )
     response.set_cookie("id_token", "", expires=0)
