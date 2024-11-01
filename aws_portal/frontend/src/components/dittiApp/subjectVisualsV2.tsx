@@ -14,9 +14,9 @@ import BoutsTimeline from "../visualizations/boutsTimeline";
 import AudioTapsTimeline from "../visualizations/audioTapsTimeline";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
-import CardHeader from "../cards/cardHeader";
-import CardTitle from "../cards/cardTitle";
-import CardSubtitle from "../cards/cardSubtilte";
+import CardContentRow from "../cards/cardHeader";
+import Title from "../cards/cardTitle";
+import Subtitle from "../cards/cardSubtilte";
 import Button from "../buttons/button";
 
 /**
@@ -137,10 +137,10 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     <ViewContainer>
       <Card>
         {/* the subject's details */}
-        <CardHeader>
+        <CardContentRow>
           <div className="flex flex-col">
-            <CardTitle>{user.userPermissionId}</CardTitle>
-            <CardSubtitle>Expires on: {expTimeFormatted}</CardSubtitle>
+            <Title>{user.userPermissionId}</Title>
+            <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
           </div>
 
           <div className="flex flex-col md:flex-row">
@@ -158,7 +158,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
               </Button>
             }
           </div>
-        </CardHeader>
+        </CardContentRow>
 
         <VisualizationController>
           <TapVisualizationButtons />

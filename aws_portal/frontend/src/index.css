@@ -208,9 +208,9 @@ h1 {
   color: white;
 }
 
-.border-light {
+/* .border-light {
   border: 1px solid #b3b3cc;
-}
+} */
 
 .border-light-t {
   border-top: 1px solid #b3b3cc;
@@ -228,9 +228,9 @@ h1 {
   border-left: 1px solid #b3b3cc;
 }
 
-.border-dark {
+/* .border-dark {
   border: 1px solid #33334d;
-}
+} */
 
 .border-dark-t {
   border-top: 1px solid #33334d;

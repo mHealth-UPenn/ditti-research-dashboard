@@ -1,9 +1,16 @@
 import { PropsWithChildren } from "react";
 
+interface CardContentRowProps {
+  className?: string;
+}
 
-const CardHeader = ({ children }: PropsWithChildren<unknown>) => {
+
+const CardContentRow = ({
+  className = "",
+  children,
+}: PropsWithChildren<CardContentRowProps>) => {
   return (
-    <div className="mb-8">
+    <div className={`mb-8 ${className}`}>
       <div className="flex items-center justify-between mb-4">
         {children}
       </div>
@@ -12,4 +19,4 @@ const CardHeader = ({ children }: PropsWithChildren<unknown>) => {
 };
 
 
-export default CardHeader;
+export default CardContentRow;

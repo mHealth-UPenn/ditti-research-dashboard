@@ -11,6 +11,10 @@ import { saveAs } from "file-saver";
 import { format } from "date-fns";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
+import Title from "../cards/cardTitle";
+import Subtitle from "../cards/cardSubtilte";
+import Button from "../buttons/button";
+import CardContentRow from "../cards/cardHeader";
 
 /**
  * Information for study contacts
@@ -106,13 +110,40 @@ const StudySummary: React.FC<StudySummaryProps> = ({
 
   const { dittiId, email, name } = studyDetails;
 
+  const handleClickEnrollSubject = () =>
+    handleClick(
+      ["Enroll"],
+      <SubjectsEdit
+        flashMessage={flashMessage}
+        dittiId=""
+        goBack={goBack}
+        handleClick={handleClick}
+        studyId={studyId}
+        studyPrefix={dittiId}
+        studyEmail={email}
+      />
+    );
+
+  const handleClickViewAllSubjects = () =>
+    handleClick(
+      ["Subjects"],
+      <Subjects
+        flashMessage={flashMessage}
+        goBack={goBack}
+        handleClick={handleClick}
+        studyDetails={studyDetails}
+        getTaps={getTaps}
+        getAudioTaps={getAudioTaps}
+      />
+    );
+
   if (loading) {
     return (
       <ViewContainer>
-        <Card>
+        <Card width="md">
           <SmallLoader />
         </Card>
-        <Card>
+        <Card width="sm">
           <SmallLoader />
         </Card>
       </ViewContainer>
@@ -122,130 +153,66 @@ const StudySummary: React.FC<StudySummaryProps> = ({
   return (
     <ViewContainer>
       <Card width="md">
-        {loading ? (
-          <SmallLoader />
-        ) : (
-          <div>
-
-            {/* study information */}
-            <div className="card-header">
-              <div className="card-title flex-space">
-                <span>{name}</span>
-
-                {/* download as excel button */}
-                <button
-                  className="button-primary button-lg"
-                  onClick={downloadExcel}
-                  style={{ flexShrink: 0, width: "12rem" }}
-                >
-                  Download Excel
-                </button>
-              </div>
-              <span>
-                Study email: <b>{email}</b>
-              </span>
-              <br />
-              <span>
-                Ditti acronym: <b>{dittiId}</b>
-              </span>
-            </div>
-
-            {/* list of active study subjects */}
-            <div className="study-subjects">
-              <div className="study-subjects-header">
-                <div className="study-subjects-title">Active Subjects</div>
-                <div className="study-subjects-buttons">
-
-                  {/* if the user has permissions to create add the enroll button */}
-                  {canCreate ? (
-                    <button
-                      className="button-primary"
-                      onClick={() =>
-                        handleClick(
-                          ["Enroll"],
-                          <SubjectsEdit
-                            flashMessage={flashMessage}
-                            dittiId=""
-                            goBack={goBack}
-                            handleClick={handleClick}
-                            studyId={studyId}
-                            studyPrefix={dittiId}
-                            studyEmail={email}
-                          />
-                        )
-                      }
-                    >
-                      Enroll subject +
-                    </button>
-                  ) : null}
-
-                  {/* the view all subjects button */}
-                  <button
-                    className="button-secondary"
-                    onClick={() =>
-                      handleClick(
-                        ["Subjects"],
-                        <Subjects
-                          flashMessage={flashMessage}
-                          goBack={goBack}
-                          handleClick={handleClick}
-                          studyDetails={studyDetails}
-                          getTaps={getTaps}
-                          getAudioTaps={getAudioTaps}
-                        />
-                      )
-                    }
-                  >
-                    View all subjects
-                  </button>
-                </div>
-              </div>
-
-              {/* list of active subjects */}
-              <div className="study-subjects-list">
-                <StudySubjects
-                  flashMessage={flashMessage}
-                  goBack={goBack}
-                  getTaps={getTaps}
-                  getAudioTaps={getAudioTaps}
-                  handleClick={handleClick}
-                  studyDetails={studyDetails}
-                  studyPrefix={dittiId}
-                />
-              </div>
-            </div>
+        <CardContentRow>
+          <div className="flex flex-col">
+            <Title>{name}</Title>
+            <Subtitle>Study email: {email}</Subtitle>
+            <Subtitle>Ditti acronym: {dittiId}</Subtitle>
           </div>
-        )}
+          <Button onClick={downloadExcel}>Download Excel</Button>
+        </CardContentRow>
+
+        <CardContentRow>
+          <Title>Active Subjects</Title>
+          <div>
+            {canCreate &&
+              <Button
+                className="mr-2"
+                onClick={handleClickEnrollSubject}>
+                  Enroll subject +
+              </Button>
+            }
+            <Button
+              variant="secondary"
+              onClick={handleClickViewAllSubjects}>
+                View all subjects
+            </Button>
+          </div>
+        </CardContentRow>
+
+        <StudySubjects
+          flashMessage={flashMessage}
+          goBack={goBack}
+          getTaps={getTaps}
+          getAudioTaps={getAudioTaps}
+          handleClick={handleClick}
+          studyDetails={studyDetails}
+          studyPrefix={dittiId}
+        />
       </Card>
 
       <Card width="sm">
         {/* list of study contacts */}
-        <div className="card-title">Study Contacts</div>
-        {loading ? (
-          <SmallLoader />
-        ) : (
-          <div>
-            {studyContacts.map((sc: StudyContact, i) => {
-              return (
-                <div key={i}>
-                  <span>
-                    <b>
-                      {sc.fullName}: {sc.role}
-                    </b>
-                  </span>
-                  <br />
-                  &nbsp;&nbsp;&nbsp;&nbsp;
-                  {sc.email}
-                  <br />
-                  &nbsp;&nbsp;&nbsp;&nbsp;
-                  {sc.phoneNumber}
-                  <br />
-                  <br />
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <Title>Study Contacts</Title>
+        {studyContacts.map((sc: StudyContact, i) => {
+          return (
+            <div key={i}>
+              <span>
+                <b>
+                  {sc.fullName}: {sc.role}
+                </b>
+              </span>
+              <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              {sc.email}
+              <br />
+              &nbsp;&nbsp;&nbsp;&nbsp;
+              {sc.phoneNumber}
+              <br />
+              <br />
+            </div>
+          );
+        })}
       </Card>
     </ViewContainer>
   );
