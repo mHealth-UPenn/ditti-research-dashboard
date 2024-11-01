@@ -50,51 +50,46 @@ const TextField: React.FC<TextFieldProps> = ({
   };
 
   return (
-    <div
-      className="text-field-container"
-      style={type === "textarea" ? { height: "24rem" } : {}}
-    >
-      {/* if a label was passed as a prop */}
-      {label ? (
-        <label className="text-field-label" htmlFor={id}>
-          {label}
-        </label>
-      ) : null}
-      <div
-        className={
-          "text-field-content border-light" + (disabled ? " bg-light" : "")
+    <div style={type === "textarea" ? { height: "24rem" } : {}}>
+        {/* if a label was passed as a prop */}
+        {label &&
+          <div className="mb-1">
+            <label htmlFor={id}>
+              {label}
+            </label>
+          </div>
         }
-      >
-        {/* place children here as prefix icons (e.g., a password icon) */}
-        {children || null}
+        <div className={`flex items-center h-[50px] border border-light ${disabled ? "bg-light" : ""}`}>
+          {/* place children here as prefix icons (e.g., a password icon) */}
+          {children || null}
 
-        {/* the input */}
-        <div className="text-field-input">
-          {/* textares require a unique e.target class */}
-          {type === "textarea" ? (
-            <textarea
-              defaultValue={prefill ? prefill : undefined}
-              onChange={handleKeyUp}
-              disabled={disabled}
-            ></textarea>
-          ) : (
-            <input
-              type={type || "text"}
-              placeholder={placeholder || ""}
-              defaultValue={prefill || undefined}
-              value={value ?? text} // Use value if provided, otherwise fall back to internal state
-              onChange={handleKeyUp}
-              disabled={disabled}
-            />
-          )}
+          {/* the input */}
+          <div className="flex-grow px-2">
+            {/* textares require a unique e.target class */}
+            {type === "textarea" ? (
+              <textarea
+                className="w-full focus:outline-none"
+                defaultValue={prefill ? prefill : undefined}
+                onChange={handleKeyUp}
+                disabled={disabled} />
+            ) : (
+              <input
+                className="w-full focus:outline-none"
+                type={type || "text"}
+                placeholder={placeholder || ""}
+                defaultValue={prefill || undefined}
+                value={value ?? text} // Use value if provided, otherwise fall back to internal state
+                onChange={handleKeyUp}
+                disabled={disabled} />
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* feedback on error */}
-      <span
-        className={"text-sm text-[red]" + (feedback && feedback !== "" ? "" : "hidden")}>
-          {feedback}
-      </span>
+        {/* feedback on error */}
+        <span
+          className={`text-sm text-[red] ${feedback && feedback !== "" ? "" : "hidden"}`}>
+            {feedback}
+        </span>
     </div>
   );
 };

@@ -50,28 +50,21 @@ const Select: React.FC<SelectProps> = ({
   const updatedOpts = [{ value: 0, label: "" }].concat(opts);
 
   return (
-    <div
-      style={{
-        alignItems: "center",
-        display: "flex",
-        flexGrow: 1,
-        position: "relative",
-      }}>
+    <div className={`flex items-center flex-grow relative border border-light ${disabled && "bg-light"}`}>
       {/* if the blank option is selected, show the placeholder */}
       {value === "0" && (
-        <div className="select-placeholder">{placeholder}</div>
+        <div className="">{placeholder}</div>
       )}
       <select
+        className="bg-[transparent] min-h-[calc(3rem-2px)]"
         onChange={changeValue}
         value={value}
-        style={{ minHeight: "calc(3rem - 2px)" }}
-        disabled={disabled}
-        className={disabled ? "bg-transparent" : ""}>
-        {updatedOpts.map((opt, i) => (
-          <option key={i} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
+        disabled={disabled}>
+          {updatedOpts.map((opt, i) => (
+            <option key={i} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
       </select>
     </div>
   );

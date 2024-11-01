@@ -30,9 +30,8 @@ const RadioField: React.FC<RadioFieldProps> = ({
       <div key={i} className="flex items-center">
         <label
           htmlFor={`${id}-${v}`}
-          className="p-2 cursor-pointer"
-          >
-          {v}
+          className="p-2 cursor-pointer">
+            {v}
         </label>
         <input
           ref={ref}
@@ -50,9 +49,8 @@ const RadioField: React.FC<RadioFieldProps> = ({
 
   return (
     <div className="flex flex-col w-full">
-      {
-        label &&
-        <span className="font-bold mb-1">
+      {label &&
+        <span className="mb-1">
           {label}
         </span>
       }

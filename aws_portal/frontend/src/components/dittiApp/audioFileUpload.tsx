@@ -3,12 +3,25 @@ import TextField from "../fields/textField";
 import { Study, ResponseBody, ViewProps, AudioFile } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
-import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 import Select from "../fields/select";
 import RadioField from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
 import axios, { AxiosError } from "axios";
+import { APP_ENV } from "../../environment";
+import dataFactory from "../../dataFactory";
+import FormView from "../containers/forms/formView";
+import Form from "../containers/forms/form";
+import FormTitle from "../text/formTitle";
+import FormRow from "../containers/forms/formRow";
+import FormField from "../containers/forms/formField";
+import FormSummary from "../containers/forms/formSummary";
+import FormSummaryTitle from "../text/formSummaryTitle";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
+import FormSummaryButton from "../containers/forms/formSummaryButton";
+import FormSummarySubtext from "../containers/forms/formSummarySubtext";
+import Button from "../buttons/button";
+import { SmallLoader } from "../loader";
 
 
 interface IFile {
@@ -43,23 +56,28 @@ const AudioFileUpload: React.FC<ViewProps> = ({
 
   const fileInputRef = createRef<HTMLInputElement>();
 
-  // Initialize the list of studies and audio files
-  useEffect(() => {
-    const studiesPromise = makeRequest("/db/get-studies?app=2");
-    const audioFilesPromise = makeRequest("/aws/get-audio-files?app=2");
-    Promise.all([studiesPromise, audioFilesPromise]).then(
-      ([studies, audioFiles]) => {
-        const existing: Set<string> = new Set();
-        (audioFiles as AudioFile[]).forEach(af => {
-          if (af.fileName) existing.add(af.fileName)
-        });
+  const getAudioFiles = async () => {
+    const newStudies: Study[] = await makeRequest("/db/get-studies?app=2");
 
-        setStudies(studies);
-        setExistingFiles(existing);
-        setLoading(false);
-      }
-    );
-  }, []);
+    let newAudioFiles: AudioFile[];
+    if (APP_ENV === "production") {
+      newAudioFiles = await makeRequest("/aws/get-audio-files?app=2");
+    } else {
+      newAudioFiles = dataFactory.audioFiles;
+    }
+
+    const existing: Set<string> = new Set();
+    newAudioFiles.forEach(af => {
+      if (af.fileName) existing.add(af.fileName)
+    });
+
+    setStudies(studies);
+    setExistingFiles(existing);
+    setLoading(false);
+  }
+
+  // Initialize the list of studies and audio files
+  useEffect(() => {getAudioFiles()}, []);
 
   /**
    * Get a set of presigned URLs for uploading audio files to S3.
@@ -347,245 +365,237 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     uploadProgress.reduce((a, b) => a + b) / uploadProgress.length
   ) : 0;
 
+  if (loading) {
+    return (
+      <FormView>
+        <SmallLoader />
+      </FormView>
+    )
+  }
+
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] overflow-scroll overflow-x-hidden bg-white lg:bg-transparent lg:flex-row">
-      <div className="p-12 flex-grow bg-white lg:overflow-y-scroll">
-        {/* the enroll subject form */}
-        {
-          loading ?
-          <SmallLoader /> :
-          <>
-            <h1 className="text-xl font-bold border-b border-solid border-[#B3B3CC]">
-              Upload Audio File
-            </h1>
+    <FormView>
+      <Form>
+        <FormTitle>Upload Audio File</FormTitle>
 
-            {/* Category field */}
-            <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8">
-                <TextField
-                  id="category"
-                  type="text"
-                  placeholder=""
-                  label="Category"
-                  onKeyup={setCategory}
-                  feedback={categoryFeedback}
-                />
-              </div>
+        {/* Category field */}
+        <FormRow>
+          <FormField>
+            <TextField
+              id="category"
+              type="text"
+              placeholder=""
+              label="Category"
+              onKeyup={setCategory}
+              feedback={categoryFeedback} />
+          </FormField>
+        </FormRow>
+
+        {/* Availability & Ditti ID fields */}
+        <FormRow>
+          <FormField>
+            <RadioField
+              id="availability-radio"
+              label="Availability"
+              onChange={handleClickAvailability}
+              values={["All Users", "Individual"]}
+              checked={availability}
+            />
+          </FormField>
+          <FormField>
+            <TextField
+              id="availability"
+              type="text"
+              label="Ditti ID"
+              value={dittiId}
+              onKeyup={setDittiId}
+              disabled={availability === "All Users"}
+              feedback={availabilityFeedback}
+            />
+          </FormField>
+        </FormRow>
+
+        {/* Studies & select studies fields */}
+        <FormRow>
+          <FormField>
+            <RadioField
+              id="studies-radio"
+              label="Studies"
+              onChange={handleClickStudies}
+              values={["All Studies", "Select Studies"]}
+              checked={studiesRadio}
+            />
+          </FormField>
+          <FormField>
+            <div className="mb-1">
+              Add study...
             </div>
-
-            {/* Availability & Ditti ID fields */}
-            <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
-                <RadioField
-                  id="availability-radio"
-                  label="Availability"
-                  onChange={handleClickAvailability}
-                  values={["All Users", "Individual"]}
-                  checked={availability}
-                />
-              </div>
-              <div className="flex w-full flex-col mb-8 md:w-1/2">
-                <TextField
-                  id="availability"
-                  type="text"
-                  label="Ditti ID"
-                  value={dittiId}
-                  onKeyup={setDittiId}
-                  disabled={availability === "All Users"}
-                  feedback={availabilityFeedback}
-                />
-              </div>
+            <div className="border-light">
+              <Select
+                id={0}
+                opts={studies.map(
+                  s => {return { value: s.id, label: s.acronym }}
+                )}
+                placeholder="Select studies..."
+                callback={selectStudy}
+                disabled={studiesRadio === "All Studies"}/>
             </div>
-
-            {/* Studies & select studies fields */}
-            <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
-                <RadioField
-                  id="studies-radio"
-                  label="Studies"
-                  onChange={handleClickStudies}
-                  values={["All Studies", "Select Studies"]}
-                  checked={studiesRadio}
-                />
+            {/* feedback on error TODO: Fix the select field so this does not have to be here */}
+            {studiesFeedback !== "" && <span className="text-sm text-[red]">{studiesFeedback}</span>}
+          </FormField>
+        </FormRow>
+        {!!selectedStudies.size &&
+          <FormRow>
+            <FormField>
+              <div className="mb-1">
+                <b>Selected studies</b>
               </div>
-              <div className="flex w-full flex-col mb-8 md:w-1/2">
-                <div style={{ marginBottom: "0.5rem" }}>
-                  <b>Add study...</b>
-                </div>
-                <div className={"border-light" + (studiesRadio === "All Studies" ? " bg-light" : "")}>
-                  <Select
-                    id={0}
-                    opts={studies.map(
-                      s => {return { value: s.id, label: s.acronym }}
-                    )}
-                    placeholder="Select studies..."
-                    callback={selectStudy}
-                    disabled={studiesRadio === "All Studies"}/>
-                </div>
-
-                {/* feedback on error TODO: Fix the select field so this does not have to be here */}
-                {studiesFeedback !== "" && <span className="text-sm text-[red]">{studiesFeedback}</span>}
-              </div>
-            </div>
-            {
-              Boolean(selectedStudies.size) &&
-              <div className="flex flex-col md:flex-row">
-                <div className="flex w-full flex-col mb-8">
-                  <div className="mb-1">
-                    <b>Selected studies</b>
-                  </div>
-                  {
-                    studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
-                      <div key={i} className="flex items-center justify-between">
-                        <span className="truncate">{`${s.acronym}: ${s.name}`}</span>
-                        <div
-                          className="p-2 cursor-pointer"
-                          onClick={() => removeStudy(s.id)}>
-                          <CloseIcon color="warning" />
-                        </div>
-                      </div>
-                    )
-                  }
-                </div>
-              </div>
-            }
-
-            {/* Select audio files field */}
-            <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  accept=".mp3"
-                  onChange={handleSelectFiles} />
-                <label
-                  htmlFor="audio-file-upload"
-                  className="mb-2 font-bold">
-                  Select audio files
-                </label>
-                <button
-                  className="button button-large button-secondary p-4"
-                  onClick={handleClickChooseFiles}>
-                  Choose files
-                </button>
-              </div>
-            </div>
-
-            {/* Selected audio files list */}
-            {
-              Boolean(files.length) &&
-              <div className="flex flex-col md:flex-row">
-                <div className="flex flex-col w-full">
-                  <span className="font-bold mb-1">Audio files</span>
-                  {files.map((file, i) =>
-                    <div key={i} className="w-full">
-                      <div className="flex justify-between w-full mb-1">
-                        <span className="truncate">{file.name}</span>
-                        <span className="w-max flex-shrink-0">{file.size} - {formatDuration(file.length)}</span>
-                      </div>
-                      <div className="flex w-full flex-col mb-4">
-                        {
-                          file.exists ?
-                          <span className="text-sm text-[red]">
-                            An audio file with this name already exists.<br />
-                            Rename this file or delete the existing file and try
-                            again.
-                          </span> :
-                          <TextField
-                            id={`file-${file.name}`}
-                            type="text"
-                            value={file.title}
-                            onKeyup={(text: string) => handleTitleKeyup(text, i)}>
-                              <span className="flex items-center font-bold px-2 bg-light h-full">Title</span>
-                          </TextField>
-                        }
-                      </div>
+              {
+                studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
+                  <div key={i} className="flex items-center justify-between">
+                    <span className="truncate">{`${s.acronym}: ${s.name}`}</span>
+                    <div
+                      className="p-2 cursor-pointer"
+                      onClick={() => removeStudy(s.id)}>
+                      <CloseIcon color="warning" />
                     </div>
-                  )}
-                </div>
-              </div>
-            }
-          </>
+                  </div>
+                )
+              }
+            </FormField>
+          </FormRow>
         }
-      </div>
+
+        {/* Select audio files field */}
+        <FormRow>
+          <FormField>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              accept=".mp3"
+              onChange={handleSelectFiles} />
+            <label
+              htmlFor="audio-file-upload"
+              className="mb-1">
+              Select audio files
+            </label>
+            <Button
+              variant="secondary"
+              onClick={handleClickChooseFiles}>
+                Choose files
+            </Button>
+          </FormField>
+        </FormRow>
+
+        {/* Selected audio files list */}
+        {
+          Boolean(files.length) &&
+          <FormRow>
+            <FormField>
+              <span className="font-bold mb-2">Audio files</span>
+              {files.map((file, i) =>
+                <div key={i} className="w-full">
+                  <div className="flex justify-between w-full mb-1">
+                    <span className="truncate">{file.name}</span>
+                    <span className="w-max flex-shrink-0">{file.size} - {formatDuration(file.length)}</span>
+                  </div>
+                  <div className="flex w-full flex-col mb-4">
+                    {
+                      file.exists ?
+                      <span className="text-sm text-[red]">
+                        An audio file with this name already exists.<br />
+                        Rename this file or delete the existing file and try
+                        again.
+                      </span> :
+                      <TextField
+                        id={`file-${file.name}`}
+                        type="text"
+                        value={file.title}
+                        onKeyup={(text: string) => handleTitleKeyup(text, i)}>
+                          <span className="flex items-center px-2 bg-light h-full">Title</span>
+                      </TextField>
+                    }
+                  </div>
+                </div>
+              )}
+            </FormField>
+          </FormRow>
+        }
+      </Form>
 
       {/* the subject summary */}
-      <div className="flex flex-col flex-shrink-0 px-16 py-12 w-full lg:px-8 lg:w-[20rem] 2xl:w-[28rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)]">
-        <h1 className="border-b border-solid border-white text-xl font-bold">Audio File Summary</h1>
-        <div className="flex flex-col md:flex-row lg:flex-col lg:max-h-[calc(100vh-17rem)] lg:h-full lg:justify-between">
-          <div className="flex-grow mb-8 lg:overflow-y-scroll truncate">
-            Files:
-            <br />
-            {/* &nbsp;&nbsp;&nbsp;&nbsp;{title} */}
-            {
-              files.map((file, i) =>
-                <span key={i}>
-                  {Boolean(i) && <><br /><br /></>}
-                  &nbsp;&nbsp;&nbsp;&nbsp;{file.title}
-                  <br />
-                  &nbsp;&nbsp;&nbsp;&nbsp;{file.size} - {formatDuration(file.length)}
-                </span>
-              )
-            }
-            <br />
-            <br />
-            Category:
-            <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{category}
-            <br />
-            <br />
-            Availability
-            <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;
-            {availability === "All Users"
-              ? "All Users"
-              : `Individual - ${dittiId}`}
-            <br />
-            <br />
-            Studies:
-            <br />
-            {
-              studiesRadio === "All Studies" ?
-              <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span> :
-              studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
-                <span key={`study-${i}`}>
-                  {Boolean(i) && <br />}
-                  &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}: {s.name}
-                </span>
-              )
-            }
-          </div>
+      <FormSummary>
+        <FormSummaryTitle>Audio File Summary</FormSummaryTitle>
+        <FormSummaryContent>
+          Files:
+          <br />
+          {/* &nbsp;&nbsp;&nbsp;&nbsp;{title} */}
           {
-            // Upload progres bar
-            uploading &&
-            <div className="flex flex-col w-full mb-4">
-              <div className="flex justify-between mb-1 w-full">
-                <span>Uploading...</span>
-                <span>{percentComplete}%</span>
-              </div>
-              <span className={`h-[4px] bg-white transition-all duration-500`}
-                style={{ width: percentComplete ? `${percentComplete}%` : 0 }}/>
-            </div>
+            files.map((file, i) =>
+              <span key={i}>
+                {Boolean(i) && <><br /><br /></>}
+                &nbsp;&nbsp;&nbsp;&nbsp;{file.title}
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;{file.size} - {formatDuration(file.length)}
+              </span>
+            )
           }
-          <div className="flex flex-col md:w-1/2 lg:w-full justify-end">
-            <AsyncButton
-              className="p-4"
-              onClick={handleUpload}
-              text="Upload"
-              type="primary"
-              disabled={!canUpload}/>
-            <div className="mt-6 text-sm">
-              <i>
-              Audio file details cannot be changed after upload. The files must be
-              deleted and uploaded again.
-              </i>
+          <br />
+          <br />
+          Category:
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;{category}
+          <br />
+          <br />
+          Availability
+          <br />
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          {availability === "All Users"
+            ? "All Users"
+            : `Individual - ${dittiId}`}
+          <br />
+          <br />
+          Studies:
+          <br />
+          {
+            studiesRadio === "All Studies" ?
+            <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span> :
+            studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
+              <span key={`study-${i}`}>
+                {Boolean(i) && <br />}
+                &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}: {s.name}
+              </span>
+            )
+          }
+        </FormSummaryContent>
+        {
+          // Upload progres bar
+          uploading &&
+          <div className="flex flex-col w-full mb-4">
+            <div className="flex justify-between mb-1 w-full">
+              <span>Uploading...</span>
+              <span>{percentComplete}%</span>
             </div>
+            <span className={`h-[4px] bg-white transition-all duration-500`}
+              style={{ width: percentComplete ? `${percentComplete}%` : 0 }}/>
           </div>
-        </div>
-      </div>
-    </div>
+        }
+        <FormSummaryButton>
+          <AsyncButton
+            className="p-4"
+            onClick={handleUpload}
+            text="Upload"
+            type="primary"
+            disabled={!canUpload}/>
+        </FormSummaryButton>
+        <FormSummarySubtext>
+          Audio file details cannot be changed after upload. The files must be
+          deleted and uploaded again.
+        </FormSummarySubtext>
+      </FormSummary>
+    </FormView>
   );
 };
 
