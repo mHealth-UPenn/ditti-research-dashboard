@@ -1,9 +1,5 @@
-from datetime import datetime, timezone
 import json
-from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study,
-    StudySubject
-)
+from aws_portal.models import AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study
 from tests.testing_utils import get_auth_headers, login_admin_account
 
 
