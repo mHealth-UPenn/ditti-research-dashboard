@@ -9,7 +9,7 @@ interface LinkProps {
 const Link = ({ onClick, children }: PropsWithChildren<LinkProps>) => {
   return (
     <span
-      className="text-link underline hover:text-link-hover"
+      className="text-link underline hover:text-link-hover cursor-pointer"
       onClick={onClick}>
         {children}
     </span>

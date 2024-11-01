@@ -9,6 +9,13 @@ import AudioFileUpload from "./audioFileUpload";
 import AudioFiles from "./audioFiles";
 import { APP_ENV } from "../../environment";
 import dataFactory from "../../dataFactory";
+import Card from "../cards/card";
+import ViewContainer from "../containers/viewContainer";
+import CardContentRow from "../cards/cardHeader";
+import Button from "../buttons/button";
+import Title from "../cards/cardTitle";
+import ActiveIcon from "../icons/activeIcon";
+import Link from "../links/link";
 
 interface StudiesViewProps extends ViewProps {
   getTapsAsync: () => Promise<TapDetails[]>;
@@ -92,64 +99,47 @@ const StudiesView: React.FC<StudiesViewProps> = ({
     }
   };
 
-  const audioFileCard = (
-    <div className="p-6 m-6 w-[24rem] bg-white shadow">
-      <div className="card-title">Audio Files</div>
-      {loading ? (
-        <SmallLoader />
-      ) : (
-        <div>
-          <div style={{ marginBottom: "1rem" }}>
-            <button
-              className="button-primary button-lg"
-              onClick={() => handleClick(
-                ["Audio File", "Upload"],
-                <AudioFileUpload
-                  goBack={goBack}
-                  flashMessage={flashMessage}
-                  handleClick={handleClick}
-                />
-              )}
-              style={{ marginRight: "0.5rem" }}
-            >
-              Upload +
-            </button>
-            <button
-              className="button-secondary button-lg"
-              onClick={() => handleClick(
-                ["Audio File"],
-                <AudioFiles
-                  goBack={goBack}
-                  flashMessage={flashMessage}
-                  handleClick={handleClick}
-                />
-              )}
-            >
-              View All
-            </button>
-          </div>
-          <div>
-            <div className="flex-space border-light-b" style={{ paddingBottom: "0.5rem" }}>
-              <span><b>All files</b></span>
-              <span><b>{getAudioFiles().length} files</b></span>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+  const handleClickUploadAudioFile = () => handleClick(
+    ["Audio File", "Upload"],
+    <AudioFileUpload
+      goBack={goBack}
+      flashMessage={flashMessage}
+      handleClick={handleClick}
+    />
   );
 
-  return (
-    <div className="flex flex-wrap p-6 max-h-[calc(calc(100vh-8rem)-1px)] overflow-scroll overflow-x-hidden">
-      <div className="p-6 m-6 w-[36rem] bg-white shadow">
-        <div className="text-xl font-bold mb-4">Studies</div>
-        {loading ? (
+  const handleClickViewAudioFiles = () => handleClick(
+    ["Audio File"],
+    <AudioFiles
+      goBack={goBack}
+      flashMessage={flashMessage}
+      handleClick={handleClick}
+    />
+  );
+
+  if (loading) {
+    return (
+      <ViewContainer>
+        <Card width="md">
           <SmallLoader />
-        ) : (
+        </Card>
+        <Card width="sm">
+          <SmallLoader />
+        </Card>
+      </ViewContainer>
+    );
+  }
+
+  return (
+    <ViewContainer>
+      <Card width="md">
+        <CardContentRow>
+          <Title>Studies</Title>
+        </CardContentRow>
+        {
           // for each study the user has access to
           studies.map((s) => {
             // count the number of taps that were recorded in the last 7 days
-            console.log(getTaps()[0])
             const lastWeek = getTaps()
               .filter(
                 (t) =>
@@ -170,42 +160,57 @@ const StudiesView: React.FC<StudiesViewProps> = ({
               .filter((v, i, arr) => arr.indexOf(v) === i).length;
 
             return (
-              <div key={s.id} className="border-light-b study-row">
-                {/* active tapping icon */}
-                <div
-                  className={
-                    "icon " + (last24hrs ? "icon-success" : "icon-gray")
-                  }
-                ></div>
-
-                {/* link to study summary */}
-                <div className="study-row-name">
-                  <span
-                    className="link"
-                    onClick={() => handleClickStudy(s.id)}
-                  >
-                    {s.acronym}
-                  </span>
+              <CardContentRow key={s.id} className="border-b border-light">
+                <div className="flex items-center">
+                  {/* active tapping icon */}
+                  <ActiveIcon active={!!last24hrs} className="mr-2" />
+                  {/* link to study summary */}
+                  <Link onClick={() => handleClickStudy(s.id)}>
+                    {s.acronym}: {s.name}
+                  </Link>
                 </div>
 
                 {/* display the number of taps in the last 7 days and 24 hours */}
-                <div className="study-row-summary">
-                  <div className="study-row-summary-l">
+                <div className="flex">
+                  <div className="flex flex-col mr-2 font-bold">
                     <div>24 hours:</div>
                     <div>1 week:</div>
                   </div>
-                  <div className="study-row-summary-r">
+                  <div className="flex flex-col">
                     <div>{last24hrs} active subjects</div>
                     <div>{lastWeek} active subjects</div>
                   </div>
                 </div>
-              </div>
+              </CardContentRow>
             );
           })
-        )}
-      </div>
-      {audioFileCard}
-    </div>
+        }
+      </Card>
+
+      <Card width="sm">
+        <CardContentRow>
+          <Title>Audio Files</Title>
+        </CardContentRow>
+        <CardContentRow>
+          <div>
+            <Button
+              onClick={handleClickUploadAudioFile}
+              className="mr-2">
+                Upload +
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={handleClickViewAudioFiles}>
+                View all
+            </Button>
+          </div>
+        </CardContentRow>
+        <CardContentRow className="border-b border-light">
+          <b>All files</b>
+          <b>{getAudioFiles().length} files</b>
+        </CardContentRow>
+      </Card>
+    </ViewContainer>
   );
 };
 
