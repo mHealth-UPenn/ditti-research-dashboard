@@ -5,9 +5,9 @@ interface CardProps {
 }
 
 const widthMap = {
-  lg: "w-full",
-  md: "w-full lg:w-[calc(65%-8rem)]",
-  sm: "w-full lg:w-[calc(32%-8rem)]",
+  lg: "w-full lg:px-6",
+  md: "w-full lg:w-2/3 lg:px-6",
+  sm: "w-full lg:w-1/3 lg:px-6",
 }
 
 
@@ -16,8 +16,10 @@ const Card = ({
   children
 }: PropsWithChildren<CardProps>) => {
   return (
-    <div className={`bg-white p-8 lg:shadow-lg ${widthMap[width]}`}>
-      {children}
+    <div className={widthMap[width]}>
+      <div className={`bg-white p-8 lg:shadow-lg w-full`}>
+        {children}
+      </div>
     </div>
   );
 };
