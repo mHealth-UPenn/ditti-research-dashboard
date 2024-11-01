@@ -6,9 +6,10 @@ from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AboutSleepTemplate, AccessGroup, Account, Action, App,
+    AboutSleepTemplate, AccessGroup, Account, Action, App, Api,
     JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
-    JoinRolePermission, Permission, Resource, Role, Study
+    JoinRolePermission, Permission, Resource, Role, Study, StudySubject,
+    JoinStudySubjectStudy, JoinStudySubjectApi
 )
 from aws_portal.utils.auth import auth_required, validate_password
 from aws_portal.utils.db import populate_model
@@ -73,7 +74,7 @@ def account():
 def account_create():
     """
     Create a new account.
-    
+
     Request syntax
     --------------
     {
@@ -170,7 +171,7 @@ def account_create():
 def account_edit():
     """
     Edit an existing account
-    
+
     Request syntax
     --------------
     {
@@ -402,7 +403,7 @@ def study():
 def study_create():
     """
     Create a new study.
-    
+
     Request syntax
     --------------
     {
@@ -450,7 +451,7 @@ def study_create():
 def study_edit():
     """
     Edit an existing study
-    
+
     Request syntax
     --------------
     {
@@ -598,7 +599,7 @@ def access_group():
 def access_group_create():
     """
     Create a new access group.
-    
+
     Request syntax
     --------------
     {
@@ -674,7 +675,7 @@ def access_group_create():
 def access_group_edit():
     """
     Edit an existing access group.
-    
+
     Request syntax
     --------------
     {
@@ -856,7 +857,7 @@ def role():
 def role_create():
     """
     Create a new role.
-    
+
     Request syntax
     --------------
     {
@@ -927,7 +928,7 @@ def role_create():
 def role_edit():
     """
     Edit an existing role.
-    
+
     Request syntax
     --------------
     {
@@ -1206,13 +1207,13 @@ def about_sleep_template():
 
         if i:
             q = AboutSleepTemplate.query.filter(
-              ~AboutSleepTemplate.is_archived &
-              (AboutSleepTemplate.id == int(i))
+                ~AboutSleepTemplate.is_archived &
+                (AboutSleepTemplate.id == int(i))
             )
 
         else:
             q = AboutSleepTemplate.query.filter(
-              ~AboutSleepTemplate.is_archived
+                ~AboutSleepTemplate.is_archived
             )
 
         res = [s.meta for s in q.all()]
@@ -1233,7 +1234,7 @@ def about_sleep_template():
 def about_sleep_template_create():
     """
     Create a new about sleep template.
-    
+
     Request syntax
     --------------
     {
@@ -1281,7 +1282,7 @@ def about_sleep_template_create():
 def about_sleep_template_edit():
     """
     Edit an existing about sleep template
-    
+
     Request syntax
     --------------
     {
@@ -1311,7 +1312,7 @@ def about_sleep_template_edit():
         data = request.json["edit"]
         about_sleep_template_id = request.json["id"]
         about_sleep_template = AboutSleepTemplate.query.get(
-          about_sleep_template_id
+            about_sleep_template_id
         )
 
         populate_model(about_sleep_template, data)
@@ -1360,7 +1361,7 @@ def about_sleep_template_archive():
     try:
         about_sleep_template_id = request.json["id"]
         about_sleep_template = AboutSleepTemplate.query.get(
-          about_sleep_template_id
+            about_sleep_template_id
         )
         about_sleep_template.is_archived = True
         db.session.commit()
@@ -1372,6 +1373,715 @@ def about_sleep_template_archive():
         logger.warn(exc)
         db.session.rollback()
 
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg})
+
+
+@blueprint.route("/study_subject")
+@auth_required("View", "Admin Dashboard")
+@auth_required("View", "Study Subjects")
+def study_subject():
+    """
+    Get one study subject or a list of all study subjects. This will return one
+    study subject if the study subject's database primary key is passed as a URL option.
+
+    Options
+    -------
+    app: 1
+    id: str
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...Study Subject data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        # Retrieve the 'id' parameter from the query string
+        study_subject_id = request.args.get("id")
+
+        if study_subject_id:
+            # Attempt to convert 'id' to integer
+            try:
+                study_subject_id = int(study_subject_id)
+            except ValueError:
+                return make_response({"msg": "Invalid ID format. ID must be an integer."}, 400)
+
+            # Query for the specific StudySubject, excluding archived entries
+            query = StudySubject.query.filter(
+                ~StudySubject.is_archived & (
+                    StudySubject.id == study_subject_id)
+            )
+        else:
+            # Query for all non-archived StudySubjects
+            query = StudySubject.query.filter(~StudySubject.is_archived)
+
+        # Execute the query and serialize the results
+        res = [a.meta for a in query.all()]
+        return jsonify(res)
+
+    except Exception:
+        # Capture and log the traceback
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({"msg": msg}, 500)
+
+
+@blueprint.route("/study_subject/create", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "Study Subjects")
+def study_subject_create():
+    """
+    Create a new study subject.
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        create: {
+            email: str,
+            studies: [
+                { 
+                    id: int,
+                    expires_o": str,
+                    did_consent: bool
+                },
+                ...
+            ],
+            apis: [
+                {
+                    id: int,
+                    api_user_uuid: str,
+                    scope: str[],
+                    access_key_uuid: str,
+                    refresh_key_uuid: str
+                },
+                ...
+            ]
+        }
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "Study Subject Created Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg:    "Email was not provided" or
+                "Email already exists" or
+                "Invalid study ID: X" or
+                "Invalid API ID: Y" or
+                "Invalid date format for expires_on: YYYY-MM-DDTHH:MM:SSZ"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: "Internal server error message"
+    }
+    """
+    try:
+        data = request.json.get("create")
+        if not data:
+            return make_response({"msg": "No data provided"}, 400)
+
+        email = data.get("email")
+        if not email:
+            return make_response({"msg": "Email was not provided"}, 400)
+
+        if StudySubject.query.filter(StudySubject.email == email).first():
+            return make_response({"msg": "Email already exists"}, 400)
+
+        # Initialize StudySubject instance
+        study_subject = StudySubject()
+
+        # Populate non-relationship fields using populate_model
+        populate_model(study_subject, data)
+
+        # Set default values if not provided
+        study_subject.created_on = datetime.now(UTC)
+        study_subject.is_archived = False
+
+        # Add study associations
+        studies_data = data.get("studies", [])
+        for study_entry in studies_data:
+            study_id = study_entry.get("id")
+            if not study_id:
+                return make_response({"msg": "Study ID is required in studies"}, 400)
+            study = Study.query.get(study_id)
+            if study is None:
+                return make_response({"msg": f"Invalid study ID: {study_id}"}, 400)
+            if study.is_archived:
+                return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
+
+            did_consent = study_entry.get("did_consent", False)
+            expires_on_str = study_entry.get("expires_on")
+            if not expires_on_str:
+                return make_response({"msg": f"'expires_on' is required for study ID {study_id}"}, 400)
+            try:
+                expires_on = datetime.fromisoformat(
+                    expires_on_str.replace("Z", "+00:00"))
+            except ValueError:
+                return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+
+            join_study = JoinStudySubjectStudy(
+                study_subject=study_subject,
+                study=study,
+                did_consent=did_consent,
+                expires_on=expires_on
+            )
+            db.session.add(join_study)
+
+        # Add API associations
+        apis_data = data.get("apis", [])
+        for api_entry in apis_data:
+            api_id = api_entry.get("id")
+            if not api_id:
+                return make_response({"msg": "API ID is required in apis"}, 400)
+            api = Api.query.get(api_id)
+            if api is None:
+                return make_response({"msg": f"Invalid API ID: {api_id}"}, 400)
+            if api.is_archived:
+                return make_response({"msg": f"Cannot associate with archived API ID: {api_id}"}, 400)
+
+            api_user_uuid = api_entry.get("api_user_uuid")
+            if not api_user_uuid:
+                return make_response({"msg": f"'api_user_uuid' is required in apis {api_id}"}, 400)
+            # string: wrap it in a list, empty: [], list: list
+            # scope should probably be nonnullable in JoinStudySubjectApi
+            scope = [scope] if isinstance(
+                scope := api_entry.get("scope", []), str) else scope
+            access_key_uuid = api_entry.get("access_key_uuid")
+            refresh_key_uuid = api_entry.get("refresh_key_uuid")
+
+            join_api = JoinStudySubjectApi(
+                study_subject=study_subject,
+                api=api,
+                api_user_uuid=api_user_uuid,
+                scope=scope,
+                access_key_uuid=access_key_uuid,
+                refresh_key_uuid=refresh_key_uuid
+            )
+            db.session.add(join_api)
+
+        db.session.add(study_subject)
+        db.session.commit()
+
+        return jsonify({"msg": "Study Subject Created Successfully"}), 200
+
+    # Other server errors return 500
+    except Exception as e:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warning(exc)
+        db.session.rollback()
+        return make_response({"msg": msg}, 500)
+
+
+@blueprint.route("/study_subject/archive", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "Study Subjects")
+def study_subject_archive():
+    """
+    Archive a study subject.
+
+    Request syntax
+    --------------
+    {
+        app: int,
+        id: int
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "Study Subject Archived Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg:    "Study Subject ID not provided" or
+                "Study Subject with ID X does not exist"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: "Internal server error message"
+    }
+    """
+    try:
+        study_subject_id = request.json.get("id")
+        if not study_subject_id:
+            return make_response({"msg": "Study Subject ID not provided"}, 400)
+
+        study_subject = StudySubject.query.get(study_subject_id)
+        if study_subject is None:
+            return make_response({"msg": f"Study Subject with ID {study_subject_id} does not exist"}, 400)
+
+        study_subject.is_archived = True
+        db.session.commit()
+        msg = "Study Subject Archived Successfully"
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warning(exc)
+        db.session.rollback()
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg}), 200
+
+
+@blueprint.route("/study_subject/edit", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "Study Subjects")
+def study_subject_edit():
+    """
+    Edit an existing study subject
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int,
+        edit: {
+            email: str,  # Optional
+            studies: [
+                {
+                    id: int,
+                    expires_on: str,  # ISO 8601 format, e.g., "2024-12-31T23:59:59Z"
+                    did_consent: bool
+                },
+                ...
+            ],
+            apis: [
+                {
+                    id: int,
+                    api_user_uuid: str,
+                    scope: str[],
+                    access_key_uuid: str,
+                    refresh_key_uuid: str
+                },
+                ...
+            ]
+        }
+    }
+
+    All data in the request body are optional. Any attributes that are excluded
+    from the request body will not be changed.
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "Study Subject Edited Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: "Study Subject with ID X does not exist" or
+             "Email already exists" or
+             "Invalid study ID: Y" or
+             "Invalid API ID: Z" or
+             "Invalid date format for expires_on: YYYY-MM-DDTHH:MM:SSZ"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: "Internal server error message"
+    }
+    """
+    try:
+        data = request.json.get("edit")
+        study_subject_id = request.json.get("id")
+
+        if not study_subject_id:
+            return make_response({"msg": "Study Subject ID not provided"}, 400)
+
+        study_subject = StudySubject.query.get(study_subject_id)
+        if not study_subject:
+            return make_response({"msg": f"Study Subject with ID {study_subject_id} does not exist"}, 400)
+
+        # Update email if provided
+        if data and "email" in data:
+            new_email = data["email"]
+            if new_email != study_subject.email:
+                if StudySubject.query.filter(StudySubject.email == new_email).first():
+                    return make_response({"msg": "Email already exists"}, 400)
+                study_subject.email = new_email
+
+        # Update other non-relationship fields using populate_model
+        if data:
+            populate_model(study_subject, data)
+
+        # Update studies if provided
+        if data and "studies" in data:
+            # Remove studies not in the new list
+            try:
+                new_study_ids = [s["id"] for s in data["studies"]]
+            except KeyError:
+                return make_response({"msg": "Study ID is required in studies"}, 400)
+            for join in list(study_subject.studies):
+                if join.study_id not in new_study_ids:
+                    db.session.delete(join)
+
+            # Add or update studies
+            for study_entry in data["studies"]:
+                study_id = study_entry.get("id")
+                if not study_id:
+                    return make_response({"msg": "Study ID is required in studies"}, 400)
+                study = Study.query.get(study_id)
+                if study is None:
+                    return make_response({"msg": f"Invalid study ID: {study_id}"}, 400)
+                if study.is_archived:
+                    return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
+
+                did_consent = study_entry.get("did_consent", False)
+                expires_on_str = study_entry.get("expires_on")
+                if not expires_on_str:
+                    return make_response({"msg": f"'expires_on' is required for study ID {study_id}"}, 400)
+                try:
+                    expires_on = datetime.fromisoformat(
+                        expires_on_str.replace("Z", "+00:00"))
+                except ValueError:
+                    return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+
+                join = JoinStudySubjectStudy.query.get(
+                    (study_subject_id, study_id))
+                if join:
+                    # Update existing association
+                    join.did_consent = did_consent
+                    join.expires_on = expires_on
+                else:
+                    # Create new association
+                    new_join = JoinStudySubjectStudy(
+                        study_subject=study_subject,
+                        study=study,
+                        did_consent=did_consent,
+                        expires_on=expires_on
+                    )
+                    db.session.add(new_join)
+
+        # Update APIs if provided
+        if data and "apis" in data:
+            # Remove APIs not in the new list
+            try:
+                new_api_ids = [a["id"] for a in data["apis"]]
+            except KeyError:
+                return make_response({"msg": "API ID is required in apis"}, 400)
+            for join in list(study_subject.apis):
+                if join.api_id not in new_api_ids:
+                    db.session.delete(join)
+
+            # Add or update APIs
+            for api_entry in data["apis"]:
+                api_id = api_entry.get("id")
+                if not api_id:
+                    return make_response({"msg": "API ID is required in apis"}, 400)
+                api = Api.query.get(api_id)
+                if api is None:
+                    return make_response({"msg": f"Invalid API ID: {api_id}"}, 400)
+                if api.is_archived:
+                    return make_response({"msg": f"Cannot associate with archived API ID: {api_id}"}, 400)
+
+                api_user_uuid = api_entry.get("api_user_uuid")
+                if not api_user_uuid:
+                    return make_response({"msg": f"'api_user_uuid' is required for API ID {api_id}"}, 400)
+                scope = [scope] if isinstance(
+                    scope := api_entry.get("scope", []), str) else scope
+                access_key_uuid = api_entry.get("access_key_uuid")
+                refresh_key_uuid = api_entry.get("refresh_key_uuid")
+
+                join_api = JoinStudySubjectApi.query.get(
+                    (study_subject_id, api_id))
+                if join_api:
+                    # Update existing association
+                    join_api.api_user_uuid = api_user_uuid
+                    join_api.scope = scope
+                    join_api.access_key_uuid = access_key_uuid
+                    join_api.refresh_key_uuid = refresh_key_uuid
+                else:
+                    # Create new association
+                    new_join_api = JoinStudySubjectApi(
+                        study_subject=study_subject,
+                        api=api,
+                        api_user_uuid=api_user_uuid,
+                        scope=scope,
+                        access_key_uuid=access_key_uuid,
+                        refresh_key_uuid=refresh_key_uuid
+                    )
+                    db.session.add(new_join_api)
+
+        db.session.commit()
+        msg = "Study Subject Edited Successfully"
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg})
+
+
+@blueprint.route("/api")
+@auth_required("View", "Admin Dashboard")
+@auth_required("View", "APIs")
+def api():
+    """
+    Get one API or a list of all APIs. This will return one API if the API's
+    database primary key is passed as a URL option.
+
+    Options
+    -------
+    app: 1
+    id: str
+
+    Response syntax (200)
+    ---------------------
+    [
+        {
+            ...API data
+        },
+        ...
+    ]
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        api_id = request.args.get("id")
+
+        if api_id:
+            query = Api.query.filter(
+                ~Api.is_archived & (Api.id == int(api_id))
+            )
+        else:
+            query = Api.query.filter(~Api.is_archived)
+
+        res = [api.meta for api in query.all()]
+        return jsonify(res)
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({"msg": msg}, 500)
+
+
+@blueprint.route("/api/create", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Create", "APIs")
+def api_create():
+    """
+    Create a new API.
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        create: {
+            name: str
+        }
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "API Created Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: "API name was not provided" or "API name already exists"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        data = request.json.get("create")
+        if not data:
+            return make_response({"msg": "No data provided"}, 400)
+
+        name = data.get("name")
+        if not name:
+            return make_response({"msg": "API name was not provided"}, 400)
+
+        # Check if an API with the same name already exists
+        if Api.query.filter_by(name=name).first():
+            return make_response({"msg": "API name already exists"}, 400)
+
+        api = Api()
+        populate_model(api, data)
+        db.session.add(api)
+        db.session.commit()
+        msg = "API Created Successfully"
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg})
+
+
+@blueprint.route("/api/edit", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Edit", "APIs")
+def api_edit():
+    """
+    Edit an existing API.
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int,
+        edit: {
+            name: str
+        }
+    }
+
+    All data in the request body are optional. Any attributes that are excluded
+    from the request body will not be changed.
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "API Edited Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: "API with the same name already exists" or "API with ID X does not exist"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        data = request.json.get("edit")
+        api_id = request.json.get("id")
+        if not api_id:
+            return make_response({"msg": "API ID not provided"}, 400)
+
+        api = Api.query.get(api_id)
+        if not api:
+            return make_response({"msg": f"API with ID {api_id} does not exist"}, 400)
+
+        if data and "name" in data:
+            new_name = data["name"]
+            if new_name != api.name:
+                # Check if another API with the same name exists
+                existing_api = Api.query.filter(
+                    Api.name == new_name, Api.id != api_id
+                ).first()
+                if existing_api:
+                    return make_response({"msg": "API with the same name already exists"}, 400)
+
+        populate_model(api, data)
+        db.session.commit()
+        msg = "API Edited Successfully"
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
+        return make_response({"msg": msg}, 500)
+
+    return jsonify({"msg": msg})
+
+
+@blueprint.route("/api/archive", methods=["POST"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "APIs")
+def api_archive():
+    """
+    Archive an API. This action has the same effect as deleting an entry
+    from the database. However, archived items are only filtered from queries
+    and can be retrieved.
+
+    Request syntax
+    --------------
+    {
+        app: 1,
+        id: int
+    }
+
+    Response syntax (200)
+    ---------------------
+    {
+        msg: "API Archived Successfully"
+    }
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: "API with ID X does not exist"
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: a formatted traceback if an uncaught error was thrown
+    }
+    """
+    try:
+        api_id = request.json.get("id")
+        if not api_id:
+            return make_response({"msg": "API ID not provided"}, 400)
+
+        api = Api.query.get(api_id)
+        if not api:
+            return make_response({"msg": f"API with ID {api_id} does not exist"}, 400)
+
+        api.is_archived = True
+        db.session.commit()
+        msg = "API Archived Successfully"
+
+    except Exception:
+        exc = traceback.format_exc()
+        msg = exc.splitlines()[-1]
+        logger.warn(exc)
+        db.session.rollback()
         return make_response({"msg": msg}, 500)
 
     return jsonify({"msg": msg})
