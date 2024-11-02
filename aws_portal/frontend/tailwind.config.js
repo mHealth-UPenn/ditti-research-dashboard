@@ -24,6 +24,7 @@ module.exports = {
       "link": "#666699",
       "link-hover": "#52527A",
       "light": "#B3B3CC",
+      "extra-light": "#F0F0F5"
     },
   },
   plugins: [],

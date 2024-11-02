@@ -6,6 +6,9 @@ import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
 import StudiesEdit from "./studiesEdit";
 import { SmallLoader } from "../loader";
+import Button from "../buttons/button";
+import AdminView from "../containers/admin/adminView";
+import AdminContent from "../containers/admin/adminContent";
 
 const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
   const [canCreate, setCanCreate] = useState(false);
@@ -51,46 +54,38 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
       return [
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{acronym}</span>
-            </div>
+            <span>{acronym}</span>
           ),
           searchValue: acronym,
           sortValue: acronym
         },
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{name}</span>
-            </div>
+            <span>{name}</span>
           ),
           searchValue: name,
           sortValue: name
         },
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{dittiId}</span>
-            </div>
+            <span>{dittiId}</span>
           ),
           searchValue: dittiId,
           sortValue: dittiId
         },
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{email}</span>
-            </div>
+            <span>{email}</span>
           ),
           searchValue: email,
           sortValue: email
         },
         {
           contents: (
-            <div className="flex-left table-control">
-              {canEdit && (
-                <button
-                  className="button-secondary"
+            <>
+              {canEdit &&
+                <Button
+                  variant="secondary"
                   onClick={() =>
                     handleClick(
                       ["Edit", acronym],
@@ -98,23 +93,23 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
                         studyId={id}
                         flashMessage={flashMessage}
                         goBack={goBack}
-                        handleClick={handleClick}
-                      />
+                        handleClick={handleClick} />
                     )
-                  }
-                >
-                  Edit
-                </button>
-              )}
-              {canArchive && (
-                <button className="button-danger" onClick={() => deleteStudy(id)}>
+                  }>
+                    Edit
+                </Button>
+              }
+              {canArchive &&
+                <Button variant="danger" onClick={() => deleteStudy(id)}>
                   Archive
-                </button>
-              )}
-            </div>
+                </Button>
+              }
+            </>
           ),
           searchValue: "",
-          sortValue: ""
+          sortValue: "",
+          paddingX: 0,
+          paddingY: 0,
         }
       ];
     });
@@ -169,52 +164,59 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
     flashMessage(msg, "danger");
   };
 
+  const tableControl = canCreate ? (
+    <Button
+      variant="primary"
+      onClick={() =>
+        handleClick(
+          ["Create"],
+          <StudiesEdit
+            studyId={0}
+            flashMessage={flashMessage}
+            goBack={goBack}
+            handleClick={handleClick}
+          />
+        )
+      }>
+        Create +
+    </Button>
+  ) : (
+    <React.Fragment />
+  )
+
+  const navbar =
+    <Navbar
+      active="Studies"
+      flashMessage={flashMessage}
+      goBack={goBack}
+      handleClick={handleClick} />
+
+  if (loading) {
+    return (
+      <AdminView>
+        {navbar}
+        <AdminContent>
+          <SmallLoader />
+        </AdminContent>
+      </AdminView>
+    );
+  }
+
   return (
-    <div className="page-container">
-      <Navbar
-        active="Studies"
-        flashMessage={flashMessage}
-        goBack={goBack}
-        handleClick={handleClick}
-      />
-      <div className="page-content bg-white">
-        <div style={{ position: "relative", height: "100%", width: "100%" }}>
-          {loading ? (
-            <SmallLoader />
-          ) : (
-            <Table
-              columns={columns}
-              control={canCreate ? (
-                <button
-                  className="button-primary"
-                  onClick={() =>
-                    handleClick(
-                      ["Create"],
-                      <StudiesEdit
-                        studyId={0}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick}
-                      />
-                    )
-                  }
-                >
-                  Create&nbsp;<b>+</b>
-                </button>
-              ) : (
-                <React.Fragment />
-              )}
-              controlWidth={10}
-              data={getData()}
-              includeControl={true}
-              includeSearch={true}
-              paginationPer={10}
-              sortDefault=""
-            />
-          )}
-        </div>
-      </div>
-    </div>
+    <AdminView>
+      {navbar}
+      <AdminContent>
+        <Table
+          columns={columns}
+          control={tableControl}
+          controlWidth={10}
+          data={getData()}
+          includeControl={true}
+          includeSearch={true}
+          paginationPer={10}
+          sortDefault="" />
+      </AdminContent>
+    </AdminView>
   );
 };
 

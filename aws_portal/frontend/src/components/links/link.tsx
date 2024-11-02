@@ -3,13 +3,18 @@ import { PropsWithChildren } from "react";
 
 interface LinkProps {
   onClick?: () => void;
+  className?: string;
 }
 
 
-const Link = ({ onClick, children }: PropsWithChildren<LinkProps>) => {
+const Link = ({
+  onClick,
+  className = "",
+  children
+}: PropsWithChildren<LinkProps>) => {
   return (
     <span
-      className="text-link underline hover:text-link-hover cursor-pointer"
+      className={`${className} text-link underline hover:text-link-hover cursor-pointer`}
       onClick={onClick}>
         {children}
     </span>

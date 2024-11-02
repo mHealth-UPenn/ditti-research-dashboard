@@ -6,6 +6,9 @@ import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
 import RolesEdit from "./rolesEdit";
 import { SmallLoader } from "../loader";
+import Button from "../buttons/button";
+import AdminView from "../containers/admin/adminView";
+import AdminContent from "../containers/admin/adminContent";
 
 const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
@@ -77,37 +80,33 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
       return [
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{name}</span>
-            </div>
+            <span>{name}</span>
           ),
           searchValue: name,
           sortValue: name
         },
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>
-                {permissions
-                  .map((p) => {
-                    const action = p.action === "*" ? "All Actions" : p.action;
-                    const resource =
-                      p.resource === "*" ? "All Resources" : p.resource;
-                    return action + " - " + resource;
-                  })
-                  .join(", ")}
-              </span>
-            </div>
+            <span>
+              {permissions
+                .map((p) => {
+                  const action = p.action === "*" ? "All Actions" : p.action;
+                  const resource =
+                    p.resource === "*" ? "All Resources" : p.resource;
+                  return action + " - " + resource;
+                })
+                .join(", ")}
+            </span>
           ),
           searchValue: "",
           sortValue: ""
         },
         {
           contents: (
-            <div className="flex-left table-control">
-              {canEdit ? (
-                <button
-                  className="button-secondary"
+            <>
+              {canEdit &&
+                <Button
+                  variant="secondary"
                   onClick={() =>
                     handleClick(
                       ["Edit", name],
@@ -118,23 +117,23 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
                         handleClick={handleClick}
                       />
                     )
-                  }
-                >
-                  Edit
-                </button>
-              ) : null}
-              {canArchive ? (
-                <button
-                  className="button-danger"
-                  onClick={() => deleteRole(id)}
-                >
-                  Archive
-                </button>
-              ) : null}
-            </div>
+                  }>
+                    Edit
+                </Button>
+              }
+              {canArchive &&
+                <Button
+                  variant="danger"
+                  onClick={() => deleteRole(id)}>
+                    Archive
+                </Button>
+              }
+            </>
           ),
           searchValue: "",
-          sortValue: ""
+          sortValue: "",
+          paddingX: 0,
+          paddingY: 0,
         }
       ];
     });
@@ -194,8 +193,8 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
 
   // if the user has permission to create, show the create button
   const tableControl = canCreate ? (
-    <button
-      className="button-primary"
+    <Button
+      variant="primary"
       onClick={() =>
         handleClick(
           ["Create"],
@@ -206,39 +205,46 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
             handleClick={handleClick}
           />
         )
-      }
-    >
-      Create&nbsp;<b>+</b>
-    </button>
+      }>
+        Create +
+    </Button>
   ) : (
     <></>
   );
 
-  return (
-    <div className="page-container">
-      <Navbar
-        active="Roles"
-        flashMessage={flashMessage}
-        goBack={goBack}
-        handleClick={handleClick}
-      />
-      <div className="page-content bg-white">
-        {loading ? (
+  const navbar =
+    <Navbar
+      active="Roles"
+      flashMessage={flashMessage}
+      goBack={goBack}
+      handleClick={handleClick} />;
+
+  if (loading) {
+    return (
+      <AdminView>
+        {navbar}
+        <AdminContent>
           <SmallLoader />
-        ) : (
-          <Table
-            columns={columns}
-            control={tableControl}
-            controlWidth={10}
-            data={getData()}
-            includeControl={true}
-            includeSearch={true}
-            paginationPer={10}
-            sortDefault=""
-          />
-        )}
-      </div>
-    </div>
+        </AdminContent>
+      </AdminView>
+    );
+  }
+
+  return (
+    <AdminView>
+      {navbar}
+      <AdminContent>
+        <Table
+          columns={columns}
+          control={tableControl}
+          controlWidth={10}
+          data={getData()}
+          includeControl={true}
+          includeSearch={true}
+          paginationPer={10}
+          sortDefault="" />
+      </AdminContent>
+    </AdminView>
   );
 };
 

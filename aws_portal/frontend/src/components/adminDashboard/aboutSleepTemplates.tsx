@@ -9,6 +9,9 @@ import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
 import AboutSleepTemplatesEdit from "./aboutSleepTemplatesEdit";
 import { SmallLoader } from "../loader";
+import Button from "../buttons/button";
+import AdminView from "../containers/admin/adminView";
+import AdminContent from "../containers/admin/adminContent";
 
 const AboutSleepTemplates: React.FC<ViewProps> = ({
   flashMessage,
@@ -77,19 +80,17 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
       return [
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{name}</span>
-            </div>
+            <span>{name}</span>
           ),
           searchValue: name,
           sortValue: name,
         },
         {
           contents: (
-            <div className="flex-left table-control">
-              {canEdit ? (
-                <button
-                  className="button-secondary"
+            <>
+              {canEdit &&
+                <Button
+                  variant="secondary"
                   onClick={() =>
                     handleClick(
                       ["Edit", name],
@@ -97,26 +98,25 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
                         aboutSleepTemplateId={id}
                         flashMessage={flashMessage}
                         goBack={goBack}
-                        handleClick={handleClick}
-                      />
+                        handleClick={handleClick} />
                     )
-                  }
-                >
-                  Edit
-                </button>
-              ) : null}
-              {canArchive ? (
-                <button
-                  className="button-danger"
-                  onClick={() => deleteTemplate(id)}
-                >
-                  Archive
-                </button>
-              ) : null}
-            </div>
+                  }>
+                    Edit
+                </Button>
+              }
+              {canArchive &&
+                <Button
+                  variant="danger"
+                  onClick={() => deleteTemplate(id)}>
+                    Archive
+                </Button>
+              }
+            </>
           ),
           searchValue: "",
           sortValue: "",
+          paddingX: 0,
+          paddingY: 0,
         },
       ];
     });
@@ -176,9 +176,9 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
   };
 
   // if the user has permission to create, show the create button
-  const tableControl = canCreate ? (
-    <button
-      className="button-primary"
+  const tableControl = canCreate ?
+    <Button
+      variant="primary"
       onClick={() =>
         handleClick(
           ["Create"],
@@ -186,44 +186,46 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
             aboutSleepTemplateId={0}
             flashMessage={flashMessage}
             goBack={goBack}
-            handleClick={handleClick}
-          />
+            handleClick={handleClick} />
         )
-      }
-    >
-      Create&nbsp;<b>+</b>
-    </button>
-  ) : (
-    <React.Fragment />
-  );
+      }>
+        Create +
+    </Button> :
+    <React.Fragment />;
+
+  const navbar =
+    <Navbar
+      active="About Sleep Templates"
+      flashMessage={flashMessage}
+      goBack={goBack}
+      handleClick={handleClick} />;
+
+  if (loading) {
+    return (
+      <AdminView>
+        {navbar}
+        <AdminContent>
+          <SmallLoader />
+        </AdminContent>
+      </AdminView>
+    );
+  }
 
   return (
-    <div className="page-container">
-      <Navbar
-        active="About Sleep Templates"
-        flashMessage={flashMessage}
-        goBack={goBack}
-        handleClick={handleClick}
-      />
-      <div className="page-content bg-white">
-        <div style={{ position: "relative", height: "100%", width: "100%" }}>
-          {loading ? (
-            <SmallLoader />
-          ) : (
-            <Table
-              columns={columns}
-              control={tableControl}
-              controlWidth={10}
-              data={getData()}
-              includeControl={true}
-              includeSearch={true}
-              paginationPer={10}
-              sortDefault=""
-            />
-          )}
-        </div>
-      </div>
-    </div>
+    <AdminView>
+      {navbar}
+      <AdminContent>
+        <Table
+          columns={columns}
+          control={tableControl}
+          controlWidth={10}
+          data={getData()}
+          includeControl={true}
+          includeSearch={true}
+          paginationPer={10}
+          sortDefault="" />
+      </AdminContent>
+    </AdminView>
   );
 };
 
