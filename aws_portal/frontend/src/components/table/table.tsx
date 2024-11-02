@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { renderToString } from "react-dom/server";
 import TableControl from "./tableControl";
 import TableHeader from "./tableHeader";
 import TableRow from "./tableRow";
 import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
 import { ReactComponent as Right } from "../../icons/arrowRight.svg";
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+
+
 import "./table.css";
+import Button from "../buttons/button";
 
 /**
  * name: the name to display in the column header
@@ -40,7 +45,10 @@ export interface Header {
  */
 export interface TableData {
   contents: React.ReactElement;
-  sortValue: string;
+  sortValue?: string;
+  searchValue?: string;
+  paddingX?: number;
+  paddingY?: number;
 }
 
 /**
@@ -51,13 +59,15 @@ export interface TableData {
  * sortable: whether the cell is in a searchable column
  * width: the column's display width
  */
-interface Row {
+interface Cell {
   contents: React.ReactElement;
   searchable: boolean;
   searchValue: string;
   sortable: boolean;
   sortValue: string;
   width: number;
+  paddingX?: number;
+  paddingY?: number;
 }
 
 /**
@@ -91,22 +101,28 @@ const Table: React.FC<TableProps> = ({
   paginationPer,
   sortDefault
 }) => {
-  const [rows, setRows] = useState<Row[][]>(() =>
+  const cells: Cell[][] = useMemo(() =>
     data.map((row) =>
       row.map((cell, i) => ({
         contents: cell.contents,
         searchable: columns[i].searchable,
-        searchValue: renderToString(cell.contents)
-          .replace(/<(.+?)>/g, "")
-          .toLowerCase(),
+        searchValue: (
+          cell.searchValue ?
+          renderToString(cell.contents)
+            .replace(/<(.+?)>/g, "")
+            .toLowerCase() :
+          ""
+        ),
         sortable: columns[i].sortable,
-        sortValue: cell.sortValue,
-        width: columns[i].width
+        sortValue: cell.sortValue || "",
+        width: columns[i].width,
+        paddingX: cell.paddingX,
+        paddingY: cell.paddingY,
       }))
-    )
+    ), [data]
   );
 
-  const [rowsFiltered, setRowsFiltered] = useState<Row[][]>(rows);
+  const [rowsFiltered, setRowsFiltered] = useState<Cell[][]>(cells);
   const [rowsRendered, setRowsRendered] = useState<React.ReactElement>(
     <React.Fragment />
   );
@@ -123,13 +139,11 @@ const Table: React.FC<TableProps> = ({
     Math.ceil(data.length / paginationPer)
   );
 
-  useEffect(() => {
-    renderRows(1, rows);
-  }, [rows]);
+  useEffect(() => renderRows(1, cells), [cells]);
 
   const onSearch = useCallback(
     (text: string) => {
-      const filtered = rows.filter((row) =>
+      const filtered = cells.filter((row) =>
         row.some(
           (cell) =>
             cell.searchable && cell.searchValue.includes(text.toLowerCase())
@@ -141,7 +155,7 @@ const Table: React.FC<TableProps> = ({
       setTotalPages(Math.ceil(filtered.length / paginationPer));
       renderRows(1, filtered);
     },
-    [rows, paginationPer]
+    [cells, paginationPer]
   );
 
   const onSort = useCallback(
@@ -173,90 +187,84 @@ const Table: React.FC<TableProps> = ({
     [rowsFiltered]
   );
 
-  const renderRows = useCallback(
-    (currentPage: number, dataToRender: Row[][]) => {
-      const fragment = (
-        <React.Fragment>
-          {dataToRender.length ? (
-            dataToRender
-              .slice((currentPage - 1) * paginationPer, currentPage * paginationPer)
-              .map((row, i) => (
-                <TableRow
-                  key={i}
-                  data={row.map((cell) => ({
-                    contents: cell.contents,
-                    width: cell.width
-                  }))}
-                />
-              ))
-          ) : (
-            <tr className="bg-light">
-              <td className="border-light-t border-light-r no-data">
-                <i>No data to display</i>
-              </td>
-            </tr>
-          )}
-        </React.Fragment>
-      );
-      setRowsRendered(fragment);
-    },
-    [paginationPer]
-  );
+  const renderRows = (currentPage: number, dataToRender: Cell[][]) => {
+    const fragment = (
+      <>
+        {dataToRender.length ?
+          dataToRender
+            .slice((currentPage - 1) * paginationPer, currentPage * paginationPer)
+            .map((row, i) => (
+              <TableRow
+                key={i}
+                cells={row.map((cell) => ({
+                  contents: cell.contents,
+                  width: cell.width,
+                  paddingX: cell.paddingX,
+                  paddingY: cell.paddingY,
+                }))} />
+            )) :
+          <tr className="bg-light">
+            <td colSpan={columns.length} className="border-r border-t border-light text-[#666699] px-1 py-3">
+              <i>No data to display</i>
+            </td>
+          </tr>
+        }
+      </>
+    );
+    setRowsRendered(fragment);
+  }
 
   return (
-    <div className="table-container">
-      {includeControl || includeSearch ? (
+    <>
+      {(includeControl || includeSearch) &&
         <TableControl
           control={control}
           controlWidth={controlWidth}
           includeControl={includeControl}
           includeSearch={includeSearch}
-          onSearch={onSearch}
-        />
-      ) : null}
+          onSearch={onSearch} />
+      }
 
-      <table className="border-light-t border-light-b border-light-l">
+      <table className="border border-light w-full">
         <thead>
           <TableHeader headers={headers} onSort={onSort} />
         </thead>
         <tbody>{rowsRendered}</tbody>
       </table>
 
-      <div className="table-pagination">
-        <div className="table-pagination-control">
-          <div
-            className={
-              "pagination-button bg-light border-light-t border-light-l border-light-b" +
-              (page > 1 ? " pagination-button-active" : "")
-            }
-            onClick={() => page > 1 && paginate(page - 1)}
-          >
-            <Left />
-          </div>
-          <div
-            className={
-              "pagination-button bg-light border-light" +
-              (page < totalPages ? " pagination-button-active" : "")
-            }
-            onClick={() => page < totalPages && paginate(page + 1)}
-          >
-            <Right />
-          </div>
-          <span>
+      <div className="flex flex-col">
+        <div className="flex items-center mb-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            square={true}
+            disabled={page === 1}
+            onClick={() => page > 1 && paginate(page - 1)}>
+              <KeyboardArrowLeftIcon />
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            square={true}
+            disabled={page === totalPages}
+            onClick={() => page < totalPages && paginate(page + 1)}>
+              <KeyboardArrowRightIcon />
+          </Button>
+          <span className="ml-2">
             Page {page} of {totalPages || 1}
           </span>
         </div>
         <span>
-          {totalPages
-            ? `${(page - 1) * paginationPer + 1} - ${Math.min(
-                rowsFiltered.length,
-                page * paginationPer
-              )} of `
-            : ""}
+          {totalPages &&
+            `${(page - 1) * paginationPer + 1} - ${Math.min(
+              rowsFiltered.length,
+              page * paginationPer
+            )} of `
+          }
           {rowsFiltered.length} item{rowsFiltered.length === 1 ? "" : "s"}
         </span>
       </div>
-    </div>
+    </>
   );
 };
 

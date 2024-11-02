@@ -18,33 +18,25 @@ const TableControl: React.FC<TableControlProps> = ({
   onSearch,
 }) => {
   return (
-    <div className="table-control-container">
-      {includeControl ? (
-        <div className="table-control" style={{ width: controlWidth + "%" }}>
+    <div className="flex justify-between mb-4">
+      {includeControl &&
+        <div style={{ width: controlWidth + "%" }}>
           {control}
         </div>
-      ) : (
-        ""
-      )}
-      {includeSearch ? (
-        <div className="table-search">
-          <TextField
-            id="table-search-input"
-            type="text"
-            placeholder="Search..."
-            prefill=""
-            label=""
-            onKeyup={onSearch}
-            feedback=""
-          >
-            <div className="table-search-svg bg-dark">
+      }
+      {includeSearch &&
+        <TextField
+          type="text"
+          placeholder="Search..."
+          prefill=""
+          label=""
+          onKeyup={onSearch}
+          feedback="">
+            <div className="flex items-center bg-dark h-full px-4">
               <Search />
             </div>
-          </TextField>
-        </div>
-      ) : (
-        ""
-      )}
+        </TextField>
+      }
     </div>
   );
 };

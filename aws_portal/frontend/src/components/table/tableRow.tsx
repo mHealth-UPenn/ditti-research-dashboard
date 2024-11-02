@@ -1,24 +1,30 @@
 import * as React from "react";
+import TableCell from "./tableCell";
 
 /**
  * data: the row's cells
  */
 interface TableRowProps {
-  data: { contents: React.ReactElement; width: number }[];
+  cells: {
+    contents: React.ReactElement;
+    width: number;
+    paddingX?: number;
+    paddingY?: number;
+  }[];
 }
 
-const TableRow: React.FC<TableRowProps> = ({ data }) => {
+const TableRow: React.FC<TableRowProps> = ({ cells }) => {
   return (
     <tr>
-      {data.map((cell, i) => (
-        <td
+      {cells.map((cell, i) =>
+        <TableCell
           key={i}
-          className="border-light-t border-light-r"
-          style={{ width: cell.width + "%" }}
-        >
-          {cell.contents}
-        </td>
-      ))}
+          width={cell.width}
+          paddingX={cell.paddingX}
+          paddingY={cell.paddingY}>
+            {cell.contents}
+        </TableCell>
+      )}
     </tr>
   );
 };

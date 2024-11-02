@@ -13,6 +13,15 @@ import {
 import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
 import SubjectVisuals from "./subjectVisualsV2";
+import { APP_ENV } from "../../environment";
+import dataFactory from "../../dataFactory";
+import Button from "../buttons/button";
+import ViewContainer from "../containers/viewContainer";
+import Card from "../cards/card";
+import Link from "../links/link";
+import CardContentRow from "../cards/cardHeader";
+import Title from "../cards/cardTitle";
+import Subtitle from "../cards/cardSubtilte";
 
 /**
  * studyDetails: the details of the study that subjects will be listed for
@@ -27,7 +36,7 @@ interface SubjectsProps extends ViewProps {
 const Subjects: React.FC<SubjectsProps> = (props) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserDetails[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const columns: Column[] = [
@@ -50,7 +59,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
       width: 30
     },
     {
-      name: "Tapping Access",
+      name: "Tapping",
       searchable: false,
       sortable: true,
       width: 15
@@ -77,155 +86,134 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
       .catch(() => setCanEdit(false));
 
     // get all of the study's users
-    const url = `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${dittiId}"`;
-    const usersRequest = makeRequest(url).then((users: User[]) => setUsers(users));
+    const url = `/aws/scan?app=2&key=User&query=user.userPermissionIdBEGINS"${dittiId}"`;
+    let usersRequest;
+    if (APP_ENV === "production") {
+      usersRequest = makeRequest(url).then((users: User[]) => {
+        const userDetails = users.map(user => ({
+            tapPermission: user.tap_permission,
+            userPermissionId: user.user_permission_id,
+            expTime: user.exp_time,
+            createdAt: user.createdAt,
+            information: user.information,
+            teamEmail: user.team_email
+          }));
+        setUsers(userDetails)
+      });
+    } else {
+      usersRequest = new Promise<UserDetails[]>(
+        resolve => resolve(dataFactory.users)
+      ).then(setUsers);
+    }
 
     // when all promises complete, hide the loader
     Promise.all([create, edit, usersRequest]).then(() => setLoading(false));
 
   }, [props.studyDetails]);
 
-  /**
-   * Get the data for the subjects table
-   * @returns - The table's contents, consisting of rows of table cells
-   */
-  const getData = (): TableData[][] => {
-    const { flashMessage, goBack, handleClick, getTaps, getAudioTaps } = props;
-    const { id, dittiId, email } = props.studyDetails;
-    const dateOptions: Intl.DateTimeFormatOptions = {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit"
-    };
-
-    return users.map((u: User) => {
-      const {
-        tap_permission,
-        user_permission_id,
-        exp_time,
-        createdAt,
-        information,
-        team_email
-      } = u;
-
-      const user: UserDetails = {
-        tapPermission: tap_permission,
-        userPermissionId: user_permission_id,
-        expTime: exp_time,
-        createdAt: createdAt,
-        information: information,
-        teamEmail: team_email
-      };
-
-      return [
-        {
-          contents: (
-            <div className="flex-left table-data">
-
-              {/* if the user has tap permission, link to a subject visuals page */}
-              {u.tap_permission ? (
-                <span
-                  className="link"
-                  onClick={() =>
-                    handleClick(
-                      [user_permission_id],
-                      <SubjectVisuals
-                        flashMessage={flashMessage}
-                        getTaps={getTaps}
-                        getAudioTaps={getAudioTaps}
-                        goBack={goBack}
-                        handleClick={handleClick}
-                        studyDetails={props.studyDetails}
-                        user={user}
-                      />
-                    )
-                  }
-                >
-                  {user_permission_id}
-                </span>
-              ) : (
-                user_permission_id
-              )}
-            </div>
-          ),
-          searchValue: user_permission_id,
-          sortValue: user_permission_id
-        },
-        {
-          contents: (
-            <div className="flex-left table-data">
-              <span>
-                {new Date(exp_time).toLocaleDateString("en-US", dateOptions)}
-              </span>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: exp_time
-        },
-        {
-          contents: (
-            <div className="flex-left table-data">
-              <span>
-                {new Date(createdAt).toLocaleDateString("en-US", dateOptions)}
-              </span>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: createdAt
-        },
-        {
-          contents: (
-            <div className="flex-left table-data">
-              <span>{tap_permission ? "Yes" : "No"}</span>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: tap_permission ? "1" : "0"
-        },
-        {
-          contents: (
-            <div className="flex-left table-control">
-
-              {/* if the user can edit, link to the edit subject page */}
-              {canEdit ? (
-                <button
-                  className="button-secondary"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit", user_permission_id],
-                      <SubjectsEdit
-                        dittiId={user_permission_id}
-                        studyId={id}
-                        studyEmail={email}
-                        studyPrefix={dittiId}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick}
-                      />
-                    )
-                  }
-                >
-                  Edit Details
-                </button>
-              ) : null}
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        }
-      ];
-    });
+  const { flashMessage, goBack, handleClick, getTaps, getAudioTaps } = props;
+  const { id, dittiId, email } = props.studyDetails;
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
   };
 
-  const { flashMessage, goBack, handleClick } = props;
-  const { id, dittiId, email } = props.studyDetails;
+  const tableData: TableData[][] = users.map((user: UserDetails) => {
+    return [
+      {
+        contents: (
+          <>
+            {/* if the user has tap permission, link to a subject visuals page */}
+            {user.tapPermission ? (
+              <Link
+                onClick={() =>
+                  handleClick(
+                    [user.userPermissionId],
+                    <SubjectVisuals
+                      flashMessage={flashMessage}
+                      getTaps={getTaps}
+                      getAudioTaps={getAudioTaps}
+                      goBack={goBack}
+                      handleClick={handleClick}
+                      studyDetails={props.studyDetails}
+                      user={user} />
+                  )
+                }>
+                  {user.userPermissionId}
+              </Link>
+            ) : (
+              user.userPermissionId
+            )}
+          </>
+        ),
+        searchValue: user.userPermissionId,
+        sortValue: user.userPermissionId
+      },
+      {
+        contents: (
+          <span>
+            {new Date(user.expTime).toLocaleDateString("en-US", dateOptions)}
+          </span>
+        ),
+        searchValue: "",
+        sortValue: user.expTime
+      },
+      {
+        contents: (
+          <span>
+            {new Date(user.createdAt).toLocaleDateString("en-US", dateOptions)}
+          </span>
+        ),
+        searchValue: "",
+        sortValue: user.createdAt
+      },
+      {
+        contents: (
+          <span>{user.tapPermission ? "Yes" : "No"}</span>
+        ),
+        searchValue: "",
+        sortValue: user.tapPermission ? "1" : "0"
+      },
+      {
+        contents: (
+          <>
+            {/* if the user can edit, link to the edit subject page */}
+            {canEdit &&
+              <Button
+                variant="secondary"
+                className="w-full h-full"
+                onClick={() =>
+                  handleClick(
+                    ["Edit", user.userPermissionId],
+                    <SubjectsEdit
+                      dittiId={user.userPermissionId}
+                      studyId={id}
+                      studyEmail={email}
+                      studyPrefix={dittiId}
+                      flashMessage={flashMessage}
+                      goBack={goBack}
+                      handleClick={handleClick} />
+                  )
+                }>
+                  Edit
+              </Button>
+            }
+          </>
+        ),
+        searchValue: "",
+        sortValue: "",
+        paddingX: 0,
+        paddingY: 0,
+      }
+    ];
+  });
 
   // if the user can enroll subjects, include an enroll button
   const tableControl = canCreate ? (
-    <button
-      className="button-primary"
+    <Button
       onClick={() =>
         handleClick(
           ["Create"],
@@ -236,36 +224,45 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
             studyPrefix={dittiId}
             flashMessage={flashMessage}
             goBack={goBack}
-            handleClick={handleClick}
-          />
+            handleClick={handleClick} />
         )
-      }
-    >
-      Create&nbsp;<b>+</b>
-    </button>
+      }>
+        Create +
+    </Button>
   ) : (
     <React.Fragment />
   );
 
-  return (
-    <div className="page-container">
-      <div className="page-content bg-white">
-        {loading ? (
+  if (loading) {
+    return (
+      <ViewContainer>
+        <Card>
           <SmallLoader />
-        ) : (
-          <Table
-            columns={columns}
-            control={tableControl}
-            controlWidth={10}
-            data={getData()}
-            includeControl={true}
-            includeSearch={true}
-            paginationPer={10}
-            sortDefault=""
-          />
-        )}
-      </div>
-    </div>
+        </Card>
+      </ViewContainer>
+    );
+  }
+
+  return (
+    <ViewContainer>
+      <Card>
+        <CardContentRow>
+          <div className="flex flex-col">
+            <Title>{props.studyDetails.name}</Title>
+            <Subtitle>All subjects</Subtitle>
+          </div>
+        </CardContentRow>
+        <Table
+          columns={columns}
+          control={tableControl}
+          controlWidth={10}
+          data={tableData}
+          includeControl={true}
+          includeSearch={true}
+          paginationPer={10}
+          sortDefault="" />
+      </Card>
+    </ViewContainer>
   );
 };
 

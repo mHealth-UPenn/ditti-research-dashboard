@@ -1,4 +1,4 @@
-table {
+/* table {
   border-spacing: 0;
   margin-bottom: 1rem;
   width: 100%;
@@ -130,7 +130,7 @@ th .sort-active .svg-fill {
   display: flex;
   justify-content: center;
   width: 3rem;
-}
+} */
 
 .no-data {
   align-items: center;
