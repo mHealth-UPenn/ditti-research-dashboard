@@ -6,6 +6,10 @@ import StudiesView from "./dittiApp/studies";
 import Accounts from "./adminDashboard/accounts";
 import { SmallLoader } from "./loader";
 import { getAccess } from "../utils";
+import Card from "./cards/card";
+import CardContentRow from "./cards/cardHeader";
+import Title from "./cards/cardTitle";
+import ViewContainer from "./containers/viewContainer";
 
 /**
  * getTapsAsync: queries AWS for tap data
@@ -50,8 +54,7 @@ const Home: React.FC<HomeProps> = ({
           getAudioFiles={getAudioFiles}
           handleClick={handleClick}
           goBack={goBack}
-          flashMessage={flashMessage}
-        />
+          flashMessage={flashMessage} />
       ),
     },
     {
@@ -61,8 +64,7 @@ const Home: React.FC<HomeProps> = ({
         <Accounts
           handleClick={handleClick}
           goBack={goBack}
-          flashMessage={flashMessage}
-        />
+          flashMessage={flashMessage} />
       ),
     },
   ]);
@@ -84,39 +86,23 @@ const Home: React.FC<HomeProps> = ({
     Promise.all([admin, ditti]).then(() => setLoading(false));
   }, []);
 
-  /**
-   * Render the apps on the page
-   * @returns - apps to be rendered on the page
-   */
-  const getApps = () => {
-    return apps.map((app, i) => (
-      <div
-        key={i}
-        className="p-6 m-8 w-[24rem] bg-white shadow cursor-pointer bg-white shadow"
-        onClick={() => handleClick(app.breadcrumbs, app.view)}
-      >
-        <div className="text-lg font-bold mb-24">
-          <span>{app.name}</span>
-        </div>
-        <div className="float-right link-svg">
-          <Right />
-        </div>
-      </div>
-    ));
-  };
-
   return (
-    <div className="flex flex-col p-6 max-h-[calc(calc(100vh-8rem)-1px)] overflow-scroll overflow-x-hidden">
-      <div className="flex items-start flex-wrap">
-        {loading ? (
-          <div className="p-6 m-8 w-[24rem] bg-white shadow">
-            <SmallLoader />
-          </div>
-        ) : (
-          getApps()
-        )}
-      </div>
-    </div>
+    <ViewContainer>
+      {apps.map((app, i) => (
+        <Card
+          key={i}
+          width="sm"
+          className="cursor-pointer hover:ring hover:ring-inse hover:ring-light"
+          onClick={() => handleClick(app.breadcrumbs, app.view)}>
+            <CardContentRow>
+              <p className="text-xl">{app.name}</p>
+            </CardContentRow>
+            <div className="flex justify-end w-full mt-24">
+              <Right />
+            </div>
+        </Card>
+      ))}
+    </ViewContainer>
   );
 };
 

@@ -6,6 +6,7 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import ReplayIcon from '@mui/icons-material/Replay';
 
 import { useVisualizationContext } from "../../contexts/visualizationContext";
+import Button from "../buttons/button";
 
 
 const TapVisualizationButtons: React.FC = () => {
@@ -21,33 +22,45 @@ const TapVisualizationButtons: React.FC = () => {
 
   return (
     <div className="flex justify-end">
-      <button
-        className="button button-lg button-secondary"
+      <Button
+        square={true}
+        size="sm"
+        variant="secondary"
         onClick={panLeft}>
         <KeyboardArrowLeftIcon />
-      </button>
-      <button
-        className="button button-lg button-secondary mr-2"
+      </Button>
+      <Button
+        square={true}
+        size="sm"
+        variant="secondary"
+        className="mr-2"
         onClick={panRight}>
         <KeyboardArrowRightIcon />
-      </button>
-      <button
-        className="button button-lg button-secondary"
+      </Button>
+      <Button
+        square={true}
+        size="sm"
+        variant="secondary"
         onClick={zoomIn}
         disabled={minRangeReached}>
         <AddIcon />
-      </button>
-      <button
-        className="button button-lg button-secondary mr-2"
+      </Button>
+      <Button
+        square={true}
+        size="sm"
+        variant="secondary"
+        className="mr-2"
         onClick={zoomOut}
         disabled={maxRangeReached}>
         <RemoveIcon />
-      </button>
-      <button
-        className="button button-lg button-primary"
+      </Button>
+      <Button
+        square={true}
+        size="sm"
+        variant="primary"
         onClick={resetZoom}>
         <ReplayIcon />
-      </button>
+      </Button>
     </div>
   );
 }

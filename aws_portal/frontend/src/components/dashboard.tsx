@@ -342,7 +342,7 @@ const Dashboard: React.FC = () => {
   const popMessage = (id: number) => dispatch({ type: "CLOSE_MESSAGE", id });
 
   return (
-    <main className="bg-[#F0F0F5] flex flex-col h-screen">
+    <main className="flex flex-col max-h-screen">
 
       {/* header with the account menu  */}
       <Header
@@ -350,7 +350,7 @@ const Dashboard: React.FC = () => {
         goBack={goBack}
         flashMessage={flashMessage}
       />
-      <div className="flex flex-grow max-h-[calc(100vh-4rem)">
+      <div className="flex flex-grow max-h-[calc(100vh-4rem)]">
 
         {/* list of studies on the left of the screen */}
         <StudiesMenu

@@ -3,7 +3,7 @@ import { PropsWithChildren } from "react";
 
 const ViewContainer = ({ children }: PropsWithChildren<unknown>) => {
   return (
-    <div className="flex flex-wrap bg-white h-[calc(calc(100vh-8rem)-1px)] overflow-x-hidden lg:bg-[transparent] lg:px-6 lg:py-16 overflow-scroll">
+    <div className="bg-[#F0F0F5] flex flex-wrap basis-[content] min-h-[calc(calc(100vh-8rem)-1px)] h-[calc(calc(100vh-8rem)-1px)] overflow-x-hidden px-4 pt-16 md:px-6 overflow-scroll">
       {children}
     </div>
   );

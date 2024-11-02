@@ -10,7 +10,7 @@ const FormField = ({
   children
 }: PropsWithChildren<FormFieldProps>) => {
   return (
-    <div className={`flex w-full flex-col mb-8 lg:px-4 ${className}`}>
+    <div className={`flex w-full flex-col mb-8 px-4 ${className}`}>
       {children}
     </div>
   );

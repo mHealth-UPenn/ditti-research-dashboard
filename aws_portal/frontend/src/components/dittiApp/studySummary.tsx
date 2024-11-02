@@ -164,7 +164,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
 
         <CardContentRow>
           <Title>Active Subjects</Title>
-          <div>
+          <div className="flex">
             {canCreate &&
               <Button
                 className="mr-2"

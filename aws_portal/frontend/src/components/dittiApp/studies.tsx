@@ -192,7 +192,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
           <Title>Audio Files</Title>
         </CardContentRow>
         <CardContentRow>
-          <div>
+          <div className="flex">
             <Button
               onClick={handleClickUploadAudioFile}
               className="mr-2">

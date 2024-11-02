@@ -87,7 +87,7 @@ const Navbar: React.FC<NavbarProps> = ({ active, handleClick, flashMessage, goBa
         v.active ?
           <div
             key={i}
-            className="flex px-3 lg:px-4 xl:px-8 items-center justify-center h-full py-4 bg-dark text-center">
+            className="flex px-4 lg:px-8 items-center justify-center h-full py-4 bg-dark text-center">
               {v.name}
           </div> :
           <div key={i} className="flex h-full">

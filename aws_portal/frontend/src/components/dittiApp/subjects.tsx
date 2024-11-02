@@ -22,6 +22,8 @@ import Link from "../links/link";
 import CardContentRow from "../cards/cardHeader";
 import Title from "../cards/cardTitle";
 import Subtitle from "../cards/cardSubtilte";
+import AdminView from "../containers/admin/adminView";
+import AdminContent from "../containers/admin/adminContent";
 
 /**
  * studyDetails: the details of the study that subjects will be listed for
@@ -244,14 +246,12 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
   }
 
   return (
-    <ViewContainer>
-      <Card>
-        <CardContentRow>
-          <div className="flex flex-col">
-            <Title>{props.studyDetails.name}</Title>
-            <Subtitle>All subjects</Subtitle>
-          </div>
-        </CardContentRow>
+    <AdminView>
+      <AdminContent>
+        <div className="flex flex-col mb-8">
+          <Title>{props.studyDetails.name}</Title>
+          <Subtitle>All subjects</Subtitle>
+        </div>
         <Table
           columns={columns}
           control={tableControl}
@@ -261,8 +261,8 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
           includeSearch={true}
           paginationPer={10}
           sortDefault="" />
-      </Card>
-    </ViewContainer>
+      </AdminContent>
+    </AdminView>
   );
 };
 
