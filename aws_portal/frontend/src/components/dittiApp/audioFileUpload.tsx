@@ -17,11 +17,12 @@ import FormRow from "../containers/forms/formRow";
 import FormField from "../containers/forms/formField";
 import FormSummary from "../containers/forms/formSummary";
 import FormSummaryTitle from "../text/formSummaryTitle";
-import FormSummaryContent from "../containers/forms/formSummaryContent";
+import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummarySubtext from "../containers/forms/formSummarySubtext";
 import Button from "../buttons/button";
 import { SmallLoader } from "../loader";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
 
 
 interface IFile {
@@ -529,71 +530,75 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       <FormSummary>
         <FormSummaryTitle>Audio File Summary</FormSummaryTitle>
         <FormSummaryContent>
-          Files:
-          <br />
-          {/* &nbsp;&nbsp;&nbsp;&nbsp;{title} */}
-          {
-            files.map((file, i) =>
-              <span key={i}>
-                {Boolean(i) && <><br /><br /></>}
-                &nbsp;&nbsp;&nbsp;&nbsp;{file.title}
-                <br />
-                &nbsp;&nbsp;&nbsp;&nbsp;{file.size} - {formatDuration(file.length)}
-              </span>
-            )
-          }
-          <br />
-          <br />
-          Category:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{category}
-          <br />
-          <br />
-          Availability
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;
-          {availability === "All Users"
-            ? "All Users"
-            : `Individual - ${dittiId}`}
-          <br />
-          <br />
-          Studies:
-          <br />
-          {
-            studiesRadio === "All Studies" ?
-            <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span> :
-            studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
-              <span key={`study-${i}`}>
-                {Boolean(i) && <br />}
-                &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}: {s.name}
-              </span>
-            )
-          }
-        </FormSummaryContent>
-        {
-          // Upload progres bar
-          uploading &&
-          <div className="flex flex-col w-full mb-4">
-            <div className="flex justify-between mb-1 w-full">
-              <span>Uploading...</span>
-              <span>{percentComplete}%</span>
-            </div>
-            <span className={`h-[4px] bg-white transition-all duration-500`}
-              style={{ width: percentComplete ? `${percentComplete}%` : 0 }}/>
+          <FormSummaryText>
+            Files:
+            <br />
+            {/* &nbsp;&nbsp;&nbsp;&nbsp;{title} */}
+            {
+              files.map((file, i) =>
+                <span key={i}>
+                  {Boolean(i) && <><br /><br /></>}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{file.title}
+                  <br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;{file.size} - {formatDuration(file.length)}
+                </span>
+              )
+            }
+            <br />
+            <br />
+            Category:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{category}
+            <br />
+            <br />
+            Availability
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            {availability === "All Users"
+              ? "All Users"
+              : `Individual - ${dittiId}`}
+            <br />
+            <br />
+            Studies:
+            <br />
+            {
+              studiesRadio === "All Studies" ?
+              <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span> :
+              studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
+                <span key={`study-${i}`}>
+                  {Boolean(i) && <br />}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}: {s.name}
+                </span>
+              )
+            }
+          </FormSummaryText>
+          <div>
+            {
+              // Upload progres bar
+              uploading &&
+              <div className="flex flex-col w-full mb-4">
+                <div className="flex justify-between mb-1 w-full">
+                  <span>Uploading...</span>
+                  <span>{percentComplete}%</span>
+                </div>
+                <span className={`h-[4px] bg-white transition-all duration-500`}
+                  style={{ width: percentComplete ? `${percentComplete}%` : 0 }}/>
+              </div>
+            }
+            <FormSummaryButton>
+              <AsyncButton
+                className="p-4"
+                onClick={handleUpload}
+                text="Upload"
+                type="primary"
+                disabled={!canUpload}/>
+            </FormSummaryButton>
+            <FormSummarySubtext>
+              Audio file details cannot be changed after upload. The files must be
+              deleted and uploaded again.
+            </FormSummarySubtext>
           </div>
-        }
-        <FormSummaryButton>
-          <AsyncButton
-            className="p-4"
-            onClick={handleUpload}
-            text="Upload"
-            type="primary"
-            disabled={!canUpload}/>
-        </FormSummaryButton>
-        <FormSummarySubtext>
-          Audio file details cannot be changed after upload. The files must be
-          deleted and uploaded again.
-        </FormSummarySubtext>
+        </FormSummaryContent>
       </FormSummary>
     </FormView>
   );

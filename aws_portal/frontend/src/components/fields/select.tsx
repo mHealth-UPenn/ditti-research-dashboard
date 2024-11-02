@@ -14,6 +14,7 @@ interface SelectProps {
   opts: { value: number; label: string }[];
   placeholder: string;
   disabled?: boolean;
+  hideBorder?: boolean;
   callback: (selected: number, id: number) => void;
   getDefault?: (id: number) => number;
 }
@@ -23,6 +24,7 @@ const Select: React.FC<SelectProps> = ({
   opts,
   placeholder,
   disabled,
+  hideBorder = false,
   callback,
   getDefault,
 }) => {
@@ -50,10 +52,10 @@ const Select: React.FC<SelectProps> = ({
   const updatedOpts = [{ value: 0, label: "" }].concat(opts);
 
   return (
-    <div className={`flex items-center flex-grow relative border border-light ${disabled && "bg-light"}`}>
+    <div className={`flex items-center flex-grow relative ${hideBorder ? "" : "border border-light"} ${disabled ? "bg-light" : ""}`}>
       {/* if the blank option is selected, show the placeholder */}
       {value === "0" && (
-        <div className="">{placeholder}</div>
+        <p className="ml-4 text-light pointer-events-none select-none absolute">{placeholder}</p>
       )}
       <select
         className="bg-[transparent] min-h-[calc(3rem-2px)]"

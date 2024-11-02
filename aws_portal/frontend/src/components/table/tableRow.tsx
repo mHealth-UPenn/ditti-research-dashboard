@@ -15,7 +15,7 @@ interface TableRowProps {
 
 const TableRow: React.FC<TableRowProps> = ({ cells }) => {
   return (
-    <tr>
+    <tr className="h-[3rem]">
       {cells.map((cell, i) =>
         <TableCell
           key={i}

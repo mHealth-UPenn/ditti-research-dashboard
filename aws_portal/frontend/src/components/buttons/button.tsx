@@ -1,10 +1,12 @@
 import { PropsWithChildren } from "react";
 
-interface ButtonProps {
+export interface ButtonProps {
   variant?: "primary" | "secondary" | "info" | "danger" | "success";
   size?: "sm" | "md" | "lg";
   disabled?: boolean;
   square?: boolean;
+  fullWidth?: boolean;
+  fullHeight?: boolean;
   className?: string;
   onClick?: () => void;
 }
@@ -15,14 +17,16 @@ const Button = ({
   size = "md",
   disabled = false,
   square = false,
+  fullWidth = false,
+  fullHeight = false,
   className = "",
   onClick,
   children,
 }: PropsWithChildren<ButtonProps>) => {
   const sizeMap = {
-    sm: square ? "px-3 py-3" : "px-4 py-3",
-    md: square ? "px-4 py-4" : "px-6 py-4",
-    lg: square ? "px-5 py-5" : "px-8 py-5",
+    sm: square ? `${!fullWidth ? "px-3" : ""} ${!fullHeight ? "py-3" : ""}` : `${!fullWidth ? "px-4" : ""} ${!fullHeight ? "py-3" : ""}`,
+    md: square ? `${!fullWidth ? "px-4" : ""} ${!fullHeight ? "py-4" : ""}` : `${!fullWidth ? "px-6" : ""} ${!fullHeight ? "py-4" : ""}`,
+    lg: square ? `${!fullWidth ? "px-5" : ""} ${!fullHeight ? "py-5" : ""}` : `${!fullWidth ? "px-8" : ""} ${!fullHeight ? "py-5" : ""}`,
   }
 
   const variantMap = {
@@ -36,7 +40,7 @@ const Button = ({
   return (
     <button
       disabled={disabled}
-      className={`${variantMap[variant]} ${sizeMap[size]} ${disabled && "cursor-not-allowed opacity-50"} font-bold whitespace-nowrap ${className}`}
+      className={`flex items-center justify-center ${variantMap[variant]} ${sizeMap[size]} ${fullWidth ? "w-full" : ""} ${fullHeight ? "h-full" : ""} ${disabled ? "cursor-not-allowed opacity-50" : ""} font-bold whitespace-nowrap ${className}`}
       onClick={onClick}>
         {children}
     </button>

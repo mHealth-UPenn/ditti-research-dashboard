@@ -20,9 +20,10 @@ import FormTitle from "../text/formTitle";
 import FormRow from "../containers/forms/formRow";
 import FormField from "../containers/forms/formField";
 import FormSummaryTitle from "../text/formSummaryTitle";
-import FormSummaryContent from "../containers/forms/formSummaryContent";
+import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummarySubtext from "../containers/forms/formSummarySubtext";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
 
 /**
  * dittiId: the subject's ditti id
@@ -206,6 +207,16 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   // if dittiId is 0, the user is enrolling a new subject
   const buttonText = dittiId ? "Update" : "Create";
 
+  if (loading) {
+    return (
+      <FormView>
+        <Form>
+          <SmallLoader />
+        </Form>
+      </FormView>
+    );
+  }
+
   return (
     <FormView>
       <Form>
@@ -282,41 +293,45 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
       <FormSummary>
         <FormSummaryTitle>Subject Summary</FormSummaryTitle>
         <FormSummaryContent>
-          Ditti ID:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{state.userPermissionId}
-          <br />
-          <br />
-          Team email:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{studyEmail}
-          <br />
-          <br />
-          Expires on:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;
-          {state.expTime
-            ? new Date(state.expTime).toLocaleDateString("en-US", dateOptions)
-            : ""}
-          <br />
-          <br />
-          Tapping access:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{state.tapPermission ? "Yes" : "No"}
-          <br />
-          <br />
-          About sleep template:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{aboutSleepTemplateSelected.name}
-          <br />
+          <FormSummaryText>
+            Ditti ID:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{state.userPermissionId}
+            <br />
+            <br />
+            Team email:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{studyEmail}
+            <br />
+            <br />
+            Expires on:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            {state.expTime
+              ? new Date(state.expTime).toLocaleDateString("en-US", dateOptions)
+              : ""}
+            <br />
+            <br />
+            Tapping access:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{state.tapPermission ? "Yes" : "No"}
+            <br />
+            <br />
+            About sleep template:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{aboutSleepTemplateSelected.name}
+            <br />
+          </FormSummaryText>
+          <div>
+            <FormSummaryButton>
+              <AsyncButton onClick={post} text={buttonText} type="primary" />
+            </FormSummaryButton>
+            <FormSummarySubtext>
+              After enrolling a subject, log in on your smartphone using their
+              Ditti ID to ensure their account was created successfully.
+            </FormSummarySubtext>
+          </div>
         </FormSummaryContent>
-        <FormSummaryButton>
-          <AsyncButton onClick={post} text={buttonText} type="primary" />
-        </FormSummaryButton>
-        <FormSummarySubtext>
-          After enrolling a subject, log in on your smartphone using their
-          Ditti ID to ensure their account was created successfully.
-        </FormSummarySubtext>
       </FormSummary>
     </FormView>
   );

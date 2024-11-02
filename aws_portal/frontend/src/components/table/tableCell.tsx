@@ -27,7 +27,7 @@ const TableCell = ({
 
   return (
     <td
-      className="border-t border-r border-light height-[inherit] p-0"
+      className="border-t border-r border-light h-[inherit] p-0"
       style={{ width: `${width}%` }}>
         <div className={`w-full h-full flex items-center truncate ${padding}`}>
           {children}

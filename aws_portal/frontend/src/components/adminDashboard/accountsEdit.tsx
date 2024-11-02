@@ -17,6 +17,16 @@ import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
 import AccessGroups from "./accessGroups";
+import FormView from "../containers/forms/formView";
+import Form from "../containers/forms/form";
+import FormSummary from "../containers/forms/formSummary";
+import FormTitle from "../text/formTitle";
+import FormRow from "../containers/forms/formRow";
+import FormField from "../containers/forms/formField";
+import FormSummaryTitle from "../text/formSummaryTitle";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
+import FormSummaryText from "../containers/forms/formSummaryText";
+import FormSummaryButton from "../containers/forms/formSummaryButton";
 
 type Action =
   | {
@@ -80,7 +90,7 @@ const reducer = (state: AccountsEditState, action: Action) => {
   
       // get the access group
       const accessGroup = accessGroups.filter(ag => ag.id == id)[0];
-      if (accessGroup) {
+      if (accessGroup && !accessGroupsSelected.some(ag => ag.id === accessGroup.id)) {
         // add it to the selected access groups
         accessGroupsSelected.push(accessGroup);
         return { ...state, accessGroupsSelected };
@@ -104,7 +114,7 @@ const reducer = (state: AccountsEditState, action: Action) => {
         studies.filter((s: Study) => s.id == id)[0]
       );
   
-      if (study) {
+      if (study && !studiesSelected.some(s => s.id === study.id)) {
         // add it to the selected studies
         studiesSelected.push(study);
         return { ...state, studiesSelected };
@@ -170,7 +180,7 @@ interface AccountsEditState extends AccountPrefill {
   loading: boolean;
 }
 
-const initialState = {
+const initialState: AccountsEditState = {
   accessGroups: [],
   roles: [],
   studies: [],
@@ -179,19 +189,19 @@ const initialState = {
       name: "Name",
       sortable: true,
       searchable: false,
-      width: 45
+      width: 43
     },
     {
       name: "App",
       sortable: true,
       searchable: false,
-      width: 45
+      width: 43
     },
     {
       name: "",
       sortable: false,
       searchable: false,
-      width: 10
+      width: 14
     }
   ],
   columnsStudies: [
@@ -199,19 +209,19 @@ const initialState = {
       name: "Name",
       sortable: true,
       searchable: false,
-      width: 45
+      width: 43
     },
     {
       name: "Role",
       sortable: false,
       searchable: false,
-      width: 45
+      width: 43
     },
     {
       name: "",
       sortable: false,
       searchable: false,
-      width: 10
+      width: 14
     }
   ],
   loading: true,
@@ -321,36 +331,33 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
       return [
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{name}</span>
-            </div>
+            <span>{name}</span>
           ),
           searchValue: "",
           sortValue: name
         },
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{app.name}</span>
-            </div>
+            <span>{app.name}</span>
           ),
           searchValue: "",
           sortValue: app.name
         },
         {
           contents: (
-            <div className="flex-left table-control">
-              <ToggleButton
-                key={id}
-                id={id}
-                getActive={isActiveAccessGroup}
-                add={addAccessGroup}
-                remove={removeAccessGroup}
-              />
-            </div>
+            <ToggleButton
+              key={id}
+              id={id}
+              getActive={isActiveAccessGroup}
+              add={addAccessGroup}
+              remove={removeAccessGroup}
+              fullWidth={true}
+              fullHeight={true} />
           ),
           searchValue: "",
-          sortValue: ""
+          sortValue: "",
+          paddingX: 0,
+          paddingY: 0,
         }
       ];
     });
@@ -378,36 +385,37 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
         },
         {
           contents: (
-            <div className="flex-left" style={{ position: "relative" }}>
-              <Select
-                key={id}
-                id={id}
-                opts={roles.map((r: Role) => {
-                  return { value: r.id, label: r.name };
-                })}
-                placeholder="Select role..."
-                callback={selectRole}
-                getDefault={getSelectedRole}
-              />
-            </div>
+            <Select
+              key={id}
+              id={id}
+              opts={roles.map((r: Role) => {
+                return { value: r.id, label: r.name };
+              })}
+              placeholder="Select role..."
+              callback={selectRole}
+              getDefault={getSelectedRole}
+              hideBorder={true} />
           ),
           searchValue: "",
-          sortValue: ""
+          sortValue: "",
+          paddingX: 0,
+          paddingY: 0,
         },
         {
           contents: (
-            <div className="flex-left table-control">
-              <ToggleButton
-                key={id}
-                id={id}
-                getActive={isActiveStudy}
-                add={addStudy}
-                remove={removeStudy}
-              />
-            </div>
+            <ToggleButton
+              key={id}
+              id={id}
+              getActive={isActiveStudy}
+              add={addStudy}
+              remove={removeStudy}
+              fullWidth={true}
+              fullHeight={true} />
           ),
           searchValue: "",
-          sortValue: ""
+          sortValue: "",
+          paddingX: 0,
+          paddingY: 0,
         }
       ];
     });
@@ -653,148 +661,141 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
 
   const buttonText = accountId ? "Update" : "Create";
 
-  return (
-    <div className="page-container" style={{ flexDirection: "row" }}>
-
-      {/* the edit/create form */}
-      <div className="page-content bg-white">
-        {loading ? (
+  if (loading) {
+    return (
+      <FormView>
+        <Form>
           <SmallLoader />
-        ) : (
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {accountId ? "Edit " : "Create "} Account
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="first-name"
-                    type="text"
-                    placeholder=""
-                    prefill={firstName}
-                    label="First Name"
-                    onKeyup={(firstName) => {
-                      dispatch({ type: "EDIT_FIELD", firstName });
-                    }}
-                    feedback=""
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="last-name"
-                    type="text"
-                    placeholder=""
-                    prefill={lastName}
-                    label="Last Name"
-                    onKeyup={(lastName) => {
-                      dispatch({ type: "EDIT_FIELD", lastName });
-                    }}
-                    feedback=""
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="email"
-                    type="text"
-                    placeholder=""
-                    prefill={email}
-                    label="Email"
-                    onKeyup={(email) => dispatch({ type: "EDIT_FIELD", email })}
-                    feedback=""
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="phoneNumber"
-                    type="text"
-                    placeholder=""
-                    prefill={phoneNumber}
-                    label="Phone Number"
-                    onKeyup={(phoneNumber) => {
-                      dispatch({ type: "EDIT_FIELD", phoneNumber });
-                    }}
-                    feedback=""
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="password"
-                    type="password"
-                    label={accountId ? "Change password" : "Password"}
-                    onKeyup={(password) => {
-                      dispatch({ type: "EDIT_FIELD", password });
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <span>Assign Account to Access Group</span>
-                  <Table
-                    columns={columnsAccessGroups}
-                    control={<React.Fragment />}
-                    controlWidth={0}
-                    data={getAccessGroupsData()}
-                    includeControl={false}
-                    includeSearch={false}
-                    paginationPer={4}
-                    sortDefault="Name"
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <span>Assign Account to Studies</span>
-                  <Table
-                    columns={columnsStudies}
-                    control={<React.Fragment />}
-                    controlWidth={0}
-                    data={getStudiesData()}
-                    includeControl={false}
-                    includeSearch={false}
-                    paginationPer={4}
-                    sortDefault="Name"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="admin-form-summary bg-dark">
+        </Form>
+      </FormView>
+    );
+  }
 
-        {/* the edit/create summary */}
-        <h1 className="border-white-b">Account Summary</h1>
-        <span>
-          Name:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;
-          {firstName || lastName ? firstName + " " + lastName : <i>Name</i>}
-          <br />
-          <br />
-          Email:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;
-          {email ? email : <i>Email</i>}
-          <br />
-          <br />
-          AccessGroups:
-          <br />
-          {getAccessGroupsSummary()}
-          <br />
-          Studies:
-          <br />
-          {getStudiesSummary()}
-          <br />
-        </span>
-        <AsyncButton onClick={post} text={buttonText} type="primary" />
-      </div>
-    </div>
+  return (
+    <FormView>
+      <Form>
+        <FormTitle>{accountId ? "Edit " : "Create "} Account</FormTitle>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="first-name"
+              type="text"
+              placeholder=""
+              prefill={firstName}
+              label="First Name"
+              onKeyup={(firstName) => {
+                dispatch({ type: "EDIT_FIELD", firstName });
+              }}
+              feedback="" />
+          </FormField>
+          <FormField>
+            <TextField
+              id="last-name"
+              type="text"
+              placeholder=""
+              prefill={lastName}
+              label="Last Name"
+              onKeyup={(lastName) => {
+                dispatch({ type: "EDIT_FIELD", lastName });
+              }}
+              feedback="" />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="email"
+              type="text"
+              placeholder=""
+              prefill={email}
+              label="Email"
+              onKeyup={(email) => dispatch({ type: "EDIT_FIELD", email })}
+              feedback="" />
+          </FormField>
+          <FormField>
+            <TextField
+              id="phoneNumber"
+              type="text"
+              placeholder=""
+              prefill={phoneNumber}
+              label="Phone Number"
+              onKeyup={(phoneNumber) => {
+                dispatch({ type: "EDIT_FIELD", phoneNumber });
+              }}
+              feedback="" />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="password"
+              type="password"
+              label={accountId ? "Change password" : "Password"}
+              onKeyup={(password) => {
+                dispatch({ type: "EDIT_FIELD", password });
+              }} />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <span className="mb-1">Assign Account to Access Group</span>
+            <Table
+              columns={columnsAccessGroups}
+              control={<React.Fragment />}
+              controlWidth={0}
+              data={getAccessGroupsData()}
+              includeControl={false}
+              includeSearch={false}
+              paginationPer={4}
+              sortDefault="Name" />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <span className="mb-1">Assign Account to Studies</span>
+            <Table
+              columns={columnsStudies}
+              control={<React.Fragment />}
+              controlWidth={0}
+              data={getStudiesData()}
+              includeControl={false}
+              includeSearch={false}
+              paginationPer={4}
+              sortDefault="Name" />
+          </FormField>
+        </FormRow>
+      </Form>
+      <FormSummary>
+        <FormSummaryTitle>Account Summary</FormSummaryTitle>
+        <FormSummaryContent>
+          <FormSummaryText>
+            Name:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            {firstName || lastName ? firstName + " " + lastName : <i>Name</i>}
+            <br />
+            <br />
+            Email:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            {email ? email : <i>Email</i>}
+            <br />
+            <br />
+            AccessGroups:
+            <br />
+            {getAccessGroupsSummary()}
+            <br />
+            Studies:
+            <br />
+            {getStudiesSummary()}
+            <br />
+          </FormSummaryText>
+          <FormSummaryButton>
+            <AsyncButton onClick={post} text={buttonText} type="primary" />
+          </FormSummaryButton>
+        </FormSummaryContent>
+      </FormSummary>
+    </FormView>
   );
 };
 

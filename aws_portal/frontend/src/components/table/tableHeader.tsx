@@ -14,7 +14,7 @@ interface TableHeaderProps {
 
 const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
   return (
-    <tr>
+    <tr className="h-[3rem]">
       {headers.map((h, i) => (
         <th
           key={i}
@@ -23,17 +23,16 @@ const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
           onClick={() => {
             return h.sortable && onSort(h.name, h.ascending === 0);
           }}>
-            <div className="flex items-begin justify-between mx-1 my-4 relative lg:mx-2">
+            <div className="flex items-begin justify-between mx-1 relative lg:mx-2">
               <span className="text-base font-regular whitespace-nowrap">{h.name}</span>
 
               {/* sort buttons */}
               {h.sortable && (
                 h.ascending === -1 ?
-                <KeyboardArrowUpIcon className={"text-light"} /> :
-                <>
-                  <KeyboardArrowUpIcon className={h.ascending === 0 ? "" : "invisible"} />
-                  <KeyboardArrowDownIcon className={h.ascending === 1 ? "" : "invisible"} />
-                </>
+                <KeyboardArrowUpIcon className="text-light" /> :
+                h.ascending === 0 ?
+                <KeyboardArrowUpIcon /> :
+                <KeyboardArrowDownIcon />
               )}
             </div>
         </th>

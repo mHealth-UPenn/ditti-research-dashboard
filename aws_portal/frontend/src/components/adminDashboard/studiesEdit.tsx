@@ -4,6 +4,16 @@ import { ResponseBody, Study, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
+import FormView from "../containers/forms/formView";
+import Form from "../containers/forms/form";
+import FormSummary from "../containers/forms/formSummary";
+import FormTitle from "../text/formTitle";
+import FormRow from "../containers/forms/formRow";
+import FormField from "../containers/forms/formField";
+import FormSummaryTitle from "../text/formSummaryTitle";
+import FormSummaryText from "../containers/forms/formSummaryText";
+import FormSummaryButton from "../containers/forms/formSummaryButton";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
 
 /**
  * The form's prefill
@@ -122,105 +132,103 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
   const { name, acronym, dittiId, email, loading } = state;
   const buttonText = studyId ? "Update" : "Create";
 
-  return (
-    <div className="page-container" style={{ flexDirection: "row" }}>
-      {/* the edit/create form */}
-      <div className="page-content bg-white">
-        {loading ? (
+  if (loading) {
+    return (
+      <FormView>
+        <Form>
           <SmallLoader />
-        ) : (
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {studyId ? "Edit " : "Create "} Study
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="name"
-                    type="text"
-                    placeholder=""
-                    prefill={name}
-                    label="Name"
-                    onKeyup={(text: string) =>
-                      setState(prevState => ({ ...prevState, name: text }))
-                    }
-                    feedback=""
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="email"
-                    type="text"
-                    placeholder=""
-                    prefill={email}
-                    label="Team Email"
-                    onKeyup={(text: string) =>
-                      setState(prevState => ({ ...prevState, email: text }))
-                    }
-                    feedback=""
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="acronym"
-                    type="text"
-                    placeholder=""
-                    prefill={acronym}
-                    label="Acronym"
-                    onKeyup={(text: string) =>
-                      setState(prevState => ({ ...prevState, acronym: text }))
-                    }
-                    feedback=""
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="dittiId"
-                    type="text"
-                    placeholder=""
-                    prefill={dittiId}
-                    label="Ditti ID"
-                    onKeyup={(text: string) =>
-                      setState(prevState => ({ ...prevState, dittiId: text }))
-                    }
-                    feedback=""
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="admin-form-summary bg-dark">
-        {/* the edit/create summary */}
-        <h1 className="border-white-b">Study Summary</h1>
-        <span>
-          Name:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{name}
-          <br />
-          <br />
-          Team Email:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{email}
-          <br />
-          <br />
-          Acronym:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{acronym}
-          <br />
-          <br />
-          Ditti ID:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
-          <br />
-        </span>
-        <AsyncButton onClick={post} text={buttonText} type="primary" />
-      </div>
-    </div>
+        </Form>
+      </FormView>
+    );
+  }
+
+  return (
+    <FormView>
+      <Form>
+        <FormTitle>{studyId ? "Edit " : "Create "} Study</FormTitle>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="name"
+              type="text"
+              placeholder=""
+              prefill={name}
+              label="Name"
+              onKeyup={(text: string) =>
+                setState(prevState => ({ ...prevState, name: text }))
+              }
+              feedback="" />
+          </FormField>
+          <FormField>
+            <TextField
+              id="email"
+              type="text"
+              placeholder=""
+              prefill={email}
+              label="Team Email"
+              onKeyup={(text: string) =>
+                setState(prevState => ({ ...prevState, email: text }))
+              }
+              feedback="" />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="acronym"
+              type="text"
+              placeholder=""
+              prefill={acronym}
+              label="Acronym"
+              onKeyup={(text: string) =>
+                setState(prevState => ({ ...prevState, acronym: text }))
+              }
+              feedback="" />
+          </FormField>
+          <FormField>
+            <TextField
+              id="dittiId"
+              type="text"
+              placeholder=""
+              prefill={dittiId}
+              label="Ditti ID"
+              onKeyup={(text: string) =>
+                setState(prevState => ({ ...prevState, dittiId: text }))
+              }
+              feedback="" />
+          </FormField>
+        </FormRow>
+      </Form>
+      <FormSummary>
+        <FormSummaryTitle>Study Summary</FormSummaryTitle>
+        <FormSummaryContent>
+          <FormSummaryText>
+            Name:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{name}
+            <br />
+            <br />
+            Team Email:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{email}
+            <br />
+            <br />
+            Acronym:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{acronym}
+            <br />
+            <br />
+            Ditti ID:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
+            <br />
+          </FormSummaryText>
+          <FormSummaryButton>
+            <AsyncButton onClick={post} text={buttonText} type="primary" />
+          </FormSummaryButton>
+        </FormSummaryContent>
+      </FormSummary>
+    </FormView>
   );
 };
 

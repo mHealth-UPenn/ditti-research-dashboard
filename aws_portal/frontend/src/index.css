@@ -351,18 +351,6 @@ div:hover > .link-svg .svg-stroke {
   margin-top: 2rem;
 }
 
-*::-webkit-scrollbar,
-*::-webkit-scrollbar-thumb {
-  border-radius: 13px;
-  background-clip: padding-box;
-  border: 10px solid transparent;
-  width: 26px;
-}
-
-*::-webkit-scrollbar-thumb {
-  box-shadow: inset 0 0 0 10px;
-}
-
 .lds-ring {
   display: inline-block;
   position: relative;

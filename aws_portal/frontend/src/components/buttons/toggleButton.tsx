@@ -1,5 +1,6 @@
 import * as React from "react";
 import { ReactComponent as Check } from "../../icons/check.svg";
+import Button, { ButtonProps } from "./button";
 
 /**
  * id: an id of the item that will be toggled by the button
@@ -7,14 +8,21 @@ import { ReactComponent as Check } from "../../icons/check.svg";
  * add: adds the item
  * remove: removes the item
  */
-interface ToggleButtonProps {
+interface ToggleButtonProps extends ButtonProps {
   id: number;
   getActive: (id: number) => boolean;
   add: (id: number, callback: (active: boolean) => void) => void;
   remove: (id: number, callback: (active: boolean) => void) => void;
 }
 
-const ToggleButton: React.FC<ToggleButtonProps> = ({ id, getActive, add, remove }) => {
+const ToggleButton: React.FC<ToggleButtonProps> = ({
+  id,
+  getActive,
+  add,
+  remove,
+  fullWidth,
+  fullHeight,
+}) => {
   // get whether the toggled item is currently active
   const [active, setActive] = React.useState<boolean>(getActive(id));
   
@@ -26,16 +34,21 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({ id, getActive, add, remove 
   };
 
   return active ? (
-    <button
-      className="button-success flex-center"
+    <Button
+      variant="success"
       onClick={() => remove(id, update)}
-    >
-      <Check />
-    </button>
+      fullWidth={fullWidth}
+      fullHeight={fullHeight}>
+        <Check />
+    </Button>
   ) : (
-    <button className="button-secondary" onClick={() => add(id, update)}>
-      Add&nbsp;+
-    </button>
+    <Button
+      variant="secondary"
+      onClick={() => add(id, update)}
+      fullWidth={fullWidth}
+      fullHeight={fullHeight}>
+        Add +
+    </Button>
   );
 };
 

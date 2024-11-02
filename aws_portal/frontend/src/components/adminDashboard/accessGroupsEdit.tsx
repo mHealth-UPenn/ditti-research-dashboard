@@ -12,6 +12,18 @@ import {
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
+import FormView from "../containers/forms/formView";
+import Form from "../containers/forms/form";
+import FormTitle from "../text/formTitle";
+import FormRow from "../containers/forms/formRow";
+import FormField from "../containers/forms/formField";
+import Button from "../buttons/button";
+import FormSummary from "../containers/forms/formSummary";
+import FormSummaryTitle from "../text/formSummaryTitle";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
+import FormSummaryText from "../containers/forms/formSummaryText";
+import FormSummaryButton from "../containers/forms/formSummaryButton";
+import CloseIcon from "@mui/icons-material/Close";
 
 /**
  * The form's prefill
@@ -199,42 +211,32 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
    * Get the action and resource dropdown menus for each permission
    * @returns - the permission fields
    */
-  const getPermissionFields = useMemo((): React.ReactElement => {
-    return (
-      <>
-        {permissions.map((p: Permission) => (
-          <div key={p.id} className="admin-form-row">
-            <div className="admin-form-field border-light">
-              <Select
-                id={p.id}
-                opts={actions.map((a) => ({ value: a.id, label: a.value }))}
-                placeholder="Action"
-                callback={selectAction}
-                getDefault={() => getSelectedAction(p.id)}
-              />
-            </div>
-            <div className="admin-form-field border-light">
-              <Select
-                id={p.id}
-                opts={resources.map((r) => ({ value: r.id, label: r.value }))}
-                placeholder="Permission"
-                callback={selectResource}
-                getDefault={() => getSelectedResource(p.id)}
-              />
-            </div>
-            <div className="admin-form-field" style={{ flexGrow: 0 }}>
-              <button
-                className="button-secondary button-lg"
-                onClick={() => removePermission(p.id)}
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        ))}
-      </>
-    );
-  }, [permissions, actions, resources]);
+  const permissionFields =permissions.map((p: Permission) =>
+    <FormRow key={p.id} forceRow={true}>
+      <FormField className="mr-4 xl:mr-8">
+        <Select
+          id={p.id}
+          opts={actions.map((a) => ({ value: a.id, label: a.value }))}
+          placeholder="Action"
+          callback={selectAction}
+          getDefault={() => getSelectedAction(p.id)} />
+      </FormField>
+      <FormField>
+        <Select
+          id={p.id}
+          opts={resources.map((r) => ({ value: r.id, label: r.value }))}
+          placeholder="Permission"
+          callback={selectResource}
+          getDefault={() => getSelectedResource(p.id)} />
+      </FormField>
+      <div className="flex items-center mb-8 px-2 cursor-pointer lg:pr-4">
+        <CloseIcon
+          color="warning"
+          fontSize="large"
+          onClick={() => removePermission(p.id)} />
+      </div>
+    </FormRow>
+  );
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating
@@ -317,91 +319,87 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
 
   const buttonText = accessGroupId ? "Update" : "Create";
 
-  return (
-    <div className="page-container" style={{ flexDirection: "row" }}>
-      {/* the edit/create form */}
-      <div className="page-content bg-white">
-        {loading ? (
+  if (loading) {
+    return (
+      <FormView>
+        <Form>
           <SmallLoader />
-        ) : (
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {accessGroupId ? "Edit " : "Create "} Access Group
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="name"
-                    type="text"
-                    placeholder=""
-                    prefill={name}
-                    label="Name"
-                    onKeyup={(text: string) => setName(text)}
-                    feedback=""
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <div style={{ marginBottom: "0.5rem" }}>
-                    <b>App</b>
-                  </div>
-                  <div className="border-light">
-                    <Select
-                      id={accessGroupId}
-                      opts={apps.map((a: App) => ({
-                        value: a.id,
-                        label: a.name
-                      }))}
-                      placeholder="Select app..."
-                      callback={selectApp}
-                      getDefault={getSelectedApp}
-                    />
-                  </div>
-                </div>
-              </div>
-              <div style={{ marginLeft: "2rem", marginBottom: "0.5rem" }}>
-                <b>Add Permissions to Access Group</b>
-              </div>
-              {getPermissionFields}
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <button
-                    className="button-secondary button-lg"
-                    onClick={addPermission}
-                  >
-                    Add Permission
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+        </Form>
+      </FormView>
+    );
+  }
 
-      {/* the edit/create summary */}
-      <div className="admin-form-summary bg-dark">
-        <h1 className="border-white-b">Access Group Summary</h1>
-        <span>
-          Name:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{name}
-          <br />
-          <br />
-          App:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{appSelected.name}
-          <br />
-          <br />
-          Permissions:
-          <br />
-          {getPermissionsSummary}
-          <br />
-        </span>
-        <AsyncButton onClick={post} text={buttonText} type="primary" />
-      </div>
-    </div>
+  return (
+    <FormView>
+      <Form>
+        <FormTitle>{accessGroupId ? "Edit " : "Create "} Access Group</FormTitle>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="name"
+              type="text"
+              placeholder=""
+              prefill={name}
+              label="Name"
+              onKeyup={(text: string) => setName(text)}
+              feedback="" />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <div className="mb-1">App</div>
+            <div className="border-light">
+              <Select
+                id={accessGroupId}
+                opts={apps.map((a: App) => ({
+                  value: a.id,
+                  label: a.name
+                }))}
+                placeholder="Select app..."
+                callback={selectApp}
+                getDefault={getSelectedApp} />
+            </div>
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <span className="mb-1 lg:mx-4">Add Permissions to Access Group</span>
+        </FormRow>
+        {permissionFields}
+        <FormRow>
+          <FormField>
+            <Button
+              variant="secondary"
+              onClick={addPermission}>
+                Add Permission
+            </Button>
+          </FormField>
+        </FormRow>
+      </Form>
+      <FormSummary>
+        <FormSummaryTitle>Access Group Summary</FormSummaryTitle>
+        <FormSummaryContent>
+          <FormSummaryText>
+            Name:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{name}
+            <br />
+            <br />
+            App:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{appSelected.name}
+            <br />
+            <br />
+            Permissions:
+            <br />
+            {getPermissionsSummary}
+            <br />
+          </FormSummaryText>
+          <FormSummaryButton>
+            <AsyncButton onClick={post} text={buttonText} type="primary" />
+          </FormSummaryButton>
+        </FormSummaryContent>
+      </FormSummary>
+    </FormView>
   );
 };
 

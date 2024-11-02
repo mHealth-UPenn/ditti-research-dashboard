@@ -50,7 +50,7 @@ const TextField: React.FC<TextFieldProps> = ({
   };
 
   return (
-    <div style={type === "textarea" ? { height: "24rem" } : {}}>
+    <>
         {/* if a label was passed as a prop */}
         {label &&
           <div className="mb-1">
@@ -59,16 +59,16 @@ const TextField: React.FC<TextFieldProps> = ({
             </label>
           </div>
         }
-        <div className={`flex items-center h-[50px] border border-light ${disabled ? "bg-light" : ""}`}>
+        <div className={`flex items-center ${type === "textarea" ? "h-[24rem]" : "h-[50px]"} border border-light ${disabled ? "bg-light" : ""}`}>
           {/* place children here as prefix icons (e.g., a password icon) */}
           {children || null}
 
           {/* the input */}
-          <div className="flex-grow px-2">
+          <div className="flex-grow h-full p-2">
             {/* textares require a unique e.target class */}
             {type === "textarea" ? (
               <textarea
-                className={`w-full focus:outline-none ${disabled && "italic text-[#666699]"}`}
+                className={`w-full h-full resize-none focus:outline-none ${disabled && "italic text-[#666699]"}`}
                 defaultValue={prefill ? prefill : undefined}
                 onChange={handleKeyUp}
                 disabled={disabled} />
@@ -90,7 +90,7 @@ const TextField: React.FC<TextFieldProps> = ({
           className={`text-sm text-[red] ${feedback && feedback !== "" ? "" : "hidden"}`}>
             {feedback}
         </span>
-    </div>
+    </>
   );
 };
 

@@ -9,6 +9,17 @@ import {
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import AsyncButton from "../buttons/asyncButton";
+import FormView from "../containers/forms/formView";
+import Form from "../containers/forms/form";
+import FormTitle from "../text/formTitle";
+import FormRow from "../containers/forms/formRow";
+import FormField from "../containers/forms/formField";
+import FormSummary from "../containers/forms/formSummary";
+import FormSummaryTitle from "../text/formSummaryTitle";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
+import FormSummaryText from "../containers/forms/formSummaryText";
+import FormSummaryButton from "../containers/forms/formSummaryButton";
+import FormSummarySubtext from "../containers/forms/formSummarySubtext";
 
 /**
  * The form's prefill
@@ -128,64 +139,62 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
 
   const buttonText = aboutSleepTemplateId ? "Update" : "Create";
 
-  return (
-    <div className="page-container" style={{ flexDirection: "row" }}>
-
-      {/* the edit/create form */}
-      <div className="page-content bg-white">
-        {loading ? (
+  if (loading) {
+    return (
+      <FormView>
+        <Form>
           <SmallLoader />
-        ) : (
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {aboutSleepTemplateId ? "Edit " : "Create "} Template
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="name"
-                    prefill={name}
-                    label="Name"
-                    onKeyup={setName}
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="text"
-                    type="textarea"
-                    prefill={text}
-                    label="Text"
-                    onKeyup={setText}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+        </Form>
+      </FormView>
+    );
+  }
 
-      {/* the edit/create summary */}
-      <div className="admin-form-summary bg-dark">
-        <h1 className="border-white-b">Template Summary</h1>
-        <span>
-          Name:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{name}
-          <br />
-        </span>
-        <AsyncButton onClick={post} text={buttonText} type="primary" />
-        <div style={{ marginTop: "1.5rem" }}>
-          <i>
-            To preview this template, you must update an existing user or
-            create a new user with this template, then view it through the
-            app.
-          </i>
-        </div>
-      </div>
-    </div>
+  return (
+    <FormView>
+      <Form>
+        <FormTitle>{aboutSleepTemplateId ? "Edit " : "Create "} Template</FormTitle>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="name"
+              prefill={name}
+              label="Name"
+              onKeyup={setName} />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="text"
+              type="textarea"
+              prefill={text}
+              label="Text"
+              onKeyup={setText} />
+          </FormField>
+        </FormRow>
+      </Form>
+      <FormSummary>
+        <FormSummaryTitle>Template Summary</FormSummaryTitle>
+        <FormSummaryContent>
+          <FormSummaryText>
+            Name:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{name}
+            <br />
+          </FormSummaryText>
+          <div>
+            <FormSummaryButton>
+              <AsyncButton onClick={post} text={buttonText} type="primary" />
+            </FormSummaryButton>
+            <FormSummarySubtext>
+              To preview this template, you must update an existing user or
+              create a new user with this template, then view it through the
+              app.
+            </FormSummarySubtext>
+          </div>
+        </FormSummaryContent>
+      </FormSummary>
+    </FormView>
   );
 };
 

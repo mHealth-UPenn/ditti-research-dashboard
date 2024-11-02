@@ -87,12 +87,12 @@ const Navbar: React.FC<NavbarProps> = ({ active, handleClick, flashMessage, goBa
         v.active ?
           <div
             key={i}
-            className={"flex px-8 items-center justify-center h-full py-4 bg-dark"}>
+            className="flex px-8 items-center justify-center h-full py-4 bg-dark text-center">
               {v.name}
           </div> :
-          <div className="flex h-full">
+          <div key={i} className="flex h-full">
             <Link
-              className="flex items-center justify-center px-8 h-full w-full no-underline hover:bg-extra-light"
+              className="flex items-center justify-center px-8 h-full w-full no-underline hover:bg-extra-light text-center"
               onClick={() => handleClick([v.name], v.view, true)}>
                 {v.name}
             </Link>
