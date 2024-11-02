@@ -171,12 +171,12 @@ def fitbit_callback():
 
         # Store access token
         study_subject_secrets_manager.store_secret(
-            access_key_uuid, access_token_data, "fb-access"
+            access_key_uuid, access_token_data
         )
 
         # Store refresh token
         study_subject_secrets_manager.store_secret(
-            refresh_key_uuid, refresh_token_data, "fb-refresh"
+            refresh_key_uuid, refresh_token_data
         )
     except Exception as e:
         msg = f"Error storing tokens: {str(e)}"

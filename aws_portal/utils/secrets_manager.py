@@ -20,35 +20,34 @@ class StudySubjectSecretsManager:
             self._local_secrets = {}
             logger.info("Initialized local Secrets Manager for testing.")
 
-    def store_secret(self, secret_uuid, secret_value, label):
+    def store_secret(self, secret_uuid, secret_value):
         """
         Stores a secret. Accepts either a string or a dict (which will be stored as JSON).
         """
-        labled_secret_uuid = f"{label}-{secret_uuid}"
         if isinstance(secret_value, dict):
             secret_string = json.dumps(secret_value)
         else:
             secret_string = secret_value
 
         if self.testing:
-            self._local_secrets[labled_secret_uuid] = secret_string
+            self._local_secrets[secret_uuid] = secret_string
             logger.info(
-                f"(Test) Stored secret locally for UUID: {labled_secret_uuid}")
+                f"(Test) Stored secret locally for UUID: {secret_uuid}")
         else:
             try:
                 # Attempt to update the secret in AWS Secrets Manager
                 self.client.put_secret_value(
-                    SecretId=labled_secret_uuid,
+                    SecretId=secret_uuid,
                     SecretString=secret_string
                 )
-                logger.info(f"Updated secret for UUID: {labled_secret_uuid}")
+                logger.info(f"Updated secret for UUID: {secret_uuid}")
             except self.client.exceptions.ResourceNotFoundException:
                 # Secret doesn't exist; create it in AWS Secrets Manager
                 self.client.create_secret(
-                    Name=labled_secret_uuid,
+                    Name=secret_uuid,
                     SecretString=secret_string
                 )
-                logger.info(f"Created secret for UUID: {labled_secret_uuid}")
+                logger.info(f"Created secret for UUID: {secret_uuid}")
             except ClientError as e:
                 logger.error(f"Error storing secret: {e}")
                 raise

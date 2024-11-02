@@ -128,11 +128,11 @@ def get_fitbit_oauth_session(join_entry):
                 }
                 # Store refresh token
                 study_subject_secrets_manager.store_secret(
-                    join_entry.refresh_key_uuid, new_refresh_token_data, "fb-refresh")
+                    join_entry.refresh_key_uuid, new_refresh_token_data)
 
             # Store access token
             study_subject_secrets_manager.store_secret(
-                join_entry.access_key_uuid, new_access_token_data, "fb-access")
+                join_entry.access_key_uuid, new_access_token_data)
 
         except Exception as e:
             logger.error(f"Error updating tokens in Secrets Manager: {e}")
