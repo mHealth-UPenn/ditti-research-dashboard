@@ -81,18 +81,18 @@ const Navbar: React.FC<NavbarProps> = ({ active, handleClick, flashMessage, goBa
   });
 
   return (
-    <div className="flex items-center justify-left bg-white select-none border-b border-light">
+    <div className="flex items-center justify-left bg-white select-none">
       {/* if the view is active, highlight it using bg-dark */}
       {views.map((v, i) => (
         v.active ?
           <div
             key={i}
-            className="flex px-8 items-center justify-center h-full py-4 bg-dark text-center">
+            className="flex px-3 lg:px-4 xl:px-8 items-center justify-center h-full py-4 bg-dark text-center">
               {v.name}
           </div> :
           <div key={i} className="flex h-full">
             <Link
-              className="flex items-center justify-center px-8 h-full w-full no-underline hover:bg-extra-light text-center"
+              className="flex items-center justify-center px-3 lg:px-4 xl:px-8 h-full w-full no-underline hover:bg-extra-light text-center"
               onClick={() => handleClick([v.name], v.view, true)}>
                 {v.name}
             </Link>

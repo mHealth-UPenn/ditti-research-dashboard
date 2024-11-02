@@ -17,7 +17,7 @@ const Card = ({
 }: PropsWithChildren<CardProps>) => {
   return (
     <div className={widthMap[width]}>
-      <div className="bg-white p-8 lg:shadow-lg w-full">
+      <div className="bg-white p-8 lg:shadow-lg w-full overflow-x-scroll">
         {children}
       </div>
     </div>
