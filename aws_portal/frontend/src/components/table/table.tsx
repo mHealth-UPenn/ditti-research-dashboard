@@ -246,7 +246,7 @@ const Table: React.FC<TableProps> = ({
             variant="secondary"
             size="sm"
             square={true}
-            disabled={page === totalPages}
+            disabled={!rowsFiltered.length || page === totalPages}
             onClick={() => page < totalPages && paginate(page + 1)}>
               <KeyboardArrowRightIcon />
           </Button>
@@ -255,7 +255,7 @@ const Table: React.FC<TableProps> = ({
           </span>
         </div>
         <span>
-          {totalPages &&
+          {(!!rowsFiltered.length && totalPages) &&
             `${(page - 1) * paginationPer + 1} - ${Math.min(
               rowsFiltered.length,
               page * paginationPer
