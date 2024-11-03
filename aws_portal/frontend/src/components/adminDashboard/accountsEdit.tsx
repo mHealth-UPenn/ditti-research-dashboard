@@ -791,7 +791,7 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
             <br />
           </FormSummaryText>
           <FormSummaryButton>
-            <AsyncButton onClick={post} text={buttonText} type="primary" />
+            <AsyncButton onClick={post}>{buttonText}</AsyncButton>
           </FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>

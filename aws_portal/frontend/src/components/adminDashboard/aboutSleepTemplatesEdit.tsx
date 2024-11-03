@@ -184,7 +184,7 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
           </FormSummaryText>
           <div>
             <FormSummaryButton>
-              <AsyncButton onClick={post} text={buttonText} type="primary" />
+            <AsyncButton onClick={post}>{buttonText}</AsyncButton>
             </FormSummaryButton>
             <FormSummarySubtext>
               To preview this template, you must update an existing user or

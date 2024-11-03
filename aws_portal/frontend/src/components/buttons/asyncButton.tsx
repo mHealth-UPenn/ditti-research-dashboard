@@ -1,32 +1,27 @@
 import * as React from "react";
 import { useState } from "react";
+import Button, { ButtonProps } from "./button";
 
 /**
  * onClick: the function to handle clicks
  * text: the text to display in the button
  * type: the button's type (primary, secondary, etc.)
  */
-interface AsyncButtonProps {
+interface AsyncButtonProps extends ButtonProps {
   onClick: () => Promise<any>;
-  text: string;
-  type: "primary" | "secondary" | "danger";
-  className?: string;
-  disabled?: boolean;
-}
-
-const variantMap = {
-  primary: "bg-primary",
-  secondary: "bg-secondary",
-  danger: "bg-danger",
 }
 
 
 const AsyncButton: React.FC<AsyncButtonProps> = ({
+  variant = "primary",
+  size = "md",
+  disabled = false,
+  square = false,
+  fullWidth = false,
+  fullHeight = false,
+  className = "",
   onClick,
-  text,
-  type,
-  className,
-  disabled,
+  children,
 }) => {
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -49,12 +44,17 @@ const AsyncButton: React.FC<AsyncButtonProps> = ({
   );
 
   return (
-    <button
-      className={`${variantMap[type]} px-6 py-4 ${className}`}
-      onClick={handleClick}
-      disabled={disabled || false}>
-        {loading ? loader : text}
-    </button>
+    <Button
+      variant={variant}
+      size={size}
+      disabled={disabled}
+      square={square}
+      fullWidth={fullWidth}
+      fullHeight={fullHeight}
+      className={className}
+      onClick={handleClick}>
+        {children}
+    </Button>
   );
 };
 

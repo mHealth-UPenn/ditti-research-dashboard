@@ -589,9 +589,9 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               <AsyncButton
                 className="p-4"
                 onClick={handleUpload}
-                text="Upload"
-                type="primary"
-                disabled={!canUpload}/>
+                disabled={!canUpload}>
+                  Upload
+              </AsyncButton>
             </FormSummaryButton>
             <FormSummarySubtext>
               Audio file details cannot be changed after upload. The files must be

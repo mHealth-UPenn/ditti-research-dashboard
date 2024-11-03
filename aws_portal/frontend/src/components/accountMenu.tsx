@@ -121,12 +121,12 @@ const AccountMenu: React.FC<AccountMenuProps> = (props) => {
   return (
     <div
       ref={props.accountMenuRef}
-      className="absolute right-[-24rem] top-16 w-[24rem] max-h-[calc(100vh-4rem)] overflow-scroll z-20 bg-white border-light border-l transition-all duration-500">
+      className="absolute right-[-24rem] top-16 w-[24rem] h-[calc(100vh-4rem)] overflow-scroll z-20 bg-white border-light border-l transition-all duration-500">
         <div className="p-8">
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-light">
             <p>Account Details</p>
             {edit ? (
-              <AsyncButton onClick={post} text="Save" type="primary" />
+              <AsyncButton size="sm" onClick={post}>Save</AsyncButton>
             ) : (
               <Button
                 variant="primary"
@@ -199,19 +199,15 @@ const AccountMenu: React.FC<AccountMenuProps> = (props) => {
           <div className="border-b border-light mb-6" />
           <div className="flex items-center justify-between mb-6">
             <p>Change password</p>
-            {editPassword ? (
-              <AsyncButton
-                onClick={trySetPassword}
-                text="Save"
-                type="primary" />
-            ) : (
+            {editPassword ?
+              <AsyncButton size="sm" onClick={trySetPassword}>Save</AsyncButton> :
               <Button
                 variant="primary"
                 size="sm"
                 onClick={() => setState((prevState) => ({ ...prevState, editPassword: true }))} >
                   Change
               </Button>
-            )}
+            }
           </div>
           {editPassword &&
             <>

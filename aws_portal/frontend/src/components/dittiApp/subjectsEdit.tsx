@@ -324,7 +324,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
           </FormSummaryText>
           <div>
             <FormSummaryButton>
-              <AsyncButton onClick={post} text={buttonText} type="primary" />
+              <AsyncButton onClick={post}>{buttonText}</AsyncButton>
             </FormSummaryButton>
             <FormSummarySubtext>
               After enrolling a subject, log in on your smartphone using their

@@ -265,7 +265,7 @@ const LoginPage: React.FC = () => {
         </TextField>
       </div>
       <div className="login-buttons">
-        <AsyncButton text="Sign In" type="primary" onClick={tryLogIn} />
+        <AsyncButton onClick={tryLogIn}>Sign in</AsyncButton>
       </div>
     </>
   );
