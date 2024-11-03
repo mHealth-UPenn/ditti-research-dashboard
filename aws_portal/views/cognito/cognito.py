@@ -5,13 +5,22 @@ from datetime import datetime, timezone
 from flask import (
     Blueprint, current_app, make_response, redirect, request, session
 )
+from urllib.parse import urlencode, urljoin
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
 from aws_portal.utils.cognito import verify_token
 
-# Initialize Blueprint for Cognito-related routes
 blueprint = Blueprint("cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
+
+
+def build_cognito_url(path: str, params: dict) -> str:
+    """
+    Constructs a full URL for AWS Cognito by combining the base domain, path, and query parameters.
+    """
+    base_url = f"https://{current_app.config['COGNITO_DOMAIN']}"
+    query_string = urlencode(params)
+    return f"{base_url}{path}?{query_string}"
 
 
 @blueprint.route("/login")
@@ -22,13 +31,12 @@ def login():
     Constructs the Cognito authorization URL with client ID, response type,
     scope, and redirect URI, then redirects the user to the Cognito login page.
     """
-    cognito_auth_url = (
-        f"https://{current_app.config['COGNITO_DOMAIN']}/login"
-        f"?client_id={current_app.config['COGNITO_CLIENT_ID']}"
-        f"&response_type=code"
-        f"&scope=openid+email"
-        f"&redirect_uri={current_app.config['COGNITO_REDIRECT_URI']}"
-    )
+    cognito_auth_url = build_cognito_url("/login", {
+        "client_id": current_app.config['COGNITO_CLIENT_ID'],
+        "response_type": "code",
+        "scope": "openid email",
+        "redirect_uri": current_app.config['COGNITO_REDIRECT_URI'],
+    })
     return redirect(cognito_auth_url)
 
 
@@ -48,7 +56,8 @@ def cognito_callback():
     code = request.args.get("code")
 
     # Construct token endpoint and request parameters
-    token_url = f"https://{current_app.config['COGNITO_DOMAIN']}/oauth2/token"
+    cognito_domain = current_app.config['COGNITO_DOMAIN']
+    token_issuer_endpoint = f"https://{cognito_domain}/oauth2/token"
     data = {
         "grant_type": "authorization_code",
         "client_id": current_app.config["COGNITO_CLIENT_ID"],
@@ -59,7 +68,7 @@ def cognito_callback():
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
     # Request tokens from Cognito
-    response = requests.post(token_url, data=data, headers=headers)
+    response = requests.post(token_issuer_endpoint, data=data, headers=headers)
     response.raise_for_status()
     token_data = response.json()
 
@@ -118,15 +127,16 @@ def logout():
     ID and access tokens from cookies by setting their expiration to zero.
     """
     session.clear()
-    response = make_response(
-        redirect(
-            f"https://{current_app.config['COGNITO_DOMAIN']}/logout"
-            f"?client_id={current_app.config['COGNITO_CLIENT_ID']}"
-            f"&response_type=code"
-            f"&scope=openid+email"
-            f"&redirect_uri={current_app.config['COGNITO_REDIRECT_URI']}"
-        )
-    )
+
+    cognito_logout_url = build_cognito_url("/logout", {
+        "client_id": current_app.config['COGNITO_CLIENT_ID'],
+        # TODO: Add logout URL to Cognito app settings and replace this
+        "redirect_uri": current_app.config['COGNITO_REDIRECT_URI'],
+        "response_type": "code",
+        "scope": "openid email"
+    })
+
+    response = make_response(redirect(cognito_logout_url))
 
     # Remove cookies by setting them to expire immediately
     response.set_cookie("id_token", "", expires=0)
