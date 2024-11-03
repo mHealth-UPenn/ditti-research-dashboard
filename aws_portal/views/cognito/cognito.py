@@ -7,7 +7,7 @@ from flask import (
 )
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
-from aws_portal.utils.cognito import get_public_key, decode_token
+from aws_portal.utils.cognito import verify_token
 
 # Initialize Blueprint for Cognito-related routes
 blueprint = Blueprint("cognito", __name__, url_prefix="/cognito")
@@ -73,20 +73,7 @@ def cognito_callback():
 
     # Decode and verify ID token
     try:
-        public_key = get_public_key(id_token)
-        issuer = (
-            f"https://cognito-idp.{current_app.config['COGNITO_DOMAIN']
-                                   .split('.')[2]}"
-            f".amazonaws.com/{current_app.config['COGNITO_USER_POOL_ID']}"
-        )
-        claims = decode_token(
-            id_token,
-            public_key,
-            audience=current_app.config["COGNITO_CLIENT_ID"],
-            issuer=issuer
-        )
-        if claims.get("token_use") != "id":
-            raise jwt.InvalidTokenError('Invalid token_use. Expected "id".')
+        claims = verify_token(id_token, token_use="id")
 
     except jwt.ExpiredSignatureError:
         return make_response({"msg": "Token has expired."}, 400)

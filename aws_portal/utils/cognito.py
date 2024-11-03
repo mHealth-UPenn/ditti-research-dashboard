@@ -90,39 +90,6 @@ def get_public_key(token: str):
         raise
 
 
-def decode_token(token, key, audience, issuer, verify_aud=True, verify_exp=True):
-    """
-    Decodes and verifies a JWT token using the provided public key, audience, and issuer.
-
-    Args:
-        token (str): JWT token to be decoded and verified.
-        key: Public key for verifying the JWT.
-        audience (str): Expected audience for the token.
-        issuer (str): Expected issuer of the token.
-        verify_aud (bool): Flag to indicate if audience should be verified.
-        verify_exp (bool): Flag to indicate if expiration should be verified.
-
-    Returns:
-        dict: Decoded token claims if verification succeeds.
-
-    Raises:
-        PyJWTError: If token verification fails.
-    """
-    try:
-        # Decode the token and verify claims based on provided options
-        return jwt.decode(
-            token,
-            key,
-            algorithms=["RS256"],
-            audience=audience if verify_aud else None,
-            issuer=issuer,
-            options={"verify_aud": verify_aud, "verify_exp": verify_exp}
-        )
-    except PyJWTError as e:
-        logger.error(f"Error decoding token: {e}")
-        raise
-
-
 def refresh_access_token(refresh_token: str) -> str:
     """
     Refreshes the access token using the provided refresh token by making an OAuth2 token request.
@@ -170,6 +137,71 @@ def refresh_access_token(refresh_token: str) -> str:
         raise
 
 
+def verify_token(token: str, token_use: str = "id") -> dict:
+    """
+    Decodes and verifies a JWT token (ID or Access) using the provided public key,
+    audience, and issuer.
+
+    Based on https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-tokens-verifying-a-jwt.html
+
+    Args:
+        token (str): JWT token to be decoded and verified.
+        token_use (str): Type of the token ('id' or 'access').
+
+    Returns:
+        dict: Decoded token claims if verification succeeds.
+
+    Raises:
+        PyJWTError: If token verification fails.
+    """
+    try:
+        # Retrieve public key
+        public_key = get_public_key(token)
+
+        # Define issuer and audience based on configuration
+        region = current_app.config['COGNITO_DOMAIN'].split('.')[2]
+        # TODO: Record this in the config
+        issuer = f"https://cognito-idp.{region}.amazonaws.com/{
+            current_app.config['COGNITO_USER_POOL_ID']}"
+        audience = current_app.config["COGNITO_CLIENT_ID"]
+
+        if token_use not in ["id", "access"]:
+            raise InvalidTokenError("Invalid token type specified.")
+
+        # Decode and verify the token 'iss' claim and 'aud' claim for id tokens
+        claims = jwt.decode(
+            token,
+            public_key,
+            algorithms=["RS256"],
+            audience=audience if token_use == "id" else None,
+            issuer=issuer,
+            options={"verify_aud": False} if token_use == "access" else None
+        )
+
+        # Verify the 'token_use' claim
+        if claims.get("token_use") != token_use:
+            raise InvalidTokenError(
+                f'Invalid token_use. Expected "{token_use}".')
+
+        # Verify the 'client_id' claim in access tokens
+        if token_use == "access":
+            if claims.get("client_id") != current_app.config["COGNITO_CLIENT_ID"]:
+                raise InvalidTokenError(
+                    "Access token 'client_id' does not match.")
+
+        return claims
+
+    except jwt.ExpiredSignatureError:
+        logger.error("Token has expired.")
+        raise
+    except jwt.InvalidTokenError as e:
+        logger.error(f"Invalid token: {str(e)}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error during token verification: {e}")
+        raise
+
+
 def cognito_auth_required(f):
     """
     Decorator for routes to enforce Cognito authentication using tokens from cookies.
@@ -195,24 +227,7 @@ def cognito_auth_required(f):
 
         # Verify access token and handle token refresh if expired
         try:
-            public_key = get_public_key(access_token)
-            access_claims = jwt.decode(
-                access_token,
-                public_key,
-                algorithms=["RS256"],
-                issuer=(
-                    f"https://cognito-idp."
-                    f"{current_app.config['COGNITO_DOMAIN'].split('.')[2]}"
-                    f".amazonaws.com/"
-                    f"{current_app.config['COGNITO_USER_POOL_ID']}"
-                )
-            )
-
-            # Confirm 'client_id' in access claims
-            if access_claims.get("client_id") != current_app.config["COGNITO_CLIENT_ID"]:
-                raise InvalidTokenError(
-                    "Access token 'client_id' does not match."
-                )
+            verify_token(access_token, token_use="access")
         except ExpiredSignatureError:
             # Attempt to refresh access token if expired
             if not refresh_token:
@@ -220,17 +235,7 @@ def cognito_auth_required(f):
             try:
                 # Refresh the access token
                 new_access_token = refresh_access_token(refresh_token)
-                new_access_claims = jwt.decode(
-                    new_access_token,
-                    get_public_key(new_access_token),
-                    algorithms=["RS256"],
-                    issuer=(
-                        f"https://cognito-idp."
-                        f"{current_app.config['COGNITO_DOMAIN'].split('.')[2]}"
-                        f".amazonaws.com/"
-                        f"{current_app.config['COGNITO_USER_POOL_ID']}"
-                    )
-                )
+                verify_token(new_access_token, token_use="access")
 
                 response = make_response(f(*args, **kwargs))
                 response.set_cookie(
@@ -247,19 +252,7 @@ def cognito_auth_required(f):
 
         # Verify ID token and check that claims match the expected values
         try:
-            public_key_id = get_public_key(id_token)
-            id_claims = jwt.decode(
-                id_token,
-                public_key_id,
-                algorithms=["RS256"],
-                audience=current_app.config["COGNITO_CLIENT_ID"],
-                issuer=(
-                    f"https://cognito-idp."
-                    f"{current_app.config['COGNITO_DOMAIN'].split('.')[2]}"
-                    f".amazonaws.com/"
-                    f"{current_app.config['COGNITO_USER_POOL_ID']}"
-                )
-            )
+            verify_token(id_token, token_use="id")
         except ExpiredSignatureError:
             return make_response({"msg": "ID token has expired."}, 401)
         except InvalidTokenError as e:
