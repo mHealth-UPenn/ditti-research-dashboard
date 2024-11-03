@@ -348,19 +348,17 @@ const Dashboard: React.FC = () => {
       <Header
         handleClick={setView}
         goBack={goBack}
-        flashMessage={flashMessage}
-      />
+        flashMessage={flashMessage} />
       <div className="flex flex-grow max-h-[calc(100vh-4rem)]">
 
         {/* list of studies on the left of the screen */}
-        <StudiesMenu
+        {/* <StudiesMenu
           setView={setStudy}
           flashMessage={flashMessage}
           handleClick={setView}
           getTaps={getTaps}
           getAudioTaps={getAudioTaps}
-          goBack={goBack}
-        />
+          goBack={goBack} /> */}
 
         {/* main dashboard */}
         <div className="flex flex-col flex-grow max-w-[calc(100vw-16rem) overflow-hidden relative">
@@ -370,15 +368,14 @@ const Dashboard: React.FC = () => {
             breadcrumbs={breadcrumbs}
             handleBack={goBack}
             handleClick={setView}
-            hasHistory={history.length > 0}
-          />
+            hasHistory={history.length > 0} />
 
           {/* flash messages */}
-          {flashMessages.length ? (
+          {!!flashMessages.length &&
             <div className="flash-message-container">
               {flashMessages.map((fm) => fm.element)}
             </div>
-          ) : null}
+          }
 
           {/* current view */}
           {view}

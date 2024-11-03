@@ -299,7 +299,7 @@ const LoginPage: React.FC = () => {
             <p>Research Coordinator Dashboard</p>
           </div>
           {/* For new sign in with AWS Cognito */}
-          {/* <div className="flex flex-col">
+          {/* <div className="flex flex-col xl:mx-16">
             <div className="flex justify-center">
               <p className="mb-4 whitespace-nowrap">Continue to our secure sign in:</p>
             </div>

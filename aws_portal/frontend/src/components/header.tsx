@@ -41,9 +41,8 @@ const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
           {/* clicking on this icon shows the account menu */}
           <div
             className="border-solid border-white border-2 rounded-[50%] p-2 relative select-none"
-            onClick={() => setShowMenu(!showMenu)}
-          >
-            <span>{initials}</span>
+            onClick={() => setShowMenu(!showMenu)}>
+              <span>{initials}</span>
           </div>
         </div>
       </div>

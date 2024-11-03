@@ -72,12 +72,10 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
                 getTaps={getTaps}
                 getAudioTaps={getAudioTaps}
                 goBack={goBack}
-                studyId={s.id}
-              />
+                studyId={s.id} />
             )
-          }
-        >
-          {s.acronym}
+          }>
+            {s.acronym}
         </li>
       ))}
     </ul>
