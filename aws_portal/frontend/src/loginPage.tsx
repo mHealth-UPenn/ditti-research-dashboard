@@ -10,6 +10,8 @@ import { FullLoader } from "./components/loader";
 import { IFlashMessage, ResponseBody } from "./interfaces";
 import AsyncButton from "./components/buttons/asyncButton";
 import FlashMessage, { FlashMessageVariant } from "./components/flashMessage/flashMessage";
+import Form from "./components/containers/forms/form";
+import Button from "./components/buttons/button";
 
 
 /**
@@ -211,16 +213,15 @@ const LoginPage: React.FC = () => {
 
   // the login form fields to be shown on a user's first login
   const setPasswordFields = (
-    <React.Fragment>
+    <>
       <div className="login-field">
         <TextField
           id="set-password"
           type="password"
           placeholder="To log in, please enter a new password"
           onKeyup={(text: string) => setSetPasswordField(text)}
-          value={setPasswordField}
-        >
-          <Key />
+          value={setPasswordField}>
+            <Key />
         </TextField>
       </div>
       <div className="login-field">
@@ -229,9 +230,8 @@ const LoginPage: React.FC = () => {
           type="password"
           placeholder="Confirm your password"
           onKeyup={(text: string) => setConfirmPassword(text)}
-          value={confirmPassword}
-        >
-          <Key />
+          value={confirmPassword}>
+            <Key />
         </TextField>
       </div>
       <div className="login-buttons">
@@ -239,20 +239,19 @@ const LoginPage: React.FC = () => {
           Set password
         </button>
       </div>
-    </React.Fragment>
+    </>
   );
 
   // regular login form fields
   const loginFields = (
-    <React.Fragment>
+    <>
       <div className="login-field">
         <TextField
           id="login-email"
           placeholder="Email"
           onKeyup={(text: string) => setEmail(text)}
-          value={email}
-        >
-          <Person />
+          value={email}>
+            <Person />
         </TextField>
       </div>
       <div className="login-field">
@@ -261,49 +260,60 @@ const LoginPage: React.FC = () => {
           type="password"
           placeholder="Password"
           onKeyup={(text: string) => setPassword(text)}
-          value={password}
-        >
-          <Key />
+          value={password}>
+            <Key />
         </TextField>
       </div>
       <div className="login-buttons">
         <AsyncButton text="Sign In" type="primary" onClick={tryLogIn} />
       </div>
-    </React.Fragment>
+    </>
   );
 
-  // the login page
-  const page = (
-    <div className="flex h-screen lg:mx-[6rem] xl:mx-[10rem] 2xl:mx-[20rem] bg-light">
-      <div className="login-image-container">
-        <img className="hidden lg:flex login-image" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
+  if (loading || fading) {
+    return (
+      <FullLoader
+        loading={loading}
+        msg={loadingDb ? "Starting the database... This may take up to 6 minutes" : ""} />
+    );
+  }
+
+  if (loggedIn && !firstLogin) {
+    return <Dashboard />;
+  }
+
+  return (
+    <div className="flex h-screen w-screen md:w-max mx-auto sm:px-12 xl:px-20 bg-light">
+      <div className="hidden sm:flex items-center mr-12 xl:mr-20">
+        <img className="w-[10rem] xl:w-[12rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
       </div>
-      <div className="login-menu bg-white">
-        <div className="login-menu-content">
-          <h1>Geriatric Sleep Research Lab</h1>
-          <h3>AWS Data Portal</h3>
-          <div className="login-flash-message-container">
+      <div className="flex flex-grow items-center justify-center bg-white mx-[auto] max-w-[24rem] sm:max-w-[64rem]">
+        <div className="flex flex-col mx-8 xl:mx-16">
+          <div className="flex justify-center mb-8 sm:hidden">
+            <div className="p-4 bg-light rounded-xl">
+              <img className="w-[6rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
+            </div>
+          </div>
+          <div className="mb-16">
+            <p className="text-4xl">Penn Ditti</p>
+            <p>Research Coordinator Dashboard</p>
+          </div>
+          {/* For new sign in with AWS Cognito */}
+          {/* <div className="flex flex-col">
+            <div className="flex justify-center">
+              <p className="mb-4 whitespace-nowrap">Continue to our secure sign in:</p>
+            </div>
+            <div className="flex justify-center">
+              <Button>Sign in</Button>
+            </div>
+          </div> */}
+          <div className="">
             {flashMessages.map((fm) => fm.element)}
           </div>
           {firstLogin ? setPasswordFields : loginFields}
         </div>
       </div>
     </div>
-  );
-
-  return (
-    <React.Fragment>
-      {/* if the loading screen is showing or completing a 0.5 second fade-out */}
-      {loading || fading ? (
-        <FullLoader
-          loading={loading}
-          msg={loadingDb ? "Starting the database... This may take up to 6 minutes" : ""}
-        />
-      ) : null}
-
-      {/* if the user is logged in, show the dashboard, else show the login page */}
-      <div>{loggedIn && !firstLogin ? <Dashboard /> : page}</div>
-    </React.Fragment>
   );
 };
 
