@@ -23,16 +23,10 @@ def get_cognito_jwks():
         RequestException: If the JWKS could not be fetched due to a request issue.
     """
     try:
-        # Obtain Cognito domain and User Pool ID from the configuration
-        cognito_domain = current_app.config['COGNITO_DOMAIN']
+        region = current_app.config['COGNITO_REGION']
         user_pool_id = current_app.config['COGNITO_USER_POOL_ID']
-
-        # Extract AWS region from the domain format and construct the JWKS URL
-        region = cognito_domain.split(".")[2]
-        keys_url = (
-            f"https://cognito-idp.{region}.amazonaws.com/"
-            f"{user_pool_id}/.well-known/jwks.json"
-        )
+        issuer = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
+        keys_url = f"{issuer}/.well-known/jwks.json"
 
         # Fetch and return the JWKS JSON data
         response = requests.get(keys_url)
@@ -105,11 +99,9 @@ def refresh_access_token(refresh_token: str) -> str:
         Exception: For any unexpected issues in the refresh process.
     """
     try:
-        cognito_domain = current_app.config['COGNITO_DOMAIN']
-        # TODO: Record this in the config
-        token_url = f"https://{cognito_domain}/oauth2/token"
-
         # Prepare the request data for the token refresh request
+        cognito_domain = current_app.config['COGNITO_DOMAIN']
+        token_issuer_endpoint = f"https://{cognito_domain}/oauth2/token"
         data = {
             "grant_type": "refresh_token",
             "client_id": current_app.config["COGNITO_CLIENT_ID"],
@@ -120,7 +112,11 @@ def refresh_access_token(refresh_token: str) -> str:
         }
 
         # Send the token refresh request and parse the response for the new access token
-        response = requests.post(token_url, data=data, headers=headers)
+        response = requests.post(
+            token_issuer_endpoint,
+            data=data,
+            headers=headers
+        )
         response.raise_for_status()
         token_data = response.json()
         new_access_token = token_data.get("access_token")
@@ -158,17 +154,14 @@ def verify_token(token: str, token_use: str = "id") -> dict:
         # Retrieve public key
         public_key = get_public_key(token)
 
-        # Define issuer and audience based on configuration
-        region = current_app.config['COGNITO_DOMAIN'].split('.')[2]
-        # TODO: Record this in the config
-        issuer = f"https://cognito-idp.{region}.amazonaws.com/{
-            current_app.config['COGNITO_USER_POOL_ID']}"
-        audience = current_app.config["COGNITO_CLIENT_ID"]
-
         if token_use not in ["id", "access"]:
             raise InvalidTokenError("Invalid token type specified.")
 
         # Decode and verify the token 'iss' claim and 'aud' claim for id tokens
+        audience = current_app.config["COGNITO_CLIENT_ID"]
+        region = current_app.config['COGNITO_REGION']
+        user_pool_id = current_app.config['COGNITO_USER_POOL_ID']
+        issuer = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
         claims = jwt.decode(
             token,
             public_key,
