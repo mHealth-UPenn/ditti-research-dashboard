@@ -24,9 +24,9 @@ const Button = ({
   children,
 }: PropsWithChildren<ButtonProps>) => {
   const sizeMap = {
-    sm: square ? `${!fullWidth ? "px-3" : ""} ${!fullHeight ? "py-3" : ""}` : `${!fullWidth ? "px-4" : ""} ${!fullHeight ? "py-3" : ""}`,
-    md: square ? `${!fullWidth ? "px-4" : ""} ${!fullHeight ? "py-4" : ""}` : `${!fullWidth ? "px-6" : ""} ${!fullHeight ? "py-4" : ""}`,
-    lg: square ? `${!fullWidth ? "px-5" : ""} ${!fullHeight ? "py-5" : ""}` : `${!fullWidth ? "px-8" : ""} ${!fullHeight ? "py-5" : ""}`,
+    sm: `text-sm ${square ? `${!fullWidth ? "px-3" : ""} ${!fullHeight ? "py-3" : ""}` : `${!fullWidth ? "px-4" : ""} ${!fullHeight ? "py-3" : ""}`}`,
+    md: `text-[1rem] ${square ? `${!fullWidth ? "px-4" : ""} ${!fullHeight ? "py-4" : ""}` : `${!fullWidth ? "px-6" : ""} ${!fullHeight ? "py-4" : ""}`}`,
+    lg: `text-lg ${square ? `${!fullWidth ? "px-5" : ""} ${!fullHeight ? "py-5" : ""}` : `${!fullWidth ? "px-8" : ""} ${!fullHeight ? "py-5" : ""}`}`,
   }
 
   const variantMap = {
@@ -40,7 +40,7 @@ const Button = ({
   return (
     <button
       disabled={disabled}
-      className={`flex items-center justify-center ${variantMap[variant]} ${sizeMap[size]} ${fullWidth ? "w-full" : ""} ${fullHeight ? "h-full" : ""} ${disabled ? "cursor-not-allowed opacity-50" : ""} font-bold whitespace-nowrap ${className}`}
+      className={`flex items-center justify-center ${variantMap[variant]} ${sizeMap[size]} ${fullWidth ? "w-full" : ""} ${fullHeight ? "h-full" : ""} ${disabled ? "cursor-not-allowed opacity-50" : ""} whitespace-nowrap ${className} select-none`}
       onClick={onClick}>
         {children}
     </button>

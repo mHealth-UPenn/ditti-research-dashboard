@@ -58,7 +58,7 @@ const Select: React.FC<SelectProps> = ({
         <p className="ml-4 text-light pointer-events-none select-none absolute">{placeholder}</p>
       )}
       <select
-        className="bg-[transparent] min-h-[calc(3rem-2px)]"
+        className="flex-grow pl-2 bg-[transparent] min-h-[calc(3rem-2px)] focus:outline-none focus:shadow-none cursor-pointer"
         onChange={changeValue}
         value={value}
         disabled={disabled}>

@@ -3,7 +3,7 @@ import { PropsWithChildren } from "react";
 
 const FormSummaryTitle = ({ children }: PropsWithChildren<unknown>) => {
   return (
-    <h1 className="border-b border-solid border-white text-xl font-bold">{children}</h1>
+    <p className="pb-2 mb-8 border-b border-solid border-white text-xl font-bold">{children}</p>
   );
 };
 

@@ -342,7 +342,7 @@ const Dashboard: React.FC = () => {
   const popMessage = (id: number) => dispatch({ type: "CLOSE_MESSAGE", id });
 
   return (
-    <main className="flex flex-col max-h-screen">
+    <main className="flex flex-col h-screen">
 
       {/* header with the account menu  */}
       <Header

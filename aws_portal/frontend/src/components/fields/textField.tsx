@@ -64,7 +64,7 @@ const TextField: React.FC<TextFieldProps> = ({
           {children || null}
 
           {/* the input */}
-          <div className="flex-grow h-full p-2">
+          <div className="flex items-center flex-grow h-full p-2">
             {/* textares require a unique e.target class */}
             {type === "textarea" ? (
               <textarea

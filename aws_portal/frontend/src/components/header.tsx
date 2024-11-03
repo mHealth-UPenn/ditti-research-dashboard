@@ -48,10 +48,11 @@ const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
       {/* the header */}
       <div className="bg-[#33334d] text-white flex items-center justify-between flex-shrink-0 h-16">
         <div className="text-2xl ml-8">
-          <span>AWS Data Portal</span>
+          <span className="mr-2">Penn Ditti</span>
+          <span className="text-sm hidden sm:flex">Research Coordinator Dashboard</span>
         </div>
         <div className="flex items-center mr-8">
-          <span className="absolute right-[6.5rem]">
+          <span className="hidden mr-6 md:flex">
             {name ? name : ""}&nbsp;&nbsp;|&nbsp;&nbsp;{email ? email : ""}
           </span>
 

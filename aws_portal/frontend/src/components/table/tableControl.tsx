@@ -1,6 +1,6 @@
 import * as React from "react";
 import TextField from "../fields/textField";
-import { ReactComponent as Search } from "../../icons/search.svg";
+import SearchIcon from '@mui/icons-material/Search';
 
 interface TableControlProps {
   control: React.ReactElement;
@@ -33,7 +33,7 @@ const TableControl: React.FC<TableControlProps> = ({
           onKeyup={onSearch}
           feedback="">
             <div className="flex items-center bg-dark h-full px-4">
-              <Search />
+              <SearchIcon />
             </div>
         </TextField>
       }

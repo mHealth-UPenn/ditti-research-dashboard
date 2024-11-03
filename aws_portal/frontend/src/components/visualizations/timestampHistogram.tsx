@@ -26,7 +26,6 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
   } = useVisualizationContext();
   // Guard against null xScale
   if (!xScale) return <></>;
-  console.log(margin, height);
 
   const histogramData = useMemo(() => {
     const domain = xScale.domain();

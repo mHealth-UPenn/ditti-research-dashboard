@@ -17,7 +17,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-button {
+/* button {
   font-size: 0.9rem;
 }
 
@@ -64,7 +64,7 @@ h1 {
   margin-top: 0;
   margin-bottom: 2rem;
   padding-bottom: 1rem;
-}
+} */
 
 .card-container {
   display: flex;
@@ -291,7 +291,7 @@ h1 {
   stroke: #666699;
 }
 
-div:hover > .link-svg {
+/* div:hover > .link-svg {
   cursor: pointer;
 }
 
@@ -301,7 +301,7 @@ div:hover > .link-svg .svg-fill {
 
 div:hover > .link-svg .svg-stroke {
   stroke: #52527a;
-}
+} */
 
 .shadow {
   box-shadow: 8px 8px 8px #00000016;

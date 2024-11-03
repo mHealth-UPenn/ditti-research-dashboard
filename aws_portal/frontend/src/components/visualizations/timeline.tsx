@@ -59,7 +59,7 @@ const Timeline: React.FC<TimelineProps> = ({
       (start <= group.start && group.start <= stop)
       || (group.stop && start <= group.stop && group.stop <= stop)
       || (group.stop && group.start <= start && stop <= group.stop)
-    ).map(group => {
+    ).map((group, i) => {
       const startX = Math.max(margin.left, xScale(group.start));
       const stopX = group.stop ? Math.min(xScale(group.stop), width - margin.right) : startX;
       const y = margin.top;
@@ -78,19 +78,19 @@ const Timeline: React.FC<TimelineProps> = ({
 
       if (group.stop) {
         return (
-          <>
+          <React.Fragment key={i}>
             {group.start >= start && <circle cx={startX} cy={y} r={5} fill="black" />}
             <Line from={{ x: startX, y }} to={{ x: stopX, y }} stroke="black" strokeWidth={2} />
             {stop >= group.stop && <circle cx={stopX} cy={y} r={5} fill="black" />}
             {tooltipRect}
-          </>
+          </React.Fragment>
         );
       }
       return (
-        <>
+        <React.Fragment key={i}>
           <circle cx={startX} cy={y} r={5} fill="black" />
           {tooltipRect}
-        </>
+        </React.Fragment>
       );
   });
 
