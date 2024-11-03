@@ -1,36 +1,54 @@
+
 import base64
 import hashlib
 import os
-from flask import current_app
-from aws_portal.extensions import study_subject_secrets_manager
 import logging
 import time
+from typing import Any, Dict
 import requests
 from oauthlib.oauth2 import WebApplicationClient
+from flask import current_app
+from aws_portal.extensions import study_subject_secrets_manager as sm
 
 logger = logging.getLogger(__name__)
 
-FITBIT_TOKEN_URL = "https://api.fitbit.com/oauth2/token"
 
-
-def generate_code_verifier(length=128):
+def generate_code_verifier(length: int = 128) -> str:
     """
-    Generates a high-entropy cryptographic random string for PKCE.
+    Generates a high-entropy cryptographic random string for PKCE (Proof Key for Code Exchange).
+
+    Args:
+        length (int, optional): Length of the code verifier. Must be between 43 and 128 characters.
+                                Defaults to 128.
+
+    Returns:
+        str: A securely generated code verifier string.
+
+    Raises:
+        ValueError: If the specified length is not within the allowed range.
     """
     if not 43 <= length <= 128:
         raise ValueError("length must be between 43 and 128 characters")
-    code_verifier = base64.urlsafe_b64encode(
-        os.urandom(length)).rstrip(b'=').decode('utf-8')
+    code_verifier = base64.urlsafe_b64encode(os.urandom(length))\
+        .rstrip(b'=')\
+        .decode('utf-8')
     return code_verifier[:length]
 
 
-def create_code_challenge(code_verifier):
+def create_code_challenge(code_verifier: str) -> str:
     """
-    Creates a S256 code challenge from the code_verifier.
+    Creates a S256 code challenge from the provided code verifier.
+
+    Args:
+        code_verifier (str): The code verifier string.
+
+    Returns:
+        str: The generated code challenge string.
     """
     code_challenge = hashlib.sha256(code_verifier.encode('utf-8')).digest()
-    code_challenge = base64.urlsafe_b64encode(
-        code_challenge).rstrip(b'=').decode('utf-8')
+    code_challenge = base64.urlsafe_b64encode(code_challenge)\
+        .rstrip(b'=')\
+        .decode('utf-8')
     return code_challenge
 
 
@@ -39,18 +57,20 @@ def get_fitbit_oauth_session(join_entry):
     Creates an OAuth2Session for Fitbit API, using stored tokens.
 
     Args:
-        join_entry (JoinStudySubjectApi): The association object for the API.
+        join_entry (Any): JoinStudySubjectApi instance.
 
     Returns:
-        OAuth2Client: An OAuth2Client instance ready to make requests to Fitbit API.
+        OAuth2SessionWithRefresh: An OAuth2Session instance ready to make requests to Fitbit API.
+
+    Raises:
+        Exception: If there is an error retrieving or refreshing tokens.
     """
     fitbit_client_id = current_app.config["FITBIT_CLIENT_ID"]
     fitbit_client_secret = current_app.config["FITBIT_CLIENT_SECRET"]
 
     # Load access token data
     try:
-        access_token_data = study_subject_secrets_manager.get_secret(
-            join_entry.access_key_uuid)
+        access_token_data = sm.get_secret(join_entry.access_key_uuid)
         access_token = access_token_data.get("access_token")
         expires_at = access_token_data.get("expires_at")
     except Exception as e:
@@ -59,14 +79,13 @@ def get_fitbit_oauth_session(join_entry):
 
     # Load refresh token data
     try:
-        refresh_token_data = study_subject_secrets_manager.get_secret(
-            join_entry.refresh_key_uuid)
+        refresh_token_data = sm.get_secret(join_entry.refresh_key_uuid)
         refresh_token = refresh_token_data.get("refresh_token")
     except Exception as e:
         logger.error(f"Error retrieving refresh token: {e}")
         raise
 
-    # Create the token dict
+    # Create the token dictionary
     token = {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -75,36 +94,18 @@ def get_fitbit_oauth_session(join_entry):
         "expires_in": expires_at - int(time.time())
     }
 
-    # Create an OAuth2Client
+    # Initialize the OAuth2 WebApplicationClient
     client = WebApplicationClient(client_id=fitbit_client_id, token=token)
 
-    # Define a method to refresh the token
-    def refresh_token():
-        token_url = FITBIT_TOKEN_URL
-        auth = requests.auth.HTTPBasicAuth(
-            fitbit_client_id, fitbit_client_secret)
-        refresh_params = {
-            "grant_type": "refresh_token",
-            "refresh_token": refresh_token,
-        }
-        try:
-            response = requests.post(
-                token_url,
-                data=refresh_params,
-                auth=auth,
-            )
-            response.raise_for_status()
-            new_token = response.json()
-            # Update tokens in Secrets Manager
-            token_updater(new_token)
-            client.token = new_token
-        except Exception as e:
-            logger.error(f"Error refreshing token: {e}")
-            raise
-
-    def token_updater(new_token):
+    def token_updater(new_token: Dict[str, Any]) -> None:
         """
-        Update the access_token and refresh_token in Secrets Manager.
+        Updates the access_token and refresh_token in Secrets Manager.
+
+        Args:
+            new_token (Dict[str, Any]): The new token data obtained from Fitbit.
+
+        Raises:
+            Exception: If there is an error updating the tokens in Secrets Manager.
         """
         try:
             # Compute new expires_at
@@ -127,23 +128,64 @@ def get_fitbit_oauth_session(join_entry):
                     "refresh_token": new_refresh_token
                 }
                 # Store refresh token
-                study_subject_secrets_manager.store_secret(
+                sm.store_secret(
                     join_entry.refresh_key_uuid, new_refresh_token_data)
 
             # Store access token
-            study_subject_secrets_manager.store_secret(
+            sm.store_secret(
                 join_entry.access_key_uuid, new_access_token_data)
 
         except Exception as e:
             logger.error(f"Error updating tokens in Secrets Manager: {e}")
             raise
 
+    def refresh_token() -> None:
+        """
+        Refreshes the access token using the refresh token.
+
+        Raises:
+            Exception: If the token refresh fails.
+        """
+        token_issuer_endpoint = "https://api.fitbit.com/oauth2/token"
+        auth = requests.auth.HTTPBasicAuth(
+            fitbit_client_id, fitbit_client_secret)
+        refresh_params = {
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+        }
+        try:
+            response = requests.post(
+                token_issuer_endpoint, data=refresh_params, auth=auth)
+            response.raise_for_status()
+            new_token = response.json()
+
+            token_updater(new_token)
+            client.token = new_token
+        except Exception as e:
+            logger.error(f"Error refreshing token: {e}")
+            raise
+
     # Wrapper around requests to handle token expiration
     class OAuth2SessionWithRefresh:
-        def __init__(self, client):
+        """
+        A wrapper around the OAuth2 WebApplicationClient to handle automatic token refresh.
+        """
+
+        def __init__(self, client: WebApplicationClient):
             self.client = client
 
-        def request(self, method, url, **kwargs):
+        def request(self, method: str, url: str, **kwargs) -> requests.Response:
+            """
+            Makes an HTTP request using the OAuth2 session, handling token refresh on 401 responses.
+
+            Args:
+                method (str): HTTP method (e.g., 'GET', 'POST').
+                url (str): The URL to make the request to.
+                **kwargs: Additional arguments for the requests.request method.
+
+            Returns:
+                requests.Response: The HTTP response received.
+            """
             headers = kwargs.pop("headers", {})
             headers["Authorization"] = f"Bearer {
                 self.client.token['access_token']}"
@@ -159,10 +201,30 @@ def get_fitbit_oauth_session(join_entry):
                 response = requests.request(method, url, **kwargs)
             return response
 
-        def get(self, url, **kwargs):
+        def get(self, url: str, **kwargs) -> requests.Response:
+            """
+            Convenience method for making GET requests.
+
+            Args:
+                url (str): The URL to make the GET request to.
+                **kwargs: Additional arguments for the requests.get method.
+
+            Returns:
+                requests.Response: The HTTP response received.
+            """
             return self.request("GET", url, **kwargs)
 
-        def post(self, url, **kwargs):
+        def post(self, url: str, **kwargs) -> requests.Response:
+            """
+            Convenience method for making POST requests.
+
+            Args:
+                url (str): The URL to make the POST request to.
+                **kwargs: Additional arguments for the requests.post method.
+
+            Returns:
+                requests.Response: The HTTP response received.
+            """
             return self.request("POST", url, **kwargs)
 
     return OAuth2SessionWithRefresh(client)
