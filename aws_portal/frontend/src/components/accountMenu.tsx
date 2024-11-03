@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { RefObject } from "react";
 import { useState, useCallback } from "react";
 import { AccountDetails, ResponseBody, ViewProps } from "../interfaces";
 import TextField from "./fields/textField";
@@ -6,6 +6,7 @@ import { ReactComponent as Right } from "../icons/arrowRight.svg";
 import "./accountMenu.css";
 import { makeRequest } from "../utils";
 import AsyncButton from "./buttons/asyncButton";
+import Button from "./buttons/button";
 
 /**
  * accountDetails: the current user's data
@@ -13,6 +14,7 @@ import AsyncButton from "./buttons/asyncButton";
  */
 interface AccountMenuProps extends ViewProps {
   accountDetails: AccountDetails;
+  accountMenuRef: RefObject<HTMLDivElement>;
   hideMenu: () => void;
 }
 
@@ -117,147 +119,130 @@ const AccountMenu: React.FC<AccountMenuProps> = (props) => {
   const { edit, editPassword, email, firstName, lastName, phoneNumber } = state;
 
   return (
-    <div className="account-menu-container bg-white border-light-l">
-      <div className="account-menu-content">
-        <div className="account-menu-button">
-          <span>
-            <b>Account Details</b>
-          </span>
-          {edit ? (
-            <AsyncButton onClick={post} text="Save" type="primary" />
-          ) : (
-            <button
-              className="button-primary"
-              onClick={() => setState((prevState) => ({ ...prevState, edit: true }))}
-            >
-              Edit
-            </button>
-          )}
-        </div>
-        <div className="account-menu-field">
-          {edit ? (
-            <TextField
-              id="firstName"
-              label="First Name"
-              prefill={firstName}
-              onKeyup={(text: string) => setState((prevState) => ({ ...prevState, firstName: text }))}
-            ></TextField>
-          ) : (
-            <span>
-              <b>First Name</b>
-              <br />
-              &nbsp;&nbsp;&nbsp;&nbsp;{firstName}
-            </span>
-          )}
-        </div>
-        <div className="account-menu-field">
-          {edit ? (
-            <TextField
-              id="lastName"
-              label="Last Name"
-              prefill={lastName}
-              onKeyup={(text: string) => setState((prevState) => ({ ...prevState, lastName: text }))}
-            ></TextField>
-          ) : (
-            <span>
-              <b>Last Name</b>
-              <br />
-              &nbsp;&nbsp;&nbsp;&nbsp;{lastName}
-            </span>
-          )}
-        </div>
-        <div className="account-menu-field">
-          {edit ? (
-            <TextField
-              id="email"
-              label="Email"
-              prefill={email}
-              onKeyup={(text: string) => setState((prevState) => ({ ...prevState, email: text }))}
-            ></TextField>
-          ) : (
-            <span>
-              <b>Email</b>
-              <br />
-              &nbsp;&nbsp;&nbsp;&nbsp;{email}
-            </span>
-          )}
-        </div>
-        <div className="account-menu-field">
-          {edit ? (
-            <TextField
-              id="phoneNumber"
-              label="Phone Number"
-              prefill={phoneNumber}
-              onKeyup={(text: string) => setState((prevState) => ({ ...prevState, phoneNumber: text }))}
-            ></TextField>
-          ) : (
-            <span>
-              <b>Phone Number</b>
-              <br />
-              &nbsp;&nbsp;&nbsp;&nbsp;{phoneNumber}
-            </span>
-          )}
-        </div>
-        <div
-          className="border-light-b"
-          style={{ marginBottom: "2rem" }}
-        ></div>
-        <div className="account-menu-button">
-          <span>
-            <b>Password</b>
-          </span>
-          {editPassword ? (
-            <AsyncButton
-              onClick={trySetPassword}
-              text="Save"
-              type="primary"
-            />
-          ) : (
-            <button
-              className="button-primary"
-              onClick={() => setState((prevState) => ({ ...prevState, editPassword: true }))}
-            >
-              Change
-            </button>
-          )}
-        </div>
-        {editPassword ? (
-          <React.Fragment>
-            <div className="account-menu-field">
+    <div
+      ref={props.accountMenuRef}
+      className="absolute right-[-24rem] top-16 w-[24rem] max-h-[calc(100vh-4rem)] overflow-scroll z-20 bg-white border-light border-l transition-all duration-500">
+        <div className="p-8">
+          <div className="flex items-center justify-between pb-6 mb-6 border-b border-light">
+            <p>Account Details</p>
+            {edit ? (
+              <AsyncButton onClick={post} text="Save" type="primary" />
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setState((prevState) => ({ ...prevState, edit: true }))}>
+                  Edit
+              </Button>
+            )}
+          </div>
+          <div className="mb-4">
+            {edit ? (
               <TextField
-                id="setPassword"
-                label="Enter a new password"
-                type="password"
-                onKeyup={(text: string) =>
-                  setState((prevState) => ({ ...prevState, setPassword: text }))
-                }
-              ></TextField>
-            </div>
-            <div className="account-menu-field">
+                id="firstName"
+                label="First Name"
+                prefill={firstName}
+                onKeyup={(text: string) => setState((prevState) => ({ ...prevState, firstName: text }))} />
+            ) : (
+              <span>
+                <b>First Name</b>
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;{firstName}
+              </span>
+            )}
+          </div>
+          <div className="mb-4">
+            {edit ? (
               <TextField
-                id="confirmPassword"
-                label="Confirm your password"
-                type="password"
-                onKeyup={(text: string) =>
-                  setState((prevState) => ({ ...prevState, confirmPassword: text }))
-                }
-              ></TextField>
-            </div>
-          </React.Fragment>
-        ) : null}
-        <div
-          className="border-light-b"
-          style={{ marginBottom: "2rem" }}
-        ></div>
-        <div className="logout-button">
-          <button className="button-danger" onClick={logout}>
-            Logout
-          </button>
+                id="lastName"
+                label="Last Name"
+                prefill={lastName}
+                onKeyup={(text: string) => setState((prevState) => ({ ...prevState, lastName: text }))} />
+            ) : (
+              <span>
+                <b>Last Name</b>
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;{lastName}
+              </span>
+            )}
+          </div>
+          <div className="mb-4">
+            {edit ? (
+              <TextField
+                id="email"
+                label="Email"
+                prefill={email}
+                onKeyup={(text: string) => setState((prevState) => ({ ...prevState, email: text }))} />
+            ) : (
+              <span>
+                <b>Email</b>
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;{email}
+              </span>
+            )}
+          </div>
+          <div className="mb-6">
+            {edit ? (
+              <TextField
+                id="phoneNumber"
+                label="Phone Number"
+                prefill={phoneNumber}
+                onKeyup={(text: string) => setState((prevState) => ({ ...prevState, phoneNumber: text }))} />
+            ) : (
+              <span>
+                <b>Phone Number</b>
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;{phoneNumber}
+              </span>
+            )}
+          </div>
+          <div className="border-b border-light mb-6" />
+          <div className="flex items-center justify-between mb-6">
+            <p>Change password</p>
+            {editPassword ? (
+              <AsyncButton
+                onClick={trySetPassword}
+                text="Save"
+                type="primary" />
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setState((prevState) => ({ ...prevState, editPassword: true }))} >
+                  Change
+              </Button>
+            )}
+          </div>
+          {editPassword &&
+            <>
+              <div className="mb-4">
+                <TextField
+                  id="setPassword"
+                  label="Enter a new password"
+                  type="password"
+                  onKeyup={(text: string) =>
+                    setState((prevState) => ({ ...prevState, setPassword: text }))
+                  } />
+              </div>
+              <div className="mb-6">
+                <TextField
+                  id="confirmPassword"
+                  label="Confirm your password"
+                  type="password"
+                  onKeyup={(text: string) =>
+                    setState((prevState) => ({ ...prevState, confirmPassword: text }))
+                  } />
+              </div>
+            </>
+          }
+          <div className="border-light border-b mb-6" />
+          <div className="flex items-center justify-between">
+            <p>Logout</p>
+            <Button variant="danger" size="sm" onClick={logout}>
+              Logout
+            </Button>
+          </div>
         </div>
-      </div>
-      <div className="account-menu-footer bg-dark" onClick={hide}>
-        <Right />
-      </div>
     </div>
   );
 };
