@@ -180,6 +180,271 @@ def init_admin_account(email=None, password=None):
     return admin
 
 
+def init_dev_database_data():
+    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+    if "localhost" not in db_uri:
+        raise RuntimeError("Dev data initialization attempted on non-localhost database")
+
+    to_add = []
+    actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
+    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
+    for action in actions:
+        for resource in resources:
+            permission = Permission()
+            permission.action = action
+            permission.resource = resource
+            to_add.append(permission)
+    db.session.flush()
+
+    roles = {
+        "Admin": [
+            ("*", "*"),
+            ("View", "All Studies")
+        ],
+        "Coordinator": [
+            ("View", "*"),
+            ("Create", "Users"),
+            ("Edit", "Users"),
+            ("Create", "Audio Files"),
+            ("Edit", "Audio Files"),
+        ],
+        "Analyst": [
+            ("View", "*"),
+        ],
+        "Can View Audio Files": [
+            ("View", "Audio Files")
+        ],
+        "Can Create Audio Files": [
+            ("View", "Audio Files"),
+            ("Create", "Audio Files")
+        ],
+        "Can Edit Audio Files": [
+            ("View", "Audio Files"),
+            ("Edit", "Audio Files")
+        ],
+        "Can Delete Audio Files": [
+            ("View", "Audio Files"),
+            ("Delete", "Audio Files")
+        ],
+        "Can View Users": [
+            ("View", "Users")
+        ],
+        "Can Create Users": [
+            ("View", "Users"),
+            ("Create", "Users")
+        ],
+        "Can Edit Users": [
+            ("View", "Users"),
+            ("Edit", "Users")
+        ],
+        "Can Archive Users": [
+            ("View", "Users"),
+            ("Archive", "Users")
+        ],
+        "Can View Taps": [
+            ("View", "Taps")
+        ],
+        "Can Create Taps": [
+            ("View", "Taps"),
+            ("Create", "Taps")
+        ],
+        "Can Edit Taps": [
+            ("View", "Taps"),
+            ("Edit", "Taps")
+        ],
+        "Can Archive Taps": [
+            ("View", "Taps"),
+            ("Archive", "Taps")
+        ]
+    }
+
+    for role_name, permissions in roles.items():
+        role = Role(name=role_name)
+        for action, resource in permissions:
+            query = Permission.definition == tuple_(action, resource)
+            permission = Permission.query.filter(query).first()
+            JoinRolePermission(role=role, permission=permission)
+        to_add.append(role)
+    db.session.flush()
+
+    ditti_app = App(name="Ditti App Dashboard")
+    ditti_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    join = JoinAccessGroupPermission(access_group=ditti_group, permission=permission)
+    to_add.append(ditti_app)
+    to_add.append(ditti_group)
+    to_add.append(join)
+
+    admin_app = App(name="Admin Dashboard")
+    admin_group = AccessGroup(name="Admin", app=admin_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    join = JoinAccessGroupPermission(access_group=admin_group, permission=permission)
+    to_add.append(admin_app)
+    to_add.append(admin_group)
+    to_add.append(join)
+    db.session.flush()
+
+    access_groups = {
+        "Can View Accounts": [
+            ("View", "Accounts")
+        ],
+        "Can Create Accounts": [
+            ("View", "Accounts"),
+            ("Create", "Accounts")
+        ],
+        "Can Edit Accounts": [
+            ("View", "Accounts"),
+            ("Edit", "Accounts")
+        ],
+        "Can Archive Accounts": [
+            ("View", "Accounts"),
+            ("Archive", "Accounts")
+        ],
+        "Can View Access Groups": [
+            ("View", "Access Groups")
+        ],
+        "Can Create Access Groups": [
+            ("View", "Access Groups"),
+            ("Create", "Access Groups")
+        ],
+        "Can Edit Access Groups": [
+            ("View", "Access Groups"),
+            ("Edit", "Access Groups")
+        ],
+        "Can Archive Access Groups": [
+            ("View", "Access Groups"),
+            ("Archive", "Access Groups")
+        ],
+        "Can View Roles": [
+            ("View", "Roles")
+        ],
+        "Can Create Roles": [
+            ("View", "Roles"),
+            ("Create", "Roles")
+        ],
+        "Can Edit Roles": [
+            ("View", "Roles"),
+            ("Edit", "Roles")
+        ],
+        "Can Archive Roles": [
+            ("View", "Roles"),
+            ("Archive", "Roles")
+        ],
+        "Can View Studies": [
+            ("View", "Studies")
+        ],
+        "Can Create Studies": [
+            ("View", "Studies"),
+            ("Create", "Studies")
+        ],
+        "Can Edit Studies": [
+            ("View", "Studies"),
+            ("Edit", "Studies")
+        ],
+        "Can Archive Studies": [
+            ("View", "Studies"),
+            ("Archive", "Studies")
+        ],
+        "Can View About Sleep Templates": [
+            ("View", "About Sleep Templates")
+        ],
+        "Can Create About Sleep Templates": [
+            ("View", "About Sleep Templates"),
+            ("Create", "About Sleep Templates")
+        ],
+        "Can Edit About Sleep Templates": [
+            ("View", "About Sleep Templates"),
+            ("Edit", "About Sleep Templates")
+        ],
+        "Can Archive About Sleep Templates": [
+            ("View", "About Sleep Templates"),
+            ("Archive", "About Sleep Templates")
+        ],
+    }
+
+    for access_group_name, permissions in access_groups.items():
+        access_group = AccessGroup(name=access_group_name, app=admin_app)
+        for action, resource in permissions:
+            query = Permission.definition == tuple_(action, resource)
+            permission = Permission.query.filter(query).first()
+            JoinRolePermission(role=role, permission=permission)
+        to_add.append(access_group)
+    db.session.flush()
+
+    studies = [
+        {
+            "name": "Test Study A",
+            "acronym": "TESTA",
+            "ditti_id": "TA",
+            "email": "test.study.A@studyAemail.com",
+            "default_expiry_delta": 14,
+            "consent_information": "",
+        },
+        {
+            "name": "Test Study B",
+            "acronym": "TESTB",
+            "ditti_id": "TB",
+            "email": "test.study.B@studyBemail.com",
+            "default_expiry_delta": 14,
+            "consent_information": "",
+        }
+    ]
+
+    for study in studies:
+        to_add.append(Study(**study))
+    db.session.flush()
+
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Admin",
+        last_name="",
+        email="Admin",
+        is_confirmed=True,
+    )
+    account.password = "abc123"
+    JoinAccountAccessGroup(account=account, access_group=ditti_group)
+    JoinAccountAccessGroup(account=account, access_group=admin_group)
+    to_add.append(account)
+
+    for study_data in studies:
+        for role_name in roles.keys():
+            account = Account(
+                public_id=str(uuid.uuid4()),
+                created_on=datetime.now(UTC),
+                first_name=f"{study_data["name"]} - {role_name}",
+                last_name="",
+                email=f"{study_data["name"]} - {role_name}",
+                is_confirmed=True,
+            )
+            account.password = "abc123"
+            study = Study.query.filter(Study.name == study_data["name"]).first()
+            role = Role.query.filter(Role.name == role_name).first()
+            JoinAccountStudy(account=account, study=study, role=role)
+            to_add.append(account)
+
+    for access_group_name in access_groups.keys():
+            account = Account(
+                public_id=str(uuid.uuid4()),
+                created_on=datetime.now(UTC),
+                first_name=access_group_name,
+                last_name="",
+                email=access_group_name,
+                is_confirmed=True,
+            )
+            account.password = "abc123"
+            access_group = AccessGroup.query.filter(
+                AccessGroup.name == access_group_name
+            ).first()
+            JoinAccountAccessGroup(account=account, access_group=access_group)
+            to_add.append(account)
+
+    db.session.add_all(to_add)
+    db.session.commit()
+
+
 @jwt.user_identity_loader
 def user_identity_lookup(account):
     return account.public_id
