@@ -209,21 +209,6 @@ def init_dev_database_data():
         "Analyst": [
             ("View", "*"),
         ],
-        "Can View Audio Files": [
-            ("View", "Audio Files")
-        ],
-        "Can Create Audio Files": [
-            ("View", "Audio Files"),
-            ("Create", "Audio Files")
-        ],
-        "Can Edit Audio Files": [
-            ("View", "Audio Files"),
-            ("Edit", "Audio Files")
-        ],
-        "Can Delete Audio Files": [
-            ("View", "Audio Files"),
-            ("Delete", "Audio Files")
-        ],
         "Can View Users": [
             ("View", "Users")
         ],
@@ -242,18 +227,6 @@ def init_dev_database_data():
         "Can View Taps": [
             ("View", "Taps")
         ],
-        "Can Create Taps": [
-            ("View", "Taps"),
-            ("Create", "Taps")
-        ],
-        "Can Edit Taps": [
-            ("View", "Taps"),
-            ("Edit", "Taps")
-        ],
-        "Can Archive Taps": [
-            ("View", "Taps"),
-            ("Archive", "Taps")
-        ]
     }
 
     for role_name, permissions in roles.items():
@@ -264,14 +237,6 @@ def init_dev_database_data():
             JoinRolePermission(role=role, permission=permission)
         db.session.add(role)
 
-    ditti_app = App(name="Ditti App Dashboard")
-    ditti_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
-    query = Permission.definition == tuple_("*", "*")
-    permission = Permission.query.filter(query).first()
-    JoinAccessGroupPermission(access_group=ditti_group, permission=permission)
-    db.session.add(ditti_app)
-    db.session.add(ditti_group)
-
     admin_app = App(name="Admin Dashboard")
     admin_group = AccessGroup(name="Admin", app=admin_app)
     query = Permission.definition == tuple_("*", "*")
@@ -280,81 +245,138 @@ def init_dev_database_data():
     db.session.add(admin_app)
     db.session.add(admin_group)
 
+    ditti_app = App(name="Ditti App Dashboard")
+    ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    query = Permission.definition == tuple_("View", "Ditti App Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    db.session.add(ditti_app)
+    db.session.add(ditti_admin_group)
+
+    ditti_coordinator_group = AccessGroup(name="Ditti App Coordinator", app=ditti_app)
+    query = Permission.definition == tuple_("View", "Ditti App Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_coordinator_group, permission=permission)
+    db.session.add(ditti_app)
+    db.session.add(ditti_coordinator_group)
+
     access_groups = {
         "Can View Accounts": [
+            ("View", "Admin Dashboard"),
             ("View", "Accounts")
         ],
         "Can Create Accounts": [
+            ("View", "Admin Dashboard"),
             ("View", "Accounts"),
             ("Create", "Accounts")
         ],
         "Can Edit Accounts": [
+            ("View", "Admin Dashboard"),
             ("View", "Accounts"),
             ("Edit", "Accounts")
         ],
         "Can Archive Accounts": [
+            ("View", "Admin Dashboard"),
             ("View", "Accounts"),
             ("Archive", "Accounts")
         ],
         "Can View Access Groups": [
+            ("View", "Admin Dashboard"),
             ("View", "Access Groups")
         ],
         "Can Create Access Groups": [
+            ("View", "Admin Dashboard"),
             ("View", "Access Groups"),
             ("Create", "Access Groups")
         ],
         "Can Edit Access Groups": [
+            ("View", "Admin Dashboard"),
             ("View", "Access Groups"),
             ("Edit", "Access Groups")
         ],
         "Can Archive Access Groups": [
+            ("View", "Admin Dashboard"),
             ("View", "Access Groups"),
             ("Archive", "Access Groups")
         ],
         "Can View Roles": [
+            ("View", "Admin Dashboard"),
             ("View", "Roles")
         ],
         "Can Create Roles": [
+            ("View", "Admin Dashboard"),
             ("View", "Roles"),
             ("Create", "Roles")
         ],
         "Can Edit Roles": [
+            ("View", "Admin Dashboard"),
             ("View", "Roles"),
             ("Edit", "Roles")
         ],
         "Can Archive Roles": [
+            ("View", "Admin Dashboard"),
             ("View", "Roles"),
             ("Archive", "Roles")
         ],
         "Can View Studies": [
+            ("View", "Admin Dashboard"),
             ("View", "Studies")
         ],
         "Can Create Studies": [
+            ("View", "Admin Dashboard"),
             ("View", "Studies"),
             ("Create", "Studies")
         ],
         "Can Edit Studies": [
+            ("View", "Admin Dashboard"),
             ("View", "Studies"),
             ("Edit", "Studies")
         ],
         "Can Archive Studies": [
+            ("View", "Admin Dashboard"),
             ("View", "Studies"),
             ("Archive", "Studies")
         ],
         "Can View About Sleep Templates": [
+            ("View", "Admin Dashboard"),
             ("View", "About Sleep Templates")
         ],
         "Can Create About Sleep Templates": [
+            ("View", "Admin Dashboard"),
             ("View", "About Sleep Templates"),
             ("Create", "About Sleep Templates")
         ],
         "Can Edit About Sleep Templates": [
+            ("View", "Admin Dashboard"),
             ("View", "About Sleep Templates"),
             ("Edit", "About Sleep Templates")
         ],
         "Can Archive About Sleep Templates": [
+            ("View", "Admin Dashboard"),
             ("View", "About Sleep Templates"),
             ("Archive", "About Sleep Templates")
+        ],
+        "Can View Audio Files": [
+            ("View", "Ditti App Dashboard"),
+            ("View", "Audio Files")
+        ],
+        "Can Create Audio Files": [
+            ("View", "Ditti App Dashboard"),
+            ("View", "Audio Files"),
+            ("Create", "Audio Files")
+        ],
+        "Can Edit Audio Files": [
+            ("View", "Ditti App Dashboard"),
+            ("View", "Audio Files"),
+            ("Edit", "Audio Files")
+        ],
+        "Can Delete Audio Files": [
+            ("View", "Ditti App Dashboard"),
+            ("View", "Audio Files"),
+            ("Delete", "Audio Files")
         ],
     }
 
@@ -397,7 +419,7 @@ def init_dev_database_data():
         is_confirmed=True,
     )
     account.password = "abc123"
-    JoinAccountAccessGroup(account=account, access_group=ditti_group)
+    JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
     db.session.add(account)
 
@@ -411,10 +433,11 @@ def init_dev_database_data():
                 email=f"{study_data["name"]} - {role_name}",
                 is_confirmed=True,
             )
-            account.password = "abc123"
+            account.password = os.getenv("FLASK_ADMIN_PASSWORD")
             study = Study.query.filter(Study.name == study_data["name"]).first()
             role = Role.query.filter(Role.name == role_name).first()
             JoinAccountStudy(account=account, study=study, role=role)
+            JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
             db.session.add(account)
 
     for access_group_name in access_groups.keys():

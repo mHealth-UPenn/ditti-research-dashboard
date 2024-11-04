@@ -45,30 +45,42 @@ const StudySummary: React.FC<StudySummaryProps> = ({
   studyId
 }) => {
   const [canCreate, setCanCreate] = useState(false);
+  const [canViewTaps, setCanViewTaps] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
   const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // check whether the user can enroll new subjects
-    const create = getAccess(2, "Create", "Users", studyId)
-      .then(() => setCanCreate(true))
-      .catch(() => setCanCreate(false));
+    const promises: Promise<any>[] = [];
+    promises.push(
+      getAccess(2, "Create", "Users", studyId)
+        .then(() => setCanCreate(true))
+        .catch(() => setCanCreate(false))
+    );
+
+    promises.push(
+      getAccess(2, "View", "Taps", studyId)
+        .then(() => setCanViewTaps(true))
+        .catch(() => setCanViewTaps(false))
+    );
 
     // get other accounts that have access to this study
-    const fetchStudyContacts = makeRequest(
-      "/db/get-study-contacts?app=2&study=" + studyId
-    ).then((contacts: StudyContact[]) => setStudyContacts(contacts));
+    promises.push(
+      makeRequest(
+        "/db/get-study-contacts?app=2&study=" + studyId
+      ).then((contacts: StudyContact[]) => setStudyContacts(contacts))
+    );
 
     // get this study's information
-    const fetchStudyDetails = makeRequest(
-      "/db/get-study-details?app=2&study=" + studyId
-    ).then((details: Study) => setStudyDetails(details));
+    promises.push(
+      makeRequest(
+        "/db/get-study-details?app=2&study=" + studyId
+      ).then((details: Study) => setStudyDetails(details))
+    );
 
     // when all promises resolve, hide the loader
-    Promise.all([create, fetchStudyContacts, fetchStudyDetails]).then(() =>
-      setLoading(false)
-    );
+    Promise.all(promises).then(() => setLoading(false));
   }, [studyId]);
 
   /**
@@ -159,7 +171,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
             <Subtitle>Study email: {email}</Subtitle>
             <Subtitle>Ditti acronym: {dittiId}</Subtitle>
           </div>
-          <Button onClick={downloadExcel}>Download Excel</Button>
+          {canViewTaps && <Button onClick={downloadExcel}>Download Excel</Button>}
         </CardContentRow>
 
         <CardContentRow>
@@ -188,7 +200,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
           handleClick={handleClick}
           studyDetails={studyDetails}
           studyPrefix={dittiId}
-        />
+          canViewTaps={canViewTaps} />
       </Card>
 
       <Card width="sm">

@@ -21,9 +21,19 @@ interface StudySubjectsProps extends ViewProps {
   getTaps: () => TapDetails[];
   getAudioTaps: () => AudioTapDetails[];  // TODO: Implement into subject summary
   studyDetails: Study;
+  canViewTaps: boolean;
 }
 
-const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
+const StudySubjects: React.FC<StudySubjectsProps> = ({
+  studyPrefix,
+  getTaps,
+  getAudioTaps,
+  studyDetails,
+  canViewTaps,
+  flashMessage,
+  goBack,
+  handleClick,
+}) => {
   const [users, setUsers] = useState<UserDetails[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +43,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
     let users: UserDetails[];
     if (APP_ENV === "production") {
       makeRequest(
-        `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${props.studyPrefix}"`
+        `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${studyPrefix}"`
       ).then((res: User[]) => {
         // map the user data to user details
         users = res.map((user) => {
@@ -56,7 +66,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
       setLoading(false);
     }
 
-  }, [props.studyPrefix]);
+  }, [studyPrefix]);
 
   /**
    * Render recent summary tap data for a user
@@ -64,7 +74,6 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
    * @returns 
    */
   const getSubjectSummary = (user: UserDetails): React.ReactElement => {
-    const { flashMessage, getTaps, getAudioTaps, goBack, handleClick } = props;
     let summaryTaps: React.ReactElement[];
     let hasTapsToday = false;
 
@@ -81,8 +90,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
         const end = add(start, { days: 1 });
 
         // get taps and filter for only taps between start and end
-        const taps = props
-          .getTaps()
+        const taps = getTaps()
           .filter(
             (t) =>
               t.dittiId === user.userPermissionId &&
@@ -107,8 +115,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
 
       // get all taps starting from 7 days ago
       const start = sub(today, { days: 7 });
-      const totalTaps = props
-        .getTaps()
+      const totalTaps = getTaps()
         .filter(
           (t) =>
             t.dittiId === user.userPermissionId &&
@@ -141,7 +148,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
           getAudioTaps={getAudioTaps}
           goBack={goBack}
           handleClick={handleClick}
-          studyDetails={props.studyDetails}
+          studyDetails={studyDetails}
           user={user}
         />
       );
@@ -153,19 +160,24 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
           <div className="flex flex-col">
             <div className="flex items-center">
               {/* active tapping icon */}
-              <ActiveIcon active={hasTapsToday} className="mr-2" />
+              {canViewTaps && <ActiveIcon active={hasTapsToday} className="mr-2" />}
               {/* link to the user's summary page */}
-              <Link onClick={handleClickSubject}>
-                {user.userPermissionId}
-              </Link>
+              {canViewTaps ?
+                <Link onClick={handleClickSubject}>
+                  {user.userPermissionId}
+                </Link> :
+                <span>{user.userPermissionId}</span>
+              }
             </div>
             <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
             {/* summary tap data */}
           </div>
 
-          <div className="flex flex-grow-0 overflow-x-hidden">
-            {summaryTaps}
-          </div>
+          {canViewTaps &&
+            <div className="flex flex-grow-0 overflow-x-hidden">
+              {summaryTaps}
+            </div>
+          }
       </CardContentRow>
     );
   };

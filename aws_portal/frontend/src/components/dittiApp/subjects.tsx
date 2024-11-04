@@ -129,7 +129,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
         contents: (
           <>
             {/* if the user has tap permission, link to a subject visuals page */}
-            {user.tapPermission ? (
+            {(user.tapPermission && canEdit) ? (
               <Link
                 onClick={() =>
                   handleClick(

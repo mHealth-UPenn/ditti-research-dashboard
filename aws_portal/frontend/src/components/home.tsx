@@ -86,6 +86,16 @@ const Home: React.FC<HomeProps> = ({
     Promise.all([admin, ditti]).then(() => setLoading(false));
   }, []);
 
+  if (loading) {
+    return (
+      <ViewContainer>
+        <Card width="sm">
+          <SmallLoader />
+        </Card>
+      </ViewContainer>
+    );
+  }
+
   return (
     <ViewContainer>
       {apps.map((app, i) => (
