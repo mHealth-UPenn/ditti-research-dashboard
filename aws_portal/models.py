@@ -158,7 +158,7 @@ def init_admin_account(email=None, password=None):
         is_confirmed=True
     )
 
-    db.session.flush()
+    db.session.commit()
     admin.password = password
     admin_join = JoinAccountAccessGroup(
         account=admin, access_group=admin_group
@@ -185,7 +185,6 @@ def init_dev_database_data():
     if "localhost" not in db_uri:
         raise RuntimeError("Dev data initialization attempted on non-localhost database")
 
-    to_add = []
     actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
     resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
     for action in actions:
@@ -193,8 +192,7 @@ def init_dev_database_data():
             permission = Permission()
             permission.action = action
             permission.resource = resource
-            to_add.append(permission)
-    db.session.flush()
+            db.session.add(permission)
 
     roles = {
         "Admin": [
@@ -264,27 +262,23 @@ def init_dev_database_data():
             query = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(query).first()
             JoinRolePermission(role=role, permission=permission)
-        to_add.append(role)
-    db.session.flush()
+        db.session.add(role)
 
     ditti_app = App(name="Ditti App Dashboard")
     ditti_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
     query = Permission.definition == tuple_("*", "*")
     permission = Permission.query.filter(query).first()
-    join = JoinAccessGroupPermission(access_group=ditti_group, permission=permission)
-    to_add.append(ditti_app)
-    to_add.append(ditti_group)
-    to_add.append(join)
+    JoinAccessGroupPermission(access_group=ditti_group, permission=permission)
+    db.session.add(ditti_app)
+    db.session.add(ditti_group)
 
     admin_app = App(name="Admin Dashboard")
     admin_group = AccessGroup(name="Admin", app=admin_app)
     query = Permission.definition == tuple_("*", "*")
     permission = Permission.query.filter(query).first()
-    join = JoinAccessGroupPermission(access_group=admin_group, permission=permission)
-    to_add.append(admin_app)
-    to_add.append(admin_group)
-    to_add.append(join)
-    db.session.flush()
+    JoinAccessGroupPermission(access_group=admin_group, permission=permission)
+    db.session.add(admin_app)
+    db.session.add(admin_group)
 
     access_groups = {
         "Can View Accounts": [
@@ -369,9 +363,8 @@ def init_dev_database_data():
         for action, resource in permissions:
             query = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(query).first()
-            JoinRolePermission(role=role, permission=permission)
-        to_add.append(access_group)
-    db.session.flush()
+            JoinAccessGroupPermission(access_group=access_group, permission=permission)
+        db.session.add(access_group)
 
     studies = [
         {
@@ -393,8 +386,7 @@ def init_dev_database_data():
     ]
 
     for study in studies:
-        to_add.append(Study(**study))
-    db.session.flush()
+        db.session.add(Study(**study))
 
     account = Account(
         public_id=str(uuid.uuid4()),
@@ -407,7 +399,7 @@ def init_dev_database_data():
     account.password = "abc123"
     JoinAccountAccessGroup(account=account, access_group=ditti_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
-    to_add.append(account)
+    db.session.add(account)
 
     for study_data in studies:
         for role_name in roles.keys():
@@ -423,7 +415,7 @@ def init_dev_database_data():
             study = Study.query.filter(Study.name == study_data["name"]).first()
             role = Role.query.filter(Role.name == role_name).first()
             JoinAccountStudy(account=account, study=study, role=role)
-            to_add.append(account)
+            db.session.add(account)
 
     for access_group_name in access_groups.keys():
             account = Account(
@@ -439,9 +431,8 @@ def init_dev_database_data():
                 AccessGroup.name == access_group_name
             ).first()
             JoinAccountAccessGroup(account=account, access_group=access_group)
-            to_add.append(account)
+            db.session.add(account)
 
-    db.session.add_all(to_add)
     db.session.commit()
 
 

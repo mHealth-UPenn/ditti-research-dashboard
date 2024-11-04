@@ -1,6 +1,9 @@
+import traceback
+
 import click
 from flask import current_app
 from flask.cli import with_appcontext
+from aws_portal.extensions import db
 from aws_portal.models import (
     init_admin_app, init_admin_group, init_admin_account, init_db,
     init_dev_database_data
