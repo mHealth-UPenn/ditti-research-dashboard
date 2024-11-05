@@ -181,10 +181,12 @@ def init_admin_account(email=None, password=None):
 
 
 def init_integration_testing_db():
+    # Enforce that the environment must be pointing at a local database
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
     if "localhost" not in db_uri:
         raise RuntimeError("Dev data initialization attempted on non-localhost database")
 
+    # Create all possible `(action, resource)` permission combinations
     actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
     resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
     for action in actions:
@@ -225,6 +227,7 @@ def init_integration_testing_db():
         ],
     }
 
+    # Create all study-level roles
     for role_name, permissions in roles.items():
         role = Role(name=role_name)
         for action, resource in permissions:
@@ -233,6 +236,7 @@ def init_integration_testing_db():
             JoinRolePermission(role=role, permission=permission)
         db.session.add(role)
 
+    # Create the Admin access group
     admin_app = App(name="Admin Dashboard")
     admin_group = AccessGroup(name="Admin", app=admin_app)
     query = Permission.definition == tuple_("*", "*")
@@ -241,6 +245,7 @@ def init_integration_testing_db():
     db.session.add(admin_app)
     db.session.add(admin_group)
 
+    # Create the Ditti Admin access group
     ditti_app = App(name="Ditti App Dashboard")
     ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
     query = Permission.definition == tuple_("*", "*")
@@ -252,6 +257,7 @@ def init_integration_testing_db():
     db.session.add(ditti_app)
     db.session.add(ditti_admin_group)
 
+    # Create the Ditti Coordinator access group
     ditti_coordinator_group = AccessGroup(name="Ditti App Coordinator", app=ditti_app)
     query = Permission.definition == tuple_("View", "Ditti App Dashboard")
     permission = Permission.query.filter(query).first()
@@ -322,6 +328,7 @@ def init_integration_testing_db():
         ],
     }
 
+    # Create access groups for testing admin dashboard permissions
     for access_group_name, permissions in admin_access_groups.items():
         access_group = AccessGroup(name=access_group_name, app=admin_app)
         for action, resource in permissions:
@@ -347,6 +354,7 @@ def init_integration_testing_db():
         ],
     }
 
+    # Create access groups for testing Ditti dashboard permissions
     for access_group_name, permissions in ditti_access_groups.items():
         access_group = AccessGroup(name=access_group_name, app=ditti_app)
         for action, resource in permissions:
@@ -374,11 +382,13 @@ def init_integration_testing_db():
         }
     ]
 
+    # Create two test studies
     study_a = Study(**studies[0])
     study_b = Study(**studies[1])
     db.session.add(study_a)
     db.session.add(study_b)
 
+    # Create an admin account
     account = Account(
         public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
@@ -392,6 +402,37 @@ def init_integration_testing_db():
     JoinAccountAccessGroup(account=account, access_group=admin_group)
     db.session.add(account)
 
+    # Create a Ditti admin account to test whether pemissions are scoped to the Ditti Dashboard only
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Jane",
+        last_name="Doe",
+        email="Ditti Admin",
+        is_confirmed=True,
+    )
+    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+    JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
+    db.session.add(account)
+
+    # Create a Study A Admin account to test whether permissions are scopeed to Study A only
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Jane",
+        last_name="Doe",
+        email="Study A Admin",
+        is_confirmed=True,
+    )
+    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+    role = Role.query.filter(Role.name == "Admin").first()
+    JoinAccountStudy(account=account, study=study_a, role=role)
+    JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
+    JoinAccountAccessGroup(account=account, access_group=admin_group)
+    db.session.add(account)
+
+    # Create an account for each role
+    # Assign each role to Study A to test whether permissions are scoped to Study A only
     other_role = Role.query.filter(Role.name == "Can View Users").first()
     for role_name in roles.keys():
         account = Account(
@@ -407,23 +448,28 @@ def init_integration_testing_db():
         JoinAccountStudy(account=account, study=study_a, role=role)
         JoinAccountStudy(account=account, study=study_b, role=other_role)
         JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
+        JoinAccountAccessGroup(account=account, access_group=admin_group)
         db.session.add(account)
 
-    for access_group_name in list(admin_access_groups.keys()) + list(ditti_access_groups.keys()):
-            account = Account(
-                public_id=str(uuid.uuid4()),
-                created_on=datetime.now(UTC),
-                first_name="Jane",
-                last_name="Doe",
-                email=access_group_name,
-                is_confirmed=True,
-            )
-            account.password = os.getenv("FLASK_ADMIN_PASSWORD")
-            access_group = AccessGroup.query.filter(
-                AccessGroup.name == access_group_name
-            ).first()
-            JoinAccountAccessGroup(account=account, access_group=access_group)
-            db.session.add(account)
+    # Create an account for each access group to test whether permissions are scoped properly on the Admin Dashboard
+    access_group_names = (
+        list(admin_access_groups.keys()) + list(ditti_access_groups.keys())
+    )
+    for access_group_name in access_group_names:
+        account = Account(
+            public_id=str(uuid.uuid4()),
+            created_on=datetime.now(UTC),
+            first_name="Jane",
+            last_name="Doe",
+            email=access_group_name,
+            is_confirmed=True,
+        )
+        account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+        access_group = AccessGroup.query.filter(
+            AccessGroup.name == access_group_name
+        ).first()
+        JoinAccountAccessGroup(account=account, access_group=access_group)
+        db.session.add(account)
 
     db.session.add(AboutSleepTemplate(name="About Sleep Template", text="Text"))
     db.session.commit()
