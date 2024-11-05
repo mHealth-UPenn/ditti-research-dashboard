@@ -32,7 +32,7 @@ const generateUsers = (studyIds: string[]): UserDetails[] => {
   studyIds.forEach(studyId => {
     for (let i = 1; i <= 10; i++) {
       const user = {
-        tapPermission: Math.random() < 0.5,
+        tapPermission: true,
         information: "",
         userPermissionId: `${studyId}${String(i).padStart(3, "0")}`,
         expTime: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
@@ -151,9 +151,4 @@ class DataFactory {
   }
 }
 
-const dataFactory = new DataFactory();
-if (APP_ENV === "development") {
-  dataFactory.init();
-}
-
-export default dataFactory
+export default DataFactory;

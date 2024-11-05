@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
+import { Study, ViewProps } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import StudySubjects from "./studySubjects";
@@ -15,6 +15,7 @@ import Title from "../cards/cardTitle";
 import Subtitle from "../cards/cardSubtilte";
 import Button from "../buttons/button";
 import CardContentRow from "../cards/cardHeader";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
 
 /**
  * Information for study contacts
@@ -31,15 +32,11 @@ interface StudyContact {
  * studyId: the study's database primary key
  */
 interface StudySummaryProps extends ViewProps {
-  getTaps: () => TapDetails[];
-  getAudioTaps: () => AudioTapDetails[];
   studyId: number;
 }
 
 const StudySummary: React.FC<StudySummaryProps> = ({
   flashMessage,
-  getTaps,
-  getAudioTaps,  // TODO: implement into excel download
   goBack,
   handleClick,
   studyId
@@ -49,6 +46,8 @@ const StudySummary: React.FC<StudySummaryProps> = ({
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
   const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
   const [loading, setLoading] = useState(true);
+
+  const { taps } = useDittiDataContext();
 
   useEffect(() => {
     // check whether the user can enroll new subjects
@@ -89,7 +88,6 @@ const StudySummary: React.FC<StudySummaryProps> = ({
   const downloadExcel = async (): Promise<void> => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
-    const taps = getTaps();
     const id = studyDetails.acronym;
     const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
 
@@ -144,8 +142,6 @@ const StudySummary: React.FC<StudySummaryProps> = ({
         goBack={goBack}
         handleClick={handleClick}
         studyDetails={studyDetails}
-        getTaps={getTaps}
-        getAudioTaps={getAudioTaps}
       />
     );
 
@@ -195,8 +191,6 @@ const StudySummary: React.FC<StudySummaryProps> = ({
         <StudySubjects
           flashMessage={flashMessage}
           goBack={goBack}
-          getTaps={getTaps}
-          getAudioTaps={getAudioTaps}
           handleClick={handleClick}
           studyDetails={studyDetails}
           studyPrefix={dittiId}

@@ -18,6 +18,7 @@ import CardContentRow from "../cards/cardHeader";
 import Title from "../cards/cardTitle";
 import Subtitle from "../cards/cardSubtilte";
 import Button from "../buttons/button";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
 
 /**
  * getTaps: get tap data
@@ -25,15 +26,11 @@ import Button from "../buttons/button";
  * user: details of the subject
  */
 interface SubjectVisualsV2Props extends ViewProps {
-  getTaps: () => TapDetails[];
-  getAudioTaps: () => AudioTapDetails[];
   studyDetails: Study;
   user: UserDetails;
 }
 
 const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
-  getTaps,
-  getAudioTaps,
   studyDetails,
   user,
   flashMessage,
@@ -43,8 +40,9 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const taps = getTaps().filter((t) => t.dittiId === user.userPermissionId);
-  const audioTaps = getAudioTaps().filter((at) => at.dittiId === user.userPermissionId);
+  const { taps, audioTaps } = useDittiDataContext();
+  const filteredTaps = taps.filter((t) => t.dittiId === user.userPermissionId);
+  const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === user.userPermissionId);
 
   useEffect(() => {
     getAccess(2, "Edit", "Users", studyDetails.id)
@@ -63,7 +61,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     const sheet = workbook.addWorksheet("Sheet 1");
     const id = user.userPermissionId;
     const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
-    const data = taps.map((t) => {
+    const data = filteredTaps.map((t) => {
       // localize tap timestamps
       const time = t.time.getTime() - t.time.getTimezoneOffset() * 60000;
       return [t.dittiId, new Date(time)];
@@ -105,7 +103,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     dateOpts as Intl.DateTimeFormatOptions
   );
 
-  const timestamps = useMemo(() => taps.map(t => t.time.getTime()), [getTaps]);
+  const timestamps = useMemo(() => filteredTaps.map(t => t.time.getTime()), [filteredTaps]);
 
   const handleClickEditDetails = () =>
     handleClick(
@@ -162,7 +160,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
           <TapVisualizationButtons />
           <TimestampHistogram timestamps={timestamps} />
           <BoutsTimeline timestamps={timestamps} />
-          <AudioTapsTimeline audioTaps={audioTaps} />
+          <AudioTapsTimeline audioTaps={filteredAudioTaps} />
         </VisualizationController>
       </Card>
     </ViewContainer>

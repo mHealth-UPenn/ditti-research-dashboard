@@ -24,6 +24,7 @@ import Title from "../cards/cardTitle";
 import Subtitle from "../cards/cardSubtilte";
 import AdminView from "../containers/admin/adminView";
 import AdminContent from "../containers/admin/adminContent";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
 
 /**
  * studyDetails: the details of the study that subjects will be listed for
@@ -31,8 +32,6 @@ import AdminContent from "../containers/admin/adminContent";
  */
 interface SubjectsProps extends ViewProps {
   studyDetails: Study;
-  getTaps: () => TapDetails[];
-  getAudioTaps: () => AudioTapDetails[];
 }
 
 const Subjects: React.FC<SubjectsProps> = (props) => {
@@ -117,10 +116,11 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
         })
       )
     } else {
+      const { users } = useDittiDataContext();
       promises.push(
         new Promise<UserDetails[]>(
           resolve => resolve(
-            dataFactory.users.filter(
+            users.filter(
               u => u.userPermissionId.startsWith(props.studyDetails.dittiId)
             )
           )
@@ -132,7 +132,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
     Promise.all(promises).then(() => setLoading(false));
   }, [props.studyDetails]);
 
-  const { flashMessage, goBack, handleClick, getTaps, getAudioTaps } = props;
+  const { flashMessage, goBack, handleClick } = props;
   const { id, dittiId, email } = props.studyDetails;
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: "numeric",
@@ -155,8 +155,6 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
                     [user.userPermissionId],
                     <SubjectVisuals
                       flashMessage={flashMessage}
-                      getTaps={getTaps}
-                      getAudioTaps={getAudioTaps}
                       goBack={goBack}
                       handleClick={handleClick}
                       studyDetails={props.studyDetails}

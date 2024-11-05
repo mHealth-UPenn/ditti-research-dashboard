@@ -7,8 +7,6 @@ import StudySummary from "./studySummary";
 import { sub } from "date-fns";
 import AudioFileUpload from "./audioFileUpload";
 import AudioFiles from "./audioFiles";
-import { APP_ENV } from "../../environment";
-import dataFactory from "../../dataFactory";
 import Card from "../cards/card";
 import ViewContainer from "../containers/viewContainer";
 import CardContentRow from "../cards/cardHeader";
@@ -16,33 +14,21 @@ import Button from "../buttons/button";
 import Title from "../cards/cardTitle";
 import ActiveIcon from "../icons/activeIcon";
 import Link from "../links/link";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
 
-interface StudiesViewProps extends ViewProps {
-  getTapsAsync: () => Promise<TapDetails[]>;
-  getTaps: () => TapDetails[];
-  getAudioTapsAsync: () => Promise<AudioTapDetails[]>;
-  getAudioTaps: () => AudioTapDetails[];
-  getAudioFilesAsync: () => Promise<AudioFile[]>;
-  getAudioFiles: () => AudioFile[];
-}
 
-const StudiesView: React.FC<StudiesViewProps> = ({
-  getTapsAsync,
-  getTaps,
-  getAudioTapsAsync,
-  getAudioTaps,
-  getAudioFilesAsync,
-  getAudioFiles,
+const StudiesView: React.FC<ViewProps> = ({
   flashMessage,
   goBack,
   handleClick
 }) => {
   const [studies, setStudies] = useState<Study[]>([]);
-  const [users, setUsers] = useState<UserDetails[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [canViewAudioFiles, setCanViewAudioFiles] = useState(true);
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState(true);
   const [canViewTaps, setCanViewTaps] = useState<Set<number>>(new Set());
+
+  const { taps, audioFiles } = useDittiDataContext();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,18 +37,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
         const promises: Promise<any>[] = [];
         promises.push(makeRequest("/db/get-studies?app=2").then(setStudies));
 
-        if (APP_ENV === "production") {
-          promises.push(makeRequest("/aws/get-users?app=2").then(setUsers));
-        } else {
-          promises.push(new Promise<UserDetails[]>(
-            resolve => resolve(dataFactory.users)
-          ).then(setUsers));
-        }
-
         // get all tap and audio file data
-        promises.push(getTapsAsync());
-        promises.push(getAudioTapsAsync());
-        promises.push(getAudioFilesAsync());
         promises.push(
           getAccess(2, "View", "Audio Files")
             .catch(() => setCanViewAudioFiles(false))
@@ -81,7 +56,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
     };
 
     fetchData();
-  }, [getTapsAsync, getAudioTapsAsync, getAudioFilesAsync]);
+  }, []);
 
   useEffect(() => {
     const updateCanViewTaps = async () => {
@@ -111,8 +86,6 @@ const StudiesView: React.FC<StudiesViewProps> = ({
         <StudySummary
           flashMessage={flashMessage}
           handleClick={handleClick}
-          getTaps={getTaps}
-          getAudioTaps={getAudioTaps}
           goBack={goBack}
           studyId={study.id}
         />
@@ -163,7 +136,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
           // for each study the user has access to
           studies.map((s) => {
             // count the number of taps that were recorded in the last 7 days
-            const lastWeek = getTaps()
+            const lastWeek = taps
               .filter(
                 (t) =>
                   t.time > sub(new Date(), { weeks: 1 }) &&
@@ -173,7 +146,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
               .filter((v, i, arr) => arr.indexOf(v) === i).length;
 
             // count the number of taps that were recorded in the last 24 hours
-            const last24hrs = getTaps()
+            const last24hrs = taps
               .filter(
                 (t) =>
                   t.time > sub(new Date(), { days: 1 }) && // This should be 'days' not 'weeks'
@@ -237,7 +210,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
           </CardContentRow>
           <CardContentRow className="border-b border-light">
             <b>All files</b>
-            <b>{getAudioFiles().length} files</b>
+            <b>{audioFiles.length} files</b>
           </CardContentRow>
         </Card>
       }

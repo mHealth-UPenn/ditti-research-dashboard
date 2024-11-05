@@ -11,6 +11,8 @@ import { makeRequest } from "../utils";
 import FlashMessage, { FlashMessageVariant } from "./flashMessage/flashMessage";
 import { APP_ENV } from "../environment";
 import dataFactory from "../dataFactory";
+import DittiDataContext, { useDittiDataContext } from "../contexts/dittiDataContext";
+import useDittiData from "../hooks/useDittiData";
 
 type Action =
   | { type: "INIT"; name: string; view: React.ReactElement }
@@ -18,10 +20,7 @@ type Action =
   | { type: "FLASH_MESSAGE"; msg: React.ReactElement; variant: FlashMessageVariant }
   | { type: "CLOSE_MESSAGE"; id: number }
   | { type: "SET_VIEW"; name: string[]; view: React.ReactElement; replace: boolean | null }
-  | { type: "SET_STUDY"; name: string; view: React.ReactElement; appView: React.ReactElement }
-  | { type: "SET_TAPS"; taps: TapDetails[] }
-  | { type: "SET_AUDIO_TAPS"; audioTaps: AudioTapDetails[] }
-  | { type: "SET_AUDIO_FILES"; audioFiles: AudioFile[] };
+  | { type: "SET_STUDY"; name: string; view: React.ReactElement; appView: React.ReactElement };
 
 
 const reducer = (state: DashboardState, action: Action) => {
@@ -129,19 +128,6 @@ const reducer = (state: DashboardState, action: Action) => {
       breadcrumbs.push({ name, view });
       return { ...state, breadcrumbs, history, view }
     }
-    case "SET_TAPS": {
-      const { taps } = action;
-      taps.sort((a, b) => differenceInMilliseconds(a.time, b.time));
-      return { ...state, taps };
-    }
-    case "SET_AUDIO_TAPS": {
-      const { audioTaps } = action;
-      audioTaps.sort((a, b) => differenceInMilliseconds(a.time, b.time));
-      return { ...state, audioTaps };
-    }
-    case "SET_AUDIO_FILES": {
-      return { ...state, audioFiles: action.audioFiles };
-    }
     default:
       return state;
   }
@@ -160,10 +146,6 @@ interface DashboardState {
   breadcrumbs: { name: string; view: React.ReactElement }[];
   flashMessages: IFlashMessage[];
   history: { name: string; view: React.ReactElement }[][];
-  taps: TapDetails[];
-  audioTaps: AudioTapDetails[];
-  users: UserDetails[];
-  audioFiles: AudioFile[];
   view: React.ReactElement;
 }
 
@@ -171,34 +153,28 @@ const initialState: DashboardState = {
   breadcrumbs: [],
   flashMessages: [],
   history: [],
-  taps: [],
-  audioTaps: [],
-  users: [],
-  audioFiles: [],
   view: <React.Fragment />,
 };
 
 
 const Dashboard: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { breadcrumbs, flashMessages, history, taps, audioTaps, audioFiles, view } = state;
-  const tapRef = useRef<TapDetails[]>();
-  const audioTapRef = useRef<AudioTapDetails[]>();
-  const audioFileRef = useRef<AudioFile[]>();
+  const { breadcrumbs, flashMessages, history, view } = state;
+
+  const {
+    dataLoading,
+    taps,
+    audioTaps,
+    audioFiles,
+    users,
+  } = useDittiData();
 
   useEffect(() => {
     const view = (
       <Home
-        getTapsAsync={getTapsAsync}
-        getTaps={getTaps}
-        getAudioTapsAsync={getAudioTapsAsync}
-        getAudioTaps={getAudioTaps}
-        getAudioFilesAsync={getAudioFilesAsync}
-        getAudioFiles={getAudioFiles}
         handleClick={setView}
         goBack={goBack}
-        flashMessage={flashMessage}
-      />
+        flashMessage={flashMessage} />
     );
     dispatch({ type: "INIT", name: "Home", view })
   }, []);
@@ -218,99 +194,6 @@ const Dashboard: React.FC = () => {
     });
   }, [flashMessages]);
 
-  useEffect(() => {
-    tapRef.current = taps;
-  }, [taps])
-
-  useEffect(() => {
-    audioTapRef.current = audioTaps;
-  }, [audioTaps])
-
-  useEffect(() => {
-    audioFileRef.current = audioFiles;
-  }, [audioFiles])
-
-  const getTapsAsync = async (): Promise<TapDetails[]> => {
-    // if AWS has not been queried yet
-    if (!taps.length) {
-      let updatedTaps: TapDetails[];
-
-      if (APP_ENV === "production") {
-        updatedTaps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
-          return res.map((tap) => {
-            return { dittiId: tap.dittiId, time: new Date(tap.time) };
-          });
-        });
-      } else {
-        updatedTaps = dataFactory.taps;
-      }
-
-      // sort taps by timestamp
-      updatedTaps = updatedTaps.sort((a, b) =>
-        differenceInMilliseconds(new Date(a.time), new Date(b.time))
-      );
-    
-      dispatch({ type: "SET_TAPS", taps: updatedTaps });
-    }
-
-    return taps;
-  };
-
-  const getTaps = (): TapDetails[] => tapRef.current || [];
-
-  const getAudioTapsAsync = async (): Promise<AudioTapDetails[]> => {
-    // if AWS has not been queried yet
-    if (!audioTaps.length) {
-      let updatedAudioTaps: AudioTapDetails[];
-
-      if (APP_ENV == "production") {
-        updatedAudioTaps = await makeRequest("/aws/get-audio-taps?app=2").then((res: AudioTap[]) => {
-          return res.map((at) => {
-            return {
-              dittiId: at.dittiId,
-              audioFileTitle: at.audioFileTitle,
-              time: new Date(at.time),
-              timezone: at.timezone,
-              action: at.action,
-            };
-          });
-        });
-      } else {
-        updatedAudioTaps = dataFactory.audioTaps;
-      }
-
-      // sort taps by timestamp
-      updatedAudioTaps = updatedAudioTaps.sort((a, b) =>
-        differenceInMilliseconds(new Date(a.time), new Date(b.time))
-      );
-
-      dispatch({ type: "SET_AUDIO_TAPS", audioTaps: updatedAudioTaps });
-    }
-
-    return audioTaps;
-  };
-
-  const getAudioTaps = (): AudioTapDetails[] => audioTapRef.current || [];
-
-  const getAudioFilesAsync = async (): Promise<AudioFile[]> => {
-    // if AWS has not been queried yet
-    if (!audioFiles.length) {
-      let newAudioFiles: AudioFile[];
-
-      if (APP_ENV === "production") {
-        newAudioFiles = await makeRequest("/aws/get-audio-files?app=2");
-      } else {
-        newAudioFiles = dataFactory.audioFiles;
-      }
-
-      dispatch({ type: "SET_AUDIO_FILES", audioFiles: newAudioFiles });
-    }
-
-    return audioFiles;
-  };
-
-  const getAudioFiles = () => audioFileRef.current || [];
-
   const setView = (
     name: string[], view: React.ReactElement, replace: boolean | null = null
   ) => {
@@ -320,16 +203,9 @@ const Dashboard: React.FC = () => {
   const setStudy = (name: string, view: React.ReactElement) => {
     const appView =
       <StudiesView
-        getTapsAsync={getTapsAsync}
-        getTaps={getTaps}
-        getAudioTapsAsync={getAudioTapsAsync}
-        getAudioTaps={getAudioTaps}
-        getAudioFilesAsync={getAudioFilesAsync}
-        getAudioFiles={getAudioFiles}
         handleClick={setView}
         goBack={goBack}
-        flashMessage={flashMessage}
-      />
+        flashMessage={flashMessage} />
     dispatch({ type: "SET_STUDY", name, view, appView });
   };
 
@@ -378,7 +254,15 @@ const Dashboard: React.FC = () => {
           }
 
           {/* current view */}
-          {view}
+          <DittiDataContext.Provider value={{
+              dataLoading,
+              taps,
+              audioTaps,
+              audioFiles,
+              users,
+            }}>
+              {view}
+          </DittiDataContext.Provider>
         </div>
       </div>
     </main>

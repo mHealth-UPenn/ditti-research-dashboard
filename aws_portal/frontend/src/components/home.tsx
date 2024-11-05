@@ -1,39 +1,19 @@
 import React, { useEffect, useState } from "react";
 import "./home.css";
 import { ReactComponent as Right } from "../icons/right.svg";
-import { AudioFile, AudioTapDetails, TapDetails, ViewProps } from "../interfaces";
+import { ViewProps } from "../interfaces";
 import StudiesView from "./dittiApp/studies";
 import Accounts from "./adminDashboard/accounts";
 import { SmallLoader } from "./loader";
 import { getAccess } from "../utils";
 import Card from "./cards/card";
 import CardContentRow from "./cards/cardHeader";
-import Title from "./cards/cardTitle";
 import ViewContainer from "./containers/viewContainer";
-
-/**
- * getTapsAsync: queries AWS for tap data
- * getTaps: get tap data locally after querying AWS
- */
-interface HomeProps extends ViewProps {
-  getTapsAsync: () => Promise<TapDetails[]>;
-  getTaps: () => TapDetails[];
-  getAudioTapsAsync: () => Promise<AudioTapDetails[]>;
-  getAudioTaps: () => AudioTapDetails[];
-  getAudioFilesAsync: () => Promise<AudioFile[]>;
-  getAudioFiles: () => AudioFile[];
-}
 
 /**
  * Home component: renders available apps for the user
  */
-const Home: React.FC<HomeProps> = ({
-  getTapsAsync,
-  getTaps,
-  getAudioTapsAsync,
-  getAudioTaps,
-  getAudioFilesAsync,
-  getAudioFiles,
+const Home: React.FC<ViewProps> = ({
   flashMessage,
   goBack,
   handleClick
@@ -46,12 +26,6 @@ const Home: React.FC<HomeProps> = ({
       name: "Ditti App Dashboard",
       view: (
         <StudiesView
-          getTapsAsync={getTapsAsync}
-          getTaps={getTaps}
-          getAudioTapsAsync={getAudioTapsAsync}
-          getAudioTaps={getAudioTaps}
-          getAudioFilesAsync={getAudioFilesAsync}
-          getAudioFiles={getAudioFiles}
           handleClick={handleClick}
           goBack={goBack}
           flashMessage={flashMessage} />

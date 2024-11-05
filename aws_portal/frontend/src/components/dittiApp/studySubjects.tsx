@@ -1,15 +1,12 @@
-import React, { useState, useEffect } from "react";
-import { AudioTapDetails, Study, TapDetails, User, UserDetails, ViewProps } from "../../interfaces";
-import { SmallLoader } from "../loader";
+import React from "react";
+import { Study, UserDetails, ViewProps } from "../../interfaces";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
 import SubjectVisuals from "./subjectVisualsV2";
-import { makeRequest } from "../../utils";
-import { APP_ENV } from "../../environment";
-import dataFactory from "../../dataFactory";
 import CardContentRow from "../cards/cardHeader";
 import ActiveIcon from "../icons/activeIcon";
 import Link from "../links/link";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -18,55 +15,20 @@ import Link from "../links/link";
  */
 interface StudySubjectsProps extends ViewProps {
   studyPrefix: string;
-  getTaps: () => TapDetails[];
-  getAudioTaps: () => AudioTapDetails[];  // TODO: Implement into subject summary
   studyDetails: Study;
   canViewTaps: boolean;
 }
 
 const StudySubjects: React.FC<StudySubjectsProps> = ({
   studyPrefix,
-  getTaps,
-  getAudioTaps,
   studyDetails,
   canViewTaps,
   flashMessage,
   goBack,
   handleClick,
 }) => {
-  const [users, setUsers] = useState<UserDetails[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // For fetching users enrolled in the study
-    // get all users that are enrolled in this study
-    let users: UserDetails[];
-    if (APP_ENV === "production") {
-      makeRequest(
-        `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${studyPrefix}"`
-      ).then((res: User[]) => {
-        // map the user data to user details
-        users = res.map((user) => {
-          return {
-            tapPermission: user.tap_permission,
-            information: user.information,
-            userPermissionId: user.user_permission_id,
-            expTime: user.exp_time,
-            teamEmail: user.team_email,
-            createdAt: user.createdAt
-          };
-        });
-        
-        setUsers(users);
-        setLoading(false);
-      });
-    } else {
-      users = dataFactory.users.filter(u => u.userPermissionId.startsWith(studyPrefix));
-      setUsers(users);
-      setLoading(false);
-    }
-
-  }, [studyPrefix]);
+  const { users, taps } = useDittiDataContext();
+  const filteredUsers = users.filter(u => u.userPermissionId.startsWith(studyPrefix));
 
   /**
    * Render recent summary tap data for a user
@@ -90,7 +52,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
         const end = add(start, { days: 1 });
 
         // get taps and filter for only taps between start and end
-        const taps = getTaps()
+        const filteredTaps = taps
           .filter(
             (t) =>
               t.dittiId === user.userPermissionId &&
@@ -98,7 +60,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
           ).length;
 
         // if i is 0 and there are taps
-        hasTapsToday = !i && taps > 0;
+        hasTapsToday = !i && filteredTaps > 0;
 
         // get the current weekday (Mon, Tue, Wed, etc.)
         const weekday = start.toLocaleString("en-US", { weekday: "narrow" });
@@ -106,7 +68,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
         return (
           <div key={i} className="hidden md:flex flex-grow-0 flex-col w-[60px] items-center border-r border-light">
             <span>{weekday}</span>
-            <span>{taps}</span>
+            <span>{filteredTaps}</span>
           </div>
         );
       });
@@ -115,7 +77,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
 
       // get all taps starting from 7 days ago
       const start = sub(today, { days: 7 });
-      const totalTaps = getTaps()
+      const totalTaps = taps
         .filter(
           (t) =>
             t.dittiId === user.userPermissionId &&
@@ -144,8 +106,6 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
         [user.userPermissionId],
         <SubjectVisuals
           flashMessage={flashMessage}
-          getTaps={getTaps}
-          getAudioTaps={getAudioTaps}
           goBack={goBack}
           handleClick={handleClick}
           studyDetails={studyDetails}
@@ -183,13 +143,9 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
   };
 
   // all users whose ids have not expired
-  const activeUsers = users.filter(
+  const activeUsers = filteredUsers.filter(
     (u: UserDetails) => new Date() < new Date(u.expTime)
   );
-
-  if (loading) {
-    return <SmallLoader />;
-  }
 
   return (
     <>

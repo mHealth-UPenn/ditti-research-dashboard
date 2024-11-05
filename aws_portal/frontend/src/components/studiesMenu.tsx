@@ -69,8 +69,6 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
               <StudySummary
                 flashMessage={flashMessage}
                 handleClick={handleClick}
-                getTaps={getTaps}
-                getAudioTaps={getAudioTaps}
                 goBack={goBack}
                 studyId={s.id} />
             )

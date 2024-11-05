@@ -1,6 +1,6 @@
-import React, { useState, useEffect, ChangeEvent, createRef } from "react";
+import React, { useState, ChangeEvent, createRef } from "react";
 import TextField from "../fields/textField";
-import { Study, ResponseBody, ViewProps, AudioFile } from "../../interfaces";
+import { Study, ResponseBody, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
 import AsyncButton from "../buttons/asyncButton";
@@ -8,8 +8,6 @@ import Select from "../fields/select";
 import RadioField from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
 import axios, { AxiosError } from "axios";
-import { APP_ENV } from "../../environment";
-import dataFactory from "../../dataFactory";
 import FormView from "../containers/forms/formView";
 import Form from "../containers/forms/form";
 import FormTitle from "../text/formTitle";
@@ -23,6 +21,7 @@ import FormSummarySubtext from "../containers/forms/formSummarySubtext";
 import Button from "../buttons/button";
 import { SmallLoader } from "../loader";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
 
 
 interface IFile {
@@ -47,9 +46,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const [files, setFiles] = useState<IFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
-  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [existingFiles, setExistingFiles] = useState<Set<string>>(new Set());
   const [canUpload, setCanUpload] = useState(false);
   const [categoryFeedback, setCategoryFeedback] = useState<string>("");
   const [availabilityFeedback, setAvailabilityFeedback] = useState<string>("");
@@ -57,28 +54,9 @@ const AudioFileUpload: React.FC<ViewProps> = ({
 
   const fileInputRef = createRef<HTMLInputElement>();
 
-  const getAudioFiles = async () => {
-    const newStudies: Study[] = await makeRequest("/db/get-studies?app=2");
-
-    let newAudioFiles: AudioFile[];
-    if (APP_ENV === "production") {
-      newAudioFiles = await makeRequest("/aws/get-audio-files?app=2");
-    } else {
-      newAudioFiles = dataFactory.audioFiles;
-    }
-
-    const existing: Set<string> = new Set();
-    newAudioFiles.forEach(af => {
-      if (af.fileName) existing.add(af.fileName)
-    });
-
-    setStudies(studies);
-    setExistingFiles(existing);
-    setLoading(false);
-  }
-
-  // Initialize the list of studies and audio files
-  useEffect(() => {getAudioFiles()}, []);
+  const { audioFiles } = useDittiDataContext();
+  const existingFiles = new Set();
+  audioFiles.forEach(af => existingFiles.add(af.fileName))
 
   /**
    * Get a set of presigned URLs for uploading audio files to S3.
@@ -365,14 +343,6 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const percentComplete = uploadProgress.length ? Math.floor(
     uploadProgress.reduce((a, b) => a + b) / uploadProgress.length
   ) : 0;
-
-  if (loading) {
-    return (
-      <FormView>
-        <SmallLoader />
-      </FormView>
-    )
-  }
 
   return (
     <FormView>
