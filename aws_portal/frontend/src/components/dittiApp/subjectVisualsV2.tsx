@@ -105,9 +105,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     dateOpts as Intl.DateTimeFormatOptions
   );
 
-  const timestamps = useMemo(
-    () => getTaps().map(t => t.time.getTime()), [getTaps]
-  );
+  const timestamps = useMemo(() => taps.map(t => t.time.getTime()), [getTaps]);
 
   const handleClickEditDetails = () =>
     handleClick(

@@ -20,7 +20,8 @@ type TimelineProps = {
 
 const Timeline: React.FC<TimelineProps> = ({
   groups,
-  title
+  title,
+  hideAxis,
 }) => {
   const {
     width,
@@ -97,7 +98,10 @@ const Timeline: React.FC<TimelineProps> = ({
   return (
     <div className="relative">
       <svg width={width} height={height}>
-        <AxisBottom top={margin.top} scale={xScale} />
+        <AxisBottom
+          top={margin.top}
+          scale={xScale}
+          tickLabelProps={hideAxis ? { display: "none" } : { }} />
         <AxisLeft
           left={margin.left}
           scale={scaleLinear({domain: [0, 0], range: [margin.top, margin.top]})}
