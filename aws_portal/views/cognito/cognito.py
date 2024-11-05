@@ -1,11 +1,12 @@
 import jwt
 import logging
 import requests
+import time
 from datetime import datetime, timezone
 from flask import (
-    Blueprint, current_app, make_response, redirect, request, session
+    Blueprint, current_app, make_response, redirect, request, session, url_for
 )
-from urllib.parse import urlencode, urljoin
+from urllib.parse import urlencode
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
 from aws_portal.utils.cognito import verify_token
@@ -26,11 +27,30 @@ def build_cognito_url(path: str, params: dict) -> str:
 @blueprint.route("/login")
 def login():
     """
-    Redirect users to the Cognito login page.
-
-    Constructs the Cognito authorization URL with client ID, response type,
-    scope, and redirect URI, then redirects the user to the Cognito login page.
+    Redirect users to the Cognito login page after ensuring the database is ready.
     """
+    # Attempt to touch the database until it's ready
+    while True:
+        try:
+            res = requests.get(url_for('base.touch', _external=True))
+            res.raise_for_status()
+            data = res.json()
+            msg = data.get('msg', '')
+
+            if msg == "OK":
+                logger.info("Database is ready.")
+                break
+            elif msg == "STARTING":
+                logger.info("Database is starting. Retrying in 2 seconds...")
+                time.sleep(2)
+            else:
+                logger.error(f"Unexpected status from /touch: {msg}")
+                return make_response({"msg": msg}, 500)
+        except requests.RequestException as e:
+            logger.error(f"Error contacting /touch endpoint: {e}")
+            time.sleep(2)
+
+    # Construct the Cognito authorization URL after the database is confirmed ready
     cognito_auth_url = build_cognito_url("/login", {
         "client_id": current_app.config['COGNITO_CLIENT_ID'],
         "response_type": "code",

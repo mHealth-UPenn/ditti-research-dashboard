@@ -4,7 +4,6 @@ import os
 from urllib.parse import urlencode
 import uuid
 import time
-from typing import Any, Dict
 import requests
 from flask import current_app, Blueprint, jsonify, make_response, redirect, request, session
 from oauthlib.oauth2 import WebApplicationClient
