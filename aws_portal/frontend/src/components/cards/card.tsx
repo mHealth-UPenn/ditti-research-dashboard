@@ -22,7 +22,7 @@ const Card = ({
   return (
     <div className={widthMap[width]}>
       <div
-        className={`bg-white p-8 mb-16 lg:mb-0 shadow-lg w-full overflow-x-scroll ${className}`}
+        className={`bg-white p-8 mb-8 lg:mb-0 shadow-lg w-full overflow-x-scroll rounded-xl ${className}`}
         onClick={onClick}>
           {children}
       </div>

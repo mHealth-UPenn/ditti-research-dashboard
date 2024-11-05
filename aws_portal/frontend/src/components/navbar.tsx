@@ -17,7 +17,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ breadcrumbs, handleBack, handleClick, hasHistory }) => {
   return (
-    <div className="bg-white flex items-center h-16 flex-shrink-0 select-none border-b border-solid border-[#33334D]">
+    <div className="bg-white flex items-center h-16 flex-shrink-0 select-none z-10 shadow">
 
       {/* the back button */}
       <div className={"h-10 mx-8 flex items-center" + (hasHistory ? " link-svg cursor-pointer" : "")} onClick={handleBack}>
