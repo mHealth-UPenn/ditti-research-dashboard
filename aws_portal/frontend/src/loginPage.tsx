@@ -285,18 +285,18 @@ const LoginPage: React.FC = () => {
   return (
     <div className="flex h-screen w-screen md:w-max mx-auto sm:px-12 xl:px-20 bg-light">
       <div className="hidden sm:flex items-center mr-12 xl:mr-20">
-        <img className="w-[10rem] xl:w-[12rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
+        <img className="shadow-xl w-[10rem] xl:w-[12rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
       </div>
       <div className="flex flex-grow items-center justify-center bg-white mx-[auto] max-w-[24rem] sm:max-w-[64rem]">
         <div className="flex flex-col mx-8 xl:mx-16">
           <div className="flex justify-center mb-8 sm:hidden">
-            <div className="p-4 bg-light rounded-xl">
+            <div className="p-4 bg-light rounded-xl shadow-lg">
               <img className="w-[6rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
             </div>
           </div>
           <div className="mb-16">
-            <p className="text-4xl">Penn Ditti</p>
-            <p>Research Coordinator Dashboard</p>
+            <p className="text-4xl">Ditti</p>
+            <p>Research Dashboard</p>
           </div>
           {/* For new sign in with AWS Cognito */}
           {/* <div className="flex flex-col xl:mx-16">

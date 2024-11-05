@@ -81,7 +81,7 @@ const Navbar: React.FC<NavbarProps> = ({ active, handleClick, flashMessage, goBa
   });
 
   return (
-    <div className="flex items-center justify-left bg-white select-none">
+    <div className="flex items-center justify-left px-6 lg:px-12 bg-white select-none whitespace-nowrap">
       {/* if the view is active, highlight it using bg-dark */}
       {views.map((v, i) => (
         v.active ?

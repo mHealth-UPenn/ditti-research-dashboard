@@ -180,7 +180,7 @@ def init_admin_account(email=None, password=None):
     return admin
 
 
-def init_dev_database_data():
+def init_integration_testing_db():
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
     if "localhost" not in db_uri:
         raise RuntimeError("Dev data initialization attempted on non-localhost database")
@@ -374,52 +374,51 @@ def init_dev_database_data():
         }
     ]
 
-    for study in studies:
-        db.session.add(Study(**study))
+    study_a = Study(**studies[0])
+    study_b = Study(**studies[1])
+    db.session.add(study_a)
+    db.session.add(study_b)
 
     account = Account(
         public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
-        first_name="Admin",
-        last_name="",
-        email="Admin",
+        first_name="Jane",
+        last_name="Doe",
+        email=os.getenv("FLASK_ADMIN_EMAIL"),
         is_confirmed=True,
     )
-    account.password = "abc123"
+    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
     JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
     db.session.add(account)
 
-    for study_data in studies:
-        other_study = Study.query.filter(~(Study.name == study_data["name"])).first()
-        other_role = Role.query.filter(Role.name == "Can View Users").first()
-        for role_name in roles.keys():
-            account = Account(
-                public_id=str(uuid.uuid4()),
-                created_on=datetime.now(UTC),
-                first_name=f"{study_data["name"]} - {role_name}",
-                last_name="",
-                email=f"{study_data["name"]} - {role_name}",
-                is_confirmed=True,
-            )
-            account.password = os.getenv("FLASK_ADMIN_PASSWORD")
-            study = Study.query.filter(Study.name == study_data["name"]).first()
-            role = Role.query.filter(Role.name == role_name).first()
-            JoinAccountStudy(account=account, study=study, role=role)
-            JoinAccountStudy(account=account, study=other_study, role=other_role)
-            JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
-            db.session.add(account)
+    other_role = Role.query.filter(Role.name == "Can View Users").first()
+    for role_name in roles.keys():
+        account = Account(
+            public_id=str(uuid.uuid4()),
+            created_on=datetime.now(UTC),
+            first_name="Jane",
+            last_name="Doe",
+            email=role_name,
+            is_confirmed=True,
+        )
+        account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+        role = Role.query.filter(Role.name == role_name).first()
+        JoinAccountStudy(account=account, study=study_a, role=role)
+        JoinAccountStudy(account=account, study=study_b, role=other_role)
+        JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
+        db.session.add(account)
 
     for access_group_name in list(admin_access_groups.keys()) + list(ditti_access_groups.keys()):
             account = Account(
                 public_id=str(uuid.uuid4()),
                 created_on=datetime.now(UTC),
-                first_name=access_group_name,
-                last_name="",
+                first_name="Jane",
+                last_name="Doe",
                 email=access_group_name,
                 is_confirmed=True,
             )
-            account.password = "abc123"
+            account.password = os.getenv("FLASK_ADMIN_PASSWORD")
             access_group = AccessGroup.query.filter(
                 AccessGroup.name == access_group_name
             ).first()

@@ -47,9 +47,9 @@ const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
     <>
       {/* the header */}
       <div className="bg-[#33334d] text-white flex items-center justify-between flex-shrink-0 h-16">
-        <div className="text-2xl ml-8">
-          <span className="mr-2">Penn Ditti</span>
-          <span className="text-sm hidden sm:flex">Research Coordinator Dashboard</span>
+        <div className="flex flex-col text-2xl ml-8">
+          <span className="mr-2">Ditti</span>
+          <span className="text-sm whitespace-nowrap overflow-hidden">Research Dashboard</span>
         </div>
         <div className="flex items-center mr-8">
           <span className="hidden mr-6 md:flex">
