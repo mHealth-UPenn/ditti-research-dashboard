@@ -8,7 +8,7 @@ from typing import Any, Dict
 import requests
 from oauthlib.oauth2 import WebApplicationClient
 from flask import current_app
-from aws_portal.extensions import study_subject_secrets_manager as sm
+from aws_portal.extensions import sm
 
 logger = logging.getLogger(__name__)
 

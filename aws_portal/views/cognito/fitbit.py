@@ -1,13 +1,12 @@
 import base64
 import logging
 import os
-from urllib.parse import urlencode
 import uuid
 import time
 import requests
 from flask import current_app, Blueprint, jsonify, make_response, redirect, request, session
 from oauthlib.oauth2 import WebApplicationClient
-from aws_portal.extensions import db, study_subject_secrets_manager as sm
+from aws_portal.extensions import db, sm
 from aws_portal.models import Api, JoinStudySubjectApi
 from aws_portal.utils.cognito import cognito_auth_required
 from aws_portal.utils.fitbit import (

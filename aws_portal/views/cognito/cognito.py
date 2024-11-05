@@ -40,6 +40,7 @@ def login():
             if msg == "OK":
                 logger.info("Database is ready.")
                 break
+            # TODO: Determine if we need to retry before redirecting to Cognito
             elif msg == "STARTING":
                 logger.info("Database is starting. Retrying in 2 seconds...")
                 time.sleep(2)
@@ -118,7 +119,7 @@ def cognito_callback():
         study_subject = StudySubject(
             created_on=datetime.now(timezone.utc),
             email=email,
-            is_confirmed=True
+            is_confirmed=True  # handled by Cognito already
         )
         db.session.add(study_subject)
         db.session.commit()

@@ -6,9 +6,9 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 
-class StudySubjectSecretsManager:
+class SecretsManager:
     """
-    Manages secrets for StudySubjects using AWS Secrets Manager or local storage for testing.
+    Manages keys using AWS Secrets Manager or local storage for testing.
     """
 
     def __init__(self, testing=False):
