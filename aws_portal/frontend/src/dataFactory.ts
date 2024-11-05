@@ -1,5 +1,4 @@
-import { APP_ENV } from "./environment";
-import { AudioFile, AudioTapDetails, Study, TapDetails, UserDetails } from "./interfaces";
+import { AudioFile, AudioTapDetails, Study, TapDetails, User, UserDetails } from "./interfaces";
 import { makeRequest } from "./utils";
 
 
@@ -148,6 +147,23 @@ class DataFactory {
     const audioFileNames = this.audioFiles.map(af => af.fileName)
       .filter((s): s is string => s !== undefined);
     [this.taps, this.audioTaps] = generateTaps(userIds, audioFileNames);
+  }
+
+  getUserByDittiId(id: string): User {
+    const user = this.users.filter(u => u.userPermissionId === id)[0];
+    return {
+      tap_permission: user.tapPermission,
+      information: user.information,
+      user_permission_id: user.userPermissionId,
+      exp_time: user.expTime,
+      team_email: user.teamEmail,
+      createdAt: user.createdAt,
+      __typename: "",
+      _lastChangedAt: 0,
+      _version: 0,
+      updatedAt: "",
+      id: "",
+    }
   }
 }
 

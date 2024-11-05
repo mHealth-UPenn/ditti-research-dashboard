@@ -19,7 +19,6 @@ import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummarySubtext from "../containers/forms/formSummarySubtext";
 import Button from "../buttons/button";
-import { SmallLoader } from "../loader";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 

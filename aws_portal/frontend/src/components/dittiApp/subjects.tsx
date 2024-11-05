@@ -2,24 +2,15 @@ import React, { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { getAccess, makeRequest } from "../../utils";
-import {
-  AudioTapDetails,
-  Study,
-  TapDetails,
-  User,
-  UserDetails,
-  ViewProps
-} from "../../interfaces";
+import { Study, User, UserDetails, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
 import SubjectVisuals from "./subjectVisualsV2";
 import { APP_ENV } from "../../environment";
-import dataFactory from "../../dataFactory";
 import Button from "../buttons/button";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
 import Link from "../links/link";
-import CardContentRow from "../cards/cardHeader";
 import Title from "../cards/cardTitle";
 import Subtitle from "../cards/cardSubtilte";
 import AdminView from "../containers/admin/adminView";
@@ -38,8 +29,12 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
-  const [users, setUsers] = useState<UserDetails[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const { users } = useDittiDataContext();
+  const filteredUsers = users.filter(
+    u => u.userPermissionId.startsWith(props.studyDetails.dittiId)
+  );
 
   const columns: Column[] = [
     {
@@ -99,35 +94,6 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
         .catch(() => setCanViewTaps(false))
     );
 
-    // get all of the study's users
-    const url = `/aws/scan?app=2&key=User&query=user.userPermissionIdBEGINS"${dittiId}"`;
-    if (APP_ENV === "production") {
-      promises.push(
-        makeRequest(url).then((users: User[]) => {
-          const userDetails = users.map(user => ({
-              tapPermission: user.tap_permission,
-              userPermissionId: user.user_permission_id,
-              expTime: user.exp_time,
-              createdAt: user.createdAt,
-              information: user.information,
-              teamEmail: user.team_email
-            }));
-          setUsers(userDetails)
-        })
-      )
-    } else {
-      const { users } = useDittiDataContext();
-      promises.push(
-        new Promise<UserDetails[]>(
-          resolve => resolve(
-            users.filter(
-              u => u.userPermissionId.startsWith(props.studyDetails.dittiId)
-            )
-          )
-        ).then(setUsers)
-      );
-    }
-
     // when all promises complete, hide the loader
     Promise.all(promises).then(() => setLoading(false));
   }, [props.studyDetails]);
@@ -142,7 +108,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
     minute: "2-digit"
   };
 
-  const tableData: TableData[][] = users.map((user: UserDetails) => {
+  const tableData: TableData[][] = filteredUsers.map((user: UserDetails) => {
     return [
       {
         contents: (

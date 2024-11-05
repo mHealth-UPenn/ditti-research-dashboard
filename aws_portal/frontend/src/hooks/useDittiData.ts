@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails, UserDetails } from "../interfaces";
+import { useEffect, useMemo, useState } from "react";
+import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails, User, UserDetails } from "../interfaces";
 import { APP_ENV } from "../environment";
 import { makeRequest } from "../utils";
 import DataFactory from "../dataFactory";
@@ -14,10 +14,12 @@ const useDittiData = () => {
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
   const [users, setUsers] = useState<UserDetails[]>([]);
 
-  let dataFactory: DataFactory | null = null;
-  if (APP_ENV === "development") {
-    dataFactory = new DataFactory();
-  }
+  const dataFactory: DataFactory | null = useMemo(() => {
+    if (APP_ENV === "development") {
+      return new DataFactory();
+    }
+    return null;
+  }, []);
 
   useEffect(() => {
     const promises: Promise<any>[] = [];
@@ -113,12 +115,43 @@ const useDittiData = () => {
     return users;
   };
 
+  const refreshAudioFiles = async () => {
+    setAudioFiles(await getAudioFilesAsync());
+  }
+
+  const getUserByDittiId = async (id: string): Promise<User> => {
+    if (APP_ENV === "production") {
+      return await makeRequest(`/aws/scan?app=2&key=User&query=user_permission_id=="${id}"`);
+    } else if (APP_ENV === "development" && dataFactory) {
+      const user =  dataFactory?.getUserByDittiId(id);
+      if (user) {
+        return user;
+      }
+    }
+
+    return {
+      tap_permission: true,
+      information: "",
+      user_permission_id: "",
+      exp_time: "",
+      team_email: "",
+      createdAt: "",
+      __typename: "",
+      _lastChangedAt: 0,
+      _version: 0,
+      updatedAt: "",
+      id: "",
+    }
+  }
+
   return {
     dataLoading,
     taps,
     audioTaps,
     audioFiles,
     users,
+    refreshAudioFiles,
+    getUserByDittiId,
   };
 };
 

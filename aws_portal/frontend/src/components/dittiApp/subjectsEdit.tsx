@@ -24,6 +24,8 @@ import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummarySubtext from "../containers/forms/formSummarySubtext";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { APP_ENV } from "../../environment";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
 
 /**
  * dittiId: the subject's ditti id
@@ -59,6 +61,8 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] = useState<AboutSleepTemplate>({} as AboutSleepTemplate);
   const [loading, setLoading] = useState<boolean>(true);
 
+  const { getUserByDittiId } = useDittiDataContext();
+
   useEffect(() => {
     // get all about sleep templates
     const fetchTemplates = makeRequest("/db/get-about-sleep-templates").then(
@@ -81,21 +85,18 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
    * @returns - the form prefill data
    */
   const getPrefill = async (): Promise<UserDetails> => {
-    const id = dittiId;
+    if (dittiId) {
+      return await getUserByDittiId(dittiId).then(makePrefill);
+    } 
 
-    // if editing an existing entry, return prefill data, else return empty data
-    return id
-      ? makeRequest(
-          `/aws/scan?app=2&key=User&query=user_permission_id=="${id}"`
-        ).then(makePrefill)
-      : {
-          tapPermission: false,
-          information: "",
-          userPermissionId: "",
-          expTime: "",
-          teamEmail: "",
-          createdAt: ""
-        };
+    return {
+      tapPermission: false,
+      information: "",
+      userPermissionId: "",
+      expTime: "",
+      teamEmail: "",
+      createdAt: ""
+    }
   };
 
   /**
@@ -103,20 +104,20 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
    * @param res - the response body
    * @returns - the form prefill data
    */
-  const makePrefill = (user: User[]): UserDetails => {
+  const makePrefill = (user: User): UserDetails => {
     const selectedTemplate = aboutSleepTemplates.filter(
-      (ast: AboutSleepTemplate) => ast.text === user[0].information
+      (ast: AboutSleepTemplate) => ast.text === user.information
     )[0];
 
     if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
 
     return {
-      tapPermission: user[0].tap_permission,
-      information: user[0].information,
-      userPermissionId: user[0].user_permission_id,
-      expTime: user[0].exp_time,
-      teamEmail: user[0].team_email,
-      createdAt: user[0].createdAt
+      tapPermission: user.tap_permission,
+      information: user.information,
+      userPermissionId: user.user_permission_id,
+      expTime: user.exp_time,
+      teamEmail: user.team_email,
+      createdAt: user.createdAt
     };
   };
 

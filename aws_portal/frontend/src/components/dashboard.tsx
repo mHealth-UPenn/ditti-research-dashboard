@@ -167,6 +167,8 @@ const Dashboard: React.FC = () => {
     audioTaps,
     audioFiles,
     users,
+    refreshAudioFiles,
+    getUserByDittiId,
   } = useDittiData();
 
   useEffect(() => {
@@ -260,6 +262,8 @@ const Dashboard: React.FC = () => {
               audioTaps,
               audioFiles,
               users,
+              refreshAudioFiles,
+              getUserByDittiId,
             }}>
               {view}
           </DittiDataContext.Provider>

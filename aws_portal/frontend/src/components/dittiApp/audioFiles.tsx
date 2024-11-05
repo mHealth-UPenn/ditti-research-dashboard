@@ -3,11 +3,11 @@ import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { getAccess, makeRequest } from "../../utils";
 import { AudioFile, ViewProps } from "../../interfaces";
-import { SmallLoader } from "../loader";
 import AudioFileUpload from "./audioFileUpload";
 import Button from "../buttons/button";
 import AdminView from "../containers/admin/adminView";
 import AdminContent from "../containers/admin/adminContent";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
 
 
 const AudioFiles: React.FC<ViewProps> = ({
@@ -17,8 +17,9 @@ const AudioFiles: React.FC<ViewProps> = ({
 }) => {
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState<boolean>(false);
   const [canDeleteAudioFiles, setCanDeleteAudioFiles] = useState<boolean>(false);
-  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const { audioFiles, refreshAudioFiles } = useDittiDataContext();
 
   const columns: Column[] = [
     {
@@ -75,10 +76,6 @@ const AudioFiles: React.FC<ViewProps> = ({
         .catch(() => setCanDeleteAudioFiles(false))
       );
 
-    promises.push(
-      makeRequest("/aws/get-audio-files?app=2").then(setAudioFiles)
-    );
-
     // when all promises complete, hide the loader
     Promise.all(promises).then(() => setLoading(false));
   }, []);
@@ -95,14 +92,18 @@ const AudioFiles: React.FC<ViewProps> = ({
         );
         flashMessage(<span>Audio file deleted successfully</span>, "success");
         setLoading(true);
-        makeRequest("/aws/get-audio-files?app=2")
-          .then(audioFilesData => {
-            setAudioFiles(audioFilesData);
-            setLoading(false);
-          })
-          .catch(() => {
-            flashMessage(<span>And error occured while reloading the page. Please refresh and try again.</span>, "danger");
-          });
+
+        refreshAudioFiles()
+          .then(() => setLoading(false))
+          .catch(() =>
+            flashMessage(
+              <span>
+                And error occured while reloading the page. Please refresh and
+                try again.
+              </span>,
+              "danger"
+            )
+          );
       } catch (error) {
         console.error(error);
         const e = error as { msg: string };

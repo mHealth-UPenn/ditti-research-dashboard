@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { AudioFile, AudioTapDetails, TapDetails, UserDetails } from "../interfaces";
+import { AudioFile, AudioTapDetails, TapDetails, User, UserDetails } from "../interfaces";
 
 interface IDittiDataContext {
   dataLoading: boolean;
@@ -7,6 +7,8 @@ interface IDittiDataContext {
   audioTaps: AudioTapDetails[]
   audioFiles: AudioFile[]
   users: UserDetails[];
+  refreshAudioFiles: () => Promise<void>;
+  getUserByDittiId: (id: string) => Promise<User>;
 }
 
 const DittiDataContext = createContext<IDittiDataContext | undefined>(undefined);
