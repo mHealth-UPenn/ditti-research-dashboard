@@ -205,24 +205,18 @@ const StudySummary: React.FC<StudySummaryProps> = ({
 
       <Card width="sm">
         {/* list of study contacts */}
-        <Title>Study Contacts</Title>
+        <CardContentRow>
+          <Title>Study Contacts</Title>
+        </CardContentRow>
         {studyContacts.map((sc: StudyContact, i) => {
           return (
-            <div key={i}>
-              <span>
-                <b>
-                  {sc.fullName}: {sc.role}
-                </b>
-              </span>
-              <br />
-              &nbsp;&nbsp;&nbsp;&nbsp;
-              {sc.email}
-              <br />
-              &nbsp;&nbsp;&nbsp;&nbsp;
-              {sc.phoneNumber}
-              <br />
-              <br />
-            </div>
+            <CardContentRow key={i}>
+              <div>
+                <p><b>{sc.fullName}: {sc.role}</b></p>
+                <p className="ml-4">{sc.email}</p>
+                <p className="ml-4">{sc.phoneNumber}</p>
+              </div>
+            </CardContentRow>
           );
         })}
       </Card>
