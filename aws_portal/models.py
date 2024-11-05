@@ -259,102 +259,78 @@ def init_dev_database_data():
     db.session.add(ditti_app)
     db.session.add(ditti_coordinator_group)
 
-    access_groups = {
-        "Can View Accounts": [
-            ("View", "Admin Dashboard"),
-            ("View", "Accounts")
-        ],
+    admin_access_groups = {
         "Can Create Accounts": [
             ("View", "Admin Dashboard"),
-            ("View", "Accounts"),
             ("Create", "Accounts")
         ],
         "Can Edit Accounts": [
             ("View", "Admin Dashboard"),
-            ("View", "Accounts"),
             ("Edit", "Accounts")
         ],
         "Can Archive Accounts": [
             ("View", "Admin Dashboard"),
-            ("View", "Accounts"),
             ("Archive", "Accounts")
-        ],
-        "Can View Access Groups": [
-            ("View", "Admin Dashboard"),
-            ("View", "Access Groups")
         ],
         "Can Create Access Groups": [
             ("View", "Admin Dashboard"),
-            ("View", "Access Groups"),
             ("Create", "Access Groups")
         ],
         "Can Edit Access Groups": [
             ("View", "Admin Dashboard"),
-            ("View", "Access Groups"),
             ("Edit", "Access Groups")
         ],
         "Can Archive Access Groups": [
             ("View", "Admin Dashboard"),
-            ("View", "Access Groups"),
             ("Archive", "Access Groups")
-        ],
-        "Can View Roles": [
-            ("View", "Admin Dashboard"),
-            ("View", "Roles")
         ],
         "Can Create Roles": [
             ("View", "Admin Dashboard"),
-            ("View", "Roles"),
             ("Create", "Roles")
         ],
         "Can Edit Roles": [
             ("View", "Admin Dashboard"),
-            ("View", "Roles"),
             ("Edit", "Roles")
         ],
         "Can Archive Roles": [
             ("View", "Admin Dashboard"),
-            ("View", "Roles"),
             ("Archive", "Roles")
-        ],
-        "Can View Studies": [
-            ("View", "Admin Dashboard"),
-            ("View", "Studies")
         ],
         "Can Create Studies": [
             ("View", "Admin Dashboard"),
-            ("View", "Studies"),
             ("Create", "Studies")
         ],
         "Can Edit Studies": [
             ("View", "Admin Dashboard"),
-            ("View", "Studies"),
             ("Edit", "Studies")
         ],
         "Can Archive Studies": [
             ("View", "Admin Dashboard"),
-            ("View", "Studies"),
             ("Archive", "Studies")
-        ],
-        "Can View About Sleep Templates": [
-            ("View", "Admin Dashboard"),
-            ("View", "About Sleep Templates")
         ],
         "Can Create About Sleep Templates": [
             ("View", "Admin Dashboard"),
-            ("View", "About Sleep Templates"),
             ("Create", "About Sleep Templates")
         ],
         "Can Edit About Sleep Templates": [
             ("View", "Admin Dashboard"),
-            ("View", "About Sleep Templates"),
             ("Edit", "About Sleep Templates")
         ],
         "Can Archive About Sleep Templates": [
             ("View", "Admin Dashboard"),
-            ("View", "About Sleep Templates"),
             ("Archive", "About Sleep Templates")
         ],
+    }
+
+    for access_group_name, permissions in admin_access_groups.items():
+        access_group = AccessGroup(name=access_group_name, app=admin_app)
+        for action, resource in permissions:
+            query = Permission.definition == tuple_(action, resource)
+            permission = Permission.query.filter(query).first()
+            JoinAccessGroupPermission(access_group=access_group, permission=permission)
+        db.session.add(access_group)
+
+    ditti_access_groups = {
         "Can View Audio Files": [
             ("View", "Ditti App Dashboard"),
             ("View", "Audio Files")
@@ -364,11 +340,6 @@ def init_dev_database_data():
             ("View", "Audio Files"),
             ("Create", "Audio Files")
         ],
-        "Can Edit Audio Files": [
-            ("View", "Ditti App Dashboard"),
-            ("View", "Audio Files"),
-            ("Edit", "Audio Files")
-        ],
         "Can Delete Audio Files": [
             ("View", "Ditti App Dashboard"),
             ("View", "Audio Files"),
@@ -376,8 +347,8 @@ def init_dev_database_data():
         ],
     }
 
-    for access_group_name, permissions in access_groups.items():
-        access_group = AccessGroup(name=access_group_name, app=admin_app)
+    for access_group_name, permissions in ditti_access_groups.items():
+        access_group = AccessGroup(name=access_group_name, app=ditti_app)
         for action, resource in permissions:
             query = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(query).first()
@@ -439,7 +410,7 @@ def init_dev_database_data():
             JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
             db.session.add(account)
 
-    for access_group_name in access_groups.keys():
+    for access_group_name in list(admin_access_groups.keys()) + list(ditti_access_groups.keys()):
             account = Account(
                 public_id=str(uuid.uuid4()),
                 created_on=datetime.now(UTC),
@@ -455,6 +426,7 @@ def init_dev_database_data():
             JoinAccountAccessGroup(account=account, access_group=access_group)
             db.session.add(account)
 
+    db.session.add(AboutSleepTemplate(name="About Sleep Template", text="Text"))
     db.session.commit()
 
 

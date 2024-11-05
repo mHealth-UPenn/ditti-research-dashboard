@@ -221,18 +221,18 @@ const StudiesView: React.FC<StudiesViewProps> = ({
           </CardContentRow>
           <CardContentRow>
             <div className="flex">
-              <Button
-                onClick={handleClickUploadAudioFile}
-                className="mr-2">
-                  Upload +
-              </Button>
               {canCreateAudioFiles &&
                 <Button
-                  variant="secondary"
-                  onClick={handleClickViewAudioFiles}>
-                    View all
+                  onClick={handleClickUploadAudioFile}
+                  className="mr-2">
+                    Upload +
                 </Button>
               }
+              <Button
+                variant="secondary"
+                onClick={handleClickViewAudioFiles}>
+                  View all
+              </Button>
             </div>
           </CardContentRow>
           <CardContentRow className="border-b border-light">

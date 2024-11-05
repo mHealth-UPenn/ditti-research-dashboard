@@ -63,7 +63,7 @@ const AudioFiles: React.FC<ViewProps> = ({
       .catch(() => setCanCreate(false));
 
     // get whether the user can edit subjects
-    const getEdit = getAccess(2, "Delete", "AudioFiles")
+    const getEdit = getAccess(2, "Delete", "Audio Files")
       .then(() => setCanDelete(true))
       .catch(() => setCanDelete(false));
 
