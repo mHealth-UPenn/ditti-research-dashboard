@@ -91,6 +91,8 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
               {canEdit &&
                 <Button
                   variant="secondary"
+                  size="sm"
+                  className="h-full flex-grow"
                   onClick={() =>
                     handleClick(
                       ["Edit", name],
@@ -107,6 +109,8 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
               {canArchive &&
                 <Button
                   variant="danger"
+                  size="sm"
+                  className="h-full flex-grow"
                   onClick={() => deleteTemplate(id)}>
                     Archive
                 </Button>

@@ -205,7 +205,8 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
             {canEdit &&
               <Button
                 variant="secondary"
-                className="w-full h-full"
+                size="sm"
+                className="h-full flex-grow"
                 onClick={() =>
                   handleClick(
                     ["Edit", user.userPermissionId],

@@ -176,6 +176,8 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
               {canEdit &&
                 <Button
                   variant="secondary"
+                  size="sm"
+                  className="h-full flex-grow"
                   onClick={() =>
                     handleClick(
                       ["Edit", name],
@@ -192,6 +194,8 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
               {canArchive &&
                 <Button
                   variant="danger"
+                  size="sm"
+                  className="h-full flex-grow"
                   onClick={() => deleteAccount(id)}>
                     Archive
                 </Button>

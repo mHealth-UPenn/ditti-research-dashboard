@@ -86,6 +86,8 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
               {canEdit &&
                 <Button
                   variant="secondary"
+                  size="sm"
+                  className="h-full flex-grow"
                   onClick={() =>
                     handleClick(
                       ["Edit", acronym],
@@ -100,8 +102,12 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
                 </Button>
               }
               {canArchive &&
-                <Button variant="danger" onClick={() => deleteStudy(id)}>
-                  Archive
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="h-full flex-grow"
+                  onClick={() => deleteStudy(id)}>
+                    Archive
                 </Button>
               }
             </>
