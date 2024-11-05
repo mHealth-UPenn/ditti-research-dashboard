@@ -18,25 +18,27 @@ const TableControl: React.FC<TableControlProps> = ({
   onSearch,
 }) => {
   return (
-    <div className="flex justify-between mb-4">
+    <div className="flex items-center justify-between mb-4">
       {includeControl &&
         <div style={{ width: controlWidth + "%" }}>
           {control}
         </div>
       }
-      {includeSearch &&
-        <TextField
-          type="text"
-          placeholder="Search..."
-          prefill=""
-          label=""
-          onKeyup={onSearch}
-          feedback="">
-            <div className="flex items-center bg-dark h-full px-4">
-              <SearchIcon />
-            </div>
-        </TextField>
-      }
+      <div>
+        {includeSearch &&
+          <TextField
+            type="text"
+            placeholder="Search..."
+            prefill=""
+            label=""
+            onKeyup={onSearch}
+            feedback="">
+              <div className="pl-2 text-light">
+                <SearchIcon />
+              </div>
+          </TextField>
+        }
+      </div>
     </div>
   );
 };
