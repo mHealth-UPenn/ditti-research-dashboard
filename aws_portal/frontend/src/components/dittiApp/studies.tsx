@@ -42,7 +42,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [canViewAudioFiles, setCanViewAudioFiles] = useState(true);
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState(true);
-  const [canViewTaps, setCanViewTaps] = useState(true);
+  const [canViewTaps, setCanViewTaps] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -63,9 +63,14 @@ const StudiesView: React.FC<StudiesViewProps> = ({
         promises.push(getTapsAsync());
         promises.push(getAudioTapsAsync());
         promises.push(getAudioFilesAsync());
-        promises.push(getAccess(2, "View", "Audio Files").catch(() => setCanViewAudioFiles(false)));
-        promises.push(getAccess(2, "Create", "Audio Files").catch(() => setCanCreateAudioFiles(false)));
-        promises.push(getAccess(2, "View", "Taps").catch(() => setCanViewTaps(false)));
+        promises.push(
+          getAccess(2, "View", "Audio Files")
+            .catch(() => setCanViewAudioFiles(false))
+        );
+        promises.push(
+          getAccess(2, "Create", "Audio Files")
+            .catch(() => setCanCreateAudioFiles(false))
+        );
 
         // when all promises resolve, hide the loader
         Promise.all(promises).then(() => setLoading(false));
@@ -77,6 +82,20 @@ const StudiesView: React.FC<StudiesViewProps> = ({
 
     fetchData();
   }, [getTapsAsync, getAudioTapsAsync, getAudioFilesAsync]);
+
+  useEffect(() => {
+    const updateCanViewTaps = async () => {
+      const updatedCanViewTaps: Set<number> = new Set();
+      const promises = studies.map(s => {
+        return getAccess(2, "View", "Taps", s.id)
+          .then(() => updatedCanViewTaps.add(s.id))
+          .catch(() => updatedCanViewTaps.delete(s.id));
+      });
+      await Promise.all(promises)
+      setCanViewTaps(updatedCanViewTaps)
+    }
+    updateCanViewTaps();
+  }, [studies]);
 
   /**
    * Handle when a user clicks on a study
@@ -167,7 +186,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
               <CardContentRow key={s.id} className="border-b border-light">
                 <div className="flex items-center">
                   {/* active tapping icon */}
-                  {canViewTaps && <ActiveIcon active={!!last24hrs} className="mr-2" />}
+                  {canViewTaps.has(s.id) && <ActiveIcon active={!!last24hrs} className="mr-2" />}
                   {/* link to study summary */}
                   <Link onClick={() => handleClickStudy(s.id)}>
                     {s.acronym}: {s.name}
@@ -176,7 +195,7 @@ const StudiesView: React.FC<StudiesViewProps> = ({
 
                 {/* display the number of taps in the last 7 days and 24 hours */}
                 <div className="flex">
-                  {canViewTaps &&
+                  {canViewTaps.has(s.id) &&
                     <>
                       <div className="flex flex-col mr-2 font-bold">
                         <div>24 hours:</div>

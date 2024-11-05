@@ -38,6 +38,7 @@ interface SubjectsProps extends ViewProps {
 const Subjects: React.FC<SubjectsProps> = (props) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
+  const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
   const [users, setUsers] = useState<UserDetails[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -78,39 +79,57 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
     const { dittiId, id } = props.studyDetails;
 
     // get whether the user can enroll subjects
-    const create = getAccess(2, "Create", "Users", id)
-      .then(() => setCanCreate(true))
-      .catch(() => setCanCreate(false));
+    const promises: Promise<any>[] = [];
+    promises.push(
+      getAccess(2, "Create", "Users", id)
+        .then(() => setCanCreate(true))
+        .catch(() => setCanCreate(false))
+    );
 
     // get whether the user can edit subjects
-    const edit = getAccess(2, "Edit", "Users", id)
-      .then(() => setCanEdit(true))
-      .catch(() => setCanEdit(false));
+    promises.push(
+      getAccess(2, "Edit", "Users", id)
+        .then(() => setCanEdit(true))
+        .catch(() => setCanEdit(false))
+    );
+
+    // get whether the user can edit subjects
+    promises.push(
+      getAccess(2, "View", "Taps", id)
+        .then(() => setCanViewTaps(true))
+        .catch(() => setCanViewTaps(false))
+    );
 
     // get all of the study's users
     const url = `/aws/scan?app=2&key=User&query=user.userPermissionIdBEGINS"${dittiId}"`;
-    let usersRequest;
     if (APP_ENV === "production") {
-      usersRequest = makeRequest(url).then((users: User[]) => {
-        const userDetails = users.map(user => ({
-            tapPermission: user.tap_permission,
-            userPermissionId: user.user_permission_id,
-            expTime: user.exp_time,
-            createdAt: user.createdAt,
-            information: user.information,
-            teamEmail: user.team_email
-          }));
-        setUsers(userDetails)
-      });
+      promises.push(
+        makeRequest(url).then((users: User[]) => {
+          const userDetails = users.map(user => ({
+              tapPermission: user.tap_permission,
+              userPermissionId: user.user_permission_id,
+              expTime: user.exp_time,
+              createdAt: user.createdAt,
+              information: user.information,
+              teamEmail: user.team_email
+            }));
+          setUsers(userDetails)
+        })
+      )
     } else {
-      usersRequest = new Promise<UserDetails[]>(
-        resolve => resolve(dataFactory.users)
-      ).then(setUsers);
+      promises.push(
+        new Promise<UserDetails[]>(
+          resolve => resolve(
+            dataFactory.users.filter(
+              u => u.userPermissionId.startsWith(props.studyDetails.dittiId)
+            )
+          )
+        ).then(setUsers)
+      );
     }
 
     // when all promises complete, hide the loader
-    Promise.all([create, edit, usersRequest]).then(() => setLoading(false));
-
+    Promise.all(promises).then(() => setLoading(false));
   }, [props.studyDetails]);
 
   const { flashMessage, goBack, handleClick, getTaps, getAudioTaps } = props;
@@ -129,7 +148,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
         contents: (
           <>
             {/* if the user has tap permission, link to a subject visuals page */}
-            {(user.tapPermission && canEdit) ? (
+            {(user.tapPermission && canViewTaps) ? (
               <Link
                 onClick={() =>
                   handleClick(

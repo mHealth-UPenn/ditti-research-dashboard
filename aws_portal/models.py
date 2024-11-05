@@ -220,10 +220,6 @@ def init_dev_database_data():
             ("View", "Users"),
             ("Edit", "Users")
         ],
-        "Can Archive Users": [
-            ("View", "Users"),
-            ("Archive", "Users")
-        ],
         "Can View Taps": [
             ("View", "Taps")
         ],
@@ -424,6 +420,8 @@ def init_dev_database_data():
     db.session.add(account)
 
     for study_data in studies:
+        other_study = Study.query.filter(~(Study.name == study_data["name"])).first()
+        other_role = Role.query.filter(Role.name == "Can View Users").first()
         for role_name in roles.keys():
             account = Account(
                 public_id=str(uuid.uuid4()),
@@ -437,6 +435,7 @@ def init_dev_database_data():
             study = Study.query.filter(Study.name == study_data["name"]).first()
             role = Role.query.filter(Role.name == role_name).first()
             JoinAccountStudy(account=account, study=study, role=role)
+            JoinAccountStudy(account=account, study=other_study, role=other_role)
             JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
             db.session.add(account)
 
@@ -620,7 +619,7 @@ class Account(db.Model):
             .filter(
                 (~AccessGroup.is_archived) &
                 (JoinAccountAccessGroup.account_id == self.id)
-        )
+            )
 
         # if a study id was passed and the study is not archived
         if study_id and not Study.query.get(study_id).is_archived:
@@ -632,7 +631,7 @@ class Account(db.Model):
                 .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)\
                 .filter(
                     JoinAccountStudy.primary_key == tuple_(self.id, study_id)
-            )
+                )
 
             # return the union of all permission for the app and study
             permissions = q1.union(q2)

@@ -61,7 +61,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
         setLoading(false);
       });
     } else {
-      users = dataFactory.users;
+      users = dataFactory.users.filter(u => u.userPermissionId.startsWith(studyPrefix));
       setUsers(users);
       setLoading(false);
     }
