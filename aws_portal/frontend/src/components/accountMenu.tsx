@@ -121,8 +121,8 @@ const AccountMenu: React.FC<AccountMenuProps> = (props) => {
   return (
     <div
       ref={props.accountMenuRef}
-      className="absolute right-[-24rem] top-16 w-[24rem] max-w-[100vw] h-[calc(100vh-4rem)] overflow-scroll z-20 bg-white border-light border-l [@media(min-width:383px)]:bg-red [@media(min-width:383px)]:transition-all [@media(min-width:383px)]:duration-500">
-        <div className="p-8">
+      className="absolute right-0 top-16 w-0 max-w-[100vw] h-[calc(100vh-4rem)] overflow-scroll z-20 bg-white border-light border-l overflow-x-hidden [@media(min-width:383px)]:bg-red [@media(min-width:383px)]:transition-[width] [@media(min-width:383px)]:duration-500">
+        <div className="p-8 w-[24rem]">
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-light">
             <p>Account Details</p>
             {edit ? (

@@ -31,14 +31,14 @@ const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
 
   const handleOpenMenu = () => {
     if (accountMenuRef.current) {
-      accountMenuRef.current.style.right = "0";
+      accountMenuRef.current.style.width = "24rem";
       setShowMenu(true);
     }
   }
 
   const handleCloseMenu = () => {
     if (accountMenuRef.current) {
-      accountMenuRef.current.style.right = "-24rem";
+      accountMenuRef.current.style.width = "0";
       setShowMenu(false);
     }
   }
