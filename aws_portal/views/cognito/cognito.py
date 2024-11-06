@@ -30,7 +30,9 @@ def login():
     Redirect users to the Cognito login page after ensuring the database is ready.
     """
     # Attempt to touch the database until it's ready
-    while True:
+    max_retries = 5
+    retries = 0
+    while retries < max_retries:
         try:
             res = requests.get(url_for('base.touch', _external=True))
             res.raise_for_status()
@@ -50,6 +52,10 @@ def login():
         except requests.RequestException as e:
             logger.error(f"Error contacting /touch endpoint: {e}")
             time.sleep(2)
+        retries += 1
+    else:
+        logger.error("Max retries reached. Database is not ready.")
+        return make_response({"msg": "Database is not ready."}, 500)
 
     # Construct the Cognito authorization URL after the database is confirmed ready
     cognito_auth_url = build_cognito_url("/login", {
