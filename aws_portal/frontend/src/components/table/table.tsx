@@ -45,7 +45,7 @@ export interface Header {
  */
 export interface TableData {
   contents: React.ReactElement;
-  sortValue?: string;
+  sortValue?: string | number;
   searchValue?: string;
   paddingX?: number;
   paddingY?: number;
@@ -64,7 +64,7 @@ interface Cell {
   searchable: boolean;
   searchValue: string;
   sortable: boolean;
-  sortValue: string;
+  sortValue: string | number;
   width: number;
   paddingX?: number;
   paddingY?: number;
@@ -101,118 +101,59 @@ const Table: React.FC<TableProps> = ({
   paginationPer,
   sortDefault
 }) => {
-  const cells: Cell[][] = useMemo(() =>
-    data.map((row) =>
-      row.map((cell, i) => ({
-        contents: cell.contents,
-        searchable: columns[i].searchable,
-        searchValue: (
-          cell.searchValue ?
-          renderToString(cell.contents)
-            .replace(/<(.+?)>/g, "")
-            .toLowerCase() :
-          ""
-        ),
-        sortable: columns[i].sortable,
-        sortValue: cell.sortValue || "",
-        width: columns[i].width,
-        paddingX: cell.paddingX,
-        paddingY: cell.paddingY,
-      }))
-    ), [data]
-  );
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState<string | null>(null);
+  const [sort, setSort] = useState<{ name: string; ascending: 0 | 1 } | null>(null);
 
-  const [rowsFiltered, setRowsFiltered] = useState<Cell[][]>(cells);
-  const [rowsRendered, setRowsRendered] = useState<React.ReactElement>(
-    <React.Fragment />
-  );
-  const [headers, setHeaders] = useState<Header[]>(
-    columns.map((c) => ({
-      ascending: c.name === sortDefault ? 1 : -1,
-      name: c.name,
-      sortable: c.sortable,
-      width: c.width
-    }))
-  );
-  const [page, setPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(
-    Math.ceil(data.length / paginationPer)
-  );
-
-  useEffect(() => renderRows(1, cells), [cells]);
-
-  const onSearch = useCallback(
-    (text: string) => {
-      const filtered = cells.filter((row) =>
-        row.some(
-          (cell) =>
-            cell.searchable && cell.searchValue.includes(text.toLowerCase())
-        )
-      );
-
-      setRowsFiltered(filtered);
-      setPage(1);
-      setTotalPages(Math.ceil(filtered.length / paginationPer));
-      renderRows(1, filtered);
-    },
-    [cells, paginationPer]
-  );
-
-  const onSort = useCallback(
-    (name: string, ascending: boolean) => {
-      const updatedHeaders: Header[] = headers.map((header) => ({
-        ...header,
-        ascending: header.name === name ? (ascending ? 1 : 0) : -1
-      }));
-
-      const sortedRows = [...rowsFiltered].sort((a, b) => {
-        const index = updatedHeaders.findIndex((h) => h.name === name);
-        if (a[index].sortValue < b[index].sortValue) return ascending ? 1 : -1;
-        else if (a[index].sortValue > b[index].sortValue) return ascending ? -1 : 1;
-        else return 0;
-      });
-
-      setHeaders(updatedHeaders);
-      setRowsFiltered(sortedRows);
-      renderRows(page, sortedRows);
-    },
-    [headers, page, rowsFiltered]
-  );
-
-  const paginate = useCallback(
-    (newPage: number) => {
-      renderRows(newPage, rowsFiltered);
-      setPage(newPage);
-    },
-    [rowsFiltered]
-  );
-
-  const renderRows = (currentPage: number, dataToRender: Cell[][]) => {
-    const fragment = (
-      <>
-        {dataToRender.length ?
-          dataToRender
-            .slice((currentPage - 1) * paginationPer, currentPage * paginationPer)
-            .map((row, i) => (
-              <TableRow
-                key={i}
-                cells={row.map((cell) => ({
-                  contents: cell.contents,
-                  width: cell.width,
-                  paddingX: cell.paddingX,
-                  paddingY: cell.paddingY,
-                }))} />
-            )) :
-          <tr className="bg-light">
-            <td colSpan={columns.length} className="border-r border-t border-light text-[#666699] px-1 py-3">
-              <i>No data to display</i>
-            </td>
-          </tr>
-        }
-      </>
-    );
-    setRowsRendered(fragment);
+  const onSort = (name: string, ascending: 0 | 1) => {
+    setSort({ name, ascending });
   }
+
+  const headers: Header[] = columns.map((c) => ({
+    ascending: (sort ? (sort.name === c.name ? sort.ascending : -1) : (sortDefault === c.name ? 1 : -1)),
+    name: c.name,
+    sortable: c.sortable,
+    width: c.width
+  }));
+
+  let rows: Cell[][] = data.map((row) =>
+    row.map((cell, i) => ({
+      contents: cell.contents,
+      searchable: columns[i].searchable,
+      searchValue: cell.searchValue || "",
+      sortable: columns[i].sortable,
+      sortValue: cell.sortValue || "",
+      width: columns[i].width,
+      paddingX: cell.paddingX,
+      paddingY: cell.paddingY,
+    }))
+  )
+
+  if (search) {
+    rows = rows.filter(
+      row => row.some(cell => cell.searchValue.includes(search))
+    );
+  }
+
+  if (sort) {
+    let index = 0;
+    headers.forEach((header, i) => {
+      const isSortHeader = header.name === (sort ? sort.name : sortDefault);
+      if (isSortHeader) index = i;
+      return {
+        ...header,
+        ascending: isSortHeader ? sort.ascending : -1
+      }
+    });
+
+    rows = rows.sort((a, b) => {
+      if (a[index].sortValue < b[index].sortValue) return sort.ascending ? -1 : 1;
+      else if (a[index].sortValue > b[index].sortValue) return sort.ascending ? 1 : -1;
+      else return 0;
+    });
+  }
+
+  const totalPages = Math.ceil(rows.length / paginationPer);
 
   return (
     <>
@@ -222,14 +163,35 @@ const Table: React.FC<TableProps> = ({
           controlWidth={controlWidth}
           includeControl={includeControl}
           includeSearch={includeSearch}
-          onSearch={onSearch} />
+          onSearch={setSearch} />
       }
 
       <table className="border border-light w-full">
         <thead>
           <TableHeader headers={headers} onSort={onSort} />
         </thead>
-        <tbody>{rowsRendered}</tbody>
+        <tbody>
+          <>
+            {rows.length ?
+              rows.slice((page - 1) * paginationPer, page * paginationPer)
+                .map((row, i) => (
+                  <TableRow
+                    key={i}
+                    cells={row.map((cell) => ({
+                      contents: cell.contents,
+                      width: cell.width,
+                      paddingX: cell.paddingX,
+                      paddingY: cell.paddingY,
+                    }))} />
+                )) :
+              <tr className="bg-light">
+                <td colSpan={columns.length} className="border-r border-t border-light text-[#666699] px-1 py-3">
+                  <i>No data to display</i>
+                </td>
+              </tr>
+            }
+          </>
+        </tbody>
       </table>
 
       <div className="flex flex-col">
@@ -239,15 +201,15 @@ const Table: React.FC<TableProps> = ({
             size="sm"
             square={true}
             disabled={page === 1}
-            onClick={() => page > 1 && paginate(page - 1)}>
+            onClick={() => page > 1 && setPage(page - 1)}>
               <KeyboardArrowLeftIcon />
           </Button>
           <Button
             variant="secondary"
             size="sm"
             square={true}
-            disabled={!rowsFiltered.length || page === totalPages}
-            onClick={() => page < totalPages && paginate(page + 1)}>
+            disabled={!rows.length || page === totalPages}
+            onClick={() => page < totalPages && setPage(page + 1)}>
               <KeyboardArrowRightIcon />
           </Button>
           <span className="ml-2">
@@ -255,13 +217,13 @@ const Table: React.FC<TableProps> = ({
           </span>
         </div>
         <span>
-          {(!!rowsFiltered.length && totalPages) &&
+          {(!!rows.length && totalPages) &&
             `${(page - 1) * paginationPer + 1} - ${Math.min(
-              rowsFiltered.length,
+              rows.length,
               page * paginationPer
             )} of `
           }
-          {rowsFiltered.length} item{rowsFiltered.length === 1 ? "" : "s"}
+          {rows.length} item{rows.length === 1 ? "" : "s"}
         </span>
       </div>
     </>

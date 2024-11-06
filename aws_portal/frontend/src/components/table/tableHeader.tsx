@@ -9,7 +9,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
  */
 interface TableHeaderProps {
   headers: Header[];
-  onSort: (name: string, ascending: boolean) => void;
+  onSort: (name: string, ascending: 0 | 1) => void;
 }
 
 const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
@@ -20,9 +20,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
           key={i}
           className={`bg-light border-r border-light select-none ${h.sortable && "cursor-pointer"}`}
           style={{ width: h.width + "%" }}
-          onClick={() => {
-            return h.sortable && onSort(h.name, h.ascending === 0);
-          }}>
+          onClick={() => h.sortable && onSort(h.name, h.ascending ? 0 : 1)}>
             <div className="flex items-begin justify-between mx-1 relative lg:mx-2">
               <span className="text-base font-regular whitespace-nowrap">{h.name}</span>
 
@@ -31,8 +29,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
                 h.ascending === -1 ?
                 <KeyboardArrowUpIcon className="text-light" /> :
                 h.ascending === 0 ?
-                <KeyboardArrowUpIcon /> :
-                <KeyboardArrowDownIcon />
+                <KeyboardArrowDownIcon /> :
+                <KeyboardArrowUpIcon />
               )}
             </div>
         </th>

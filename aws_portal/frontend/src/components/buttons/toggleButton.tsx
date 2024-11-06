@@ -10,41 +10,35 @@ import Button, { ButtonProps } from "./button";
  */
 interface ToggleButtonProps extends ButtonProps {
   id: number;
-  getActive: (id: number) => boolean;
-  add: (id: number, callback: (active: boolean) => void) => void;
-  remove: (id: number, callback: (active: boolean) => void) => void;
+  active: boolean;
+  add: (id: number) => void;
+  remove: (id: number) => void;
 }
 
 const ToggleButton: React.FC<ToggleButtonProps> = ({
   id,
-  getActive,
+  active,
   add,
   remove,
   fullWidth,
   fullHeight,
 }) => {
-  // get whether the toggled item is currently active
-  const [active, setActive] = React.useState<boolean>(getActive(id));
-  
-  /**
-   * Update the button's active state
-   */
-  const update = (active: boolean) => {
-    setActive(active);
-  };
+  if (active) {
+    return (
+      <Button
+        variant="success"
+        onClick={() => remove(id)}
+        fullWidth={fullWidth}
+        fullHeight={fullHeight}>
+          <Check />
+      </Button>
+    );
+  }
 
-  return active ? (
-    <Button
-      variant="success"
-      onClick={() => remove(id, update)}
-      fullWidth={fullWidth}
-      fullHeight={fullHeight}>
-        <Check />
-    </Button>
-  ) : (
+  return (
     <Button
       variant="secondary"
-      onClick={() => add(id, update)}
+      onClick={() => add(id)}
       fullWidth={fullWidth}
       fullHeight={fullHeight}>
         Add +
