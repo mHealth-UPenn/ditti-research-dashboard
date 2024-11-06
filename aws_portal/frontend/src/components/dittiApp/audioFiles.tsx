@@ -173,7 +173,7 @@ const AudioFiles: React.FC<ViewProps> = ({
         },
         {
           contents: (
-            <>
+            <div className="flex w-full h-full">
               {/* if the user can edit, link to the edit subject page */}
               {canDeleteAudioFiles &&
                 <Button
@@ -184,7 +184,7 @@ const AudioFiles: React.FC<ViewProps> = ({
                     Delete
                 </Button>
               }
-            </>
+            </div>
           ),
           searchValue: "",
           sortValue: "",

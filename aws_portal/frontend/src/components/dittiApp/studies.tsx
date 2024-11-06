@@ -157,18 +157,22 @@ const StudiesView: React.FC<ViewProps> = ({
 
             return (
               <CardContentRow key={s.id} className="border-b border-light">
-                <div className="flex items-center">
+                <div className="flex items-start">
                   {/* active tapping icon */}
-                  {canViewTaps.has(s.id) && <ActiveIcon active={!!last24hrs} className="mr-2" />}
+                  {canViewTaps.has(s.id) ?
+                    <ActiveIcon active={!!last24hrs} className="mr-2" /> :
+                    // Optimistic hydration
+                    <ActiveIcon active={false} className="mr-2" />
+                  }
                   {/* link to study summary */}
                   <Link onClick={() => handleClickStudy(s.id)}>
-                    {s.acronym}: {s.name}
+                    {s.name}
                   </Link>
                 </div>
 
                 {/* display the number of taps in the last 7 days and 24 hours */}
-                <div className="flex">
-                  {canViewTaps.has(s.id) &&
+                <div className="flex whitespace-nowrap">
+                  {canViewTaps.has(s.id) ?
                     <>
                       <div className="flex flex-col mr-2 font-bold">
                         <div>24 hours:</div>
@@ -177,6 +181,17 @@ const StudiesView: React.FC<ViewProps> = ({
                       <div className="flex flex-col">
                         <div>{last24hrs} active subjects</div>
                         <div>{lastWeek} active subjects</div>
+                      </div>
+                    </> :
+                    // Optimistic hydration
+                    <>
+                      <div className="flex flex-col mr-2 font-bold">
+                        <div>24 hours:</div>
+                        <div>1 week:</div>
+                      </div>
+                      <div className="flex flex-col">
+                        <div>0 active subjects</div>
+                        <div>0 active subjects</div>
                       </div>
                     </>
                   }

@@ -82,7 +82,7 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
         },
         {
           contents: (
-            <>
+            <div className="flex w-full h-full">
               {canEdit &&
                 <Button
                   variant="secondary"
@@ -110,7 +110,7 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
                     Archive
                 </Button>
               }
-            </>
+            </div>
           ),
           searchValue: "",
           sortValue: "",

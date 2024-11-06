@@ -87,7 +87,7 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
         },
         {
           contents: (
-            <>
+            <div className="flex w-full h-full">
               {canEdit &&
                 <Button
                   variant="secondary"
@@ -115,7 +115,7 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
                     Archive
                 </Button>
               }
-            </>
+            </div>
           ),
           searchValue: "",
           sortValue: "",

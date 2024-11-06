@@ -44,7 +44,7 @@ export interface Header {
  * sortValue: the value to sort the cell on
  */
 export interface TableData {
-  contents: React.ReactElement;
+  contents: React.ReactElement | string;
   sortValue?: string | number;
   searchValue?: string;
   paddingX?: number;
@@ -60,7 +60,7 @@ export interface TableData {
  * width: the column's display width
  */
 interface Cell {
-  contents: React.ReactElement;
+  contents: React.ReactElement | string;
   searchable: boolean;
   searchValue: string;
   sortable: boolean;

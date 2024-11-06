@@ -13,6 +13,7 @@ import { APP_ENV } from "../environment";
 import dataFactory from "../dataFactory";
 import DittiDataContext, { useDittiDataContext } from "../contexts/dittiDataContext";
 import useDittiData from "../hooks/useDittiData";
+import { SmallLoader } from "./loader";
 
 type Action =
   | { type: "INIT"; name: string; view: React.ReactElement }
@@ -256,17 +257,20 @@ const Dashboard: React.FC = () => {
           }
 
           {/* current view */}
-          <DittiDataContext.Provider value={{
-              dataLoading,
-              taps,
-              audioTaps,
-              audioFiles,
-              users,
-              refreshAudioFiles,
-              getUserByDittiId,
-            }}>
-              {view}
-          </DittiDataContext.Provider>
+          { dataLoading ?
+            <SmallLoader /> :
+            <DittiDataContext.Provider value={{
+                dataLoading,
+                taps,
+                audioTaps,
+                audioFiles,
+                users,
+                refreshAudioFiles,
+                getUserByDittiId,
+              }}>
+                {view}
+            </DittiDataContext.Provider>
+          }
         </div>
       </div>
     </main>

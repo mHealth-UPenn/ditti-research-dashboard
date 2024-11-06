@@ -6,7 +6,7 @@ import TableCell from "./tableCell";
  */
 interface TableRowProps {
   cells: {
-    contents: React.ReactElement;
+    contents: React.ReactElement | string;
     width: number;
     paddingX?: number;
     paddingY?: number;

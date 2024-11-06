@@ -50,6 +50,9 @@ const useDittiData = () => {
         return res.map((tap) => {
           return { dittiId: tap.dittiId, time: new Date(tap.time) };
         });
+      }).catch(() => {
+        console.error("Unable to fetch taps data. Check account permissions.")
+        return [];
       });
     } else if (dataFactory) {
       taps = dataFactory.taps;
@@ -60,6 +63,7 @@ const useDittiData = () => {
       differenceInMilliseconds(new Date(a.time), new Date(b.time))
     );
 
+    console.debug("Taps:", taps);
     return taps;
   };
 
@@ -78,6 +82,9 @@ const useDittiData = () => {
               action: at.action,
             };
           });
+        }).catch(() => {
+          console.error("Unable to fetch audio taps data. Check account permissions.")
+          return [];
         });
     } else if (dataFactory) {
       audioTaps = dataFactory.audioTaps;
@@ -88,6 +95,7 @@ const useDittiData = () => {
       differenceInMilliseconds(new Date(a.time), new Date(b.time))
     );
 
+    console.debug("AudioTaps:", audioTaps);
     return audioTaps;
   };
 
@@ -95,7 +103,11 @@ const useDittiData = () => {
     let audioFiles: AudioFile[] = [];
 
     if (APP_ENV === "production") {
-      audioFiles = await makeRequest("/aws/get-audio-files?app=2");
+      audioFiles = await makeRequest("/aws/get-audio-files?app=2")
+        .catch(() => {
+          console.error("Unable to fetch audio files. Check account permissions.")
+          return [];
+        });
     } else if (dataFactory) {
       audioFiles = dataFactory.audioFiles;
     }
@@ -107,11 +119,16 @@ const useDittiData = () => {
     let users: UserDetails[] = [];
 
     if (APP_ENV === "production") {
-      users = await makeRequest("/aws/get-users?app=2");
+      users = await makeRequest("/aws/get-users?app=2")
+        .catch(() => {
+          console.error("Unable to fetch users. Check account permissions.")
+          return [];
+        });
     } else if (dataFactory) {
       users = dataFactory.users;
     }
 
+    console.debug("Users:", users);
     return users;
   };
 
@@ -120,12 +137,22 @@ const useDittiData = () => {
   }
 
   const getUserByDittiId = async (id: string): Promise<User> => {
-    if (APP_ENV === "production") {
-      return await makeRequest(`/aws/scan?app=2&key=User&query=user_permission_id=="${id}"`);
-    } else if (APP_ENV === "development" && dataFactory) {
-      const user =  dataFactory?.getUserByDittiId(id);
-      if (user) {
-        return user;
+    const userFilter = users.filter(u => u.userPermissionId === id);
+
+    if (userFilter.length) {
+      const user = userFilter[0];
+      return {
+        tap_permission: user.tapPermission,
+        information: user.information,
+        user_permission_id: user.userPermissionId,
+        exp_time: user.expTime,
+        team_email: user.teamEmail,
+        createdAt: user.createdAt,
+        __typename: "",
+        _lastChangedAt: 0,
+        _version: 0,
+        updatedAt: "",
+        id: "",
       }
     }
 

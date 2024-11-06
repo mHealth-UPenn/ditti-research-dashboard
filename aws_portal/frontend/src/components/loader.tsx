@@ -62,7 +62,7 @@ export const FullLoader: React.FC<FullLoaderProps> = ({ loading, msg }) => {
     justifyContent: "center",
     height: "100%",
     position: "absolute",
-    width: "100%"
+    width: "100%",
   };
 
   const fadingStyle: React.CSSProperties = {
@@ -76,7 +76,8 @@ export const FullLoader: React.FC<FullLoaderProps> = ({ loading, msg }) => {
     opacity: 0,
     position: "absolute",
     transition: "opacity 500ms ease-in",
-    width: "100%"
+    width: "100%",
+    pointerEvents: "none",
   };
 
   const style = loading ? loadingStyle : fadingStyle;

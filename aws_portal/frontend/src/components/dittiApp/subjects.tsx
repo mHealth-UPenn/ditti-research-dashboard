@@ -164,7 +164,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
       },
       {
         contents: (
-          <>
+          <div className="flex w-full h-full">
             {/* if the user can edit, link to the edit subject page */}
             {canEdit &&
               <Button
@@ -187,7 +187,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
                   Edit
               </Button>
             }
-          </>
+          </div>
         ),
         searchValue: "",
         sortValue: "",

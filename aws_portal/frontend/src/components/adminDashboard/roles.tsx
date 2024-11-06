@@ -103,7 +103,7 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
         },
         {
           contents: (
-            <>
+            <div className="flex w-full h-full">
               {canEdit &&
                 <Button
                   variant="secondary"
@@ -132,7 +132,7 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
                     Archive
                 </Button>
               }
-            </>
+            </div>
           ),
           searchValue: "",
           sortValue: "",

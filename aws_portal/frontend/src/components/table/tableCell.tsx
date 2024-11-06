@@ -29,8 +29,10 @@ const TableCell = ({
     <td
       className="border-t border-r border-light h-[inherit] p-0"
       style={{ width: `${width}%` }}>
-        <div className={`w-full h-full flex items-center truncate ${padding}`}>
-          {children}
+        <div className={`w-full h-full flex items-center ${padding}`}>
+          <div className={`max-w-[500px] truncate ${paddingY !== undefined ? "h-full" : ""} ${paddingX !== undefined ? "w-full" : ""}`}>
+            {children}
+          </div>
         </div>
     </td>
   );
