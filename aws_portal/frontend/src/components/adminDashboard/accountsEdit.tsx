@@ -639,7 +639,7 @@ const AccountsEdit = ({
               id="first-name"
               type="text"
               placeholder=""
-              prefill={firstName}
+              value={firstName}
               label="First Name"
               onKeyup={(firstName) => {
                 dispatch({ type: "EDIT_FIELD", firstName });
@@ -651,7 +651,7 @@ const AccountsEdit = ({
               id="last-name"
               type="text"
               placeholder=""
-              prefill={lastName}
+              value={lastName}
               label="Last Name"
               onKeyup={(lastName) => {
                 dispatch({ type: "EDIT_FIELD", lastName });
@@ -665,7 +665,7 @@ const AccountsEdit = ({
               id="email"
               type="text"
               placeholder=""
-              prefill={email}
+              value={email}
               label="Email"
               onKeyup={(email) => dispatch({ type: "EDIT_FIELD", email })}
               feedback="" />
@@ -675,7 +675,7 @@ const AccountsEdit = ({
               id="phoneNumber"
               type="text"
               placeholder=""
-              prefill={phoneNumber}
+              value={phoneNumber}
               label="Phone Number"
               onKeyup={(phoneNumber) => {
                 dispatch({ type: "EDIT_FIELD", phoneNumber });
@@ -691,7 +691,8 @@ const AccountsEdit = ({
               label={accountId ? "Change password" : "Password"}
               onKeyup={(password) => {
                 dispatch({ type: "EDIT_FIELD", password });
-              }} />
+              }}
+              value={password} />
           </FormField>
         </FormRow>
         <FormRow>

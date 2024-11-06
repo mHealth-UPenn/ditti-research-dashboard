@@ -228,7 +228,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
               id="dittiId"
               type="text"
               placeholder=""
-              prefill={state.userPermissionId.replace(studyPrefix, "")}
+              value={state.userPermissionId.replace(studyPrefix, "")}
               label="Ditti ID"
               onKeyup={(text: string) => {
                 setState(prev => ({ ...prev, userPermissionId: studyPrefix + text }));
@@ -245,7 +245,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
           <FormField>
             <TextField
               label="Team Email"
-              prefill={studyEmail}
+              value={studyEmail}
               disabled={true} />
           </FormField>
         </FormRow>
@@ -257,7 +257,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
               id="expiresOn"
               type="datetime-local"
               placeholder=""
-              prefill={state.expTime.replace("Z", "")}
+              value={state.expTime.replace("Z", "")}
               label="Expires On"
               onKeyup={(text: string) =>
                 setState(prev => ({ ...prev, expTime: text + ":00.000Z" }))

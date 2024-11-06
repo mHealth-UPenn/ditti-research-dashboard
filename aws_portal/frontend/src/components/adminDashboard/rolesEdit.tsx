@@ -304,7 +304,7 @@ const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) =
               id="name"
               type="text"
               placeholder=""
-              prefill={name}
+              value={name}
               label="Name"
               onKeyup={(text: string) => setName(text)}
               feedback="" />

@@ -13,11 +13,10 @@ import "./textField.css";
  * disabled (optional): whether to disable the field
  */
 interface TextFieldProps {
+  value: string;
   id?: string;
   type?: string;
   placeholder?: string;
-  prefill?: string;
-  value?: string;
   label?: string;
   onKeyup?: (text: string) => void;
   feedback?: string;
@@ -31,7 +30,6 @@ const TextField: React.FC<TextFieldProps> = ({
   id,
   type,
   placeholder,
-  prefill,
   label,
   onKeyup,
   feedback,
@@ -39,13 +37,9 @@ const TextField: React.FC<TextFieldProps> = ({
   value,
   children,
 }) => {
-  const [text, setText] = useState(prefill || "");
-
   const handleKeyUp = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const inputValue = e.target.value;
-    setText(inputValue);
     if (onKeyup) {
-      onKeyup(inputValue);
+      onKeyup(e.target.value);
     }
   };
 
@@ -69,18 +63,17 @@ const TextField: React.FC<TextFieldProps> = ({
             {type === "textarea" ? (
               <textarea
                 className={`w-full h-full resize-none focus:outline-none ${disabled && "italic text-[#666699]"}`}
-                defaultValue={prefill ? prefill : undefined}
                 onChange={handleKeyUp}
-                disabled={disabled} />
+                disabled={disabled}
+                value={value} />
             ) : (
               <input
                 className={`w-full focus:outline-none ${disabled && "italic text-[#666699]"}`}
                 type={type || "text"}
                 placeholder={placeholder || ""}
-                defaultValue={prefill || undefined}
-                value={value ?? text} // Use value if provided, otherwise fall back to internal state
                 onChange={handleKeyUp}
-                disabled={disabled} />
+                disabled={disabled}
+                value={value} />
             )}
           </div>
         </div>

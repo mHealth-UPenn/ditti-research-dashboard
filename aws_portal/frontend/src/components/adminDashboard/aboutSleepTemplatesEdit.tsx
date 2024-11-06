@@ -157,7 +157,7 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
           <FormField>
             <TextField
               id="name"
-              prefill={name}
+              value={name}
               label="Name"
               onKeyup={setName} />
           </FormField>
@@ -167,7 +167,7 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
             <TextField
               id="text"
               type="textarea"
-              prefill={text}
+              value={text}
               label="Text"
               onKeyup={setText} />
           </FormField>

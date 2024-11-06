@@ -41,7 +41,7 @@ class AppsEdit extends React.Component<AppsEditProps, AppsEditState> {
                     id="name"
                     type="text"
                     placeholder=""
-                    prefill={name}
+                    value={name}
                     label="Name"
                     onKeyup={(text: string) => this.setState({ name: text })}
                     feedback=""

@@ -357,7 +357,8 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               placeholder=""
               label="Category"
               onKeyup={setCategory}
-              feedback={categoryFeedback} />
+              feedback={categoryFeedback}
+              value={category} />
           </FormField>
         </FormRow>
 
@@ -380,8 +381,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               value={dittiId}
               onKeyup={setDittiId}
               disabled={availability === "All Users"}
-              feedback={availabilityFeedback}
-            />
+              feedback={availabilityFeedback} />
           </FormField>
         </FormRow>
 

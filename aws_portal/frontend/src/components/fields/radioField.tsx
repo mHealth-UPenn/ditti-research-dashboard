@@ -9,7 +9,6 @@ import "./radioField.css";
  */
 interface RadioFieldProps {
   id?: string;
-  prefill?: string;
   label?: string;
   checked?: string;
   values: string[];
@@ -18,7 +17,6 @@ interface RadioFieldProps {
 
 const RadioField: React.FC<RadioFieldProps> = ({
     id,
-    prefill,
     label,
     checked,
     values,
@@ -38,7 +36,6 @@ const RadioField: React.FC<RadioFieldProps> = ({
           id={`${id}-${v}`}
           className="cursor-pointer"
           type="radio"
-          defaultChecked={v === prefill}
           checked={v === checked}
           name={id}
           value={v}

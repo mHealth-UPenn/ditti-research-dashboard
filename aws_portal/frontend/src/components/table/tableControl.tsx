@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState } from "react";
 import TextField from "../fields/textField";
 import SearchIcon from '@mui/icons-material/Search';
 
@@ -17,6 +17,13 @@ const TableControl: React.FC<TableControlProps> = ({
   includeSearch,
   onSearch,
 }) => {
+  const [value, setValue] = useState("");
+
+  const handleKeyUp = (v: string) => {
+    setValue(v);
+    onSearch(v);
+  }
+
   return (
     <div className="flex items-center justify-between mb-4">
       {includeControl &&
@@ -29,10 +36,10 @@ const TableControl: React.FC<TableControlProps> = ({
           <TextField
             type="text"
             placeholder="Search..."
-            prefill=""
             label=""
-            onKeyup={onSearch}
-            feedback="">
+            onKeyup={handleKeyUp}
+            feedback=""
+            value={value}>
               <div className="pl-2 text-light">
                 <SearchIcon />
               </div>

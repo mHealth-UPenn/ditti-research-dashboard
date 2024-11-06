@@ -136,7 +136,7 @@ const AccountMenu = ({
               <TextField
                 id="firstName"
                 label="First Name"
-                prefill={firstName}
+                value={firstName}
                 onKeyup={setFirstName} />
             ) : (
               <span>
@@ -151,7 +151,7 @@ const AccountMenu = ({
               <TextField
                 id="lastName"
                 label="Last Name"
-                prefill={lastName}
+                value={lastName}
                 onKeyup={setLastName} />
             ) : (
               <span>
@@ -166,7 +166,7 @@ const AccountMenu = ({
               <TextField
                 id="email"
                 label="Email"
-                prefill={email}
+                value={email}
                 onKeyup={setEmail} />
             ) : (
               <span>
@@ -181,7 +181,7 @@ const AccountMenu = ({
               <TextField
                 id="phoneNumber"
                 label="Phone Number"
-                prefill={phoneNumber}
+                value={phoneNumber}
                 onKeyup={setPhoneNumber} />
             ) : (
               <span>
@@ -211,14 +211,16 @@ const AccountMenu = ({
                   id="setPassword"
                   label="Enter a new password"
                   type="password"
-                  onKeyup={setPasswordValue} />
+                  onKeyup={setPasswordValue}
+                  value={passwordValue} />
               </div>
               <div className="mb-6">
                 <TextField
                   id="confirmPassword"
                   label="Confirm your password"
                   type="password"
-                  onKeyup={setConfirmPasswordValue} />
+                  onKeyup={setConfirmPasswordValue}
+                  value={confirmPasswordValue} />
               </div>
             </>
           }

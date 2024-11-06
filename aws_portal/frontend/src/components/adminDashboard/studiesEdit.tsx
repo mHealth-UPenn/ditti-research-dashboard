@@ -152,7 +152,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               id="name"
               type="text"
               placeholder=""
-              prefill={name}
+              value={name}
               label="Name"
               onKeyup={(text: string) =>
                 setState(prevState => ({ ...prevState, name: text }))
@@ -164,7 +164,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               id="email"
               type="text"
               placeholder=""
-              prefill={email}
+              value={email}
               label="Team Email"
               onKeyup={(text: string) =>
                 setState(prevState => ({ ...prevState, email: text }))
@@ -178,7 +178,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               id="acronym"
               type="text"
               placeholder=""
-              prefill={acronym}
+              value={acronym}
               label="Acronym"
               onKeyup={(text: string) =>
                 setState(prevState => ({ ...prevState, acronym: text }))
@@ -190,7 +190,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               id="dittiId"
               type="text"
               placeholder=""
-              prefill={dittiId}
+              value={dittiId}
               label="Ditti ID"
               onKeyup={(text: string) =>
                 setState(prevState => ({ ...prevState, dittiId: text }))
