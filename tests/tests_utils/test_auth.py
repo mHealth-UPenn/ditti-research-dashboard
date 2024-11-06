@@ -29,14 +29,14 @@ def get_user_study_id(account):
     return foo.id
 
 
-def test_get_auth_required_no_token(client):
-    res = login_test_account("foo", client)
+def test_get_auth_required_no_token(authenticated_client):
+    res = login_test_account("foo", authenticated_client)
     account = get_account_from_response(res)
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     resource = "baz"
     opts = "?app=%s&study=%s&resource=%s" % (app, study, resource)
-    res = client.get("/test/get-auth-required-action%s" % opts)
+    res = authenticated_client.get("/test/get-auth-required-action%s" % opts)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Missing Authorization Header"
@@ -52,105 +52,111 @@ def test_get_auth_required_timeout(timeout_client):
     opts = "?app=%s&study=%s&resource=%s" % (app, study, resource)
     sleep(2)
 
-    res = timeout_client.get("/test/get-auth-required-action%s" % opts, headers=headers)
+    res = timeout_client.get(
+        "/test/get-auth-required-action%s" % opts, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Token has expired"
 
 
-def test_get_auth_required_after_logout(client):
-    res = login_test_account("foo", client)
+def test_get_auth_required_after_logout(authenticated_client):
+    res = login_test_account("foo", authenticated_client)
     headers = get_auth_headers(res)
-    client.post("/iam/logout", headers=headers)
+    authenticated_client.post("/iam/logout", headers=headers)
     account = get_account_from_response(res)
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     resource = "baz"
     opts = "?app=%s&study=%s&resource=%s" % (app, study, resource)
-    res = client.get("/test/get-auth-required-action%s" % opts)
+    res = authenticated_client.get("/test/get-auth-required-action%s" % opts)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Missing Authorization Header"
 
 
-def test_get_auth_required_after_logout_with_fake(client):
-    res = login_test_account("foo", client)
+def test_get_auth_required_after_logout_with_fake(authenticated_client):
+    res = login_test_account("foo", authenticated_client)
     headers = get_auth_headers(res)
-    client.post("/iam/logout", headers=headers)
+    authenticated_client.post("/iam/logout", headers=headers)
 
     account = get_account_from_response(res)
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     resource = "baz"
     opts = "?app=%s&study=%s&resource=%s" % (app, study, resource)
-    res = client.get("/test/get-auth-required-action%s" % opts, headers=headers)
+    res = authenticated_client.get(
+        "/test/get-auth-required-action%s" % opts, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Token has been revoked"
 
 
-def test_post_auth_required_no_csrf(client):
-    res = login_test_account("foo", client)
+def test_post_auth_required_no_csrf(authenticated_client):
+    res = login_test_account("foo", authenticated_client)
     headers = {"Authorization": "Bearer " + res.json["jwt"]}
     account = get_account_from_response(res)
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     data = {"app": app, "study": study, "resource": "baz"}
-    res = client.post("/test/post-auth-required-action", json=data, headers=headers)
+    res = authenticated_client.post(
+        "/test/post-auth-required-action", json=data, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Missing CSRF token"
 
 
-def test_get_auth_required_action(client):
-    res = login_test_account("foo", client)
+def test_get_auth_required_action(authenticated_client):
+    res = login_test_account("foo", authenticated_client)
     headers = {"Authorization": "Bearer " + res.json["jwt"]}
     account = get_account_from_response(res)
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     resource = "baz"
     opts = "?app=%s&study=%s&resource=%s" % (app, study, resource)
-    res = client.get("/test/get-auth-required-action%s" % opts, headers=headers)
+    res = authenticated_client.get(
+        "/test/get-auth-required-action%s" % opts, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "OK"
 
 
-def test_get_auth_required_resource_unauthorized(client):
-    res = login_test_account("foo", client)
+def test_get_auth_required_resource_unauthorized(authenticated_client):
+    res = login_test_account("foo", authenticated_client)
     headers = {"Authorization": "Bearer " + res.json["jwt"]}
     account = get_account_from_response(res)
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     opts = "?app=%s&study=%s" % (app, study)
-    res = client.get("/test/get-auth-required-resource%s" % opts, headers=headers)
+    res = authenticated_client.get(
+        "/test/get-auth-required-resource%s" % opts, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Unauthorized Request"
 
 
-def test_get_auth_required_resource(client):
-    res = login_test_account("bar", client)
+def test_get_auth_required_resource(authenticated_client):
+    res = login_test_account("bar", authenticated_client)
     headers = {"Authorization": "Bearer " + res.json["jwt"]}
     account = get_account_from_response(res)
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     opts = "?app=%s&study=%s" % (app, study)
-    res = client.get("/test/get-auth-required-resource%s" % opts, headers=headers)
+    res = authenticated_client.get(
+        "/test/get-auth-required-resource%s" % opts, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "OK"
 
 
-def test_post_auth_required_action_unauthorized(client):
-    res = login_test_account("bar", client)
+def test_post_auth_required_action_unauthorized(authenticated_client):
+    res = login_test_account("bar", authenticated_client)
     headers = get_auth_headers(res)
     account = get_account_from_response(res)
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     data = {"app": app, "study": study, "resource": "baz"}
     data = json.dumps(data)
-    res = client.post(
+    res = authenticated_client.post(
         "/test/post-auth-required-action",
         content_type="application/json",
         data=data,
@@ -162,15 +168,15 @@ def test_post_auth_required_action_unauthorized(client):
     assert data["msg"] == "Unauthorized Request"
 
 
-def test_post_auth_required_action(client):
-    res = login_test_account("foo", client)
+def test_post_auth_required_action(authenticated_client):
+    res = login_test_account("foo", authenticated_client)
     account = get_account_from_response(res)
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     data = {"app": app, "study": study, "resource": "baz"}
     data = json.dumps(data)
     headers = get_auth_headers(res)
-    res = client.post(
+    res = authenticated_client.post(
         "/test/post-auth-required-action",
         content_type="application/json",
         data=data,
@@ -182,15 +188,15 @@ def test_post_auth_required_action(client):
     assert data["msg"] == "OK"
 
 
-def test_post_auth_required_resource_unauthorized(client):
-    res = login_test_account("foo", client)
+def test_post_auth_required_resource_unauthorized(authenticated_client):
+    res = login_test_account("foo", authenticated_client)
     account = get_account_from_response(res)
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     data = {"app": app, "study": study}
     data = json.dumps(data)
     headers = get_auth_headers(res)
-    res = client.post(
+    res = authenticated_client.post(
         "/test/post-auth-required-resource",
         content_type="application/json",
         data=data,
