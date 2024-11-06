@@ -27,7 +27,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
   goBack,
   handleClick,
 }) => {
-  const { users, taps } = useDittiDataContext();
+  const { users, taps, audioTaps } = useDittiDataContext();
   const filteredUsers = users.filter(u => u.userPermissionId.startsWith(studyPrefix));
 
   /**
@@ -37,7 +37,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
    */
   const getSubjectSummary = (user: UserDetails): React.ReactElement => {
     let summaryTaps: React.ReactElement[];
-    let hasTapsToday = false;
+    let totalTaps = 0;
 
     // if the user has access to tapping
     if (user.tapPermission) {
@@ -59,8 +59,12 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
               isWithinInterval(new Date(t.time), { start, end })
           ).length;
 
-        // if i is 0 and there are taps
-        hasTapsToday = !i && filteredTaps > 0;
+        const filteredAudioTaps = audioTaps
+          .filter(
+            (t) =>
+              t.dittiId === user.userPermissionId &&
+              isWithinInterval(new Date(t.time), { start, end })
+          ).length;
 
         // get the current weekday (Mon, Tue, Wed, etc.)
         const weekday = start.toLocaleString("en-US", { weekday: "narrow" });
@@ -68,7 +72,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
         return (
           <div key={i} className="hidden md:flex flex-grow-0 flex-col w-[60px] items-center border-r border-light">
             <span>{weekday}</span>
-            <span>{filteredTaps}</span>
+            <span>{filteredTaps + filteredAudioTaps}</span>
           </div>
         );
       });
@@ -77,12 +81,19 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
 
       // get all taps starting from 7 days ago
       const start = sub(today, { days: 7 });
-      const totalTaps = taps
+      const tapsCount = taps
         .filter(
           (t) =>
             t.dittiId === user.userPermissionId &&
             isWithinInterval(new Date(t.time), { start, end: new Date() })
         ).length;
+      const audioTapsCount = audioTaps
+        .filter(
+          (t) =>
+            t.dittiId === user.userPermissionId &&
+            isWithinInterval(new Date(t.time), { start, end: new Date() })
+        ).length;
+      totalTaps = tapsCount + audioTapsCount;
 
       summaryTaps.push(
         <div key="total" className="flex flex-col items-center w-[80px] font-bold">
@@ -120,7 +131,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
           <div className="flex flex-col">
             <div className="flex items-center">
               {/* active tapping icon */}
-              {canViewTaps && <ActiveIcon active={hasTapsToday} className="mr-2" />}
+              {canViewTaps && <ActiveIcon active={!!totalTaps} className="mr-2" />}
               {/* link to the user's summary page */}
               {canViewTaps ?
                 <Link onClick={handleClickSubject}>

@@ -160,7 +160,7 @@ const StudiesView: React.FC<ViewProps> = ({
                 <div className="flex items-start">
                   {/* active tapping icon */}
                   {canViewTaps.has(s.id) ?
-                    <ActiveIcon active={!!last24hrs} className="mr-2" /> :
+                    <ActiveIcon active={!!lastWeek} className="mr-2" /> :
                     // Optimistic hydration
                     <ActiveIcon active={false} className="mr-2" />
                   }
