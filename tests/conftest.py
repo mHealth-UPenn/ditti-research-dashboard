@@ -9,7 +9,7 @@ import pytest
 from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
-    init_admin_account, init_admin_app, init_admin_group, init_db
+    init_admin_account, init_admin_app, init_admin_group, init_db, init_api
 )
 from aws_portal.utils.auth import auth_required
 from tests.testing_utils import (
@@ -92,6 +92,7 @@ def app(with_mocked_tables):
         init_admin_app()
         init_admin_group()
         init_admin_account()
+        init_api()
         create_tables()
         create_joins()
         db.session.commit()
