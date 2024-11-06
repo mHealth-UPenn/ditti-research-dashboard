@@ -30,12 +30,24 @@ const AsyncButton: React.FC<AsyncButtonProps> = ({
    * promise is complete
    */
   const handleClick = (): void => {
-    setLoading(true);
-    onClick().then(() => setLoading(false));
+    setLoading(!loading);
+    // onClick().then(() => setLoading(false));
   };
 
+  const sizeMap = {
+    sm: "lds-ring-sm",
+    md: "lds-ring-md",
+    lg: "lds-ring-lg",
+  }
+
+  const sizeContainerMap = {
+    sm: "left-[calc(50%-10px)]",
+    md: "left-[calc(50%-12px)]",
+    lg: "left-[calc(50%-14px)]",
+  }
+
   const loader = (
-    <div className="lds-ring lds-ring-small">
+    <div className={`lds-ring ${sizeMap[size]}`}>
       <div></div>
       <div></div>
       <div></div>
@@ -53,7 +65,12 @@ const AsyncButton: React.FC<AsyncButtonProps> = ({
       fullHeight={fullHeight}
       className={className}
       onClick={handleClick}>
-        {children}
+        <div className="relative h-full w-full">
+          <div className={`absolute top-0 ${sizeContainerMap[size]}`}>
+            {loading && loader}
+          </div>
+          <span className={loading ? "opacity-0" : ""}>{children}</span>
+        </div>
     </Button>
   );
 };

@@ -358,9 +358,19 @@ div:hover > .link-svg .svg-stroke {
   height: 80px;
 }
 
-.lds-ring-small {
+.lds-ring-sm {
   width: 20px;
   height: 20px;
+}
+
+.lds-ring-md {
+  width: 24px;
+  height: 24px;
+}
+
+.lds-ring-lg {
+  width: 28px;
+  height: 28px;
 }
 
 .lds-ring div {
@@ -376,9 +386,25 @@ div:hover > .link-svg .svg-stroke {
   border-color: #b3b3cc transparent transparent transparent;
 }
 
-.lds-ring-small div {
+.lds-ring-sm div {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  border: 3px solid white;
+  border-color: white transparent transparent transparent;
+}
+
+.lds-ring-md div {
   width: 24px;
   height: 24px;
+  margin: 0;
+  border: 4px solid white;
+  border-color: white transparent transparent transparent;
+}
+
+.lds-ring-lg div {
+  width: 28px;
+  height: 28px;
   margin: 0;
   border: 4px solid white;
   border-color: white transparent transparent transparent;
