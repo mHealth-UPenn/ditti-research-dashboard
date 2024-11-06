@@ -25,9 +25,6 @@ const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
 
   const { email, firstName, lastName } = accountDetails;
   const name = firstName + " " + lastName;
-  const initials = (
-    (firstName ? firstName[0] : "") + (lastName ? lastName[0] : "")
-  ).toUpperCase();
 
   const handleOpenMenu = () => {
     if (accountMenuRef.current) {
@@ -74,13 +71,15 @@ const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
       </div>
 
       {/* the account menu */}
-      <AccountMenu
-        accountDetails={accountDetails}
-        handleClick={handleClick}
-        goBack={goBack}
-        flashMessage={flashMessage}
-        accountMenuRef={accountMenuRef}
-        hideMenu={() => setShowMenu(false)} />
+      {!loading &&
+        <AccountMenu
+          prefill={accountDetails}
+          handleClick={handleClick}
+          goBack={goBack}
+          flashMessage={flashMessage}
+          accountMenuRef={accountMenuRef}
+          hideMenu={() => setShowMenu(false)} />
+      }
     </>
   );
 };

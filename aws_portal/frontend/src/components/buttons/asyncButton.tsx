@@ -30,8 +30,8 @@ const AsyncButton: React.FC<AsyncButtonProps> = ({
    * promise is complete
    */
   const handleClick = (): void => {
-    setLoading(!loading);
-    // onClick().then(() => setLoading(false));
+    setLoading(true);
+    onClick().then(() => setLoading(false));
   };
 
   const sizeMap = {
