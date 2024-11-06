@@ -72,13 +72,20 @@ const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
 
       {/* the account menu */}
       {!loading &&
-        <AccountMenu
-          prefill={accountDetails}
-          handleClick={handleClick}
-          goBack={goBack}
-          flashMessage={flashMessage}
-          accountMenuRef={accountMenuRef}
-          hideMenu={() => setShowMenu(false)} />
+        <>
+          {showMenu &&
+            <div
+              className="absolute w-[calc(100vw-4.5rem)] h-screen z-20 bg-transparent"
+              onClick={handleCloseMenu} />
+          }
+          <AccountMenu
+            prefill={accountDetails}
+            handleClick={handleClick}
+            goBack={goBack}
+            flashMessage={flashMessage}
+            accountMenuRef={accountMenuRef}
+            hideMenu={() => setShowMenu(false)} />
+        </>
       }
     </>
   );
