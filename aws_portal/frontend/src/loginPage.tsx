@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react";
-import "./loginPage.css";
+import { useNavigate } from "react-router-dom";
+import { Buffer } from "buffer";
+import { makeRequest } from "./utils";
+import { ResponseBody } from "./interfaces";
 import TextField from "./components/fields/textField";
 import { ReactComponent as Person } from "./icons/person.svg";
 import { ReactComponent as Key } from "./icons/key.svg";
-import Dashboard from "./components/dashboard";
-import { Buffer } from "buffer";
-import { makeRequest } from "./utils";
 import { FullLoader } from "./components/loader";
-import { ResponseBody } from "./interfaces";
 import AsyncButton from "./components/buttons/asyncButton";
+import "./loginPage.css";
+
 
 /**
  * flashMessages: messages to show above the login form fields
@@ -34,12 +35,14 @@ const LoginPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [fading, setFading] = useState<boolean>(false);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
-    // check the app's status
+    // Check the app's status
     touch().then((msg: string) => {
-      // if the app is not ready
+      // If the app is not ready
       if (msg !== "OK") {
-        // show the database loading screen and try again every two seconds
+        // Show the database loading screen and try again every two seconds
         setLoadingDb(true);
         const id: ReturnType<typeof setInterval> = setInterval(() => touch(id), 2000);
       }
@@ -53,11 +56,11 @@ const LoginPage: React.FC = () => {
    */
   const touch = async (id?: ReturnType<typeof setInterval>): Promise<string> => {
     return await makeRequest("/touch").then((res: ResponseBody) => {
-      // if the app is ready
+      // If the app is ready
       if (res.msg === "OK") {
-        // clear the interval if touch is being called by setInterval
+        // Clear the interval if touch is being called by setInterval
         if (id) clearInterval(id);
-        // check the user's login status
+        // Check the user's login status
         checkLogIn();
       }
       return res.msg;
@@ -70,39 +73,35 @@ const LoginPage: React.FC = () => {
   const checkLogIn = () => {
     makeRequest("/iam/check-login")
       .then((res: ResponseBody) => {
-        const set = { loading: false, loadingDb: false, fading: true };
-
-        // if the user is logged in
         if (res.msg === "Login successful") {
           setFirstLogin(false);
           setLoggedIn(true);
+          navigate("/"); // Redirect to main app
         } 
-        // if this is the user's first login
         else if (res.msg === "First login") {
           setFirstLogin(true);
           setLoggedIn(true);
         } 
-        // if the user is not logged in
         else {
           setLoggedIn(false);
-          if (localStorage.getItem("jwt")) localStorage.removeItem("jwt");
+          localStorage.removeItem("jwt");
         }
 
-        // let the loading screen fade out for 0.5 seconds
+        // Let the loading screen fade out for 0.5 seconds
         setLoading(false);
         setFading(true);
         setTimeout(() => setFading(false), 500);
       })
       .catch((res: ResponseBody) => {
-        if (localStorage.getItem("jwt")) localStorage.removeItem("jwt");
+        localStorage.removeItem("jwt");
 
-        // if the user was logged in and their token expired
+        // If the user's token has expired
         if (res.msg === "Token has expired") {
           const msg = <span>Your session has expired. Please log in again</span>;
           flashMessage(msg, "danger");
         }
 
-        // let the loading screen fade out for 0.5 seconds
+        // Let the loading screen fade out for 0.5 seconds
         setLoading(false);
         setFading(true);
         setLoggedIn(false);
@@ -130,8 +129,8 @@ const LoginPage: React.FC = () => {
    * @returns - A response from the set password endpoint
    */
   const setPasswordFunc = (): Promise<ResponseBody> => {
-    // if the user's password doesn't match the confirm password field
-    if (!(setPasswordField === confirmPassword)) throw "Passwords do not match";
+    // If the user's password doesn't match the confirm password field
+    if (setPasswordField !== confirmPassword) throw new Error("Passwords do not match");
     const body = JSON.stringify({ password: setPasswordField });
     const opts = { method: "POST", body: body };
     return makeRequest("/iam/set-password", opts);
@@ -146,11 +145,12 @@ const LoginPage: React.FC = () => {
    * @param res - The response from the login endpoint
    */
   const handleLogin = (res: ResponseBody): void => {
-    // if this is the user's first login
-    if (res.msg === "First login") setFirstLogin(true);
-    else {
+    if (res.msg === "First login") {
+      setFirstLogin(true);
+    } else {
       setFirstLogin(false);
       setLoggedIn(true);
+      navigate("/"); // Redirect to main app
     }
   };
 
@@ -159,7 +159,7 @@ const LoginPage: React.FC = () => {
    * @param res - The response from the login endpoint
    */
   const handleFailure = (res: ResponseBody) => {
-    // flash the message from the server or "Internal server error"
+    // Flash the message from the server or "Internal server error"
     const msg = <span>{res.msg ? res.msg : "Internal server error"}</span>;
     flashMessage(msg, "danger");
   };
@@ -174,7 +174,7 @@ const LoginPage: React.FC = () => {
     const id = flashMessages.length ? flashMessages[flashMessages.length - 1].id + 1 : 0;
 
     const element = (
-      <div key={id} className={"shadow flash-message flash-message-" + type}>
+      <div key={id} className={`shadow flash-message flash-message-${type}`}>
         <div className="flash-message-content">
           <span>{msg}</span>
         </div>
@@ -196,9 +196,9 @@ const LoginPage: React.FC = () => {
     setFlashMessages(flashMessages.filter((fm) => fm.id !== id));
   };
 
-  // the login form fields to be shown on a user's first login
+  // The login form fields to be shown on a user's first login
   const setPasswordFields = (
-    <React.Fragment>
+    <>
       <div className="login-field">
         <TextField
           id="set-password"
@@ -226,12 +226,12 @@ const LoginPage: React.FC = () => {
           Set password
         </button>
       </div>
-    </React.Fragment>
+    </>
   );
 
-  // regular login form fields
+  // Regular login form fields
   const loginFields = (
-    <React.Fragment>
+    <>
       <div className="login-field">
         <TextField
           id="login-email"
@@ -256,14 +256,14 @@ const LoginPage: React.FC = () => {
       <div className="login-buttons">
         <AsyncButton text="Sign In" type="primary" onClick={tryLogIn} />
       </div>
-    </React.Fragment>
+    </>
   );
 
-  // the login page
+  // The login page layout
   const page = (
     <div className="flex h-screen lg:mx-[6rem] xl:mx-[10rem] 2xl:mx-[20rem] bg-light">
       <div className="login-image-container">
-        <img className="hidden lg:flex login-image" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
+        <img className="hidden lg:flex login-image" src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo" />
       </div>
       <div className="login-menu bg-white">
         <div className="login-menu-content">
@@ -279,18 +279,18 @@ const LoginPage: React.FC = () => {
   );
 
   return (
-    <React.Fragment>
+    <>
       {/* if the loading screen is showing or completing a 0.5 second fade-out */}
-      {loading || fading ? (
+      {(loading || fading) && (
         <FullLoader
           loading={loading}
           msg={loadingDb ? "Starting the database... This may take up to 6 minutes" : ""}
         />
-      ) : null}
+      )}
 
-      {/* if the user is logged in, show the dashboard, else show the login page */}
-      <div>{loggedIn && !firstLogin ? <Dashboard /> : page}</div>
-    </React.Fragment>
+      {/* Show login page if not logged in or it's the first login */}
+      {!(loggedIn && !firstLogin) && page}
+    </>
   );
 };
 
