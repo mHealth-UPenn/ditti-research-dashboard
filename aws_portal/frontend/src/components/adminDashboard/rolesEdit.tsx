@@ -311,7 +311,7 @@ const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) =
           </FormField>
         </FormRow>
         <FormRow>
-          <span className="mb-1 lg:mx-4">Add Permissions to Role</span>
+          <span className="mb-1 px-4">Add Permissions to Role</span>
         </FormRow>
         {permissionFields}
         <FormRow>

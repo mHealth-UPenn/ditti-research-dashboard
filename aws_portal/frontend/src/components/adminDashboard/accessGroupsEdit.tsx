@@ -362,7 +362,7 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
           </FormField>
         </FormRow>
         <FormRow>
-          <span className="mb-1 lg:mx-4">Add Permissions to Access Group</span>
+          <span className="mb-1 px-4">Add Permissions to Access Group</span>
         </FormRow>
         {permissionFields}
         <FormRow>
