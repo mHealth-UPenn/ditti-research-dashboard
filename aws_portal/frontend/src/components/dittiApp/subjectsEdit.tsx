@@ -257,7 +257,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
               }}
               feedback="">
                 {/* superimpose the study prefix on the form field */}
-                <div className="flex items-center text-[#666699] h-full px-2 bg-light border-r border-light">
+                <div className="flex items-center text-link h-full px-2 bg-light border-r border-light">
                   <i>{studyPrefix}</i>
                 </div>
             </TextField>

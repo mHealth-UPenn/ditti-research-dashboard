@@ -4,6 +4,7 @@ import { AxisBottom, AxisLeft } from "@visx/axis";
 import { scaleLinear } from '@visx/scale';
 import { useVisualizationContext } from "../../contexts/visualizationContext";
 import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
+import colors from "../../colors";
 
 type GroupData = {
   start: number;
@@ -123,7 +124,7 @@ const Timeline: React.FC<TimelineProps> = ({
               color: "black",
               borderTopWidth: 1,
               borderTopStyle: "solid",
-              borderTopColor: "#33334D",
+              borderTopColor: colors.secondary,
               borderRadius: 0,
             }
           }}>

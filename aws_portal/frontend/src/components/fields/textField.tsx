@@ -62,13 +62,13 @@ const TextField: React.FC<TextFieldProps> = ({
             {/* textares require a unique e.target class */}
             {type === "textarea" ? (
               <textarea
-                className={`w-full h-full resize-none focus:outline-none ${disabled && "italic text-[#666699]"}`}
+                className={`w-full h-full resize-none focus:outline-none ${disabled && "italic text-link"}`}
                 onChange={handleKeyUp}
                 disabled={disabled}
                 value={value} />
             ) : (
               <input
-                className={`w-full focus:outline-none ${disabled && "italic text-[#666699]"}`}
+                className={`w-full focus:outline-none ${disabled && "italic text-link"}`}
                 type={type || "text"}
                 placeholder={placeholder || ""}
                 onChange={handleKeyUp}

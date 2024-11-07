@@ -185,7 +185,7 @@ const Table: React.FC<TableProps> = ({
                     }))} />
                 )) :
               <tr className="bg-light">
-                <td colSpan={columns.length} className="border-r border-t border-light text-[#666699] px-1 py-3">
+                <td colSpan={columns.length} className="border-r border-t border-light text-link px-1 py-3">
                   <i>No data to display</i>
                 </td>
               </tr>

@@ -34,7 +34,7 @@ const Button = ({
   const variantMap = {
     primary: "bg-primary text-white [&:hover:not(:disabled)]:bg-primary-hover",
     secondary: "bg-secondary text-white [&:hover:not(:disabled)]:bg-secondary-hover",
-    tertiary: "bg-white text-secondary border-secondary border-2 [&:hover:not(:disabled)]:bg-extra-light",
+    tertiary: "bg-white text-link border-link border-2 [&:hover:not(:disabled)]:bg-extra-light",
     danger: "bg-danger text-white [&:hover:not(:disabled)]:bg-danger-hover",
     success: "bg-success text-white [&:hover:not(:disabled)]:bg-success-hover",
   }

@@ -121,12 +121,13 @@ const AccountMenu = ({
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-light">
             <span>Account Details</span>
             {edit ? (
-              <AsyncButton size="sm" onClick={post}>Save</AsyncButton>
+              <AsyncButton size="sm" onClick={post} rounded={true}>Save</AsyncButton>
             ) : (
               <Button
                 variant="tertiary"
                 size="sm"
-                onClick={() => setEdit(true)}>
+                onClick={() => setEdit(true)}
+                rounded={true}>
                   Edit
               </Button>
             )}
@@ -195,11 +196,12 @@ const AccountMenu = ({
           <div className="flex items-center justify-between mb-6">
             <span>Change password</span>
             {editPassword ?
-              <AsyncButton size="sm" onClick={trySetPassword}>Save</AsyncButton> :
+              <AsyncButton size="sm" onClick={trySetPassword} rounded={true}>Save</AsyncButton> :
               <Button
                 variant="tertiary"
                 size="sm"
-                onClick={() => setEditPassword(true)} >
+                onClick={() => setEditPassword(true)}
+                rounded={true}>
                   Change
               </Button>
             }
@@ -227,7 +229,7 @@ const AccountMenu = ({
           <div className="border-light border-b mb-6" />
           <div className="flex items-center justify-between">
             <span>Logout</span>
-            <Button variant="danger" size="sm" onClick={logout}>
+            <Button variant="danger" size="sm" onClick={logout} rounded={true}>
               Logout
             </Button>
           </div>

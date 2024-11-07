@@ -9,6 +9,7 @@ import { GridRows, GridColumns } from '@visx/grid';
 import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 
 import { useVisualizationContext } from '../../contexts/visualizationContext';
+import colors from '../../colors';
 
 interface TimestampHistogramProps {
   timestamps: number[];
@@ -88,14 +89,14 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
           left={margin.left}
           width={width - margin.left - margin.right}
           height={height - margin.bottom}
-          stroke="#e0e0e0"
+          stroke={colors.extraLight}
           numTicks={numYTicks} />
         <GridColumns
           scale={xScale}
           top={margin.top}
           width={width - margin.left - margin.right}
           height={height - margin.bottom - margin.top}
-          stroke="#e0e0e0" />
+          stroke={colors.extraLight} />
 
         <Brush
           xScale={xScale}
@@ -119,7 +120,7 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
                 y={yScale(bin.length)}
                 height={yScale(0) - yScale(bin.length)}
                 width={width}
-                fill="#33334D"
+                fill={colors.secondary}
                 onMouseEnter={(e) => handleMouseEnter(e.target as SVGRectElement, bin.length, width)}
                 onMouseLeave={handleMouseLeave} />
               );
@@ -151,7 +152,7 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
               color: "black",
               borderTopWidth: 1,
               borderTopStyle: "solid",
-              borderTopColor: "#33334D",
+              borderTopColor: colors.secondary,
               borderRadius: 0,
             }
           }}>

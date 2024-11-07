@@ -41,7 +41,7 @@ const Navbar: React.FC<NavbarProps> = ({ breadcrumbs, handleBack, handleClick, h
             return (
               <React.Fragment key={i}>
                 <div
-                  className="flex items-center text-[#666699] cursor-pointer"
+                  className="flex items-center text-link hover:text-link-hover cursor-pointer"
                   onClick={() => handleClick([b.name], b.view)}
                 >
                   <span>{b.name}</span>
