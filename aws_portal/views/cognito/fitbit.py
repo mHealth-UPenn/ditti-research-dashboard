@@ -153,8 +153,6 @@ def fitbit_callback():
             study_subject_id=study_subject_id,
             api_id=fitbit_api.id,
             api_user_uuid=token.get("user_id"),
-            access_key_uuid=str(uuid.uuid4()),
-            refresh_key_uuid=str(uuid.uuid4()),
             scope=token.get("scope", "")
         )
         db.session.add(join_entry)
@@ -165,32 +163,31 @@ def fitbit_callback():
 
     db.session.commit()
 
-    # Compute the expiration time for the access token
+    # Prepare the token data
     expires_in = token.get("expires_in")
     if expires_in:
         expires_at = int(time.time()) + int(expires_in)
     else:
         expires_at = int(time.time()) + 28800  # Default to 8 hours
 
-    access_token_data = {
-        "access_token": token["access_token"],
+    access_token = token["access_token"]
+    refresh_token = token["refresh_token"]
+
+    token_data = {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "expires_at": expires_at
     }
-    refresh_token_data = {
-        "refresh_token": token["refresh_token"]
-    }
 
-    # Store tokens securely using AWS Secrets Manager
+    # Store tokens securely using the updated SecretsManager
     try:
-        sm.store_secret(
-            join_entry.access_key_uuid, access_token_data
-        )
-
-        sm.store_secret(
-            join_entry.refresh_key_uuid, refresh_token_data
+        sm.add_or_update_api_token(
+            api_name="Fitbit",
+            study_subject_id=study_subject_id,
+            tokens=token_data
         )
     except Exception as e:
-        msg = f"Error storing access or refresh tokens: {str(e)}"
+        msg = f"Error storing tokens: {str(e)}"
         logger.error(msg)
         return make_response({"msg": msg}, 500)
 

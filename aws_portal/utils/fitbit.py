@@ -57,7 +57,7 @@ def get_fitbit_oauth_session(join_entry):
     Creates an OAuth2Session for Fitbit API, using stored tokens.
 
     Args:
-        join_entry (Any): JoinStudySubjectApi instance.
+        join_entry (JoinStudySubjectApi): JoinStudySubjectApi instance.
 
     Returns:
         OAuth2SessionWithRefresh: An OAuth2Session instance ready to make requests to Fitbit API.
@@ -68,24 +68,23 @@ def get_fitbit_oauth_session(join_entry):
     fitbit_client_id = current_app.config["FITBIT_CLIENT_ID"]
     fitbit_client_secret = current_app.config["FITBIT_CLIENT_SECRET"]
 
-    # Load access token data
     try:
-        access_token_data = sm.get_secret(join_entry.access_key_uuid)
-        access_token = access_token_data.get("access_token")
-        expires_at = access_token_data.get("expires_at")
+        # Retrieve tokens using the updated SecretsManager
+        tokens = sm.get_api_tokens(
+            api_name="Fitbit",
+            study_subject_id=join_entry.study_subject_id
+        )
+    except KeyError as e:
+        logger.error(f"Tokens not found: {e}")
+        raise
     except Exception as e:
-        logger.error(f"Error retrieving access token: {e}")
+        logger.error(f"Error retrieving tokens: {e}")
         raise
 
-    # Load refresh token data
-    try:
-        refresh_token_data = sm.get_secret(join_entry.refresh_key_uuid)
-        refresh_token = refresh_token_data.get("refresh_token")
-    except Exception as e:
-        logger.error(f"Error retrieving refresh token: {e}")
-        raise
+    access_token = tokens.get("access_token")
+    refresh_token = tokens.get("refresh_token")
+    expires_at = tokens.get("expires_at")
 
-    # Create the token dictionary
     token = {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -99,7 +98,7 @@ def get_fitbit_oauth_session(join_entry):
 
     def token_updater(new_token: Dict[str, Any]) -> None:
         """
-        Updates the access_token and refresh_token in Secrets Manager.
+        Updates the tokens in Secrets Manager.
 
         Args:
             new_token (Dict[str, Any]): The new token data obtained from Fitbit.
@@ -108,38 +107,29 @@ def get_fitbit_oauth_session(join_entry):
             Exception: If there is an error updating the tokens in Secrets Manager.
         """
         try:
-            # Compute new expires_at
             expires_in = new_token.get("expires_in")
             if expires_in:
                 new_expires_at = int(time.time()) + int(expires_in)
             else:
                 new_expires_at = int(time.time()) + 28800  # Default to 8 hours
 
-            # Prepare new access token data
-            new_access_token_data = {
+            updated_token_data = {
                 "access_token": new_token["access_token"],
+                "refresh_token": new_token.get("refresh_token", refresh_token),
                 "expires_at": new_expires_at
             }
 
-            # Prepare new refresh token data (if provided)
-            new_refresh_token = new_token.get("refresh_token")
-            if new_refresh_token:
-                new_refresh_token_data = {
-                    "refresh_token": new_refresh_token
-                }
-                # Store refresh token
-                sm.store_secret(
-                    join_entry.refresh_key_uuid, new_refresh_token_data)
-
-            # Store access token
-            sm.store_secret(
-                join_entry.access_key_uuid, new_access_token_data)
-
+            # Store the updated tokens
+            sm.add_or_update_api_token(
+                api_name="Fitbit",
+                study_subject_id=join_entry.study_subject_id,
+                tokens=updated_token_data
+            )
         except Exception as e:
             logger.error(f"Error updating tokens in Secrets Manager: {e}")
             raise
 
-    def refresh_token() -> None:
+    def refresh_token_func() -> None:
         """
         Refreshes the access token using the refresh token.
 
@@ -193,7 +183,7 @@ def get_fitbit_oauth_session(join_entry):
             response = requests.request(method, url, **kwargs)
             if response.status_code == 401:
                 # Token expired, refresh it
-                refresh_token()
+                refresh_token_func()
                 # Retry the request with the new token
                 headers["Authorization"] = f"Bearer {
                     self.client.token['access_token']}"
