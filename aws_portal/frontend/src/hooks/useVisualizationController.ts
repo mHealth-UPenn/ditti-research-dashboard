@@ -26,12 +26,12 @@ const useVisualizationController = () => {
   }, [zoomDomain, width]);
 
   const xTicks = useMemo(() => {
-    if (width >= 1000) {
-      return 50;
+    if (width >= 1200) {
+      return 80;
     } else if (width >= 800) {
-      return 40;
+      return 60;
     }
-    return 20;
+    return 40;
   }, [width])
 
   const onZoomChange = (domain: [number, number]) => {

@@ -42,10 +42,8 @@ const VisualizationController = ({
         zoomIn,
         zoomOut,
       }}>
-        <div className="w-full flex justify-center">
-          <div ref={parentRef} className="w-[400px] sm:w-[500px] md:w-[600px] lg:w-[800px] xl:w-[1100px] 2xl:w-[1400px]">
-            {children}
-          </div>
+        <div ref={parentRef} className="w-full">
+          {children}
         </div>
     </VisualizationContext.Provider>
   );
