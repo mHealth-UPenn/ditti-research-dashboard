@@ -145,14 +145,16 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
             <Button
               variant="secondary"
               className="mb-2 md:mb-0 md:mr-2"
-              onClick={downloadExcel}>
+              onClick={downloadExcel}
+              rounded={true}>
                 Download Excel
             </Button>
             {/* if the user can edit, show the edit button */}
             <Button
               variant="secondary"
               onClick={handleClickEditDetails}
-              disabled={!(canEdit || APP_ENV === "demo")}>
+              disabled={!(canEdit || APP_ENV === "demo")}
+              rounded={true}>
               Edit Details
             </Button>
           </div>

@@ -119,7 +119,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
     });
   };
 
-  const { dittiId, email, name } = studyDetails;
+  const { dittiId, email, name, acronym } = studyDetails;
 
   const handleClickEnrollSubject = () =>
     handleClick(
@@ -164,7 +164,8 @@ const StudySummary: React.FC<StudySummaryProps> = ({
       <Card width="md">
         <CardContentRow>
           <div className="flex flex-col">
-            <Title>{name}</Title>
+            <Title>{acronym}</Title>
+            <Subtitle>{name}</Subtitle>
             <Subtitle>Study email: {email}</Subtitle>
             <Subtitle>Ditti acronym: {dittiId}</Subtitle>
           </div>

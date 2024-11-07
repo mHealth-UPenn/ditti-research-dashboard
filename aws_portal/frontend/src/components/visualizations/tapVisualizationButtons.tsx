@@ -25,22 +25,24 @@ const TapVisualizationButtons: React.FC = () => {
       <Button
         square={true}
         size="sm"
-        variant="secondary"
+        variant="tertiary"
+        className="rounded-l-[0.25rem]"
         onClick={panLeft}>
         <KeyboardArrowLeftIcon />
       </Button>
       <Button
         square={true}
         size="sm"
-        variant="secondary"
-        className="mr-2"
+        variant="tertiary"
+        className="mr-2 border-l-0 rounded-r-[0.25rem]"
         onClick={panRight}>
         <KeyboardArrowRightIcon />
       </Button>
       <Button
         square={true}
         size="sm"
-        variant="secondary"
+        variant="tertiary"
+        className="rounded-l-[0.25rem]"
         onClick={zoomIn}
         disabled={minRangeReached}>
         <AddIcon />
@@ -48,8 +50,8 @@ const TapVisualizationButtons: React.FC = () => {
       <Button
         square={true}
         size="sm"
-        variant="secondary"
-        className="mr-2"
+        variant="tertiary"
+        className="mr-2 border-l-0 rounded-r-[0.25rem]"
         onClick={zoomOut}
         disabled={maxRangeReached}>
         <RemoveIcon />
@@ -58,7 +60,8 @@ const TapVisualizationButtons: React.FC = () => {
         square={true}
         size="sm"
         variant="primary"
-        onClick={resetZoom}>
+        onClick={resetZoom}
+        rounded={true}>
         <ReplayIcon />
       </Button>
     </div>

@@ -166,9 +166,12 @@ const StudiesView: React.FC<ViewProps> = ({
                     <ActiveIcon active={false} className="mr-2" />
                   }
                   {/* link to study summary */}
-                  <Link onClick={() => handleClickStudy(s.id)}>
-                    {s.name}
-                  </Link>
+                  <div className="flex flex-col">
+                    <Link onClick={() => handleClickStudy(s.id)}>
+                      {s.acronym}
+                    </Link>
+                    <span className="text-sm">{s.name}</span>
+                  </div>
                 </div>
 
                 {/* display the number of taps in the last 7 days and 24 hours */}
