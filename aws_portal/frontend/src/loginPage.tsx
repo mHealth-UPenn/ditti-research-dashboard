@@ -266,7 +266,12 @@ const LoginPage: React.FC = () => {
   );
 
   if (loggedIn && !firstLogin) {
-    return <Dashboard />;
+    return (
+      <>
+        <FullLoader loading={loading} msg="" />
+        <Dashboard />
+      </>
+    );
   }
 
   return (

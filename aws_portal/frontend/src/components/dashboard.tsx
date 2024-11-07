@@ -13,7 +13,7 @@ import { APP_ENV } from "../environment";
 import dataFactory from "../dataFactory";
 import DittiDataContext, { useDittiDataContext } from "../contexts/dittiDataContext";
 import useDittiData from "../hooks/useDittiData";
-import { SmallLoader } from "./loader";
+import { FullLoader, SmallLoader } from "./loader";
 
 type Action =
   | { type: "INIT"; name: string; view: React.ReactElement }
@@ -222,7 +222,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <main className="flex flex-col h-screen">
-
       {/* header with the account menu  */}
       <Header
         handleClick={setView}
@@ -257,20 +256,17 @@ const Dashboard: React.FC = () => {
           }
 
           {/* current view */}
-          { dataLoading ?
-            <SmallLoader /> :
-            <DittiDataContext.Provider value={{
-                dataLoading,
-                taps,
-                audioTaps,
-                audioFiles,
-                users,
-                refreshAudioFiles,
-                getUserByDittiId,
-              }}>
-                {view}
-            </DittiDataContext.Provider>
-          }
+          <DittiDataContext.Provider value={{
+              dataLoading,
+              taps,
+              audioTaps,
+              audioFiles,
+              users,
+              refreshAudioFiles,
+              getUserByDittiId,
+            }}>
+              {view}
+          </DittiDataContext.Provider>
         </div>
       </div>
     </main>
