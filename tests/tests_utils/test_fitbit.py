@@ -6,7 +6,7 @@ from aws_portal.utils.fitbit import (
     create_code_challenge,
     get_fitbit_oauth_session,
 )
-from aws_portal.extensions import tm
+from aws_portal.extensions import tm  # Updated from sm to tm
 import base64
 import hashlib
 import time
@@ -55,85 +55,72 @@ def test_create_code_challenge_correctness():
 
 def test_get_fitbit_oauth_session_success(app):
     with app.app_context():
-        # Mock join_entry with access_key_uuid and refresh_key_uuid
+        # Mock join_entry with study_subject_id
         join_entry = MagicMock()
-        join_entry.access_key_uuid = "access_key_uuid"
-        join_entry.refresh_key_uuid = "refresh_key_uuid"
+        join_entry.study_subject_id = 123
 
         # Mock tokens
-        fake_access_token_data = {
+        fake_tokens = {
             "access_token": "fake_access_token",
+            "refresh_token": "fake_refresh_token",
             "expires_at": int(time.time()) + 3600,
         }
-        fake_refresh_token_data = {
-            "refresh_token": "fake_refresh_token",
-        }
 
-        # Mock sm.get_secret to return fake tokens
-        with patch.object(tm, 'get_secret') as mock_get_secret:
-            def get_secret_side_effect(key_uuid):
-                if key_uuid == "access_key_uuid":
-                    return fake_access_token_data
-                elif key_uuid == "refresh_key_uuid":
-                    return fake_refresh_token_data
-            mock_get_secret.side_effect = get_secret_side_effect
+        # Mock tm.get_api_tokens to return fake tokens
+        with patch.object(tm, 'get_api_tokens') as mock_get_api_tokens:
+            mock_get_api_tokens.return_value = fake_tokens
 
-            # Mock WebApplicationClient
-            with patch("aws_portal.utils.fitbit.WebApplicationClient") as mock_client_class:
-                mock_client = MagicMock()
-                mock_client_class.return_value = mock_client
+            # Mock tm.add_or_update_api_token if needed
+            with patch.object(tm, 'add_or_update_api_token') as mock_add_update_api_token:
+                # Mock WebApplicationClient
+                with patch("aws_portal.utils.fitbit.WebApplicationClient") as mock_client_class:
+                    mock_client = MagicMock()
+                    mock_client_class.return_value = mock_client
 
-                session = get_fitbit_oauth_session(join_entry)
-                assert session is not None
-                assert hasattr(session, 'request')
-                assert hasattr(session, 'get')
-                assert hasattr(session, 'post')
+                    session = get_fitbit_oauth_session(join_entry)
+                    assert session is not None
+                    assert hasattr(session, 'request')
+                    assert hasattr(session, 'get')
+                    assert hasattr(session, 'post')
 
 
 def test_get_fitbit_oauth_session_token_refresh(app):
     with app.app_context():
         # Mock join_entry
         join_entry = MagicMock()
-        join_entry.access_key_uuid = "access_key_uuid"
-        join_entry.refresh_key_uuid = "refresh_key_uuid"
+        join_entry.study_subject_id = 456
 
         # Mock expired access token and valid refresh token
-        expired_access_token_data = {
+        expired_tokens = {
             "access_token": "expired_access_token",
+            "refresh_token": "fake_refresh_token",
             "expires_at": int(time.time()) - 3600,
         }
-        fake_refresh_token_data = {
-            "refresh_token": "fake_refresh_token",
-        }
 
-        # Mock sm.get_secret
-        with patch.object(tm, 'get_secret') as mock_get_secret:
-            def get_secret_side_effect(key_uuid):
-                if key_uuid == "access_key_uuid":
-                    return expired_access_token_data
-                elif key_uuid == "refresh_key_uuid":
-                    return fake_refresh_token_data
-            mock_get_secret.side_effect = get_secret_side_effect
+        # Mock tm.get_api_tokens to return expired tokens
+        with patch.object(tm, 'get_api_tokens') as mock_get_api_tokens:
+            mock_get_api_tokens.return_value = expired_tokens
 
-            # Mock WebApplicationClient
-            with patch("aws_portal.utils.fitbit.WebApplicationClient") as mock_client_class:
-                mock_client = MagicMock()
-                mock_client_class.return_value = mock_client
+            # Mock tm.add_or_update_api_token for updating tokens after refresh
+            with patch.object(tm, 'add_or_update_api_token') as mock_add_update_api_token:
 
-                # Mock token refresh response
-                with patch("aws_portal.utils.fitbit.requests.post") as mock_post:
-                    mock_response = MagicMock()
-                    mock_response.status_code = 200
-                    mock_response.json.return_value = {
-                        "access_token": "new_access_token",
-                        "refresh_token": "new_refresh_token",
-                        "expires_in": 3600,
-                    }
-                    mock_post.return_value = mock_response
+                # Mock WebApplicationClient
+                with patch("aws_portal.utils.fitbit.WebApplicationClient") as mock_client_class:
+                    mock_client = MagicMock()
+                    mock_client_class.return_value = mock_client
 
-                    # Mock sm.store_secret
-                    with patch.object(tm, 'store_secret') as mock_store_secret:
+                    # Mock token refresh response
+                    with patch("aws_portal.utils.fitbit.requests.post") as mock_post:
+                        mock_response = MagicMock()
+                        mock_response.status_code = 200
+                        mock_response.json.return_value = {
+                            "access_token": "new_access_token",
+                            "refresh_token": "new_refresh_token",
+                            "expires_in": 3600,
+                        }
+                        mock_post.return_value = mock_response
 
+                        # Initialize the OAuth2 session
                         session = get_fitbit_oauth_session(join_entry)
 
                         # Simulate a request that returns 401 and then 200 after refresh
@@ -151,117 +138,106 @@ def test_get_fitbit_oauth_session_token_refresh(app):
                                 "https://api.fitbit.com/1/user/-/profile.json")
                             assert response.status_code == 200
                             assert mock_post.called
-                            assert mock_store_secret.called
+                            assert mock_add_update_api_token.called
 
 
 def test_get_fitbit_oauth_session_refresh_failure(app):
     with app.app_context():
         # Mock join_entry
         join_entry = MagicMock()
-        join_entry.access_key_uuid = "access_key_uuid"
-        join_entry.refresh_key_uuid = "refresh_key_uuid"
+        join_entry.study_subject_id = 789
 
         # Mock expired access token and valid refresh token
-        expired_access_token_data = {
+        expired_tokens = {
             "access_token": "expired_access_token",
+            "refresh_token": "fake_refresh_token",
             "expires_at": int(time.time()) - 3600,
         }
-        fake_refresh_token_data = {
-            "refresh_token": "fake_refresh_token",
-        }
 
-        # Mock sm.get_secret
-        with patch.object(tm, 'get_secret') as mock_get_secret:
-            def get_secret_side_effect(key_uuid):
-                if key_uuid == "access_key_uuid":
-                    return expired_access_token_data
-                elif key_uuid == "refresh_key_uuid":
-                    return fake_refresh_token_data
-            mock_get_secret.side_effect = get_secret_side_effect
+        # Mock tm.get_api_tokens to return expired tokens
+        with patch.object(tm, 'get_api_tokens') as mock_get_api_tokens:
+            mock_get_api_tokens.return_value = expired_tokens
 
-            # Mock WebApplicationClient
-            with patch("aws_portal.utils.fitbit.WebApplicationClient") as mock_client_class:
-                mock_client = MagicMock()
-                mock_client_class.return_value = mock_client
+            # Mock tm.add_or_update_api_token (should not be called due to refresh failure)
+            with patch.object(tm, 'add_or_update_api_token') as mock_add_update_api_token:
 
-                # Mock token refresh failure
-                with patch("aws_portal.utils.fitbit.requests.post") as mock_post:
-                    mock_response = MagicMock()
-                    mock_response.status_code = 400
-                    mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-                        "Token refresh failed")
-                    mock_post.return_value = mock_response
+                # Mock WebApplicationClient
+                with patch("aws_portal.utils.fitbit.WebApplicationClient") as mock_client_class:
+                    mock_client = MagicMock()
+                    mock_client_class.return_value = mock_client
 
-                    session = get_fitbit_oauth_session(join_entry)
+                    # Mock token refresh failure
+                    with patch("aws_portal.utils.fitbit.requests.post") as mock_post:
+                        mock_response = MagicMock()
+                        mock_response.status_code = 400
+                        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
+                            "Token refresh failed")
+                        mock_post.return_value = mock_response
 
-                    # Simulate a request that triggers token refresh failure
-                    with patch("aws_portal.utils.fitbit.requests.request") as mock_request:
-                        mock_response_401 = MagicMock()
-                        mock_response_401.status_code = 401
-                        mock_request.return_value = mock_response_401
+                        # Initialize the OAuth2 session
+                        session = get_fitbit_oauth_session(join_entry)
 
-                        # Update the expected match to the actual exception message
-                        with pytest.raises(requests.exceptions.HTTPError, match="Token refresh failed"):
-                            session.get(
-                                "https://api.fitbit.com/1/user/-/profile.json")
+                        # Simulate a request that triggers token refresh failure
+                        with patch("aws_portal.utils.fitbit.requests.request") as mock_request:
+                            mock_response_401 = MagicMock()
+                            mock_response_401.status_code = 401
+                            mock_request.return_value = mock_response_401
+
+                            # Expect an HTTPError due to failed token refresh
+                            with pytest.raises(requests.exceptions.HTTPError, match="Token refresh failed"):
+                                session.get(
+                                    "https://api.fitbit.com/1/user/-/profile.json")
 
 
-def test_get_fitbit_oauth_session_sm_get_secret_failure(app):
+def test_get_fitbit_oauth_session_tm_get_api_tokens_failure(app):
     with app.app_context():
         # Mock join_entry
         join_entry = MagicMock()
-        join_entry.access_key_uuid = "access_key_uuid"
+        join_entry.study_subject_id = 1010
 
-        # Mock sm.get_secret to raise exception
-        with patch.object(tm, 'get_secret', side_effect=Exception("SM get_secret failed")):
-            with pytest.raises(Exception, match="SM get_secret failed"):
+        # Mock tm.get_api_tokens to raise an exception
+        with patch.object(tm, 'get_api_tokens', side_effect=Exception("TM get_api_tokens failed")):
+            with pytest.raises(Exception, match="TM get_api_tokens failed"):
                 get_fitbit_oauth_session(join_entry)
 
 
-def test_get_fitbit_oauth_session_sm_store_secret_failure(app):
+def test_get_fitbit_oauth_session_tm_add_or_update_api_token_failure(app):
     with app.app_context():
         # Mock join_entry
         join_entry = MagicMock()
-        join_entry.access_key_uuid = "access_key_uuid"
-        join_entry.refresh_key_uuid = "refresh_key_uuid"
+        join_entry.study_subject_id = 2020
 
-        # Mock tokens
-        expired_access_token_data = {
+        # Mock expired access token and valid refresh token
+        expired_tokens = {
             "access_token": "expired_access_token",
+            "refresh_token": "fake_refresh_token",
             "expires_at": int(time.time()) - 3600,
         }
-        fake_refresh_token_data = {
-            "refresh_token": "fake_refresh_token",
-        }
 
-        # Mock sm.get_secret
-        with patch.object(tm, 'get_secret') as mock_get_secret:
-            def get_secret_side_effect(key_uuid):
-                if key_uuid == "access_key_uuid":
-                    return expired_access_token_data
-                elif key_uuid == "refresh_key_uuid":
-                    return fake_refresh_token_data
-            mock_get_secret.side_effect = get_secret_side_effect
+        # Mock tm.get_api_tokens to return expired tokens
+        with patch.object(tm, 'get_api_tokens') as mock_get_api_tokens:
+            mock_get_api_tokens.return_value = expired_tokens
 
-            # Mock WebApplicationClient
-            with patch("aws_portal.utils.fitbit.WebApplicationClient") as mock_client_class:
-                mock_client = MagicMock()
-                mock_client_class.return_value = mock_client
+            # Mock tm.add_or_update_api_token to raise an exception during token update
+            with patch.object(tm, 'add_or_update_api_token', side_effect=Exception("TM add_or_update_api_token failed")) as mock_add_update_api_token:
 
-                # Mock token refresh response
-                with patch("aws_portal.utils.fitbit.requests.post") as mock_post:
-                    mock_response = MagicMock()
-                    mock_response.status_code = 200
-                    mock_response.json.return_value = {
-                        "access_token": "new_access_token",
-                        "refresh_token": "new_refresh_token",
-                        "expires_in": 3600,
-                    }
-                    mock_post.return_value = mock_response
+                # Mock WebApplicationClient
+                with patch("aws_portal.utils.fitbit.WebApplicationClient") as mock_client_class:
+                    mock_client = MagicMock()
+                    mock_client_class.return_value = mock_client
 
-                    # Mock sm.store_secret to raise exception
-                    with patch.object(tm, 'store_secret', side_effect=Exception("SM store_secret failed")):
+                    # Mock token refresh response
+                    with patch("aws_portal.utils.fitbit.requests.post") as mock_post:
+                        mock_response = MagicMock()
+                        mock_response.status_code = 200
+                        mock_response.json.return_value = {
+                            "access_token": "new_access_token",
+                            "refresh_token": "new_refresh_token",
+                            "expires_in": 3600,
+                        }
+                        mock_post.return_value = mock_response
 
+                        # Initialize the OAuth2 session
                         session = get_fitbit_oauth_session(join_entry)
 
                         # Simulate a request that triggers token refresh
@@ -270,7 +246,77 @@ def test_get_fitbit_oauth_session_sm_store_secret_failure(app):
                             mock_response_401.status_code = 401
                             mock_request.return_value = mock_response_401
 
-                            # Update the expected match to the actual exception message
-                            with pytest.raises(Exception, match="SM store_secret failed"):
+                            # Expect an Exception due to failed token update
+                            with pytest.raises(Exception, match="TM add_or_update_api_token failed"):
                                 session.get(
                                     "https://api.fitbit.com/1/user/-/profile.json")
+
+
+def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(app):
+    with app.app_context():
+        # Mock join_entry
+        join_entry = MagicMock()
+        join_entry.study_subject_id = 3030
+
+        # Mock expired access token and existing refresh token
+        expired_tokens = {
+            "access_token": "expired_access_token",
+            "refresh_token": "existing_refresh_token",
+            "expires_at": int(time.time()) - 3600,
+        }
+
+        # Mock tm.get_api_tokens to return expired tokens
+        with patch.object(tm, 'get_api_tokens') as mock_get_api_tokens:
+            mock_get_api_tokens.return_value = expired_tokens
+
+            # Mock tm.add_or_update_api_token to perform partial update (e.g., missing refresh_token)
+            with patch.object(tm, 'add_or_update_api_token') as mock_add_update_api_token:
+                # Define a side effect function to simulate partial update
+                def add_update_side_effect(api_name, study_subject_id, tokens):
+                    if tokens.get("access_token"):
+                        expired_tokens["access_token"] = tokens["access_token"]
+                    if tokens.get("refresh_token"):
+                        expired_tokens["refresh_token"] = tokens["refresh_token"]
+                    if tokens.get("expires_at"):
+                        expired_tokens["expires_at"] = tokens["expires_at"]
+
+                mock_add_update_api_token.side_effect = add_update_side_effect
+
+                # Mock WebApplicationClient
+                with patch("aws_portal.utils.fitbit.WebApplicationClient") as mock_client_class:
+                    mock_client = MagicMock()
+                    mock_client_class.return_value = mock_client
+
+                    # Mock token refresh response with partial data (e.g., missing refresh_token)
+                    with patch("aws_portal.utils.fitbit.requests.post") as mock_post:
+                        mock_response = MagicMock()
+                        mock_response.status_code = 200
+                        mock_response.json.return_value = {
+                            "access_token": "updated_access_token",
+                            # "refresh_token" is omitted to simulate partial update
+                            "expires_in": 3600,
+                        }
+                        mock_post.return_value = mock_response
+
+                        # Initialize the OAuth2 session
+                        session = get_fitbit_oauth_session(join_entry)
+
+                        # Simulate a request that returns 401 and then 200 after refresh
+                        with patch("aws_portal.utils.fitbit.requests.request") as mock_request:
+                            # First call returns 401
+                            mock_response_401 = MagicMock()
+                            mock_response_401.status_code = 401
+                            # Second call returns 200
+                            mock_response_200 = MagicMock()
+                            mock_response_200.status_code = 200
+                            mock_request.side_effect = [
+                                mock_response_401, mock_response_200]
+
+                            response = session.get(
+                                "https://api.fitbit.com/1/user/-/profile.json")
+                            assert response.status_code == 200
+                            assert mock_post.called
+                            assert mock_add_update_api_token.called
+
+                            # Verify that the refresh_token remains unchanged
+                            assert expired_tokens["refresh_token"] == "existing_refresh_token"
