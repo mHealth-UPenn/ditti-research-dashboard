@@ -55,7 +55,7 @@ const Select: React.FC<SelectProps> = ({
     <div className={`flex items-center flex-grow relative ${hideBorder ? "" : "border border-light"} ${disabled ? "bg-light" : ""}`}>
       {/* if the blank option is selected, show the placeholder */}
       {value === "0" && (
-        <p className="ml-4 text-light pointer-events-none select-none absolute">{placeholder}</p>
+        <span className="ml-4 text-light pointer-events-none select-none absolute">{placeholder}</span>
       )}
       <select
         className="flex-grow pl-2 bg-[transparent] min-h-[calc(3rem-2px)] focus:outline-none focus:shadow-none cursor-pointer"

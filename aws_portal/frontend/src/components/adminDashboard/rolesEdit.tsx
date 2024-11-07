@@ -318,7 +318,8 @@ const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) =
           <FormField>
             <Button
               variant="secondary"
-              onClick={addPermission}>
+              onClick={addPermission}
+              className="w-max">
                 Add Permission
             </Button>
           </FormField>
