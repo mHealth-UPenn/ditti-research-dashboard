@@ -339,8 +339,8 @@ const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) =
             <br />
             {getPermissionsSummary()}
           </FormSummaryText>
-          <FormSummaryButton>
-            <AsyncButton onClick={post}>{buttonText}</AsyncButton>
+          <FormSummaryButton onClick={post}>
+            {buttonText}
           </FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>

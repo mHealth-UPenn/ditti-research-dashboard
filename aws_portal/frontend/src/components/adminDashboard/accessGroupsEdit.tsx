@@ -396,8 +396,8 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
             {getPermissionsSummary}
             <br />
           </FormSummaryText>
-          <FormSummaryButton>
-            <AsyncButton onClick={post}>{buttonText}</AsyncButton>
+          <FormSummaryButton onClick={post}>
+            {buttonText}
           </FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>

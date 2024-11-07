@@ -194,8 +194,8 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
             &nbsp;&nbsp;&nbsp;&nbsp;{name}
             <br />
           </FormSummaryText>
-          <FormSummaryButton>
-            <AsyncButton onClick={post}>{buttonText}</AsyncButton>
+          <FormSummaryButton onClick={post}>
+            {buttonText}
           </FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>

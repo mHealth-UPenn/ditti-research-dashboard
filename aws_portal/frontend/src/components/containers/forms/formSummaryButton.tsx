@@ -1,10 +1,27 @@
 import { PropsWithChildren } from "react";
+import { ButtonProps } from "../../buttons/button";
+import AsyncButton from "../../buttons/asyncButton";
+
+interface FormSummaryButtonProps {
+  disabled?: boolean;
+  onClick: () => Promise<void>;
+}
 
 
-const FormSummaryButton = ({ children }: PropsWithChildren<unknown>) => {
+const FormSummaryButton = ({
+  disabled,
+  onClick,
+  children
+}: PropsWithChildren<FormSummaryButtonProps>) => {
   return (
     <div className="flex flex-col w-full w-full justify-end">
-      {children}
+      <AsyncButton
+        className="p-4"
+        onClick={onClick}
+        disabled={disabled}
+        rounded={true}>
+          {children}
+      </AsyncButton>
     </div>
   );
 };

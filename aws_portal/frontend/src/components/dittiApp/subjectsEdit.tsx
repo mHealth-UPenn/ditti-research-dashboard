@@ -350,12 +350,10 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
             <br />
           </FormSummaryText>
           <div>
-            <FormSummaryButton>
-              <AsyncButton
-                onClick={post}
-                disabled={APP_ENV === "demo"}>
-                  {buttonText}
-              </AsyncButton>
+            <FormSummaryButton
+              onClick={post}
+              disabled={APP_ENV === "demo"}>
+                {buttonText}
             </FormSummaryButton>
             {APP_ENV === "demo" &&
               <FormSummarySubtext>

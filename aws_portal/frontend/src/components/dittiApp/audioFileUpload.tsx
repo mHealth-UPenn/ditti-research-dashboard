@@ -579,13 +579,10 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                   style={{ width: percentComplete ? `${percentComplete}%` : 0 }}/>
               </div>
             }
-            <FormSummaryButton>
-              <AsyncButton
-                className="p-4"
-                onClick={handleUpload}
-                disabled={!canUpload || APP_ENV === "demo"}>
-                  Upload
-              </AsyncButton>
+            <FormSummaryButton
+              onClick={handleUpload}
+              disabled={!canUpload || APP_ENV === "demo"}>
+                Upload
             </FormSummaryButton>
             {APP_ENV === "demo" &&
               <FormSummarySubtext>

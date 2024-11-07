@@ -20,6 +20,7 @@ const AsyncButton: React.FC<AsyncButtonProps> = ({
   fullWidth = false,
   fullHeight = false,
   className = "",
+  rounded,
   onClick,
   children,
 }) => {
@@ -64,6 +65,7 @@ const AsyncButton: React.FC<AsyncButtonProps> = ({
       fullWidth={fullWidth}
       fullHeight={fullHeight}
       className={className}
+      rounded={rounded}
       onClick={handleClick}>
         <div className="relative h-full w-full">
           <div className={`absolute top-0 ${sizeContainerMap[size]}`}>

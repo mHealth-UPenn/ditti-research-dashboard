@@ -223,8 +223,8 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
             &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
             <br />
           </FormSummaryText>
-          <FormSummaryButton>
-            <AsyncButton onClick={post}>{buttonText}</AsyncButton>
+          <FormSummaryButton onClick={post}>
+            {buttonText}
           </FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>
