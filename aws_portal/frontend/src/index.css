@@ -50,6 +50,10 @@ h6 {
   color: #555;
 }
 
+p {
+  margin-bottom: 1rem;
+}
+
 /* button {
   font-size: 0.9rem;
 }

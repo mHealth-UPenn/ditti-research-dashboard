@@ -166,27 +166,26 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
         contents: (
           <div className="flex w-full h-full">
             {/* if the user can edit, link to the edit subject page */}
-            {canEdit &&
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-full flex-grow"
-                onClick={() =>
-                  handleClick(
-                    ["Edit", user.userPermissionId],
-                    <SubjectsEdit
-                      dittiId={user.userPermissionId}
-                      studyId={id}
-                      studyEmail={email}
-                      studyPrefix={dittiId}
-                      flashMessage={flashMessage}
-                      goBack={goBack}
-                      handleClick={handleClick} />
-                  )
-                }>
-                  Edit
-              </Button>
-            }
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-full flex-grow"
+              onClick={() =>
+                handleClick(
+                  ["Edit", user.userPermissionId],
+                  <SubjectsEdit
+                    dittiId={user.userPermissionId}
+                    studyId={id}
+                    studyEmail={email}
+                    studyPrefix={dittiId}
+                    flashMessage={flashMessage}
+                    goBack={goBack}
+                    handleClick={handleClick} />
+                )
+              }
+              disabled={!(canEdit || APP_ENV === "demo")}>
+                Edit
+            </Button>
           </div>
         ),
         searchValue: "",
@@ -198,7 +197,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
   });
 
   // if the user can enroll subjects, include an enroll button
-  const tableControl = canCreate ? (
+  const tableControl =
     <Button
       onClick={() =>
         handleClick(
@@ -212,12 +211,10 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
             goBack={goBack}
             handleClick={handleClick} />
         )
-      }>
+      }
+      disabled={!(canCreate || APP_ENV === "demo")}>
         Create +
     </Button>
-  ) : (
-    <React.Fragment />
-  );
 
   if (loading) {
     return (

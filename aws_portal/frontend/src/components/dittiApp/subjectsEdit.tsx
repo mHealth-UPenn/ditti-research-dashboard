@@ -351,8 +351,20 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
           </FormSummaryText>
           <div>
             <FormSummaryButton>
-              <AsyncButton onClick={post}>{buttonText}</AsyncButton>
+              <AsyncButton
+                onClick={post}
+                disabled={APP_ENV === "demo"}>
+                  {buttonText}
+              </AsyncButton>
             </FormSummaryButton>
+            {APP_ENV === "demo" &&
+              <FormSummarySubtext>
+                {dittiId ?
+                  "Updating users is disabled in demo mode." :
+                  "Enrolling new users is disabled in demo mode."
+                }
+              </FormSummarySubtext>
+            }
             <FormSummarySubtext>
               After enrolling a subject, log in on your smartphone using their
               Ditti ID to ensure their account was created successfully.

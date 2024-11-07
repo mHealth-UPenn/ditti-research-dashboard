@@ -53,7 +53,7 @@ const TextField: React.FC<TextFieldProps> = ({
             </label>
           </div>
         }
-        <div className={`flex items-center ${type === "textarea" ? "h-[24rem]" : ""} border border-light ${disabled ? "bg-light" : ""}`}>
+        <div className={`flex items-center ${type === "textarea" ? "h-[24rem]" : "h-[2.75rem]"} border border-light ${disabled ? "bg-light" : ""}`}>
           {/* place children here as prefix icons (e.g., a password icon) */}
           {children || null}
 

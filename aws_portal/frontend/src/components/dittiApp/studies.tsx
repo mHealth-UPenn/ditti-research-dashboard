@@ -15,6 +15,7 @@ import Title from "../cards/cardTitle";
 import ActiveIcon from "../icons/activeIcon";
 import Link from "../links/link";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { APP_ENV } from "../../environment";
 
 
 const StudiesView: React.FC<ViewProps> = ({
@@ -209,7 +210,7 @@ const StudiesView: React.FC<ViewProps> = ({
           </CardContentRow>
           <CardContentRow>
             <div className="flex">
-              {canCreateAudioFiles &&
+              {(canCreateAudioFiles || APP_ENV === "demo") &&
                 <Button
                   onClick={handleClickUploadAudioFile}
                   className="mr-2">

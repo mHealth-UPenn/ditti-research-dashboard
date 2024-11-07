@@ -15,7 +15,7 @@ const useDittiData = () => {
   const [users, setUsers] = useState<UserDetails[]>([]);
 
   const dataFactory: DataFactory | null = useMemo(() => {
-    if (APP_ENV === "development") {
+    if (APP_ENV === "development" || APP_ENV === "demo") {
       return new DataFactory();
     }
     return null;
@@ -29,7 +29,7 @@ const useDittiData = () => {
       promises.push(getAudioTapsAsync().then(setAudioTaps));
       promises.push(getAudioFilesAsync().then(setAudioFiles));
       promises.push(getUsersAsync().then(setUsers));
-    } else if (APP_ENV === "development" && dataFactory) {
+    } else if ((APP_ENV === "development" || APP_ENV === "demo") && dataFactory) {
       promises.push(dataFactory.init().then(() => {
         if (dataFactory) {
           setTaps(dataFactory.taps);

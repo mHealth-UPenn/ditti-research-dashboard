@@ -8,6 +8,7 @@ import Button from "../buttons/button";
 import AdminView from "../containers/admin/adminView";
 import AdminContent from "../containers/admin/adminContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { APP_ENV } from "../../environment";
 
 
 const AudioFiles: React.FC<ViewProps> = ({
@@ -175,15 +176,14 @@ const AudioFiles: React.FC<ViewProps> = ({
           contents: (
             <div className="flex w-full h-full">
               {/* if the user can edit, link to the edit subject page */}
-              {canDeleteAudioFiles &&
-                <Button
-                  variant="danger"
-                  size="sm"
-                  className="h-full flex-grow"
-                  onClick={() => handleDelete(id || "", _version || 0, fileName || "")}>
-                    Delete
-                </Button>
-              }
+              <Button
+                variant="danger"
+                size="sm"
+                className="h-full flex-grow"
+                onClick={() => handleDelete(id || "", _version || 0, fileName || "")}
+                disabled={!canDeleteAudioFiles}>
+                  Delete
+              </Button>
             </div>
           ),
           searchValue: "",
@@ -198,7 +198,7 @@ const AudioFiles: React.FC<ViewProps> = ({
   };
 
   // if the user can enroll subjects, include an enroll button
-  const tableControl = canCreateAudioFiles ? (
+  const tableControl =
     <Button
       variant="primary"
       onClick={() =>
@@ -209,12 +209,10 @@ const AudioFiles: React.FC<ViewProps> = ({
             flashMessage={flashMessage}
             handleClick={handleClick} />
         )
-      }>
+      }
+      disabled={!(canCreateAudioFiles || APP_ENV === "demo")}>
         Upload
     </Button>
-  ) : (
-    <React.Fragment />
-  );
 
   if (loading) {
     return (

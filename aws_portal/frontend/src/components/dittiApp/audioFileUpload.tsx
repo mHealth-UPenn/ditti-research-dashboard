@@ -22,6 +22,7 @@ import Button from "../buttons/button";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { SmallLoader } from "../loader";
+import { APP_ENV } from "../../environment";
 
 
 interface IFile {
@@ -419,7 +420,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
           </FormField>
           <FormField>
             <div className="mb-1">
-              Add study...
+              Add study
             </div>
             <div className="border-light">
               <Select
@@ -439,7 +440,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
           <FormRow>
             <FormField>
               <div className="mb-1">
-                <b>Selected studies</b>
+                <p>Selected studies</p>
               </div>
               {
                 studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
@@ -485,7 +486,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
           Boolean(files.length) &&
           <FormRow>
             <FormField>
-              <span className="font-bold mb-2">Audio files</span>
+              <span className="mb-1">Audio files</span>
               {files.map((file, i) =>
                 <div key={i} className="w-full">
                   <div className="flex justify-between w-full mb-1">
@@ -579,10 +580,15 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               <AsyncButton
                 className="p-4"
                 onClick={handleUpload}
-                disabled={!canUpload}>
+                disabled={!canUpload || APP_ENV === "demo"}>
                   Upload
               </AsyncButton>
             </FormSummaryButton>
+            {APP_ENV === "demo" &&
+              <FormSummarySubtext>
+                Audio file uploads are disabled in demo mode.
+              </FormSummarySubtext>
+            }
             <FormSummarySubtext>
               Audio file details cannot be changed after upload. The files must be
               deleted and uploaded again.

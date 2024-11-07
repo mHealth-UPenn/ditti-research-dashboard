@@ -19,6 +19,7 @@ import Title from "../cards/cardTitle";
 import Subtitle from "../cards/cardSubtilte";
 import Button from "../buttons/button";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { APP_ENV } from "../../environment";
 
 /**
  * getTaps: get tap data
@@ -148,11 +149,12 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
                 Download Excel
             </Button>
             {/* if the user can edit, show the edit button */}
-            {canEdit &&
-              <Button variant="secondary" onClick={handleClickEditDetails}>
-                Edit Details
-              </Button>
-            }
+            <Button
+              variant="secondary"
+              onClick={handleClickEditDetails}
+              disabled={!(canEdit || APP_ENV === "demo")}>
+              Edit Details
+            </Button>
           </div>
         </CardContentRow>
 

@@ -16,6 +16,7 @@ import Subtitle from "../cards/cardSubtilte";
 import Button from "../buttons/button";
 import CardContentRow from "../cards/cardHeader";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { APP_ENV } from "../../environment";
 
 /**
  * Information for study contacts
@@ -173,7 +174,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
         <CardContentRow>
           <Title>Active Subjects</Title>
           <div className="flex">
-            {canCreate &&
+            {(canCreate || APP_ENV === "demo") &&
               <Button
                 className="mr-2"
                 onClick={handleClickEnrollSubject}>

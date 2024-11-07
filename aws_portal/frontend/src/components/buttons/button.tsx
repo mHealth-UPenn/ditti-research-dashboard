@@ -8,6 +8,7 @@ export interface ButtonProps {
   fullWidth?: boolean;
   fullHeight?: boolean;
   className?: string;
+  title?: string;
   onClick?: () => void;
 }
 
