@@ -103,12 +103,24 @@ class TokensManager:
             tokens (Dict[str, Any]): A dictionary containing token information.
 
         Raises:
+            ValueError: If api_name is invalid.
             Exception: If there is an error during the process.
         """
+        if not isinstance(api_name, str) or not api_name.strip():
+            raise ValueError("api_name must be a non-empty string.")
+
         secret_name = self._get_secret_name(api_name)
         try:
             secret_data = self._retrieve_secret(secret_name)
-            secret_data[str(study_subject_id)] = tokens
+            study_subject_key = str(study_subject_id)
+
+            if study_subject_key in secret_data:
+                # Merge existing tokens with new tokens
+                secret_data[study_subject_key].update(tokens)
+            else:
+                # Add new study subject tokens
+                secret_data[study_subject_key] = tokens
+
             self._store_secret(secret_name, secret_data)
             logger.info(
                 f"Added/Updated tokens for Study Subject ID {study_subject_id} in API '{api_name}'.")
