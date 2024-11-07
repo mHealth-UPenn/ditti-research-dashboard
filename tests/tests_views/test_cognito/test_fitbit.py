@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from aws_portal.models import Api, JoinStudySubjectApi, StudySubject
-from aws_portal.extensions import db, sm
+from aws_portal.extensions import db, tm
 from oauthlib.oauth2 import WebApplicationClient
 import base64
 import uuid
@@ -150,7 +150,7 @@ def test_fitbit_callback_success_new_association(app, authenticated_client, stud
             mock_post.return_value = mock_response
 
             # Mock sm.store_secret
-            with patch.object(sm, "store_secret") as mock_store_secret:
+            with patch.object(tm, "store_secret") as mock_store_secret:
                 response = authenticated_client.get(
                     "/cognito/fitbit/callback", query_string=query_params)
 
@@ -333,7 +333,7 @@ def test_fitbit_callback_error_storing_tokens(app, authenticated_client, study_s
             mock_post.return_value = mock_response
 
             # Mock sm.store_secret to raise an exception
-            with patch.object(sm, "store_secret") as mock_store_secret:
+            with patch.object(tm, "store_secret") as mock_store_secret:
                 mock_store_secret.side_effect = Exception(
                     "AWS Secrets Manager error")
 

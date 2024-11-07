@@ -6,7 +6,7 @@ from aws_portal.utils.fitbit import (
     create_code_challenge,
     get_fitbit_oauth_session,
 )
-from aws_portal.extensions import sm
+from aws_portal.extensions import tm
 import base64
 import hashlib
 import time
@@ -70,7 +70,7 @@ def test_get_fitbit_oauth_session_success(app):
         }
 
         # Mock sm.get_secret to return fake tokens
-        with patch.object(sm, 'get_secret') as mock_get_secret:
+        with patch.object(tm, 'get_secret') as mock_get_secret:
             def get_secret_side_effect(key_uuid):
                 if key_uuid == "access_key_uuid":
                     return fake_access_token_data
@@ -107,7 +107,7 @@ def test_get_fitbit_oauth_session_token_refresh(app):
         }
 
         # Mock sm.get_secret
-        with patch.object(sm, 'get_secret') as mock_get_secret:
+        with patch.object(tm, 'get_secret') as mock_get_secret:
             def get_secret_side_effect(key_uuid):
                 if key_uuid == "access_key_uuid":
                     return expired_access_token_data
@@ -132,7 +132,7 @@ def test_get_fitbit_oauth_session_token_refresh(app):
                     mock_post.return_value = mock_response
 
                     # Mock sm.store_secret
-                    with patch.object(sm, 'store_secret') as mock_store_secret:
+                    with patch.object(tm, 'store_secret') as mock_store_secret:
 
                         session = get_fitbit_oauth_session(join_entry)
 
@@ -171,7 +171,7 @@ def test_get_fitbit_oauth_session_refresh_failure(app):
         }
 
         # Mock sm.get_secret
-        with patch.object(sm, 'get_secret') as mock_get_secret:
+        with patch.object(tm, 'get_secret') as mock_get_secret:
             def get_secret_side_effect(key_uuid):
                 if key_uuid == "access_key_uuid":
                     return expired_access_token_data
@@ -213,7 +213,7 @@ def test_get_fitbit_oauth_session_sm_get_secret_failure(app):
         join_entry.access_key_uuid = "access_key_uuid"
 
         # Mock sm.get_secret to raise exception
-        with patch.object(sm, 'get_secret', side_effect=Exception("SM get_secret failed")):
+        with patch.object(tm, 'get_secret', side_effect=Exception("SM get_secret failed")):
             with pytest.raises(Exception, match="SM get_secret failed"):
                 get_fitbit_oauth_session(join_entry)
 
@@ -235,7 +235,7 @@ def test_get_fitbit_oauth_session_sm_store_secret_failure(app):
         }
 
         # Mock sm.get_secret
-        with patch.object(sm, 'get_secret') as mock_get_secret:
+        with patch.object(tm, 'get_secret') as mock_get_secret:
             def get_secret_side_effect(key_uuid):
                 if key_uuid == "access_key_uuid":
                     return expired_access_token_data
@@ -260,7 +260,7 @@ def test_get_fitbit_oauth_session_sm_store_secret_failure(app):
                     mock_post.return_value = mock_response
 
                     # Mock sm.store_secret to raise exception
-                    with patch.object(sm, 'store_secret', side_effect=Exception("SM store_secret failed")):
+                    with patch.object(tm, 'store_secret', side_effect=Exception("SM store_secret failed")):
 
                         session = get_fitbit_oauth_session(join_entry)
 

@@ -7,7 +7,7 @@ from typing import Any, Dict
 logger = logging.getLogger(__name__)
 
 
-class SecretsManager:
+class TokensManager:
     """
     Manages API tokens using AWS Secrets Manager.
     Each API has a single secret storing tokens for all study subjects.

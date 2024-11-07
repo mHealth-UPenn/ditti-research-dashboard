@@ -3,7 +3,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from aws_portal.utils.secrets_manager import SecretsManager
+from aws_portal.utils.tokens_manager import TokensManager
 
 
 bcrypt = Bcrypt()
@@ -12,4 +12,4 @@ db = SQLAlchemy()
 jwt = JWTManager()
 migrate = Migrate()
 
-sm = SecretsManager()
+tm = TokensManager()

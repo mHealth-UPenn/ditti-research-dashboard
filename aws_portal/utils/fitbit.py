@@ -8,7 +8,7 @@ from typing import Any, Dict
 import requests
 from oauthlib.oauth2 import WebApplicationClient
 from flask import current_app
-from aws_portal.extensions import sm
+from aws_portal.extensions import tm
 
 logger = logging.getLogger(__name__)
 
@@ -69,8 +69,8 @@ def get_fitbit_oauth_session(join_entry):
     fitbit_client_secret = current_app.config["FITBIT_CLIENT_SECRET"]
 
     try:
-        # Retrieve tokens using the updated SecretsManager
-        tokens = sm.get_api_tokens(
+        # Retrieve tokens using TokensManager
+        tokens = tm.get_api_tokens(
             api_name="Fitbit",
             study_subject_id=join_entry.study_subject_id
         )
@@ -120,7 +120,7 @@ def get_fitbit_oauth_session(join_entry):
             }
 
             # Store the updated tokens
-            sm.add_or_update_api_token(
+            tm.add_or_update_api_token(
                 api_name="Fitbit",
                 study_subject_id=join_entry.study_subject_id,
                 tokens=updated_token_data
