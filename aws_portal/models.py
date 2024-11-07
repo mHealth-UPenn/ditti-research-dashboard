@@ -180,6 +180,164 @@ def init_admin_account(email=None, password=None):
     return admin
 
 
+def init_demo_db():
+    demo_admin_email = os.getenv("DEMO_ADMIN_EMAIL")
+    demo_admin_password = os.getenv("DEMO_ADMIN_PASSWORD")
+    demo_email = os.getenv("DEMO_EMAIL")
+    demo_password = os.getenv("DEMO_PASSWORD")
+
+    if (
+        demo_admin_email is None or
+        demo_admin_password is None or
+        demo_email is None or
+        demo_password is None
+    ):
+        raise RuntimeError("One or more of the following environment variables are missing: DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, DEMO_EMAIL, DEMO_PASSWORD")
+
+    # Request user confirmation when pointing to non-localhost database
+    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+    if input(f"(y/n) Confirm creating demo data on following database: {db_uri}\n") not in {"y", "yes"}:
+        print("Creation of demo data cancelled")
+        return False
+
+    # Create all possible `(action, resource)` permission combinations
+    actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
+    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
+    for action in actions:
+        for resource in resources:
+            permission = Permission()
+            permission.action = action
+            permission.resource = resource
+            db.session.add(permission)
+
+    # Create the Admin access group
+    admin_app = App(name="Admin Dashboard")
+    admin_group = AccessGroup(name="Admin", app=admin_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=admin_group, permission=permission)
+    db.session.add(admin_app)
+    db.session.add(admin_group)
+
+    # Create the Ditti Admin access group
+    ditti_app = App(name="Ditti App Dashboard")
+    ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    query = Permission.definition == tuple_("View", "Ditti App Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    db.session.add(ditti_app)
+    db.session.add(ditti_admin_group)
+
+    # Create the demo access group
+    demo_group = AccessGroup(name="Demo Group", app=ditti_app)
+    query = Permission.definition == tuple_("View", "Ditti App Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=demo_group, permission=permission)
+    query = Permission.definition == tuple_("View", "Audio Files")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=demo_group, permission=permission)
+    query = Permission.definition == tuple_("View", "All Studies")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=demo_group, permission=permission)
+    db.session.add(demo_group)
+
+    # Create the demo role
+    demo_role = Role(name="Demo Role")
+    query = Permission.definition == tuple_("View", "Taps")
+    permission = Permission.query.filter(query).first()
+    JoinRolePermission(role=demo_role, permission=permission)
+    query = Permission.definition == tuple_("View", "Users")
+    permission = Permission.query.filter(query).first()
+    JoinRolePermission(role=demo_role, permission=permission)
+    db.session.add(demo_role)
+
+    studies = [
+        {
+            "name": "Sleep and Lifestyle Enhancement through Evidence-based Practices for Insomnia Treatment",
+            "acronym": "SLEEP-IT",
+            "ditti_id": "sit",
+            "email": "sleep.it@research.edu",
+            "default_expiry_delta": 14,
+            "consent_information": "",
+        },
+        {
+            "name": "Cognitive and Affective Lifestyle Modifications for Sleep Enhancement through Mindfulness Practices",
+            "acronym": "CALM-SLEEP",
+            "ditti_id": "cs",
+            "email": "calm.sleep@research.edu",
+            "default_expiry_delta": 14,
+            "consent_information": "",
+        }
+    ]
+
+    # Create two test studies
+    study_a = Study(**studies[0])
+    study_b = Study(**studies[1])
+    db.session.add(study_a)
+    db.session.add(study_b)
+
+    # Create an admin account
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Admin",
+        last_name="Admin",
+        email=os.getenv("DEMO_ADMIN_EMAIL"),
+        is_confirmed=True,
+    )
+    account.password = os.getenv("DEMO_ADMIN_PASSWORD")
+    JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
+    JoinAccountAccessGroup(account=account, access_group=admin_group)
+    db.session.add(account)
+
+    # Create a demo account
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Demo",
+        last_name="Demo",
+        email=os.getenv("DEMO_EMAIL"),
+        is_confirmed=True,
+    )
+    account.password = os.getenv("DEMO_PASSWORD")
+    JoinAccountAccessGroup(account=account, access_group=demo_group)
+    JoinAccountStudy(account=account, study=study_a, role=demo_role)
+    JoinAccountStudy(account=account, study=study_b, role=demo_role)
+    db.session.add(account)
+
+    template_html = """<div>
+    <h1>Sleep Hygiene Instructions: General</h1>
+    <p>Maintain a regular sleep/wake schedule. Try to keep the same rise time and bedtime every day.</p>
+    <p>Set your alarm to get up at the same time each morning, regardless of how much sleep you got during the night, in
+        order to maintain a consistent sleep/wake schedule.</p>
+    <p>Do not attempt to “make up for lost sleep” on weekends or hopdays. It may not work and it means you are not up to
+        par for the second half of the week.</p>
+    <p>Do not watch the alarm clock and worry about the time or lost sleep. </p>
+    <p>Do not spend too much time in bed “chasing sleep”</p>
+    <p>Do not nap during the day. Not napping will allow you to sleep much better at night. Exercise instead of napping.
+        Stay active during the day when you feel sleepy.</p>
+    <p>Eat meals at the same time each day, every day. Three or four small meals per day are better than one to two
+        large meals.</p>
+    <p>Avoid or minimize the use of caffeine. It is a stimulant that interferes with sleep. The effects can last as long
+        as 8-14 hours. One cup of coffee contains 100 mg of caffeine and takes three hours to leave the body. Most sodas
+        and teas, some headache and cold medicines, and most diet pills will worsen sleep. It is recommended not to
+        drink coffee, tea or soda after lunch. If you continue to have difficulty falling asleep, avoid drinking
+        caffeinated beverages after breakfast.</p>
+    <p>Avoid alcohol. You may feel it helps you get to sleep, but for most people it causes awakenings as well as poor
+        sleep later in the night. Alcohol can make snoring and sleep apnea worse.</p>
+    <p>Maintain a regular exercise schedule. Walking is an excellent form of exercise. The best time is early in the
+        morning (7 AM – 9 AM). Stretching can be done on rainy days. Guard against “strenuous exercise” before</p>
+</div>"""
+
+    db.session.add(AboutSleepTemplate(name="Default Template", text=template_html))
+    db.session.commit()
+
+    return True
+
+
 def init_integration_testing_db():
     # Enforce that the environment must be pointing at a local database
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
