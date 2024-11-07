@@ -180,9 +180,7 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
               onKeyup={setText} />
           </FormField>
         </FormRow>
-        <div className="px-4">
-          <FormTitle>Preview</FormTitle>
-        </div>
+        <FormTitle className="mt-6">Preview</FormTitle>
         <FormRow>
           <div ref={previewRef} className="px-4" />
         </FormRow>

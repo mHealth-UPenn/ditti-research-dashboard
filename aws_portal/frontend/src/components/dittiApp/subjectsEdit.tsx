@@ -311,9 +311,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
             </div>
           </FormField>
         </FormRow>
-        <div className="px-4">
-          <FormTitle>About Sleep Template Preview</FormTitle>
-        </div>
+        <FormTitle className="mt-6">About Sleep Template Preview</FormTitle>
         <FormRow>
           <div ref={previewRef} className="px-4" />
         </FormRow>
