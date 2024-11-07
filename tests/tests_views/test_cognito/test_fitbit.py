@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from aws_portal.models import Api, JoinStudySubjectApi, StudySubject
-from aws_portal.extensions import db, sm
+from aws_portal.extensions import db, tm
 from oauthlib.oauth2 import WebApplicationClient
 import base64
 import uuid
@@ -29,7 +29,7 @@ def study_subject():
 @pytest.fixture
 def fitbit_api():
     """
-    Fixture to provide the fitbit api.
+    Fixture to provide the Fitbit API.
     """
     fitbit_api = Api.query.filter_by(name="Fitbit").first()
     return fitbit_api
@@ -68,7 +68,7 @@ def test_fitbit_authorize_success(app, authenticated_client, study_subject, fitb
     # Mock generate_code_verifier and create_code_challenge
     with patch("aws_portal.views.cognito.fitbit.generate_code_verifier") as mock_gen_verifier, \
             patch("aws_portal.views.cognito.fitbit.create_code_challenge") as mock_code_challenge, \
-            patch("os.urandom") as mock_urandom:
+            patch("aws_portal.views.cognito.fitbit.os.urandom") as mock_urandom:
 
         mock_gen_verifier.return_value = "test_code_verifier"
         mock_code_challenge.return_value = "test_code_challenge"
@@ -150,7 +150,7 @@ def test_fitbit_callback_success_new_association(app, authenticated_client, stud
             mock_post.return_value = mock_response
 
             # Mock sm.store_secret
-            with patch.object(sm, "store_secret") as mock_store_secret:
+            with patch.object(tm, "add_or_update_api_token") as mock_add_update_api_token:
                 response = authenticated_client.get(
                     "/cognito/fitbit/callback", query_string=query_params)
 
@@ -158,12 +158,20 @@ def test_fitbit_callback_success_new_association(app, authenticated_client, stud
                 assert response.status_code == 302
                 assert response.headers["Location"] == "/cognito/fitbit/success"
 
-                # Verify that tokens are stored in AWS Secrets Manager
-                assert mock_store_secret.call_count == 2
-                # First call is for access_token
-                access_call_args = mock_store_secret.call_args_list[0][0]
-                # Second call is for refresh_token
-                refresh_call_args = mock_store_secret.call_args_list[1][0]
+                # Verify that tokens are stored using TokensManager
+                mock_add_update_api_token.assert_called_once()
+                args, kwargs = mock_add_update_api_token.call_args
+                assert kwargs["api_name"] == "Fitbit", f"Expected api_name 'Fitbit', got {
+                    kwargs['api_name']}"
+                assert kwargs["study_subject_id"] == study_subject.id, \
+                    f"Expected study_subject_id {study_subject.id}, got {
+                        kwargs['study_subject_id']}"
+                assert kwargs["tokens"]["access_token"] == "access_token_value", \
+                    f"Expected access_token 'access_token_value', got {
+                        kwargs['tokens']['access_token']}"
+                assert kwargs["tokens"]["refresh_token"] == "refresh_token_value", \
+                    f"Expected refresh_token 'refresh_token_value', got {
+                        kwargs['tokens']['refresh_token']}"
 
                 # Verify that JoinStudySubjectApi entry is created
                 join_entry = JoinStudySubjectApi.query.filter_by(
@@ -286,7 +294,7 @@ def test_fitbit_callback_missing_fitbit_api_entry(app, authenticated_client):
             mock_post.return_value = mock_response
 
             # Mock Api.query.filter_by(name="Fitbit").first() to return None
-            with patch("aws_portal.views.cognito.fitbit.Api.query") as mock_api_query:
+            with patch("aws_portal.models.Api.query") as mock_api_query:
                 mock_api_query.filter_by.return_value.first.return_value = None
 
                 response = authenticated_client.get(
@@ -332,18 +340,15 @@ def test_fitbit_callback_error_storing_tokens(app, authenticated_client, study_s
             })
             mock_post.return_value = mock_response
 
-            # Mock sm.store_secret to raise an exception
-            with patch.object(sm, "store_secret") as mock_store_secret:
-                mock_store_secret.side_effect = Exception(
-                    "AWS Secrets Manager error")
-
+            # Mock tm.add_or_update_api_token to raise an exception
+            with patch.object(tm, "add_or_update_api_token", side_effect=Exception("AWS Secrets Manager error")) as mock_add_update_api_token:
                 response = authenticated_client.get(
                     "/cognito/fitbit/callback", query_string=query_params)
 
                 # Expect a 500 Internal Server Error due to error storing tokens
                 assert response.status_code == 500
                 assert response.get_json() == {
-                    "msg": "Error storing access or refresh tokens: AWS Secrets Manager error"}
+                    "msg": "Error storing tokens: AWS Secrets Manager error"}
 
 
 def test_fitbit_success(app, authenticated_client):
@@ -368,7 +373,7 @@ def test_fitbit_authorize_unauthenticated(client):
 def test_fitbit_authorize_concurrent_requests(app, authenticated_client, study_subject):
     with patch("aws_portal.views.cognito.fitbit.generate_code_verifier") as mock_gen_verifier, \
             patch("aws_portal.views.cognito.fitbit.create_code_challenge") as mock_code_challenge, \
-            patch("os.urandom") as mock_urandom:
+            patch("aws_portal.views.cognito.fitbit.os.urandom") as mock_urandom:
 
         mock_gen_verifier.return_value = "test_code_verifier"
         mock_code_challenge.return_value = "test_code_challenge"
@@ -420,13 +425,19 @@ def test_fitbit_callback_token_scope_validation(app, authenticated_client, study
         })
         mock_post.return_value = mock_response
 
-        response = authenticated_client.get(
-            "/cognito/fitbit/callback", query_string=query_params)
+        with patch.object(tm, "add_or_update_api_token") as mock_add_update_api_token:
+            def add_update_side_effect(api_name, study_subject_id, tokens):
+                tokens["expires_at"] = pytest.approx(
+                    tokens["expires_at"], rel=1e-2)
 
-        assert response.status_code == 302
-        # Further assertions can be made on the stored scopes
-        join_entry = JoinStudySubjectApi.query.filter_by(
-            study_subject_id=study_subject.id,
-            api_id=fitbit_api.id
-        ).first()
-        assert join_entry.scope == ["sleep"]
+            mock_add_update_api_token.side_effect = add_update_side_effect
+
+            response = authenticated_client.get(
+                "/cognito/fitbit/callback", query_string=query_params)
+
+            assert response.status_code == 302
+            join_entry = JoinStudySubjectApi.query.filter_by(
+                study_subject_id=study_subject.id,
+                api_id=fitbit_api.id
+            ).first()
+            assert join_entry.scope == ["sleep"]

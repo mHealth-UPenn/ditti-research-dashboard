@@ -1242,9 +1242,9 @@ class JoinStudySubjectApi(db.Model):
     scope: sqlalchemy.Column
         The scope of data that the study subject approved access for
     access_key_uuid: sqlalchemy.Column
-        A unique ID for locating the study subject's access key for the API
+        DEPRECATED
     refresh_key_uuid: sqlalchemy.Column
-        A unique ID for locating the study subject's refresh key for the API
+        DEPRECATED
     study_subject: sqlalchemy.orm.relationship
     api: sqlalchemy.orm.relationship
     """
