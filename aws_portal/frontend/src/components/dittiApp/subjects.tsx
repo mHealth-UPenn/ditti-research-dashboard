@@ -212,7 +212,8 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
             handleClick={handleClick} />
         )
       }
-      disabled={!(canCreate || APP_ENV === "demo")}>
+      disabled={!(canCreate || APP_ENV === "demo")}
+      rounded={true}>
         Create +
     </Button>
 

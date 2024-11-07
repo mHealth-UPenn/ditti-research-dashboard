@@ -1,14 +1,14 @@
 import { PropsWithChildren } from "react";
 
 export interface ButtonProps {
-  variant?: "primary" | "secondary" | "info" | "danger" | "success";
+  variant?: "primary" | "secondary" | "tertiary" | "danger" | "success";
   size?: "sm" | "md" | "lg";
   disabled?: boolean;
   square?: boolean;
   fullWidth?: boolean;
   fullHeight?: boolean;
   className?: string;
-  title?: string;
+  rounded?: boolean;
   onClick?: () => void;
 }
 
@@ -21,6 +21,7 @@ const Button = ({
   fullWidth = false,
   fullHeight = false,
   className = "",
+  rounded,
   onClick,
   children,
 }: PropsWithChildren<ButtonProps>) => {
@@ -33,15 +34,21 @@ const Button = ({
   const variantMap = {
     primary: "bg-primary text-white [&:hover:not(:disabled)]:bg-primary-hover",
     secondary: "bg-secondary text-white [&:hover:not(:disabled)]:bg-secondary-hover",
-    info: "bg-info text-white [&:hover:not(:disabled)]:bg-info-hover",
+    tertiary: "bg-white text-secondary border-secondary border-2 [&:hover:not(:disabled)]:bg-extra-light",
     danger: "bg-danger text-white [&:hover:not(:disabled)]:bg-danger-hover",
     success: "bg-success text-white [&:hover:not(:disabled)]:bg-success-hover",
+  }
+
+  const roundedMap = {
+    sm: "rounded",
+    md: "rounded-lg",
+    lg: "rounded-xl",
   }
 
   return (
     <button
       disabled={disabled}
-      className={`flex items-center justify-center ${variantMap[variant]} ${sizeMap[size]} ${fullWidth ? "w-full" : ""} ${fullHeight ? "h-full" : ""} ${disabled ? "cursor-not-allowed opacity-50" : ""} whitespace-nowrap ${className} select-none`}
+      className={`flex items-center justify-center ${variantMap[variant]} ${sizeMap[size]} ${rounded ? roundedMap[size] : ""} ${fullWidth ? "w-full" : ""} ${fullHeight ? "h-full" : ""} ${disabled ? "cursor-not-allowed opacity-50" : ""} whitespace-nowrap ${className} select-none`}
       onClick={onClick}>
         {children}
     </button>

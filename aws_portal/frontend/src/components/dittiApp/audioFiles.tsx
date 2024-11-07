@@ -210,8 +210,9 @@ const AudioFiles: React.FC<ViewProps> = ({
             handleClick={handleClick} />
         )
       }
-      disabled={!(canCreateAudioFiles || APP_ENV === "demo")}>
-        Upload
+      disabled={!(canCreateAudioFiles || APP_ENV === "demo")}
+      rounded={true}>
+        Upload +
     </Button>
 
   if (loading) {

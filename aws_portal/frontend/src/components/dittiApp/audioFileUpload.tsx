@@ -474,9 +474,11 @@ const AudioFileUpload: React.FC<ViewProps> = ({
               Select audio files
             </label>
             <Button
-              variant="secondary"
+              variant="tertiary"
               onClick={handleClickChooseFiles}
-              className="w-max">
+              className="w-max"
+              size="sm"
+              rounded={true}>
                 Choose files
             </Button>
           </FormField>

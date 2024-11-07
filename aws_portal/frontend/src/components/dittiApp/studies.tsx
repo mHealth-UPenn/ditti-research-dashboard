@@ -213,13 +213,15 @@ const StudiesView: React.FC<ViewProps> = ({
               {(canCreateAudioFiles || APP_ENV === "demo") &&
                 <Button
                   onClick={handleClickUploadAudioFile}
-                  className="mr-2">
+                  className="mr-2"
+                  rounded={true}>
                     Upload +
                 </Button>
               }
               <Button
                 variant="secondary"
-                onClick={handleClickViewAudioFiles}>
+                onClick={handleClickViewAudioFiles}
+                rounded={true}>
                   View all
               </Button>
             </div>

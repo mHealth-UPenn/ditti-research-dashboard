@@ -368,9 +368,10 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
         <FormRow>
           <FormField>
             <Button
-              variant="secondary"
+              variant="tertiary"
               onClick={addPermission}
-              className="w-max">
+              className="w-max"
+              size="sm">
                 Add Permission
             </Button>
           </FormField>

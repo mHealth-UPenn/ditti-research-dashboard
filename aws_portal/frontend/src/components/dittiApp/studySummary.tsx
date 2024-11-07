@@ -168,7 +168,13 @@ const StudySummary: React.FC<StudySummaryProps> = ({
             <Subtitle>Study email: {email}</Subtitle>
             <Subtitle>Ditti acronym: {dittiId}</Subtitle>
           </div>
-          {canViewTaps && <Button onClick={downloadExcel}>Download Excel</Button>}
+          {canViewTaps &&
+            <Button
+              onClick={downloadExcel}
+              variant="secondary"
+              rounded={true}>
+                Download Excel
+            </Button>}
         </CardContentRow>
 
         <CardContentRow>
@@ -177,13 +183,15 @@ const StudySummary: React.FC<StudySummaryProps> = ({
             {(canCreate || APP_ENV === "demo") &&
               <Button
                 className="mr-2"
-                onClick={handleClickEnrollSubject}>
+                onClick={handleClickEnrollSubject}
+                rounded={true}>
                   Enroll subject +
               </Button>
             }
             <Button
               variant="secondary"
-              onClick={handleClickViewAllSubjects}>
+              onClick={handleClickViewAllSubjects}
+              rounded={true}>
                 View all subjects
             </Button>
           </div>

@@ -119,12 +119,12 @@ const AccountMenu = ({
       className="absolute right-0 top-16 w-0 max-w-[100vw] h-[calc(100vh-4rem)] overflow-scroll z-20 bg-white border-light border-l overflow-x-hidden [@media(min-width:383px)]:bg-red [@media(min-width:383px)]:transition-[width] [@media(min-width:383px)]:duration-500">
         <div className="p-8 w-[24rem]">
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-light">
-            <p>Account Details</p>
+            <span>Account Details</span>
             {edit ? (
               <AsyncButton size="sm" onClick={post}>Save</AsyncButton>
             ) : (
               <Button
-                variant="primary"
+                variant="tertiary"
                 size="sm"
                 onClick={() => setEdit(true)}>
                   Edit
@@ -193,11 +193,11 @@ const AccountMenu = ({
           </div>
           <div className="border-b border-light mb-6" />
           <div className="flex items-center justify-between mb-6">
-            <p>Change password</p>
+            <span>Change password</span>
             {editPassword ?
               <AsyncButton size="sm" onClick={trySetPassword}>Save</AsyncButton> :
               <Button
-                variant="primary"
+                variant="tertiary"
                 size="sm"
                 onClick={() => setEditPassword(true)} >
                   Change
@@ -226,7 +226,7 @@ const AccountMenu = ({
           }
           <div className="border-light border-b mb-6" />
           <div className="flex items-center justify-between">
-            <p>Logout</p>
+            <span>Logout</span>
             <Button variant="danger" size="sm" onClick={logout}>
               Logout
             </Button>
