@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createRef } from "react";
 import TextField from "../fields/textField";
 import {
   AboutSleepTemplate,
@@ -26,6 +26,7 @@ import FormSummarySubtext from "../containers/forms/formSummarySubtext";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 import { APP_ENV } from "../../environment";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import sanitize from "sanitize-html";
 
 /**
  * dittiId: the subject's ditti id
@@ -60,8 +61,15 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   const [aboutSleepTemplates, setAboutSleepTemplates] = useState<AboutSleepTemplate[]>([]);
   const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] = useState<AboutSleepTemplate>({} as AboutSleepTemplate);
   const [loading, setLoading] = useState<boolean>(true);
+  const previewRef = createRef<HTMLDivElement>();
 
   const { getUserByDittiId } = useDittiDataContext();
+
+  useEffect(() => {
+    if (previewRef.current && state.information !== "") {
+      previewRef.current.innerHTML = sanitize(state.information);
+    }
+  }, [previewRef]);
 
   useEffect(() => {
     // get all about sleep templates
@@ -79,6 +87,16 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
       setLoading(false)
     );
   }, [dittiId]);
+
+  useEffect(() => {
+    if (previewRef.current) {
+      if (aboutSleepTemplateSelected.text) {
+        previewRef.current.innerHTML = sanitize(aboutSleepTemplateSelected.text);
+      } else {
+        previewRef.current.innerHTML = sanitize(state.information);
+      }
+    }
+  }, [aboutSleepTemplateSelected]);
 
   /**
    * Get the form prefill if editing
@@ -186,7 +204,11 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
       (a: AboutSleepTemplate) => a.id === id
     )[0];
 
-    if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
+    if (selectedTemplate) {
+      setAboutSleepTemplateSelected(selectedTemplate);
+    } else {
+      setAboutSleepTemplateSelected({} as AboutSleepTemplate);
+    }
   };
 
   /**
@@ -288,6 +310,12 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
                 getDefault={getSelectedAboutSleepTemplate} />
             </div>
           </FormField>
+        </FormRow>
+        <div className="px-4">
+          <FormTitle>About Sleep Template Preview</FormTitle>
+        </div>
+        <FormRow>
+          <div ref={previewRef} className="px-4" />
         </FormRow>
       </Form>
 

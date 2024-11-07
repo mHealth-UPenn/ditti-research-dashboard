@@ -1,6 +1,11 @@
 import { AudioFile, AudioTapDetails, Study, TapDetails, User, UserDetails } from "./interfaces";
 import { makeRequest } from "./utils";
 
+const aboutSleepTemplate = `<div>
+  <h1>About Sleep</h1>
+  <p>This is an about sleep template</p>
+</div>`;
+
 
 const generateAudioFiles = (): AudioFile[] => {
   const categories = ["Nature", "Voice", "Noise", "Music"];
@@ -32,7 +37,7 @@ const generateUsers = (studyIds: string[]): UserDetails[] => {
     for (let i = 1; i <= 10; i++) {
       const user = {
         tapPermission: true,
-        information: "",
+        information: aboutSleepTemplate,
         userPermissionId: `${studyId}${String(i).padStart(3, "0")}`,
         expTime: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
         teamEmail: `${studyId}@email.com`,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createRef } from "react";
 import TextField from "../fields/textField";
 import {
   AboutSleepTemplate,
@@ -20,6 +20,7 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummarySubtext from "../containers/forms/formSummarySubtext";
+import sanitize from "sanitize-html";
 
 /**
  * The form's prefill
@@ -44,6 +45,13 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
   const [name, setName] = useState<string>("");
   const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
+  const previewRef = createRef<HTMLDivElement>();
+
+  useEffect(() => {
+    if (previewRef.current) {
+      previewRef.current.innerHTML = sanitize(text);
+    }
+  }, [text]);
 
   useEffect(() => {
     const fetchPrefill = async () => {
@@ -172,6 +180,12 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
               onKeyup={setText} />
           </FormField>
         </FormRow>
+        <div className="px-4">
+          <FormTitle>Preview</FormTitle>
+        </div>
+        <FormRow>
+          <div ref={previewRef} className="px-4" />
+        </FormRow>
       </Form>
       <FormSummary>
         <FormSummaryTitle>Template Summary</FormSummaryTitle>
@@ -182,16 +196,9 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
             &nbsp;&nbsp;&nbsp;&nbsp;{name}
             <br />
           </FormSummaryText>
-          <div>
-            <FormSummaryButton>
+          <FormSummaryButton>
             <AsyncButton onClick={post}>{buttonText}</AsyncButton>
-            </FormSummaryButton>
-            <FormSummarySubtext>
-              To preview this template, you must update an existing user or
-              create a new user with this template, then view it through the
-              app.
-            </FormSummarySubtext>
-          </div>
+          </FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>
     </FormView>
