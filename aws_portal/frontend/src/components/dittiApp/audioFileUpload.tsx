@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, createRef } from "react";
+import React, { useState, ChangeEvent, createRef, useEffect } from "react";
 import TextField from "../fields/textField";
 import { Study, ResponseBody, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
@@ -21,6 +21,7 @@ import FormSummarySubtext from "../containers/forms/formSummarySubtext";
 import Button from "../buttons/button";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { SmallLoader } from "../loader";
 
 
 interface IFile {
@@ -50,12 +51,22 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const [categoryFeedback, setCategoryFeedback] = useState<string>("");
   const [availabilityFeedback, setAvailabilityFeedback] = useState<string>("");
   const [studiesFeedback, setStudiesFeedback] = useState<string>("");
+  const [loading, setLoading] = useState(true);
 
   const fileInputRef = createRef<HTMLInputElement>();
 
   const { audioFiles } = useDittiDataContext();
   const existingFiles = new Set();
   audioFiles.forEach(af => existingFiles.add(af.fileName))
+
+  useEffect(() => {
+    makeRequest("/db/get-studies?app=2")
+      .then((res: Study[]) => {
+        setStudies(res);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   /**
    * Get a set of presigned URLs for uploading audio files to S3.
@@ -342,6 +353,16 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const percentComplete = uploadProgress.length ? Math.floor(
     uploadProgress.reduce((a, b) => a + b) / uploadProgress.length
   ) : 0;
+
+  if (loading) {
+    return (
+      <FormView>
+        <Form>
+          <SmallLoader />
+        </Form>
+      </FormView>
+    );
+  }
 
   return (
     <FormView>

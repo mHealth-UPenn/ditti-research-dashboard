@@ -1258,8 +1258,8 @@ class Study(db.Model):
     ditti_id = db.Column(db.String, nullable=False, unique=True)
     email = db.Column(db.String, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
-    # default_expiry_delta = db.Column(db.Integer)
-    # consent_information = db.Column(db.String)
+    default_expiry_delta = db.Column(db.Integer)
+    consent_information = db.Column(db.String)
 
     roles = db.relationship("JoinStudyRole", cascade="all, delete-orphan")
 
@@ -1384,229 +1384,229 @@ class AboutSleepTemplate(db.Model):
         return "<AboutSleepTemplate %s>" % self.name
 
 
-# class StudySubject(db.Model):
-#     """
-#     The study_subject table mapping calss
+class StudySubject(db.Model):
+    """
+    The study_subject table mapping calss
 
-#     Vars
-#     ----
-#     id: sqlalchemy.Column
-#     created_on: sqlalchemy.Column
-#     email: sqlalchemy.Column
-#         The study subject's email as it is stored in AWS Cognito
-#     is_confirmed: sqlalchemy.Column
-#         Whether the user verified their email with AWS Cognito
-#     is_archived: sqlalchemy.Column
-#     studies: sqlalchemy.Column
-#         Any studies the subject is enrolled in
-#     apis: sqlalchemy.Column
-#         Any APIs that the subject has granted access to
-#     """
-#     __tablename__ = "study_subject"
-#     id = db.Column(db.Integer, primary_key=True)
-#     created_on = db.Column(db.DateTime, nullable=False)
-#     email = db.Column(db.String, nullable=False, unique=True)
-#     is_confirmed = db.Column(db.Boolean, default=False, nullable=False)
-#     is_archived = db.Column(db.Boolean, default=False, nullable=False)
+    Vars
+    ----
+    id: sqlalchemy.Column
+    created_on: sqlalchemy.Column
+    email: sqlalchemy.Column
+        The study subject's email as it is stored in AWS Cognito
+    is_confirmed: sqlalchemy.Column
+        Whether the user verified their email with AWS Cognito
+    is_archived: sqlalchemy.Column
+    studies: sqlalchemy.Column
+        Any studies the subject is enrolled in
+    apis: sqlalchemy.Column
+        Any APIs that the subject has granted access to
+    """
+    __tablename__ = "study_subject"
+    id = db.Column(db.Integer, primary_key=True)
+    created_on = db.Column(db.DateTime, nullable=False)
+    email = db.Column(db.String, nullable=False, unique=True)
+    is_confirmed = db.Column(db.Boolean, default=False, nullable=False)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
-#     # ignore archived studies
-#     studies = db.relationship(
-#         "JoinStudySubjectStudy",
-#         back_populates="study_subject",
-#         cascade="all, delete-orphan",
-#         primaryjoin=(
-#             "and_(" +
-#             "   StudySubject.id == JoinStudySubjectStudy.study_subject_id," +
-#             "   JoinStudySubjectStudy.study_id == Study.id," +
-#             "   Study.is_archived == False" +
-#             ")"
-#         )
-#     )
+    # ignore archived studies
+    studies = db.relationship(
+        "JoinStudySubjectStudy",
+        back_populates="study_subject",
+        cascade="all, delete-orphan",
+        primaryjoin=(
+            "and_(" +
+            "   StudySubject.id == JoinStudySubjectStudy.study_subject_id," +
+            "   JoinStudySubjectStudy.study_id == Study.id," +
+            "   Study.is_archived == False" +
+            ")"
+        )
+    )
 
-#     # ignore archived apis
-#     apis = db.relationship(
-#         "JoinStudySubjectApi",
-#         back_populates="study_subject",
-#         cascade="all, delete-orphan",
-#         primaryjoin=(
-#             "and_(" +
-#             "   StudySubject.id == JoinStudySubjectApi.study_subject_id," +
-#             "   JoinStudySubjectApi.api_id == Api.id," +
-#             "   Api.is_archived == False" +
-#             ")"
-#         )
-#     )
+    # ignore archived apis
+    apis = db.relationship(
+        "JoinStudySubjectApi",
+        back_populates="study_subject",
+        cascade="all, delete-orphan",
+        primaryjoin=(
+            "and_(" +
+            "   StudySubject.id == JoinStudySubjectApi.study_subject_id," +
+            "   JoinStudySubjectApi.api_id == Api.id," +
+            "   Api.is_archived == False" +
+            ")"
+        )
+    )
 
-#     @property
-#     def meta(self):
-#         return {
-#             "id": self.id,
-#             "createdOn": self.created_on,
-#             "email": self.email,
-#             "isConfirmed": self.is_confirmed,
-#             "studies": [join.meta for join in self.studies],
-#             "apis": [join.meta for join in self.apis],
-#         }
+    @property
+    def meta(self):
+        return {
+            "id": self.id,
+            "createdOn": self.created_on,
+            "email": self.email,
+            "isConfirmed": self.is_confirmed,
+            "studies": [join.meta for join in self.studies],
+            "apis": [join.meta for join in self.apis],
+        }
 
-#     def __repr__(self):
-#         return f"<StudySubject {self.email}>"
-
-
-# class JoinStudySubjectStudy(db.Model):
-#     """
-#     The join_study_subject_study table mapping class.
-
-#     Vars
-#     ----
-#     study_subject_id: sqlalchemy.Column
-#     study_id: sqlalchemy.Column
-#     did_consent: sqlalchemy.Column
-#         Whether the study subject consented to the collection of their data
-#     expires_on: sqlalchemy.Column
-#         When the study is no longer a part of the study and data should no
-#         longer be collected from any of the subject's approved APIs
-#     study_subject: sqlalchemy.orm.relationship
-#     study: sqlalchemy.orm.relationship
-#     """
-#     __tablename__ = "join_study_subject_study"
-
-#     study_subject_id = db.Column(
-#         db.Integer,
-#         db.ForeignKey("study_subject.id", ondelete="CASCADE"),
-#         primary_key=True
-#     )
-
-#     study_id = db.Column(
-#         db.Integer,
-#         db.ForeignKey("study.id"),  # do not allow deletions on study table
-#         primary_key=True
-#     )
-
-#     did_consent = db.Column(db.Boolean, default=False, nullable=False)
-#     expires_on = db.Column(db.DateTime, nullable=False)
-
-#     study_subject = db.relationship("StudySubject", back_populates="studies")
-#     study = db.relationship("Study")
-
-#     @hybrid_property
-#     def primary_key(self):
-#         """
-#         tuple of int: an entry's primary key.
-#         """
-#         return self.study_subject_id, self.study_id
-
-#     @primary_key.expression
-#     def primary_key(cls):
-#         return tuple_(cls.study_subject_id, cls.study_id)
-
-#     @property
-#     def meta(self):
-#         """
-#         dict: an entry's metadata.
-#         """
-#         return {
-#             "did_consent": self.did_consent,
-#             "expires_on": self.expires_on,
-#             "study": self.study.meta,
-#         }
-
-#     def __repr__(self):
-#         return "<JoinStudySubjectStudy %s-%s>" % self.primary_key
+    def __repr__(self):
+        return f"<StudySubject {self.email}>"
 
 
-# class JoinStudySubjectApi(db.Model):
-#     """
-#     The join_study_subject_api table mapping class.
+class JoinStudySubjectStudy(db.Model):
+    """
+    The join_study_subject_study table mapping class.
 
-#     Vars
-#     ----
-#     study_subject_id: sqlalchemy.Column
-#     api_id: sqlalchemy.Column
-#     api_user_uuid: sqlalchemy.Column
-#         The study subject's user ID associated with the API
-#     scope: sqlalchemy.Column
-#         The scope of data that the study subject approved access for
-#     access_key_uuid: sqlalchemy.Column
-#         A unique ID for locating the study subject's access key for the API
-#     refresh_key_uuid: sqlalchemy.Column
-#         A unique ID for locating the study subject's refresh key for the API
-#     study_subject: sqlalchemy.orm.relationship
-#     api: sqlalchemy.orm.relationship
-#     """
-#     __tablename__ = "join_study_subject_api"
+    Vars
+    ----
+    study_subject_id: sqlalchemy.Column
+    study_id: sqlalchemy.Column
+    did_consent: sqlalchemy.Column
+        Whether the study subject consented to the collection of their data
+    expires_on: sqlalchemy.Column
+        When the study is no longer a part of the study and data should no
+        longer be collected from any of the subject's approved APIs
+    study_subject: sqlalchemy.orm.relationship
+    study: sqlalchemy.orm.relationship
+    """
+    __tablename__ = "join_study_subject_study"
 
-#     study_subject_id = db.Column(
-#         db.Integer,
-#         db.ForeignKey("study_subject.id", ondelete="CASCADE"),
-#         primary_key=True
-#     )
+    study_subject_id = db.Column(
+        db.Integer,
+        db.ForeignKey("study_subject.id", ondelete="CASCADE"),
+        primary_key=True
+    )
 
-#     api_id = db.Column(
-#         db.Integer,
-#         db.ForeignKey("api.id"),  # Do not allow deletion on api table
-#         primary_key=True
-#     )
+    study_id = db.Column(
+        db.Integer,
+        db.ForeignKey("study.id"),  # do not allow deletions on study table
+        primary_key=True
+    )
 
-#     api_user_uuid = db.Column(db.String, nullable=False)
-#     scope = db.Column(db.ARRAY(db.String))
-#     access_key_uuid = db.Column(db.String, unique=True)
-#     refresh_key_uuid = db.Column(db.String, unique=True)
+    did_consent = db.Column(db.Boolean, default=False, nullable=False)
+    expires_on = db.Column(db.DateTime, nullable=False)
 
-#     study_subject = db.relationship("StudySubject", back_populates="apis")
-#     api = db.relationship("Api")
+    study_subject = db.relationship("StudySubject", back_populates="studies")
+    study = db.relationship("Study")
 
-#     @hybrid_property
-#     def primary_key(self):
-#         """
-#         tuple of int: an entry's primary key.
-#         """
-#         return self.study_subject_id, self.api_id
+    @hybrid_property
+    def primary_key(self):
+        """
+        tuple of int: an entry's primary key.
+        """
+        return self.study_subject_id, self.study_id
 
-#     @primary_key.expression
-#     def primary_key(cls):
-#         return tuple_(cls.study_subject_id, cls.api_id)
+    @primary_key.expression
+    def primary_key(cls):
+        return tuple_(cls.study_subject_id, cls.study_id)
 
-#     @property
-#     def meta(self):
-#         """
-#         dict: an entry's metadata.
-#         """
-#         return {
-#             "api_user_uuid": self.api_user_uuid,
-#             "scope": self.scope,
-#             "access_key_uuid": self.access_key_uuid,
-#             "refresh_key_uuid": self.refresh_key_uuid,
-#             "api": self.api.meta,
-#         }
+    @property
+    def meta(self):
+        """
+        dict: an entry's metadata.
+        """
+        return {
+            "did_consent": self.did_consent,
+            "expires_on": self.expires_on,
+            "study": self.study.meta,
+        }
 
-#     def __repr__(self):
-#         return "<JoinStudySubjectApi %s-%s>" % self.primary_key
+    def __repr__(self):
+        return "<JoinStudySubjectStudy %s-%s>" % self.primary_key
 
 
-# class Api(db.Model):
-#     """
-#     The api table mapping class
+class JoinStudySubjectApi(db.Model):
+    """
+    The join_study_subject_api table mapping class.
 
-#     Vars
-#     ----
-#     id: sqlalchemy.Column
-#     name: sqlalchemy.Column
-#     is_archived: sqlalchemy.Column
-#     """
-#     __tablename__ = "api"
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String, nullable=False, unique=True)
-#     is_archived = db.Column(db.Boolean, default=False, nullable=False)
+    Vars
+    ----
+    study_subject_id: sqlalchemy.Column
+    api_id: sqlalchemy.Column
+    api_user_uuid: sqlalchemy.Column
+        The study subject's user ID associated with the API
+    scope: sqlalchemy.Column
+        The scope of data that the study subject approved access for
+    access_key_uuid: sqlalchemy.Column
+        A unique ID for locating the study subject's access key for the API
+    refresh_key_uuid: sqlalchemy.Column
+        A unique ID for locating the study subject's refresh key for the API
+    study_subject: sqlalchemy.orm.relationship
+    api: sqlalchemy.orm.relationship
+    """
+    __tablename__ = "join_study_subject_api"
 
-#     @property
-#     def meta(self):
-#         """
-#         dict: an entry's metadata.
-#         """
-#         return {
-#             "id": self.id,
-#             "name": self.name
-#         }
+    study_subject_id = db.Column(
+        db.Integer,
+        db.ForeignKey("study_subject.id", ondelete="CASCADE"),
+        primary_key=True
+    )
 
-#     def __repr__(self):
-#         return "<Api %s>" % self.name
+    api_id = db.Column(
+        db.Integer,
+        db.ForeignKey("api.id"),  # Do not allow deletion on api table
+        primary_key=True
+    )
+
+    api_user_uuid = db.Column(db.String, nullable=False)
+    scope = db.Column(db.ARRAY(db.String))
+    access_key_uuid = db.Column(db.String, unique=True)
+    refresh_key_uuid = db.Column(db.String, unique=True)
+
+    study_subject = db.relationship("StudySubject", back_populates="apis")
+    api = db.relationship("Api")
+
+    @hybrid_property
+    def primary_key(self):
+        """
+        tuple of int: an entry's primary key.
+        """
+        return self.study_subject_id, self.api_id
+
+    @primary_key.expression
+    def primary_key(cls):
+        return tuple_(cls.study_subject_id, cls.api_id)
+
+    @property
+    def meta(self):
+        """
+        dict: an entry's metadata.
+        """
+        return {
+            "api_user_uuid": self.api_user_uuid,
+            "scope": self.scope,
+            "access_key_uuid": self.access_key_uuid,
+            "refresh_key_uuid": self.refresh_key_uuid,
+            "api": self.api.meta,
+        }
+
+    def __repr__(self):
+        return "<JoinStudySubjectApi %s-%s>" % self.primary_key
+
+
+class Api(db.Model):
+    """
+    The api table mapping class
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    name: sqlalchemy.Column
+    is_archived: sqlalchemy.Column
+    """
+    __tablename__ = "api"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False, unique=True)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
+
+    @property
+    def meta(self):
+        """
+        dict: an entry's metadata.
+        """
+        return {
+            "id": self.id,
+            "name": self.name
+        }
+
+    def __repr__(self):
+        return "<Api %s>" % self.name
