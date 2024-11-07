@@ -1,59 +1,68 @@
 import { ResponseBody } from "./interfaces";
 
-let csrfAccessToken = "";
-const crossorigin = Boolean(process.env.CROSSORIGIN)
+const crossorigin = Boolean(process.env.CROSSORIGIN);
 
-// make a request with options
-export const makeRequest = async (url: string, opts?: any): Promise<any> => {
-
-  // set credentials and crossorigin options
-  if (opts) opts.crossorigin = crossorigin;
-  else opts = {crossorigin: crossorigin}
-
+/**
+ * Makes a request with specified options.
+ * @param url - The endpoint URL.
+ * @param opts - Request options including method, headers, and body.
+ * @returns A promise that resolves to the response body.
+ */
+export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<any> => {
   const jwt = localStorage.getItem("jwt");
-  if (jwt) {
-    if (opts.headers) opts.headers["Authorization"] = `Bearer ${jwt}`;
-    else opts.headers = {"Authorization": `Bearer ${jwt}`};
+
+  // Set credentials and crossorigin options
+  opts.credentials = crossorigin ? "include" : "same-origin";
+
+  // Set headers
+  opts.headers = {
+    ...opts.headers,
+    ...(jwt && { Authorization: `Bearer ${jwt}` }),
+  };
+
+  // Add additional headers for specific request methods
+  if (["POST", "PUT", "DELETE"].includes(opts.method || "")) {
+    opts.headers = {
+      ...opts.headers,
+      "Content-Type": "application/json",
+      "X-CSRF-TOKEN": localStorage.getItem("csrfToken") || "",
+    };
   }
 
-  // if making a POST request
-  if (opts && opts.method == "POST") {
+  // Execute the request
+  const response = await fetch(`${process.env.REACT_APP_FLASK_SERVER}${url}`, opts);
+  const body: ResponseBody = await response.json();
 
-    // set the content type and CSRF token headers
-    if (opts.headers) {
-      opts.headers["Content-Type"] = "application/json";
-      opts.headers["X-CSRF-TOKEN"] = csrfAccessToken;
-    } else
-      opts.headers = {
-        "Content-Type": "application/json",
-        "X-CSRF-TOKEN": csrfAccessToken
-      };
+  // Store CSRF token for future requests
+  if (response.status === 200) {
+    if (body.csrfAccessToken) localStorage.setItem("csrfToken", body.csrfAccessToken);
+    if (body.jwt) localStorage.setItem("jwt", body.jwt);
   }
 
-  // make the request
-  return fetch(process.env.REACT_APP_FLASK_SERVER + url, opts ? opts : {}).then(
-    async (res) => {
-      const body: ResponseBody = await res.json();
+  // Handle unauthorized responses
+  if (response.status === 401) {
+    localStorage.removeItem("jwt");
+    localStorage.removeItem("csrfToken");
+    window.location.href = "/login";
+    throw body;
+  }
 
-      // save the CSRF token for the next request
-      if (res.status == 200 && body.csrfAccessToken)
-        csrfAccessToken = body.csrfAccessToken;
+  // Throw an error if the response is not successful
+  if (response.status !== 200) {
+    throw body;
+  }
 
-      if (res.status == 200 && body.jwt)
-        localStorage.setItem("jwt", body.jwt);
-
-      if (res.status != 200)
-
-        // if the user's token expired, refresh the page to show the login screen
-        if (body.msg == "Token has expired" && url != "/iam/check-login")
-          location.reload();
-        else throw body;
-      else return body;
-    }
-  );
+  return body;
 };
 
-// check whether the user is allowed to complete a requested action on a requested resource
+/**
+ * Checks if the user has permission to perform a specified action on a resource.
+ * @param app - Application ID.
+ * @param action - Action to be checked (e.g., "read", "write").
+ * @param resource - Resource identifier.
+ * @param study - (Optional) Study ID.
+ * @returns A promise that resolves if authorized or throws an error if unauthorized.
+ */
 export const getAccess = async (
   app: number,
   action: string,
@@ -62,6 +71,7 @@ export const getAccess = async (
 ): Promise<void> => {
   let url = `/iam/get-access?app=${app}&action=${action}&resource=${resource}`;
   if (study) url += `&study=${study}`;
+
   const res: ResponseBody = await makeRequest(url);
-  if (res.msg != "Authorized") throw "Unauthorized";
+  if (res.msg !== "Authorized") throw new Error("Unauthorized");
 };
