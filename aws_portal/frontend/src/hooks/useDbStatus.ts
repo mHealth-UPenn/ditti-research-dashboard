@@ -9,7 +9,6 @@ import { ResponseBody } from "../interfaces";
  * 
  * @returns {boolean} - `true` if the database is still loading or unreachable, `false` if connected.
  */
-
 export const useDbStatus = () => {
   const [loadingDb, setLoadingDb] = useState<boolean>(false);
 

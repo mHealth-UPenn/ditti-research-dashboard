@@ -21,8 +21,8 @@ const LoginPage: React.FC = () => {
   const [setPasswordField, setSetPasswordField] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [fading, setFading] = useState<boolean>(false);
-
   const loadingDb = useDbStatus();
+  const navigate = useNavigate();
 
   const {
     isIamAuthenticated,
@@ -31,7 +31,6 @@ const LoginPage: React.FC = () => {
     login,
     setFirstLogin
   } = useAuth();
-  const navigate = useNavigate();
 
   /**
    * Triggers fade effect when loading changes
