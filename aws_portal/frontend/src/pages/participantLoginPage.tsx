@@ -13,17 +13,19 @@ const ParticipantLoginPage: React.FC = () => {
 
   // Enter triggers login
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Enter") {
-        cognitoLogin();
-      }
-    };
+    if (!loadingDb) {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Enter") {
+          cognitoLogin();
+        }
+      };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [cognitoLogin]);
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+      };
+    }
+  }, [loadingDb, cognitoLogin]);
 
   const page = (
     <div className="flex h-screen lg:mx-[6rem] xl:mx-[10rem] 2xl:mx-[20rem] bg-light">
