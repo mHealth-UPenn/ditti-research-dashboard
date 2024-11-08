@@ -10,44 +10,50 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
  * AuthProvider component that wraps children with authentication context.
  */
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isIamAuthenticated, setIsIamAuthenticated] = useState<boolean>(false);
+  const [isCognitoAuthenticated, setIsCognitoAuthenticated] = useState<boolean>(false);
   const [firstLogin, setFirstLogin] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isIamLoading, setIsIamLoading] = useState<boolean>(true);
+  const [isCognitoLoading, setIsCognitoLoading] = useState<boolean>(true);
   const [csrfToken, setCsrfToken] = useState<string>("");
   const navigate = useNavigate();
 
   useEffect(() => {
     /**
-     * Checks authentication status on component mount.
+     * Checks IAM authentication status on component mount.
      */
-    const checkAuthStatus = async () => {
+    const checkIamAuthStatus = async () => {
       try {
         const jwt = localStorage.getItem("jwt");
         if (jwt) {
-          // Verify login status with a server request
           const res = await makeRequest("/iam/check-login", { method: "GET" });
-          if (res.msg === "Login successful") {
-            setIsAuthenticated(true);
-            setFirstLogin(false);
-          } else if (res.msg === "First login") {
-            setIsAuthenticated(true);
-            setFirstLogin(true);
-          } else {
-            setIsAuthenticated(false);
-            localStorage.removeItem("jwt");
-          }
+          setIsIamAuthenticated(res.msg === "Login successful");
         } else {
-          setIsAuthenticated(false);
+          setIsIamAuthenticated(false);
         }
-      } catch (error) {
-        setIsAuthenticated(false);
-        localStorage.removeItem("jwt");
+      } catch {
+        setIsIamAuthenticated(false);
       } finally {
-        setIsLoading(false);
+        setIsIamLoading(false);
       }
     };
 
-    checkAuthStatus();
+    /**
+     * Checks Cognito authentication status on component mount.
+     */
+    const checkCognitoAuthStatus = async () => {
+      try {
+        const res = await makeRequest("/cognito/check-login", { method: "GET" });
+        setIsCognitoAuthenticated(res.msg === "Login successful");
+      } catch {
+        setIsCognitoAuthenticated(false);
+      } finally {
+        setIsCognitoLoading(false);
+      }
+    };
+
+    checkIamAuthStatus();
+    checkCognitoAuthStatus();
   }, []);
 
   /**
@@ -55,7 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * @param email - The user's email
    * @param password - The user's password
    */
-  const login = async (email: string, password: string): Promise<void> => {
+  const iamLogin = async (email: string, password: string): Promise<void> => {
     const auth = Buffer.from(`${email}:${password}`).toString("base64");
     const headers = { Authorization: `Basic ${auth}` };
     const opts = { method: "POST", headers };
@@ -68,7 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setCsrfToken(res.csrfAccessToken);
           localStorage.setItem("csrfToken", res.csrfAccessToken);
         }
-        setIsAuthenticated(true);
+        setIsIamAuthenticated(true);
         if (res.msg === "First login") {
           setFirstLogin(true);
         } else {
@@ -77,29 +83,48 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
     } catch (error) {
-      setIsAuthenticated(false);
+      setIsIamAuthenticated(false);
       throw error;
     }
   };
 
   /**
-   * Logs out the user by clearing stored tokens and redirecting to login.
+   * Logs out the IAM user by clearing stored tokens and redirecting to login.
    */
-  const logout = (): void => {
+  const iamLogout = (): void => {
     localStorage.removeItem("jwt");
-    setIsAuthenticated(false);
+    setIsIamAuthenticated(false);
     navigate("/login");
+  };
+
+  /**
+   * Redirects to Cognito login page.
+   */
+  const cognitoLogin = (): void => {
+    window.location.href = "http://localhost:5000/cognito/login";
+  };
+
+  /**
+   * Logs out the Cognito user by redirecting to the logout endpoint.
+   */
+  const cognitoLogout = (): void => {
+    window.location.href = "http://localhost:5000/cognito/logout";
+    setIsCognitoAuthenticated(false);
   };
 
   return (
     <AuthContext.Provider
       value={{
-        isAuthenticated,
-        isLoading,
+        isIamAuthenticated,
+        isCognitoAuthenticated,
+        isIamLoading,
+        isCognitoLoading,
         firstLogin,
         csrfToken,
-        login,
-        logout,
+        login: iamLogin,
+        logout: iamLogout,
+        cognitoLogin,
+        cognitoLogout,
         setFirstLogin,
         setCsrfToken,
       }}

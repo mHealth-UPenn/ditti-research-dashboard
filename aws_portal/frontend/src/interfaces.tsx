@@ -257,22 +257,30 @@ export interface AudioFile {
 
 /**
  * Defines the authentication context structure.
- * @property isAuthenticated - Indicates if the user is authenticated.
- * @property isLoading - Indicates if authentication status is being checked.
+ * @property isIamAuthenticated - Indicates if the user is authenticated with IAM (Identity and Access Management).
+ * @property isCognitoAuthenticated - Indicates if the user is authenticated with Amazon Cognito.
+ * @property isIamLoading - Indicates if the IAM authentication status is being checked.
+ * @property isCognitoLoading - Indicates if the Cognito authentication status is being checked.
  * @property firstLogin - Indicates if it's the user's first login.
  * @property csrfToken - The CSRF token for secure requests.
- * @property login - Function to log in the user.
+ * @property login - Function to log in the user with email and password.
  * @property logout - Function to log out the user.
+ * @property cognitoLogin - Function to log in the user specifically with Cognito authentication.
+ * @property cognitoLogout - Function to log out the user from Cognito.
  * @property setFirstLogin - Sets whether this is the user's first login.
  * @property setCsrfToken - Sets the CSRF token.
  */
 export interface AuthContextType {
-  isAuthenticated: boolean;
-  isLoading: boolean;
+  isIamAuthenticated: boolean;
+  isCognitoAuthenticated: boolean;
+  isIamLoading: boolean;
+  isCognitoLoading: boolean;
   firstLogin: boolean;
   csrfToken: string;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  setFirstLogin: (value: boolean) => void;
-  setCsrfToken: (token: string) => void;
+  cognitoLogin: () => void;
+  cognitoLogout: () => void;
+  setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
+  setCsrfToken: React.Dispatch<React.SetStateAction<string>>;
 }
