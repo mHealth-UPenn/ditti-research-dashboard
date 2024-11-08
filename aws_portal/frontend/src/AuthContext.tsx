@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Buffer } from "buffer";
 import { makeRequest } from "./utils";
@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * @param email - The user's email
    * @param password - The user's password
    */
-  const iamLogin = async (email: string, password: string): Promise<void> => {
+  const iamLogin = useCallback(async (email: string, password: string): Promise<void> => {
     const auth = Buffer.from(`${email}:${password}`).toString("base64");
     const headers = { Authorization: `Basic ${auth}` };
     const opts = { method: "POST", headers };
@@ -86,31 +86,31 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsIamAuthenticated(false);
       throw error;
     }
-  };
+  }, [navigate]);
 
   /**
    * Logs out the IAM user by clearing stored tokens and redirecting to login.
    */
-  const iamLogout = (): void => {
+  const iamLogout = useCallback((): void => {
     localStorage.removeItem("jwt");
     setIsIamAuthenticated(false);
     navigate("/login");
-  };
+  }, [navigate]);
 
   /**
    * Redirects to Cognito login page.
    */
-  const cognitoLogin = (): void => {
+  const cognitoLogin = useCallback((): void => {
     window.location.href = "http://localhost:5000/cognito/login";
-  };
+  }, []);
 
   /**
    * Logs out the Cognito user by redirecting to the logout endpoint.
    */
-  const cognitoLogout = (): void => {
+  const cognitoLogout = useCallback((): void => {
     window.location.href = "http://localhost:5000/cognito/logout";
     setIsCognitoAuthenticated(false);
-  };
+  }, []);
 
   return (
     <AuthContext.Provider
