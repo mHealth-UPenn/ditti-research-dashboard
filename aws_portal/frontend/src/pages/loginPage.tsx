@@ -8,6 +8,7 @@ import { ReactComponent as Key } from "../icons/key.svg";
 import { FullLoader } from "../components/loader";
 import AsyncButton from "../components/buttons/asyncButton";
 import { useAuth } from "../hooks/useAuth";
+import { useDbStatus } from "../hooks/useDbStatus";
 import "./loginPage.css";
 
 /**
@@ -19,8 +20,9 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState<string>("");
   const [setPasswordField, setSetPasswordField] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [loadingDb, setLoadingDb] = useState<boolean>(false);
   const [fading, setFading] = useState<boolean>(false);
+
+  const loadingDb = useDbStatus();
 
   const {
     isIamAuthenticated,
@@ -30,18 +32,6 @@ const LoginPage: React.FC = () => {
     setFirstLogin
   } = useAuth();
   const navigate = useNavigate();
-
-  /**
-   * Checks app's status on component mount
-   */
-  useEffect(() => {
-    touch().then((msg: string) => {
-      if (msg !== "OK") {
-        setLoadingDb(true);
-        const id: ReturnType<typeof setInterval> = setInterval(() => touch(id), 2000);
-      }
-    });
-  }, []);
 
   /**
    * Triggers fade effect when loading changes
@@ -61,19 +51,6 @@ const LoginPage: React.FC = () => {
       navigate("/");
     }
   }, [isIamAuthenticated, firstLogin, navigate]);
-
-  /**
-   * Touches the server endpoint to check if the app is ready
-   */
-  const touch = async (id?: ReturnType<typeof setInterval>): Promise<string> => {
-    try {
-      const res: ResponseBody = await makeRequest("/touch");
-      if (res.msg === "OK" && id) clearInterval(id);
-      return res.msg;
-    } catch (error) {
-      return "Error";
-    }
-  };
 
   /**
    * Attempts to log the IAM user in

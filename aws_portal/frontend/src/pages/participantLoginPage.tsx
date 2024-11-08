@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { makeRequest } from "../utils";
-import { ResponseBody } from "../interfaces";
+import React from "react";
 import { FullLoader } from "../components/loader";
 import { useAuth } from "../hooks/useAuth";
+import { useDbStatus } from "../hooks/useDbStatus";
 import "./loginPage.css";
 
 /**
@@ -10,32 +9,7 @@ import "./loginPage.css";
  */
 const ParticipantLoginPage: React.FC = () => {
   const { cognitoLogin } = useAuth();
-  const [loadingDb, setLoadingDb] = useState<boolean>(false);
-
-  /**
-   * Touches the server endpoint to check if the app is ready
-   */
-  const touch = async (id?: ReturnType<typeof setInterval>): Promise<string> => {
-    try {
-      const res: ResponseBody = await makeRequest("/touch");
-      if (res.msg === "OK" && id) clearInterval(id);
-      return res.msg;
-    } catch (error) {
-      return "Error";
-    }
-  };
-
-  /**
-   * Checks app's status on component mount
-   */
-  useEffect(() => {
-    touch().then((msg: string) => {
-      if (msg !== "OK") {
-        setLoadingDb(true);
-        const intervalId: ReturnType<typeof setInterval> = setInterval(() => touch(intervalId), 2000);
-      }
-    });
-  }, []);
+  const loadingDb = useDbStatus();
 
   const page = (
     <div className="flex h-screen lg:mx-[6rem] xl:mx-[10rem] 2xl:mx-[20rem] bg-light">
