@@ -27,37 +27,8 @@ def build_cognito_url(path: str, params: dict) -> str:
 @blueprint.route("/login")
 def login():
     """
-    Redirect users to the Cognito login page after ensuring the database is ready.
+    Redirect users to the Cognito login page.
     """
-    # Attempt to touch the database until it's ready
-    max_retries = 5
-    retries = 0
-    while retries < max_retries:
-        try:
-            res = requests.get(url_for('base.touch', _external=True))
-            res.raise_for_status()
-            data = res.json()
-            msg = data.get('msg', '')
-
-            if msg == "OK":
-                logger.info("Database is ready.")
-                break
-            # TODO: Determine if we need to retry before redirecting to Cognito
-            elif msg == "STARTING":
-                logger.info("Database is starting. Retrying in 2 seconds...")
-                time.sleep(2)
-            else:
-                logger.error(f"Unexpected status from /touch: {msg}")
-                return make_response({"msg": msg}, 500)
-        except requests.RequestException as e:
-            logger.error(f"Error contacting /touch endpoint: {e}")
-            time.sleep(2)
-        retries += 1
-    else:
-        logger.error("Max retries reached. Database is not ready.")
-        return make_response({"msg": "Database is not ready."}, 500)
-
-    # Construct the Cognito authorization URL after the database is confirmed ready
     cognito_auth_url = build_cognito_url("/login", {
         "client_id": current_app.config['COGNITO_CLIENT_ID'],
         "response_type": "code",
