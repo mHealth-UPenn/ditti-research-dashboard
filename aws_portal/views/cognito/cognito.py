@@ -132,7 +132,13 @@ def cognito_callback():
 
     # Store study subject ID in session and prepare the response
     session["study_subject_id"] = study_subject.id
-    response = make_response(redirect("/cognito/fitbit/authorize"))
+
+    # Redirect to the front-end PartitipantDashboard
+    frontend_base_url = current_app.config.get(
+        'CORS_ORIGINS', 'http://localhost:3000')
+    redirect_url = f"{frontend_base_url}/participant"
+
+    response = make_response(redirect(redirect_url))
 
     # Set tokens in secure, HTTP-only cookies
     response.set_cookie(
@@ -170,3 +176,21 @@ def logout():
     response.set_cookie("access_token", "", expires=0)
 
     return response
+
+
+@blueprint.route("/check-login", methods=["GET"])
+def check_login():
+    """
+    Checks if the user is authenticated via Cognito.
+    """
+    id_token = request.cookies.get('id_token')
+    if not id_token:
+        return make_response({"msg": "Not authenticated"}, 401)
+
+    try:
+        claims = verify_token(id_token, token_use="id")
+        return make_response({"msg": "Login successful"}, 200)
+    except jwt.ExpiredSignatureError:
+        return make_response({"msg": "Token has expired."}, 401)
+    except jwt.InvalidTokenError as e:
+        return make_response({"msg": f"Invalid token: {str(e)}"}, 401)

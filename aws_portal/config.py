@@ -56,4 +56,4 @@ class Production(Default):
 
 class Testing(Default):
     TESTING = True
-    CORS_ORIGINS = ["http://localhost:3000"]
+    CORS_ORIGINS = "http://localhost:3000"
