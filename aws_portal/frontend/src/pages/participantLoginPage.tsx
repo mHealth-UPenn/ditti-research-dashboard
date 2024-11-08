@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { makeRequest } from "./utils";
-import { ResponseBody } from "./interfaces";
-import { FullLoader } from "./components/loader";
-import { useAuth } from "./hooks/useAuth";
+import { makeRequest } from "../utils";
+import { ResponseBody } from "../interfaces";
+import { FullLoader } from "../components/loader";
+import { useAuth } from "../hooks/useAuth";
 import "./loginPage.css";
 
 /**

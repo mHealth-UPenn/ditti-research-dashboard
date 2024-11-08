@@ -1,10 +1,10 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider, Outlet, RouteObject } from "react-router-dom";
-import LoginPage from "./loginPage";
-import ParticipantLoginPage from "./participantLoginPage";
+import LoginPage from "./pages/loginPage";
+import ParticipantLoginPage from "./pages/participantLoginPage";
 import Dashboard from "./components/dashboard";
-import ParticipantDashboard from "./participantDashboard";
+import ParticipantDashboard from "./components/participantDashboard";
 import ProtectedRoute from "./components/protectedRoute";
 import { AuthProvider } from "./AuthContext";
 import "./index.css";

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { makeRequest } from "./utils";
-import { ResponseBody } from "./interfaces";
-import TextField from "./components/fields/textField";
-import { ReactComponent as Person } from "./icons/person.svg";
-import { ReactComponent as Key } from "./icons/key.svg";
-import { FullLoader } from "./components/loader";
-import AsyncButton from "./components/buttons/asyncButton";
-import { useAuth } from "./hooks/useAuth";
+import { makeRequest } from "../utils";
+import { ResponseBody } from "../interfaces";
+import TextField from "../components/fields/textField";
+import { ReactComponent as Person } from "../icons/person.svg";
+import { ReactComponent as Key } from "../icons/key.svg";
+import { FullLoader } from "../components/loader";
+import AsyncButton from "../components/buttons/asyncButton";
+import { useAuth } from "../hooks/useAuth";
 import "./loginPage.css";
 
 /**
