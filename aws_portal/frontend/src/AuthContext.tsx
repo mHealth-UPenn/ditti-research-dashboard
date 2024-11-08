@@ -121,8 +121,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isCognitoLoading,
         firstLogin,
         csrfToken,
-        login: iamLogin,
-        logout: iamLogout,
+        iamLogin,
+        iamLogout,
         cognitoLogin,
         cognitoLogout,
         setFirstLogin

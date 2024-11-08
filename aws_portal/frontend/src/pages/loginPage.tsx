@@ -28,7 +28,7 @@ const LoginPage: React.FC = () => {
     isIamAuthenticated,
     firstLogin,
     isIamLoading,
-    login,
+    iamLogin,
     setFirstLogin
   } = useAuth();
 
@@ -56,7 +56,7 @@ const LoginPage: React.FC = () => {
    */
   const tryLogIn = async (): Promise<void> => {
     try {
-      await login(email, password);
+      await iamLogin(email, password);
     } catch (error) {
       const errorMessage = (error as { msg?: string }).msg;
       const msg = <span>{errorMessage ? errorMessage : "Internal server error"}</span>;

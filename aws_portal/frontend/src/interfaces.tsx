@@ -263,8 +263,8 @@ export interface AudioFile {
  * @property isCognitoLoading - Indicates if the Cognito authentication status is being checked.
  * @property firstLogin - Indicates if it's the user's first login.
  * @property csrfToken - The CSRF token for secure requests.
- * @property login - Function to log in the user with email and password.
- * @property logout - Function to log out the user.
+ * @property iamLogin - Function to log in the user with email and password with IAM.
+ * @property iamLogout - Function to log out the user with IAM.
  * @property cognitoLogin - Function to log in the user specifically with Cognito authentication.
  * @property cognitoLogout - Function to log out the user from Cognito.
  * @property setFirstLogin - Sets whether this is the user's first login.
@@ -276,8 +276,8 @@ export interface AuthContextType {
   isCognitoLoading: boolean;
   firstLogin: boolean;
   csrfToken: string;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  iamLogin: (email: string, password: string) => Promise<void>;
+  iamLogout: () => void;
   cognitoLogin: () => void;
   cognitoLogout: () => void;
   setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
