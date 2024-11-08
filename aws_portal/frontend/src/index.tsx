@@ -2,7 +2,9 @@ import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider, Outlet, RouteObject } from "react-router-dom";
 import LoginPage from "./loginPage";
+import ParticipantLoginPage from "./participantLoginPage";
 import Dashboard from "./components/dashboard";
+import ParticipantDashboard from "./participantDashboard";
 import ProtectedRoute from "./components/protectedRoute";
 import { AuthProvider } from "./AuthContext";
 import "./index.css";
@@ -18,7 +20,7 @@ const Root: React.FC = () => (
 );
 
 /**
- * Define application routes with nested routes for protected areas and login page.
+ * Define application routes with nested routes for protected areas and login pages.
  */
 const router = createBrowserRouter([
   {
@@ -26,14 +28,26 @@ const router = createBrowserRouter([
     element: <Root />,
     children: [
       {
+        index: true,
+        element: (
+          <ProtectedRoute authMethod='iam'>
+            <Dashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: "login",
         element: <LoginPage />,
       },
       {
-        path: "/",
+        path: "participant/login",
+        element: <ParticipantLoginPage />,
+      },
+      {
+        path: "participant",
         element: (
-          <ProtectedRoute>
-            <Dashboard />
+          <ProtectedRoute authMethod='cognito'>
+            <ParticipantDashboard />
           </ProtectedRoute>
         ),
       },
