@@ -1,6 +1,7 @@
 import { ResponseBody } from "./interfaces";
 
-const crossorigin = Boolean(process.env.CROSSORIGIN);
+// TODO: Find out what this was meant for
+// const crossorigin = Boolean(process.env.CROSSORIGIN);
 
 /**
  * Makes a request with specified options.
@@ -8,11 +9,12 @@ const crossorigin = Boolean(process.env.CROSSORIGIN);
  * @param opts - Request options including method, headers, and body.
  * @returns A promise that resolves to the response body.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<any> => {
   const jwt = localStorage.getItem("jwt");
 
-  // Set credentials and crossorigin options
-  opts.credentials = crossorigin ? "include" : "same-origin";
+  // Set credentials to include to send cookies
+  opts.credentials = 'include';
 
   // Set headers
   opts.headers = {
@@ -43,7 +45,6 @@ export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<
   if (response.status === 401) {
     localStorage.removeItem("jwt");
     localStorage.removeItem("csrfToken");
-    window.location.href = "/login";
     throw body;
   }
 
