@@ -1,10 +1,9 @@
 import jwt
 import logging
 import requests
-import time
 from datetime import datetime, timezone
 from flask import (
-    Blueprint, current_app, make_response, redirect, request, session, url_for
+    Blueprint, current_app, make_response, redirect, request, session
 )
 from urllib.parse import urlencode
 from aws_portal.extensions import db
