@@ -11,7 +11,7 @@ import { useAuth } from "./hooks/useAuth";
 import "./loginPage.css";
 
 /**
- * LoginPage component
+ * LoginPage component for IAM authentication
  */
 const LoginPage: React.FC = () => {
   const [flashMessages, setFlashMessages] = useState<{ id: number; element: React.ReactElement }[]>([]);
@@ -23,13 +23,11 @@ const LoginPage: React.FC = () => {
   const [fading, setFading] = useState<boolean>(false);
 
   const {
-    isAuthenticated,
+    isIamAuthenticated,
     firstLogin,
-    isLoading,
+    isIamLoading,
     login,
-    setFirstLogin,
-    csrfToken,
-    setCsrfToken,
+    setFirstLogin
   } = useAuth();
   const navigate = useNavigate();
 
@@ -49,11 +47,20 @@ const LoginPage: React.FC = () => {
    * Triggers fade effect when loading changes
    */
   useEffect(() => {
-    if (!isLoading && !loadingDb) {
+    if (!isIamLoading && !loadingDb) {
       setFading(true);
       setTimeout(() => setFading(false), 500);
     }
-  }, [isLoading, loadingDb]);
+  }, [isIamLoading, loadingDb]);
+
+  /**
+   * Redirects authenticated IAM users to the Research Coordinator Dashboard
+   */
+  useEffect(() => {
+    if (isIamAuthenticated && !firstLogin) {
+      navigate("/");
+    }
+  }, [isIamAuthenticated, firstLogin, navigate]);
 
   /**
    * Touches the server endpoint to check if the app is ready
@@ -69,7 +76,7 @@ const LoginPage: React.FC = () => {
   };
 
   /**
-   * Attempts to log the user in
+   * Attempts to log the IAM user in
    */
   const tryLogIn = async (): Promise<void> => {
     try {
@@ -215,13 +222,13 @@ const LoginPage: React.FC = () => {
 
   return (
     <>
-      {(isLoading || loadingDb || fading) && (
+      {(isIamLoading || loadingDb || fading) && (
         <FullLoader
-          loading={isLoading || loadingDb}
+          loading={isIamLoading || loadingDb}
           msg={loadingDb ? "Starting the database... This may take up to 6 minutes" : ""}
         />
       )}
-      {(!isAuthenticated || firstLogin) && page}
+      {(!isIamAuthenticated || firstLogin) && page}
     </>
   );
 };

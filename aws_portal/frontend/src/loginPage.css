@@ -1,3 +1,4 @@
+/* src/loginPage.css */
 .login-container {
   display: flex;
   margin: 0 20rem;
@@ -50,10 +51,53 @@
   width: 8rem;
 }
 
+.login-buttons-centered {
+  display: flex;
+  height: 3rem;
+  width: 8rem;
+  margin: auto;
+}
+
 .login-buttons button {
   flex-grow: 1;
 }
 
-.login-flash-message-container {
-  margin-bottom: 3rem;
+.flash-message-container {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+}
+
+.flash-message {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flash-message-danger {
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+.flash-message-close {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.cognito-login p {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.cognito-login .login-buttons {
+  justify-content: center;
+  margin: auto;
 }
