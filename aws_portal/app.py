@@ -73,7 +73,12 @@ def register_commands(app):
 
 def register_extensions(app):
     bcrypt.init_app(app)
-    cors.init_app(app)
+    cors.init_app(
+        app,
+        origins=app.config.get("CORS_ORIGINS", "*"),
+        allow_headers=app.config.get("CORS_ALLOW_HEADERS", ["Content-Type"]),
+        supports_credentials=app.config.get("CORS_SUPPORTS_CREDENTIALS", True)
+    )
     db.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)

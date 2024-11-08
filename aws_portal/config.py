@@ -8,6 +8,7 @@ class Default:
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "secret")
 
     CORS_ALLOW_HEADERS = ["Authorization", "Content-Type", "X-CSRF-TOKEN"]
+    CORS_SUPPORTS_CREDENTIALS = True
 
     JWT_TOKEN_LOCATION = "headers"
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
@@ -51,8 +52,8 @@ class Production(Default):
     ]
 
     CORS_ORIGINS = os.getenv("AWS_CLOUDFRONT_DOMAIN_NAME")
-    CORS_SUPPORTS_CREDENTIALS = True
 
 
 class Testing(Default):
     TESTING = True
+    CORS_ORIGINS = ["http://localhost:3000"]
