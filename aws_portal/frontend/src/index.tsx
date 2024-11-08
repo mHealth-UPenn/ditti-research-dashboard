@@ -7,17 +7,22 @@ import Dashboard from "./components/dashboard";
 import ParticipantDashboard from "./components/participantDashboard";
 import ProtectedRoute from "./components/protectedRoute";
 import { AuthProvider } from "./AuthContext";
+import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import "./index.css";
 import "./output.css";
 
 /**
  * Root component wrapped with AuthProvider for authentication context.
  */
-const Root: React.FC = () => (
-  <AuthProvider>
-    <Outlet />
-  </AuthProvider>
-);
+const Root: React.FC = () => {
+  useDocumentTitle("AWS Portal");
+
+  return (
+    <AuthProvider>
+      <Outlet />
+    </AuthProvider>
+  );
+};
 
 /**
  * Define application routes with nested routes for protected areas and login pages.
