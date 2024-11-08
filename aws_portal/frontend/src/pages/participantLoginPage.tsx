@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FullLoader } from "../components/loader";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
@@ -10,6 +10,20 @@ import "./loginPage.css";
 const ParticipantLoginPage: React.FC = () => {
   const { cognitoLogin } = useAuth();
   const loadingDb = useDbStatus();
+
+  // Enter triggers login
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        cognitoLogin();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [cognitoLogin]);
 
   const page = (
     <div className="flex h-screen lg:mx-[6rem] xl:mx-[10rem] 2xl:mx-[20rem] bg-light">

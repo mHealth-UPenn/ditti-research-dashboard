@@ -121,6 +121,7 @@ const LoginPage: React.FC = () => {
           type="password"
           placeholder="To log in, please enter a new password"
           onKeyup={(text: string) => setSetPasswordField(text)}
+          onKeyDown={(e) => e.key === "Enter" && trySetPassword()}
           value={setPasswordField}
         >
           <Key />
@@ -132,6 +133,7 @@ const LoginPage: React.FC = () => {
           type="password"
           placeholder="Confirm your password"
           onKeyup={(text: string) => setConfirmPassword(text)}
+          onKeyDown={(e) => e.key === "Enter" && trySetPassword()}
           value={confirmPassword}
         >
           <Key />
@@ -152,6 +154,7 @@ const LoginPage: React.FC = () => {
           id="login-email"
           placeholder="Email"
           onKeyup={(text: string) => setEmail(text)}
+          onKeyDown={(e) => e.key === "Enter" && tryLogIn()}
           value={email}
         >
           <Person />
@@ -163,6 +166,7 @@ const LoginPage: React.FC = () => {
           type="password"
           placeholder="Password"
           onKeyup={(text: string) => setPassword(text)}
+          onKeyDown={(e) => e.key === "Enter" && tryLogIn()}
           value={password}
         >
           <Key />
