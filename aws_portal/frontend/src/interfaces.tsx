@@ -268,7 +268,6 @@ export interface AudioFile {
  * @property cognitoLogin - Function to log in the user specifically with Cognito authentication.
  * @property cognitoLogout - Function to log out the user from Cognito.
  * @property setFirstLogin - Sets whether this is the user's first login.
- * @property setCsrfToken - Sets the CSRF token.
  */
 export interface AuthContextType {
   isIamAuthenticated: boolean;
@@ -282,5 +281,4 @@ export interface AuthContextType {
   cognitoLogin: () => void;
   cognitoLogout: () => void;
   setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
-  setCsrfToken: React.Dispatch<React.SetStateAction<string>>;
 }

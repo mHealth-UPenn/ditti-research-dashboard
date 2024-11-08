@@ -15,7 +15,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [firstLogin, setFirstLogin] = useState<boolean>(false);
   const [isIamLoading, setIsIamLoading] = useState<boolean>(true);
   const [isCognitoLoading, setIsCognitoLoading] = useState<boolean>(true);
-  const [csrfToken, setCsrfToken] = useState<string>("");
+  const [csrfToken, setCsrfToken] = useState<string>(localStorage.getItem("csrfToken") || "");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -125,8 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         logout: iamLogout,
         cognitoLogin,
         cognitoLogout,
-        setFirstLogin,
-        setCsrfToken,
+        setFirstLogin
       }}
     >
       {children}
