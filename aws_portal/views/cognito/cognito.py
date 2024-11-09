@@ -133,8 +133,7 @@ def logout():
 
     cognito_logout_url = build_cognito_url("/logout", {
         "client_id": current_app.config['COGNITO_CLIENT_ID'],
-        # TODO: Add logout URL to Cognito app settings and replace this
-        "redirect_uri": current_app.config['COGNITO_REDIRECT_URI'],
+        "logout_uri": current_app.config['COGNITO_LOGOUT_URI'],
         "response_type": "code",
         "scope": "openid email"
     })
