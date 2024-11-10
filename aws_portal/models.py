@@ -7,7 +7,7 @@ from sqlalchemy import func, select, tuple_
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.sql.schema import UniqueConstraint
-from aws_portal.extensions import bcrypt, db, jwt
+from aws_portal.extensions import bcrypt, db, jwt, tm
 
 logger = logging.getLogger(__name__)
 
@@ -946,6 +946,7 @@ class App(db.Model):
         return "<App %s>" % self.name
 
 
+# TODO: Add Why We Are Collecting Your Data
 class Study(db.Model):
     """
     The study table mapping class.
@@ -1286,7 +1287,7 @@ class JoinStudySubjectApi(db.Model):
         """
         dict: an entry's metadata.
         """
-        return {
+        metadata = {
             "api_user_uuid": self.api_user_uuid,
             "scope": self.scope,
             "access_key_uuid": self.access_key_uuid,
@@ -1294,8 +1295,18 @@ class JoinStudySubjectApi(db.Model):
             "api": self.api.meta,
         }
 
-    def __repr__(self):
-        return "<JoinStudySubjectApi %s-%s>" % self.primary_key
+        try:
+            tokens = tm.get_api_tokens(self.api.name, self.study_subject_id)
+            expires_at_unix = tokens.get('expires_at')
+            metadata['expires_at'] = (
+                datetime.fromtimestamp(expires_at_unix).isoformat()
+                if expires_at_unix is not None
+                else None
+            )
+        except Exception:
+            metadata['expires_at'] = None
+
+        return metadata
 
 
 class Api(db.Model):
