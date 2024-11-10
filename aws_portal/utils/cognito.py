@@ -168,7 +168,10 @@ def verify_token(token: str, token_use: str = "id") -> dict:
             algorithms=["RS256"],
             audience=audience if token_use == "id" else None,
             issuer=issuer,
-            options={"verify_aud": False} if token_use == "access" else None
+            options={"verify_aud": False} if token_use == "access" else None,
+            # Allow 5 second leeway for clock skew.
+            # Necessary for deleting Cognito user then immediatly creating new one.
+            leeway=5
         )
 
         # Verify the 'token_use' claim
