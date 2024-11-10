@@ -31,7 +31,8 @@ def login():
     cognito_auth_url = build_cognito_url("/login", {
         "client_id": current_app.config['COGNITO_CLIENT_ID'],
         "response_type": "code",
-        "scope": "openid email",
+        # TODO: Make user reauthenticate to add scope to delete account
+        "scope": "openid email aws.cognito.signin.user.admin",
         "redirect_uri": current_app.config['COGNITO_REDIRECT_URI'],
     })
     return redirect(cognito_auth_url)
@@ -91,7 +92,11 @@ def cognito_callback():
 
     # Check for study subject in database or create a new one
     study_subject = StudySubject.query.filter_by(email=email).first()
-    if not study_subject:
+    if study_subject:
+        if study_subject.is_archived:
+            return make_response({"msg": f"Account archived: {str(e)}"}, 400)
+    else:
+        # If no StudySubject exists with the given email, create a new one
         study_subject = StudySubject(
             created_on=datetime.now(timezone.utc),
             email=email,
@@ -134,8 +139,7 @@ def logout():
     cognito_logout_url = build_cognito_url("/logout", {
         "client_id": current_app.config['COGNITO_CLIENT_ID'],
         "logout_uri": current_app.config['COGNITO_LOGOUT_URI'],
-        "response_type": "code",
-        "scope": "openid email"
+        "response_type": "code"
     })
 
     response = make_response(redirect(cognito_logout_url))
