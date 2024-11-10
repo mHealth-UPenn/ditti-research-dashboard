@@ -34,6 +34,7 @@ class Default:
     COGNITO_LOGOUT_URI = "http://localhost:3000/participant/login"
     COGNITO_USER_POOL_ID = "us-east-1_HcIXYBqE2"
 
+    API_AUTHORIZE_REDIRECT = "http://localhost:3000/participant"
     FITBIT_CLIENT_ID = os.environ.get("DEV_FITBIT_CLIENT_ID")
     FITBIT_CLIENT_SECRET = os.environ.get("DEV_FITBIT_CLIENT_SECRET")
     FITBIT_REDIRECT_URI = "http://localhost:5000/cognito/fitbit/callback"

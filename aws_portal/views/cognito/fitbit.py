@@ -191,20 +191,8 @@ def fitbit_callback():
         logger.error(msg)
         return make_response({"msg": msg}, 500)
 
-    # Redirect the user to the Fitbit authorization success page
-    return redirect("/cognito/fitbit/success")
-
-
-@blueprint.route("/success")
-@cognito_auth_required
-def fitbit_success():
-    """
-    Provides a success message after successful Fitbit authorization.
-
-    Returns:
-        Any: A JSON response indicating successful authorization.
-    """
-    return jsonify({"msg": "Fitbit authorization successful. Try /cognito/fitbit/sleep_list now."})
+    # Redirect the user to the participant dashboard
+    return redirect(current_app.config["API_AUTHORIZE_REDIRECT"])
 
 
 @blueprint.route("/sleep_list")
@@ -228,8 +216,16 @@ def fitbit_sleep_list():
         study_subject_id=study_subject_id,
         api_id=fitbit_api.id
     ).first()
-    fitbit_session = get_fitbit_oauth_session(study_subject_fitbit)
-    sleep_list_data = fitbit_session.request(
-        'GET', 'https://api.fitbit.com/1.2/user/-/sleep/list.json?afterDate=2024-01-01&sort=asc&offset=0&limit=100').json()
+    try:
+        fitbit_session = get_fitbit_oauth_session(study_subject_fitbit)
+    except Exception as e:
+        msg = f"OAuth Session Error: {str(e)}"
+        return make_response({"msg": msg}, 401)
+    try:
+        sleep_list_data = fitbit_session.request(
+            'GET', 'https://api.fitbit.com/1.2/user/-/sleep/list.json?afterDate=2024-01-01&sort=asc&offset=0&limit=100').json()
+    except Exception as e:
+        msg = f"Fitbit Data Request Error: {str(e)}"
+        return make_response({"msg": msg}, 401)
 
     return jsonify(sleep_list_data)
