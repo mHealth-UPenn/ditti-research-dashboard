@@ -28,11 +28,15 @@ def login():
     """
     Redirect users to the Cognito login page.
     """
+    elevated = request.args.get("elevated") == "true"
+    scope = "openid email"
+    if elevated:
+        scope += " aws.cognito.signin.user.admin"
+
     cognito_auth_url = build_cognito_url("/login", {
         "client_id": current_app.config['COGNITO_CLIENT_ID'],
         "response_type": "code",
-        # TODO: Make user reauthenticate to add scope to delete account
-        "scope": "openid email aws.cognito.signin.user.admin",
+        "scope": scope,
         "redirect_uri": current_app.config['COGNITO_REDIRECT_URI'],
     })
     return redirect(cognito_auth_url)

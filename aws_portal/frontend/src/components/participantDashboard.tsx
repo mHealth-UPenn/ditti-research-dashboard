@@ -45,9 +45,17 @@ const ParticipantDashboard: React.FC = () => {
   };
 
   const deleteParticipant = async () => {
-    const res = await makeRequest("/participant", { method: "DELETE" });
-    console.log("Delete participant: ", res);
-    navigate("/participant/login");
+    try {
+      const res = await makeRequest("/participant", { method: "DELETE" });
+      console.log("Delete participant: ", res);
+      navigate("/participant/login");
+    } catch (error) {
+      console.error("Delete participant: ", error);
+      if ((error as { msg: string }).msg === "Insufficient permissions.") {
+        console.error("Redirecting to elevated login page");
+        navigate("/participant/login?elevated=true");
+      }
+    }
   };
 
   const fetchParticipantData = async () => {

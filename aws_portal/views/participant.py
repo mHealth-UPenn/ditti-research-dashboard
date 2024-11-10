@@ -4,7 +4,7 @@ import jwt
 import boto3
 from aws_portal.extensions import db
 from aws_portal.models import Api, StudySubject, JoinStudySubjectApi
-from aws_portal.utils.cognito import cognito_auth_required
+from aws_portal.utils.cognito import cognito_auth_required, get_token_scopes
 from aws_portal.utils.serialization import serialize_participant
 from aws_portal.extensions import tm
 
@@ -142,6 +142,12 @@ def delete_participant():
         if not study_subject:
             return make_response({"msg": "User not found or already archived."}, 404)
         study_subject_id = study_subject.id
+
+        # Check if user has scope to delete own account
+        scopes = get_token_scopes(access_token)
+        logger.error(f"Scopes: {scopes}")
+        if 'aws.cognito.signin.user.admin' not in scopes:
+            return make_response({"msg": "Insufficient permissions."}, 403)
 
         # TODO: Delete API data (DIT-16)
 

@@ -198,6 +198,34 @@ def verify_token(token: str, token_use: str = "id") -> dict:
         raise
 
 
+def get_token_scopes(access_token: str) -> list:
+    """
+    Decodes the JWT access token and retrieves the scopes.
+
+    Args:
+        access_token (str): The JWT access token.
+
+    Returns:
+        list: A list of scopes included in the access token.
+    """
+    try:
+        # Decode the token without verifying the signature
+        decoded_token = jwt.decode(access_token, options={
+                                   "verify_signature": False})
+
+        # Extract scopes
+        scopes = decoded_token.get("scope", "")
+        scope_list = scopes.split()
+
+        return scope_list
+    except jwt.DecodeError as e:
+        logger.error(f"Failed to decode access token: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error decoding token: {e}")
+        raise
+
+
 def cognito_auth_required(f):
     """
     Decorator for routes to enforce Cognito authentication using tokens from cookies.

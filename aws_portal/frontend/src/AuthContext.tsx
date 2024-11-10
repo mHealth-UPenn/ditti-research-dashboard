@@ -100,8 +100,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   /**
    * Redirects to Cognito login page.
    */
-  const cognitoLogin = useCallback((): void => {
-    window.location.href = "http://localhost:5000/cognito/login";
+  const cognitoLogin = useCallback((options?: { elevated: boolean }): void => {
+    if (options && options.elevated) {
+      window.location.href = "http://localhost:5000/cognito/login?elevated=true";
+    } else {
+      window.location.href = "http://localhost:5000/cognito/login";
+    }
   }, []);
 
   /**

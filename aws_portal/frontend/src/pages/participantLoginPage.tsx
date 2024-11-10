@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { FullLoader } from "../components/loader";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
@@ -8,8 +9,17 @@ import "./loginPage.css";
  * ParticipantLoginPage component for Cognito authentication with database touch and loader
  */
 const ParticipantLoginPage: React.FC = () => {
+  const [isElevated, setIsElevated] = useState(false);
+
   const { cognitoLogin } = useAuth();
   const loadingDb = useDbStatus();
+  const location = useLocation();
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const elevatedParam = urlParams.get("elevated");
+    setIsElevated(elevatedParam === "true");
+  }, [location.search]);
 
   // Enter triggers login
   useEffect(() => {
@@ -27,6 +37,14 @@ const ParticipantLoginPage: React.FC = () => {
     }
   }, [loadingDb, cognitoLogin]);
 
+  const handleCognitoLogin = () => {
+    if (isElevated) {
+      cognitoLogin({ elevated: true });
+    } else {
+      cognitoLogin();
+    }
+  };
+
   const page = (
     <div className="flex h-screen lg:mx-[6rem] xl:mx-[10rem] 2xl:mx-[20rem] bg-light">
       <div className="login-image-container">
@@ -41,11 +59,15 @@ const ParticipantLoginPage: React.FC = () => {
           <h1>Geriatric Sleep Research Lab</h1>
           <h3>Participant Portal</h3>
           <div className="cognito-login">
-            <p>Continue to our secure sign in:</p>
+            <p>
+              {isElevated
+                ? "To delete your account and its data, please sign in and try again."
+                : "Continue to our secure sign in:"}
+            </p>
             <div className="login-buttons">
               <button
                 className="button button-large button-primary"
-                onClick={cognitoLogin}
+                onClick={handleCognitoLogin}
               >
                 Sign In
               </button>
