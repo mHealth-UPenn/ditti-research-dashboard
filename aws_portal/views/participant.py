@@ -173,6 +173,7 @@ def delete_participant():
         # Delete user from AWS Cognito
         client = boto3.client('cognito-idp')
         try:
+            # Requires aws.cognito.signin.user.admin OpenID Connect scope
             client.delete_user(
                 AccessToken=access_token
             )
