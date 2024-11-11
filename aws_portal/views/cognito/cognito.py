@@ -1,11 +1,9 @@
-import jwt
 import logging
-import requests
 from datetime import datetime, timezone
-from flask import (
-    Blueprint, current_app, make_response, redirect, request, session
-)
 from urllib.parse import urlencode
+import jwt
+import requests
+from flask import Blueprint, current_app, make_response, redirect, request, session
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
 from aws_portal.utils.cognito import verify_token
@@ -34,10 +32,10 @@ def login():
         scope += " aws.cognito.signin.user.admin"
 
     cognito_auth_url = build_cognito_url("/login", {
-        "client_id": current_app.config['COGNITO_CLIENT_ID'],
+        "client_id": current_app.config["COGNITO_CLIENT_ID"],
         "response_type": "code",
         "scope": scope,
-        "redirect_uri": current_app.config['COGNITO_REDIRECT_URI'],
+        "redirect_uri": current_app.config["COGNITO_REDIRECT_URI"],
     })
     return redirect(cognito_auth_url)
 
@@ -58,7 +56,7 @@ def cognito_callback():
     code = request.args.get("code")
 
     # Construct token endpoint and request parameters
-    cognito_domain = current_app.config['COGNITO_DOMAIN']
+    cognito_domain = current_app.config["COGNITO_DOMAIN"]
     token_issuer_endpoint = f"https://{cognito_domain}/oauth2/token"
     data = {
         "grant_type": "authorization_code",
@@ -112,9 +110,10 @@ def cognito_callback():
     # Store study subject ID in session and prepare the response
     session["study_subject_id"] = study_subject.id
 
-    # Redirect to the front-end PartitipantDashboard
+    # Redirect to the front-end ParticipantDashboard
     frontend_base_url = current_app.config.get(
-        'CORS_ORIGINS', 'http://localhost:3000')
+        "CORS_ORIGINS", "http://localhost:3000"
+    )
     redirect_url = f"{frontend_base_url}/participant"
 
     response = make_response(redirect(redirect_url))
@@ -141,8 +140,8 @@ def logout():
     session.clear()
 
     cognito_logout_url = build_cognito_url("/logout", {
-        "client_id": current_app.config['COGNITO_CLIENT_ID'],
-        "logout_uri": current_app.config['COGNITO_LOGOUT_URI'],
+        "client_id": current_app.config["COGNITO_CLIENT_ID"],
+        "logout_uri": current_app.config["COGNITO_LOGOUT_URI"],
         "response_type": "code"
     })
 
@@ -160,7 +159,7 @@ def check_login():
     """
     Checks if the user is authenticated via Cognito.
     """
-    id_token = request.cookies.get('id_token')
+    id_token = request.cookies.get("id_token")
     if not id_token:
         return make_response({"msg": "Not authenticated"}, 401)
 

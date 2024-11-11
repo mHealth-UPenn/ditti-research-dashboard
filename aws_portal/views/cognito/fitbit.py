@@ -1,17 +1,18 @@
 import base64
 import logging
 import os
-import uuid
 import time
 import requests
-from flask import current_app, Blueprint, jsonify, make_response, redirect, request, session
+from flask import (
+    current_app, Blueprint, jsonify, make_response,
+    redirect, request, session
+)
 from oauthlib.oauth2 import WebApplicationClient
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, JoinStudySubjectApi
 from aws_portal.utils.cognito import cognito_auth_required
 from aws_portal.utils.fitbit import (
-    generate_code_verifier,
-    create_code_challenge,
+    generate_code_verifier, create_code_challenge,
     get_fitbit_oauth_session
 )
 
@@ -25,15 +26,17 @@ def fitbit_authorize():
     """
     Initiates the OAuth2 authorization flow with Fitbit.
 
-    Generates a code verifier and code challenge for PKCE, saves them along with a state parameter in the session,
-    constructs the Fitbit authorization URL, and redirects the user to Fitbit's login page.
+    Generates a code verifier and code challenge for PKCE,
+    saves them along with a state parameter in the session,
+    constructs the Fitbit authorization URL,
+    and redirects the user to Fitbit's login page.
 
     Returns:
         Any: A redirect response to Fitbit's authorization URL.
     """
-    fitbit_client_id = current_app.config['FITBIT_CLIENT_ID']
-    fitbit_redirect_uri = current_app.config['FITBIT_REDIRECT_URI']
-    scopes = ['sleep']  # Only request sleep data permission
+    fitbit_client_id = current_app.config["FITBIT_CLIENT_ID"]
+    fitbit_redirect_uri = current_app.config["FITBIT_REDIRECT_URI"]
+    scopes = ["sleep"]  # Only request sleep data permission
 
     # Initialize the OAuth2 client
     client = WebApplicationClient(fitbit_client_id)
@@ -44,12 +47,12 @@ def fitbit_authorize():
 
     # Generate a random state string for CSRF protection
     state = base64.urlsafe_b64encode(os.urandom(32))\
-        .rstrip(b'=')\
-        .decode('utf-8')
+        .rstrip(b"=")\
+        .decode("utf-8")
 
     # Save code_verifier and state in session for later verification
-    session['oauth_code_verifier'] = code_verifier
-    session['oauth_state'] = state
+    session["oauth_code_verifier"] = code_verifier
+    session["oauth_state"] = state
 
     # Prepare the Fitbit authorization URL with necessary parameters
     authorization_url = client.prepare_request_uri(
@@ -58,7 +61,7 @@ def fitbit_authorize():
         scope=scopes,
         state=state,
         code_challenge=code_challenge,
-        code_challenge_method='S256',
+        code_challenge_method="S256",
     )
 
     return redirect(authorization_url)
@@ -77,14 +80,14 @@ def fitbit_callback():
     Returns:
         Any: A redirect response to the Fitbit authorization success page or an error response.
     """
-    fitbit_client_id = current_app.config['FITBIT_CLIENT_ID']
-    fitbit_client_secret = current_app.config['FITBIT_CLIENT_SECRET']
-    fitbit_redirect_uri = current_app.config['FITBIT_REDIRECT_URI']
+    fitbit_client_id = current_app.config["FITBIT_CLIENT_ID"]
+    fitbit_client_secret = current_app.config["FITBIT_CLIENT_SECRET"]
+    fitbit_redirect_uri = current_app.config["FITBIT_REDIRECT_URI"]
 
     # Retrieve the saved state and code_verifier
-    state = session.get('oauth_state')
-    code_verifier = session.get('oauth_code_verifier')
-    study_subject_id = session.get('study_subject_id')
+    state = session.get("oauth_state")
+    code_verifier = session.get("oauth_code_verifier")
+    study_subject_id = session.get("study_subject_id")
 
     if not state or not code_verifier or not study_subject_id:
         msg = "Authorization failed: Missing state, code_verifier, or study_subject_id"
@@ -92,14 +95,14 @@ def fitbit_callback():
         return make_response({"msg": msg}, 400)
 
     # Verify the state parameter to prevent CSRF attacks
-    state_in_request = request.args.get('state')
+    state_in_request = request.args.get("state")
     if state_in_request != state:
         msg = "State mismatch"
         logger.error(msg)
         return make_response({"msg": msg}, 400)
 
     # Retrieve the authorization code from the request
-    code = request.args.get('code')
+    code = request.args.get("code")
     if not code:
         msg = "Authorization code not found"
         logger.error(msg)
@@ -210,7 +213,7 @@ def fitbit_sleep_list():
     Raises:
         Exception: If there is an error retrieving the sleep data.
     """
-    study_subject_id = session.get('study_subject_id')
+    study_subject_id = session.get("study_subject_id")
     fitbit_api = Api.query.filter_by(name="Fitbit").first()
     study_subject_fitbit = JoinStudySubjectApi.query.filter_by(
         study_subject_id=study_subject_id,
@@ -224,7 +227,8 @@ def fitbit_sleep_list():
             return make_response({"msg": msg}, 401)
         try:
             sleep_list_data = fitbit_session.request(
-                'GET', 'https://api.fitbit.com/1.2/user/-/sleep/list.json?afterDate=2024-01-01&sort=asc&offset=0&limit=100').json()
+                "GET", "https://api.fitbit.com/1.2/user/-/sleep/list.json?afterDate=2024-01-01&sort=asc&offset=0&limit=100"
+            ).json()
         except Exception as e:
             msg = f"Fitbit Data Request Error: {str(e)}"
             return make_response({"msg": msg}, 401)

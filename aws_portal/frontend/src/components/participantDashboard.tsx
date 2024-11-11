@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from "../hooks/useAuth";
 import { makeRequest } from "../utils";
 
 interface ApiData {
@@ -34,7 +34,7 @@ const ParticipantDashboard: React.FC = () => {
   }, []);
 
   const authorizeFitbit = () => {
-    window.location.href = 'http://localhost:5000/cognito/fitbit/authorize';
+    window.location.href = "http://localhost:5000/cognito/fitbit/authorize";
   };
 
   const revokeFitbit = async () => {

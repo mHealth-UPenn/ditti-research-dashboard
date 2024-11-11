@@ -1,18 +1,18 @@
 import logging
-from flask import Blueprint, jsonify, make_response, request
-import jwt
 import boto3
-from aws_portal.extensions import db
+import jwt
+from flask import Blueprint, jsonify, make_response, request
+from aws_portal.extensions import db, tm
 from aws_portal.models import Api, StudySubject, JoinStudySubjectApi
 from aws_portal.utils.cognito import cognito_auth_required, get_token_scopes
 from aws_portal.utils.serialization import serialize_participant
-from aws_portal.extensions import tm
 
-blueprint = Blueprint('participant', __name__, url_prefix='/participant')
+
+blueprint = Blueprint("participant", __name__, url_prefix="/participant")
 logger = logging.getLogger(__name__)
 
 
-@blueprint.route('', methods=['GET'])
+@blueprint.route("", methods=["GET"])
 @cognito_auth_required
 def get_participant():
     """
@@ -23,13 +23,13 @@ def get_participant():
     """
     try:
         # Get ID token from cookies
-        id_token = request.cookies.get('id_token')
+        id_token = request.cookies.get("id_token")
         if not id_token:
             return make_response({"msg": "Missing ID token."}, 401)
 
         # Decode ID token without verification to extract email
         claims = jwt.decode(id_token, options={"verify_signature": False})
-        email = claims.get('email')
+        email = claims.get("email")
         if not email:
             return make_response({"msg": "Email not found in token."}, 400)
 
@@ -49,7 +49,7 @@ def get_participant():
         return make_response({"msg": "Error retrieving participant data."}, 500)
 
 
-@blueprint.route('/api/<string:api_name>', methods=['DELETE'])
+@blueprint.route("/api/<string:api_name>", methods=["DELETE"])
 @cognito_auth_required
 def revoke_api_access(api_name):
     """
@@ -65,14 +65,14 @@ def revoke_api_access(api_name):
     """
     try:
         # Get tokens and claims
-        id_token = request.cookies.get('id_token')
+        id_token = request.cookies.get("id_token")
 
         if not id_token:
             return make_response({"msg": "Missing authentication tokens."}, 401)
 
         # Decode ID token to get claims
         claims = jwt.decode(id_token, options={"verify_signature": False})
-        email = claims.get('email')
+        email = claims.get("email")
         if not email:
             return make_response({"msg": "Email not found in token"}, 400)
 
@@ -97,7 +97,7 @@ def revoke_api_access(api_name):
                 api_name=api_name, study_subject_id=study_subject.id)
         except KeyError:
             logger.warning(f"Tokens for API '{api_name}' and StudySubject ID {
-                study_subject.id} not found.")
+                           study_subject.id} not found.")
 
         # Remove API access
         db.session.delete(join_api)
@@ -111,7 +111,7 @@ def revoke_api_access(api_name):
         return make_response({"msg": "Error revoking API access"}, 500)
 
 
-@blueprint.route('', methods=['DELETE'])
+@blueprint.route("", methods=["DELETE"])
 @cognito_auth_required
 def delete_participant():
     """
@@ -124,15 +124,15 @@ def delete_participant():
     """
     try:
         # Get tokens from cookies
-        id_token = request.cookies.get('id_token')
-        access_token = request.cookies.get('access_token')
+        id_token = request.cookies.get("id_token")
+        access_token = request.cookies.get("access_token")
 
         if not id_token or not access_token:
             return make_response({"msg": "Missing authentication tokens."}, 401)
 
         # Decode ID token to get claims
         claims = jwt.decode(id_token, options={"verify_signature": False})
-        email = claims.get('email')
+        email = claims.get("email")
         if not email:
             return make_response({"msg": "Email not found in token."}, 400)
 
@@ -146,7 +146,7 @@ def delete_participant():
         # Check if user has scope to delete own account
         scopes = get_token_scopes(access_token)
         logger.error(f"Scopes: {scopes}")
-        if 'aws.cognito.signin.user.admin' not in scopes:
+        if "aws.cognito.signin.user.admin" not in scopes:
             return make_response({"msg": "Insufficient permissions."}, 403)
 
         # TODO: Delete API data (DIT-16)
@@ -177,7 +177,7 @@ def delete_participant():
         db.session.commit()
 
         # Delete user from AWS Cognito
-        client = boto3.client('cognito-idp')
+        client = boto3.client("cognito-idp")
         try:
             # Requires aws.cognito.signin.user.admin OpenID Connect scope
             client.delete_user(
@@ -192,9 +192,9 @@ def delete_participant():
 
         # Clear cookies
         response = make_response({"msg": "Account deleted successfully."})
-        response.delete_cookie('id_token')
-        response.delete_cookie('access_token')
-        response.delete_cookie('refresh_token')
+        response.delete_cookie("id_token")
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
         return response
 
     except Exception as e:
