@@ -63,7 +63,7 @@ def login():
     cognito_auth_url = build_cognito_url(True, "/login", {
         "client_id": current_app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
         "response_type": "code",
-        "scope": "openid email",
+        "scope": "openid",
         "redirect_uri": current_app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
     })
     return redirect(cognito_auth_url)
@@ -118,8 +118,9 @@ def cognito_callback():
     except jwt.InvalidTokenError as e:
         return make_response({"msg": f"Invalid token: {str(e)}"}, 400)
 
-    # Get the user's email from token claims
-    email = claims.get("email")
+    # Get the user's user from token claims
+    # TODO: Drop the current email column and replace it with ditti_id
+    email = claims.get("cognito:username")
 
     # Check for study subject in database or create a new one
     study_subject = StudySubject.query.filter_by(email=email).first()
@@ -162,7 +163,7 @@ def logout():
         # TODO: Add logout URL to Cognito app settings and replace this
         "redirect_uri": current_app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
         "response_type": "code",
-        "scope": "openid email"
+        "scope": "openid"
     })
 
     response = make_response(redirect(cognito_logout_url))

@@ -15,10 +15,10 @@ def study_subject():
     """
     Fixture to provide a new unique study subject.
     """
-    unique_email = f"user_{uuid.uuid4()}@example.com"
+    unique_username = f"username_{uuid.uuid4()}"
     subject = StudySubject(
         created_on=datetime.utcnow(),
-        email=unique_email,
+        email=unique_username,
         is_confirmed=True
     )
     db.session.add(subject)
