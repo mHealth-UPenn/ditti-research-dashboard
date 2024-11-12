@@ -21,10 +21,10 @@ def clear_cognito_jwks_cache():
 def app():
     app = Flask(__name__)
     app.config["TESTING"] = True
-    app.config["COGNITO_REGION"] = "us-east-1"
-    app.config["COGNITO_USER_POOL_ID"] = "us-east-1_example"
-    app.config["COGNITO_CLIENT_ID"] = "example_client_id"
-    app.config["COGNITO_DOMAIN"] = "example.auth.us-east-1.amazoncognito.com"
+    app.config["COGNITO_PARTICIPANT_REGION"] = "us-east-1"
+    app.config["COGNITO_PARTICIPANT_USER_POOL_ID"] = "us-east-1_example"
+    app.config["COGNITO_PARTICIPANT_CLIENT_ID"] = "example_client_id"
+    app.config["COGNITO_PARTICIPANT_DOMAIN"] = "example.auth.us-east-1.amazoncognito.com"
     return app
 
 
@@ -182,8 +182,8 @@ def test_verify_token_success_id_token(app):
         public_key = MagicMock()
         payload = {
             "sub": "user123",
-            "iss": f"https://cognito-idp.{app.config['COGNITO_REGION']}.amazonaws.com/{app.config['COGNITO_USER_POOL_ID']}",
-            "aud": app.config["COGNITO_CLIENT_ID"],
+            "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
+            "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
             "token_use": "id",
         }
         with patch("aws_portal.utils.cognito.get_public_key", return_value=public_key):
@@ -194,7 +194,7 @@ def test_verify_token_success_id_token(app):
                     token,
                     public_key,
                     algorithms=["RS256"],
-                    audience=app.config["COGNITO_CLIENT_ID"],
+                    audience=app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
                     issuer=payload["iss"],
                     options=None,
                 )
@@ -206,9 +206,9 @@ def test_verify_token_success_access_token(app):
         public_key = MagicMock()
         payload = {
             "sub": "user123",
-            "iss": f"https://cognito-idp.{app.config['COGNITO_REGION']}.amazonaws.com/{app.config['COGNITO_USER_POOL_ID']}",
+            "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
             "token_use": "access",
-            "client_id": app.config["COGNITO_CLIENT_ID"],
+            "client_id": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
         }
         with patch("aws_portal.utils.cognito.get_public_key", return_value=public_key):
             with patch("aws_portal.utils.cognito.jwt.decode", return_value=payload) as mock_decode:
@@ -247,8 +247,8 @@ def test_verify_token_invalid_token_use(app):
                         # Simulate decode returning invalid 'token_use'
                         mock_jwt_decode.return_value = {
                             "sub": "user123",
-                            "iss": f"https://cognito-idp.{app.config['COGNITO_REGION']}.amazonaws.com/{app.config['COGNITO_USER_POOL_ID']}",
-                            "aud": app.config["COGNITO_CLIENT_ID"],
+                            "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
+                            "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
                             "token_use": "invalid",  # Invalid token_use
                         }
 

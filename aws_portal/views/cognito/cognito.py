@@ -19,7 +19,7 @@ def build_cognito_url(path: str, params: dict) -> str:
     """
     Constructs a full URL for AWS Cognito by combining the base domain, path, and query parameters.
     """
-    base_url = f"https://{current_app.config['COGNITO_DOMAIN']}"
+    base_url = f"https://{current_app.config['COGNITO_PARTICIPANT_DOMAIN']}"
     query_string = urlencode(params)
     return f"{base_url}{path}?{query_string}"
 
@@ -59,10 +59,10 @@ def login():
 
     # Construct the Cognito authorization URL after the database is confirmed ready
     cognito_auth_url = build_cognito_url("/login", {
-        "client_id": current_app.config['COGNITO_CLIENT_ID'],
+        "client_id": current_app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
         "response_type": "code",
         "scope": "openid email",
-        "redirect_uri": current_app.config['COGNITO_REDIRECT_URI'],
+        "redirect_uri": current_app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
     })
     return redirect(cognito_auth_url)
 
@@ -83,14 +83,14 @@ def cognito_callback():
     code = request.args.get("code")
 
     # Construct token endpoint and request parameters
-    cognito_domain = current_app.config['COGNITO_DOMAIN']
+    cognito_domain = current_app.config['COGNITO_PARTICIPANT_DOMAIN']
     token_issuer_endpoint = f"https://{cognito_domain}/oauth2/token"
     data = {
         "grant_type": "authorization_code",
-        "client_id": current_app.config["COGNITO_CLIENT_ID"],
-        "client_secret": current_app.config["COGNITO_CLIENT_SECRET"],
+        "client_id": current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
+        "client_secret": current_app.config["COGNITO_PARTICIPANT_CLIENT_SECRET"],
         "code": code,
-        "redirect_uri": current_app.config["COGNITO_REDIRECT_URI"],
+        "redirect_uri": current_app.config["COGNITO_PARTICIPANT_REDIRECT_URI"],
     }
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -156,9 +156,9 @@ def logout():
     session.clear()
 
     cognito_logout_url = build_cognito_url("/logout", {
-        "client_id": current_app.config['COGNITO_CLIENT_ID'],
+        "client_id": current_app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
         # TODO: Add logout URL to Cognito app settings and replace this
-        "redirect_uri": current_app.config['COGNITO_REDIRECT_URI'],
+        "redirect_uri": current_app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
         "response_type": "code",
         "scope": "openid email"
     })

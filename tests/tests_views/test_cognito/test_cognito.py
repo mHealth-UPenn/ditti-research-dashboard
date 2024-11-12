@@ -33,7 +33,7 @@ def test_build_cognito_url(app, client_with_cognito):
     with app.app_context():
         path = "/test-path"
         params = {"key1": "value1", "key2": "value2"}
-        expected_url = f"https://{app.config['COGNITO_DOMAIN']
+        expected_url = f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']
                                   }/test-path?key1=value1&key2=value2"
         constructed_url = build_cognito_url(path, params)
         assert constructed_url == expected_url
@@ -50,15 +50,15 @@ def test_login_success(app, client_with_cognito):
 
             # Expected Cognito auth URL
             params = {
-                "client_id": app.config['COGNITO_CLIENT_ID'],
+                "client_id": app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
                 "response_type": "code",
                 "scope": "openid email",
-                "redirect_uri": app.config['COGNITO_REDIRECT_URI'],
+                "redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
             }
             redirect_uri_encoded = urlencode(
-                {"redirect_uri": app.config['COGNITO_REDIRECT_URI']})
-            cognito_auth_url = f"https://{app.config['COGNITO_DOMAIN']}/login?" + \
-                f"client_id={app.config['COGNITO_CLIENT_ID']
+                {"redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI']})
+            cognito_auth_url = f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/login?" + \
+                f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']
                              }&response_type=code&scope=openid+email&redirect_uri={redirect_uri_encoded}"
 
             with patch("aws_portal.views.cognito.cognito.build_cognito_url", return_value=cognito_auth_url) as mock_build_url:
@@ -68,10 +68,10 @@ def test_login_success(app, client_with_cognito):
                 mock_get.assert_called_once_with(
                     url_for('base.touch', _external=True))
                 mock_build_url.assert_called_once_with("/login", {
-                    "client_id": app.config['COGNITO_CLIENT_ID'],
+                    "client_id": app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
                     "response_type": "code",
                     "scope": "openid email",
-                    "redirect_uri": app.config['COGNITO_REDIRECT_URI'],
+                    "redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
                 })
 
 
@@ -93,16 +93,16 @@ def test_login_database_starting_then_ok(app, client_with_cognito):
             with patch("aws_portal.views.cognito.cognito.time.sleep", return_value=None):
                 # Expected Cognito auth URL
                 params = {
-                    "client_id": app.config['COGNITO_CLIENT_ID'],
+                    "client_id": app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
                     "response_type": "code",
                     "scope": "openid email",
-                    "redirect_uri": app.config['COGNITO_REDIRECT_URI'],
+                    "redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
                 }
                 redirect_uri_encoded = urlencode(
-                    {"redirect_uri": app.config['COGNITO_REDIRECT_URI']})
-                cognito_auth_url = f"https://{app.config['COGNITO_DOMAIN']}/login?" + \
+                    {"redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI']})
+                cognito_auth_url = f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/login?" + \
                     f"client_id={
-                        app.config['COGNITO_CLIENT_ID']}&response_type=code&scope=openid+email&redirect_uri={redirect_uri_encoded}"
+                        app.config['COGNITO_PARTICIPANT_CLIENT_ID']}&response_type=code&scope=openid+email&redirect_uri={redirect_uri_encoded}"
 
                 with patch("aws_portal.views.cognito.cognito.build_cognito_url", return_value=cognito_auth_url) as mock_build_url:
                     response = client_with_cognito.get("/cognito/login")
@@ -110,10 +110,10 @@ def test_login_database_starting_then_ok(app, client_with_cognito):
                     assert response.headers["Location"] == cognito_auth_url
                     assert mock_get.call_count == 2
                     mock_build_url.assert_called_once_with("/login", {
-                        "client_id": app.config['COGNITO_CLIENT_ID'],
+                        "client_id": app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
                         "response_type": "code",
                         "scope": "openid email",
-                        "redirect_uri": app.config['COGNITO_REDIRECT_URI'],
+                        "redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
                     })
 
 
@@ -173,8 +173,8 @@ def test_cognito_callback_success_existing_user(app, client_with_cognito):
                 mock_verify_token.return_value = {
                     "email": "user@example.com",
                     "sub": "user123",
-                    "iss": f"https://cognito-idp.{app.config['COGNITO_REGION']}.amazonaws.com/{app.config['COGNITO_USER_POOL_ID']}",
-                    "aud": app.config["COGNITO_CLIENT_ID"],
+                    "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
+                    "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
                     "token_use": "id",
                 }
 
@@ -223,8 +223,8 @@ def test_cognito_callback_success_new_user(app, client_with_cognito):
                 mock_verify_token.return_value = {
                     "email": "newuser@example.com",
                     "sub": "newuser123",
-                    "iss": f"https://cognito-idp.{app.config['COGNITO_REGION']}.amazonaws.com/{app.config['COGNITO_USER_POOL_ID']}",
-                    "aud": app.config["COGNITO_CLIENT_ID"],
+                    "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
+                    "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
                     "token_use": "id",
                 }
 
@@ -331,15 +331,15 @@ def test_logout_success(app, client_with_cognito):
         # Mock build_cognito_url to return a known logout URL
         with patch("aws_portal.views.cognito.cognito.build_cognito_url") as mock_build_url:
             params = {
-                "client_id": app.config['COGNITO_CLIENT_ID'],
-                "redirect_uri": app.config['COGNITO_REDIRECT_URI'],
+                "client_id": app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
+                "redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
                 "response_type": "code",
                 "scope": "openid email"
             }
             redirect_uri_encoded = urlencode(
-                {"redirect_uri": app.config['COGNITO_REDIRECT_URI']})
-            cognito_logout_url = f"https://{app.config['COGNITO_DOMAIN']}/logout?" + \
-                f"client_id={app.config['COGNITO_CLIENT_ID']}&redirect_uri={
+                {"redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI']})
+            cognito_logout_url = f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/logout?" + \
+                f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']}&redirect_uri={
                     redirect_uri_encoded}&response_type=code&scope=openid+email"
             mock_build_url.return_value = cognito_logout_url
 
@@ -392,8 +392,8 @@ def test_cognito_callback_database_exception(app, client_with_cognito):
                 mock_verify_token.return_value = {
                     "email": "user@example.com",
                     "sub": "user123",
-                    "iss": f"https://cognito-idp.{app.config['COGNITO_REGION']}.amazonaws.com/{app.config['COGNITO_USER_POOL_ID']}",
-                    "aud": app.config["COGNITO_CLIENT_ID"],
+                    "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
+                    "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
                     "token_use": "id",
                 }
 
@@ -417,15 +417,15 @@ def test_cognito_logout_without_cookies(app, client_with_cognito):
         # Mock build_cognito_url to return a known logout URL
         with patch("aws_portal.views.cognito.cognito.build_cognito_url") as mock_build_url:
             params = {
-                "client_id": app.config['COGNITO_CLIENT_ID'],
-                "redirect_uri": app.config['COGNITO_REDIRECT_URI'],
+                "client_id": app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
+                "redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
                 "response_type": "code",
                 "scope": "openid email"
             }
             redirect_uri_encoded = urlencode(
-                {"redirect_uri": app.config['COGNITO_REDIRECT_URI']})
-            cognito_logout_url = f"https://{app.config['COGNITO_DOMAIN']}/logout?" + \
-                f"client_id={app.config['COGNITO_CLIENT_ID']}&redirect_uri={
+                {"redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI']})
+            cognito_logout_url = f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/logout?" + \
+                f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']}&redirect_uri={
                     redirect_uri_encoded}&response_type=code&scope=openid+email"
             mock_build_url.return_value = cognito_logout_url
 

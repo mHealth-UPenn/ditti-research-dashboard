@@ -23,8 +23,8 @@ def get_cognito_jwks():
         RequestException: If the JWKS could not be fetched due to a request issue.
     """
     try:
-        region = current_app.config['COGNITO_REGION']
-        user_pool_id = current_app.config['COGNITO_USER_POOL_ID']
+        region = current_app.config['COGNITO_PARTICIPANT_REGION']
+        user_pool_id = current_app.config['COGNITO_PARTICIPANT_USER_POOL_ID']
         issuer = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
         keys_url = f"{issuer}/.well-known/jwks.json"
 
@@ -100,11 +100,11 @@ def refresh_access_token(refresh_token: str) -> str:
     """
     try:
         # Prepare the request data for the token refresh request
-        cognito_domain = current_app.config['COGNITO_DOMAIN']
+        cognito_domain = current_app.config['COGNITO_PARTICIPANT_DOMAIN']
         token_issuer_endpoint = f"https://{cognito_domain}/oauth2/token"
         data = {
             "grant_type": "refresh_token",
-            "client_id": current_app.config["COGNITO_CLIENT_ID"],
+            "client_id": current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
             "refresh_token": refresh_token
         }
         headers = {
@@ -158,9 +158,9 @@ def verify_token(token: str, token_use: str = "id") -> dict:
             raise InvalidTokenError("Invalid token type specified.")
 
         # Decode and verify the token 'iss' claim and 'aud' claim for id tokens
-        audience = current_app.config["COGNITO_CLIENT_ID"]
-        region = current_app.config['COGNITO_REGION']
-        user_pool_id = current_app.config['COGNITO_USER_POOL_ID']
+        audience = current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"]
+        region = current_app.config['COGNITO_PARTICIPANT_REGION']
+        user_pool_id = current_app.config['COGNITO_PARTICIPANT_USER_POOL_ID']
         issuer = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
         claims = jwt.decode(
             token,
@@ -178,7 +178,7 @@ def verify_token(token: str, token_use: str = "id") -> dict:
 
         # Verify the 'client_id' claim in access tokens
         if token_use == "access":
-            if claims.get("client_id") != current_app.config["COGNITO_CLIENT_ID"]:
+            if claims.get("client_id") != current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"]:
                 raise InvalidTokenError(
                     "Access token 'client_id' does not match.")
 
