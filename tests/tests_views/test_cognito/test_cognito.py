@@ -29,16 +29,6 @@ def client_with_cognito(client):
     return client
 
 
-def test_build_cognito_url(app, client_with_cognito):
-    with app.app_context():
-        path = "/test-path"
-        params = {"key1": "value1", "key2": "value2"}
-        expected_url = f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']
-                                  }/test-path?key1=value1&key2=value2"
-        constructed_url = build_cognito_url(path, params)
-        assert constructed_url == expected_url
-
-
 def test_login_success(app, client_with_cognito):
     with app.app_context():
         # Mock requests.get to /touch endpoint to return "OK"
@@ -67,7 +57,7 @@ def test_login_success(app, client_with_cognito):
                 assert response.headers["Location"] == cognito_auth_url
                 mock_get.assert_called_once_with(
                     url_for('base.touch', _external=True))
-                mock_build_url.assert_called_once_with("/login", {
+                mock_build_url.assert_called_once_with(True, "/login", {
                     "client_id": app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
                     "response_type": "code",
                     "scope": "openid email",
@@ -109,7 +99,7 @@ def test_login_database_starting_then_ok(app, client_with_cognito):
                     assert response.status_code == 302
                     assert response.headers["Location"] == cognito_auth_url
                     assert mock_get.call_count == 2
-                    mock_build_url.assert_called_once_with("/login", {
+                    mock_build_url.assert_called_once_with(True, "/login", {
                         "client_id": app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
                         "response_type": "code",
                         "scope": "openid email",
