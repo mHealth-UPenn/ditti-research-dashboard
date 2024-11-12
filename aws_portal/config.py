@@ -25,15 +25,15 @@ class Default:
     AWS_TABLENAME_AUDIO_TAP = os.getenv("AWS_TABLENAME_AUDIO_TAP")
     AWS_AUDIO_FILE_BUCKET = os.getenv("AWS_AUDIO_FILE_BUCKET")
 
-    COGNITO_CLIENT_ID = os.environ.get("DEV_COGNITO_CLIENT_ID")
-    COGNITO_CLIENT_SECRET = os.environ.get("DEV_COGNITO_CLIENT_SECRET")
+    COGNITO_CLIENT_ID = os.environ.get("COGNITO_CLIENT_ID")
+    COGNITO_CLIENT_SECRET = os.environ.get("COGNITO_CLIENT_SECRET")
     COGNITO_DOMAIN = "penn-ditti-dev.auth.us-east-1.amazoncognito.com"
     COGNITO_REGION = "us-east-1"
     COGNITO_REDIRECT_URI = "http://localhost:5000/cognito/callback"
     COGNITO_USER_POOL_ID = "us-east-1_HcIXYBqE2"
 
-    FITBIT_CLIENT_ID = os.environ.get("DEV_FITBIT_CLIENT_ID")
-    FITBIT_CLIENT_SECRET = os.environ.get("DEV_FITBIT_CLIENT_SECRET")
+    FITBIT_CLIENT_ID = os.environ.get("FITBIT_CLIENT_ID")
+    FITBIT_CLIENT_SECRET = os.environ.get("FITBIT_CLIENT_SECRET")
     FITBIT_REDIRECT_URI = "http://localhost:5000/cognito/fitbit/callback"
 
 
