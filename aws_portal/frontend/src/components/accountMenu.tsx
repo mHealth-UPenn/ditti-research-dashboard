@@ -1,13 +1,12 @@
-import React, { RefObject } from "react";
-import { useState, useCallback } from "react";
+import { RefObject } from "react";
+import { useState } from "react";
 import { AccountDetails, ResponseBody, ViewProps } from "../interfaces";
 import TextField from "./fields/textField";
-import { ReactComponent as Right } from "../icons/arrowRight.svg";
 import "./accountMenu.css";
 import { makeRequest } from "../utils";
-import { useAuth } from "../hooks/useAuth";
 import AsyncButton from "./buttons/asyncButton";
 import Button from "./buttons/button";
+import { useAuth } from "../hooks/useAuth";
 
 /**
  * accountDetails: the current user's data
@@ -33,6 +32,8 @@ const AccountMenu = ({
   const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
   const [edit, setEdit] = useState(false);
   const [editPassword, setEditPassword] = useState(false);
+
+  const { iamLogout } = useAuth();
 
   /**
    * Make a POST request with changes
@@ -105,9 +106,6 @@ const AccountMenu = ({
     hideMenu();
   }
 
-  /**
-   * Logout the user
-   */
   const logout = () => {
     localStorage.removeItem("jwt");
     // refresh the window to show the login page
@@ -230,7 +228,7 @@ const AccountMenu = ({
           <div className="border-light border-b mb-6" />
           <div className="flex items-center justify-between">
             <span>Logout</span>
-            <Button variant="danger" size="sm" onClick={logout} rounded={true}>
+            <Button variant="danger" size="sm" onClick={iamLogout} rounded={true}>
               Logout
             </Button>
           </div>

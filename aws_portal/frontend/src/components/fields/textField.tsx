@@ -66,6 +66,7 @@ const TextField: React.FC<TextFieldProps> = ({
               <textarea
                 className={`w-full h-full resize-none focus:outline-none ${disabled && "italic text-link"}`}
                 onChange={handleKeyUp}
+                onKeyDown={onKeyDown}
                 disabled={disabled}
                 value={value} />
             ) : (
@@ -74,6 +75,7 @@ const TextField: React.FC<TextFieldProps> = ({
                 type={type || "text"}
                 placeholder={placeholder || ""}
                 onChange={handleKeyUp}
+                onKeyDown={onKeyDown}
                 disabled={disabled}
                 value={value} />
             )}
