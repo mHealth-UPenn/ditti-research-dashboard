@@ -141,7 +141,9 @@ def test_cognito_callback_success_new_user(app, client_with_cognito):
                 response = client_with_cognito.get(
                     f"/cognito/callback?code={auth_code}")
                 assert response.status_code == 302
-                assert response.headers["Location"] == "/cognito/fitbit/authorize"
+                expected_redirect_url = f"{app.config.get(
+                    'CORS_ORIGINS', 'http://localhost:3000')}/participant"
+                assert response.headers["Location"] == expected_redirect_url
 
                 # Check that cookies are set
                 set_cookies = response.headers.getlist("Set-Cookie")
