@@ -156,7 +156,9 @@ def test_fitbit_callback_success_new_association(app, authenticated_client, stud
 
                 # Check redirection to success page
                 assert response.status_code == 302
-                assert response.headers["Location"] == "/cognito/fitbit/success"
+                expected_redirect_url = f"{app.config.get(
+                    'CORS_ORIGINS', 'http://localhost:3000')}/participant"
+                assert response.headers["Location"] == expected_redirect_url
 
                 # Verify that tokens are stored using TokensManager
                 mock_add_update_api_token.assert_called_once()
@@ -349,15 +351,6 @@ def test_fitbit_callback_error_storing_tokens(app, authenticated_client, study_s
                 assert response.status_code == 500
                 assert response.get_json() == {
                     "msg": "Error storing tokens: AWS Secrets Manager error"}
-
-
-def test_fitbit_success(app, authenticated_client):
-    response = authenticated_client.get("/cognito/fitbit/success")
-
-    # Expect a JSON response with success message
-    assert response.status_code == 200
-    assert response.get_json() == {
-        "msg": "Fitbit authorization successful. Try /cognito/fitbit/sleep_list now."}
 
 
 # Test: Decorator behavior for unauthenticated requests
