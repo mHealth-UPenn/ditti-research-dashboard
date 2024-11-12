@@ -19,6 +19,7 @@ interface TextFieldProps {
   placeholder?: string;
   label?: string;
   onKeyup?: (text: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
   feedback?: string;
   disabled?: boolean;
 }
@@ -32,6 +33,7 @@ const TextField: React.FC<TextFieldProps> = ({
   placeholder,
   label,
   onKeyup,
+  onKeyDown,
   feedback,
   disabled,
   value,

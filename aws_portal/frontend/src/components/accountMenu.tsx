@@ -5,6 +5,7 @@ import TextField from "./fields/textField";
 import { ReactComponent as Right } from "../icons/arrowRight.svg";
 import "./accountMenu.css";
 import { makeRequest } from "../utils";
+import { useAuth } from "../hooks/useAuth";
 import AsyncButton from "./buttons/asyncButton";
 import Button from "./buttons/button";
 
