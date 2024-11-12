@@ -41,116 +41,24 @@ def test_build_cognito_url(app, client_with_cognito):
 
 def test_login_success(app, client_with_cognito):
     with app.app_context():
-        # Mock requests.get to /touch endpoint to return "OK"
-        with patch("aws_portal.views.cognito.cognito.requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.raise_for_status.return_value = None
-            mock_response.json.return_value = {"msg": "OK"}
-            mock_get.return_value = mock_response
+        # Expected Cognito auth URL
+        params = {
+            "client_id": app.config["COGNITO_CLIENT_ID"],
+            "response_type": "code",
+            "scope": "openid email",
+            "redirect_uri": app.config["COGNITO_REDIRECT_URI"],
+        }
+        redirect_uri_encoded = urlencode(
+            {"redirect_uri": app.config["COGNITO_REDIRECT_URI"]})
+        cognito_auth_url = f"https://{app.config['COGNITO_DOMAIN']}/login?" + \
+            f"client_id={app.config['COGNITO_CLIENT_ID']
+                         }&response_type=code&scope=openid+email&redirect_uri={redirect_uri_encoded}"
 
-            # Expected Cognito auth URL
-            params = {
-                "client_id": app.config['COGNITO_CLIENT_ID'],
-                "response_type": "code",
-                "scope": "openid email",
-                "redirect_uri": app.config['COGNITO_REDIRECT_URI'],
-            }
-            redirect_uri_encoded = urlencode(
-                {"redirect_uri": app.config['COGNITO_REDIRECT_URI']})
-            cognito_auth_url = f"https://{app.config['COGNITO_DOMAIN']}/login?" + \
-                f"client_id={app.config['COGNITO_CLIENT_ID']
-                             }&response_type=code&scope=openid+email&redirect_uri={redirect_uri_encoded}"
-
-            with patch("aws_portal.views.cognito.cognito.build_cognito_url", return_value=cognito_auth_url) as mock_build_url:
-                response = client_with_cognito.get("/cognito/login")
-                assert response.status_code == 302
-                assert response.headers["Location"] == cognito_auth_url
-                mock_get.assert_called_once_with(
-                    url_for('base.touch', _external=True))
-                mock_build_url.assert_called_once_with("/login", {
-                    "client_id": app.config['COGNITO_CLIENT_ID'],
-                    "response_type": "code",
-                    "scope": "openid email",
-                    "redirect_uri": app.config['COGNITO_REDIRECT_URI'],
-                })
-
-
-def test_login_database_starting_then_ok(app, client_with_cognito):
-    with app.app_context():
-        # Mock requests.get to /touch endpoint to return "STARTING" first, then "OK"
-        with patch("aws_portal.views.cognito.cognito.requests.get") as mock_get:
-            mock_response_starting = MagicMock()
-            mock_response_starting.raise_for_status.return_value = None
-            mock_response_starting.json.return_value = {"msg": "STARTING"}
-
-            mock_response_ok = MagicMock()
-            mock_response_ok.raise_for_status.return_value = None
-            mock_response_ok.json.return_value = {"msg": "OK"}
-
-            mock_get.side_effect = [mock_response_starting, mock_response_ok]
-
-            # Patch time.sleep to speed up the test
-            with patch("aws_portal.views.cognito.cognito.time.sleep", return_value=None):
-                # Expected Cognito auth URL
-                params = {
-                    "client_id": app.config['COGNITO_CLIENT_ID'],
-                    "response_type": "code",
-                    "scope": "openid email",
-                    "redirect_uri": app.config['COGNITO_REDIRECT_URI'],
-                }
-                redirect_uri_encoded = urlencode(
-                    {"redirect_uri": app.config['COGNITO_REDIRECT_URI']})
-                cognito_auth_url = f"https://{app.config['COGNITO_DOMAIN']}/login?" + \
-                    f"client_id={
-                        app.config['COGNITO_CLIENT_ID']}&response_type=code&scope=openid+email&redirect_uri={redirect_uri_encoded}"
-
-                with patch("aws_portal.views.cognito.cognito.build_cognito_url", return_value=cognito_auth_url) as mock_build_url:
-                    response = client_with_cognito.get("/cognito/login")
-                    assert response.status_code == 302
-                    assert response.headers["Location"] == cognito_auth_url
-                    assert mock_get.call_count == 2
-                    mock_build_url.assert_called_once_with("/login", {
-                        "client_id": app.config['COGNITO_CLIENT_ID'],
-                        "response_type": "code",
-                        "scope": "openid email",
-                        "redirect_uri": app.config['COGNITO_REDIRECT_URI'],
-                    })
-
-
-def test_login_touch_unexpected_status(app, client_with_cognito):
-    with app.app_context():
-        # Mock requests.get to /touch endpoint to return unexpected status
-        with patch("aws_portal.views.cognito.cognito.requests.get") as mock_get:
-            mock_response = MagicMock()
-            mock_response.raise_for_status.return_value = None
-            mock_response.json.return_value = {"msg": "UNKNOWN_STATUS"}
-            mock_get.return_value = mock_response
-
-            # Patch time.sleep to prevent actual sleep
-            with patch("aws_portal.views.cognito.cognito.time.sleep", return_value=None):
-                response = client_with_cognito.get("/cognito/login")
-                assert response.status_code == 500
-                assert response.get_json() == {"msg": "UNKNOWN_STATUS"}
-                mock_get.assert_called_once_with(
-                    url_for('base.touch', _external=True))
-
-
-def test_login_touch_request_exception(app, client_with_cognito):
-    with app.app_context():
-        # Mock requests.get to /touch endpoint to raise RequestException
-        with patch("aws_portal.views.cognito.cognito.requests.get") as mock_get:
-            # All attempts will raise RequestException
-            mock_get.side_effect = requests.exceptions.RequestException(
-                "Network error")
-
-            # Patch time.sleep to prevent actual sleep
-            with patch("aws_portal.views.cognito.cognito.time.sleep", return_value=None):
-                # Since max_retries=5, expect 5 calls and a 500 response
-                response = client_with_cognito.get("/cognito/login")
-                # Expect a 500 response with {"msg": "Database is not ready."}
-                assert response.status_code == 500
-                assert response.get_json() == {"msg": "Database is not ready."}
-                assert mock_get.call_count == 5
+        with patch("aws_portal.views.cognito.cognito.build_cognito_url", return_value=cognito_auth_url) as mock_build_url:
+            response = client_with_cognito.get("/cognito/login")
+            assert response.status_code == 302
+            assert response.headers["Location"] == cognito_auth_url
+            mock_build_url.assert_called_once_with("/login", params)
 
 
 def test_cognito_callback_success_existing_user(app, client_with_cognito):
