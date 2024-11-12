@@ -42,11 +42,11 @@ export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<
   }
 
   // Handle unauthorized responses
-  if (response.status === 401) {
-    localStorage.removeItem("jwt");
-    localStorage.removeItem("csrfToken");
-    throw body;
-  }
+  // if (response.status === 401) {
+  //   localStorage.removeItem("jwt");
+  //   localStorage.removeItem("csrfToken");
+  //   throw body;
+  // }
 
   // Throw an error if the response is not successful
   if (response.status !== 200) {

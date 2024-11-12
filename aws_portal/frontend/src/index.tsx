@@ -10,6 +10,7 @@ import { AuthProvider } from "./AuthContext";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import "./index.css";
 import "./output.css";
+import { FullLoader } from "./components/loader";
 
 /**
  * Root component wrapped with AuthProvider for authentication context.
@@ -36,7 +37,10 @@ const router = createBrowserRouter([
         index: true,
         element: (
           <ProtectedRoute authMethod='iam'>
-            <Dashboard />
+            <>
+              <FullLoader loading={false} msg="" />
+              <Dashboard />
+            </>
           </ProtectedRoute>
         ),
       },

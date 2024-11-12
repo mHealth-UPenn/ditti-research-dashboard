@@ -54,11 +54,6 @@ p {
   margin-bottom: 1rem;
 }
 
-body * {
-  transition: all;
-  transition-duration: 100ms;
-}
-
 /* button {
   font-size: 0.9rem;
 }

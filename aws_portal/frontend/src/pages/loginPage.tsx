@@ -10,6 +10,7 @@ import AsyncButton from "../components/buttons/asyncButton";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
 import "./loginPage.css";
+import Button from "../components/buttons/button";
 
 /**
  * LoginPage component for IAM authentication
@@ -20,7 +21,6 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState<string>("");
   const [setPasswordField, setSetPasswordField] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [fading, setFading] = useState<boolean>(false);
   const loadingDb = useDbStatus();
   const navigate = useNavigate();
 
@@ -31,16 +31,6 @@ const LoginPage: React.FC = () => {
     iamLogin,
     setFirstLogin
   } = useAuth();
-
-  /**
-   * Triggers fade effect when loading changes
-   */
-  useEffect(() => {
-    if (!isIamLoading && !loadingDb) {
-      setFading(true);
-      setTimeout(() => setFading(false), 500);
-    }
-  }, [isIamLoading, loadingDb]);
 
   /**
    * Redirects authenticated IAM users to the Research Coordinator Dashboard
@@ -173,42 +163,51 @@ const LoginPage: React.FC = () => {
         </TextField>
       </div>
       <div className="login-buttons">
-        <AsyncButton text="Sign In" type="primary" onClick={tryLogIn} />
+        <AsyncButton onClick={tryLogIn}>Sign in</AsyncButton>
       </div>
     </>
   );
 
-  const page = (
-    <div className="flex h-screen lg:mx-[6rem] xl:mx-[10rem] 2xl:mx-[20rem] bg-light">
-      <div className="login-image-container">
-        <img
-          className="hidden lg:flex login-image"
-          src={`${process.env.PUBLIC_URL}/logo.png`}
-          alt="Logo"
-        />
-      </div>
-      <div className="login-menu bg-white">
-        <div className="login-menu-content">
-          <h1>Geriatric Sleep Research Lab</h1>
-          <h3>AWS Data Portal</h3>
-          <div className="login-flash-message-container">
-            {flashMessages.map((fm) => fm.element)}
-          </div>
-          {firstLogin ? setPasswordFields : loginFields}
-        </div>
-      </div>
-    </div>
-  );
+  if (isIamAuthenticated && !firstLogin) {
+    return <FullLoader loading={isIamLoading || loadingDb} msg="" />;
+  }
 
   return (
     <>
-      {(isIamLoading || loadingDb || fading) && (
-        <FullLoader
-          loading={isIamLoading || loadingDb}
-          msg={loadingDb ? "Starting the database... This may take up to 6 minutes" : ""}
-        />
-      )}
-      {(!isIamAuthenticated || firstLogin) && page}
+      <FullLoader
+        loading={isIamLoading || loadingDb}
+        msg={loadingDb ? "Starting the database... This may take up to 6 minutes" : ""} />
+      <div className="flex h-screen w-screen md:w-max mx-auto sm:px-12 xl:px-20 bg-light">
+        <div className="hidden sm:flex items-center mr-12 xl:mr-20">
+          <img className="shadow-xl w-[10rem] xl:w-[12rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
+        </div>
+        <div className="flex flex-grow items-center justify-center bg-white mx-[auto] max-w-[24rem] sm:max-w-[64rem]">
+          <div className="flex flex-col mx-8 xl:mx-16">
+            <div className="flex justify-center mb-8 sm:hidden">
+              <div className="p-4 bg-light rounded-xl shadow-lg">
+                <img className="w-[6rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
+              </div>
+            </div>
+            <div className="mb-16">
+              <p className="text-4xl">Ditti</p>
+              <p>Research Dashboard</p>
+            </div>
+            {/* For new sign in with AWS Cognito */}
+            {/* <div className="flex flex-col xl:mx-16">
+              <div className="flex justify-center">
+                <p className="mb-4 whitespace-nowrap">Continue to our secure sign in:</p>
+              </div>
+              <div className="flex justify-center">
+                <Button rounded={true}>Sign in</Button>
+              </div>
+            </div> */}
+            <div className="">
+              {flashMessages.map((fm) => fm.element)}
+            </div>
+            {firstLogin ? setPasswordFields : loginFields}
+          </div>
+        </div>
+      </div>
     </>
   );
 };
