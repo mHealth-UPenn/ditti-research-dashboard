@@ -15,10 +15,12 @@ blueprint = Blueprint("cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
 
 
-def build_cognito_url(path: str, params: dict) -> str:
+def build_cognito_url(participant_pool: bool, path: str, params: dict) -> str:
     """
     Constructs a full URL for AWS Cognito by combining the base domain, path, and query parameters.
     """
+    if not participant_pool:
+        raise ValueError("Only participant pool is supported at this time.")
     base_url = f"https://{current_app.config['COGNITO_PARTICIPANT_DOMAIN']}"
     query_string = urlencode(params)
     return f"{base_url}{path}?{query_string}"
@@ -58,7 +60,7 @@ def login():
         return make_response({"msg": "Database is not ready."}, 500)
 
     # Construct the Cognito authorization URL after the database is confirmed ready
-    cognito_auth_url = build_cognito_url("/login", {
+    cognito_auth_url = build_cognito_url(True, "/login", {
         "client_id": current_app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
         "response_type": "code",
         "scope": "openid email",
@@ -109,7 +111,7 @@ def cognito_callback():
 
     # Decode and verify ID token
     try:
-        claims = verify_token(id_token, token_use="id")
+        claims = verify_token(True, id_token, token_use="id")
 
     except jwt.ExpiredSignatureError:
         return make_response({"msg": "Token has expired."}, 400)
@@ -155,7 +157,7 @@ def logout():
     """
     session.clear()
 
-    cognito_logout_url = build_cognito_url("/logout", {
+    cognito_logout_url = build_cognito_url(True, "/logout", {
         "client_id": current_app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
         # TODO: Add logout URL to Cognito app settings and replace this
         "redirect_uri": current_app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
