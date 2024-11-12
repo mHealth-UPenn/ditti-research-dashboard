@@ -2,6 +2,7 @@ import logging
 import boto3
 import jwt
 from flask import Blueprint, jsonify, make_response, request
+from sqlalchemy.exc import SQLAlchemyError
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, StudySubject, JoinStudySubjectApi
 from aws_portal.utils.cognito import cognito_auth_required, get_token_scopes
@@ -28,25 +29,44 @@ def get_participant():
             return make_response({"msg": "Missing ID token."}, 401)
 
         # Decode ID token without verification to extract email
-        claims = jwt.decode(id_token, options={"verify_signature": False})
+        try:
+            claims = jwt.decode(id_token, options={"verify_signature": False})
+        except jwt.DecodeError:
+            return make_response({"msg": "Invalid ID token."}, 400)
+        except jwt.ExpiredSignatureError:
+            return make_response({"msg": "Expired ID token."}, 401)
+
+        # Extract email from claims
         email = claims.get("email")
         if not email:
             return make_response({"msg": "Email not found in token."}, 400)
 
         # Retrieve the StudySubject
-        study_subject = StudySubject.query.filter_by(
-            email=email, is_archived=False).first()
-        if not study_subject:
-            return make_response({"msg": "User not found or is archived."}, 404)
+        try:
+            study_subject = StudySubject.query.filter_by(
+                email=email, is_archived=False).first()
+            if not study_subject:
+                logger.info(f"StudySubject with email {
+                            email} not found or is archived.")
+                return make_response({"msg": "User not found or is archived."}, 404)
+        except SQLAlchemyError as db_err:
+            logger.error(f"Database error retrieving StudySubject for email {
+                         email}: {str(db_err)}")
+            return make_response({"msg": "Database error retrieving participant data."}, 500)
 
         # Serialize the StudySubject data to only include required fields
-        participant_data = serialize_participant(study_subject)
+        try:
+            participant_data = serialize_participant(study_subject)
+        except Exception as serialize_err:
+            logger.error(f"Error serializing participant data for email {
+                         email}: {str(serialize_err)}")
+            return make_response({"msg": "Error processing participant data."}, 500)
 
         return jsonify(participant_data)
 
     except Exception as e:
-        logger.error(f"Error retrieving participant data: {str(e)}")
-        return make_response({"msg": "Error retrieving participant data."}, 500)
+        logger.error(f"Unhandled error retrieving participant data: {str(e)}")
+        return make_response({"msg": "Unexpected server error."}, 500)
 
 
 @blueprint.route("/api/<string:api_name>", methods=["DELETE"])
