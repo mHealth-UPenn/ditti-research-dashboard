@@ -1465,9 +1465,7 @@ def study_subject_create():
                 {
                     id: int,
                     api_user_uuid: str,
-                    scope: str[],
-                    access_key_uuid: str,
-                    refresh_key_uuid: str
+                    scope: str[]
                 },
                 ...
             ]
@@ -1567,16 +1565,12 @@ def study_subject_create():
             # scope should probably be nonnullable in JoinStudySubjectApi
             scope = [scope] if isinstance(
                 scope := api_entry.get("scope", []), str) else scope
-            access_key_uuid = api_entry.get("access_key_uuid")
-            refresh_key_uuid = api_entry.get("refresh_key_uuid")
 
             join_api = JoinStudySubjectApi(
                 study_subject=study_subject,
                 api=api,
                 api_user_uuid=api_user_uuid,
-                scope=scope,
-                access_key_uuid=access_key_uuid,
-                refresh_key_uuid=refresh_key_uuid
+                scope=scope
             )
             db.session.add(join_api)
 
@@ -1676,9 +1670,7 @@ def study_subject_edit():
                 {
                     id: int,
                     api_user_uuid: str,
-                    scope: str[],
-                    access_key_uuid: str,
-                    refresh_key_uuid: str
+                    scope: str[]
                 },
                 ...
             ]
@@ -1808,8 +1800,6 @@ def study_subject_edit():
                     return make_response({"msg": f"'api_user_uuid' is required for API ID {api_id}"}, 400)
                 scope = [scope] if isinstance(
                     scope := api_entry.get("scope", []), str) else scope
-                access_key_uuid = api_entry.get("access_key_uuid")
-                refresh_key_uuid = api_entry.get("refresh_key_uuid")
 
                 join_api = JoinStudySubjectApi.query.get(
                     (study_subject_id, api_id))
@@ -1817,17 +1807,13 @@ def study_subject_edit():
                     # Update existing association
                     join_api.api_user_uuid = api_user_uuid
                     join_api.scope = scope
-                    join_api.access_key_uuid = access_key_uuid
-                    join_api.refresh_key_uuid = refresh_key_uuid
                 else:
                     # Create new association
                     new_join_api = JoinStudySubjectApi(
                         study_subject=study_subject,
                         api=api,
                         api_user_uuid=api_user_uuid,
-                        scope=scope,
-                        access_key_uuid=access_key_uuid,
-                        refresh_key_uuid=refresh_key_uuid
+                        scope=scope
                     )
                     db.session.add(new_join_api)
 
