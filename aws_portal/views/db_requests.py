@@ -50,7 +50,7 @@ def get_studies():  # TODO rewrite unit test
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when retrieving studies."
     }
     """
     try:
@@ -67,10 +67,9 @@ def get_studies():  # TODO rewrite unit test
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
-        logger.warn(exc)
+        logger.warning(exc)
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving studies."}, 500)
 
     res = [s.meta for s in q.all()]
     return jsonify(res)
@@ -241,7 +240,7 @@ def edit_account_details():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when editing account details."
     }
     """
     try:
@@ -251,11 +250,10 @@ def edit_account_details():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
-        logger.warn(exc)
+        logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when editing account details."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -279,7 +277,7 @@ def get_about_sleep_templates():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when retrieving about sleep templates."
     }
     """
     try:
@@ -289,10 +287,9 @@ def get_about_sleep_templates():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
-        logger.warn(exc)
+        logger.warning(exc)
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving about sleep templates."}, 500)
 
     res = [a.meta for a in about_sleep_templates]
     return jsonify(res)
