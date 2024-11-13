@@ -1,10 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { renderToString } from "react-dom/server";
+import React, { useState } from "react";
 import TableControl from "./tableControl";
 import TableHeader from "./tableHeader";
 import TableRow from "./tableRow";
-import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
-import { ReactComponent as Right } from "../../icons/arrowRight.svg";
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 

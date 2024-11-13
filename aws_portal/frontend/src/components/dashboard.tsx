@@ -1,19 +1,13 @@
-import React, { createRef, useEffect, useReducer, useRef } from "react";
+import React, { createRef, useEffect, useReducer } from "react";
 import StudiesView from "./dittiApp/studies";
 import Header from "./header";
 import Home from "./home";
 import Navbar from "./navbar";
-import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
-import { AudioFile, AudioTap, AudioTapDetails, IFlashMessage, Tap, TapDetails, UserDetails } from "../interfaces";
-import { differenceInMilliseconds } from "date-fns";
-import { makeRequest } from "../utils";
+import { IFlashMessage } from "../interfaces";
 import FlashMessage, { FlashMessageVariant } from "./flashMessage/flashMessage";
-import { APP_ENV } from "../environment";
-import dataFactory from "../dataFactory";
-import DittiDataContext, { useDittiDataContext } from "../contexts/dittiDataContext";
+import DittiDataContext from "../contexts/dittiDataContext";
 import useDittiData from "../hooks/useDittiData";
-import { FullLoader, SmallLoader } from "./loader";
 
 type Action =
   | { type: "INIT"; name: string; view: React.ReactElement }

@@ -9,7 +9,6 @@ import { getAccess } from "../utils";
 import Card from "./cards/card";
 import CardContentRow from "./cards/cardContentRow";
 import ViewContainer from "./containers/viewContainer";
-import { useDittiDataContext } from "../contexts/dittiDataContext";
 
 /**
  * Home component: renders available apps for the user

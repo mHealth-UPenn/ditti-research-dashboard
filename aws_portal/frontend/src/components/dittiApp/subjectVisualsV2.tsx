@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
+import { Study, UserDetails, ViewProps } from "../../interfaces";
 import SubjectsEdit from "./subjectsEdit";
 import { format } from "date-fns";
 import { Workbook } from "exceljs";

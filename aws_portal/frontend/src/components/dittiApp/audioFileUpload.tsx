@@ -3,7 +3,6 @@ import TextField from "../fields/textField";
 import { Study, ResponseBody, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
-import AsyncButton from "../buttons/asyncButton";
 import Select from "../fields/select";
 import RadioField from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";

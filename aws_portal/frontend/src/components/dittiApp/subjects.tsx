@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
-import { getAccess, makeRequest } from "../../utils";
-import { Study, User, UserDetails, ViewProps } from "../../interfaces";
+import { getAccess } from "../../utils";
+import { Study, UserDetails, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
 import SubjectVisuals from "./subjectVisualsV2";

@@ -1,4 +1,4 @@
-import { AudioFile, AudioTapDetails, Study, TapDetails, User, UserDetails } from "./interfaces";
+import { AudioFile, AudioTapDetails, Study, TapDetails, UserDetails } from "./interfaces";
 import { makeRequest } from "./utils";
 
 const aboutSleepTemplate = `<div>

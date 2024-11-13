@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { getAccess, makeRequest } from "../../utils";
-import { AudioFile, ViewProps } from "../../interfaces";
+import { ViewProps } from "../../interfaces";
 import AudioFileUpload from "./audioFileUpload";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";

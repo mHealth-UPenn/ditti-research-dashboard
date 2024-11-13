@@ -1,5 +1,4 @@
 import { PropsWithChildren } from "react";
-import { ButtonProps } from "../../buttons/button";
 import AsyncButton from "../../buttons/asyncButton";
 
 interface FormSummaryButtonProps {

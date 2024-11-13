@@ -1,14 +1,8 @@
 import React, { useState, useEffect, createRef } from "react";
 import TextField from "../fields/textField";
-import {
-  AboutSleepTemplate,
-  ResponseBody,
-  Study,
-  ViewProps
-} from "../../interfaces";
+import { AboutSleepTemplate, ResponseBody, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import AsyncButton from "../buttons/asyncButton";
 import FormView from "../containers/forms/formView";
 import Form from "../containers/forms/form";
 import FormTitle from "../text/formTitle";
@@ -19,7 +13,6 @@ import FormSummaryTitle from "../text/formSummaryTitle";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
-import FormSummarySubtext from "../containers/forms/formSummarySubtext";
 import sanitize from "sanitize-html";
 
 /**

@@ -1,12 +1,10 @@
-import React, { useEffect, useMemo, useReducer } from "react";
-import { Component } from "react";
-import Table, { Column, TableData } from "../table/table";
+import React, { useEffect, useReducer } from "react";
+import Table, { TableData } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
 import {
   AccessGroup,
   Account,
-  Permission,
   ResponseBody,
   Role,
   Study,
@@ -15,8 +13,6 @@ import {
 import Select from "../fields/select";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import AsyncButton from "../buttons/asyncButton";
-import AccessGroups from "./accessGroups";
 import FormView from "../containers/forms/formView";
 import Form from "../containers/forms/form";
 import FormSummary from "../containers/forms/formSummary";

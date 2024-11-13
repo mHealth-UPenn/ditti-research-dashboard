@@ -10,7 +10,6 @@ import AsyncButton from "../components/buttons/asyncButton";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
 import "./loginPage.css";
-import Button from "../components/buttons/button";
 
 /**
  * LoginPage component for IAM authentication

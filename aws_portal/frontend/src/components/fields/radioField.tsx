@@ -1,4 +1,4 @@
-import React, { ChangeEvent, createRef, RefObject } from "react";
+import React, { ChangeEvent, createRef } from "react";
 import "./radioField.css";
 
 /**

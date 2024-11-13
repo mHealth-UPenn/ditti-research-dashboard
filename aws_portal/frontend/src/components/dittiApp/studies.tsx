@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AudioFile, AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
+import { Study, ViewProps } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import "./studies.css";

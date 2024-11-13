@@ -11,7 +11,6 @@ import { makeRequest } from "../../utils";
 import "./subjectsEdit.css";
 import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
-import AsyncButton from "../buttons/asyncButton";
 import Select from "../fields/select";
 import FormView from "../containers/forms/formView";
 import Form from "../containers/forms/form";
