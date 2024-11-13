@@ -5,8 +5,8 @@ import { getAccess, makeRequest } from "../../utils";
 import { AudioFile, ViewProps } from "../../interfaces";
 import AudioFileUpload from "./audioFileUpload";
 import Button from "../buttons/button";
-import AdminView from "../containers/admin/adminView";
-import AdminContent from "../containers/admin/adminContent";
+import ListView from "../containers/lists/listView";
+import ListContent from "../containers/lists/listContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 
@@ -217,15 +217,15 @@ const AudioFiles: React.FC<ViewProps> = ({
 
   if (loading) {
     return (
-      <AdminView>
-        <AdminContent />
-      </AdminView>
+      <ListView>
+        <ListContent />
+      </ListView>
     );
   }
 
   return (
-    <AdminView>
-      <AdminContent>
+    <ListView>
+      <ListContent>
         <Table
           columns={columns}
           control={tableControl}
@@ -235,8 +235,8 @@ const AudioFiles: React.FC<ViewProps> = ({
           includeSearch={true}
           paginationPer={10}
           sortDefault="" />
-      </AdminContent>
-    </AdminView>
+      </ListContent>
+    </ListView>
   );
 };
 

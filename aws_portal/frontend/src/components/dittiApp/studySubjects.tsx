@@ -3,7 +3,7 @@ import { Study, UserDetails, ViewProps } from "../../interfaces";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import "./studySubjects.css";
 import SubjectVisuals from "./subjectVisualsV2";
-import CardContentRow from "../cards/cardHeader";
+import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
 import Link from "../links/link";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";

@@ -7,8 +7,8 @@ import Navbar from "./navbar";
 import StudiesEdit from "./studiesEdit";
 import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
-import AdminView from "../containers/admin/adminView";
-import AdminContent from "../containers/admin/adminContent";
+import ListView from "../containers/lists/listView";
+import ListContent from "../containers/lists/listContent";
 
 const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
   const [canCreate, setCanCreate] = useState(false);
@@ -199,19 +199,19 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
 
   if (loading) {
     return (
-      <AdminView>
+      <ListView>
         {navbar}
-        <AdminContent>
+        <ListContent>
           <SmallLoader />
-        </AdminContent>
-      </AdminView>
+        </ListContent>
+      </ListView>
     );
   }
 
   return (
-    <AdminView>
+    <ListView>
       {navbar}
-      <AdminContent>
+      <ListContent>
         <Table
           columns={columns}
           control={tableControl}
@@ -221,8 +221,8 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
           includeSearch={true}
           paginationPer={10}
           sortDefault="" />
-      </AdminContent>
-    </AdminView>
+      </ListContent>
+    </ListView>
   );
 };
 

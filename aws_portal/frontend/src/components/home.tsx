@@ -7,7 +7,7 @@ import Accounts from "./adminDashboard/accounts";
 import { SmallLoader } from "./loader";
 import { getAccess } from "../utils";
 import Card from "./cards/card";
-import CardContentRow from "./cards/cardHeader";
+import CardContentRow from "./cards/cardContentRow";
 import ViewContainer from "./containers/viewContainer";
 import { useDittiDataContext } from "../contexts/dittiDataContext";
 

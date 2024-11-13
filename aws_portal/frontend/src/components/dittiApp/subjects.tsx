@@ -11,10 +11,10 @@ import Button from "../buttons/button";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
 import Link from "../links/link";
-import Title from "../cards/cardTitle";
-import Subtitle from "../cards/cardSubtilte";
-import AdminView from "../containers/admin/adminView";
-import AdminContent from "../containers/admin/adminContent";
+import Title from "../text/title";
+import Subtitle from "../text/subtitle";
+import ListView from "../containers/lists/listView";
+import ListContent from "../containers/lists/listContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 
 /**
@@ -228,8 +228,8 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
   }
 
   return (
-    <AdminView>
-      <AdminContent>
+    <ListView>
+      <ListContent>
         <div className="flex flex-col mb-8">
           <Title>{props.studyDetails.name}</Title>
           <Subtitle>All subjects</Subtitle>
@@ -243,8 +243,8 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
           includeSearch={true}
           paginationPer={10}
           sortDefault="" />
-      </AdminContent>
-    </AdminView>
+      </ListContent>
+    </ListView>
   );
 };
 

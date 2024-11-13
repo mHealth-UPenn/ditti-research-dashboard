@@ -10,8 +10,8 @@ import Navbar from "./navbar";
 import AboutSleepTemplatesEdit from "./aboutSleepTemplatesEdit";
 import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
-import AdminView from "../containers/admin/adminView";
-import AdminContent from "../containers/admin/adminContent";
+import ListView from "../containers/lists/listView";
+import ListContent from "../containers/lists/listContent";
 
 const AboutSleepTemplates: React.FC<ViewProps> = ({
   flashMessage,
@@ -206,19 +206,19 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
 
   if (loading) {
     return (
-      <AdminView>
+      <ListView>
         {navbar}
-        <AdminContent>
+        <ListContent>
           <SmallLoader />
-        </AdminContent>
-      </AdminView>
+        </ListContent>
+      </ListView>
     );
   }
 
   return (
-    <AdminView>
+    <ListView>
       {navbar}
-      <AdminContent>
+      <ListContent>
         <Table
           columns={columns}
           control={tableControl}
@@ -228,8 +228,8 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
           includeSearch={true}
           paginationPer={10}
           sortDefault="" />
-      </AdminContent>
-    </AdminView>
+      </ListContent>
+    </ListView>
   );
 };
 

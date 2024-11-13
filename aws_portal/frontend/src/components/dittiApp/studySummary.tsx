@@ -11,10 +11,10 @@ import { saveAs } from "file-saver";
 import { format } from "date-fns";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
-import Title from "../cards/cardTitle";
-import Subtitle from "../cards/cardSubtilte";
+import Title from "../text/title";
+import Subtitle from "../text/subtitle";
 import Button from "../buttons/button";
-import CardContentRow from "../cards/cardHeader";
+import CardContentRow from "../cards/cardContentRow";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 
