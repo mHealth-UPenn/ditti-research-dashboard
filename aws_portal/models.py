@@ -967,6 +967,8 @@ class Study(db.Model):
     is_archived: sqlalchemy.Column
     data_summary: sqlalchemy.Column
         Text describing why we are collecting participants data.
+    is_qi: sqlalchemy.Column
+        Indicates if the study is QI (Quality Improvement), defaults to False.
     roles: sqlalchemy.orm.relationship
     """
     __tablename__ = "study"
@@ -979,6 +981,7 @@ class Study(db.Model):
     default_expiry_delta = db.Column(db.Integer)
     consent_information = db.Column(db.String)
     data_summary = db.Column(db.Text)
+    is_qi = db.Column(db.Boolean, default=False, nullable=False)
 
     roles = db.relationship("JoinStudyRole", cascade="all, delete-orphan")
 
@@ -994,7 +997,8 @@ class Study(db.Model):
             "dittiId": self.ditti_id,
             "email": self.email,
             "roles": [r.meta for r in self.roles],
-            "dataSummary": self.data_summary
+            "dataSummary": self.data_summary,
+            "isQi": self.is_qi  # Include in metadata
         }
 
     def __repr__(self):
