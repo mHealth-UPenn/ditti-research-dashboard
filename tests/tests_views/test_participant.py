@@ -66,7 +66,7 @@ def authenticated_client(client, study_subject):
 
     # Mock "verify_token" to accept the fake tokens
     with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
-        def verify_token_side_effect(token, token_use="id"):
+        def verify_token_side_effect(participant_pool, token, token_use="id"):
             if token_use == "access":
                 return {"token_use": "access", "email": study_subject.email}
             elif token_use == "id":

@@ -116,7 +116,7 @@ def cognito_callback():
     # Redirect to the front-end ParticipantDashboard
     frontend_base_url = current_app.config.get(
         "CORS_ORIGINS", "http://localhost:3000")
-    redirect_url = f"{frontend_base_url}/participant"
+    redirect_url = frontend_base_url
 
     response = make_response(redirect(redirect_url))
 

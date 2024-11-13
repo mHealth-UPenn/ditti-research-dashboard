@@ -159,8 +159,8 @@ def test_fitbit_callback_success_new_association(app, authenticated_client, stud
 
                 # Check redirection to success page
                 assert response.status_code == 302
-                expected_redirect_url = f"{app.config.get(
-                    'CORS_ORIGINS', 'http://localhost:3000')}/participant"
+                expected_redirect_url = app.config.get(
+                    'CORS_ORIGINS', 'http://localhost:3000')
                 assert response.headers["Location"] == expected_redirect_url
 
                 # Verify that tokens are stored using TokensManager
