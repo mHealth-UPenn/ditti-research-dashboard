@@ -1379,7 +1379,7 @@ def study_subject():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when retrieving study subjects"
     }
     """
     try:
@@ -1409,11 +1409,10 @@ def study_subject():
     except Exception:
         # Capture and log the traceback
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
-        logger.warn(exc)
+        logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving study subjects"}, 500)
 
 
 @blueprint.route("/study_subject/create", methods=["POST"])
@@ -1469,7 +1468,7 @@ def study_subject_create():
     Response syntax (500)
     ---------------------
     {
-        msg: "Internal server error message"
+        msg: "Internal server error when creating study subject"
     }
     """
     try:
@@ -1564,10 +1563,9 @@ def study_subject_create():
     # Other server errors return 500
     except Exception as e:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when creating study subject"}, 500)
 
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
@@ -1600,7 +1598,7 @@ def study_subject_archive():
     Response syntax (500)
     ---------------------
     {
-        msg: "Internal server error message"
+        msg: "Internal server error when archiving study subject"
     }
     """
     try:
@@ -1618,10 +1616,9 @@ def study_subject_archive():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when archiving study subject"}, 500)
 
     return jsonify({"msg": msg}), 200
 
@@ -1683,7 +1680,7 @@ def study_subject_edit():
     Response syntax (500)
     ---------------------
     {
-        msg: "Internal server error message"
+        msg: "Internal server error when editing study subject"
     }
     """
     try:
@@ -1812,10 +1809,9 @@ def study_subject_edit():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
-        logger.warn(exc)
+        logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when editing study subject"}, 500)
 
     return jsonify({"msg": msg})
 
@@ -1863,11 +1859,10 @@ def api():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
-        logger.warn(exc)
+        logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving APIs"}, 500)
 
 
 @blueprint.route("/api/create", methods=["POST"])
@@ -1901,7 +1896,7 @@ def api_create():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when creating API"
     }
     """
     try:
@@ -1925,11 +1920,10 @@ def api_create():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
-        logger.warn(exc)
+        logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when creating API"}, 500)
 
     return jsonify({"msg": msg})
 
@@ -1969,7 +1963,7 @@ def api_edit():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when editing API"
     }
     """
     try:
@@ -1998,10 +1992,9 @@ def api_edit():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
-        logger.warn(exc)
+        logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when editing API"}, 500)
 
     return jsonify({"msg": msg})
 
@@ -2037,7 +2030,7 @@ def api_archive():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when archiving API"
     }
     """
     try:
@@ -2055,9 +2048,8 @@ def api_archive():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
-        logger.warn(exc)
+        logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when archiving API"}, 500)
 
     return jsonify({"msg": msg})
