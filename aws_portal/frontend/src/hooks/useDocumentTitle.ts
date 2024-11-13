@@ -5,7 +5,7 @@ export const useDocumentTitle = (defaultTitle: string) => {
   const location = useLocation();
 
   useEffect(() => {
-    const isParticipantRoute = location.pathname.startsWith("/participant");
-    document.title = isParticipantRoute ? "Participant Portal" : defaultTitle;
+    const isCoordinatorRoute = location.pathname.startsWith("/coordinator");
+    document.title = isCoordinatorRoute ? "AWS Portal" : defaultTitle;
   }, [location, defaultTitle]);
 };

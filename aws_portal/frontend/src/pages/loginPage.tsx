@@ -37,7 +37,7 @@ const LoginPage: React.FC = () => {
    */
   useEffect(() => {
     if (isIamAuthenticated && !firstLogin) {
-      navigate("/");
+      navigate("/coordinator");
     }
   }, [isIamAuthenticated, firstLogin, navigate]);
 
@@ -68,7 +68,7 @@ const LoginPage: React.FC = () => {
       const res: ResponseBody = await makeRequest("/iam/set-password", opts);
       if (res.msg === "Password set successfully") {
         setFirstLogin(false);
-        navigate("/");
+        navigate("/coordinator");
       } else {
         flashMessage(<span>{res.msg}</span>, "danger");
       }

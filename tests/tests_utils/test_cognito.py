@@ -21,10 +21,10 @@ def clear_cognito_jwks_cache():
 def app():
     app = Flask(__name__)
     app.config["TESTING"] = True
-    app.config["COGNITO_REGION"] = "us-east-1"
-    app.config["COGNITO_USER_POOL_ID"] = "us-east-1_example"
-    app.config["COGNITO_CLIENT_ID"] = "example_client_id"
-    app.config["COGNITO_DOMAIN"] = "example.auth.us-east-1.amazoncognito.com"
+    app.config["COGNITO_PARTICIPANT_REGION"] = "us-east-1"
+    app.config["COGNITO_PARTICIPANT_USER_POOL_ID"] = "us-east-1_example"
+    app.config["COGNITO_PARTICIPANT_CLIENT_ID"] = "example_client_id"
+    app.config["COGNITO_PARTICIPANT_DOMAIN"] = "example.auth.us-east-1.amazoncognito.com"
     return app
 
 
@@ -48,7 +48,7 @@ def test_get_cognito_jwks_success(app):
             mock_response.json.return_value = fake_jwks
             mock_get.return_value = mock_response
 
-            jwks = get_cognito_jwks()
+            jwks = get_cognito_jwks(participant_pool=True)
             assert jwks == fake_jwks
             mock_get.assert_called_once()
 
@@ -62,7 +62,7 @@ def test_get_cognito_jwks_request_exception(app):
             mock_get.side_effect = requests.exceptions.RequestException(
                 "Network error")
             with pytest.raises(requests.exceptions.RequestException):
-                get_cognito_jwks()
+                get_cognito_jwks(participant_pool=True)
 
 
 def test_get_public_key_success(app):
@@ -145,7 +145,7 @@ def test_refresh_access_token_success(app):
                 "access_token": new_access_token}
             mock_post.return_value = mock_response
 
-            result = refresh_access_token(refresh_token)
+            result = refresh_access_token(True, refresh_token)
             assert result == new_access_token
             mock_post.assert_called_once()
 
@@ -162,7 +162,7 @@ def test_refresh_access_token_no_access_token(app):
             with pytest.raises(
                 Exception, match="No 'access_token' found in refresh response."
             ):
-                refresh_access_token(refresh_token)
+                refresh_access_token(True, refresh_token)
 
 
 def test_refresh_access_token_request_exception(app):
@@ -173,7 +173,7 @@ def test_refresh_access_token_request_exception(app):
                 "Network error")
 
             with pytest.raises(requests.exceptions.RequestException):
-                refresh_access_token(refresh_token)
+                refresh_access_token(True, refresh_token)
 
 
 def test_verify_token_success_id_token(app):
@@ -182,19 +182,19 @@ def test_verify_token_success_id_token(app):
         public_key = MagicMock()
         payload = {
             "sub": "user123",
-            "iss": f"https://cognito-idp.{app.config['COGNITO_REGION']}.amazonaws.com/{app.config['COGNITO_USER_POOL_ID']}",
-            "aud": app.config["COGNITO_CLIENT_ID"],
+            "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
+            "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
             "token_use": "id",
         }
         with patch("aws_portal.utils.cognito.get_public_key", return_value=public_key):
             with patch("aws_portal.utils.cognito.jwt.decode", return_value=payload) as mock_decode:
-                claims = verify_token(token, token_use="id")
+                claims = verify_token(True, token, token_use="id")
                 assert claims == payload
                 mock_decode.assert_called_once_with(
                     token,
                     public_key,
                     algorithms=["RS256"],
-                    audience=app.config["COGNITO_CLIENT_ID"],
+                    audience=app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
                     issuer=payload["iss"],
                     options=None,
                 )
@@ -206,13 +206,13 @@ def test_verify_token_success_access_token(app):
         public_key = MagicMock()
         payload = {
             "sub": "user123",
-            "iss": f"https://cognito-idp.{app.config['COGNITO_REGION']}.amazonaws.com/{app.config['COGNITO_USER_POOL_ID']}",
+            "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
             "token_use": "access",
-            "client_id": app.config["COGNITO_CLIENT_ID"],
+            "client_id": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
         }
         with patch("aws_portal.utils.cognito.get_public_key", return_value=public_key):
             with patch("aws_portal.utils.cognito.jwt.decode", return_value=payload) as mock_decode:
-                claims = verify_token(token, token_use="access")
+                claims = verify_token(True, token, token_use="access")
                 assert claims == payload
                 mock_decode.assert_called_once_with(
                     token,
@@ -247,13 +247,13 @@ def test_verify_token_invalid_token_use(app):
                         # Simulate decode returning invalid 'token_use'
                         mock_jwt_decode.return_value = {
                             "sub": "user123",
-                            "iss": f"https://cognito-idp.{app.config['COGNITO_REGION']}.amazonaws.com/{app.config['COGNITO_USER_POOL_ID']}",
-                            "aud": app.config["COGNITO_CLIENT_ID"],
+                            "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
+                            "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
                             "token_use": "invalid",  # Invalid token_use
                         }
 
                         with pytest.raises(InvalidTokenError, match="Invalid token type specified."):
-                            verify_token(token, token_use="invalid")
+                            verify_token(True, token, token_use="invalid")
 
 
 def test_verify_token_invalid_claims(app):
@@ -263,7 +263,7 @@ def test_verify_token_invalid_claims(app):
         with patch("aws_portal.utils.cognito.get_public_key", return_value=public_key):
             with patch("aws_portal.utils.cognito.jwt.decode", side_effect=InvalidTokenError("Invalid token")):
                 with pytest.raises(InvalidTokenError, match="Invalid token"):
-                    verify_token(token, token_use="id")
+                    verify_token(True, token, token_use="id")
 
 
 def test_verify_token_expired_signature(app):
@@ -273,7 +273,7 @@ def test_verify_token_expired_signature(app):
         with patch("aws_portal.utils.cognito.get_public_key", return_value=public_key):
             with patch("aws_portal.utils.cognito.jwt.decode", side_effect=ExpiredSignatureError("Token expired")):
                 with pytest.raises(ExpiredSignatureError, match="Token expired"):
-                    verify_token(token, token_use="id")
+                    verify_token(True, token, token_use="id")
 
 
 def test_verify_token_jwt_decode_exception(app):
@@ -283,7 +283,7 @@ def test_verify_token_jwt_decode_exception(app):
         with patch("aws_portal.utils.cognito.get_public_key", return_value=public_key):
             with patch("aws_portal.utils.cognito.jwt.decode", side_effect=PyJWTError("Decode error")):
                 with pytest.raises(PyJWTError, match="Decode error"):
-                    verify_token(token, token_use="id")
+                    verify_token(True, token, token_use="id")
 
 
 def test_cognito_auth_required_success(app):
@@ -298,7 +298,7 @@ def test_cognito_auth_required_success(app):
 
         with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
             # Mock verify_token to return valid claims for both tokens
-            mock_verify_token.side_effect = lambda token, token_use: {
+            mock_verify_token.side_effect = lambda participant_pool, token, token_use: {
                 "sub": "user123"}
 
             # Set cookies without 'server_name' for Flask 1.x
@@ -309,8 +309,9 @@ def test_cognito_auth_required_success(app):
             assert response.status_code == 200
             assert response.get_json() == {"msg": "Success"}
             mock_verify_token.assert_any_call(
-                "valid_access_token", token_use="access")
-            mock_verify_token.assert_any_call("valid_id_token", token_use="id")
+                True, "valid_access_token", token_use="access")
+            mock_verify_token.assert_any_call(
+                True, "valid_id_token", token_use="id")
 
 
 def test_cognito_auth_required_missing_tokens(app):
@@ -338,7 +339,7 @@ def test_cognito_auth_required_expired_access_token_with_refresh(app):
         test_client = app.test_client()
         with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
             # Define side effects for verify_token
-            def verify_token_side_effect(token, token_use):
+            def verify_token_side_effect(participant_pool, token, token_use):
                 if token_use == "access":
                     if token == "expired_access_token":
                         raise ExpiredSignatureError("Token has expired.")
@@ -362,7 +363,7 @@ def test_cognito_auth_required_expired_access_token_with_refresh(app):
                 assert response.status_code == 200
                 assert response.get_json() == {"msg": "Success"}
                 mock_refresh_access_token.assert_called_once_with(
-                    "valid_refresh_token")
+                    True, "valid_refresh_token")
 
 
 def test_cognito_auth_required_expired_access_token_no_refresh(app):
@@ -376,7 +377,7 @@ def test_cognito_auth_required_expired_access_token_no_refresh(app):
         test_client = app.test_client()
         with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
             # Define side effects for verify_token
-            def verify_token_side_effect(token, token_use):
+            def verify_token_side_effect(participant_pool, token, token_use):
                 if token_use == "access":
                     raise ExpiredSignatureError("Token has expired.")
                 elif token_use == "id":
@@ -404,7 +405,7 @@ def test_cognito_auth_required_refresh_fails(app):
         test_client = app.test_client()
         with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
             # Define side effects for verify_token
-            def verify_token_side_effect(token, token_use):
+            def verify_token_side_effect(participant_pool, token, token_use):
                 if token_use == "access":
                     raise ExpiredSignatureError("Token has expired.")
                 elif token_use == "id":
@@ -423,7 +424,7 @@ def test_cognito_auth_required_refresh_fails(app):
                     "msg": "Failed to refresh access token: Refresh failed"
                 }
                 mock_refresh_access_token.assert_called_once_with(
-                    "valid_refresh_token")
+                    True, "valid_refresh_token")
 
 
 def test_cognito_auth_required_invalid_access_token(app):
@@ -437,7 +438,7 @@ def test_cognito_auth_required_invalid_access_token(app):
         test_client = app.test_client()
         with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
             # Define side effects for verify_token
-            def verify_token_side_effect(token, token_use):
+            def verify_token_side_effect(participant_pool, token, token_use):
                 if token_use == "access":
                     raise InvalidTokenError("Invalid token")
                 elif token_use == "id":
@@ -466,7 +467,7 @@ def test_cognito_auth_required_invalid_id_token(app):
         test_client = app.test_client()
         with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
             # Define side effects for verify_token
-            def verify_token_side_effect(token, token_use):
+            def verify_token_side_effect(participant_pool, token, token_use):
                 if token_use == "access":
                     return {"sub": "user123"}
                 elif token_use == "id":
@@ -495,7 +496,7 @@ def test_cognito_auth_required_expired_id_token(app):
         test_client = app.test_client()
         with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
             # Define side effects for verify_token
-            def verify_token_side_effect(token, token_use):
+            def verify_token_side_effect(participant_pool, token, token_use):
                 if token_use == "access":
                     return {"sub": "user123"}
                 elif token_use == "id":
