@@ -969,6 +969,10 @@ class Study(db.Model):
         Text describing why we are collecting participants data.
     is_qi: sqlalchemy.Column
         Indicates if the study is QI (Quality Improvement), defaults to False.
+    start_date: sqlalchemy.Column
+        The date when the study starts.
+    end_date: sqlalchemy.Column
+        The date when the study ends.
     roles: sqlalchemy.orm.relationship
     """
     __tablename__ = "study"
@@ -982,6 +986,8 @@ class Study(db.Model):
     consent_information = db.Column(db.String)
     data_summary = db.Column(db.Text)
     is_qi = db.Column(db.Boolean, default=False, nullable=False)
+    start_date = db.Column(db.Date, nullable=True)
+    end_date = db.Column(db.Date, nullable=True)
 
     roles = db.relationship("JoinStudyRole", cascade="all, delete-orphan")
 
@@ -998,7 +1004,9 @@ class Study(db.Model):
             "email": self.email,
             "roles": [r.meta for r in self.roles],
             "dataSummary": self.data_summary,
-            "isQi": self.is_qi
+            "isQi": self.is_qi,
+            "startDate": self.start_date.isoformat() if self.start_date else None,
+            "endDate": self.end_date.isoformat() if self.end_date else None
         }
 
     def __repr__(self):
@@ -1321,7 +1329,7 @@ class JoinStudySubjectApi(db.Model):
         """
         dict: An entry's metadata.
         """
-        metadata = {
+        return {
             "apiUserUuid": self.api_user_uuid,
             "scope": self.scope,
             "api": self.api.meta,
@@ -1329,21 +1337,6 @@ class JoinStudySubjectApi(db.Model):
             "createdOn": self.created_on.isoformat(),
             "expiresOn": self.expires_on.isoformat() if self.expires_on else None
         }
-
-        try:
-            tokens = tm.get_api_tokens(self.api.name, self.study_subject_id)
-            expires_at_unix = tokens.get('expires_at')
-            metadata['expires_at'] = (
-                datetime.fromtimestamp(expires_at_unix).isoformat()
-                if expires_at_unix is not None
-                else None
-            )
-        except Exception as e:
-            # Log the exception for debugging purposes
-            logger.error(f"Error retrieving API tokens: {e}")
-            metadata['expires_at'] = None
-
-        return metadata
 
     def __repr__(self):
         return f"<JoinStudySubjectApi StudySubject {self.study_subject_id} - Api {self.api_id}>"
