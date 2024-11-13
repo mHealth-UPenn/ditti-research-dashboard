@@ -1126,8 +1126,6 @@ class StudySubject(db.Model):
     created_on: sqlalchemy.Column
     ditti_id: sqlalchemy.Column
         The study subject's Cognito username (unique identifier).
-    is_confirmed: sqlalchemy.Column
-        Whether the user verified their email with Amazon Cognito.
     is_archived: sqlalchemy.Column
     studies: sqlalchemy.orm.relationship
         Studies the subject is enrolled in.
@@ -1140,7 +1138,6 @@ class StudySubject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     created_on = db.Column(db.DateTime, nullable=False)
     ditti_id = db.Column(db.String, nullable=False, unique=True)
-    is_confirmed = db.Column(db.Boolean, default=False, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
     # ignore archived studies
@@ -1184,7 +1181,6 @@ class StudySubject(db.Model):
             "id": self.id,
             "createdOn": self.created_on.isoformat(),
             "dittiId": self.ditti_id,
-            "isConfirmed": self.is_confirmed,
             "studies": [join.meta for join in self.studies],
             "apis": [join.meta for join in self.apis],
             # Omitting sleepLogs from meta to prevent excessive data transfer
