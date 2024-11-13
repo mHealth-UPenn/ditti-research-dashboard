@@ -67,10 +67,13 @@ def authenticated_client(client, study_subject):
     # Mock "verify_token" to accept the fake tokens
     with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
         def verify_token_side_effect(participant_pool, token, token_use="id"):
+            if participant_pool is not True:
+                raise ValueError(
+                    "Only participant pool is supported at this time.")
             if token_use == "access":
-                return {"token_use": "access", "email": study_subject.email}
+                return {"token_use": "access", "cognito:username": study_subject.email}
             elif token_use == "id":
-                return {"token_use": "id", "email": study_subject.email}
+                return {"token_use": "id", "cognito:username": study_subject.email}
             else:
                 raise InvalidTokenError("Invalid token_use")
 
@@ -100,8 +103,9 @@ def test_get_participant_success(authenticated_client, study_subject, join_api, 
     with patch("aws_portal.views.participant.serialize_participant") as mock_serialize, \
             patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
 
-        # Mock jwt.decode to return a valid claims dictionary with email
-        mock_jwt_decode.return_value = {"email": study_subject.email}
+        # Mock jwt.decode to return a valid claims dictionary with cognito:username
+        mock_jwt_decode.return_value = {
+            "cognito:username": study_subject.email}
 
         mock_serialize.return_value = expected_data
 
@@ -139,8 +143,8 @@ def test_get_participant_user_not_found(authenticated_client):
     Test retrieval of participant data when user is not found or is archived.
     """
     with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        # Mock jwt.decode to return a valid claims dictionary with nonexistent email
-        mock_jwt_decode.return_value = {"email": "dne@email.com"}
+        # Mock jwt.decode to return a valid claims dictionary with nonexistent cognito:username
+        mock_jwt_decode.return_value = {"cognito:username": "dne@email.com"}
         response = authenticated_client.get("/participant")
         assert response.status_code == 404
         assert response.get_json() == {"msg": "User not found or is archived."}
@@ -153,9 +157,10 @@ def test_get_participant_exception_handling(authenticated_client, study_subject)
     with patch("aws_portal.views.participant.StudySubject.query") as mock_query:
         mock_query.filter_by.side_effect = Exception("Database error")
 
-        # Mock jwt.decode to return a valid claims dictionary with email
+        # Mock jwt.decode to return a valid claims dictionary with cognito:username
         with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {"email": study_subject.email}
+            mock_jwt_decode.return_value = {
+                "cognito:username": study_subject.email}
 
             response = authenticated_client.get("/participant")
 
@@ -174,9 +179,10 @@ def test_revoke_api_access_success(authenticated_client, study_subject, api_entr
             patch("aws_portal.views.participant.db.session.delete") as mock_db_delete, \
             patch("aws_portal.views.participant.db.session.commit") as mock_db_commit:
 
-        # Mock jwt.decode to return a valid claims dictionary with email
+        # Mock jwt.decode to return a valid claims dictionary with cognito:username
         with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {"email": study_subject.email}
+            mock_jwt_decode.return_value = {
+                "cognito:username": study_subject.email}
 
             response = authenticated_client.delete(
                 f"/participant/api/{api_entry.name}")
@@ -216,8 +222,8 @@ def test_revoke_api_access_user_not_found(authenticated_client):
     Test revocation of API access when user is not found.
     """
     with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        # Mock jwt.decode to return a valid claims dictionary with nonexistent email
-        mock_jwt_decode.return_value = {"email": "dne@email.com"}
+        # Mock jwt.decode to return a valid claims dictionary with nonexistent cognito:username
+        mock_jwt_decode.return_value = {"cognito:username": "dne@email.com"}
         response = authenticated_client.delete("/participant/api/TestAPI")
         assert response.status_code == 404
         assert response.get_json() == {"msg": "User not found"}
@@ -227,9 +233,10 @@ def test_revoke_api_access_api_not_found(authenticated_client, study_subject):
     """
     Test revocation of API access when API is not found.
     """
-    # Mock jwt.decode to return a valid claims dictionary with email
+    # Mock jwt.decode to return a valid claims dictionary with cognito:username
     with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        mock_jwt_decode.return_value = {"email": study_subject.email}
+        mock_jwt_decode.return_value = {
+            "cognito:username": study_subject.email}
 
         response = authenticated_client.delete(
             "/participant/api/NonExistentAPI")
@@ -241,9 +248,10 @@ def test_revoke_api_access_api_access_not_found(authenticated_client, study_subj
     """
     Test revocation of API access when API access is not found.
     """
-    # Mock jwt.decode to return a valid claims dictionary with email
+    # Mock jwt.decode to return a valid claims dictionary with cognito:username
     with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        mock_jwt_decode.return_value = {"email": study_subject.email}
+        mock_jwt_decode.return_value = {
+            "cognito:username": study_subject.email}
 
         response = authenticated_client.delete(
             f"/participant/api/{api_entry.name}")
@@ -260,9 +268,10 @@ def test_revoke_api_access_delete_tokens_keyerror(authenticated_client, study_su
             patch("aws_portal.views.participant.db.session.commit") as mock_db_commit, \
             patch("aws_portal.views.participant.logger.warning") as mock_logger_warning:
 
-        # Mock jwt.decode to return a valid claims dictionary with email
+        # Mock jwt.decode to return a valid claims dictionary with cognito:username
         with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {"email": study_subject.email}
+            mock_jwt_decode.return_value = {
+                "cognito:username": study_subject.email}
 
             response = authenticated_client.delete(
                 f"/participant/api/{api_entry.name}")
@@ -285,9 +294,10 @@ def test_revoke_api_access_exception_handling(authenticated_client, study_subjec
     with patch("aws_portal.views.participant.db.session.commit", side_effect=Exception("Commit error")), \
             patch("aws_portal.views.participant.logger.error") as mock_logger_error:
 
-        # Mock jwt.decode to return a valid claims dictionary with email
+        # Mock jwt.decode to return a valid claims dictionary with cognito:username
         with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {"email": study_subject.email}
+            mock_jwt_decode.return_value = {
+                "cognito:username": study_subject.email}
 
             response = authenticated_client.delete(
                 f"/participant/api/{api_entry.name}")
@@ -312,11 +322,12 @@ def test_delete_participant_success(authenticated_client, study_subject, join_ap
 
         with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
             mock_get_scopes.return_value = [
-                "email", "openid", "aws.cognito.signin.user.admin"]
+                "openid", "aws.cognito.signin.user.admin"]
 
             # Mock jwt.decode to return a valid claims dictionary with email
             with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {"email": study_subject.email}
+                mock_jwt_decode.return_value = {
+                    "cognito:username": study_subject.email}
 
                 response = authenticated_client.delete("/participant")
 
@@ -372,8 +383,8 @@ def test_delete_participant_user_not_found(authenticated_client):
     Test deletion of participant account when user is not found or already archived.
     """
     with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        # Mock jwt.decode to return a valid claims dictionary with nonexistent email
-        mock_jwt_decode.return_value = {"email": "dne@email.com"}
+        # Mock jwt.decode to return a valid claims dictionary with nonexistent cognito:username
+        mock_jwt_decode.return_value = {"cognito:username": "dne@email.com"}
         response = authenticated_client.delete("/participant")
         assert response.status_code == 404
         assert response.get_json() == {
@@ -385,11 +396,12 @@ def test_delete_participant_insufficient_permissions(authenticated_client, study
     Test deletion of participant account with insufficient permissions.
     """
     with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
-        mock_get_scopes.return_value = ["email", "openid"]
+        mock_get_scopes.return_value = ["openid"]
 
-        # Mock jwt.decode to return a valid claims dictionary with email
+        # Mock jwt.decode to return a valid claims dictionary with cognito:username
         with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {"email": study_subject.email}
+            mock_jwt_decode.return_value = {
+                "cognito:username": study_subject.email}
 
             response = authenticated_client.delete("/participant")
 
@@ -405,10 +417,11 @@ def test_delete_participant_exception_deleting_tokens(authenticated_client, stud
 
         with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
             mock_get_scopes.return_value = [
-                "email", "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with email
+                "openid", "aws.cognito.signin.user.admin"]
+            # Mock jwt.decode to return a valid claims dictionary with cognito:username
             with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {"email": study_subject.email}
+                mock_jwt_decode.return_value = {
+                    "cognito:username": study_subject.email}
 
                 response = authenticated_client.delete("/participant")
 
@@ -428,9 +441,10 @@ def test_delete_participant_cognito_not_authorized(authenticated_client, study_s
             "Not authorized")
         mock_boto_client.return_value = mock_cognito_client
 
-        # Mock jwt.decode to return a valid claims dictionary with email
+        # Mock jwt.decode to return a valid claims dictionary with cognito:username
         with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {"email": study_subject.email}
+            mock_jwt_decode.return_value = {
+                "cognito:username": study_subject.email}
 
             response = authenticated_client.delete("/participant")
 
@@ -452,10 +466,11 @@ def test_delete_participant_cognito_exception(authenticated_client, study_subjec
 
         with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
             mock_get_scopes.return_value = [
-                "email", "openid", "aws.cognito.signin.user.admin"]
+                "openid", "aws.cognito.signin.user.admin"]
             # Mock jwt.decode to return a valid claims dictionary with email
             with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {"email": study_subject.email}
+                mock_jwt_decode.return_value = {
+                    "cognito:username": study_subject.email}
 
                 response = authenticated_client.delete("/participant")
 
@@ -472,10 +487,11 @@ def test_delete_participant_exception_handling(authenticated_client, study_subje
 
         with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
             mock_get_scopes.return_value = [
-                "email", "openid", "aws.cognito.signin.user.admin"]
+                "openid", "aws.cognito.signin.user.admin"]
             # Mock jwt.decode to return a valid claims dictionary with email
             with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {"email": study_subject.email}
+                mock_jwt_decode.return_value = {
+                    "cognito:username": study_subject.email}
 
                 response = authenticated_client.delete("/participant")
 
@@ -493,10 +509,11 @@ def test_revoke_api_access_exception_deleting_tokens(authenticated_client, study
 
         with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
             mock_get_scopes.return_value = [
-                "email", "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with email
+                "openid", "aws.cognito.signin.user.admin"]
+            # Mock jwt.decode to return a valid claims dictionary with cognito:username
             with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {"email": study_subject.email}
+                mock_jwt_decode.return_value = {
+                    "cognito:username": study_subject.email}
 
                 response = authenticated_client.delete(
                     f"/participant/api/{api_entry.name}")
@@ -516,7 +533,8 @@ def test_get_participant_serialization(authenticated_client, study_subject, join
     with patch("aws_portal.views.participant.serialize_participant") as mock_serialize, \
             patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
 
-        mock_jwt_decode.return_value = {"email": study_subject.email}
+        mock_jwt_decode.return_value = {
+            "cognito:username": study_subject.email}
         mock_serialize.return_value = {
             "email": study_subject.email,
             "user_id": study_subject.id,
@@ -556,10 +574,11 @@ def test_delete_participant_remove_api_access(authenticated_client, study_subjec
 
         with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
             mock_get_scopes.return_value = [
-                "email", "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with email
+                "openid", "aws.cognito.signin.user.admin"]
+            # Mock jwt.decode to return a valid claims dictionary with cognito:username
             with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {"email": study_subject.email}
+                mock_jwt_decode.return_value = {
+                    "cognito:username": study_subject.email}
 
                 response = authenticated_client.delete("/participant")
 
@@ -610,10 +629,11 @@ def test_delete_participant_cognito_refresh_token_missing(authenticated_client, 
 
         with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
             mock_get_scopes.return_value = [
-                "email", "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with email
+                "openid", "aws.cognito.signin.user.admin"]
+            # Mock jwt.decode to return a valid claims dictionary with cognito:username
             with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {"email": study_subject.email}
+                mock_jwt_decode.return_value = {
+                    "cognito:username": study_subject.email}
 
                 response = authenticated_client.delete("/participant")
 
@@ -626,9 +646,10 @@ def test_revoke_api_access_concurrent_requests(authenticated_client, study_subje
     """
     Test handling of concurrent API access revocation requests.
     """
-    # Set the email in the token for authenticated client
+    # Set the cognito:username in the token for authenticated client
     with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        mock_jwt_decode.return_value = {"email": study_subject.email}
+        mock_jwt_decode.return_value = {
+            "cognito:username": study_subject.email}
 
         # Send the first DELETE request
         response1 = authenticated_client.delete(
@@ -667,10 +688,11 @@ def test_delete_participant_cognito_token_missing(authenticated_client, study_su
 
         with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
             mock_get_scopes.return_value = [
-                "email", "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with email
+                "openid", "aws.cognito.signin.user.admin"]
+            # Mock jwt.decode to return a valid claims dictionary with cognito:username
             with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {"email": study_subject.email}
+                mock_jwt_decode.return_value = {
+                    "cognito:username": study_subject.email}
 
                 response = authenticated_client.delete("/participant")
 

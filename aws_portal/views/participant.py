@@ -28,7 +28,7 @@ def get_participant():
         if not id_token:
             return make_response({"msg": "Missing ID token."}, 401)
 
-        # Decode ID token without verification to extract email
+        # Decode ID token without verification to extract cognito:username
         try:
             claims = jwt.decode(id_token, options={"verify_signature": False})
         except jwt.DecodeError:
@@ -36,10 +36,10 @@ def get_participant():
         except jwt.ExpiredSignatureError:
             return make_response({"msg": "Expired ID token."}, 401)
 
-        # Extract email from claims
-        email = claims.get("email")
+        # Extract cognito:username from claims
+        email = claims.get("cognito:username")
         if not email:
-            return make_response({"msg": "Email not found in token."}, 400)
+            return make_response({"msg": "cognito:username not found in token."}, 400)
 
         # Retrieve the StudySubject
         try:
@@ -92,9 +92,9 @@ def revoke_api_access(api_name):
 
         # Decode ID token to get claims
         claims = jwt.decode(id_token, options={"verify_signature": False})
-        email = claims.get("email")
+        email = claims.get("cognito:username")
         if not email:
-            return make_response({"msg": "Email not found in token"}, 400)
+            return make_response({"msg": "cognito:username not found in token"}, 400)
 
         study_subject = StudySubject.query.filter_by(
             email=email, is_archived=False).first()
@@ -152,9 +152,9 @@ def delete_participant():
 
         # Decode ID token to get claims
         claims = jwt.decode(id_token, options={"verify_signature": False})
-        email = claims.get("email")
+        email = claims.get("cognito:username")
         if not email:
-            return make_response({"msg": "Email not found in token."}, 400)
+            return make_response({"msg": "cognito:username not found in token."}, 400)
 
         # Retrieve the StudySubject
         study_subject = StudySubject.query.filter_by(
