@@ -30,11 +30,13 @@ class Default:
         "COGNITO_PARTICIPANT_CLIENT_ID")
     COGNITO_PARTICIPANT_CLIENT_SECRET = os.environ.get(
         "COGNITO_PARTICIPANT_CLIENT_SECRET")
-    COGNITO_PARTICIPANT_DOMAIN = "penn-ditti-dev-rev2.auth.us-east-1.amazoncognito.com"
-    COGNITO_PARTICIPANT_REGION = "us-east-1"
+    COGNITO_PARTICIPANT_DOMAIN = os.environ.get("COGNITO_PARTICIPANT_DOMAIN")
+    COGNITO_PARTICIPANT_REGION = os.environ.get("COGNITO_PARTICIPANT_REGION")
     COGNITO_PARTICIPANT_REDIRECT_URI = "http://localhost:5000/cognito/callback"
     COGNITO_PARTICIPANT_LOGOUT_URI = "http://localhost:3000/login"
-    COGNITO_PARTICIPANT_USER_POOL_ID = "us-east-1_yz8n85tm1"
+    COGNITO_PARTICIPANT_USER_POOL_ID = os.environ.get(
+        "COGNITO_PARTICIPANT_USER_POOL_ID"
+    )
 
     FITBIT_CLIENT_ID = os.environ.get("FITBIT_CLIENT_ID")
     FITBIT_CLIENT_SECRET = os.environ.get("FITBIT_CLIENT_SECRET")
@@ -55,6 +57,15 @@ class Production(Default):
     ]
 
     CORS_ORIGINS = os.getenv("AWS_CLOUDFRONT_DOMAIN_NAME")
+
+    COGNITO_PARTICIPANT_REDIRECT_URI = os.environ.get(
+        "COGNITO_PARTICIPANT_REDIRECT_URI"
+    )
+    COGNITO_PARTICIPANT_LOGOUT_URI = os.environ.get(
+        "COGNITO_PARTICIPANT_LOGOUT_URI"
+    )
+
+    FITBIT_REDIRECT_URI = os.environ.get("FITBIT_REDIRECT_URI")
 
 
 class Testing(Default):
