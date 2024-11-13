@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { makeRequest } from "../utils";
 import { ResponseBody } from "../interfaces";
 import TextField from "../components/fields/textField";
-import { ReactComponent as Person } from "../icons/person.svg";
-import { ReactComponent as Key } from "../icons/key.svg";
 import { FullLoader } from "../components/loader";
 import AsyncButton from "../components/buttons/asyncButton";
 import { useAuth } from "../hooks/useAuth";
@@ -111,10 +109,7 @@ const LoginPage: React.FC = () => {
           placeholder="To log in, please enter a new password"
           onKeyup={(text: string) => setSetPasswordField(text)}
           onKeyDown={(e) => e.key === "Enter" && trySetPassword()}
-          value={setPasswordField}
-        >
-          <Key />
-        </TextField>
+          value={setPasswordField} />
       </div>
       <div className="login-field">
         <TextField
@@ -123,10 +118,7 @@ const LoginPage: React.FC = () => {
           placeholder="Confirm your password"
           onKeyup={(text: string) => setConfirmPassword(text)}
           onKeyDown={(e) => e.key === "Enter" && trySetPassword()}
-          value={confirmPassword}
-        >
-          <Key />
-        </TextField>
+          value={confirmPassword} />
       </div>
       <div className="login-buttons">
         <button className="button-primary button-lg" onClick={trySetPassword}>
@@ -144,10 +136,7 @@ const LoginPage: React.FC = () => {
           placeholder="Email"
           onKeyup={(text: string) => setEmail(text)}
           onKeyDown={(e) => e.key === "Enter" && tryLogIn()}
-          value={email}
-        >
-          <Person />
-        </TextField>
+          value={email} />
       </div>
       <div className="login-field">
         <TextField
@@ -156,10 +145,7 @@ const LoginPage: React.FC = () => {
           placeholder="Password"
           onKeyup={(text: string) => setPassword(text)}
           onKeyDown={(e) => e.key === "Enter" && tryLogIn()}
-          value={password}
-        >
-          <Key />
-        </TextField>
+          value={password} />
       </div>
       <div className="login-buttons">
         <AsyncButton onClick={tryLogIn}>Sign in</AsyncButton>

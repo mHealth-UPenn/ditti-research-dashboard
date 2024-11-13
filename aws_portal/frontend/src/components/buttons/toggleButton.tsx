@@ -1,6 +1,6 @@
 import * as React from "react";
-import { ReactComponent as Check } from "../../icons/check.svg";
 import Button, { ButtonProps } from "./button";
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 /**
  * id: an id of the item that will be toggled by the button
@@ -30,7 +30,7 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({
         onClick={() => remove(id)}
         fullWidth={fullWidth}
         fullHeight={fullHeight}>
-          <Check />
+          <CheckCircleOutlineIcon />
       </Button>
     );
   }
