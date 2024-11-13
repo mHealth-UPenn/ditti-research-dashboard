@@ -998,7 +998,7 @@ class Study(db.Model):
             "email": self.email,
             "roles": [r.meta for r in self.roles],
             "dataSummary": self.data_summary,
-            "isQi": self.is_qi  # Include in metadata
+            "isQi": self.is_qi
         }
 
     def __repr__(self):
@@ -1262,6 +1262,12 @@ class JoinStudySubjectApi(db.Model):
         The scope of data that the study subject approved access for.
     last_sync_date: sqlalchemy.Column
         The last date sleep data was synchronized.
+    created_on: sqlalchemy.Column
+        The timestamp of the account's creation, e.g., `datetime.now(UTC)`.
+        The created_on value cannot be modified.
+    expires_on: sqlalchemy.Column
+        The timestamp of when access expires.
+        # TODO: Find out where this comes from
     study_subject: sqlalchemy.orm.relationship
     api: sqlalchemy.orm.relationship
     """
@@ -1281,11 +1287,23 @@ class JoinStudySubjectApi(db.Model):
 
     api_user_uuid = db.Column(db.String, nullable=False)
     scope = db.Column(db.ARRAY(db.String))
-    # Removed deprecated fields: access_key_uuid and refresh_key_uuid
     last_sync_date = db.Column(db.Date, nullable=True)
+    created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
+    expires_on = db.Column(db.DateTime, nullable=True)
 
     study_subject = db.relationship("StudySubject", back_populates="apis")
     api = db.relationship("Api")
+
+    @validates("created_on")
+    def validate_created_on(self, key, val):
+        """
+        Make the created_on column read-only.
+        """
+        if self.created_on:
+            raise ValueError(
+                "JoinStudySubjectApi.created_on cannot be modified.")
+
+        return val
 
     @hybrid_property
     def primary_key(self):
@@ -1307,7 +1325,9 @@ class JoinStudySubjectApi(db.Model):
             "apiUserUuid": self.api_user_uuid,
             "scope": self.scope,
             "api": self.api.meta,
-            "lastSyncDate": self.last_sync_date.isoformat() if self.last_sync_date else None
+            "lastSyncDate": self.last_sync_date.isoformat() if self.last_sync_date else None,
+            "createdOn": self.created_on.isoformat(),
+            "expiresOn": self.expires_on.isoformat() if self.expires_on else None
         }
 
         try:
