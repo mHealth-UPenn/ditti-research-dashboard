@@ -162,7 +162,7 @@ def check_login():
         return make_response({"msg": "Not authenticated"}, 401)
 
     try:
-        claims = verify_token(id_token, token_use="id")
+        claims = verify_token(True, id_token, token_use="id")
         return make_response({"msg": "Login successful"}, 200)
     except jwt.ExpiredSignatureError:
         return make_response({"msg": "Token has expired."}, 401)
