@@ -306,16 +306,13 @@ def create_joins():
         expires_on=datetime.now(UTC) + timedelta(days=14),
     )
 
-
     q1 = StudySubject.email == "foo@email.com"
     q2 = Api.name == "foo"
     foo = JoinStudySubjectApi(
         study_subject=StudySubject.query.filter(q1).first(),
         api=Api.query.filter(q2).first(),
         api_user_uuid="foo",
-        scope=["foo", "bar"],
-        access_key_uuid=str(uuid.uuid4()),
-        refresh_key_uuid=str(uuid.uuid4()),
+        scope=["foo", "bar"]
     )
 
     db.session.add(foo)
@@ -326,9 +323,7 @@ def create_joins():
         study_subject=StudySubject.query.filter(q1).first(),
         api=Api.query.filter(q2).first(),
         api_user_uuid="foo",
-        scope=["foo", "bar"],
-        access_key_uuid=str(uuid.uuid4()),
-        refresh_key_uuid=str(uuid.uuid4()),
+        scope=["foo", "bar"]
     )
 
     db.session.add(foo)
