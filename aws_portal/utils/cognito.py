@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=1)
-def get_cognito_jwks():
+def get_cognito_jwks(participant_pool: bool):
     """
     Fetches and caches the JWKS (JSON Web Key Set) from the AWS Cognito User Pool.
 
@@ -22,9 +22,11 @@ def get_cognito_jwks():
         ValueError: If the Cognito domain format is invalid.
         RequestException: If the JWKS could not be fetched due to a request issue.
     """
+    if not participant_pool:
+        raise ValueError("Only participant pool is supported at this time.")
     try:
-        region = current_app.config['COGNITO_REGION']
-        user_pool_id = current_app.config['COGNITO_USER_POOL_ID']
+        region = current_app.config['COGNITO_PARTICIPANT_REGION']
+        user_pool_id = current_app.config['COGNITO_PARTICIPANT_USER_POOL_ID']
         issuer = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
         keys_url = f"{issuer}/.well-known/jwks.json"
 
@@ -55,7 +57,7 @@ def get_public_key(token: str):
     """
     try:
         # Get JWKS and extract 'kid' from the token header
-        jwks = get_cognito_jwks()
+        jwks = get_cognito_jwks(participant_pool=True)
         unverified_header = jwt.get_unverified_header(token)
         kid = unverified_header.get("kid")
 
@@ -68,7 +70,7 @@ def get_public_key(token: str):
         # Clear cache and retry if the key is not found (in case of key rotation)
         if not key:
             get_cognito_jwks.cache_clear()
-            jwks = get_cognito_jwks()
+            jwks = get_cognito_jwks(participant_pool=True)
             key = next((k for k in jwks["keys"] if k["kid"] == kid), None)
 
         if not key:
@@ -84,7 +86,7 @@ def get_public_key(token: str):
         raise
 
 
-def refresh_access_token(refresh_token: str) -> str:
+def refresh_access_token(participant_pool: bool, refresh_token: str) -> str:
     """
     Refreshes the access token using the provided refresh token by making an OAuth2 token request.
 
@@ -98,13 +100,15 @@ def refresh_access_token(refresh_token: str) -> str:
         RequestException: If there is an HTTP error in the token refresh request.
         Exception: For any unexpected issues in the refresh process.
     """
+    if not participant_pool:
+        raise ValueError("Only participant pool is supported at this time.")
     try:
         # Prepare the request data for the token refresh request
-        cognito_domain = current_app.config['COGNITO_DOMAIN']
+        cognito_domain = current_app.config['COGNITO_PARTICIPANT_DOMAIN']
         token_issuer_endpoint = f"https://{cognito_domain}/oauth2/token"
         data = {
             "grant_type": "refresh_token",
-            "client_id": current_app.config["COGNITO_CLIENT_ID"],
+            "client_id": current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
             "refresh_token": refresh_token
         }
         headers = {
@@ -133,7 +137,7 @@ def refresh_access_token(refresh_token: str) -> str:
         raise
 
 
-def verify_token(token: str, token_use: str = "id") -> dict:
+def verify_token(participant_pool: bool, token: str, token_use: str = "id") -> dict:
     """
     Decodes and verifies a JWT token (ID or Access) using the provided public key,
     audience, and issuer.
@@ -150,6 +154,8 @@ def verify_token(token: str, token_use: str = "id") -> dict:
     Raises:
         PyJWTError: If token verification fails.
     """
+    if not participant_pool:
+        raise ValueError("Only participant pool is supported at this time.")
     try:
         # Retrieve public key
         public_key = get_public_key(token)
@@ -158,9 +164,9 @@ def verify_token(token: str, token_use: str = "id") -> dict:
             raise InvalidTokenError("Invalid token type specified.")
 
         # Decode and verify the token 'iss' claim and 'aud' claim for id tokens
-        audience = current_app.config["COGNITO_CLIENT_ID"]
-        region = current_app.config['COGNITO_REGION']
-        user_pool_id = current_app.config['COGNITO_USER_POOL_ID']
+        audience = current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"]
+        region = current_app.config['COGNITO_PARTICIPANT_REGION']
+        user_pool_id = current_app.config['COGNITO_PARTICIPANT_USER_POOL_ID']
         issuer = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
         claims = jwt.decode(
             token,
@@ -178,7 +184,7 @@ def verify_token(token: str, token_use: str = "id") -> dict:
 
         # Verify the 'client_id' claim in access tokens
         if token_use == "access":
-            if claims.get("client_id") != current_app.config["COGNITO_CLIENT_ID"]:
+            if claims.get("client_id") != current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"]:
                 raise InvalidTokenError(
                     "Access token 'client_id' does not match.")
 
@@ -220,15 +226,15 @@ def cognito_auth_required(f):
 
         # Verify access token and handle token refresh if expired
         try:
-            verify_token(access_token, token_use="access")
+            verify_token(True, access_token, token_use="access")
         except ExpiredSignatureError:
             # Attempt to refresh access token if expired
             if not refresh_token:
                 return make_response({"msg": "Missing refresh token."}, 401)
             try:
                 # Refresh the access token
-                new_access_token = refresh_access_token(refresh_token)
-                verify_token(new_access_token, token_use="access")
+                new_access_token = refresh_access_token(True, refresh_token)
+                verify_token(True, new_access_token, token_use="access")
 
                 response = make_response(f(*args, **kwargs))
                 response.set_cookie(
@@ -245,7 +251,7 @@ def cognito_auth_required(f):
 
         # Verify ID token and check that claims match the expected values
         try:
-            verify_token(id_token, token_use="id")
+            verify_token(True, id_token, token_use="id")
         except ExpiredSignatureError:
             return make_response({"msg": "ID token has expired."}, 401)
         except InvalidTokenError as e:
