@@ -2,7 +2,6 @@ import React, { useState, ChangeEvent, createRef, useEffect } from "react";
 import TextField from "../fields/textField";
 import { Study, ResponseBody, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
-import "./subjectsEdit.css";
 import Select from "../fields/select";
 import RadioField from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
@@ -508,7 +507,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                         type="text"
                         value={file.title}
                         onKeyup={(text: string) => handleTitleKeyup(text, i)}>
-                          <span className="flex items-center px-2 bg-light h-full">Title</span>
+                          <span className="flex items-center px-2 bg-extra-light h-full">Title</span>
                       </TextField>
                     }
                   </div>

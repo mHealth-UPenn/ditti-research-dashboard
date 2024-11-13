@@ -1,6 +1,5 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import "./select.css";
 
 /**
  * id: the value of the selected option
@@ -52,7 +51,7 @@ const Select: React.FC<SelectProps> = ({
   const updatedOpts = [{ value: 0, label: "" }].concat(opts);
 
   return (
-    <div className={`flex items-center flex-grow relative ${hideBorder ? "" : "border border-light"} ${disabled ? "bg-light" : ""}`}>
+    <div className={`flex items-center flex-grow relative ${hideBorder ? "" : "border border-light"} ${disabled ? "bg-extra-light" : ""}`}>
       {/* if the blank option is selected, show the placeholder */}
       {value === "0" && (
         <span className="ml-4 text-light pointer-events-none select-none absolute">{placeholder}</span>

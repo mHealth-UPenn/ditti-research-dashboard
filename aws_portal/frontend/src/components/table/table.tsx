@@ -4,9 +4,6 @@ import TableHeader from "./tableHeader";
 import TableRow from "./tableRow";
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-
-
-import "./table.css";
 import Button from "../buttons/button";
 
 /**
@@ -181,7 +178,7 @@ const Table: React.FC<TableProps> = ({
                       paddingY: cell.paddingY,
                     }))} />
                 )) :
-              <tr className="bg-light">
+              <tr className="bg-extra-light">
                 <td colSpan={columns.length} className="border-r border-t border-light text-link px-1 py-3">
                   <i>No data to display</i>
                 </td>

@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./navbar.css";
 import { ReactComponent as Back } from "../icons/left.svg";
 
 /**

@@ -28,7 +28,7 @@ const ParticipantLoginPage: React.FC = () => {
   }, [loadingDb, cognitoLogin]);
 
   const page = (
-    <div className="flex h-screen lg:mx-[6rem] xl:mx-[10rem] 2xl:mx-[20rem] bg-light">
+    <div className="flex h-screen lg:mx-[6rem] xl:mx-[10rem] 2xl:mx-[20rem] bg-extra-light">
       <div className="login-image-container">
         <img
           className="hidden lg:flex login-image"

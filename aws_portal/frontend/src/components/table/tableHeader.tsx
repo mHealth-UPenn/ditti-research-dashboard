@@ -18,7 +18,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
       {headers.map((h, i) => (
         <th
           key={i}
-          className={`bg-light border-r border-light select-none ${h.sortable && "cursor-pointer"}`}
+          className={`bg-extra-light border-r border-light select-none ${h.sortable && "cursor-pointer"}`}
           style={{ width: h.width + "%" }}
           onClick={() => h.sortable && onSort(h.name, h.ascending ? 0 : 1)}>
             <div className="flex items-begin justify-between mx-1 relative lg:mx-2">

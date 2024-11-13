@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./checkField.css";
 
 /**
  * id (optional): an optional html id

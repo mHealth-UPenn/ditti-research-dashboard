@@ -1,5 +1,4 @@
 import React, { createRef, useEffect, useState } from "react";
-import "./header.css";
 import { makeRequest } from "../utils";
 import { AccountDetails, ViewProps } from "../interfaces";
 import AccountMenu from "./accountMenu";

@@ -1,5 +1,4 @@
 import React from "react";
-import "./textField.css";
 
 /**
  * id (optional): an optional html id
@@ -55,7 +54,7 @@ const TextField: React.FC<TextFieldProps> = ({
             </label>
           </div>
         }
-        <div className={`flex items-center ${type === "textarea" ? "h-[24rem]" : "h-[2.75rem]"} border border-light ${disabled ? "bg-light" : ""}`}>
+        <div className={`flex items-center ${type === "textarea" ? "h-[24rem]" : "h-[2.75rem]"} border border-light ${disabled ? "bg-extra-light" : ""}`}>
           {/* place children here as prefix icons (e.g., a password icon) */}
           {children || null}
 

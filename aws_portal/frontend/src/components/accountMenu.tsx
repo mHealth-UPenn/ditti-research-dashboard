@@ -2,7 +2,6 @@ import { RefObject } from "react";
 import { useState } from "react";
 import { AccountDetails, ResponseBody, ViewProps } from "../interfaces";
 import TextField from "./fields/textField";
-import "./accountMenu.css";
 import { makeRequest } from "../utils";
 import AsyncButton from "./buttons/asyncButton";
 import Button from "./buttons/button";

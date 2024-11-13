@@ -3,7 +3,6 @@ import { Study, ViewProps } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import StudySubjects from "./studySubjects";
-import "./studySummary.css";
 import Subjects from "./subjects";
 import SubjectsEdit from "./subjectsEdit";
 import { Workbook } from "exceljs";

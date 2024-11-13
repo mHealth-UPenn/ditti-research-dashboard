@@ -1,5 +1,4 @@
 import React, { ChangeEvent, createRef } from "react";
-import "./radioField.css";
 
 /**
  * id (optional): an optional html id

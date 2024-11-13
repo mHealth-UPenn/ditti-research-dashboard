@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import "./home.css";
 import { ReactComponent as Right } from "../icons/right.svg";
 import { ViewProps } from "../interfaces";
 import StudiesView from "./dittiApp/studies";

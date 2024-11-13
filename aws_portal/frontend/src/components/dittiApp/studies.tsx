@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Study, ViewProps } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import "./studies.css";
 import StudySummary from "./studySummary";
 import { sub } from "date-fns";
 import AudioFileUpload from "./audioFileUpload";
