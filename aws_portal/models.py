@@ -1124,8 +1124,8 @@ class StudySubject(db.Model):
     ----
     id: sqlalchemy.Column
     created_on: sqlalchemy.Column
-    email: sqlalchemy.Column
-        The study subject's email as stored in Amazon Cognito.
+    ditti_id: sqlalchemy.Column
+        The study subject's Cognito username (unique identifier).
     is_confirmed: sqlalchemy.Column
         Whether the user verified their email with Amazon Cognito.
     is_archived: sqlalchemy.Column
@@ -1139,7 +1139,7 @@ class StudySubject(db.Model):
     __tablename__ = "study_subject"
     id = db.Column(db.Integer, primary_key=True)
     created_on = db.Column(db.DateTime, nullable=False)
-    email = db.Column(db.String, nullable=False, unique=True)
+    ditti_id = db.Column(db.String, nullable=False, unique=True)
     is_confirmed = db.Column(db.Boolean, default=False, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
@@ -1183,7 +1183,7 @@ class StudySubject(db.Model):
         return {
             "id": self.id,
             "createdOn": self.created_on.isoformat(),
-            "email": self.email,
+            "dittiId": self.ditti_id,
             "isConfirmed": self.is_confirmed,
             "studies": [join.meta for join in self.studies],
             "apis": [join.meta for join in self.apis],
@@ -1191,7 +1191,7 @@ class StudySubject(db.Model):
         }
 
     def __repr__(self):
-        return f"<StudySubject {self.email}>"
+        return f"<StudySubject {self.ditti_id}>"
 
 
 class JoinStudySubjectStudy(db.Model):
