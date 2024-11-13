@@ -12,11 +12,13 @@ blueprint = Blueprint("cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
 
 
-def build_cognito_url(path: str, params: dict) -> str:
+def build_cognito_url(participant_pool: bool, path: str, params: dict) -> str:
     """
     Constructs a full URL for AWS Cognito by combining the base domain, path, and query parameters.
     """
-    base_url = f"https://{current_app.config['COGNITO_DOMAIN']}"
+    if not participant_pool:
+        raise ValueError("Only participant pool is supported at this time.")
+    base_url = f"https://{current_app.config['COGNITO_PARTICIPANT_DOMAIN']}"
     query_string = urlencode(params)
     return f"{base_url}{path}?{query_string}"
 
@@ -27,15 +29,15 @@ def login():
     Redirect users to the Cognito login page.
     """
     elevated = request.args.get("elevated") == "true"
-    scope = "openid email"
+    scope = "openid"
     if elevated:
         scope += " aws.cognito.signin.user.admin"
 
-    cognito_auth_url = build_cognito_url("/login", {
-        "client_id": current_app.config["COGNITO_CLIENT_ID"],
+    cognito_auth_url = build_cognito_url(True, "/login", {
+        "client_id": current_app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
         "response_type": "code",
         "scope": scope,
-        "redirect_uri": current_app.config["COGNITO_REDIRECT_URI"],
+        "redirect_uri": current_app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
     })
     return redirect(cognito_auth_url)
 
@@ -56,14 +58,14 @@ def cognito_callback():
     code = request.args.get("code")
 
     # Construct token endpoint and request parameters
-    cognito_domain = current_app.config["COGNITO_DOMAIN"]
+    cognito_domain = current_app.config["COGNITO_PARTICIPANT_DOMAIN"]
     token_issuer_endpoint = f"https://{cognito_domain}/oauth2/token"
     data = {
         "grant_type": "authorization_code",
-        "client_id": current_app.config["COGNITO_CLIENT_ID"],
-        "client_secret": current_app.config["COGNITO_CLIENT_SECRET"],
+        "client_id": current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
+        "client_secret": current_app.config["COGNITO_PARTICIPANT_CLIENT_SECRET"],
         "code": code,
-        "redirect_uri": current_app.config["COGNITO_REDIRECT_URI"],
+        "redirect_uri": current_app.config["COGNITO_PARTICIPANT_REDIRECT_URI"],
     }
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -82,15 +84,16 @@ def cognito_callback():
 
     # Decode and verify ID token
     try:
-        claims = verify_token(id_token, token_use="id")
+        claims = verify_token(True, id_token, token_use="id")
 
     except jwt.ExpiredSignatureError:
         return make_response({"msg": "Token has expired."}, 400)
     except jwt.InvalidTokenError as e:
         return make_response({"msg": f"Invalid token: {str(e)}"}, 400)
 
-    # Get the user's email from token claims
-    email = claims.get("email")
+    # Get the user's user from token claims
+    # TODO: Drop the current email column and replace it with ditti_id
+    email = claims.get("cognito:username")
 
     # Check for study subject in database or create a new one
     study_subject = StudySubject.query.filter_by(email=email).first()
@@ -112,8 +115,7 @@ def cognito_callback():
 
     # Redirect to the front-end ParticipantDashboard
     frontend_base_url = current_app.config.get(
-        "CORS_ORIGINS", "http://localhost:3000"
-    )
+        "CORS_ORIGINS", "http://localhost:3000")
     redirect_url = f"{frontend_base_url}/participant"
 
     response = make_response(redirect(redirect_url))
@@ -139,9 +141,9 @@ def logout():
     """
     session.clear()
 
-    cognito_logout_url = build_cognito_url("/logout", {
-        "client_id": current_app.config["COGNITO_CLIENT_ID"],
-        "logout_uri": current_app.config["COGNITO_LOGOUT_URI"],
+    cognito_logout_url = build_cognito_url(True, "/logout", {
+        "client_id": current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
+        "logout_uri": current_app.config["COGNITO_PARTICIPANT_LOGOUT_URI"],
         "response_type": "code"
     })
 
@@ -164,7 +166,7 @@ def check_login():
         return make_response({"msg": "Not authenticated"}, 401)
 
     try:
-        claims = verify_token(id_token, token_use="id")
+        claims = verify_token(True, id_token, token_use="id")
         return make_response({"msg": "Login successful"}, 200)
     except jwt.ExpiredSignatureError:
         return make_response({"msg": "Token has expired."}, 401)

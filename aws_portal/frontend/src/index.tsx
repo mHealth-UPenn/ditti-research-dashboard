@@ -15,7 +15,7 @@ import "./output.css";
  * Root component wrapped with AuthProvider for authentication context.
  */
 const Root: React.FC = () => {
-  useDocumentTitle("AWS Portal");
+  useDocumentTitle("Participant Portal");
 
   return (
     <AuthProvider>
@@ -35,6 +35,14 @@ const router = createBrowserRouter([
       {
         index: true,
         element: (
+          <ProtectedRoute authMethod='cognito'>
+            <ParticipantDashboard />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "coordinator",
+        element: (
           <ProtectedRoute authMethod='iam'>
             <Dashboard />
           </ProtectedRoute>
@@ -42,19 +50,11 @@ const router = createBrowserRouter([
       },
       {
         path: "login",
-        element: <LoginPage />,
-      },
-      {
-        path: "participant/login",
         element: <ParticipantLoginPage />,
       },
       {
-        path: "participant",
-        element: (
-          <ProtectedRoute authMethod='cognito'>
-            <ParticipantDashboard />
-          </ProtectedRoute>
-        ),
+        path: "coordinator/login",
+        element: <LoginPage />,
       },
       // Additional routes can be added here
     ],

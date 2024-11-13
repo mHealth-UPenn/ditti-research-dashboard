@@ -79,7 +79,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setFirstLogin(true);
         } else {
           setFirstLogin(false);
-          navigate("/");
+          navigate("/coordinator");
         }
       }
     } catch (error) {
@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const iamLogout = useCallback((): void => {
     localStorage.removeItem("jwt");
     setIsIamAuthenticated(false);
-    navigate("/login");
+    navigate("/coordinator/login");
   }, [navigate]);
 
   /**

@@ -20,13 +20,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, authMethod })
 
   if (authMethod === 'iam') {
     if (isIamLoading) return <FullLoader loading={true} msg="Loading..." />;
-    if (!isIamAuthenticated) return <Navigate to="/login" replace />;
+    if (!isIamAuthenticated) return <Navigate to="/coordinator/login" replace />;
     return children;
   }
 
   if (authMethod === 'cognito') {
     if (isCognitoLoading) return <FullLoader loading={true} msg="Loading..." />;
-    if (!isCognitoAuthenticated) return <Navigate to="/participant/login" replace />;
+    if (!isCognitoAuthenticated) return <Navigate to="/login" replace />;
     return children;
   }
 
