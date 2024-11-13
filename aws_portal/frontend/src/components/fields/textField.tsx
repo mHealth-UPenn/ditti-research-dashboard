@@ -20,6 +20,7 @@ interface TextFieldProps {
   value?: string;
   label?: string;
   onKeyup?: (text: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
   feedback?: string;
   disabled?: boolean;
 }
@@ -34,6 +35,7 @@ const TextField: React.FC<TextFieldProps> = ({
   prefill,
   label,
   onKeyup,
+  onKeyDown,
   feedback,
   disabled,
   value,
@@ -75,6 +77,7 @@ const TextField: React.FC<TextFieldProps> = ({
             <textarea
               defaultValue={prefill ? prefill : undefined}
               onChange={handleKeyUp}
+              onKeyDown={onKeyDown}
               disabled={disabled}
             ></textarea>
           ) : (
@@ -84,6 +87,7 @@ const TextField: React.FC<TextFieldProps> = ({
               defaultValue={prefill || undefined}
               value={value ?? text} // Use value if provided, otherwise fall back to internal state
               onChange={handleKeyUp}
+              onKeyDown={onKeyDown}
               disabled={disabled}
             />
           )}

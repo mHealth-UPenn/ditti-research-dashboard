@@ -2,7 +2,7 @@ import click
 from flask import current_app
 from flask.cli import with_appcontext
 from aws_portal.models import (
-    init_admin_app, init_admin_group, init_admin_account, init_db
+    init_admin_app, init_admin_group, init_admin_account, init_db, init_api
 )
 
 
@@ -46,3 +46,10 @@ def init_admin_account_click(uri, email, password):
 def init_db_click():
     init_db()
     click.echo("Database successfully initialized.")
+
+
+@click.command("init-api")
+@with_appcontext
+def init_api_click():
+    init_api(click)
+    click.echo("API successfully initialized.")

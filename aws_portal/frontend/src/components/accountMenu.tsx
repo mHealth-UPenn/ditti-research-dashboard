@@ -5,6 +5,7 @@ import TextField from "./fields/textField";
 import { ReactComponent as Right } from "../icons/arrowRight.svg";
 import "./accountMenu.css";
 import { makeRequest } from "../utils";
+import { useAuth } from "../hooks/useAuth";
 import AsyncButton from "./buttons/asyncButton";
 
 /**
@@ -24,6 +25,8 @@ const AccountMenu: React.FC<AccountMenuProps> = (props) => {
     edit: false,
     editPassword: false,
   });
+
+  const { iamLogout } = useAuth();
 
   /**
    * Make a POST request with changes
@@ -104,15 +107,6 @@ const AccountMenu: React.FC<AccountMenuProps> = (props) => {
       confirmPassword: "",
     });
   }, [props]);
-
-  /**
-   * Logout the user
-   */
-  const logout = useCallback(async (): Promise<void> => {
-    localStorage.removeItem("jwt");
-    // refresh the window to show the login page
-    location.reload();
-  }, []);
 
   const { edit, editPassword, email, firstName, lastName, phoneNumber } = state;
 
@@ -250,7 +244,7 @@ const AccountMenu: React.FC<AccountMenuProps> = (props) => {
           style={{ marginBottom: "2rem" }}
         ></div>
         <div className="logout-button">
-          <button className="button-danger" onClick={logout}>
+          <button className="button-danger" onClick={iamLogout}>
             Logout
           </button>
         </div>

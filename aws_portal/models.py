@@ -180,6 +180,25 @@ def init_admin_account(email=None, password=None):
     return admin
 
 
+def init_api(click=None):
+    """
+    Insert Fitbit API entry.
+    """
+    api_name = "Fitbit"
+    existing_api = Api.query.filter_by(name=api_name).first()
+
+    if not existing_api:
+        new_api = Api(name=api_name, is_archived=False)
+        db.session.add(new_api)
+        db.session.commit()
+        message = f"API '{api_name}' has been created with ID {new_api.id}."
+    else:
+        message = f"API '{api_name}' already exists with ID {existing_api.id}."
+
+    if click:
+        click.echo(message)
+
+
 @jwt.user_identity_loader
 def user_identity_lookup(account):
     return account.public_id
@@ -1223,9 +1242,9 @@ class JoinStudySubjectApi(db.Model):
     scope: sqlalchemy.Column
         The scope of data that the study subject approved access for
     access_key_uuid: sqlalchemy.Column
-        A unique ID for locating the study subject's access key for the API
+        DEPRECATED
     refresh_key_uuid: sqlalchemy.Column
-        A unique ID for locating the study subject's refresh key for the API
+        DEPRECATED
     study_subject: sqlalchemy.orm.relationship
     api: sqlalchemy.orm.relationship
     """
