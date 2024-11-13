@@ -947,7 +947,6 @@ class App(db.Model):
         return "<App %s>" % self.name
 
 
-# TODO: Add Why We Are Collecting Your Data
 class Study(db.Model):
     """
     The study table mapping class.
@@ -963,9 +962,11 @@ class Study(db.Model):
         The default amount of time in number of days that a subject is enrolled
         in the study. A subject's expires_on column will be automatically set
         according to this value.
-    consent_information: sqlalchemt.Column
+    consent_information: sqlalchemy.Column
         The consent text to show to a study subject.
     is_archived: sqlalchemy.Column
+    data_summary: sqlalchemy.Column
+        Text describing why we are collecting participants data.
     roles: sqlalchemy.orm.relationship
     """
     __tablename__ = "study"
@@ -977,6 +978,7 @@ class Study(db.Model):
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
     default_expiry_delta = db.Column(db.Integer)
     consent_information = db.Column(db.String)
+    data_summary = db.Column(db.Text)
 
     roles = db.relationship("JoinStudyRole", cascade="all, delete-orphan")
 
@@ -991,7 +993,8 @@ class Study(db.Model):
             "acronym": self.acronym,
             "dittiId": self.ditti_id,
             "email": self.email,
-            "roles": [r.meta for r in self.roles]
+            "roles": [r.meta for r in self.roles],
+            "dataSummary": self.data_summary
         }
 
     def __repr__(self):
