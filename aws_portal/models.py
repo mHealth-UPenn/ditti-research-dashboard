@@ -991,10 +991,6 @@ class Study(db.Model):
         Text describing why we are collecting participants data.
     is_qi: sqlalchemy.Column
         Indicates if the study is QI (Quality Improvement), defaults to False.
-    start_date: sqlalchemy.Column
-        The date when the study starts.
-    end_date: sqlalchemy.Column
-        The date when the study ends.
     roles: sqlalchemy.orm.relationship
     """
     __tablename__ = "study"
@@ -1008,8 +1004,6 @@ class Study(db.Model):
     consent_information = db.Column(db.String)
     data_summary = db.Column(db.Text)
     is_qi = db.Column(db.Boolean, default=False, nullable=False)
-    start_date = db.Column(db.Date, nullable=True)
-    end_date = db.Column(db.Date, nullable=True)
 
     roles = db.relationship("JoinStudyRole", cascade="all, delete-orphan")
 
@@ -1026,9 +1020,7 @@ class Study(db.Model):
             "email": self.email,
             "roles": [r.meta for r in self.roles],
             "dataSummary": self.data_summary,
-            "isQi": self.is_qi,
-            "startDate": self.start_date.isoformat() if self.start_date else None,
-            "endDate": self.end_date.isoformat() if self.end_date else None
+            "isQi": self.is_qi
         }
 
     def __repr__(self):
