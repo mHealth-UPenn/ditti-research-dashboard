@@ -1,12 +1,13 @@
 import logging
 import boto3
 import jwt
-from flask import Blueprint, jsonify, make_response, request
+from flask import Blueprint, jsonify, make_response, request, current_app
 from sqlalchemy.exc import SQLAlchemyError
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, StudySubject, JoinStudySubjectApi
-from aws_portal.utils.cognito import cognito_auth_required, get_token_scopes
+from aws_portal.utils.cognito import cognito_auth_required
 from aws_portal.utils.serialization import serialize_participant
+from aws_portal.utils.auth import auth_required
 
 
 blueprint = Blueprint("participant", __name__, url_prefix="/participant")
@@ -131,43 +132,28 @@ def revoke_api_access(api_name):
         return make_response({"msg": "Error revoking API access"}, 500)
 
 
-@blueprint.route("", methods=["DELETE"])
-@cognito_auth_required
-def delete_participant():
+@blueprint.route("<string:participant_username>", methods=["DELETE"])
+@auth_required("View", "Admin Dashboard")
+@auth_required("Archive", "Accounts")
+def delete_participant(participant_username):
     """
     Endpoint to delete a participant's account and all associated API data.
     Deletes API tokens and data, archives the StudySubject in the database,
     and removes the user from AWS Cognito.
 
+    Args:
+        participant_username (str): Username of the StudySubject to delete.
+
     Returns:
         JSON response confirming account deletion or an error message.
     """
     try:
-        # Get tokens from cookies
-        id_token = request.cookies.get("id_token")
-        access_token = request.cookies.get("access_token")
-
-        if not id_token or not access_token:
-            return make_response({"msg": "Missing authentication tokens."}, 401)
-
-        # Decode ID token to get claims
-        claims = jwt.decode(id_token, options={"verify_signature": False})
-        email = claims.get("cognito:username")
-        if not email:
-            return make_response({"msg": "cognito:username not found in token."}, 400)
-
         # Retrieve the StudySubject
         study_subject = StudySubject.query.filter_by(
-            email=email, is_archived=False).first()
+            email=participant_username, is_archived=False).first()
         if not study_subject:
             return make_response({"msg": "User not found or already archived."}, 404)
         study_subject_id = study_subject.id
-
-        # Check if user has scope to delete own account
-        scopes = get_token_scopes(access_token)
-        logger.error(f"Scopes: {scopes}")
-        if "aws.cognito.signin.user.admin" not in scopes:
-            return make_response({"msg": "Insufficient permissions."}, 403)
 
         # TODO: Delete API data (DIT-16)
 
@@ -200,8 +186,9 @@ def delete_participant():
         client = boto3.client("cognito-idp")
         try:
             # Requires aws.cognito.signin.user.admin OpenID Connect scope
-            client.delete_user(
-                AccessToken=access_token
+            client.admin_delete_user(
+                UserPoolId=current_app.config['COGNITO_PARTICIPANT_USER_POOL_ID'],
+                Username=participant_username
             )
         except client.exceptions.NotAuthorizedException:
             logger.error("Not authorized to delete user in Cognito.")
