@@ -1061,7 +1061,7 @@ class JoinStudyRole(db.Model):
         return self.role.meta
 
     def __repr__(self):
-        return "<JoinStudyRole %s-%s>" % self.primary_key
+        return f"<JoinStudyRole {self.study_id}-{self.role_id}>"
 
 
 class BlockedToken(db.Model):
@@ -1079,7 +1079,7 @@ class BlockedToken(db.Model):
     __tablename__ = "blocked_token"
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String, nullable=False)
-    created_on = db.Column(db.DateTime, nullable=False)
+    created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     def __repr__(self):
         return "<BlockedToken %s>" % self.id
@@ -1137,11 +1137,11 @@ class StudySubject(db.Model):
     """
     __tablename__ = "study_subject"
     id = db.Column(db.Integer, primary_key=True)
-    created_on = db.Column(db.DateTime, nullable=False)
+    created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
     ditti_id = db.Column(db.String, nullable=False, unique=True)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
-    # ignore archived studies
+    # Ignore archived studies
     studies = db.relationship(
         "JoinStudySubjectStudy",
         back_populates="study_subject",
@@ -1155,7 +1155,7 @@ class StudySubject(db.Model):
         )
     )
 
-    # ignore archived apis
+    # Ignore archived apis
     apis = db.relationship(
         "JoinStudySubjectApi",
         back_populates="study_subject",
@@ -1170,10 +1170,10 @@ class StudySubject(db.Model):
     )
 
     sleep_logs = db.relationship(
-        'SleepLog',
-        back_populates='study_subject',
-        cascade='all, delete-orphan',
-        lazy='dynamic'  # Use dynamic loading for large datasets
+        "SleepLog",
+        back_populates="study_subject",
+        cascade="all, delete-orphan",
+        lazy="dynamic"  # Use dynamic loading for large datasets
     )
 
     @property
@@ -1217,10 +1217,9 @@ class JoinStudySubjectStudy(db.Model):
 
     study_id = db.Column(
         db.Integer,
-        db.ForeignKey("study.id"),  # do not allow deletions on study table
+        db.ForeignKey("study.id"),  # Do not allow deletions on study table
         primary_key=True
     )
-
     did_consent = db.Column(db.Boolean, default=False, nullable=False)
     expires_on = db.Column(db.DateTime, nullable=True)
 
@@ -1250,13 +1249,13 @@ class JoinStudySubjectStudy(db.Model):
         dict: an entry's metadata.
         """
         return {
-            "did_consent": self.did_consent,
-            "expires_on": self.expires_on.isoformat() if self.expires_on else None,
+            "didConsent": self.did_consent,
+            "expiresOn": self.expires_on.isoformat() if self.expires_on else None,
             "study": self.study.meta,
         }
 
     def __repr__(self):
-        return "<JoinStudySubjectStudy %s-%s>" % self.primary_key
+        return f"<JoinStudySubjectStudy {self.study_subject_id}-{self.study_id}>"
 
 
 @event.listens_for(JoinStudySubjectStudy, "before_insert")
@@ -1267,15 +1266,17 @@ def set_expires_on(mapper, connection, target):
     """
     if not target.expires_on:
         if target.study_id:
-            stmt = select(Study.default_expiry_delta)\
-                .where(Study.id == target.study_id)
+            # Use a raw SQL query to fetch default_expiry_delta
+            stmt = select(Study.default_expiry_delta).where(
+                Study.id == target.study_id
+            )
             result = connection.execute(stmt).scalar_one_or_none()
             if result is not None:
                 target.expires_on = datetime.now(UTC) + timedelta(days=result)
             else:
                 raise ValueError(
-                    f"Cannot set expires_on: Study with id {target.study_id}"
-                    f"not found or default_expiry_delta is missing."
+                    f"Cannot set expires_on: Study with id {
+                        target.study_id} not found or default_expiry_delta is missing."
                 )
         else:
             raise ValueError("Cannot set expires_on: study_id is missing.")
@@ -1368,7 +1369,7 @@ class JoinStudySubjectApi(db.Model):
 
 class Api(db.Model):
     """
-    The api table mapping class
+    The api table mapping class.
 
     Vars
     ----
@@ -1425,15 +1426,14 @@ class SleepLog(db.Model):
     minutes_awake: sqlalchemy.Column
     minutes_to_fall_asleep: sqlalchemy.Column
     log_type: sqlalchemy.Column
-        Type of sleep log (e.g., 'auto_detected', 'manual').
+        Type of sleep log (e.g., "auto_detected", "manual").
     start_time: sqlalchemy.Column
         Timestamp when sleep began.
     time_in_bed: sqlalchemy.Column
         Total number of minutes in bed.
     type: sqlalchemy.Column
-        Type of sleep log ('stages' or 'classic').
+        Type of sleep log ("stages" or "classic").
     """
-
     __tablename__ = "sleep_log"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -1443,7 +1443,7 @@ class SleepLog(db.Model):
         nullable=False,
         index=True
     )
-    # Fitbit's logId
+
     log_id = db.Column(db.BigInteger, nullable=False, unique=True, index=True)
     date_of_sleep = db.Column(db.Date, nullable=False, index=True)
     duration = db.Column(db.Integer)
@@ -1460,9 +1460,10 @@ class SleepLog(db.Model):
     time_in_bed = db.Column(db.Integer)
     type = db.Column(db.String)
 
-    # Relationships
     study_subject = db.relationship(
-        "StudySubject", back_populates="sleep_logs")
+        "StudySubject",
+        back_populates="sleep_logs"
+    )
     levels = db.relationship(
         "SleepLevel",
         back_populates="sleep_log",
@@ -1498,14 +1499,18 @@ class SleepLog(db.Model):
     @sleep_efficiency_percentage.expression
     def sleep_efficiency_percentage(cls):
         return case(
-            [(cls.time_in_bed != 0,
-              (func.coalesce(cls.minutes_asleep, 0) / cls.time_in_bed) * 100)],
+            [
+                (
+                    cls.time_in_bed != 0,
+                    (func.coalesce(cls.minutes_asleep, 0) / cls.time_in_bed) * 100
+                )
+            ],
             else_=None
         )
 
     # Column property for duration in hours
     duration_hours = column_property(
-        func.coalesce(duration, 0) / (1000 * 60 * 60)
+        (func.coalesce(id.duration, 0) / (1000 * 60 * 60)).label("duration_hours")
     )
 
     @validates("efficiency")
@@ -1559,15 +1564,14 @@ class SleepLevel(db.Model):
     date_time: sqlalchemy.Column
     level: sqlalchemy.Column
         The sleep level entered. Valid values include:
-        - Stages: 'deep', 'light', 'rem', 'wake'
-        - Classic: 'asleep', 'restless', 'awake'
+        - Stages: "deep", "light", "rem", "wake"
+        - Classic: "asleep", "restless", "awake"
     seconds: sqlalchemy.Column
         Duration in seconds for the sleep level.
     is_short: sqlalchemy.Column
         Indicates if the wake period is short (<= 3 minutes).
         Only applicable for stages sleep logs (nullable).
     """
-
     __tablename__ = "sleep_level"
     __table_args__ = (
         db.Index("idx_sleep_level_sleep_log_id_date_time",
@@ -1575,8 +1579,11 @@ class SleepLevel(db.Model):
     )
 
     id = db.Column(db.Integer, primary_key=True)
-    sleep_log_id = db.Column(db.Integer, db.ForeignKey(
-        "sleep_log.id"), nullable=False)
+    sleep_log_id = db.Column(
+        db.Integer,
+        db.ForeignKey("sleep_log.id"),
+        nullable=False
+    )
     date_time = db.Column(db.DateTime, nullable=False, index=True)
     level = db.Column(db.String, nullable=False)
     seconds = db.Column(db.Integer, nullable=False)
@@ -1622,8 +1629,8 @@ class SleepSummary(db.Model):
     sleep_log_id: sqlalchemy.Column
     level: sqlalchemy.Column
         The sleep level. Valid values include:
-        - Stages: 'deep', 'light', 'rem', 'wake'
-        - Classic: 'asleep', 'restless', 'awake'
+        - Stages: "deep", "light", "rem", "wake"
+        - Classic: "asleep", "restless", "awake"
     count: sqlalchemy.Column
         Total number of times the user entered the sleep level.
     minutes: sqlalchemy.Column
@@ -1632,7 +1639,6 @@ class SleepSummary(db.Model):
         Average sleep stage time over the past 30 days.
         Only applicable for stages sleep logs (nullable).
     """
-
     __tablename__ = "sleep_summary"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -1642,7 +1648,6 @@ class SleepSummary(db.Model):
         nullable=False
     )
     level = db.Column(db.String, nullable=False)
-
     count = db.Column(db.Integer)
     minutes = db.Column(db.Integer)
     thirty_day_avg_minutes = db.Column(db.Integer, nullable=True)
@@ -1668,7 +1673,7 @@ class SleepSummary(db.Model):
             "level": self.level,
             "count": self.count,
             "minutes": self.minutes,
-            "thirtyDayAvgMinutes": self.thirty_day_avg_minutes
+            "thirtyDayAvgMinutes": self.thirty_day_avg_minutes,
         }
 
     def __repr__(self):
