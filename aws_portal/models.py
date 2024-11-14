@@ -1214,6 +1214,9 @@ class JoinStudySubjectStudy(db.Model):
     study_id: sqlalchemy.Column
     did_consent: sqlalchemy.Column
         Whether the study subject consented to the collection of their data
+    created_on: sqlalchemy.Column
+        The timestamp of the account's creation, e.g., `datetime.now(UTC)`.
+        The created_on value cannot be modified.
     expires_on: sqlalchemy.Column
         When the study subject is no longer a part of the study and data should no
         longer be collected from any of the subject's approved APIs
@@ -1227,17 +1230,27 @@ class JoinStudySubjectStudy(db.Model):
         db.ForeignKey("study_subject.id", ondelete="CASCADE"),
         primary_key=True
     )
-
     study_id = db.Column(
         db.Integer,
         db.ForeignKey("study.id"),  # Do not allow deletions on study table
         primary_key=True
     )
     did_consent = db.Column(db.Boolean, default=False, nullable=False)
+    created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
     expires_on = db.Column(db.DateTime, nullable=True)
 
     study_subject = db.relationship("StudySubject", back_populates="studies")
     study = db.relationship("Study")
+
+    @validates("created_on")
+    def validate_created_on(self, key, val):
+        """
+        Make the created_on column read-only.
+        """
+        if self.created_on:
+            raise ValueError(
+                "JoinStudySubjectApi.created_on cannot be modified.")
+        return val
 
     @validates("expires_on")
     def validate_expires_on(self, key, value):
@@ -1263,6 +1276,7 @@ class JoinStudySubjectStudy(db.Model):
         """
         return {
             "didConsent": self.did_consent,
+            "createdOn": self.created_on.isoformat(),
             "expiresOn": self.expires_on.isoformat() if self.expires_on else None,
             "study": self.study.meta,
         }
