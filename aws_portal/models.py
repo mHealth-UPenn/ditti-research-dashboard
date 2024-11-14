@@ -1,9 +1,10 @@
+import enum
 import logging
 import os
 import uuid
 from datetime import datetime, UTC, timedelta
 from flask import current_app
-from sqlalchemy import select, func, tuple_, case, event
+from sqlalchemy import select, func, tuple_, case, event, Enum
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import validates, column_property
@@ -218,6 +219,26 @@ def check_if_token_revoked(jwt_header, jwt_payload):
     print("checking %s" % jti)
     token = BlockedToken.query.filter(BlockedToken.jti == jti).first()
     return token is not None
+
+
+class SleepLevelEnum(enum.Enum):
+    wake = "wake"
+    light = "light"
+    deep = "deep"
+    rem = "rem"
+    asleep = "asleep"
+    awake = "awake"
+    restless = "restless"
+
+
+class SleepLogTypeEnum(enum.Enum):
+    auto_detected = "auto_detected"
+    manual = "manual"
+
+
+class SleepCategoryTypeEnum(enum.Enum):
+    stages = "stages"
+    classic = "classic"
 
 
 class Account(db.Model):
@@ -1455,10 +1476,10 @@ class SleepLog(db.Model):
     minutes_asleep = db.Column(db.Integer)
     minutes_awake = db.Column(db.Integer)
     minutes_to_fall_asleep = db.Column(db.Integer)
-    log_type = db.Column(db.String)
+    log_type = db.Column(Enum(SleepLogTypeEnum), nullable=False)
     start_time = db.Column(db.DateTime)
     time_in_bed = db.Column(db.Integer)
-    type = db.Column(db.String)
+    type = db.Column(Enum(SleepCategoryTypeEnum), nullable=False)
 
     study_subject = db.relationship(
         "StudySubject",
@@ -1538,10 +1559,10 @@ class SleepLog(db.Model):
             "minutesAsleep": self.minutes_asleep,
             "minutesAwake": self.minutes_awake,
             "minutesToFallAsleep": self.minutes_to_fall_asleep,
-            "logType": self.log_type,
+            "logType": self.log_type.value,
             "startTime": self.start_time.isoformat() if self.start_time else None,
             "timeInBed": self.time_in_bed,
-            "type": self.type,
+            "type": self.type.value,
             "totalMinutesAsleep": self.total_minutes_asleep,
             "sleepEfficiencyPercentage": self.sleep_efficiency_percentage,
             # Omitting levels and summaries to prevent excessive data transfer
@@ -1585,21 +1606,11 @@ class SleepLevel(db.Model):
         nullable=False
     )
     date_time = db.Column(db.DateTime, nullable=False, index=True)
-    level = db.Column(db.String, nullable=False)
+    level = db.Column(Enum(SleepLevelEnum), nullable=False)
     seconds = db.Column(db.Integer, nullable=False)
     is_short = db.Column(db.Boolean, default=False, nullable=True)
 
     sleep_log = db.relationship("SleepLog", back_populates="levels")
-
-    @validates("level")
-    def validate_level(self, key, value):
-        allowed_levels = {
-            "wake", "light", "deep", "rem",
-            "asleep", "awake", "restless"
-        }
-        if value not in allowed_levels:
-            raise ValueError(f"Invalid sleep level: {value}")
-        return value
 
     @property
     def meta(self):
@@ -1608,13 +1619,13 @@ class SleepLevel(db.Model):
         """
         return {
             "dateTime": self.date_time.isoformat(),
-            "level": self.level,
+            "level": self.level.value,
             "seconds": self.seconds,
             "isShort": self.is_short
         }
 
     def __repr__(self):
-        return f"<SleepLevel {self.level} at {self.date_time} for SleepLog {self.sleep_log_id}>"
+        return f"<SleepLevel {self.level.value} at {self.date_time} for SleepLog {self.sleep_log_id}>"
 
 
 class SleepSummary(db.Model):
@@ -1647,22 +1658,12 @@ class SleepSummary(db.Model):
         db.ForeignKey("sleep_log.id"),
         nullable=False
     )
-    level = db.Column(db.String, nullable=False)
+    level = db.Column(Enum(SleepLevelEnum), nullable=False)
     count = db.Column(db.Integer)
     minutes = db.Column(db.Integer)
     thirty_day_avg_minutes = db.Column(db.Integer, nullable=True)
 
     sleep_log = db.relationship("SleepLog", back_populates="summaries")
-
-    @validates("level")
-    def validate_level(self, key, value):
-        allowed_levels = {
-            "wake", "light", "deep", "rem",
-            "asleep", "awake", "restless"
-        }
-        if value not in allowed_levels:
-            raise ValueError(f"Invalid sleep summary level: {value}")
-        return value
 
     @property
     def meta(self):
@@ -1670,11 +1671,11 @@ class SleepSummary(db.Model):
         dict: An entry's metadata.
         """
         return {
-            "level": self.level,
+            "level": self.level.value,
             "count": self.count,
             "minutes": self.minutes,
             "thirtyDayAvgMinutes": self.thirty_day_avg_minutes,
         }
 
     def __repr__(self):
-        return f"<SleepSummary {self.level} for SleepLog {self.sleep_log_id}>"
+        return f"<SleepSummary {self.level.value} for SleepLog {self.sleep_log_id}>"
