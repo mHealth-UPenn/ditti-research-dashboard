@@ -4,10 +4,9 @@ import os
 import uuid
 from datetime import datetime, UTC, timedelta
 from flask import current_app
-from sqlalchemy import select, func, tuple_, case, event, Enum
+from sqlalchemy import select, func, tuple_, event, Enum
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import validates, column_property
+from sqlalchemy.orm import validates
 from sqlalchemy.sql.schema import UniqueConstraint
 from aws_portal.extensions import bcrypt, db, jwt
 
@@ -1530,7 +1529,8 @@ class SleepLog(db.Model):
             "type": self.type.value,
             "totalMinutesAsleep": self.total_minutes_asleep,
             "sleepEfficiencyPercentage": self.sleep_efficiency_percentage,
-            # Omitting levels and summaries to prevent excessive data transfer
+            "levels": [level.meta for level in self.levels],
+            "summaries": [summary.meta for summary in self.summaries]
         }
 
     def __repr__(self):
