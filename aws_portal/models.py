@@ -1,14 +1,15 @@
-from datetime import datetime, UTC
 import logging
 import os
 import uuid
+from datetime import datetime, UTC, timedelta
 from flask import current_app
-from sqlalchemy import func, select, tuple_, case
+from sqlalchemy import select, func, tuple_, case, event
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import validates, column_property
 from sqlalchemy.sql.schema import UniqueConstraint
-from aws_portal.extensions import bcrypt, db, jwt, tm
+from aws_portal.extensions import bcrypt, db, jwt
+
 
 logger = logging.getLogger(__name__)
 
@@ -960,7 +961,7 @@ class Study(db.Model):
     email: sqlalchemy.Column
     default_expiry_delta: sqlalchemy.Column
         The default amount of time in number of days that a subject is enrolled
-        in the study. A subject's expires_on column will be automatically set
+        in the study. A JoinStudySubjectStudy's expires_on column will be automatically set
         according to this value.
     consent_information: sqlalchemy.Column
         The consent text to show to a study subject.
@@ -982,7 +983,7 @@ class Study(db.Model):
     ditti_id = db.Column(db.String, nullable=False, unique=True)
     email = db.Column(db.String, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
-    default_expiry_delta = db.Column(db.Integer)
+    default_expiry_delta = db.Column(db.Integer, nullable=False)
     consent_information = db.Column(db.String)
     data_summary = db.Column(db.Text)
     is_qi = db.Column(db.Boolean, default=False, nullable=False)
@@ -1201,7 +1202,7 @@ class JoinStudySubjectStudy(db.Model):
     did_consent: sqlalchemy.Column
         Whether the study subject consented to the collection of their data
     expires_on: sqlalchemy.Column
-        When the study is no longer a part of the study and data should no
+        When the study subject is no longer a part of the study and data should no
         longer be collected from any of the subject's approved APIs
     study_subject: sqlalchemy.orm.relationship
     study: sqlalchemy.orm.relationship
@@ -1221,10 +1222,16 @@ class JoinStudySubjectStudy(db.Model):
     )
 
     did_consent = db.Column(db.Boolean, default=False, nullable=False)
-    expires_on = db.Column(db.DateTime, nullable=False)
+    expires_on = db.Column(db.DateTime, nullable=True)
 
     study_subject = db.relationship("StudySubject", back_populates="studies")
     study = db.relationship("Study")
+
+    @validates("expires_on")
+    def validate_expires_on(self, key, value):
+        if value and value <= datetime.now(UTC):
+            raise ValueError("expires_on must be a future date.")
+        return value
 
     @hybrid_property
     def primary_key(self):
@@ -1244,12 +1251,34 @@ class JoinStudySubjectStudy(db.Model):
         """
         return {
             "did_consent": self.did_consent,
-            "expires_on": self.expires_on,
+            "expires_on": self.expires_on.isoformat() if self.expires_on else None,
             "study": self.study.meta,
         }
 
     def __repr__(self):
         return "<JoinStudySubjectStudy %s-%s>" % self.primary_key
+
+
+@event.listens_for(JoinStudySubjectStudy, "before_insert")
+def set_expires_on(mapper, connection, target):
+    """
+    Automatically set the expires_on field based on the Study's default_expiry_delta
+    if expires_on is not provided.
+    """
+    if not target.expires_on:
+        if target.study_id:
+            stmt = select(Study.default_expiry_delta)\
+                .where(Study.id == target.study_id)
+            result = connection.execute(stmt).scalar_one_or_none()
+            if result is not None:
+                target.expires_on = datetime.now(UTC) + timedelta(days=result)
+            else:
+                raise ValueError(
+                    f"Cannot set expires_on: Study with id {target.study_id}"
+                    f"not found or default_expiry_delta is missing."
+                )
+        else:
+            raise ValueError("Cannot set expires_on: study_id is missing.")
 
 
 class JoinStudySubjectApi(db.Model):
@@ -1306,7 +1335,6 @@ class JoinStudySubjectApi(db.Model):
         if self.created_on:
             raise ValueError(
                 "JoinStudySubjectApi.created_on cannot be modified.")
-
         return val
 
     @hybrid_property
