@@ -135,7 +135,8 @@ def test_get_participant_missing_email(authenticated_client):
         response = authenticated_client.get("/participant")
 
         assert response.status_code == 400
-        assert response.get_json() == {"msg": "Email not found in token."}
+        assert response.get_json() == {
+            "msg": "cognito:username not found in token."}
 
 
 def test_get_participant_user_not_found(authenticated_client):
@@ -214,7 +215,8 @@ def test_revoke_api_access_missing_email(authenticated_client):
         response = authenticated_client.delete("/participant/api/TestAPI")
 
         assert response.status_code == 400
-        assert response.get_json() == {"msg": "Email not found in token"}
+        assert response.get_json() == {
+            "msg": "cognito:username not found in token"}
 
 
 def test_revoke_api_access_user_not_found(authenticated_client):
@@ -375,7 +377,8 @@ def test_delete_participant_missing_email(authenticated_client):
         response = authenticated_client.delete("/participant")
 
         assert response.status_code == 400
-        assert response.get_json() == {"msg": "Email not found in token."}
+        assert response.get_json() == {
+            "msg": "cognito:username not found in token."}
 
 
 def test_delete_participant_user_not_found(authenticated_client):
