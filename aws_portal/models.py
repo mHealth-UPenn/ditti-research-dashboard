@@ -1499,42 +1499,6 @@ class SleepLog(db.Model):
         lazy="joined"  # Eagerly load summaries
     )
 
-    # Association proxy to simplify access to levels
-    level_values = association_proxy("levels", "level")
-
-    # Hybrid Properties
-
-    @hybrid_property
-    def total_minutes_asleep(self):
-        return (self.minutes_asleep or 0) + (self.minutes_after_wakeup or 0)
-
-    @total_minutes_asleep.expression
-    def total_minutes_asleep(cls):
-        return func.coalesce(cls.minutes_asleep, 0) + func.coalesce(cls.minutes_after_wakeup, 0)
-
-    @hybrid_property
-    def sleep_efficiency_percentage(self):
-        if self.time_in_bed:
-            return ((self.minutes_asleep or 0) / self.time_in_bed) * 100
-        return None
-
-    @sleep_efficiency_percentage.expression
-    def sleep_efficiency_percentage(cls):
-        return case(
-            [
-                (
-                    cls.time_in_bed != 0,
-                    (func.coalesce(cls.minutes_asleep, 0) / cls.time_in_bed) * 100
-                )
-            ],
-            else_=None
-        )
-
-    # Column property for duration in hours
-    duration_hours = column_property(
-        (func.coalesce(id.duration, 0) / (1000 * 60 * 60)).label("duration_hours")
-    )
-
     @validates("efficiency")
     def validate_efficiency(self, key, value):
         if value is not None and not (0 <= value <= 100):
