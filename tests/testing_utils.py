@@ -14,6 +14,7 @@ from aws_portal.models import (
     JoinStudySubjectStudy, Api
 )
 
+# Validate the SQLAlchemy URI
 uri = os.getenv("FLASK_DB")
 if "localhost" not in uri:
     raise Exception(
@@ -22,6 +23,7 @@ if "localhost" not in uri:
         uri
     )
 
+# Test data for various models
 apps = [
     {
         "name": "foo"
@@ -97,17 +99,23 @@ studies = [
         "name": "foo",
         "acronym": "FOO",
         "ditti_id": "FO",
-        "email": "foo@email.com",
+        "email": "foo@study.com",
+        "is_archived": False,
         "default_expiry_delta": 14,
         "consent_information": "foo",
+        "data_summary": None,
+        "is_qi": False
     },
     {
         "name": "bar",
         "acronym": "BAR",
         "ditti_id": "BR",
-        "email": "bar@email.com",
+        "email": "bar@study.com",
+        "is_archived": False,
         "default_expiry_delta": 14,
         "consent_information": "foo",
+        "data_summary": None,
+        "is_qi": False
     }
 ]
 
@@ -125,13 +133,11 @@ blocked_tokens = [
 study_subjects = [
     {
         "created_on": datetime.now(UTC),
-        "email": "foo@email.com",
-        "is_confirmed": True,
+        "ditti_id": "ditti_foo_123",
     },
     {
         "created_on": datetime.now(UTC),
-        "email": "bar@email.com",
-        "is_confirmed": True,
+        "ditti_id": "ditti_bar_456",
     }
 ]
 
@@ -146,194 +152,210 @@ apis = [
 
 
 def create_tables():
-    for app in apps:
-        db.session.add(App(**app))
+    # Add Apps
+    for app_data in apps:
+        db.session.add(App(**app_data))
 
-    for access_group in access_groups:
-        db.session.add(AccessGroup(**access_group))
+    # Add AccessGroups
+    for access_group_data in access_groups:
+        db.session.add(AccessGroup(**access_group_data))
 
-    for account in accounts:
-        db.session.add(Account(**account))
+    # Add Accounts
+    for account_data in accounts:
+        db.session.add(Account(**account_data))
 
-    for permission in permissions:
+    # Add Permissions
+    for permission_data in permissions:
         p = Permission()
-        p.action = permission["action"]
-        p.resource = permission["resource"]
+        p.action = permission_data["action"]
+        p.resource = permission_data["resource"]
         db.session.add(p)
 
-    for role in roles:
-        db.session.add(Role(**role))
+    # Add Roles
+    for role_data in roles:
+        db.session.add(Role(**role_data))
 
-    for study in studies:
-        db.session.add(Study(**study))
+    # Add Studies with all required fields
+    for study_data in studies:
+        db.session.add(Study(**study_data))
 
-    for blocked_token in blocked_tokens:
-        db.session.add(BlockedToken(**blocked_token))
+    # Add BlockedTokens
+    for blocked_token_data in blocked_tokens:
+        db.session.add(BlockedToken(**blocked_token_data))
 
-    for study_subject in study_subjects:
-        db.session.add(StudySubject(**study_subject))
+    # Add StudySubjects with ditti_id
+    for study_subject_data in study_subjects:
+        db.session.add(StudySubject(**study_subject_data))
 
-    for api in apis:
-        db.session.add(Api(**api))
+    # Add APIs
+    for api_data in apis:
+        db.session.add(Api(**api_data))
 
 
 def create_joins():
-    q1 = AccessGroup.name == "foo"
-    q2 = App.name == "foo"
-    access_group = AccessGroup.query.filter(q1).first()
-    access_group.app = App.query.filter(q2).first()
+    # Associate AccessGroups with Apps
+    foo_access_group = AccessGroup.query.filter(
+        AccessGroup.name == "foo").first()
+    foo_app = App.query.filter(App.name == "foo").first()
+    foo_access_group.app = foo_app
 
-    q1 = AccessGroup.name == "bar"
-    q2 = App.name == "bar"
-    access_group = AccessGroup.query.filter(q1).first()
-    access_group.app = App.query.filter(q2).first()
+    bar_access_group = AccessGroup.query.filter(
+        AccessGroup.name == "bar").first()
+    bar_app = App.query.filter(App.name == "bar").first()
+    bar_access_group.app = bar_app
 
-    q1 = AccessGroup.name == "foo"
-    q2 = Permission.definition == ("foo", "baz")
-    foo = JoinAccessGroupPermission(
-        access_group=AccessGroup.query.filter(q1).first(),
-        permission=Permission.query.filter(q2).first()
+    # Associate AccessGroups with Permissions
+    foo_permission = Permission.query.filter(
+        Permission.action == "foo", Permission.resource == "baz"
+    ).first()
+    foo_join = JoinAccessGroupPermission(
+        access_group=foo_access_group,
+        permission=foo_permission
     )
+    db.session.add(foo_join)
 
-    db.session.add(foo)
-
-    q1 = AccessGroup.name == "bar"
-    q2 = Permission.definition == ("bar", "baz")
-    foo = JoinAccessGroupPermission(
-        access_group=AccessGroup.query.filter(q1).first(),
-        permission=Permission.query.filter(q2).first()
+    bar_permission = Permission.query.filter(
+        Permission.action == "bar", Permission.resource == "baz"
+    ).first()
+    bar_join = JoinAccessGroupPermission(
+        access_group=bar_access_group,
+        permission=bar_permission
     )
+    db.session.add(bar_join)
 
-    db.session.add(foo)
+    # Associate Roles with Permissions
+    role_foo = Role.query.filter(Role.name == "foo").first()
+    perm_foo_baz = Permission.query.filter(
+        Permission.action == "foo", Permission.resource == "baz"
+    ).first()
+    perm_edit_user = Permission.query.filter(
+        Permission.action == "Edit", Permission.resource == "User"
+    ).first()
+    perm_create_user = Permission.query.filter(
+        Permission.action == "Create", Permission.resource == "User"
+    ).first()
 
-    q1 = Role.name == "foo"
-    q2 = Permission.definition == ("foo", "baz")
-    q3 = Permission.definition == ("Edit", "User")
-    q4 = Permission.definition == ("Create", "User")
-    foo = JoinRolePermission(
-        role=Role.query.filter(q1).first(),
-        permission=Permission.query.filter(q2).first()
+    join_role_perm_foo_baz = JoinRolePermission(
+        role=role_foo,
+        permission=perm_foo_baz
     )
-
-    bar = JoinRolePermission(
-        role=Role.query.filter(q1).first(),
-        permission=Permission.query.filter(q3).first()
+    join_role_perm_edit_user = JoinRolePermission(
+        role=role_foo,
+        permission=perm_edit_user
     )
-
-    baz = JoinRolePermission(
-        role=Role.query.filter(q1).first(),
-        permission=Permission.query.filter(q4).first()
+    join_role_perm_create_user = JoinRolePermission(
+        role=role_foo,
+        permission=perm_create_user
     )
+    db.session.add(join_role_perm_foo_baz)
+    db.session.add(join_role_perm_edit_user)
+    db.session.add(join_role_perm_create_user)
 
-    db.session.add(foo)
-    db.session.add(bar)
-    db.session.add(baz)
-
-    q1 = Role.name == "bar"
-    q2 = Permission.definition == ("bar", "qux")
-    foo = JoinRolePermission(
-        role=Role.query.filter(q1).first(),
-        permission=Permission.query.filter(q2).first()
+    perm_bar_qux = Permission.query.filter(
+        Permission.action == "bar", Permission.resource == "qux"
+    ).first()
+    role_bar = Role.query.filter(Role.name == "bar").first()
+    join_role_perm_bar_qux = JoinRolePermission(
+        role=role_bar,
+        permission=perm_bar_qux
     )
+    db.session.add(join_role_perm_bar_qux)
 
-    db.session.add(foo)
-
-    foo = Role.query.filter(Role.name == "foo").first()
-    bar = Study.query.filter(Study.name == "foo").first()
-    baz = JoinStudyRole(role=foo, study=bar)
-    db.session.add(baz)
-
-    foo = Role.query.filter(Role.name == "bar").first()
-    bar = Study.query.filter(Study.name == "bar").first()
-    baz = JoinStudyRole(role=foo, study=bar)
-    db.session.add(baz)
-
-    q1 = Account.email == "foo@email.com"
-    q2 = AccessGroup.name == "foo"
-    foo = JoinAccountAccessGroup(
-        account=Account.query.filter(q1).first(),
-        access_group=AccessGroup.query.filter(q2).first()
+    # Associate Roles with Studies
+    study_foo = Study.query.filter(Study.name == "foo").first()
+    join_study_role_foo = JoinStudyRole(
+        role=role_foo,
+        study=study_foo
     )
+    db.session.add(join_study_role_foo)
 
-    db.session.add(foo)
-
-    q1 = Account.email == "bar@email.com"
-    q2 = AccessGroup.name == "bar"
-    foo = JoinAccountAccessGroup(
-        account=Account.query.filter(q1).first(),
-        access_group=AccessGroup.query.filter(q2).first()
+    study_bar = Study.query.filter(Study.name == "bar").first()
+    join_study_role_bar = JoinStudyRole(
+        role=role_bar,
+        study=study_bar
     )
+    db.session.add(join_study_role_bar)
 
-    db.session.add(foo)
+    # Associate Accounts with AccessGroups
+    account_foo = Account.query.filter(
+        Account.email == "foo@email.com").first()
+    account_bar = Account.query.filter(
+        Account.email == "bar@email.com").first()
 
-    q1 = Account.email == "foo@email.com"
-    q2 = Study.name == "foo"
-    q3 = Role.name == "foo"
-    foo = JoinAccountStudy(
-        account=Account.query.filter(q1).first(),
-        study=Study.query.filter(q2).first(),
-        role=Role.query.filter(q3).first()
+    join_account_access_group_foo = JoinAccountAccessGroup(
+        account=account_foo,
+        access_group=foo_access_group
     )
-
-    db.session.add(foo)
-
-    q1 = Account.email == "bar@email.com"
-    q2 = Study.name == "bar"
-    q3 = Role.name == "bar"
-    foo = JoinAccountStudy(
-        account=Account.query.filter(q1).first(),
-        study=Study.query.filter(q2).first(),
-        role=Role.query.filter(q3).first()
+    join_account_access_group_bar = JoinAccountAccessGroup(
+        account=account_bar,
+        access_group=bar_access_group
     )
+    db.session.add(join_account_access_group_foo)
+    db.session.add(join_account_access_group_bar)
 
-    db.session.add(foo)
+    # Associate Accounts with Studies and Roles
+    join_account_study_foo = JoinAccountStudy(
+        account=account_foo,
+        study=study_foo,
+        role=role_foo
+    )
+    join_account_study_bar = JoinAccountStudy(
+        account=account_bar,
+        study=study_bar,
+        role=role_bar
+    )
+    db.session.add(join_account_study_foo)
+    db.session.add(join_account_study_bar)
 
-    q1 = StudySubject.email == "foo@email.com"
-    q2 = Study.name == "foo"
-    foo = JoinStudySubjectStudy(
-        study_subject=StudySubject.query.filter(q1).first(),
-        study=Study.query.filter(q2).first(),
+    # Associate StudySubjects with Studies
+    study_subject_foo = StudySubject.query.filter(
+        StudySubject.ditti_id == "ditti_foo_123"
+    ).first()
+    study_subject_bar = StudySubject.query.filter(
+        StudySubject.ditti_id == "ditti_bar_456"
+    ).first()
+
+    join_study_subject_study_foo = JoinStudySubjectStudy(
+        study_subject=study_subject_foo,
+        study=study_foo,
         expires_on=datetime.now(UTC) + timedelta(days=14),
     )
-
-    db.session.add(foo)
-
-    q1 = StudySubject.email == "bar@email.com"
-    q2 = Study.name == "bar"
-    foo = JoinStudySubjectStudy(
-        study_subject=StudySubject.query.filter(q1).first(),
-        study=Study.query.filter(q2).first(),
+    join_study_subject_study_bar = JoinStudySubjectStudy(
+        study_subject=study_subject_bar,
+        study=study_bar,
         expires_on=datetime.now(UTC) + timedelta(days=14),
     )
+    db.session.add(join_study_subject_study_foo)
+    db.session.add(join_study_subject_study_bar)
 
-    q1 = StudySubject.email == "foo@email.com"
-    q2 = Api.name == "foo"
-    foo = JoinStudySubjectApi(
-        study_subject=StudySubject.query.filter(q1).first(),
-        api=Api.query.filter(q2).first(),
+    # Associate StudySubjects with APIs
+    api_foo = Api.query.filter(Api.name == "foo").first()
+    api_bar = Api.query.filter(Api.name == "bar").first()
+
+    join_study_subject_api_foo = JoinStudySubjectApi(
+        study_subject=study_subject_foo,
+        api=api_foo,
         api_user_uuid="foo",
         scope=["foo", "bar"]
     )
-
-    db.session.add(foo)
-
-    q1 = StudySubject.email == "bar@email.com"
-    q2 = Api.name == "bar"
-    foo = JoinStudySubjectApi(
-        study_subject=StudySubject.query.filter(q1).first(),
-        api=Api.query.filter(q2).first(),
-        api_user_uuid="foo",
+    join_study_subject_api_bar = JoinStudySubjectApi(
+        study_subject=study_subject_bar,
+        api=api_bar,
+        api_user_uuid="bar",
         scope=["foo", "bar"]
     )
-
-    db.session.add(foo)
+    db.session.add(join_study_subject_api_foo)
+    db.session.add(join_study_subject_api_bar)
 
 
 def login_test_account(name, client, password=None):
-    q1 = Account.email == "%s@email.com" % name
+    # This function interacts with Account.email and remains unchanged
+    q1 = Account.email == f"{name}@email.com"
     foo = Account.query.filter(q1).first()
+    if not foo:
+        raise ValueError(f"No account found with email: {name}@email.com")
     cred = b64encode(f"{foo.email}:{password or name}".encode())
-    headers = {"Authorization": "Basic %s" % cred.decode()}
+    headers = {"Authorization": f"Basic {cred.decode()}"}
     res = client.post("/iam/login", headers=headers)
 
     return res
@@ -342,28 +364,39 @@ def login_test_account(name, client, password=None):
 def login_admin_account(client):
     email = os.getenv("FLASK_ADMIN_EMAIL")
     password = os.getenv("FLASK_ADMIN_PASSWORD")
+    if not email or not password:
+        raise ValueError(
+            "FLASK_ADMIN_EMAIL and FLASK_ADMIN_PASSWORD must be set.")
     cred = b64encode(f"{email}:{password}".encode())
-    headers = {"Authorization": "Basic %s" % cred.decode()}
+    headers = {"Authorization": f"Basic {cred.decode()}"}
     res = client.post("/iam/login", headers=headers)
 
     return res
 
 
 def get_auth_headers(res, headers=None):
-    csrf_token = res.json["csrfAccessToken"]
+    csrf_token = res.json.get("csrfAccessToken")
+    if not csrf_token:
+        raise ValueError("CSRF token not found in response.")
     headers = headers or {}
     csrf_header_name = current_app.config["JWT_ACCESS_CSRF_HEADER_NAME"]
     headers.update({csrf_header_name: csrf_token})
 
-    if "jwt" in res.json:
-        headers.update({"Authorization": "Bearer " + res.json["jwt"]})
+    jwt_token = res.json.get("jwt")
+    if jwt_token:
+        headers.update({"Authorization": f"Bearer {jwt_token}"})
 
     return headers
 
 
 def get_account_from_response(res):
-    access_token = res.json["jwt"]
-    public_id = decode_token(access_token)["sub"]
+    access_token = res.json.get("jwt")
+    if not access_token:
+        raise ValueError("JWT token not found in response.")
+    payload = decode_token(access_token)
+    public_id = payload.get("sub")
+    if not public_id:
+        raise ValueError("Public ID not found in JWT payload.")
     account = Account.query.filter(Account.public_id == public_id).first()
 
     return account
