@@ -61,7 +61,7 @@ const ParticipantLoginPage: React.FC = () => {
           <div className="cognito-login">
             <p>
               {isElevated
-                ? "To delete your account and its data, please sign in and try again."
+                ? "Please sign in and try again."
                 : "Continue to our secure sign in:"}
             </p>
             <div className="login-buttons">
