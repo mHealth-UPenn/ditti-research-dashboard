@@ -390,40 +390,47 @@ class TestArchives:
         assert qux == []
 
     def test_archive_study(self, app):
+        # Retrieve the Study instance
         q1 = Study.name == "bar"
         foo = Study.query.filter(q1).first()
-        assert "foo: %s" % foo != "foo: %s" % None
+        assert foo is not None, "Study 'bar' should exist."
 
+        # Retrieve the Account associated with the Study
         q2 = Account.email == "bar@email.com"
         bar = Account.query.filter(q2).first()
-        assert "bar: %s" % bar != "bar: %s" % None
-        assert len(bar.studies) == 1
-        assert bar.studies[0].study is foo
+        assert bar is not None, "Account 'bar@email.com' should exist."
+        assert len(
+            bar.studies) == 1, "Account should be associated with one study."
+        assert bar.studies[0].study is foo, "Associated study should be 'bar'."
 
-        q2 = StudySubject.email == "bar@email.com"
+        # Retrieve the StudySubject using ditti_id
+        q2 = StudySubject.ditti_id == "ditti_bar_456"
         baz = StudySubject.query.filter(q2).first()
-        assert "baz: %s" % baz != "baz: %s" % None
-        assert len(baz.studies) == 1
-        assert baz.studies[0].study is foo
+        assert baz is not None, "StudySubject with ditti_id 'ditti_bar_456' should exist."
+        assert len(
+            baz.studies) == 1, "StudySubject should be associated with one study."
+        assert baz.studies[0].study is foo, "Associated study should be 'bar'."
 
+        # Archive the Study
         foo.is_archived = True
         db.session.commit()
-        assert foo.is_archived
-        assert len(bar.studies) == 0
-        assert len(baz.studies) == 0
+
+        # Validate archiving
+        assert foo.is_archived, "Study should be marked as archived."
+        assert len(
+            bar.studies) == 0, "Account should no longer be associated with the archived study."
+        assert len(
+            baz.studies) == 0, "StudySubject should no longer be associated with the archived study."
 
     def test_archive_api(self, app):
         q1 = Api.name == "bar"
         foo = Api.query.filter(q1).first()
-        assert "foo: %s" % foo != "foo: %s" % None
+        assert foo is not None, "API 'bar' should exist."
 
-        q2 = StudySubject.email == "bar@email.com"
+        # Updated to use ditti_id instead of email
+        q2 = StudySubject.ditti_id == "ditti_bar_456"
         baz = StudySubject.query.filter(q2).first()
-        assert "baz: %s" % baz != "baz: %s" % None
-        assert len(baz.apis) == 1
-        assert baz.apis[0].api is foo
-
-        foo.is_archived = True
-        db.session.commit()
-        assert foo.is_archived
-        assert len(baz.apis) == 0
+        assert baz is not None, "StudySubject with ditti_id 'ditti_bar_456' should exist."
+        assert len(
+            baz.apis) == 1, "StudySubject should be associated with one API."
+        assert baz.apis[0].api is foo, "Associated API should be 'bar'."
