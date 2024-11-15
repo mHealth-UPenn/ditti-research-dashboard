@@ -284,26 +284,31 @@ class TestDeletions:
         assert "baz: %s" % baz == "baz: %s" % None
 
     def test_delete_study_subject(self, app):
-        q1 = StudySubject.email == "foo@email.com"
+        # Query the StudySubject using ditti_id
+        q1 = StudySubject.ditti_id == "ditti_foo_123"
         foo = StudySubject.query.filter(q1).first()
-        assert "foo: %s" % foo != "foo: %s" % None
+        assert foo is not None, "StudySubject with ditti_id 'ditti_foo_123' should exist."
 
+        # Get the IDs for JoinStudySubjectStudy and JoinStudySubjectApi associations
         foo_id = foo.id
         q3 = JoinStudySubjectStudy.study_subject_id == foo_id
         q2 = JoinStudySubjectApi.study_subject_id == foo_id
         baz = JoinStudySubjectStudy.query.filter(q3).first()
         bar = JoinStudySubjectApi.query.filter(q2).first()
-        assert "bar: %s" % bar != "bar: %s" % None
-        assert "baz: %s" % baz != "baz: %s" % None
+        assert bar is not None, "JoinStudySubjectApi association should exist."
+        assert baz is not None, "JoinStudySubjectStudy association should exist."
 
+        # Delete the StudySubject
         db.session.delete(foo)
         db.session.commit()
+
+        # Verify the StudySubject and its associations are deleted
         foo = StudySubject.query.filter(q1).first()
         baz = JoinStudySubjectStudy.query.filter(q3).first()
         bar = JoinStudySubjectApi.query.filter(q2).first()
-        assert "foo: %s" % foo == "foo: %s" % None
-        assert "bar: %s" % bar == "bar: %s" % None
-        assert "baz: %s" % baz == "baz: %s" % None
+        assert foo is None, "StudySubject should be deleted."
+        assert bar is None, "JoinStudySubjectApi association should be deleted."
+        assert baz is None, "JoinStudySubjectStudy association should be deleted."
 
     def test_delete_api_with_enrolled_subject(self, app):
         with pytest.raises(IntegrityError):
