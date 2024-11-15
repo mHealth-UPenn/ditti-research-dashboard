@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { makeRequest } from "../utils";
 
@@ -26,7 +25,6 @@ const ParticipantDashboard: React.FC = () => {
   const [sleepList, setSleepList] = useState(null);
 
   const { cognitoLogout } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchParticipantData();
@@ -42,20 +40,6 @@ const ParticipantDashboard: React.FC = () => {
     console.log("Revoke Fitbit: ", res);
     fetchParticipantData();
     fetchSleepList();
-  };
-
-  const deleteParticipant = async () => {
-    try {
-      const res = await makeRequest("/participant", { method: "DELETE" });
-      console.log("Delete participant: ", res);
-      navigate("/participant/login");
-    } catch (error) {
-      console.error("Delete participant: ", error);
-      if ((error as { msg: string }).msg === "Insufficient permissions.") {
-        console.error("Redirecting to elevated login page");
-        navigate("/participant/login?elevated=true");
-      }
-    }
   };
 
   const fetchParticipantData = async () => {
@@ -85,7 +69,6 @@ const ParticipantDashboard: React.FC = () => {
       ) : (
         <button onClick={authorizeFitbit}>Authorize access to my Fitbit data</button>
       )}
-      <button onClick={deleteParticipant}>Delete my account and all data</button>
 
       {participantData && (
         <div className="participant-info">

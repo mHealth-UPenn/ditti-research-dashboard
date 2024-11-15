@@ -308,7 +308,7 @@ def test_revoke_api_access_exception_handling(authenticated_client, study_subjec
                 "Error revoking API access: Commit error")
 
 
-def test_delete_participant_success(authenticated_client, study_subject, join_api, api_entry):
+def test_delete_participant_success(app, delete_admin, study_subject, join_api, api_entry):
     """
     Test successful deletion of participant account.
     """
@@ -320,185 +320,119 @@ def test_delete_participant_success(authenticated_client, study_subject, join_ap
         mock_cognito_client = MagicMock()
         mock_boto_client.return_value = mock_cognito_client
 
-        with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
-            mock_get_scopes.return_value = [
-                "openid", "aws.cognito.signin.user.admin"]
+        response = delete_admin(
+            f"/participant/{study_subject.email}", query_string={"app": 1})
 
-            # Mock jwt.decode to return a valid claims dictionary with email
-            with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {
-                    "cognito:username": study_subject.email}
-
-                response = authenticated_client.delete("/participant")
-
-                assert response.status_code == 200
-                assert response.get_json() == {
-                    "msg": "Account deleted successfully."}
-
-                # Verify tokens deletion for each API
-                mock_delete_tokens.assert_called_once_with(
-                    api_name=api_entry.name, study_subject_id=study_subject.id)
-
-                # Verify API access removal
-                mock_db_delete.assert_called_once_with(join_api)
-
-                # Verify StudySubject is archived
-                assert study_subject.is_archived == True
-
-                # Verify database commit
-                mock_db_commit.assert_called_once()
-
-                # Verify Cognito deletion
-                mock_cognito_client.delete_user.assert_called_once_with(
-                    AccessToken="fake_access_token")
-
-                # Verify cookies are cleared
-                assert response.headers.get_all("Set-Cookie")
-
-
-def test_delete_participant_missing_tokens(client):
-    """
-    Test deletion of participant account with missing tokens.
-    """
-    response = client.delete("/participant")
-    assert response.status_code == 401
-    assert response.get_json() == {"msg": "Missing authentication tokens."}
-
-
-def test_delete_participant_missing_email(authenticated_client):
-    """
-    Test deletion of participant account when email is missing in ID token.
-    """
-    with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        mock_jwt_decode.return_value = {}  # No email in claims
-
-        response = authenticated_client.delete("/participant")
-
-        assert response.status_code == 400
+        assert response.status_code == 200
         assert response.get_json() == {
-            "msg": "cognito:username not found in token."}
+            "msg": "Account deleted successfully."}
+
+        # Verify tokens deletion for each API
+        mock_delete_tokens.assert_called_once_with(
+            api_name=api_entry.name, study_subject_id=study_subject.id)
+
+        # Verify API access removal
+        mock_db_delete.assert_called_once_with(join_api)
+
+        # Verify StudySubject is archived
+        assert study_subject.is_archived == True
+
+        # Verify database commit
+        mock_db_commit.assert_called_once()
+
+        # Verify Cognito deletion
+        mock_cognito_client.admin_delete_user.assert_called_once_with(
+            UserPoolId=app.config["COGNITO_PARTICIPANT_USER_POOL_ID"],
+            Username=study_subject.email
+        )
+
+        # Verify cookies are cleared
+        assert response.headers.get_all("Set-Cookie")
 
 
-def test_delete_participant_user_not_found(authenticated_client):
+def test_delete_participant_not_admin(app, delete, study_subject):
+    """
+    Test deletion of participant account without admin permissions.
+    """
+    response = delete(
+        f"/participant/{study_subject.email}", query_string={"app": 1})
+    assert response.status_code == 403
+    assert response.get_json() == {"msg": "Unauthorized Request"}
+
+
+def test_delete_participant_missing_username(app, delete_admin, study_subject):
+    """
+    Test deletion of participant account when username is missing in route.
+    """
+    with patch("aws_portal.views.participant.tm.delete_api_tokens") as mock_delete_tokens, \
+            patch("aws_portal.views.participant.db.session.delete") as mock_db_delete, \
+            patch("aws_portal.views.participant.db.session.commit") as mock_db_commit, \
+            patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
+        response = delete_admin(
+            f"/participant/", query_string={"app": 1})
+
+        assert response.status_code == 405
+
+
+def test_delete_participant_user_not_found(app, delete_admin):
     """
     Test deletion of participant account when user is not found or already archived.
     """
-    with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        # Mock jwt.decode to return a valid claims dictionary with nonexistent cognito:username
-        mock_jwt_decode.return_value = {"cognito:username": "dne@email.com"}
-        response = authenticated_client.delete("/participant")
+    with patch("aws_portal.views.participant.tm.delete_api_tokens") as mock_delete_tokens, \
+            patch("aws_portal.views.participant.db.session.delete") as mock_db_delete, \
+            patch("aws_portal.views.participant.db.session.commit") as mock_db_commit, \
+            patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
+        response = delete_admin(
+            f"/participant/username_dne", query_string={"app": 1})
         assert response.status_code == 404
         assert response.get_json() == {
             "msg": "User not found or already archived."}
 
 
-def test_delete_participant_insufficient_permissions(authenticated_client, study_subject):
-    """
-    Test deletion of participant account with insufficient permissions.
-    """
-    with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
-        mock_get_scopes.return_value = ["openid"]
-
-        # Mock jwt.decode to return a valid claims dictionary with cognito:username
-        with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {
-                "cognito:username": study_subject.email}
-
-            response = authenticated_client.delete("/participant")
-
-            assert response.status_code == 403
-            assert response.get_json() == {"msg": "Insufficient permissions."}
-
-
-def test_delete_participant_exception_deleting_tokens(authenticated_client, study_subject, join_api):
+def test_delete_participant_exception_deleting_tokens(app, delete_admin, study_subject, join_api):
     """
     Test deletion of participant account when deleting tokens raises an exception.
     """
     with patch("aws_portal.views.participant.tm.delete_api_tokens", side_effect=Exception("Token deletion error")):
+        response = delete_admin(
+            f"/participant/{study_subject.email}", query_string={"app": 1})
 
-        with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
-            mock_get_scopes.return_value = [
-                "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with cognito:username
-            with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {
-                    "cognito:username": study_subject.email}
-
-                response = authenticated_client.delete("/participant")
-
-                assert response.status_code == 500
-                assert response.get_json() == {
-                    "msg": "Error deleting API tokens."}
+        assert response.status_code == 500
+        assert response.get_json() == {
+            "msg": "Error deleting API tokens."}
 
 
-def test_delete_participant_cognito_not_authorized(authenticated_client, study_subject):
-    """
-    Test deletion of participant account when Cognito deletion raises NotAuthorizedException.
-    """
-    with patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
-
-        mock_cognito_client = MagicMock()
-        mock_cognito_client.delete_user.side_effect = mock_cognito_client.exceptions.NotAuthorizedException(
-            "Not authorized")
-        mock_boto_client.return_value = mock_cognito_client
-
-        # Mock jwt.decode to return a valid claims dictionary with cognito:username
-        with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {
-                "cognito:username": study_subject.email}
-
-            response = authenticated_client.delete("/participant")
-
-            assert response.status_code == 403
-            assert response.get_json() == {
-                "msg": "Insufficient permissions."}
-
-
-def test_delete_participant_cognito_exception(authenticated_client, study_subject):
+def test_delete_participant_cognito_exception(app, delete_admin, study_subject):
     """
     Test deletion of participant account when Cognito deletion raises a general exception.
     """
     with patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
 
         mock_cognito_client = MagicMock()
-        mock_cognito_client.delete_user.side_effect = Exception(
+        mock_cognito_client.admin_delete_user.side_effect = Exception(
             "Cognito error")
         mock_boto_client.return_value = mock_cognito_client
 
-        with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
-            mock_get_scopes.return_value = [
-                "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with email
-            with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {
-                    "cognito:username": study_subject.email}
+        response = delete_admin(
+            f"/participant/{study_subject.email}", query_string={"app": 1})
 
-                response = authenticated_client.delete("/participant")
-
-                assert response.status_code == 500
-                assert response.get_json() == {
-                    "msg": "Error deleting account."}
+        assert response.status_code == 500
+        assert response.get_json() == {
+            "msg": "Error deleting account."}
 
 
-def test_delete_participant_exception_handling(authenticated_client, study_subject):
+def test_delete_participant_exception_handling(app, delete_admin, study_subject):
     """
     Test deletion of participant account when an exception occurs during the process.
     """
     with patch("aws_portal.views.participant.db.session.commit", side_effect=Exception("Commit error")):
 
-        with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
-            mock_get_scopes.return_value = [
-                "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with email
-            with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {
-                    "cognito:username": study_subject.email}
+        response = delete_admin(
+            f"/participant/{study_subject.email}", query_string={"app": 1})
 
-                response = authenticated_client.delete("/participant")
-
-                assert response.status_code == 500
-                assert response.get_json() == {
-                    "msg": "Error deleting account."}
+        assert response.status_code == 500
+        assert response.get_json() == {
+            "msg": "Error deleting account."}
 
 
 def test_revoke_api_access_exception_deleting_tokens(authenticated_client, study_subject, api_entry, join_api):
@@ -508,22 +442,19 @@ def test_revoke_api_access_exception_deleting_tokens(authenticated_client, study
     with patch("aws_portal.views.participant.tm.delete_api_tokens", side_effect=Exception("Delete token error")), \
             patch("aws_portal.views.participant.logger.error") as mock_logger_error:
 
-        with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
-            mock_get_scopes.return_value = [
-                "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with cognito:username
-            with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {
-                    "cognito:username": study_subject.email}
+        # Mock jwt.decode to return a valid claims dictionary with cognito:username
+        with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
+            mock_jwt_decode.return_value = {
+                "cognito:username": study_subject.email}
 
-                response = authenticated_client.delete(
-                    f"/participant/api/{api_entry.name}")
+            response = authenticated_client.delete(
+                f"/participant/api/{api_entry.name}")
 
-                assert response.status_code == 500
-                assert response.get_json() == {
-                    "msg": "Error revoking API access"}
-                mock_logger_error.assert_called_once_with(
-                    "Error revoking API access: Delete token error")
+            assert response.status_code == 500
+            assert response.get_json() == {
+                "msg": "Error revoking API access"}
+            mock_logger_error.assert_called_once_with(
+                "Error revoking API access: Delete token error")
 
 
 def test_get_participant_serialization(authenticated_client, study_subject, join_api, api_entry):
@@ -559,7 +490,7 @@ def test_get_participant_serialization(authenticated_client, study_subject, join
         assert response.get_json()["apis"][0]["api_name"] == api_entry.name
 
 
-def test_delete_participant_remove_api_access(authenticated_client, study_subject, join_api, api_entry):
+def test_delete_participant_remove_api_access(app, delete_admin, study_subject, join_api, api_entry):
     """
     Test that the delete_participant endpoint removes API access entries.
     """
@@ -573,74 +504,40 @@ def test_delete_participant_remove_api_access(authenticated_client, study_subjec
         mock_cognito_client.delete_user.return_value = {}
         mock_boto_client.return_value = mock_cognito_client
 
-        with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
-            mock_get_scopes.return_value = [
-                "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with cognito:username
-            with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {
-                    "cognito:username": study_subject.email}
+        response = delete_admin(
+            f"/participant/{study_subject.email}", query_string={"app": 1})
 
-                response = authenticated_client.delete("/participant")
+        assert response.status_code == 200
+        assert response.get_json() == {
+            "msg": "Account deleted successfully."}
 
-                assert response.status_code == 200
-                assert response.get_json() == {
-                    "msg": "Account deleted successfully."}
+        # Verify tokens deletion for each API
+        mock_delete_tokens.assert_called_once_with(
+            api_name=api_entry.name, study_subject_id=study_subject.id)
 
-                # Verify tokens deletion for each API
-                mock_delete_tokens.assert_called_once_with(
-                    api_name=api_entry.name, study_subject_id=study_subject.id)
+        # Verify API access removal
+        mock_db_delete.assert_called_once_with(join_api)
 
-                # Verify API access removal
-                mock_db_delete.assert_called_once_with(join_api)
+        # Verify StudySubject is archived
+        assert study_subject.is_archived == True
 
-                # Verify StudySubject is archived
-                assert study_subject.is_archived == True
+        # Verify database commit
+        mock_db_commit.assert_called_once()
 
-                # Verify database commit
-                mock_db_commit.assert_called_once()
+        # Verify Cognito deletion
+        mock_cognito_client.admin_delete_user.assert_called_once_with(
+            UserPoolId=app.config["COGNITO_PARTICIPANT_USER_POOL_ID"],
+            Username=study_subject.email
+        )
 
-                # Verify Cognito deletion
-                mock_cognito_client.delete_user.assert_called_once_with(
-                    AccessToken="fake_access_token")
-
-                # Verify cookies are cleared
-                set_cookie_headers = response.headers.get_all("Set-Cookie")
-                assert any(
-                    "id_token=; " in header for header in set_cookie_headers)
-                assert any(
-                    "access_token=; " in header for header in set_cookie_headers)
-                assert any(
-                    "refresh_token=; " in header for header in set_cookie_headers)
-
-
-def test_delete_participant_cognito_refresh_token_missing(authenticated_client, study_subject):
-    """
-    Test deletion of participant account when refresh_token is missing.
-    """
-    # Remove 'refresh_token' cookie by deleting it
-    authenticated_client.delete_cookie("refresh_token")
-
-    with patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
-
-        mock_cognito_client = MagicMock()
-        # Configure the delete_user method to return a successful response
-        mock_cognito_client.delete_user.return_value = {}
-        mock_boto_client.return_value = mock_cognito_client
-
-        with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
-            mock_get_scopes.return_value = [
-                "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with cognito:username
-            with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {
-                    "cognito:username": study_subject.email}
-
-                response = authenticated_client.delete("/participant")
-
-                assert response.status_code == 200
-                assert response.get_json() == {
-                    "msg": "Account deleted successfully."}
+        # Verify cookies are cleared
+        set_cookie_headers = response.headers.get_all("Set-Cookie")
+        assert any(
+            "id_token=; " in header for header in set_cookie_headers)
+        assert any(
+            "access_token=; " in header for header in set_cookie_headers)
+        assert any(
+            "refresh_token=; " in header for header in set_cookie_headers)
 
 
 def test_revoke_api_access_concurrent_requests(authenticated_client, study_subject, api_entry, join_api):
@@ -671,32 +568,3 @@ def test_revoke_api_access_concurrent_requests(authenticated_client, study_subje
         # Assert that the second request fails as the API access no longer exists
         assert response2.status_code == 404
         assert response2.get_json() == {"msg": "API access not found"}
-
-
-def test_delete_participant_cognito_token_missing(authenticated_client, study_subject):
-    """
-    Test deletion of participant account when access_token is missing.
-    """
-    # Remove 'access_token' cookie by deleting it
-    authenticated_client.delete_cookie("access_token")
-
-    with patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
-
-        mock_cognito_client = MagicMock()
-        # Configure the delete_user method to return a successful response
-        mock_cognito_client.delete_user.return_value = {}
-        mock_boto_client.return_value = mock_cognito_client
-
-        with patch("aws_portal.views.participant.get_token_scopes") as mock_get_scopes:
-            mock_get_scopes.return_value = [
-                "openid", "aws.cognito.signin.user.admin"]
-            # Mock jwt.decode to return a valid claims dictionary with cognito:username
-            with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-                mock_jwt_decode.return_value = {
-                    "cognito:username": study_subject.email}
-
-                response = authenticated_client.delete("/participant")
-
-                assert response.status_code == 401
-                assert response.get_json() == {
-                    "msg": "Missing authentication tokens."}
