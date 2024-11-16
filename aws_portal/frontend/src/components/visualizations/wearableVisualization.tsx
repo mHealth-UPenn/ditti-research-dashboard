@@ -59,7 +59,8 @@ const WearableVisualization = () => {
               width={width - margin.left - margin.right}
               height={80 - margin.bottom - margin.top}
               stroke={colors.light}
-              strokeDasharray="5,5" />
+              strokeDasharray="5,5"
+              numTicks={window.screen.width > 600 ? 10 : 5} />
           </svg>
           <Timeline
             groups={levelGroups.wake}
@@ -129,6 +130,7 @@ const WearableVisualization = () => {
           stroke="transparent"
           tickLength={20}
           tickStroke={colors.light}
+          numTicks={window.screen.width > 600 ? 10 : 5}
           tickFormat={v => getTime(v as Date)} />
       </svg>
       {visualizations}
