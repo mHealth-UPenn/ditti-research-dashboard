@@ -16,6 +16,7 @@ type TimelineProps = {
   groups: GroupData[];
   title: string;
   hideAxis?: boolean;
+  xScaleOffset?: number;
 };
 
 
@@ -23,6 +24,7 @@ const Timeline: React.FC<TimelineProps> = ({
   groups,
   title,
   hideAxis,
+  xScaleOffset = 0,
 }) => {
   const {
     width,
@@ -32,8 +34,10 @@ const Timeline: React.FC<TimelineProps> = ({
   if (!xScale) return <></>;
 
   const height = margin.top + margin.bottom;
-  const start = xScale.domain()[0].getTime();
-  const stop = xScale.domain()[1].getTime();
+  const start = xScale.domain()[0].getTime() + xScaleOffset;
+  const stop = xScale.domain()[1].getTime() + xScaleOffset;
+  console.log("start:", new Date(start), "stop:", new Date(stop));
+  groups.forEach(g => console.log("start:", new Date(g.start), "stop:", new Date(g.stop || 0)))
   
   const {
     showTooltip,

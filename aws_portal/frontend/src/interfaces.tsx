@@ -89,7 +89,7 @@ export interface Study {
   acronym: string;
   dittiId: string;
   email: string;
-  role: Role;
+  role?: Role;
 }
 
 /**

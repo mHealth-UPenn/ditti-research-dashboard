@@ -149,11 +149,13 @@ const generateSleepLogs = (): ISleepLog[] => {
   const sleepLogs: ISleepLog[] = [];
   const levels: ISleepLevelLevel[] = ["deep", "light", "rem", "wake"];
 
-  for (let i = 1; i <= 7; i++) {
+  for (let i = 7; i >= 1; i--) {
     const dateOfSleep = new Date();
-    dateOfSleep.setDate(dateOfSleep.getDate() - i);
+    const dateOffset = dateOfSleep.getDate() - i
+    dateOfSleep.setDate(dateOffset);
 
     const startTime = generateRandomTimeBetween(22, 24); // Random time between 10pm and 12am
+    startTime.setDate(dateOffset)
 
     const sleepLog: ISleepLog = {
       dateOfSleep: dateOfSleep,
@@ -170,11 +172,12 @@ const generateSleepLogs = (): ISleepLog[] => {
     while (totalDurationMinutes < maxDurationMinutes) {
       // Random between 5 and 30 minutes
       const seconds = Math.floor(Math.random() * (30 * 60 - 5 * 60)) + 5 * 60;
+      const dateTime = previousLevel
+        ? new Date(previousLevel.dateTime.getTime() + previousLevel.seconds * 1000)
+        : startTime;
 
       const level: ISleepLevel = {
-        dateTime: previousLevel
-          ? new Date(new Date(previousLevel.dateTime).getTime() + previousLevel.seconds * 1000)
-          : startTime,
+        dateTime,
         seconds,
         isShort: null,
         level: previousLevel
@@ -213,21 +216,29 @@ class DataFactory {
 
   async init() {
     if (!this.initialized) {
-      try {
-        const studies: Study[] = await makeRequest("/db/get-studies?app=2");
-        const studyIds = studies.map(s => s.dittiId);
-        this.users = generateUsers(studyIds);
-      } catch (err) {
-        console.error(err);
-      }
-
+      const studies: Study[] = [
+        {
+          id: 1,
+          name: "Sleep and Lifestyle Enhancement through Evidence-based Practices for Insomnia Treatment",
+          acronym: "SLEEP-IT",
+          dittiId: "sit",
+          email: "sleep.it@research.edu",
+        },
+        {
+          id: 2,
+          name: "Cognitive and Affective Lifestyle Modifications for Sleep Enhancement through Mindfulness Practices",
+          acronym: "CALM-SLEEP",
+          dittiId: "cs",
+          email: "calm.sleep@research.edu",
+        }
+      ];
+      const studyIds = studies.map(s => s.dittiId);
+      this.users = generateUsers(studyIds);
       this.audioFiles = generateAudioFiles();
-
       const userIds = this.users.map(u => u.userPermissionId);
       const audioFileNames = this.audioFiles.map(af => af.fileName)
         .filter((s): s is string => s !== undefined);
       [this.taps, this.audioTaps] = generateTaps(userIds, audioFileNames);
-
       this.sleepLogs = generateSleepLogs();
       this.initialized = true;
     }

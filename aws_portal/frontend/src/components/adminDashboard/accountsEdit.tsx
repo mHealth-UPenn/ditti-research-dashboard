@@ -258,7 +258,7 @@ const AccountsEdit = ({
   const makePrefill = (res: Account[]): AccountPrefill => {
     const account = res[0];
     const roles = account.studies.map((s): RoleSelected => {
-      return { study: s.id, role: s.role.id };
+      return { study: s.id, role: s.role?.id || 0 };
     });
 
     return {

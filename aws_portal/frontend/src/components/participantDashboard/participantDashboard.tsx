@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import ViewContainer from '../containers/viewContainer';
 import Card from '../cards/card';
@@ -6,11 +6,11 @@ import CardContentRow from '../cards/cardContentRow';
 import Title from '../text/title';
 import Button from '../buttons/button';
 import Link from '../links/link';
-import { useWearableData, WearableDataProvider } from '../../contexts/wearableDataContext';
+import { WearableDataProvider } from '../../contexts/wearableDataContext';
 import ParticipantVisualization from './participantVisualization';
 
 
-const ParticipantDashboard: React.FC = () => {
+const ParticipantDashboard = () => {
   const [fitbitConnected, setFitbitConnected] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -87,6 +87,7 @@ const ParticipantDashboard: React.FC = () => {
             </WearableDataProvider>
           </CardContentRow>
         </Card>
+
         <Card width="sm">
           <CardContentRow>
             <Title>Your Data</Title>
