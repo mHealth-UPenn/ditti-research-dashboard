@@ -16,6 +16,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isIamLoading, setIsIamLoading] = useState<boolean>(true);
   const [isCognitoLoading, setIsCognitoLoading] = useState<boolean>(true);
   const [csrfToken, setCsrfToken] = useState<string>(localStorage.getItem("csrfToken") || "");
+  const [dittiId, setDittiId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,7 +45,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const checkCognitoAuthStatus = async () => {
       try {
         const res = await makeRequest("/cognito/check-login", { method: "GET" });
-        setIsCognitoAuthenticated(res.msg === "Login successful");
+        if (res.msg === "Login successful") {
+          setIsCognitoAuthenticated(true);
+          setDittiId(res.dittiId);
+        }
       } catch {
         setIsCognitoAuthenticated(false);
       } finally {
@@ -94,6 +98,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const iamLogout = useCallback((): void => {
     localStorage.removeItem("jwt");
     setIsIamAuthenticated(false);
+    setDittiId(null);
     navigate("/coordinator/login");
   }, [navigate]);
 
@@ -110,6 +115,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const cognitoLogout = useCallback((): void => {
     window.location.href = "http://localhost:5000/cognito/logout";
     setIsCognitoAuthenticated(false);
+    setDittiId(null);
   }, []);
 
   return (
@@ -121,11 +127,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isCognitoLoading,
         firstLogin,
         csrfToken,
+        dittiId,
         iamLogin,
         iamLogout,
         cognitoLogin,
         cognitoLogout,
-        setFirstLogin
+        setFirstLogin,
       }}
     >
       {children}

@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider, Outlet, RouteObject } from "react-
 import LoginPage from "./pages/loginPage";
 import ParticipantLoginPage from "./pages/participantLoginPage";
 import Dashboard from "./components/dashboard";
-import ParticipantDashboard from "./components/participantDashboard";
+import ParticipantDashboard from "./components/participantDashboard/participantDashboard";
 import ProtectedRoute from "./components/protectedRoute";
 import { AuthProvider } from "./AuthContext";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";

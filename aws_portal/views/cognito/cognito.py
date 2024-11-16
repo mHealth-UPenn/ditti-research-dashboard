@@ -163,7 +163,11 @@ def check_login():
 
     try:
         claims = verify_token(True, id_token, token_use="id")
-        return make_response({"msg": "Login successful"}, 200)
+        body = {
+            "msg": "Login successful",
+            "dittiId": claims.get("cognito:username"),
+        }
+        return make_response(body, 200)
     except jwt.ExpiredSignatureError:
         return make_response({"msg": "Token has expired."}, 401)
     except jwt.InvalidTokenError as e:

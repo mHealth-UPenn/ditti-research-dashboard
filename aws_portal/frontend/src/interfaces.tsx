@@ -278,6 +278,7 @@ export interface AuthContextType {
   isCognitoLoading: boolean;
   firstLogin: boolean;
   csrfToken: string;
+  dittiId: string | null;
   iamLogin: (email: string, password: string) => Promise<void>;
   iamLogout: () => void;
   cognitoLogin: () => void;
