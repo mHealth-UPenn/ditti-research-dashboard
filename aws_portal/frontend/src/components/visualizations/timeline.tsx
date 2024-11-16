@@ -14,9 +14,14 @@ type GroupData = {
 
 type TimelineProps = {
   groups: GroupData[];
-  title: string;
+  title?: string;
   hideAxis?: boolean;
+  hideStops?: boolean;
+  hideTicks?: boolean;
   xScaleOffset?: number;
+  strokeWidth?: number;
+  color?: string;
+  axisColor?: string;
 };
 
 
@@ -24,7 +29,12 @@ const Timeline: React.FC<TimelineProps> = ({
   groups,
   title,
   hideAxis,
+  hideStops = false,
+  hideTicks = false,
   xScaleOffset = 0,
+  strokeWidth = 2,
+  color = "black",
+  axisColor = "black",
 }) => {
   const {
     width,
@@ -36,8 +46,6 @@ const Timeline: React.FC<TimelineProps> = ({
   const height = margin.top + margin.bottom;
   const start = xScale.domain()[0].getTime() + xScaleOffset;
   const stop = xScale.domain()[1].getTime() + xScaleOffset;
-  console.log("start:", new Date(start), "stop:", new Date(stop));
-  groups.forEach(g => console.log("start:", new Date(g.start), "stop:", new Date(g.stop || 0)))
   
   const {
     showTooltip,
@@ -66,8 +74,8 @@ const Timeline: React.FC<TimelineProps> = ({
       || (group.stop && start <= group.stop && group.stop <= stop)
       || (group.stop && group.start <= start && stop <= group.stop)
     ).map((group, i) => {
-      const startX = Math.max(margin.left, xScale(group.start));
-      const stopX = group.stop ? Math.min(xScale(group.stop), width - margin.right) : startX;
+      const startX = Math.max(margin.left, xScale(group.start - xScaleOffset));
+      const stopX = group.stop ? Math.min(xScale(group.stop - xScaleOffset), width - margin.right) : startX;
       const y = margin.top;
       const tooltipRect =
         group.label
@@ -85,16 +93,16 @@ const Timeline: React.FC<TimelineProps> = ({
       if (group.stop) {
         return (
           <React.Fragment key={i}>
-            {group.start >= start && <circle cx={startX} cy={y} r={5} fill="black" />}
-            <Line from={{ x: startX, y }} to={{ x: stopX, y }} stroke="black" strokeWidth={2} />
-            {stop >= group.stop && <circle cx={stopX} cy={y} r={5} fill="black" />}
+            {!hideStops && group.start >= start && <circle cx={startX} cy={y} r={5} fill={color} />}
+            <Line from={{ x: startX, y }} to={{ x: stopX, y }} stroke={color} strokeWidth={strokeWidth} />
+            {!hideStops && stop >= group.stop && <circle cx={stopX} cy={y} r={5} fill={color} />}
             {tooltipRect}
           </React.Fragment>
         );
       }
       return (
         <React.Fragment key={i}>
-          <circle cx={startX} cy={y} r={5} fill="black" />
+          {!hideStops && <circle cx={startX} cy={y} r={5} fill={color} />}
           {tooltipRect}
         </React.Fragment>
       );
@@ -106,14 +114,19 @@ const Timeline: React.FC<TimelineProps> = ({
         <AxisBottom
           top={margin.top}
           scale={xScale}
-          tickLabelProps={hideAxis ? { display: "none" } : { }} />
-        <AxisLeft
-          left={margin.left}
-          scale={scaleLinear({domain: [0, 0], range: [margin.top, margin.top]})}
-          numTicks={0}
-          label={title}
-          labelClassName="text-lg font-bold"
-          labelOffset={30} />
+          axisLineClassName=""
+          tickLineProps={hideTicks ? { display: "none" } : { }}
+          tickLabelProps={hideAxis ? { display: "none" } : { }}
+          stroke={axisColor} />
+        {title &&
+          <AxisLeft
+            left={margin.left}
+            scale={scaleLinear({domain: [0, 0], range: [margin.top, margin.top]})}
+            numTicks={0}
+            label={title}
+            labelClassName="text-lg font-bold"
+            labelOffset={30} />
+        }
         {visualizations}
       </svg>
       {

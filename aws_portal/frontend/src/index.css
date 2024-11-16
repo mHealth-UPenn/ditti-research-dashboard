@@ -234,3 +234,7 @@ p {
   justify-content: center;
   min-height: 160px;
 }
+
+.wearable-title {
+  transform: rotate(-90deg) translateY(-50%);
+}

@@ -1,4 +1,4 @@
-import { AudioFile, AudioTapDetails, ISleepLevel, ISleepLevelLevel, ISleepLog, Study, TapDetails, UserDetails } from "./interfaces";
+import { AudioFile, AudioTapDetails, ISleepLevel, ISleepLevelClassic, ISleepLevelStages, ISleepLog, Study, TapDetails, UserDetails } from "./interfaces";
 import { makeRequest } from "./utils";
 
 const aboutSleepTemplate = `<div>
@@ -138,16 +138,17 @@ const generateRandomTimeBetween = (startHour: number, endHour: number) => {
 }
 
 
-const getRandomLevel = (prev: ISleepLevelLevel): ISleepLevelLevel => {
-  const levels: ISleepLevelLevel[] = ["deep", "light", "rem", "wake"];
-  const randomIndex = Math.floor(Math.random() * levels.length - 1);
-  return levels.filter(l => l !== prev)[randomIndex];
+const getRandomLevel = (prev: ISleepLevelStages | ISleepLevelClassic): ISleepLevelStages | ISleepLevelClassic => {
+  const levels: (ISleepLevelStages | ISleepLevelClassic)[] = ["deep", "light", "rem", "wake"];
+  const levelsFiltered = levels.filter(l => l !== prev);
+  const randomIndex = Math.floor(Math.random() * levelsFiltered.length);
+  return levelsFiltered[randomIndex];
 }
 
 
 const generateSleepLogs = (): ISleepLog[] => {
   const sleepLogs: ISleepLog[] = [];
-  const levels: ISleepLevelLevel[] = ["deep", "light", "rem", "wake"];
+  const levels: ISleepLevelStages[] = ["deep", "light", "rem", "wake"];
 
   for (let i = 7; i >= 1; i--) {
     const dateOfSleep = new Date();

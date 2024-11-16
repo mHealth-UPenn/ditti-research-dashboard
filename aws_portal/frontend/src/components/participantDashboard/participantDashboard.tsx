@@ -7,7 +7,8 @@ import Title from '../text/title';
 import Button from '../buttons/button';
 import Link from '../links/link';
 import { WearableDataProvider } from '../../contexts/wearableDataContext';
-import ParticipantVisualization from './participantVisualization';
+import WearableVisualization from '../visualizations/wearableVisualization';
+import VisualizationController from '../visualizations/visualizationController';
 
 
 const ParticipantDashboard = () => {
@@ -83,7 +84,10 @@ const ParticipantDashboard = () => {
           </CardContentRow>
           <CardContentRow>
             <WearableDataProvider>
-              <ParticipantVisualization />
+              <VisualizationController
+                margin={{ top: 8, right: 30, bottom: 8, left: 40 }}>
+                  <WearableVisualization />
+              </VisualizationController>
             </WearableDataProvider>
           </CardContentRow>
         </Card>

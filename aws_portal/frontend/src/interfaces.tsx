@@ -294,11 +294,12 @@ export interface IFlashMessage {
   closeRef: React.RefObject<HTMLDivElement>;
 }
 
-export type ISleepLevelLevel = "deep" | "light" | "rem" | "wake" | "asleep" | "restless" | "awake";
+export type ISleepLevelStages = "deep" | "light" | "rem" | "wake";
+export type ISleepLevelClassic = "asleep" | "restless" | "awake";
 
 export interface ISleepLevel {
   dateTime: Date;
-  level: ISleepLevelLevel;
+  level: ISleepLevelStages | ISleepLevelClassic;
   seconds: number;
   isShort: boolean | null;
 }

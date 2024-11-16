@@ -2,10 +2,15 @@ import { PropsWithChildren } from 'react';
 import useVisualizationController from '../../hooks/useVisualizationController';
 import VisualizationContext from '../../contexts/visualizationContext';
 
+interface VisualizationControllerProps {
+  margin?: { top: number, right: number, bottom: number, left: number };
+}
+
 
 const VisualizationController = ({
-    children,
-}: PropsWithChildren<any>) => {
+  margin = { top: 50, right: 30, bottom: 25, left: 60 },
+  children,
+}: PropsWithChildren<VisualizationControllerProps>) => {
   const {
     zoomDomain,
     minRangeReached,
@@ -13,7 +18,6 @@ const VisualizationController = ({
     parentRef,
     width,
     height,
-    margin,
     xScale,
     xTicks,
     onZoomChange,
@@ -22,7 +26,7 @@ const VisualizationController = ({
     panRight,
     zoomIn,
     zoomOut,
-  } = useVisualizationController();
+  } = useVisualizationController(margin);
 
   return (
     <VisualizationContext.Provider value={{

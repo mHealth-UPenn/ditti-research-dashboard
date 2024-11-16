@@ -20,6 +20,10 @@ const colors: { [key: string]: string } = {
   linkHover: "#8585ad",
   light: "#B3B3CC",
   extraLight: "#F0F0F5",
+  wearableWake: "#E04B6F",
+  wearableRem: "#86BAEF",
+  wearableLight: "#5489F5",
+  wearableDeep: "#24499F",
 };
 
 export default colors;

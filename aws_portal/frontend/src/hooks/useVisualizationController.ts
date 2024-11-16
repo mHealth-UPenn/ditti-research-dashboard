@@ -4,7 +4,9 @@ import { useParentSize } from '@visx/responsive'
 
 
 // TODO: extend to customize default values when needed in future vizualizations
-const useVisualizationController = () => {
+const useVisualizationController = (
+  margin: { top: number, right: number, bottom: number, left: number }
+) => {
   const now = new Date();
   const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
   const previousNoon = new Date(todayNoon);
@@ -16,14 +18,13 @@ const useVisualizationController = () => {
 
   const { parentRef, width } = useParentSize();
   const height = 400;
-  const margin = { top: 50, right: 30, bottom: 25, left: 60 };
 
   const xScale = useMemo(() => {
     return scaleTime({
       domain: zoomDomain,
       range: [margin.left, width - margin.right],
     });
-  }, [zoomDomain, width]);
+  }, [zoomDomain, width, margin]);
 
   const xTicks = useMemo(() => {
     if (width >= 1200) {
