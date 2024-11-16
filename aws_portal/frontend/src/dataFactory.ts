@@ -1,4 +1,4 @@
-import { AudioFile, AudioTapDetails, Study, TapDetails, UserDetails } from "./interfaces";
+import { AudioFile, AudioTapDetails, ISleepLevel, ISleepLevelLevel, ISleepLog, Study, TapDetails, UserDetails } from "./interfaces";
 import { makeRequest } from "./utils";
 
 const aboutSleepTemplate = `<div>
@@ -129,29 +129,103 @@ const generateTaps = (
 }
 
 
+const generateRandomTimeBetween = (startHour: number, endHour: number) => {
+  const today = new Date();
+  const start = new Date(today.setHours(startHour, 0, 0, 0)).getTime();
+  const end = new Date(today.setHours(endHour, 0, 0, 0)).getTime();
+  const randomTime = new Date(start + Math.random() * (end - start));
+  return randomTime;
+}
+
+
+const getRandomLevel = (prev: ISleepLevelLevel): ISleepLevelLevel => {
+  const levels: ISleepLevelLevel[] = ["deep", "light", "rem", "wake"];
+  const randomIndex = Math.floor(Math.random() * levels.length - 1);
+  return levels.filter(l => l !== prev)[randomIndex];
+}
+
+
+const generateSleepLogs = (): ISleepLog[] => {
+  const sleepLogs: ISleepLog[] = [];
+  const levels: ISleepLevelLevel[] = ["deep", "light", "rem", "wake"];
+
+  for (let i = 1; i <= 7; i++) {
+    const dateOfSleep = new Date();
+    dateOfSleep.setDate(dateOfSleep.getDate() - i);
+
+    const startTime = generateRandomTimeBetween(22, 24); // Random time between 10pm and 12am
+
+    const sleepLog: ISleepLog = {
+      dateOfSleep: dateOfSleep,
+      startTime: startTime,
+      type: "stages",
+      levels: [],
+    };
+
+    let previousLevel: ISleepLevel | null = null;
+    let totalDurationMinutes = 0;
+    // Simulate between six to eight hours
+    const maxDurationMinutes = 360 + Math.random() * 120;
+
+    while (totalDurationMinutes < maxDurationMinutes) {
+      // Random between 5 and 30 minutes
+      const seconds = Math.floor(Math.random() * (30 * 60 - 5 * 60)) + 5 * 60;
+
+      const level: ISleepLevel = {
+        dateTime: previousLevel
+          ? new Date(new Date(previousLevel.dateTime).getTime() + previousLevel.seconds * 1000)
+          : startTime,
+        seconds,
+        isShort: null,
+        level: previousLevel
+          ? getRandomLevel(previousLevel.level)
+          : levels[Math.floor(Math.random() * levels.length)],
+      };
+
+      sleepLog.levels.push(level);
+      previousLevel = level;
+      totalDurationMinutes += seconds / 60;
+    }
+
+    sleepLogs.push(sleepLog);
+  }
+
+  return sleepLogs;
+}
+
+
 class DataFactory {
-  taps: TapDetails[];
-  audioTaps: AudioTapDetails[];
-  audioFiles: AudioFile[];
-  users: UserDetails[];
+  private initialized: boolean;
+  public taps: TapDetails[];
+  public audioTaps: AudioTapDetails[];
+  public audioFiles: AudioFile[];
+  public users: UserDetails[];
+  public sleepLogs: ISleepLog[];
 
   constructor() {
-    this.taps = []
-    this.audioTaps = []
-    this.audioFiles = []
-    this.users = []
+    this.initialized = false;
+    this.taps = [];
+    this.audioTaps = [];
+    this.audioFiles = [];
+    this.users = [];
+    this.sleepLogs = [];
   }
 
   async init() {
-    const studies: Study[] = await makeRequest("/db/get-studies?app=2");
-    const studyIds = studies.map(s => s.dittiId);
-    this.audioFiles = generateAudioFiles();
-    this.users = generateUsers(studyIds);
+    if (!this.initialized) {
+      const studies: Study[] = await makeRequest("/db/get-studies?app=2");
+      const studyIds = studies.map(s => s.dittiId);
+      this.audioFiles = generateAudioFiles();
+      this.users = generateUsers(studyIds);
 
-    const userIds = this.users.map(u => u.userPermissionId);
-    const audioFileNames = this.audioFiles.map(af => af.fileName)
-      .filter((s): s is string => s !== undefined);
-    [this.taps, this.audioTaps] = generateTaps(userIds, audioFileNames);
+      const userIds = this.users.map(u => u.userPermissionId);
+      const audioFileNames = this.audioFiles.map(af => af.fileName)
+        .filter((s): s is string => s !== undefined);
+      [this.taps, this.audioTaps] = generateTaps(userIds, audioFileNames);
+
+      this.sleepLogs = generateSleepLogs();
+      this.initialized = true;
+    }
   }
 }
 

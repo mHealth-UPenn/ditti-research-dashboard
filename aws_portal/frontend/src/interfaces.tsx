@@ -293,3 +293,25 @@ export interface IFlashMessage {
   containerRef: React.RefObject<HTMLDivElement>;
   closeRef: React.RefObject<HTMLDivElement>;
 }
+
+export type ISleepLevelLevel = "deep" | "light" | "rem" | "wake" | "asleep" | "restless" | "awake";
+
+export interface ISleepLevel {
+  dateTime: Date;
+  level: ISleepLevelLevel;
+  seconds: number;
+  isShort: boolean | null;
+}
+
+export interface ISleepLog {
+  dateOfSleep: Date;
+  startTime: Date;
+  type: "stages" | "classic";
+  levels: ISleepLevel[];
+}
+
+export interface IWearableDataContextType {
+  sleepLogs: ISleepLog[];
+  isLoading: boolean;
+  error: string | null;
+}

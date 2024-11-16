@@ -6,6 +6,7 @@ import CardContentRow from '../cards/cardContentRow';
 import Title from '../text/title';
 import Button from '../buttons/button';
 import Link from '../links/link';
+import { useWearableData, WearableDataProvider } from '../../contexts/wearableDataContext';
 
 
 const ParticipantDashboard: React.FC = () => {
