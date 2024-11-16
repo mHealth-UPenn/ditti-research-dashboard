@@ -1,15 +1,15 @@
-import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
-import { ISleepLog, IWearableDataContextType } from '../interfaces';
-import { APP_ENV } from '../environment';
-import DataFactory from '../dataFactory';
+import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from "react";
+import { ISleepLog, IWearableDataContextType } from "../interfaces";
+import { APP_ENV } from "../environment";
+import DataFactory from "../dataFactory";
 
 
 const WearableDataContext = createContext<IWearableDataContextType | undefined>(undefined);
 
 
-export const WearableDataProvider = ({ children }: PropsWithChildren<void>) => {
+export const WearableDataProvider = ({ children }: PropsWithChildren<any>) => {
   const [sleepLogs, setSleepLogs] = useState<ISleepLog[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const dataFactory: DataFactory | null = useMemo(() => {
@@ -21,12 +21,11 @@ export const WearableDataProvider = ({ children }: PropsWithChildren<void>) => {
 
   useEffect(() => {
     const fetchSleepData = async () => {
-      setIsLoading(true);
       try {
         if (APP_ENV === "production") {
-          const response = await fetch('/api/sleepdata'); // Adjust API endpoint as necessary
+          const response = await fetch("/api/sleepdata");
           if (!response.ok) {
-            throw new Error('Failed to fetch sleep data');
+            throw new Error("Failed to fetch sleep data");
           }
           const data: ISleepLog[] = await response.json();
           setSleepLogs(data);
@@ -55,7 +54,7 @@ export const WearableDataProvider = ({ children }: PropsWithChildren<void>) => {
 export const useWearableData = (): IWearableDataContextType => {
   const context = useContext(WearableDataContext);
   if (context === undefined) {
-    throw new Error('useWearableData must be used within a WearableDataProvider');
+    throw new Error("useWearableData must be used within a WearableDataProvider");
   }
   return context;
 };

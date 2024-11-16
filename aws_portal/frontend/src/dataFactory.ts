@@ -213,10 +213,15 @@ class DataFactory {
 
   async init() {
     if (!this.initialized) {
-      const studies: Study[] = await makeRequest("/db/get-studies?app=2");
-      const studyIds = studies.map(s => s.dittiId);
+      try {
+        const studies: Study[] = await makeRequest("/db/get-studies?app=2");
+        const studyIds = studies.map(s => s.dittiId);
+        this.users = generateUsers(studyIds);
+      } catch (err) {
+        console.error(err);
+      }
+
       this.audioFiles = generateAudioFiles();
-      this.users = generateUsers(studyIds);
 
       const userIds = this.users.map(u => u.userPermissionId);
       const audioFileNames = this.audioFiles.map(af => af.fileName)

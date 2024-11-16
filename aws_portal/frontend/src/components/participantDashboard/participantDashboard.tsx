@@ -7,6 +7,7 @@ import Title from '../text/title';
 import Button from '../buttons/button';
 import Link from '../links/link';
 import { useWearableData, WearableDataProvider } from '../../contexts/wearableDataContext';
+import ParticipantVisualization from './participantVisualization';
 
 
 const ParticipantDashboard: React.FC = () => {
@@ -79,6 +80,11 @@ const ParticipantDashboard: React.FC = () => {
               <span>Expires on: <b>January 1, 2025</b></span>
               <span>We will no longer collect your data after this date.</span>
             </div>
+          </CardContentRow>
+          <CardContentRow>
+            <WearableDataProvider>
+              <ParticipantVisualization />
+            </WearableDataProvider>
           </CardContentRow>
         </Card>
         <Card width="sm">
