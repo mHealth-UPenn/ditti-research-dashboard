@@ -4,6 +4,7 @@ import { useWearableData } from "../../contexts/wearableDataContext";
 import { ISleepLevelClassic, ISleepLevelStages } from "../../interfaces";
 import Timeline from "./timeline";
 import { AxisTop } from "@visx/axis";
+import { GridColumns } from '@visx/grid';
 
 
 const getWeekday = (date: Date) => {
@@ -11,12 +12,19 @@ const getWeekday = (date: Date) => {
 };
 
 
+const getTime = (date: Date) => {
+  return date.toLocaleTimeString(
+    "en-US", { hour12: true, hour: "numeric", minute: "numeric" }
+  );
+}
+
+
 type ILevelGroupsStages = Record<ISleepLevelStages, { start: number; stop: number; }[]>;
 type ILevelGroupsClassic = Record<ISleepLevelClassic, { start: number; stop: number; }[]>;
 
 
 const WearableVisualization = () => {
-  const { width, xScale } = useVisualizationContext();
+  const { width, margin, xScale } = useVisualizationContext();
   const { sleepLogs, isLoading } = useWearableData();
 
   if (isLoading || !xScale) {
@@ -45,6 +53,14 @@ const WearableVisualization = () => {
       <div key={i} className="relative flex items-center mb-4">
         <span className="absolute font-bold text-sm [writing-mode:vertical-lr] rotate-180">{title}</span>
         <div>
+          <svg className="absolute" width={width} height={80}>
+            <GridColumns
+              scale={xScale}
+              width={width - margin.left - margin.right}
+              height={80 - margin.bottom - margin.top}
+              stroke={colors.light}
+              strokeDasharray="5,5" />
+          </svg>
           <Timeline
             groups={levelGroups.wake}
             hideAxis={true}
@@ -88,13 +104,32 @@ const WearableVisualization = () => {
 
   return (
     <div className="flex flex-col">
+      <div className="flex mb-2">
+        <div className="flex mr-4">
+          <div className="bg-wearable-wake w-[1rem] mr-2" />
+          <span className="text-xs">Awake</span>
+        </div>
+        <div className="flex mr-4">
+          <div className="bg-wearable-rem w-[1rem] mr-2" />
+          <span className="text-xs">REM</span>
+        </div>
+        <div className="flex mr-4">
+          <div className="bg-wearable-light w-[1rem] mr-2" />
+          <span className="text-xs">Light</span>
+        </div>
+        <div className="flex">
+          <div className="bg-wearable-deep w-[1rem] mr-2" />
+          <span className="text-xs">Deep</span>
+        </div>
+      </div>
       <svg className="relative top-[10px]" width={width} height={40}>
         <AxisTop
           top={38}
           scale={xScale}
           stroke="transparent"
           tickLength={20}
-          tickStroke={colors.light} />
+          tickStroke={colors.light}
+          tickFormat={v => getTime(v as Date)} />
       </svg>
       {visualizations}
     </div>
