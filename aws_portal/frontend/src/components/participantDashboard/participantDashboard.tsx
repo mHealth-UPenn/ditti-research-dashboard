@@ -45,11 +45,11 @@ const ParticipantDashboard: React.FC = () => {
   }, []);
 
   const handleRedirect = () => {
-    window.location.href = 'http://localhost:5000/cognito/fitbit/authorize';
+    window.location.href = "http://localhost:5000/cognito/fitbit/authorize";
   };
 
   const handleClickManageData = () => {
-    window.location.href = "http://localhost:3000/";
+    window.location.href = "https://hosting.med.upenn.edu/forms/DittiApp/view.php?id=10677";
   };
 
   return (
