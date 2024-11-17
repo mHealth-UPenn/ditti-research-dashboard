@@ -57,7 +57,7 @@ const ParticipantDashboard = () => {
   return (
     <main className="flex flex-col h-screen">
       {/* the header */}
-      <div className="bg-secondary text-white flex items-center justify-between flex-shrink-0 h-16">
+      <div className="bg-secondary text-white flex items-center justify-between flex-shrink-0 h-16 shadow-xl z-10">
         <div className="flex flex-col text-2xl ml-8">
           <span className="mr-2">Ditti</span>
           <span className="text-sm whitespace-nowrap overflow-hidden">Participant Dashboard</span>

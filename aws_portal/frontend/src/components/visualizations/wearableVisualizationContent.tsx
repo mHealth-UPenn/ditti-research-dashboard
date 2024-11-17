@@ -100,7 +100,7 @@ const WearableVisualizationContent = () => {
             hideStops={true}
             strokeWidth={16}
             color={colors.wearableWake}
-            axisColor={colors.wearableWake}
+            axisColor={colors.light}
             xScaleOffset={offset}
             strokeDashArray={sl.type === "classic" ? "1,1" : ""} />
           <Timeline
@@ -130,7 +130,7 @@ const WearableVisualizationContent = () => {
             hideStops={true}
             strokeWidth={16}
             color={colors.wearableDeep}
-            axisColor={colors.light}
+            axisColor={colors.wearableDeep}
             xScaleOffset={offset}
             strokeDashArray={sl.type === "classic" ? "1,1" : ""} />
           <svg className="absolute top-0" width={width} height={80}>
