@@ -5,6 +5,10 @@ import { ISleepLevelClassic, ISleepLevelStages } from "../../interfaces";
 import Timeline from "./timeline";
 import { AxisTop } from "@visx/axis";
 import { GridColumns } from '@visx/grid';
+import { Brush } from '@visx/brush';
+import { scaleLinear } from '@visx/scale';
+import Button from "../buttons/button";
+import ReplayIcon from '@mui/icons-material/Replay';
 
 
 const getWeekday = (date: Date) => {
@@ -24,7 +28,7 @@ type ILevelGroupsClassic = Record<ISleepLevelClassic, { start: number; stop: num
 
 
 const WearableVisualization = () => {
-  const { width, margin, xScale } = useVisualizationContext();
+  const { width, margin, xScale, onZoomChange, resetZoom } = useVisualizationContext();
   const { sleepLogs, isLoading } = useWearableData();
 
   if (isLoading || !xScale) {
@@ -98,30 +102,53 @@ const WearableVisualization = () => {
             color={colors.wearableDeep}
             axisColor={colors.light}
             xScaleOffset={offset} />
-          </div>
+          <svg className="absolute top-0" width={width} height={80}>
+            <Brush
+              xScale={xScale}
+              yScale={scaleLinear({domain: [0, 80], range: [0, 80]})}
+              width={width}
+              height={80 - margin.bottom - margin.top}
+              onBrushEnd={bounds => {
+                if (bounds) {
+                  onZoomChange([bounds.x0, bounds.x1]);
+                }
+              }}
+              resetOnEnd={true} />
+          </svg>
+        </div>
       </div>
     );
   })
 
   return (
     <div className="flex flex-col">
-      <div className="flex mb-2">
-        <div className="flex mr-4">
-          <div className="bg-wearable-wake w-[1rem] mr-2" />
-          <span className="text-xs">Awake</span>
-        </div>
-        <div className="flex mr-4">
-          <div className="bg-wearable-rem w-[1rem] mr-2" />
-          <span className="text-xs">REM</span>
-        </div>
-        <div className="flex mr-4">
-          <div className="bg-wearable-light w-[1rem] mr-2" />
-          <span className="text-xs">Light</span>
-        </div>
+      <div className="flex items-center justify-between mb-2">
         <div className="flex">
-          <div className="bg-wearable-deep w-[1rem] mr-2" />
-          <span className="text-xs">Deep</span>
+          <div className="flex mr-4">
+            <div className="bg-wearable-wake w-[1rem] mr-2" />
+            <span className="text-xs">Awake</span>
+          </div>
+          <div className="flex mr-4">
+            <div className="bg-wearable-rem w-[1rem] mr-2" />
+            <span className="text-xs">REM</span>
+          </div>
+          <div className="flex mr-4">
+            <div className="bg-wearable-light w-[1rem] mr-2" />
+            <span className="text-xs">Light</span>
+          </div>
+          <div className="flex">
+            <div className="bg-wearable-deep w-[1rem] mr-2" />
+            <span className="text-xs">Deep</span>
+          </div>
         </div>
+        <Button
+          square={true}
+          size="sm"
+          variant="primary"
+          onClick={resetZoom}
+          rounded={true}>
+            <ReplayIcon />
+        </Button>
       </div>
       <svg className="relative top-[10px]" width={width} height={40}>
         <AxisTop
