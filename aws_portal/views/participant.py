@@ -158,7 +158,23 @@ def delete_participant(ditti_id):
             return make_response({"msg": "User not found or already archived."}, 404)
         study_subject_id = study_subject.id
 
-        # TODO: Delete API data (DIT-16)
+        # Delete all sleep logs associated with the StudySubject
+        try:
+            # Fetch all SleepLog entries for the StudySubject
+            sleep_logs = study_subject.sleep_logs.all()
+            logger.info(f"Deleting {len(sleep_logs)} sleep logs for StudySubject ID {
+                        study_subject_id}.")
+
+            for sleep_log in sleep_logs:
+                db.session.delete(sleep_log)
+
+            # Optionally, you can bulk delete if you're certain no cascading is needed
+            # db.session.query(SleepLog).filter_by(study_subject_id=study_subject_id).delete(synchronize_session=False)
+
+        except Exception as e:
+            logger.error(f"Error deleting sleep logs for StudySubject ID {
+                         study_subject_id}: {str(e)}")
+            return make_response({"msg": "Error deleting sleep data."}, 500)
 
         # Delete associated JoinStudySubjectApi entries
         for api_entry in list(study_subject.apis):
