@@ -1,5 +1,4 @@
-import * as React from "react";
-import { useState } from "react";
+import { PropsWithChildren, useState } from "react";
 import Button, { ButtonProps } from "./button";
 
 /**
@@ -12,7 +11,7 @@ interface AsyncButtonProps extends ButtonProps {
 }
 
 
-const AsyncButton: React.FC<AsyncButtonProps> = ({
+const AsyncButton = ({
   variant = "primary",
   size = "md",
   disabled = false,
@@ -23,7 +22,7 @@ const AsyncButton: React.FC<AsyncButtonProps> = ({
   rounded,
   onClick,
   children,
-}) => {
+}: PropsWithChildren<AsyncButtonProps>) => {
   const [loading, setLoading] = useState<boolean>(false);
 
   /**

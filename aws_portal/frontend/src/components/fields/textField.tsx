@@ -1,4 +1,4 @@
-import React from "react";
+import React, { PropsWithChildren } from "react";
 
 /**
  * id (optional): an optional html id
@@ -26,7 +26,7 @@ interface TextFieldProps {
 /**
  * Functional component version of TextField
  */
-const TextField: React.FC<TextFieldProps> = ({
+const TextField = ({
   id,
   type,
   placeholder,
@@ -37,7 +37,7 @@ const TextField: React.FC<TextFieldProps> = ({
   disabled,
   value,
   children,
-}) => {
+}: PropsWithChildren<TextFieldProps>) => {
   const handleKeyUp = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (onKeyup) {
       onKeyup(e.target.value);
