@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./navbar.css";
 import { ReactComponent as Back } from "../icons/left.svg";
 
 /**
@@ -17,10 +16,10 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ breadcrumbs, handleBack, handleClick, hasHistory }) => {
   return (
-    <div className="bg-white flex items-center h-16 flex-shrink-0 select-none border-b border-solid border-[#33334D]">
+    <div className="bg-white flex items-center h-16 flex-shrink-0 select-none z-10 shadow">
 
       {/* the back button */}
-      <div className={"h-10 mx-8 flex items-center" + (hasHistory ? " link-svg" : "")} onClick={handleBack}>
+      <div className={"h-10 mx-8 flex items-center" + (hasHistory ? " link-svg cursor-pointer" : "")} onClick={handleBack}>
         <Back width={40} height={40} />
       </div>
 
@@ -41,7 +40,7 @@ const Navbar: React.FC<NavbarProps> = ({ breadcrumbs, handleBack, handleClick, h
             return (
               <React.Fragment key={i}>
                 <div
-                  className="flex items-center text-[#666699] cursor-pointer"
+                  className="flex items-center text-link hover:text-link-hover cursor-pointer"
                   onClick={() => handleClick([b.name], b.view)}
                 >
                   <span>{b.name}</span>

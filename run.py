@@ -1,7 +1,7 @@
 import os
 
 # if the app is running in a production environment
-if os.getenv("FLASK_CONFIG") == "Production":
+if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
     import json
     import boto3
 

@@ -19,6 +19,7 @@ blueprint = Blueprint("aws", __name__, url_prefix="/aws")
 logger = logging.getLogger(__name__)
 
 
+# TODO: Remove unused endpoint.
 @blueprint.route("/scan")
 @auth_required("View", "Ditti App Dashboard")
 def scan():  # TODO update unit test
@@ -73,7 +74,6 @@ def scan():  # TODO update unit test
 
 @blueprint.route("/get-taps")
 @auth_required("View", "Ditti App Dashboard")
-@auth_required("View", "Taps")
 def get_taps():  # TODO update unit test
     """
     Get tap data. If the user has permissions to view all studies, this will
@@ -97,7 +97,7 @@ def get_taps():  # TODO update unit test
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Query failed due to internal server error."
     }
     """
 
@@ -128,10 +128,9 @@ def get_taps():  # TODO update unit test
 
     except Exception as e:
         exc = traceback.format_exc()
-        logger.warn(exc)
-        msg = "Query failed: %s" % e
+        logger.warning(exc)
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Query failed due to internal server error."}, 500)
 
     # get all taps
     taps = Query("Tap").scan()["Items"]
@@ -160,7 +159,6 @@ def get_taps():  # TODO update unit test
 
 @blueprint.route("/get-audio-taps")
 @auth_required("View", "Ditti App Dashboard")
-@auth_required("View", "Taps")
 def get_audio_taps():  # TODO write unit test
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
@@ -187,10 +185,9 @@ def get_audio_taps():  # TODO write unit test
 
     except Exception as e:
         exc = traceback.format_exc()
-        logger.warn(exc)
-        msg = "Query failed: %s" % e
+        logger.warning(exc)
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Query failed due to internal server error."}, 500)
 
     # Get all audio files
     audio_files = Query("AudioFile").scan()["Items"]
@@ -230,7 +227,6 @@ def get_audio_taps():  # TODO write unit test
 
 @blueprint.route("/get-users")
 @auth_required("View", "Ditti App Dashboard")
-@auth_required("View", "Users")
 def get_users():  # TODO: create unit test
     """
     Get user data. If the user has permissions to view all studies, this will
@@ -258,7 +254,7 @@ def get_users():  # TODO: create unit test
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Query failed due to internal server error."
     }
     """
 
@@ -305,10 +301,9 @@ def get_users():  # TODO: create unit test
 
     except Exception as e:
         exc = traceback.format_exc()
-        logger.warn(exc)
-        msg = "Query failed: %s" % e
+        logger.warning(exc)
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Query failed due to internal server error."}, 500)
 
     # get all users for the studies that were returned earlier
     prefixes = [s.ditti_id for s in studies]
@@ -349,7 +344,7 @@ def user_create():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "User creation failed due to internal server error."
     }
     """
     msg = "User Created Successfully"
@@ -367,10 +362,9 @@ def user_create():
 
     except Exception as e:
         exc = traceback.format_exc()
-        logger.warn(exc)
-        msg = "User creation failed: %s" % e
+        logger.warning(exc)
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "User creation failed due to internal server error."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -412,7 +406,7 @@ def user_edit():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "User edit failed due to internal server error."
     }
     """
     msg = "User Successfully Edited"
@@ -445,10 +439,9 @@ def user_edit():
 
     except Exception as e:
         exc = traceback.format_exc()
-        logger.warn(exc)
-        msg = "User Edit Failed: %s" % e
+        logger.warning(exc)
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "User edit failed due to internal server error."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -483,7 +476,7 @@ def get_audio_files():  # TODO update unit test
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Query failed due to internal server error."
     }
     """
     res = []
@@ -536,9 +529,8 @@ def get_audio_files():  # TODO update unit test
 
     except Exception as e:
         exc = traceback.format_exc()
-        logger.warn(exc)
-        msg = "Query failed: %s" % e
-        return make_response({"msg": msg}, 500)
+        logger.warning(exc)
+        return make_response({"msg": "Query failed due to internal server error."}, 500)
 
     return jsonify(res)
 
@@ -576,7 +568,7 @@ def audio_file_create():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Creation of audio file failed due to internal server error."
     }
     """
     msg = "Audio File Created Successfully"
@@ -601,8 +593,7 @@ def audio_file_create():
     except Exception as e:
         exc = traceback.format_exc()
         logger.warning(exc)
-        msg = "Creation of Audio File failed: %s" % e
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Creation of audio file failed due to internal server error."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -633,7 +624,7 @@ def audio_file_delete():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Deletion of audio file failed due to internal server error."
     }
     """
     msg = "Audio file successfully deleted."
@@ -674,9 +665,8 @@ def audio_file_delete():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Deletion of audio file failed due to internal server error."}, 500)
 
     return jsonify({"msg": msg})
 

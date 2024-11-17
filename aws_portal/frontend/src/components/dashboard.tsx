@@ -1,25 +1,21 @@
-import React, { createRef, RefObject, useEffect, useReducer, useRef } from "react";
+import React, { createRef, useEffect, useReducer } from "react";
 import StudiesView from "./dittiApp/studies";
 import Header from "./header";
 import Home from "./home";
 import Navbar from "./navbar";
-import StudiesMenu from "./studiesMenu";
 import "./dashboard.css";
-import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails, UserDetails } from "../interfaces";
-import { dummyAudioTaps, dummyTaps } from "./dummyData";
-import { differenceInMilliseconds } from "date-fns";
-import { makeRequest } from "../utils";
+import { IFlashMessage } from "../interfaces";
+import FlashMessage, { FlashMessageVariant } from "./flashMessage/flashMessage";
+import DittiDataContext from "../contexts/dittiDataContext";
+import useDittiData from "../hooks/useDittiData";
 
 type Action =
   | { type: "INIT"; name: string; view: React.ReactElement }
   | { type: "GO_BACK" }
-  | { type: "FLASH_MESSAGE"; msg: React.ReactElement; variant: string }
+  | { type: "FLASH_MESSAGE"; msg: React.ReactElement; variant: FlashMessageVariant }
   | { type: "CLOSE_MESSAGE"; id: number }
   | { type: "SET_VIEW"; name: string[]; view: React.ReactElement; replace: boolean | null }
-  | { type: "SET_STUDY"; name: string; view: React.ReactElement; appView: React.ReactElement }
-  | { type: "SET_TAPS"; taps: TapDetails[] }
-  | { type: "SET_AUDIO_TAPS"; audioTaps: AudioTapDetails[] }
-  | { type: "SET_AUDIO_FILES"; audioFiles: AudioFile[] };
+  | { type: "SET_STUDY"; name: string; view: React.ReactElement; appView: React.ReactElement };
 
 
 const reducer = (state: DashboardState, action: Action) => {
@@ -47,29 +43,25 @@ const reducer = (state: DashboardState, action: Action) => {
     case "FLASH_MESSAGE": {
       const { msg, variant } = action;
       const flashMessages = [...state.flashMessages];
-      const ref = createRef<HTMLDivElement>();
+      const containerRef = createRef<HTMLDivElement>();
+      const closeRef = createRef<HTMLDivElement>();
 
       // set the element's key to 0 or the last message's key + 1
       const id = flashMessages.length
         ? flashMessages[flashMessages.length - 1].id + 1
         : 0;
 
-      const element = (
-        <div
+      const element =
+        <FlashMessage
           key={id}
-          className={"shadow flash-message flash-message-" + variant}
-        >
-          <div className="flash-message-content">
-            <span>{msg}</span>
-          </div>
-          <div className="flash-message-close" ref={ref}>
-            <span>x</span>
-          </div>
-        </div>
-      );
+          variant={variant}
+          containerRef={containerRef}
+          closeRef={closeRef}>
+            {msg}
+        </FlashMessage>;
 
       // add the message to the page
-      flashMessages.push({ id, element, ref });
+      flashMessages.push({ id, element, containerRef, closeRef });
       return { ...state, flashMessages };
     }
     case "CLOSE_MESSAGE": {
@@ -131,19 +123,6 @@ const reducer = (state: DashboardState, action: Action) => {
       breadcrumbs.push({ name, view });
       return { ...state, breadcrumbs, history, view }
     }
-    case "SET_TAPS": {
-      const { taps } = action;
-      taps.sort((a, b) => differenceInMilliseconds(a.time, b.time));
-      return { ...state, taps };
-    }
-    case "SET_AUDIO_TAPS": {
-      const { audioTaps } = action;
-      audioTaps.sort((a, b) => differenceInMilliseconds(a.time, b.time));
-      return { ...state, audioTaps };
-    }
-    case "SET_AUDIO_FILES": {
-      return { ...state, audioFiles: action.audioFiles };
-    }
     default:
       return state;
   }
@@ -160,12 +139,8 @@ const reducer = (state: DashboardState, action: Action) => {
  */
 interface DashboardState {
   breadcrumbs: { name: string; view: React.ReactElement }[];
-  flashMessages: { id: number; element: React.ReactElement; ref: RefObject<HTMLDivElement> }[];
+  flashMessages: IFlashMessage[];
   history: { name: string; view: React.ReactElement }[][];
-  taps: TapDetails[];
-  audioTaps: AudioTapDetails[];
-  users: UserDetails[];
-  audioFiles: AudioFile[];
   view: React.ReactElement;
 }
 
@@ -173,132 +148,48 @@ const initialState: DashboardState = {
   breadcrumbs: [],
   flashMessages: [],
   history: [],
-  taps: [],
-  audioTaps: [],
-  users: [],
-  audioFiles: [],
   view: <React.Fragment />,
 };
 
 
 const Dashboard: React.FC = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { breadcrumbs, flashMessages, history, taps, audioTaps, audioFiles, view } = state;
-  const tapRef = useRef<TapDetails[]>();
-  const audioTapRef = useRef<AudioTapDetails[]>();
-  const audioFileRef = useRef<AudioFile[]>();
+  const { breadcrumbs, flashMessages, history, view } = state;
+
+  const {
+    dataLoading,
+    taps,
+    audioTaps,
+    audioFiles,
+    users,
+    refreshAudioFiles,
+    getUserByDittiId,
+  } = useDittiData();
 
   useEffect(() => {
     const view = (
       <Home
-        getTapsAsync={getTapsAsync}
-        getTaps={getTaps}
-        getAudioTapsAsync={getAudioTapsAsync}
-        getAudioTaps={getAudioTaps}
-        getAudioFilesAsync={getAudioFilesAsync}
-        getAudioFiles={getAudioFiles}
         handleClick={setView}
         goBack={goBack}
-        flashMessage={flashMessage}
-      />
+        flashMessage={flashMessage} />
     );
     dispatch({ type: "INIT", name: "Home", view })
   }, []);
 
   useEffect(() => {
     flashMessages.forEach(flashMessage => {
-      const div = flashMessage.ref.current;
-      if (div && !div.onclick) {
-        div.onclick = () => popMessage(flashMessage.id);
+      const closeDiv = flashMessage.closeRef.current;
+      if (closeDiv && !closeDiv.onclick) {
+        closeDiv.onclick = () => popMessage(flashMessage.id);
+      }
+
+      const containerDiv = flashMessage.containerRef.current;
+      if (containerDiv) {
+        setTimeout(() => containerDiv.style.opacity = "0", 3000);
+        setTimeout(() => popMessage(flashMessage.id), 5000)
       }
     });
   }, [flashMessages]);
-
-  useEffect(() => {
-    tapRef.current = taps;
-  }, [taps])
-
-  useEffect(() => {
-    audioTapRef.current = audioTaps;
-  }, [audioTaps])
-
-  useEffect(() => {
-    audioFileRef.current = audioFiles;
-  }, [audioFiles])
-
-  const getTapsAsync = async (): Promise<TapDetails[]> => {
-    // if AWS has not been queried yet
-    if (!taps.length) {
-      let updatedTaps: TapDetails[] = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
-        return res.map((tap) => {
-          return {
-            dittiId: tap.dittiId,
-            time: new Date(tap.time),
-            timezone: tap.timezone,
-          };
-        });
-      });
-
-      // sort taps by timestamp
-      updatedTaps = updatedTaps.sort((a, b) =>
-        differenceInMilliseconds(a.time, b.time)
-      );
-
-      dispatch({ type: "SET_TAPS", taps: updatedTaps });
-    }
-
-    // // uncomment when using dummy data
-    // const taps = dummyTaps;
-    // dispatch({ type: "SET_TAPS", taps });
-
-    return taps;
-  };
-
-  const getTaps = (): TapDetails[] => tapRef.current || [];
-
-  const getAudioTapsAsync = async (): Promise<AudioTapDetails[]> => {
-    // if AWS has not been queried yet
-    if (!audioTaps.length) {
-      let updatedAudioTaps: AudioTapDetails[] = await makeRequest("/aws/get-audio-taps?app=2").then((res: AudioTap[]) => {
-        return res.map((at) => {
-          return {
-            dittiId: at.dittiId,
-            audioFileTitle: at.audioFileTitle,
-            time: new Date(at.time),
-            timezone: at.timezone,
-            action: at.action,
-          };
-        });
-      });
-
-      // sort taps by timestamp
-      updatedAudioTaps = updatedAudioTaps.sort((a, b) =>
-        differenceInMilliseconds(a.time, b.time)
-      );
-
-      dispatch({ type: "SET_AUDIO_TAPS", audioTaps: updatedAudioTaps });
-    }
-
-    // // uncomment when using dummy data
-    // const audioTaps = dummyAudioTaps;
-    // dispatch({ type: "SET_AUDIO_TAPS", audioTaps });
-
-    return audioTaps;
-  };
-
-  const getAudioTaps = (): AudioTapDetails[] => audioTapRef.current || [];
-
-  const getAudioFilesAsync = async (): Promise<AudioFile[]> => {
-    // if AWS has not been queried yet
-    if (!audioFiles.length) {
-      const newAudioFiles = await makeRequest("/aws/get-audio-files?app=2");
-      dispatch({ type: "SET_AUDIO_FILES", audioFiles: newAudioFiles });
-    }
-
-    return audioFiles;
-  };
-
-  const getAudioFiles = () => audioFileRef.current || [];
 
   const setView = (
     name: string[], view: React.ReactElement, replace: boolean | null = null
@@ -309,68 +200,67 @@ const Dashboard: React.FC = () => {
   const setStudy = (name: string, view: React.ReactElement) => {
     const appView =
       <StudiesView
-        getTapsAsync={getTapsAsync}
-        getTaps={getTaps}
-        getAudioTapsAsync={getAudioTapsAsync}
-        getAudioTaps={getAudioTaps}
-        getAudioFilesAsync={getAudioFilesAsync}
-        getAudioFiles={getAudioFiles}
         handleClick={setView}
         goBack={goBack}
-        flashMessage={flashMessage}
-      />
+        flashMessage={flashMessage} />
     dispatch({ type: "SET_STUDY", name, view, appView });
   };
 
   const goBack = () => dispatch({ type: "GO_BACK" });
 
-  const flashMessage = (msg: React.ReactElement, variant: string) => {
+  const flashMessage = (msg: React.ReactElement, variant: FlashMessageVariant) => {
     dispatch({ type: "FLASH_MESSAGE", msg, variant });
   };
 
   const popMessage = (id: number) => dispatch({ type: "CLOSE_MESSAGE", id });
 
   return (
-    <main className="bg-[#F0F0F5] flex flex-col h-screen">
-
+    <main className="flex flex-col h-screen">
       {/* header with the account menu  */}
       <Header
         handleClick={setView}
         goBack={goBack}
-        flashMessage={flashMessage}
-      />
-      <div className="flex flex-grow max-h-[calc(100vh-4rem)">
+        flashMessage={flashMessage} />
+      <div className="flex flex-grow max-h-[calc(100vh-4rem)]">
 
         {/* list of studies on the left of the screen */}
-        <StudiesMenu
+        {/* <StudiesMenu
           setView={setStudy}
           flashMessage={flashMessage}
           handleClick={setView}
           getTaps={getTaps}
           getAudioTaps={getAudioTaps}
-          goBack={goBack}
-        />
+          goBack={goBack} /> */}
 
         {/* main dashboard */}
-        <div className="flex flex-col flex-grow max-w-[calc(100vw-16rem) overflow-x-hidden relative">
+        <div className="flex flex-col flex-grow max-w-[calc(100vw-16rem) overflow-hidden relative">
 
           {/* navigation bar */}
           <Navbar
             breadcrumbs={breadcrumbs}
             handleBack={goBack}
             handleClick={setView}
-            hasHistory={history.length > 0}
-          />
+            hasHistory={history.length > 0} />
 
           {/* flash messages */}
-          {flashMessages.length ? (
+          {!!flashMessages.length &&
             <div className="flash-message-container">
               {flashMessages.map((fm) => fm.element)}
             </div>
-          ) : null}
+          }
 
           {/* current view */}
-          {view}
+          <DittiDataContext.Provider value={{
+              dataLoading,
+              taps,
+              audioTaps,
+              audioFiles,
+              users,
+              refreshAudioFiles,
+              getUserByDittiId,
+            }}>
+              {view}
+          </DittiDataContext.Provider>
         </div>
       </div>
     </main>

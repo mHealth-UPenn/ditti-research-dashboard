@@ -155,7 +155,7 @@ def init_admin_account(email=None, password=None):
         is_confirmed=True
     )
 
-    db.session.flush()
+    db.session.commit()
     admin.password = password
     admin_join = JoinAccountAccessGroup(
         account=admin, access_group=admin_group
@@ -175,6 +175,499 @@ def init_admin_account(email=None, password=None):
     db.session.commit()
 
     return admin
+
+
+def init_api(click=None):
+    """
+    Insert Fitbit API entry.
+    """
+    api_name = "Fitbit"
+    existing_api = Api.query.filter_by(name=api_name).first()
+
+    if not existing_api:
+        new_api = Api(name=api_name, is_archived=False)
+        db.session.add(new_api)
+        db.session.commit()
+        message = f"API '{api_name}' has been created with ID {new_api.id}."
+    else:
+        message = f"API '{api_name}' already exists with ID {existing_api.id}."
+
+    if click:
+        click.echo(message)
+
+
+def init_demo_db():
+    demo_admin_email = os.getenv("DEMO_ADMIN_EMAIL")
+    demo_admin_password = os.getenv("DEMO_ADMIN_PASSWORD")
+    demo_email = os.getenv("DEMO_EMAIL")
+    demo_password = os.getenv("DEMO_PASSWORD")
+
+    if (
+        demo_admin_email is None or
+        demo_admin_password is None or
+        demo_email is None or
+        demo_password is None
+    ):
+        raise RuntimeError("One or more of the following environment variables are missing: DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, DEMO_EMAIL, DEMO_PASSWORD")
+
+    # Request user confirmation when pointing to non-localhost database
+    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+    if input(f"(y/n) Confirm creating demo data on following database: {db_uri}\n") not in {"y", "yes"}:
+        print("Creation of demo data cancelled")
+        return False
+
+    # Create all possible `(action, resource)` permission combinations
+    actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
+    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
+    for action in actions:
+        for resource in resources:
+            permission = Permission()
+            permission.action = action
+            permission.resource = resource
+            db.session.add(permission)
+
+    # Create the Admin access group
+    admin_app = App(name="Admin Dashboard")
+    admin_group = AccessGroup(name="Admin", app=admin_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=admin_group, permission=permission)
+    db.session.add(admin_app)
+    db.session.add(admin_group)
+
+    # Create the Ditti Admin access group
+    ditti_app = App(name="Ditti App Dashboard")
+    ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    query = Permission.definition == tuple_("View", "Ditti App Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    db.session.add(ditti_app)
+    db.session.add(ditti_admin_group)
+
+    # Create the demo access group
+    demo_group = AccessGroup(name="Demo Group", app=ditti_app)
+    query = Permission.definition == tuple_("View", "Ditti App Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=demo_group, permission=permission)
+    query = Permission.definition == tuple_("View", "Audio Files")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=demo_group, permission=permission)
+    query = Permission.definition == tuple_("View", "All Studies")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=demo_group, permission=permission)
+    db.session.add(demo_group)
+
+    # Create the demo role
+    demo_role = Role(name="Demo Role")
+    query = Permission.definition == tuple_("View", "Taps")
+    permission = Permission.query.filter(query).first()
+    JoinRolePermission(role=demo_role, permission=permission)
+    query = Permission.definition == tuple_("View", "Users")
+    permission = Permission.query.filter(query).first()
+    JoinRolePermission(role=demo_role, permission=permission)
+    db.session.add(demo_role)
+
+    studies = [
+        {
+            "name": "Sleep and Lifestyle Enhancement through Evidence-based Practices for Insomnia Treatment",
+            "acronym": "SLEEP-IT",
+            "ditti_id": "sit",
+            "email": "sleep.it@research.edu",
+            "default_expiry_delta": 14,
+            "consent_information": "",
+        },
+        {
+            "name": "Cognitive and Affective Lifestyle Modifications for Sleep Enhancement through Mindfulness Practices",
+            "acronym": "CALM-SLEEP",
+            "ditti_id": "cs",
+            "email": "calm.sleep@research.edu",
+            "default_expiry_delta": 14,
+            "consent_information": "",
+        }
+    ]
+
+    # Create two test studies
+    study_a = Study(**studies[0])
+    study_b = Study(**studies[1])
+    db.session.add(study_a)
+    db.session.add(study_b)
+
+    # Create an admin account
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Admin",
+        last_name="Admin",
+        email=os.getenv("DEMO_ADMIN_EMAIL"),
+        is_confirmed=True,
+    )
+    account.password = os.getenv("DEMO_ADMIN_PASSWORD")
+    JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
+    JoinAccountAccessGroup(account=account, access_group=admin_group)
+    db.session.add(account)
+
+    # Create a demo account
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Demo",
+        last_name="Demo",
+        email=os.getenv("DEMO_EMAIL"),
+        is_confirmed=True,
+    )
+    account.password = os.getenv("DEMO_PASSWORD")
+    JoinAccountAccessGroup(account=account, access_group=demo_group)
+    JoinAccountStudy(account=account, study=study_a, role=demo_role)
+    JoinAccountStudy(account=account, study=study_b, role=demo_role)
+    db.session.add(account)
+
+    template_html = """<div>
+    <h1>Sleep Hygiene Instructions: General</h1>
+    <p>Maintain a regular sleep/wake schedule. Try to keep the same rise time and bedtime every day.</p>
+    <p>Set your alarm to get up at the same time each morning, regardless of how much sleep you got during the night, in
+        order to maintain a consistent sleep/wake schedule.</p>
+    <p>Do not attempt to “make up for lost sleep” on weekends or hopdays. It may not work and it means you are not up to
+        par for the second half of the week.</p>
+    <p>Do not watch the alarm clock and worry about the time or lost sleep. </p>
+    <p>Do not spend too much time in bed “chasing sleep”</p>
+    <p>Do not nap during the day. Not napping will allow you to sleep much better at night. Exercise instead of napping.
+        Stay active during the day when you feel sleepy.</p>
+    <p>Eat meals at the same time each day, every day. Three or four small meals per day are better than one to two
+        large meals.</p>
+    <p>Avoid or minimize the use of caffeine. It is a stimulant that interferes with sleep. The effects can last as long
+        as 8-14 hours. One cup of coffee contains 100 mg of caffeine and takes three hours to leave the body. Most sodas
+        and teas, some headache and cold medicines, and most diet pills will worsen sleep. It is recommended not to
+        drink coffee, tea or soda after lunch. If you continue to have difficulty falling asleep, avoid drinking
+        caffeinated beverages after breakfast.</p>
+    <p>Avoid alcohol. You may feel it helps you get to sleep, but for most people it causes awakenings as well as poor
+        sleep later in the night. Alcohol can make snoring and sleep apnea worse.</p>
+    <p>Maintain a regular exercise schedule. Walking is an excellent form of exercise. The best time is early in the
+        morning (7 AM – 9 AM). Stretching can be done on rainy days. Guard against “strenuous exercise” before</p>
+</div>"""
+
+    db.session.add(AboutSleepTemplate(name="Default Template", text=template_html))
+    db.session.commit()
+
+    return True
+
+
+def init_integration_testing_db():
+    # Enforce that the environment must be pointing at a local database
+    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+    if "localhost" not in db_uri:
+        raise RuntimeError("Dev data initialization attempted on non-localhost database")
+
+    # Create all possible `(action, resource)` permission combinations
+    actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
+    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
+    for action in actions:
+        for resource in resources:
+            permission = Permission()
+            permission.action = action
+            permission.resource = resource
+            db.session.add(permission)
+
+    roles = {
+        "Admin": [
+            ("*", "*"),
+            ("View", "All Studies")
+        ],
+        "Coordinator": [
+            ("View", "*"),
+            ("Create", "Users"),
+            ("Edit", "Users"),
+            ("Create", "Audio Files"),
+            ("Edit", "Audio Files"),
+        ],
+        "Analyst": [
+            ("View", "*"),
+        ],
+        "Can View Users": [
+            ("View", "Users")
+        ],
+        "Can Create Users": [
+            ("View", "Users"),
+            ("Create", "Users")
+        ],
+        "Can Edit Users": [
+            ("View", "Users"),
+            ("Edit", "Users")
+        ],
+        "Can View Taps": [
+            ("View", "Taps")
+        ],
+    }
+
+    # Create all study-level roles
+    for role_name, permissions in roles.items():
+        role = Role(name=role_name)
+        for action, resource in permissions:
+            query = Permission.definition == tuple_(action, resource)
+            permission = Permission.query.filter(query).first()
+            JoinRolePermission(role=role, permission=permission)
+        db.session.add(role)
+
+    # Create the Admin access group
+    admin_app = App(name="Admin Dashboard")
+    admin_group = AccessGroup(name="Admin", app=admin_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=admin_group, permission=permission)
+    db.session.add(admin_app)
+    db.session.add(admin_group)
+
+    # Create the Ditti Admin access group
+    ditti_app = App(name="Ditti App Dashboard")
+    ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    query = Permission.definition == tuple_("View", "Ditti App Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    db.session.add(ditti_app)
+    db.session.add(ditti_admin_group)
+
+    # Create the Ditti Coordinator access group
+    ditti_coordinator_group = AccessGroup(name="Ditti App Coordinator", app=ditti_app)
+    query = Permission.definition == tuple_("View", "Ditti App Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_coordinator_group, permission=permission)
+    query = Permission.definition == tuple_("View", "Audio Files")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_coordinator_group, permission=permission)
+    query = Permission.definition == tuple_("Create", "Audio Files")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_coordinator_group, permission=permission)
+    query = Permission.definition == tuple_("Delete", "Audio Files")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=ditti_coordinator_group, permission=permission)
+    db.session.add(ditti_app)
+    db.session.add(ditti_coordinator_group)
+
+    admin_access_groups = {
+        "Can Create Accounts": [
+            ("View", "Admin Dashboard"),
+            ("Create", "Accounts")
+        ],
+        "Can Edit Accounts": [
+            ("View", "Admin Dashboard"),
+            ("Edit", "Accounts")
+        ],
+        "Can Archive Accounts": [
+            ("View", "Admin Dashboard"),
+            ("Archive", "Accounts")
+        ],
+        "Can Create Access Groups": [
+            ("View", "Admin Dashboard"),
+            ("Create", "Access Groups")
+        ],
+        "Can Edit Access Groups": [
+            ("View", "Admin Dashboard"),
+            ("Edit", "Access Groups")
+        ],
+        "Can Archive Access Groups": [
+            ("View", "Admin Dashboard"),
+            ("Archive", "Access Groups")
+        ],
+        "Can Create Roles": [
+            ("View", "Admin Dashboard"),
+            ("Create", "Roles")
+        ],
+        "Can Edit Roles": [
+            ("View", "Admin Dashboard"),
+            ("Edit", "Roles")
+        ],
+        "Can Archive Roles": [
+            ("View", "Admin Dashboard"),
+            ("Archive", "Roles")
+        ],
+        "Can Create Studies": [
+            ("View", "Admin Dashboard"),
+            ("Create", "Studies")
+        ],
+        "Can Edit Studies": [
+            ("View", "Admin Dashboard"),
+            ("Edit", "Studies")
+        ],
+        "Can Archive Studies": [
+            ("View", "Admin Dashboard"),
+            ("Archive", "Studies")
+        ],
+        "Can Create About Sleep Templates": [
+            ("View", "Admin Dashboard"),
+            ("Create", "About Sleep Templates")
+        ],
+        "Can Edit About Sleep Templates": [
+            ("View", "Admin Dashboard"),
+            ("Edit", "About Sleep Templates")
+        ],
+        "Can Archive About Sleep Templates": [
+            ("View", "Admin Dashboard"),
+            ("Archive", "About Sleep Templates")
+        ],
+    }
+
+    # Create access groups for testing admin dashboard permissions
+    for access_group_name, permissions in admin_access_groups.items():
+        access_group = AccessGroup(name=access_group_name, app=admin_app)
+        for action, resource in permissions:
+            query = Permission.definition == tuple_(action, resource)
+            permission = Permission.query.filter(query).first()
+            JoinAccessGroupPermission(access_group=access_group, permission=permission)
+        db.session.add(access_group)
+
+    ditti_access_groups = {
+        "Can View Audio Files": [
+            ("View", "Ditti App Dashboard"),
+            ("View", "Audio Files")
+        ],
+        "Can Create Audio Files": [
+            ("View", "Ditti App Dashboard"),
+            ("View", "Audio Files"),
+            ("Create", "Audio Files")
+        ],
+        "Can Delete Audio Files": [
+            ("View", "Ditti App Dashboard"),
+            ("View", "Audio Files"),
+            ("Delete", "Audio Files")
+        ],
+    }
+
+    # Create access groups for testing Ditti dashboard permissions
+    for access_group_name, permissions in ditti_access_groups.items():
+        access_group = AccessGroup(name=access_group_name, app=ditti_app)
+        for action, resource in permissions:
+            query = Permission.definition == tuple_(action, resource)
+            permission = Permission.query.filter(query).first()
+            JoinAccessGroupPermission(access_group=access_group, permission=permission)
+        db.session.add(access_group)
+
+    studies = [
+        {
+            "name": "Test Study A",
+            "acronym": "TESTA",
+            "ditti_id": "TA",
+            "email": "test.study.A@studyAemail.com",
+            "default_expiry_delta": 14,
+            "consent_information": "",
+        },
+        {
+            "name": "Test Study B",
+            "acronym": "TESTB",
+            "ditti_id": "TB",
+            "email": "test.study.B@studyBemail.com",
+            "default_expiry_delta": 14,
+            "consent_information": "",
+        }
+    ]
+
+    # Create two test studies
+    study_a = Study(**studies[0])
+    study_b = Study(**studies[1])
+    db.session.add(study_a)
+    db.session.add(study_b)
+
+    # Create an admin account
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Jane",
+        last_name="Doe",
+        email=os.getenv("FLASK_ADMIN_EMAIL"),
+        is_confirmed=True,
+    )
+    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+    JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
+    JoinAccountAccessGroup(account=account, access_group=admin_group)
+    db.session.add(account)
+
+    # Create a Ditti admin account to test whether pemissions are scoped to the Ditti Dashboard only
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Jane",
+        last_name="Doe",
+        email="Ditti Admin",
+        is_confirmed=True,
+    )
+    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+    JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
+    db.session.add(account)
+
+    # Create a Study A Admin account to test whether permissions are scopeed to Study A only
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Jane",
+        last_name="Doe",
+        email="Study A Admin",
+        is_confirmed=True,
+    )
+    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+    role = Role.query.filter(Role.name == "Admin").first()
+    JoinAccountStudy(account=account, study=study_a, role=role)
+    JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
+    JoinAccountAccessGroup(account=account, access_group=admin_group)
+    db.session.add(account)
+
+    # Create an account for each role
+    # Assign each role to Study A to test whether permissions are scoped to Study A only
+    other_role = Role.query.filter(Role.name == "Can View Users").first()
+    for role_name in roles.keys():
+        account = Account(
+            public_id=str(uuid.uuid4()),
+            created_on=datetime.now(UTC),
+            first_name="Jane",
+            last_name="Doe",
+            email=role_name,
+            is_confirmed=True,
+        )
+        account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+        role = Role.query.filter(Role.name == role_name).first()
+        JoinAccountStudy(account=account, study=study_a, role=role)
+        JoinAccountStudy(account=account, study=study_b, role=other_role)
+        JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
+        JoinAccountAccessGroup(account=account, access_group=admin_group)
+        db.session.add(account)
+
+    # Create an account for each access group to test whether permissions are scoped properly on the Admin Dashboard
+    access_group_names = (
+        list(admin_access_groups.keys()) + list(ditti_access_groups.keys())
+    )
+    for access_group_name in access_group_names:
+        account = Account(
+            public_id=str(uuid.uuid4()),
+            created_on=datetime.now(UTC),
+            first_name="Jane",
+            last_name="Doe",
+            email=access_group_name,
+            is_confirmed=True,
+        )
+        account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+        access_group = AccessGroup.query.filter(
+            AccessGroup.name == access_group_name
+        ).first()
+        JoinAccountAccessGroup(account=account, access_group=access_group)
+        db.session.add(account)
+
+    template_html = """<div>
+    <h1>Heading 1</h1>
+    <h2>Heading 2</h2>
+    <h3>Heading 3</h3>
+    <h4>Heading 4</h4>
+    <h5>Heading 5</h5>
+    <h6>Heading 6</h6>
+    <p>Paragraph. <i>Italics.</i> <b>Bold</b></p>
+    <unallowed>Unallowed tag.</unallowed>
+    <p unallowed>Unallowed attribute.</p>
+</div>"""
+
+    db.session.add(AboutSleepTemplate(name="About Sleep Template", text=template_html))
+    db.session.commit()
 
 
 @jwt.user_identity_loader
@@ -337,7 +830,7 @@ class Account(db.Model):
             .filter(
                 (~AccessGroup.is_archived) &
                 (JoinAccountAccessGroup.account_id == self.id)
-        )
+            )
 
         # if a study id was passed and the study is not archived
         if study_id and not Study.query.get(study_id).is_archived:
@@ -349,7 +842,7 @@ class Account(db.Model):
                 .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)\
                 .filter(
                     JoinAccountStudy.primary_key == tuple_(self.id, study_id)
-            )
+                )
 
             # return the union of all permission for the app and study
             permissions = q1.union(q2)
@@ -395,7 +888,7 @@ class Account(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return {
             "id": self.id,
@@ -445,7 +938,7 @@ class JoinAccountAccessGroup(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry"s primary key.
+        tuple of int: an entry's primary key.
         """
         return self.account_id, self.access_group_id
 
@@ -499,7 +992,7 @@ class JoinAccountStudy(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry"s primary key.
+        tuple of int: an entry's primary key.
         """
         return self.account_id, self.study_id
 
@@ -510,7 +1003,7 @@ class JoinAccountStudy(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return {
             **self.study.meta,
@@ -568,7 +1061,7 @@ class AccessGroup(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return {
             "id": self.id,
@@ -612,7 +1105,7 @@ class JoinAccessGroupPermission(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry"s primary key
+        tuple of int: an entry's primary key
         """
         return self.access_group_id, self.permission_id
 
@@ -623,7 +1116,7 @@ class JoinAccessGroupPermission(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return self.permission.meta
 
@@ -656,7 +1149,7 @@ class Role(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return {
             "id": self.id,
@@ -699,7 +1192,7 @@ class JoinRolePermission(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry"s primary key.
+        tuple of int: an entry's primary key.
         """
         return self.role_id, self.permission_id
 
@@ -710,7 +1203,7 @@ class JoinRolePermission(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return self.permission.meta
 
@@ -734,7 +1227,7 @@ class Action(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return {
             "id": self.id,
@@ -761,7 +1254,7 @@ class Resource(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return {
             "id": self.id,
@@ -802,7 +1295,7 @@ class Permission(db.Model):
     @hybrid_property
     def action(self):
         """
-        str: an entry"s action
+        str: an entry's action
         """
         return self._action.value
 
@@ -824,7 +1317,7 @@ class Permission(db.Model):
     @hybrid_property
     def resource(self):
         """
-        str: an entry"s resource
+        str: an entry's resource
         """
         return self._resource.value
 
@@ -846,7 +1339,7 @@ class Permission(db.Model):
     @validates("_action_id")
     def validate_action(self, key, val):
         """
-        Ensure an entry"s action cannot be modified.
+        Ensure an entry's action cannot be modified.
         """
         if self._action_id is not None:
             raise ValueError("permission.action cannot be modified.")
@@ -856,7 +1349,7 @@ class Permission(db.Model):
     @validates("_resource_id")
     def validate_resource(self, key, val):
         """
-        Ensure an entry"s resource cannot be modified.
+        Ensure an entry's resource cannot be modified.
         """
         if self._resource_id is not None:
             raise ValueError("permission.resource cannot be modified.")
@@ -866,7 +1359,7 @@ class Permission(db.Model):
     @hybrid_property
     def definition(self):
         """
-        tuple of str: an entry"s (action, resource) definition
+        tuple of str: an entry's (action, resource) definition
         """
         return self.action, self.resource
 
@@ -884,7 +1377,7 @@ class Permission(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return {
             "id": self.id,
@@ -912,7 +1405,7 @@ class App(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return {
             "id": self.id,
@@ -934,6 +1427,12 @@ class Study(db.Model):
     acronym: sqlalchemy.Column
     ditti_id: sqlalchemy.Column
     email: sqlalchemy.Column
+    default_expiry_delta: sqlalchemy.Column
+        The default amount of time in number of days that a subject is enrolled
+        in the study. A subject's expires_on column will be automatically set
+        according to this value.
+    consent_information: sqlalchemt.Column
+        The consent text to show to a study subject.
     is_archived: sqlalchemy.Column
     roles: sqlalchemy.orm.relationship
     """
@@ -944,13 +1443,15 @@ class Study(db.Model):
     ditti_id = db.Column(db.String, nullable=False, unique=True)
     email = db.Column(db.String, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
+    default_expiry_delta = db.Column(db.Integer)
+    consent_information = db.Column(db.String)
 
     roles = db.relationship("JoinStudyRole", cascade="all, delete-orphan")
 
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return {
             "id": self.id,
@@ -996,7 +1497,7 @@ class JoinStudyRole(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry"s primary key.
+        tuple of int: an entry's primary key.
         """
         return self.study_id, self.role_id
 
@@ -1007,7 +1508,7 @@ class JoinStudyRole(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return self.role.meta
 
@@ -1056,7 +1557,7 @@ class AboutSleepTemplate(db.Model):
     @property
     def meta(self):
         """
-        dict: an entry"s metadata.
+        dict: an entry's metadata.
         """
         return {
             "id": self.id,
@@ -1066,3 +1567,231 @@ class AboutSleepTemplate(db.Model):
 
     def __repr__(self):
         return "<AboutSleepTemplate %s>" % self.name
+
+
+class StudySubject(db.Model):
+    """
+    The study_subject table mapping calss
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    created_on: sqlalchemy.Column
+    email: sqlalchemy.Column
+        The study subject's email as it is stored in AWS Cognito
+    is_confirmed: sqlalchemy.Column
+        Whether the user verified their email with AWS Cognito
+    is_archived: sqlalchemy.Column
+    studies: sqlalchemy.Column
+        Any studies the subject is enrolled in
+    apis: sqlalchemy.Column
+        Any APIs that the subject has granted access to
+    """
+    __tablename__ = "study_subject"
+    id = db.Column(db.Integer, primary_key=True)
+    created_on = db.Column(db.DateTime, nullable=False)
+    email = db.Column(db.String, nullable=False, unique=True)
+    is_confirmed = db.Column(db.Boolean, default=False, nullable=False)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
+
+    # ignore archived studies
+    studies = db.relationship(
+        "JoinStudySubjectStudy",
+        back_populates="study_subject",
+        cascade="all, delete-orphan",
+        primaryjoin=(
+            "and_(" +
+            "   StudySubject.id == JoinStudySubjectStudy.study_subject_id," +
+            "   JoinStudySubjectStudy.study_id == Study.id," +
+            "   Study.is_archived == False" +
+            ")"
+        )
+    )
+
+    # ignore archived apis
+    apis = db.relationship(
+        "JoinStudySubjectApi",
+        back_populates="study_subject",
+        cascade="all, delete-orphan",
+        primaryjoin=(
+            "and_(" +
+            "   StudySubject.id == JoinStudySubjectApi.study_subject_id," +
+            "   JoinStudySubjectApi.api_id == Api.id," +
+            "   Api.is_archived == False" +
+            ")"
+        )
+    )
+
+    @property
+    def meta(self):
+        return {
+            "id": self.id,
+            "createdOn": self.created_on,
+            "email": self.email,
+            "isConfirmed": self.is_confirmed,
+            "studies": [join.meta for join in self.studies],
+            "apis": [join.meta for join in self.apis],
+        }
+
+    def __repr__(self):
+        return f"<StudySubject {self.email}>"
+
+
+class JoinStudySubjectStudy(db.Model):
+    """
+    The join_study_subject_study table mapping class.
+
+    Vars
+    ----
+    study_subject_id: sqlalchemy.Column
+    study_id: sqlalchemy.Column
+    did_consent: sqlalchemy.Column
+        Whether the study subject consented to the collection of their data
+    expires_on: sqlalchemy.Column
+        When the study is no longer a part of the study and data should no
+        longer be collected from any of the subject's approved APIs
+    study_subject: sqlalchemy.orm.relationship
+    study: sqlalchemy.orm.relationship
+    """
+    __tablename__ = "join_study_subject_study"
+
+    study_subject_id = db.Column(
+        db.Integer,
+        db.ForeignKey("study_subject.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+
+    study_id = db.Column(
+        db.Integer,
+        db.ForeignKey("study.id"),  # do not allow deletions on study table
+        primary_key=True
+    )
+
+    did_consent = db.Column(db.Boolean, default=False, nullable=False)
+    expires_on = db.Column(db.DateTime, nullable=False)
+
+    study_subject = db.relationship("StudySubject", back_populates="studies")
+    study = db.relationship("Study")
+
+    @hybrid_property
+    def primary_key(self):
+        """
+        tuple of int: an entry's primary key.
+        """
+        return self.study_subject_id, self.study_id
+
+    @primary_key.expression
+    def primary_key(cls):
+        return tuple_(cls.study_subject_id, cls.study_id)
+
+    @property
+    def meta(self):
+        """
+        dict: an entry's metadata.
+        """
+        return {
+            "did_consent": self.did_consent,
+            "expires_on": self.expires_on,
+            "study": self.study.meta,
+        }
+
+    def __repr__(self):
+        return "<JoinStudySubjectStudy %s-%s>" % self.primary_key
+
+
+class JoinStudySubjectApi(db.Model):
+    """
+    The join_study_subject_api table mapping class.
+
+    Vars
+    ----
+    study_subject_id: sqlalchemy.Column
+    api_id: sqlalchemy.Column
+    api_user_uuid: sqlalchemy.Column
+        The study subject's user ID associated with the API
+    scope: sqlalchemy.Column
+        The scope of data that the study subject approved access for
+    access_key_uuid: sqlalchemy.Column
+        DEPRECATED
+    refresh_key_uuid: sqlalchemy.Column
+        DEPRECATED
+    study_subject: sqlalchemy.orm.relationship
+    api: sqlalchemy.orm.relationship
+    """
+    __tablename__ = "join_study_subject_api"
+
+    study_subject_id = db.Column(
+        db.Integer,
+        db.ForeignKey("study_subject.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+
+    api_id = db.Column(
+        db.Integer,
+        db.ForeignKey("api.id"),  # Do not allow deletion on api table
+        primary_key=True
+    )
+
+    api_user_uuid = db.Column(db.String, nullable=False)
+    scope = db.Column(db.ARRAY(db.String))
+    access_key_uuid = db.Column(db.String, unique=True)
+    refresh_key_uuid = db.Column(db.String, unique=True)
+
+    study_subject = db.relationship("StudySubject", back_populates="apis")
+    api = db.relationship("Api")
+
+    @hybrid_property
+    def primary_key(self):
+        """
+        tuple of int: an entry's primary key.
+        """
+        return self.study_subject_id, self.api_id
+
+    @primary_key.expression
+    def primary_key(cls):
+        return tuple_(cls.study_subject_id, cls.api_id)
+
+    @property
+    def meta(self):
+        """
+        dict: an entry's metadata.
+        """
+        return {
+            "api_user_uuid": self.api_user_uuid,
+            "scope": self.scope,
+            "access_key_uuid": self.access_key_uuid,
+            "refresh_key_uuid": self.refresh_key_uuid,
+            "api": self.api.meta,
+        }
+
+    def __repr__(self):
+        return "<JoinStudySubjectApi %s-%s>" % self.primary_key
+
+
+class Api(db.Model):
+    """
+    The api table mapping class
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    name: sqlalchemy.Column
+    is_archived: sqlalchemy.Column
+    """
+    __tablename__ = "api"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False, unique=True)
+    is_archived = db.Column(db.Boolean, default=False, nullable=False)
+
+    @property
+    def meta(self):
+        """
+        dict: an entry's metadata.
+        """
+        return {
+            "id": self.id,
+            "name": self.name
+        }
+
+    def __repr__(self):
+        return "<Api %s>" % self.name

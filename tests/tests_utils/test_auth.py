@@ -52,7 +52,8 @@ def test_get_auth_required_timeout(timeout_client):
     opts = "?app=%s&study=%s&resource=%s" % (app, study, resource)
     sleep(2)
 
-    res = timeout_client.get("/test/get-auth-required-action%s" % opts, headers=headers)
+    res = timeout_client.get(
+        "/test/get-auth-required-action%s" % opts, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Token has expired"
@@ -83,7 +84,8 @@ def test_get_auth_required_after_logout_with_fake(client):
     study = get_user_study_id(account)
     resource = "baz"
     opts = "?app=%s&study=%s&resource=%s" % (app, study, resource)
-    res = client.get("/test/get-auth-required-action%s" % opts, headers=headers)
+    res = client.get(
+        "/test/get-auth-required-action%s" % opts, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Token has been revoked"
@@ -96,7 +98,8 @@ def test_post_auth_required_no_csrf(client):
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     data = {"app": app, "study": study, "resource": "baz"}
-    res = client.post("/test/post-auth-required-action", json=data, headers=headers)
+    res = client.post(
+        "/test/post-auth-required-action", json=data, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Missing CSRF token"
@@ -110,7 +113,8 @@ def test_get_auth_required_action(client):
     study = get_user_study_id(account)
     resource = "baz"
     opts = "?app=%s&study=%s&resource=%s" % (app, study, resource)
-    res = client.get("/test/get-auth-required-action%s" % opts, headers=headers)
+    res = client.get(
+        "/test/get-auth-required-action%s" % opts, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "OK"
@@ -123,7 +127,8 @@ def test_get_auth_required_resource_unauthorized(client):
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     opts = "?app=%s&study=%s" % (app, study)
-    res = client.get("/test/get-auth-required-resource%s" % opts, headers=headers)
+    res = client.get(
+        "/test/get-auth-required-resource%s" % opts, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "Unauthorized Request"
@@ -136,7 +141,8 @@ def test_get_auth_required_resource(client):
     app = get_user_app_id(account)
     study = get_user_study_id(account)
     opts = "?app=%s&study=%s" % (app, study)
-    res = client.get("/test/get-auth-required-resource%s" % opts, headers=headers)
+    res = client.get(
+        "/test/get-auth-required-resource%s" % opts, headers=headers)
     data = json.loads(res.data)
     assert "msg" in data
     assert data["msg"] == "OK"

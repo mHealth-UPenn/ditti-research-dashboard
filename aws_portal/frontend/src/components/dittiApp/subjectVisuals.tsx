@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import TextField from "../fields/textField";
 import SubjectsEdit from "./subjectsEdit";
@@ -510,7 +510,6 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
     const audioTapsFiltered = audioTaps.filter(
       (b) => start < b.time && b.time < stop
     );
-    console.log(audioTapsFiltered.length)
 
     const audioTapElems = audioTapsFiltered.map((at, index) => {
       const left =
