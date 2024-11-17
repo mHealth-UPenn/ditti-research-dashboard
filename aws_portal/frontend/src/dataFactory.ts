@@ -113,7 +113,7 @@ const generateTaps = (
           let tapTime = new Date(boutStart);
 
           for (let i = 0; i < tapsInBout; i++) {
-            taps.push({ dittiId, time: new Date(tapTime) });
+            taps.push({ dittiId, time: new Date(tapTime), timezone: "GMT-05:00 Eastern Standard Time" });
 
             const delta = (10 + Math.floor(Math.random() * 11)) * 1000;
             tapTime = new Date(tapTime.getTime() + delta);

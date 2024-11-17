@@ -47,7 +47,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
   const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
   const [loading, setLoading] = useState(true);
 
-  const { taps } = useDittiDataContext();
+  const { taps, audioTaps } = useDittiDataContext();
 
   useEffect(() => {
     // check whether the user can enroll new subjects

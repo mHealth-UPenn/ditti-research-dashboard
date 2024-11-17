@@ -48,7 +48,7 @@ const useDittiData = () => {
     if (APP_ENV === "production") {
       taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
         return res.map((tap) => {
-          return { dittiId: tap.dittiId, time: new Date(tap.time) };
+          return { dittiId: tap.dittiId, time: new Date(tap.time), timezone: tap.timezone };
         });
       }).catch(() => {
         console.error("Unable to fetch taps data. Check account permissions.")
