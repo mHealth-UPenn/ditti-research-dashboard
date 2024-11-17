@@ -52,4 +52,3 @@ def init_db_click():
 @with_appcontext
 def init_api_click():
     init_api(click)
-    click.echo("API successfully initialized.")
