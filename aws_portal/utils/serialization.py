@@ -9,31 +9,28 @@ def serialize_participant(study_subject):
         dict: A dictionary containing the serialized participant data.
     """
     participant_data = {
-        "email": study_subject.email,
-        "user_id": study_subject.id,
-        # "name": study_subject.name,  # TODO: Add this later
+        "dittiId": study_subject.meta.dittiId,
+        "userId": study_subject.meta.id,
         "apis": [],
         "studies": []
     }
 
     # Serialize APIs
-    for api_entry in study_subject.apis:
+    for api_entry in study_subject.meta.apis:
         api_data = {
-            "api_name": api_entry.api.name,
-            "scope": api_entry.scope,
-            "expires_at": api_entry.meta.get('expires_at', None)
+            "apiName": api_entry.meta.api.meta.name,
+            "scope": api_entry.meta.scope
         }
         participant_data["apis"].append(api_data)
 
     # Serialize Studies
     for study_entry in study_subject.studies:
         study_data = {
-            "study_name": study_entry.study.name,
-            "study_id": study_entry.study.id,
-            # "study_start_date": study_entry.study.created_on.isoformat(),
-            "study_start_date": study_subject.created_on.isoformat(),  # TODO: Replace later
-            "study_end_date": study_entry.expires_on.isoformat(),
-            # "why_collecting_data": study_entry.study.consent_information  # TODO: Add this later
+            "studyName": study_entry.meta.study.meta.name,
+            "studyId": study_entry.meta.study.meta.id,
+            "createdOn": study_entry.meta.createdOn,
+            "expiresOn": study_entry.meta.expiresOn,
+            "dataSummary": study_entry.meta.study.meta.dataSummary
         }
         participant_data["studies"].append(study_data)
 
