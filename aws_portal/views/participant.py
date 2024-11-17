@@ -9,7 +9,6 @@ from aws_portal.utils.cognito import cognito_auth_required
 from aws_portal.utils.serialization import serialize_participant
 from aws_portal.utils.auth import auth_required
 
-
 blueprint = Blueprint("participant", __name__, url_prefix="/participant")
 logger = logging.getLogger(__name__)
 
@@ -37,30 +36,30 @@ def get_participant():
         except jwt.ExpiredSignatureError:
             return make_response({"msg": "Expired ID token."}, 401)
 
-        # Extract cognito:username from claims
-        email = claims.get("cognito:username")
-        if not email:
+        # Extract cognito:username from claims (now represents ditti_id)
+        ditti_id = claims.get("cognito:username")
+        if not ditti_id:
             return make_response({"msg": "cognito:username not found in token."}, 400)
 
-        # Retrieve the StudySubject
+        # Retrieve the StudySubject by ditti_id
         try:
             study_subject = StudySubject.query.filter_by(
-                email=email, is_archived=False).first()
+                ditti_id=ditti_id, is_archived=False).first()
             if not study_subject:
-                logger.info(f"StudySubject with email {
-                            email} not found or is archived.")
+                logger.info(f"StudySubject with ditti_id {
+                            ditti_id} not found or is archived.")
                 return make_response({"msg": "User not found or is archived."}, 404)
         except SQLAlchemyError as db_err:
-            logger.error(f"Database error retrieving StudySubject for email {
-                         email}: {str(db_err)}")
+            logger.error(f"Database error retrieving StudySubject for ditti_id {
+                         ditti_id}: {str(db_err)}")
             return make_response({"msg": "Database error retrieving participant data."}, 500)
 
         # Serialize the StudySubject data to only include required fields
         try:
             participant_data = serialize_participant(study_subject)
         except Exception as serialize_err:
-            logger.error(f"Error serializing participant data for email {
-                         email}: {str(serialize_err)}")
+            logger.error(f"Error serializing participant data for ditti_id {
+                         ditti_id}: {str(serialize_err)}")
             return make_response({"msg": "Error processing participant data."}, 500)
 
         return jsonify(participant_data)
@@ -93,12 +92,12 @@ def revoke_api_access(api_name):
 
         # Decode ID token to get claims
         claims = jwt.decode(id_token, options={"verify_signature": False})
-        email = claims.get("cognito:username")
-        if not email:
+        ditti_id = claims.get("cognito:username")
+        if not ditti_id:
             return make_response({"msg": "cognito:username not found in token"}, 400)
 
         study_subject = StudySubject.query.filter_by(
-            email=email, is_archived=False).first()
+            ditti_id=ditti_id, is_archived=False).first()
         if not study_subject:
             return make_response({"msg": "User not found"}, 404)
 
@@ -119,6 +118,10 @@ def revoke_api_access(api_name):
         except KeyError:
             logger.warning(f"Tokens for API '{api_name}' and StudySubject ID {
                            study_subject.id} not found.")
+        except Exception as e:
+            logger.error(f"Error deleting tokens for API '{
+                         api_name}': {str(e)}")
+            return make_response({"msg": "Error deleting API tokens."}, 500)
 
         # Remove API access
         db.session.delete(join_api)
@@ -132,25 +135,25 @@ def revoke_api_access(api_name):
         return make_response({"msg": "Error revoking API access"}, 500)
 
 
-@blueprint.route("<string:participant_username>", methods=["DELETE"])
+@blueprint.route("<string:ditti_id>", methods=["DELETE"])
 @auth_required("View", "Admin Dashboard")
 @auth_required("Archive", "Accounts")
-def delete_participant(participant_username):
+def delete_participant(ditti_id):
     """
     Endpoint to delete a participant's account and all associated API data.
     Deletes API tokens and data, archives the StudySubject in the database,
     and removes the user from AWS Cognito.
 
     Args:
-        participant_username (str): Username of the StudySubject to delete.
+        ditti_id (str): ditti_id of the StudySubject to delete.
 
     Returns:
         JSON response confirming account deletion or an error message.
     """
     try:
-        # Retrieve the StudySubject
+        # Retrieve the StudySubject by ditti_id
         study_subject = StudySubject.query.filter_by(
-            email=participant_username, is_archived=False).first()
+            ditti_id=ditti_id, is_archived=False).first()
         if not study_subject:
             return make_response({"msg": "User not found or already archived."}, 404)
         study_subject_id = study_subject.id
@@ -188,7 +191,7 @@ def delete_participant(participant_username):
             # Requires aws.cognito.signin.user.admin OpenID Connect scope
             client.admin_delete_user(
                 UserPoolId=current_app.config['COGNITO_PARTICIPANT_USER_POOL_ID'],
-                Username=participant_username
+                Username=ditti_id
             )
         except client.exceptions.NotAuthorizedException:
             logger.error("Not authorized to delete user in Cognito.")
