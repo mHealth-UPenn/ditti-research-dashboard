@@ -19,7 +19,7 @@ export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<
   // Set headers
   opts.headers = {
     ...opts.headers,
-    ...(jwt && { Authorization: `Bearer ${jwt}` }),
+    ...((jwt && !(opts.headers && "Authorization" in opts.headers) ) && { Authorization: `Bearer ${jwt}` }),
   };
 
   // Add additional headers for specific request methods

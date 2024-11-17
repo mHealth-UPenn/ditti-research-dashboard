@@ -43,6 +43,20 @@ class Default:
     FITBIT_REDIRECT_URI = "http://localhost:5000/cognito/fitbit/callback"
 
 
+class Staging(Default):
+    ENV = "production"
+    DEBUG = False
+
+    CORS_ALLOW_HEADERS = [
+        "Content-Type",
+        "X-Amz-Date",
+        "Authorization",
+        "X-Api-Key",
+        "X-Amz-Security-Token",
+        "X-CSRF-TOKEN"
+    ]
+
+
 class Production(Default):
     ENV = "production"
     DEBUG = False
