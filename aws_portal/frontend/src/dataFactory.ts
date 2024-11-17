@@ -138,8 +138,16 @@ const generateRandomTimeBetween = (startHour: number, endHour: number) => {
 }
 
 
-const getRandomLevel = (prev: ISleepLevelStages | ISleepLevelClassic): ISleepLevelStages | ISleepLevelClassic => {
-  const levels: (ISleepLevelStages | ISleepLevelClassic)[] = ["deep", "light", "rem", "wake"];
+const getRandomLevelStages = (prev: ISleepLevelStages): ISleepLevelStages => {
+  const levels: ISleepLevelStages[] = ["deep", "light", "rem", "wake"];
+  const levelsFiltered = levels.filter(l => l !== prev);
+  const randomIndex = Math.floor(Math.random() * levelsFiltered.length);
+  return levelsFiltered[randomIndex];
+}
+
+
+const getRandomLevelClassic = (prev: ISleepLevelClassic): ISleepLevelClassic => {
+  const levels: ISleepLevelClassic[] = ["asleep", "awake", "restless"];
   const levelsFiltered = levels.filter(l => l !== prev);
   const randomIndex = Math.floor(Math.random() * levelsFiltered.length);
   return levelsFiltered[randomIndex];
@@ -148,7 +156,9 @@ const getRandomLevel = (prev: ISleepLevelStages | ISleepLevelClassic): ISleepLev
 
 const generateSleepLogs = (): ISleepLog[] => {
   const sleepLogs: ISleepLog[] = [];
-  const levels: ISleepLevelStages[] = ["deep", "light", "rem", "wake"];
+  const levelsStages: ISleepLevelStages[] = ["deep", "light", "rem", "wake"];
+  const levelsClassic: ISleepLevelClassic[] = ["asleep", "awake", "restless"];
+  const classicDay = Math.ceil(Math.random() * 7);
 
   for (let i = 7; i >= 1; i--) {
     const dateOfSleep = new Date();
@@ -161,7 +171,7 @@ const generateSleepLogs = (): ISleepLog[] => {
     const sleepLog: ISleepLog = {
       dateOfSleep: dateOfSleep,
       startTime: startTime,
-      type: "stages",
+      type: i === classicDay ? "classic" : "stages",
       levels: [],
     };
 
@@ -181,9 +191,15 @@ const generateSleepLogs = (): ISleepLog[] => {
         dateTime,
         seconds,
         isShort: null,
-        level: previousLevel
-          ? getRandomLevel(previousLevel.level)
-          : levels[Math.floor(Math.random() * levels.length)],
+        level: i === classicDay
+          // Use classic
+          ? previousLevel
+          ? getRandomLevelClassic(previousLevel.level as ISleepLevelClassic)
+          : levelsClassic[Math.floor(Math.random() * levelsClassic.length)]
+          // Use stages
+          : previousLevel
+          ? getRandomLevelStages(previousLevel.level as ISleepLevelStages)
+          : levelsStages[Math.floor(Math.random() * levelsStages.length)]
       };
 
       sleepLog.levels.push(level);

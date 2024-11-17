@@ -22,6 +22,7 @@ type TimelineProps = {
   strokeWidth?: number;
   color?: string;
   axisColor?: string;
+  strokeDashArray?: string;
 };
 
 
@@ -35,6 +36,7 @@ const Timeline: React.FC<TimelineProps> = ({
   strokeWidth = 2,
   color = "black",
   axisColor = "black",
+  strokeDashArray,
 }) => {
   const {
     width,
@@ -94,7 +96,7 @@ const Timeline: React.FC<TimelineProps> = ({
         return (
           <React.Fragment key={i}>
             {!hideStops && group.start >= start && <circle cx={startX} cy={y} r={5} fill={color} />}
-            <Line from={{ x: startX, y }} to={{ x: stopX, y }} stroke={color} strokeWidth={strokeWidth} />
+            <Line from={{ x: startX, y }} to={{ x: stopX, y }} stroke={color} strokeWidth={strokeWidth} strokeDasharray={strokeDashArray} />
             {!hideStops && stop >= group.stop && <circle cx={stopX} cy={y} r={5} fill={color} />}
             {tooltipRect}
           </React.Fragment>
