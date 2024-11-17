@@ -1,4 +1,19 @@
-if [[ "$1" != "conda" ]]; then
+# Initialize flags
+CONDA_FLAG=false
+INIT_FLAG=false
+
+# Check for "conda" and "init" parameters
+for arg in "$@"
+do
+    if [[ "$arg" == "conda" ]]; then
+        CONDA_FLAG=true
+    elif [[ "$arg" == "init" ]]; then
+        INIT_FLAG=true
+    fi
+done
+
+# Handle Python virtual environment setup if "conda" is not provided
+if [[ "$CONDA_FLAG" == false ]]; then
     # if no python virtual environment, create one
     if [ ! -f env/bin/activate ]; then
         echo "Initializing Python virtual environment..."
@@ -41,3 +56,14 @@ export $(cat flask.env | xargs)
 # export development cognito and fitbit env variables
 export $(cat cognito.env | xargs)
 export $(cat fitbit.env | xargs)
+
+# Run initialization commands if "init" parameter is provided
+if [[ "$INIT_FLAG" == true ]]; then
+    echo "Initializing application..."
+    docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
+    flask db upgrade
+    flask init-admin-app
+    flask init-admin-group
+    flask init-admin
+    flask init-api
+fi

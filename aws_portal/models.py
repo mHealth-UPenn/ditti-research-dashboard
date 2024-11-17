@@ -191,9 +191,9 @@ def init_api(click=None):
         new_api = Api(name=api_name, is_archived=False)
         db.session.add(new_api)
         db.session.commit()
-        message = f"API '{api_name}' has been created with ID {new_api.id}."
+        message = f"<API {api_name}>"
     else:
-        message = f"API '{api_name}' already exists with ID {existing_api.id}."
+        message = f"<API {api_name}> already exists with ID {existing_api.id}."
 
     if click:
         click.echo(message)
