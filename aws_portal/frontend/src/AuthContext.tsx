@@ -106,14 +106,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Redirects to Cognito login page.
    */
   const cognitoLogin = useCallback((): void => {
-    window.location.href = "http://localhost:5000/cognito/login";
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/login`;
   }, []);
 
   /**
    * Logs out the Cognito user by redirecting to the logout endpoint.
    */
   const cognitoLogout = useCallback((): void => {
-    window.location.href = "http://localhost:5000/cognito/logout";
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/logout`;
     setIsCognitoAuthenticated(false);
     setDittiId(null);
   }, []);

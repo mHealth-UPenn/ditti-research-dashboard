@@ -47,7 +47,7 @@ const ParticipantDashboard = () => {
   }, []);
 
   const handleRedirect = () => {
-    window.location.href = "http://localhost:5000/cognito/fitbit/authorize";
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/fitbit/authorize`;
   };
 
   const handleClickManageData = () => {

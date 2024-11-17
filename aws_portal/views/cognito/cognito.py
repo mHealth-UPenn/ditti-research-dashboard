@@ -117,10 +117,10 @@ def cognito_callback():
 
     # Set tokens in secure, HTTP-only cookies
     response.set_cookie(
-        "id_token", id_token, httponly=True, secure=True, samesite="Lax"
+        "id_token", id_token, httponly=True, secure=True, samesite="None"
     )
     response.set_cookie(
-        "access_token", access_token, httponly=True, secure=True, samesite="Lax"
+        "access_token", access_token, httponly=True, secure=True, samesite="None"
     )
 
     return response
