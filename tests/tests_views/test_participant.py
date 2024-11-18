@@ -5,7 +5,7 @@ import pytest
 from jwt.exceptions import InvalidTokenError
 from unittest.mock import MagicMock, patch
 from aws_portal.extensions import db
-from aws_portal.models import Api, JoinStudySubjectApi, StudySubject
+from aws_portal.models import Api, JoinStudySubjectApi, SleepCategoryTypeEnum, SleepLog, SleepLogTypeEnum, StudySubject
 
 
 @pytest.fixture
@@ -572,3 +572,147 @@ def test_revoke_api_access_concurrent_requests(authenticated_client, study_subje
         # Assert that the second request fails as the API access no longer exists
         assert response2.status_code == 404
         assert response2.get_json() == {"msg": "API access not found"}
+
+
+def test_delete_participant_with_sleep_logs(app, delete_admin, study_subject, api_entry, join_api):
+    """
+    Test deletion of participant account when there are sleep logs.
+    Ensure that sleep logs are deleted along with the participant.
+    """
+    # Create sleep logs associated with the study_subject
+    sleep_log1 = SleepLog(
+        study_subject_id=study_subject.id,
+        log_id=1234567890,
+        date_of_sleep=datetime.utcnow().date(),
+        log_type=SleepLogTypeEnum.auto_detected,
+        type=SleepCategoryTypeEnum.stages
+    )
+    sleep_log2 = SleepLog(
+        study_subject_id=study_subject.id,
+        log_id=9876543210,
+        date_of_sleep=datetime.utcnow().date(),
+        log_type=SleepLogTypeEnum.manual,
+        type=SleepCategoryTypeEnum.classic
+    )
+    db.session.add_all([sleep_log1, sleep_log2])
+    db.session.commit()
+
+    # Verify that sleep logs exist in the database
+    assert SleepLog.query.filter_by(
+        study_subject_id=study_subject.id).count() == 2
+
+    with patch("aws_portal.views.participant.tm.delete_api_tokens") as mock_delete_tokens, \
+            patch("aws_portal.views.participant.db.session.commit") as mock_db_commit, \
+            patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
+
+        mock_cognito_client = MagicMock()
+        mock_boto_client.return_value = mock_cognito_client
+
+        response = delete_admin(
+            f"/participant/{study_subject.ditti_id}", query_string={"app": 1})
+
+        assert response.status_code == 200
+        assert response.get_json() == {
+            "msg": "Account deleted successfully."}
+
+        # Verify that sleep logs are deleted
+        assert SleepLog.query.filter_by(
+            study_subject_id=study_subject.id).count() == 0
+
+        # Verify StudySubject is archived
+        assert study_subject.is_archived is True
+
+        # Verify database commit
+        mock_db_commit.assert_called_once()
+
+        # Verify Cognito deletion
+        mock_cognito_client.admin_delete_user.assert_called_once_with(
+            UserPoolId=app.config["COGNITO_PARTICIPANT_USER_POOL_ID"],
+            Username=study_subject.ditti_id
+        )
+
+        # Verify cookies are cleared
+        set_cookie_headers = response.headers.get_all("Set-Cookie")
+        assert any("id_token=; " in header for header in set_cookie_headers)
+        assert any("access_token=; " in header for header in set_cookie_headers)
+        assert any("refresh_token=; " in header for header in set_cookie_headers)
+
+
+def test_delete_participant_no_sleep_logs(app, delete_admin, study_subject, api_entry, join_api):
+    """
+    Test deletion of participant account when there are no sleep logs.
+    Ensure that the deletion process handles this gracefully without errors.
+    """
+    # Ensure no sleep logs are associated with the study_subject
+    assert SleepLog.query.filter_by(
+        study_subject_id=study_subject.id).count() == 0
+
+    with patch("aws_portal.views.participant.tm.delete_api_tokens") as mock_delete_tokens, \
+            patch("aws_portal.views.participant.db.session.commit") as mock_db_commit, \
+            patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
+
+        mock_cognito_client = MagicMock()
+        mock_boto_client.return_value = mock_cognito_client
+
+        response = delete_admin(
+            f"/participant/{study_subject.ditti_id}", query_string={"app": 1})
+
+        assert response.status_code == 200
+        assert response.get_json() == {
+            "msg": "Account deleted successfully."}
+
+        # Verify that sleep logs are still non-existent
+        assert SleepLog.query.filter_by(
+            study_subject_id=study_subject.id).count() == 0
+
+        # Verify StudySubject is archived
+        assert study_subject.is_archived is True
+
+        # Verify database commit
+        mock_db_commit.assert_called_once()
+
+        # Verify Cognito deletion
+        mock_cognito_client.admin_delete_user.assert_called_once_with(
+            UserPoolId=app.config["COGNITO_PARTICIPANT_USER_POOL_ID"],
+            Username=study_subject.ditti_id
+        )
+
+        # Verify cookies are cleared
+        set_cookie_headers = response.headers.get_all("Set-Cookie")
+        assert any("id_token=; " in header for header in set_cookie_headers)
+        assert any("access_token=; " in header for header in set_cookie_headers)
+        assert any("refresh_token=; " in header for header in set_cookie_headers)
+
+
+def test_delete_participant_exception_deleting_sleep_logs(app, delete_admin, study_subject):
+    """
+    Test deletion of participant account when an exception occurs while deleting sleep logs.
+    """
+    # Create sleep logs associated with the study_subject
+    sleep_log = SleepLog(
+        study_subject_id=study_subject.id,
+        log_id=1234567890,
+        date_of_sleep=datetime.utcnow().date(),
+        log_type=SleepLogTypeEnum.auto_detected,
+        type=SleepCategoryTypeEnum.stages
+    )
+    db.session.add(sleep_log)
+    db.session.commit()
+
+    # Mock an exception during sleep log deletion
+    with patch("aws_portal.views.participant.db.session.delete", side_effect=Exception("Sleep log deletion error")), \
+            patch("aws_portal.views.participant.logger.error") as mock_logger_error:
+
+        response = delete_admin(
+            f"/participant/{study_subject.ditti_id}", query_string={"app": 1})
+
+        assert response.status_code == 500
+        assert response.get_json() == {"msg": "Error deleting sleep data."}
+
+        # Verify that the error was logged
+        mock_logger_error.assert_called_once()
+        assert "Error deleting sleep logs" in mock_logger_error.call_args[0][0]
+
+        # Verify that the sleep log still exists
+        assert SleepLog.query.filter_by(
+            study_subject_id=study_subject.id).count() == 1
