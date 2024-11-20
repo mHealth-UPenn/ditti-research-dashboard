@@ -108,6 +108,23 @@ const TimestampHistogram = ({
 
   const handleMouseLeave = useCallback(hideTooltip, [hideTooltip]);
 
+  const getMidnightDates = () => {
+    const start = xScale.domain()[0];
+    const stop = xScale.domain()[1];
+
+    const midnightDates = [];
+
+    // Set the start time to midnight
+    start.setHours(0, 0, 0, 0);
+
+    while (start <= stop) {
+        midnightDates.push(new Date(start)); // Push a copy of the current date
+        start.setDate(start.getDate() + 1); // Move to the next day
+    }
+
+    return midnightDates;
+  };
+
   return (
     <div className="relative">
       <svg width={width} height={height}>
@@ -125,6 +142,14 @@ const TimestampHistogram = ({
           width={width - margin.left - margin.right}
           height={height - margin.bottom - margin.top}
           stroke={colors.extraLight} />
+        <GridColumns
+          scale={xScale}
+          top={margin.top}
+          width={width - margin.left - margin.right}
+          height={height - margin.bottom - margin.top}
+          stroke={colors.light}
+          strokeWidth={2}
+          tickValues={getMidnightDates()} />
 
         <Brush
           xScale={xScale}
