@@ -60,28 +60,43 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
   const downloadExcel = async (): Promise<void> => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
-    const id = user.userPermissionId;
-    const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
-    const data = filteredTaps.map((t) => {
-      // localize tap timestamps
-      const time = t.time.getTime() - t.time.getTimezoneOffset() * 60000;
-      return [t.dittiId, new Date(time)];
+    const id = studyDetails.acronym;
+    const fileName = format(new Date(), `'${user.userPermissionId}_'yyyy-MM-dd'_'HH:mm:ss`);
+
+    const tapsData = filteredTaps.map(t => {
+      return [t.dittiId, t.time, t.timezone, "", ""];
+    });
+
+    const audioTapsData = filteredAudioTaps.map(t => {
+      return [t.dittiId, t.time, t.timezone, t.action, t.audioFileTitle];
+    });
+
+    const data = tapsData.concat(audioTapsData).sort((a, b) => {
+      if (a[1] > b[1]) return 1;
+      else if (a[1] < b[1]) return -1;
+      else return 0;
     });
 
     sheet.columns = [
       { header: "Ditti ID", width: 10 },
-      { header: "Taps", width: 20 }
+      { header: "Taps", width: 20 },
+      { header: "Timezone", width: 30 },
+      { header: "Audio Tap Action", width: 15 },
+      { header: "Audio File Title", width: 20 },
     ];
 
     sheet.getColumn("B").numFmt = "DD/MM/YYYY HH:mm:ss";
+
+    // add data to the workbook
     sheet.addRows(data);
 
+    // write the workbook to a blob
     workbook.xlsx.writeBuffer().then((data) => {
       const blob = new Blob([data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
       });
 
-      // download the excel file
+      // download the blob
       saveAs(blob, fileName + ".xlsx");
     });
   };
