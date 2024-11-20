@@ -15,6 +15,7 @@ import { IVisualizationProps } from '../../interfaces';
 
 interface TimestampHistogramProps extends IVisualizationProps {
   timestamps: number[];
+  timezones?: { time: number; name: string }[];
 }
 
 
@@ -31,8 +32,26 @@ const formatTick = (v: Date | NumberValue, i: number) => {
 };
 
 
+const formatTimeZoneTick = (v: Date | NumberValue, timezones?: { time: number; name: string; }[]) => {
+  if (!timezones) {
+    return "";
+  }
+
+  let index = 0;
+  while (index < timezones.length && v.valueOf() > timezones[index].time) {
+    index++;
+  }
+
+  if (index === timezones.length) {
+    return timezones[index - 1].name;
+  }
+  return timezones[index]?.name || "";
+};
+
+
 const TimestampHistogram = ({
   timestamps,
+  timezones,
   marginTop,
   marginRight,
   marginBottom,
@@ -48,6 +67,7 @@ const TimestampHistogram = ({
   } = useVisualizationContext();
   // Guard against null xScale
   if (!xScale) return <></>;
+  timezones?.forEach(tz => console.log(new Date(tz.time), tz.name))
 
   const margin = {
     top: marginTop !== undefined ? marginTop : defaultMargin.top,
@@ -186,6 +206,14 @@ const TimestampHistogram = ({
           scale={xScale}
           tickLabelProps={{ angle: 45, dx: -5, textAnchor: "start" }}
           tickFormat={formatTick} />
+        {timezones &&
+          <AxisBottom
+            top={height - margin.bottom}
+            scale={xScale}
+            tickLabelProps={{ dy: 55, textAnchor: "start" }}
+            tickFormat={(v) => formatTimeZoneTick(v, timezones)}
+            tickValues={[xScale.domain()[0]]} />
+        }
         <AxisLeft
           left={margin.left}
           scale={yScale}

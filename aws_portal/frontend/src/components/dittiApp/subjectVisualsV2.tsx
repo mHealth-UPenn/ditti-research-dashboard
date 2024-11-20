@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Study, UserDetails, ViewProps } from "../../interfaces";
 import SubjectsEdit from "./subjectsEdit";
-import { format } from "date-fns";
+import { differenceInMilliseconds, format } from "date-fns";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import "./subjectVisuals.css";
@@ -104,7 +104,26 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     dateOpts as Intl.DateTimeFormatOptions
   );
 
-  const timestamps = useMemo(() => filteredTaps.map(t => t.time.getTime()), [filteredTaps]);
+  const timestamps = useMemo(
+    () => filteredTaps.map(t => t.time.getTime()), [filteredTaps]
+  );
+
+  const timezones = useMemo(() => {
+    const timezones: { time: number; name: string }[] = [];
+    let prevTimezone: string | null = null;
+    [...filteredTaps, ...filteredAudioTaps].sort(
+      (a, b) => differenceInMilliseconds(a.time, b.time)
+    ).forEach(t => {
+      const name = t.timezone === ""
+        ? "GMT Universal Coordinated Time"
+        : t.timezone;
+      if (name !== prevTimezone) {
+        timezones.push({ time: t.time.getTime(), name });
+        prevTimezone = name;
+      }
+    });
+  return timezones;
+  }, [filteredTaps, filteredAudioTaps]);
 
   const handleClickEditDetails = () =>
     handleClick(
@@ -161,9 +180,9 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
         </CardContentRow>
 
         <VisualizationController
-          defaultMargin={{ top: 50, right: 40, bottom: 60, left: 60 }}>
+          defaultMargin={{ top: 50, right: 40, bottom: 75, left: 60 }}>
             <TapVisualizationButtons />
-            <TimestampHistogram timestamps={timestamps} />
+            <TimestampHistogram timestamps={timestamps} timezones={timezones} />
             <BoutsTimeline timestamps={timestamps} marginBottom={30} marginTop={30} />
             <AudioTapsTimeline audioTaps={filteredAudioTaps} marginBottom={30} marginTop={30} />
         </VisualizationController>

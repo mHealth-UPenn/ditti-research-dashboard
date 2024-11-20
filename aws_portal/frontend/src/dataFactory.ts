@@ -58,12 +58,19 @@ const generateTaps = (
 ): [TapDetails[], AudioTapDetails[]] => {
   const taps: TapDetails[] = [];
   const audioTaps: AudioTapDetails[] = [];
+  const timezones = [
+    "",
+    "GMT Universal Coordinated Time",
+    "GMT-05:00 Eastern Standard Time",
+    "GMT-04:00 Eastern Daylight Time",
+  ]
 
   dittiIds.forEach(dittiId => {
     const now = new Date();
 
     // Loop through the last seven days
     for (let daysAgo = 1; daysAgo <= 7; daysAgo++) {
+      const timezone = timezones[Math.floor(Math.random() * timezones.length)];
       const day = new Date(now);
       day.setDate(now.getDate() - daysAgo);
 
@@ -97,7 +104,7 @@ const generateTaps = (
             audioTaps.push({
               dittiId,
               time: new Date(tapTime),
-              timezone: "",
+              timezone,
               audioFileTitle: audioFileName,
               action: i === 0 ? "play" : "resume"
             });
@@ -113,7 +120,7 @@ const generateTaps = (
           let tapTime = new Date(boutStart);
 
           for (let i = 0; i < tapsInBout; i++) {
-            taps.push({ dittiId, time: new Date(tapTime), timezone: "GMT-05:00 Eastern Standard Time" });
+            taps.push({ dittiId, time: new Date(tapTime), timezone });
 
             const delta = (10 + Math.floor(Math.random() * 11)) * 1000;
             tapTime = new Date(tapTime.getTime() + delta);
