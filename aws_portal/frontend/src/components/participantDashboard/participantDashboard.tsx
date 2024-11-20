@@ -33,12 +33,12 @@ const ParticipantDashboard = () => {
       setEndDate(end);
       setScope(["Sleep"]);
       setDataSummary(`
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit. In eget nisi
-        elit. Donec molestie, mauris sed sollicitudin convallis, mauris odio
-        convallis dolor, sit amet rhoncus dolor felis vel dui. Nam scelerisque
-        arcu nisi, ut mattis nibh suscipit sit amet. Ut lacinia facilisis
-        vulputate. Sed vitae enim turpis. Sed in molestie lacus, id tincidunt
-        enim. In posuere tempus egestas.
+        The clinical trial collects sleep data from participants' wearable devices over four weeks to evaluate the
+        impact of mindfulness exercises on treating insomnia. By monitoring sleep patterns, duration, and quality,
+        researchers can gain objective insights into participants' sleep behavior before, during, and after engaging in
+        mindfulness interventions. This data enables the study to measure the effectiveness of these exercises in
+        improving sleep outcomes. Wearable devices provide a convenient, non-invasive method for gathering accurate,
+        real-time data essential for understanding the physiological effects of mindfulness on sleep.
       `);
       setLoading(false);
     };
