@@ -160,7 +160,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
           </div>
         </CardContentRow>
 
-        <VisualizationController>
+        <VisualizationController margin={{ top: 50, right: 40, bottom: 60, left: 60 }}>
           <TapVisualizationButtons />
           <TimestampHistogram timestamps={timestamps} />
           <BoutsTimeline timestamps={timestamps} />

@@ -10,10 +10,24 @@ import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 
 import { useVisualizationContext } from '../../contexts/visualizationContext';
 import colors from '../../colors';
+import { NumberValue } from 'd3';
 
 interface TimestampHistogramProps {
   timestamps: number[];
 }
+
+
+const formatTick = (v: Date | NumberValue, i: number) => {
+  const date = new Date(v.valueOf())
+  const day = date.toLocaleDateString("en-US", { weekday: "long" });
+  if (!(i && date.getHours() + date.getMinutes() + date.getSeconds())) {
+    return day;
+  }
+  const time = date.toLocaleTimeString(
+    "en-US", { hour12: true, hour: "numeric", minute: "numeric" }
+  );
+  return time;
+};
 
 
 const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) => {
@@ -130,14 +144,17 @@ const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) =
 
         <AxisBottom
           top={height - margin.bottom}
-          scale={xScale} />
+          scale={xScale}
+          tickLabelProps={{ angle: 45, dx: -5, textAnchor: "start" }}
+          tickFormat={formatTick} />
         <AxisLeft
           left={margin.left}
           scale={yScale}
           numTicks={numYTicks}
           label="Taps"
           labelClassName="text-lg font-bold"
-          labelOffset={30} />
+          labelOffset={30}
+          tickLabelProps={{ className: "text-xs" }} />
       </svg>
       {
         tooltipOpen &&

@@ -233,22 +233,23 @@ class DataFactory {
 
   async init() {
     if (!this.initialized) {
-      const studies: Study[] = [
-        {
-          id: 1,
-          name: "Sleep and Lifestyle Enhancement through Evidence-based Practices for Insomnia Treatment",
-          acronym: "SLEEP-IT",
-          dittiId: "sit",
-          email: "sleep.it@research.edu",
-        },
-        {
-          id: 2,
-          name: "Cognitive and Affective Lifestyle Modifications for Sleep Enhancement through Mindfulness Practices",
-          acronym: "CALM-SLEEP",
-          dittiId: "cs",
-          email: "calm.sleep@research.edu",
-        }
-      ];
+      // const studies: Study[] = [
+      //   {
+      //     id: 1,
+      //     name: "Sleep and Lifestyle Enhancement through Evidence-based Practices for Insomnia Treatment",
+      //     acronym: "SLEEP-IT",
+      //     dittiId: "sit",
+      //     email: "sleep.it@research.edu",
+      //   },
+      //   {
+      //     id: 2,
+      //     name: "Cognitive and Affective Lifestyle Modifications for Sleep Enhancement through Mindfulness Practices",
+      //     acronym: "CALM-SLEEP",
+      //     dittiId: "cs",
+      //     email: "calm.sleep@research.edu",
+      //   }
+      // ];
+      const studies: Study[] = await makeRequest("/db/get-studies?app=2");
       const studyIds = studies.map(s => s.dittiId);
       this.users = generateUsers(studyIds);
       this.audioFiles = generateAudioFiles();
