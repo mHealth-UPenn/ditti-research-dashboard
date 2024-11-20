@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import Timeline from "./timeline";
+import { IVisualizationProps } from "../../interfaces";
 
 /**
  * A period of time when a subject is considered to be actively tapping
@@ -18,11 +19,11 @@ interface Bout {
  * studyDetails: details of the subject's study
  * user: details of the subject
  */
-interface BoutsTimelineProps {
+interface BoutsTimelineProps extends IVisualizationProps {
   timestamps: number[];
 }
 
-const BoutsTimeline: React.FC<BoutsTimelineProps> = ({ timestamps }) => {
+const BoutsTimeline = ({ timestamps, ...props }: BoutsTimelineProps) => {
   const bouts = useMemo(() => {
     const _bouts: Bout[] = [];
     let first: number;
@@ -91,7 +92,7 @@ const BoutsTimeline: React.FC<BoutsTimelineProps> = ({ timestamps }) => {
     return _bouts;
   }, [timestamps]);
 
-  return <Timeline groups={bouts} title="Bouts" hideAxis={true} />;
+  return <Timeline groups={bouts} title="Bouts" hideAxis={true} {...props} />;
 };
 
 export default BoutsTimeline;

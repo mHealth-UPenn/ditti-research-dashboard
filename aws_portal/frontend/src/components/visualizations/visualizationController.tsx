@@ -3,12 +3,12 @@ import useVisualizationController from '../../hooks/useVisualizationController';
 import VisualizationContext from '../../contexts/visualizationContext';
 
 interface VisualizationControllerProps {
-  margin?: { top: number, right: number, bottom: number, left: number };
+  defaultMargin?: { top: number, right: number, bottom: number, left: number };
 }
 
 
 const VisualizationController = ({
-  margin = { top: 50, right: 30, bottom: 25, left: 60 },
+  defaultMargin = { top: 50, right: 30, bottom: 25, left: 60 },
   children,
 }: PropsWithChildren<VisualizationControllerProps>) => {
   const {
@@ -26,7 +26,7 @@ const VisualizationController = ({
     panRight,
     zoomIn,
     zoomOut,
-  } = useVisualizationController(margin);
+  } = useVisualizationController(defaultMargin);
 
   return (
     <VisualizationContext.Provider value={{
@@ -36,7 +36,7 @@ const VisualizationController = ({
         parentRef,
         width,
         height,
-        margin,
+        defaultMargin,
         xScale,
         xTicks,
         onZoomChange,

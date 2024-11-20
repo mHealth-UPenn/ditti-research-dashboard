@@ -11,8 +11,9 @@ import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 import { useVisualizationContext } from '../../contexts/visualizationContext';
 import colors from '../../colors';
 import { NumberValue } from 'd3';
+import { IVisualizationProps } from '../../interfaces';
 
-interface TimestampHistogramProps {
+interface TimestampHistogramProps extends IVisualizationProps {
   timestamps: number[];
 }
 
@@ -30,17 +31,30 @@ const formatTick = (v: Date | NumberValue, i: number) => {
 };
 
 
-const TimestampHistogram: React.FC<TimestampHistogramProps> = ({ timestamps }) => {
+const TimestampHistogram = ({
+  timestamps,
+  marginTop,
+  marginRight,
+  marginBottom,
+  marginLeft,
+}: TimestampHistogramProps) => {
   const {
     width,
     height,
-    margin,
+    defaultMargin,
     xScale,
     xTicks,
     onZoomChange,
   } = useVisualizationContext();
   // Guard against null xScale
   if (!xScale) return <></>;
+
+  const margin = {
+    top: marginTop !== undefined ? marginTop : defaultMargin.top,
+    right: marginRight !== undefined ? marginRight : defaultMargin.right,
+    bottom: marginBottom !== undefined ? marginBottom : defaultMargin.bottom,
+    left: marginLeft !== undefined ? marginLeft : defaultMargin.left,
+  }
 
   const histogramData = useMemo(() => {
     const domain = xScale.domain();

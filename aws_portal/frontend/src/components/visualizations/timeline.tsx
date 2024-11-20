@@ -5,6 +5,7 @@ import { scaleLinear } from '@visx/scale';
 import { useVisualizationContext } from "../../contexts/visualizationContext";
 import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 import colors from "../../colors";
+import { IVisualizationProps } from "../../interfaces";
 
 type GroupData = {
   start: number;
@@ -12,7 +13,7 @@ type GroupData = {
   label?: string;
 };
 
-type TimelineProps = {
+interface TimelineProps extends IVisualizationProps {
   groups: GroupData[];
   title?: string;
   hideAxis?: boolean;
@@ -23,7 +24,7 @@ type TimelineProps = {
   color?: string;
   axisColor?: string;
   strokeDashArray?: string;
-};
+}
 
 
 const Timeline: React.FC<TimelineProps> = ({
@@ -37,13 +38,24 @@ const Timeline: React.FC<TimelineProps> = ({
   color = "black",
   axisColor = "black",
   strokeDashArray,
+  marginTop,
+  marginRight,
+  marginBottom,
+  marginLeft,
 }) => {
   const {
     width,
-    margin,
+    defaultMargin,
     xScale,
   } = useVisualizationContext();
   if (!xScale) return <></>;
+
+  const margin = {
+    top: marginTop !== undefined ? marginTop : defaultMargin.top,
+    right: marginRight !== undefined ? marginRight : defaultMargin.right,
+    bottom: marginBottom !== undefined ? marginBottom : defaultMargin.bottom,
+    left: marginLeft !== undefined ? marginLeft : defaultMargin.left,
+  }
 
   const height = margin.top + margin.bottom;
   const start = xScale.domain()[0].getTime() + xScaleOffset;

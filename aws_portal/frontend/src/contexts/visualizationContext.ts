@@ -8,7 +8,7 @@ interface IVisualizationContext {
   parentRef: RefObject<HTMLDivElement>;
   width: number;
   height: number;
-  margin: { top: number; right: number; bottom: number; left: number };
+  defaultMargin: { top: number; right: number; bottom: number; left: number };
   xScale: ScaleTime<number, number> | null;
   xTicks: number;
   onZoomChange: (domain: [number, number]) => void;

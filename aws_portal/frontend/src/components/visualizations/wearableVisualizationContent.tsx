@@ -1,7 +1,7 @@
 import colors from "../../colors";
 import { useVisualizationContext } from "../../contexts/visualizationContext";
 import { useWearableData } from "../../contexts/wearableDataContext";
-import { ISleepLevelClassic, ISleepLevelStages } from "../../interfaces";
+import { ISleepLevelClassic, ISleepLevelStages, IVisualizationProps } from "../../interfaces";
 import Timeline from "./timeline";
 import { AxisTop } from "@visx/axis";
 import { GridColumns } from '@visx/grid';
@@ -27,9 +27,27 @@ type ILevelGroupsStages = Record<ISleepLevelStages, { start: number; stop: numbe
 type ILevelGroupsClassic = Record<ISleepLevelClassic, { start: number; stop: number; }[]>;
 
 
-const WearableVisualizationContent = () => {
-  const { width, margin, xScale, onZoomChange, resetZoom } = useVisualizationContext();
+const WearableVisualizationContent = ({
+  marginTop,
+  marginRight,
+  marginBottom,
+  marginLeft,
+}: IVisualizationProps) => {
+  const {
+    width,
+    xScale,
+    defaultMargin,
+    onZoomChange,
+    resetZoom
+  } = useVisualizationContext();
   const { sleepLogs, isLoading } = useWearableData();
+
+  const margin = {
+    top: marginTop !== undefined ? marginTop : defaultMargin.top,
+    right: marginRight !== undefined ? marginRight : defaultMargin.right,
+    bottom: marginBottom !== undefined ? marginBottom : defaultMargin.bottom,
+    left: marginLeft !== undefined ? marginLeft : defaultMargin.left,
+  }
 
   if (isLoading || !xScale) {
     return <></>;

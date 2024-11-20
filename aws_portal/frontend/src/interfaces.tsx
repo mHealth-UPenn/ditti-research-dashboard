@@ -318,3 +318,10 @@ export interface IWearableDataContextType {
   isLoading: boolean;
   error: string | null;
 }
+
+export interface IVisualizationProps {
+  marginTop?: number;
+  marginRight?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+}

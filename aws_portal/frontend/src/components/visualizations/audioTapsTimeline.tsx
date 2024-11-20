@@ -1,18 +1,18 @@
-import { AudioTapDetails } from "../../interfaces";
+import { AudioTapDetails, IVisualizationProps } from "../../interfaces";
 import Timeline from "./timeline";
 
-interface AudioTapsTimelineProps {
+interface AudioTapsTimelineProps extends IVisualizationProps {
   audioTaps: AudioTapDetails[];
 }
 
 
-const AudioTapsTimeline = ({ audioTaps }: AudioTapsTimelineProps) => {
+const AudioTapsTimeline = ({ audioTaps, ...props }: AudioTapsTimelineProps) => {
   const groups = audioTaps.map(at => ({
     start: at.time.getTime(),
     label: at.action,
   }));
 
-  return <Timeline groups={groups} title="Audio" hideAxis={true} />
+  return <Timeline groups={groups} title="Audio" hideAxis={true} {...props} />
 };
 
 

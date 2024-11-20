@@ -160,11 +160,12 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
           </div>
         </CardContentRow>
 
-        <VisualizationController margin={{ top: 50, right: 40, bottom: 60, left: 60 }}>
-          <TapVisualizationButtons />
-          <TimestampHistogram timestamps={timestamps} />
-          <BoutsTimeline timestamps={timestamps} />
-          <AudioTapsTimeline audioTaps={filteredAudioTaps} />
+        <VisualizationController
+          defaultMargin={{ top: 50, right: 40, bottom: 60, left: 60 }}>
+            <TapVisualizationButtons />
+            <TimestampHistogram timestamps={timestamps} />
+            <BoutsTimeline timestamps={timestamps} marginBottom={30} marginTop={30} />
+            <AudioTapsTimeline audioTaps={filteredAudioTaps} marginBottom={30} marginTop={30} />
         </VisualizationController>
       </Card>
     </ViewContainer>

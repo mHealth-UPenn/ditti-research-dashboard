@@ -5,7 +5,7 @@ import { useParentSize } from '@visx/responsive'
 
 // TODO: extend to customize default values when needed in future vizualizations
 const useVisualizationController = (
-  margin: { top: number, right: number, bottom: number, left: number }
+  defaultMargin: { top: number, right: number, bottom: number, left: number }
 ) => {
   const now = new Date();
   const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
@@ -22,9 +22,9 @@ const useVisualizationController = (
   const xScale = useMemo(() => {
     return scaleTime({
       domain: zoomDomain,
-      range: [margin.left, width - margin.right],
+      range: [defaultMargin.left, width - defaultMargin.right],
     });
-  }, [zoomDomain, width, margin]);
+  }, [zoomDomain, width, defaultMargin]);
 
   const xTicks = useMemo(() => {
     if (width >= 1200) {
@@ -124,7 +124,6 @@ const useVisualizationController = (
     parentRef,
     width,
     height,
-    margin,
     xScale,
     xTicks,
     onZoomChange,
