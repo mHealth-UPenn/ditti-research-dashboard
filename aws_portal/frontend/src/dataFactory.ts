@@ -1,3 +1,4 @@
+import { APP_ENV } from "./environment";
 import { AudioFile, AudioTapDetails, ISleepLevel, ISleepLevelClassic, ISleepLevelStages, ISleepLog, Study, TapDetails, UserDetails } from "./interfaces";
 import { makeRequest } from "./utils";
 
@@ -223,6 +224,7 @@ const generateSleepLogs = (): ISleepLog[] => {
 
 class DataFactory {
   private initialized: boolean;
+  public studies: Study[];
   public taps: TapDetails[];
   public audioTaps: AudioTapDetails[];
   public audioFiles: AudioFile[];
@@ -231,6 +233,7 @@ class DataFactory {
 
   constructor() {
     this.initialized = false;
+    this.studies = [];
     this.taps = [];
     this.audioTaps = [];
     this.audioFiles = [];
@@ -240,24 +243,31 @@ class DataFactory {
 
   async init() {
     if (!this.initialized) {
-      // const studies: Study[] = [
-      //   {
-      //     id: 1,
-      //     name: "Sleep and Lifestyle Enhancement through Evidence-based Practices for Insomnia Treatment",
-      //     acronym: "SLEEP-IT",
-      //     dittiId: "sit",
-      //     email: "sleep.it@research.edu",
-      //   },
-      //   {
-      //     id: 2,
-      //     name: "Cognitive and Affective Lifestyle Modifications for Sleep Enhancement through Mindfulness Practices",
-      //     acronym: "CALM-SLEEP",
-      //     dittiId: "cs",
-      //     email: "calm.sleep@research.edu",
-      //   }
-      // ];
-      const studies: Study[] = await makeRequest("/db/get-studies?app=2");
-      const studyIds = studies.map(s => s.dittiId);
+      this.studies = [
+        {
+          id: 1,
+          name: "Sleep and Lifestyle Enhancement through Evidence-based Practices for Insomnia Treatment",
+          acronym: "SLEEP-IT",
+          dittiId: "sit",
+          email: "sleep.it@research.edu",
+        },
+        {
+          id: 2,
+          name: "Cognitive and Affective Lifestyle Modifications for Sleep Enhancement through Mindfulness Practices",
+          acronym: "CALM-SLEEP",
+          dittiId: "cs",
+          email: "calm.sleep@research.edu",
+        }
+      ];
+      if (APP_ENV !== "demo") {
+        try {
+          this.studies = await makeRequest("/db/get-studies?app=2");
+        } catch (error) {
+          console.error(error);
+        }
+      }
+
+      const studyIds = this.studies.map(s => s.dittiId);
       this.users = generateUsers(studyIds);
       this.audioFiles = generateAudioFiles();
       const userIds = this.users.map(u => u.userPermissionId);

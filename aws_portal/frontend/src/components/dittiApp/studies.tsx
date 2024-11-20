@@ -22,20 +22,18 @@ const StudiesView: React.FC<ViewProps> = ({
   goBack,
   handleClick
 }) => {
-  const [studies, setStudies] = useState<Study[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [canViewAudioFiles, setCanViewAudioFiles] = useState(true);
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState(true);
   const [canViewTaps, setCanViewTaps] = useState<Set<number>>(new Set());
 
-  const { taps, audioFiles } = useDittiDataContext();
+  const { studies, taps, audioFiles } = useDittiDataContext();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         // get all studies that the user has access to
         const promises: Promise<any>[] = [];
-        promises.push(makeRequest("/db/get-studies?app=2").then(setStudies));
 
         // get all tap and audio file data
         promises.push(

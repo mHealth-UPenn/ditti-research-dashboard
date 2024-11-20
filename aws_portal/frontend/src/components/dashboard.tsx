@@ -158,6 +158,7 @@ const Dashboard: React.FC = () => {
 
   const {
     dataLoading,
+    studies,
     taps,
     audioTaps,
     audioFiles,
@@ -252,6 +253,7 @@ const Dashboard: React.FC = () => {
           {/* current view */}
           <DittiDataContext.Provider value={{
               dataLoading,
+              studies,
               taps,
               audioTaps,
               audioFiles,

@@ -1,8 +1,9 @@
 import { createContext, useContext } from "react";
-import { AudioFile, AudioTapDetails, TapDetails, User, UserDetails } from "../interfaces";
+import { AudioFile, AudioTapDetails, Study, TapDetails, User, UserDetails } from "../interfaces";
 
 interface IDittiDataContext {
   dataLoading: boolean;
+  studies: Study[];
   taps: TapDetails[]
   audioTaps: AudioTapDetails[]
   audioFiles: AudioFile[]

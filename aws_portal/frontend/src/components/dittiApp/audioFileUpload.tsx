@@ -40,7 +40,6 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const [availability, setAvailability] = useState("All Users");
   const [dittiId, setDittiId] = useState("");
   const [studiesRadio, setStudiesRadio] = useState("All Studies");
-  const [studies, setStudies] = useState<Study[]>([]);
   const [selectedStudies, setSelectedStudies] = useState<Set<number>>(new Set());
   const [files, setFiles] = useState<IFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -50,22 +49,12 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const [categoryFeedback, setCategoryFeedback] = useState<string>("");
   const [availabilityFeedback, setAvailabilityFeedback] = useState<string>("");
   const [studiesFeedback, setStudiesFeedback] = useState<string>("");
-  const [loading, setLoading] = useState(true);
 
   const fileInputRef = createRef<HTMLInputElement>();
 
-  const { audioFiles } = useDittiDataContext();
+  const { studies, audioFiles } = useDittiDataContext();
   const existingFiles = new Set();
   audioFiles.forEach(af => existingFiles.add(af.fileName))
-
-  useEffect(() => {
-    makeRequest("/db/get-studies?app=2")
-      .then((res: Study[]) => {
-        setStudies(res);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
 
   /**
    * Get a set of presigned URLs for uploading audio files to S3.
@@ -238,16 +227,12 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     const updatedSelectedStudies = selectedStudies;
     updatedSelectedStudies.add(id);
     setSelectedStudies(updatedSelectedStudies);
-
-    // Set studies to force re-render
-    setStudies([...studies]);
   };
 
   const removeStudy = (id: number): void => {
     const updatedSelectedStudies = selectedStudies
     updatedSelectedStudies.delete(id);
     setSelectedStudies(updatedSelectedStudies);
-    setStudies([...studies]);
   };
 
   const handleClickAvailability = (e: ChangeEvent<HTMLInputElement>) => {
@@ -352,16 +337,6 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const percentComplete = uploadProgress.length ? Math.floor(
     uploadProgress.reduce((a, b) => a + b) / uploadProgress.length
   ) : 0;
-
-  if (loading) {
-    return (
-      <FormView>
-        <Form>
-          <SmallLoader />
-        </Form>
-      </FormView>
-    );
-  }
 
   return (
     <FormView>
