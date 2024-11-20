@@ -217,15 +217,16 @@ const WearableVisualizationContent = ({
             <ReplayIcon />
         </Button>
       </div>
-      <svg className="relative top-[10px]" width={width} height={40}>
+      <svg className="relative top-[10px]" width={width} height={50}>
         <AxisTop
-          top={38}
+          top={50}
           scale={xScale}
           stroke="transparent"
           tickLength={20}
           tickStroke={colors.light}
           numTicks={window.screen.width > 600 ? 10 : 5}
-          tickFormat={v => getTime(v as Date)} />
+          tickFormat={v => getTime(v as Date)}
+          tickLabelProps={{ angle: -45, dy: -10 }} />
       </svg>
       {visualizations}
     </div>
