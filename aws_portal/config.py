@@ -57,6 +57,8 @@ class Production(Default):
 
     CORS_ORIGINS = os.getenv("AWS_CLOUDFRONT_DOMAIN_NAME")
 
+    API_AUTHORIZE_REDIRECT = os.getenv("API_AUTHORIZE_REDIRECT")
+
 
 class Testing(Default):
     TESTING = True
