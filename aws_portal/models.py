@@ -1308,6 +1308,9 @@ class JoinStudySubjectApi(db.Model):
 
         return metadata
 
+    def __repr__(self):
+        return "<JoinStudySubjectApi %s-%s>" % self.primary_key
+
 
 class Api(db.Model):
     """
