@@ -1,7 +1,7 @@
 import os
 
 # if the app is running in a production environment
-if os.getenv("FLASK_CONFIG") == "Production":
+if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
     import json
     import boto3
 
@@ -18,7 +18,7 @@ if os.getenv("FLASK_CONFIG") == "Production":
 # import the app after the environment variables are exported
 from aws_portal.app import create_app
 
-app = create_app()
+app = create_app(testing=True)
 
 if __name__ == "__main__":
     app.run()

@@ -28,7 +28,7 @@ def touch():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when getting database status."
     }
     """
     res = {"msg": "OK"}
@@ -65,9 +65,8 @@ def touch():
 
         except Exception:
             exc = traceback.format_exc()
-            msg = exc.splitlines()[-1]
-            logger.warn(exc)
+            logger.warning(exc)
 
-            return make_response({"msg": msg}, 500)
+            return make_response({"msg": "Internal server error when getting database status."}, 500)
 
     return jsonify(res)

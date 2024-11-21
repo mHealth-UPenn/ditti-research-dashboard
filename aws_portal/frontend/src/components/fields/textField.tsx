@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import "./textField.css";
+import React, { PropsWithChildren } from "react";
 
 /**
  * id (optional): an optional html id
@@ -13,11 +12,10 @@ import "./textField.css";
  * disabled (optional): whether to disable the field
  */
 interface TextFieldProps {
+  value: string;
   id?: string;
   type?: string;
   placeholder?: string;
-  prefill?: string;
-  value?: string;
   label?: string;
   onKeyup?: (text: string) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
@@ -28,11 +26,10 @@ interface TextFieldProps {
 /**
  * Functional component version of TextField
  */
-const TextField: React.FC<TextFieldProps> = ({
+const TextField = ({
   id,
   type,
   placeholder,
-  prefill,
   label,
   onKeyup,
   onKeyDown,
@@ -40,66 +37,56 @@ const TextField: React.FC<TextFieldProps> = ({
   disabled,
   value,
   children,
-}) => {
-  const [text, setText] = useState(prefill || "");
-
+}: PropsWithChildren<TextFieldProps>) => {
   const handleKeyUp = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const inputValue = e.target.value;
-    setText(inputValue);
     if (onKeyup) {
-      onKeyup(inputValue);
+      onKeyup(e.target.value);
     }
   };
 
   return (
-    <div
-      className="text-field-container"
-      style={type === "textarea" ? { height: "24rem" } : {}}
-    >
-      {/* if a label was passed as a prop */}
-      {label ? (
-        <label className="text-field-label" htmlFor={id}>
-          {label}
-        </label>
-      ) : null}
-      <div
-        className={
-          "text-field-content border-light" + (disabled ? " bg-light" : "")
+    <>
+        {/* if a label was passed as a prop */}
+        {label &&
+          <div className="mb-1">
+            <label htmlFor={id}>
+              {label}
+            </label>
+          </div>
         }
-      >
-        {/* place children here as prefix icons (e.g., a password icon) */}
-        {children || null}
+        <div className={`flex items-center ${type === "textarea" ? "h-[24rem]" : "h-[2.75rem]"} border border-light ${disabled ? "bg-extra-light" : ""}`}>
+          {/* place children here as prefix icons (e.g., a password icon) */}
+          {children || null}
 
-        {/* the input */}
-        <div className="text-field-input">
-          {/* textares require a unique e.target class */}
-          {type === "textarea" ? (
-            <textarea
-              defaultValue={prefill ? prefill : undefined}
-              onChange={handleKeyUp}
-              onKeyDown={onKeyDown}
-              disabled={disabled}
-            ></textarea>
-          ) : (
-            <input
-              type={type || "text"}
-              placeholder={placeholder || ""}
-              defaultValue={prefill || undefined}
-              value={value ?? text} // Use value if provided, otherwise fall back to internal state
-              onChange={handleKeyUp}
-              onKeyDown={onKeyDown}
-              disabled={disabled}
-            />
-          )}
+          {/* the input */}
+          <div className="flex items-center flex-grow h-full p-2">
+            {/* textares require a unique e.target class */}
+            {type === "textarea" ? (
+              <textarea
+                className={`w-full h-full resize-none focus:outline-none ${disabled && "italic text-link"}`}
+                onChange={handleKeyUp}
+                onKeyDown={onKeyDown}
+                disabled={disabled}
+                value={value} />
+            ) : (
+              <input
+                className={`w-full focus:outline-none ${disabled && "italic text-link"}`}
+                type={type || "text"}
+                placeholder={placeholder || ""}
+                onChange={handleKeyUp}
+                onKeyDown={onKeyDown}
+                disabled={disabled}
+                value={value} />
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* feedback on error */}
-      <span
-        className={"text-sm text-[red]" + (feedback && feedback !== "" ? "" : "hidden")}>
-          {feedback}
-      </span>
-    </div>
+        {/* feedback on error */}
+        <span
+          className={`text-sm text-[red] ${feedback && feedback !== "" ? "" : "hidden"}`}>
+            {feedback}
+        </span>
+    </>
   );
 };
 

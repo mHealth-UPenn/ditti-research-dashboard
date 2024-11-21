@@ -1,3 +1,5 @@
+import { FlashMessageVariant } from "./components/flashMessage/flashMessage";
+
 /**
  * Represents an account with user details and permissions.
  * @property id - The database primary key.
@@ -87,7 +89,7 @@ export interface Study {
   acronym: string;
   dittiId: string;
   email: string;
-  role: Role;
+  role?: Role;
 }
 
 /**
@@ -167,6 +169,7 @@ export interface User {
 export interface TapDetails {
   dittiId: string;
   time: Date;
+  timezone: string;
 }
 
 /**
@@ -175,6 +178,7 @@ export interface TapDetails {
 export interface Tap {
   dittiId: string;
   time: string;
+  timezone: string;
 }
 
 /**
@@ -211,7 +215,7 @@ export interface AudioTap {
  * @property handleClick - Function to handle navigation link clicks.
  */
 export interface ViewProps {
-  flashMessage: (msg: React.ReactElement, type: string) => void;
+  flashMessage: (msg: React.ReactElement, type: FlashMessageVariant) => void;
   goBack: () => void;
   handleClick: (
     name: string[],
@@ -276,9 +280,48 @@ export interface AuthContextType {
   isCognitoLoading: boolean;
   firstLogin: boolean;
   csrfToken: string;
+  dittiId: string | null;
   iamLogin: (email: string, password: string) => Promise<void>;
   iamLogout: () => void;
   cognitoLogin: (options?: { elevated: boolean }) => void;
   cognitoLogout: () => void;
   setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+
+export interface IFlashMessage {
+  id: number;
+  element: React.ReactElement;
+  containerRef: React.RefObject<HTMLDivElement>;
+  closeRef: React.RefObject<HTMLDivElement>;
+}
+
+export type ISleepLevelStages = "deep" | "light" | "rem" | "wake";
+export type ISleepLevelClassic = "asleep" | "restless" | "awake";
+
+export interface ISleepLevel {
+  dateTime: Date;
+  level: ISleepLevelStages | ISleepLevelClassic;
+  seconds: number;
+  isShort: boolean | null;
+}
+
+export interface ISleepLog {
+  dateOfSleep: Date;
+  startTime: Date;
+  type: "stages" | "classic";
+  levels: ISleepLevel[];
+}
+
+export interface IWearableDataContextType {
+  sleepLogs: ISleepLog[];
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface IVisualizationProps {
+  marginTop?: number;
+  marginRight?: number;
+  marginBottom?: number;
+  marginLeft?: number;
 }

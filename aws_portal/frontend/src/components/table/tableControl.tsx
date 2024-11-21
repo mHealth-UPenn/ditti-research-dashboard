@@ -1,6 +1,6 @@
-import * as React from "react";
+import React, { useState } from "react";
 import TextField from "../fields/textField";
-import { ReactComponent as Search } from "../../icons/search.svg";
+import SearchIcon from '@mui/icons-material/Search';
 
 interface TableControlProps {
   control: React.ReactElement;
@@ -17,34 +17,35 @@ const TableControl: React.FC<TableControlProps> = ({
   includeSearch,
   onSearch,
 }) => {
+  const [value, setValue] = useState("");
+
+  const handleKeyUp = (v: string) => {
+    setValue(v);
+    onSearch(v);
+  }
+
   return (
-    <div className="table-control-container">
-      {includeControl ? (
-        <div className="table-control" style={{ width: controlWidth + "%" }}>
+    <div className="flex items-center justify-between mb-4">
+      {includeControl &&
+        <div style={{ width: controlWidth + "%" }}>
           {control}
         </div>
-      ) : (
-        ""
-      )}
-      {includeSearch ? (
-        <div className="table-search">
+      }
+      <div>
+        {includeSearch &&
           <TextField
-            id="table-search-input"
             type="text"
             placeholder="Search..."
-            prefill=""
             label=""
-            onKeyup={onSearch}
+            onKeyup={handleKeyUp}
             feedback=""
-          >
-            <div className="table-search-svg bg-dark">
-              <Search />
-            </div>
+            value={value}>
+              <div className="pl-2 text-light">
+                <SearchIcon />
+              </div>
           </TextField>
-        </div>
-      ) : (
-        ""
-      )}
+        }
+      </div>
     </div>
   );
 };

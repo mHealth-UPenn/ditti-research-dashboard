@@ -42,7 +42,7 @@ def account():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when retriving accounts"
     }
     """
     try:
@@ -61,11 +61,10 @@ def account():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retriving accounts"}, 500)
 
 
 @blueprint.route("/account/create", methods=["POST"])
@@ -116,7 +115,7 @@ def account_create():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when creating account."
     }
     """
     try:
@@ -156,11 +155,10 @@ def account_create():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when creating account."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -217,7 +215,7 @@ def account_edit():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when updating account."
     }
     """
     try:
@@ -294,11 +292,10 @@ def account_edit():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when updating account."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -328,7 +325,7 @@ def account_archive():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when archiving account."
     }
     """
     try:
@@ -340,11 +337,10 @@ def account_archive():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when archiving account."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -373,7 +369,7 @@ def study():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when retrieving studies."
     }
     """
     try:
@@ -390,11 +386,10 @@ def study():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving studies."}, 500)
 
 
 @blueprint.route("/study/create", methods=["POST"])
@@ -435,7 +430,7 @@ def study_create():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when creating study."
     }
     """
     try:
@@ -455,11 +450,10 @@ def study_create():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when creating study."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -500,7 +494,7 @@ def study_edit():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when updating study."
     }
     """
     try:
@@ -514,11 +508,10 @@ def study_edit():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when updating study."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -548,7 +541,7 @@ def study_archive():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when archiving study."
     }
     """
     try:
@@ -560,11 +553,10 @@ def study_archive():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when archiving study."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -593,7 +585,7 @@ def access_group():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when retrieving access groups."
     }
     """
     try:
@@ -612,11 +604,10 @@ def access_group():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving access groups."}, 500)
 
 
 @blueprint.route("/access-group/create", methods=["POST"])
@@ -651,7 +642,7 @@ def access_group_create():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when creating access group."
     }
     """
     try:
@@ -686,11 +677,10 @@ def access_group_create():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when creating access group."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -731,7 +721,7 @@ def access_group_edit():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when updating access group."
     }
     """
     try:
@@ -774,11 +764,10 @@ def access_group_edit():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when updating access group."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -808,7 +797,7 @@ def access_group_archive():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when archiving access group."
     }
     """
     try:
@@ -820,11 +809,10 @@ def access_group_archive():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when archiving access group."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -853,7 +841,7 @@ def role():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when retrieving roles."
     }
     """
     try:
@@ -870,11 +858,10 @@ def role():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving roles."}, 500)
 
 
 @blueprint.route("/role/create", methods=["POST"])
@@ -909,7 +896,7 @@ def role_create():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when creating role."
     }
     """
     try:
@@ -939,11 +926,10 @@ def role_create():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when creating role."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -984,7 +970,7 @@ def role_edit():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when updating role."
     }
     """
     try:
@@ -1018,11 +1004,10 @@ def role_edit():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when updating role."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -1052,7 +1037,7 @@ def role_archive():  # TODO: create unit test
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when archiving role."
     }
     """
     try:
@@ -1064,11 +1049,10 @@ def role_archive():  # TODO: create unit test
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when archiving role."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -1096,11 +1080,10 @@ def app_create():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when creating app."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -1121,11 +1104,10 @@ def app_edit():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when updating app."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -1148,7 +1130,7 @@ def action():  # TODO: write unit test
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server when retrieving actions."
     }
     """
     try:
@@ -1158,11 +1140,10 @@ def action():  # TODO: write unit test
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server when retrieving actions."}, 500)
 
 
 @blueprint.route("/resource")
@@ -1183,7 +1164,7 @@ def resource():  # TODO: write unit test
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when retrieving resources."
     }
     """
     try:
@@ -1193,11 +1174,10 @@ def resource():  # TODO: write unit test
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving resources."}, 500)
 
 
 @blueprint.route("/about-sleep-template")
@@ -1225,7 +1205,7 @@ def about_sleep_template():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when retrieving about sleep templates."
     }
     """
     try:
@@ -1247,11 +1227,10 @@ def about_sleep_template():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving about sleep templates."}, 500)
 
 
 @blueprint.route("/about-sleep-template/create", methods=["POST"])
@@ -1279,7 +1258,7 @@ def about_sleep_template_create():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when creating about sleep template."
     }
     """
     try:
@@ -1293,11 +1272,10 @@ def about_sleep_template_create():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when creating about sleep template."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -1331,7 +1309,7 @@ def about_sleep_template_edit():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when updating about sleep template."
     }
     """
     try:
@@ -1347,11 +1325,10 @@ def about_sleep_template_edit():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when updating about sleep template."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -1381,7 +1358,7 @@ def about_sleep_template_archive():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when archiving about sleep template."
     }
     """
     try:
@@ -1395,11 +1372,10 @@ def about_sleep_template_archive():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when archiving about sleep template."}, 500)
 
     return jsonify({"msg": msg})
 
@@ -1429,7 +1405,7 @@ def study_subject():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when retrieving study subjects"
     }
     """
     try:
@@ -1459,11 +1435,10 @@ def study_subject():
     except Exception:
         # Capture and log the traceback
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving study subjects"}, 500)
 
 
 @blueprint.route("/study_subject/create", methods=["POST"])
@@ -1517,7 +1492,7 @@ def study_subject_create():
     Response syntax (500)
     ---------------------
     {
-        msg: "Internal server error message"
+        msg: "Internal server error when creating study subject"
     }
     """
     try:
@@ -1609,10 +1584,9 @@ def study_subject_create():
 
     except Exception as e:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when creating study subject"}, 500)
 
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
@@ -1645,7 +1619,7 @@ def study_subject_archive():
     Response syntax (500)
     ---------------------
     {
-        msg: "Internal server error message"
+        msg: "Internal server error when archiving study subject"
     }
     """
     try:
@@ -1663,10 +1637,9 @@ def study_subject_archive():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when archiving study subject"}, 500)
 
     return jsonify({"msg": msg}), 200
 
@@ -1726,7 +1699,7 @@ def study_subject_edit():
     Response syntax (500)
     ---------------------
     {
-        msg: "Internal server error message"
+        msg: "Internal server error when editing study subject"
     }
     """
     try:
@@ -1853,10 +1826,9 @@ def study_subject_edit():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when editing study subject"}, 500)
 
     return jsonify({"msg": msg})
 
@@ -1904,11 +1876,10 @@ def api():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when retrieving APIs"}, 500)
 
 
 @blueprint.route("/api/create", methods=["POST"])
@@ -1942,7 +1913,7 @@ def api_create():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when creating API"
     }
     """
     try:
@@ -1966,11 +1937,10 @@ def api_create():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when creating API"}, 500)
 
     return jsonify({"msg": msg})
 
@@ -2010,7 +1980,7 @@ def api_edit():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when editing API"
     }
     """
     try:
@@ -2039,10 +2009,9 @@ def api_edit():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when editing API"}, 500)
 
     return jsonify({"msg": msg})
 
@@ -2078,7 +2047,7 @@ def api_archive():
     Response syntax (500)
     ---------------------
     {
-        msg: a formatted traceback if an uncaught error was thrown
+        msg: "Internal server error when archiving API"
     }
     """
     try:
@@ -2096,9 +2065,8 @@ def api_archive():
 
     except Exception:
         exc = traceback.format_exc()
-        msg = exc.splitlines()[-1]
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": msg}, 500)
+        return make_response({"msg": "Internal server error when archiving API"}, 500)
 
     return jsonify({"msg": msg})

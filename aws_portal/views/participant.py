@@ -137,7 +137,8 @@ def revoke_api_access(api_name):
 
 @blueprint.route("<string:ditti_id>", methods=["DELETE"])
 @auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Accounts")
+@auth_required("Archive", "Participants")
+@auth_required("Delete", "Fitbit Data")
 def delete_participant(ditti_id):
     """
     Endpoint to delete a participant's account and all associated API data.

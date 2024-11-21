@@ -1,14 +1,26 @@
-import React, { useState, useEffect, ChangeEvent, createRef } from "react";
+import React, { useState, ChangeEvent, createRef, useEffect } from "react";
 import TextField from "../fields/textField";
-import { Study, ResponseBody, ViewProps, AudioFile } from "../../interfaces";
+import { Study, ResponseBody, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
-import "./subjectsEdit.css";
-import { SmallLoader } from "../loader";
-import AsyncButton from "../buttons/asyncButton";
 import Select from "../fields/select";
 import RadioField from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
 import axios, { AxiosError } from "axios";
+import FormView from "../containers/forms/formView";
+import Form from "../containers/forms/form";
+import FormTitle from "../text/formTitle";
+import FormRow from "../containers/forms/formRow";
+import FormField from "../containers/forms/formField";
+import FormSummary from "../containers/forms/formSummary";
+import FormSummaryTitle from "../text/formSummaryTitle";
+import FormSummaryText from "../containers/forms/formSummaryText";
+import FormSummaryButton from "../containers/forms/formSummaryButton";
+import FormSummarySubtext from "../containers/forms/formSummarySubtext";
+import Button from "../buttons/button";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { SmallLoader } from "../loader";
+import { APP_ENV } from "../../environment";
 
 
 interface IFile {
@@ -28,14 +40,11 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const [availability, setAvailability] = useState("All Users");
   const [dittiId, setDittiId] = useState("");
   const [studiesRadio, setStudiesRadio] = useState("All Studies");
-  const [studies, setStudies] = useState<Study[]>([]);
   const [selectedStudies, setSelectedStudies] = useState<Set<number>>(new Set());
   const [files, setFiles] = useState<IFile[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
-  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [existingFiles, setExistingFiles] = useState<Set<string>>(new Set());
   const [canUpload, setCanUpload] = useState(false);
   const [categoryFeedback, setCategoryFeedback] = useState<string>("");
   const [availabilityFeedback, setAvailabilityFeedback] = useState<string>("");
@@ -43,23 +52,9 @@ const AudioFileUpload: React.FC<ViewProps> = ({
 
   const fileInputRef = createRef<HTMLInputElement>();
 
-  // Initialize the list of studies and audio files
-  useEffect(() => {
-    const studiesPromise = makeRequest("/db/get-studies?app=2");
-    const audioFilesPromise = makeRequest("/aws/get-audio-files?app=2");
-    Promise.all([studiesPromise, audioFilesPromise]).then(
-      ([studies, audioFiles]) => {
-        const existing: Set<string> = new Set();
-        (audioFiles as AudioFile[]).forEach(af => {
-          if (af.fileName) existing.add(af.fileName)
-        });
-
-        setStudies(studies);
-        setExistingFiles(existing);
-        setLoading(false);
-      }
-    );
-  }, []);
+  const { studies, audioFiles } = useDittiDataContext();
+  const existingFiles = new Set();
+  audioFiles.forEach(af => existingFiles.add(af.fileName))
 
   /**
    * Get a set of presigned URLs for uploading audio files to S3.
@@ -232,16 +227,12 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     const updatedSelectedStudies = selectedStudies;
     updatedSelectedStudies.add(id);
     setSelectedStudies(updatedSelectedStudies);
-
-    // Set studies to force re-render
-    setStudies([...studies]);
   };
 
   const removeStudy = (id: number): void => {
     const updatedSelectedStudies = selectedStudies
     updatedSelectedStudies.delete(id);
     setSelectedStudies(updatedSelectedStudies);
-    setStudies([...studies]);
   };
 
   const handleClickAvailability = (e: ChangeEvent<HTMLInputElement>) => {
@@ -348,174 +339,165 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   ) : 0;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] overflow-scroll overflow-x-hidden bg-white lg:bg-transparent lg:flex-row">
-      <div className="p-12 flex-grow bg-white lg:overflow-y-scroll">
-        {/* the enroll subject form */}
-        {
-          loading ?
-          <SmallLoader /> :
-          <>
-            <h1 className="text-xl font-bold border-b border-solid border-[#B3B3CC]">
-              Upload Audio File
-            </h1>
+    <FormView>
+      <Form>
+        <FormTitle>Upload Audio File</FormTitle>
 
-            {/* Category field */}
-            <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8">
-                <TextField
-                  id="category"
-                  type="text"
-                  placeholder=""
-                  label="Category"
-                  onKeyup={setCategory}
-                  feedback={categoryFeedback}
-                />
-              </div>
+        {/* Category field */}
+        <FormRow>
+          <FormField>
+            <TextField
+              id="category"
+              type="text"
+              placeholder=""
+              label="Category"
+              onKeyup={setCategory}
+              feedback={categoryFeedback}
+              value={category} />
+          </FormField>
+        </FormRow>
+
+        {/* Availability & Ditti ID fields */}
+        <FormRow>
+          <FormField>
+            <RadioField
+              id="availability-radio"
+              label="Availability"
+              onChange={handleClickAvailability}
+              values={["All Users", "Individual"]}
+              checked={availability}
+            />
+          </FormField>
+          <FormField>
+            <TextField
+              id="availability"
+              type="text"
+              label="Ditti ID"
+              value={dittiId}
+              onKeyup={setDittiId}
+              disabled={availability === "All Users"}
+              feedback={availabilityFeedback} />
+          </FormField>
+        </FormRow>
+
+        {/* Studies & select studies fields */}
+        <FormRow>
+          <FormField>
+            <RadioField
+              id="studies-radio"
+              label="Studies"
+              onChange={handleClickStudies}
+              values={["All Studies", "Select Studies"]}
+              checked={studiesRadio}
+            />
+          </FormField>
+          <FormField>
+            <div className="mb-1">
+              Add study
             </div>
-
-            {/* Availability & Ditti ID fields */}
-            <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
-                <RadioField
-                  id="availability-radio"
-                  label="Availability"
-                  onChange={handleClickAvailability}
-                  values={["All Users", "Individual"]}
-                  checked={availability}
-                />
-              </div>
-              <div className="flex w-full flex-col mb-8 md:w-1/2">
-                <TextField
-                  id="availability"
-                  type="text"
-                  label="Ditti ID"
-                  value={dittiId}
-                  onKeyup={setDittiId}
-                  disabled={availability === "All Users"}
-                  feedback={availabilityFeedback}
-                />
-              </div>
+            <div className="border-light">
+              <Select
+                id={0}
+                opts={studies.map(
+                  s => {return { value: s.id, label: s.acronym }}
+                )}
+                placeholder="Select studies..."
+                callback={selectStudy}
+                disabled={studiesRadio === "All Studies"}/>
             </div>
-
-            {/* Studies & select studies fields */}
-            <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8 md:pr-4 md:w-1/2">
-                <RadioField
-                  id="studies-radio"
-                  label="Studies"
-                  onChange={handleClickStudies}
-                  values={["All Studies", "Select Studies"]}
-                  checked={studiesRadio}
-                />
+            {/* feedback on error TODO: Fix the select field so this does not have to be here */}
+            {studiesFeedback !== "" && <span className="text-sm text-[red]">{studiesFeedback}</span>}
+          </FormField>
+        </FormRow>
+        {!!selectedStudies.size &&
+          <FormRow>
+            <FormField>
+              <div className="mb-1">
+                <p>Selected studies</p>
               </div>
-              <div className="flex w-full flex-col mb-8 md:w-1/2">
-                <div style={{ marginBottom: "0.5rem" }}>
-                  <b>Add study...</b>
-                </div>
-                <div className={"border-light" + (studiesRadio === "All Studies" ? " bg-light" : "")}>
-                  <Select
-                    id={0}
-                    opts={studies.map(
-                      s => {return { value: s.id, label: s.acronym }}
-                    )}
-                    placeholder="Select studies..."
-                    callback={selectStudy}
-                    disabled={studiesRadio === "All Studies"}/>
-                </div>
-
-                {/* feedback on error TODO: Fix the select field so this does not have to be here */}
-                {studiesFeedback !== "" && <span className="text-sm text-[red]">{studiesFeedback}</span>}
-              </div>
-            </div>
-            {
-              Boolean(selectedStudies.size) &&
-              <div className="flex flex-col md:flex-row">
-                <div className="flex w-full flex-col mb-8">
-                  <div className="mb-1">
-                    <b>Selected studies</b>
-                  </div>
-                  {
-                    studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
-                      <div key={i} className="flex items-center justify-between">
-                        <span className="truncate">{`${s.acronym}: ${s.name}`}</span>
-                        <div
-                          className="p-2 cursor-pointer"
-                          onClick={() => removeStudy(s.id)}>
-                          <CloseIcon color="warning" />
-                        </div>
-                      </div>
-                    )
-                  }
-                </div>
-              </div>
-            }
-
-            {/* Select audio files field */}
-            <div className="flex flex-col md:flex-row">
-              <div className="flex w-full flex-col mb-8">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  accept=".mp3"
-                  onChange={handleSelectFiles} />
-                <label
-                  htmlFor="audio-file-upload"
-                  className="mb-2 font-bold">
-                  Select audio files
-                </label>
-                <button
-                  className="button button-large button-secondary p-4"
-                  onClick={handleClickChooseFiles}>
-                  Choose files
-                </button>
-              </div>
-            </div>
-
-            {/* Selected audio files list */}
-            {
-              Boolean(files.length) &&
-              <div className="flex flex-col md:flex-row">
-                <div className="flex flex-col w-full">
-                  <span className="font-bold mb-1">Audio files</span>
-                  {files.map((file, i) =>
-                    <div key={i} className="w-full">
-                      <div className="flex justify-between w-full mb-1">
-                        <span className="truncate">{file.name}</span>
-                        <span className="w-max flex-shrink-0">{file.size} - {formatDuration(file.length)}</span>
-                      </div>
-                      <div className="flex w-full flex-col mb-4">
-                        {
-                          file.exists ?
-                          <span className="text-sm text-[red]">
-                            An audio file with this name already exists.<br />
-                            Rename this file or delete the existing file and try
-                            again.
-                          </span> :
-                          <TextField
-                            id={`file-${file.name}`}
-                            type="text"
-                            value={file.title}
-                            onKeyup={(text: string) => handleTitleKeyup(text, i)}>
-                              <span className="flex items-center font-bold px-2 bg-light h-full">Title</span>
-                          </TextField>
-                        }
-                      </div>
+              {
+                studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
+                  <div key={i} className="flex items-center justify-between">
+                    <span className="truncate">{`${s.acronym}: ${s.name}`}</span>
+                    <div
+                      className="p-2 cursor-pointer"
+                      onClick={() => removeStudy(s.id)}>
+                      <CloseIcon color="warning" />
                     </div>
-                  )}
-                </div>
-              </div>
-            }
-          </>
+                  </div>
+                )
+              }
+            </FormField>
+          </FormRow>
         }
-      </div>
+
+        {/* Select audio files field */}
+        <FormRow>
+          <FormField>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              accept=".mp3"
+              onChange={handleSelectFiles} />
+            <label
+              htmlFor="audio-file-upload"
+              className="mb-1">
+              Select audio files
+            </label>
+            <Button
+              variant="tertiary"
+              onClick={handleClickChooseFiles}
+              className="w-max"
+              size="sm"
+              rounded={true}>
+                Choose files
+            </Button>
+          </FormField>
+        </FormRow>
+
+        {/* Selected audio files list */}
+        {
+          Boolean(files.length) &&
+          <FormRow>
+            <FormField>
+              <span className="mb-1">Audio files</span>
+              {files.map((file, i) =>
+                <div key={i} className="w-full">
+                  <div className="flex justify-between w-full mb-1">
+                    <span className="truncate">{file.name}</span>
+                    <span className="w-max flex-shrink-0">{file.size} - {formatDuration(file.length)}</span>
+                  </div>
+                  <div className="flex w-full flex-col mb-4">
+                    {
+                      file.exists ?
+                      <span className="text-sm text-[red]">
+                        An audio file with this name already exists.<br />
+                        Rename this file or delete the existing file and try
+                        again.
+                      </span> :
+                      <TextField
+                        id={`file-${file.name}`}
+                        type="text"
+                        value={file.title}
+                        onKeyup={(text: string) => handleTitleKeyup(text, i)}>
+                          <span className="flex items-center px-2 bg-extra-light h-full">Title</span>
+                      </TextField>
+                    }
+                  </div>
+                </div>
+              )}
+            </FormField>
+          </FormRow>
+        }
+      </Form>
 
       {/* the subject summary */}
-      <div className="flex flex-col flex-shrink-0 px-16 py-12 w-full lg:px-8 lg:w-[20rem] 2xl:w-[28rem] bg-[#33334D] text-white lg:max-h-[calc(100vh-8rem)]">
-        <h1 className="border-b border-solid border-white text-xl font-bold">Audio File Summary</h1>
-        <div className="flex flex-col md:flex-row lg:flex-col lg:max-h-[calc(100vh-17rem)] lg:h-full lg:justify-between">
-          <div className="flex-grow mb-8 lg:overflow-y-scroll truncate">
+      <FormSummary>
+        <FormSummaryTitle>Audio File Summary</FormSummaryTitle>
+        <FormSummaryContent>
+          <FormSummaryText>
             Files:
             <br />
             {/* &nbsp;&nbsp;&nbsp;&nbsp;{title} */}
@@ -556,36 +538,38 @@ const AudioFileUpload: React.FC<ViewProps> = ({
                 </span>
               )
             }
-          </div>
-          {
-            // Upload progres bar
-            uploading &&
-            <div className="flex flex-col w-full mb-4">
-              <div className="flex justify-between mb-1 w-full">
-                <span>Uploading...</span>
-                <span>{percentComplete}%</span>
+          </FormSummaryText>
+          <div>
+            {
+              // Upload progres bar
+              uploading &&
+              <div className="flex flex-col w-full mb-4">
+                <div className="flex justify-between mb-1 w-full">
+                  <span>Uploading...</span>
+                  <span>{percentComplete}%</span>
+                </div>
+                <span className={`h-[4px] bg-white transition-all duration-500`}
+                  style={{ width: percentComplete ? `${percentComplete}%` : 0 }}/>
               </div>
-              <span className={`h-[4px] bg-white transition-all duration-500`}
-                style={{ width: percentComplete ? `${percentComplete}%` : 0 }}/>
-            </div>
-          }
-          <div className="flex flex-col md:w-1/2 lg:w-full justify-end">
-            <AsyncButton
-              className="p-4"
+            }
+            <FormSummaryButton
               onClick={handleUpload}
-              text="Upload"
-              type="primary"
-              disabled={!canUpload}/>
-            <div className="mt-6 text-sm">
-              <i>
+              disabled={!canUpload || APP_ENV === "demo"}>
+                Upload
+            </FormSummaryButton>
+            {APP_ENV === "demo" &&
+              <FormSummarySubtext>
+                Audio file uploads are disabled in demo mode.
+              </FormSummarySubtext>
+            }
+            <FormSummarySubtext>
               Audio file details cannot be changed after upload. The files must be
               deleted and uploaded again.
-              </i>
-            </div>
+            </FormSummarySubtext>
           </div>
-        </div>
-      </div>
-    </div>
+        </FormSummaryContent>
+      </FormSummary>
+    </FormView>
   );
 };
 

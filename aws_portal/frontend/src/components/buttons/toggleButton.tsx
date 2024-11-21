@@ -1,5 +1,6 @@
 import * as React from "react";
-import { ReactComponent as Check } from "../../icons/check.svg";
+import Button, { ButtonProps } from "./button";
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 /**
  * id: an id of the item that will be toggled by the button
@@ -7,35 +8,41 @@ import { ReactComponent as Check } from "../../icons/check.svg";
  * add: adds the item
  * remove: removes the item
  */
-interface ToggleButtonProps {
+interface ToggleButtonProps extends ButtonProps {
   id: number;
-  getActive: (id: number) => boolean;
-  add: (id: number, callback: (active: boolean) => void) => void;
-  remove: (id: number, callback: (active: boolean) => void) => void;
+  active: boolean;
+  add: (id: number) => void;
+  remove: (id: number) => void;
 }
 
-const ToggleButton: React.FC<ToggleButtonProps> = ({ id, getActive, add, remove }) => {
-  // get whether the toggled item is currently active
-  const [active, setActive] = React.useState<boolean>(getActive(id));
-  
-  /**
-   * Update the button's active state
-   */
-  const update = (active: boolean) => {
-    setActive(active);
-  };
+const ToggleButton: React.FC<ToggleButtonProps> = ({
+  id,
+  active,
+  add,
+  remove,
+  fullWidth,
+  fullHeight,
+}) => {
+  if (active) {
+    return (
+      <Button
+        variant="success"
+        onClick={() => remove(id)}
+        fullWidth={fullWidth}
+        fullHeight={fullHeight}>
+          <CheckCircleOutlineIcon />
+      </Button>
+    );
+  }
 
-  return active ? (
-    <button
-      className="button-success flex-center"
-      onClick={() => remove(id, update)}
-    >
-      <Check />
-    </button>
-  ) : (
-    <button className="button-secondary" onClick={() => add(id, update)}>
-      Add&nbsp;+
-    </button>
+  return (
+    <Button
+      variant="secondary"
+      onClick={() => add(id)}
+      fullWidth={fullWidth}
+      fullHeight={fullHeight}>
+        Add +
+    </Button>
   );
 };
 

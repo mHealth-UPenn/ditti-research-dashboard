@@ -5,6 +5,7 @@ import AccessGroups from "./accessGroups";
 import Roles from "./roles";
 import { ViewProps } from "../../interfaces";
 import AboutSleepTemplates from "./aboutSleepTemplates";
+import Link from "../links/link";
 
 /**
  * active: the active view
@@ -80,19 +81,22 @@ const Navbar: React.FC<NavbarProps> = ({ active, handleClick, flashMessage, goBa
   });
 
   return (
-    <div className="page-header bg-white border-dark-b">
+    <div className="flex items-center justify-left px-6 lg:px-12 bg-white select-none whitespace-nowrap">
       {/* if the view is active, highlight it using bg-dark */}
       {views.map((v, i) => (
-        <div
-          key={i}
-          className={
-            "page-header-button" +
-            (v.active ? " bg-dark" : " link-no-underline")
-          }
-          onClick={() => handleClick([v.name], v.view, true)}
-        >
-          {v.name}
-        </div>
+        v.active ?
+          <div
+            key={i}
+            className="flex px-4 lg:px-8 items-center justify-center h-full py-4 bg-dark text-center">
+              {v.name}
+          </div> :
+          <div key={i} className="flex h-full">
+            <Link
+              className="flex items-center justify-center px-3 lg:px-4 xl:px-8 h-full w-full no-underline hover:bg-extra-light text-center"
+              onClick={() => handleClick([v.name], v.view, true)}>
+                {v.name}
+            </Link>
+          </div>
       ))}
     </div>
   );

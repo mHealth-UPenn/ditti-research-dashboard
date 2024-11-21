@@ -4,12 +4,13 @@ import { createBrowserRouter, RouterProvider, Outlet, RouteObject } from "react-
 import LoginPage from "./pages/loginPage";
 import ParticipantLoginPage from "./pages/participantLoginPage";
 import Dashboard from "./components/dashboard";
-import ParticipantDashboard from "./components/participantDashboard";
+import ParticipantDashboard from "./components/participantDashboard/participantDashboard";
 import ProtectedRoute from "./components/protectedRoute";
 import { AuthProvider } from "./AuthContext";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import "./index.css";
 import "./output.css";
+import { FullLoader } from "./components/loader";
 
 /**
  * Root component wrapped with AuthProvider for authentication context.
@@ -44,7 +45,10 @@ const router = createBrowserRouter([
         path: "coordinator",
         element: (
           <ProtectedRoute authMethod='iam'>
-            <Dashboard />
+            <>
+              <FullLoader loading={false} msg="" />
+              <Dashboard />
+            </>
           </ProtectedRoute>
         ),
       },

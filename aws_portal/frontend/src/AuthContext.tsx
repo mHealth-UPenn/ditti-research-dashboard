@@ -16,6 +16,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isIamLoading, setIsIamLoading] = useState<boolean>(true);
   const [isCognitoLoading, setIsCognitoLoading] = useState<boolean>(true);
   const [csrfToken, setCsrfToken] = useState<string>(localStorage.getItem("csrfToken") || "");
+  const [dittiId, setDittiId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -44,7 +45,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const checkCognitoAuthStatus = async () => {
       try {
         const res = await makeRequest("/cognito/check-login", { method: "GET" });
-        setIsCognitoAuthenticated(res.msg === "Login successful");
+        if (res.msg === "Login successful") {
+          setIsCognitoAuthenticated(true);
+          setDittiId(res.dittiId);
+        }
       } catch {
         setIsCognitoAuthenticated(false);
       } finally {
@@ -94,26 +98,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const iamLogout = useCallback((): void => {
     localStorage.removeItem("jwt");
     setIsIamAuthenticated(false);
+    setDittiId(null);
     navigate("/coordinator/login");
   }, [navigate]);
 
   /**
    * Redirects to Cognito login page.
    */
-  const cognitoLogin = useCallback((options?: { elevated: boolean }): void => {
-    if (options && options.elevated) {
-      window.location.href = "http://localhost:5000/cognito/login?elevated=true";
-    } else {
-      window.location.href = "http://localhost:5000/cognito/login";
-    }
+  const cognitoLogin = useCallback((): void => {
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/login`;
   }, []);
 
   /**
    * Logs out the Cognito user by redirecting to the logout endpoint.
    */
   const cognitoLogout = useCallback((): void => {
-    window.location.href = "http://localhost:5000/cognito/logout";
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/logout`;
     setIsCognitoAuthenticated(false);
+    setDittiId(null);
   }, []);
 
   return (
@@ -125,11 +127,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isCognitoLoading,
         firstLogin,
         csrfToken,
+        dittiId,
         iamLogin,
         iamLogout,
         cognitoLogin,
         cognitoLogout,
-        setFirstLogin
+        setFirstLogin,
       }}
     >
       {children}

@@ -140,10 +140,10 @@ def cognito_callback():
 
     # Set tokens in secure, HTTP-only cookies
     response.set_cookie(
-        "id_token", id_token, httponly=True, secure=True, samesite="Lax"
+        "id_token", id_token, httponly=True, secure=True, samesite="None"
     )
     response.set_cookie(
-        "access_token", access_token, httponly=True, secure=True, samesite="Lax"
+        "access_token", access_token, httponly=True, secure=True, samesite="None"
     )
 
     return response
@@ -187,7 +187,11 @@ def check_login():
 
     try:
         claims = verify_token(True, id_token, token_use="id")
-        return make_response({"msg": "Login successful"}, 200)
+        body = {
+            "msg": "Login successful",
+            "dittiId": claims.get("cognito:username"),
+        }
+        return make_response(body, 200)
     except jwt.ExpiredSignatureError:
         logger.warning("ID token has expired.")
         return make_response({"msg": "Token has expired."}, 401)
