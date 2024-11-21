@@ -1,14 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, createRef } from "react";
 import TextField from "../fields/textField";
-import {
-  AboutSleepTemplate,
-  ResponseBody,
-  Study,
-  ViewProps
-} from "../../interfaces";
+import { AboutSleepTemplate, ResponseBody, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import AsyncButton from "../buttons/asyncButton";
+import FormView from "../containers/forms/formView";
+import Form from "../containers/forms/form";
+import FormTitle from "../text/formTitle";
+import FormRow from "../containers/forms/formRow";
+import FormField from "../containers/forms/formField";
+import FormSummary from "../containers/forms/formSummary";
+import FormSummaryTitle from "../text/formSummaryTitle";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
+import FormSummaryText from "../containers/forms/formSummaryText";
+import FormSummaryButton from "../containers/forms/formSummaryButton";
+import sanitize from "sanitize-html";
 
 /**
  * The form's prefill
@@ -33,6 +38,13 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
   const [name, setName] = useState<string>("");
   const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
+  const previewRef = createRef<HTMLDivElement>();
+
+  useEffect(() => {
+    if (previewRef.current) {
+      previewRef.current.innerHTML = sanitize(text);
+    }
+  }, [text]);
 
   useEffect(() => {
     const fetchPrefill = async () => {
@@ -128,64 +140,59 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
 
   const buttonText = aboutSleepTemplateId ? "Update" : "Create";
 
-  return (
-    <div className="page-container" style={{ flexDirection: "row" }}>
-
-      {/* the edit/create form */}
-      <div className="page-content bg-white">
-        {loading ? (
+  if (loading) {
+    return (
+      <FormView>
+        <Form>
           <SmallLoader />
-        ) : (
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {aboutSleepTemplateId ? "Edit " : "Create "} Template
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="name"
-                    prefill={name}
-                    label="Name"
-                    onKeyup={setName}
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="text"
-                    type="textarea"
-                    prefill={text}
-                    label="Text"
-                    onKeyup={setText}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+        </Form>
+      </FormView>
+    );
+  }
 
-      {/* the edit/create summary */}
-      <div className="admin-form-summary bg-dark">
-        <h1 className="border-white-b">Template Summary</h1>
-        <span>
-          Name:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{name}
-          <br />
-        </span>
-        <AsyncButton onClick={post} text={buttonText} type="primary" />
-        <div style={{ marginTop: "1.5rem" }}>
-          <i>
-            To preview this template, you must update an existing user or
-            create a new user with this template, then view it through the
-            app.
-          </i>
-        </div>
-      </div>
-    </div>
+  return (
+    <FormView>
+      <Form>
+        <FormTitle>{aboutSleepTemplateId ? "Edit " : "Create "} Template</FormTitle>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="name"
+              value={name}
+              label="Name"
+              onKeyup={setName} />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="text"
+              type="textarea"
+              value={text}
+              label="Text"
+              onKeyup={setText} />
+          </FormField>
+        </FormRow>
+        <FormTitle className="mt-6">Preview</FormTitle>
+        <FormRow>
+          <div ref={previewRef} className="px-4" />
+        </FormRow>
+      </Form>
+      <FormSummary>
+        <FormSummaryTitle>Template Summary</FormSummaryTitle>
+        <FormSummaryContent>
+          <FormSummaryText>
+            Name:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{name}
+            <br />
+          </FormSummaryText>
+          <FormSummaryButton onClick={post}>
+            {buttonText}
+          </FormSummaryButton>
+        </FormSummaryContent>
+      </FormSummary>
+    </FormView>
   );
 };
 

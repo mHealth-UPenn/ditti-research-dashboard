@@ -1,5 +1,4 @@
 import * as React from "react";
-import "./checkField.css";
 
 /**
  * id (optional): an optional html id
@@ -16,21 +15,25 @@ interface CheckFieldProps {
 
 const CheckField: React.FC<CheckFieldProps> = ({ id, prefill, label, onChange }) => {
   return (
-    <div className="check-field-container">
-      {label ? (
-        <label className="check-field-label" htmlFor={id}>
-          {label}
-        </label>
-      ) : null}
-      <input
-        type="checkbox"
-        checked={prefill}
-        onChange={
-          onChange
-            ? (e) => onChange((e.target as HTMLInputElement).checked)
-            : () => null
-        }
-      />
+    <div className="flex flex-col h-full">
+      <div className="hidden md:flex mb-1">&nbsp;</div>
+      <div className="flex flex-grow items-center">
+        <div>
+          {label &&
+            <label className="mr-4" htmlFor={id}>
+              {label}
+            </label>
+          }
+          <input
+            type="checkbox"
+            checked={prefill}
+            onChange={
+              onChange
+                ? (e) => onChange((e.target as HTMLInputElement).checked)
+                : () => null
+            } />
+        </div>
+      </div>
     </div>
   );
 };

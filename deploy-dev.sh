@@ -62,8 +62,6 @@ if [[ "$INIT_FLAG" == true ]]; then
     echo "Initializing application..."
     docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
     flask db upgrade
-    flask init-admin-app
-    flask init-admin-group
-    flask init-admin
+    flask init-integration-testing-db
     flask init-api
 fi

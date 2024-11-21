@@ -1,12 +1,10 @@
 import React, { useEffect, useReducer } from "react";
-import { Component } from "react";
-import Table, { Column, TableData } from "../table/table";
+import Table, { TableData } from "../table/table";
 import TextField from "../fields/textField";
 import ToggleButton from "../buttons/toggleButton";
 import {
   AccessGroup,
   Account,
-  Permission,
   ResponseBody,
   Role,
   Study,
@@ -15,8 +13,16 @@ import {
 import Select from "../fields/select";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import AsyncButton from "../buttons/asyncButton";
-import AccessGroups from "./accessGroups";
+import FormView from "../containers/forms/formView";
+import Form from "../containers/forms/form";
+import FormSummary from "../containers/forms/formSummary";
+import FormTitle from "../text/formTitle";
+import FormRow from "../containers/forms/formRow";
+import FormField from "../containers/forms/formField";
+import FormSummaryTitle from "../text/formSummaryTitle";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
+import FormSummaryText from "../containers/forms/formSummaryText";
+import FormSummaryButton from "../containers/forms/formSummaryButton";
 
 type Action =
   | {
@@ -80,7 +86,7 @@ const reducer = (state: AccountsEditState, action: Action) => {
   
       // get the access group
       const accessGroup = accessGroups.filter(ag => ag.id == id)[0];
-      if (accessGroup) {
+      if (accessGroup && !accessGroupsSelected.some(ag => ag.id === accessGroup.id)) {
         // add it to the selected access groups
         accessGroupsSelected.push(accessGroup);
         return { ...state, accessGroupsSelected };
@@ -104,7 +110,7 @@ const reducer = (state: AccountsEditState, action: Action) => {
         studies.filter((s: Study) => s.id == id)[0]
       );
   
-      if (study) {
+      if (study && !studiesSelected.some(s => s.id === study.id)) {
         // add it to the selected studies
         studiesSelected.push(study);
         return { ...state, studiesSelected };
@@ -164,56 +170,14 @@ interface AccountsEditState extends AccountPrefill {
   accessGroups: AccessGroup[];
   roles: Role[];
   studies: Study[];
-  columnsAccessGroups: Column[];
-  columnsStudies: Column[];
   password: string;
   loading: boolean;
 }
 
-const initialState = {
+const initialState: AccountsEditState = {
   accessGroups: [],
   roles: [],
   studies: [],
-  columnsAccessGroups: [
-    {
-      name: "Name",
-      sortable: true,
-      searchable: false,
-      width: 45
-    },
-    {
-      name: "App",
-      sortable: true,
-      searchable: false,
-      width: 45
-    },
-    {
-      name: "",
-      sortable: false,
-      searchable: false,
-      width: 10
-    }
-  ],
-  columnsStudies: [
-    {
-      name: "Name",
-      sortable: true,
-      searchable: false,
-      width: 45
-    },
-    {
-      name: "Role",
-      sortable: false,
-      searchable: false,
-      width: 45
-    },
-    {
-      name: "",
-      sortable: false,
-      searchable: false,
-      width: 10
-    }
-  ],
   loading: true,
   firstName: "",
   lastName: "",
@@ -225,16 +189,16 @@ const initialState = {
   password: ""
 };
 
-const AccountsEdit: React.FC<AccountsEditProps> = ({
-  accountId, flashMessage, goBack, handleClick
-}) => {
+const AccountsEdit = ({
+  accountId,
+  flashMessage,
+  goBack,
+}: AccountsEditProps) => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const {
     accessGroups,
     roles,
     studies,
-    columnsAccessGroups,
-    columnsStudies,
     loading,
     firstName,
     lastName,
@@ -294,7 +258,7 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
   const makePrefill = (res: Account[]): AccountPrefill => {
     const account = res[0];
     const roles = account.studies.map((s): RoleSelected => {
-      return { study: s.id, role: s.role.id };
+      return { study: s.id, role: s.role?.id || 0 };
     });
 
     return {
@@ -306,111 +270,6 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
       rolesSelected: roles,
       studiesSelected: account.studies
     };
-  };
-
-  /**
-   * Get the contents for the access groups table
-   * @returns - the table contents
-   */
-  const getAccessGroupsData = (): TableData[][] => {
-
-    // map each table row to table cells for each column
-    return accessGroups.map(ag => {
-      const { id, name, app } = ag;
-
-      return [
-        {
-          contents: (
-            <div className="flex-left table-data">
-              <span>{name}</span>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: name
-        },
-        {
-          contents: (
-            <div className="flex-left table-data">
-              <span>{app.name}</span>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: app.name
-        },
-        {
-          contents: (
-            <div className="flex-left table-control">
-              <ToggleButton
-                key={id}
-                id={id}
-                getActive={isActiveAccessGroup}
-                add={addAccessGroup}
-                remove={removeAccessGroup}
-              />
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        }
-      ];
-    });
-  };
-
-  /**
-   * Get the contents for the studies table
-   * @returns - the table contents
-   */
-  const getStudiesData = (): TableData[][] => {
-
-    // map each table row to table cells for each column
-    return studies.map((s) => {
-      const { id, name } = s;
-
-      return [
-        {
-          contents: (
-            <div className="flex-left table-data">
-              <span>{name}</span>
-            </div>
-          ),
-          searchValue: "",
-          sortValue: name
-        },
-        {
-          contents: (
-            <div className="flex-left" style={{ position: "relative" }}>
-              <Select
-                key={id}
-                id={id}
-                opts={roles.map((r: Role) => {
-                  return { value: r.id, label: r.name };
-                })}
-                placeholder="Select role..."
-                callback={selectRole}
-                getDefault={getSelectedRole}
-              />
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        },
-        {
-          contents: (
-            <div className="flex-left table-control">
-              <ToggleButton
-                key={id}
-                id={id}
-                getActive={isActiveStudy}
-                add={addStudy}
-                remove={removeStudy}
-              />
-            </div>
-          ),
-          searchValue: "",
-          sortValue: ""
-        }
-      ];
-    });
   };
 
   /**
@@ -437,22 +296,12 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
   };
 
   /**
-   * Check if a given access group is currently assigned to the user
-   * @param id - the database primary key of the access group to check
-   * @returns - whether the access group is selected
-   */
-  const isActiveAccessGroup = (id: number): boolean => {
-    return accessGroupsSelected.some(ag => ag.id == id);
-  };
-
-  /**
    * Assign a new access group to the user
    * @param id - the access group's database primary key
    * @param callback
    */
-  const addAccessGroup = (id: number, callback: (active: boolean) => void): void => {
+  const addAccessGroup = (id: number): void => {
     dispatch({ type: "SELECT_ACCESS_GROUP", id });
-    callback(true);
   };
 
   /**
@@ -460,18 +309,8 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
    * @param id - the access group's database primary key
    * @param callback 
    */
-  const removeAccessGroup = (id: number, callback: (active: boolean) => void): void => {
+  const removeAccessGroup = (id: number): void => {
     dispatch({ type: "REMOVE_ACCESS_GROUP", id });
-    callback(false);
-  };
-
-  /**
-   * Check a given study is assigned to the user
-   * @param id - the study's database primary key
-   * @returns - whether the study is assigned to the user
-   */
-  const isActiveStudy = (id: number): boolean => {
-    return studiesSelected.some(s => s.id == id);
   };
 
   /**
@@ -479,9 +318,8 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
    * @param id - the study's database primary key
    * @param callback 
    */
-  const addStudy = (id: number, callback: (active: boolean) => void): void => {
+  const addStudy = (id: number): void => {
     dispatch({ type: "SELECT_STUDY", id });
-    callback(true);
   };
 
   /**
@@ -489,9 +327,8 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
    * @param id - the study's database primary key
    * @param callback 
    */
-  const removeStudy = (id: number, callback: (active: boolean) => void): void => {
+  const removeStudy = (id: number): void => {
     dispatch({ type: "REMOVE_STUDY", id });
-    callback(false);
   };
 
   /**
@@ -653,148 +490,267 @@ const AccountsEdit: React.FC<AccountsEditProps> = ({
 
   const buttonText = accountId ? "Update" : "Create";
 
-  return (
-    <div className="page-container" style={{ flexDirection: "row" }}>
+  const columnsAccessGroups = [
+    {
+      name: "Name",
+      sortable: true,
+      searchable: false,
+      width: 43
+    },
+    {
+      name: "App",
+      sortable: true,
+      searchable: false,
+      width: 43
+    },
+    {
+      name: "Added",
+      sortable: true,
+      searchable: false,
+      width: 14
+    }
+  ]
 
-      {/* the edit/create form */}
-      <div className="page-content bg-white">
-        {loading ? (
-          <SmallLoader />
-        ) : (
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {accountId ? "Edit " : "Create "} Account
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="first-name"
-                    type="text"
-                    placeholder=""
-                    prefill={firstName}
-                    label="First Name"
-                    onKeyup={(firstName) => {
-                      dispatch({ type: "EDIT_FIELD", firstName });
-                    }}
-                    feedback=""
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="last-name"
-                    type="text"
-                    placeholder=""
-                    prefill={lastName}
-                    label="Last Name"
-                    onKeyup={(lastName) => {
-                      dispatch({ type: "EDIT_FIELD", lastName });
-                    }}
-                    feedback=""
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="email"
-                    type="text"
-                    placeholder=""
-                    prefill={email}
-                    label="Email"
-                    onKeyup={(email) => dispatch({ type: "EDIT_FIELD", email })}
-                    feedback=""
-                  />
-                </div>
-                <div className="admin-form-field">
-                  <TextField
-                    id="phoneNumber"
-                    type="text"
-                    placeholder=""
-                    prefill={phoneNumber}
-                    label="Phone Number"
-                    onKeyup={(phoneNumber) => {
-                      dispatch({ type: "EDIT_FIELD", phoneNumber });
-                    }}
-                    feedback=""
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="password"
-                    type="password"
-                    label={accountId ? "Change password" : "Password"}
-                    onKeyup={(password) => {
-                      dispatch({ type: "EDIT_FIELD", password });
-                    }}
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <span>Assign Account to Access Group</span>
-                  <Table
-                    columns={columnsAccessGroups}
-                    control={<React.Fragment />}
-                    controlWidth={0}
-                    data={getAccessGroupsData()}
-                    includeControl={false}
-                    includeSearch={false}
-                    paginationPer={4}
-                    sortDefault="Name"
-                  />
-                </div>
-              </div>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <span>Assign Account to Studies</span>
-                  <Table
-                    columns={columnsStudies}
-                    control={<React.Fragment />}
-                    controlWidth={0}
-                    data={getStudiesData()}
-                    includeControl={false}
-                    includeSearch={false}
-                    paginationPer={4}
-                    sortDefault="Name"
-                  />
-                </div>
-              </div>
-            </div>
+  const columnsStudies = [
+    {
+      name: "Name",
+      sortable: true,
+      searchable: false,
+      width: 43
+    },
+    {
+      name: "Role",
+      sortable: false,
+      searchable: false,
+      width: 43
+    },
+    {
+      name: "Added",
+      sortable: true,
+      searchable: false,
+      width: 14
+    }
+  ]
+
+  const accessGroupsData: TableData[][] = accessGroups.map(ag => {
+    const selected = accessGroupsSelected.some(sag => sag.id == ag.id);
+    return [
+      {
+        contents: (
+          <span>{ag.name}</span>
+        ),
+        searchValue: "",
+        sortValue: ag.name
+      },
+      {
+        contents: (
+          <span>{ag.app.name}</span>
+        ),
+        searchValue: "",
+        sortValue: ag.app.name
+      },
+      {
+        contents: (
+          <ToggleButton
+            key={ag.id}
+            id={ag.id}
+            active={selected}
+            add={addAccessGroup}
+            remove={removeAccessGroup}
+            fullWidth={true}
+            fullHeight={true} />
+        ),
+        searchValue: "",
+        sortValue: selected ? 1 : 0,
+        paddingX: 0,
+        paddingY: 0,
+      }
+    ];
+  });
+
+  const studiesData = studies.map((s) => {
+    const selected = studiesSelected.some(ss => ss.id == s.id);
+    return [
+      {
+        contents: (
+          <div className="flex-left table-data">
+            <span>{s.name}</span>
           </div>
-        )}
-      </div>
-      <div className="admin-form-summary bg-dark">
+        ),
+        searchValue: "",
+        sortValue: s.name
+      },
+      {
+        contents: (
+          <Select
+            key={s.id}
+            id={s.id}
+            opts={roles.map((r: Role) => ({ value: r.id, label: r.name }))}
+            placeholder="Select role..."
+            callback={selectRole}
+            getDefault={getSelectedRole}
+            hideBorder={true} />
+        ),
+        searchValue: "",
+        sortValue: "",
+        paddingX: 0,
+        paddingY: 0,
+      },
+      {
+        contents: (
+          <ToggleButton
+            key={s.id}
+            id={s.id}
+            active={selected}
+            add={addStudy}
+            remove={removeStudy}
+            fullWidth={true}
+            fullHeight={true} />
+        ),
+        searchValue: "",
+        sortValue: selected ? 1 : 0,
+        paddingX: 0,
+        paddingY: 0,
+      }
+    ];
+  });
 
-        {/* the edit/create summary */}
-        <h1 className="border-white-b">Account Summary</h1>
-        <span>
-          Name:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;
-          {firstName || lastName ? firstName + " " + lastName : <i>Name</i>}
-          <br />
-          <br />
-          Email:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;
-          {email ? email : <i>Email</i>}
-          <br />
-          <br />
-          AccessGroups:
-          <br />
-          {getAccessGroupsSummary()}
-          <br />
-          Studies:
-          <br />
-          {getStudiesSummary()}
-          <br />
-        </span>
-        <AsyncButton onClick={post} text={buttonText} type="primary" />
-      </div>
-    </div>
+  if (loading) {
+    return (
+      <FormView>
+        <Form>
+          <SmallLoader />
+        </Form>
+      </FormView>
+    );
+  }
+
+  return (
+    <FormView>
+      <Form>
+        <FormTitle>{accountId ? "Edit " : "Create "} Account</FormTitle>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="first-name"
+              type="text"
+              placeholder=""
+              value={firstName}
+              label="First Name"
+              onKeyup={(firstName) => {
+                dispatch({ type: "EDIT_FIELD", firstName });
+              }}
+              feedback="" />
+          </FormField>
+          <FormField>
+            <TextField
+              id="last-name"
+              type="text"
+              placeholder=""
+              value={lastName}
+              label="Last Name"
+              onKeyup={(lastName) => {
+                dispatch({ type: "EDIT_FIELD", lastName });
+              }}
+              feedback="" />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="email"
+              type="text"
+              placeholder=""
+              value={email}
+              label="Email"
+              onKeyup={(email) => dispatch({ type: "EDIT_FIELD", email })}
+              feedback="" />
+          </FormField>
+          <FormField>
+            <TextField
+              id="phoneNumber"
+              type="text"
+              placeholder=""
+              value={phoneNumber}
+              label="Phone Number"
+              onKeyup={(phoneNumber) => {
+                dispatch({ type: "EDIT_FIELD", phoneNumber });
+              }}
+              feedback="" />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="password"
+              type="password"
+              label={accountId ? "Change password" : "Password"}
+              onKeyup={(password) => {
+                dispatch({ type: "EDIT_FIELD", password });
+              }}
+              value={password} />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <span className="mb-1">Assign Account to Access Group</span>
+            <Table
+              columns={columnsAccessGroups}
+              control={<React.Fragment />}
+              controlWidth={0}
+              data={accessGroupsData}
+              includeControl={false}
+              includeSearch={false}
+              paginationPer={4}
+              sortDefault="Name" />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <span className="mb-1">Assign Account to Studies</span>
+            <Table
+              columns={columnsStudies}
+              control={<React.Fragment />}
+              controlWidth={0}
+              data={studiesData}
+              includeControl={false}
+              includeSearch={false}
+              paginationPer={4}
+              sortDefault="Name" />
+          </FormField>
+        </FormRow>
+      </Form>
+      <FormSummary>
+        <FormSummaryTitle>Account Summary</FormSummaryTitle>
+        <FormSummaryContent>
+          <FormSummaryText>
+            Name:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            {firstName || lastName ? firstName + " " + lastName : <i>Name</i>}
+            <br />
+            <br />
+            Email:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            {email ? email : <i>Email</i>}
+            <br />
+            <br />
+            AccessGroups:
+            <br />
+            {getAccessGroupsSummary()}
+            <br />
+            Studies:
+            <br />
+            {getStudiesSummary()}
+            <br />
+          </FormSummaryText>
+          <FormSummaryButton onClick={post}>
+            {buttonText}
+          </FormSummaryButton>
+        </FormSummaryContent>
+      </FormSummary>
+    </FormView>
   );
 };
 

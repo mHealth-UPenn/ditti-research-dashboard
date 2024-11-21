@@ -10,7 +10,18 @@ import {
 } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import AsyncButton from "../buttons/asyncButton";
+import FormView from "../containers/forms/formView";
+import Form from "../containers/forms/form";
+import FormSummary from "../containers/forms/formSummary";
+import FormTitle from "../text/formTitle";
+import FormRow from "../containers/forms/formRow";
+import FormField from "../containers/forms/formField";
+import Button from "../buttons/button";
+import FormSummaryTitle from "../text/formSummaryTitle";
+import FormSummaryText from "../containers/forms/formSummaryText";
+import FormSummaryButton from "../containers/forms/formSummaryButton";
+import CloseIcon from "@mui/icons-material/Close";
+import FormSummaryContent from "../containers/forms/formSummaryContent";
 
 /**
  * The form's prefill
@@ -83,53 +94,6 @@ const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) =
       name: role.name,
       permissions: role.permissions
     };
-  };
-
-  /**
-   * Get the action and resource dropdown menus for each permission
-   * @returns - the permission fields
-   */
-  const getPermissionFields = (): React.ReactElement => {
-    return (
-      <React.Fragment>
-        {permissions.map((p: Permission) => (
-          <div key={p.id} className="admin-form-row">
-            <div className="admin-form-field border-light">
-              <Select
-                id={p.id}
-                opts={actions.map((a: ActionResource) => ({
-                  value: a.id,
-                  label: a.value
-                }))}
-                placeholder="Action"
-                callback={selectAction}
-                getDefault={getSelectedAction}
-              />
-            </div>
-            <div className="admin-form-field border-light">
-              <Select
-                id={p.id}
-                opts={resources.map((r: ActionResource) => ({
-                  value: r.id,
-                  label: r.value
-                }))}
-                placeholder="Permission"
-                callback={selectResource}
-                getDefault={getSelectedResource}
-              />
-            </div>
-            <div className="admin-form-field" style={{ flexGrow: 0 }}>
-              <button
-                className="button-secondary button-lg"
-                onClick={() => removePermission(p.id)}
-              >
-                Remove
-              </button>
-            </div>
-          </div>
-        ))}
-      </React.Fragment>
-    );
   };
 
   /**
@@ -284,69 +248,102 @@ const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) =
     );
   };
 
+  const permissionFields = permissions.map((p: Permission, i) =>
+    <FormRow key={i} forceRow={true}>
+      <FormField className="mr-4 xl:mr-8">
+        <Select
+          id={p.id}
+          opts={actions.map((a: ActionResource) => ({
+            value: a.id,
+            label: a.value
+          }))}
+          placeholder="Action"
+          callback={selectAction}
+          getDefault={getSelectedAction} />
+      </FormField>
+      <FormField>
+        <Select
+          id={p.id}
+          opts={resources.map((r: ActionResource) => ({
+            value: r.id,
+            label: r.value
+          }))}
+          placeholder="Permission"
+          callback={selectResource}
+          getDefault={getSelectedResource} />
+      </FormField>
+      <div className="flex items-center mb-8 px-2 cursor-pointer lg:pr-4">
+        <CloseIcon
+          color="warning"
+          fontSize="large"
+          onClick={() => removePermission(p.id)} />
+      </div>
+    </FormRow>
+  );
+
   const buttonText = roleId ? "Update" : "Create";
 
-  return (
-    <div className="page-container" style={{ flexDirection: "row" }}>
-
-      {/* the edit/create form */}
-      <div className="page-content bg-white">
-        {loading ? (
+  if (loading) {
+    return (
+      <FormView>
+        <Form>
           <SmallLoader />
-        ) : (
-          <div className="admin-form">
-            <div className="admin-form-content">
-              <h1 className="border-light-b">
-                {roleId ? "Edit " : "Create "} Role
-              </h1>
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <TextField
-                    id="name"
-                    type="text"
-                    placeholder=""
-                    prefill={name}
-                    label="Name"
-                    onKeyup={(text: string) => setName(text)}
-                    feedback=""
-                  />
-                </div>
-              </div>
-              <div style={{ marginLeft: "2rem", marginBottom: "0.5rem" }}>
-                <b>Add Permissions to Role</b>
-              </div>
-              {getPermissionFields()}
-              <div className="admin-form-row">
-                <div className="admin-form-field">
-                  <button
-                    className="button-secondary button-lg"
-                    onClick={addPermission}
-                  >
-                    Add Permission
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-      <div className="admin-form-summary bg-dark">
+        </Form>
+      </FormView>
+    );
+  }
 
-        {/* the edit/create summary */}
-        <h1 className="border-white-b">Role Summary</h1>
-        <span>
-          Name:
-          <br />
-          &nbsp;&nbsp;&nbsp;&nbsp;{name}
-          <br />
-          <br />
-          Permissions:
-          <br />
-          {getPermissionsSummary()}
-        </span>
-        <AsyncButton onClick={post} text={buttonText} type="primary" />
-      </div>
-    </div>
+  return (
+    <FormView>
+      <Form>
+        <FormTitle>{roleId ? "Edit " : "Create "} Role</FormTitle>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="name"
+              type="text"
+              placeholder=""
+              value={name}
+              label="Name"
+              onKeyup={(text: string) => setName(text)}
+              feedback="" />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <span className="mb-1 px-4">Add Permissions to Role</span>
+        </FormRow>
+        {permissionFields}
+        <FormRow>
+          <FormField>
+            <Button
+              variant="tertiary"
+              onClick={addPermission}
+              className="w-max"
+              size="sm">
+                Add Permission
+            </Button>
+          </FormField>
+        </FormRow>
+      </Form>
+      <FormSummary>
+        <FormSummaryTitle>Role Summary</FormSummaryTitle>
+        <FormSummaryContent>
+          <FormSummaryText>
+            Name:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{name}
+            <br />
+            <br />
+            Permissions:
+            <br />
+            {getPermissionsSummary()}
+          </FormSummaryText>
+          <FormSummaryButton onClick={post}>
+            {buttonText}
+          </FormSummaryButton>
+        </FormSummaryContent>
+      </FormSummary>
+    </FormView>
   );
 };
 

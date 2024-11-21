@@ -1,35 +1,18 @@
 import React, { useEffect, useState } from "react";
-import "./home.css";
 import { ReactComponent as Right } from "../icons/right.svg";
-import { AudioFile, AudioTapDetails, TapDetails, ViewProps } from "../interfaces";
+import { ViewProps } from "../interfaces";
 import StudiesView from "./dittiApp/studies";
 import Accounts from "./adminDashboard/accounts";
 import { SmallLoader } from "./loader";
 import { getAccess } from "../utils";
-
-/**
- * getTapsAsync: queries AWS for tap data
- * getTaps: get tap data locally after querying AWS
- */
-interface HomeProps extends ViewProps {
-  getTapsAsync: () => Promise<TapDetails[]>;
-  getTaps: () => TapDetails[];
-  getAudioTapsAsync: () => Promise<AudioTapDetails[]>;
-  getAudioTaps: () => AudioTapDetails[];
-  getAudioFilesAsync: () => Promise<AudioFile[]>;
-  getAudioFiles: () => AudioFile[];
-}
+import Card from "./cards/card";
+import CardContentRow from "./cards/cardContentRow";
+import ViewContainer from "./containers/viewContainer";
 
 /**
  * Home component: renders available apps for the user
  */
-const Home: React.FC<HomeProps> = ({
-  getTapsAsync,
-  getTaps,
-  getAudioTapsAsync,
-  getAudioTaps,
-  getAudioFilesAsync,
-  getAudioFiles,
+const Home: React.FC<ViewProps> = ({
   flashMessage,
   goBack,
   handleClick
@@ -42,16 +25,9 @@ const Home: React.FC<HomeProps> = ({
       name: "Ditti App Dashboard",
       view: (
         <StudiesView
-          getTapsAsync={getTapsAsync}
-          getTaps={getTaps}
-          getAudioTapsAsync={getAudioTapsAsync}
-          getAudioTaps={getAudioTaps}
-          getAudioFilesAsync={getAudioFilesAsync}
-          getAudioFiles={getAudioFiles}
           handleClick={handleClick}
           goBack={goBack}
-          flashMessage={flashMessage}
-        />
+          flashMessage={flashMessage} />
       ),
     },
     {
@@ -61,8 +37,7 @@ const Home: React.FC<HomeProps> = ({
         <Accounts
           handleClick={handleClick}
           goBack={goBack}
-          flashMessage={flashMessage}
-        />
+          flashMessage={flashMessage} />
       ),
     },
   ]);
@@ -84,39 +59,33 @@ const Home: React.FC<HomeProps> = ({
     Promise.all([admin, ditti]).then(() => setLoading(false));
   }, []);
 
-  /**
-   * Render the apps on the page
-   * @returns - apps to be rendered on the page
-   */
-  const getApps = () => {
-    return apps.map((app, i) => (
-      <div
-        key={i}
-        className="p-6 m-8 w-[24rem] bg-white shadow cursor-pointer bg-white shadow"
-        onClick={() => handleClick(app.breadcrumbs, app.view)}
-      >
-        <div className="text-lg font-bold mb-24">
-          <span>{app.name}</span>
-        </div>
-        <div className="float-right link-svg">
-          <Right />
-        </div>
-      </div>
-    ));
-  };
+  if (loading) {
+    return (
+      <ViewContainer>
+        <Card width="sm">
+          <SmallLoader />
+        </Card>
+      </ViewContainer>
+    );
+  }
 
   return (
-    <div className="flex flex-col p-6 max-h-[calc(calc(100vh-8rem)-1px)] overflow-scroll overflow-x-hidden">
-      <div className="flex items-start flex-wrap">
-        {loading ? (
-          <div className="p-6 m-8 w-[24rem] bg-white shadow">
-            <SmallLoader />
-          </div>
-        ) : (
-          getApps()
-        )}
-      </div>
-    </div>
+    <ViewContainer>
+      {apps.map((app, i) => (
+        <Card
+          key={i}
+          width="sm"
+          className="cursor-pointer hover:ring hover:ring-inse hover:ring-light"
+          onClick={() => handleClick(app.breadcrumbs, app.view)}>
+            <CardContentRow>
+              <p className="text-xl">{app.name}</p>
+            </CardContentRow>
+            <div className="flex justify-end w-full mt-24">
+              <Right />
+            </div>
+        </Card>
+      ))}
+    </ViewContainer>
   );
 };
 

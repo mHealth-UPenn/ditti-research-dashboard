@@ -6,6 +6,9 @@ import Navbar from "./navbar";
 import { getAccess, makeRequest } from "../../utils";
 import { Account, ResponseBody, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
+import ListView from "../containers/lists/listView";
+import ListContent from "../containers/lists/listContent";
+import Button from "../buttons/button";
 
 /**
  * Functional component representing Accounts.
@@ -126,63 +129,55 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
       return [
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{name}</span>
-            </div>
+            <span>{name}</span>
           ),
           searchValue: name,
           sortValue: name
         },
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{email}</span>
-            </div>
+            <span>{email}</span>
           ),
           searchValue: email,
           sortValue: email
         },
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{phoneNumber}</span>
-            </div>
+            <span>{phoneNumber}</span>
           ),
           searchValue: phoneNumber,
           sortValue: phoneNumber
         },
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>
-                {new Date(createdOn).toLocaleDateString("en-US", dateOptions)}
-              </span>
-            </div>
+            <span>
+              {new Date(createdOn).toLocaleDateString("en-US", dateOptions)}
+            </span>
           ),
           searchValue: "",
           sortValue: createdOn
         },
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>
-                {lastLogin
-                  ? ago
-                    ? `${ago} day${ago === 1 ? "" : "s"} ago`
-                    : "Today"
-                  : "Never"}
-              </span>
-            </div>
+            <span>
+              {lastLogin
+                ? ago
+                  ? `${ago} day${ago === 1 ? "" : "s"} ago`
+                  : "Today"
+                : "Never"}
+            </span>
           ),
           searchValue: "",
           sortValue: ""
         },
         {
           contents: (
-            <div className="flex-left table-control">
-              {canEdit ? (
-                <button
-                  className="button-secondary"
+            <div className="flex w-full h-full">
+              {canEdit &&
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-full flex-grow"
                   onClick={() =>
                     handleClick(
                       ["Edit", name],
@@ -190,26 +185,27 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
                         accountId={id}
                         flashMessage={flashMessage}
                         goBack={goBack}
-                        handleClick={handleClick}
-                      />
+                        handleClick={handleClick} />
                     )
-                  }
-                >
-                  Edit
-                </button>
-              ) : null}
-              {canArchive ? (
-                <button
-                  className="button-danger"
-                  onClick={() => deleteAccount(id)}
-                >
-                  Archive
-                </button>
-              ) : null}
+                  }>
+                    Edit
+                </Button>
+              }
+              {canArchive &&
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="h-full flex-grow"
+                  onClick={() => deleteAccount(id)}>
+                    Archive
+                </Button>
+              }
             </div>
           ),
           searchValue: "",
-          sortValue: ""
+          sortValue: "",
+          paddingX: 0,
+          paddingY: 0,
         }
       ];
     });
@@ -264,8 +260,8 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
 
   // If the user has permission to create, show the create button
   const tableControl = canCreate ? (
-    <button
-      className="button-primary"
+    <Button
+      variant="primary"
       onClick={() =>
         handleClick(
           ["Create"],
@@ -273,40 +269,46 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
             accountId={0}
             flashMessage={flashMessage}
             goBack={goBack}
-            handleClick={handleClick}
-          />
+            handleClick={handleClick} />
         )
-      }
-    >
-      Create&nbsp;<b>+</b>
-    </button>
+      } >
+        Create +
+    </Button>
   ) : <React.Fragment />;
 
-  return (
-    <div className="page-container">
-      <Navbar
-        active="Accounts"
-        flashMessage={flashMessage}
-        goBack={goBack}
-        handleClick={handleClick}
-      />
-      <div className="page-content bg-white">
-        {loading ? (
+  const navbar =
+    <Navbar
+      active="Accounts"
+      flashMessage={flashMessage}
+      goBack={goBack}
+      handleClick={handleClick} />;
+
+  if (loading) {
+    return (
+      <ListView>
+        {navbar}
+        <ListContent>
           <SmallLoader />
-        ) : (
-          <Table
-            columns={columns}
-            control={tableControl}
-            controlWidth={10}
-            data={getData()}
-            includeControl={true}
-            includeSearch={true}
-            paginationPer={10}
-            sortDefault=""
-          />
-        )}
-      </div>
-    </div>
+        </ListContent>
+      </ListView>
+    );
+  }
+
+  return (
+    <ListView>
+      {navbar}
+      <ListContent>
+        <Table
+          columns={columns}
+          control={tableControl}
+          controlWidth={10}
+          data={getData()}
+          includeControl={true}
+          includeSearch={true}
+          paginationPer={10}
+          sortDefault="" />
+      </ListContent>
+    </ListView>
   );
 };
 

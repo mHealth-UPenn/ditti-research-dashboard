@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { AudioTapDetails, Study, TapDetails, User, UserDetails, ViewProps } from "../../interfaces";
-import { SmallLoader } from "../loader";
+import React from "react";
+import { Study, UserDetails, ViewProps } from "../../interfaces";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
-import "./studySubjects.css";
-import SubjectVisuals from "./subjectVisuals";
-import { dummyUsers } from "../dummyData";
-import { makeRequest } from "../../utils";
+import SubjectVisuals from "./subjectVisualsV2";
+import CardContentRow from "../cards/cardContentRow";
+import ActiveIcon from "../icons/activeIcon";
+import Link from "../links/link";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -14,42 +14,20 @@ import { makeRequest } from "../../utils";
  */
 interface StudySubjectsProps extends ViewProps {
   studyPrefix: string;
-  getTaps: () => TapDetails[];
-  getAudioTaps: () => AudioTapDetails[];  // TODO: Implement into subject summary
   studyDetails: Study;
+  canViewTaps: boolean;
 }
 
-const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
-  const [users, setUsers] = useState<UserDetails[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // For fetching users enrolled in the study
-    // get all users that are enrolled in this study
-    makeRequest(
-      `/aws/scan?app=2&key=User&query=user_permission_idBEGINS"${props.studyPrefix}"`
-    ).then((res: User[]) => {
-
-      // map the user data to user details
-      const users: UserDetails[] = res.map((user) => {
-        return {
-          tapPermission: user.tap_permission,
-          information: user.information,
-          userPermissionId: user.user_permission_id,
-          expTime: user.exp_time,
-          teamEmail: user.team_email,
-          createdAt: user.createdAt
-        };
-      });
-
-      setUsers(users);
-      setLoading(false);
-    });
-
-    // Using dummyUsers for this example
-    // setUsers(dummyUsers);
-    // setLoading(false);
-  }, [props.studyPrefix]);
+const StudySubjects: React.FC<StudySubjectsProps> = ({
+  studyPrefix,
+  studyDetails,
+  canViewTaps,
+  flashMessage,
+  goBack,
+  handleClick,
+}) => {
+  const { users, taps, audioTaps } = useDittiDataContext();
+  const filteredUsers = users.filter(u => u.userPermissionId.startsWith(studyPrefix));
 
   /**
    * Render recent summary tap data for a user
@@ -57,9 +35,8 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
    * @returns 
    */
   const getSubjectSummary = (user: UserDetails): React.ReactElement => {
-    const { flashMessage, getTaps, getAudioTaps, goBack, handleClick } = props;
     let summaryTaps: React.ReactElement[];
-    let hasTapsToday = false;
+    let totalTaps = 0;
 
     // if the user has access to tapping
     if (user.tapPermission) {
@@ -74,26 +51,27 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
         const end = add(start, { days: 1 });
 
         // get taps and filter for only taps between start and end
-        const taps = props
-          .getTaps()
+        const filteredTaps = taps
           .filter(
             (t) =>
               t.dittiId === user.userPermissionId &&
               isWithinInterval(new Date(t.time), { start, end })
           ).length;
 
-        // if i is 0 and there are taps
-        hasTapsToday = !i && taps > 0;
+        const filteredAudioTaps = audioTaps
+          .filter(
+            (t) =>
+              t.dittiId === user.userPermissionId &&
+              isWithinInterval(new Date(t.time), { start, end })
+          ).length;
 
         // get the current weekday (Mon, Tue, Wed, etc.)
-        const weekday = i
-          ? start.toLocaleString("en-US", { weekday: "narrow" })
-          : "Today";
+        const weekday = start.toLocaleString("en-US", { weekday: "narrow" });
 
         return (
-          <div key={i} className="subject-summary-taps-day border-light-l">
+          <div key={i} className="hidden md:flex flex-grow-0 flex-col w-[60px] items-center border-r border-light">
             <span>{weekday}</span>
-            <span>{taps}</span>
+            <span>{filteredTaps + filteredAudioTaps}</span>
           </div>
         );
       });
@@ -102,90 +80,87 @@ const StudySubjects: React.FC<StudySubjectsProps> = (props) => {
 
       // get all taps starting from 7 days ago
       const start = sub(today, { days: 7 });
-      const totalTaps = props
-        .getTaps()
+      const tapsCount = taps
         .filter(
           (t) =>
             t.dittiId === user.userPermissionId &&
             isWithinInterval(new Date(t.time), { start, end: new Date() })
         ).length;
+      const audioTapsCount = audioTaps
+        .filter(
+          (t) =>
+            t.dittiId === user.userPermissionId &&
+            isWithinInterval(new Date(t.time), { start, end: new Date() })
+        ).length;
+      totalTaps = tapsCount + audioTapsCount;
 
       summaryTaps.push(
-        <div key={"total"} className="subject-summary-taps-day border-light-l">
-          <span>
-            <b>Total</b>
-          </span>
-          <span>
-            <b>{totalTaps}</b>
-          </span>
+        <div key="total" className="flex flex-col items-center w-[80px] font-bold">
+          <span>Total</span>
+          <span>{totalTaps}</span>
         </div>
       );
     } else {
       summaryTaps = [
-        <div key={0} className="subject-summary-no-access">
+        <span key={0}>
           No tapping access
-        </div>
+        </span>
       ];
     }
 
     // get the number of days until the user's id expires
     const expiresOn = differenceInDays(new Date(user.expTime), new Date());
 
+    const handleClickSubject = () =>
+      handleClick(
+        [user.userPermissionId],
+        <SubjectVisuals
+          flashMessage={flashMessage}
+          goBack={goBack}
+          handleClick={handleClick}
+          studyDetails={studyDetails}
+          user={user}
+        />
+      );
+
     return (
-      <div
+      <CardContentRow
         key={user.userPermissionId}
-        className="subject-summary border-light-b"
-      >
-        {/* active tapping icon */}
-        <div
-          className={"icon " + (hasTapsToday ? "icon-success" : "icon-gray")}
-        ></div>
+        className="border-b border-light">
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              {/* active tapping icon */}
+              {canViewTaps && <ActiveIcon active={!!totalTaps} className="mr-2" />}
+              {/* link to the user's summary page */}
+              {canViewTaps ?
+                <Link onClick={handleClickSubject}>
+                  {user.userPermissionId}
+                </Link> :
+                <span>{user.userPermissionId}</span>
+              }
+            </div>
+            <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
+            {/* summary tap data */}
+          </div>
 
-        {/* link to the user's summary page */}
-        <div className="subject-summary-name">
-          <span
-            className="link"
-            onClick={() =>
-              handleClick(
-                [user.userPermissionId],
-                <SubjectVisuals
-                  flashMessage={flashMessage}
-                  getTaps={getTaps}
-                  getAudioTaps={getAudioTaps}
-                  goBack={goBack}
-                  handleClick={handleClick}
-                  studyDetails={props.studyDetails}
-                  user={user}
-                />
-              )
-            }
-          >
-            {user.userPermissionId}
-          </span>
-
-          {/* days until expiry */}
-          <span>
-            <i>Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
-          </span>
-        </div>
-
-        {/* summary tap data */}
-        <div className="subject-summary-taps">{summaryTaps}</div>
-      </div>
+          {canViewTaps &&
+            <div className="flex flex-grow-0 overflow-x-hidden">
+              {summaryTaps}
+            </div>
+          }
+      </CardContentRow>
     );
   };
 
   // all users whose ids have not expired
-  const activeUsers = users.filter(
+  const activeUsers = filteredUsers.filter(
     (u: UserDetails) => new Date() < new Date(u.expTime)
   );
 
-  return loading ? (
-    <SmallLoader />
-  ) : (
-    <React.Fragment>
+  return (
+    <>
       {activeUsers.length ? activeUsers.map(getSubjectSummary) : "No active subjects"}
-    </React.Fragment>
+    </>
   );
 };
 

@@ -1,8 +1,12 @@
 import click
 from flask import current_app
 from flask.cli import with_appcontext
+from flask_migrate import upgrade
+
+from aws_portal.extensions import db
 from aws_portal.models import (
-    init_admin_app, init_admin_group, init_admin_account, init_db, init_api
+    init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
+    init_integration_testing_db, init_demo_db
 )
 
 
@@ -52,3 +56,34 @@ def init_db_click():
 @with_appcontext
 def init_api_click():
     init_api(click)
+
+
+@click.command("reset-db")
+@with_appcontext
+def reset_db_click():
+    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+
+    if "localhost" in db_uri:
+        db.drop_all()
+        db.create_all()
+        upgrade()
+    else:
+        raise RuntimeError("reset-db requires a localhost database URI.")
+
+    click.echo("Database successfully reset.")
+
+
+@click.command("init-integration-testing-db")
+@with_appcontext
+def init_integration_testing_db_click():
+    init_integration_testing_db()
+    click.echo("Database successfully initialized.")
+
+
+@click.command("init-demo-db")
+@with_appcontext
+def init_demo_db_click():
+    if init_demo_db():
+        click.echo("Demo database successfully initialized.")
+    else:
+        click.echo("Demo database not initialized.")

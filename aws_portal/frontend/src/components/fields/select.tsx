@@ -1,6 +1,5 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import "./select.css";
 
 /**
  * id: the value of the selected option
@@ -14,6 +13,7 @@ interface SelectProps {
   opts: { value: number; label: string }[];
   placeholder: string;
   disabled?: boolean;
+  hideBorder?: boolean;
   callback: (selected: number, id: number) => void;
   getDefault?: (id: number) => number;
 }
@@ -23,6 +23,7 @@ const Select: React.FC<SelectProps> = ({
   opts,
   placeholder,
   disabled,
+  hideBorder = false,
   callback,
   getDefault,
 }) => {
@@ -50,28 +51,21 @@ const Select: React.FC<SelectProps> = ({
   const updatedOpts = [{ value: 0, label: "" }].concat(opts);
 
   return (
-    <div
-      style={{
-        alignItems: "center",
-        display: "flex",
-        flexGrow: 1,
-        position: "relative",
-      }}>
+    <div className={`flex items-center flex-grow relative ${hideBorder ? "" : "border border-light"} ${disabled ? "bg-extra-light" : ""}`}>
       {/* if the blank option is selected, show the placeholder */}
       {value === "0" && (
-        <div className="select-placeholder">{placeholder}</div>
+        <span className="ml-4 text-light pointer-events-none select-none absolute">{placeholder}</span>
       )}
       <select
+        className="flex-grow pl-2 bg-[transparent] min-h-[calc(3rem-2px)] focus:outline-none focus:shadow-none cursor-pointer"
         onChange={changeValue}
         value={value}
-        style={{ minHeight: "calc(3rem - 2px)" }}
-        disabled={disabled}
-        className={disabled ? "bg-transparent" : ""}>
-        {updatedOpts.map((opt, i) => (
-          <option key={i} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
+        disabled={disabled}>
+          {updatedOpts.map((opt, i) => (
+            <option key={i} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
       </select>
     </div>
   );

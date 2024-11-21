@@ -9,6 +9,9 @@ import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
 import AboutSleepTemplatesEdit from "./aboutSleepTemplatesEdit";
 import { SmallLoader } from "../loader";
+import Button from "../buttons/button";
+import ListView from "../containers/lists/listView";
+import ListContent from "../containers/lists/listContent";
 
 const AboutSleepTemplates: React.FC<ViewProps> = ({
   flashMessage,
@@ -77,19 +80,19 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
       return [
         {
           contents: (
-            <div className="flex-left table-data">
-              <span>{name}</span>
-            </div>
+            <span>{name}</span>
           ),
           searchValue: name,
           sortValue: name,
         },
         {
           contents: (
-            <div className="flex-left table-control">
-              {canEdit ? (
-                <button
-                  className="button-secondary"
+            <div className="flex w-full h-full">
+              {canEdit &&
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-full flex-grow"
                   onClick={() =>
                     handleClick(
                       ["Edit", name],
@@ -97,26 +100,27 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
                         aboutSleepTemplateId={id}
                         flashMessage={flashMessage}
                         goBack={goBack}
-                        handleClick={handleClick}
-                      />
+                        handleClick={handleClick} />
                     )
-                  }
-                >
-                  Edit
-                </button>
-              ) : null}
-              {canArchive ? (
-                <button
-                  className="button-danger"
-                  onClick={() => deleteTemplate(id)}
-                >
-                  Archive
-                </button>
-              ) : null}
+                  }>
+                    Edit
+                </Button>
+              }
+              {canArchive &&
+                <Button
+                  variant="danger"
+                  size="sm"
+                  className="h-full flex-grow"
+                  onClick={() => deleteTemplate(id)}>
+                    Archive
+                </Button>
+              }
             </div>
           ),
           searchValue: "",
           sortValue: "",
+          paddingX: 0,
+          paddingY: 0,
         },
       ];
     });
@@ -176,9 +180,9 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
   };
 
   // if the user has permission to create, show the create button
-  const tableControl = canCreate ? (
-    <button
-      className="button-primary"
+  const tableControl = canCreate ?
+    <Button
+      variant="primary"
       onClick={() =>
         handleClick(
           ["Create"],
@@ -186,44 +190,46 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
             aboutSleepTemplateId={0}
             flashMessage={flashMessage}
             goBack={goBack}
-            handleClick={handleClick}
-          />
+            handleClick={handleClick} />
         )
-      }
-    >
-      Create&nbsp;<b>+</b>
-    </button>
-  ) : (
-    <React.Fragment />
-  );
+      }>
+        Create +
+    </Button> :
+    <React.Fragment />;
+
+  const navbar =
+    <Navbar
+      active="About Sleep Templates"
+      flashMessage={flashMessage}
+      goBack={goBack}
+      handleClick={handleClick} />;
+
+  if (loading) {
+    return (
+      <ListView>
+        {navbar}
+        <ListContent>
+          <SmallLoader />
+        </ListContent>
+      </ListView>
+    );
+  }
 
   return (
-    <div className="page-container">
-      <Navbar
-        active="About Sleep Templates"
-        flashMessage={flashMessage}
-        goBack={goBack}
-        handleClick={handleClick}
-      />
-      <div className="page-content bg-white">
-        <div style={{ position: "relative", height: "100%", width: "100%" }}>
-          {loading ? (
-            <SmallLoader />
-          ) : (
-            <Table
-              columns={columns}
-              control={tableControl}
-              controlWidth={10}
-              data={getData()}
-              includeControl={true}
-              includeSearch={true}
-              paginationPer={10}
-              sortDefault=""
-            />
-          )}
-        </div>
-      </div>
-    </div>
+    <ListView>
+      {navbar}
+      <ListContent>
+        <Table
+          columns={columns}
+          control={tableControl}
+          controlWidth={10}
+          data={getData()}
+          includeControl={true}
+          includeSearch={true}
+          paginationPer={10}
+          sortDefault="" />
+      </ListContent>
+    </ListView>
   );
 };
 

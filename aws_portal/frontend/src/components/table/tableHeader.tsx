@@ -1,7 +1,7 @@
 import * as React from "react";
-import { ReactComponent as Ascending } from "../../icons/sortAscending.svg";
-import { ReactComponent as Descending } from "../../icons/sortDescending.svg";
 import { Header } from "./table";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 
 /**
  * headers: the table's headers
@@ -9,40 +9,30 @@ import { Header } from "./table";
  */
 interface TableHeaderProps {
   headers: Header[];
-  onSort: (name: string, ascending: boolean) => void;
+  onSort: (name: string, ascending: 0 | 1) => void;
 }
 
 const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
   return (
-    <tr>
+    <tr className="h-[3rem]">
       {headers.map((h, i) => (
         <th
           key={i}
-          className={
-            "bg-light border-light-r" + (h.sortable ? " sortable" : "")
-          }
+          className={`bg-extra-light border-r border-light select-none ${h.sortable && "cursor-pointer"}`}
           style={{ width: h.width + "%" }}
-          onClick={() => {
-            return h.sortable && onSort(h.name, h.ascending === 0);
-          }}
-        >
-          <div>
-            <span>{h.name}</span>
+          onClick={() => h.sortable && onSort(h.name, h.ascending ? 0 : 1)}>
+            <div className="flex items-begin justify-between mx-1 relative lg:mx-2">
+              <span className="text-base font-regular whitespace-nowrap">{h.name}</span>
 
-            {/* sort buttons */}
-            {h.sortable ? (
-              <div className="sort">
-                <div className={h.ascending === 0 ? "sort-active" : ""}>
-                  <Descending />
-                </div>
-                <div className={h.ascending === 1 ? "sort-active" : ""}>
-                  <Ascending />
-                </div>
-              </div>
-            ) : (
-              ""
-            )}
-          </div>
+              {/* sort buttons */}
+              {h.sortable && (
+                h.ascending === -1 ?
+                <KeyboardArrowUpIcon className="text-light" /> :
+                h.ascending === 0 ?
+                <KeyboardArrowDownIcon /> :
+                <KeyboardArrowUpIcon />
+              )}
+            </div>
         </th>
       ))}
     </tr>

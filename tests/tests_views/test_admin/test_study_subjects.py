@@ -627,7 +627,7 @@ def test_study_subject_edit_success(
             "Extra Fields in Edit Payload",
             "extra_fields@example.com",
             {"studies": [], "apis": [], "unexpected_field": "unexpected_value"},
-            "Invalid attribute"
+            "Internal server error when editing study subject"
         )
     ]
 )

@@ -1,5 +1,4 @@
-import React, { ChangeEvent, createRef, RefObject } from "react";
-import "./radioField.css";
+import React, { ChangeEvent, createRef } from "react";
 
 /**
  * id (optional): an optional html id
@@ -9,7 +8,6 @@ import "./radioField.css";
  */
 interface RadioFieldProps {
   id?: string;
-  prefill?: string;
   label?: string;
   checked?: string;
   values: string[];
@@ -18,7 +16,6 @@ interface RadioFieldProps {
 
 const RadioField: React.FC<RadioFieldProps> = ({
     id,
-    prefill,
     label,
     checked,
     values,
@@ -30,16 +27,14 @@ const RadioField: React.FC<RadioFieldProps> = ({
       <div key={i} className="flex items-center">
         <label
           htmlFor={`${id}-${v}`}
-          className="p-2 cursor-pointer"
-          >
-          {v}
+          className="p-2 cursor-pointer">
+            {v}
         </label>
         <input
           ref={ref}
           id={`${id}-${v}`}
           className="cursor-pointer"
           type="radio"
-          defaultChecked={v === prefill}
           checked={v === checked}
           name={id}
           value={v}
@@ -50,9 +45,8 @@ const RadioField: React.FC<RadioFieldProps> = ({
 
   return (
     <div className="flex flex-col w-full">
-      {
-        label &&
-        <span className="font-bold mb-1">
+      {label &&
+        <span className="mb-1">
           {label}
         </span>
       }
