@@ -4,10 +4,13 @@ import json
 import logging
 import os
 import sys
+import time
 
 import boto3
+from sqlalchemy import create_engine, Table, MetaData, insert, select, update
+from sqlalchemy.orm import aliased
 
-# from utils import get_fitbit_oauth_session
+from utils.fitbit import get_fitbit_oauth_session
 
 TESTING = os.getenv("TESTING") is not None
 
@@ -95,7 +98,7 @@ def get_secret(secret_name):
             secret = response["SecretString"]
             config = json.loads(secret)
         else:
-            # Decode binary secret if it's not a string
+            # Decode binary secret if it"s not a string
             config = json.loads(response["SecretBinary"].decode("utf-8"))
 
         logger.info(
@@ -118,129 +121,204 @@ tokens_config = get_secret(tokens_secret_name)
 
 
 def handler(event, context):
+    start_time = event["requestContext"]["timeEpoch"]  # Assuming start time comes from the event context in milliseconds
     logger.info("Starting wearable data retrieval job", extra={"job_timestamp": job_timestamp})
 
-    # 1. Retrieve `function_id` from the lambda function invocation
+    # Retrieve function_id from the lambda function invocation event
+    function_id = event.get("function_id")
+    logger.info("Retrieved function_id", extra={"function_id": function_id})
 
-    # 2. Query the `lambda_function` SQL table where `lambda_function.id = function_id`
-    #     -Use config["DB_URI"] as the database URI
+    # Database connection setup
+    db_uri = config["DB_URI"]
+    engine = create_engine(db_uri)
+    metadata = MetaData(bind=engine)
 
-    # 3. Update `lambda_function.status` to `IN_PROGRESS`
+    # Reflect existing database into a new model
+    metadata.reflect(only=["lambda_function"])
+    
+    # Access the `lambda_function` table
+    lambda_function_table = Table("lambda_function", metadata, autoload_with=engine)
 
-    # 4. Query all entries in the `join_study_subject_api as api` SQL table
-    #     -Use config["DB_URI"] as the database URI
-    #     -Join `study_subject as subject` on `api.study_subject_id` and `subject.id`
-    #     -Join `join_study_subject_study as study` on `subject.id` and `study.study_subject_id`
-    #     -Where `study.expires_on` (datetime) is after `api.last_sync_date` (date)
-    #     -Select `subject.id api.api_user_uuid api.last_sync_date study.expires_on`
-    #     -On error save `DB_ERROR` in the variable `error_code`
+    # Query the table for the specific function_id and update status
+    try:
+        with engine.connect() as connection:
+            # Retrieve the record
+            query = select(lambda_function_table).where(lambda_function_table.c.id == function_id)
+            result = connection.execute(query).first()
+            
+            if result:
+                logger.info("Query result", extra=dict(result))
+                
+                # Update the status to "IN_PROGRESS"
+                update_stmt = (
+                    update(lambda_function_table).
+                    where(lambda_function_table.c.id == function_id).
+                    values(status="IN_PROGRESS")
+                )
+                connection.execute(update_stmt)
+                connection.commit()
+                logger.info("Updated status to IN_PROGRESS", extra={"function_id": function_id})
 
-    # 5. Query the Fitbit API for each query result
-    #     -Initialize a Fitbit oauth session using `get_fitbit_oauth_session`
-    #      -Example usage: `session = get_fitbit_oauth_session(entry, tokens)`
-    #      -Retrieve `tokens` from `tokens_config` using `subject.id` as the key: `tokens = tokens_config[subject_id]`
-    #     -Query the Fitbit API using `session`
-    #      -Example usage: `data = fitbit_session.request(url)`
-    #      -For `url` use `https://api.fitbit.com/1.2/user/[user-id]/sleep/date/[startDate]/[endDate].json`
-    #      -Use `api.api_user_uuid` as `user-id`
-    #      -Use `api.last_sync_date` as `startDate`
-    #      -If `study.expires_on` is before `job_timestamp` use `study.expires_on` as `endDate`
-    #      -Else use `job_timestamp` as `endDate`
-    #     -On error save `API_ERROR` in the variable `error_code`
+            else:
+                logger.warning("No entry found for function_id", extra={"function_id": function_id})
 
-    # 6. Store each API query result in the following SQL schema as defined by SQLAlchemy. The schema reflects the data
-    #    structed expected from each API query
-    #     -On error save `DB_ERROR` in the variable `error_code`
-    # class SleepLog(db.Model):
-    #     __tablename__ = "sleep_log"
+    except Exception as e:
+        logger.error("Error updating the database", extra={"error": str(e)})
 
-    #     id = db.Column(db.Integer, primary_key=True)
-    #     study_subject_id = db.Column(
-    #         db.Integer,
-    #         db.ForeignKey("study_subject.id"),
-    #         nullable=False,
-    #         index=True
-    #     )
+    # Reflect existing tables into models
+    metadata.reflect(only=["join_study_subject_api", "study_subject", "join_study_subject_study"])
 
-    #     log_id = db.Column(db.BigInteger, nullable=False, unique=True, index=True)
-    #     date_of_sleep = db.Column(db.Date, nullable=False, index=True)
-    #     duration = db.Column(db.Integer)
-    #     efficiency = db.Column(db.Integer)
-    #     end_time = db.Column(db.DateTime)
-    #     info_code = db.Column(db.Integer)
-    #     is_main_sleep = db.Column(db.Boolean)
-    #     minutes_after_wakeup = db.Column(db.Integer)
-    #     minutes_asleep = db.Column(db.Integer)
-    #     minutes_awake = db.Column(db.Integer)
-    #     minutes_to_fall_asleep = db.Column(db.Integer)
-    #     log_type = db.Column(Enum(SleepLogTypeEnum), nullable=False)
-    #     start_time = db.Column(db.DateTime)
-    #     time_in_bed = db.Column(db.Integer)
-    #     type = db.Column(Enum(SleepCategoryTypeEnum), nullable=False)
+    # Aliased tables for readability
+    api = aliased(Table("join_study_subject_api", metadata, autoload_with=engine))
+    subject = aliased(Table("study_subject", metadata, autoload_with=engine))
+    study = aliased(Table("join_study_subject_study", metadata, autoload_with=engine))
+    sleep_log_table = Table("sleep_log", metadata, autoload_with=engine)
+    sleep_level_table = Table("sleep_level", metadata, autoload_with=engine)
+    sleep_summary_table = Table("sleep_summary", metadata, autoload_with=engine)
 
-    #     study_subject = db.relationship(
-    #         "StudySubject",
-    #         back_populates="sleep_logs"
-    #     )
-    #     levels = db.relationship(
-    #         "SleepLevel",
-    #         back_populates="sleep_log",
-    #         cascade="all, delete-orphan",
-    #         lazy="selectin"  # Efficient loading of related objects
-    #     )
-    #     summaries = db.relationship(
-    #         "SleepSummary",
-    #         back_populates="sleep_log",
-    #         cascade="all, delete-orphan",
-    #         lazy="joined"  # Eagerly load summaries
-    #     )
+    try:
+        with engine.connect() as connection:
+            # Perform the query with joins and conditions
+            query = (
+                select(
+                    subject.c.id,
+                    api.c.api_user_uuid,
+                    api.c.last_sync_date,
+                    study.c.expires_on
+                )
+                .select_from(api
+                    .join(subject, api.c.study_subject_id == subject.c.id)
+                    .join(study, subject.c.id == study.c.study_subject_id)
+                )
+                .where(study.c.expires_on > api.c.last_sync_date)
+            )
+            result = connection.execute(query).fetchall()
 
+            # Log or process the result as needed
+            logger.info("Fetched study subject API data", extra={"result_count": len(result)})
 
-    # class SleepLevel(db.Model):
-    #     __tablename__ = "sleep_level"
-    #     __table_args__ = (
-    #         db.Index("idx_sleep_level_sleep_log_id_date_time",
-    #                  "sleep_log_id", "date_time"),
-    #     )
+            # Iterate over each result to query the Fitbit API
+            for entry in result:
+                try:
+                    # Retrieve OAuth tokens for the subject
+                    subject_id = entry.id
+                    tokens = tokens_config[subject_id]
 
-    #     id = db.Column(db.Integer, primary_key=True)
-    #     sleep_log_id = db.Column(
-    #         db.Integer,
-    #         db.ForeignKey("sleep_log.id"),
-    #         nullable=False
-    #     )
-    #     date_time = db.Column(db.DateTime, nullable=False, index=True)
-    #     level = db.Column(Enum(SleepLevelEnum), nullable=False)
-    #     seconds = db.Column(db.Integer, nullable=False)
-    #     is_short = db.Column(db.Boolean, default=False, nullable=True)
+                    # Initialize Fitbit OAuth session
+                    fitbit_session = get_fitbit_oauth_session(entry, tokens)
 
-    #     sleep_log = db.relationship("SleepLog", back_populates="levels")
+                    # Construct the URL for Fitbit API call
+                    user_id = entry.api_user_uuid
+                    start_date = entry.last_sync_date.strftime("%Y-%m-%d")
+                    end_date = min(entry.expires_on, datetime.strptime(job_timestamp, "%Y-%m-%d_%H:%M:%S")).strftime("%Y-%m-%d")
 
-    # class SleepSummary(db.Model):
-    #     __tablename__ = "sleep_summary"
+                    url = f"https://api.fitbit.com/1.2/user/{user_id}/sleep/date/{start_date}/{end_date}.json"
+                    
+                    # Query the Fitbit API
+                    response = fitbit_session.request(url)
+                    data = response.json()
 
-    #     id = db.Column(db.Integer, primary_key=True)
-    #     sleep_log_id = db.Column(
-    #         db.Integer,
-    #         db.ForeignKey("sleep_log.id"),
-    #         nullable=False
-    #     )
-    #     level = db.Column(Enum(SleepLevelEnum), nullable=False)
-    #     count = db.Column(db.Integer)
-    #     minutes = db.Column(db.Integer)
-    #     thirty_day_avg_minutes = db.Column(db.Integer, nullable=True)
+                    logger.info("Fitbit API data retrieved", extra={"user_id": user_id, "data": data})
 
-    #     sleep_log = db.relationship("SleepLog", back_populates="summaries")
+                except Exception as api_error:
+                    error_code = "API_ERROR"
+                    logger.error("Error querying the Fitbit API", extra={"error": str(api_error), "user_id": user_id})
 
-    # 7. Update `api.last_sync_date` to `job_timestamp`
+                for sleep_record in data.get("sleep", []):
+                    # Create sleep log entry
+                    insert_stmt = insert(sleep_log_table).values(
+                        study_subject_id=subject_id,
+                        log_id=sleep_record["logId"],
+                        date_of_sleep=datetime.strptime(sleep_record["dateOfSleep"], "%Y-%m-%d").date(),
+                        duration=sleep_record["duration"],
+                        efficiency=sleep_record["efficiency"],
+                        end_time=datetime.strptime(sleep_record["endTime"], "%Y-%m-%dT%H:%M:%S.%f"),
+                        info_code=sleep_record.get("infoCode"),
+                        is_main_sleep=sleep_record["isMainSleep"],
+                        minutes_after_wakeup=sleep_record["minutesAfterWakeup"],
+                        minutes_asleep=sleep_record["minutesAsleep"],
+                        minutes_awake=sleep_record["minutesAwake"],
+                        minutes_to_fall_asleep=sleep_record["minutesToFallAsleep"],
+                        log_type=sleep_record["type"],
+                        start_time=datetime.strptime(sleep_record["startTime"], "%Y-%m-%dT%H:%M:%S.%f"),
+                        time_in_bed=sleep_record["timeInBed"],
+                        type=sleep_record["type"]
+                    )
+                    result_proxy = connection.execute(insert_stmt)
+                    sleep_log_id = result_proxy.inserted_primary_key[0]  # Get the inserted ID
 
-    # 8. Upload the log file to S3
-    #     -Use config["S3_BUCKET"] as the bucket to upload to
-    #     -Include `function_id` in the log filename on S3
+                    # Insert sleep levels and summaries
+                    for level_data in sleep_record.get("levels", {}).get("data", []):
+                        insert_level_stmt = insert(sleep_level_table).values(
+                            sleep_log_id=sleep_log_id,
+                            date_time=datetime.strptime(level_data["dateTime"], "%Y-%m-%dT%H:%M:%S.%f"),
+                            level=level_data["level"],
+                            seconds=level_data["seconds"],
+                            is_short=level_data.get("isShort", False)
+                        )
+                        connection.execute(insert_level_stmt)
 
-    # 9. Update `lambda_function`
-    #     -Update `lambda_function.completed_on` to the current time
-    #     -Update `lambda_function.ms_billed` to the number of milliseconds the function ran
-    #     -Update `lambda_function.logfile` to the full S3 URI of the logfile
-    #     -If any error occured update `lambda_function.status` to `FAILED` and `lambda_function.error_code` to `error_code`
-    #     -Else set `lambda_function.status` to `COMPLETE`
+                    for summary_data in sleep_record.get("levels", {}).get("summary", []):
+                        insert_summary_stmt = insert(sleep_summary_table).values(
+                            sleep_log_id=sleep_log_id,
+                            level=summary_data["level"],
+                            count=summary_data["count"],
+                            minutes=summary_data["minutes"],
+                            thirty_day_avg_minutes=summary_data.get("thirtyDayAvgMinutes")
+                        )
+                        connection.execute(insert_summary_stmt)
+
+                # Update `api.last_sync_date` to the current `job_timestamp`
+                updated_timestamp = datetime.strptime(job_timestamp, "%Y-%m-%d_%H:%M:%S")
+                
+                connection.execute(
+                    update(api)
+                    .where(api.c.study_subject_id == subject_id)
+                    .values(last_sync_date=updated_timestamp)
+                )
+                connection.commit()
+
+                logger.info("Updated last_sync_date", extra={"study_subject_id": subject_id})
+
+    except Exception as e:
+        error_code = "DB_ERROR"
+        logger.error("Error querying the study subject API data", extra={"error": str(e)})
+
+    # Upload log file to S3
+    try:
+        s3_client = boto3.client("s3")
+        bucket_name = config["S3_BUCKET"]
+        # Prepare the S3 filename including function_id
+        s3_filename = f"logs/{function_id}_log_{job_timestamp}.json"
+
+        s3_client.upload_file(log_filename, bucket_name, s3_filename)
+        
+        logger.info("Log file successfully uploaded to S3", extra={"s3_filename": s3_filename, "bucket": bucket_name})
+
+    except Exception as s3_error:
+        logger.error("Error uploading log file to S3", extra={"error": str(s3_error)})
+
+    s3_uri = f"s3://{bucket_name}/{s3_filename}"
+    end_time = int(time.time() * 1000)  # Current time in milliseconds
+    ms_billed = end_time - start_time
+
+    # Update the lambda_function table with completion information
+    try:
+        with engine.connect() as connection:
+            update_stmt = (
+                update(lambda_function_table)
+                .where(lambda_function_table.c.id == function_id)
+                .values(
+                    completed_on=datetime.now(),
+                    ms_billed=ms_billed,
+                    logfile=s3_uri,
+                    status="FAILED" if error_code else "COMPLETE",
+                    error_code=error_code
+                )
+            )
+            connection.execute(update_stmt)
+            connection.commit()
+            logger.info("Updated lambda_function with completion information", extra={"function_id": function_id})
+
+    except Exception as db_error:
+        logger.error("Error updating lambda_function with completion information", extra={"error": str(db_error)})
