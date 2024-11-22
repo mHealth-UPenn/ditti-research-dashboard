@@ -1,6 +1,7 @@
 alembic==1.13.2
 annotated-types==0.7.0
 antlr4-python3-runtime==4.13.1
+APScheduler==3.10.4
 argcomplete==3.4.0
 attrs==23.2.0
 aws-sam-translator==1.89.0
@@ -20,6 +21,7 @@ cryptography==42.0.8
 docker==7.1.0
 durationpy==0.7
 Flask==2.3.3
+Flask-APScheduler==1.13.1
 Flask-Bcrypt==1.0.1
 Flask-Cors==4.0.1
 Flask-JWT-Extended==4.6.0
