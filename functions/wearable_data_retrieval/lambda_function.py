@@ -10,7 +10,7 @@ import boto3
 from sqlalchemy import create_engine, Table, MetaData, insert, select, update
 from sqlalchemy.orm import aliased
 
-from utils.fitbit import get_fitbit_oauth_session
+from shared.fitbit import get_fitbit_oauth_session
 
 TESTING = os.getenv("TESTING") is not None
 

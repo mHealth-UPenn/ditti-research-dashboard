@@ -1,16 +1,58 @@
+
+import base64
+import hashlib
+import os
 import logging
 import time
 from typing import Any, Dict
-
-from oauthlib.oauth2 import WebApplicationClient
 import requests
+from oauthlib.oauth2 import WebApplicationClient
+from flask import current_app
+from aws_portal.extensions import tm
 
-import utils.tokens_manager as tm
-
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
-def get_fitbit_oauth_session(join_entry, config, tokens):
+def generate_code_verifier(length: int = 128) -> str:
+    """
+    Generates a high-entropy cryptographic random string for PKCE (Proof Key for Code Exchange).
+
+    Args:
+        length (int, optional): Length of the code verifier. Must be between 43 and 128 characters.
+                                Defaults to 128.
+
+    Returns:
+        str: A securely generated code verifier string.
+
+    Raises:
+        ValueError: If the specified length is not within the allowed range.
+    """
+    if not 43 <= length <= 128:
+        raise ValueError("length must be between 43 and 128 characters")
+    code_verifier = base64.urlsafe_b64encode(os.urandom(length))\
+        .rstrip(b'=')\
+        .decode('utf-8')
+    return code_verifier[:length]
+
+
+def create_code_challenge(code_verifier: str) -> str:
+    """
+    Creates a S256 code challenge from the provided code verifier.
+
+    Args:
+        code_verifier (str): The code verifier string.
+
+    Returns:
+        str: The generated code challenge string.
+    """
+    code_challenge = hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    code_challenge = base64.urlsafe_b64encode(code_challenge)\
+        .rstrip(b'=')\
+        .decode('utf-8')
+    return code_challenge
+
+
+def get_fitbit_oauth_session(join_entry, config, tokens=None):
     """
     Creates an OAuth2Session for Fitbit API, using stored tokens.
 
@@ -25,6 +67,21 @@ def get_fitbit_oauth_session(join_entry, config, tokens):
     """
     fitbit_client_secret = config["FITBIT_CLIENT_SECRET"]
     fitbit_client_id = config["FITBIT_CLIENT_ID"]
+
+    if tokens is None:
+        try:
+            # Retrieve tokens using TokensManager
+            tokens = tm.get_api_tokens(
+                api_name="Fitbit",
+                study_subject_id=join_entry.study_subject_id
+            )
+        except KeyError as e:
+            logger.error(f"Tokens not found: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error retrieving tokens: {e}")
+            raise
+
     access_token = tokens.get("access_token")
     refresh_token = tokens.get("refresh_token")
     expires_at = tokens.get("expires_at")
