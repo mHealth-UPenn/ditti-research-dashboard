@@ -5,10 +5,11 @@ import os
 import logging
 import time
 from typing import Any, Dict
+
 import requests
 from oauthlib.oauth2 import WebApplicationClient
-from flask import current_app
-from aws_portal.extensions import tm
+
+from shared.tokens_manager import TokensManager
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ def create_code_challenge(code_verifier: str) -> str:
     return code_challenge
 
 
-def get_fitbit_oauth_session(join_entry, config, tokens=None):
+def get_fitbit_oauth_session(join_entry, config, tokens=None, tm=None):
     """
     Creates an OAuth2Session for Fitbit API, using stored tokens.
 
@@ -67,6 +68,9 @@ def get_fitbit_oauth_session(join_entry, config, tokens=None):
     """
     fitbit_client_secret = config["FITBIT_CLIENT_SECRET"]
     fitbit_client_id = config["FITBIT_CLIENT_ID"]
+
+    if tm is None:
+        tm = TokensManager()
 
     if tokens is None:
         try:
