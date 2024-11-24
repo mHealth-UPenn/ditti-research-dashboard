@@ -90,8 +90,8 @@ class Testing(Default):
 
     CORS_ORIGINS = "http://localhost:3000"
 
-    COGNITO_PARTICIPANT_DOMAIN = "penn-ditti-dev-rev2.auth.us-east-1.amazoncognito.com"
-    COGNITO_PARTICIPANT_REGION = "us-east-1"
+    COGNITO_PARTICIPANT_DOMAIN = os.getenv("COGNITO_PARTICIPANT_DOMAIN")
+    COGNITO_PARTICIPANT_REGION = os.getenv("COGNITO_PARTICIPANT_REGION")
     COGNITO_PARTICIPANT_REDIRECT_URI = "http://localhost:5000/cognito/callback"
     COGNITO_PARTICIPANT_LOGOUT_URI = "http://localhost:3000/login"
-    COGNITO_PARTICIPANT_USER_POOL_ID = "us-east-1_yz8n85tm1"
+    COGNITO_PARTICIPANT_USER_POOL_ID = os.getenv("COGNITO_PARTICIPANT_USER_POOL_ID")
