@@ -56,7 +56,9 @@ def handler(event, context):
 
     # Load secrets
     if TESTING:
-        config = {}
+        config = {
+            "DB_URI": os.getenv("DB_URI")
+        }
         tokens_config = {}
     else:
         config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
@@ -68,27 +70,32 @@ def handler(event, context):
     function_id = event.get("function_id")
     logger.info("Retrieved function_id", extra={"function_id": function_id})
 
-    # # Database connection setup
-    # db_uri = config["DB_URI"]
-    # engine = create_engine(db_uri)
-    # metadata = MetaData(bind=engine)
+    # Database connection setup
+    db_uri = config["DB_URI"]
+    engine = create_engine(db_uri)
+    metadata = MetaData(bind=engine)
 
     # # Reflect existing database into a new model
     # metadata.reflect(only=["lambda_function"])
-    
+
     # # Access the `lambda_function` table
-    # lambda_function_table = Table("lambda_function", metadata, autoload_with=engine)
+    # lambda_function_table = Table(
+    #     "lambda_function", metadata, autoload_with=engine
+    # )
 
     # # Query the table for the specific function_id and update status
     # try:
     #     with engine.connect() as connection:
     #         # Retrieve the record
-    #         query = select(lambda_function_table).where(lambda_function_table.c.id == function_id)
+    #         query = select(lambda_function_table)\
+    #             .where(lambda_function_table.c.id == function_id)
     #         result = connection.execute(query).first()
-            
+
     #         if result:
-    #             logger.info("Query result", extra=dict(result))
-                
+    #             logger.info(
+    #                 "Query for `lambda_function` result", extra=dict(result)
+    #             )
+
     #             # Update the status to "IN_PROGRESS"
     #             update_stmt = (
     #                 update(lambda_function_table).
@@ -97,13 +104,20 @@ def handler(event, context):
     #             )
     #             connection.execute(update_stmt)
     #             connection.commit()
-    #             logger.info("Updated status to IN_PROGRESS", extra={"function_id": function_id})
+    #             logger.info(
+    #                 "Updated status to IN_PROGRESS",
+    #                 extra={"function_id": function_id}
+    #             )
 
     #         else:
-    #             logger.warning("No entry found for function_id", extra={"function_id": function_id})
+    #             logger.warning(
+    #                 "No entry found for function_id",
+    #                 extra={"function_id": function_id}
+    #             )
 
     # except Exception as e:
     #     logger.error("Error updating the database", extra={"error": str(e)})
+    #     raise
 
     # # Reflect existing tables into models
     # metadata.reflect(only=["join_study_subject_api", "study_subject", "join_study_subject_study"])
@@ -153,7 +167,7 @@ def handler(event, context):
     #                 end_date = min(entry.expires_on, datetime.strptime(job_timestamp, "%Y-%m-%d_%H:%M:%S")).strftime("%Y-%m-%d")
 
     #                 url = f"https://api.fitbit.com/1.2/user/{user_id}/sleep/date/{start_date}/{end_date}.json"
-                    
+
     #                 # Query the Fitbit API
     #                 response = fitbit_session.request(url)
     #                 data = response.json()
@@ -210,7 +224,7 @@ def handler(event, context):
 
     #             # Update `api.last_sync_date` to the current `job_timestamp`
     #             updated_timestamp = datetime.strptime(job_timestamp, "%Y-%m-%d_%H:%M:%S")
-                
+
     #             connection.execute(
     #                 update(api)
     #                 .where(api.c.study_subject_id == subject_id)
@@ -232,7 +246,7 @@ def handler(event, context):
     #     s3_filename = f"logs/{function_id}_{logger.log_filename}.json"
 
     #     s3_client.upload_file(logger.log_filename, bucket_name, s3_filename)
-        
+
     #     logger.info("Log file successfully uploaded to S3", extra={"s3_filename": s3_filename, "bucket": bucket_name})
 
     # except Exception as s3_error:

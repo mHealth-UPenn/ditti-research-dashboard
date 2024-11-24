@@ -26,9 +26,13 @@ if [ $? -ne 0 ]; then
 fi
 rm -rf shared
 
+export $(cat .env | xargs)
+
 docker run --rm \
     --platform linux/amd64 \
     --name wearable-data-retrieval-test \
+    --network aws-network \
     -p 9000:8080 \
+    -e DB_URI=$DB_URI \
     -e TESTING=true \
     wearable-data-retrieval:test
