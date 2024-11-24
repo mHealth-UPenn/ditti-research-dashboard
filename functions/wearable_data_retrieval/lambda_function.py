@@ -54,15 +54,19 @@ def get_secret(secret_name):
 def handler(event, context):
     logger.info("Starting wearable data retrieval job", extra={"job_timestamp": job_timestamp})
 
-    # # Load secrets
-    # config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
-    # tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
-    # config = get_secret(config_secret_name)
-    # tokens_config = get_secret(tokens_secret_name)
+    # Load secrets
+    if TESTING:
+        config = {}
+        tokens_config = {}
+    else:
+        config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
+        tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
+        config = get_secret(config_secret_name)
+        tokens_config = get_secret(tokens_secret_name)
 
     # # Retrieve function_id from the lambda function invocation event
-    # function_id = event.get("function_id")
-    # logger.info("Retrieved function_id", extra={"function_id": function_id})
+    function_id = event.get("function_id")
+    logger.info("Retrieved function_id", extra={"function_id": function_id})
 
     # # Database connection setup
     # db_uri = config["DB_URI"]

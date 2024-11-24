@@ -27,7 +27,7 @@ class JsonFormatter(logging.Formatter):
         "threadName",
         "processName",
         "process",
-        "taskName"
+        "taskName",
     }
 
     def format(self, record):
@@ -45,7 +45,30 @@ class JsonFormatter(logging.Formatter):
             }
         )
 
-        return json.dumps(log_entry, indent=4)
+        return log_entry  # Return a dictionary instead of a JSON string
+
+
+class StreamFormatter(JsonFormatter):
+    def format(self, record: logging.LogRecord):
+        entry = super().format(record)
+        return json.dumps(entry, indent=4)
+
+
+class JsonFileHandler(logging.Handler):
+    def __init__(self, log_filename):
+        super(JsonFileHandler, self).__init__()
+        self.log_filename = log_filename
+        self.log_entries = []  # Keep track of all log entries in memory
+
+    def emit(self, record):
+        # Format the record and append it to the in-memory list
+        formatter = self.formatter
+        if formatter:
+            formatted_record = formatter.format(record)
+            self.log_entries.append(formatted_record)
+
+        with open(self.log_filename, "w") as log_file:
+            json.dump(self.log_entries, log_file, indent=4)
 
 
 class LambdaLogger(logging.Logger):
@@ -53,24 +76,25 @@ class LambdaLogger(logging.Logger):
         self.job_timestamp = job_timestamp
         self.log_filename = f"log_{self.job_timestamp}.json"
 
-        # Set up logger to write JSON log entries to a file
-        self.__logger = logging.getLogger("logger")
+        # Set up logger
+        self.__logger = logging.getLogger(__name__)
         self.__logger.setLevel(logging.INFO)
 
         # JSON Formatter
         json_formatter = JsonFormatter()
+        stream_formatter = StreamFormatter()
 
         # Stream handler for console output
         stream_handler = logging.StreamHandler(sys.stdout)
         stream_handler.setLevel(logging.INFO)
-        stream_handler.setFormatter(json_formatter)
+        stream_handler.setFormatter(stream_formatter)
         self.__logger.addHandler(stream_handler)
 
-        # File handler for JSON log file output
-        file_handler = logging.FileHandler(self.log_filename)
-        file_handler.setLevel(logging.INFO)
-        file_handler.setFormatter(json_formatter)
-        self.__logger.addHandler(file_handler)
+        # Custom JSON file handler for structured logging
+        json_file_handler = JsonFileHandler(self.log_filename)
+        json_file_handler.setLevel(logging.INFO)
+        json_file_handler.setFormatter(json_formatter)
+        self.__logger.addHandler(json_file_handler)
 
     def debug(self, *args, **kwargs):
         self.__logger.debug(*args, **kwargs)
