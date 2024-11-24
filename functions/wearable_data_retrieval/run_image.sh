@@ -20,6 +20,10 @@ if [ $NOCACHE -eq 1 ]; then
 else
     docker build --platform linux/amd64 -t wearable-data-retrieval:test .
 fi
+if [ $? -ne 0 ]; then
+    rm -rf shared
+    exit 1
+fi
 rm -rf shared
 
 docker run --rm \
