@@ -1,7 +1,5 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from flask import url_for
-from aws_portal.views.cognito.cognito import build_cognito_url
 from aws_portal.models import StudySubject
 from aws_portal.extensions import db
 import requests
@@ -39,12 +37,19 @@ def test_login_success(app, client_with_cognito):
             "redirect_uri": app.config["COGNITO_PARTICIPANT_REDIRECT_URI"],
         }
         redirect_uri_encoded = urlencode(
-            {"redirect_uri": app.config["COGNITO_PARTICIPANT_REDIRECT_URI"]})
-        cognito_auth_url = f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/login?" + \
-            f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']
-                         }&response_type=code&scope=openid&redirect_uri={redirect_uri_encoded}"
+            {"redirect_uri": app.config["COGNITO_PARTICIPANT_REDIRECT_URI"]}
+        )
+        cognito_auth_url = (
+            f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/login?"
+            + f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']}"
+            f"&response_type=code&scope=openid&redirect_uri={
+                redirect_uri_encoded}"
+        )
 
-        with patch("aws_portal.views.cognito.cognito.build_cognito_url", return_value=cognito_auth_url) as mock_build_url:
+        with patch(
+            "aws_portal.views.cognito.cognito.build_cognito_url",
+            return_value=cognito_auth_url,
+        ) as mock_build_url:
             response = client_with_cognito.get("/cognito/login")
             assert response.status_code == 302
             assert response.headers["Location"] == cognito_auth_url
@@ -62,14 +67,16 @@ def test_cognito_callback_success_existing_user(app, client_with_cognito):
             mock_response.raise_for_status.return_value = None
             mock_response.json.return_value = {
                 "id_token": "valid_id_token",
-                "access_token": "valid_access_token"
+                "access_token": "valid_access_token",
             }
             mock_post.return_value = mock_response
 
             # Mock verify_token to return valid claims
-            with patch("aws_portal.views.cognito.cognito.verify_token") as mock_verify_token:
+            with patch(
+                "aws_portal.views.cognito.cognito.verify_token"
+            ) as mock_verify_token:
                 mock_verify_token.return_value = {
-                    "cognito:username": "myusername",
+                    "cognito:username": "existing_ditti_id",
                     "sub": "user123",
                     "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
                     "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
@@ -79,17 +86,19 @@ def test_cognito_callback_success_existing_user(app, client_with_cognito):
                 # Ensure the user exists in the database
                 study_subject = StudySubject(
                     created_on=datetime.now(timezone.utc),
-                    email="myusername",
-                    is_confirmed=True
+                    ditti_id="existing_ditti_id",
+                    is_archived=False,
                 )
                 db.session.add(study_subject)
                 db.session.commit()
 
                 response = client_with_cognito.get(
-                    f"/cognito/callback?code={auth_code}")
+                    f"/cognito/callback?code={auth_code}"
+                )
                 assert response.status_code == 302
                 expected_redirect_url = app.config.get(
-                    'CORS_ORIGINS', 'http://localhost:3000')
+                    "CORS_ORIGINS", "http://localhost:3000"
+                )
                 assert response.headers["Location"] == expected_redirect_url
 
                 # Check that cookies are set
@@ -114,14 +123,16 @@ def test_cognito_callback_success_new_user(app, client_with_cognito):
             mock_response.raise_for_status.return_value = None
             mock_response.json.return_value = {
                 "id_token": "valid_id_token",
-                "access_token": "valid_access_token"
+                "access_token": "valid_access_token",
             }
             mock_post.return_value = mock_response
 
             # Mock verify_token to return valid claims
-            with patch("aws_portal.views.cognito.cognito.verify_token") as mock_verify_token:
+            with patch(
+                "aws_portal.views.cognito.cognito.verify_token"
+            ) as mock_verify_token:
                 mock_verify_token.return_value = {
-                    "cognito:username": "myusername",
+                    "cognito:username": "new_ditti_id",
                     "sub": "newuser123",
                     "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
                     "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
@@ -129,10 +140,12 @@ def test_cognito_callback_success_new_user(app, client_with_cognito):
                 }
 
                 response = client_with_cognito.get(
-                    f"/cognito/callback?code={auth_code}")
+                    f"/cognito/callback?code={auth_code}"
+                )
                 assert response.status_code == 302
                 expected_redirect_url = app.config.get(
-                    'CORS_ORIGINS', 'http://localhost:3000')
+                    "CORS_ORIGINS", "http://localhost:3000"
+                )
                 assert response.headers["Location"] == expected_redirect_url
 
                 # Check that cookies are set
@@ -147,8 +160,8 @@ def test_cognito_callback_success_new_user(app, client_with_cognito):
                     study_subject_id = sess["study_subject_id"]
                     study_subject = StudySubject.query.get(study_subject_id)
                     assert study_subject is not None
-                    assert study_subject.email == "myusername"
-                    assert study_subject.is_confirmed == True
+                    assert study_subject.ditti_id == "new_ditti_id"
+                    assert not study_subject.is_archived
 
 
 def test_cognito_callback_missing_tokens(app, client_with_cognito):
@@ -166,7 +179,8 @@ def test_cognito_callback_missing_tokens(app, client_with_cognito):
             mock_post.return_value = mock_response
 
             response = client_with_cognito.get(
-                f"/cognito/callback?code={auth_code}")
+                f"/cognito/callback?code={auth_code}"
+            )
             assert response.status_code == 400
             assert response.get_json() == {"msg": "Error fetching tokens."}
 
@@ -182,17 +196,20 @@ def test_cognito_callback_invalid_token(app, client_with_cognito):
             mock_response.raise_for_status.return_value = None
             mock_response.json.return_value = {
                 "id_token": "invalid_id_token",
-                "access_token": "valid_access_token"
+                "access_token": "valid_access_token",
             }
             mock_post.return_value = mock_response
 
             # Mock verify_token to raise InvalidTokenError
-            with patch("aws_portal.views.cognito.cognito.verify_token") as mock_verify_token:
+            with patch(
+                "aws_portal.views.cognito.cognito.verify_token"
+            ) as mock_verify_token:
                 mock_verify_token.side_effect = jwt.InvalidTokenError(
                     "Invalid token")
 
                 response = client_with_cognito.get(
-                    f"/cognito/callback?code={auth_code}")
+                    f"/cognito/callback?code={auth_code}"
+                )
                 assert response.status_code == 400
                 assert response.get_json() == {
                     "msg": "Invalid token: Invalid token"}
@@ -209,17 +226,21 @@ def test_cognito_callback_expired_token(app, client_with_cognito):
             mock_response.raise_for_status.return_value = None
             mock_response.json.return_value = {
                 "id_token": "expired_id_token",
-                "access_token": "valid_access_token"
+                "access_token": "valid_access_token",
             }
             mock_post.return_value = mock_response
 
             # Mock verify_token to raise ExpiredSignatureError
-            with patch("aws_portal.views.cognito.cognito.verify_token") as mock_verify_token:
+            with patch(
+                "aws_portal.views.cognito.cognito.verify_token"
+            ) as mock_verify_token:
                 mock_verify_token.side_effect = jwt.ExpiredSignatureError(
-                    "Token has expired.")
+                    "Token has expired."
+                )
 
                 response = client_with_cognito.get(
-                    f"/cognito/callback?code={auth_code}")
+                    f"/cognito/callback?code={auth_code}"
+                )
                 assert response.status_code == 400
                 assert response.get_json() == {"msg": "Token has expired."}
 
@@ -231,18 +252,24 @@ def test_logout_success(app, client_with_cognito):
             sess["study_subject_id"] = 1
 
         # Mock build_cognito_url to return a known logout URL
-        with patch("aws_portal.views.cognito.cognito.build_cognito_url") as mock_build_url:
+        with patch(
+            "aws_portal.views.cognito.cognito.build_cognito_url"
+        ) as mock_build_url:
             params = {
-                "client_id": app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
-                "redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
+                "client_id": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
+                "redirect_uri": app.config["COGNITO_PARTICIPANT_REDIRECT_URI"],
                 "response_type": "code",
-                "scope": "openid"
+                "scope": "openid",
             }
             redirect_uri_encoded = urlencode(
-                {"redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI']})
-            cognito_logout_url = f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/logout?" + \
-                f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']}&redirect_uri={
-                    redirect_uri_encoded}&response_type=code&scope=openid"
+                {"redirect_uri": app.config["COGNITO_PARTICIPANT_REDIRECT_URI"]}
+            )
+            cognito_logout_url = (
+                f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/logout?"
+                + f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']}"
+                f"&redirect_uri={redirect_uri_encoded}"
+                f"&response_type=code&scope=openid"
+            )
             mock_build_url.return_value = cognito_logout_url
 
             response = client_with_cognito.get("/cognito/logout")
@@ -270,8 +297,13 @@ def test_cognito_callback_requests_post_exception(app, client_with_cognito):
             mock_post.side_effect = requests.exceptions.RequestException(
                 "Network error")
 
-            with pytest.raises(requests.exceptions.RequestException):
-                client_with_cognito.get(f"/cognito/callback?code={auth_code}")
+            # Send GET request to /cognito/callback with auth_code
+            response = client_with_cognito.get(
+                f"/cognito/callback?code={auth_code}")
+
+            # Assert response status and message
+            assert response.status_code == 400
+            assert response.get_json() == {"msg": "Error fetching tokens."}
 
 
 def test_cognito_callback_database_exception(app, client_with_cognito):
@@ -285,14 +317,14 @@ def test_cognito_callback_database_exception(app, client_with_cognito):
             mock_response.raise_for_status.return_value = None
             mock_response.json.return_value = {
                 "id_token": "valid_id_token",
-                "access_token": "valid_access_token"
+                "access_token": "valid_access_token",
             }
             mock_post.return_value = mock_response
 
             # Mock verify_token to return valid claims
             with patch("aws_portal.views.cognito.cognito.verify_token") as mock_verify_token:
                 mock_verify_token.return_value = {
-                    "cognito:username": "myusername",
+                    "cognito:username": "my_ditti_id",
                     "sub": "user123",
                     "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
                     "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
@@ -301,13 +333,18 @@ def test_cognito_callback_database_exception(app, client_with_cognito):
 
                 # Mock StudySubject.query.filter_by().first() to raise Exception
                 with patch("aws_portal.views.cognito.cognito.StudySubject.query") as mock_query:
-                    mock_query.filter_by.return_value.first.side_effect = Exception(
-                        "Database error")
+                    # Ensure that any call to filter_by().first() raises an exception
+                    mock_filter = MagicMock()
+                    mock_filter.first.side_effect = Exception("Database error")
+                    mock_query.filter_by.return_value = mock_filter
 
-                    with patch("aws_portal.views.cognito.cognito.db.session.commit", side_effect=Exception("Database commit failed")):
-                        with pytest.raises(Exception):
-                            client_with_cognito.get(
-                                f"/cognito/callback?code={auth_code}")
+                    # Send GET request to /cognito/callback with auth_code
+                    response = client_with_cognito.get(
+                        f"/cognito/callback?code={auth_code}")
+
+                    # Assert response status and message
+                    assert response.status_code == 500
+                    assert response.get_json() == {"msg": "Database error."}
 
 
 def test_cognito_logout_without_cookies(app, client_with_cognito):
@@ -317,18 +354,18 @@ def test_cognito_logout_without_cookies(app, client_with_cognito):
             assert "study_subject_id" not in sess
 
         # Mock build_cognito_url to return a known logout URL
-        with patch("aws_portal.views.cognito.cognito.build_cognito_url") as mock_build_url:
-            params = {
-                "client_id": app.config['COGNITO_PARTICIPANT_CLIENT_ID'],
-                "redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI'],
-                "response_type": "code",
-                "scope": "openid"
-            }
+        with patch(
+            "aws_portal.views.cognito.cognito.build_cognito_url"
+        ) as mock_build_url:
             redirect_uri_encoded = urlencode(
-                {"redirect_uri": app.config['COGNITO_PARTICIPANT_REDIRECT_URI']})
-            cognito_logout_url = f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/logout?" + \
-                f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']}&redirect_uri={
-                    redirect_uri_encoded}&response_type=code&scope=openid"
+                {"redirect_uri": app.config["COGNITO_PARTICIPANT_REDIRECT_URI"]}
+            )
+            cognito_logout_url = (
+                f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/logout?"
+                + f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']}"
+                f"&redirect_uri={redirect_uri_encoded}"
+                f"&response_type=code&scope=openid"
+            )
             mock_build_url.return_value = cognito_logout_url
 
             response = client_with_cognito.get("/cognito/logout")

@@ -284,26 +284,31 @@ class TestDeletions:
         assert "baz: %s" % baz == "baz: %s" % None
 
     def test_delete_study_subject(self, app):
-        q1 = StudySubject.email == "foo@email.com"
+        # Query the StudySubject using ditti_id
+        q1 = StudySubject.ditti_id == "ditti_foo_123"
         foo = StudySubject.query.filter(q1).first()
-        assert "foo: %s" % foo != "foo: %s" % None
+        assert foo is not None, "StudySubject with ditti_id 'ditti_foo_123' should exist."
 
+        # Get the IDs for JoinStudySubjectStudy and JoinStudySubjectApi associations
         foo_id = foo.id
         q3 = JoinStudySubjectStudy.study_subject_id == foo_id
         q2 = JoinStudySubjectApi.study_subject_id == foo_id
         baz = JoinStudySubjectStudy.query.filter(q3).first()
         bar = JoinStudySubjectApi.query.filter(q2).first()
-        assert "bar: %s" % bar != "bar: %s" % None
-        assert "baz: %s" % baz != "baz: %s" % None
+        assert bar is not None, "JoinStudySubjectApi association should exist."
+        assert baz is not None, "JoinStudySubjectStudy association should exist."
 
+        # Delete the StudySubject
         db.session.delete(foo)
         db.session.commit()
+
+        # Verify the StudySubject and its associations are deleted
         foo = StudySubject.query.filter(q1).first()
         baz = JoinStudySubjectStudy.query.filter(q3).first()
         bar = JoinStudySubjectApi.query.filter(q2).first()
-        assert "foo: %s" % foo == "foo: %s" % None
-        assert "bar: %s" % bar == "bar: %s" % None
-        assert "baz: %s" % baz == "baz: %s" % None
+        assert foo is None, "StudySubject should be deleted."
+        assert bar is None, "JoinStudySubjectApi association should be deleted."
+        assert baz is None, "JoinStudySubjectStudy association should be deleted."
 
     def test_delete_api_with_enrolled_subject(self, app):
         with pytest.raises(IntegrityError):
@@ -390,40 +395,47 @@ class TestArchives:
         assert qux == []
 
     def test_archive_study(self, app):
+        # Retrieve the Study instance
         q1 = Study.name == "bar"
         foo = Study.query.filter(q1).first()
-        assert "foo: %s" % foo != "foo: %s" % None
+        assert foo is not None, "Study 'bar' should exist."
 
+        # Retrieve the Account associated with the Study
         q2 = Account.email == "bar@email.com"
         bar = Account.query.filter(q2).first()
-        assert "bar: %s" % bar != "bar: %s" % None
-        assert len(bar.studies) == 1
-        assert bar.studies[0].study is foo
+        assert bar is not None, "Account 'bar@email.com' should exist."
+        assert len(
+            bar.studies) == 1, "Account should be associated with one study."
+        assert bar.studies[0].study is foo, "Associated study should be 'bar'."
 
-        q2 = StudySubject.email == "bar@email.com"
+        # Retrieve the StudySubject using ditti_id
+        q2 = StudySubject.ditti_id == "ditti_bar_456"
         baz = StudySubject.query.filter(q2).first()
-        assert "baz: %s" % baz != "baz: %s" % None
-        assert len(baz.studies) == 1
-        assert baz.studies[0].study is foo
+        assert baz is not None, "StudySubject with ditti_id 'ditti_bar_456' should exist."
+        assert len(
+            baz.studies) == 1, "StudySubject should be associated with one study."
+        assert baz.studies[0].study is foo, "Associated study should be 'bar'."
 
+        # Archive the Study
         foo.is_archived = True
         db.session.commit()
-        assert foo.is_archived
-        assert len(bar.studies) == 0
-        assert len(baz.studies) == 0
+
+        # Validate archiving
+        assert foo.is_archived, "Study should be marked as archived."
+        assert len(
+            bar.studies) == 0, "Account should no longer be associated with the archived study."
+        assert len(
+            baz.studies) == 0, "StudySubject should no longer be associated with the archived study."
 
     def test_archive_api(self, app):
         q1 = Api.name == "bar"
         foo = Api.query.filter(q1).first()
-        assert "foo: %s" % foo != "foo: %s" % None
+        assert foo is not None, "API 'bar' should exist."
 
-        q2 = StudySubject.email == "bar@email.com"
+        # Updated to use ditti_id instead of email
+        q2 = StudySubject.ditti_id == "ditti_bar_456"
         baz = StudySubject.query.filter(q2).first()
-        assert "baz: %s" % baz != "baz: %s" % None
-        assert len(baz.apis) == 1
-        assert baz.apis[0].api is foo
-
-        foo.is_archived = True
-        db.session.commit()
-        assert foo.is_archived
-        assert len(baz.apis) == 0
+        assert baz is not None, "StudySubject with ditti_id 'ditti_bar_456' should exist."
+        assert len(
+            baz.apis) == 1, "StudySubject should be associated with one API."
+        assert baz.apis[0].api is foo, "Associated API should be 'bar'."

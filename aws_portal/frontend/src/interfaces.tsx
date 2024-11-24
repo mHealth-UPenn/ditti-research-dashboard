@@ -283,7 +283,7 @@ export interface AuthContextType {
   dittiId: string | null;
   iamLogin: (email: string, password: string) => Promise<void>;
   iamLogout: () => void;
-  cognitoLogin: () => void;
+  cognitoLogin: (options?: { elevated: boolean }) => void;
   cognitoLogout: () => void;
   setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }
