@@ -1,239 +1,225 @@
-import base64
-import logging
-import os
-import time
-import requests
-from flask import (
-    current_app, Blueprint, jsonify, make_response,
-    redirect, request, session
-)
-from oauthlib.oauth2 import WebApplicationClient
-from aws_portal.extensions import db, tm
-from aws_portal.models import Api, JoinStudySubjectApi
-from aws_portal.utils.cognito import cognito_auth_required
-from aws_portal.utils.fitbit import (
-    generate_code_verifier, create_code_challenge,
-    get_fitbit_oauth_session
-)
 
-blueprint = Blueprint("cognito_fitbit", __name__, url_prefix="/cognito/fitbit")
+import base64
+import hashlib
+import os
+import logging
+import time
+from typing import Any, Dict
+
+import requests
+from oauthlib.oauth2 import WebApplicationClient
+
+from shared.tokens_manager import TokensManager
+
 logger = logging.getLogger(__name__)
 
 
-@blueprint.route("/authorize")
-@cognito_auth_required
-def fitbit_authorize():
+def generate_code_verifier(length: int = 128) -> str:
     """
-    Initiates the OAuth2 authorization flow with Fitbit.
+    Generates a high-entropy cryptographic random string for PKCE (Proof Key for Code Exchange).
 
-    Generates a code verifier and code challenge for PKCE,
-    saves them along with a state parameter in the session,
-    constructs the Fitbit authorization URL,
-    and redirects the user to Fitbit's login page.
+    Args:
+        length (int, optional): Length of the code verifier. Must be between 43 and 128 characters.
+                                Defaults to 128.
 
     Returns:
-        Any: A redirect response to Fitbit's authorization URL.
-    """
-    fitbit_client_id = current_app.config["FITBIT_CLIENT_ID"]
-    fitbit_redirect_uri = current_app.config["FITBIT_REDIRECT_URI"]
-    scopes = ["sleep"]  # Only request sleep data permission
-
-    # Initialize the OAuth2 client
-    client = WebApplicationClient(fitbit_client_id)
-
-    # Generate PKCE code_verifier and code_challenge
-    code_verifier = generate_code_verifier()
-    code_challenge = create_code_challenge(code_verifier)
-
-    # Generate a random state string for CSRF protection
-    state = base64.urlsafe_b64encode(os.urandom(32))\
-        .rstrip(b"=")\
-        .decode("utf-8")
-
-    # Save code_verifier and state in session for later verification
-    session["oauth_code_verifier"] = code_verifier
-    session["oauth_state"] = state
-
-    # Prepare the Fitbit authorization URL with necessary parameters
-    authorization_url = client.prepare_request_uri(
-        "https://www.fitbit.com/oauth2/authorize",
-        redirect_uri=fitbit_redirect_uri,
-        scope=scopes,
-        state=state,
-        code_challenge=code_challenge,
-        code_challenge_method="S256",
-    )
-
-    return redirect(authorization_url)
-
-
-@blueprint.route("/callback")
-@cognito_auth_required
-def fitbit_callback():
-    """
-    Handles the OAuth2 callback from Fitbit after user authorization.
-
-    Exchanges the authorization code for access and refresh tokens, verifies the ID token,
-    associates the tokens with the user's study subject record, stores the tokens securely,
-    and redirects the user to a success page.
-
-    Returns:
-        Any: A redirect response to the Fitbit authorization success page or an error response.
-    """
-    fitbit_client_id = current_app.config["FITBIT_CLIENT_ID"]
-    fitbit_client_secret = current_app.config["FITBIT_CLIENT_SECRET"]
-    fitbit_redirect_uri = current_app.config["FITBIT_REDIRECT_URI"]
-
-    # Retrieve the saved state and code_verifier
-    state = session.get("oauth_state")
-    code_verifier = session.get("oauth_code_verifier")
-    study_subject_id = session.get("study_subject_id")
-
-    if not state or not code_verifier or not study_subject_id:
-        msg = "Authorization failed: Missing state, code_verifier, or study_subject_id"
-        logger.error(msg)
-        return make_response({"msg": msg}, 400)
-
-    # Verify the state parameter to prevent CSRF attacks
-    state_in_request = request.args.get("state")
-    if state_in_request != state:
-        msg = "State mismatch"
-        logger.error(msg)
-        return make_response({"msg": msg}, 400)
-
-    # Retrieve the authorization code from the request
-    code = request.args.get("code")
-    if not code:
-        msg = "Authorization code not found"
-        logger.error(msg)
-        return make_response({"msg": msg}, 400)
-
-    # Initialize the OAuth2 client
-    client = WebApplicationClient(fitbit_client_id)
-
-    # Prepare the token request parameters
-    token_url, headers, body = client.prepare_token_request(
-        "https://api.fitbit.com/oauth2/token",
-        code=code,
-        redirect_url=fitbit_redirect_uri,
-        code_verifier=code_verifier
-    )
-
-    # Fitbit requires HTTP Basic Authentication for the token request
-    auth = requests.auth.HTTPBasicAuth(fitbit_client_id, fitbit_client_secret)
-
-    # Send the token request to Fitbit
-    try:
-        response = requests.post(
-            token_url,
-            headers=headers,
-            data=body,
-            auth=auth
-        )
-        response.raise_for_status()
-        token = client.parse_request_body_response(response.text)
-    except Exception as e:
-        msg = f"Failed to fetch token: {e}"
-        logger.error(msg)
-        return make_response({"msg": msg}, 400)
-
-    # Retrieve the Fitbit API record from the database
-    fitbit_api = Api.query.filter_by(name="Fitbit").first()
-    if not fitbit_api:
-        msg = "Fitbit API not configured."
-        logger.error(msg)
-        return make_response({"msg": msg}, 500)
-
-    # Associate the tokens with the study subject's Fitbit API entry
-    join_entry = JoinStudySubjectApi.query.filter_by(
-        study_subject_id=study_subject_id,
-        api_id=fitbit_api.id
-    ).first()
-
-    if not join_entry:
-        # Create a new association entry if it doesn't exist
-        join_entry = JoinStudySubjectApi(
-            study_subject_id=study_subject_id,
-            api_id=fitbit_api.id,
-            api_user_uuid=token.get("user_id"),
-            scope=token.get("scope", "")
-        )
-        db.session.add(join_entry)
-    else:
-        # Update the existing association entry
-        join_entry.api_user_uuid = token.get("user_id")
-        join_entry.scope = token.get("scope", join_entry.scope)
-
-    db.session.commit()
-
-    # Prepare the token data
-    expires_in = token.get("expires_in")
-    if expires_in:
-        expires_at = int(time.time()) + int(expires_in)
-    else:
-        expires_at = int(time.time()) + 28800  # Default to 8 hours
-
-    access_token = token["access_token"]
-    refresh_token = token["refresh_token"]
-
-    token_data = {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "expires_at": expires_at
-    }
-
-    # Store tokens securely using TokensManager
-    try:
-        tm.add_or_update_api_token(
-            api_name="Fitbit",
-            study_subject_id=study_subject_id,
-            tokens=token_data
-        )
-    except Exception as e:
-        msg = f"Error storing tokens: {str(e)}"
-        logger.error(msg)
-        return make_response({"msg": msg}, 500)
-
-    # Redirect the user to the participant dashboard
-    return redirect(current_app.config["API_AUTHORIZE_REDIRECT"])
-
-
-@blueprint.route("/sleep_list")
-@cognito_auth_required
-def fitbit_sleep_list():
-    """
-    Test: Retrieves the user's sleep data from Fitbit.
-
-    Fetches the study subject's Fitbit API session, makes a request to the Fitbit API for sleep data,
-    and returns the data as a JSON response.
-
-    Returns:
-        Any: A JSON response containing the sleep data.
+        str: A securely generated code verifier string.
 
     Raises:
-        Exception: If there is an error retrieving the sleep data.
+        ValueError: If the specified length is not within the allowed range.
     """
-    study_subject_id = session.get("study_subject_id")
-    fitbit_api = Api.query.filter_by(name="Fitbit").first()
-    study_subject_fitbit = JoinStudySubjectApi.query.filter_by(
-        study_subject_id=study_subject_id,
-        api_id=fitbit_api.id
-    ).first()
-    if study_subject_fitbit:
-        try:
-            fitbit_session = get_fitbit_oauth_session(study_subject_fitbit)
-        except Exception as e:
-            msg = f"OAuth Session Error: {str(e)}"
-            return make_response({"msg": msg}, 401)
-        try:
-            sleep_list_data = fitbit_session.request(
-                "GET", "https://api.fitbit.com/1.2/user/-/sleep/list.json?afterDate=2024-01-01&sort=asc&offset=0&limit=100"
-            ).json()
-        except Exception as e:
-            msg = f"Fitbit Data Request Error: {str(e)}"
-            return make_response({"msg": msg}, 401)
-    else:
-        msg = "Fitbit API not linked to account."
-        return make_response({"msg": msg}, 401)
+    if not 43 <= length <= 128:
+        raise ValueError("length must be between 43 and 128 characters")
+    code_verifier = base64.urlsafe_b64encode(os.urandom(length))\
+        .rstrip(b'=')\
+        .decode('utf-8')
+    return code_verifier[:length]
 
-    return jsonify(sleep_list_data)
+
+def create_code_challenge(code_verifier: str) -> str:
+    """
+    Creates a S256 code challenge from the provided code verifier.
+
+    Args:
+        code_verifier (str): The code verifier string.
+
+    Returns:
+        str: The generated code challenge string.
+    """
+    code_challenge = hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    code_challenge = base64.urlsafe_b64encode(code_challenge)\
+        .rstrip(b'=')\
+        .decode('utf-8')
+    return code_challenge
+
+
+def get_fitbit_oauth_session(join_entry, config, tokens=None, tm=None):
+    """
+    Creates an OAuth2Session for Fitbit API, using stored tokens.
+
+    Args:
+        join_entry (JoinStudySubjectApi): JoinStudySubjectApi instance.
+
+    Returns:
+        OAuth2SessionWithRefresh: An OAuth2Session instance ready to make requests to Fitbit API.
+
+    Raises:
+        Exception: If there is an error retrieving or refreshing tokens.
+    """
+    fitbit_client_secret = config["FITBIT_CLIENT_SECRET"]
+    fitbit_client_id = config["FITBIT_CLIENT_ID"]
+
+    if tm is None:
+        tm = TokensManager()
+
+    if tokens is None:
+        try:
+            # Retrieve tokens using TokensManager
+            tokens = tm.get_api_tokens(
+                api_name="Fitbit",
+                study_subject_id=join_entry.study_subject_id
+            )
+        except KeyError as e:
+            logger.error(f"Tokens not found: {e}")
+            raise
+        except Exception as e:
+            logger.error(f"Error retrieving tokens: {e}")
+            raise
+
+    access_token = tokens.get("access_token")
+    refresh_token = tokens.get("refresh_token")
+    expires_at = tokens.get("expires_at")
+
+    token = {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "Bearer",
+        "expires_at": expires_at,
+        "expires_in": expires_at - int(time.time())
+    }
+
+    # Initialize the OAuth2 WebApplicationClient
+    client = WebApplicationClient(client_id=fitbit_client_id, token=token)
+
+    def token_updater(new_token: Dict[str, Any]) -> None:
+        """
+        Updates the tokens in Secrets Manager.
+
+        Args:
+            new_token (Dict[str, Any]): The new token data obtained from Fitbit.
+
+        Raises:
+            Exception: If there is an error updating the tokens in Secrets Manager.
+        """
+        try:
+            expires_in = new_token.get("expires_in")
+            if expires_in:
+                new_expires_at = int(time.time()) + int(expires_in)
+            else:
+                new_expires_at = int(time.time()) + 28800  # Default to 8 hours
+
+            updated_token_data = {
+                "access_token": new_token["access_token"],
+                "refresh_token": new_token.get("refresh_token", refresh_token),
+                "expires_at": new_expires_at
+            }
+
+            # Store the updated tokens
+            tm.add_or_update_api_token(
+                api_name="Fitbit",
+                study_subject_id=join_entry.study_subject_id,
+                tokens=updated_token_data
+            )
+        except Exception as e:
+            logger.error(f"Error updating tokens in Secrets Manager: {e}")
+            raise
+
+    def refresh_token_func() -> None:
+        """
+        Refreshes the access token using the refresh token.
+
+        Raises:
+            Exception: If the token refresh fails.
+        """
+        token_issuer_endpoint = "https://api.fitbit.com/oauth2/token"
+        auth = requests.auth.HTTPBasicAuth(
+            fitbit_client_id, fitbit_client_secret)
+        refresh_params = {
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+        }
+        try:
+            response = requests.post(
+                token_issuer_endpoint, data=refresh_params, auth=auth)
+            response.raise_for_status()
+            new_token = response.json()
+
+            token_updater(new_token)
+            client.token = new_token
+        except Exception as e:
+            logger.error(f"Error refreshing token: {e}")
+            raise
+
+    # Wrapper around requests to handle token expiration
+    class OAuth2SessionWithRefresh:
+        """
+        A wrapper around the OAuth2 WebApplicationClient to handle automatic token refresh.
+        """
+
+        def __init__(self, client: WebApplicationClient):
+            self.client = client
+
+        def request(self, method: str, url: str, **kwargs) -> requests.Response:
+            """
+            Makes an HTTP request using the OAuth2 session, handling token refresh on 401 responses.
+
+            Args:
+                method (str): HTTP method (e.g., 'GET', 'POST').
+                url (str): The URL to make the request to.
+                **kwargs: Additional arguments for the requests.request method.
+
+            Returns:
+                requests.Response: The HTTP response received.
+            """
+            headers = kwargs.pop("headers", {})
+            headers["Authorization"] = f"Bearer {
+                self.client.token['access_token']}"
+            kwargs["headers"] = headers
+            response = requests.request(method, url, **kwargs)
+            if response.status_code == 401:
+                # Token expired, refresh it
+                refresh_token_func()
+                # Retry the request with the new token
+                headers["Authorization"] = f"Bearer {
+                    self.client.token['access_token']}"
+                kwargs["headers"] = headers
+                response = requests.request(method, url, **kwargs)
+            return response
+
+        def get(self, url: str, **kwargs) -> requests.Response:
+            """
+            Convenience method for making GET requests.
+
+            Args:
+                url (str): The URL to make the GET request to.
+                **kwargs: Additional arguments for the requests.get method.
+
+            Returns:
+                requests.Response: The HTTP response received.
+            """
+            return self.request("GET", url, **kwargs)
+
+        def post(self, url: str, **kwargs) -> requests.Response:
+            """
+            Convenience method for making POST requests.
+
+            Args:
+                url (str): The URL to make the POST request to.
+                **kwargs: Additional arguments for the requests.post method.
+
+            Returns:
+                requests.Response: The HTTP response received.
+            """
+            return self.request("POST", url, **kwargs)
+
+    return OAuth2SessionWithRefresh(client)
