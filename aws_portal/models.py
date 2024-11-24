@@ -1,6 +1,7 @@
 import enum
 import logging
 import os
+import random
 import uuid
 from datetime import datetime, UTC, timedelta
 from flask import current_app
@@ -356,6 +357,90 @@ def init_demo_db():
     return True
 
 
+def generate_random_time_between(start_hour, end_hour):
+    """Generates a random time between the specified hours of the day."""
+    hour = random.randint(start_hour, end_hour - 1)
+    minute = random.randint(0, 59)
+    return datetime.now().replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+
+def get_random_level_stages(previous_level):
+    """Returns a random sleep level stage, avoiding the previous level."""
+    levels_stages = ["deep", "light", "rem", "wake"]
+    levels_stages.remove(previous_level)
+    return random.choice(levels_stages)
+
+
+def get_random_level_classic(previous_level):
+    """Returns a random sleep level classic, avoiding the previous level."""
+    levels_classic = ["asleep", "awake", "restless"]
+    levels_classic.remove(previous_level)
+    return random.choice(levels_classic)
+
+
+def generate_sleep_logs():
+    sleep_logs = []
+    levels_stages = ["deep", "light", "rem", "wake"]
+    levels_classic = ["asleep", "awake", "restless"]
+    classic_day = random.randint(1, 7)
+
+    for i in range(7, 0, -1):
+        date_of_sleep = datetime.now() - timedelta(days=i)
+        start_time = generate_random_time_between(22, 24).replace(day=date_of_sleep.day)
+
+        sleep_log = {
+            "data": {
+                "date_of_sleep": date_of_sleep,
+                "start_time": start_time,
+                "type": "classic" if i == classic_day else "stages",
+            },
+            "levels": [],
+        }
+
+        previous_level = None
+        total_duration_minutes = 0
+        max_duration_minutes = 360 + random.random() * 120
+
+        while total_duration_minutes < max_duration_minutes:
+            seconds = random.randint(5 * 60, 30 * 60)
+            date_time = (
+                previous_level["date_time"] + timedelta(seconds=previous_level["seconds"])
+                if previous_level
+                else start_time
+            )
+
+            if i == classic_day:
+                level = {
+                    "date_time": date_time,
+                    "seconds": seconds,
+                    "is_short": None,
+                    "level": (
+                        get_random_level_classic(previous_level["level"])
+                        if previous_level
+                        else random.choice(levels_classic)
+                    ),
+                }
+            else:
+                level = {
+                    "date_time": date_time,
+                    "seconds": seconds,
+                    "is_short": None,
+                    "level": (
+                        get_random_level_stages(previous_level["level"])
+                        if previous_level
+                        else random.choice(levels_stages)
+                    ),
+                }
+
+            sleep_log["levels"].append(level)
+            previous_level = level
+            total_duration_minutes += seconds / 60
+
+        sleep_logs.append(sleep_log)
+
+    return sleep_logs
+
+
 def init_integration_testing_db():
     # Enforce that the environment must be pointing at a local database
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
@@ -669,6 +754,75 @@ def init_integration_testing_db():
 </div>"""
 
     db.session.add(AboutSleepTemplate(name="About Sleep Template", text=template_html))
+
+    api = Api(name="Fitbit")
+    db.session.add(api)
+
+    test001 = StudySubject(ditti_id="test001")
+    test002 = StudySubject(ditti_id="test002")
+    test003 = StudySubject(ditti_id="test003")
+    db.session.add(test001)
+    db.session.add(test002)
+    db.session.add(test003)
+
+    study_subject_studies = [
+        {
+            "study_subject": test001,
+            "study": study_a,
+            "did_consent": True,
+        },
+        {
+            "study_subject": test002,
+            "study": study_a,
+            "did_consent": False,
+        },
+        {
+            "study_subject": test002,
+            "study": study_b,
+            "did_consent": True,
+        },
+        {
+            "study_subject": test003,
+            "study": study_a,
+            "did_consent": True,
+        }
+    ]
+
+    for join in study_subject_studies:
+        JoinStudySubjectStudy(**join)
+
+    study_subject_apis = [
+        {
+            "study_subject": test001,
+            "api": api,
+            "api_user_uuid": "test",
+            "scope": ["sleep"],
+            "last_sync_date": datetime.now(),
+        },
+        {
+            "study_subject": test003,
+            "api": api,
+            "api_user_uuid": "test",
+            "scope": ["sleep"],
+        }
+    ]
+
+    for join in study_subject_apis:
+        JoinStudySubjectApi(**join)
+
+    for i, study_subject in enumerate([test001, test002, test003]):
+        sleep_logs = generate_sleep_logs()
+        for j, entry in enumerate(sleep_logs):
+            sleep_log = SleepLog(
+                study_subject=study_subject,
+                log_id=i * 10 + j,
+                log_type="auto_detected",
+                **entry["data"]
+            )
+            for level in entry["levels"]:
+                SleepLevel(sleep_log=sleep_log, **level)
+            db.session.add(sleep_log)
+
     db.session.commit()
 
 
