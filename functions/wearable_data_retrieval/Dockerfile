@@ -11,7 +11,8 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # Copy the Lambda function code
-COPY . .
+COPY lambda_function.py /var/task/
+COPY shared/ /var/task/shared/
 
 # Set the CMD to your Lambda handler function
 CMD ["lambda_function.handler"]

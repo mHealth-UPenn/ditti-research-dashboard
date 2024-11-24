@@ -1,14 +1,30 @@
-export $(cat secrets-aws.env | xargs)
+NOCACHE=0
 
+# parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --no-cache)
+            NOCACHE=1
+            shift
+            ;;
+        -*|--*)
+            echo "Unknown option $1"
+            exit 1
+            ;;
+    esac
+done
 
-docker build --platform linux/amd64 -t wearable-data-retrieval:test .
+cp -r ../../shared shared
+if [ $NOCACHE -eq 1 ]; then
+    docker build --platform linux/amd64 --no-cache -t wearable-data-retrieval:test .
+else
+    docker build --platform linux/amd64 -t wearable-data-retrieval:test .
+fi
+rm -rf shared
+
 docker run --rm \
     --platform linux/amd64 \
     --name wearable-data-retrieval-test \
     -p 9000:8080 \
-    -e AWS_REGION=$AWS_REGION \
-    -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
-    -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
-    -e AWS_SECRET_NAME=$AWS_SECRET_NAME \
     -e TESTING=true \
     wearable-data-retrieval:test
