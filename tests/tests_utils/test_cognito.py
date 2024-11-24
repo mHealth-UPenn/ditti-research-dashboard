@@ -197,6 +197,7 @@ def test_verify_token_success_id_token(app):
                     audience=app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
                     issuer=payload["iss"],
                     options=None,
+                    leeway=5
                 )
 
 
@@ -221,6 +222,7 @@ def test_verify_token_success_access_token(app):
                     audience=None,
                     issuer=payload["iss"],
                     options={"verify_aud": False},
+                    leeway=5
                 )
 
 

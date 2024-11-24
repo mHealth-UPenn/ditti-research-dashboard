@@ -121,23 +121,39 @@ def test_study_create(post_admin):
             "name": "baz",
             "acronym": "BAZ",
             "ditti_id": "BZ",
-            "email": "baz@email.com"
+            "email": "baz@email.com",
+            "default_expiry_delta": 30,
+            "consent_information": "Consent text...",
+            "data_summary": "Data summary..."
         }
     }
 
-    data = json.dumps(data)
-    res = post_admin("/admin/study/create", data=data)
-    data = json.loads(res.data)
-    assert "msg" in data
-    assert data["msg"] == "Study Created Successfully"
+    payload = json.dumps(data)
+    res = post_admin("/admin/study/create", data=payload)
+    response_data = json.loads(res.data)
 
-    q1 = Study.name == "baz"
-    foo = Study.query.filter(q1).first()
-    assert foo is not None
-    assert foo.name == "baz"
-    assert foo.acronym == "BAZ"
-    assert foo.ditti_id == "BZ"
-    assert foo.email == "baz@email.com"
+    assert "msg" in response_data
+    assert response_data["msg"] == "Study Created Successfully"
+
+    created_study = Study.query.filter_by(name="baz").first()
+
+    # Assert that the study exists in the database
+    assert created_study is not None
+
+    # Validate the study's attributes
+    assert created_study.name == "baz"
+    assert created_study.acronym == "BAZ"
+    assert created_study.ditti_id == "BZ"
+    assert created_study.email == "baz@email.com"
+    assert created_study.default_expiry_delta == 30
+
+    # Assert default values for optional fields
+    assert created_study.is_archived == False
+    assert created_study.is_qi == False
+
+    # Other optional fields
+    assert created_study.consent_information == "Consent text..."
+    assert created_study.data_summary == "Data summary..."
 
 
 def test_study_edit(post_admin):

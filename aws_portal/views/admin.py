@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 def account():
     """
     Get one account or a list of all accounts. This will return one account if
-    the account"s database primary key is passed as a URL option
+    the account's database primary key is passed as a URL option
 
     Options
     -------
@@ -90,7 +90,7 @@ def account_create():
                 {
                     id: int,
                     role: {
-                        id: inte
+                        id: int
                     }
                 },
                 ...
@@ -187,7 +187,7 @@ def account_edit():
                 {
                     id: int,
                     role: {
-                        id: inte
+                        id: int
                     }
                 },
                 ...
@@ -350,7 +350,7 @@ def account_archive():
 def study():
     """
     Get one study or a list of all studies. This will return one study if the
-    study"s database primary key is passed as a URL option
+    study's database primary key is passed as a URL option
 
     Options
     -------
@@ -404,7 +404,14 @@ def study_create():
     {
         app: 1,
         create: {
-            ...Study data
+            name: str,
+            acronym: str,
+            ditti_id: str,
+            email: str,
+            default_expiry_delta: int,
+            consent_information: str (optional),
+            data_summary: str (optional),
+            is_qi: bool (optional)
         }
     }
 
@@ -414,6 +421,12 @@ def study_create():
         msg: "Study Created Successfully"
     }
 
+    Response syntax (400)
+    ---------------------
+    {
+        msg: "default_expiry_delta was not provided" or other validation errors
+    }
+
     Response syntax (500)
     ---------------------
     {
@@ -421,7 +434,13 @@ def study_create():
     }
     """
     try:
-        data = request.json["create"]
+        data = request.json.get("create")
+        if not data:
+            return make_response({"msg": "No data provided"}, 400)
+
+        if "default_expiry_delta" not in data:
+            return make_response({"msg": "default_expiry_delta was not provided"}, 400)
+
         study = Study()
 
         populate_model(study, data)
@@ -452,7 +471,14 @@ def study_edit():
         app: 1,
         id: int,
         edit: {
-            ...Study data
+            name: str,
+            acronym: str,
+            ditti_id: str,
+            email: str,
+            default_expiry_delta: int (optional),
+            consent_information: str (optional),
+            data_summary: str (optional),
+            is_qi: bool (optional)
         }
     }
 
@@ -540,7 +566,7 @@ def study_archive():
 def access_group():
     """
     Get one access group or a list of all studies. This will return one access
-    group if the access groups"s database primary key is passed as a URL option
+    group if the access groups's database primary key is passed as a URL option
 
     Options
     -------
@@ -689,7 +715,7 @@ def access_group_edit():
     Response syntax (200)
     ---------------------
     {
-        msg: "Access Group Created Successfully"
+        msg: "Access Group Edited Successfully"
     }
 
     Response syntax (500)
@@ -722,7 +748,7 @@ def access_group_edit():
                 q = Permission.definition == tuple_(action, resource)
                 permission = Permission.query.filter(q).first()
 
-                # only create a new permission if it doens"t already exist
+                # only create a new permission if it doesn't already exist
                 if permission is None:
                     permission = Permission()
                     permission.action = entry["action"]
@@ -796,7 +822,7 @@ def access_group_archive():
 def role():
     """
     Get one role or a list of all studies. This will return one role if the
-    role"s database primary key is passed as a URL option
+    role's database primary key is passed as a URL option
 
     Options
     -------
@@ -1427,11 +1453,11 @@ def study_subject_create():
     {
         app: 1,
         create: {
-            email: str,
+            ditti_id: str,
             studies: [
-                { 
+                {
                     id: int,
-                    expires_o": str,
+                    expires_on: str (optional),
                     did_consent: bool
                 },
                 ...
@@ -1440,9 +1466,7 @@ def study_subject_create():
                 {
                     id: int,
                     api_user_uuid: str,
-                    scope: str[],
-                    access_key_uuid: str,
-                    refresh_key_uuid: str
+                    scope: str[]
                 },
                 ...
             ]
@@ -1458,8 +1482,8 @@ def study_subject_create():
     Response syntax (400)
     ---------------------
     {
-        msg:    "Email was not provided" or
-                "Email already exists" or
+        msg:    "ditti_id was not provided" or
+                "ditti_id already exists" or
                 "Invalid study ID: X" or
                 "Invalid API ID: Y" or
                 "Invalid date format for expires_on: YYYY-MM-DDTHH:MM:SSZ"
@@ -1476,18 +1500,18 @@ def study_subject_create():
         if not data:
             return make_response({"msg": "No data provided"}, 400)
 
-        email = data.get("email")
-        if not email:
-            return make_response({"msg": "Email was not provided"}, 400)
+        ditti_id = data.get("ditti_id")
+        if not ditti_id:
+            return make_response({"msg": "ditti_id was not provided"}, 400)
 
-        if StudySubject.query.filter(StudySubject.email == email).first():
-            return make_response({"msg": "Email already exists"}, 400)
+        if StudySubject.query.filter(StudySubject.ditti_id == ditti_id).first():
+            return make_response({"msg": "ditti_id already exists"}, 400)
 
         # Initialize StudySubject instance
         study_subject = StudySubject()
 
         # Populate non-relationship fields using populate_model
-        populate_model(study_subject, data)
+        populate_model(study_subject, {"ditti_id": ditti_id})
 
         # Set default values if not provided
         study_subject.created_on = datetime.now(UTC)
@@ -1507,13 +1531,14 @@ def study_subject_create():
 
             did_consent = study_entry.get("did_consent", False)
             expires_on_str = study_entry.get("expires_on")
-            if not expires_on_str:
-                return make_response({"msg": f"'expires_on' is required for study ID {study_id}"}, 400)
-            try:
-                expires_on = datetime.fromisoformat(
-                    expires_on_str.replace("Z", "+00:00"))
-            except ValueError:
-                return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+            if expires_on_str:
+                try:
+                    expires_on = datetime.fromisoformat(
+                        expires_on_str.replace("Z", "+00:00"))
+                except ValueError:
+                    return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+            else:
+                expires_on = None  # Let the event listener set it
 
             join_study = JoinStudySubjectStudy(
                 study_subject=study_subject,
@@ -1537,21 +1562,18 @@ def study_subject_create():
 
             api_user_uuid = api_entry.get("api_user_uuid")
             if not api_user_uuid:
-                return make_response({"msg": f"'api_user_uuid' is required in apis {api_id}"}, 400)
-            # string: wrap it in a list, empty: [], list: list
-            # scope should probably be nonnullable in JoinStudySubjectApi
-            scope = [scope] if isinstance(
-                scope := api_entry.get("scope", []), str) else scope
-            access_key_uuid = api_entry.get("access_key_uuid")
-            refresh_key_uuid = api_entry.get("refresh_key_uuid")
+                return make_response({"msg": f"'api_user_uuid' is required for API ID {api_id}"}, 400)
+            scope = api_entry.get("scope", [])
+            if isinstance(scope, str):
+                scope = [scope]
+            elif not isinstance(scope, list):
+                scope = []
 
             join_api = JoinStudySubjectApi(
                 study_subject=study_subject,
                 api=api,
                 api_user_uuid=api_user_uuid,
-                scope=scope,
-                access_key_uuid=access_key_uuid,
-                refresh_key_uuid=refresh_key_uuid
+                scope=scope
             )
             db.session.add(join_api)
 
@@ -1560,7 +1582,6 @@ def study_subject_create():
 
         return jsonify({"msg": "Study Subject Created Successfully"}), 200
 
-    # Other server errors return 500
     except Exception as e:
         exc = traceback.format_exc()
         logger.warning(exc)
@@ -1636,11 +1657,11 @@ def study_subject_edit():
         app: 1,
         id: int,
         edit: {
-            email: str,  # Optional
+            ditti_id: str,  # Optional
             studies: [
                 {
                     id: int,
-                    expires_on: str,  # ISO 8601 format, e.g., "2024-12-31T23:59:59Z"
+                    expires_on: str (optional),
                     did_consent: bool
                 },
                 ...
@@ -1649,9 +1670,7 @@ def study_subject_edit():
                 {
                     id: int,
                     api_user_uuid: str,
-                    scope: str[],
-                    access_key_uuid: str,
-                    refresh_key_uuid: str
+                    scope: str[]
                 },
                 ...
             ]
@@ -1671,7 +1690,7 @@ def study_subject_edit():
     ---------------------
     {
         msg: "Study Subject with ID X does not exist" or
-             "Email already exists" or
+             "ditti_id already exists" or
              "Invalid study ID: Y" or
              "Invalid API ID: Z" or
              "Invalid date format for expires_on: YYYY-MM-DDTHH:MM:SSZ"
@@ -1694,13 +1713,13 @@ def study_subject_edit():
         if not study_subject:
             return make_response({"msg": f"Study Subject with ID {study_subject_id} does not exist"}, 400)
 
-        # Update email if provided
-        if data and "email" in data:
-            new_email = data["email"]
-            if new_email != study_subject.email:
-                if StudySubject.query.filter(StudySubject.email == new_email).first():
-                    return make_response({"msg": "Email already exists"}, 400)
-                study_subject.email = new_email
+        # Update ditti_id if provided
+        if data and "ditti_id" in data:
+            new_ditti_id = data["ditti_id"]
+            if new_ditti_id != study_subject.ditti_id:
+                if StudySubject.query.filter(StudySubject.ditti_id == new_ditti_id, StudySubject.id != study_subject_id).first():
+                    return make_response({"msg": "ditti_id already exists"}, 400)
+                study_subject.ditti_id = new_ditti_id
 
         # Update other non-relationship fields using populate_model
         if data:
@@ -1730,13 +1749,14 @@ def study_subject_edit():
 
                 did_consent = study_entry.get("did_consent", False)
                 expires_on_str = study_entry.get("expires_on")
-                if not expires_on_str:
-                    return make_response({"msg": f"'expires_on' is required for study ID {study_id}"}, 400)
-                try:
-                    expires_on = datetime.fromisoformat(
-                        expires_on_str.replace("Z", "+00:00"))
-                except ValueError:
-                    return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+                if expires_on_str:
+                    try:
+                        expires_on = datetime.fromisoformat(
+                            expires_on_str.replace("Z", "+00:00"))
+                    except ValueError:
+                        return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+                else:
+                    expires_on = None  # Let the event listener set it
 
                 join = JoinStudySubjectStudy.query.get(
                     (study_subject_id, study_id))
@@ -1779,10 +1799,11 @@ def study_subject_edit():
                 api_user_uuid = api_entry.get("api_user_uuid")
                 if not api_user_uuid:
                     return make_response({"msg": f"'api_user_uuid' is required for API ID {api_id}"}, 400)
-                scope = [scope] if isinstance(
-                    scope := api_entry.get("scope", []), str) else scope
-                access_key_uuid = api_entry.get("access_key_uuid")
-                refresh_key_uuid = api_entry.get("refresh_key_uuid")
+                scope = api_entry.get("scope", [])
+                if isinstance(scope, str):
+                    scope = [scope]
+                elif not isinstance(scope, list):
+                    scope = []
 
                 join_api = JoinStudySubjectApi.query.get(
                     (study_subject_id, api_id))
@@ -1790,17 +1811,13 @@ def study_subject_edit():
                     # Update existing association
                     join_api.api_user_uuid = api_user_uuid
                     join_api.scope = scope
-                    join_api.access_key_uuid = access_key_uuid
-                    join_api.refresh_key_uuid = refresh_key_uuid
                 else:
                     # Create new association
                     new_join_api = JoinStudySubjectApi(
                         study_subject=study_subject,
                         api=api,
                         api_user_uuid=api_user_uuid,
-                        scope=scope,
-                        access_key_uuid=access_key_uuid,
-                        refresh_key_uuid=refresh_key_uuid
+                        scope=scope
                     )
                     db.session.add(new_join_api)
 

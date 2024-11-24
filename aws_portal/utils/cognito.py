@@ -174,7 +174,10 @@ def verify_token(participant_pool: bool, token: str, token_use: str = "id") -> d
             algorithms=["RS256"],
             audience=audience if token_use == "id" else None,
             issuer=issuer,
-            options={"verify_aud": False} if token_use == "access" else None
+            options={"verify_aud": False} if token_use == "access" else None,
+            # Allow 5 second leeway for clock skew.
+            # Necessary for deleting Cognito user then immediatly creating new one.
+            leeway=5
         )
 
         # Verify the 'token_use' claim
@@ -198,6 +201,34 @@ def verify_token(participant_pool: bool, token: str, token_use: str = "id") -> d
         raise
     except Exception as e:
         logger.error(f"Unexpected error during token verification: {e}")
+        raise
+
+
+def get_token_scopes(access_token: str) -> list:
+    """
+    Decodes the JWT access token and retrieves the scopes.
+
+    Args:
+        access_token (str): The JWT access token.
+
+    Returns:
+        list: A list of scopes included in the access token.
+    """
+    try:
+        # Decode the token without verifying the signature
+        decoded_token = jwt.decode(access_token, options={
+                                   "verify_signature": False})
+
+        # Extract scopes
+        scopes = decoded_token.get("scope", "")
+        scope_list = scopes.split()
+
+        return scope_list
+    except jwt.DecodeError as e:
+        logger.error(f"Failed to decode access token: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error decoding token: {e}")
         raise
 
 

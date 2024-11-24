@@ -122,6 +122,32 @@ def get_admin(client):
 
 
 @pytest.fixture
+def delete(client):
+    res = login_test_account("foo", client)
+    headers = get_auth_headers(res)
+    delete = partial(
+        client.delete,
+        content_type="application/json",
+        headers=headers
+    )
+
+    yield delete
+
+
+@pytest.fixture
+def delete_admin(client):
+    res = login_admin_account(client)
+    headers = get_auth_headers(res)
+    delete = partial(
+        client.delete,
+        content_type="application/json",
+        headers=headers
+    )
+
+    yield delete
+
+
+@pytest.fixture
 def post(client):
     res = login_test_account("foo", client)
     headers = get_auth_headers(res)
