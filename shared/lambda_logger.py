@@ -72,13 +72,13 @@ class JsonFileHandler(logging.Handler):
 
 
 class LambdaLogger(logging.Logger):
-    def __init__(self, job_timestamp: str):
+    def __init__(self, job_timestamp: str, /, *, level=logging.INFO):
         self.job_timestamp = job_timestamp
         self.log_filename = f"log_{self.job_timestamp}.json"
 
         # Set up logger
         self.__logger = logging.getLogger(__name__)
-        self.__logger.setLevel(logging.INFO)
+        self.__logger.setLevel(level)
 
         # JSON Formatter
         json_formatter = JsonFormatter()
@@ -86,13 +86,13 @@ class LambdaLogger(logging.Logger):
 
         # Stream handler for console output
         stream_handler = logging.StreamHandler(sys.stdout)
-        stream_handler.setLevel(logging.INFO)
+        stream_handler.setLevel(level)
         stream_handler.setFormatter(stream_formatter)
         self.__logger.addHandler(stream_handler)
 
         # Custom JSON file handler for structured logging
         json_file_handler = JsonFileHandler(self.log_filename)
-        json_file_handler.setLevel(logging.INFO)
+        json_file_handler.setLevel(level)
         json_file_handler.setFormatter(json_formatter)
         self.__logger.addHandler(json_file_handler)
 
