@@ -1,6 +1,6 @@
 export default function PrivacyPolicy() {
   return (
-    <div className="px-16 bg-extra-light">
+    <div className="px-0 sm:px-16 bg-extra-light">
       <div className="px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 2xl:px-40 py-16 bg-white">
         <h3><span>Privacy Policy for the Ditti Research Dashboard</span></h3>
         <p><span>We institute strict procedures to maintain confidentiality and will adhere to the </span><span className="font-bold">2024 HIPAA Standards for Privacy of Individually Identifiable Health Information (the PrivacyRule)</span><span>. No personally identifiable information will be collected when using the Ditti ResearchDashboard. Each user will be assigned a unique User ID that contains no personal identifiers. All data isstored on </span><span className="font-bold">Amazon Web Services (AWS)</span><span>&nbsp;and is maintained by the</span><span className="font-bold">&nbsp;University of Pennsylvania</span><span>.</span></p>

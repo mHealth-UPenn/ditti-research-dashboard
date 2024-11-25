@@ -1,6 +1,6 @@
 export default function TermsOfUse() {
   return (
-    <div className="px-16 bg-extra-light">
+    <div className="px-0 sm:px-16 bg-extra-light">
       <div className="px-4 sm:px-8 md:px-16 lg:px-24 xl:px-32 2xl:px-40 py-16 bg-white">
         <h3><span>Terms of Use for the Ditti Research Dashboard</span></h3>
         <p><span>Welcome to the Ditti Research Dashboard, a web application developed and maintained by
