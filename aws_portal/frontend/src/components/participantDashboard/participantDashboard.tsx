@@ -6,6 +6,7 @@ import CardContentRow from '../cards/cardContentRow';
 import Title from '../text/title';
 import Button from '../buttons/button';
 import Link from '../links/link';
+import { Link as RouterLink } from "react-router-dom";
 import { WearableDataProvider } from '../../contexts/wearableDataContext';
 import WearableVisualization from '../visualizations/wearableVisualization';
 
@@ -123,6 +124,15 @@ const ParticipantDashboard = () => {
             <Link onClick={handleClickManageData}>
               Request deletion of my account or data.
             </Link>
+          </CardContentRow>
+          <CardContentRow>
+            <Title>Legal</Title>
+          </CardContentRow>
+          <CardContentRow>
+            <div className="flex flex-col">
+              <RouterLink className="link" to={{ pathname: "/terms-of-use" }}>Terms of Use</RouterLink>
+              <RouterLink className="link" to={{ pathname: "/privacy-policy" }}>Privacy Policy</RouterLink>
+            </div>
           </CardContentRow>
         </Card>
       </ViewContainer>
