@@ -11,6 +11,8 @@ import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import "./index.css";
 import "./output.css";
 import { FullLoader } from "./components/loader";
+import PrivacyPolicy from "./pages/privacyPolicy";
+import TermsOfUse from "./pages/termsOfUse";
 
 /**
  * Root component wrapped with AuthProvider for authentication context.
@@ -63,6 +65,14 @@ const router = createBrowserRouter([
       // Additional routes can be added here
     ],
   },
+  {
+    path: "/privacy-policy",
+    element: <PrivacyPolicy />,
+  },
+  {
+    path: "/terms-of-use",
+    element: <TermsOfUse />,
+  }
 ] as RouteObject[]);
 
 /**
