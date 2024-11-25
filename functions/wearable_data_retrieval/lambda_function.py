@@ -1,11 +1,14 @@
 import boto3
 from datetime import datetime
+from functools import partial
 import json
 import logging
 import os
+import traceback
 
 import boto3
 from sqlalchemy import create_engine, Table, MetaData, insert, select, update
+from sqlalchemy.engine import Row
 from sqlalchemy.orm import aliased
 
 from shared.fitbit import get_fitbit_oauth_session
@@ -20,7 +23,7 @@ job_timestamp = datetime.now().isoformat()
 
 logger = LambdaLogger(
     job_timestamp,
-    level=logging.DEBUG if TESTING or DEBUG else logging.INFO
+    level=logging.DEBUG if DEBUG else logging.INFO
 )
 
 
@@ -68,7 +71,10 @@ def handler(event, context):
             config = get_secret(config_secret_name)
             tokens_config = get_secret(tokens_secret_name)
         except Exception as e:
-            logger.error(f"Error retrieving secret", extra={"error": str(e)})
+            logger.error(
+                f"Error retrieving secret",
+                extra={"error": traceback.format_exc()}
+            )
             error_code = "AWS_ERROR"
             raise
 
@@ -78,7 +84,7 @@ def handler(event, context):
 
     # Database connection setup
     db_uri = config["DB_URI"]
-    engine = create_engine(db_uri)
+    engine = create_engine(db_uri, future=True)
     metadata = MetaData(bind=engine)
 
     # # Reflect existing database into a new model
@@ -122,27 +128,29 @@ def handler(event, context):
     #             )
 
     # except Exception as e:
-    #     logger.error("Error updating the database", extra={"error": str(e)})
+    #     logger.error("Error updating the database", extra={"error": traceback.format_exc()})
     #     raise
 
     # Reflect existing tables into models
     metadata.reflect(only=["join_study_subject_api", "study_subject", "join_study_subject_study"])
 
     # Aliased tables for readability
-    api = aliased(Table("join_study_subject_api", metadata, autoload_with=engine))
+    api_table = Table("join_study_subject_api", metadata, autoload_with=engine)
+    api = aliased(api_table)
     subject = aliased(Table("study_subject", metadata, autoload_with=engine))
     study = aliased(Table("join_study_subject_study", metadata, autoload_with=engine))
     sleep_log_table = Table("sleep_log", metadata, autoload_with=engine)
     sleep_level_table = Table("sleep_level", metadata, autoload_with=engine)
     sleep_summary_table = Table("sleep_summary", metadata, autoload_with=engine)
 
-    try:
-        with engine.connect() as connection:
+    with engine.connect() as connection:
+        try:
             # Perform the query with joins and conditions
             query = (
                 select(
                     subject.c.id,
                     api.c.api_user_uuid,
+                    api.c.api_id,
                     api.c.last_sync_date,
                     study.c.expires_on
                 )
@@ -154,49 +162,64 @@ def handler(event, context):
             )
             result = connection.execute(query).fetchall()
 
-            # Log or process the result as needed
-            logger.info("Fetched study subject API data", extra={"result_count": len(result)})
+        except Exception as e:
+            error_code = "DB_ERROR"
+            logger.error(
+                "Error fetching participant API data from database",
+                extra={"error": traceback.format_exc()}
+            )
+            raise
 
-            # Iterate over each result to query the Fitbit API
-            for entry in result:
-                logger.debug("Fetching Fitbit data", extra=entry.__dict__)
+        logger.info(
+            "Fetched participant API data from database",
+            extra={"result_count": len(result)}
+        )
 
-                # Retrieve OAuth tokens for the subject
-                tokens = tokens_config[entry.id]
+        # Iterate over each result to query the Fitbit API
+        for entry in result:
+            logger.debug(
+                "Fetching participant Fitbit data",
+                extra=entry._asdict()
+            )
 
-                # Construct the URL for Fitbit API call
-                user_id = entry.api_user_uuid
-                start_date = entry.last_sync_date.strftime("%Y-%m-%d")
-                end_date = min(entry.expires_on, datetime.strptime(job_timestamp, "%Y-%m-%d_%H:%M:%S")).strftime("%Y-%m-%d")
-                url = f"https://api.fitbit.com/1.2/user/{user_id}/sleep/date/{start_date}/{end_date}.json"
-                logger.debug("Fitbit URL generated", extra={"url": url})
+            # Construct the URL for Fitbit API call
+            user_id = entry.api_user_uuid
+            start_date = entry.last_sync_date.strftime("%Y-%m-%d")
+            end_date = min(
+                entry.expires_on,
+                datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+            ).strftime("%Y-%m-%d")
 
+            url = f"https://api.fitbit.com/1.2/user/{user_id}/sleep/date/{start_date}/{end_date}.json"
+            logger.debug("Fitbit URL generated", extra={"url": url})
+            data = {"sleep": []}
+
+            try:
+                if TESTING:
+                    data = generate_sleep_logs()
+                else:
+                    # Retrieve OAuth tokens for the subject
+                    tokens = tokens_config[entry.id]
+
+                    # Query the Fitbit API
+                    fitbit_session = get_fitbit_oauth_session(entry, tokens)
+                    response = fitbit_session.request(url)
+                    data = response.json()
+
+                logger.info(
+                    "Participant data retrieved from Fibit API",
+                    extra={"user_id": user_id, "result_count": len(data["sleep"])}
+                )
+
+            except Exception as e:
+                error_code = "API_ERROR"
+                logger.error(
+                    "Error retrieving participant data from Fitbit API",
+                    extra={"error": traceback.format_exc(), "user_id": user_id, "url": url}
+                )
+
+            for sleep_record in data.get("sleep", []):
                 try:
-                    if TESTING:
-                        data = {"sleep": generate_sleep_logs()}
-                    else:
-                        # Query the Fitbit API
-                        fitbit_session = get_fitbit_oauth_session(entry, tokens)
-                        response = fitbit_session.request(url)
-                        data = response.json()
-
-                    logger.info(
-                        "Fitbit API data retrieved",
-                        extra={"user_id": user_id, "result_count": len(data)}
-                    )
-                    logger.debug(
-                        "Fitbit API data retrieved",
-                        extra={"data": data}
-                    )
-
-                except Exception as e:
-                    error_code = "API_ERROR"
-                    logger.error(
-                        "Error querying the Fitbit API",
-                        extra={"error": str(e), "user_id": user_id, "url": url}
-                    )
-
-                for sleep_record in data.get("sleep", []):
                     # Create sleep log entry
                     insert_stmt = insert(sleep_log_table).values(
                         study_subject_id=entry.id,
@@ -211,16 +234,19 @@ def handler(event, context):
                         minutes_asleep=sleep_record["minutesAsleep"],
                         minutes_awake=sleep_record["minutesAwake"],
                         minutes_to_fall_asleep=sleep_record["minutesToFallAsleep"],
-                        log_type=sleep_record["type"],
+                        log_type=sleep_record["logType"],
                         start_time=datetime.strptime(sleep_record["startTime"], "%Y-%m-%dT%H:%M:%S.%f"),
                         time_in_bed=sleep_record["timeInBed"],
                         type=sleep_record["type"]
                     )
                     result_proxy = connection.execute(insert_stmt)
-                    sleep_log_id = result_proxy.inserted_primary_key[0]  # Get the inserted ID
+                    sleep_log_id = result_proxy.inserted_primary_key[0]
                     logger.debug(
                         "Sleep log created",
-                        extra={"user_id": entry.id, "sleep_log_id": sleep_log_id}
+                        extra={
+                            "user_id": entry.id,
+                            "sleep_log_id": sleep_log_id
+                        }
                     )
 
                     # Insert sleep levels and summaries
@@ -262,20 +288,39 @@ def handler(event, context):
                             }
                         )
 
-                # Update `api.last_sync_date` to the current `job_timestamp`
-                updated_timestamp = datetime.strptime(job_timestamp, "%Y-%m-%d_%H:%M:%S")
+                except Exception as e:
+                    error_code = "DB_ERROR"
+                    logger.error(
+                        "Error inserting Fitbit data to database",
+                        extra={
+                            "user_id": user_id,
+                            "error": traceback.format_exc()
+                        }
+                    )
 
+            # Update `api.last_sync_date` to the current `job_timestamp`
+            try:
                 connection.execute(
-                    update(api)
-                    .where(api.c.study_subject_id == entry.id)
-                    .values(last_sync_date=updated_timestamp)
+                    update(api_table)
+                    .where(api_table.c.study_subject_id == entry.id)
+                    .values(last_sync_date=datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f"))
                 )
                 connection.commit()
-                logger.info("Updated last_sync_date", extra={"study_subject_id": entry.id})
+                logger.info(
+                    "Updated last_sync_date",
+                    extra={"study_subject_id": entry.id}
+                )
 
-    except Exception as e:
-        error_code = "DB_ERROR"
-        logger.error("Error querying the study subject API data", extra={"error": str(e)})
+            except Exception as e:
+                error_code = "DB_ERROR"
+                logger.error(
+                    "Error updating `last_sync_date`",
+                    extra={
+                        "user_id": user_id,
+                        "api_id": entry.api_id,
+                        "error": traceback.format_exc()
+                    }
+                )
 
     # # Upload log file to S3
     # try:

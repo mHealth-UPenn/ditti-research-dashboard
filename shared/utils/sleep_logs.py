@@ -1,13 +1,12 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import random
-import uuid
 
 
 def generate_random_time_between(start_hour, end_hour):
     """Generates a random time between the specified hours of the day."""
     hour = random.randint(start_hour, end_hour - 1)
     minute = random.randint(0, 59)
-    return datetime.now().replace(hour=hour, minute=minute, second=0, microsecond=0)
+    return datetime.now().replace(hour=hour, minute=minute)
 
 
 def get_random_level_stages(previous_level):
@@ -31,30 +30,26 @@ def generate_sleep_logs():
     classic_day = random.randint(1, 7)
 
     for i in range(7, 0, -1):
-        date_of_sleep = datetime.now() - timedelta(days=i)
+        date_of_sleep = date.today() - timedelta(days=i)
         start_time = generate_random_time_between(22, 24).replace(day=date_of_sleep.day)
 
         sleep_log = {
-            "sleep_log": {
-                "logId": str(uuid.uuid4()),
-                "dateOfSleep": date_of_sleep.isoformat(),
-                "startTime": start_time.isoformat(),
-                "duration": "",
-                "efficiency": "",
-                "endTime": datetime.now().isoformat(),
-                "infoCode": "",
-                "isMainSleep": "",
-                "minutesAfterWakeup": "",
-                "minutesAsleep": "",
-                "minutesAwake": "",
-                "minutesToFallAsleep": "",
-                "logType": "",
-                "timeInBed": "",
-                "totalMinutesAsleep": "",
-                "sleepEfficiencyPercentage": "",
-                "type": "classic" if i == classic_day else "stages",
-                "levels": {"data": [], "summary": []},
-            },
+            "logId": random.randint(0, int(1e9)),
+            "dateOfSleep": date_of_sleep.isoformat(),
+            "startTime": start_time.isoformat(),
+            "duration": 1,
+            "efficiency": 1,
+            "endTime": datetime.now().isoformat(),
+            "infoCode": 1,
+            "isMainSleep": True,
+            "minutesAfterWakeup": 1,
+            "minutesAsleep": 1,
+            "minutesAwake": 1,
+            "minutesToFallAsleep": 1,
+            "logType": "auto_detected",
+            "timeInBed": 1,
+            "type": "classic" if i == classic_day else "stages",
+            "levels": {"data": [], "summary": []},
         }
 
         previous_level = None
@@ -64,7 +59,7 @@ def generate_sleep_logs():
         while total_duration_minutes < max_duration_minutes:
             seconds = random.randint(5 * 60, 30 * 60)
             date_time = (
-                previous_level["dateTime"] + timedelta(seconds=previous_level["seconds"])
+                datetime.strptime(previous_level["dateTime"], "%Y-%m-%dT%H:%M:%S.%f") + timedelta(seconds=previous_level["seconds"])
                 if previous_level
                 else start_time
             )
@@ -82,7 +77,7 @@ def generate_sleep_logs():
                 }
             else:
                 level = {
-                    "dateTime": date_time,
+                    "dateTime": date_time.isoformat(),
                     "seconds": seconds,
                     "isShort": None,
                     "level": (
@@ -98,4 +93,4 @@ def generate_sleep_logs():
 
         sleep_logs.append(sleep_log)
 
-    return sleep_logs
+    return {"sleep": sleep_logs}

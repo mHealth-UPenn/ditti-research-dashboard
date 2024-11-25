@@ -1,10 +1,15 @@
 NOCACHE=0
+DEBUG=0
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --no-cache)
             NOCACHE=1
+            shift
+            ;;
+        --debug)
+            DEBUG=1
             shift
             ;;
         -*|--*)
@@ -28,11 +33,23 @@ rm -rf shared
 
 export $(cat .env | xargs)
 
-docker run --rm \
-    --platform linux/amd64 \
-    --name wearable-data-retrieval-test \
-    --network aws-network \
-    -p 9000:8080 \
-    -e DB_URI=$DB_URI \
-    -e TESTING=true \
-    wearable-data-retrieval:test
+if [ $DEBUG -eq 1 ]; then
+    docker run --rm \
+        --platform linux/amd64 \
+        --name wearable-data-retrieval-test \
+        --network aws-network \
+        -p 9000:8080 \
+        -e DB_URI=$DB_URI \
+        -e TESTING=true \
+        -e DEBUG=true \
+        wearable-data-retrieval:test
+else
+    docker run --rm \
+        --platform linux/amd64 \
+        --name wearable-data-retrieval-test \
+        --network aws-network \
+        -p 9000:8080 \
+        -e DB_URI=$DB_URI \
+        -e TESTING=true \
+        wearable-data-retrieval:test
+fi

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 import json
 import logging
 import sys
@@ -38,12 +38,13 @@ class JsonFormatter(logging.Formatter):
         }
 
         # Add any extra fields in record if they exist
-        log_entry.update(
-            {
-                k: v for k, v in record.__dict__.items()
-                if k not in self.exclude
-            }
-        )
+        for k, v in record.__dict__.items():
+            if k in self.exclude:
+                continue
+            if isinstance(v, datetime) or isinstance(v, date):
+                log_entry[k] = v.isoformat()
+            else:
+                log_entry[k] = v
 
         return log_entry  # Return a dictionary instead of a JSON string
 
