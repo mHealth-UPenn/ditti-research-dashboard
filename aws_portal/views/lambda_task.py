@@ -37,7 +37,8 @@ def get_lambda_tasks():
 
 
 @blueprint.route("/trigger", methods=["POST"])
-@sigv4_required
+# TODO: Add correct authentication decorator
+# TODO: Will be called when someone opens the app and after the database starts running
 def trigger_lambda_task():
     """
     Manually trigger the lambda task.
