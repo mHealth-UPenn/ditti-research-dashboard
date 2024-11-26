@@ -1,5 +1,6 @@
 import boto3
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import datetime
 import json
 import logging
@@ -37,6 +38,15 @@ class DBService:
         self.metadata = MetaData(bind=self.engine)
 
 
+@dataclass
+class StudySubjectEntry:
+    id: int
+    api_user_uuid: str
+    api_id: int
+    last_sync_date: str
+    expires_on: str
+
+
 class StudySubjectService:
     def __init__(self, service: DBService):
         self.__service = service
@@ -56,7 +66,7 @@ class StudySubjectService:
         self.sleep_summary_table = Table("sleep_summary", m, autoload_with=e)
 
         self.__connection = None
-        self.__entries = None
+        self.__entries: list[StudySubjectEntry] = []
         self.__index = None
 
     @contextmanager
@@ -86,7 +96,10 @@ class StudySubjectService:
             )
             .where(self.study.c.expires_on > self.api.c.last_sync_date)
         )
-        self.__entries = self.__connection.execute(query).fetchall()
+        self.__entries = []
+        result = self.__connection.execute(query).fetchall()
+        for entry in result:
+            self.__entries.append(StudySubjectEntry(**entry._asdict()))
 
         logger.info(
             "Fetched participant API data from database",
@@ -263,7 +276,7 @@ def handler(event, context):
                 f"Error retrieving secret",
                 extra={"error": traceback.format_exc()}
             )
-            error_code = "AWS_ERROR"
+            error_code = "CONFIG_FETCH_ERROR"
             raise
 
     # # Retrieve function_id from the lambda function invocation event
@@ -327,7 +340,7 @@ def handler(event, context):
 
         # On error raise exception and exit
         except Exception:
-            error_code = "DB_ERROR"
+            error_code = "DB_FETCH_ERROR"
             logger.error(
                 "Error fetching participant API data from database",
                 extra={"error": traceback.format_exc()}
@@ -338,7 +351,7 @@ def handler(event, context):
         for entry in study_subject_service.iter_entries():
             logger.debug(
                 "Fetching participant Fitbit data",
-                extra=entry._asdict()
+                extra=entry.__dict__
             )
 
             # Construct the URL for Fitbit API call
@@ -360,7 +373,10 @@ def handler(event, context):
 
                 logger.info(
                     "Participant data retrieved from Fibit API",
-                    extra={"study_subject_id": entry.id, "result_count": len(data["sleep"])}
+                    extra={
+                        "study_subject_id": entry.id,
+                        "result_count": len(data["sleep"])
+                    }
                 )
 
             # On error continue to next study subject
@@ -418,7 +434,7 @@ def handler(event, context):
 
             # Log error and exit in case of unhandled error
             except Exception:
-                error_code = "DB_ERROR"
+                error_code = "DB_UPDATE_ERROR"
                 logger.error(
                     "Unhandled error when updating study subject. Exiting.",
                     extra={
