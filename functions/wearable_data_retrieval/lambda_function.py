@@ -27,6 +27,10 @@ logger = LambdaLogger(
 )
 
 
+class NestedError(Exception):
+    pass
+
+
 def get_secret(secret_name):
     # Initialize a session using environment variables
     session = boto3.session.Session()
@@ -144,183 +148,215 @@ def handler(event, context):
     sleep_summary_table = Table("sleep_summary", metadata, autoload_with=engine)
 
     with engine.connect() as connection:
-        try:
-            # Perform the query with joins and conditions
-            query = (
-                select(
-                    subject.c.id,
-                    api.c.api_user_uuid,
-                    api.c.api_id,
-                    api.c.last_sync_date,
-                    study.c.expires_on
-                )
-                .select_from(api
-                    .join(subject, api.c.study_subject_id == subject.c.id)
-                    .join(study, subject.c.id == study.c.study_subject_id)
-                )
-                .where(study.c.expires_on > api.c.last_sync_date)
-            )
-            result = connection.execute(query).fetchall()
-
-        except Exception as e:
-            error_code = "DB_ERROR"
-            logger.error(
-                "Error fetching participant API data from database",
-                extra={"error": traceback.format_exc()}
-            )
-            raise
-
-        logger.info(
-            "Fetched participant API data from database",
-            extra={"result_count": len(result)}
-        )
-
-        # Iterate over each result to query the Fitbit API
-        for entry in result:
-            logger.debug(
-                "Fetching participant Fitbit data",
-                extra=entry._asdict()
-            )
-
-            # Construct the URL for Fitbit API call
-            user_id = entry.api_user_uuid
-            start_date = entry.last_sync_date.strftime("%Y-%m-%d")
-            end_date = min(
-                entry.expires_on,
-                datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
-            ).strftime("%Y-%m-%d")
-
-            url = f"https://api.fitbit.com/1.2/user/{user_id}/sleep/date/{start_date}/{end_date}.json"
-            logger.debug("Fitbit URL generated", extra={"url": url})
-            data = {"sleep": []}
-
+        with connection.begin():
+            # Try querying study subject api joins that are not expired
             try:
-                if TESTING:
-                    data = generate_sleep_logs()
-                else:
-                    # Retrieve OAuth tokens for the subject
-                    tokens = tokens_config[entry.id]
-
-                    # Query the Fitbit API
-                    fitbit_session = get_fitbit_oauth_session(entry, tokens)
-                    response = fitbit_session.request(url)
-                    data = response.json()
-
-                logger.info(
-                    "Participant data retrieved from Fibit API",
-                    extra={"user_id": user_id, "result_count": len(data["sleep"])}
-                )
-
-            except Exception as e:
-                error_code = "API_ERROR"
-                logger.error(
-                    "Error retrieving participant data from Fitbit API",
-                    extra={"error": traceback.format_exc(), "user_id": user_id, "url": url}
-                )
-
-            for sleep_record in data.get("sleep", []):
-                try:
-                    # Create sleep log entry
-                    insert_stmt = insert(sleep_log_table).values(
-                        study_subject_id=entry.id,
-                        log_id=sleep_record["logId"],
-                        date_of_sleep=datetime.strptime(sleep_record["dateOfSleep"], "%Y-%m-%d").date(),
-                        duration=sleep_record["duration"],
-                        efficiency=sleep_record["efficiency"],
-                        end_time=datetime.strptime(sleep_record["endTime"], "%Y-%m-%dT%H:%M:%S.%f"),
-                        info_code=sleep_record.get("infoCode"),
-                        is_main_sleep=sleep_record["isMainSleep"],
-                        minutes_after_wakeup=sleep_record["minutesAfterWakeup"],
-                        minutes_asleep=sleep_record["minutesAsleep"],
-                        minutes_awake=sleep_record["minutesAwake"],
-                        minutes_to_fall_asleep=sleep_record["minutesToFallAsleep"],
-                        log_type=sleep_record["logType"],
-                        start_time=datetime.strptime(sleep_record["startTime"], "%Y-%m-%dT%H:%M:%S.%f"),
-                        time_in_bed=sleep_record["timeInBed"],
-                        type=sleep_record["type"]
+                query = (
+                    select(
+                        subject.c.id,
+                        api.c.api_user_uuid,
+                        api.c.api_id,
+                        api.c.last_sync_date,
+                        study.c.expires_on
                     )
-                    result_proxy = connection.execute(insert_stmt)
-                    sleep_log_id = result_proxy.inserted_primary_key[0]
-                    logger.debug(
-                        "Sleep log created",
-                        extra={
-                            "user_id": entry.id,
-                            "sleep_log_id": sleep_log_id
-                        }
+                    .select_from(api
+                        .join(subject, api.c.study_subject_id == subject.c.id)
+                        .join(study, subject.c.id == study.c.study_subject_id)
                     )
-
-                    # Insert sleep levels and summaries
-                    for level_data in sleep_record.get("levels", {}).get("data", []):
-                        insert_level_stmt = insert(sleep_level_table).values(
-                            sleep_log_id=sleep_log_id,
-                            date_time=datetime.strptime(level_data["dateTime"], "%Y-%m-%dT%H:%M:%S.%f"),
-                            level=level_data["level"],
-                            seconds=level_data["seconds"],
-                            is_short=level_data.get("isShort", False)
-                        )
-                        connection.execute(insert_level_stmt)
-                        sleep_level_id = result_proxy.inserted_primary_key[0]
-                        logger.debug(
-                            "Sleep level created",
-                            extra={
-                                "user_id": entry.id,
-                                "sleep_log_id": sleep_log_id,
-                                "sleep_level_id": sleep_level_id
-                            }
-                        )
-
-                    for summary_data in sleep_record.get("levels", {}).get("summary", []):
-                        insert_summary_stmt = insert(sleep_summary_table).values(
-                            sleep_log_id=sleep_log_id,
-                            level=summary_data["level"],
-                            count=summary_data["count"],
-                            minutes=summary_data["minutes"],
-                            thirty_day_avg_minutes=summary_data.get("thirtyDayAvgMinutes")
-                        )
-                        connection.execute(insert_summary_stmt)
-                        sleep_summary_id = result_proxy.inserted_primary_key[0]
-                        logger.debug(
-                            "Sleep summary created",
-                            extra={
-                                "user_id": entry.id,
-                                "sleep_log_id": sleep_log_id,
-                                "sleep_summary_id": sleep_summary_id
-                            }
-                        )
-
-                except Exception as e:
-                    error_code = "DB_ERROR"
-                    logger.error(
-                        "Error inserting Fitbit data to database",
-                        extra={
-                            "user_id": user_id,
-                            "error": traceback.format_exc()
-                        }
-                    )
-
-            # Update `api.last_sync_date` to the current `job_timestamp`
-            try:
-                connection.execute(
-                    update(api_table)
-                    .where(api_table.c.study_subject_id == entry.id)
-                    .values(last_sync_date=datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f"))
+                    .where(study.c.expires_on > api.c.last_sync_date)
                 )
-                connection.commit()
-                logger.info(
-                    "Updated last_sync_date",
-                    extra={"study_subject_id": entry.id}
-                )
+                result = connection.execute(query).fetchall()
 
-            except Exception as e:
+            # On error raise exception and exit
+            except Exception:
                 error_code = "DB_ERROR"
                 logger.error(
-                    "Error updating `last_sync_date`",
-                    extra={
-                        "user_id": user_id,
-                        "api_id": entry.api_id,
-                        "error": traceback.format_exc()
-                    }
+                    "Error fetching participant API data from database",
+                    extra={"error": traceback.format_exc()}
                 )
+                raise
+
+            logger.info(
+                "Fetched participant API data from database",
+                extra={"result_count": len(result)}
+            )
+
+            # Iterate over each result to query the Fitbit API
+            for entry in result:
+                logger.debug(
+                    "Fetching participant Fitbit data",
+                    extra=entry._asdict()
+                )
+
+                # Construct the URL for Fitbit API call
+                user_id = entry.api_user_uuid
+                start_date = entry.last_sync_date.strftime("%Y-%m-%d")
+                end_date = min(
+                    entry.expires_on,
+                    datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+                ).strftime("%Y-%m-%d")
+                url = f"https://api.fitbit.com/1.2/user/{user_id}/sleep/date/{start_date}/{end_date}.json"
+                logger.debug("Fitbit URL generated", extra={"url": url})
+
+                # Try querying the fitbit API for this study subject
+                data = {"sleep": []}
+                try:
+                    if TESTING:
+                        data = generate_sleep_logs()
+                    else:
+                        # Retrieve OAuth tokens for the subject
+                        tokens = tokens_config[entry.id]
+
+                        # Query the Fitbit API
+                        fitbit_session = get_fitbit_oauth_session(entry, tokens)
+                        response = fitbit_session.request(url)
+                        data = response.json()
+
+                    logger.info(
+                        "Participant data retrieved from Fibit API",
+                        extra={"user_id": user_id, "result_count": len(data["sleep"])}
+                    )
+
+                # On error continue to next study subject
+                except Exception:
+                    logger.error(
+                        "Error retrieving participant data from Fitbit API",
+                        extra={
+                            "error": traceback.format_exc(),
+                            "user_id": user_id,
+                            "url": url
+                        }
+                    )
+                    continue
+
+                try:
+                    with connection.begin_nested():
+                        # Try inserting Fitbit data into the database
+                        try:
+                            for sleep_record in data.get("sleep", []):
+                                # Create sleep log entry
+                                insert_stmt = insert(sleep_log_table).values(
+                                    study_subject_id=entry.id,
+                                    log_id=sleep_record["logId"],
+                                    date_of_sleep=datetime.strptime(sleep_record["dateOfSleep"], "%Y-%m-%d").date(),
+                                    duration=sleep_record["duration"],
+                                    efficiency=sleep_record["efficiency"],
+                                    end_time=datetime.strptime(sleep_record["endTime"], "%Y-%m-%dT%H:%M:%S.%f"),
+                                    info_code=sleep_record.get("infoCode"),
+                                    is_main_sleep=sleep_record["isMainSleep"],
+                                    minutes_after_wakeup=sleep_record["minutesAfterWakeup"],
+                                    minutes_asleep=sleep_record["minutesAsleep"],
+                                    minutes_awake=sleep_record["minutesAwake"],
+                                    minutes_to_fall_asleep=sleep_record["minutesToFallAsleep"],
+                                    log_type=sleep_record["logType"],
+                                    start_time=datetime.strptime(sleep_record["startTime"], "%Y-%m-%dT%H:%M:%S.%f"),
+                                    time_in_bed=sleep_record["timeInBed"],
+                                    type=sleep_record["type"]
+                                )
+                                result_proxy = connection.execute(insert_stmt)
+                                sleep_log_id = result_proxy.inserted_primary_key[0]
+                                logger.debug(
+                                    "Sleep log created",
+                                    extra={
+                                        "user_id": entry.id,
+                                        "sleep_log_id": sleep_log_id
+                                    }
+                                )
+
+                                # Insert sleep levels
+                                for level_data in sleep_record.get("levels", {}).get("data", []):
+                                    insert_level_stmt = insert(sleep_level_table).values(
+                                        sleep_log_id=sleep_log_id,
+                                        date_time=datetime.strptime(level_data["dateTime"], "%Y-%m-%dT%H:%M:%S.%f"),
+                                        level=level_data["level"],
+                                        seconds=level_data["seconds"],
+                                        is_short=level_data.get("isShort", False)
+                                    )
+                                    connection.execute(insert_level_stmt)
+                                    sleep_level_id = result_proxy.inserted_primary_key[0]
+                                    logger.debug(
+                                        "Sleep level created",
+                                        extra={
+                                            "user_id": entry.id,
+                                            "sleep_log_id": sleep_log_id,
+                                            "sleep_level_id": sleep_level_id
+                                        }
+                                    )
+
+                                # Insert summaries
+                                for summary_data in sleep_record.get("levels", {}).get("summary", []):
+                                    insert_summary_stmt = insert(sleep_summary_table).values(
+                                        sleep_log_id=sleep_log_id,
+                                        level=summary_data["level"],
+                                        count=summary_data["count"],
+                                        minutes=summary_data["minutes"],
+                                        thirty_day_avg_minutes=summary_data.get("thirtyDayAvgMinutes")
+                                    )
+                                    connection.execute(insert_summary_stmt)
+                                    sleep_summary_id = result_proxy.inserted_primary_key[0]
+                                    logger.debug(
+                                        "Sleep summary created",
+                                        extra={
+                                            "user_id": entry.id,
+                                            "sleep_log_id": sleep_log_id,
+                                            "sleep_summary_id": sleep_summary_id
+                                        }
+                                    )
+
+                        # On error continue to next study subject
+                        except Exception:
+                            logger.error(
+                                "Error inserting Fitbit data to database",
+                                extra={
+                                    "user_id": user_id,
+                                    "error": traceback.format_exc()
+                                }
+                            )
+                            raise NestedError
+
+                        # Try updating `api.last_sync_date` to the current `job_timestamp`
+                        try:
+                            connection.execute(
+                                update(api_table)
+                                .where(api_table.c.study_subject_id == entry.id)
+                                .values(last_sync_date=datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f"))
+                            )
+                            logger.info(
+                                "Updated last_sync_date",
+                                extra={"study_subject_id": entry.id}
+                            )
+
+                        # On error continue to next study subject
+                        except Exception:
+                            logger.error(
+                                "Error updating `last_sync_date`",
+                                extra={
+                                    "user_id": user_id,
+                                    "api_id": entry.api_id,
+                                    "error": traceback.format_exc()
+                                }
+                            )
+                            raise NestedError
+
+                # Continue to next study subject in case of handled error
+                except NestedError:
+                    logger.error(
+                        "Updating study subject failed. Changes not committed.",
+                        extra={"user_id": user_id}
+                    )
+                    continue
+
+                # Log error and exit in case of unhandled error
+                except Exception:
+                    error_code = "DB_ERROR"
+                    logger.error(
+                        "Unhandled error when updating study subject. Exiting.",
+                        extra={
+                            "user_id": user_id,
+                            "error": traceback.format_exc(),
+                        }
+                    )
+                    raise
 
     # # Upload log file to S3
     # try:
