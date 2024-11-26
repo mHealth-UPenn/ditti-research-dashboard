@@ -11,27 +11,46 @@ blueprint = Blueprint("lambda_task", __name__, url_prefix="/lambda_task")
 logger = logging.getLogger(__name__)
 
 
+@blueprint.route("/", methods=["GET"])
+# TODO: Add correct authentication decorator
 def get_lambda_tasks():
     """
-    Get all lambda tasks.
+    Retrieve all Lambda tasks sorted by creation date.
 
-    Response syntax (200)
-    ---------------------
+    Request:
+    --------
+    GET /lambda_task/
+
+    Response (200 OK):
+    ------------------
     [
         {
-            ...LambdaTask data
+            "id": int,
+            "taskId": str,
+            "status": str,          # "Pending", "Success", or "Failed"
+            "billedMs": int,
+            "createdOn": str,       # ISO 8601 format
+            "updatedOn": str,       # ISO 8601 format
+            "errorMessage": str
         },
         ...
     ]
+
+    Response (500 Internal Server Error):
+    -------------------------------------
+    {
+        "msg": "Internal server error when retrieving lambda tasks."
+    }
     """
     try:
+        # Retrieve all tasks sorted by created_on in descending order (most recent first)
         tasks = LambdaTask.query.order_by(LambdaTask.created_on.desc()).all()
         res = [task.meta for task in tasks]
         return jsonify(res), 200
 
-    except Exception:
+    except Exception as e:
         exc = traceback.format_exc()
-        logger.warning(exc)
+        logger.warning(f"Error retrieving Lambda tasks: {exc}")
         db.session.rollback()
         return make_response({"msg": "Internal server error when retrieving lambda tasks."}, 500)
 
@@ -41,19 +60,43 @@ def get_lambda_tasks():
 # TODO: Will be called when someone opens the app and after the database starts running
 def trigger_lambda_task():
     """
-    Manually trigger the lambda task.
+    Manually trigger a Lambda task.
 
-    Request syntax
-    --------------
+    Request:
+    --------
+    POST /lambda_task/trigger
+
+    Request Body (JSON):
+    --------------------
     {
-        "function_id": int
+        "function_id": int  # Required
     }
 
-    Response syntax (200)
-    ---------------------
+    Response (200 OK):
+    ------------------
     {
-        msg: "Lambda task triggered successfully",
-        task: { ...LambdaTask data }
+        "msg": "Lambda task triggered successfully",
+        "task": {
+            "id": int,
+            "taskId": str,
+            "status": str,          # "Pending", "Success", or "Failed"
+            "billedMs": int,
+            "createdOn": str,       # ISO 8601 format
+            "updatedOn": str,       # ISO 8601 format
+            "errorMessage": str
+        }
+    }
+
+    Response (400 Bad Request):
+    --------------------------
+    {
+        "msg": "function_id is required"
+    }
+
+    Response (500 Internal Server Error):
+    -------------------------------------
+    {
+        "msg": "Internal server error when triggering lambda task."
     }
     """
     try:
@@ -82,6 +125,6 @@ def trigger_lambda_task():
 
     except Exception:
         exc = traceback.format_exc()
-        logger.warning(exc)
+        logger.warning(f"Error triggering Lambda task: {exc}")
         db.session.rollback()
         return make_response({"msg": "Internal server error when triggering lambda task."}, 500)
