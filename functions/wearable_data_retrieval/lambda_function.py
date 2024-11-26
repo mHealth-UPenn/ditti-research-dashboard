@@ -62,8 +62,15 @@ class DBService:
         self.db = db
         self.connection = None
 
-    def __reset(self):
-        self.connection = None
+    @contextmanager
+    def connect(self):
+        try:
+            with self.db.engine.connect() as connection:
+                with connection.begin():
+                    self.connection = connection
+                    yield connection
+        finally:
+            self.connection = None
 
 
 @dataclass
@@ -96,19 +103,10 @@ class StudySubjectService(DBService):
         self.__entries: list[StudySubjectEntry] = []
         self.__index = None
 
-    @contextmanager
-    def connect(self):
-        try:
-            with self.db.engine.connect() as connection:
-                with connection.begin():
-                    self.connection = connection
-                    yield connection
-        finally:
-            self.connection = None
-            self.__entries = None
-            self.__index = None
-
     def get_entries(self):
+        if self.connection is None:
+            raise RuntimeError("`get_entries` must be called within `connect` context.")
+
         query = (
             select(
                 self.subject.c.id,
