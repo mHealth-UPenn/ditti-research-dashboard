@@ -392,6 +392,7 @@ def handler(event, context):
 
             try:
                 # lambda_function_service.update_status("IN_PROGRESS")
+                # connection.commit()
                 pass
 
             # On error raise exception and exit
@@ -541,24 +542,31 @@ def handler(event, context):
         error_code = "DB_UPDATE_ERROR"
     except S3UploadError:
         error_code = "S3_UPLOAD_ERROR"
+    except Exception:
+        error_code = "UNKNOWN_ERROR"
 
-    # # Update the lambda_function table with completion information
-    # try:
-    #     with engine.connect() as connection:
-    #         update_stmt = (
-    #             update(lambda_function_table)
-    #             .where(lambda_function_table.c.id == function_id)
-    #             .values(
-    #                 completed_on=datetime.now(),
-    #                 ms_billed=ms_billed,
-    #                 logfile=s3_uri,
-    #                 status="FAILED" if error_code else "COMPLETE",
-    #                 error_code=error_code
-    #             )
-    #         )
-    #         connection.execute(update_stmt)
-    #         connection.commit()
-    #         logger.info("Updated lambda_function with completion information", extra={"function_id": function_id})
+    # Update the lambda_function table with completion information
+    try:
+        with lambda_function_service.connect() as connection:
+            # lambda_function_service.update_status(
+            #     status="FAILED" if error_code else "COMPLETE",
+            #     completed_on=datetime.now(),
+            #     ms_billed=ms_billed,
+            #     logfile=s3_uri,
+            #     error_code=error_code
+            # )
+            # connection.commit()
+            logger.info(
+                "Updated lambda_function with completion information",
+                extra={"function_id": function_id}
+            )
 
-    # except Exception as db_error:
-    #     logger.error("Error updating lambda_function with completion information", extra={"error": str(db_error)})
+    except Exception:
+        logger.error(
+            "Error updating lambda_function with completion information",
+            extra={
+                "function_id": function_id,
+                "error_code": error_code,
+                "error": traceback.format_exc()
+            }
+        )
