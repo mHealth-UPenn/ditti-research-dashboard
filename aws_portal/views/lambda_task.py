@@ -1,7 +1,7 @@
 from datetime import datetime, UTC
 import logging
 import traceback
-from flask import Blueprint, jsonify, make_response, request, current_app
+from flask import Blueprint, jsonify, make_response, request
 from aws_portal.extensions import db
 from aws_portal.models import LambdaTask
 from aws_portal.utils.lambda_task import invoke_lambda_task
@@ -45,8 +45,7 @@ def trigger_lambda_task():
     Request syntax
     --------------
     {
-        "function_name": str (optional),
-        "payload": dict (optional)
+        "function_id": int
     }
 
     Response syntax (200)
@@ -58,10 +57,23 @@ def trigger_lambda_task():
     """
     try:
         data = request.json or {}
-        function_name = data.get("function_name")
-        payload = data.get("payload", {})
+        function_id = data.get("function_id")
 
-        lambda_task = invoke_lambda_task(function_name, payload)
+        if function_id is None:
+            return make_response({"msg": "function_id is required"}, 400)
+
+        # Create a new LambdaTask with status 'Pending'
+        lambda_task = LambdaTask(
+            status="Pending",
+            created_on=datetime.now(UTC),
+            updated_on=datetime.now(UTC)
+        )
+        db.session.add(lambda_task)
+        db.session.commit()
+
+        # Invoke the Lambda function with the function_id
+        invoke_lambda_task(function_id=lambda_task.id)
+
         return jsonify({
             "msg": "Lambda task triggered successfully",
             "task": lambda_task.meta
@@ -83,7 +95,7 @@ def update_lambda_task_status_route():
     Request syntax
     --------------
     {
-        "task_id": str,
+        "task_id": int,
         "status": str,  # 'Success' or 'Failed'
         "error_message": str (optional),
         "billed_ms": int (optional)
@@ -102,15 +114,15 @@ def update_lambda_task_status_route():
         error_message = data.get("error_message", None)
         billed_ms = data.get("billed_ms", None)
 
-        if not task_id or not status:
+        if task_id is None or status is None:
             return make_response({"msg": "task_id and status are required"}, 400)
 
         if status not in ['Success', 'Failed']:
             return make_response({"msg": "Invalid status. Must be 'Success' or 'Failed'."}, 400)
 
-        lambda_task = LambdaTask.query.filter_by(task_id=task_id).first()
+        lambda_task = LambdaTask.query.filter_by(id=task_id).first()
         if not lambda_task:
-            return make_response({"msg": f"LambdaTask with task_id {task_id} not found"}, 400)
+            return make_response({"msg": f"LambdaTask with id {task_id} not found"}, 400)
 
         lambda_task.status = status
         lambda_task.error_message = error_message

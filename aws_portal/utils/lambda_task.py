@@ -10,13 +10,12 @@ from flask import current_app
 logger = logging.getLogger(__name__)
 
 
-def invoke_lambda_task(function_name=None, payload=None):
+def invoke_lambda_task(function_id):
     """
     Invokes an AWS Lambda function asynchronously and stores the task in the database.
 
     Args:
-        function_name (str, optional): The name of the lambda function to invoke.
-        payload (dict, optional): The payload to send to the lambda function.
+        function_id: The database ID of the LambdaTask to update.
 
     Returns:
         LambdaTask: The LambdaTask object stored in the database.
@@ -29,11 +28,15 @@ def invoke_lambda_task(function_name=None, payload=None):
         )
         client = session.client("lambda")
 
-        if payload is None:
-            payload = {}
+        # Retrieve the Lambda function name from configuration
+        function_name = current_app.config.get("LAMBDA_FUNCTION_NAME")
+        if not function_name:
+            raise ValueError("LAMBDA_FUNCTION_NAME is not configured.")
 
-        if function_name is None:
-            function_name = current_app.config.get("LAMBDA_FUNCTION_NAME")
+        # Payload contains only the function_id
+        payload = {
+            "function_id": function_id
+        }
 
         response = client.invoke(
             FunctionName=function_name,
@@ -41,36 +44,24 @@ def invoke_lambda_task(function_name=None, payload=None):
             Payload=json.dumps(payload)
         )
 
-        # Get the request ID as a task ID
-        task_id = response["ResponseMetadata"]["RequestId"]
-
-        # Store the LambdaTask in the database
-        lambda_task = LambdaTask(
-            task_id=task_id,
-            status="Pending",
-            created_on=datetime.now(UTC),
-            updated_on=datetime.now(UTC)
+        logger.info(
+            f"Lambda invoked with function_id {function_id}. "
+            f"Response: {response}"
         )
 
-        db.session.add(lambda_task)
-        db.session.commit()
-
-        return lambda_task
+        return LambdaTask.query.get(function_id)
 
     except Exception as e:
-        logger.error(f"Failed to invoke lambda function {function_name}: {e}")
+        logger.error(f"Failed to invoke lambda function: {e}")
         traceback_str = traceback.format_exc()
         logger.error(traceback_str)
-        # Store the failed task in the database
-        lambda_task = LambdaTask(
-            task_id="N/A",
-            status="Failed",
-            created_on=datetime.now(UTC),
-            updated_on=datetime.now(UTC),
-            error_message=str(e)
-        )
-        db.session.add(lambda_task)
-        db.session.commit()
+        # Update the LambdaTask status to 'Failed'
+        lambda_task = LambdaTask.query.get(function_id)
+        if lambda_task:
+            lambda_task.status = "Failed"
+            lambda_task.error_message = str(e)
+            lambda_task.updated_on = datetime.now(UTC)
+            db.session.commit()
         return lambda_task
 
 
@@ -80,11 +71,17 @@ def schedule_lambda_task():
     """
     try:
         logger.info("Scheduling Lambda task to retrieve and store sleep data.")
-        payload = {
-            "action": "retrieve_and_store_sleep_data",
-            # Add any additional data needed by the Lambda function
-        }
-        invoke_lambda_task(payload=payload)
+        # Create a new LambdaTask with status 'Pending'
+        lambda_task = LambdaTask(
+            status="Pending",
+            created_on=datetime.now(UTC),
+            updated_on=datetime.now(UTC)
+        )
+        db.session.add(lambda_task)
+        db.session.commit()
+
+        # Pass the function_id to the Lambda function
+        invoke_lambda_task(function_id=lambda_task.id)
     except Exception as e:
         logger.error(f"Error in scheduled Lambda task: {e}")
         traceback_str = traceback.format_exc()
@@ -96,14 +93,14 @@ def update_lambda_task_status(task_id, status, error_message=None):
     Updates the status of a LambdaTask.
 
     Args:
-        task_id (str): The ID of the task to update.
+        task_id (int): The ID of the task to update.
         status (str): The new status ("Success" or "Failed").
         error_message (str, optional): The error message if status is "Failed".
     """
     try:
-        lambda_task = LambdaTask.query.filter_by(task_id=task_id).first()
+        lambda_task = LambdaTask.query.filter_by(id=task_id).first()
         if not lambda_task:
-            logger.warning(f"LambdaTask with task_id {task_id} not found.")
+            logger.warning(f"LambdaTask with id {task_id} not found.")
             return
 
         lambda_task.status = status
