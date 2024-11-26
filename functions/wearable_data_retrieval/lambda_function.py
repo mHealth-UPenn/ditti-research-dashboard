@@ -32,6 +32,22 @@ class NestedError(Exception):
     pass
 
 
+class ConfigFetchError(Exception):
+    pass
+
+
+class DBFetchError(Exception):
+    pass
+
+
+class DBUpdateError(Exception):
+    pass
+
+
+class S3UploadError(Exception):
+    pass
+
+
 class DBService:
     def __init__(self, db_uri: str):
         self.engine = create_engine(db_uri, future=True)
@@ -255,10 +271,7 @@ def build_url(entry):
     return url
 
 
-def handler(event, context):
-    logger.info("Starting wearable data retrieval job", extra={"job_timestamp": job_timestamp})
-    error_code = None
-
+def main(function_id):
     # Load secrets
     if TESTING:
         config = {
@@ -276,12 +289,7 @@ def handler(event, context):
                 f"Error retrieving secret",
                 extra={"error": traceback.format_exc()}
             )
-            error_code = "CONFIG_FETCH_ERROR"
-            raise
-
-    # # Retrieve function_id from the lambda function invocation event
-    function_id = event.get("function_id")
-    logger.info("Retrieved function_id", extra={"function_id": function_id})
+            raise ConfigFetchError
 
     # Database connection setup
     db_service = DBService(config["DB_URI"])
@@ -340,12 +348,11 @@ def handler(event, context):
 
         # On error raise exception and exit
         except Exception:
-            error_code = "DB_FETCH_ERROR"
             logger.error(
                 "Error fetching participant API data from database",
                 extra={"error": traceback.format_exc()}
             )
-            raise
+            raise DBFetchError
 
         # Iterate over each result to query the Fitbit API
         for entry in study_subject_service.iter_entries():
@@ -434,7 +441,6 @@ def handler(event, context):
 
             # Log error and exit in case of unhandled error
             except Exception:
-                error_code = "DB_UPDATE_ERROR"
                 logger.error(
                     "Unhandled error when updating study subject. Exiting.",
                     extra={
@@ -442,25 +448,49 @@ def handler(event, context):
                         "error": traceback.format_exc(),
                     }
                 )
-                raise
+                raise DBUpdateError
 
-    # # Upload log file to S3
-    # try:
-    #     s3_client = boto3.client("s3")
-    #     bucket_name = config["S3_BUCKET"]
-    #     # Prepare the S3 filename including function_id
-    #     s3_filename = f"logs/{function_id}_{logger.log_filename}.json"
+    # Upload log file to S3
+    try:
+        s3_client = boto3.client("s3")
+        bucket_name = config["S3_BUCKET"]
 
-    #     s3_client.upload_file(logger.log_filename, bucket_name, s3_filename)
+        # Prepare the S3 filename including function_id
+        s3_filename = f"logs/{function_id}_{logger.log_filename}.json"
+        s3_client.upload_file(logger.log_filename, bucket_name, s3_filename)
 
-    #     logger.info("Log file successfully uploaded to S3", extra={"s3_filename": s3_filename, "bucket": bucket_name})
+        logger.info(
+            "Log file successfully uploaded to S3",
+            extra={"s3_filename": s3_filename, "bucket": bucket_name}
+        )
 
-    # except Exception as s3_error:
-    #     logger.error("Error uploading log file to S3", extra={"error": str(s3_error)})
+    except Exception as s3_error:
+        logger.error(
+            "Error uploading log file to S3",
+            extra={"error": str(s3_error)}
+        )
 
-    # s3_uri = f"s3://{bucket_name}/{s3_filename}"
-    # end_time = int(time.time() * 1000)  # Current time in milliseconds
-    # ms_billed = end_time - start_time
+        raise S3UploadError
+
+
+def handler(event, context):
+    logger.info("Starting wearable data retrieval job", extra={"job_timestamp": job_timestamp})
+    error_code = None
+
+    # Retrieve function_id from the lambda function invocation event
+    function_id = event.get("function_id")
+    logger.info("Retrieved function_id", extra={"function_id": function_id})
+
+    try:
+        main(function_id)
+    except ConfigFetchError:
+        error_code = "CONFIG_FETCH_ERROR"
+    except DBFetchError:
+        error_code = "DB_FETCH_ERROR"
+    except DBUpdateError:
+        error_code = "DB_UPDATE_ERROR"
+    except S3UploadError:
+        error_code = "S3_UPLOAD_ERROR"
 
     # # Update the lambda_function table with completion information
     # try:
