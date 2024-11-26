@@ -68,6 +68,8 @@ class StudySubjectService:
                     yield connection
         finally:
             self.__connection = None
+            self.__entries = None
+            self.__index = None
 
     def get_entries(self):
         query = (
@@ -92,6 +94,12 @@ class StudySubjectService:
         )
 
     def iter_entries(self):
+        if self.__connection is None:
+            raise RuntimeError("`iter_entries` must be called within `connect` context.")
+
+        if self.__entries is None:
+            raise RuntimeError("No entries to iterate. Call `iter_entries` first.")
+
         for i in range(len(self.__entries)):
             self.__index = i
             yield self.__entries[i]
@@ -99,6 +107,9 @@ class StudySubjectService:
         self.__index = None
 
     def insert_data(self, data):
+        if self.__index is None:
+            raise RuntimeError("No index found. `insert_data` must be called inside `iter_entries` block.")
+
         entry = self.__entries[self.__index]
 
         for sleep_record in data.get("sleep", []):
@@ -175,6 +186,9 @@ class StudySubjectService:
                 )
 
     def update_last_sync_date(self):
+        if self.__index is None:
+            raise RuntimeError("No index found. `insert_data` must be called inside `iter_entries` block.")
+
         entry = self.__entries[self.__index]
 
         self.__connection.execute(
