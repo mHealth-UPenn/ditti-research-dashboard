@@ -1,6 +1,6 @@
 import boto3
+from contextlib import contextmanager
 from datetime import datetime
-from functools import partial
 import json
 import logging
 import os
@@ -59,12 +59,15 @@ class StudySubjectService:
         self.__entries = None
         self.__index = None
 
+    @contextmanager
     def connect(self):
-        with self.service.engine.connect() as connection:
-            with connection.begin():
-                self.__connection = connection
-                yield connection
-        self.__connection = None
+        try:
+            with self.__service.engine.connect() as connection:
+                with connection.begin():
+                    self.__connection = connection
+                    yield connection
+        finally:
+            self.__connection = None
 
     def get_entries(self):
         query = (
@@ -76,7 +79,7 @@ class StudySubjectService:
                 self.study.c.expires_on
             )
             .select_from(self.api
-                .join(self.subject, self.api.c.study_self.subject_id == self.subject.c.id)
+                .join(self.subject, self.api.c.study_subject_id == self.subject.c.id)
                 .join(self.study, self.subject.c.id == self.study.c.study_subject_id)
             )
             .where(self.study.c.expires_on > self.api.c.last_sync_date)
