@@ -86,30 +86,3 @@ def schedule_lambda_task():
         logger.error(f"Error in scheduled Lambda task: {e}")
         traceback_str = traceback.format_exc()
         logger.error(traceback_str)
-
-
-def update_lambda_task_status(task_id, status, error_message=None):
-    """
-    Updates the status of a LambdaTask.
-
-    Args:
-        task_id (int): The ID of the task to update.
-        status (str): The new status ("Success" or "Failed").
-        error_message (str, optional): The error message if status is "Failed".
-    """
-    try:
-        lambda_task = LambdaTask.query.filter_by(id=task_id).first()
-        if not lambda_task:
-            logger.warning(f"LambdaTask with id {task_id} not found.")
-            return
-
-        lambda_task.status = status
-        lambda_task.error_message = error_message
-        lambda_task.updated_on = datetime.now(UTC)
-        db.session.commit()
-        logger.info(f"Updated LambdaTask {task_id} status to {status}.")
-    except Exception as e:
-        logger.error(f"Failed to update LambdaTask {task_id}: {e}")
-        traceback_str = traceback.format_exc()
-        logger.error(traceback_str)
-        db.session.rollback()
