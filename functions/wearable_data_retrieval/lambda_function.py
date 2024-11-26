@@ -73,6 +73,62 @@ class DBService:
             self.connection = None
 
 
+class LambdaFunctionService(DBService):
+    def __init__(self, db: DB):
+        super(LambdaFunctionService, self).__init__(db)
+        m = self.db.metadata
+        e = self.db.engine
+
+        # Reflect existing database into a new model
+        m.reflect(only=["lambda_function"])
+
+        # Access the `lambda_function` table
+        self.table = Table("lambda_function", m, autoload_with=e)
+        self.__entry = None
+
+    def get_entry(self, id: int):
+        if self.connection is None:
+            raise RuntimeError("`get_entry` must be called within `connect` context.")
+
+        # Query the table for the specific function_id and update status
+        query = select(self.table).where(self.table.c.id == id)
+        self.__entry = self.connection.execute(query).first()
+
+        if self.__entry:
+            logger.info(
+                "Query for `lambda_function` result",
+                extra=self.__entry._asdict()
+            )
+
+        else:
+            logger.warning(
+                "No entry found for function_id", extra={"function_id": id}
+            )
+
+            raise RuntimeError(f"No entry found for function_id {id}")
+
+    def update_status(self, status: str, **kwargs):
+        if self.connection is None:
+            raise RuntimeError("`update_status` must be called within `connect` context.")
+
+        if self.__entry is None:
+            raise RuntimeError("Entry not found. Call `get_entry` first.")
+
+        # Update the status to "IN_PROGRESS"
+        update_stmt = (
+            update(self.table).
+            where(self.table.c.id == self.__entry.id).
+            values(status=status, **kwargs)
+        )
+
+        self.connection.execute(update_stmt)
+
+        logger.info(
+            "Updated lambda function status",
+            extra={"function_id": self.__entry.id, "status": status}
+        )
+
+
 @dataclass
 class StudySubjectEntry:
     id: int
@@ -136,7 +192,7 @@ class StudySubjectService(DBService):
             raise RuntimeError("`iter_entries` must be called within `connect` context.")
 
         if self.__entries is None:
-            raise RuntimeError("No entries to iterate. Call `iter_entries` first.")
+            raise RuntimeError("No entries to iterate. Call `get_entries` first.")
 
         for i in range(len(self.__entries)):
             self.__index = i
@@ -311,58 +367,41 @@ def handler(event, context):
         # Database connection setup
         try:
             db = DB(config["DB_URI"])
+            lambda_function_service = LambdaFunctionService(db)
             study_subject_service = StudySubjectService(db)
 
         except Exception:
             logger.error(
-                f"Error retrieving secret",
+                f"Error initializing database services",
                 extra={"error": traceback.format_exc()}
             )
             raise DBInitializationError
 
-        # # Reflect existing database into a new model
-        # metadata.reflect(only=["lambda_function"])
+        with lambda_function_service.connect() as connection:
+            try:
+                # lambda_function_service.get_entry()
+                pass
 
-        # # Access the `lambda_function` table
-        # lambda_function_table = Table(
-        #     "lambda_function", metadata, autoload_with=engine
-        # )
+            # On error raise exception and exit
+            except Exception:
+                logger.error(
+                    "Error fetching lambda function from database",
+                    extra={"error": traceback.format_exc()}
+                )
+                raise DBFetchError
 
-        # # Query the table for the specific function_id and update status
-        # try:
-        #     with engine.connect() as connection:
-        #         # Retrieve the record
-        #         query = select(lambda_function_table)\
-        #             .where(lambda_function_table.c.id == function_id)
-        #         result = connection.execute(query).first()
+            try:
+                # lambda_function_service.update_status("IN_PROGRESS")
+                pass
 
-        #         if result:
-        #             logger.info(
-        #                 "Query for `lambda_function` result", extra=dict(result)
-        #             )
+            # On error raise exception and exit
+            except Exception:
+                logger.error(
+                    "Error updating lambda function status from database",
+                    extra={"error": traceback.format_exc()}
+                )
+                raise DBUpdateError
 
-        #             # Update the status to "IN_PROGRESS"
-        #             update_stmt = (
-        #                 update(lambda_function_table).
-        #                 where(lambda_function_table.c.id == function_id).
-        #                 values(status="IN_PROGRESS")
-        #             )
-        #             connection.execute(update_stmt)
-        #             connection.commit()
-        #             logger.info(
-        #                 "Updated status to IN_PROGRESS",
-        #                 extra={"function_id": function_id}
-        #             )
-
-        #         else:
-        #             logger.warning(
-        #                 "No entry found for function_id",
-        #                 extra={"function_id": function_id}
-        #             )
-
-        # except Exception as e:
-        #     logger.error("Error updating the database", extra={"error": traceback.format_exc()})
-        #     raise
         with study_subject_service.connect() as connection:
             # Try querying study subject api joins that are not expired
             try:
