@@ -9,7 +9,6 @@ import traceback
 
 import boto3
 from sqlalchemy import create_engine, Table, MetaData, insert, select, update
-from sqlalchemy.engine import Row
 from sqlalchemy.orm import aliased
 
 from shared.fitbit import get_fitbit_oauth_session
@@ -21,11 +20,6 @@ DEBUG = os.getenv("DEBUG") is not None
 
 # Use a common timestamp across the whole job
 job_timestamp = datetime.now().isoformat()
-
-# Initialize db services to `None` for global access
-db_service = None
-lambda_function_service = None
-study_subject_service = None
 
 logger = LambdaLogger(
     job_timestamp,
@@ -57,10 +51,19 @@ class S3UploadError(Exception):
     pass
 
 
-class DBService:
+class DB:
     def __init__(self, db_uri: str):
         self.engine = create_engine(db_uri, future=True)
         self.metadata = MetaData(bind=self.engine)
+
+
+class DBService:
+    def __init__(self, db: DB):
+        self.db = db
+        self.connection = None
+
+    def __reset(self):
+        self.connection = None
 
 
 @dataclass
@@ -72,11 +75,11 @@ class StudySubjectEntry:
     expires_on: str
 
 
-class StudySubjectService:
-    def __init__(self, service: DBService):
-        self.__service = service
-        m = service.metadata
-        e = service.engine
+class StudySubjectService(DBService):
+    def __init__(self, *args):
+        super(StudySubjectService, self).__init__(*args)
+        m = self.db.metadata
+        e = self.db.engine
 
         # Reflect existing tables into models
         m.reflect(only=["join_study_subject_api", "study_subject", "join_study_subject_study"])
@@ -90,19 +93,18 @@ class StudySubjectService:
         self.sleep_level_table = Table("sleep_level", m, autoload_with=e)
         self.sleep_summary_table = Table("sleep_summary", m, autoload_with=e)
 
-        self.__connection = None
         self.__entries: list[StudySubjectEntry] = []
         self.__index = None
 
     @contextmanager
     def connect(self):
         try:
-            with self.__service.engine.connect() as connection:
+            with self.db.engine.connect() as connection:
                 with connection.begin():
-                    self.__connection = connection
+                    self.connection = connection
                     yield connection
         finally:
-            self.__connection = None
+            self.connection = None
             self.__entries = None
             self.__index = None
 
@@ -122,7 +124,7 @@ class StudySubjectService:
             .where(self.study.c.expires_on > self.api.c.last_sync_date)
         )
         self.__entries = []
-        result = self.__connection.execute(query).fetchall()
+        result = self.connection.execute(query).fetchall()
         for entry in result:
             self.__entries.append(StudySubjectEntry(**entry._asdict()))
 
@@ -132,7 +134,7 @@ class StudySubjectService:
         )
 
     def iter_entries(self):
-        if self.__connection is None:
+        if self.connection is None:
             raise RuntimeError("`iter_entries` must be called within `connect` context.")
 
         if self.__entries is None:
@@ -170,7 +172,7 @@ class StudySubjectService:
                 time_in_bed=sleep_record["timeInBed"],
                 type=sleep_record["type"]
             )
-            result_proxy = self.__connection.execute(insert_stmt)
+            result_proxy = self.connection.execute(insert_stmt)
             sleep_log_id = result_proxy.inserted_primary_key[0]
 
             logger.debug(
@@ -190,7 +192,7 @@ class StudySubjectService:
                     seconds=level_data["seconds"],
                     is_short=level_data.get("isShort", False)
                 )
-                self.__connection.execute(insert_level_stmt)
+                self.connection.execute(insert_level_stmt)
                 sleep_level_id = result_proxy.inserted_primary_key[0]
 
                 logger.debug(
@@ -211,7 +213,7 @@ class StudySubjectService:
                     minutes=summary_data["minutes"],
                     thirty_day_avg_minutes=summary_data.get("thirtyDayAvgMinutes")
                 )
-                self.__connection.execute(insert_summary_stmt)
+                self.connection.execute(insert_summary_stmt)
                 sleep_summary_id = result_proxy.inserted_primary_key[0]
 
                 logger.debug(
@@ -229,7 +231,7 @@ class StudySubjectService:
 
         entry = self.__entries[self.__index]
 
-        self.__connection.execute(
+        self.connection.execute(
             update(self.api_table)
             .where(self.api_table.c.study_subject_id == entry.id)
             .values(last_sync_date=datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f"))
@@ -280,182 +282,6 @@ def build_url(entry):
     return url
 
 
-def main(function_id, config, tokens_config):
-    # # Reflect existing database into a new model
-    # metadata.reflect(only=["lambda_function"])
-
-    # # Access the `lambda_function` table
-    # lambda_function_table = Table(
-    #     "lambda_function", metadata, autoload_with=engine
-    # )
-
-    # # Query the table for the specific function_id and update status
-    # try:
-    #     with engine.connect() as connection:
-    #         # Retrieve the record
-    #         query = select(lambda_function_table)\
-    #             .where(lambda_function_table.c.id == function_id)
-    #         result = connection.execute(query).first()
-
-    #         if result:
-    #             logger.info(
-    #                 "Query for `lambda_function` result", extra=dict(result)
-    #             )
-
-    #             # Update the status to "IN_PROGRESS"
-    #             update_stmt = (
-    #                 update(lambda_function_table).
-    #                 where(lambda_function_table.c.id == function_id).
-    #                 values(status="IN_PROGRESS")
-    #             )
-    #             connection.execute(update_stmt)
-    #             connection.commit()
-    #             logger.info(
-    #                 "Updated status to IN_PROGRESS",
-    #                 extra={"function_id": function_id}
-    #             )
-
-    #         else:
-    #             logger.warning(
-    #                 "No entry found for function_id",
-    #                 extra={"function_id": function_id}
-    #             )
-
-    # except Exception as e:
-    #     logger.error("Error updating the database", extra={"error": traceback.format_exc()})
-    #     raise
-    with study_subject_service.connect() as connection:
-        # Try querying study subject api joins that are not expired
-        try:
-            study_subject_service.get_entries()
-
-        # On error raise exception and exit
-        except Exception:
-            logger.error(
-                "Error fetching participant API data from database",
-                extra={"error": traceback.format_exc()}
-            )
-            raise DBFetchError
-
-        # Iterate over each result to query the Fitbit API
-        for entry in study_subject_service.iter_entries():
-            logger.debug(
-                "Fetching participant Fitbit data",
-                extra=entry.__dict__
-            )
-
-            # Construct the URL for Fitbit API call
-            url = build_url(entry)
-
-            # Try querying the fitbit API for this study subject
-            data = {"sleep": []}
-            try:
-                if TESTING:
-                    data = generate_sleep_logs()
-                else:
-                    # Retrieve OAuth tokens for the subject
-                    tokens = tokens_config[entry.id]
-
-                    # Query the Fitbit API
-                    fitbit_session = get_fitbit_oauth_session(entry, tokens)
-                    response = fitbit_session.request(url)
-                    data = response.json()
-
-                logger.info(
-                    "Participant data retrieved from Fibit API",
-                    extra={
-                        "study_subject_id": entry.id,
-                        "result_count": len(data["sleep"])
-                    }
-                )
-
-            # On error continue to next study subject
-            except Exception:
-                logger.error(
-                    "Error retrieving participant data from Fitbit API",
-                    extra={
-                        "error": traceback.format_exc(),
-                        "study_subject_id": entry.id,
-                        "url": url
-                    }
-                )
-                continue
-
-            try:
-                with connection.begin_nested():
-                    # Try inserting Fitbit data into the database
-                    try:
-                        study_subject_service.insert_data(data)
-
-                    # On error continue to next study subject
-                    except Exception:
-                        logger.error(
-                            "Error inserting Fitbit data to database",
-                            extra={
-                                "study_subject_id": entry.id,
-                                "error": traceback.format_exc()
-                            }
-                        )
-                        raise NestedError
-
-                    # Try updating `api.last_sync_date` to the current `job_timestamp`
-                    try:
-                        study_subject_service.update_last_sync_date()
-
-                    # On error continue to next study subject
-                    except Exception:
-                        logger.error(
-                            "Error updating `last_sync_date`",
-                            extra={
-                                "study_subject_id": entry.id,
-                                "api_id": entry.api_id,
-                                "error": traceback.format_exc()
-                            }
-                        )
-                        raise NestedError
-
-            # Continue to next study subject in case of handled error
-            except NestedError:
-                logger.error(
-                    "Updating study subject failed. Changes not committed.",
-                    extra={"study_subject_id": entry.id}
-                )
-                continue
-
-            # Log error and exit in case of unhandled error
-            except Exception:
-                logger.error(
-                    "Unhandled error when updating study subject. Exiting.",
-                    extra={
-                        "study_subject_id": entry.id,
-                        "error": traceback.format_exc(),
-                    }
-                )
-                raise DBUpdateError
-
-    # Upload log file to S3
-    try:
-        s3_client = boto3.client("s3")
-        bucket_name = config["S3_BUCKET"]
-
-        # Prepare the S3 filename including function_id
-        s3_filename = f"logs/{function_id}_{logger.log_filename}.json"
-        s3_client.upload_file(logger.log_filename, bucket_name, s3_filename)
-
-        logger.info(
-            "Log file successfully uploaded to S3",
-            extra={"s3_filename": s3_filename, "bucket": bucket_name}
-        )
-
-    except Exception as s3_error:
-        logger.error(
-            "Error uploading log file to S3",
-            extra={"error": str(s3_error)}
-        )
-
-        raise S3UploadError
-
-
 def handler(event, context):
     logger.info("Starting wearable data retrieval job", extra={"job_timestamp": job_timestamp})
     error_code = None
@@ -486,8 +312,8 @@ def handler(event, context):
 
         # Database connection setup
         try:
-            db_service = DBService(config["DB_URI"])
-            study_subject_service = StudySubjectService(db_service)
+            db = DB(config["DB_URI"])
+            study_subject_service = StudySubjectService(db)
 
         except Exception:
             logger.error(
@@ -496,7 +322,179 @@ def handler(event, context):
             )
             raise DBInitializationError
 
-        main(function_id, config, tokens_config)
+        # # Reflect existing database into a new model
+        # metadata.reflect(only=["lambda_function"])
+
+        # # Access the `lambda_function` table
+        # lambda_function_table = Table(
+        #     "lambda_function", metadata, autoload_with=engine
+        # )
+
+        # # Query the table for the specific function_id and update status
+        # try:
+        #     with engine.connect() as connection:
+        #         # Retrieve the record
+        #         query = select(lambda_function_table)\
+        #             .where(lambda_function_table.c.id == function_id)
+        #         result = connection.execute(query).first()
+
+        #         if result:
+        #             logger.info(
+        #                 "Query for `lambda_function` result", extra=dict(result)
+        #             )
+
+        #             # Update the status to "IN_PROGRESS"
+        #             update_stmt = (
+        #                 update(lambda_function_table).
+        #                 where(lambda_function_table.c.id == function_id).
+        #                 values(status="IN_PROGRESS")
+        #             )
+        #             connection.execute(update_stmt)
+        #             connection.commit()
+        #             logger.info(
+        #                 "Updated status to IN_PROGRESS",
+        #                 extra={"function_id": function_id}
+        #             )
+
+        #         else:
+        #             logger.warning(
+        #                 "No entry found for function_id",
+        #                 extra={"function_id": function_id}
+        #             )
+
+        # except Exception as e:
+        #     logger.error("Error updating the database", extra={"error": traceback.format_exc()})
+        #     raise
+        with study_subject_service.connect() as connection:
+            # Try querying study subject api joins that are not expired
+            try:
+                study_subject_service.get_entries()
+
+            # On error raise exception and exit
+            except Exception:
+                logger.error(
+                    "Error fetching participant API data from database",
+                    extra={"error": traceback.format_exc()}
+                )
+                raise DBFetchError
+
+            # Iterate over each result to query the Fitbit API
+            for entry in study_subject_service.iter_entries():
+                logger.debug(
+                    "Fetching participant Fitbit data",
+                    extra=entry.__dict__
+                )
+
+                # Construct the URL for Fitbit API call
+                url = build_url(entry)
+
+                # Try querying the fitbit API for this study subject
+                data = {"sleep": []}
+                try:
+                    if TESTING:
+                        data = generate_sleep_logs()
+                    else:
+                        # Retrieve OAuth tokens for the subject
+                        tokens = tokens_config[entry.id]
+
+                        # Query the Fitbit API
+                        fitbit_session = get_fitbit_oauth_session(entry, tokens)
+                        response = fitbit_session.request(url)
+                        data = response.json()
+
+                    logger.info(
+                        "Participant data retrieved from Fibit API",
+                        extra={
+                            "study_subject_id": entry.id,
+                            "result_count": len(data["sleep"])
+                        }
+                    )
+
+                # On error continue to next study subject
+                except Exception:
+                    logger.error(
+                        "Error retrieving participant data from Fitbit API",
+                        extra={
+                            "error": traceback.format_exc(),
+                            "study_subject_id": entry.id,
+                            "url": url
+                        }
+                    )
+                    continue
+
+                try:
+                    with connection.begin_nested():
+                        # Try inserting Fitbit data into the database
+                        try:
+                            study_subject_service.insert_data(data)
+
+                        # On error continue to next study subject
+                        except Exception:
+                            logger.error(
+                                "Error inserting Fitbit data to database",
+                                extra={
+                                    "study_subject_id": entry.id,
+                                    "error": traceback.format_exc()
+                                }
+                            )
+                            raise NestedError
+
+                        # Try updating `api.last_sync_date` to the current `job_timestamp`
+                        try:
+                            study_subject_service.update_last_sync_date()
+
+                        # On error continue to next study subject
+                        except Exception:
+                            logger.error(
+                                "Error updating `last_sync_date`",
+                                extra={
+                                    "study_subject_id": entry.id,
+                                    "api_id": entry.api_id,
+                                    "error": traceback.format_exc()
+                                }
+                            )
+                            raise NestedError
+
+                # Continue to next study subject in case of handled error
+                except NestedError:
+                    logger.error(
+                        "Updating study subject failed. Changes not committed.",
+                        extra={"study_subject_id": entry.id}
+                    )
+                    continue
+
+                # Log error and exit in case of unhandled error
+                except Exception:
+                    logger.error(
+                        "Unhandled error when updating study subject. Exiting.",
+                        extra={
+                            "study_subject_id": entry.id,
+                            "error": traceback.format_exc(),
+                        }
+                    )
+                    raise DBUpdateError
+
+        # Upload log file to S3
+        try:
+            s3_client = boto3.client("s3")
+            bucket_name = config["S3_BUCKET"]
+
+            # Prepare the S3 filename including function_id
+            s3_filename = f"logs/{function_id}_{logger.log_filename}.json"
+            s3_client.upload_file(logger.log_filename, bucket_name, s3_filename)
+
+            logger.info(
+                "Log file successfully uploaded to S3",
+                extra={"s3_filename": s3_filename, "bucket": bucket_name}
+            )
+
+        except Exception as s3_error:
+            logger.error(
+                "Error uploading log file to S3",
+                extra={"error": str(s3_error)}
+            )
+
+            raise S3UploadError
 
     except ConfigFetchError:
         error_code = "CONFIG_FETCH_ERROR"
