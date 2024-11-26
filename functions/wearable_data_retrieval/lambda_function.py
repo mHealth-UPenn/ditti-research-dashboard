@@ -22,6 +22,11 @@ DEBUG = os.getenv("DEBUG") is not None
 # Use a common timestamp across the whole job
 job_timestamp = datetime.now().isoformat()
 
+# Initialize db services to `None` for global access
+db_service = None
+lambda_function_service = None
+study_subject_service = None
+
 logger = LambdaLogger(
     job_timestamp,
     level=logging.DEBUG if DEBUG else logging.INFO
@@ -29,6 +34,10 @@ logger = LambdaLogger(
 
 
 class NestedError(Exception):
+    pass
+
+
+class DBInitializationError(Exception):
     pass
 
 
@@ -271,29 +280,7 @@ def build_url(entry):
     return url
 
 
-def main(function_id):
-    # Load secrets
-    if TESTING:
-        config = {
-            "DB_URI": os.getenv("DB_URI")
-        }
-        tokens_config = {}
-    else:
-        try:
-            config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
-            tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
-            config = get_secret(config_secret_name)
-            tokens_config = get_secret(tokens_secret_name)
-        except Exception as e:
-            logger.error(
-                f"Error retrieving secret",
-                extra={"error": traceback.format_exc()}
-            )
-            raise ConfigFetchError
-
-    # Database connection setup
-    db_service = DBService(config["DB_URI"])
-
+def main(function_id, config, tokens_config):
     # # Reflect existing database into a new model
     # metadata.reflect(only=["lambda_function"])
 
@@ -337,10 +324,6 @@ def main(function_id):
     # except Exception as e:
     #     logger.error("Error updating the database", extra={"error": traceback.format_exc()})
     #     raise
-
-    # Reflect existing tables into models
-    study_subject_service = StudySubjectService(db_service)
-
     with study_subject_service.connect() as connection:
         # Try querying study subject api joins that are not expired
         try:
@@ -482,7 +465,39 @@ def handler(event, context):
     logger.info("Retrieved function_id", extra={"function_id": function_id})
 
     try:
-        main(function_id)
+        # Load secrets
+        if TESTING:
+            config = {
+                "DB_URI": os.getenv("DB_URI")
+            }
+            tokens_config = {}
+        else:
+            try:
+                config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
+                tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
+                config = get_secret(config_secret_name)
+                tokens_config = get_secret(tokens_secret_name)
+            except Exception:
+                logger.error(
+                    f"Error retrieving secret",
+                    extra={"error": traceback.format_exc()}
+                )
+                raise ConfigFetchError
+
+        # Database connection setup
+        try:
+            db_service = DBService(config["DB_URI"])
+            study_subject_service = StudySubjectService(db_service)
+
+        except Exception:
+            logger.error(
+                f"Error retrieving secret",
+                extra={"error": traceback.format_exc()}
+            )
+            raise DBInitializationError
+
+        main(function_id, config, tokens_config)
+
     except ConfigFetchError:
         error_code = "CONFIG_FETCH_ERROR"
     except DBFetchError:
