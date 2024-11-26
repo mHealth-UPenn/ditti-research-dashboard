@@ -2145,8 +2145,6 @@ class LambdaTask(db.Model):
     Vars
     ----
     id: sqlalchemy.Column
-    task_id: sqlalchemy.Column
-        The AWS Lambda task ID.
     status: sqlalchemy.Column
         The status of the task ("Pending", "Success", "Failed").
     billed_ms: sqlalchemy.Column
@@ -2158,14 +2156,21 @@ class LambdaTask(db.Model):
     """
     __tablename__ = "lambda_task"
     id = db.Column(db.Integer, primary_key=True)
-    task_id = db.Column(db.String, nullable=False, unique=True)
     status = db.Column(
-        db.Enum("Pending", "Success", "Failed", name="task_status"), nullable=False
+        db.Enum("Pending", "Success", "Failed", name="taskstatustypeenum"), nullable=False
     )
     billed_ms = db.Column(db.Integer, nullable=True)
-    created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
+    created_on = db.Column(
+        db.DateTime,
+        default=func.now(),
+        nullable=False,
+        index=True
+    )
     updated_on = db.Column(
-        db.DateTime, default=func.now(), onupdate=func.now(), nullable=False
+        db.DateTime,
+        default=func.now(),
+        onupdate=func.now(),
+        nullable=False
     )
     error_message = db.Column(db.Text, nullable=True)
 
@@ -2173,7 +2178,6 @@ class LambdaTask(db.Model):
     def meta(self):
         return {
             "id": self.id,
-            "taskId": self.task_id,
             "status": self.status,
             "billedMs": self.billed_ms,
             "createdOn": self.created_on.isoformat(),
