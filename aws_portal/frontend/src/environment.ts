@@ -1,12 +1,9 @@
-export type Environment = "production" | "demo" | "development";
+export type Environment = "production" | "demo" | "development" | "test";
 
 export const APP_ENV: Environment = (() => {
-  switch (process.env.REACT_APP_ENV) {
-    case "production":
-      return "production"
-    case "demo":
-      return "demo"
-    default:
-      return "development"
+  if (process.env.REACT_APP_DEMO === "1") {
+    return "demo";
+  } else {
+    return process.env.NODE_ENV;
   }
 })();

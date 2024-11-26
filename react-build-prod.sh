@@ -1,11 +1,3 @@
-# export react env variables
-if [ -f secret-react.env ]; then
-    export $(cat secret-react.env | xargs)
-else
-    echo "secret-react.env not found."
-    exit 1
-fi
-
 # export deployment env variables
 if [ -f secret-deploy.env ]; then
     export $(cat secret-deploy.env | xargs)
