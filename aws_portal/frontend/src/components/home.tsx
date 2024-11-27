@@ -40,6 +40,13 @@ const Home: React.FC<ViewProps> = ({
           flashMessage={flashMessage} />
       ),
     },
+    {
+      breadcrumbs: ["Wearable Dashboard"],
+      name: "Wearable Dashboard",
+      view: (
+        <React.Fragment />
+      ),
+    },
   ]);
 
   const [loading, setLoading] = useState(true);
