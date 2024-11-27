@@ -169,9 +169,9 @@ def logout():
 
     # Remove cookies by setting them to expire immediately
     response.set_cookie("id_token", "", expires=0,
-                        httponly=True, secure=True, samesite="Lax")
+                        httponly=True, secure=True, samesite="None")
     response.set_cookie("access_token", "", expires=0,
-                        httponly=True, secure=True, samesite="Lax")
+                        httponly=True, secure=True, samesite="None")
 
     return response
 
