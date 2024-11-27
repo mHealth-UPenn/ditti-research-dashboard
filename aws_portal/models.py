@@ -2157,7 +2157,10 @@ class LambdaTask(db.Model):
     __tablename__ = "lambda_task"
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(
-        db.Enum("Pending", "Success", "Failed", name="taskstatustypeenum"), nullable=False
+        db.Enum(
+            "Pending", "InProgress", "Success", "Failed", "CompletedWithErrors",
+            name="taskstatustypeenum"
+        ), nullable=False
     )
     billed_ms = db.Column(db.Integer, nullable=True)
     created_on = db.Column(
