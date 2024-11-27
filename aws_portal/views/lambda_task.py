@@ -1,11 +1,9 @@
-from datetime import datetime, UTC
 import logging
 import traceback
-from flask import Blueprint, jsonify, make_response, request
+from flask import Blueprint, jsonify, make_response
 from aws_portal.extensions import db
 from aws_portal.models import LambdaTask
-from aws_portal.utils.lambda_task import create_and_invoke_lambda_task, invoke_lambda_task
-from aws_portal.utils.sigv4_auth import sigv4_required
+from aws_portal.utils.lambda_task import create_and_invoke_lambda_task
 
 blueprint = Blueprint("lambda_task", __name__, url_prefix="/lambda_task")
 logger = logging.getLogger(__name__)
@@ -56,21 +54,21 @@ def get_lambda_tasks():
         return make_response({"msg": "Internal server error when retrieving lambda tasks."}, 500)
 
 
-@blueprint.route("/trigger", methods=["POST"])
+@blueprint.route("/invoke", methods=["POST"])
 # TODO: Add correct authentication decorator
 # TODO: Will be called when someone opens the app and after the database starts running
-def trigger_lambda_task():
+def invoke_lambda_task_endpoint():
     """
-    Manually trigger a Lambda task.
+    Manually invoke a Lambda task.
 
     Request:
     --------
-    POST /lambda_task/trigger
+    POST /lambda_task/invoke
 
     Response (200 OK):
     ------------------
     {
-        "msg": "Lambda task triggered successfully",
+        "msg": "Lambda task invoked successfully",
         "task": {
             "id": int,
             "status": str,          # "Pending", "InProgress", "Success", "Failed", or "CompletedWithErrors"
@@ -92,7 +90,7 @@ def trigger_lambda_task():
     Response (500 Internal Server Error):
     -------------------------------------
     {
-        "msg": "Internal server error when triggering lambda task."
+        "msg": "Internal server error when invoking lambda task."
     }
     """
     try:
@@ -102,12 +100,12 @@ def trigger_lambda_task():
             raise Exception("Failed to create and invoke Lambda task.")
 
         return jsonify({
-            "msg": "Lambda task triggered successfully",
+            "msg": "Lambda task invoked successfully",
             "task": lambda_task.meta
         }), 200
 
     except Exception:
         exc = traceback.format_exc()
-        logger.warning(f"Error triggering Lambda task: {exc}")
+        logger.warning(f"Error invoking Lambda task: {exc}")
         db.session.rollback()
-        return make_response({"msg": "Internal server error when triggering lambda task."}, 500)
+        return make_response({"msg": "Internal server error when invoking lambda task."}, 500)
