@@ -31,6 +31,7 @@ def upgrade():
                     sa.Column('billed_ms', sa.Integer(), nullable=True),
                     sa.Column('created_on', sa.DateTime(), nullable=False),
                     sa.Column('updated_on', sa.DateTime(), nullable=False),
+                    sa.Column('completed_on', sa.DateTime(), nullable=True),
                     sa.Column('error_message', sa.Text(), nullable=True),
                     sa.PrimaryKeyConstraint('id'),
                     sa.Index('ix_lambda_task_created_on', 'created_on')

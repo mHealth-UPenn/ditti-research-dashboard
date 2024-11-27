@@ -2146,11 +2146,13 @@ class LambdaTask(db.Model):
     ----
     id: sqlalchemy.Column
     status: sqlalchemy.Column
-        The status of the task ("Pending", "Success", "Failed").
+        The status of the task ("Pending", "InProgress", "Success", "Failed", "CompletedWithErrors").
     billed_ms: sqlalchemy.Column
         The billed duration of the Lambda function in milliseconds.
     created_on: sqlalchemy.Column
     updated_on: sqlalchemy.Column
+    completed_on: sqlalchemy.Column
+        The datetime when the task was completed.
     error_message: sqlalchemy.Column
         Error message if any.
     """
@@ -2175,6 +2177,7 @@ class LambdaTask(db.Model):
         onupdate=func.now(),
         nullable=False
     )
+    completed_on = db.Column(db.DateTime, nullable=True)
     error_message = db.Column(db.Text, nullable=True)
 
     @property
@@ -2185,8 +2188,9 @@ class LambdaTask(db.Model):
             "billedMs": self.billed_ms,
             "createdOn": self.created_on.isoformat(),
             "updatedOn": self.updated_on.isoformat(),
+            "completedOn": self.completed_on.isoformat() if self.completed_on else None,
             "errorMessage": self.error_message
         }
 
     def __repr__(self):
-        return f"<LambdaTask {self.task_id}>"
+        return f"<LambdaTask {self.id}>"
