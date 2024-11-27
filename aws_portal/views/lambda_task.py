@@ -66,12 +66,6 @@ def trigger_lambda_task():
     --------
     POST /lambda_task/trigger
 
-    Request Body (JSON):
-    --------------------
-    {
-        "function_id": int  # Required
-    }
-
     Response (200 OK):
     ------------------
     {
@@ -100,12 +94,6 @@ def trigger_lambda_task():
     }
     """
     try:
-        data = request.json or {}
-        function_id = data.get("function_id")
-
-        if function_id is None:
-            return make_response({"msg": "function_id is required"}, 400)
-
         # Create a new LambdaTask with status 'Pending'
         lambda_task = LambdaTask(
             status="Pending",
