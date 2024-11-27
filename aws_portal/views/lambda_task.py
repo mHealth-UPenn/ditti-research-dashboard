@@ -4,7 +4,7 @@ import traceback
 from flask import Blueprint, jsonify, make_response, request
 from aws_portal.extensions import db
 from aws_portal.models import LambdaTask
-from aws_portal.utils.lambda_task import invoke_lambda_task
+from aws_portal.utils.lambda_task import create_and_invoke_lambda_task, invoke_lambda_task
 from aws_portal.utils.sigv4_auth import sigv4_required
 
 blueprint = Blueprint("lambda_task", __name__, url_prefix="/lambda_task")
@@ -96,17 +96,10 @@ def trigger_lambda_task():
     }
     """
     try:
-        # Create a new LambdaTask with status 'Pending'
-        lambda_task = LambdaTask(
-            status="Pending",
-            created_on=datetime.now(UTC),
-            updated_on=datetime.now(UTC)
-        )
-        db.session.add(lambda_task)
-        db.session.commit()
-
-        # Invoke the Lambda function with the function_id
-        invoke_lambda_task(function_id=lambda_task.id)
+        # Create and invoke a new LambdaTask
+        lambda_task = create_and_invoke_lambda_task()
+        if lambda_task is None:
+            raise Exception("Failed to create and invoke Lambda task.")
 
         return jsonify({
             "msg": "Lambda task triggered successfully",

@@ -10,6 +10,33 @@ from flask import current_app
 logger = logging.getLogger(__name__)
 
 
+def create_and_invoke_lambda_task():
+    """
+    Creates a new LambdaTask and invokes the Lambda function.
+    """
+    try:
+        now = datetime.now(UTC)
+        # Create a new LambdaTask with status "Pending"
+        lambda_task = LambdaTask(
+            status="Pending",
+            created_on=now,
+            updated_on=now
+        )
+        db.session.add(lambda_task)
+        db.session.commit()
+
+        # Invoke the Lambda function with the function_id
+        invoke_lambda_task(function_id=lambda_task.id)
+
+        return lambda_task
+    except Exception as e:
+        logger.error(f"Error creating and invoking Lambda task: {e}")
+        traceback_str = traceback.format_exc()
+        logger.error(traceback_str)
+        db.session.rollback()
+        return None
+
+
 def invoke_lambda_task(function_id):
     """
     Invokes an AWS Lambda function asynchronously and stores the task in the database.
