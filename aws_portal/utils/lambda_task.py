@@ -37,6 +37,42 @@ def create_and_invoke_lambda_task():
         return None
 
 
+def check_and_invoke_lambda_task():
+    """
+    Checks if a LambdaTask has been run today. If not, invokes a new Lambda task.
+    """
+    try:
+        # Get the latest LambdaTask
+        latest_task = LambdaTask.query.order_by(
+            LambdaTask.created_on.desc()).first()
+        now = datetime.now(UTC)
+        # TODO: Update with finalized retrieval schedule
+        if latest_task:
+            # Check if the latest task was run today
+            if latest_task.created_on.date() == now.date():
+                # A task has already been run today
+                logger.info("Lambda task has already been run today.")
+                return latest_task
+            else:
+                logger.info(
+                    "No Lambda task has been run today. Invoking new Lambda task.")
+                # Create and invoke a new LambdaTask
+                lambda_task = create_and_invoke_lambda_task()
+                return lambda_task
+        else:
+            # No task has been run yet
+            logger.info("No Lambda task found. Invoking first Lambda task.")
+            # Create and invoke a new LambdaTask
+            lambda_task = create_and_invoke_lambda_task()
+            return lambda_task
+    except Exception as e:
+        logger.error(f"Error checking/invoking Lambda task: {e}")
+        traceback_str = traceback.format_exc()
+        logger.error(traceback_str)
+        db.session.rollback()
+        return None
+
+
 def invoke_lambda_task(function_id):
     """
     Invokes an AWS Lambda function asynchronously and stores the task in the database.
