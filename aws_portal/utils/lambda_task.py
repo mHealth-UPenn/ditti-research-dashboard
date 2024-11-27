@@ -42,7 +42,8 @@ def invoke_lambda_task(function_id):
         response = client.invoke(
             FunctionName=function_name,
             InvocationType="Event",  # Asynchronous invocation
-            Payload=json.dumps(payload)
+            Payload=json.dumps(payload).encode(
+                'utf-8')  # Ensure payload is bytes
         )
 
         logger.info(
@@ -50,17 +51,24 @@ def invoke_lambda_task(function_id):
             f"Response: {response}"
         )
 
-        return LambdaTask.query.get(function_id)
+        # Update the task status to 'InProgress'
+        lambda_task = LambdaTask.query.get(function_id)
+        if lambda_task:
+            lambda_task.status = "InProgress"
+            lambda_task.updated_on = datetime.now(UTC)
+            db.session.commit()
+
+        return lambda_task
 
     except Exception as e:
         logger.error(f"Failed to invoke lambda function: {e}")
         traceback_str = traceback.format_exc()
         logger.error(traceback_str)
-        # Update the LambdaTask status to 'Failed'
+        # Update the LambdaTask status to 'Failed' and set error_code
         lambda_task = LambdaTask.query.get(function_id)
         if lambda_task:
             lambda_task.status = "Failed"
-            lambda_task.error_message = str(e)
+            lambda_task.error_code = str(e)
             lambda_task.updated_on = datetime.now(UTC)
             db.session.commit()
         return lambda_task

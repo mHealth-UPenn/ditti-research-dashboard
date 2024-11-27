@@ -26,12 +26,13 @@ def get_lambda_tasks():
     [
         {
             "id": int,
-            "taskId": str,
-            "status": str,          # "Pending", "Success", or "Failed"
+            "status": str,          # "Pending", "InProgress", "Success", "Failed", or "CompletedWithErrors"
             "billedMs": int,
             "createdOn": str,       # ISO 8601 format
             "updatedOn": str,       # ISO 8601 format
-            "errorMessage": str
+            "completedOn": str,     # ISO 8601 format or null
+            "logFile": str or null,
+            "errorCode": str or null
         },
         ...
     ]
@@ -72,12 +73,13 @@ def trigger_lambda_task():
         "msg": "Lambda task triggered successfully",
         "task": {
             "id": int,
-            "taskId": str,
-            "status": str,          # "Pending", "Success", or "Failed"
+            "status": str,          # "Pending", "InProgress", "Success", "Failed", or "CompletedWithErrors"
             "billedMs": int,
             "createdOn": str,       # ISO 8601 format
             "updatedOn": str,       # ISO 8601 format
-            "errorMessage": str
+            "completedOn": str,     # ISO 8601 format or null
+            "logFile": str or null,
+            "errorCode": str or null
         }
     }
 
