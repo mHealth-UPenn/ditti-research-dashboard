@@ -7,7 +7,7 @@ import Title from '../text/title';
 import Button from '../buttons/button';
 import Link from '../links/link';
 import { Link as RouterLink } from "react-router-dom";
-import { WearableDataProvider } from '../../contexts/wearableDataContext';
+import { ParticipantWearableDataProvider } from '../../contexts/wearableDataContext';
 import WearableVisualization from '../visualizations/wearableVisualization';
 
 
@@ -83,9 +83,9 @@ const ParticipantDashboard = () => {
             </div>
           </CardContentRow>
           <CardContentRow>
-            <WearableDataProvider>
+            <ParticipantWearableDataProvider>
               <WearableVisualization />
-            </WearableDataProvider>
+            </ParticipantWearableDataProvider>
           </CardContentRow>
         </Card>
 
