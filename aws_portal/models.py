@@ -2155,8 +2155,8 @@ class LambdaTask(db.Model):
         The datetime when the task was completed.
     log_file: sqlalchemy.Column
         Text of the Lambda function log file if any.
-    error_message: sqlalchemy.Column
-        Error message if any.
+    error_code: sqlalchemy.Column
+        Error code if any.
     """
     __tablename__ = "lambda_task"
     id = db.Column(db.Integer, primary_key=True)
@@ -2181,7 +2181,7 @@ class LambdaTask(db.Model):
     )
     completed_on = db.Column(db.DateTime, nullable=True)
     log_file = db.Column(db.Text, nullable=True)
-    error_message = db.Column(db.Text, nullable=True)
+    error_code = db.Column(db.String, nullable=True)
 
     @property
     def meta(self):
@@ -2193,7 +2193,7 @@ class LambdaTask(db.Model):
             "updatedOn": self.updated_on.isoformat(),
             "completedOn": self.completed_on.isoformat() if self.completed_on else None,
             "logFile": self.log_file,
-            "errorMessage": self.error_message
+            "errorCode": self.error_code
         }
 
     def __repr__(self):
