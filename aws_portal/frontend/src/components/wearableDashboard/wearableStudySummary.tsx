@@ -11,6 +11,7 @@ import Subtitle from "../text/subtitle";
 import Button from "../buttons/button";
 import CardContentRow from "../cards/cardContentRow";
 import { APP_ENV } from "../../environment";
+import WearableStudySubjects from "./wearableStudySubjects";
 
 /**
  * Information for study contacts
@@ -158,13 +159,12 @@ export default function WearableStudySummary({
           </div>
         </CardContentRow>
 
-        {/* <StudySubjects
+        <WearableStudySubjects
           flashMessage={flashMessage}
           goBack={goBack}
           handleClick={handleClick}
-          studyDetails={studyDetails}
           studyPrefix={dittiId}
-          canViewWearableData={canViewWearableData} /> */}
+          canViewWearableData={canViewWearableData} />
       </Card>
 
       <Card width="sm">

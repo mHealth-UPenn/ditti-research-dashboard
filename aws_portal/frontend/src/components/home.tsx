@@ -8,6 +8,7 @@ import { getAccess } from "../utils";
 import Card from "./cards/card";
 import CardContentRow from "./cards/cardContentRow";
 import ViewContainer from "./containers/viewContainer";
+import WearableStudies from "./wearableDashboard/wearableStudies";
 
 /**
  * Home component: renders available apps for the user
@@ -44,7 +45,10 @@ const Home: React.FC<ViewProps> = ({
       breadcrumbs: ["Wearable Dashboard"],
       name: "Wearable Dashboard",
       view: (
-        <React.Fragment />
+        <WearableStudies
+          handleClick={handleClick}
+          goBack={goBack}
+          flashMessage={flashMessage} />
       ),
     },
   ]);

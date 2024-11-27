@@ -7,9 +7,14 @@ import CardContentRow from "../cards/cardContentRow";
 import Title from "../text/title";
 import ActiveIcon from "../icons/activeIcon";
 import Link from "../links/link";
+import WearableStudySummary from "./wearableStudySummary";
 
 
-export default function WearableStudies({ handleClick }: ViewProps) {
+export default function WearableStudies({
+  flashMessage,
+  goBack,
+  handleClick
+}: ViewProps) {
   const [canViewWearableData, setCanViewWearableData] = useState<Set<number>>(new Set());
   const studies: Study[] = [];
 
@@ -38,13 +43,12 @@ export default function WearableStudies({ handleClick }: ViewProps) {
     if (study) {
       // set the view
       const view = (
-        <React.Fragment />
-        // <WearableStudySummary
-        //   flashMessage={flashMessage}
-        //   handleClick={handleClick}
-        //   goBack={goBack}
-        //   studyId={study.id}
-        // />
+        <WearableStudySummary
+          flashMessage={flashMessage}
+          handleClick={handleClick}
+          goBack={goBack}
+          studyId={study.id}
+        />
       );
 
       handleClick([study.acronym], view, false);
