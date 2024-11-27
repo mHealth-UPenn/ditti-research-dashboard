@@ -47,16 +47,16 @@ class Default:
     LAMBDA_AWS_REGION = os.environ.get("LAMBDA_AWS_REGION", "us-east-1")
 
     # APScheduler configuration
-    SCHEDULER_API_ENABLED = True
-    JOBS = [
-        {
-            "id": "ScheduledLambdaTask",
-            "func": "aws_portal.utils.lambda_task:schedule_lambda_task",
-            "trigger": "cron",
-            "hour": 10,
-            "minute": 0
-        }
-    ]
+    # SCHEDULER_API_ENABLED = True
+    # JOBS = [
+    #     {
+    #         "id": "ScheduledLambdaTask",
+    #         "func": "aws_portal.utils.lambda_task:schedule_lambda_task",
+    #         "trigger": "cron",
+    #         "hour": 10,
+    #         "minute": 0
+    #     }
+    # ]
 
 
 class Staging(Default):
