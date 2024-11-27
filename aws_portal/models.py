@@ -2153,6 +2153,8 @@ class LambdaTask(db.Model):
     updated_on: sqlalchemy.Column
     completed_on: sqlalchemy.Column
         The datetime when the task was completed.
+    log_file: sqlalchemy.Column
+        Text of the Lambda function log file if any.
     error_message: sqlalchemy.Column
         Error message if any.
     """
@@ -2178,6 +2180,7 @@ class LambdaTask(db.Model):
         nullable=False
     )
     completed_on = db.Column(db.DateTime, nullable=True)
+    log_file = db.Column(db.Text, nullable=True)
     error_message = db.Column(db.Text, nullable=True)
 
     @property
@@ -2189,6 +2192,7 @@ class LambdaTask(db.Model):
             "createdOn": self.created_on.isoformat(),
             "updatedOn": self.updated_on.isoformat(),
             "completedOn": self.completed_on.isoformat() if self.completed_on else None,
+            "logFile": self.log_file,
             "errorMessage": self.error_message
         }
 
