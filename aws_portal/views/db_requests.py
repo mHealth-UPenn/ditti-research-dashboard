@@ -1,8 +1,11 @@
+from datetime import datetime
 import logging
 import traceback
+
 from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import current_user, jwt_required
 from sqlalchemy.sql import tuple_
+
 from aws_portal.extensions import db
 from aws_portal.models import (
     AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,
@@ -228,8 +231,11 @@ def get_study_wearable_details():
     # Build the response
     res = {}
     for ss in study_subjects:
-        # Count `has_api` if the current subject has at least 1 api connected
-        has_api = int(len(ss.apis) > 0)
+        # Count `has_api` if the current subject has at least 1 api connected and is active in at least one study
+        has_api = int(
+            len(ss.apis)
+            and len([s for s in ss.studies if s.expires_on > datetime.now()])
+        )
         for join in ss.studies:
             try:
                 res[join.study_id]["numSubjects"] += 1
