@@ -331,3 +331,10 @@ export interface IVisualizationProps {
   marginBottom?: number;
   marginLeft?: number;
 }
+
+export interface IWearableDetails {
+  [key: number]: {
+    numSubjects: number;
+    numSubjectsWithApi: number;
+  }
+}

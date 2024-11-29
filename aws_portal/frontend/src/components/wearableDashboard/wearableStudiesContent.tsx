@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { ViewProps } from "../../interfaces";
-import { getAccess } from "../../utils";
+import { IWearableDetails, ViewProps } from "../../interfaces";
+import { getAccess, makeRequest } from "../../utils";
 import Card from "../cards/card";
 import ViewContainer from "../containers/viewContainer";
 import CardContentRow from "../cards/cardContentRow";
@@ -18,21 +18,33 @@ export default function WearableStudiesContent({
   handleClick
 }: ViewProps) {
   const [canViewWearableData, setCanViewWearableData] = useState<Set<number>>(new Set());
+  const [wearableDetails, setWearableDetails] = useState<IWearableDetails>({});
+  const [loading, setLoading] = useState(true);
   
   const { studies, studiesLoading } = useStudiesContext();
 
   useEffect(() => {
-    const updateCanViewWearableData = async () => {
-      const updatedCanViewWearableData: Set<number> = new Set();
-      const promises = studies.map(s => {
-        return getAccess(3, "View", "Wearable Data", s.id)
+    const updatedCanViewWearableData: Set<number> = new Set();
+
+    const promises: Promise<unknown>[] = [];
+    
+    studies.forEach(s =>
+      promises.push(
+        getAccess(3, "View", "Wearable Data", s.id)
           .then(() => updatedCanViewWearableData.add(s.id))
-          .catch(() => updatedCanViewWearableData.delete(s.id));
-      });
-      await Promise.all(promises)
-      setCanViewWearableData(updatedCanViewWearableData)
-    }
-    updateCanViewWearableData();
+          .catch(() => updatedCanViewWearableData.delete(s.id))
+      )
+    );
+
+    promises.push(
+      makeRequest("/db/get-study-wearable-details")
+        .then((res: IWearableDetails) => setWearableDetails(res))
+        .catch(() => console.error("Error retrieving study wearable details. Check permissions."))
+    )
+    Promise.all(promises).then(() => {
+      setCanViewWearableData(updatedCanViewWearableData);
+      setLoading(false);
+    });
   }, [studies]);
 
   /**
@@ -58,7 +70,7 @@ export default function WearableStudiesContent({
     }
   };
 
-  if (studiesLoading) {
+  if (loading || studiesLoading) {
     return (
       <ViewContainer>
         <Card width="md">
@@ -92,6 +104,22 @@ export default function WearableStudiesContent({
                       {s.acronym}
                     </Link>
                     <span className="text-sm">{s.name}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <div className="text-sm font-bold">
+                    {
+                      s.id in wearableDetails
+                      ? wearableDetails[s.id].numSubjectsWithApi
+                      : 0
+                    } subjects with connected APIs
+                  </div>
+                  <div className="text-sm">
+                    {
+                      s.id in wearableDetails
+                      ? wearableDetails[s.id].numSubjects
+                      : 0
+                    } enrolled subjects
                   </div>
                 </div>
               </CardContentRow>
