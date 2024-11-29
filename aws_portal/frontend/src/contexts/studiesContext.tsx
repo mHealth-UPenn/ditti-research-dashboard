@@ -1,5 +1,5 @@
 // TODO: Extend implementation to Ditti App Dashboard
-import { createContext, useState, useEffect, PropsWithChildren, useMemo } from "react";
+import { createContext, useState, useEffect, PropsWithChildren, useMemo, useContext } from "react";
 import { makeRequest } from "../utils";
 import { StudiesContextType, Study } from "../interfaces";
 import { APP_ENV } from "../environment";
@@ -64,4 +64,13 @@ export default function StudiesProvider({
         {children}
     </StudiesContext.Provider>
   );
-};
+}
+
+
+export function useStudiesContext() {
+  const context = useContext(StudiesContext);
+  if (!context) {
+    throw new Error("useStudiesContext must be used within a StudiesContext provider");
+  }
+  return context;
+}
