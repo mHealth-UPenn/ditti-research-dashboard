@@ -289,6 +289,12 @@ export interface AuthContextType {
 }
 
 
+export interface StudiesContextType {
+  studies: Study[];
+  studiesLoading: boolean;
+}
+
+
 export interface IFlashMessage {
   id: number;
   element: React.ReactElement;

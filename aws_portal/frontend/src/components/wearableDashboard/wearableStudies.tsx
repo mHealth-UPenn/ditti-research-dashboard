@@ -18,19 +18,19 @@ export default function WearableStudies({
   const [canViewWearableData, setCanViewWearableData] = useState<Set<number>>(new Set());
   const studies: Study[] = [];
 
-  useEffect(() => {
-    const updateCanViewWearableData = async () => {
-      const updatedCanViewWearableData: Set<number> = new Set();
-      const promises = studies.map(s => {
-        return getAccess(2, "View", "Wearable Data", s.id)
-          .then(() => updatedCanViewWearableData.add(s.id))
-          .catch(() => updatedCanViewWearableData.delete(s.id));
-      });
-      await Promise.all(promises)
-      setCanViewWearableData(updatedCanViewWearableData)
-    }
-    updateCanViewWearableData();
-  }, [studies]);
+  // useEffect(() => {
+  //   const updateCanViewWearableData = async () => {
+  //     const updatedCanViewWearableData: Set<number> = new Set();
+  //     const promises = studies.map(s => {
+  //       return getAccess(2, "View", "Wearable Data", s.id)
+  //         .then(() => updatedCanViewWearableData.add(s.id))
+  //         .catch(() => updatedCanViewWearableData.delete(s.id));
+  //     });
+  //     await Promise.all(promises)
+  //     setCanViewWearableData(updatedCanViewWearableData)
+  //   }
+  //   updateCanViewWearableData();
+  // }, [studies]);
 
   /**
    * Handle when a user clicks on a study
