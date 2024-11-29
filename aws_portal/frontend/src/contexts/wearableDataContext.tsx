@@ -98,8 +98,8 @@ export const CoordinatorWearableDataProvider = ({ children }: PropsWithChildren<
 
 // Custom hook for accessing the context
 export const useWearableData = (): IWearableDataContextType => {
-  let participantContext = useContext(ParticipantWearableDataContext);
-  let coordinatorContext = useContext(CoordinatorWearableDataContext);
+  const participantContext = useContext(ParticipantWearableDataContext);
+  const coordinatorContext = useContext(CoordinatorWearableDataContext);
   if (participantContext !== undefined) {
     return participantContext;
   } else if (coordinatorContext !== undefined) {

@@ -98,4 +98,4 @@ export default function WearableStudies({
       </Card>
     </ViewContainer>
   );
-};
+}

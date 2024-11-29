@@ -81,4 +81,4 @@ export default function WearableStudySubjects({
       {activeUsers.length ? activeUsers.map(getSubjectSummary) : "No active subjects"}
     </>
   );
-};
+}
