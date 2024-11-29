@@ -66,8 +66,13 @@ const Home: React.FC<ViewProps> = ({
       setApps((prevApps) => prevApps.filter((app) => app.name !== "Ditti App Dashboard"));
     });
 
+    // check whether the user can view the ditti app dashboard
+    const wear = getAccess(3, "View", "Wearable Dashboard").catch(() => {
+      setApps((prevApps) => prevApps.filter((app) => app.name !== "Wearable Dashboard"));
+    });
+
     // when all promises resolve, hide the loader
-    Promise.all([admin, ditti]).then(() => setLoading(false));
+    Promise.all([admin, ditti, wear]).then(() => setLoading(false));
   }, []);
 
   if (loading) {

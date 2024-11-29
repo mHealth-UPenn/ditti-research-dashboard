@@ -469,7 +469,7 @@ def init_integration_testing_db():
 
     # Create the Wearable Dashboard Coordinator access group
     wear_coordinator_group = AccessGroup(name="Wearable Dashboard Coordinator", app=wear_app)
-    query = Permission.definition == tuple_("View", "Wearable Dashboard Dashboard")
+    query = Permission.definition == tuple_("View", "Wearable Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(access_group=wear_coordinator_group, permission=permission)
     db.session.add(wear_coordinator_group)
