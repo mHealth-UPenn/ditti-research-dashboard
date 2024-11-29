@@ -3,6 +3,7 @@ import traceback
 from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import current_user, jwt_required
 from sqlalchemy.sql import tuple_
+
 from aws_portal.extensions import db
 from aws_portal.models import (
     AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,
@@ -10,6 +11,7 @@ from aws_portal.models import (
 )
 # from aws_portal.utils.auth import auth_required
 from aws_portal.utils.db import populate_model
+from aws_portal.utils.auth import auth_required
 
 blueprint = Blueprint("db", __name__, url_prefix="/db")
 logger = logging.getLogger(__name__)
@@ -293,3 +295,15 @@ def get_about_sleep_templates():
 
     res = [a.meta for a in about_sleep_templates]
     return jsonify(res)
+
+
+# TODO: Move to fitbit query module after merged with dev
+@blueprint.route("/download-fitbit", methods=["GET"])
+@auth_required("View", "Wearable Dashboard")
+@auth_required("View", "Wearable Data")
+def download_fitbit():
+    """
+    Fetch all Fitbit API data from the database for either one study or one study subject. Return the fetched data
+    in a format prepared for rapid analysis via Excel download.
+    """
+    pass
