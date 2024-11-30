@@ -93,6 +93,38 @@ export interface Study {
 }
 
 /**
+ * Represents a join between a study subject and a study they are enrolled in.
+ * @property study - The study the study subject is enrolled in.
+ * @property didConsent - Whether the study subject consented to being enrolled in the study.
+ * @property createdOn - When the study subject was enrolled in the study. Actually the date when the database entry was
+ *   created.
+ * @property expiresOn - When the study subject's participation in the study ends.
+ */
+export interface StudyJoin {
+  study: Study;
+  didConsent: boolean;
+  createdOn: string;
+  expiresOn: string;
+}
+
+/**
+ * Represents a join between a study subject and an api they granted access to.
+ * @property apiUserUuid - The study subject's unique ID with the API.
+ * @property scope - The scope that the study subject granted with the API.
+ * @property api - The API the study subject granted access to.
+ * @property lastSyncDate - The last time data from this API was synced with the database.
+ * @property createdOn - When the study subject granted access to the API. Actually the data when the database entry was
+ *   created.
+ */
+export interface ApiJoin {
+  apiUserUuid: string;
+  scope: string[];
+  api: { id: number; name: string; };
+  lastSyncDate: string;
+  createdOn: string;
+}
+
+/**
  * Represents a sleep template with descriptive content.
  * @property id - The database primary key.
  * @property name - The name of the sleep template.
@@ -292,6 +324,19 @@ export interface AuthContextType {
 export interface StudiesContextType {
   studies: Study[];
   studiesLoading: boolean;
+}
+
+
+/**
+ * Defines the context containing information about a study subject.
+ * @property studies - The studies the study subject is enrolled information and information about their enrollment.
+ * @property apis - The APIs the study subject granted access to and information about the access granted.
+ * @property studySubjectLoading - Whether data is being fetched from the database.
+ */
+export interface StudySubjectContextType {
+  studies: StudyJoin[];
+  apis: ApiJoin[];
+  studySubjectLoading: boolean;
 }
 
 
