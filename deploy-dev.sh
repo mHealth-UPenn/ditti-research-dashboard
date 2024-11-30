@@ -57,6 +57,27 @@ export $(cat flask.env | xargs)
 export $(cat cognito.env | xargs)
 export $(cat fitbit.env | xargs)
 
+#!/bin/bash
+
+# Secret name
+SECRET_NAME="aws-portal-secret-dev"
+
+# Retrieve secret value using AWS CLI
+echo "Fetching secret: $SECRET_NAME"
+SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --query 'SecretString' --output text)
+
+if [[ -z "$SECRET_JSON" ]]; then
+  echo "Failed to retrieve secret or secret is empty."
+else
+    # Parse the JSON and export key-value pairs as environment variables
+    echo "Exporting key-value pairs as environment variables..."
+    echo "$SECRET_JSON" | jq -r 'to_entries | .[] | "export \(.key)=\(.value)"' | while read -r ENV_VAR; do
+    eval "$ENV_VAR"
+    done
+fi
+
+echo "Environment variables exported successfully."
+
 # Run initialization commands if "init" parameter is provided
 if [[ "$INIT_FLAG" == true ]]; then
     echo "Initializing application..."
