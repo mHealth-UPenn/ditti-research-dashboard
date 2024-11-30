@@ -29,7 +29,7 @@ const ParticipantDashboard = () => {
       start.setDate(1);
       end.setDate(28);
 
-      setFitbitConnected(true);
+      // setFitbitConnected(true);
       setStartDate(start);
       setEndDate(end);
       setScope(["Sleep"]);
@@ -76,65 +76,71 @@ const ParticipantDashboard = () => {
               <Button onClick={handleRedirect} rounded={true}>Connect FitBit</Button>
             }
           </CardContentRow>
-          <CardContentRow>
-            <div className="flex flex-col">
-              <span>Expires on: <b>January 1, 2025</b></span>
-              <span>We will no longer collect your data after this date.</span>
-            </div>
-          </CardContentRow>
-          <CardContentRow>
-            <ParticipantWearableDataProvider>
-              <WearableVisualization />
-            </ParticipantWearableDataProvider>
-          </CardContentRow>
+          {fitbitConnected &&
+            <>
+              <CardContentRow>
+                <div className="flex flex-col">
+                  <span>Expires on: <b>January 1, 2025</b></span>
+                  <span>We will no longer collect your data after this date.</span>
+                </div>
+              </CardContentRow>
+              <CardContentRow>
+                <ParticipantWearableDataProvider>
+                  <WearableVisualization />
+                </ParticipantWearableDataProvider>
+              </CardContentRow>
+            </>
+          }
         </Card>
 
-        <Card width="sm">
-          <CardContentRow>
-            <Title>Your Data</Title>
-          </CardContentRow>
-          <CardContentRow>
-            <div className="flex flex-col">
-              <div className="flex flex-col mb-4">
-                <span>Data being collected:</span>
-                {scope.map((s, i) =>
-                  <span key={i} className="font-bold">
-                    &nbsp;&nbsp;&nbsp;&nbsp;{s}
-                  </span>
-                )}
-              </div>
+        {fitbitConnected &&
+          <Card width="sm">
+            <CardContentRow>
+              <Title>Your Data</Title>
+            </CardContentRow>
+            <CardContentRow>
               <div className="flex flex-col">
-                <span>Between these dates:</span>
-                <span className="font-bold">
-                  &nbsp;&nbsp;&nbsp;&nbsp;{startDate?.toLocaleDateString()} - {endDate?.toLocaleDateString()}
-                </span>
+                <div className="flex flex-col mb-4">
+                  <span>Data being collected:</span>
+                  {scope.map((s, i) =>
+                    <span key={i} className="font-bold">
+                      &nbsp;&nbsp;&nbsp;&nbsp;{s}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col">
+                  <span>Between these dates:</span>
+                  <span className="font-bold">
+                    &nbsp;&nbsp;&nbsp;&nbsp;{startDate?.toLocaleDateString()} - {endDate?.toLocaleDateString()}
+                  </span>
+                </div>
               </div>
-            </div>
-          </CardContentRow>
-          <CardContentRow>
-            <Title>Why are we collecting your data?</Title>
-          </CardContentRow>
-          <CardContentRow>
-            <span>{dataSummary}</span>
-          </CardContentRow>
-          <CardContentRow>
-            <Title>Manage my data</Title>
-          </CardContentRow>
-          <CardContentRow>
-            <Link onClick={handleClickManageData}>
-              Request deletion of my account or data.
-            </Link>
-          </CardContentRow>
-          <CardContentRow>
-            <Title>Legal</Title>
-          </CardContentRow>
-          <CardContentRow>
-            <div className="flex flex-col">
-              <RouterLink className="link" to={{ pathname: "/terms-of-use" }}>Terms of Use</RouterLink>
-              <RouterLink className="link" to={{ pathname: "/privacy-policy" }}>Privacy Policy</RouterLink>
-            </div>
-          </CardContentRow>
-        </Card>
+            </CardContentRow>
+            <CardContentRow>
+              <Title>Why are we collecting your data?</Title>
+            </CardContentRow>
+            <CardContentRow>
+              <span>{dataSummary}</span>
+            </CardContentRow>
+            <CardContentRow>
+              <Title>Manage my data</Title>
+            </CardContentRow>
+            <CardContentRow>
+              <Link onClick={handleClickManageData}>
+                Request deletion of my account or data.
+              </Link>
+            </CardContentRow>
+            <CardContentRow>
+              <Title>Legal</Title>
+            </CardContentRow>
+            <CardContentRow>
+              <div className="flex flex-col">
+                <RouterLink className="link" to={{ pathname: "/terms-of-use" }}>Terms of Use</RouterLink>
+                <RouterLink className="link" to={{ pathname: "/privacy-policy" }}>Privacy Policy</RouterLink>
+              </div>
+            </CardContentRow>
+          </Card>
+        }
       </ViewContainer>
     </main>
   );
