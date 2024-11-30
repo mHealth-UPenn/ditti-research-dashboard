@@ -13,7 +13,7 @@ export const StudySubjectContext = createContext<StudySubjectContextType | undef
  */
 export default function StudySubjectProvider({
   children
-}: PropsWithChildren<void>) {
+}: PropsWithChildren<unknown>) {
   const [studies, setStudies] = useState<StudyJoin[]>([]);
   const [apis, setApis] = useState<ApiJoin[]>([])
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
@@ -42,8 +42,8 @@ export default function StudySubjectProvider({
   }, []);
 
   const getStudySubject = async (): Promise<[StudyJoin[], ApiJoin[]]> => {
-    let studiesData: StudyJoin[] = [];
-    let apisData: ApiJoin[] = [];
+    const studiesData: StudyJoin[] = [];
+    const apisData: ApiJoin[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
       const data = await makeRequest(`/participant`)

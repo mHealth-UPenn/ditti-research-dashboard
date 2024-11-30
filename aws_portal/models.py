@@ -1736,7 +1736,7 @@ class StudySubject(db.Model):
             "dittiId": self.ditti_id,
             "studies": [join.meta for join in self.studies],
             "apis": [join.meta for join in self.apis],
-            "sleepLogs": [join.meta for join in self.sleep_logs]
+            # "sleepLogs": [join.meta for join in self.sleep_logs]
         }
 
     def __repr__(self):

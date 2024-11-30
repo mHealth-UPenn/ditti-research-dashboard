@@ -56,13 +56,14 @@ def get_participant():
 
         # Serialize the StudySubject data to only include required fields
         try:
-            participant_data = serialize_participant(study_subject)
+            # participant_data = serialize_participant(study_subject)
+            pass
         except Exception as serialize_err:
             logger.error(f"Error serializing participant data for ditti_id {
                          ditti_id}: {str(serialize_err)}")
             return make_response({"msg": "Error processing participant data."}, 500)
 
-        return jsonify(participant_data)
+        return jsonify(study_subject.meta)
 
     except Exception as e:
         logger.error(f"Unhandled error retrieving participant data: {str(e)}")
