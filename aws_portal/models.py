@@ -1,13 +1,15 @@
+from datetime import datetime, UTC, timedelta, timezone
 import enum
 import logging
 import os
 import uuid
-from datetime import datetime, UTC, timedelta
+
 from flask import current_app
 from sqlalchemy import select, func, tuple_, event, Enum
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.sql.schema import UniqueConstraint
+
 from aws_portal.extensions import bcrypt, db, jwt
 
 
@@ -709,6 +711,34 @@ def init_integration_testing_db():
 </div>"""
 
     db.session.add(AboutSleepTemplate(name="About Sleep Template", text=template_html))
+
+    # Add Fitbit API
+    db.session.add(Api(name="Fitbit"))
+
+    db.session.commit()
+
+
+def init_study_subject(ditti_id):
+    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+    if "localhost" not in db_uri:
+        raise RuntimeError("init_study_subject requires a localhost database URI.")
+
+    study = Study.query.get(1)
+    if study is None:
+        raise RuntimeError("No studies exist in the database.")
+
+    existing = StudySubject.query.filter(StudySubject.ditti_id == ditti_id).first()
+    if existing is not None:
+        raise RuntimeError(f"Study subject with ditti_id {ditti_id} already exists.")
+
+    study_subject = StudySubject(ditti_id=ditti_id)
+    JoinStudySubjectStudy(
+        study_subject=study_subject,
+        study=study,
+        did_consent=True
+    )
+
+    db.session.add(study_subject)
     db.session.commit()
 
 
