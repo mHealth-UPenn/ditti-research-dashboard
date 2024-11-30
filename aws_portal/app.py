@@ -8,7 +8,7 @@ from aws_portal.commands import (
     init_db_click, init_api_click, init_integration_testing_db_click, reset_db_click,
     init_demo_db_click, init_study_subject_click
 )
-from aws_portal.extensions import bcrypt, cors, db, jwt, migrate
+from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, tm
 from aws_portal.views import admin, aws_requests, base, db_requests, iam, participant
 from aws_portal.views.cognito import cognito, fitbit
 
@@ -88,3 +88,5 @@ def register_extensions(app):
     db.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
+    tm.init_app(app)
+    print(tm.fstr)

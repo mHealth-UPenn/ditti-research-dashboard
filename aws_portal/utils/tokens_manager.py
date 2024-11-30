@@ -185,3 +185,13 @@ class TokensManager:
         except Exception as e:
             logger.error(f"Failed to delete tokens for Study Subject ID {study_subject_id} in API '{api_name}': {e}")
             raise
+
+    def init_app(self, app):
+        """
+        Configure the Tokens Manager instance with a Flask app's configuration. This sets the default format string to
+        that set in the Flask app's config dictionary.
+
+        Args:
+            app (Flask): The Flask app.
+        """
+        self.fstr = app.config["TM_FSTRING"]
