@@ -1,7 +1,7 @@
 // TODO: Extend implementation to Ditti App Dashboard
 import { createContext, useState, useEffect, PropsWithChildren, useMemo, useContext } from "react";
 import { makeRequest } from "../utils";
-import { StudySubjectContextType, Study, StudyJoin, ApiJoin } from "../interfaces";
+import { StudySubjectContextType, Study, StudyJoin, ApiJoin, IStudySubject } from "../interfaces";
 import { APP_ENV } from "../environment";
 import DataFactory from "../dataFactory";
 
@@ -36,22 +36,26 @@ export default function StudySubjectProvider({
         setApis(apisData);
       }));
     // } else if (APP_ENV === "demo" && dataFactory) {
+    //   setStudies(dataFactory.studyJoins);
+    //   setApis(dataFactory.apiJoins);
     }
 
     Promise.all(promises).then(() => setStudySubjectLoading(false));
   }, []);
 
   const getStudySubject = async (): Promise<[StudyJoin[], ApiJoin[]]> => {
-    const studiesData: StudyJoin[] = [];
-    const apisData: ApiJoin[] = [];
+    let studiesData: StudyJoin[] = [];
+    let apisData: ApiJoin[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
-      const data = await makeRequest(`/participant`)
+      const data: IStudySubject | void = await makeRequest(`/participant`)
+        .then((res: IStudySubject) => {
+          studiesData = res.studies;
+          apisData = res.apis;
+        })
         .catch(() => {
           console.error("Unable to fetch participant data.")
-          return [];
         });
-      console.log(data);
     // } else if (dataFactory) {
     //   studies = dataFactory.studies;
     }

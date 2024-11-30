@@ -89,4 +89,3 @@ def register_extensions(app):
     jwt.init_app(app)
     migrate.init_app(app, db)
     tm.init_app(app)
-    print(tm.fstr)

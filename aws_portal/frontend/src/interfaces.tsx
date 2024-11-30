@@ -340,6 +340,23 @@ export interface StudySubjectContextType {
 }
 
 
+/**
+ * The study subject data structure as it is returned from the database.
+ * @property id - The database primary key.
+ * @property createdOn - When the database entry for the study subject was created.
+ * @property dittiId - The study subject's primary key.
+ * @property studies - The studies that the study subject is enrolled in and information about their enrollment.
+ * @property apis - The APIs that the study subject granted access to and information about the access they granted.
+ */
+export interface IStudySubject {
+  id: number;
+  createdOn: string;
+  dittiId: string;
+  studies: StudyJoin[];
+  apis: ApiJoin[];
+}
+
+
 export interface IFlashMessage {
   id: number;
   element: React.ReactElement;

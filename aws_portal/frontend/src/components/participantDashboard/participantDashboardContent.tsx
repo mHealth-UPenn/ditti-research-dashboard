@@ -13,7 +13,6 @@ import { useStudySubjectContext } from '../../contexts/studySubjectContext';
 
 
 const ParticipantDashboardContent = () => {
-  const [fitbitConnected, setFitbitConnected] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [scope, setScope] = useState<string[]>([]);
@@ -22,6 +21,9 @@ const ParticipantDashboardContent = () => {
 
   const { cognitoLogout, dittiId } = useAuth();
   const { studies, apis, studySubjectLoading } = useStudySubjectContext();
+
+  // For now assume we are only connecting Fitbit API
+  const fitbitConnected = apis.length > 0;
 
   useEffect(() => {
     const init = async () => {
