@@ -12,11 +12,11 @@ class TokensManager:
     Manages API tokens using AWS Secrets Manager.
     Each API has a single secret storing tokens for all study subjects.
     """
-
-    def __init__(self):
+    def __init__(self, /, *, fstr="{api_name}-tokens"):
         """
         Initializes the AWS Secrets Manager client.
         """
+        self.fstr = fstr
         self.client = boto3.client("secretsmanager")
 
     def _get_secret_name(self, api_name: str) -> str:
@@ -29,7 +29,7 @@ class TokensManager:
         Returns:
             str: The constructed secret name.
         """
-        return f"{api_name}-tokens"
+        return self.fstr.format(api_name=api_name)
 
     def _retrieve_secret(self, secret_name: str) -> Dict[str, Any]:
         """
@@ -125,8 +125,7 @@ class TokensManager:
             logger.info(
                 f"Added/Updated tokens for Study Subject ID {study_subject_id} in API '{api_name}'.")
         except Exception as e:
-            logger.error(f"Failed to add/update tokens for Study Subject ID {
-                         study_subject_id} in API '{api_name}': {e}")
+            logger.error(f"Failed to add/update tokens for Study Subject ID {study_subject_id} in API '{api_name}': {e}")
             raise
 
     def get_api_tokens(self, api_name: str, study_subject_id: int) -> Dict[str, Any]:
@@ -149,17 +148,14 @@ class TokensManager:
             secret_data = self._retrieve_secret(secret_name)
             tokens = secret_data.get(str(study_subject_id))
             if not tokens:
-                logger.error(f"Tokens for Study Subject ID {
-                             study_subject_id} not found in API '{api_name}'.")
-                raise KeyError(f"Tokens for Study Subject ID {
-                               study_subject_id} not found in API '{api_name}'.")
+                logger.error(f"Tokens for Study Subject ID {study_subject_id} not found in API '{api_name}'.")
+                raise KeyError(f"Tokens for Study Subject ID {study_subject_id} not found in API '{api_name}'.")
             return tokens
         except KeyError as e:
             logger.error(e)
             raise
         except Exception as e:
-            logger.error(f"Failed to retrieve tokens for Study Subject ID {
-                         study_subject_id} in API '{api_name}': {e}")
+            logger.error(f"Failed to retrieve tokens for Study Subject ID {study_subject_id} in API '{api_name}': {e}")
             raise
 
     def delete_api_tokens(self, api_name: str, study_subject_id: int) -> None:
@@ -178,18 +174,14 @@ class TokensManager:
         try:
             secret_data = self._retrieve_secret(secret_name)
             if str(study_subject_id) not in secret_data:
-                logger.error(f"Tokens for Study Subject ID {
-                             study_subject_id} not found in API '{api_name}'.")
-                raise KeyError(f"Tokens for Study Subject ID {
-                               study_subject_id} not found in API '{api_name}'.")
+                logger.error(f"Tokens for Study Subject ID {study_subject_id} not found in API '{api_name}'.")
+                raise KeyError(f"Tokens for Study Subject ID {study_subject_id} not found in API '{api_name}'.")
             del secret_data[str(study_subject_id)]
             self._store_secret(secret_name, secret_data)
-            logger.info(f"Deleted tokens for Study Subject ID {
-                        study_subject_id} from API '{api_name}'.")
+            logger.info(f"Deleted tokens for Study Subject ID {study_subject_id} from API '{api_name}'.")
         except KeyError as e:
             logger.error(e)
             raise
         except Exception as e:
-            logger.error(f"Failed to delete tokens for Study Subject ID {
-                         study_subject_id} in API '{api_name}': {e}")
+            logger.error(f"Failed to delete tokens for Study Subject ID {study_subject_id} in API '{api_name}': {e}")
             raise
