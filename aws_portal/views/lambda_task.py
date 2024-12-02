@@ -23,7 +23,7 @@ def get_lambda_tasks():
 
     Query Parameters:
     -----------------
-    app: str                        # Required
+    app: 1                        # Required
 
     Response (200 OK):
     ------------------
