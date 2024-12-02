@@ -4,7 +4,7 @@ from functools import wraps
 from flask import request, abort, current_app
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
-from botocore.credentials import Credentials
+from .lambda_credentials_manager import LambdaCredentialsManager
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +25,8 @@ def sigv4_required(func):
             headers = dict(request.headers)
 
             # Exclude 'x-forwarded-*' headers added by Ngrok (used for testing)
-            headers = {k: v for k, v in headers.items(
-            ) if not k.lower().startswith("x-forwarded-")}
+            headers = {k: v for k, v in headers.items()
+                       if not k.lower().startswith("x-forwarded-")}
 
             if "Host" not in headers:
                 headers["Host"] = request.host
@@ -54,20 +54,16 @@ def sigv4_required(func):
                 headers=headers
             )
 
-            # Extract credentials from environment or config
-            access_key = current_app.config.get("LAMBDA_ACCESS_KEY_ID")
-            secret_key = current_app.config.get("LAMBDA_SECRET_ACCESS_KEY")
-            region = current_app.config.get("LAMBDA_AWS_REGION")
+            # Initialize LambdaCredentialsManager
+            secret_name = "lambda-execution-user-credentials"
+            region = current_app.config.get("LAMBDA_AWS_REGION", "us-east-1")
+            credentials_manager = LambdaCredentialsManager(
+                secret_name=secret_name, region_name=region)
+            credentials = credentials_manager.get_credentials()
+
             service = "execute-api"
 
-            if not access_key or not secret_key:
-                logger.error(
-                    "LAMBDA_ACCESS_KEY_ID or LAMBDA_SECRET_ACCESS_KEY not set in config.")
-                abort(500, description="Server configuration error.")
-
-            credentials = Credentials(access_key, secret_key)
-
-            # Sign the request using the credentials
+            # Sign the request using the shared credentials
             SigV4Auth(credentials, service, region).add_auth(aws_request)
 
             # Calculate Authorization header

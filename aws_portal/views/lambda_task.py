@@ -4,6 +4,7 @@ from flask import Blueprint, jsonify, make_response
 from aws_portal.extensions import db
 from aws_portal.models import LambdaTask
 from aws_portal.utils.lambda_task import create_and_invoke_lambda_task
+from aws_portal.utils.sigv4_auth import sigv4_required
 
 blueprint = Blueprint("lambda_task", __name__, url_prefix="/lambda_task")
 logger = logging.getLogger(__name__)
@@ -56,7 +57,6 @@ def get_lambda_tasks():
 
 @blueprint.route("/invoke", methods=["POST"])
 # TODO: Add correct authentication decorator
-# TODO: Will be called when someone opens the app and after the database starts running
 def invoke_lambda_task_endpoint():
     """
     Manually invoke a Lambda task.

@@ -84,12 +84,6 @@ def invoke_lambda_task(function_id):
         LambdaTask: The LambdaTask object stored in the database.
     """
     try:
-        # Replace boto3 with session if using sigv4_required to call from Lambda function
-        # session = boto3.Session(
-        #     aws_access_key_id=current_app.config["LAMBDA_ACCESS_KEY_ID"],
-        #     aws_secret_access_key=current_app.config["LAMBDA_SECRET_ACCESS_KEY"],
-        #     region_name=current_app.config["LAMBDA_AWS_REGION"]
-        # )
         client = boto3.client("lambda")
 
         # Retrieve the Lambda function name from configuration
