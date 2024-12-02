@@ -3,15 +3,16 @@ import traceback
 from flask import Blueprint, jsonify, make_response
 from aws_portal.extensions import db
 from aws_portal.models import LambdaTask
+from aws_portal.utils.auth import auth_required
 from aws_portal.utils.lambda_task import create_and_invoke_lambda_task
-from aws_portal.utils.sigv4_auth import sigv4_required
 
 blueprint = Blueprint("lambda_task", __name__, url_prefix="/lambda_task")
 logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/", methods=["GET"])
-# TODO: Add correct authentication decorator
+@auth_required("View", "Admin Dashboard")
+@auth_required("View", "Lambda Task")
 def get_lambda_tasks():
     """
     Retrieve all Lambda tasks sorted by creation date.
@@ -56,8 +57,9 @@ def get_lambda_tasks():
 
 
 @blueprint.route("/invoke", methods=["POST"])
-# TODO: Add correct authentication decorator
-def invoke_lambda_task_endpoint():
+@auth_required("View", "Admin Dashboard")
+@auth_required("Invoke", "Lambda Task")
+def invoke_lambda_task():
     """
     Manually invoke a Lambda task.
 
