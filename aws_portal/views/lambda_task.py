@@ -23,7 +23,7 @@ def get_lambda_tasks():
 
     Query Parameters:
     -----------------
-    app: str
+    app: str                        # Required
 
     Response (200 OK):
     ------------------
@@ -74,7 +74,7 @@ def invoke_lambda_task():
     Body (JSON):
     ------------
     {
-        "app": 1,              # Required
+        "app": 1,                   # Required
     }
 
     Response (200 OK):
