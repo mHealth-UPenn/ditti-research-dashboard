@@ -21,6 +21,10 @@ def get_lambda_tasks():
     --------
     GET /lambda_task/
 
+    Query Parameters:
+    -----------------
+    app: str
+
     Response (200 OK):
     ------------------
     [
@@ -66,6 +70,12 @@ def invoke_lambda_task():
     Request:
     --------
     POST /lambda_task/invoke
+
+    Body (JSON):
+    ------------
+    {
+        "app": 1,              # Required
+    }
 
     Response (200 OK):
     ------------------
