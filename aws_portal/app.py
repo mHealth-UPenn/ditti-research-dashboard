@@ -10,7 +10,7 @@ from aws_portal.commands import (
 )
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, scheduler
 from aws_portal.views import (
-    admin, aws_requests, base, db_requests, iam, participant, lambda_task
+    admin, aws_requests, base, data_processing_task, db_requests, iam, participant
 )
 from aws_portal.views.cognito import cognito, fitbit
 
@@ -65,7 +65,7 @@ def register_blueprints(app):
     app.register_blueprint(cognito.blueprint)
     app.register_blueprint(fitbit.blueprint)
     app.register_blueprint(participant.blueprint)
-    app.register_blueprint(lambda_task.blueprint)
+    app.register_blueprint(data_processing_task.blueprint)
 
 
 def register_commands(app):

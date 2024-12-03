@@ -6,20 +6,21 @@ from aws_portal.models import LambdaTask
 from aws_portal.utils.auth import auth_required
 from aws_portal.utils.lambda_task import create_and_invoke_lambda_task
 
-blueprint = Blueprint("lambda_task", __name__, url_prefix="/lambda_task")
+blueprint = Blueprint("data_processing_task", __name__,
+                      url_prefix="/data_processing_task")
 logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/", methods=["GET"])
 @auth_required("View", "Admin Dashboard")
 @auth_required("View", "Lambda Task")
-def get_lambda_tasks():
+def get_data_processing_tasks():
     """
-    Retrieve all Lambda tasks sorted by creation date.
+    Retrieve all data processing tasks sorted by creation date.
 
     Request:
     --------
-    GET /lambda_task/
+    GET /data_processing_task/
 
     Query Parameters:
     -----------------
@@ -44,7 +45,7 @@ def get_lambda_tasks():
     Response (500 Internal Server Error):
     -------------------------------------
     {
-        "msg": "Internal server error when retrieving lambda tasks."
+        "msg": "Internal server error when retrieving data processing tasks."
     }
     """
     try:
@@ -55,21 +56,21 @@ def get_lambda_tasks():
 
     except Exception as e:
         exc = traceback.format_exc()
-        logger.warning(f"Error retrieving Lambda tasks: {exc}")
+        logger.warning(f"Error retrieving data processing tasks: {exc}")
         db.session.rollback()
-        return make_response({"msg": "Internal server error when retrieving lambda tasks."}, 500)
+        return make_response({"msg": "Internal server error when retrieving data processing tasks."}, 500)
 
 
 @blueprint.route("/invoke", methods=["POST"])
 @auth_required("View", "Admin Dashboard")
 @auth_required("Invoke", "Lambda Task")
-def invoke_lambda_task():
+def invoke_data_processing_task():
     """
-    Manually invoke a Lambda task.
+    Manually invoke a data processing task.
 
     Request:
     --------
-    POST /lambda_task/invoke
+    POST /data_processing_task/invoke
 
     Body (JSON):
     ------------
@@ -80,7 +81,7 @@ def invoke_lambda_task():
     Response (200 OK):
     ------------------
     {
-        "msg": "Lambda task invoked successfully",
+        "msg": "Data processing task invoked successfully",
         "task": {
             "id": int,
             "status": str,          # "Pending", "InProgress", "Success", "Failed", or "CompletedWithErrors"
@@ -102,22 +103,23 @@ def invoke_lambda_task():
     Response (500 Internal Server Error):
     -------------------------------------
     {
-        "msg": "Internal server error when invoking lambda task."
+        "msg": "Internal server error when invoking data processing task."
     }
     """
     try:
         # Create and invoke a new LambdaTask
         lambda_task = create_and_invoke_lambda_task()
         if lambda_task is None:
-            raise Exception("Failed to create and invoke Lambda task.")
+            raise Exception(
+                "Failed to create and invoke data processing task.")
 
         return jsonify({
-            "msg": "Lambda task invoked successfully",
+            "msg": "Data processing task invoked successfully",
             "task": lambda_task.meta
         }), 200
 
     except Exception:
         exc = traceback.format_exc()
-        logger.warning(f"Error invoking Lambda task: {exc}")
+        logger.warning(f"Error invoking data processing task: {exc}")
         db.session.rollback()
-        return make_response({"msg": "Internal server error when invoking lambda task."}, 500)
+        return make_response({"msg": "Internal server error when invoking data processing task."}, 500)

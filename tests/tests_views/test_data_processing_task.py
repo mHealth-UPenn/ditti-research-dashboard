@@ -2,14 +2,14 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 # ---------------------------
-# Tests for GET /lambda_task/
+# Tests for GET /data_processing_task/
 # ---------------------------
 
 
-@patch('aws_portal.views.lambda_task.LambdaTask')
-def test_get_lambda_tasks_success(mock_lambda_task_model, client, get_admin):
+@patch('aws_portal.views.data_processing_task.LambdaTask')
+def test_get_data_processing_tasks_success(mock_lambda_task_model, client, get_admin):
     """
-    Test successful retrieval of Lambda tasks.
+    Test successful retrieval of data processing tasks.
     """
     mock_desc = MagicMock()
     mock_lambda_task_model.created_on.desc.return_value = mock_desc
@@ -41,7 +41,7 @@ def test_get_lambda_tasks_success(mock_lambda_task_model, client, get_admin):
     mock_lambda_task_model.query.order_by.return_value.all.return_value = [
         mock_task1, mock_task2]
 
-    response = get_admin("/lambda_task/", query_string={"app": "1"})
+    response = get_admin("/data_processing_task/", query_string={"app": "1"})
 
     assert response.status_code == 200
     assert response.is_json
@@ -49,36 +49,36 @@ def test_get_lambda_tasks_success(mock_lambda_task_model, client, get_admin):
     mock_lambda_task_model.query.order_by.assert_called_once_with(mock_desc)
 
 
-@patch('aws_portal.views.lambda_task.LambdaTask')
-def test_get_lambda_tasks_internal_error(mock_lambda_task_model, client, get_admin):
+@patch('aws_portal.views.data_processing_task.LambdaTask')
+def test_get_data_processing_tasks_internal_error(mock_lambda_task_model, client, get_admin):
     """
-    Test internal server error during retrieval of Lambda tasks.
+    Test internal server error during retrieval of data processing tasks.
     """
     mock_desc = MagicMock()
     mock_lambda_task_model.created_on.desc.return_value = mock_desc
     mock_lambda_task_model.query.order_by.return_value.all.side_effect = Exception(
         "Database error")
 
-    response = get_admin("/lambda_task/", query_string={"app": "1"})
+    response = get_admin("/data_processing_task/", query_string={"app": "1"})
 
     assert response.status_code == 500
     assert response.is_json
     assert response.get_json() == {
-        "msg": "Internal server error when retrieving lambda tasks."}
+        "msg": "Internal server error when retrieving data processing tasks."}
     mock_lambda_task_model.query.order_by.assert_called_once_with(mock_desc)
     mock_lambda_task_model.query.order_by.return_value.all.assert_called_once()
 
 
-@patch('aws_portal.views.lambda_task.LambdaTask')
-def test_get_lambda_tasks_empty_list(mock_lambda_task_model, client, get_admin):
+@patch('aws_portal.views.data_processing_task.LambdaTask')
+def test_get_data_processing_tasks_empty_list(mock_lambda_task_model, client, get_admin):
     """
-    Test retrieval when no Lambda tasks exist.
+    Test retrieval when no data processing tasks exist.
     """
     mock_desc = MagicMock()
     mock_lambda_task_model.created_on.desc.return_value = mock_desc
     mock_lambda_task_model.query.order_by.return_value.all.return_value = []
 
-    response = get_admin("/lambda_task/", query_string={"app": "1"})
+    response = get_admin("/data_processing_task/", query_string={"app": "1"})
 
     assert response.status_code == 200
     assert response.is_json
@@ -87,13 +87,13 @@ def test_get_lambda_tasks_empty_list(mock_lambda_task_model, client, get_admin):
 
 
 # ---------------------------------
-# Tests for POST /lambda_task/invoke
+# Tests for POST /data_processing_task/invoke
 # ---------------------------------
 
-@patch('aws_portal.views.lambda_task.create_and_invoke_lambda_task')
-def test_invoke_lambda_task_success(mock_create_and_invoke, client, post_admin):
+@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
+def test_invoke_data_processing_task_success(mock_create_and_invoke, client, post_admin):
     """
-    Test successful invocation of a new Lambda task.
+    Test successful invocation of a new data processing task.
     """
     mock_task = MagicMock()
     mock_task.meta = {
@@ -108,53 +108,53 @@ def test_invoke_lambda_task_success(mock_create_and_invoke, client, post_admin):
     }
     mock_create_and_invoke.return_value = mock_task
 
-    response = post_admin("/lambda_task/invoke", json={"app": "1"})
+    response = post_admin("/data_processing_task/invoke", json={"app": "1"})
 
     assert response.status_code == 200
     assert response.is_json
     assert response.get_json() == {
-        "msg": "Lambda task invoked successfully",
+        "msg": "Data processing task invoked successfully",
         "task": mock_task.meta
     }
     mock_create_and_invoke.assert_called_once()
 
 
-@patch('aws_portal.views.lambda_task.create_and_invoke_lambda_task')
-def test_invoke_lambda_task_failure(mock_create_and_invoke, client, post_admin):
+@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
+def test_invoke_data_processing_task_failure(mock_create_and_invoke, client, post_admin):
     """
     Test invocation failure when create_and_invoke_lambda_task returns None.
     """
     mock_create_and_invoke.return_value = None
 
-    response = post_admin("/lambda_task/invoke", json={"app": "1"})
+    response = post_admin("/data_processing_task/invoke", json={"app": "1"})
 
     assert response.status_code == 500
     assert response.is_json
     assert response.get_json() == {
-        "msg": "Internal server error when invoking lambda task."}
+        "msg": "Internal server error when invoking data processing task."}
     mock_create_and_invoke.assert_called_once()
 
 
-@patch('aws_portal.views.lambda_task.create_and_invoke_lambda_task')
-def test_invoke_lambda_task_exception(mock_create_and_invoke, client, post_admin):
+@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
+def test_invoke_data_processing_task_exception(mock_create_and_invoke, client, post_admin):
     """
     Test invocation failure when create_and_invoke_lambda_task raises an exception.
     """
     mock_create_and_invoke.side_effect = Exception("Invocation error")
 
-    response = post_admin("/lambda_task/invoke", json={"app": "1"})
+    response = post_admin("/data_processing_task/invoke", json={"app": "1"})
 
     assert response.status_code == 500
     assert response.is_json
     assert response.get_json() == {
-        "msg": "Internal server error when invoking lambda task."}
+        "msg": "Internal server error when invoking data processing task."}
     mock_create_and_invoke.assert_called_once()
 
 
-@patch('aws_portal.views.lambda_task.create_and_invoke_lambda_task')
-def test_invoke_lambda_task_invalid_data(mock_create_and_invoke, client, post_admin):
+@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
+def test_invoke_data_processing_task_invalid_data(mock_create_and_invoke, client, post_admin):
     """
-    Since the POST /invoke route does not expect any data, this test ensures that sending unexpected data does not break the route.
+    Since the POST /invoke route expects an 'app' field, this test ensures that sending unexpected data does not break the route.
     """
     mock_task = MagicMock()
     mock_task.meta = {
@@ -169,7 +169,7 @@ def test_invoke_lambda_task_invalid_data(mock_create_and_invoke, client, post_ad
     }
     mock_create_and_invoke.return_value = mock_task
 
-    response = post_admin("/lambda_task/invoke", json={
+    response = post_admin("/data_processing_task/invoke", json={
         "app": "1",
         "unexpected": "data"
     })
@@ -177,7 +177,7 @@ def test_invoke_lambda_task_invalid_data(mock_create_and_invoke, client, post_ad
     assert response.status_code == 200
     assert response.is_json
     assert response.get_json() == {
-        "msg": "Lambda task invoked successfully",
+        "msg": "Data processing task invoked successfully",
         "task": mock_task.meta
     }
     mock_create_and_invoke.assert_called_once()
