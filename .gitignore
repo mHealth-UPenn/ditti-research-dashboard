@@ -35,3 +35,4 @@ zappa_settings.py
 **/src/output.css
 
 .DS_Store
+.env.production

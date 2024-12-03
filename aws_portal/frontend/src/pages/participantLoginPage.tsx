@@ -5,6 +5,7 @@ import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
 import "./loginPage.css";
 import Button from "../components/buttons/button";
+import { Link } from "react-router-dom";
 
 /**
  * ParticipantLoginPage component for Cognito authentication with database touch and loader
@@ -55,7 +56,8 @@ const ParticipantLoginPage: React.FC = () => {
         <div className="hidden sm:flex items-center mr-12 xl:mr-20">
           <img className="shadow-xl w-[10rem] xl:w-[12rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
         </div>
-        <div className="flex flex-grow items-center justify-center bg-white mx-[auto] max-w-[24rem] sm:max-w-[64rem]">
+        <div className="flex flex-col flex-grow items-center justify-center bg-white mx-[auto] max-w-[24rem] sm:max-w-[64rem]">
+          <div className="flex-grow" />
           <div className="flex flex-col mx-8 xl:mx-16">
             <div className="flex justify-center mb-8 sm:hidden">
               <div className="p-4 bg-extra-light rounded-xl shadow-lg">
@@ -74,6 +76,11 @@ const ParticipantLoginPage: React.FC = () => {
                 <Button rounded={true} onClick={cognitoLogin}>Sign in</Button>
               </div>
             </div>
+          </div>
+          <div className="flex items-center flex-grow">
+            <Link className="link" to={{ pathname: "/terms-of-use" }}>Terms of Use</Link>
+            <span>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+            <Link className="link" to={{ pathname: "/privacy-policy" }}>Privacy Policy</Link>
           </div>
         </div>
       </div>

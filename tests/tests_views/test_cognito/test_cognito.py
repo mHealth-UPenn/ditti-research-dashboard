@@ -1,12 +1,24 @@
+import jwt
 import pytest
-from unittest.mock import patch, MagicMock
-from aws_portal.models import StudySubject
-from aws_portal.extensions import db
 import requests
 from datetime import datetime, timezone
-import jwt
-from urllib.parse import urlencode
 from http.cookies import SimpleCookie
+from urllib.parse import urlencode
+from unittest.mock import MagicMock, patch
+from aws_portal.extensions import db
+from aws_portal.models import StudySubject
+
+
+@pytest.fixture
+def app(app):
+    app.config["TESTING"] = True
+    app.config["COGNITO_PARTICIPANT_REGION"] = "us-east-1"
+    app.config["COGNITO_PARTICIPANT_USER_POOL_ID"] = "us-east-1_example"
+    app.config["COGNITO_PARTICIPANT_CLIENT_ID"] = "example_client_id"
+    app.config["COGNITO_PARTICIPANT_DOMAIN"] = "example.auth.us-east-1.amazoncognito.com"
+    app.config["COGNITO_PARTICIPANT_REDIRECT_URI"] = "http://localhost:5000/cognito/callback"
+    app.config["COGNITO_PARTICIPANT_LOGOUT_URI"] = "http://localhost:3000/login"
+    return app
 
 
 def parse_set_cookies(set_cookie_headers):
@@ -41,7 +53,7 @@ def test_login_success(app, client_with_cognito):
         )
         cognito_auth_url = (
             f"https://{app.config['COGNITO_PARTICIPANT_DOMAIN']}/login?"
-            + f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']}"
+            f"client_id={app.config['COGNITO_PARTICIPANT_CLIENT_ID']}"
             f"&response_type=code&scope=openid&redirect_uri={
                 redirect_uri_encoded}"
         )
