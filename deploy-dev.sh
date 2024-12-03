@@ -87,5 +87,4 @@ if [[ "$INIT_FLAG" == true ]]; then
     docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
     flask db upgrade
     flask init-integration-testing-db
-    flask init-api
 fi
