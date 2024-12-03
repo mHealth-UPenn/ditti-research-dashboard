@@ -383,7 +383,17 @@ def handler(event, context):
             config = {
                 "DB_URI": os.getenv("DB_URI")
             }
-            tokens_config = {}
+
+            try:
+                tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
+                tokens_config = get_secret(tokens_secret_name)
+            except Exception:
+                logger.error(
+                    f"Error retrieving secret",
+                    extra={"error": traceback.format_exc()}
+                )
+                raise ConfigFetchError
+
         else:
             try:
                 config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
