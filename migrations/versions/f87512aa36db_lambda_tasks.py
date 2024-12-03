@@ -32,7 +32,7 @@ def upgrade():
                     sa.Column('created_on', sa.DateTime(), nullable=False),
                     sa.Column('updated_on', sa.DateTime(), nullable=False),
                     sa.Column('completed_on', sa.DateTime(), nullable=True),
-                    sa.Column('log_file', sa.Text(), nullable=True),
+                    sa.Column('log_file', sa.String(), nullable=True),
                     sa.Column('error_code', sa.String(), nullable=True),
                     sa.PrimaryKeyConstraint('id'),
                     sa.Index('ix_lambda_task_created_on', 'created_on')

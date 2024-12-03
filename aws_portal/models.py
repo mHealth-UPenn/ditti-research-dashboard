@@ -2154,7 +2154,7 @@ class LambdaTask(db.Model):
     completed_on: sqlalchemy.Column
         The datetime when the task was completed.
     log_file: sqlalchemy.Column
-        Text of the Lambda function log file if any.
+        S3 URI location of log file.
     error_code: sqlalchemy.Column
         Error code if any.
     """
@@ -2180,7 +2180,7 @@ class LambdaTask(db.Model):
         nullable=False
     )
     completed_on = db.Column(db.DateTime, nullable=True)
-    log_file = db.Column(db.Text, nullable=True)
+    log_file = db.Column(db.String, nullable=True)
     error_code = db.Column(db.String, nullable=True)
 
     @property
