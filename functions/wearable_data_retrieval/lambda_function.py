@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import traceback
+from typing import Literal
 
 import boto3
 from sqlalchemy import create_engine, Table, MetaData, insert, select, update
@@ -73,18 +74,39 @@ class DBService:
             self.connection = None
 
 
-class LambdaFunctionService(DBService):
+type TaskStatus = Literal[
+    "Pending",
+    "InProgress",
+    "Success",
+    "Failed",
+    "CompletedWithErrors"
+]
+
+
+@dataclass
+class LambdaTaskEntry:
+    id: int
+    status: TaskStatus
+    billed_ms: int
+    created_on: datetime
+    updated_on: datetime
+    completed_on: datetime
+    log_file: str
+    error_code: str
+
+
+class LambdaTaskService(DBService):
     def __init__(self, db: DB):
-        super(LambdaFunctionService, self).__init__(db)
+        super(LambdaTaskService, self).__init__(db)
         m = self.db.metadata
         e = self.db.engine
 
         # Reflect existing database into a new model
-        m.reflect(only=["lambda_function"])
+        m.reflect(only=["lambda_task"])
 
-        # Access the `lambda_function` table
-        self.table = Table("lambda_function", m, autoload_with=e)
-        self.__entry = None
+        # Access the `lambda_task` table
+        self.table = Table("lambda_task", m, autoload_with=e)
+        self.__entry: LambdaTaskEntry | None = None
 
     def get_entry(self, id: int):
         if self.connection is None:
@@ -92,12 +114,12 @@ class LambdaFunctionService(DBService):
 
         # Query the table for the specific function_id and update status
         query = select(self.table).where(self.table.c.id == id)
-        self.__entry = self.connection.execute(query).first()
+        entry = self.connection.execute(query).first()
+        self.__entry = LambdaTaskEntry(**entry._asdict())
 
-        if self.__entry:
+        if self.__entry is not None:
             logger.info(
-                "Query for `lambda_function` result",
-                extra=self.__entry._asdict()
+                "Query for `lambda_task` result", extra=self.__entry._asdict()
             )
 
         else:
@@ -107,7 +129,7 @@ class LambdaFunctionService(DBService):
 
             raise RuntimeError(f"No entry found for function_id {id}")
 
-    def update_status(self, status: str, **kwargs):
+    def update_status(self, status: TaskStatus, **kwargs):
         if self.connection is None:
             raise RuntimeError("`update_status` must be called within `connect` context.")
 
@@ -145,7 +167,13 @@ class StudySubjectService(DBService):
         e = self.db.engine
 
         # Reflect existing tables into models
-        m.reflect(only=["join_study_subject_api", "study_subject", "join_study_subject_study"])
+        m.reflect(
+            only=[
+                "join_study_subject_api",
+                "study_subject",
+                "join_study_subject_study"
+            ]
+        )
 
         # Aliased tables for readability
         self.api_table = Table("join_study_subject_api", m, autoload_with=e)
@@ -172,8 +200,14 @@ class StudySubjectService(DBService):
                 self.study.c.expires_on
             )
             .select_from(self.api
-                .join(self.subject, self.api.c.study_subject_id == self.subject.c.id)
-                .join(self.study, self.subject.c.id == self.study.c.study_subject_id)
+                .join(
+                    self.subject,
+                    self.api.c.study_subject_id == self.subject.c.id
+                )
+                .join(
+                    self.study,
+                    self.subject.c.id == self.study.c.study_subject_id
+                )
             )
             .where(self.study.c.expires_on > self.api.c.last_sync_date)
         )
@@ -292,8 +326,7 @@ class StudySubjectService(DBService):
         )
 
         logger.info(
-            "Updated last_sync_date",
-            extra={"study_subject_id": entry.id}
+            "Updated last_sync_date", extra={"study_subject_id": entry.id}
         )
 
 
@@ -301,8 +334,7 @@ def get_secret(secret_name):
     # Initialize a session using environment variables
     session = boto3.session.Session()
     client = session.client(
-        service_name="secretsmanager",
-        region_name=os.getenv("AWS_REGION")
+        service_name="secretsmanager", region_name=os.getenv("AWS_REGION")
     )
 
     # Fetch the secret
@@ -338,6 +370,7 @@ def build_url(entry):
 
 def handler(event, context):
     logger.info("Starting wearable data retrieval job", extra={"job_timestamp": job_timestamp})
+    log_file = None
     error_code = None
 
     # Retrieve function_id from the lambda function invocation event
@@ -367,7 +400,7 @@ def handler(event, context):
         # Database connection setup
         try:
             db = DB(config["DB_URI"])
-            lambda_function_service = LambdaFunctionService(db)
+            lambda_task_service = LambdaTaskService(db)
             study_subject_service = StudySubjectService(db)
 
         except Exception:
@@ -377,10 +410,9 @@ def handler(event, context):
             )
             raise DBInitializationError
 
-        with lambda_function_service.connect() as connection:
+        with lambda_task_service.connect() as connection:
             try:
-                # lambda_function_service.get_entry()
-                pass
+                lambda_task_service.get_entry()
 
             # On error raise exception and exit
             except Exception:
@@ -391,9 +423,8 @@ def handler(event, context):
                 raise DBFetchError
 
             try:
-                # lambda_function_service.update_status("IN_PROGRESS")
-                # connection.commit()
-                pass
+                lambda_task_service.update_status("IN_PROGRESS")
+                connection.commit()
 
             # On error raise exception and exit
             except Exception:
@@ -518,18 +549,17 @@ def handler(event, context):
             bucket_name = config["S3_BUCKET"]
 
             # Prepare the S3 filename including function_id
-            s3_filename = f"logs/{function_id}_{logger.log_filename}.json"
-            s3_client.upload_file(logger.log_filename, bucket_name, s3_filename)
+            log_file = f"logs/{function_id}_{logger.log_filename}.json"
+            s3_client.upload_file(logger.log_filename, bucket_name, log_file)
 
             logger.info(
                 "Log file successfully uploaded to S3",
-                extra={"s3_filename": s3_filename, "bucket": bucket_name}
+                extra={"log_file": log_file, "bucket": bucket_name}
             )
 
         except Exception as s3_error:
             logger.error(
-                "Error uploading log file to S3",
-                extra={"error": str(s3_error)}
+                "Error uploading log file to S3", extra={"error": str(s3_error)}
             )
 
             raise S3UploadError
@@ -545,25 +575,24 @@ def handler(event, context):
     except Exception:
         error_code = "UNKNOWN_ERROR"
 
-    # Update the lambda_function table with completion information
+    # Update the lambda_task table with completion information
     try:
-        with lambda_function_service.connect() as connection:
-            # lambda_function_service.update_status(
-            #     status="FAILED" if error_code else "COMPLETE",
-            #     completed_on=datetime.now(),
-            #     ms_billed=ms_billed,
-            #     logfile=s3_uri,
-            #     error_code=error_code
-            # )
-            # connection.commit()
+        with lambda_task_service.connect() as connection:
+            lambda_task_service.update_status(
+                status="FAILED" if error_code else "COMPLETE",
+                completed_on=datetime.now(),
+                log_file=log_file,
+                error_code=error_code
+            )
+            connection.commit()
             logger.info(
-                "Updated lambda_function with completion information",
+                "Updated lambda_task with completion information",
                 extra={"function_id": function_id}
             )
 
     except Exception:
         logger.error(
-            "Error updating lambda_function with completion information",
+            "Error updating lambda_task with completion information",
             extra={
                 "function_id": function_id,
                 "error_code": error_code,
