@@ -44,7 +44,7 @@ class Default:
     COGNITO_PARTICIPANT_LOGOUT_URI = "http://localhost:3000/login"
     COGNITO_PARTICIPANT_USER_POOL_ID = os.getenv("COGNITO_PARTICIPANT_USER_POOL_ID")
 
-    TM_FSTRING = "{api_name}-tokens-dev"
+    TM_FSTRING = os.getenv("TM_FSTRING")
 
     # AWS Lambda configuration
     LAMBDA_FUNCTION_NAME = os.environ.get("LAMBDA_FUNCTION_NAME")

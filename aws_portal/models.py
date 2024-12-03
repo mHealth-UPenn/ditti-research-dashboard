@@ -374,8 +374,8 @@ def init_integration_testing_db():
 
     # Create all possible `(action, resource)` permission combinations
     actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
-    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups",
-                 "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
+    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Wearable Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps", "Wearable Data"]
+
     for action in actions:
         for resource in resources:
             permission = Permission()
