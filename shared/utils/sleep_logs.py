@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime, timedelta, date
 import random
 
@@ -49,15 +50,28 @@ def generate_sleep_logs():
             "logType": "auto_detected",
             "timeInBed": 1,
             "type": "classic" if i == classic_day else "stages",
-            "levels": {"data": [], "summary": []},
+            "levels": {"data": [], "shortData": [], "summary": {}},
         }
+
+        if i == classic_day:
+            sleep_log["levels"]["summary"] = {
+                level: defaultdict(int) for level in levels_classic
+            }
+        else:
+            sleep_log["levels"]["summary"] = {
+                level: defaultdict(int) for level in levels_stages
+            }
 
         previous_level = None
         total_duration_minutes = 0
         max_duration_minutes = 360 + random.random() * 120
 
         while total_duration_minutes < max_duration_minutes:
-            seconds = random.randint(5 * 60, 30 * 60)
+            if random.randint(0, 1):
+                seconds = random.randint(210, 30 * 60)
+            else:
+                seconds = random.randint(60, 210)
+            seconds = seconds - seconds % 30
             date_time = (
                 datetime.strptime(previous_level["dateTime"], "%Y-%m-%dT%H:%M:%S.%f") + timedelta(seconds=previous_level["seconds"])
                 if previous_level
@@ -65,31 +79,32 @@ def generate_sleep_logs():
             )
 
             if i == classic_day:
-                level = {
-                    "dateTime": date_time.isoformat(),
-                    "seconds": seconds,
-                    "isShort": None,
-                    "level": (
-                        get_random_level_classic(previous_level["level"])
-                        if previous_level
-                        else random.choice(levels_classic)
-                    ),
-                }
+                if previous_level:
+                    level = get_random_level_classic(previous_level["level"])
+                else:
+                    level = random.choice(levels_classic)
             else:
-                level = {
-                    "dateTime": date_time.isoformat(),
-                    "seconds": seconds,
-                    "isShort": None,
-                    "level": (
-                        get_random_level_stages(previous_level["level"])
-                        if previous_level
-                        else random.choice(levels_stages)
-                    ),
-                }
+                if previous_level:
+                    level = get_random_level_stages(previous_level["level"])
+                else:
+                    level = random.choice(levels_stages)
 
-            sleep_log["levels"]["data"].append(level)
-            previous_level = level
-            total_duration_minutes += seconds / 60
+            level_data = {
+                "dateTime": date_time.isoformat(),
+                "seconds": seconds,
+                "level": level,
+            }
+
+            sleep_log["levels"]["data"].append(level_data)
+            sleep_log["levels"]["summary"][level]["count"] += 1
+            sleep_log["levels"]["summary"][level]["minutes"] += seconds // 60
+            sleep_log["levels"]["summary"][level]["thirtyDayAverageMinutes"] += seconds // 60
+
+            if seconds < 210:
+                sleep_log["levels"]["shortData"].append(level_data)
+
+            previous_level = level_data
+            total_duration_minutes += seconds // 60
 
         sleep_logs.append(sleep_log)
 
