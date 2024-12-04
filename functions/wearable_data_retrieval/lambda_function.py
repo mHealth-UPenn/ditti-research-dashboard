@@ -691,10 +691,12 @@ def build_url(
     return url
 
 
+# TODO: billed_ms
 def handler(event, context):
     logger.info("Starting wearable data retrieval job", extra={"function_timestamp": function_timestamp})
     log_file = None
     error_code = None
+    has_errors = False
 
     # Retrieve function_id from the lambda function invocation event
     function_id = event.get("function_id")
@@ -817,6 +819,7 @@ def handler(event, context):
                                 "Participant not found in API tokens secret.",
                                 extra={"study_subject_id": entry.id}
                             )
+                            has_errors = True
                             continue
 
                         for url in urls:
@@ -851,6 +854,7 @@ def handler(event, context):
                             "url": url
                         }
                     )
+                    has_errors = True
                     continue
 
                 # Convert levels to a format expected by the database
@@ -925,6 +929,7 @@ def handler(event, context):
                         "Updating study subject failed. Changes not committed.",
                         extra={"study_subject_id": entry.id}
                     )
+                    has_errors = True
                     continue
 
                 # Log error and exit in case of unhandled error
@@ -978,12 +983,19 @@ def handler(event, context):
     # Update the lambda_task table with completion information
     try:
         with lambda_task_service.connect() as connection:
+            status = "Success"
+            if error_code:
+                status = "Failed"
+            elif has_errors:
+                status = "CompletedWithErrors"
+
             lambda_task_service.update_status(
-                status="Failed" if error_code else "Success",
+                status=status,
                 completed_on=datetime.now(),
                 log_file=log_file,
                 error_code=error_code
             )
+
             connection.commit()
             logger.info(
                 "Updated lambda_task with completion information",
