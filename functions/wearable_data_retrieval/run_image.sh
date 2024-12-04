@@ -39,7 +39,7 @@ if [ $DEBUG -eq 1 ]; then
         --name wearable-data-retrieval-test \
         --network aws-network \
         -p 9000:8080 \
-        -e DB_URI=$DB_URI \
+        --env-file .env \
         -e TESTING=true \
         -e DEBUG=true \
         wearable-data-retrieval:test
@@ -49,7 +49,7 @@ else
         --name wearable-data-retrieval-test \
         --network aws-network \
         -p 9000:8080 \
-        -e DB_URI=$DB_URI \
+        --env-file .env \
         -e TESTING=true \
         wearable-data-retrieval:test
 fi

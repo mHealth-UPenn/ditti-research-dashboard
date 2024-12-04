@@ -9,7 +9,7 @@ import traceback
 from typing import Literal
 
 import boto3
-from sqlalchemy import create_engine, Table, MetaData, insert, select, update
+from sqlalchemy import create_engine, Table, MetaData, insert, select, update, or_
 from sqlalchemy.orm import aliased
 
 from shared.fitbit import get_fitbit_oauth_session
@@ -119,7 +119,7 @@ class LambdaTaskService(DBService):
 
         if self.__entry is not None:
             logger.info(
-                "Query for `lambda_task` result", extra=self.__entry._asdict()
+                "Query for `lambda_task` result", extra=self.__entry.__dict__
             )
 
         else:
@@ -136,7 +136,7 @@ class LambdaTaskService(DBService):
         if self.__entry is None:
             raise RuntimeError("Entry not found. Call `get_entry` first.")
 
-        # Update the status to "IN_PROGRESS"
+        # Update the status to "InProgress"
         update_stmt = (
             update(self.table).
             where(self.table.c.id == self.__entry.id).
@@ -157,6 +157,7 @@ class StudySubjectEntry:
     api_user_uuid: str
     api_id: int
     last_sync_date: str
+    created_on: datetime
     expires_on: str
 
 
@@ -197,7 +198,8 @@ class StudySubjectService(DBService):
                 self.api.c.api_user_uuid,
                 self.api.c.api_id,
                 self.api.c.last_sync_date,
-                self.study.c.expires_on
+                self.study.c.created_on,
+                self.study.c.expires_on,
             )
             .select_from(self.api
                 .join(
@@ -209,7 +211,10 @@ class StudySubjectService(DBService):
                     self.subject.c.id == self.study.c.study_subject_id
                 )
             )
-            .where(self.study.c.expires_on > self.api.c.last_sync_date)
+            .where(or_(
+                self.study.c.expires_on > self.api.c.last_sync_date,
+                self.api.c.last_sync_date == None
+            ))
         )
         self.__entries = []
         result = self.connection.execute(query).fetchall()
@@ -356,9 +361,16 @@ def get_secret(secret_name):
     return secret_data
 
 
+# TODO: Manage dates
 def build_url(entry):
+    logger.info("build_url", extra=entry.__dict__)
     study_subject_id = entry.api_user_uuid
-    start_date = entry.last_sync_date.strftime("%Y-%m-%d")
+
+    try:
+        start_date = entry.last_sync_date.strftime("%Y-%m-%d")
+    except AttributeError:
+        start_date = entry.created_on.strftime("%Y-%m-%d")
+
     timestamp = datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
     end_date = min(entry.expires_on, timestamp).strftime("%Y-%m-%d")
     url = f"https://api.fitbit.com/1.2/user/{study_subject_id}/sleep/date/{start_date}/{end_date}.json"
@@ -422,7 +434,7 @@ def handler(event, context):
 
         with lambda_task_service.connect() as connection:
             try:
-                lambda_task_service.get_entry()
+                lambda_task_service.get_entry(function_id)
 
             # On error raise exception and exit
             except Exception:
@@ -433,7 +445,7 @@ def handler(event, context):
                 raise DBFetchError
 
             try:
-                lambda_task_service.update_status("IN_PROGRESS")
+                lambda_task_service.update_status("InProgress")
                 connection.commit()
 
             # On error raise exception and exit
@@ -470,16 +482,16 @@ def handler(event, context):
                 # Try querying the fitbit API for this study subject
                 data = {"sleep": []}
                 try:
-                    if TESTING:
-                        data = generate_sleep_logs()
-                    else:
-                        # Retrieve OAuth tokens for the subject
-                        tokens = tokens_config[entry.id]
+                    # if TESTING:
+                    #     data = generate_sleep_logs()
+                    # else:
+                    # Retrieve OAuth tokens for the subject
+                    tokens = tokens_config[entry.id]
 
-                        # Query the Fitbit API
-                        fitbit_session = get_fitbit_oauth_session(entry, tokens)
-                        response = fitbit_session.request(url)
-                        data = response.json()
+                    # Query the Fitbit API
+                    fitbit_session = get_fitbit_oauth_session(entry, tokens)
+                    response = fitbit_session.request(url)
+                    data = response.json()
 
                     logger.info(
                         "Participant data retrieved from Fibit API",
@@ -488,6 +500,8 @@ def handler(event, context):
                             "result_count": len(data["sleep"])
                         }
                     )
+
+                    print("data:", data)
 
                 # On error continue to next study subject
                 except Exception:
@@ -575,21 +589,26 @@ def handler(event, context):
             raise S3UploadError
 
     except ConfigFetchError:
+        logger.info("Exiting on ConfigFetchError", extra={"error": traceback.format_exc()})
         error_code = "CONFIG_FETCH_ERROR"
     except DBFetchError:
+        logger.info("Exiting on DBFetchError", extra={"error": traceback.format_exc()})
         error_code = "DB_FETCH_ERROR"
     except DBUpdateError:
+        logger.info("Exiting on DBUpdateError", extra={"error": traceback.format_exc()})
         error_code = "DB_UPDATE_ERROR"
     except S3UploadError:
+        logger.info("Exiting on S3UploadError", extra={"error": traceback.format_exc()})
         error_code = "S3_UPLOAD_ERROR"
     except Exception:
+        logger.info("Exiting on Exception", extra={"error": traceback.format_exc()})
         error_code = "UNKNOWN_ERROR"
 
     # Update the lambda_task table with completion information
     try:
         with lambda_task_service.connect() as connection:
             lambda_task_service.update_status(
-                status="FAILED" if error_code else "COMPLETE",
+                status="Failed" if error_code else "Complete",
                 completed_on=datetime.now(),
                 log_file=log_file,
                 error_code=error_code
