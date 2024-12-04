@@ -1,7 +1,7 @@
 import boto3
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 import json
 import logging
 import os
@@ -9,7 +9,7 @@ import traceback
 from typing import Literal
 
 import boto3
-from sqlalchemy import create_engine, Table, MetaData, insert, select, update, and_, or_
+from sqlalchemy import create_engine, Table, MetaData, insert, select, update, and_, or_, func
 from sqlalchemy.orm import aliased
 
 from shared.fitbit import get_fitbit_oauth_session
@@ -160,6 +160,7 @@ class StudySubjectEntry:
     starts_on: datetime
     expires_on: str
     did_consent: bool
+    earliest_sleep_log: date | None
 
 
 class StudySubjectService(DBService):
@@ -173,7 +174,7 @@ class StudySubjectService(DBService):
             only=[
                 "join_study_subject_api",
                 "study_subject",
-                "join_study_subject_study"
+                "join_study_subject_study",
             ]
         )
 
@@ -193,6 +194,12 @@ class StudySubjectService(DBService):
         if self.connection is None:
             raise RuntimeError("`get_entries` must be called within `connect` context.")
 
+        earliest_sleep_log_subquery = (
+            select(func.min(self.sleep_log_table.c.date_of_sleep))
+            .where(self.sleep_log_table.c.study_subject_id == self.subject.c.id)
+            .scalar_subquery()
+        )
+
         query = (
             select(
                 self.subject.c.id,
@@ -202,8 +209,10 @@ class StudySubjectService(DBService):
                 self.study.c.starts_on,
                 self.study.c.expires_on,
                 self.study.c.did_consent,
+                earliest_sleep_log_subquery.label("earliest_sleep_log")
             )
-            .select_from(self.api
+            .select_from(
+                self.api
                 .join(
                     self.subject,
                     self.api.c.study_subject_id == self.subject.c.id
@@ -221,7 +230,8 @@ class StudySubjectService(DBService):
                         and_(
                             self.api.c.last_sync_date < date.today(),
                             self.study.c.expires_on > self.api.c.last_sync_date,
-                        )
+                        ),
+                        self.study.c.starts_on < earliest_sleep_log_subquery,
                     )
                 )
             )
@@ -229,11 +239,13 @@ class StudySubjectService(DBService):
 
         self.__entries = []
         result = self.connection.execute(query).fetchall()
+        logger.info(str(result))
 
         # Merge multiple results for a subject into one
         result_map: dict[int, dict] = {}
         for entry in result:
             entry_id = entry.id
+
             try:
                 # Query APIs starting from the study subject's earliest start date (if `last_sync_date` is null)
                 result_map[entry_id]["starts_on"] = min(
@@ -278,7 +290,7 @@ class StudySubjectService(DBService):
 
         entry = self.__entries[self.__index]
 
-        for sleep_record in data.get("sleep", []):
+        for sleep_record in data:
             # Create sleep log entry
             insert_stmt = insert(self.sleep_log_table).values(
                 study_subject_id=entry.id,
@@ -374,17 +386,33 @@ def get_secret(secret_name):
     return secret_data
 
 
-# TODO: Manage dates
-def build_url(entry):
+def build_url(
+    entry: StudySubjectEntry, /, *,
+    start_date: str | None = None,
+    end_date: str | None = None
+) -> str:
     study_subject_id = entry.api_user_uuid
 
-    try:
-        start_date = entry.last_sync_date.strftime("%Y-%m-%d")
-    except AttributeError:
-        start_date = entry.starts_on.strftime("%Y-%m-%d")
+    if start_date is None:
+        try:
+            start_date = entry.last_sync_date.strftime("%Y-%m-%d")
+        except AttributeError:
+            start_date = entry.starts_on.strftime("%Y-%m-%d")
 
-    timestamp = datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
-    end_date = min(entry.expires_on, timestamp).strftime("%Y-%m-%d")
+    if end_date is None:
+        timestamp = datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+        end_date = min(entry.expires_on, timestamp).strftime("%Y-%m-%d")
+
+    if start_date >= end_date:
+        logger.error(
+            "Error building URL: `start_date` is on or after `end_date`.",
+            extra={
+                "start_date": start_date,
+                "end_date": end_date,
+            }
+        )
+        raise ValueError("Error building URL: `start_date` is on or after `end_date`.")
+
     url = f"https://api.fitbit.com/1.2/user/{study_subject_id}/sleep/date/{start_date}/{end_date}.json"
 
     logger.debug("Fitbit URL generated", extra={"url": url})
@@ -480,13 +508,33 @@ def handler(event, context):
                 )
 
                 # Construct the URL for Fitbit API call
-                url = build_url(entry)
+                try:
+                    urls = [build_url(entry)]
+                except ValueError:
+                    urls = []
+
+                # Handle edge case when a participant's `starts_on` changes to an earlier date
+                # Generate an additional URL for fetching retroactive data
+                if entry.earliest_sleep_log and entry.starts_on.date() < entry.earliest_sleep_log:
+                    logger.info(
+                        "Participant's `starts_on` value is before their earliest sleep log. Generating extra URL for fetching retroactive data.",
+                        extra={
+                            "study_subject_id": entry.id,
+                            "starts_on": entry.starts_on,
+                            "earliest_sleep_log": entry.earliest_sleep_log,
+                        }
+                    )
+                    urls.append(build_url(
+                        entry,
+                        start_date=str(entry.starts_on.date()),
+                        end_date=str(entry.earliest_sleep_log))
+                    )
 
                 # Try querying the fitbit API for this study subject
-                data = {"sleep": []}
+                data = []
                 try:
                     if TESTING:
-                        data = generate_sleep_logs()
+                        data += generate_sleep_logs()["sleep"]
                     else:
                         # Retrieve OAuth tokens for the subject
                         try:
@@ -498,16 +546,25 @@ def handler(event, context):
                             )
                             continue
 
-                        # Query the Fitbit API
-                        fitbit_session = get_fitbit_oauth_session(entry, config, tokens)
-                        response = fitbit_session.request("GET", url)
-                        data = response.json()
+                        for url in urls:
+                            logger.info(
+                                "Querying Fitbit API",
+                                extra={
+                                    "study_subject_id": entry.id,
+                                    "url": url,
+                                }
+                            )
+
+                            # Query the Fitbit API
+                            fitbit_session = get_fitbit_oauth_session(entry, config, tokens)
+                            response = fitbit_session.request("GET", url)
+                            data += response.json()["sleep"]
 
                     logger.info(
                         "Participant data retrieved from Fibit API",
                         extra={
                             "study_subject_id": entry.id,
-                            "result_count": len(data["sleep"])
+                            "result_count": len(data)
                         }
                     )
 
@@ -525,7 +582,7 @@ def handler(event, context):
 
                 # Convert levels to a format expected by the database
                 # Set `level.is_short` to True if the same timestamp is found in `shortData`
-                for sleep_record in data.get("sleep", []):
+                for sleep_record in data:
 
                     # Use a pointer to traverse short data entries
                     short_idx = 0

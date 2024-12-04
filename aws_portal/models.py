@@ -1844,6 +1844,7 @@ class JoinStudySubjectStudy(db.Model):
         return {
             "didConsent": self.did_consent,
             "createdOn": self.created_on.isoformat(),
+            "startsOn": self.starts_on.isoformat(),
             "expiresOn": self.expires_on.isoformat() if self.expires_on else None,
             "study": self.study.meta,
         }
