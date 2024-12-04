@@ -156,8 +156,8 @@ class StudySubjectEntry:
     id: int
     api_user_uuid: str
     api_id: int
-    last_sync_date: str
-    created_on: datetime
+    last_sync_date: str | None
+    starts_on: datetime
     expires_on: str
 
 
@@ -198,7 +198,7 @@ class StudySubjectService(DBService):
                 self.api.c.api_user_uuid,
                 self.api.c.api_id,
                 self.api.c.last_sync_date,
-                self.study.c.created_on,
+                self.study.c.starts_on,
                 self.study.c.expires_on,
             )
             .select_from(self.api
@@ -218,13 +218,38 @@ class StudySubjectService(DBService):
         )
         self.__entries = []
         result = self.connection.execute(query).fetchall()
+
+        # Merge multiple results for a subject into one
+        result_map: dict[int, dict] = {}
         for entry in result:
-            self.__entries.append(StudySubjectEntry(**entry._asdict()))
+            entry_id = entry.id
+            try:
+                # Query APIs starting from the study subject's earliest start date (if `last_sync_date` is null)
+                result_map[entry_id]["starts_on"] = min(
+                    result_map[entry_id]["starts_on"],
+                    entry.starts_on
+                )
+                # Query APIs until the study subject's latest expiry date
+                result_map[entry_id]["expires_on"] = max(
+                    result_map[entry_id]["expires_on"],
+                    entry.expires_on
+                )
+            except KeyError:
+                result_map[entry_id] = entry._asdict()
+
+        for entry in result_map.values():
+            self.__entries.append(StudySubjectEntry(**entry))
 
         logger.info(
             "Fetched participant API data from database",
             extra={"result_count": len(self.__entries)}
         )
+
+        for entry in self.__entries:
+            logger.debug(
+                f"Data for entry {entry.id}",
+                extra=entry.__dict__
+            )
 
     def iter_entries(self):
         if self.connection is None:
@@ -369,7 +394,7 @@ def build_url(entry):
     try:
         start_date = entry.last_sync_date.strftime("%Y-%m-%d")
     except AttributeError:
-        start_date = entry.created_on.strftime("%Y-%m-%d")
+        start_date = entry.starts_on.strftime("%Y-%m-%d")
 
     timestamp = datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
     end_date = min(entry.expires_on, timestamp).strftime("%Y-%m-%d")
