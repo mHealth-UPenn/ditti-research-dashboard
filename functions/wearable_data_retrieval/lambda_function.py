@@ -19,52 +19,102 @@ from shared.utils.sleep_logs import generate_sleep_logs
 TESTING = os.getenv("TESTING") is not None
 DEBUG = os.getenv("DEBUG") is not None
 
-# Use a common timestamp across the whole job
-job_timestamp = datetime.now().isoformat()
+# Use a common timestamp across the whole function
+function_timestamp = datetime.now().isoformat()
 
 logger = LambdaLogger(
-    job_timestamp,
+    function_timestamp,
     level=logging.DEBUG if DEBUG else logging.INFO
 )
 
 
 class NestedError(Exception):
+    """
+    Exception for error on a nested database transaction.
+    """
     pass
 
 
 class DBInitializationError(Exception):
+    """
+    Exception for error on initialization of database engine and connection.
+    """
     pass
 
 
 class ConfigFetchError(Exception):
+    """
+    Exception for error on fetching config from AWS Secrets Manager.
+    """
     pass
 
 
 class DBFetchError(Exception):
+    """
+    Exception for error on fetching any data from the database.
+    """
     pass
 
 
 class DBUpdateError(Exception):
+    """
+    Exception for error on updating or inserting any data to the database.
+    """
     pass
 
 
 class S3UploadError(Exception):
+    """
+    Exception for error on uploading the log file to S3.
+    """
     pass
 
 
 class DB:
+    """
+    Helper class for initializing a database connection.
+
+    Args:
+    - db_uri (str): The URI for securely connecting to the database.
+    """
     def __init__(self, db_uri: str):
         self.engine = create_engine(db_uri, future=True)
         self.metadata = MetaData(bind=self.engine)
 
 
 class DBService:
+    """
+    Base database service class for providing a database connection context.
+
+    Args:
+    - db (DB): A database connection class.
+    """
     def __init__(self, db: DB):
         self.db = db
         self.connection = None
 
     @contextmanager
     def connect(self):
+        """
+        Context manager for establishing and managing a database connection.
+
+        This method provides a transactional scope for database operations.
+        It ensures that the connection is properly managed, beginning a transaction 
+        on entry and committing or rolling back as needed on exit.
+
+        Usage:
+        ```python
+        db_service = DBService(db_instance)
+        with db_service.connect() as connection:
+            # Perform database operations using the `connection`
+        ```
+
+        Yields:
+        - connection: An active database connection to be used for database operations.
+
+        Ensures:
+        - The connection is properly closed and cleaned up after use.
+        """
         try:
             with self.db.engine.connect() as connection:
                 with connection.begin():
@@ -74,6 +124,7 @@ class DBService:
             self.connection = None
 
 
+# Typing for the database-defined lambda_task task status enum
 type TaskStatus = Literal[
     "Pending",
     "InProgress",
@@ -85,18 +136,67 @@ type TaskStatus = Literal[
 
 @dataclass
 class LambdaTaskEntry:
+    """
+    Represents a row from the `lambda_task` table, reflecting the status and details of a Lambda function.
+
+    Attributes:
+    - id (int): The unique identifier of the Lambda function.
+    - status (TaskStatus): The current status of the function, which can be one of the following:
+        - "Pending"
+        - "InProgress"
+        - "Success"
+        - "Failed"
+        - "CompletedWithErrors"
+    - billed_ms (int | None): The number of milliseconds billed for the function's execution.
+    - created_on (datetime): The timestamp when the function was created.
+    - updated_on (datetime): The timestamp when the function was last updated.
+    - completed_on (datetime | None): The timestamp when the function was completed. `None` if the function is Pending
+      or InProcess.
+    - log_file (str | None): The S3 URI location of the function's log file. `None` if no log file exists
+    - error_code (str | None): The error code (if any) returned during function execution. `None` if no error occurred.
+    """
     id: int
     status: TaskStatus
-    billed_ms: int
+    billed_ms: int | None
     created_on: datetime
     updated_on: datetime
-    completed_on: datetime
-    log_file: str
-    error_code: str
+    completed_on: datetime | None
+    log_file: str | None
+    error_code: str | None
 
 
 class LambdaTaskService(DBService):
+    """
+    A database service for interacting with the `lambda_task` table. 
+
+    This class provides methods to query and update entries in the table, specifically 
+    designed for managing Lambda task statuses and related metadata.
+
+    Inherits:
+        DBService: Base database service class.
+
+    Attributes:
+        table (Table): SQLAlchemy Table object for the `lambda_task` table.
+        __entry (LambdaTaskEntry | None): The current task entry being managed, or None if no entry is loaded.
+
+    Methods:
+        get_entry(id: int):
+            Queries the `lambda_task` table for a specific entry by ID and loads it as a `LambdaTaskEntry` instance.
+        
+        update_status(status: TaskStatus, **kwargs):
+            Updates the status and optional additional fields of the current task entry.
+    """
+
     def __init__(self, db: DB):
+        """
+        Initializes the LambdaTaskService.
+
+        Args:
+            db (DB): An instance of the `DB` helper class to manage database connections.
+
+        Raises:
+            RuntimeError: If the table reflection fails or the database schema is inconsistent.
+        """
         super(LambdaTaskService, self).__init__(db)
         m = self.db.metadata
         e = self.db.engine
@@ -109,6 +209,27 @@ class LambdaTaskService(DBService):
         self.__entry: LambdaTaskEntry | None = None
 
     def get_entry(self, id: int):
+        """
+        Queries the `lambda_task` table for a specific entry by ID and stores it as a `LambdaTaskEntry` instance.
+
+        Args:
+            id (int): The ID of the Lambda task to query.
+
+        Raises:
+            RuntimeError: If called outside the `connect` context or if no entry is found.
+
+        Side Effects:
+            - Logs the result of the query.
+            - Stores the retrieved entry in the `__entry` attribute.
+
+        Example:
+            ```python
+            with service.connect():
+                service.get_entry(42)
+                print(service.__entry)
+            ```
+        """
+
         if self.connection is None:
             raise RuntimeError("`get_entry` must be called within `connect` context.")
 
@@ -130,6 +251,28 @@ class LambdaTaskService(DBService):
             raise RuntimeError(f"No entry found for function_id {id}")
 
     def update_status(self, status: TaskStatus, **kwargs):
+        """
+        Updates the status and optional additional fields of the currently loaded Lambda task entry.
+
+        Args:
+            status (TaskStatus): The new status to set for the task.
+            **kwargs: Additional fields to update in the `lambda_task` table.
+
+        Raises:
+            RuntimeError: If called outside the `connect` context or if no entry is loaded.
+
+        Side Effects:
+            - Executes an update statement on the `lambda_task` table.
+            - Logs the updated status and additional fields.
+
+        Example:
+            ```python
+            with service.connect():
+                service.get_entry(42)
+                service.update_status("InProgress", billed_ms=1500)
+            ```
+        """
+
         if self.connection is None:
             raise RuntimeError("`update_status` must be called within `connect` context.")
 
@@ -153,18 +296,52 @@ class LambdaTaskService(DBService):
 
 @dataclass
 class StudySubjectEntry:
+    """
+    Represents entries in the `study_subject` table and its joins that are relevant for updating data.
+
+    Attributes:
+        id (int): Unique identifier for the study subject.
+        api_user_uuid (str): UUID of the user in the associated API system.
+        api_id (int): Identifier for the associated API.
+        last_sync_date (str | None): Timestamp of the last synchronization with the API, if any.
+        starts_on (datetime): Start date for the subject's enrollment in a study. This attribute is the earliest
+          `starts_on` value for all `join_study_subject_study` entries.
+        expires_on (str): Expiration date for the subject's enrollment in a study. This attribute is the latest
+          `expires_on` value for all `join_study_subject_study` entries.
+        earliest_sleep_log (date | None): Earliest date of sleep logs available for the study subject.
+    """
     id: int
     api_user_uuid: str
     api_id: int
     last_sync_date: str | None
     starts_on: datetime
     expires_on: str
-    did_consent: bool
     earliest_sleep_log: date | None
 
 
 class StudySubjectService(DBService):
+    """
+    Service for managing the `study_subject` table and associated tables, 
+    including APIs, studies, sleep logs, sleep levels, and sleep summaries.
+
+    This class provides methods to query study subject data, manage sleep-related data, 
+    and handle synchronization with APIs.
+
+    Methods:
+        get_entries(): Fetches all entries of study subjects requiring API synchronization.
+        iter_entries(): Yields each study subject entry for iterative processing.
+        insert_data(data): Inserts sleep log, level, and summary data into the database for the current entry.
+        update_last_sync_date(): Updates the `last_sync_date` for the current study subject.
+    """
+
     def __init__(self, *args):
+        """
+        Initializes the StudySubjectService with the database connection and metadata.
+
+        Args:
+            *args: Positional arguments to be passed to the base `DBService` class.
+        """
+
         super(StudySubjectService, self).__init__(*args)
         m = self.db.metadata
         e = self.db.engine
@@ -191,9 +368,20 @@ class StudySubjectService(DBService):
         self.__index = None
 
     def get_entries(self):
+        """
+        Retrieves all study subject entries requiring synchronization with their associated APIs.
+
+        Populates the `__entries` attribute with `StudySubjectEntry` instances, 
+        representing the consolidated data for each study subject.
+
+        Raises:
+            RuntimeError: If called outside of a `connect` context.
+        """
+
         if self.connection is None:
             raise RuntimeError("`get_entries` must be called within `connect` context.")
 
+        # Subquery for a study subject's earliest sleep log
         earliest_sleep_log_subquery = (
             select(func.min(self.sleep_log_table.c.date_of_sleep))
             .where(self.sleep_log_table.c.study_subject_id == self.subject.c.id)
@@ -224,14 +412,14 @@ class StudySubjectService(DBService):
             )
             .where(
                 and_(
-                    self.study.c.did_consent,
+                    self.study.c.did_consent,  # Get only studies that have been consented
                     or_(
-                        self.api.c.last_sync_date == None,
-                        and_(
+                        self.api.c.last_sync_date == None,  # Get any entries without a `last_sync_date`
+                        and_(  # Get any entries with a `last_sync_date` before today and before the `expires_on` date
                             self.api.c.last_sync_date < date.today(),
                             self.study.c.expires_on > self.api.c.last_sync_date,
                         ),
-                        self.study.c.starts_on < earliest_sleep_log_subquery,
+                        self.study.c.starts_on < earliest_sleep_log_subquery,  # Get any entries with past data that was not pulled
                     )
                 )
             )
@@ -261,7 +449,15 @@ class StudySubjectService(DBService):
                 result_map[entry_id] = entry._asdict()
 
         for entry in result_map.values():
-            self.__entries.append(StudySubjectEntry(**entry))
+            self.__entries.append(StudySubjectEntry(
+                id=entry.id,
+                api_user_uuid=entry.api_user_uuid,
+                api_id=entry.api_id,
+                last_sync_date=entry.last_sync_date,
+                starts_on=entry.starts_on,
+                expires_on=entry.expires_on,
+                earliest_sleep_log=entry.earliest_sleep_log,
+            ))
 
         logger.info(
             "Fetched participant API data from database",
@@ -272,6 +468,16 @@ class StudySubjectService(DBService):
             logger.debug(f"Data for entry {entry.id}", extra=entry.__dict__)
 
     def iter_entries(self):
+        """
+        Iterates over all fetched study subject entries.
+
+        Yields:
+            StudySubjectEntry: The next entry in the sequence.
+
+        Raises:
+            RuntimeError: If no entries are available or if called outside of a `connect` context.
+        """
+
         if self.connection is None:
             raise RuntimeError("`iter_entries` must be called within `connect` context.")
 
@@ -284,7 +490,17 @@ class StudySubjectService(DBService):
 
         self.__index = None
 
-    def insert_data(self, data):
+    def insert_data(self, data: list[dict]):
+        """
+        Inserts sleep-related data into the database for the current study subject entry.
+
+        Args:
+            data (list[dict]): A list of sleep record dictionaries containing log, level, and summary details.
+
+        Raises:
+            RuntimeError: If called outside of the `iter_entries` block or without a valid index.
+        """
+
         if self.__index is None:
             raise RuntimeError("No index found. `insert_data` must be called inside `iter_entries` block.")
 
@@ -344,6 +560,13 @@ class StudySubjectService(DBService):
                 self.connection.execute(insert_summary_stmt)
 
     def update_last_sync_date(self):
+        """
+        Updates the `last_sync_date` for the current study subject to the current timestamp.
+
+        Raises:
+            RuntimeError: If called outside of the `iter_entries` block or without a valid index.
+        """
+
         if self.__index is None:
             raise RuntimeError("No index found. `insert_data` must be called inside `iter_entries` block.")
 
@@ -352,7 +575,7 @@ class StudySubjectService(DBService):
         self.connection.execute(
             update(self.api_table)
             .where(self.api_table.c.study_subject_id == entry.id)
-            .values(last_sync_date=datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f"))
+            .values(last_sync_date=datetime.strptime(function_timestamp, "%Y-%m-%dT%H:%M:%S.%f"))
         )
 
         logger.info(
@@ -360,7 +583,16 @@ class StudySubjectService(DBService):
         )
 
 
-def get_secret(secret_name):
+def get_secret(secret_name: str) -> dict:
+    """
+    Retrieve a secret from AWS Secrets Manager.
+
+    Args:
+    - secret_name (str): The name of the secret to retrieve a value from.
+
+    Returns:
+    - dict: The secret's value.
+    """
     # Initialize a session using environment variables
     session = boto3.session.Session()
     client = session.client(
@@ -391,6 +623,45 @@ def build_url(
     start_date: str | None = None,
     end_date: str | None = None
 ) -> str:
+    """
+    Build a URL for querying the Fitbit API.
+
+    This function constructs a URL to fetch sleep data for a given study subject
+    from the Fitbit API. The URL is based on the study subject's API user UUID, 
+    start date, and end date. If `start_date` or `end_date` are not provided, 
+    they are derived from the `StudySubjectEntry` object.
+
+    Args:
+        entry (StudySubjectEntry): The entry containing details about the study 
+            subject, including API user UUID, last sync date, start date, and 
+            expiry date.
+        start_date (str | None): Optional. The start date for the data query in 
+            "YYYY-MM-DD" format. Defaults to the subject's last sync date or 
+            start date if the last sync date is not available.
+        end_date (str | None): Optional. The end date for the data query in 
+            "YYYY-MM-DD" format. Defaults to the earlier of the subject's expiry 
+            date or the current timestamp.
+
+    Returns:
+        str: The constructed URL for querying the Fitbit API.
+
+    Raises:
+        ValueError: If the `start_date` is on or after the `end_date`.
+
+    Example:
+        >>> entry = StudySubjectEntry(
+                id=1,
+                api_user_uuid="user123",
+                api_id=101,
+                last_sync_date=None,
+                starts_on=datetime(2023, 1, 1),
+                expires_on="2023-12-31",
+                did_consent=True,
+                earliest_sleep_log=None
+            )
+        >>> build_url(entry, start_date="2023-05-01")
+        'https://api.fitbit.com/1.2/user/user123/sleep/date/2023-05-01/2023-12-31.json'
+    """
     study_subject_id = entry.api_user_uuid
 
     if start_date is None:
@@ -400,7 +671,7 @@ def build_url(
             start_date = entry.starts_on.strftime("%Y-%m-%d")
 
     if end_date is None:
-        timestamp = datetime.strptime(job_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
+        timestamp = datetime.strptime(function_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
         end_date = min(entry.expires_on, timestamp).strftime("%Y-%m-%d")
 
     if start_date >= end_date:
@@ -421,7 +692,7 @@ def build_url(
 
 
 def handler(event, context):
-    logger.info("Starting wearable data retrieval job", extra={"job_timestamp": job_timestamp})
+    logger.info("Starting wearable data retrieval job", extra={"function_timestamp": function_timestamp})
     log_file = None
     error_code = None
 
@@ -463,6 +734,7 @@ def handler(event, context):
             )
             raise DBInitializationError
 
+        # Get and update the `lambda_task` database entry
         with lambda_task_service.connect() as connection:
             try:
                 lambda_task_service.get_entry(function_id)
@@ -487,8 +759,9 @@ def handler(event, context):
                 )
                 raise DBUpdateError
 
+        # Get and update participant data
         with study_subject_service.connect() as connection:
-            # Try querying study subject api joins that are not expired
+            # Try querying study subjects and their join data
             try:
                 study_subject_service.get_entries()
 
@@ -612,6 +885,7 @@ def handler(event, context):
                         else:
                             level_data["isShort"] = False
 
+                # Try inserting new data into the database.
                 try:
                     with connection.begin_nested():
                         # Try inserting Fitbit data into the database
@@ -629,7 +903,7 @@ def handler(event, context):
                             )
                             raise NestedError
 
-                        # Try updating `api.last_sync_date` to the current `job_timestamp`
+                        # Try updating `api.last_sync_date` to the current `function_timestamp`
                         try:
                             study_subject_service.update_last_sync_date()
 
