@@ -417,7 +417,8 @@ def handler(event, context):
         # Load secrets
         if TESTING:
             config = {
-                "DB_URI": os.getenv("DB_URI")
+                "DB_URI": os.getenv("DB_URI"),
+                "S3_BUCKET": os.getenv("S3_BUCKET"),
             }
 
         else:
@@ -624,7 +625,7 @@ def handler(event, context):
             bucket_name = config["S3_BUCKET"]
 
             # Prepare the S3 filename including function_id
-            log_file = f"logs/{function_id}_{logger.log_filename}.json"
+            log_file = f"{function_id}_{logger.log_filename}"
             s3_client.upload_file(logger.log_filename, bucket_name, log_file)
 
             logger.info(
@@ -641,25 +642,25 @@ def handler(event, context):
 
     except ConfigFetchError:
         logger.info("Exiting on ConfigFetchError", extra={"error": traceback.format_exc()})
-        error_code = "CONFIG_FETCH_ERROR"
+        error_code = "ConfigFetchError"
     except DBFetchError:
         logger.info("Exiting on DBFetchError", extra={"error": traceback.format_exc()})
-        error_code = "DB_FETCH_ERROR"
+        error_code = "DBFetchError"
     except DBUpdateError:
         logger.info("Exiting on DBUpdateError", extra={"error": traceback.format_exc()})
-        error_code = "DB_UPDATE_ERROR"
+        error_code = "DBUpdateError"
     except S3UploadError:
         logger.info("Exiting on S3UploadError", extra={"error": traceback.format_exc()})
-        error_code = "S3_UPLOAD_ERROR"
+        error_code = "S3UploadError"
     except Exception:
         logger.info("Exiting on Exception", extra={"error": traceback.format_exc()})
-        error_code = "UNKNOWN_ERROR"
+        error_code = "UnknownError"
 
     # Update the lambda_task table with completion information
     try:
         with lambda_task_service.connect() as connection:
             lambda_task_service.update_status(
-                status="Failed" if error_code else "Complete",
+                status="Failed" if error_code else "Success",
                 completed_on=datetime.now(),
                 log_file=log_file,
                 error_code=error_code
