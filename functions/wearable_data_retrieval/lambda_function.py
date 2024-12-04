@@ -388,7 +388,6 @@ def get_secret(secret_name):
 
 # TODO: Manage dates
 def build_url(entry):
-    logger.info("build_url", extra=entry.__dict__)
     study_subject_id = entry.api_user_uuid
 
     try:
@@ -420,16 +419,6 @@ def handler(event, context):
             config = {
                 "DB_URI": os.getenv("DB_URI")
             }
-
-            try:
-                tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
-                tokens_config = get_secret(tokens_secret_name)
-            except Exception:
-                logger.error(
-                    f"Error retrieving secret",
-                    extra={"error": traceback.format_exc()}
-                )
-                raise ConfigFetchError
 
         else:
             try:
@@ -507,16 +496,23 @@ def handler(event, context):
                 # Try querying the fitbit API for this study subject
                 data = {"sleep": []}
                 try:
-                    # if TESTING:
-                    #     data = generate_sleep_logs()
-                    # else:
-                    # Retrieve OAuth tokens for the subject
-                    tokens = tokens_config[entry.id]
+                    if TESTING:
+                        data = generate_sleep_logs()
+                    else:
+                        # Retrieve OAuth tokens for the subject
+                        try:
+                            tokens = tokens_config[entry.id]
+                        except KeyError:
+                            logger.info(
+                                "Participant not found in API tokens secret.",
+                                extra={"study_subject_id": entry.id}
+                            )
+                            continue
 
-                    # Query the Fitbit API
-                    fitbit_session = get_fitbit_oauth_session(entry, tokens)
-                    response = fitbit_session.request(url)
-                    data = response.json()
+                        # Query the Fitbit API
+                        fitbit_session = get_fitbit_oauth_session(entry, config, tokens)
+                        response = fitbit_session.request("GET", url)
+                        data = response.json()
 
                     logger.info(
                         "Participant data retrieved from Fibit API",
@@ -525,8 +521,6 @@ def handler(event, context):
                             "result_count": len(data["sleep"])
                         }
                     )
-
-                    print("data:", data)
 
                 # On error continue to next study subject
                 except Exception:
