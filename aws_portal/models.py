@@ -1858,6 +1858,9 @@ class JoinStudySubjectStudy(db.Model):
     created_on: sqlalchemy.Column
         The timestamp of the account's creation, e.g., `datetime.now(UTC)`.
         The created_on value cannot be modified.
+    starts_on: sqlalchemy.Column
+        When data collection for a study subject begins. Data from approved APIs
+        will be collected starting from no earlier than this date.
     expires_on: sqlalchemy.Column
         When the study subject is no longer a part of the study and data should no
         longer be collected from any of the subject's approved APIs
@@ -1878,6 +1881,7 @@ class JoinStudySubjectStudy(db.Model):
     )
     did_consent = db.Column(db.Boolean, default=False, nullable=False)
     created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
+    starts_on = db.Column(db.DateTime, default=func.now(), nullable=False)
     expires_on = db.Column(db.DateTime, nullable=True)
 
     study_subject = db.relationship("StudySubject", back_populates="studies")
