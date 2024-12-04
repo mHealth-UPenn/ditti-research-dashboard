@@ -323,10 +323,10 @@ class StudySubjectService(DBService):
                 )
 
             # Insert summaries
-            for summary_data in sleep_record.get("levels", {}).get("summary", []):
+            for level, summary_data in sleep_record.get("levels", {}).get("summary", {}).items():
                 insert_summary_stmt = insert(self.sleep_summary_table).values(
                     sleep_log_id=sleep_log_id,
-                    level=summary_data["level"],
+                    level=level,
                     count=summary_data["count"],
                     minutes=summary_data["minutes"],
                     thirty_day_avg_minutes=summary_data.get("thirtyDayAvgMinutes")
@@ -533,6 +533,38 @@ def handler(event, context):
                         }
                     )
                     continue
+
+                # Convert levels to a format expected by the database
+                # Set `level.is_short` to True if the same timestamp is found in `shortData`
+                for sleep_record in data.get("sleep", []):
+
+                    # Use a pointer to traverse short data entries
+                    short_idx = 0
+                    short_data = sleep_record.get("levels", {}).get("shortData", [])
+
+                    # Traverse all data entries
+                    for level_data in sleep_record.get("levels", {}).get("data", []):
+
+                        # If we have reached the end of short data entries, remaining data entries are not short
+                        if short_idx == len(short_data):
+                            level_data["isShort"] = False
+                            continue
+
+                        # Skip short data entries that are before the current data entry, if any
+                        while short_idx < len(short_data) and level_data["dateTime"] > short_data[short_idx]["dateTime"]:
+                            short_idx += 1
+
+                        # If we have reached the end of short data entries, remaining data entries are not short
+                        if short_idx == len(short_data):
+                            level_data["isShort"] = False
+                            continue
+
+                        # Mark the current data entry as short or not short
+                        if level_data["dateTime"] == short_data[short_idx]["dateTime"]:
+                            level_data["isShort"] = True
+                            short_idx += 1
+                        else:
+                            level_data["isShort"] = False
 
                 try:
                     with connection.begin_nested():
