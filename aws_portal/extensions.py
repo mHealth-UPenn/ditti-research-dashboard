@@ -4,6 +4,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
+from flask_caching import Cache
 from aws_portal.utils.tokens_manager import TokensManager
 
 
@@ -13,5 +14,9 @@ db = SQLAlchemy()
 jwt = JWTManager()
 migrate = Migrate()
 scheduler = APScheduler()
+cache = Cache(config={
+    "CACHE_TYPE": "SimpleCache",
+    "CACHE_DEFAULT_TIMEOUT": 7200
+})
 
 tm = TokensManager()

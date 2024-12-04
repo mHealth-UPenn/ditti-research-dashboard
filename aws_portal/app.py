@@ -8,7 +8,7 @@ from aws_portal.commands import (
     init_db_click, init_api_click, init_integration_testing_db_click, reset_db_click,
     init_demo_db_click
 )
-from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, scheduler
+from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, scheduler, cache
 from aws_portal.views import (
     admin, aws_requests, base, data_processing_task, db_requests, iam, participant
 )
@@ -92,3 +92,4 @@ def register_extensions(app):
     migrate.init_app(app, db)
     scheduler.init_app(app)
     scheduler.start()
+    cache.init_app(app)
