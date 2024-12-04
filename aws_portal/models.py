@@ -825,18 +825,29 @@ def init_study_subject(ditti_id):
     if "localhost" not in db_uri:
         raise RuntimeError("init_study_subject requires a localhost database URI.")
 
-    study = Study.query.get(1)
-    if study is None:
-        raise RuntimeError("No studies exist in the database.")
+    study_a = Study.query.get(1)
+    study_b = Study.query.get(2)
+    if study_a is None or study_b is None:
+        raise RuntimeError("Could not retrieve studies from the database.")
 
     existing = StudySubject.query.filter(StudySubject.ditti_id == ditti_id).first()
     if existing is not None:
         raise RuntimeError(f"Study subject with ditti_id {ditti_id} already exists.")
 
     study_subject = StudySubject(ditti_id=ditti_id)
+
+    # Enroll in two studies to test that data is pulled from first `starts_on` to last `expires_on`
     JoinStudySubjectStudy(
         study_subject=study_subject,
-        study=study,
+        study=study_a,
+        did_consent=True,
+        starts_on=datetime.now(UTC) - timedelta(days=7),
+        expires_on=datetime.now(UTC) - timedelta(days=3)  # TODO: bypass expires_on validation
+    )
+
+    JoinStudySubjectStudy(
+        study_subject=study_subject,
+        study=study_b,
         did_consent=True
     )
 
