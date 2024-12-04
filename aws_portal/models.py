@@ -712,16 +712,23 @@ def init_integration_testing_db():
             "study_subject": test002,
             "study": study_a,
             "did_consent": False,
+            "starts_on": datetime.now(UTC) - timedelta(days=7),  # Consenting should retroactively pull from this date
         },
         {
             "study_subject": test002,
             "study": study_b,
             "did_consent": True,
+            "starts_on": datetime.now(UTC) - timedelta(days=1),  # Data should be pulled from this date
+        },
+        {
+            "study_subject": test003,  # No data should be pulled for this subject
+            "study": study_a,
+            "did_consent": False,
         },
         {
             "study_subject": test003,
-            "study": study_a,
-            "did_consent": True,
+            "study": study_b,
+            "did_consent": False,
         }
     ]
 
@@ -737,6 +744,12 @@ def init_integration_testing_db():
             "last_sync_date": datetime.now(),
         },
         {
+            "study_subject": test002,
+            "api": api,
+            "api_user_uuid": "test",
+            "scope": ["sleep"],
+        },
+        {
             "study_subject": test003,
             "api": api,
             "api_user_uuid": "test",
@@ -747,36 +760,8 @@ def init_integration_testing_db():
     for join in study_subject_apis:
         JoinStudySubjectApi(**join)
 
-    for i, study_subject in enumerate([test001, test002, test003]):
-        sleep_logs = generate_sleep_logs()
-        for j, entry in enumerate(sleep_logs["sleep"]):
-            sleep_log = SleepLog(
-                study_subject=study_subject,
-                log_id=i * 10 + j,
-                date_of_sleep=datetime.strptime(entry["dateOfSleep"], "%Y-%m-%d").date(),
-                duration=entry["duration"],
-                efficiency=entry["efficiency"],
-                end_time=datetime.strptime(entry["endTime"], "%Y-%m-%dT%H:%M:%S.%f"),
-                info_code=entry.get("infoCode"),
-                is_main_sleep=entry["isMainSleep"],
-                minutes_after_wakeup=entry["minutesAfterWakeup"],
-                minutes_asleep=entry["minutesAsleep"],
-                minutes_awake=entry["minutesAwake"],
-                minutes_to_fall_asleep=entry["minutesToFallAsleep"],
-                log_type=entry["logType"],
-                start_time=datetime.strptime(entry["startTime"], "%Y-%m-%dT%H:%M:%S.%f"),
-                time_in_bed=entry["timeInBed"],
-                type=entry["type"],
-            )
-            for level in entry["levels"]["data"]:
-                SleepLevel(
-                    sleep_log=sleep_log,
-                    date_time=datetime.strptime(level["dateTime"], "%Y-%m-%dT%H:%M:%S.%f"),
-                    level=level["level"],
-                    seconds=level["seconds"],
-                    is_short=level.get("isShort", False)
-                )
-            db.session.add(sleep_log)
+    # Create lambda task for testing lambda functions
+    db.session.add(LambdaTask(status="Pending"))
 
     db.session.commit()
 

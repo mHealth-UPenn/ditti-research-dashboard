@@ -9,7 +9,7 @@ import traceback
 from typing import Literal
 
 import boto3
-from sqlalchemy import create_engine, Table, MetaData, insert, select, update, or_
+from sqlalchemy import create_engine, Table, MetaData, insert, select, update, and_, or_
 from sqlalchemy.orm import aliased
 
 from shared.fitbit import get_fitbit_oauth_session
@@ -159,6 +159,7 @@ class StudySubjectEntry:
     last_sync_date: str | None
     starts_on: datetime
     expires_on: str
+    did_consent: bool
 
 
 class StudySubjectService(DBService):
@@ -200,6 +201,7 @@ class StudySubjectService(DBService):
                 self.api.c.last_sync_date,
                 self.study.c.starts_on,
                 self.study.c.expires_on,
+                self.study.c.did_consent,
             )
             .select_from(self.api
                 .join(
@@ -211,11 +213,17 @@ class StudySubjectService(DBService):
                     self.subject.c.id == self.study.c.study_subject_id
                 )
             )
-            .where(or_(
-                self.study.c.expires_on > self.api.c.last_sync_date,
-                self.api.c.last_sync_date == None
-            ))
+            .where(
+                and_(
+                    self.study.c.did_consent,
+                    or_(
+                        self.study.c.expires_on > self.api.c.last_sync_date,
+                        self.api.c.last_sync_date == None
+                    )
+                )
+            )
         )
+
         self.__entries = []
         result = self.connection.execute(query).fetchall()
 
@@ -246,10 +254,7 @@ class StudySubjectService(DBService):
         )
 
         for entry in self.__entries:
-            logger.debug(
-                f"Data for entry {entry.id}",
-                extra=entry.__dict__
-            )
+            logger.debug(f"Data for entry {entry.id}", extra=entry.__dict__)
 
     def iter_entries(self):
         if self.connection is None:
@@ -311,16 +316,6 @@ class StudySubjectService(DBService):
                     is_short=level_data.get("isShort", False)
                 )
                 self.connection.execute(insert_level_stmt)
-                sleep_level_id = result_proxy.inserted_primary_key[0]
-
-                logger.debug(
-                    "Sleep level created",
-                    extra={
-                        "study_subject_id": entry.id,
-                        "sleep_log_id": sleep_log_id,
-                        "sleep_level_id": sleep_level_id
-                    }
-                )
 
             # Insert summaries
             for level, summary_data in sleep_record.get("levels", {}).get("summary", {}).items():
@@ -332,16 +327,6 @@ class StudySubjectService(DBService):
                     thirty_day_avg_minutes=summary_data.get("thirtyDayAvgMinutes")
                 )
                 self.connection.execute(insert_summary_stmt)
-                sleep_summary_id = result_proxy.inserted_primary_key[0]
-
-                logger.debug(
-                    "Sleep summary created",
-                    extra={
-                        "study_subject_id": entry.id,
-                        "sleep_log_id": sleep_log_id,
-                        "sleep_summary_id": sleep_summary_id
-                    }
-                )
 
     def update_last_sync_date(self):
         if self.__index is None:
