@@ -1,7 +1,7 @@
 import boto3
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, timedelta
 import json
 import logging
 import os
@@ -217,8 +217,11 @@ class StudySubjectService(DBService):
                 and_(
                     self.study.c.did_consent,
                     or_(
-                        self.study.c.expires_on > self.api.c.last_sync_date,
-                        self.api.c.last_sync_date == None
+                        self.api.c.last_sync_date == None,
+                        and_(
+                            self.api.c.last_sync_date < date.today(),
+                            self.study.c.expires_on > self.api.c.last_sync_date,
+                        )
                     )
                 )
             )
