@@ -97,13 +97,16 @@ def admin_get_fitbit_data(ditti_id: str):
 
 @participant_fitbit_blueprint.route("", methods=["GET"])
 @cognito_auth_required
-def participant_get_fitbit_data():
+def participant_get_fitbit_data(ditti_id: str):
     """
     Retrieves Fitbit data for the authenticated participant.
 
     Query Parameters:
         start_date (str): The start date in 'YYYY-MM-DD' format (required).
         end_date (str, optional): The end date in 'YYYY-MM-DD' format.
+
+    Args:
+        ditti_id (str): The study subject's username, passed from cognito_auth_required.
 
     Returns:
         JSON Response: Serialized Fitbit data if found and valid.
@@ -113,29 +116,6 @@ def participant_get_fitbit_data():
         HTTP 500: If a database or server error occurs.
     """
     try:
-        # Get ID token from cookies
-        id_token = request.cookies.get("id_token")
-        if not id_token:
-            return make_response({"msg": "Missing ID token."}, 401)
-
-        # Verify and decode ID token to extract cognito:username
-        try:
-            verify_token(True, id_token, token_use="id")
-            claims = jwt.decode(id_token, options={"verify_signature": False})
-        except jwt.DecodeError:
-            return make_response({"msg": "Invalid ID token."}, 400)
-        except jwt.ExpiredSignatureError:
-            return make_response({"msg": "ID token has expired."}, 401)
-        except jwt.InvalidTokenError as e:
-            return make_response({"msg": f"Invalid ID token: {str(e)}"}, 401)
-
-        # Extract cognito:username from claims (ditti_id)
-        ditti_id = claims.get("cognito:username")
-        if not ditti_id:
-            return make_response(
-                {"msg": "cognito:username not found in token."}, 400
-            )
-
         # Extract and validate query parameters
         start_date_str = request.args.get("start_date")
         end_date_str = request.args.get("end_date")
