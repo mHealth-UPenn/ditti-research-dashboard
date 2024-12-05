@@ -119,6 +119,7 @@ class Production(Default):
 
 
 class Testing(Default):
+    ENV = "testing"
     TESTING = True
 
     CORS_ORIGINS = "http://localhost:3000"

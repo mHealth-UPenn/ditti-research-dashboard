@@ -1,6 +1,6 @@
 import pytest
 from moto import mock_aws
-from aws_portal.utils.tokens_manager import TokensManager
+from shared.tokens_manager import TokensManager
 from botocore.exceptions import ClientError
 import json
 

@@ -89,7 +89,10 @@ def invoke_lambda_task(function_id):
         LambdaTask: The LambdaTask object stored in the database.
     """
     try:
-        if current_app.config["ENV"] in {"staging", "production"}:
+        print("Here")
+        print(current_app.config.get("LAMBDA_FUNCTION_NAME"))
+        print(current_app.config.get("ENV"))
+        if current_app.config["ENV"] in {"staging", "production", "testing"}:
             client = boto3.client("lambda")
 
             # Retrieve the Lambda function name from configuration

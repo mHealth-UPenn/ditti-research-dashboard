@@ -11,7 +11,7 @@ from oauthlib.oauth2 import WebApplicationClient
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, JoinStudySubjectApi
 from aws_portal.utils.cognito import cognito_auth_required
-from aws_portal.utils.fitbit import (
+from shared.fitbit import (
     generate_code_verifier, create_code_challenge,
     get_fitbit_oauth_session
 )
