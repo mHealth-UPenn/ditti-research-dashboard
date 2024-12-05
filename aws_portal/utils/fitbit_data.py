@@ -1,6 +1,9 @@
-from datetime import datetime, date
-from typing import Tuple, Optional, List
-from aws_portal.models import StudySubject, SleepLog
+from datetime import date, datetime
+from typing import List, Optional, Tuple
+from sqlalchemy import select
+from aws_portal.extensions import db
+from aws_portal.models import SleepLevel, SleepLog, StudySubject
+from aws_portal.utils.serialization import serialize_fitbit_data
 
 MAX_DATE_RANGE_DAYS = 30
 
@@ -84,22 +87,49 @@ def get_fitbit_data_for_subject(ditti_id: str, start_date: date, end_date: date)
         end_date (datetime.date): The end date for the query.
 
     Returns:
-        list: A list of serialized sleep log data if found.
+        list: A list of serialized sleep log data dictionaries if found.
         None: If the study subject is not found or is archived.
     """
-    # Retrieve StudySubject
     study_subject = StudySubject.query.filter_by(
-        ditti_id=ditti_id, is_archived=False).first()
+        ditti_id=ditti_id, is_archived=False
+    ).first()
     if not study_subject:
         return None
 
-    # Query SleepLogs within date range
-    sleep_logs = SleepLog.query.filter(
-        SleepLog.study_subject_id == study_subject.id,
-        SleepLog.date_of_sleep >= start_date,
-        SleepLog.date_of_sleep <= end_date
-    ).all()
+    stmt = (
+        # TODO: Select only what is necessary from SleepLog
+        select(
+            SleepLog.id.label("sleep_log_id"),
+            SleepLog.log_id,
+            SleepLog.date_of_sleep,
+            SleepLog.duration,
+            SleepLog.efficiency,
+            SleepLog.end_time,
+            SleepLog.info_code,
+            SleepLog.is_main_sleep,
+            SleepLog.minutes_after_wakeup,
+            SleepLog.minutes_asleep,
+            SleepLog.minutes_awake,
+            SleepLog.minutes_to_fall_asleep,
+            SleepLog.log_type,
+            SleepLog.start_time,
+            SleepLog.time_in_bed,
+            SleepLog.type,
+            SleepLevel.date_time.label("level_date_time"),
+            SleepLevel.level.label("level_level"),
+            SleepLevel.seconds.label("level_seconds")
+        )
+        .join(SleepLevel, SleepLog.levels)
+        .where(
+            SleepLog.study_subject_id == study_subject.id,
+            SleepLog.date_of_sleep >= start_date,
+            SleepLog.date_of_sleep <= end_date
+        )
+        .order_by(SleepLog.id, SleepLevel.date_time)
+    )
 
-    # Serialize data
-    serialized_data = [sleep_log.meta for sleep_log in sleep_logs]
+    results = db.session.execute(stmt).all()
+
+    serialized_data = serialize_fitbit_data(results)
+
     return serialized_data
