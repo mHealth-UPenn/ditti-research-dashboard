@@ -124,7 +124,11 @@ def invoke_lambda_task(function_id):
 
             url = current_app.config["LOCAL_LAMBDA_ENDPOINT"]
             data = {"function_id": function_id}
-            thread = threading.Thread(target=send_request, args=(url, data), daemon=True)
+            thread = threading.Thread(
+                target=send_request,
+                args=(url, data),
+                daemon=True
+            )
             thread.start()
 
         # Update the task status to 'InProgress'
