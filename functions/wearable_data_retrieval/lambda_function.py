@@ -427,7 +427,6 @@ class StudySubjectService(DBService):
 
         self.__entries = []
         result = self.connection.execute(query).fetchall()
-        logger.info(str(result))
 
         # Merge multiple results for a subject into one
         result_map: dict[int, dict] = {}
@@ -450,13 +449,13 @@ class StudySubjectService(DBService):
 
         for entry in result_map.values():
             self.__entries.append(StudySubjectEntry(
-                id=entry.id,
-                api_user_uuid=entry.api_user_uuid,
-                api_id=entry.api_id,
-                last_sync_date=entry.last_sync_date,
-                starts_on=entry.starts_on,
-                expires_on=entry.expires_on,
-                earliest_sleep_log=entry.earliest_sleep_log,
+                id=entry["id"],
+                api_user_uuid=entry["api_user_uuid"],
+                api_id=entry["api_id"],
+                last_sync_date=entry["last_sync_date"],
+                starts_on=entry["starts_on"],
+                expires_on=entry["expires_on"],
+                earliest_sleep_log=entry["earliest_sleep_log"],
             ))
 
         logger.info(
