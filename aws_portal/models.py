@@ -1,9 +1,10 @@
+from datetime import datetime, UTC, timedelta, timezone
 import enum
 import logging
 import os
 import random
 import uuid
-from datetime import datetime, UTC, timedelta
+
 from flask import current_app
 from sqlalchemy import select, func, tuple_, event, Enum
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -373,8 +374,8 @@ def init_integration_testing_db():
 
     # Create all possible `(action, resource)` permission combinations
     actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
-    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups",
-                 "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
+    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Wearable Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps", "Wearable Data"]
+
     for action in actions:
         for resource in resources:
             permission = Permission()
@@ -391,8 +392,6 @@ def init_integration_testing_db():
             ("View", "*"),
             ("Create", "Users"),
             ("Edit", "Users"),
-            ("Create", "Audio Files"),
-            ("Edit", "Audio Files"),
         ],
         "Analyst": [
             ("View", "*"),
@@ -410,6 +409,13 @@ def init_integration_testing_db():
         ],
         "Can View Taps": [
             ("View", "Taps")
+        ],
+        "Can View Wearable Data": [
+            ("View", "Wearable Data")
+        ],
+        "Can View Taps & Wearable Data": [
+            ("View", "Taps"),
+            ("View", "Wearable Data")
         ],
     }
 
@@ -466,6 +472,25 @@ def init_integration_testing_db():
         access_group=ditti_coordinator_group, permission=permission)
     db.session.add(ditti_app)
     db.session.add(ditti_coordinator_group)
+
+    # Create the Wearable Admin access group
+    wear_app = App(name="Wearable Dashboard")
+    wear_admin_group = AccessGroup(name="Wearable Dashboard Admin", app=wear_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=wear_admin_group, permission=permission)
+    query = Permission.definition == tuple_("View", "Wearable Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=wear_admin_group, permission=permission)
+    db.session.add(wear_app)
+    db.session.add(wear_admin_group)
+
+    # Create the Wearable Dashboard Coordinator access group
+    wear_coordinator_group = AccessGroup(name="Wearable Dashboard Coordinator", app=wear_app)
+    query = Permission.definition == tuple_("View", "Wearable Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=wear_coordinator_group, permission=permission)
+    db.session.add(wear_coordinator_group)
 
     admin_access_groups = {
         "Can Create Accounts": [
@@ -604,9 +629,10 @@ def init_integration_testing_db():
     account.password = os.getenv("FLASK_ADMIN_PASSWORD")
     JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
+    JoinAccountAccessGroup(account=account, access_group=wear_admin_group)
     db.session.add(account)
 
-    # Create a Ditti admin account to test whether pemissions are scoped to the Ditti Dashboard only
+    # Create a Ditti admin account to test whether permissions are scoped to the Ditti Dashboard only
     account = Account(
         public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
@@ -619,7 +645,20 @@ def init_integration_testing_db():
     JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     db.session.add(account)
 
-    # Create a Study A Admin account to test whether permissions are scopeed to Study A only
+    # Create a Wearable admin account to test whether permissions are scoped to the Wearable Dashboard only
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Jane",
+        last_name="Doe",
+        email="Wearable Admin",
+        is_confirmed=True,
+    )
+    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+    JoinAccountAccessGroup(account=account, access_group=wear_admin_group)
+    db.session.add(account)
+
+    # Create a Study A Admin account to test whether permissions are scoped to Study A only
     account = Account(
         public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
@@ -631,8 +670,8 @@ def init_integration_testing_db():
     account.password = os.getenv("FLASK_ADMIN_PASSWORD")
     role = Role.query.filter(Role.name == "Admin").first()
     JoinAccountStudy(account=account, study=study_a, role=role)
-    JoinAccountAccessGroup(
-        account=account, access_group=ditti_coordinator_group)
+    JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
+    JoinAccountAccessGroup(account=account, access_group=wear_coordinator_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
     db.session.add(account)
 
@@ -652,8 +691,8 @@ def init_integration_testing_db():
         role = Role.query.filter(Role.name == role_name).first()
         JoinAccountStudy(account=account, study=study_a, role=role)
         JoinAccountStudy(account=account, study=study_b, role=other_role)
-        JoinAccountAccessGroup(
-            account=account, access_group=ditti_coordinator_group)
+        JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
+        JoinAccountAccessGroup(account=account, access_group=wear_coordinator_group)
         JoinAccountAccessGroup(account=account, access_group=admin_group)
         db.session.add(account)
 
@@ -689,9 +728,9 @@ def init_integration_testing_db():
     <p unallowed>Unallowed attribute.</p>
 </div>"""
 
-    db.session.add(AboutSleepTemplate(
-        name="About Sleep Template", text=template_html))
+    db.session.add(AboutSleepTemplate(name="About Sleep Template", text=template_html))
 
+    # Add Fitbit API
     api = Api(name="Fitbit")
     db.session.add(api)
 
@@ -763,6 +802,41 @@ def init_integration_testing_db():
     # Create lambda task for testing lambda functions
     db.session.add(LambdaTask(status="Pending"))
 
+    db.session.commit()
+
+
+def init_study_subject(ditti_id):
+    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+    if "localhost" not in db_uri:
+        raise RuntimeError("init_study_subject requires a localhost database URI.")
+
+    study_a = Study.query.get(1)
+    study_b = Study.query.get(2)
+    if study_a is None or study_b is None:
+        raise RuntimeError("Could not retrieve studies from the database.")
+
+    existing = StudySubject.query.filter(StudySubject.ditti_id == ditti_id).first()
+    if existing is not None:
+        raise RuntimeError(f"Study subject with ditti_id {ditti_id} already exists.")
+
+    study_subject = StudySubject(ditti_id=ditti_id)
+
+    # Enroll in two studies to test that data is pulled from first `starts_on` to last `expires_on`
+    JoinStudySubjectStudy(
+        study_subject=study_subject,
+        study=study_a,
+        did_consent=True,
+        starts_on=datetime.now(UTC) - timedelta(days=7),
+        expires_on=datetime.now(UTC) - timedelta(days=3)  # TODO: bypass expires_on validation
+    )
+
+    JoinStudySubjectStudy(
+        study_subject=study_subject,
+        study=study_b,
+        did_consent=True
+    )
+
+    db.session.add(study_subject)
     db.session.commit()
 
 

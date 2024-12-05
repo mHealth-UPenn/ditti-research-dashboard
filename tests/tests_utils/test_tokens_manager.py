@@ -12,7 +12,7 @@ def tokens_manager():
     """
     with mock_aws():
         # Instantiate TokensManager within the mocked context
-        tm = TokensManager()
+        tm = TokensManager(fstr="{api_name}-tokens-testing")
         yield tm
 
 
@@ -146,7 +146,7 @@ def test_add_api_token_creates_new_secret(tokens_manager):
 
     # Retrieve the secret directly using boto3 to verify its existence
     client = tokens_manager.client
-    secret_name = f"{api_name}-tokens"
+    secret_name = f"{api_name}-tokens-testing"
 
     response = client.get_secret_value(SecretId=secret_name)
     secret_data = json.loads(response["SecretString"])
@@ -161,7 +161,7 @@ def test_get_api_tokens_with_no_secret_string(tokens_manager):
     """
     api_name = "Fitbit"
     study_subject_id = 999
-    secret_name = f"{api_name}-tokens"
+    secret_name = f"{api_name}-tokens-testing"
 
     # Create a secret with SecretBinary instead of SecretString
     tokens_manager.client.create_secret(
@@ -367,7 +367,7 @@ def test_add_api_token_with_non_string_study_subject_id(tokens_manager):
 
     # Verify that the study_subject_id is stored as a string in the secret
     client = tokens_manager.client
-    secret_name = f"{api_name}-tokens"
+    secret_name = f"{api_name}-tokens-testing"
 
     response = client.get_secret_value(SecretId=secret_name)
     secret_data = json.loads(response["SecretString"])
