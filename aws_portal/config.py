@@ -54,6 +54,9 @@ class Default:
     LAMBDA_SECRET_ACCESS_KEY = os.environ.get("LAMBDA_SECRET_ACCESS_KEY")
     LAMBDA_AWS_REGION = os.environ.get("LAMBDA_AWS_REGION", "us-east-1")
 
+    # Configuration for invoking a lambda function locally
+    LOCAL_LAMBDA_ENDPOINT = os.environ.get("LOCAL_LAMBDA_ENDPOINT")
+
     # APScheduler configuration
     # SCHEDULER_API_ENABLED = True
     # JOBS = [
