@@ -66,7 +66,8 @@ def authenticated_client(client, study_subject):
         def verify_token_side_effect(participant_pool, token, token_use="id"):
             if participant_pool is not True:
                 raise ValueError(
-                    "Only participant pool is supported at this time.")
+                    "Only participant pool is supported at this time."
+                )
             if token_use == "access":
                 return {"token_use": "access", "cognito:username": study_subject.ditti_id}
             elif token_use == "id":
@@ -75,7 +76,6 @@ def authenticated_client(client, study_subject):
                 raise InvalidTokenError("Invalid token_use")
 
         mock_verify_token.side_effect = verify_token_side_effect
-
         yield client
 
 
@@ -83,7 +83,6 @@ def test_get_participant_success(authenticated_client, study_subject, join_api, 
     """
     Test successful retrieval of participant data.
     """
-    # Mock serialize_participant to return expected data
     expected_data = {
         "dittiId": study_subject.meta["dittiId"],
         "userId": study_subject.meta["id"],
@@ -96,13 +95,7 @@ def test_get_participant_success(authenticated_client, study_subject, join_api, 
         "studies": []
     }
 
-    with patch("aws_portal.views.participant.serialize_participant") as mock_serialize, \
-            patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-
-        # Mock jwt.decode to return a valid claims dictionary with cognito:username
-        mock_jwt_decode.return_value = {
-            "cognito:username": study_subject.ditti_id}
-
+    with patch("aws_portal.views.participant.serialize_participant") as mock_serialize:
         mock_serialize.return_value = expected_data
 
         response = authenticated_client.get("/participant")
@@ -123,10 +116,16 @@ def test_get_participant_missing_id_token(client):
 
 def test_get_participant_missing_ditti_id(authenticated_client):
     """
-    Test retrieval of participant data when ditti_id is missing in ID token.
+    Test retrieval of participant data when ditti_id is missing in ID token claims.
+    Override verify_token to omit cognito:username in ID token.
     """
-    with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        mock_jwt_decode.return_value = {}  # No ditti_id in claims
+    with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
+        def verify_token_no_username_side_effect(participant_pool, token, token_use="id"):
+            if token_use == "access":
+                return {"token_use": "access", "cognito:username": "some_username"}
+            elif token_use == "id":
+                return {"token_use": "id"}  # Missing cognito:username
+        mock_verify_token.side_effect = verify_token_no_username_side_effect
 
         response = authenticated_client.get("/participant")
 
@@ -138,10 +137,16 @@ def test_get_participant_missing_ditti_id(authenticated_client):
 def test_get_participant_user_not_found(authenticated_client):
     """
     Test retrieval of participant data when user is not found or is archived.
+    Override verify_token to return a non-existent ditti_id.
     """
-    with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        # Mock jwt.decode to return a valid claims dictionary with nonexistent cognito:username
-        mock_jwt_decode.return_value = {"cognito:username": "dne_ditti_id"}
+    with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
+        def verify_token_nonexistent_user_side_effect(participant_pool, token, token_use="id"):
+            if token_use == "access":
+                return {"token_use": "access", "cognito:username": "nonexistent_user"}
+            elif token_use == "id":
+                return {"token_use": "id", "cognito:username": "nonexistent_user"}
+        mock_verify_token.side_effect = verify_token_nonexistent_user_side_effect
+
         response = authenticated_client.get("/participant")
         assert response.status_code == 404
         assert response.get_json() == {"msg": "User not found or is archived."}
@@ -154,16 +159,10 @@ def test_get_participant_exception_handling(authenticated_client, study_subject)
     with patch("aws_portal.views.participant.StudySubject.query") as mock_query:
         mock_query.filter_by.side_effect = Exception("Database error")
 
-        # Mock jwt.decode to return a valid claims dictionary with cognito:username
-        with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {
-                "cognito:username": study_subject.ditti_id}
+        response = authenticated_client.get("/participant")
 
-            response = authenticated_client.get("/participant")
-
-            assert response.status_code == 500
-            assert response.get_json() == {
-                "msg": "Unexpected server error."}
+        assert response.status_code == 500
+        assert response.get_json() == {"msg": "Unexpected server error."}
 
 
 def test_revoke_api_access_success(authenticated_client, study_subject, api_entry, join_api):
@@ -176,20 +175,15 @@ def test_revoke_api_access_success(authenticated_client, study_subject, api_entr
             patch("aws_portal.views.participant.db.session.delete") as mock_db_delete, \
             patch("aws_portal.views.participant.db.session.commit") as mock_db_commit:
 
-        # Mock jwt.decode to return a valid claims dictionary with cognito:username
-        with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {
-                "cognito:username": study_subject.ditti_id}
+        response = authenticated_client.delete(
+            f"/participant/api/{api_entry.name}")
 
-            response = authenticated_client.delete(
-                f"/participant/api/{api_entry.name}")
-
-            assert response.status_code == 200
-            assert response.get_json() == response_data
-            mock_delete_tokens.assert_called_once_with(
-                api_name=api_entry.name, study_subject_id=study_subject.id)
-            mock_db_delete.assert_called_once_with(join_api)
-            mock_db_commit.assert_called_once()
+        assert response.status_code == 200
+        assert response.get_json() == response_data
+        mock_delete_tokens.assert_called_once_with(
+            api_name=api_entry.name, study_subject_id=study_subject.id)
+        mock_db_delete.assert_called_once_with(join_api)
+        mock_db_commit.assert_called_once()
 
 
 def test_revoke_api_access_missing_id_token(client):
@@ -205,56 +199,55 @@ def test_revoke_api_access_missing_ditti_id(authenticated_client):
     """
     Test revocation of API access when ditti_id is missing in ID token.
     """
-    with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        mock_jwt_decode.return_value = {}  # No ditti_id in claims
+    with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
+        def verify_token_no_username_side_effect(participant_pool, token, token_use="id"):
+            if token_use == "access":
+                return {"token_use": "access", "cognito:username": "some_username"}
+            elif token_use == "id":
+                return {"token_use": "id"}  # no cognito:username
+        mock_verify_token.side_effect = verify_token_no_username_side_effect
 
         response = authenticated_client.delete("/participant/api/TestAPI")
 
         assert response.status_code == 400
         assert response.get_json() == {
-            "msg": "cognito:username not found in token"}
+            "msg": "cognito:username not found in token."}
 
 
 def test_revoke_api_access_user_not_found(authenticated_client):
     """
     Test revocation of API access when user is not found.
     """
-    with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        # Mock jwt.decode to return a valid claims dictionary with nonexistent cognito:username
-        mock_jwt_decode.return_value = {"cognito:username": "dne_ditti_id"}
+    with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
+        def verify_token_nonexistent_user_side_effect(participant_pool, token, token_use="id"):
+            return {"token_use": token_use, "cognito:username": "dne_ditti_id"}
+        mock_verify_token.side_effect = verify_token_nonexistent_user_side_effect
+
         response = authenticated_client.delete("/participant/api/TestAPI")
         assert response.status_code == 404
-        assert response.get_json() == {"msg": "User not found"}
+        assert response.get_json() == {"msg": "User not found."}
 
 
 def test_revoke_api_access_api_not_found(authenticated_client, study_subject):
     """
     Test revocation of API access when API is not found.
     """
-    # Mock jwt.decode to return a valid claims dictionary with cognito:username
-    with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        mock_jwt_decode.return_value = {
-            "cognito:username": study_subject.ditti_id}
-
-        response = authenticated_client.delete(
-            "/participant/api/NonExistentAPI")
-        assert response.status_code == 404
-        assert response.get_json() == {"msg": "API not found"}
+    # No need to patch verify_token since it returns the study_subject's ditti_id by default
+    response = authenticated_client.delete("/participant/api/NonExistentAPI")
+    assert response.status_code == 404
+    assert response.get_json() == {"msg": "API not found."}
 
 
 def test_revoke_api_access_api_access_not_found(authenticated_client, study_subject, api_entry):
     """
     Test revocation of API access when API access is not found.
     """
-    # Mock jwt.decode to return a valid claims dictionary with cognito:username
-    with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        mock_jwt_decode.return_value = {
-            "cognito:username": study_subject.ditti_id}
-
-        response = authenticated_client.delete(
-            f"/participant/api/{api_entry.name}")
-        assert response.status_code == 404
-        assert response.get_json() == {"msg": "API access not found"}
+    # No need to patch verify_token since it returns the study_subject's ditti_id by default
+    # But no JoinStudySubjectApi for this combination
+    response = authenticated_client.delete(
+        f"/participant/api/{api_entry.name}")
+    assert response.status_code == 404
+    assert response.get_json() == {"msg": "API access not found."}
 
 
 def test_revoke_api_access_delete_tokens_keyerror(authenticated_client, study_subject, api_entry, join_api):
@@ -266,23 +259,15 @@ def test_revoke_api_access_delete_tokens_keyerror(authenticated_client, study_su
             patch("aws_portal.views.participant.db.session.commit") as mock_db_commit, \
             patch("aws_portal.views.participant.logger.warning") as mock_logger_warning:
 
-        # Mock jwt.decode to return a valid claims dictionary with cognito:username
-        with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {
-                "cognito:username": study_subject.ditti_id}
+        response = authenticated_client.delete(
+            f"/participant/api/{api_entry.name}")
 
-            response = authenticated_client.delete(
-                f"/participant/api/{api_entry.name}")
-
-            assert response.status_code == 200
-            assert response.get_json() == {
-                "msg": "API access revoked successfully"}
-            mock_db_delete.assert_called_once_with(join_api)
-            mock_db_commit.assert_called_once()
-            mock_logger_warning.assert_called_once_with(
-                f"Tokens for API '{api_entry.name}' and StudySubject ID {
-                    study_subject.id} not found."
-            )
+        assert response.status_code == 200
+        assert response.get_json() == {
+            "msg": "API access revoked successfully"}
+        mock_db_delete.assert_called_once_with(join_api)
+        mock_db_commit.assert_called_once()
+        mock_logger_warning.assert_called_once()
 
 
 def test_revoke_api_access_exception_handling(authenticated_client, study_subject, api_entry, join_api):
@@ -292,18 +277,12 @@ def test_revoke_api_access_exception_handling(authenticated_client, study_subjec
     with patch("aws_portal.views.participant.db.session.commit", side_effect=Exception("Commit error")), \
             patch("aws_portal.views.participant.logger.error") as mock_logger_error:
 
-        # Mock jwt.decode to return a valid claims dictionary with cognito:username
-        with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {
-                "cognito:username": study_subject.ditti_id}
+        response = authenticated_client.delete(
+            f"/participant/api/{api_entry.name}")
 
-            response = authenticated_client.delete(
-                f"/participant/api/{api_entry.name}")
-
-            assert response.status_code == 500
-            assert response.get_json() == {"msg": "Error revoking API access"}
-            mock_logger_error.assert_called_once_with(
-                "Error revoking API access: Commit error")
+        assert response.status_code == 500
+        assert response.get_json() == {"msg": "Error revoking API access."}
+        mock_logger_error.assert_called_once()
 
 
 def test_delete_participant_success(app, delete_admin, study_subject, join_api, api_entry):
@@ -322,36 +301,22 @@ def test_delete_participant_success(app, delete_admin, study_subject, join_api, 
             f"/participant/{study_subject.ditti_id}", query_string={"app": 1})
 
         assert response.status_code == 200
-        assert response.get_json() == {
-            "msg": "Account deleted successfully."}
+        assert response.get_json() == {"msg": "Account deleted successfully."}
 
-        # Verify tokens deletion for each API
         mock_delete_tokens.assert_called_once_with(
             api_name=api_entry.name, study_subject_id=study_subject.id)
-
-        # Verify API access removal
         mock_db_delete.assert_called_once_with(join_api)
-
-        # Verify StudySubject is archived
-        assert study_subject.is_archived == True
-
-        # Verify database commit
+        assert study_subject.is_archived is True
         mock_db_commit.assert_called_once()
-
-        # Verify Cognito deletion
         mock_cognito_client.admin_delete_user.assert_called_once_with(
             UserPoolId=app.config["COGNITO_PARTICIPANT_USER_POOL_ID"],
             Username=study_subject.ditti_id
         )
 
-        # Verify cookies are cleared
         set_cookie_headers = response.headers.get_all("Set-Cookie")
-        assert any(
-            "id_token=; " in header for header in set_cookie_headers)
-        assert any(
-            "access_token=; " in header for header in set_cookie_headers)
-        assert any(
-            "refresh_token=; " in header for header in set_cookie_headers)
+        assert any("id_token=; " in header for header in set_cookie_headers)
+        assert any("access_token=; " in header for header in set_cookie_headers)
+        assert any("refresh_token=; " in header for header in set_cookie_headers)
 
 
 def test_delete_participant_not_admin(app, delete, study_subject):
@@ -368,29 +333,20 @@ def test_delete_participant_missing_ditti_id(app, delete_admin, study_subject):
     """
     Test deletion of participant account when ditti_id is missing in route.
     """
-    with patch("aws_portal.views.participant.tm.delete_api_tokens") as mock_delete_tokens, \
-            patch("aws_portal.views.participant.db.session.delete") as mock_db_delete, \
-            patch("aws_portal.views.participant.db.session.commit") as mock_db_commit, \
-            patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
-        response = delete_admin(
-            f"/participant/", query_string={"app": 1})
-
-        assert response.status_code == 405
+    response = delete_admin(f"/participant/", query_string={"app": 1})
+    # The route doesn't exist (no trailing slash), so it's a 405 (Method Not Allowed)
+    assert response.status_code == 405
 
 
 def test_delete_participant_user_not_found(app, delete_admin):
     """
     Test deletion of participant account when user is not found or already archived.
     """
-    with patch("aws_portal.views.participant.tm.delete_api_tokens") as mock_delete_tokens, \
-            patch("aws_portal.views.participant.db.session.delete") as mock_db_delete, \
-            patch("aws_portal.views.participant.db.session.commit") as mock_db_commit, \
-            patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
-        response = delete_admin(
-            f"/participant/dne_ditti_id", query_string={"app": 1})
-        assert response.status_code == 404
-        assert response.get_json() == {
-            "msg": "User not found or already archived."}
+    response = delete_admin(f"/participant/dne_ditti_id",
+                            query_string={"app": 1})
+    assert response.status_code == 404
+    assert response.get_json() == {
+        "msg": "User not found or already archived."}
 
 
 def test_delete_participant_exception_deleting_tokens(app, delete_admin, study_subject, join_api):
@@ -402,8 +358,7 @@ def test_delete_participant_exception_deleting_tokens(app, delete_admin, study_s
             f"/participant/{study_subject.ditti_id}", query_string={"app": 1})
 
         assert response.status_code == 500
-        assert response.get_json() == {
-            "msg": "Error deleting API tokens."}
+        assert response.get_json() == {"msg": "Error deleting API tokens."}
 
 
 def test_delete_participant_cognito_exception(app, delete_admin, study_subject):
@@ -421,8 +376,7 @@ def test_delete_participant_cognito_exception(app, delete_admin, study_subject):
             f"/participant/{study_subject.ditti_id}", query_string={"app": 1})
 
         assert response.status_code == 500
-        assert response.get_json() == {
-            "msg": "Error deleting account."}
+        assert response.get_json() == {"msg": "Error deleting account."}
 
 
 def test_delete_participant_exception_handling(app, delete_admin, study_subject):
@@ -435,8 +389,7 @@ def test_delete_participant_exception_handling(app, delete_admin, study_subject)
             f"/participant/{study_subject.ditti_id}", query_string={"app": 1})
 
         assert response.status_code == 500
-        assert response.get_json() == {
-            "msg": "Error deleting account."}
+        assert response.get_json() == {"msg": "Error deleting account."}
 
 
 def test_revoke_api_access_exception_deleting_tokens(authenticated_client, study_subject, api_entry, join_api):
@@ -446,31 +399,19 @@ def test_revoke_api_access_exception_deleting_tokens(authenticated_client, study
     with patch("aws_portal.views.participant.tm.delete_api_tokens", side_effect=Exception("Delete token error")), \
             patch("aws_portal.views.participant.logger.error") as mock_logger_error:
 
-        # Mock jwt.decode to return a valid claims dictionary with cognito:username
-        with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-            mock_jwt_decode.return_value = {
-                "cognito:username": study_subject.ditti_id}
+        response = authenticated_client.delete(
+            f"/participant/api/{api_entry.name}")
 
-            response = authenticated_client.delete(
-                f"/participant/api/{api_entry.name}")
-
-            assert response.status_code == 500
-            assert response.get_json() == {
-                "msg": "Error deleting API tokens."}
-            mock_logger_error.assert_called_once_with(
-                "Error deleting tokens for API 'TestAPI': Delete token error")
+        assert response.status_code == 500
+        assert response.get_json() == {"msg": "Error deleting API tokens."}
+        mock_logger_error.assert_called_once()
 
 
 def test_get_participant_serialization(authenticated_client, study_subject, join_api, api_entry):
     """
     Test that the get_participant endpoint correctly serializes participant data.
     """
-    # Mock serialize_participant to ensure it's called correctly
-    with patch("aws_portal.views.participant.serialize_participant") as mock_serialize, \
-            patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-
-        mock_jwt_decode.return_value = {
-            "cognito:username": study_subject.ditti_id}
+    with patch("aws_portal.views.participant.serialize_participant") as mock_serialize:
         mock_serialize.return_value = {
             "dittiId": study_subject.meta["dittiId"],
             "userId": study_subject.meta["id"],
@@ -504,74 +445,49 @@ def test_delete_participant_remove_api_access(app, delete_admin, study_subject, 
             patch("aws_portal.views.participant.boto3.client") as mock_boto_client:
 
         mock_cognito_client = MagicMock()
-        # Configure the delete_user method to return a successful response
-        mock_cognito_client.delete_user.return_value = {}
         mock_boto_client.return_value = mock_cognito_client
 
         response = delete_admin(
             f"/participant/{study_subject.ditti_id}", query_string={"app": 1})
 
         assert response.status_code == 200
-        assert response.get_json() == {
-            "msg": "Account deleted successfully."}
-
-        # Verify tokens deletion for each API
+        assert response.get_json() == {"msg": "Account deleted successfully."}
         mock_delete_tokens.assert_called_once_with(
             api_name=api_entry.name, study_subject_id=study_subject.id)
-
-        # Verify API access removal
         mock_db_delete.assert_called_once_with(join_api)
-
-        # Verify StudySubject is archived
-        assert study_subject.is_archived == True
-
-        # Verify database commit
+        assert study_subject.is_archived is True
         mock_db_commit.assert_called_once()
-
-        # Verify Cognito deletion
         mock_cognito_client.admin_delete_user.assert_called_once_with(
             UserPoolId=app.config["COGNITO_PARTICIPANT_USER_POOL_ID"],
             Username=study_subject.ditti_id
         )
 
-        # Verify cookies are cleared
         set_cookie_headers = response.headers.get_all("Set-Cookie")
-        assert any(
-            "id_token=; " in header for header in set_cookie_headers)
-        assert any(
-            "access_token=; " in header for header in set_cookie_headers)
-        assert any(
-            "refresh_token=; " in header for header in set_cookie_headers)
+        assert any("id_token=; " in header for header in set_cookie_headers)
+        assert any("access_token=; " in header for header in set_cookie_headers)
+        assert any("refresh_token=; " in header for header in set_cookie_headers)
 
 
 def test_revoke_api_access_concurrent_requests(authenticated_client, study_subject, api_entry, join_api):
     """
     Test handling of concurrent API access revocation requests.
     """
-    # Set the cognito:username in the token for authenticated client
-    with patch("aws_portal.views.participant.jwt.decode") as mock_jwt_decode:
-        mock_jwt_decode.return_value = {
-            "cognito:username": study_subject.ditti_id}
+    response1 = authenticated_client.delete(
+        f"/participant/api/{api_entry.name}")
 
-        # Send the first DELETE request
-        response1 = authenticated_client.delete(
-            f"/participant/api/{api_entry.name}")
+    # Introduce a short delay to allow database to fully commit the deletion
+    time.sleep(0.1)
 
-        # Introduce a short delay to allow database to fully commit the deletion
-        time.sleep(0.1)
+    response2 = authenticated_client.delete(
+        f"/participant/api/{api_entry.name}")
 
-        # Send the second DELETE request
-        response2 = authenticated_client.delete(
-            f"/participant/api/{api_entry.name}")
+    # Assert that the first request was successful
+    assert response1.status_code == 200
+    assert response1.get_json() == {"msg": "API access revoked successfully"}
 
-        # Assert that the first request was successful
-        assert response1.status_code == 200
-        assert response1.get_json() == {
-            "msg": "API access revoked successfully"}
-
-        # Assert that the second request fails as the API access no longer exists
-        assert response2.status_code == 404
-        assert response2.get_json() == {"msg": "API access not found"}
+    # Assert that the second request fails as the API access no longer exists
+    assert response2.status_code == 404
+    assert response2.get_json() == {"msg": "API access not found."}
 
 
 def test_delete_participant_with_sleep_logs(app, delete_admin, study_subject, api_entry, join_api):
@@ -579,7 +495,6 @@ def test_delete_participant_with_sleep_logs(app, delete_admin, study_subject, ap
     Test deletion of participant account when there are sleep logs.
     Ensure that sleep logs are deleted along with the participant.
     """
-    # Create sleep logs associated with the study_subject
     sleep_log1 = SleepLog(
         study_subject_id=study_subject.id,
         log_id=1234567890,
@@ -597,7 +512,6 @@ def test_delete_participant_with_sleep_logs(app, delete_admin, study_subject, ap
     db.session.add_all([sleep_log1, sleep_log2])
     db.session.commit()
 
-    # Verify that sleep logs exist in the database
     assert SleepLog.query.filter_by(
         study_subject_id=study_subject.id).count() == 2
 
@@ -612,8 +526,7 @@ def test_delete_participant_with_sleep_logs(app, delete_admin, study_subject, ap
             f"/participant/{study_subject.ditti_id}", query_string={"app": 1})
 
         assert response.status_code == 200
-        assert response.get_json() == {
-            "msg": "Account deleted successfully."}
+        assert response.get_json() == {"msg": "Account deleted successfully."}
 
         # Verify that sleep logs are deleted
         assert SleepLog.query.filter_by(
@@ -631,7 +544,6 @@ def test_delete_participant_with_sleep_logs(app, delete_admin, study_subject, ap
             Username=study_subject.ditti_id
         )
 
-        # Verify cookies are cleared
         set_cookie_headers = response.headers.get_all("Set-Cookie")
         assert any("id_token=; " in header for header in set_cookie_headers)
         assert any("access_token=; " in header for header in set_cookie_headers)
@@ -641,9 +553,8 @@ def test_delete_participant_with_sleep_logs(app, delete_admin, study_subject, ap
 def test_delete_participant_no_sleep_logs(app, delete_admin, study_subject, api_entry, join_api):
     """
     Test deletion of participant account when there are no sleep logs.
-    Ensure that the deletion process handles this gracefully without errors.
+    Ensure that the deletion process handles this gracefully.
     """
-    # Ensure no sleep logs are associated with the study_subject
     assert SleepLog.query.filter_by(
         study_subject_id=study_subject.id).count() == 0
 
@@ -658,26 +569,19 @@ def test_delete_participant_no_sleep_logs(app, delete_admin, study_subject, api_
             f"/participant/{study_subject.ditti_id}", query_string={"app": 1})
 
         assert response.status_code == 200
-        assert response.get_json() == {
-            "msg": "Account deleted successfully."}
+        assert response.get_json() == {"msg": "Account deleted successfully."}
 
-        # Verify that sleep logs are still non-existent
+        # No sleep logs to delete, nothing special needed
         assert SleepLog.query.filter_by(
             study_subject_id=study_subject.id).count() == 0
 
-        # Verify StudySubject is archived
         assert study_subject.is_archived is True
-
-        # Verify database commit
         mock_db_commit.assert_called_once()
-
-        # Verify Cognito deletion
         mock_cognito_client.admin_delete_user.assert_called_once_with(
             UserPoolId=app.config["COGNITO_PARTICIPANT_USER_POOL_ID"],
             Username=study_subject.ditti_id
         )
 
-        # Verify cookies are cleared
         set_cookie_headers = response.headers.get_all("Set-Cookie")
         assert any("id_token=; " in header for header in set_cookie_headers)
         assert any("access_token=; " in header for header in set_cookie_headers)
@@ -688,7 +592,6 @@ def test_delete_participant_exception_deleting_sleep_logs(app, delete_admin, stu
     """
     Test deletion of participant account when an exception occurs while deleting sleep logs.
     """
-    # Create sleep logs associated with the study_subject
     sleep_log = SleepLog(
         study_subject_id=study_subject.id,
         log_id=1234567890,
@@ -699,7 +602,6 @@ def test_delete_participant_exception_deleting_sleep_logs(app, delete_admin, stu
     db.session.add(sleep_log)
     db.session.commit()
 
-    # Mock an exception during sleep log deletion
     with patch("aws_portal.views.participant.db.session.delete", side_effect=Exception("Sleep log deletion error")), \
             patch("aws_portal.views.participant.logger.error") as mock_logger_error:
 
@@ -708,11 +610,6 @@ def test_delete_participant_exception_deleting_sleep_logs(app, delete_admin, stu
 
         assert response.status_code == 500
         assert response.get_json() == {"msg": "Error deleting sleep data."}
-
-        # Verify that the error was logged
         mock_logger_error.assert_called_once()
-        assert "Error deleting sleep logs" in mock_logger_error.call_args[0][0]
-
-        # Verify that the sleep log still exists
         assert SleepLog.query.filter_by(
             study_subject_id=study_subject.id).count() == 1

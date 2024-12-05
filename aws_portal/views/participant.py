@@ -1,7 +1,6 @@
 import logging
 import boto3
-import jwt
-from flask import Blueprint, jsonify, make_response, request, current_app
+from flask import Blueprint, jsonify, make_response, current_app
 from sqlalchemy.exc import SQLAlchemyError
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, StudySubject, JoinStudySubjectApi
@@ -15,46 +14,27 @@ logger = logging.getLogger(__name__)
 
 @blueprint.route("", methods=["GET"])
 @cognito_auth_required
-def get_participant():
+def get_participant(ditti_id: str):
     """
     Endpoint to retrieve a participant's data.
+
+    Args:
+        ditti_id (str): The unique ID of the study subject, provided by the decorator.
 
     Returns:
         JSON response containing serialized participant data or an error message.
     """
     try:
-        # Get ID token from cookies
-        id_token = request.cookies.get("id_token")
-        if not id_token:
-            return make_response({"msg": "Missing ID token."}, 401)
-
-        # Decode ID token without verification to extract cognito:username
-        try:
-            claims = jwt.decode(id_token, options={"verify_signature": False})
-        except jwt.DecodeError:
-            return make_response({"msg": "Invalid ID token."}, 400)
-        except jwt.ExpiredSignatureError:
-            return make_response({"msg": "Expired ID token."}, 401)
-
-        # Extract cognito:username from claims (now represents ditti_id)
-        ditti_id = claims.get("cognito:username")
-        if not ditti_id:
-            return make_response({"msg": "cognito:username not found in token."}, 400)
-
         # Retrieve the StudySubject by ditti_id
-        try:
-            study_subject = StudySubject.query.filter_by(
-                ditti_id=ditti_id, is_archived=False).first()
-            if not study_subject:
-                logger.info(f"StudySubject with ditti_id {
-                            ditti_id} not found or is archived.")
-                return make_response({"msg": "User not found or is archived."}, 404)
-        except SQLAlchemyError as db_err:
-            logger.error(f"Database error retrieving StudySubject for ditti_id {
-                         ditti_id}: {str(db_err)}")
-            return make_response({"msg": "Database error retrieving participant data."}, 500)
+        study_subject = StudySubject.query.filter_by(
+            ditti_id=ditti_id, is_archived=False
+        ).first()
+        if not study_subject:
+            logger.info(f"StudySubject with ditti_id {
+                        ditti_id} not found or is archived.")
+            return make_response({"msg": "User not found or is archived."}, 404)
 
-        # Serialize the StudySubject data to only include required fields
+        # Serialize the StudySubject data to include required fields
         try:
             participant_data = serialize_participant(study_subject)
         except Exception as serialize_err:
@@ -64,14 +44,19 @@ def get_participant():
 
         return jsonify(participant_data)
 
+    except SQLAlchemyError as db_err:
+        logger.error(f"Database error retrieving participant data for ditti_id {
+                     ditti_id}: {str(db_err)}")
+        return make_response({"msg": "Database error retrieving participant data."}, 500)
     except Exception as e:
-        logger.error(f"Unhandled error retrieving participant data: {str(e)}")
+        logger.error(f"Unhandled error retrieving participant data for ditti_id {
+                     ditti_id}: {str(e)}")
         return make_response({"msg": "Unexpected server error."}, 500)
 
 
 @blueprint.route("/api/<string:api_name>", methods=["DELETE"])
 @cognito_auth_required
-def revoke_api_access(api_name):
+def revoke_api_access(api_name: str, ditti_id: str):
     """
     Endpoint to revoke a participant's access to a specified API.
     Deletes tokens associated with the API from Secrets Manager,
@@ -79,37 +64,33 @@ def revoke_api_access(api_name):
 
     Args:
         api_name (str): Name of the API to revoke access for.
+        ditti_id (str): The unique ID of the study subject, provided by the decorator.
 
     Returns:
         JSON response indicating success or failure of API access revocation.
     """
     try:
-        # Get tokens and claims
-        id_token = request.cookies.get("id_token")
-
-        if not id_token:
-            return make_response({"msg": "Missing authentication tokens."}, 401)
-
-        # Decode ID token to get claims
-        claims = jwt.decode(id_token, options={"verify_signature": False})
-        ditti_id = claims.get("cognito:username")
-        if not ditti_id:
-            return make_response({"msg": "cognito:username not found in token"}, 400)
-
+        # Retrieve the StudySubject by ditti_id
         study_subject = StudySubject.query.filter_by(
-            ditti_id=ditti_id, is_archived=False).first()
+            ditti_id=ditti_id, is_archived=False
+        ).first()
         if not study_subject:
-            return make_response({"msg": "User not found"}, 404)
+            logger.info(f"StudySubject with ditti_id {
+                        ditti_id} not found or is archived.")
+            return make_response({"msg": "User not found."}, 404)
 
         # Get the API by name
         api = Api.query.filter_by(name=api_name, is_archived=False).first()
         if not api:
-            return make_response({"msg": "API not found"}, 404)
+            logger.info(f"API '{api_name}' not found.")
+            return make_response({"msg": "API not found."}, 404)
 
         # Find the JoinStudySubjectApi entry
         join_api = JoinStudySubjectApi.query.get((study_subject.id, api.id))
         if not join_api:
-            return make_response({"msg": "API access not found"}, 404)
+            logger.info(f"API access for API '{api_name}' and StudySubject ID {
+                        study_subject.id} not found.")
+            return make_response({"msg": "API access not found."}, 404)
 
         # Delete tokens from Secrets Manager
         try:
@@ -129,17 +110,23 @@ def revoke_api_access(api_name):
 
         return jsonify({"msg": "API access revoked successfully"})
 
-    except Exception as e:
-        logger.error(f"Error revoking API access: {str(e)}")
+    except SQLAlchemyError as db_err:
+        logger.error(f"Database error revoking API access for ditti_id {
+                     ditti_id}: {str(db_err)}")
         db.session.rollback()
-        return make_response({"msg": "Error revoking API access"}, 500)
+        return make_response({"msg": "Database error revoking API access."}, 500)
+    except Exception as e:
+        logger.error(f"Error revoking API access for ditti_id {
+                     ditti_id}: {str(e)}")
+        db.session.rollback()
+        return make_response({"msg": "Error revoking API access."}, 500)
 
 
 @blueprint.route("<string:ditti_id>", methods=["DELETE"])
 @auth_required("View", "Admin Dashboard")
 @auth_required("Archive", "Participants")
 @auth_required("Delete", "Fitbit Data")
-def delete_participant(ditti_id):
+def delete_participant(ditti_id: str):
     """
     Endpoint to delete a participant's account and all associated API data.
     Deletes API tokens and data, archives the StudySubject in the database,
@@ -154,8 +141,11 @@ def delete_participant(ditti_id):
     try:
         # Retrieve the StudySubject by ditti_id
         study_subject = StudySubject.query.filter_by(
-            ditti_id=ditti_id, is_archived=False).first()
+            ditti_id=ditti_id, is_archived=False
+        ).first()
         if not study_subject:
+            logger.info(f"StudySubject with ditti_id {
+                        ditti_id} not found or is archived.")
             return make_response({"msg": "User not found or already archived."}, 404)
         study_subject_id = study_subject.id
 
@@ -169,9 +159,10 @@ def delete_participant(ditti_id):
             for sleep_log in sleep_logs:
                 db.session.delete(sleep_log)
 
-            # Optionally, you can bulk delete if you're certain no cascading is needed
-            # db.session.query(SleepLog).filter_by(study_subject_id=study_subject_id).delete(synchronize_session=False)
-
+        except SQLAlchemyError as db_err:
+            logger.error(f"Database error deleting sleep logs for StudySubject ID {
+                         study_subject_id}: {str(db_err)}")
+            return make_response({"msg": "Error deleting sleep data."}, 500)
         except Exception as e:
             logger.error(f"Error deleting sleep logs for StudySubject ID {
                          study_subject_id}: {str(e)}")
@@ -213,6 +204,9 @@ def delete_participant(ditti_id):
         except client.exceptions.NotAuthorizedException:
             logger.error("Not authorized to delete user in Cognito.")
             return make_response({"msg": "Not authorized to delete user."}, 403)
+        except client.exceptions.UserNotFoundException:
+            logger.warning(f"User '{ditti_id}' not found in Cognito.")
+            pass
         except Exception as e:
             logger.error(f"Error deleting user from Cognito: {str(e)}")
             return make_response({"msg": "Error deleting user from Cognito."}, 500)
@@ -224,7 +218,13 @@ def delete_participant(ditti_id):
         response.delete_cookie("refresh_token")
         return response
 
+    except SQLAlchemyError as db_err:
+        logger.error(f"Database error deleting participant {
+                     ditti_id}: {str(db_err)}")
+        db.session.rollback()
+        return make_response({"msg": "Database error deleting account."}, 500)
     except Exception as e:
-        logger.error(f"Error deleting participant: {str(e)}")
+        logger.error(f"Unhandled error deleting participant {
+                     ditti_id}: {str(e)}")
         db.session.rollback()
         return make_response({"msg": "Error deleting account."}, 500)
