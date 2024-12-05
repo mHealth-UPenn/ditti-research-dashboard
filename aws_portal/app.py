@@ -10,7 +10,8 @@ from aws_portal.commands import (
 )
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, scheduler, cache
 from aws_portal.views import (
-    admin, aws_requests, base, data_processing_task, db_requests, iam, participant
+    admin, aws_requests, base, data_processing_task, db_requests, iam,
+    participant, fitbit_data
 )
 from aws_portal.views.cognito import cognito, fitbit
 
@@ -66,6 +67,8 @@ def register_blueprints(app):
     app.register_blueprint(fitbit.blueprint)
     app.register_blueprint(participant.blueprint)
     app.register_blueprint(data_processing_task.blueprint)
+    app.register_blueprint(fitbit_data.admin_fitbit_blueprint)
+    app.register_blueprint(fitbit_data.participant_fitbit_blueprint)
 
 
 def register_commands(app):
