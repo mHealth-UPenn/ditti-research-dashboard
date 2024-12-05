@@ -12,12 +12,24 @@ from aws_portal.utils.fitbit_data import (
     get_fitbit_data_for_subject
 )
 
-blueprint = Blueprint("fitbit_data", __name__, url_prefix="/fitbit_data")
+admin_fitbit_blueprint = Blueprint(
+    "admin_fitbit_data",
+    __name__,
+    url_prefix="/admin/fitbit_data"
+)
+
+participant_fitbit_blueprint = Blueprint(
+    "participant_fitbit_data",
+    __name__,
+    url_prefix="/participant/fitbit_data"
+)
+
 logger = logging.getLogger(__name__)
 
 
-@blueprint.route("/admin/<string:ditti_id>", methods=["GET"])
+@admin_fitbit_blueprint.route("/<string:ditti_id>", methods=["GET"])
 @auth_required("View", "Admin Dashboard")
+@auth_required("View", "Fitbit Data")
 def admin_get_fitbit_data(ditti_id: str):
     """
     Retrieves Fitbit data for a specific study subject as an admin.
@@ -58,7 +70,8 @@ def admin_get_fitbit_data(ditti_id: str):
 
         # Retrieve and serialize data
         serialized_data = get_fitbit_data_for_subject(
-            ditti_id, start_date, end_date)
+            ditti_id, start_date, end_date
+        )
         if serialized_data is None:
             return make_response(
                 {"msg": "StudySubject not found or is archived."}, 404
@@ -82,7 +95,7 @@ def admin_get_fitbit_data(ditti_id: str):
         return make_response({"msg": "Unexpected server error."}, 500)
 
 
-@blueprint.route("/participant", methods=["GET"])
+@participant_fitbit_blueprint.route("", methods=["GET"])
 @cognito_auth_required
 def participant_get_fitbit_data():
     """
@@ -132,7 +145,8 @@ def participant_get_fitbit_data():
 
         try:
             start_date, end_date = validate_date_range(
-                start_date_str, end_date_str)
+                start_date_str, end_date_str
+            )
         except ValueError as ve:
             return make_response({"msg": str(ve)}, 400)
 
@@ -144,7 +158,8 @@ def participant_get_fitbit_data():
 
         # Retrieve and serialize data
         serialized_data = get_fitbit_data_for_subject(
-            ditti_id, start_date, end_date)
+            ditti_id, start_date, end_date
+        )
         if serialized_data is None:
             return make_response(
                 {"msg": "StudySubject not found or is archived."}, 404
