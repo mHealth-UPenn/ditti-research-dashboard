@@ -1,7 +1,7 @@
 import boto3
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 import json
 import logging
 import os
@@ -17,6 +17,7 @@ from shared.lambda_logger import LambdaLogger
 from shared.utils.sleep_logs import generate_sleep_logs
 
 TESTING = os.getenv("TESTING") is not None
+STAGING = os.getenv("STAGING") is not None
 DEBUG = os.getenv("DEBUG") is not None
 
 # Use a common timestamp across the whole function
@@ -279,7 +280,9 @@ class LambdaTaskService(DBService):
         if self.__entry is None:
             raise RuntimeError("Entry not found. Call `get_entry` first.")
 
-        # Update the status to "InProgress"
+        logger.info("update_status", extra=dict(status=status, **kwargs))
+
+        # Update the status
         update_stmt = (
             update(self.table).
             where(self.table.c.id == self.__entry.id).
@@ -453,6 +456,7 @@ class StudySubjectService(DBService):
         for entry in result_map.values():
             self.__entries.append(StudySubjectEntry(
                 id=entry["id"],
+                ditti_id=entry["ditti_id"],
                 api_user_uuid=entry["api_user_uuid"],
                 api_id=entry["api_id"],
                 last_sync_date=entry["last_sync_date"],
@@ -705,18 +709,21 @@ def handler(event, context):
     logger.info("Retrieved function_id", extra={"function_id": function_id})
 
     try:
+        config = {}
+        tokens_config = {}
+
         # Load secrets
-        if TESTING:
+        if TESTING or STAGING:
             config = {
                 "DB_URI": os.getenv("DB_URI"),
                 "S3_BUCKET": os.getenv("S3_BUCKET"),
             }
 
-        else:
+        if (not TESTING) or STAGING:
             try:
                 config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
                 tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
-                config = get_secret(config_secret_name)
+                config.update(get_secret(config_secret_name))
                 tokens_config = get_secret(tokens_secret_name)
             except Exception:
                 logger.error(
@@ -752,8 +759,8 @@ def handler(event, context):
                 raise DBFetchError
 
             try:
-                lambda_task_service.update_status("InProgress")
-                connection.commit()
+                # lambda_task_service.update_status("InProgress")
+                pass
 
             # On error raise exception and exit
             except Exception:
@@ -792,7 +799,7 @@ def handler(event, context):
 
                 # Handle edge case when a participant's `starts_on` changes to an earlier date
                 # Generate an additional URL for fetching retroactive data
-                if entry.earliest_sleep_log and entry.starts_on.date() < entry.earliest_sleep_log:
+                if entry.earliest_sleep_log and entry.starts_on.date() < entry.earliest_sleep_log - timedelta(days=1):
                     logger.info(
                         "Participant's `starts_on` value is before their earliest sleep log. Generating extra URL for fetching retroactive data.",
                         extra={
@@ -804,31 +811,31 @@ def handler(event, context):
                     urls.append(build_url(
                         entry,
                         start_date=str(entry.starts_on.date()),
-                        end_date=str(entry.earliest_sleep_log))
+                        end_date=str(entry.earliest_sleep_log - timedelta(days=1)))
                     )
 
                 # Try querying the fitbit API for this study subject
                 data = []
-                try:
-                    if TESTING:
-                        data += generate_sleep_logs()["sleep"]
-                    else:
-                        # Retrieve OAuth tokens for the subject
-                        try:
-                            tokens = tokens_config[entry.id]
-                        except KeyError:
-                            logger.info(
-                                "Participant not found in API tokens secret.",
-                                extra={"study_subject_id": entry.id}
-                            )
-                            has_errors = True
-                            continue
+                if TESTING:
+                    data += generate_sleep_logs()["sleep"]
+                else:
+                    # Retrieve OAuth tokens for the subject
+                    try:
+                        tokens = tokens_config[entry.ditti_id]
+                    except KeyError:
+                        logger.info(
+                            "Participant not found in API tokens secret.",
+                            extra={"ditti_id": entry.ditti_id}
+                        )
+                        has_errors = True
+                        continue
 
+                    try:
                         for url in urls:
                             logger.info(
                                 "Querying Fitbit API",
                                 extra={
-                                    "study_subject_id": entry.id,
+                                    "ditti_id": entry.ditti_id,
                                     "url": url,
                                 }
                             )
@@ -840,26 +847,26 @@ def handler(event, context):
                             response = fitbit_session.request("GET", url)
                             data += response.json()["sleep"]
 
-                    logger.info(
-                        "Participant data retrieved from Fibit API",
-                        extra={
-                            "study_subject_id": entry.id,
-                            "result_count": len(data)
-                        }
-                    )
+                        logger.info(
+                            "Participant data retrieved from Fibit API",
+                            extra={
+                                "study_subject_id": entry.id,
+                                "result_count": len(data)
+                            }
+                        )
 
-                # On error continue to next study subject
-                except Exception:
-                    logger.error(
-                        "Error retrieving participant data from Fitbit API",
-                        extra={
-                            "error": traceback.format_exc(),
-                            "study_subject_id": entry.id,
-                            "url": url
-                        }
-                    )
-                    has_errors = True
-                    continue
+                    # On error continue to next study subject
+                    except Exception:
+                        logger.error(
+                            "Error retrieving participant data from Fitbit API",
+                            extra={
+                                "error": traceback.format_exc(),
+                                "study_subject_id": entry.id,
+                                "url": url
+                            }
+                        )
+                        has_errors = True
+                        continue
 
                 # Convert levels to a format expected by the database
                 # Set `level.is_short` to True if the same timestamp is found in `shortData`
@@ -969,19 +976,17 @@ def handler(event, context):
             raise S3UploadError
 
     except ConfigFetchError:
-        logger.info("Exiting on ConfigFetchError", extra={"error": traceback.format_exc()})
         error_code = "ConfigFetchError"
+    except DBInitializationError:
+        error_code = "DBInitializationError"
     except DBFetchError:
-        logger.info("Exiting on DBFetchError", extra={"error": traceback.format_exc()})
         error_code = "DBFetchError"
     except DBUpdateError:
-        logger.info("Exiting on DBUpdateError", extra={"error": traceback.format_exc()})
         error_code = "DBUpdateError"
     except S3UploadError:
-        logger.info("Exiting on S3UploadError", extra={"error": traceback.format_exc()})
         error_code = "S3UploadError"
     except Exception:
-        logger.info("Exiting on Exception", extra={"error": traceback.format_exc()})
+        logger.info("Exiting on unknown error.", extra={"error": traceback.format_exc()})
         error_code = "UnknownError"
 
     # Update the lambda_task table with completion information
@@ -1000,7 +1005,6 @@ def handler(event, context):
                 error_code=error_code
             )
 
-            connection.commit()
             logger.info(
                 "Updated lambda_task with completion information",
                 extra={"function_id": function_id}
