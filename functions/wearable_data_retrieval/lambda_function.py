@@ -301,6 +301,7 @@ class StudySubjectEntry:
 
     Attributes:
         id (int): Unique identifier for the study subject.
+        ditti_id (str): A study subject's Ditti ID.
         api_user_uuid (str): UUID of the user in the associated API system.
         api_id (int): Identifier for the associated API.
         last_sync_date (str | None): Timestamp of the last synchronization with the API, if any.
@@ -311,6 +312,7 @@ class StudySubjectEntry:
         earliest_sleep_log (date | None): Earliest date of sleep logs available for the study subject.
     """
     id: int
+    ditti_id: str
     api_user_uuid: str
     api_id: int
     last_sync_date: str | None
@@ -391,6 +393,7 @@ class StudySubjectService(DBService):
         query = (
             select(
                 self.subject.c.id,
+                self.subject.c.ditti_id,
                 self.api.c.api_user_uuid,
                 self.api.c.api_id,
                 self.api.c.last_sync_date,
@@ -831,7 +834,9 @@ def handler(event, context):
                             )
 
                             # Query the Fitbit API
-                            fitbit_session = get_fitbit_oauth_session(entry, config, tokens)
+                            fitbit_session = get_fitbit_oauth_session(
+                                entry.ditti_id, config, tokens
+                            )
                             response = fitbit_session.request("GET", url)
                             data += response.json()["sleep"]
 

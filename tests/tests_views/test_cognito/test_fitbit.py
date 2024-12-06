@@ -168,9 +168,9 @@ def test_fitbit_callback_success_new_association(app, authenticated_client, stud
                 args, kwargs = mock_add_update_api_token.call_args
                 assert kwargs["api_name"] == "Fitbit", f"Expected api_name 'Fitbit', got {
                     kwargs['api_name']}"
-                assert kwargs["study_subject_id"] == study_subject.id, \
-                    f"Expected study_subject_id {study_subject.id}, got {
-                        kwargs['study_subject_id']}"
+                assert kwargs["ditti_id"] == study_subject.ditti_id, \
+                    f"Expected ditti_id {study_subject.ditti_id}, got {
+                        kwargs['ditti_id']}"
                 assert kwargs["tokens"]["access_token"] == "access_token_value", \
                     f"Expected access_token 'access_token_value', got {
                         kwargs['tokens']['access_token']}"
@@ -422,7 +422,7 @@ def test_fitbit_callback_token_scope_validation(app, authenticated_client, study
         mock_post.return_value = mock_response
 
         with patch.object(tm, "add_or_update_api_token") as mock_add_update_api_token:
-            def add_update_side_effect(api_name, study_subject_id, tokens):
+            def add_update_side_effect(api_name, ditti_id, tokens):
                 tokens["expires_at"] = pytest.approx(
                     tokens["expires_at"], rel=1e-2)
 
