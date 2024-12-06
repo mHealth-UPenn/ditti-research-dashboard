@@ -36,3 +36,5 @@ zappa_settings.py
 
 .DS_Store
 .env.production
+
+data.json

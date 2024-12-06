@@ -1,11 +1,16 @@
-import boto3
-import logging
+from datetime import datetime, UTC
 import json
+import logging
+import threading
+import traceback
+
+import boto3
+from flask import current_app
+import requests
+
 from aws_portal.extensions import db
 from aws_portal.models import LambdaTask
-from datetime import datetime, UTC
-import traceback
-from flask import current_app
+
 
 logger = logging.getLogger(__name__)
 
@@ -84,29 +89,50 @@ def invoke_lambda_task(function_id):
         LambdaTask: The LambdaTask object stored in the database.
     """
     try:
-        client = boto3.client("lambda")
+        print("Here")
+        print(current_app.config.get("LAMBDA_FUNCTION_NAME"))
+        print(current_app.config.get("ENV"))
+        if current_app.config["ENV"] in {"staging", "production", "testing"}:
+            client = boto3.client("lambda")
 
-        # Retrieve the Lambda function name from configuration
-        function_name = current_app.config.get("LAMBDA_FUNCTION_NAME")
-        if not function_name:
-            raise ValueError("LAMBDA_FUNCTION_NAME is not configured.")
+            # Retrieve the Lambda function name from configuration
+            function_name = current_app.config.get("LAMBDA_FUNCTION_NAME")
+            if not function_name:
+                raise ValueError("LAMBDA_FUNCTION_NAME is not configured.")
 
-        # Payload contains only the function_id
-        payload = {
-            "function_id": function_id
-        }
+            # Payload contains only the function_id
+            payload = {
+                "function_id": function_id
+            }
 
-        response = client.invoke(
-            FunctionName=function_name,
-            InvocationType="Event",  # Asynchronous invocation
-            Payload=json.dumps(payload).encode(
-                'utf-8')  # Ensure payload is bytes
-        )
+            response = client.invoke(
+                FunctionName=function_name,
+                InvocationType="Event",  # Asynchronous invocation
+                Payload=json.dumps(payload).encode(
+                    'utf-8')  # Ensure payload is bytes
+            )
 
-        logger.info(
-            f"Lambda invoked with function_id {function_id}. "
-            f"Response: {response}"
-        )
+            logger.info(
+                f"Lambda invoked with function_id {function_id}. "
+                f"Response: {response}"
+            )
+
+        else:
+            # In development and testing environments send an async invocation to the local lambda endpoint
+            def send_request(url, data):
+                try:
+                    requests.post(url, json=data, timeout=5)
+                except requests.RequestException as e:
+                    logger.error(f"Lambda invocation failed: {e}")
+
+            url = current_app.config["LOCAL_LAMBDA_ENDPOINT"]
+            data = {"function_id": function_id}
+            thread = threading.Thread(
+                target=send_request,
+                args=(url, data),
+                daemon=True
+            )
+            thread.start()
 
         # Update the task status to 'InProgress'
         lambda_task = LambdaTask.query.get(function_id)

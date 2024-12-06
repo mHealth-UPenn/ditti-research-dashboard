@@ -53,12 +53,12 @@ def create_code_challenge(code_verifier: str) -> str:
     return code_challenge
 
 
-def get_fitbit_oauth_session(join_entry, config, tokens=None, tm=None):
+def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
     """
     Creates an OAuth2Session for Fitbit API, using stored tokens.
 
     Args:
-        join_entry (JoinStudySubjectApi): JoinStudySubjectApi instance.
+        ditti_id (str): The Ditti ID fo the subject that the OAuth session will be used to retrieve data for.
 
     Returns:
         OAuth2SessionWithRefresh: An OAuth2Session instance ready to make requests to Fitbit API.
@@ -75,10 +75,7 @@ def get_fitbit_oauth_session(join_entry, config, tokens=None, tm=None):
     if tokens is None:
         try:
             # Retrieve tokens using TokensManager
-            tokens = tm.get_api_tokens(
-                api_name="Fitbit",
-                study_subject_id=join_entry.study_subject_id
-            )
+            tokens = tm.get_api_tokens(api_name="Fitbit", ditti_id=ditti_id)
         except KeyError as e:
             logger.error(f"Tokens not found: {e}")
             raise
@@ -127,7 +124,7 @@ def get_fitbit_oauth_session(join_entry, config, tokens=None, tm=None):
             # Store the updated tokens
             tm.add_or_update_api_token(
                 api_name="Fitbit",
-                study_subject_id=join_entry.study_subject_id,
+                ditti_id=ditti_id,
                 tokens=updated_token_data
             )
         except Exception as e:
