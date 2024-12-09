@@ -98,12 +98,22 @@ def upgrade():
         # Add 'data_summary' and 'is_qi' columns
         batch_op.add_column(
             sa.Column('data_summary', sa.Text(), nullable=True))
-        batch_op.add_column(sa.Column('is_qi', sa.Boolean(), nullable=False))
+        batch_op.add_column(sa.Column('is_qi', sa.Boolean()))
 
     # 5. Update existing 'default_expiry_delta' to 30 days for existing records
     op.execute(
         "UPDATE study SET default_expiry_delta = 30 WHERE default_expiry_delta IS NULL"
     )
+    op.execute(
+        "UPDATE study SET is_qi = false WHERE is_qi IS NULL"
+    )
+
+    with op.batch_alter_table("study", schema=None) as batch_op:
+        batch_op.alter_column(
+            "is_qi",
+            existing_type=sa.BOOLEAN(),
+            nullable=False,
+        )
 
     # 6. Modify 'join_study_subject_api' Table
     with op.batch_alter_table('join_study_subject_api', schema=None) as batch_op:

@@ -95,10 +95,10 @@ def revoke_api_access(api_name: str, ditti_id: str):
         # Delete tokens from Secrets Manager
         try:
             tm.delete_api_tokens(
-                api_name=api_name, study_subject_id=study_subject.id)
+                api_name=api_name, ditti_id=study_subject.ditti_id)
         except KeyError:
-            logger.warning(f"Tokens for API '{api_name}' and StudySubject ID {
-                           study_subject.id} not found.")
+            logger.warning(f"Tokens for API '{api_name}' and StudySubject {
+                           study_subject.ditti_id} not found.")
         except Exception as e:
             logger.error(f"Error deleting tokens for API '{
                          api_name}': {str(e)}")
@@ -175,10 +175,10 @@ def delete_participant(ditti_id: str):
             # Delete tokens from Secrets Manager
             try:
                 tm.delete_api_tokens(
-                    api_name=api_name, study_subject_id=study_subject_id)
+                    api_name=api_name, ditti_id=study_subject.ditti_id)
             except KeyError:
-                logger.warning(f"Tokens for API '{api_name}' and StudySubject ID {
-                               study_subject_id} not found.")
+                logger.warning(f"Tokens for API '{api_name}' and StudySubject {
+                               study_subject.ditti_id} not found.")
             except Exception as e:
                 logger.error(f"Error deleting tokens for API '{
                              api_name}': {str(e)}")

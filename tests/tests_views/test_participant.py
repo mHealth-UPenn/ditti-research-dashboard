@@ -181,7 +181,7 @@ def test_revoke_api_access_success(authenticated_client, study_subject, api_entr
         assert response.status_code == 200
         assert response.get_json() == response_data
         mock_delete_tokens.assert_called_once_with(
-            api_name=api_entry.name, study_subject_id=study_subject.id)
+            api_name=api_entry.name, ditti_id=study_subject.ditti_id)
         mock_db_delete.assert_called_once_with(join_api)
         mock_db_commit.assert_called_once()
 
@@ -267,7 +267,10 @@ def test_revoke_api_access_delete_tokens_keyerror(authenticated_client, study_su
             "msg": "API access revoked successfully"}
         mock_db_delete.assert_called_once_with(join_api)
         mock_db_commit.assert_called_once()
-        mock_logger_warning.assert_called_once()
+        mock_logger_warning.assert_called_once_with(
+            f"Tokens for API '{api_entry.name}' and StudySubject {
+                study_subject.ditti_id} not found."
+        )
 
 
 def test_revoke_api_access_exception_handling(authenticated_client, study_subject, api_entry, join_api):
@@ -304,7 +307,9 @@ def test_delete_participant_success(app, delete_admin, study_subject, join_api, 
         assert response.get_json() == {"msg": "Account deleted successfully."}
 
         mock_delete_tokens.assert_called_once_with(
-            api_name=api_entry.name, study_subject_id=study_subject.id)
+            api_name=api_entry.name, ditti_id=study_subject.ditti_id)
+
+        # Verify API access removal
         mock_db_delete.assert_called_once_with(join_api)
         assert study_subject.is_archived is True
         mock_db_commit.assert_called_once()
@@ -453,7 +458,9 @@ def test_delete_participant_remove_api_access(app, delete_admin, study_subject, 
         assert response.status_code == 200
         assert response.get_json() == {"msg": "Account deleted successfully."}
         mock_delete_tokens.assert_called_once_with(
-            api_name=api_entry.name, study_subject_id=study_subject.id)
+            api_name=api_entry.name, ditti_id=study_subject.ditti_id)
+
+        # Verify API access removal
         mock_db_delete.assert_called_once_with(join_api)
         assert study_subject.is_archived is True
         mock_db_commit.assert_called_once()

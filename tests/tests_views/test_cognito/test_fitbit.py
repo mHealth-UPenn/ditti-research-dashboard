@@ -156,10 +156,17 @@ def test_fitbit_callback_success_new_association(app, auth_client, study_subject
                 # Verify that tokens are stored
                 mock_add_update_api_token.assert_called_once()
                 args, kwargs = mock_add_update_api_token.call_args
-                assert kwargs["api_name"] == "Fitbit"
-                assert kwargs["study_subject_id"] == study_subject.id
-                assert kwargs["tokens"]["access_token"] == "access_token_value"
-                assert kwargs["tokens"]["refresh_token"] == "refresh_token_value"
+                assert kwargs["api_name"] == "Fitbit", f"Expected api_name 'Fitbit', got {
+                    kwargs['api_name']}"
+                assert kwargs["ditti_id"] == study_subject.ditti_id, \
+                    f"Expected ditti_id {study_subject.ditti_id}, got {
+                        kwargs['ditti_id']}"
+                assert kwargs["tokens"]["access_token"] == "access_token_value", \
+                    f"Expected access_token 'access_token_value', got {
+                        kwargs['tokens']['access_token']}"
+                assert kwargs["tokens"]["refresh_token"] == "refresh_token_value", \
+                    f"Expected refresh_token 'refresh_token_value', got {
+                        kwargs['tokens']['refresh_token']}"
 
                 # Verify that JoinStudySubjectApi entry is created
                 join_entry = JoinStudySubjectApi.query.filter_by(
@@ -377,9 +384,9 @@ def test_fitbit_callback_token_scope_validation(app, auth_client, study_subject,
         mock_post.return_value = mock_response
 
         with patch.object(tm, "add_or_update_api_token") as mock_add_update_api_token:
-            def add_update_side_effect(api_name, study_subject_id, tokens):
-                # Just ensure tokens are stored, no need to change them
-                pass
+            def add_update_side_effect(api_name, ditti_id, tokens):
+                tokens["expires_at"] = pytest.approx(
+                    tokens["expires_at"], rel=1e-2)
 
             mock_add_update_api_token.side_effect = add_update_side_effect
 

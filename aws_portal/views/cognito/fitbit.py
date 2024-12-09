@@ -11,7 +11,7 @@ from oauthlib.oauth2 import WebApplicationClient
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, JoinStudySubjectApi, StudySubject
 from aws_portal.utils.cognito import cognito_auth_required
-from aws_portal.utils.fitbit import (
+from shared.fitbit import (
     generate_code_verifier, create_code_challenge,
     get_fitbit_oauth_session
 )
@@ -67,7 +67,7 @@ def fitbit_authorize(ditti_id: str):
 
         return redirect(authorization_url)
     except Exception as e:
-        logger.error(f"Error initiating Fitbit authorization: {e}")
+        logger.error(f"Error initiating Fitbit authorization: {str(e)}")
         return make_response({"msg": "Failed to initiate Fitbit authorization."}, 500)
 
 
@@ -139,7 +139,7 @@ def fitbit_callback(ditti_id: str):
             response.raise_for_status()
             token = client.parse_request_body_response(response.text)
         except Exception as e:
-            logger.error(f"Failed to fetch Fitbit tokens: {e}")
+            logger.error(f"Failed to fetch Fitbit tokens: {str(e)}")
             return make_response({"msg": "Failed to retrieve Fitbit tokens."}, 400)
 
         # Retrieve the Fitbit API record from the database
@@ -202,11 +202,11 @@ def fitbit_callback(ditti_id: str):
         try:
             tm.add_or_update_api_token(
                 api_name="Fitbit",
-                study_subject_id=study_subject.id,
+                ditti_id=study_subject.ditti_id,
                 tokens=token_data
             )
         except Exception as e:
-            logger.error(f"Error storing Fitbit tokens: {e}")
+            logger.error(f"Error storing Fitbit tokens: {str(e)}")
             return make_response({"msg": "Failed to store Fitbit tokens."}, 500)
 
         # Clear OAuth session variables
@@ -217,7 +217,7 @@ def fitbit_callback(ditti_id: str):
         return redirect(current_app.config.get("API_AUTHORIZE_REDIRECT"))
 
     except Exception as e:
-        logger.error(f"Unhandled error in fitbit_callback: {e}")
+        logger.error(f"Unhandled error in fitbit_callback: {str(e)}")
         return make_response({"msg": "An unexpected error occurred."}, 500)
 
 
@@ -255,10 +255,12 @@ def fitbit_sleep_list(ditti_id: str):
 
         if study_subject_fitbit:
             try:
-                fitbit_session = get_fitbit_oauth_session(study_subject_fitbit)
+                fitbit_session = get_fitbit_oauth_session(
+                    study_subject.ditti_id, config=current_app.config, tm=tm
+                )
             except Exception as e:
                 logger.error(f"OAuth Session Error for ditti_id {
-                             ditti_id}: {e}")
+                             ditti_id}: {str(e)}")
                 return make_response({"msg": "Failed to create Fitbit session."}, 401)
             try:
                 # Example: Fetch sleep data from Fitbit API
@@ -273,7 +275,7 @@ def fitbit_sleep_list(ditti_id: str):
                 ).json()
             except Exception as e:
                 logger.error(f"Fitbit Data Request Error for ditti_id {
-                             ditti_id}: {e}")
+                             ditti_id}: {str(e)}")
                 return make_response({"msg": "Failed to retrieve sleep data."}, 401)
         else:
             logger.warning(f"Fitbit API not linked for ditti_id {ditti_id}")
@@ -283,5 +285,5 @@ def fitbit_sleep_list(ditti_id: str):
 
     except Exception as e:
         logger.error(f"Unhandled error in fitbit_sleep_list for ditti_id {
-                     ditti_id}: {e}")
+                     ditti_id}: {str(e)}")
         return make_response({"msg": "An unexpected error occurred."}, 500)
