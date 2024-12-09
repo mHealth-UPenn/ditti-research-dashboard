@@ -9,6 +9,7 @@ import Link from '../links/link';
 import { Link as RouterLink } from "react-router-dom";
 import { WearableDataProvider } from '../../contexts/wearableDataContext';
 import WearableVisualization from '../visualizations/wearableVisualization';
+import { APP_ENV } from '../../environment';
 
 
 const ParticipantDashboard = () => {
@@ -63,12 +64,14 @@ const ParticipantDashboard = () => {
           <span className="mr-2">Ditti</span>
           <span className="text-sm whitespace-nowrap overflow-hidden">Participant Dashboard</span>
         </div>
-        <div className="mr-8">
-          <Button variant="tertiary" size="sm" rounded={true} onClick={cognitoLogout}>Logout</Button>
-        </div>
+        {APP_ENV !== "demo" &&
+          <div className="mr-8">
+            <Button variant="tertiary" size="sm" rounded={true} onClick={cognitoLogout}>Logout</Button>
+          </div>
+        }
       </div>
 
-      <ViewContainer navbar={false}>
+      <ViewContainer navbar={false} participantDashboard={true}>
         <Card width="md">
           <CardContentRow>
             <Title>Your User ID: {dittiId}</Title>
