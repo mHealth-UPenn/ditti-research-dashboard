@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { makeRequest } from "../utils";
 import { ResponseBody } from "../interfaces";
+import { APP_ENV } from "../environment";
 
 /**
  * Monitor the application's connection status with the database.
@@ -16,6 +17,10 @@ export const useDbStatus = () => {
     let intervalId: ReturnType<typeof setInterval>;
 
     const touch = async (): Promise<string> => {
+      if (APP_ENV === "demo") {
+        return "OK"
+      }
+
       try {
         const res: ResponseBody = await makeRequest("/touch");
         if (res.msg === "OK" && intervalId) clearInterval(intervalId);

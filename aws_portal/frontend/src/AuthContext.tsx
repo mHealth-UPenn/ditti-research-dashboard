@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Buffer } from "buffer";
 import { makeRequest } from "./utils";
 import { AuthContextType } from "./interfaces";
+import { APP_ENV } from "./environment";
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -24,6 +25,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
      * Checks IAM authentication status on component mount.
      */
     const checkIamAuthStatus = async () => {
+      if (APP_ENV === "demo") {
+        setIsIamAuthenticated(true);
+        setIsIamLoading(false);
+        return;
+      }
+
       try {
         const jwt = localStorage.getItem("jwt");
         if (jwt) {
@@ -43,6 +50,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
      * Checks Cognito authentication status on component mount.
      */
     const checkCognitoAuthStatus = async () => {
+      if (APP_ENV === "demo") {
+        setIsCognitoAuthenticated(true);
+        setIsCognitoLoading(false);
+        setDittiId("demo001");
+        return;
+      }
+
       try {
         const res = await makeRequest("/cognito/check-login", { method: "GET" });
         if (res.msg === "Login successful") {
