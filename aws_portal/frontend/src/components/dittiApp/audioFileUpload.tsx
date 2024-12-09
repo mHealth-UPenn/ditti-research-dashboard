@@ -224,15 +224,19 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   };
 
   const selectStudy = (id: number): void => {
-    const updatedSelectedStudies = selectedStudies;
-    updatedSelectedStudies.add(id);
-    setSelectedStudies(updatedSelectedStudies);
+    setSelectedStudies(prevSelectedStudies => {
+      const newSelectedStudies = new Set(prevSelectedStudies)
+      newSelectedStudies.add(id);
+      return newSelectedStudies;
+    });
   };
 
   const removeStudy = (id: number): void => {
-    const updatedSelectedStudies = selectedStudies
-    updatedSelectedStudies.delete(id);
-    setSelectedStudies(updatedSelectedStudies);
+    setSelectedStudies(prevSelectedStudies => {
+      const newSelectedStudies = new Set(prevSelectedStudies)
+      newSelectedStudies.delete(id);
+      return newSelectedStudies;
+    });
   };
 
   const handleClickAvailability = (e: ChangeEvent<HTMLInputElement>) => {
