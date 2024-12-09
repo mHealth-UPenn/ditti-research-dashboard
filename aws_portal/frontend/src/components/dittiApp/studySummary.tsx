@@ -16,6 +16,7 @@ import Button from "../buttons/button";
 import CardContentRow from "../cards/cardContentRow";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
+import DataFactory from "../../dataFactory";
 
 /**
  * Information for study contacts
@@ -49,7 +50,22 @@ const StudySummary: React.FC<StudySummaryProps> = ({
 
   const { taps, audioTaps } = useDittiDataContext();
 
+  let dataFactory: DataFactory | null = null;
+  if (APP_ENV === "demo") {
+    dataFactory = new DataFactory();
+    dataFactory.init();
+  }
+
   useEffect(() => {
+    if (APP_ENV === "demo" && dataFactory) {
+      setCanCreate(true);
+      setCanViewTaps(true);
+      setStudyContacts(dataFactory.studyContacts);
+      setStudyDetails(dataFactory.studies[studyId - 1]);
+      setLoading(false);
+      return;
+    }
+
     // check whether the user can enroll new subjects
     const promises: Promise<any>[] = [];
     promises.push(

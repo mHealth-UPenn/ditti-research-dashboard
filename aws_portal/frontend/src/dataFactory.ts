@@ -2,6 +2,13 @@ import { APP_ENV } from "./environment";
 import { AccountDetails, AudioFile, AudioTapDetails, ISleepLevel, ISleepLevelClassic, ISleepLevelStages, ISleepLog, Study, TapDetails, UserDetails } from "./interfaces";
 import { makeRequest } from "./utils";
 
+interface StudyContact {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  role: string;
+}
+
 const aboutSleepTemplate = `<div>
   <h1>About Sleep</h1>
   <p>This is an about sleep template</p>
@@ -231,6 +238,7 @@ class DataFactory {
   public users: UserDetails[];
   public sleepLogs: ISleepLog[];
   public accountDetails: AccountDetails;
+  public studyContacts: StudyContact[];
 
   constructor() {
     this.initialized = false;
@@ -241,6 +249,7 @@ class DataFactory {
     this.users = [];
     this.sleepLogs = [];
     this.accountDetails = {} as AccountDetails;
+    this.studyContacts = [];
   }
 
   async init() {
@@ -261,6 +270,7 @@ class DataFactory {
           email: "calm.sleep@research.edu",
         }
       ];
+
       if (APP_ENV !== "demo") {
         try {
           this.studies = await makeRequest("/db/get-studies?app=2");
@@ -285,6 +295,27 @@ class DataFactory {
         email: "jane.doe@research.edu",
         phoneNumber: "123-555-6789",
       }
+
+      this.studyContacts = [
+        {
+          fullName: "Liam Brookfield",
+          email: "liam.brookfield@research.edu",
+          phoneNumber: "123-555-1234",
+          role: "Admin",
+        },
+        {
+          fullName: "Evelyn Harper",
+          email: "evelyn.harper@research.edu",
+          phoneNumber: "123-555-1234",
+          role: "Coordinator",
+        },
+        {
+          fullName: "Caleb Voss",
+          email: "caleb.voss@research.edu",
+          phoneNumber: "123-555-1234",
+          role: "Analyst",
+        }
+      ];
     }
   }
 }
