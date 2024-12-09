@@ -6,6 +6,7 @@ import { makeRequest } from "../utils";
 import AsyncButton from "./buttons/asyncButton";
 import Button from "./buttons/button";
 import { useAuth } from "../hooks/useAuth";
+import { APP_ENV } from "../environment";
 
 /**
  * accountDetails: the current user's data
@@ -38,6 +39,11 @@ const AccountMenu = ({
    * Make a POST request with changes
    */
   const post = async () => {
+    if (APP_ENV === "demo") {
+      handleSuccess({"msg": "Account successfully updated."} as ResponseBody);
+      return;
+    }
+
     const body = {
       email,
       first_name: firstName,
@@ -56,6 +62,14 @@ const AccountMenu = ({
    * @returns - A response from the set password endpoint
    */
   const setPassword = () => {
+    if (APP_ENV === "demo") {
+      return new Promise(
+        resolve => resolve(
+          {"msg": "Account successfully updated."} as ResponseBody
+        )
+      );
+    }
+
     // if the user's password doesn't match the confirm password field
     if (!(passwordValue === confirmPasswordValue)) throw "Passwords do not match";
     const body = JSON.stringify({ password: setPasswordValue });
@@ -71,6 +85,8 @@ const AccountMenu = ({
    */
   const handleSuccess = (res: ResponseBody) => {
     flashMessage(<span>{res.msg}</span>, "success");
+    setPasswordValue("");
+    setConfirmPasswordValue("");
     setEdit(false);
     setEditPassword(false);
   }
@@ -90,6 +106,8 @@ const AccountMenu = ({
     );
 
     flashMessage(msg, "danger");
+    setPasswordValue("");
+    setConfirmPasswordValue("");
     setEdit(false);
     setEditPassword(false);
   }
@@ -227,10 +245,20 @@ const AccountMenu = ({
           <div className="border-light border-b mb-6" />
           <div className="flex items-center justify-between">
             <span>Logout</span>
-            <Button variant="danger" size="sm" onClick={iamLogout} rounded={true}>
-              Logout
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={iamLogout}
+              rounded={true}
+              disabled={APP_ENV === "demo"}>
+                Logout
             </Button>
           </div>
+          {APP_ENV === "demo" &&
+            <div className="mt-8">
+              <span className="italic text-sm">Editing is for demonstration only. No changes are made.</span>
+            </div>
+          }
         </div>
     </div>
   );

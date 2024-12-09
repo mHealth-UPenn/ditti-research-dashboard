@@ -1,5 +1,5 @@
 import { APP_ENV } from "./environment";
-import { AudioFile, AudioTapDetails, ISleepLevel, ISleepLevelClassic, ISleepLevelStages, ISleepLog, Study, TapDetails, UserDetails } from "./interfaces";
+import { AccountDetails, AudioFile, AudioTapDetails, ISleepLevel, ISleepLevelClassic, ISleepLevelStages, ISleepLog, Study, TapDetails, UserDetails } from "./interfaces";
 import { makeRequest } from "./utils";
 
 const aboutSleepTemplate = `<div>
@@ -230,6 +230,7 @@ class DataFactory {
   public audioFiles: AudioFile[];
   public users: UserDetails[];
   public sleepLogs: ISleepLog[];
+  public accountDetails: AccountDetails;
 
   constructor() {
     this.initialized = false;
@@ -239,6 +240,7 @@ class DataFactory {
     this.audioFiles = [];
     this.users = [];
     this.sleepLogs = [];
+    this.accountDetails = {} as AccountDetails;
   }
 
   async init() {
@@ -276,6 +278,13 @@ class DataFactory {
       [this.taps, this.audioTaps] = generateTaps(userIds, audioFileNames);
       this.sleepLogs = generateSleepLogs();
       this.initialized = true;
+
+      this.accountDetails = {
+        firstName: "Jane",
+        lastName: "Doe",
+        email: "jane.doe@research.edu",
+        phoneNumber: "123-555-6789",
+      }
     }
   }
 }

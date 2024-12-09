@@ -4,6 +4,8 @@ import { AccountDetails, ViewProps } from "../interfaces";
 import AccountMenu from "./accountMenu";
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
+import { APP_ENV } from "../environment";
+import DataFactory from "../dataFactory";
 
 /**
  * The Header component now functions as a functional component.
@@ -14,7 +16,18 @@ const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
   const [showMenu, setShowMenu] = useState<boolean>(false);
   const accountMenuRef = createRef<HTMLDivElement>();
 
+  let dataFactory: DataFactory | null = null;
+  if (APP_ENV === "demo") {
+    dataFactory = new DataFactory();
+    dataFactory.init();
+  }
+
   useEffect(() => {
+    if (APP_ENV === "demo" && dataFactory) {
+      setAccountDetails(dataFactory.accountDetails)
+      setLoading(false)
+      return;
+    }
     // get the user's account information
     makeRequest("/db/get-account-details").then((accountDetails: AccountDetails) => {
       setAccountDetails(accountDetails);
