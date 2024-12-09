@@ -25,6 +25,7 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import { APP_ENV } from "../../environment";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import sanitize from "sanitize-html";
+import DataFactory from "../../dataFactory";
 
 /**
  * dittiId: the subject's ditti id
@@ -63,6 +64,12 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
 
   const { getUserByDittiId } = useDittiDataContext();
 
+  let dataFactory: DataFactory | null = null;
+  if (APP_ENV === "demo") {
+    dataFactory = new DataFactory();
+    dataFactory.init();
+  }
+
   useEffect(() => {
     if (previewRef.current && state.information !== "") {
       previewRef.current.innerHTML = sanitize(state.information);
@@ -71,6 +78,14 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
 
   useEffect(() => {
     // get all about sleep templates
+    if (APP_ENV === "demo" && dataFactory) {
+      setAboutSleepTemplates(dataFactory.aboutSleepTemplates);
+      getPrefill()
+        .then((prefill: UserDetails) => setState(prefill))
+        .then(() => setLoading(false));
+      return;
+    }
+
     const fetchTemplates = makeRequest("/db/get-about-sleep-templates").then(
       (templates: AboutSleepTemplate[]) => setAboutSleepTemplates(templates)
     );

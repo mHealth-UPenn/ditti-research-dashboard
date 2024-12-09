@@ -1,5 +1,5 @@
 import { APP_ENV } from "./environment";
-import { AccountDetails, AudioFile, AudioTapDetails, ISleepLevel, ISleepLevelClassic, ISleepLevelStages, ISleepLog, Study, TapDetails, UserDetails } from "./interfaces";
+import { AboutSleepTemplate, AccountDetails, AudioFile, AudioTapDetails, ISleepLevel, ISleepLevelClassic, ISleepLevelStages, ISleepLog, Study, TapDetails, UserDetails } from "./interfaces";
 import { makeRequest } from "./utils";
 
 interface StudyContact {
@@ -9,10 +9,7 @@ interface StudyContact {
   role: string;
 }
 
-const aboutSleepTemplate = `<div>
-  <h1>About Sleep</h1>
-  <p>This is an about sleep template</p>
-</div>`;
+const aboutSleepTemplate = "<div><h1>Sleep Hygiene Instructions: General</h1><p>Maintain a regular sleep/wake schedule. Try to keep the same rise time and bedtime every day.</p><p>Set your alarm to get up at the same time each morning, regardless of how much sleep you got during the night, in order to maintain a consistent sleep/wake schedule.</p><p>Do not attempt to “make up for lost sleep” on weekends or hopdays. It may not work and it means you are not up to par for the second half of the week.</p><p>Do not watch the alarm clock and worry about the time or lost sleep. </p><p>Do not spend too much time in bed “chasing sleep”</p><p>Do not nap during the day. Not napping will allow you to sleep much better at night. Exercise instead of napping. Stay active during the day when you feel sleepy.</p><p>Eat meals at the same time each day, every day. Three or four small meals per day are better than one to two large meals.</p><p>Avoid or minimize the use of caffeine. It is a stimulant that interferes with sleep. The effects can last as long as 8-14 hours. One cup of coffee contains 100 mg of caffeine and takes three hours to leave the body. Most sodas and teas, some headache and cold medicines, and most diet pills will worsen sleep. It is recommended not to drink coffee, tea or soda after lunch. If you continue to have difficulty falling asleep, avoid drinking caffeinated beverages after breakfast.</p><p>Avoid alcohol. You may feel it helps you get to sleep, but for most people it causes awakenings as well as poor sleep later in the night. Alcohol can make snoring and sleep apnea worse.</p><p>Maintain a regular exercise schedule. Walking is an excellent form of exercise. The best time is early in the morning (7 AM – 9 AM). Stretching can be done on rainy days. Guard against “strenuous exercise” before</p></div>";
 
 
 const generateAudioFiles = (): AudioFile[] => {
@@ -239,6 +236,7 @@ class DataFactory {
   public sleepLogs: ISleepLog[];
   public accountDetails: AccountDetails;
   public studyContacts: StudyContact[];
+  public aboutSleepTemplates: AboutSleepTemplate[];
 
   constructor() {
     this.initialized = false;
@@ -250,6 +248,7 @@ class DataFactory {
     this.sleepLogs = [];
     this.accountDetails = {} as AccountDetails;
     this.studyContacts = [];
+    this.aboutSleepTemplates = [];
   }
 
   async init() {
@@ -316,6 +315,14 @@ class DataFactory {
           role: "Analyst",
         }
       ];
+
+      this.aboutSleepTemplates = [
+        {
+          id: 1,
+          name: "Default",
+          text: aboutSleepTemplate,
+        }
+      ]
     }
   }
 }
