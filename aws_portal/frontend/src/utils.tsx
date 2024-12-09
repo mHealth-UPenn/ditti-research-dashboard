@@ -1,3 +1,4 @@
+import { APP_ENV } from "./environment";
 import { ResponseBody } from "./interfaces";
 
 // TODO: Find out what this was meant for
@@ -70,6 +71,13 @@ export const getAccess = async (
   resource: string,
   study?: number
 ): Promise<void> => {
+  if (APP_ENV === "demo") {
+    if (action === "View" && resource === "Admin Dashboard") {
+      throw new Error();
+    }
+    return;
+  }
+
   let url = `/iam/get-access?app=${app}&action=${action}&resource=${resource}`;
   if (study) url += `&study=${study}`;
 
