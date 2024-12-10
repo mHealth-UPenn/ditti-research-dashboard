@@ -741,6 +741,12 @@ def init_integration_testing_db():
     db.session.add(test002)
     db.session.add(test003)
 
+    # Add study subjects for testing filtering sleep logs by study ditti prefix
+    ta001 = StudySubject(ditti_id="TA001")
+    tb001 = StudySubject(ditti_id="TB001")
+    db.session.add(ta001)
+    db.session.add(tb001)
+
     study_subject_studies = [
         {
             "study_subject": test001,
@@ -768,6 +774,18 @@ def init_integration_testing_db():
             "study_subject": test003,
             "study": study_b,
             "did_consent": False,
+        },
+        {
+            "study_subject": ta001,
+            "study": study_a,
+            "did_consent": True,
+            "starts_on": datetime.now(UTC)
+        },
+        {
+            "study_subject": tb001,
+            "study": study_b,
+            "did_consent": True,
+            "starts_on": datetime.now(UTC)
         }
     ]
 
@@ -793,11 +811,25 @@ def init_integration_testing_db():
             "api": api,
             "api_user_uuid": "test",
             "scope": ["sleep"],
+        },
+        {
+            "study_subject": ta001,
+            "api": api,
+            "api_user_uuid": "test",
+            "scope": ["sleep"],
+        },
+        {
+            "study_subject": tb001,
+            "api": api,
+            "api_user_uuid": "test",
+            "scope": ["sleep"],
         }
     ]
 
     for join in study_subject_apis:
         JoinStudySubjectApi(**join)
+
+    db.session.add(LambdaTask(status="Pending"))
 
     db.session.commit()
 

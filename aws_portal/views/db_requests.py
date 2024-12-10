@@ -295,15 +295,3 @@ def get_about_sleep_templates():
 
     res = [a.meta for a in about_sleep_templates]
     return jsonify(res)
-
-
-# TODO: Move to fitbit query module after merged with dev
-@blueprint.route("/download-fitbit", methods=["GET"])
-@auth_required("View", "Wearable Dashboard")
-@auth_required("View", "Wearable Data")
-def download_fitbit():
-    """
-    Fetch all Fitbit API data from the database for either one study or one study subject. Return the fetched data
-    in a format prepared for rapid analysis via Excel download.
-    """
-    pass
