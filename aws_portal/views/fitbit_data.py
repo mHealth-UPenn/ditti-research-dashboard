@@ -1,6 +1,7 @@
 from datetime import datetime
 import io
 import logging
+import traceback
 
 from flask import Blueprint, jsonify, make_response, request, send_file
 import pandas as pd
@@ -176,103 +177,123 @@ def download_fitbit_participant(ditti_id: str):
     """
     Fetch all Fitbit API data from the database for one subject.
     """
-    stmt = (
-        select(
-            StudySubject.ditti_id.label("Ditti ID"),
-            SleepLog.date_of_sleep.label("Sleep Log Date"),
-            SleepLevel.date_time.label("Sleep Level Timestamp"),
-            SleepLevel.level.label("Sleep Level Level"),
-            SleepLevel.seconds.label("Sleep Level Length (s)"),
+    try:
+        stmt = (
+            select(
+                StudySubject.ditti_id.label("Ditti ID"),
+                SleepLog.date_of_sleep.label("Sleep Log Date"),
+                SleepLevel.date_time.label("Sleep Level Timestamp"),
+                SleepLevel.level.label("Sleep Level Level"),
+                SleepLevel.seconds.label("Sleep Level Length (s)"),
+            )
+            .join(SleepLog, SleepLog.study_subject_id == StudySubject.id)
+            .join(SleepLevel, SleepLevel.sleep_log_id == SleepLog.id)
+            .where(StudySubject.ditti_id == ditti_id)
+            .order_by(StudySubject.ditti_id, SleepLevel.date_time)
         )
-        .join(SleepLog, SleepLog.study_subject_id == StudySubject.id)
-        .join(SleepLevel, SleepLevel.sleep_log_id == SleepLog.id)
-        .where(StudySubject.ditti_id == ditti_id)
-        .order_by(StudySubject.ditti_id, SleepLevel.date_time)
-    )
 
-    # Execute the query and fetch the results
-    results = db.session.execute(stmt).all()
+        # Execute the query and fetch the results
+        results = db.session.execute(stmt).all()
 
-    # Convert the results to a Pandas DataFrame
-    data = [
-        {
-            **dict(row),
-            "Sleep Level Level": row["Sleep Level Level"].value
-        }
-        for row in results
-    ]
-    df = pd.DataFrame(data)
+    except Exception:
+        logger.error(traceback.format_exc())
+        return make_response("Internal server error when querying database.", 500)
 
-    # Save the DataFrame to a BytesIO object as an Excel file
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        df.to_excel(writer, index=False, sheet_name="Participant Data")
-    output.seek(0)
+    try:
+        # Convert the results to a Pandas DataFrame
+        data = [
+            {
+                **dict(row),
+                "Sleep Level Level": row["Sleep Level Level"].value
+            }
+            for row in results
+        ]
+        df = pd.DataFrame(data)
 
-    # Generate a timestamped filename
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Save the DataFrame to a BytesIO object as an Excel file
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+            df.to_excel(writer, index=False, sheet_name="Participant Data")
+        output.seek(0)
 
-    # Return the Excel file as a response
-    return send_file(
-        output,
-        as_attachment=True,
-        download_name=f"{ditti_id}_Fitbit_{timestamp}.xlsx",
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+        # Generate a timestamped filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Return the Excel file as a response
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=f"{ditti_id}_Fitbit_{timestamp}.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    except Exception:
+        logger.error(traceback.format_exc())
+        return make_response("Internal server error when processing data.", 500)
 
 
 @admin_fitbit_blueprint.route("/download/study/<int:study_id>", methods=["GET"])
 def download_fitbit_study(study_id: int):
     """
     """
-    stmt = (
-        select(Study.ditti_id, Study.acronym)
-        .where(Study.id == study_id)
-    )
-
-    result = db.session.execute(stmt).first()
-    ditti_prefix = result.ditti_id
-    acronym = result.acronym
-
-    stmt = (
-        select(
-            StudySubject.ditti_id.label("Ditti ID"),
-            SleepLog.date_of_sleep.label("Sleep Log Date"),
-            SleepLevel.date_time.label("Sleep Level Timestamp"),
-            SleepLevel.level.label("Sleep Level Level"),
-            SleepLevel.seconds.label("Sleep Level Length (s)"),
+    try:
+        stmt = (
+            select(Study.ditti_id, Study.acronym)
+            .where(Study.id == study_id)
         )
-        .join(SleepLog, SleepLog.study_subject_id == StudySubject.id)
-        .join(SleepLevel, SleepLevel.sleep_log_id == SleepLog.id)
-        .where(text(f"study_subject.ditti_id ~ '^{ditti_prefix}[0-9]'"))  # Return only exact ditti_prefix matches
-        .order_by(StudySubject.ditti_id, SleepLevel.date_time)
-    )
 
-    results = db.session.execute(stmt).all()
+        result = db.session.execute(stmt).first()
+        ditti_prefix = result.ditti_id
+        acronym = result.acronym
 
-    # Convert the results to a Pandas DataFrame
-    data = [
-        {
-            **dict(row),
-            "Sleep Level Level": row["Sleep Level Level"].value
-        }
-        for row in results
-    ]
-    df = pd.DataFrame(data)
+        stmt = (
+            select(
+                StudySubject.ditti_id.label("Ditti ID"),
+                SleepLog.date_of_sleep.label("Sleep Log Date"),
+                SleepLevel.date_time.label("Sleep Level Timestamp"),
+                SleepLevel.level.label("Sleep Level Level"),
+                SleepLevel.seconds.label("Sleep Level Length (s)"),
+            )
+            .join(SleepLog, SleepLog.study_subject_id == StudySubject.id)
+            .join(SleepLevel, SleepLevel.sleep_log_id == SleepLog.id)
+            .where(text(f"study_subject.ditti_id ~ '^{ditti_prefix}[0-9]'"))  # Return only exact ditti_prefix matches
+            .order_by(StudySubject.ditti_id, SleepLevel.date_time)
+        )
 
-    # Save the DataFrame to a BytesIO object as an Excel file
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
-        df.to_excel(writer, index=False, sheet_name="Participant Data")
-    output.seek(0)
+        results = db.session.execute(stmt).all()
 
-    # Generate a timestamped filename
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    except Exception:
+        logger.error(traceback.format_exc())
+        return make_response("Internal server error when querying database.", 500)
 
-    # Return the Excel file as a response
-    return send_file(
-        output,
-        as_attachment=True,
-        download_name=f"{acronym}_Fitbit_{timestamp}.xlsx",
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    try:
+        # Convert the results to a Pandas DataFrame
+        data = [
+            {
+                **dict(row),
+                "Sleep Level Level": row["Sleep Level Level"].value
+            }
+            for row in results
+        ]
+        df = pd.DataFrame(data)
+
+        # Save the DataFrame to a BytesIO object as an Excel file
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+            df.to_excel(writer, index=False, sheet_name="Participant Data")
+        output.seek(0)
+
+        # Generate a timestamped filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Return the Excel file as a response
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=f"{acronym}_Fitbit_{timestamp}.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+
+    except Exception:
+        logger.error(traceback.format_exc())
+        return make_response("Internal server error when processing data.", 500)
