@@ -252,9 +252,9 @@ const StudySummary: React.FC<StudySummaryProps> = ({
           return (
             <CardContentRow key={i}>
               <div>
-                <p><b>{sc.fullName}: {sc.role}</b></p>
-                <p className="ml-4">{sc.email}</p>
-                <p className="ml-4">{sc.phoneNumber}</p>
+                <p className="mb-0"><b>{sc.fullName}: {sc.role}</b></p>
+                <p className="mb-0 ml-4">{sc.email}</p>
+                <p className="mb-0 ml-4">{sc.phoneNumber}</p>
               </div>
             </CardContentRow>
           );
