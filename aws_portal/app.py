@@ -6,10 +6,14 @@ from flask_jwt_extended.utils import create_access_token, current_user, get_jwt
 from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
     init_db_click, init_api_click, init_integration_testing_db_click, reset_db_click,
-    init_demo_db_click
+    init_demo_db_click, init_study_subject_click
 )
-from aws_portal.extensions import bcrypt, cors, db, jwt, migrate
+from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, tm
 from aws_portal.views import admin, aws_requests, base, db_requests, iam, participant
+from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, scheduler
+from aws_portal.views import (
+    admin, aws_requests, base, data_processing_task, db_requests, iam, participant
+)
 from aws_portal.views.cognito import cognito, fitbit
 
 
@@ -63,6 +67,7 @@ def register_blueprints(app):
     app.register_blueprint(cognito.blueprint)
     app.register_blueprint(fitbit.blueprint)
     app.register_blueprint(participant.blueprint)
+    app.register_blueprint(data_processing_task.blueprint)
 
 
 def register_commands(app):
@@ -74,6 +79,7 @@ def register_commands(app):
     app.cli.add_command(init_integration_testing_db_click)
     app.cli.add_command(reset_db_click)
     app.cli.add_command(init_demo_db_click)
+    app.cli.add_command(init_study_subject_click)
 
 
 def register_extensions(app):
@@ -87,3 +93,6 @@ def register_extensions(app):
     db.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
+    tm.init_app(app)
+    scheduler.init_app(app)
+    scheduler.start()

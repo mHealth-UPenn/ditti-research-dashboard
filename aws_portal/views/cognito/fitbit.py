@@ -9,9 +9,9 @@ from flask import (
 )
 from oauthlib.oauth2 import WebApplicationClient
 from aws_portal.extensions import db, tm
-from aws_portal.models import Api, JoinStudySubjectApi
+from aws_portal.models import Api, JoinStudySubjectApi, StudySubject
 from aws_portal.utils.cognito import cognito_auth_required
-from aws_portal.utils.fitbit import (
+from shared.fitbit import (
     generate_code_verifier, create_code_challenge,
     get_fitbit_oauth_session
 )
@@ -182,11 +182,17 @@ def fitbit_callback():
         "expires_at": expires_at
     }
 
+    # For retrieving the current participant's Ditti ID
+    # TODO: Replace with `ditti_id` retrieved from `cognito_auth_required`
+    study_subject = StudySubject.query.filter(
+        StudySubject.id == int(study_subject_id)
+    ).first()
+
     # Store tokens securely using TokensManager
     try:
         tm.add_or_update_api_token(
             api_name="Fitbit",
-            study_subject_id=study_subject_id,
+            ditti_id=study_subject.ditti_id,
             tokens=token_data
         )
     except Exception as e:
@@ -219,9 +225,18 @@ def fitbit_sleep_list():
         study_subject_id=study_subject_id,
         api_id=fitbit_api.id
     ).first()
+
+    # For retrieving the current participant's Ditti ID
+    # TODO: Replace with `ditti_id` retrieved from `cognito_auth_required`
+    study_subject = StudySubject.query.filter(
+        StudySubject.id == int(study_subject_id)
+    ).first()
+
     if study_subject_fitbit:
         try:
-            fitbit_session = get_fitbit_oauth_session(study_subject_fitbit)
+            fitbit_session = get_fitbit_oauth_session(
+                study_subject.ditti_id, config=current_app.config, tm=tm
+            )
         except Exception as e:
             msg = f"OAuth Session Error: {str(e)}"
             return make_response({"msg": msg}, 401)

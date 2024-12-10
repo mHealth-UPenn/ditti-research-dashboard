@@ -1,14 +1,18 @@
+from datetime import datetime, UTC, timedelta, timezone
 import enum
 import logging
 import os
+import random
 import uuid
-from datetime import datetime, UTC, timedelta
+
 from flask import current_app
 from sqlalchemy import select, func, tuple_, event, Enum
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.sql.schema import UniqueConstraint
+
 from aws_portal.extensions import bcrypt, db, jwt
+from shared.utils.sleep_logs import generate_sleep_logs
 
 
 logger = logging.getLogger(__name__)
@@ -210,7 +214,8 @@ def init_demo_db():
         demo_email is None or
         demo_password is None
     ):
-        raise RuntimeError("One or more of the following environment variables are missing: DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, DEMO_EMAIL, DEMO_PASSWORD")
+        raise RuntimeError(
+            "One or more of the following environment variables are missing: DEMO_ADMIN_EMAIL, DEMO_ADMIN_PASSWORD, DEMO_EMAIL, DEMO_PASSWORD")
 
     # Request user confirmation when pointing to non-localhost database
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
@@ -220,7 +225,8 @@ def init_demo_db():
 
     # Create all possible `(action, resource)` permission combinations
     actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
-    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
+    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups",
+                 "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
     for action in actions:
         for resource in resources:
             permission = Permission()
@@ -242,10 +248,12 @@ def init_demo_db():
     ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
     query = Permission.definition == tuple_("*", "*")
     permission = Permission.query.filter(query).first()
-    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    JoinAccessGroupPermission(
+        access_group=ditti_admin_group, permission=permission)
     query = Permission.definition == tuple_("View", "Ditti App Dashboard")
     permission = Permission.query.filter(query).first()
-    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    JoinAccessGroupPermission(
+        access_group=ditti_admin_group, permission=permission)
     db.session.add(ditti_app)
     db.session.add(ditti_admin_group)
 
@@ -350,7 +358,8 @@ def init_demo_db():
         morning (7 AM – 9 AM). Stretching can be done on rainy days. Guard against “strenuous exercise” before</p>
 </div>"""
 
-    db.session.add(AboutSleepTemplate(name="Default Template", text=template_html))
+    db.session.add(AboutSleepTemplate(
+        name="Default Template", text=template_html))
     db.session.commit()
 
     return True
@@ -360,11 +369,13 @@ def init_integration_testing_db():
     # Enforce that the environment must be pointing at a local database
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
     if "localhost" not in db_uri:
-        raise RuntimeError("Dev data initialization attempted on non-localhost database")
+        raise RuntimeError(
+            "Dev data initialization attempted on non-localhost database")
 
     # Create all possible `(action, resource)` permission combinations
     actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
-    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps"]
+    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Wearable Dashboard", "Accounts", "Access Groups", "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps", "Wearable Data"]
+
     for action in actions:
         for resource in resources:
             permission = Permission()
@@ -381,8 +392,6 @@ def init_integration_testing_db():
             ("View", "*"),
             ("Create", "Users"),
             ("Edit", "Users"),
-            ("Create", "Audio Files"),
-            ("Edit", "Audio Files"),
         ],
         "Analyst": [
             ("View", "*"),
@@ -400,6 +409,13 @@ def init_integration_testing_db():
         ],
         "Can View Taps": [
             ("View", "Taps")
+        ],
+        "Can View Wearable Data": [
+            ("View", "Wearable Data")
+        ],
+        "Can View Taps & Wearable Data": [
+            ("View", "Taps"),
+            ("View", "Wearable Data")
         ],
     }
 
@@ -426,29 +442,55 @@ def init_integration_testing_db():
     ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
     query = Permission.definition == tuple_("*", "*")
     permission = Permission.query.filter(query).first()
-    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    JoinAccessGroupPermission(
+        access_group=ditti_admin_group, permission=permission)
     query = Permission.definition == tuple_("View", "Ditti App Dashboard")
     permission = Permission.query.filter(query).first()
-    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=permission)
+    JoinAccessGroupPermission(
+        access_group=ditti_admin_group, permission=permission)
     db.session.add(ditti_app)
     db.session.add(ditti_admin_group)
 
     # Create the Ditti Coordinator access group
-    ditti_coordinator_group = AccessGroup(name="Ditti App Coordinator", app=ditti_app)
+    ditti_coordinator_group = AccessGroup(
+        name="Ditti App Coordinator", app=ditti_app)
     query = Permission.definition == tuple_("View", "Ditti App Dashboard")
     permission = Permission.query.filter(query).first()
-    JoinAccessGroupPermission(access_group=ditti_coordinator_group, permission=permission)
+    JoinAccessGroupPermission(
+        access_group=ditti_coordinator_group, permission=permission)
     query = Permission.definition == tuple_("View", "Audio Files")
     permission = Permission.query.filter(query).first()
-    JoinAccessGroupPermission(access_group=ditti_coordinator_group, permission=permission)
+    JoinAccessGroupPermission(
+        access_group=ditti_coordinator_group, permission=permission)
     query = Permission.definition == tuple_("Create", "Audio Files")
     permission = Permission.query.filter(query).first()
-    JoinAccessGroupPermission(access_group=ditti_coordinator_group, permission=permission)
+    JoinAccessGroupPermission(
+        access_group=ditti_coordinator_group, permission=permission)
     query = Permission.definition == tuple_("Delete", "Audio Files")
     permission = Permission.query.filter(query).first()
-    JoinAccessGroupPermission(access_group=ditti_coordinator_group, permission=permission)
+    JoinAccessGroupPermission(
+        access_group=ditti_coordinator_group, permission=permission)
     db.session.add(ditti_app)
     db.session.add(ditti_coordinator_group)
+
+    # Create the Wearable Admin access group
+    wear_app = App(name="Wearable Dashboard")
+    wear_admin_group = AccessGroup(name="Wearable Dashboard Admin", app=wear_app)
+    query = Permission.definition == tuple_("*", "*")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=wear_admin_group, permission=permission)
+    query = Permission.definition == tuple_("View", "Wearable Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=wear_admin_group, permission=permission)
+    db.session.add(wear_app)
+    db.session.add(wear_admin_group)
+
+    # Create the Wearable Dashboard Coordinator access group
+    wear_coordinator_group = AccessGroup(name="Wearable Dashboard Coordinator", app=wear_app)
+    query = Permission.definition == tuple_("View", "Wearable Dashboard")
+    permission = Permission.query.filter(query).first()
+    JoinAccessGroupPermission(access_group=wear_coordinator_group, permission=permission)
+    db.session.add(wear_coordinator_group)
 
     admin_access_groups = {
         "Can Create Accounts": [
@@ -519,7 +561,8 @@ def init_integration_testing_db():
         for action, resource in permissions:
             query = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(query).first()
-            JoinAccessGroupPermission(access_group=access_group, permission=permission)
+            JoinAccessGroupPermission(
+                access_group=access_group, permission=permission)
         db.session.add(access_group)
 
     ditti_access_groups = {
@@ -545,7 +588,8 @@ def init_integration_testing_db():
         for action, resource in permissions:
             query = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(query).first()
-            JoinAccessGroupPermission(access_group=access_group, permission=permission)
+            JoinAccessGroupPermission(
+                access_group=access_group, permission=permission)
         db.session.add(access_group)
 
     studies = [
@@ -585,9 +629,10 @@ def init_integration_testing_db():
     account.password = os.getenv("FLASK_ADMIN_PASSWORD")
     JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
+    JoinAccountAccessGroup(account=account, access_group=wear_admin_group)
     db.session.add(account)
 
-    # Create a Ditti admin account to test whether pemissions are scoped to the Ditti Dashboard only
+    # Create a Ditti admin account to test whether permissions are scoped to the Ditti Dashboard only
     account = Account(
         public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
@@ -600,7 +645,20 @@ def init_integration_testing_db():
     JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     db.session.add(account)
 
-    # Create a Study A Admin account to test whether permissions are scopeed to Study A only
+    # Create a Wearable admin account to test whether permissions are scoped to the Wearable Dashboard only
+    account = Account(
+        public_id=str(uuid.uuid4()),
+        created_on=datetime.now(UTC),
+        first_name="Jane",
+        last_name="Doe",
+        email="Wearable Admin",
+        is_confirmed=True,
+    )
+    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
+    JoinAccountAccessGroup(account=account, access_group=wear_admin_group)
+    db.session.add(account)
+
+    # Create a Study A Admin account to test whether permissions are scoped to Study A only
     account = Account(
         public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
@@ -613,6 +671,7 @@ def init_integration_testing_db():
     role = Role.query.filter(Role.name == "Admin").first()
     JoinAccountStudy(account=account, study=study_a, role=role)
     JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
+    JoinAccountAccessGroup(account=account, access_group=wear_coordinator_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
     db.session.add(account)
 
@@ -633,6 +692,7 @@ def init_integration_testing_db():
         JoinAccountStudy(account=account, study=study_a, role=role)
         JoinAccountStudy(account=account, study=study_b, role=other_role)
         JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
+        JoinAccountAccessGroup(account=account, access_group=wear_coordinator_group)
         JoinAccountAccessGroup(account=account, access_group=admin_group)
         db.session.add(account)
 
@@ -669,6 +729,111 @@ def init_integration_testing_db():
 </div>"""
 
     db.session.add(AboutSleepTemplate(name="About Sleep Template", text=template_html))
+
+    # Add Fitbit API
+    api = Api(name="Fitbit")
+    db.session.add(api)
+
+    test001 = StudySubject(ditti_id="test001")
+    test002 = StudySubject(ditti_id="test002")
+    test003 = StudySubject(ditti_id="test003")
+    db.session.add(test001)
+    db.session.add(test002)
+    db.session.add(test003)
+
+    study_subject_studies = [
+        {
+            "study_subject": test001,
+            "study": study_a,
+            "did_consent": True,
+        },
+        {
+            "study_subject": test002,
+            "study": study_a,
+            "did_consent": False,
+            "starts_on": datetime.now(UTC) - timedelta(days=7),  # Consenting should retroactively pull from this date
+        },
+        {
+            "study_subject": test002,
+            "study": study_b,
+            "did_consent": True,
+            "starts_on": datetime.now(UTC) - timedelta(days=1),  # Data should be pulled from this date
+        },
+        {
+            "study_subject": test003,  # No data should be pulled for this subject
+            "study": study_a,
+            "did_consent": False,
+        },
+        {
+            "study_subject": test003,
+            "study": study_b,
+            "did_consent": False,
+        }
+    ]
+
+    for join in study_subject_studies:
+        JoinStudySubjectStudy(**join)
+
+    study_subject_apis = [
+        {
+            "study_subject": test001,
+            "api": api,
+            "api_user_uuid": "test",
+            "scope": ["sleep"],
+            "last_sync_date": datetime.now(),
+        },
+        {
+            "study_subject": test002,
+            "api": api,
+            "api_user_uuid": "test",
+            "scope": ["sleep"],
+        },
+        {
+            "study_subject": test003,
+            "api": api,
+            "api_user_uuid": "test",
+            "scope": ["sleep"],
+        }
+    ]
+
+    for join in study_subject_apis:
+        JoinStudySubjectApi(**join)
+
+    db.session.commit()
+
+
+def init_study_subject(ditti_id):
+    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+    if "localhost" not in db_uri:
+        raise RuntimeError("init_study_subject requires a localhost database URI.")
+
+    study_a = Study.query.get(1)
+    study_b = Study.query.get(2)
+    if study_a is None or study_b is None:
+        raise RuntimeError("Could not retrieve studies from the database.")
+
+    existing = StudySubject.query.filter(StudySubject.ditti_id == ditti_id).first()
+    if existing is not None:
+        raise RuntimeError(f"Study subject with ditti_id {ditti_id} already exists.")
+
+    study_subject = StudySubject(ditti_id=ditti_id)
+
+    # Enroll in two studies to test that data is pulled from first `starts_on` to last `expires_on`
+    JoinStudySubjectStudy(
+        study_subject=study_subject,
+        study=study_a,
+        did_consent=True,
+        starts_on=datetime.now(UTC) - timedelta(days=7),
+        expires_on=datetime.now(UTC) - timedelta(days=3)  # TODO: bypass expires_on validation
+    )
+
+    JoinStudySubjectStudy(
+        study_subject=study_subject,
+        study=study_b,
+        did_consent=True
+    )
+
+    db.session.add(study_subject)
     db.session.commit()
 
 
@@ -852,7 +1017,7 @@ class Account(db.Model):
             .filter(
                 (~AccessGroup.is_archived) &
                 (JoinAccountAccessGroup.account_id == self.id)
-            )
+        )
 
         # if a study id was passed and the study is not archived
         if study_id and not Study.query.get(study_id).is_archived:
@@ -864,7 +1029,7 @@ class Account(db.Model):
                 .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)\
                 .filter(
                     JoinAccountStudy.primary_key == tuple_(self.id, study_id)
-                )
+            )
 
             # return the union of all permission for the app and study
             permissions = q1.union(q2)
@@ -1666,7 +1831,7 @@ class StudySubject(db.Model):
             "dittiId": self.ditti_id,
             "studies": [join.meta for join in self.studies],
             "apis": [join.meta for join in self.apis],
-            "sleepLogs": [join.meta for join in self.sleep_logs]
+            # "sleepLogs": [join.meta for join in self.sleep_logs]
         }
 
     def __repr__(self):
@@ -1686,6 +1851,9 @@ class JoinStudySubjectStudy(db.Model):
     created_on: sqlalchemy.Column
         The timestamp of the account's creation, e.g., `datetime.now(UTC)`.
         The created_on value cannot be modified.
+    starts_on: sqlalchemy.Column
+        When data collection for a study subject begins. Data from approved APIs
+        will be collected starting from no earlier than this date.
     expires_on: sqlalchemy.Column
         When the study subject is no longer a part of the study and data should no
         longer be collected from any of the subject's approved APIs
@@ -1706,6 +1874,7 @@ class JoinStudySubjectStudy(db.Model):
     )
     did_consent = db.Column(db.Boolean, default=False, nullable=False)
     created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
+    starts_on = db.Column(db.DateTime, default=func.now(), nullable=False)
     expires_on = db.Column(db.DateTime, nullable=True)
 
     study_subject = db.relationship("StudySubject", back_populates="studies")
@@ -1746,6 +1915,7 @@ class JoinStudySubjectStudy(db.Model):
         return {
             "didConsent": self.did_consent,
             "createdOn": self.created_on.isoformat(),
+            "startsOn": self.starts_on.isoformat(),
             "expiresOn": self.expires_on.isoformat() if self.expires_on else None,
             "study": self.study.meta,
         }
@@ -2117,3 +2287,65 @@ class SleepSummary(db.Model):
 
     def __repr__(self):
         return f"<SleepSummary {self.level.value} for SleepLog {self.sleep_log_id}>"
+
+
+class LambdaTask(db.Model):
+    """
+    The lambda_task table mapping class.
+
+    Vars
+    ----
+    id: sqlalchemy.Column
+    status: sqlalchemy.Column
+        The status of the task ("Pending", "InProgress", "Success", "Failed", "CompletedWithErrors").
+    billed_ms: sqlalchemy.Column
+        The billed duration of the Lambda function in milliseconds.
+    created_on: sqlalchemy.Column
+    updated_on: sqlalchemy.Column
+    completed_on: sqlalchemy.Column
+        The datetime when the task was completed.
+    log_file: sqlalchemy.Column
+        S3 URI location of log file.
+    error_code: sqlalchemy.Column
+        Error code if any.
+    """
+    __tablename__ = "lambda_task"
+    id = db.Column(db.Integer, primary_key=True)
+    status = db.Column(
+        db.Enum(
+            "Pending", "InProgress", "Success", "Failed", "CompletedWithErrors",
+            name="taskstatustypeenum"
+        ), nullable=False
+    )
+    billed_ms = db.Column(db.Integer, nullable=True)
+    created_on = db.Column(
+        db.DateTime,
+        default=func.now(),
+        nullable=False,
+        index=True
+    )
+    updated_on = db.Column(
+        db.DateTime,
+        default=func.now(),
+        onupdate=func.now(),
+        nullable=False
+    )
+    completed_on = db.Column(db.DateTime, nullable=True)
+    log_file = db.Column(db.String, nullable=True)
+    error_code = db.Column(db.String, nullable=True)
+
+    @property
+    def meta(self):
+        return {
+            "id": self.id,
+            "status": self.status,
+            "billedMs": self.billed_ms,
+            "createdOn": self.created_on.isoformat(),
+            "updatedOn": self.updated_on.isoformat(),
+            "completedOn": self.completed_on.isoformat() if self.completed_on else None,
+            "logFile": self.log_file,
+            "errorCode": self.error_code
+        }
+
+    def __repr__(self):
+        return f"<LambdaTask {self.id}>"
