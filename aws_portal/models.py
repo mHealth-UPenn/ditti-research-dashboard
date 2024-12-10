@@ -2202,8 +2202,8 @@ class SleepLog(db.Model):
             "startTime": self.start_time.isoformat() if self.start_time else None,
             "timeInBed": self.time_in_bed,
             "type": self.type.value,
-            "totalMinutesAsleep": self.total_minutes_asleep,
-            "sleepEfficiencyPercentage": self.sleep_efficiency_percentage,
+            "totalMinutesAsleep": self.minutes_asleep,
+            "sleepEfficiencyPercentage": self.efficiency,
             "levels": [level.meta for level in self.levels],
             "summaries": [summary.meta for summary in self.summaries]
         }
