@@ -185,6 +185,7 @@ def test_verify_token_success_id_token(app):
             "iss": f"https://cognito-idp.{app.config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{app.config['COGNITO_PARTICIPANT_USER_POOL_ID']}",
             "aud": app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
             "token_use": "id",
+            "cognito:username": "user123",
         }
         with patch("aws_portal.utils.cognito.get_public_key", return_value=public_key):
             with patch("aws_portal.utils.cognito.jwt.decode", return_value=payload) as mock_decode:
@@ -293,23 +294,29 @@ def test_cognito_auth_required_success(app):
 
         @app.route("/protected")
         @cognito_auth_required
-        def protected():
-            return {"msg": "Success"}, 200
+        def protected(ditti_id):
+            # Return ditti_id to verify it's passed correctly
+            return {"msg": "Success", "ditti_id": ditti_id}, 200
 
         test_client = app.test_client()
 
         with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
             # Mock verify_token to return valid claims for both tokens
-            mock_verify_token.side_effect = lambda participant_pool, token, token_use: {
-                "sub": "user123"}
+            def mock_verify_token_side_effect(participant_pool, token, token_use):
+                if token_use == "access":
+                    return {"sub": "user123"}
+                elif token_use == "id":
+                    return {"cognito:username": "user123"}
 
-            # Set cookies without 'server_name' for Flask 1.x
+            mock_verify_token.side_effect = mock_verify_token_side_effect
+
             test_client.set_cookie('id_token', 'valid_id_token')
             test_client.set_cookie('access_token', 'valid_access_token')
 
             response = test_client.get("/protected")
             assert response.status_code == 200
-            assert response.get_json() == {"msg": "Success"}
+            assert response.get_json() == {
+                "msg": "Success", "ditti_id": "user123"}
             mock_verify_token.assert_any_call(
                 True, "valid_access_token", token_use="access")
             mock_verify_token.assert_any_call(
@@ -321,7 +328,7 @@ def test_cognito_auth_required_missing_tokens(app):
 
         @app.route("/protected")
         @cognito_auth_required
-        def protected():
+        def protected(ditti_id):
             return {"msg": "Success"}, 200
 
         test_client = app.test_client()
@@ -335,8 +342,8 @@ def test_cognito_auth_required_expired_access_token_with_refresh(app):
 
         @app.route("/protected")
         @cognito_auth_required
-        def protected():
-            return {"msg": "Success"}, 200
+        def protected(ditti_id):
+            return {"msg": "Success", "ditti_id": ditti_id}, 200
 
         test_client = app.test_client()
         with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
@@ -348,7 +355,7 @@ def test_cognito_auth_required_expired_access_token_with_refresh(app):
                     elif token == "new_access_token":
                         return {"sub": "user123"}
                 elif token_use == "id":
-                    return {"sub": "user123"}
+                    return {"cognito:username": "user123"}
 
             mock_verify_token.side_effect = verify_token_side_effect
 
@@ -363,7 +370,8 @@ def test_cognito_auth_required_expired_access_token_with_refresh(app):
 
                 response = test_client.get("/protected")
                 assert response.status_code == 200
-                assert response.get_json() == {"msg": "Success"}
+                assert response.get_json() == {
+                    "msg": "Success", "ditti_id": "user123"}
                 mock_refresh_access_token.assert_called_once_with(
                     True, "valid_refresh_token")
 
@@ -373,7 +381,7 @@ def test_cognito_auth_required_expired_access_token_no_refresh(app):
 
         @app.route("/protected")
         @cognito_auth_required
-        def protected():
+        def protected(ditti_id):
             return {"msg": "Success"}, 200
 
         test_client = app.test_client()
@@ -383,7 +391,7 @@ def test_cognito_auth_required_expired_access_token_no_refresh(app):
                 if token_use == "access":
                     raise ExpiredSignatureError("Token has expired.")
                 elif token_use == "id":
-                    return {"sub": "user123"}
+                    return {"cognito:username": "user123"}
 
             mock_verify_token.side_effect = verify_token_side_effect
 
@@ -401,7 +409,7 @@ def test_cognito_auth_required_refresh_fails(app):
 
         @app.route("/protected")
         @cognito_auth_required
-        def protected():
+        def protected(ditti_id):
             return {"msg": "Success"}, 200
 
         test_client = app.test_client()
@@ -411,7 +419,7 @@ def test_cognito_auth_required_refresh_fails(app):
                 if token_use == "access":
                     raise ExpiredSignatureError("Token has expired.")
                 elif token_use == "id":
-                    return {"sub": "user123"}
+                    return {"cognito:username": "user123"}
 
             mock_verify_token.side_effect = verify_token_side_effect
 
@@ -434,8 +442,9 @@ def test_cognito_auth_required_invalid_access_token(app):
 
         @app.route("/protected")
         @cognito_auth_required
-        def protected():
-            return {"msg": "Success"}, 200
+        def protected(ditti_id):
+            # Return ditti_id to verify it's passed correctly
+            return {"msg": "Success", "ditti_id": ditti_id}, 200
 
         test_client = app.test_client()
         with patch("aws_portal.utils.cognito.verify_token") as mock_verify_token:
@@ -444,7 +453,7 @@ def test_cognito_auth_required_invalid_access_token(app):
                 if token_use == "access":
                     raise InvalidTokenError("Invalid token")
                 elif token_use == "id":
-                    return {"sub": "user123"}
+                    return {"cognito:username": "user123"}
 
             mock_verify_token.side_effect = verify_token_side_effect
 
@@ -456,6 +465,7 @@ def test_cognito_auth_required_invalid_access_token(app):
             assert response.status_code == 401
             assert response.get_json() == {
                 "msg": "Invalid access token: Invalid token"}
+            # Optionally, verify that ditti_id was not passed since access token was invalid
 
 
 def test_cognito_auth_required_invalid_id_token(app):
@@ -463,7 +473,8 @@ def test_cognito_auth_required_invalid_id_token(app):
 
         @app.route("/protected")
         @cognito_auth_required
-        def protected():
+        def protected(ditti_id):
+            # This should not be called if ID token is invalid
             return {"msg": "Success"}, 200
 
         test_client = app.test_client()
@@ -492,7 +503,8 @@ def test_cognito_auth_required_expired_id_token(app):
 
         @app.route("/protected")
         @cognito_auth_required
-        def protected():
+        def protected(ditti_id):
+            # This should not be called if ID token is expired
             return {"msg": "Success"}, 200
 
         test_client = app.test_client()
