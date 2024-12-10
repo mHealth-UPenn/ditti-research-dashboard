@@ -52,10 +52,6 @@ const ParticipantDashboard = () => {
     window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/fitbit/authorize`;
   };
 
-  const handleClickManageData = () => {
-    window.location.href = "https://hosting.med.upenn.edu/forms/DittiApp/view.php?id=10677";
-  };
-
   return (
     <main className="flex flex-col h-screen">
       {/* the header */}
@@ -124,7 +120,7 @@ const ParticipantDashboard = () => {
             <Title>Manage my data</Title>
           </CardContentRow>
           <CardContentRow>
-            <Link onClick={handleClickManageData}>
+            <Link className="hover:cursor-not-allowed select-none">
               Request deletion of my account or data.
             </Link>
           </CardContentRow>
