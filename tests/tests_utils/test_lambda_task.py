@@ -18,6 +18,7 @@ def app():
     """
     app = Flask(__name__)
     app.config['TESTING'] = True
+    app.config['ENV'] = 'testing'
     app.config['LAMBDA_FUNCTION_NAME'] = 'test_lambda_function'
 
     with app.app_context():
@@ -43,17 +44,6 @@ def mock_boto3_client():
 
 
 @pytest.fixture
-def mock_current_app(app):
-    """
-    Mocks current_app within the active application context.
-    """
-    with patch('aws_portal.utils.lambda_task.current_app') as mock_app:
-        mock_app.config.get = MagicMock(
-            return_value=app.config.get('LAMBDA_FUNCTION_NAME'))
-        yield mock_app
-
-
-@pytest.fixture
 def fixed_datetime():
     fixed_time = datetime(2024, 12, 1, 12, 0, 0, tzinfo=timezone.utc)
     with freeze_time(fixed_time):
@@ -61,7 +51,7 @@ def fixed_datetime():
 
 
 def test_create_and_invoke_lambda_task_success(
-    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, mock_current_app, fixed_datetime
+    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, fixed_datetime
 ):
     mock_task_instance = MagicMock(spec=LambdaTask)
     mock_task_instance.id = 123
@@ -91,7 +81,7 @@ def test_create_and_invoke_lambda_task_success(
 
 
 def test_create_and_invoke_lambda_task_exception(
-    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, mock_current_app, fixed_datetime
+    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, fixed_datetime
 ):
     mock_db_session.commit.side_effect = Exception("DB commit failed")
 
@@ -102,7 +92,7 @@ def test_create_and_invoke_lambda_task_exception(
 
 
 def test_check_and_invoke_lambda_task_already_run_today(
-    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, mock_current_app, fixed_datetime
+    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, fixed_datetime
 ):
     mock_latest_task = MagicMock(spec=LambdaTask)
     mock_latest_task.created_on.date.return_value = fixed_datetime.date()
@@ -120,7 +110,7 @@ def test_check_and_invoke_lambda_task_already_run_today(
 
 
 def test_check_and_invoke_lambda_task_not_run_today(
-    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, mock_current_app, fixed_datetime
+    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, fixed_datetime
 ):
     mock_latest_task = MagicMock(spec=LambdaTask)
     mock_latest_task.created_on.date.return_value = (
@@ -156,7 +146,7 @@ def test_check_and_invoke_lambda_task_not_run_today(
 
 
 def test_check_and_invoke_lambda_task_no_tasks(
-    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, mock_current_app, fixed_datetime
+    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, fixed_datetime
 ):
     mock_lambda_task_model.query.order_by.return_value.first.return_value = None
 
@@ -189,7 +179,7 @@ def test_check_and_invoke_lambda_task_no_tasks(
 
 
 def test_check_and_invoke_lambda_task_exception(
-    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, mock_current_app, fixed_datetime
+    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, fixed_datetime
 ):
     mock_lambda_task_model.query.order_by.side_effect = Exception(
         "DB query failed")
@@ -201,7 +191,7 @@ def test_check_and_invoke_lambda_task_exception(
 
 
 def test_invoke_lambda_task_success(
-    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, mock_current_app, fixed_datetime
+    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, fixed_datetime
 ):
     function_id = 101
     mock_task = MagicMock(spec=LambdaTask)
@@ -226,10 +216,10 @@ def test_invoke_lambda_task_success(
 
 
 def test_invoke_lambda_task_missing_function_name(
-    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, mock_current_app, fixed_datetime
+    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, fixed_datetime
 ):
     function_id = 202
-    mock_current_app.config.get.return_value = None
+    app.config["LAMBDA_FUNCTION_NAME"] = None
 
     mock_task = MagicMock(spec=LambdaTask)
     mock_lambda_task_model.query.get.return_value = mock_task
@@ -248,7 +238,7 @@ def test_invoke_lambda_task_missing_function_name(
 
 
 def test_invoke_lambda_task_lambda_invoke_exception(
-    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, mock_current_app, fixed_datetime
+    app, mock_db_session, mock_lambda_task_model, mock_boto3_client, fixed_datetime
 ):
     function_id = 303
     mock_task = MagicMock(spec=LambdaTask)

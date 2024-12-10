@@ -1,6 +1,7 @@
 # Initialize flags
 CONDA_FLAG=false
 INIT_FLAG=false
+NO_AWS=false
 
 # Check for "conda" and "init" parameters
 for arg in "$@"
@@ -9,6 +10,8 @@ do
         CONDA_FLAG=true
     elif [[ "$arg" == "init" ]]; then
         INIT_FLAG=true
+    elif [[ "$arg" == "no-aws" ]]; then
+        NO_AWS=true
     fi
 done
 
@@ -57,11 +60,31 @@ export $(cat flask.env | xargs)
 export $(cat cognito.env | xargs)
 export $(cat fitbit.env | xargs)
 
+if [[ "$NO_AWS" == false ]]; then
+    # Secret name
+    SECRET_NAME="aws-portal-secret-dev"
+
+    # Retrieve secret value using AWS CLI
+    echo "Fetching secret: $SECRET_NAME"
+    SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --query 'SecretString' --output text)
+
+    if [[ -z "$SECRET_JSON" ]]; then
+    echo "Failed to retrieve secret or secret is empty."
+    else
+        # Parse the JSON and export key-value pairs as environment variables
+        echo "Exporting key-value pairs as environment variables..."
+        echo "$SECRET_JSON" | jq -r 'to_entries | .[] | "export \(.key)=\(.value)"' | while read -r ENV_VAR; do
+        eval "$ENV_VAR"
+        done
+    fi
+fi
+
+echo "Environment variables exported successfully."
+
 # Run initialization commands if "init" parameter is provided
 if [[ "$INIT_FLAG" == true ]]; then
     echo "Initializing application..."
     docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
     flask db upgrade
     flask init-integration-testing-db
-    flask init-api
 fi
