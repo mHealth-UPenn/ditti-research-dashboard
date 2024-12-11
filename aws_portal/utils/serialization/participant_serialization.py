@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Any, List, Optional
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, field_serializer
 from aws_portal.models import JoinStudySubjectApi, JoinStudySubjectStudy, StudySubject
 from .serialization_common import common_config
 
@@ -49,6 +49,10 @@ class ParticipantStudyModel(BaseModel):
                 "data_summary": getattr(obj.study, "data_summary", None)
             }
         return obj
+
+    @field_serializer("created_on", "expires_on", mode="plain")
+    def serialize_datetimes(value: Optional[datetime]) -> Optional[str]:
+        return value.isoformat() if value else None
 
 
 class ParticipantModel(BaseModel):
