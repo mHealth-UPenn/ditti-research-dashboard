@@ -1,11 +1,16 @@
-import time
-import uuid
+from collections import namedtuple
 from datetime import datetime
-import pytest
-from jwt.exceptions import InvalidTokenError
+import io
+import time
 from unittest.mock import MagicMock, patch
+import uuid
+
+from jwt.exceptions import InvalidTokenError
+import pandas as pd
+import pytest
+
 from aws_portal.extensions import db
-from aws_portal.models import Api, JoinStudySubjectApi, SleepCategoryTypeEnum, SleepLog, SleepLogTypeEnum, StudySubject
+from aws_portal.models import Api, JoinStudySubjectApi, SleepCategoryTypeEnum, SleepLog, SleepLogTypeEnum, SleepLevelEnum, StudySubject
 
 
 @pytest.fixture
@@ -620,3 +625,63 @@ def test_delete_participant_exception_deleting_sleep_logs(app, delete_admin, stu
         mock_logger_error.assert_called_once()
         assert SleepLog.query.filter_by(
             study_subject_id=study_subject.id).count() == 1
+
+
+@patch("aws_portal.extensions.db.session.execute")
+@patch("aws_portal.models.Account.validate_ask", lambda *_: None)
+def test_download_fitbit_participant(mock_execute, get_admin):
+    mock_execute.return_value.all.return_value = [
+        {
+            "Ditti ID": "P123",
+            "Sleep Log Date": "2024-12-01",
+            "Sleep Level Timestamp": "2024-12-01T22:00:00",
+            "Sleep Level Level": SleepLevelEnum.light,
+            "Sleep Level Length (s)": 300,
+        }
+    ]
+
+    response = get_admin("/admin/fitbit_data/download/participant/P123?app=3")
+
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert "P123_Fitbit_" in response.headers["Content-Disposition"]
+
+    with io.BytesIO(response.data) as f:
+        df = pd.read_excel(f, sheet_name="Participant Data")
+        assert not df.empty
+        assert df["Ditti ID"].iloc[0] == "P123"
+        assert df["Sleep Log Date"].iloc[0] == "2024-12-01"
+        assert df["Sleep Level Timestamp"].iloc[0] == "2024-12-01T22:00:00"
+        assert df["Sleep Level Level"].iloc[0] == "light"
+        assert df["Sleep Level Length (s)"].iloc[0] == 300
+
+
+@patch("aws_portal.extensions.db.session.execute")
+@patch("aws_portal.models.Account.validate_ask", lambda *_: None)
+def test_download_fitbit_study(mock_execute, get_admin):
+    Return = namedtuple("Return", ["ditti_id", "acronym"])
+    mock_execute.return_value.first.return_value = Return(ditti_id="SA", acronym="STUDY1")
+    mock_execute.return_value.all.return_value = [
+        {
+            "Ditti ID": "SA23",
+            "Sleep Log Date": "2024-12-01",
+            "Sleep Level Timestamp": "2024-12-01T22:00:00",
+            "Sleep Level Level": SleepLevelEnum.deep,
+            "Sleep Level Length (s)": 600,
+        }
+    ]
+
+    response = get_admin("/admin/fitbit_data/download/study/1?app=3")
+
+    assert response.status_code == 200
+    assert response.headers["Content-Type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert "STUDY1_Fitbit_" in response.headers["Content-Disposition"]
+
+    with io.BytesIO(response.data) as f:
+        df = pd.read_excel(f, sheet_name="Participant Data")
+        assert not df.empty
+        assert df["Ditti ID"].iloc[0] == "SA23"
+        assert df["Sleep Log Date"].iloc[0] == "2024-12-01"
+        assert df["Sleep Level Timestamp"].iloc[0] == "2024-12-01T22:00:00"
+        assert df["Sleep Level Level"].iloc[0] == "deep"
+        assert df["Sleep Level Length (s)"].iloc[0] == 600
