@@ -10,8 +10,6 @@ class ParticipantApiModel(BaseModel):
 
     model_config = common_config
 
-    __original_obj__: Any = Field(init=False)
-
     @classmethod
     def model_validate(cls, obj):
         # obj is a JoinStudySubjectApi instance
@@ -32,8 +30,6 @@ class ParticipantStudyModel(BaseModel):
     data_summary: Optional[Any] = None
 
     model_config = common_config
-
-    __original_obj__: Any = Field(init=False)
 
     @classmethod
     def model_validate(cls, obj):
