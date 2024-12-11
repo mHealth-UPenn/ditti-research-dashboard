@@ -117,9 +117,10 @@ def get_fitbit_data_for_subject(ditti_id: str, start_date: date, end_date: date)
             SleepLog.type,
             SleepLevel.date_time.label("level_date_time"),
             SleepLevel.level.label("level_level"),
-            SleepLevel.seconds.label("level_seconds")
+            SleepLevel.seconds.label("level_seconds"),
+            SleepLevel.is_short  # Include is_short if available
         )
-        .join(SleepLevel, SleepLog.levels)
+        .outerjoin(SleepLevel, SleepLog.levels)
         .where(
             SleepLog.study_subject_id == study_subject.id,
             SleepLog.date_of_sleep >= start_date,

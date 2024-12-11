@@ -1,8 +1,92 @@
-from typing import List, Dict
 from collections import defaultdict
+from datetime import datetime
+from enum import Enum
+from typing import Any, List, Optional, Dict
+from pydantic import BaseModel, Field, ConfigDict
+import logging
+
+logger = logging.getLogger(__name__)
 
 
-def serialize_participant(study_subject):
+def to_camel(string: str) -> str:
+    """
+    Converts a snake_case string to camelCase.
+
+    Args:
+        string (str): The snake_case string to convert.
+
+    Returns:
+        str: The converted camelCase string.
+    """
+    parts = string.split("_")
+    return parts[0] + "".join(word.capitalize() for word in parts[1:])
+
+
+class BaseCamelModel(BaseModel):
+    """
+    Base Pydantic model with camelCase alias generator and enum value usage.
+    """
+    model_config = ConfigDict(
+        populate_by_name=True,
+        alias_generator=to_camel,
+        use_enum_values=True
+    )
+
+
+class SleepLogTypeEnum(str, Enum):
+    AUTO_DETECTED = "auto_detected"
+    MANUAL = "manual"
+
+
+class SleepCategoryTypeEnum(str, Enum):
+    STAGES = "stages"
+    CLASSIC = "classic"
+
+
+class SleepLevelEnum(str, Enum):
+    DEEP = "deep"
+    LIGHT = "light"
+    REM = "rem"
+    WAKE = "wake"
+    ASLEEP = "asleep"
+    RESTLESS = "restless"
+    AWAKE = "awake"
+
+
+class SleepLevelModel(BaseCamelModel):
+    """
+    Pydantic model representing a single sleep level entry within a sleep log.
+    """
+    dateTime: Optional[datetime] = Field(None)
+    level: Optional[SleepLevelEnum] = None
+    seconds: Optional[int] = None
+    isShort: Optional[bool] = Field(None)
+
+
+class SleepLogModel(BaseCamelModel):
+    """
+    Pydantic model representing a single sleep log entry for a study subject.
+    """
+    id: Optional[int] = None
+    logId: Optional[int] = None
+    dateOfSleep: Optional[datetime] = None
+    duration: Optional[int] = None
+    efficiency: Optional[int] = None
+    endTime: Optional[datetime] = None
+    infoCode: Optional[int] = None
+    isMainSleep: Optional[bool] = None
+    minutesAfterWakeup: Optional[int] = None
+    minutesAsleep: Optional[int] = None
+    minutesAwake: Optional[int] = None
+    minutesToFallAsleep: Optional[int] = None
+    logType: Optional[SleepLogTypeEnum] = None
+    startTime: Optional[datetime] = None
+    timeInBed: Optional[int] = None
+    type: Optional[SleepCategoryTypeEnum] = None
+    levels: List[SleepLevelModel] = Field(default_factory=list)
+
+
+def serialize_participant(study_subject) -> dict[str, Any]:
     """
     Transforms a StudySubject object into a JSON-serializable dictionary containing only the required fields.
 
@@ -41,67 +125,87 @@ def serialize_participant(study_subject):
     return participant_data
 
 
-def serialize_fitbit_data(results: List) -> List[Dict]:
+def serialize_fitbit_data(results: List[Any]) -> List[Dict[str, Any]]:
     """
-    Serializes Fitbit data from query results into a structured format.
+    Serializes Fitbit data from query results into a structured format using Pydantic models.
 
-    Parameters:
-        results (List): List of rows returned from the joined SleepLog and SleepLevel query.
+    This function processes a list of SQLAlchemy row objects resulting from a joined query
+    between SleepLog and SleepLevel tables. It groups sleep logs by their unique ID,
+    serializes each log and its associated levels, and handles missing or incomplete data gracefully.
+
+    Args:
+        results (List[Any]): List of SQLAlchemy row objects from the SleepLog and SleepLevel join query.
 
     Returns:
-        List[Dict]: A list of serialized sleep log data dictionaries.
+        List[Dict[str, Any]]: A list of serialized sleep log dictionaries ready for JSON response.
     """
-    sleep_logs_dict = defaultdict(lambda: {
-        "id": None,
-        "logId": None,
-        "dateOfSleep": None,
-        "duration": None,
-        "efficiency": None,
-        "endTime": None,
-        "infoCode": None,
-        "isMainSleep": None,
-        "minutesAfterWakeup": None,
-        "minutesAsleep": None,
-        "minutesAwake": None,
-        "minutesToFallAsleep": None,
-        "logType": None,
-        "startTime": None,
-        "timeInBed": None,
-        "type": None,
-        "levels": []
-    })
+    # Initialize defaultdict with a lambda to create SleepLogModel instances
+    sleep_logs_dict = defaultdict(lambda: SleepLogModel())
 
     for row in results:
-        log_id = row.sleep_log_id
+        log_id = getattr(row, "sleep_log_id", None)
+        if log_id is None:
+            logger.warning(f"Row missing 'sleep_log_id': {row}")
+            continue
+
+        # Retrieve or create the SleepLogModel instance
         sleep_log = sleep_logs_dict[log_id]
 
-        if sleep_log["id"] is None:
-            sleep_log.update({
+        # Populate SleepLogModel fields if not already set
+        if sleep_log.id is None:
+            sleep_log_data = {
                 "id": row.sleep_log_id,
                 "logId": row.log_id,
-                "dateOfSleep": row.date_of_sleep.isoformat(),
+                "dateOfSleep": row.date_of_sleep,
                 "duration": row.duration,
                 "efficiency": row.efficiency,
-                "endTime": row.end_time.isoformat() if row.end_time else None,
+                "endTime": row.end_time,
                 "infoCode": row.info_code,
                 "isMainSleep": row.is_main_sleep,
                 "minutesAfterWakeup": row.minutes_after_wakeup,
                 "minutesAsleep": row.minutes_asleep,
                 "minutesAwake": row.minutes_awake,
                 "minutesToFallAsleep": row.minutes_to_fall_asleep,
-                "logType": row.log_type.value if row.log_type else None,
-                "startTime": row.start_time.isoformat() if row.start_time else None,
+                "logType": row.log_type,
+                "startTime": row.start_time,
                 "timeInBed": row.time_in_bed,
-                "type": row.type.value if row.type else None,
-                "levels": []
-            })
+                "type": row.type
+            }
 
-        sleep_log["levels"].append({
-            "dateTime": row.level_date_time.isoformat(),
-            "level": row.level_level.value if row.level_level else None,
-            "seconds": row.level_seconds
-        })
+            try:
+                # Initialize SleepLogModel with the extracted data
+                sleep_log = SleepLogModel(**sleep_log_data)
+                sleep_logs_dict[log_id] = sleep_log
+            except Exception as e:
+                logger.error(
+                    f"Error creating SleepLogModel for log_id {log_id}: {e}"
+                )
+                continue
 
-    serialized_data = list(sleep_logs_dict.values())
+        # Extract SleepLevel data
+        level_date_time = getattr(row, "level_date_time", None)
+        level_level = getattr(row, "level_level", None)
+        level_seconds = getattr(row, "level_seconds", None)
+        is_short = getattr(row, "is_short", None)
+
+        if any([level_date_time, level_level, level_seconds, is_short]):
+            try:
+                sleep_level = SleepLevelModel(
+                    dateTime=level_date_time,  # Pydantic handles datetime serialization
+                    level=level_level,         # Enum handled by Pydantic's use_enum_values
+                    seconds=level_seconds,
+                    isShort=is_short,
+                )
+                sleep_log.levels.append(sleep_level)
+            except Exception as e:
+                logger.error(
+                    f"Error processing SleepLevel for log_id {log_id}: {e}"
+                )
+
+    # Serialize all SleepLogModel instances to dictionaries
+    serialized_data = [
+        sleep_log.model_dump(by_alias=True, exclude_unset=True)
+        for sleep_log in sleep_logs_dict.values()
+    ]
 
     return serialized_data
