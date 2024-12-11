@@ -8,7 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def to_camel(string: str) -> str:
+def to_camel(string) -> str:
     """
     Converts a snake_case string to camelCase.
 
@@ -125,7 +125,7 @@ def serialize_participant(study_subject) -> dict[str, Any]:
     return participant_data
 
 
-def serialize_fitbit_data(results: List[Any]) -> List[Dict[str, Any]]:
+def serialize_fitbit_data(results) -> List[Dict[str, Any]]:
     """
     Serializes Fitbit data from query results into a structured format using Pydantic models.
 
