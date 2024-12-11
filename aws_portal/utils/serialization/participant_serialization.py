@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any, List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+from aws_portal.models import JoinStudySubjectApi, JoinStudySubjectStudy, StudySubject
 from .serialization_common import common_config
 
 
@@ -10,16 +11,18 @@ class ParticipantApiModel(BaseModel):
 
     model_config = common_config
 
-    @classmethod
-    def model_validate(cls, obj):
-        # obj is a JoinStudySubjectApi instance
-        model = super().model_validate(obj)
-
-        # Construct the api_name from the related Api object
-        return cls.model_construct(
-            **model.__dict__,
-            api_name=obj.api.name
-        )
+    @model_validator(mode="before")
+    def extract_api_name(cls, obj):
+        """
+        Transforms a JoinStudySubjectApi ORM instance into a dict
+        with the required fields for ParticipantApiModel.
+        """
+        if isinstance(obj, JoinStudySubjectApi):
+            return {
+                "scope": obj.scope,
+                "api_name": obj.api.name if obj.api else None
+            }
+        return obj
 
 
 class ParticipantStudyModel(BaseModel):
@@ -31,17 +34,21 @@ class ParticipantStudyModel(BaseModel):
 
     model_config = common_config
 
-    @classmethod
-    def model_validate(cls, obj):
-        # obj is a JoinStudySubjectStudy instance
-        study = obj.study
-        return cls.model_construct(
-            study_name=study.name,
-            study_id=study.id,
-            created_on=obj.created_on,
-            expires_on=obj.expires_on,
-            data_summary=getattr(study, "data_summary", None)
-        )
+    @model_validator(mode="before")
+    def extract_study_fields(cls, obj):
+        """
+        Transforms a JoinStudySubjectStudy ORM instance into a dict
+        with the required fields for ParticipantStudyModel.
+        """
+        if isinstance(obj, JoinStudySubjectStudy):
+            return {
+                "study_name": obj.study.name,
+                "study_id": obj.study.id,
+                "created_on": obj.created_on,
+                "expires_on": obj.expires_on,
+                "data_summary": getattr(obj.study, "data_summary", None)
+            }
+        return obj
 
 
 class ParticipantModel(BaseModel):
@@ -52,25 +59,20 @@ class ParticipantModel(BaseModel):
 
     model_config = common_config
 
-    @classmethod
-    def model_validate(cls, obj):
-        # obj is a StudySubject instance
-        apis_list = []
-        for api in obj.apis:
-            validated_api = ParticipantApiModel.model_validate(api)
-            apis_list.append(validated_api)
-
-        studies_list = []
-        for study in obj.studies:
-            validated_study = ParticipantStudyModel.model_validate(study)
-            studies_list.append(validated_study)
-
-        return cls.model_construct(
-            dittiId=obj.ditti_id,
-            userId=obj.id,
-            apis=apis_list,
-            studies=studies_list
-        )
+    @model_validator(mode="before")
+    def extract_participant_fields(cls, obj):
+        """
+        Transforms a StudySubject ORM instance into a dict
+        with the required fields for ParticipantModel.
+        """
+        if isinstance(obj, StudySubject):
+            return {
+                "dittiId": obj.ditti_id,
+                "userId": obj.id,
+                "apis": obj.apis,
+                "studies": obj.studies
+            }
+        return obj
 
 
 def serialize_participant(study_subject) -> dict[str, Any]:

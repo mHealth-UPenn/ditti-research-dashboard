@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, List, Optional
-from pydantic import BaseModel, Field
-from aws_portal.models import SleepCategoryTypeEnum, SleepLevelEnum, SleepLogTypeEnum
+from pydantic import BaseModel, Field, model_validator
+from aws_portal.models import SleepCategoryTypeEnum, SleepLevel, SleepLevelEnum, SleepLog, SleepLogTypeEnum
 from .serialization_common import common_config
 
 
@@ -12,6 +12,21 @@ class SleepLevelModel(BaseModel):
     is_short: Optional[bool] = None
 
     model_config = common_config
+
+    @model_validator(mode="before")
+    def extract_sleep_level(cls, obj):
+        """
+        Transforms a SleepLevel ORM instance into a dict
+        with the required fields for SleepLevelModel.
+        """
+        if isinstance(obj, SleepLevel):
+            return {
+                "date_time": obj.date_time,
+                "level": obj.level,
+                "seconds": obj.seconds,
+                "is_short": obj.is_short
+            }
+        return obj
 
 
 class SleepLogModel(BaseModel):
@@ -35,20 +50,33 @@ class SleepLogModel(BaseModel):
 
     model_config = common_config
 
-    @classmethod
-    def model_validate(cls, obj):
-        # Validate the base model
-        model = super().model_validate(obj)
-
-        # Parse levels from the ORM object
-        levels_models = [SleepLevelModel.model_validate(lvl)
-                         for lvl in obj.levels]
-
-        # Construct the model with parsed levels
-        return cls.model_construct(
-            **model.__dict__,
-            levels=levels_models
-        )
+    @model_validator(mode="before")
+    def extract_sleep_log(cls, obj):
+        """
+        Transforms a SleepLog ORM instance into a dict
+        with the required fields for SleepLogModel.
+        """
+        if isinstance(obj, SleepLog):
+            return {
+                "id": obj.id,
+                "log_id": obj.log_id,
+                "date_of_sleep": obj.date_of_sleep,
+                "duration": obj.duration,
+                "efficiency": obj.efficiency,
+                "end_time": obj.end_time,
+                "info_code": obj.info_code,
+                "is_main_sleep": obj.is_main_sleep,
+                "minutes_after_wakeup": obj.minutes_after_wakeup,
+                "minutes_asleep": obj.minutes_asleep,
+                "minutes_awake": obj.minutes_awake,
+                "minutes_to_fall_asleep": obj.minutes_to_fall_asleep,
+                "log_type": obj.log_type,
+                "start_time": obj.start_time,
+                "time_in_bed": obj.time_in_bed,
+                "type": obj.type,
+                "levels": obj.levels
+            }
+        return obj
 
 
 def serialize_fitbit_data(sleep_logs: List[Any]) -> List[dict[str, Any]]:

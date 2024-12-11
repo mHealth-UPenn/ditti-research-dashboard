@@ -26,6 +26,7 @@ def get_participant(ditti_id: str):
     """
     try:
         # Retrieve the StudySubject by ditti_id
+        # TODO: Unclear if this will work because of lazy loading
         study_subject = StudySubject.query.filter_by(
             ditti_id=ditti_id, is_archived=False
         ).first()
