@@ -14,6 +14,5 @@ common_config = ConfigDict(
     extra="forbid",  # Disallow extra fields
     alias_generator=to_camel,
     populate_by_name=True,
-    use_enum_values=True,
-    exclude_none=True
+    use_enum_values=True
 )
