@@ -209,9 +209,12 @@ def download_fitbit_participant(ditti_id: str):
         # Execute the query and fetch the results
         results = db.session.execute(stmt).all()
 
+        if len(results) == 0:
+            return make_response({"msg": f"Participant with Ditti ID {ditti_id} not found."}, 200)
+
     except Exception:
         logger.error(traceback.format_exc())
-        return make_response("Internal server error when querying database.", 500)
+        return make_response({"msg": "Internal server error when querying database."}, 500)
 
     try:
         # Convert the results to a Pandas DataFrame
@@ -273,6 +276,10 @@ def download_fitbit_study(study_id: int):
         )
 
         result = db.session.execute(stmt).first()
+
+        if result is None:
+            return make_response({"msg": f"Study with ID {study_id} not found."}, 200)
+
         ditti_prefix = result.ditti_id
         acronym = result.acronym
 
@@ -294,7 +301,7 @@ def download_fitbit_study(study_id: int):
 
     except Exception:
         logger.error(traceback.format_exc())
-        return make_response("Internal server error when querying database.", 500)
+        return make_response({"msg": "Internal server error when querying database."}, 500)
 
     try:
         # Convert the results to a Pandas DataFrame

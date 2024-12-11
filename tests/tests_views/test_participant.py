@@ -656,6 +656,14 @@ def test_download_fitbit_participant(mock_execute, get_admin):
         assert df["Sleep Level Length (s)"].iloc[0] == 300
 
 
+@patch("aws_portal.models.Account.validate_ask", lambda *_: None)
+def test_download_fitbit_participant_nonexistent(get_admin):
+    # Try querying for a non-existent Ditti ID
+    response = get_admin("/admin/fitbit_data/download/participant/nonexistent?app=3")
+    assert response.status_code == 200
+    assert response.get_json() == {"msg": "Participant with Ditti ID nonexistent not found."}
+
+
 @patch("aws_portal.extensions.db.session.execute")
 @patch("aws_portal.models.Account.validate_ask", lambda *_: None)
 def test_download_fitbit_study(mock_execute, get_admin):
@@ -685,3 +693,19 @@ def test_download_fitbit_study(mock_execute, get_admin):
         assert df["Sleep Level Timestamp"].iloc[0] == "2024-12-01T22:00:00"
         assert df["Sleep Level Level"].iloc[0] == "deep"
         assert df["Sleep Level Length (s)"].iloc[0] == 600
+
+
+@patch("aws_portal.models.Account.validate_ask", lambda *_: None)
+def test_download_fitbit_study_nonexistent(get_admin):
+    # Try querying for a non-existent study ID
+    response = get_admin("/admin/fitbit_data/download/study/0?app=3")
+
+    assert response.status_code == 200
+    assert response.get_json() == {"msg": f"Study with ID 0 not found."}
+
+
+@patch("aws_portal.models.Account.validate_ask", lambda *_: None)
+def test_download_fitbit_study_string(get_admin):
+    # Try querying for using a string as the study ID
+    response = get_admin("/admin/fitbit_data/download/study/abc?app=3")
+    assert response.status_code == 404
