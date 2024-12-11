@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Any, List, Optional
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, field_serializer
 from aws_portal.models import SleepCategoryTypeEnum, SleepLevel, SleepLevelEnum, SleepLog, SleepLogTypeEnum
 from .serialization_common import common_config
 
@@ -28,11 +28,15 @@ class SleepLevelModel(BaseModel):
             }
         return obj
 
+    @field_serializer("date_time", mode="plain")
+    def serialize_date_time(value: datetime) -> str:
+        return value.isoformat()
+
 
 class SleepLogModel(BaseModel):
     id: int
     log_id: int
-    date_of_sleep: datetime
+    date_of_sleep: date
     duration: Optional[int] = None
     efficiency: Optional[int] = None
     end_time: Optional[datetime] = None
@@ -77,6 +81,14 @@ class SleepLogModel(BaseModel):
                 "levels": obj.levels
             }
         return obj
+
+    @field_serializer("date_of_sleep", mode="plain")
+    def serialize_date_of_sleep(value: date) -> str:
+        return value.isoformat()
+
+    @field_serializer("start_time", "end_time", mode="plain")
+    def serialize_datetimes(value: Optional[datetime]) -> Optional[str]:
+        return value.isoformat() if value else None
 
 
 def serialize_fitbit_data(sleep_logs: List[Any]) -> List[dict[str, Any]]:
