@@ -1,5 +1,6 @@
 NOCACHE=0
 DEBUG=0
+STAGING=0
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
@@ -10,6 +11,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --debug)
             DEBUG=1
+            shift
+            ;;
+        --staging)
+            STAGING=1
             shift
             ;;
         -*|--*)
@@ -31,9 +36,17 @@ if [ $? -ne 0 ]; then
 fi
 rm -rf shared
 
-export $(cat .env | xargs)
-
-if [ $DEBUG -eq 1 ]; then
+if [ "$STAGING" -eq 1 ]; then
+    docker run --rm \
+        --platform linux/amd64 \
+        --name wearable-data-retrieval-test \
+        --network aws-network \
+        -p 9000:8080 \
+        --env-file .env \
+        -e DEBUG=true \
+        -e STAGING=true \
+        wearable-data-retrieval:test
+elif [ "$DEBUG" -eq 1 ]; then
     docker run --rm \
         --platform linux/amd64 \
         --name wearable-data-retrieval-test \

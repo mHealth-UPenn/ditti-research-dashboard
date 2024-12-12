@@ -799,9 +799,6 @@ def init_integration_testing_db():
     for join in study_subject_apis:
         JoinStudySubjectApi(**join)
 
-    # Create lambda task for testing lambda functions
-    db.session.add(LambdaTask(status="Pending"))
-
     db.session.commit()
 
 

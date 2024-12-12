@@ -1,12 +1,13 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, UTC
 import json
 import logging
-import threading
 import traceback
 
 import boto3
 from flask import current_app
 import requests
+from sqlalchemy import or_
 
 from aws_portal.extensions import db
 from aws_portal.models import LambdaTask
@@ -47,9 +48,18 @@ def check_and_invoke_lambda_task():
     Checks if a LambdaTask has been run today. If not, invokes a new Lambda task.
     """
     try:
-        # Get the latest LambdaTask
-        latest_task = LambdaTask.query.order_by(
-            LambdaTask.created_on.desc()).first()
+        # Get the latest completed or in progress lambda function
+        latest_task = LambdaTask.query\
+            .filter(
+                or_(
+                    LambdaTask.status == "InProgress",
+                    LambdaTask.status == "Success",
+                    LambdaTask.status == "CompletedWithErrors"
+                )
+            )\
+            .order_by(
+                LambdaTask.created_on.desc()
+            ).first()
         now = datetime.now(UTC)
         # TODO: Update with finalized retrieval schedule
         if latest_task:
@@ -89,9 +99,6 @@ def invoke_lambda_task(function_id):
         LambdaTask: The LambdaTask object stored in the database.
     """
     try:
-        print("Here")
-        print(current_app.config.get("LAMBDA_FUNCTION_NAME"))
-        print(current_app.config.get("ENV"))
         if current_app.config["ENV"] in {"staging", "production", "testing"}:
             client = boto3.client("lambda")
 
@@ -121,18 +128,14 @@ def invoke_lambda_task(function_id):
             # In development and testing environments send an async invocation to the local lambda endpoint
             def send_request(url, data):
                 try:
-                    requests.post(url, json=data, timeout=5)
+                    requests.post(url, json=data)
                 except requests.RequestException as e:
                     logger.error(f"Lambda invocation failed: {e}")
 
             url = current_app.config["LOCAL_LAMBDA_ENDPOINT"]
             data = {"function_id": function_id}
-            thread = threading.Thread(
-                target=send_request,
-                args=(url, data),
-                daemon=True
-            )
-            thread.start()
+            executor = ThreadPoolExecutor()
+            executor.submit(send_request, url, data)
 
         # Update the task status to 'InProgress'
         lambda_task = LambdaTask.query.get(function_id)
