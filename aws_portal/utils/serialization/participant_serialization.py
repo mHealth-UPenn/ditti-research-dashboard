@@ -1,8 +1,13 @@
+from pydantic import ValidationError
+from typing import Any, Dict, Optional
+import logging
 from datetime import datetime
 from typing import Any, List, Optional
-from pydantic import BaseModel, Field, model_validator, field_serializer
+from pydantic import BaseModel, Field, field_serializer, model_validator
 from aws_portal.models import JoinStudySubjectApi, JoinStudySubjectStudy, StudySubject
 from .serialization_common import common_config
+
+logger = logging.getLogger(__name__)
 
 
 class ParticipantApiModel(BaseModel):
@@ -36,10 +41,6 @@ class ParticipantStudyModel(BaseModel):
 
     @model_validator(mode="before")
     def extract_study_fields(cls, obj):
-        """
-        Transforms a JoinStudySubjectStudy ORM instance into a dict
-        with the required fields for ParticipantStudyModel.
-        """
         if isinstance(obj, JoinStudySubjectStudy):
             return {
                 "study_name": obj.study.name,
@@ -56,29 +57,43 @@ class ParticipantStudyModel(BaseModel):
 
 
 class ParticipantModel(BaseModel):
-    dittiId: str
-    userId: int
+    ditti_id: str
     apis: List[ParticipantApiModel] = Field(default_factory=list)
     studies: List[ParticipantStudyModel] = Field(default_factory=list)
 
     model_config = common_config
 
-    @model_validator(mode="before")
-    def extract_participant_fields(cls, obj):
-        """
-        Transforms a StudySubject ORM instance into a dict
-        with the required fields for ParticipantModel.
-        """
-        if isinstance(obj, StudySubject):
-            return {
-                "dittiId": obj.ditti_id,
-                "userId": obj.id,
-                "apis": obj.apis,
-                "studies": obj.studies
-            }
-        return obj
 
+def serialize_participant(study_subject: StudySubject) -> Optional[Dict[str, Any]]:
+    """
+    Serializes a StudySubject ORM instance into a dictionary suitable for JSON responses.
 
-def serialize_participant(study_subject) -> dict[str, Any]:
-    participant_model = ParticipantModel.model_validate(study_subject)
-    return participant_model.model_dump(by_alias=True, exclude_unset=True)
+    Args:
+        study_subject (StudySubject): The study subject to serialize.
+
+    Returns:
+        Optional[Dict[str, Any]]: The serialized participant data if successful, otherwise None.
+    """
+    try:
+        participant_model = ParticipantModel.model_validate(study_subject)
+        serialized_data = participant_model.model_dump(
+            by_alias=True,
+            exclude_unset=True,
+            exclude_none=True
+        )
+
+        return serialized_data
+
+    except ValidationError as ve:
+        logger.error(
+            f"Validation error in ParticipantModel for StudySubject {
+                study_subject.ditti_id}: {ve}"
+        )
+        return None
+
+    except Exception as e:
+        logger.error(
+            f"Unexpected error during serialization of StudySubject {
+                study_subject.ditti_id}: {e}"
+        )
+        return None
