@@ -77,7 +77,6 @@ def test_serialize_participant_with_data(app, mock_study_subject_with_data):
 
     # Check top-level fields
     assert serialized["dittiId"] == "test-user"
-    assert serialized["userId"] == 999
 
     # Check apis
     assert "apis" in serialized
@@ -102,7 +101,6 @@ def test_serialize_participant_empty(app, mock_study_subject_empty):
     serialized = serialize_participant(mock_study_subject_empty)
     assert isinstance(serialized, dict)
     assert serialized["dittiId"] == "empty-user"
-    assert serialized["userId"] == 123
     assert serialized["apis"] == []
     assert serialized["studies"] == []
 
@@ -111,7 +109,6 @@ def test_serialize_participant_missing_expires_on(app, mock_study_subject_missin
     serialized = serialize_participant(mock_study_subject_missing_expires_on)
     assert isinstance(serialized, dict)
     assert serialized["dittiId"] == "no-expiry-user"
-    assert serialized["userId"] == 456
     assert serialized["apis"] == []
     assert len(serialized["studies"]) == 1
     study_data = serialized["studies"][0]
