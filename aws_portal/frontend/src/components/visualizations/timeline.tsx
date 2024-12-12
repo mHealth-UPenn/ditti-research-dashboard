@@ -11,6 +11,7 @@ type GroupData = {
   start: number;
   stop?: number;
   label?: string;
+  strokeDashArray?: string;
 };
 
 interface TimelineProps extends IVisualizationProps {
@@ -82,10 +83,6 @@ const Timeline: React.FC<TimelineProps> = ({
 
   const handleMouseLeave = useCallback(hideTooltip, [hideTooltip]);
 
-  // if (groups.length) {
-  //   console.log(new Date(groups[0].start), new Date(groups[0].stop!))
-  //   console.log(new Date(start), new Date(stop))
-  // }
   const visualizations = groups
     .filter(group =>
       (start <= group.start && group.start <= stop)
@@ -111,9 +108,18 @@ const Timeline: React.FC<TimelineProps> = ({
       if (group.stop) {
         return (
           <React.Fragment key={i}>
-            {!hideStops && group.start >= start && <circle cx={startX} cy={y} r={5} fill={color} />}
-            <Line from={{ x: startX, y }} to={{ x: stopX, y }} stroke={color} strokeWidth={strokeWidth} strokeDasharray={strokeDashArray} />
-            {!hideStops && stop >= group.stop && <circle cx={stopX} cy={y} r={5} fill={color} />}
+            {!hideStops && group.start >= start &&
+              <circle cx={startX} cy={y} r={5} fill={color} />
+            }
+            <Line
+              from={{ x: startX, y }}
+              to={{ x: stopX, y }}
+              stroke={color}
+              strokeWidth={strokeWidth}
+              strokeDasharray={group.strokeDashArray || strokeDashArray} />
+            {!hideStops && stop >= group.stop &&
+              <circle cx={stopX} cy={y} r={5} fill={color} />
+            }
             {tooltipRect}
           </React.Fragment>
         );

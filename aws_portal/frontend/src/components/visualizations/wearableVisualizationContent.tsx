@@ -1,7 +1,7 @@
 import colors from "../../colors";
 import { useVisualizationContext } from "../../contexts/visualizationContext";
 import { useWearableData } from "../../contexts/wearableDataContext";
-import { ISleepLevelClassic, ISleepLevelStages, IVisualizationProps } from "../../interfaces";
+import { ISleepLevelClassic, ISleepLevelStages, ISleepLog, IVisualizationProps } from "../../interfaces";
 import Timeline from "./timeline";
 import { AxisTop } from "@visx/axis";
 import { GridColumns } from '@visx/grid';
@@ -22,9 +22,9 @@ const getTime = (date: Date) => {
   );
 }
 
-
-type ILevelGroupsStages = Record<ISleepLevelStages, { start: number; stop: number; }[]>;
-type ILevelGroupsClassic = Record<ISleepLevelClassic, { start: number; stop: number; }[]>;
+interface IGroup { start: number; stop: number; strokeDashArray: string; }
+type ILevelGroupsStages = Record<ISleepLevelStages, IGroup[]>;
+type ILevelGroupsClassic = Record<ISleepLevelClassic, IGroup[]>;
 
 
 const WearableVisualizationContent = ({
@@ -53,54 +53,71 @@ const WearableVisualizationContent = ({
     return <></>;
   }
 
-  const visualizations = sleepLogs.map((sl, i) => {
-    const groups: { start: number; stop: number; }[][] = [];
-    const dateOfSleep = new Date(sl.dateOfSleep);
-  
-    if (sl.type === "stages") {
-      const levelGroups: ILevelGroupsStages = {
-        wake: [],
-        rem: [],
-        light: [],
-        deep: [],
-      };
-
-      sl.levels.forEach(l => {
-        const dateTime = new Date(l.dateTime);
-
-        levelGroups[l.level as ISleepLevelStages].push({
-          start: dateTime.getTime(),
-          stop: dateTime.getTime() + l.seconds * 1000,
-        })
-      });
-
-      groups[0] = levelGroups["wake"];
-      groups[1] = levelGroups["rem"];
-      groups[2] = levelGroups["light"];
-      groups[3] = levelGroups["deep"];
+  // Group sleep logs by date to handle cases where there are more than one on a day
+  const days: { [key: string]: ISleepLog[] } = {};
+  sleepLogs.forEach(sl => {
+    if (sl.dateOfSleep in days) {
+      days[sl.dateOfSleep].push(sl);
     } else {
-      const levelGroups: ILevelGroupsClassic = {
-        awake: [],
-        restless: [],
-        asleep: [],
-      };
-
-      sl.levels.forEach(l => {
-        const dateTime = new Date(l.dateTime);
-
-        levelGroups[l.level as ISleepLevelClassic].push({
-          start: dateTime.getTime(),
-          stop: dateTime.getTime() + l.seconds * 1000,
-        })
-      });
-
-      groups[0] = levelGroups["awake"];
-      groups[1] = [];
-      groups[2] = levelGroups["restless"];
-      groups[3] = levelGroups["asleep"];
+      days[sl.dateOfSleep] = [sl];
     }
+  });
 
-    const title = getWeekday(dateOfSleep);
+  const visualizations = Object.values(days).map((sleepLogs, i) => {
+    const row1: IGroup[] = [];  // awake
+    const row2: IGroup[] = [];  // rem (if available)
+    const row3: IGroup[] = [];  // light or restless
+    const row4: IGroup[] = [];  // deep or asleep
+
+    sleepLogs.forEach(sl => {
+      const dateOfSleep = new Date(sl.dateOfSleep);
+    
+      if (sl.type === "stages") {
+        const levelGroups: ILevelGroupsStages = {
+          wake: [],
+          rem: [],
+          light: [],
+          deep: [],
+        };
+
+        sl.levels.forEach(l => {
+          const dateTime = new Date(l.dateTime);
+
+          levelGroups[l.level as ISleepLevelStages].push({
+            start: dateTime.getTime(),
+            stop: dateTime.getTime() + l.seconds * 1000,
+            strokeDashArray: "",
+          })
+        });
+
+        row1.push(...levelGroups.wake);
+        row2.push(...levelGroups.rem);
+        row3.push(...levelGroups.light);
+        row4.push(...levelGroups.deep);
+      } else {
+        const levelGroups: ILevelGroupsClassic = {
+          awake: [],
+          restless: [],
+          asleep: [],
+        };
+
+        sl.levels.forEach(l => {
+          const dateTime = new Date(l.dateTime);
+
+          levelGroups[l.level as ISleepLevelClassic].push({
+            start: dateTime.getTime(),
+            stop: dateTime.getTime() + l.seconds * 1000,
+            strokeDashArray: "1,1",
+          })
+        });
+
+        row1.push(...levelGroups.awake);
+        row3.push(...levelGroups.restless);
+        row4.push(...levelGroups.asleep);
+      }
+    });
+
+    const title = getWeekday(new Date(sleepLogs[0].dateOfSleep));
     const offset = (i + 1 - Math.max(7, sleepLogs.length)) * 24 * 60 * 60 * 1000;
 
     return (
@@ -117,45 +134,41 @@ const WearableVisualizationContent = ({
               numTicks={window.screen.width > 600 ? 10 : 5} />
           </svg>
           <Timeline
-            groups={groups[0]}
+            groups={row1}
             hideAxis={true}
             hideTicks={true}
             hideStops={true}
             strokeWidth={16}
             color={colors.wearableWake}
             axisColor={colors.light}
-            xScaleOffset={offset}
-            strokeDashArray={sl.type === "classic" ? "1,1" : ""} />
+            xScaleOffset={offset} />
           <Timeline
-            groups={groups[1]}
+            groups={row2}
             hideAxis={true}
             hideTicks={true}
             hideStops={true}
             strokeWidth={16}
             color={colors.wearableRem}
             axisColor={colors.light}
-            xScaleOffset={offset}
-            strokeDashArray={sl.type === "classic" ? "1,1" : ""} />
+            xScaleOffset={offset} />
           <Timeline
-            groups={groups[2]}
+            groups={row3}
             hideAxis={true}
             hideTicks={true}
             hideStops={true}
             strokeWidth={16}
             color={colors.wearableLight}
             axisColor={colors.light}
-            xScaleOffset={offset}
-            strokeDashArray={sl.type === "classic" ? "1,1" : ""} />
+            xScaleOffset={offset} />
           <Timeline
-            groups={groups[3]}
+            groups={row4}
             hideAxis={true}
             hideTicks={true}
             hideStops={true}
             strokeWidth={16}
             color={colors.wearableDeep}
             axisColor={colors.wearableDeep}
-            xScaleOffset={offset}
-            strokeDashArray={sl.type === "classic" ? "1,1" : ""} />
+            xScaleOffset={offset} />
           <svg className="absolute top-0" width={width} height={80}>
             <Brush
               xScale={xScale}

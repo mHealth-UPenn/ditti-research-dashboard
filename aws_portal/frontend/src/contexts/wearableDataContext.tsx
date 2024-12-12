@@ -48,7 +48,7 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
             else if (a.dateOfSleep < b.dateOfSleep) return -1;
             else return 0;
           })
-          console.log(data)
+
           setSleepLogs(data);
         } else if (dataFactory) {
           await dataFactory.init();
