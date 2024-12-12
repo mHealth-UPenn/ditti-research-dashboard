@@ -368,15 +368,15 @@ export type ISleepLevelStages = "deep" | "light" | "rem" | "wake";
 export type ISleepLevelClassic = "asleep" | "restless" | "awake";
 
 export interface ISleepLevel {
-  dateTime: Date;
+  dateTime: string;
   level: ISleepLevelStages | ISleepLevelClassic;
   seconds: number;
   isShort: boolean | null;
 }
 
 export interface ISleepLog {
-  dateOfSleep: Date;
-  startTime: Date;
+  dateOfSleep: string;
+  logType: "auto_detected" | "manual";
   type: "stages" | "classic";
   levels: ISleepLevel[];
 }

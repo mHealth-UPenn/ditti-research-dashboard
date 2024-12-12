@@ -53,8 +53,9 @@ const WearableVisualizationContent = ({
     return <></>;
   }
 
-  const visualizations = sleepLogs.slice(0, 7).map((sl, i) => {
+  const visualizations = sleepLogs.map((sl, i) => {
     const groups: { start: number; stop: number; }[][] = [];
+    const dateOfSleep = new Date(sl.dateOfSleep);
   
     if (sl.type === "stages") {
       const levelGroups: ILevelGroupsStages = {
@@ -65,9 +66,11 @@ const WearableVisualizationContent = ({
       };
 
       sl.levels.forEach(l => {
+        const dateTime = new Date(l.dateTime);
+
         levelGroups[l.level as ISleepLevelStages].push({
-          start: l.dateTime.getTime(),
-          stop: l.dateTime.getTime() + l.seconds * 1000,
+          start: dateTime.getTime(),
+          stop: dateTime.getTime() + l.seconds * 1000,
         })
       });
 
@@ -83,9 +86,11 @@ const WearableVisualizationContent = ({
       };
 
       sl.levels.forEach(l => {
+        const dateTime = new Date(l.dateTime);
+
         levelGroups[l.level as ISleepLevelClassic].push({
-          start: l.dateTime.getTime(),
-          stop: l.dateTime.getTime() + l.seconds * 1000,
+          start: dateTime.getTime(),
+          stop: dateTime.getTime() + l.seconds * 1000,
         })
       });
 
@@ -95,7 +100,7 @@ const WearableVisualizationContent = ({
       groups[3] = levelGroups["asleep"];
     }
 
-    const title = getWeekday(sl.dateOfSleep);
+    const title = getWeekday(dateOfSleep);
     const offset = (i + 1 - Math.max(7, sleepLogs.length)) * 24 * 60 * 60 * 1000;
 
     return (

@@ -67,7 +67,6 @@ const TimestampHistogram = ({
   } = useVisualizationContext();
   // Guard against null xScale
   if (!xScale) return <></>;
-  timezones?.forEach(tz => console.log(new Date(tz.time), tz.name))
 
   const margin = {
     top: marginTop !== undefined ? marginTop : defaultMargin.top,

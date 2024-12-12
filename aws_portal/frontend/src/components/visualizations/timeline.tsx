@@ -82,6 +82,10 @@ const Timeline: React.FC<TimelineProps> = ({
 
   const handleMouseLeave = useCallback(hideTooltip, [hideTooltip]);
 
+  // if (groups.length) {
+  //   console.log(new Date(groups[0].start), new Date(groups[0].stop!))
+  //   console.log(new Date(start), new Date(stop))
+  // }
   const visualizations = groups
     .filter(group =>
       (start <= group.start && group.start <= stop)

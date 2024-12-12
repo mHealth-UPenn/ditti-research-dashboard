@@ -177,8 +177,8 @@ const generateSleepLogs = (): ISleepLog[] => {
     startTime.setDate(dateOffset)
 
     const sleepLog: ISleepLog = {
-      dateOfSleep: dateOfSleep,
-      startTime: startTime,
+      dateOfSleep: dateOfSleep.toISOString(),
+      logType: "auto_detected",
       type: i === classicDay ? "classic" : "stages",
       levels: [],
     };
@@ -192,11 +192,11 @@ const generateSleepLogs = (): ISleepLog[] => {
       // Random between 5 and 30 minutes
       const seconds = Math.floor(Math.random() * (30 * 60 - 5 * 60)) + 5 * 60;
       const dateTime = previousLevel
-        ? new Date(previousLevel.dateTime.getTime() + previousLevel.seconds * 1000)
+        ? new Date(new Date(previousLevel.dateTime).getTime() + previousLevel.seconds * 1000)
         : startTime;
 
       const level: ISleepLevel = {
-        dateTime,
+        dateTime: dateTime.toISOString(),
         seconds,
         isShort: null,
         level: i === classicDay
