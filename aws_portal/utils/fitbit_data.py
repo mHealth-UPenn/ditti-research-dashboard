@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from typing import List, Optional, Tuple
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload, load_only
 from aws_portal.extensions import db
 from aws_portal.models import SleepLevel, SleepLog, StudySubject
 from aws_portal.utils.serialization import serialize_fitbit_data
@@ -97,39 +98,31 @@ def get_fitbit_data_for_subject(ditti_id: str, start_date: date, end_date: date)
         return None
 
     stmt = (
-        # TODO: Select only what is necessary from SleepLog
-        select(
-            SleepLog.id.label("sleep_log_id"),
-            SleepLog.log_id,
-            SleepLog.date_of_sleep,
-            SleepLog.duration,
-            SleepLog.efficiency,
-            SleepLog.end_time,
-            SleepLog.info_code,
-            SleepLog.is_main_sleep,
-            SleepLog.minutes_after_wakeup,
-            SleepLog.minutes_asleep,
-            SleepLog.minutes_awake,
-            SleepLog.minutes_to_fall_asleep,
-            SleepLog.log_type,
-            SleepLog.start_time,
-            SleepLog.time_in_bed,
-            SleepLog.type,
-            SleepLevel.date_time.label("level_date_time"),
-            SleepLevel.level.label("level_level"),
-            SleepLevel.seconds.label("level_seconds"),
-            SleepLevel.is_short  # Include is_short if available
+        select(SleepLog)
+        .options(
+            load_only(
+                SleepLog.date_of_sleep,
+                SleepLog.log_type,
+                SleepLog.type
+            ),
+            selectinload(SleepLog.levels).options(
+                load_only(
+                    SleepLevel.date_time,
+                    SleepLevel.level,
+                    SleepLevel.seconds,
+                    SleepLevel.is_short
+                )
+            )
         )
-        .outerjoin(SleepLevel, SleepLog.levels)
         .where(
             SleepLog.study_subject_id == study_subject.id,
             SleepLog.date_of_sleep >= start_date,
             SleepLog.date_of_sleep <= end_date
         )
-        .order_by(SleepLog.id, SleepLevel.date_time)
+        .order_by(SleepLog.id)
     )
 
-    results = db.session.execute(stmt).all()
+    results = db.session.execute(stmt).unique().scalars().all()
 
     serialized_data = serialize_fitbit_data(results)
 
