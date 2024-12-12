@@ -830,7 +830,8 @@ def init_study_subject(ditti_id):
     JoinStudySubjectStudy(
         study_subject=study_subject,
         study=study_b,
-        did_consent=True
+        did_consent=True,
+        starts_on=datetime.now(UTC) - timedelta(days=7),
     )
 
     db.session.add(study_subject)
