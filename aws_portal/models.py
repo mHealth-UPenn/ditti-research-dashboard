@@ -822,13 +822,13 @@ def init_study_subject(ditti_id):
     study_subject = StudySubject(ditti_id=ditti_id)
 
     # Enroll in two studies to test that data is pulled from first `starts_on` to last `expires_on`
-    JoinStudySubjectStudy(
-        study_subject=study_subject,
-        study=study_a,
-        did_consent=True,
-        starts_on=datetime.now(UTC) - timedelta(days=7),
-        expires_on=datetime.now(UTC) - timedelta(days=3)  # TODO: bypass expires_on validation
-    )
+    # JoinStudySubjectStudy(
+    #     study_subject=study_subject,
+    #     study=study_a,
+    #     did_consent=True,
+    #     starts_on=datetime.now(UTC) - timedelta(days=7),
+    #     expires_on=datetime.now(UTC) + timedelta(days=7)  # TODO: bypass expires_on validation
+    # )
 
     JoinStudySubjectStudy(
         study_subject=study_subject,
