@@ -550,7 +550,16 @@ class StudySubjectService(DBService):
                     date_time=datetime.strptime(level_data["dateTime"], "%Y-%m-%dT%H:%M:%S.%f"),
                     level=level_data["level"],
                     seconds=level_data["seconds"],
-                    is_short=level_data.get("isShort", False)
+                    is_short=False
+                )
+                self.connection.execute(insert_level_stmt)
+            for level_data in sleep_record.get("levels", {}).get("shortData", []):
+                insert_level_stmt = insert(self.sleep_level_table).values(
+                    sleep_log_id=sleep_log_id,
+                    date_time=datetime.strptime(level_data["dateTime"], "%Y-%m-%dT%H:%M:%S.%f"),
+                    level=level_data["level"],
+                    seconds=level_data["seconds"],
+                    is_short=True
                 )
                 self.connection.execute(insert_level_stmt)
 
@@ -867,38 +876,6 @@ def handler(event, context):
                         )
                         has_errors = True
                         continue
-
-                # Convert levels to a format expected by the database
-                # Set `level.is_short` to True if the same timestamp is found in `shortData`
-                for sleep_record in data:
-
-                    # Use a pointer to traverse short data entries
-                    short_idx = 0
-                    short_data = sleep_record.get("levels", {}).get("shortData", [])
-
-                    # Traverse all data entries
-                    for level_data in sleep_record.get("levels", {}).get("data", []):
-
-                        # If we have reached the end of short data entries, remaining data entries are not short
-                        if short_idx == len(short_data):
-                            level_data["isShort"] = False
-                            continue
-
-                        # Skip short data entries that are before the current data entry, if any
-                        while short_idx < len(short_data) and level_data["dateTime"] > short_data[short_idx]["dateTime"]:
-                            short_idx += 1
-
-                        # If we have reached the end of short data entries, remaining data entries are not short
-                        if short_idx == len(short_data):
-                            level_data["isShort"] = False
-                            continue
-
-                        # Mark the current data entry as short or not short
-                        if level_data["dateTime"] == short_data[short_idx]["dateTime"]:
-                            level_data["isShort"] = True
-                            short_idx += 1
-                        else:
-                            level_data["isShort"] = False
 
                 # Try inserting new data into the database.
                 try:
