@@ -104,7 +104,9 @@ export interface StudyJoin {
   study: Study;
   didConsent: boolean;
   createdOn: string;
+  startsOn: string;
   expiresOn: string;
+  dataSummary: string;
 }
 
 /**

@@ -594,6 +594,13 @@ def init_integration_testing_db():
                 access_group=access_group, permission=permission)
         db.session.add(access_group)
 
+    data_summary = """The clinical trial collects sleep data from participants' wearable devices over four weeks to evaluate the
+impact of mindfulness exercises on treating insomnia. By monitoring sleep patterns, duration, and quality,
+researchers can gain objective insights into participants' sleep behavior before, during, and after engaging in
+mindfulness interventions. This data enables the study to measure the effectiveness of these exercises in
+improving sleep outcomes. Wearable devices provide a convenient, non-invasive method for gathering accurate,
+real-time data essential for understanding the physiological effects of mindfulness on sleep."""
+
     studies = [
         {
             "name": "Test Study A",
@@ -602,6 +609,7 @@ def init_integration_testing_db():
             "email": "test.study.A@studyAemail.com",
             "default_expiry_delta": 14,
             "consent_information": "",
+            "data_summary": data_summary,
         },
         {
             "name": "Test Study B",
@@ -610,6 +618,7 @@ def init_integration_testing_db():
             "email": "test.study.B@studyBemail.com",
             "default_expiry_delta": 14,
             "consent_information": "",
+            "data_summary": data_summary,
         }
     ]
 
@@ -1930,6 +1939,7 @@ class JoinStudySubjectStudy(db.Model):
             "createdOn": self.created_on.isoformat(),
             "startsOn": self.starts_on.isoformat(),
             "expiresOn": self.expires_on.isoformat() if self.expires_on else None,
+            "dataSummary": self.study.data_summary,
             "study": self.study.meta,
         }
 
