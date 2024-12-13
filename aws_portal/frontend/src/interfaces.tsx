@@ -386,7 +386,6 @@ export interface ISleepLog {
 export interface IWearableDataContextType {
   sleepLogs: ISleepLog[];
   isLoading: boolean;
-  error: string | null;
 }
 
 export interface IVisualizationProps {

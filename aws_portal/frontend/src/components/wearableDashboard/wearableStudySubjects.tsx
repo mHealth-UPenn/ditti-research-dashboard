@@ -1,5 +1,5 @@
 import React from "react";
-import { Study, UserDetails, ViewProps } from "../../interfaces";
+import { IStudySubject, Study, UserDetails, ViewProps } from "../../interfaces";
 import { differenceInDays } from "date-fns";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
@@ -20,43 +20,42 @@ export default function WearableStudySubjects({
   canViewWearableData,
   handleClick,
 }: WearableStudySubjectsProps) {
-  const users: UserDetails[] = [];
-  const filteredUsers = users.filter(u => u.userPermissionId.startsWith(studyPrefix));
+  // const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyPrefix}\\d`).test(ss.dittiId));
 
-  const getSubjectSummary = (user: UserDetails): React.ReactElement => {
-    // get the number of days until the user's id expires
-    const expiresOn = differenceInDays(new Date(user.expTime), new Date());
+  const getSubjectSummary = (subject: IStudySubject): React.ReactElement => {
+    // get the number of days until the subject's id expires
+    // const expiresOn = differenceInDays(new Date(subject.expTime), new Date());
 
     const handleClickSubject = () =>
       handleClick(
-        [user.userPermissionId],
+        [subject.dittiId],
         <React.Fragment />
         // <SubjectVisuals
         //   flashMessage={flashMessage}
         //   goBack={goBack}
         //   handleClick={handleClick}
         //   studyDetails={studyDetails}
-        //   user={user}
+        //   studySubject={subject}
         // />
       );
 
     return (
       <CardContentRow
-        key={user.userPermissionId}
+        key={subject.dittiId}
         className="border-b border-light">
           <div className="flex flex-col">
             <div className="flex items-center">
               {/* active tapping icon */}
               {canViewWearableData && <ActiveIcon active={true} className="mr-2" />}
-              {/* link to the user's summary page */}
+              {/* link to the subject's summary page */}
               {canViewWearableData ?
                 <Link onClick={handleClickSubject}>
-                  {user.userPermissionId}
+                  {subject.dittiId}
                 </Link> :
-                <span>{user.userPermissionId}</span>
+                <span>{subject.dittiId}</span>
               }
             </div>
-            <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
+            {/* <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i> */}
             {/* summary tap data */}
           </div>
 
@@ -72,13 +71,13 @@ export default function WearableStudySubjects({
   };
 
   // all users whose ids have not expired
-  const activeUsers = filteredUsers.filter(
-    (u: UserDetails) => new Date() < new Date(u.expTime)
-  );
+  // const activeUsers = filteredUsers.filter(
+  //   (u: UserDetails) => new Date() < new Date(u.expTime)
+  // );
 
   return (
     <>
-      {activeUsers.length ? activeUsers.map(getSubjectSummary) : "No active subjects"}
+      {/* {studySubjectsFiltered.length ? studySubjectsFiltered.map(getSubjectSummary) : "No active subjects"} */}
     </>
   );
 }

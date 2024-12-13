@@ -176,9 +176,9 @@ export default function WearableStudySummary({
           return (
             <CardContentRow key={i}>
               <div>
-                <p><b>{sc.fullName}: {sc.role}</b></p>
-                <p className="ml-4">{sc.email}</p>
-                <p className="ml-4">{sc.phoneNumber}</p>
+                <p className="mb-0"><b>{sc.fullName}: {sc.role}</b></p>
+                <p className="ml-4 mb-0">{sc.email}</p>
+                <p className="ml-4 mb-0">{sc.phoneNumber}</p>
               </div>
             </CardContentRow>
           );
