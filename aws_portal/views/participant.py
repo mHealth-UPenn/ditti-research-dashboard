@@ -125,7 +125,7 @@ def revoke_api_access(api_name: str, ditti_id: str):
 @blueprint.route("<string:ditti_id>", methods=["DELETE"])
 @auth_required("View", "Admin Dashboard")
 @auth_required("Archive", "Participants")
-@auth_required("Delete", "Fitbit Data")
+@auth_required("Delete", "Wearable Data")
 def delete_participant(ditti_id: str):
     """
     Endpoint to delete a participant's account and all associated API data.
@@ -150,6 +150,7 @@ def delete_participant(ditti_id: str):
         study_subject_id = study_subject.id
 
         # Delete all sleep logs associated with the StudySubject
+        # TODO: Delete this for production, no longer doing this
         try:
             # Fetch all SleepLog entries for the StudySubject
             sleep_logs = study_subject.sleep_logs.all()
