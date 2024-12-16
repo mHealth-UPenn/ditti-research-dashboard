@@ -78,12 +78,14 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
 
 export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWithChildren<{ dittiId: string }>) => {
   const start = new Date();
-  start.setDate(start.getDate() - 6);
+  start.setDate(start.getDate() - 7);
 
   const [startDate, setStartDate] = useState<Date>(start);  // Start one week ago
   const [endDate, setEndDate] = useState<Date>(new Date());  // End today
   const [sleepLogs, setSleepLogs] = useState<ISleepLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [dataIsUpdated, setDataIsUpdated] = useState(false);
+  const [firstDateOfSleep, setFirstDateOfSleep] = useState<Date | null>(null);
 
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
@@ -92,22 +94,31 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
     return null;
   }, []);
 
+  const fetchSleepDataAsync = async (start: Date, end: Date) => {
+    const params = new URLSearchParams();
+    params.append("start_date", formatDate(start));
+    params.append("end_date", formatDate(end));
+    params.append("app", "3");
+    const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`
+
+    let data: ISleepLog[] = await makeRequest(url);
+    data = data.sort((a, b) => {
+      if (a.dateOfSleep > b.dateOfSleep) return 1;
+      else if (a.dateOfSleep < b.dateOfSleep) return -1;
+      else return 0;
+    });
+
+    return data;
+  };
+
   useEffect(() => {
     const fetchSleepData = async () => {
       try {
         if (APP_ENV === "production" || APP_ENV === "development") {
-          const params = new URLSearchParams();
-          params.append("start_date", formatDate(startDate));
-          params.append("end_date", formatDate(endDate));
-          params.append("app", "3");
-          const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`
-          let data: ISleepLog[] = await makeRequest(url);
-          data = data.sort((a, b) => {
-            if (a.dateOfSleep > b.dateOfSleep) return 1;
-            else if (a.dateOfSleep < b.dateOfSleep) return -1;
-            else return 0;
-          })
-
+          const data = await fetchSleepDataAsync(startDate, endDate);
+          if (data.length) {
+            setFirstDateOfSleep(new Date(data[0].dateOfSleep));
+          }
           setSleepLogs(data);
         } else if (dataFactory) {
           await dataFactory.init();
@@ -137,9 +148,23 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
     const updatedStartDate = new Date(startDate);
     updatedStartDate.setDate(startDate.getDate() - 1);
     setStartDate(updatedStartDate);
+
     const updatedEndDate = new Date(endDate);
     updatedEndDate.setDate(endDate.getDate() - 1);
     setEndDate(updatedEndDate);
+
+    if (firstDateOfSleep && updatedStartDate < firstDateOfSleep) {
+      fetchSleepDataAsync(updatedStartDate, updatedStartDate)
+        .then(data => {
+          const updatedSleepLogs = [...data, ...sleepLogs];
+          setSleepLogs(updatedSleepLogs);
+          if (data.length) {
+            setFirstDateOfSleep(new Date(data[0].dateOfSleep));
+          }
+          setDataIsUpdated(true);
+        })
+        .catch(error => console.error(`Error updating sleep log data: ${error}`));
+    }
   };
 
   const incrementStartDate = () => {
@@ -147,11 +172,14 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
       const updatedStartDate = new Date(startDate);
       updatedStartDate.setDate(startDate.getDate() + 1);
       setStartDate(updatedStartDate);
+
       const updatedEndDate = new Date(endDate);
       updatedEndDate.setDate(endDate.getDate() + 1);
       setEndDate(updatedEndDate);
     }
   };
+
+  console.log(sleepLogs.length)
 
   return (
     <CoordinatorWearableDataContext.Provider value={{
@@ -159,6 +187,8 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
         endDate,
         sleepLogs,
         isLoading,
+        dataIsUpdated,
+        firstDateOfSleep,
         canIncrementStartDate,
         decrementStartDate,
         incrementStartDate,

@@ -12,6 +12,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import { differenceInDays } from "date-fns";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
+import { useEffect, useState } from "react";
 
 
 const getWeekday = (date: Date) => {
@@ -41,6 +42,14 @@ const WearableVisualizationContent = ({
   marginLeft,
   showDayControls = false,
 }: IWearableVisualizationContentProps) => {
+
+  // Sleep logs may straddle multiple timeline windows, so initialize one array
+  // for each sleep stage that will contain data from all sleep logs
+  const [row1, setRow1] = useState<IGroup[]>([]);  // awake
+  const [row2, setRow2] = useState<IGroup[]>([]);  // rem (if available)
+  const [row3, setRow3] = useState<IGroup[]>([]);  // light or restless
+  const [row4, setRow4] = useState<IGroup[]>([]);  // deep or asleep
+
   const {
     width,
     xScale,
@@ -48,11 +57,14 @@ const WearableVisualizationContent = ({
     onZoomChange,
     resetZoom
   } = useVisualizationContext();
+
   const {
     startDate,
     endDate,
     sleepLogs,
     isLoading,
+    firstDateOfSleep,
+    dataIsUpdated,
     canIncrementStartDate,
     decrementStartDate,
     incrementStartDate
@@ -65,72 +77,84 @@ const WearableVisualizationContent = ({
     left: marginLeft !== undefined ? marginLeft : defaultMargin.left,
   }
 
+  useEffect(() => {
+    const updatedRow1 = [];
+    const updatedRow2 = [];
+    const updatedRow3 = [];
+    const updatedRow4 = [];
+
+    let filteredSleepLogs = [...sleepLogs]
+    if (dataIsUpdated && firstDateOfSleep) {
+      filteredSleepLogs = filteredSleepLogs.filter(sl =>
+        new Date(sl.dateOfSleep) <= firstDateOfSleep
+      );
+    }
+
+    filteredSleepLogs.forEach((sl, i) => {
+      if (sl.type === "stages") {
+        const levelGroups: ILevelGroupsStages = {
+          wake: [],
+          rem: [],
+          light: [],
+          deep: [],
+        };
+
+        sl.levels.forEach(l => {
+          const dateTime = new Date(l.dateTime);
+
+          levelGroups[l.level as ISleepLevelStages].push({
+            start: dateTime.getTime(),
+            stop: dateTime.getTime() + l.seconds * 1000,
+            strokeDashArray: "",
+          })
+        });
+
+        updatedRow1.push(...levelGroups.wake);
+        updatedRow2.push(...levelGroups.rem);
+        updatedRow3.push(...levelGroups.light);
+        updatedRow4.push(...levelGroups.deep);
+      } else {
+        const levelGroups: ILevelGroupsClassic = {
+          awake: [],
+          restless: [],
+          asleep: [],
+        };
+
+        sl.levels.forEach(l => {
+          const dateTime = new Date(l.dateTime);
+
+          levelGroups[l.level as ISleepLevelClassic].push({
+            start: dateTime.getTime(),
+            stop: dateTime.getTime() + l.seconds * 1000,
+            strokeDashArray: "1,1",
+          })
+        });
+
+        updatedRow1.push(...levelGroups.awake);
+        updatedRow3.push(...levelGroups.restless);
+        updatedRow4.push(...levelGroups.asleep);
+      }
+    });
+
+    updatedRow1.push(...row1);
+    updatedRow2.push(...row2);
+    updatedRow3.push(...row3);
+    updatedRow4.push(...row4);
+    setRow1(updatedRow1);
+    setRow2(updatedRow2);
+    setRow3(updatedRow3);
+    setRow4(updatedRow4);
+  }, [dataIsUpdated, firstDateOfSleep]);
+
   if (isLoading || !xScale) {
     return <></>;
   }
 
-  // Sleep logs may straddle multiple timeline windows, so initialize one array
-  // for each sleep stage that will contain data from all sleep logs
-  const row1: IGroup[] = [];  // awake
-  const row2: IGroup[] = [];  // rem (if available)
-  const row3: IGroup[] = [];  // light or restless
-  const row4: IGroup[] = [];  // deep or asleep
-
-  sleepLogs.forEach(sl => {
-    const dateOfSleep = new Date(sl.dateOfSleep);
-
-    if (sl.type === "stages") {
-      const levelGroups: ILevelGroupsStages = {
-        wake: [],
-        rem: [],
-        light: [],
-        deep: [],
-      };
-
-      sl.levels.forEach(l => {
-        const dateTime = new Date(l.dateTime);
-
-        levelGroups[l.level as ISleepLevelStages].push({
-          start: dateTime.getTime(),
-          stop: dateTime.getTime() + l.seconds * 1000,
-          strokeDashArray: "",
-        })
-      });
-
-      row1.push(...levelGroups.wake);
-      row2.push(...levelGroups.rem);
-      row3.push(...levelGroups.light);
-      row4.push(...levelGroups.deep);
-    } else {
-      const levelGroups: ILevelGroupsClassic = {
-        awake: [],
-        restless: [],
-        asleep: [],
-      };
-
-      sl.levels.forEach(l => {
-        const dateTime = new Date(l.dateTime);
-
-        levelGroups[l.level as ISleepLevelClassic].push({
-          start: dateTime.getTime(),
-          stop: dateTime.getTime() + l.seconds * 1000,
-          strokeDashArray: "1,1",
-        })
-      });
-
-      row1.push(...levelGroups.awake);
-      row3.push(...levelGroups.restless);
-      row4.push(...levelGroups.asleep);
-    }
-  });
-
-  // Iterate over the past seven days
-
   // Iterate through each day
   const visualizations: React.ReactElement[] = [];
-  for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
+  for (let day = new Date(startDate); day < endDate; day.setDate(day.getDate() + 1)) {
     const title = getWeekday(day);
-    const offset = (differenceInDays(day, new Date())) * 24 * 60 * 60 * 1000;
+    const offset = (differenceInDays(day, new Date()) + 1) * 24 * 60 * 60 * 1000;
 
     visualizations.push(
       <div key={day.toISOString()} className="relative flex items-center mb-8">
