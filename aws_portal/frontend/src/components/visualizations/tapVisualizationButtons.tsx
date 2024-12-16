@@ -21,49 +21,54 @@ const TapVisualizationButtons: React.FC = () => {
   } = useVisualizationContext();
 
   return (
-    <div className="flex justify-end">
-      <Button
-        square={true}
-        size="sm"
-        variant="tertiary"
-        className="rounded-l-[0.25rem]"
-        onClick={panLeft}>
-        <KeyboardArrowLeftIcon />
-      </Button>
-      <Button
-        square={true}
-        size="sm"
-        variant="tertiary"
-        className="mr-2 border-l-0 rounded-r-[0.25rem]"
-        onClick={panRight}>
-        <KeyboardArrowRightIcon />
-      </Button>
-      <Button
-        square={true}
-        size="sm"
-        variant="tertiary"
-        className="rounded-l-[0.25rem]"
-        onClick={zoomIn}
-        disabled={minRangeReached}>
-        <AddIcon />
-      </Button>
-      <Button
-        square={true}
-        size="sm"
-        variant="tertiary"
-        className="mr-2 border-l-0 rounded-r-[0.25rem]"
-        onClick={zoomOut}
-        disabled={maxRangeReached}>
-        <RemoveIcon />
-      </Button>
-      <Button
-        square={true}
-        size="sm"
-        variant="primary"
-        onClick={resetZoom}
-        rounded={true}>
-        <ReplayIcon />
-      </Button>
+    <div className="flex flex-col items-end">
+      <div className="flex justify-end">
+        <Button
+          square={true}
+          size="sm"
+          variant="tertiary"
+          className="rounded-l-[0.25rem]"
+          onClick={panLeft}>
+          <KeyboardArrowLeftIcon />
+        </Button>
+        <Button
+          square={true}
+          size="sm"
+          variant="tertiary"
+          className="mr-2 border-l-0 rounded-r-[0.25rem]"
+          onClick={panRight}>
+          <KeyboardArrowRightIcon />
+        </Button>
+        <Button
+          square={true}
+          size="sm"
+          variant="tertiary"
+          className="rounded-l-[0.25rem]"
+          onClick={zoomIn}
+          disabled={minRangeReached}>
+          <AddIcon />
+        </Button>
+        <Button
+          square={true}
+          size="sm"
+          variant="tertiary"
+          className="mr-2 border-l-0 rounded-r-[0.25rem]"
+          onClick={zoomOut}
+          disabled={maxRangeReached}>
+          <RemoveIcon />
+        </Button>
+        <Button
+          square={true}
+          size="sm"
+          variant="primary"
+          onClick={resetZoom}
+          rounded={true}>
+          <ReplayIcon />
+        </Button>
+      </div>
+      <div>
+        <span className="italic text-sm">Click and drag to zoom</span>
+      </div>
     </div>
   );
 }

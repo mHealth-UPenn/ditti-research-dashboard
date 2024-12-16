@@ -262,36 +262,41 @@ const WearableVisualizationContent = ({
             </div>
           </div>
         </div>
-        <div className="flex">
-          {showDayControls &&
-            <>
-              <Button
-                square={true}
-                size="sm"
-                variant="tertiary"
-                className="rounded-l-[0.25rem]"
-                onClick={decrementStartDate}>
-                  <KeyboardArrowUp />
-              </Button>
-              <Button
-                square={true}
-                size="sm"
-                variant="tertiary"
-                className="mr-2 border-l-0 rounded-r-[0.25rem]"
-                onClick={incrementStartDate}
-                disabled={!canIncrementStartDate}>
-                  <KeyboardArrowDown />
-              </Button>
-            </>
-          }
-          <Button
-            square={true}
-            size="sm"
-            variant="primary"
-            onClick={resetZoom}
-            rounded={true}>
-              <ReplayIcon />
-          </Button>
+        <div className="flex flex-col items-end">
+          <div className="flex">
+            {showDayControls &&
+              <>
+                <Button
+                  square={true}
+                  size="sm"
+                  variant="tertiary"
+                  className="rounded-l-[0.25rem]"
+                  onClick={decrementStartDate}>
+                    <KeyboardArrowUp />
+                </Button>
+                <Button
+                  square={true}
+                  size="sm"
+                  variant="tertiary"
+                  className="mr-2 border-l-0 rounded-r-[0.25rem]"
+                  onClick={incrementStartDate}
+                  disabled={!canIncrementStartDate}>
+                    <KeyboardArrowDown />
+                </Button>
+              </>
+            }
+            <Button
+              square={true}
+              size="sm"
+              variant="primary"
+              onClick={resetZoom}
+              rounded={true}>
+                <ReplayIcon />
+            </Button>
+          </div>
+          <div>
+            <span className="italic text-sm">Click and drag to zoom</span>
+          </div>
         </div>
       </div>
       <svg className="relative top-[10px]" width={width} height={50}>
