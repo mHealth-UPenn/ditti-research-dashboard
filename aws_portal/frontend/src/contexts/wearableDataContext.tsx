@@ -64,8 +64,13 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
   }, []);
 
   return (
-    <ParticipantWearableDataContext.Provider value={{ sleepLogs, isLoading }}>
-      {children}
+    <ParticipantWearableDataContext.Provider value={{
+        startDate,
+        endDate,
+        sleepLogs,
+        isLoading,
+      }}>
+        {children}
     </ParticipantWearableDataContext.Provider>
   );
 };
@@ -121,18 +126,18 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
 
   const canIncrementStartDate = useMemo(() => {
     const today = new Date();
-    const yesterdayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    const todayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const endWithoutTime = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
 
-    // Only increment if the end date is less than yesterday
-    return endWithoutTime < yesterdayWithoutTime;
+    // Only increment if the end date is less than today
+    return endWithoutTime < todayWithoutTime;
   }, [startDate, endDate]);
 
   const decrementStartDate = () => {
     const updatedStartDate = new Date(startDate);
     updatedStartDate.setDate(startDate.getDate() - 1);
+    setStartDate(updatedStartDate);
     const updatedEndDate = new Date(endDate);
-    setEndDate(updatedEndDate);
     updatedEndDate.setDate(endDate.getDate() - 1);
     setEndDate(updatedEndDate);
   };
@@ -141,8 +146,8 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
     if (canIncrementStartDate) {
       const updatedStartDate = new Date(startDate);
       updatedStartDate.setDate(startDate.getDate() + 1);
+      setStartDate(updatedStartDate);
       const updatedEndDate = new Date(endDate);
-      setEndDate(updatedEndDate);
       updatedEndDate.setDate(endDate.getDate() + 1);
       setEndDate(updatedEndDate);
     }
@@ -150,6 +155,8 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
 
   return (
     <CoordinatorWearableDataContext.Provider value={{
+        startDate,
+        endDate,
         sleepLogs,
         isLoading,
         canIncrementStartDate,

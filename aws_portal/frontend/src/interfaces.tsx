@@ -392,6 +392,8 @@ export interface ISleepLog {
 export interface IWearableDataContextType {
   sleepLogs: ISleepLog[];
   isLoading: boolean;
+  startDate: Date;
+  endDate: Date;
   decrementStartDate?: () => void;
   incrementStartDate?: () => void;
   canIncrementStartDate?: boolean;

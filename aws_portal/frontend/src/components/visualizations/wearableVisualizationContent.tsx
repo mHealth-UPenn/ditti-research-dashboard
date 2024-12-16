@@ -49,6 +49,8 @@ const WearableVisualizationContent = ({
     resetZoom
   } = useVisualizationContext();
   const {
+    startDate,
+    endDate,
     sleepLogs,
     isLoading,
     canIncrementStartDate,
@@ -123,16 +125,12 @@ const WearableVisualizationContent = ({
   });
 
   // Iterate over the past seven days
-  // TODO: Allow the user to control the start date.
-  const date = new Date();
-  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 7);
-  const end = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1);
 
   // Iterate through each day
   const visualizations: React.ReactElement[] = [];
-  for (let day = new Date(start); day <= end; day.setDate(day.getDate() + 1)) {
+  for (let day = new Date(startDate); day <= endDate; day.setDate(day.getDate() + 1)) {
     const title = getWeekday(day);
-    const offset = (differenceInDays(day, end)) * 24 * 60 * 60 * 1000;
+    const offset = (differenceInDays(day, new Date())) * 24 * 60 * 60 * 1000;
 
     visualizations.push(
       <div key={day.toISOString()} className="relative flex items-center mb-8">
