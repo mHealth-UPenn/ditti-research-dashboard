@@ -755,6 +755,12 @@ real-time data essential for understanding the physiological effects of mindfuln
     db.session.add(test002)
     db.session.add(test003)
 
+    # Add study subjects for testing filtering sleep logs by study ditti prefix
+    ta001 = StudySubject(ditti_id="TA001")
+    tb001 = StudySubject(ditti_id="TB001")
+    db.session.add(ta001)
+    db.session.add(tb001)
+
     study_subject_studies = [
         {
             "study_subject": test001,
@@ -784,6 +790,18 @@ real-time data essential for understanding the physiological effects of mindfuln
             "study_subject": test003,
             "study": study_b,
             "did_consent": False,
+        },
+        {
+            "study_subject": ta001,
+            "study": study_a,
+            "did_consent": True,
+            "starts_on": datetime.now(UTC)
+        },
+        {
+            "study_subject": tb001,
+            "study": study_b,
+            "did_consent": True,
+            "starts_on": datetime.now(UTC)
         }
     ]
 
@@ -809,11 +827,25 @@ real-time data essential for understanding the physiological effects of mindfuln
             "api": api,
             "api_user_uuid": "test",
             "scope": ["sleep"],
+        },
+        {
+            "study_subject": ta001,
+            "api": api,
+            "api_user_uuid": "test",
+            "scope": ["sleep"],
+        },
+        {
+            "study_subject": tb001,
+            "api": api,
+            "api_user_uuid": "test",
+            "scope": ["sleep"],
         }
     ]
 
     for join in study_subject_apis:
         JoinStudySubjectApi(**join)
+
+    db.session.add(LambdaTask(status="Pending"))
 
     db.session.commit()
 
@@ -2196,8 +2228,8 @@ class SleepLog(db.Model):
             "startTime": self.start_time.isoformat() if self.start_time else None,
             "timeInBed": self.time_in_bed,
             "type": self.type.value,
-            "totalMinutesAsleep": self.total_minutes_asleep,
-            "sleepEfficiencyPercentage": self.sleep_efficiency_percentage,
+            "totalMinutesAsleep": self.minutes_asleep,
+            "sleepEfficiencyPercentage": self.efficiency,
             "levels": [level.meta for level in self.levels],
             "summaries": [summary.meta for summary in self.summaries]
         }

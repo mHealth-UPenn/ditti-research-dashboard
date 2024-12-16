@@ -42,13 +42,15 @@ def serialize_fitbit_data(sleep_logs: List[SleepLog]) -> List[Dict[str, Any]]:
         try:
             log_model = SleepLogModel.model_validate(log)
             serialized_dump = log_model.model_dump(
-                by_alias=True, exclude_unset=True
+                by_alias=True,
+                exclude_unset=True,
+                exclude_none=True
             )
 
             serialized.append(serialized_dump)
         except ValidationError as ve:
             logger.error(
-                f"Validation error in SleepLogModel for log {log.id}: {ve}"
+                f"Validation error in SleepLogModel: {ve}"
             )
         except Exception as e:
             logger.error(f"Error validating SleepLogModel: {e}")

@@ -26,7 +26,6 @@ def get_participant(ditti_id: str):
     """
     try:
         # Retrieve the StudySubject by ditti_id
-        # TODO: Unclear if this will work because of lazy loading
         study_subject = StudySubject.query.filter_by(
             ditti_id=ditti_id, is_archived=False
         ).first()
@@ -152,6 +151,7 @@ def delete_participant(ditti_id: str):
         study_subject_id = study_subject.id
 
         # Delete all sleep logs associated with the StudySubject
+        # TODO: Delete this for production, no longer doing this
         try:
             # Fetch all SleepLog entries for the StudySubject
             sleep_logs = study_subject.sleep_logs.all()
