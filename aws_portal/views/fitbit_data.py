@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 @admin_fitbit_blueprint.route("/<string:ditti_id>", methods=["GET"])
-@auth_required("View", "Admin Dashboard")
+@auth_required("View", "Wearable Dashboard")
 @auth_required("View", "Wearable Data")
 def admin_get_fitbit_data(ditti_id: str):
     """

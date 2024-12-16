@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { IStudySubject, Study, UserDetails, ViewProps } from "../../interfaces";
 import SubjectsEdit from "../dittiApp/subjectsEdit";
 import { downloadExcelFromUrl, getAccess } from "../../utils";
@@ -33,6 +33,25 @@ export default function WearableVisuals({
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const scope = [...(new Set(studySubject.apis.map(api => api.scope).flat()))];
+  const endDate = new Date(Math.max(...studySubject.studies.map(s => new Date(s.expiresOn).getTime())));
+  const expTimeAdjusted = new Date(
+    endDate.getTime() - endDate.getTimezoneOffset() * 60000
+  );
+
+  const dateOpts = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  };
+
+  const expTimeFormatted = expTimeAdjusted.toLocaleDateString(
+    "en-US",
+    dateOpts as Intl.DateTimeFormatOptions
+  );
+
   useEffect(() => {
     getAccess(3, "Edit", "Users", studyDetails.id)
       .then(() => {
@@ -53,43 +72,25 @@ export default function WearableVisuals({
     }
   };
 
-  // TODO: Update this to pull from join table instead
-  // const expTimeDate = new Date(user.expTime);
-  // const expTimeAdjusted = new Date(
-  //   expTimeDate.getTime() - expTimeDate.getTimezoneOffset() * 60000
-  // );
-
-  // const dateOpts = {
-  //   year: "numeric",
-  //   month: "short",
-  //   day: "numeric",
-  //   hour: "numeric",
-  //   minute: "2-digit"
-  // };
-
-  // const expTimeFormatted = expTimeAdjusted.toLocaleDateString(
-  //   "en-US",
-  //   dateOpts as Intl.DateTimeFormatOptions
-  // );
-
-  // const handleClickEditDetails = () =>
-  //   handleClick(
-  //     ["Edit"],
-  //     <SubjectsEdit
-  //       dittiId={user.userPermissionId}
-  //       studyId={studyDetails.id}
-  //       studyEmail={studyDetails.email}
-  //       studyPrefix={studyDetails.dittiId}
-  //       flashMessage={flashMessage}
-  //       goBack={goBack}
-  //       handleClick={handleClick}
-  //     />
-  //   );
+  const handleClickEditDetails = () =>
+    handleClick(
+      ["Edit"],
+      <React.Fragment />
+      // <SubjectsEdit
+      //   dittiId={user.userPermissionId}
+      //   studyId={studyDetails.id}
+      //   studyEmail={studyDetails.email}
+      //   studyPrefix={studyDetails.dittiId}
+      //   flashMessage={flashMessage}
+      //   goBack={goBack}
+      //   handleClick={handleClick}
+      // />
+    );
 
   if (loading) {
     return (
       <ViewContainer>
-        <Card>
+        <Card width="lg">
           <SmallLoader />
         </Card>
       </ViewContainer>
@@ -103,7 +104,7 @@ export default function WearableVisuals({
         <CardContentRow>
           <div className="flex flex-col">
             <Title>{studySubject.dittiId}</Title>
-            {/* <Subtitle>Expires on: {expTimeFormatted}</Subtitle> */}
+            <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
           </div>
 
           <div className="flex flex-col md:flex-row">
@@ -116,13 +117,13 @@ export default function WearableVisuals({
                 Download Excel
             </Button>
             {/* if the user can edit, show the edit button */}
-            {/* <Button
+            <Button
               variant="secondary"
               onClick={handleClickEditDetails}
               disabled={!(canEdit || APP_ENV === "demo")}
               rounded={true}>
               Edit Details
-            </Button> */}
+            </Button>
           </div>
         </CardContentRow>
 

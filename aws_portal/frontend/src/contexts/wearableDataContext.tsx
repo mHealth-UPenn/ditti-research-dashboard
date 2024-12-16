@@ -93,10 +93,10 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
       try {
         if (APP_ENV === "production" || APP_ENV === "development") {
           const params = new URLSearchParams();
-          params.append("ditti_id", dittiId);
           params.append("start_date", formatDate(startDate));
           params.append("end_date", formatDate(endDate));
-          const url = `/admin/fitbit_data?${params.toString()}`
+          params.append("app", "3");
+          const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`
           let data: ISleepLog[] = await makeRequest(url);
           data = data.sort((a, b) => {
             if (a.dateOfSleep > b.dateOfSleep) return 1;
