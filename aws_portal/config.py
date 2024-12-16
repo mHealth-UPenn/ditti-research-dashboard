@@ -27,20 +27,47 @@ class Default:
     AWS_AUDIO_FILE_BUCKET = os.getenv("AWS_AUDIO_FILE_BUCKET")
 
     COGNITO_PARTICIPANT_CLIENT_ID = os.environ.get(
-        "COGNITO_PARTICIPANT_CLIENT_ID")
+        "COGNITO_PARTICIPANT_CLIENT_ID"
+    )
     COGNITO_PARTICIPANT_CLIENT_SECRET = os.environ.get(
-        "COGNITO_PARTICIPANT_CLIENT_SECRET")
-    COGNITO_PARTICIPANT_DOMAIN = os.environ.get("COGNITO_PARTICIPANT_DOMAIN")
-    COGNITO_PARTICIPANT_REGION = os.environ.get("COGNITO_PARTICIPANT_REGION")
-    COGNITO_PARTICIPANT_REDIRECT_URI = "http://localhost:5000/cognito/callback"
-    COGNITO_PARTICIPANT_LOGOUT_URI = "http://localhost:3000/login"
-    COGNITO_PARTICIPANT_USER_POOL_ID = os.environ.get(
-        "COGNITO_PARTICIPANT_USER_POOL_ID"
+        "COGNITO_PARTICIPANT_CLIENT_SECRET"
     )
 
+    API_AUTHORIZE_REDIRECT = "http://localhost:3000"
     FITBIT_CLIENT_ID = os.environ.get("FITBIT_CLIENT_ID")
     FITBIT_CLIENT_SECRET = os.environ.get("FITBIT_CLIENT_SECRET")
     FITBIT_REDIRECT_URI = "http://localhost:5000/cognito/fitbit/callback"
+
+    COGNITO_PARTICIPANT_DOMAIN = os.getenv("COGNITO_PARTICIPANT_DOMAIN")
+    COGNITO_PARTICIPANT_REGION = os.getenv("COGNITO_PARTICIPANT_REGION")
+    COGNITO_PARTICIPANT_REDIRECT_URI = "http://localhost:5000/cognito/callback"
+    COGNITO_PARTICIPANT_LOGOUT_URI = "http://localhost:3000/login"
+    COGNITO_PARTICIPANT_USER_POOL_ID = os.getenv("COGNITO_PARTICIPANT_USER_POOL_ID")
+
+    TM_FSTRING = os.getenv("TM_FSTRING")
+
+    # AWS Lambda configuration
+    LAMBDA_FUNCTION_NAME = os.environ.get("LAMBDA_FUNCTION_NAME")
+
+    # AWS SigV4 configuration
+    LAMBDA_ACCESS_KEY_ID = os.environ.get("LAMBDA_ACCESS_KEY_ID")
+    LAMBDA_SECRET_ACCESS_KEY = os.environ.get("LAMBDA_SECRET_ACCESS_KEY")
+    LAMBDA_AWS_REGION = os.environ.get("LAMBDA_AWS_REGION", "us-east-1")
+
+    # Configuration for invoking a lambda function locally
+    LOCAL_LAMBDA_ENDPOINT = os.environ.get("LOCAL_LAMBDA_ENDPOINT")
+
+    # APScheduler configuration
+    # SCHEDULER_API_ENABLED = True
+    # JOBS = [
+    #     {
+    #         "id": "ScheduledLambdaTask",
+    #         "func": "aws_portal.utils.lambda_task:schedule_lambda_task",
+    #         "trigger": "cron",
+    #         "hour": 10,
+    #         "minute": 0
+    #     }
+    # ]
 
 
 class Staging(Default):
@@ -72,16 +99,29 @@ class Production(Default):
 
     CORS_ORIGINS = os.getenv("AWS_CLOUDFRONT_DOMAIN_NAME")
 
+    COGNITO_PARTICIPANT_USER_POOL_ID = os.environ.get(
+        "COGNITO_PARTICIPANT_USER_POOL_ID"
+    )
     COGNITO_PARTICIPANT_REDIRECT_URI = os.environ.get(
         "COGNITO_PARTICIPANT_REDIRECT_URI"
     )
     COGNITO_PARTICIPANT_LOGOUT_URI = os.environ.get(
         "COGNITO_PARTICIPANT_LOGOUT_URI"
     )
+    COGNITO_PARTICIPANT_DOMAIN = os.environ.get("COGNITO_PARTICIPANT_DOMAIN")
+    COGNITO_PARTICIPANT_REGION = os.environ.get("COGNITO_PARTICIPANT_REGION")
 
     FITBIT_REDIRECT_URI = os.environ.get("FITBIT_REDIRECT_URI")
 
+    API_AUTHORIZE_REDIRECT = os.environ.get("API_AUTHORIZE_REDIRECT")
+
+    TM_FSTRING = "{api_name}-tokens"
+
 
 class Testing(Default):
+    ENV = "testing"
     TESTING = True
+
     CORS_ORIGINS = "http://localhost:3000"
+
+    TM_FSTRING = "{api_name}-tokens-testing"

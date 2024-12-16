@@ -6,7 +6,7 @@ from flask_migrate import upgrade
 from aws_portal.extensions import db
 from aws_portal.models import (
     init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
-    init_integration_testing_db, init_demo_db
+    init_integration_testing_db, init_demo_db, init_study_subject
 )
 
 
@@ -56,7 +56,6 @@ def init_db_click():
 @with_appcontext
 def init_api_click():
     init_api(click)
-    click.echo("API successfully initialized.")
 
 
 @click.command("reset-db")
@@ -88,3 +87,13 @@ def init_demo_db_click():
         click.echo("Demo database successfully initialized.")
     else:
         click.echo("Demo database not initialized.")
+
+
+@click.command("init-study-subject")
+@click.option("--ditti_id")
+@with_appcontext
+def init_study_subject_click(ditti_id):
+    if ditti_id is None:
+        raise RuntimeError("Option `ditti_id` is required.")
+    init_study_subject(ditti_id)
+    click.echo("Study subject successfully initialized.")

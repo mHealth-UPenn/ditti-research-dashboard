@@ -174,7 +174,10 @@ def verify_token(participant_pool: bool, token: str, token_use: str = "id") -> d
             algorithms=["RS256"],
             audience=audience if token_use == "id" else None,
             issuer=issuer,
-            options={"verify_aud": False} if token_use == "access" else None
+            options={"verify_aud": False} if token_use == "access" else None,
+            # Allow 5 second leeway for clock skew.
+            # Necessary for deleting Cognito user then immediatly creating new one.
+            leeway=5
         )
 
         # Verify the 'token_use' claim
@@ -201,12 +204,40 @@ def verify_token(participant_pool: bool, token: str, token_use: str = "id") -> d
         raise
 
 
+def get_token_scopes(access_token: str) -> list:
+    """
+    Decodes the JWT access token and retrieves the scopes.
+
+    Args:
+        access_token (str): The JWT access token.
+
+    Returns:
+        list: A list of scopes included in the access token.
+    """
+    try:
+        # Decode the token without verifying the signature
+        decoded_token = jwt.decode(access_token, options={
+                                   "verify_signature": False})
+
+        # Extract scopes
+        scopes = decoded_token.get("scope", "")
+        scope_list = scopes.split()
+
+        return scope_list
+    except jwt.DecodeError as e:
+        logger.error(f"Failed to decode access token: {e}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error decoding token: {e}")
+        raise
+
+
 def cognito_auth_required(f):
     """
     Decorator for routes to enforce Cognito authentication using tokens from cookies.
 
     This decorator verifies the access and ID tokens from cookies, handles token refresh if needed,
-    and populates Flask's global context with token claims.
+    extracts `ditti_id` from the ID token, and passes it to the decorated function.
 
     Args:
         f (Callable): The route function to decorate.
@@ -236,27 +267,34 @@ def cognito_auth_required(f):
                 new_access_token = refresh_access_token(True, refresh_token)
                 verify_token(True, new_access_token, token_use="access")
 
-                response = make_response(f(*args, **kwargs))
+                response = make_response()
                 response.set_cookie(
                     "access_token",
                     new_access_token,
                     httponly=True,
                     secure=True
                 )
-                return response
+                access_token = new_access_token
             except Exception as e:
                 return make_response({"msg": f"Failed to refresh access token: {str(e)}"}, 401)
         except InvalidTokenError as e:
             return make_response({"msg": f"Invalid access token: {str(e)}"}, 401)
 
-        # Verify ID token and check that claims match the expected values
+        # Verify ID token and extract `ditti_id`
         try:
-            verify_token(True, id_token, token_use="id")
+            claims = verify_token(True, id_token, token_use="id")
+            ditti_id = claims.get("cognito:username")
+            if not ditti_id:
+                return make_response({"msg": "cognito:username not found in token."}, 400)
         except ExpiredSignatureError:
             return make_response({"msg": "ID token has expired."}, 401)
         except InvalidTokenError as e:
             return make_response({"msg": f"Invalid ID token: {str(e)}"}, 401)
+        except Exception as e:
+            logger.error(f"Unexpected error during token verification: {e}")
+            return make_response({"msg": "Unexpected server error."}, 500)
 
-        return f(*args, **kwargs)
+        # Pass `ditti_id` to the decorated function
+        return f(*args, ditti_id=ditti_id, **kwargs)
 
     return decorated

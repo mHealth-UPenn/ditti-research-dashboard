@@ -3,6 +3,7 @@ import traceback
 from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import current_user, jwt_required
 from sqlalchemy.sql import tuple_
+
 from aws_portal.extensions import db
 from aws_portal.models import (
     AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,

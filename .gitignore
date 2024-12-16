@@ -33,4 +33,8 @@ zappa_settings.py
 **/dummyUsers.json
 
 **/src/output.css
+
+.DS_Store
 .env.production
+
+data.json
