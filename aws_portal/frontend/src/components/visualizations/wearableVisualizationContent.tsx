@@ -10,6 +10,8 @@ import { scaleLinear } from '@visx/scale';
 import Button from "../buttons/button";
 import ReplayIcon from '@mui/icons-material/Replay';
 import { differenceInDays } from "date-fns";
+import { KeyboardArrowDown } from "@mui/icons-material";
+import { KeyboardArrowUp } from "@mui/icons-material";
 
 
 const getWeekday = (date: Date) => {
@@ -27,13 +29,18 @@ interface IGroup { start: number; stop: number; strokeDashArray: string; }
 type ILevelGroupsStages = Record<ISleepLevelStages, IGroup[]>;
 type ILevelGroupsClassic = Record<ISleepLevelClassic, IGroup[]>;
 
+interface IWearableVisualizationContentProps extends IVisualizationProps {
+  showDayControls?: boolean;
+}
+
 
 const WearableVisualizationContent = ({
   marginTop,
   marginRight,
   marginBottom,
   marginLeft,
-}: IVisualizationProps) => {
+  showDayControls = false,
+}: IWearableVisualizationContentProps) => {
   const {
     width,
     xScale,
@@ -41,7 +48,13 @@ const WearableVisualizationContent = ({
     onZoomChange,
     resetZoom
   } = useVisualizationContext();
-  const { sleepLogs, isLoading } = useWearableData();
+  const {
+    sleepLogs,
+    isLoading,
+    canIncrementStartDate,
+    decrementStartDate,
+    incrementStartDate
+  } = useWearableData();
 
   const margin = {
     top: marginTop !== undefined ? marginTop : defaultMargin.top,
@@ -227,14 +240,37 @@ const WearableVisualizationContent = ({
             </div>
           </div>
         </div>
-        <Button
-          square={true}
-          size="sm"
-          variant="primary"
-          onClick={resetZoom}
-          rounded={true}>
-            <ReplayIcon />
-        </Button>
+        <div className="flex">
+          {showDayControls &&
+            <>
+              <Button
+                square={true}
+                size="sm"
+                variant="tertiary"
+                className="rounded-l-[0.25rem]"
+                onClick={decrementStartDate}>
+                  <KeyboardArrowUp />
+              </Button>
+              <Button
+                square={true}
+                size="sm"
+                variant="tertiary"
+                className="mr-2 border-l-0 rounded-r-[0.25rem]"
+                onClick={incrementStartDate}
+                disabled={!canIncrementStartDate}>
+                  <KeyboardArrowDown />
+              </Button>
+            </>
+          }
+          <Button
+            square={true}
+            size="sm"
+            variant="primary"
+            onClick={resetZoom}
+            rounded={true}>
+              <ReplayIcon />
+          </Button>
+        </div>
       </div>
       <svg className="relative top-[10px]" width={width} height={50}>
         <AxisTop

@@ -1,5 +1,5 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from "react";
-import { ISleepLog, IStudySubject, IWearableDataContextType } from "../interfaces";
+import { ISleepLog,  IWearableDataContextType } from "../interfaces";
 import { APP_ENV } from "../environment";
 import DataFactory from "../dataFactory";
 import { makeRequest } from "../utils";
@@ -77,7 +77,6 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
 
   const [startDate, setStartDate] = useState<Date>(start);  // Start one week ago
   const [endDate, setEndDate] = useState<Date>(new Date());  // End today
-  const [studySubjects, setStudySubjects] = useState<IStudySubject[]>([]);
   const [sleepLogs, setSleepLogs] = useState<ISleepLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -120,9 +119,44 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
     Promise.all(promises).finally(() => setIsLoading(false))
   }, []);
 
+  const canIncrementStartDate = useMemo(() => {
+    const today = new Date();
+    const yesterdayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    const endWithoutTime = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+    // Only increment if the end date is less than yesterday
+    return endWithoutTime < yesterdayWithoutTime;
+  }, [startDate, endDate]);
+
+  const decrementStartDate = () => {
+    const updatedStartDate = new Date(startDate);
+    updatedStartDate.setDate(startDate.getDate() - 1);
+    const updatedEndDate = new Date(endDate);
+    setEndDate(updatedEndDate);
+    updatedEndDate.setDate(endDate.getDate() - 1);
+    setEndDate(updatedEndDate);
+  };
+
+  const incrementStartDate = () => {
+    if (canIncrementStartDate) {
+      const updatedStartDate = new Date(startDate);
+      updatedStartDate.setDate(startDate.getDate() + 1);
+      const updatedEndDate = new Date(endDate);
+      setEndDate(updatedEndDate);
+      updatedEndDate.setDate(endDate.getDate() + 1);
+      setEndDate(updatedEndDate);
+    }
+  };
+
   return (
-    <CoordinatorWearableDataContext.Provider value={{ sleepLogs, isLoading }}>
-      {children}
+    <CoordinatorWearableDataContext.Provider value={{
+        sleepLogs,
+        isLoading,
+        canIncrementStartDate,
+        decrementStartDate,
+        incrementStartDate,
+      }}>
+        {children}
     </CoordinatorWearableDataContext.Provider>
   );
 };

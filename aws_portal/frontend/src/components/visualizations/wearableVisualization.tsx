@@ -1,12 +1,18 @@
 import VisualizationController from "./visualizationController";
 import WearableVisualizationContent from "./wearableVisualizationContent";
 
+interface IWearableVisualizationProps {
+  showDayControls?: boolean;
+}
 
-const WearableVisualization = () => {
+
+const WearableVisualization = ({
+  showDayControls = false,
+}: IWearableVisualizationProps) => {
   return (
     <VisualizationController
       defaultMargin={{ top: 8, right: 30, bottom: 8, left: 40 }}>
-        <WearableVisualizationContent />
+        <WearableVisualizationContent showDayControls={showDayControls} />
     </VisualizationController>
   );
 };

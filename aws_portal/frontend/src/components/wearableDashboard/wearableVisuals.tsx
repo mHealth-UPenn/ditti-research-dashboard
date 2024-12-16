@@ -129,7 +129,7 @@ export default function WearableVisuals({
 
         <CardContentRow>
             <CoordinatorWearableDataProvider dittiId={studySubject.dittiId}>
-              <WearableVisualization />
+              <WearableVisualization showDayControls={true} />
             </CoordinatorWearableDataProvider>
           </CardContentRow>
       </Card>
