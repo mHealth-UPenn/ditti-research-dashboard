@@ -15,8 +15,8 @@ const ParticipantDashboardContent = () => {
   const { dittiId } = useAuth();
   const { studies, apis, studySubjectLoading } = useStudySubjectContext();
 
-  const endDate = new Date(Math.min(...studies.map(s => new Date(s.startsOn).getTime())));
-  const startDate = new Date(Math.max(...studies.map(s => new Date(s.expiresOn).getTime())));
+  const startDate = new Date(Math.min(...studies.map(s => new Date(s.startsOn).getTime())));
+  const endDate = new Date(Math.max(...studies.map(s => new Date(s.expiresOn).getTime())));
   const scope = [...(new Set(apis.map(api => api.scope).flat()))];
 
   // For now assume we are only connecting Fitbit API

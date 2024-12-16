@@ -474,7 +474,6 @@ def init_integration_testing_db():
     wear_app = App(name="Wearable Dashboard")
     wear_admin_group = AccessGroup(
         name="Wearable Dashboard Admin", app=wear_app)
-    print(wildcard)
     JoinAccessGroupPermission(
         access_group=wear_admin_group, permission=wildcard)
     query = Permission.definition == tuple_("View", "Wearable Dashboard")
