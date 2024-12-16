@@ -237,7 +237,7 @@ def cognito_auth_required(f):
     Decorator for routes to enforce Cognito authentication using tokens from cookies.
 
     This decorator verifies the access and ID tokens from cookies, handles token refresh if needed,
-    and populates Flask's global context with token claims.
+    extracts `ditti_id` from the ID token, and passes it to the decorated function.
 
     Args:
         f (Callable): The route function to decorate.
@@ -267,27 +267,34 @@ def cognito_auth_required(f):
                 new_access_token = refresh_access_token(True, refresh_token)
                 verify_token(True, new_access_token, token_use="access")
 
-                response = make_response(f(*args, **kwargs))
+                response = make_response()
                 response.set_cookie(
                     "access_token",
                     new_access_token,
                     httponly=True,
                     secure=True
                 )
-                return response
+                access_token = new_access_token
             except Exception as e:
                 return make_response({"msg": f"Failed to refresh access token: {str(e)}"}, 401)
         except InvalidTokenError as e:
             return make_response({"msg": f"Invalid access token: {str(e)}"}, 401)
 
-        # Verify ID token and check that claims match the expected values
+        # Verify ID token and extract `ditti_id`
         try:
-            verify_token(True, id_token, token_use="id")
+            claims = verify_token(True, id_token, token_use="id")
+            ditti_id = claims.get("cognito:username")
+            if not ditti_id:
+                return make_response({"msg": "cognito:username not found in token."}, 400)
         except ExpiredSignatureError:
             return make_response({"msg": "ID token has expired."}, 401)
         except InvalidTokenError as e:
             return make_response({"msg": f"Invalid ID token: {str(e)}"}, 401)
+        except Exception as e:
+            logger.error(f"Unexpected error during token verification: {e}")
+            return make_response({"msg": "Unexpected server error."}, 500)
 
-        return f(*args, **kwargs)
+        # Pass `ditti_id` to the decorated function
+        return f(*args, ditti_id=ditti_id, **kwargs)
 
     return decorated
