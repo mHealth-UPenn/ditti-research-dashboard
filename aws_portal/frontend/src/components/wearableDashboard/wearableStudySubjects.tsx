@@ -4,6 +4,7 @@ import { differenceInDays } from "date-fns";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
 import Link from "../links/link";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -20,11 +21,15 @@ export default function WearableStudySubjects({
   canViewWearableData,
   handleClick,
 }: WearableStudySubjectsProps) {
-  // const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyPrefix}\\d`).test(ss.dittiId));
+  const { studySubjects, studySubjectLoading } = useCoordinatorStudySubjectContext();
+  console.log(studyPrefix)
+  console.log(studySubjects)
+  const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyPrefix}\\d`).test(ss.dittiId));
 
   const getSubjectSummary = (subject: IStudySubject): React.ReactElement => {
     // get the number of days until the subject's id expires
-    // const expiresOn = differenceInDays(new Date(subject.expTime), new Date());
+    const endDate = new Date(Math.max(...subject.studies.map(s => new Date(s.expiresOn).getTime())));
+    const expiresOn = differenceInDays(endDate, new Date());
 
     const handleClickSubject = () =>
       handleClick(
@@ -55,14 +60,22 @@ export default function WearableStudySubjects({
                 <span>{subject.dittiId}</span>
               }
             </div>
-            {/* <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i> */}
-            {/* summary tap data */}
+            <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
           </div>
 
           {canViewWearableData &&
             <div className="flex flex-grow-0 overflow-x-hidden">
-              <div className="hidden md:flex flex-grow-0 flex-col w-[60px] items-center border-r border-light">
-                <span>Fitbit</span>
+              <div className="hidden md:flex items-center">
+                {subject.apis.length ?
+                  subject.apis.map((api, i) =>
+                    <span
+                      className={i ? "border-l border-light ml-2 pl-2" : ""}
+                      key={api.api.id}>
+                        {api.api.name}
+                    </span>
+                  ) :
+                  <span>No APIs connected</span>
+                }
               </div>
             </div>
           }
@@ -77,7 +90,7 @@ export default function WearableStudySubjects({
 
   return (
     <>
-      {/* {studySubjectsFiltered.length ? studySubjectsFiltered.map(getSubjectSummary) : "No active subjects"} */}
+      {studySubjectsFiltered.length ? studySubjectsFiltered.map(getSubjectSummary) : "No active subjects"}
     </>
   );
 }

@@ -10,7 +10,7 @@ import Link from "../links/link";
 import WearableStudySummary from "./wearableStudySummary";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { SmallLoader } from "../loader";
-import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import CoordinatorStudySubjectProvider, { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 
 interface IWearableDetails {
   [key: number]: {
@@ -82,12 +82,13 @@ export default function WearableStudiesContent({
     if (study) {
       // set the view
       const view = (
-        <WearableStudySummary
-          flashMessage={flashMessage}
-          handleClick={handleClick}
-          goBack={goBack}
-          studyId={study.id}
-        />
+        <CoordinatorStudySubjectProvider>
+          <WearableStudySummary
+            flashMessage={flashMessage}
+            handleClick={handleClick}
+            goBack={goBack}
+            studyId={study.id} />
+        </CoordinatorStudySubjectProvider>
       );
 
       handleClick([study.acronym], view, false);
