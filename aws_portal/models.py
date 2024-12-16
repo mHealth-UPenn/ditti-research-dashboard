@@ -429,18 +429,18 @@ def init_integration_testing_db():
     admin_app = App(name="Admin Dashboard")
     admin_group = AccessGroup(name="Admin", app=admin_app)
     query = Permission.definition == tuple_("*", "*")
-    permission = Permission.query.filter(query).first()
-    JoinAccessGroupPermission(access_group=admin_group, permission=permission)
+    wildcard = Permission.query.filter(query).first()
+    print(wildcard)
+    JoinAccessGroupPermission(access_group=admin_group, permission=wildcard)
     db.session.add(admin_app)
     db.session.add(admin_group)
 
     # Create the Ditti Admin access group
     ditti_app = App(name="Ditti App Dashboard")
     ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
-    query = Permission.definition == tuple_("*", "*")
-    permission = Permission.query.filter(query).first()
+    print(wildcard)
     JoinAccessGroupPermission(
-        access_group=ditti_admin_group, permission=permission)
+        access_group=ditti_admin_group, permission=wildcard)
     query = Permission.definition == tuple_("View", "Ditti App Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
@@ -474,10 +474,9 @@ def init_integration_testing_db():
     wear_app = App(name="Wearable Dashboard")
     wear_admin_group = AccessGroup(
         name="Wearable Dashboard Admin", app=wear_app)
-    query = Permission.definition == tuple_("*", "*")
-    permission = Permission.query.filter(query).first()
+    print(wildcard)
     JoinAccessGroupPermission(
-        access_group=wear_admin_group, permission=permission)
+        access_group=wear_admin_group, permission=wildcard)
     query = Permission.definition == tuple_("View", "Wearable Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
@@ -1061,6 +1060,9 @@ class Account(db.Model):
             # return all permissions for the app
             permissions = q1
 
+        print(app_id, study_id)
+        print(permissions.all())
+
         return permissions
 
     def validate_ask(self, action, resource, permissions):
@@ -1078,6 +1080,8 @@ class Account(db.Model):
         ValueError
             If the account has no permissions that satisfy the request.
         """
+        # print(action, resource)
+        # print(permissions.all())
 
         # build a query using the requested action and resource
         query = Permission.definition == tuple_(action, resource)
@@ -1087,7 +1091,7 @@ class Account(db.Model):
         query = query | (Permission.definition == tuple_("*", resource))
         query = query | (Permission.definition == tuple_("*", "*"))
 
-        # filter the account"s permissions
+        # filter the account's permissions
         valid = permissions.filter(query).first()
 
         # if no permissions were found

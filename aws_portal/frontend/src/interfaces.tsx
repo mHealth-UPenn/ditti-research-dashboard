@@ -342,6 +342,12 @@ export interface StudySubjectContextType {
 }
 
 
+export interface CoordinatorStudySubjectContextType {
+  studySubjects: IStudySubject[];
+  studySubjectLoading: boolean;
+}
+
+
 /**
  * The study subject data structure as it is returned from the database.
  * @property id - The database primary key.
@@ -393,11 +399,4 @@ export interface IVisualizationProps {
   marginRight?: number;
   marginBottom?: number;
   marginLeft?: number;
-}
-
-export interface IWearableDetails {
-  [key: number]: {
-    numSubjects: number;
-    numSubjectsWithApi: number;
-  }
 }

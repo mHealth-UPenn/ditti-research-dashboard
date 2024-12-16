@@ -192,63 +192,6 @@ def get_study_contacts():
     return jsonify(res)
 
 
-# TODO: Write tests
-@blueprint.route("/get-study-wearable-details")
-@jwt_required()
-def get_study_wearable_details():
-    """
-    For all studies a coordinator has access to, retrieve the number of study subjects enrolled and the number of study
-    subjects with at least one API connected. Always use Wearable Dashboard (`app_id` = 3) for checking permissions.
-
-    Response Syntax (200)
-    ---
-    {
-        studyId (int): {
-            numSubjects: int,
-            numSubjectsWithApi: int
-        }
-        ...
-    }
-    """
-    # Try to retrieve all study subjects
-    try:
-        permissions = current_user.get_permissions(3)  # Always use Wearable Dashboard (`app_id` = 3)
-        # Throw ValueError if the coordinator does not have permissions to view all studies
-        current_user.validate_ask("View", "All Studies", permissions)
-        study_subjects = StudySubject.query.all()
-
-    # On error retrieve all study subjects enrolled in studies the current user has access to
-    except ValueError:
-        study_subjects = StudySubject.query\
-            .join(JoinStudySubjectStudy)\
-            .join(
-                JoinAccountStudy,
-                JoinAccountStudy.study_id == JoinStudySubjectStudy.study_id
-            )\
-            .filter(JoinAccountStudy.account_id == current_user.id)\
-            .all()
-
-    # Build the response
-    res = {}
-    for ss in study_subjects:
-        # Count `has_api` if the current subject has at least 1 api connected and is active in at least one study
-        has_api = int(
-            len(ss.apis)
-            and len([s for s in ss.studies if s.expires_on > datetime.now()])
-        )
-        for join in ss.studies:
-            try:
-                res[join.study_id]["numSubjects"] += 1
-                res[join.study_id]["numSubjectsWithApi"] += has_api
-            except KeyError:
-                res[join.study_id] = {
-                    "numSubjects": 1,
-                    "numSubjectsWithApi": has_api
-                }
-
-    return jsonify(res)
-
-
 @blueprint.route("/get-account-details")
 @jwt_required()
 # @auth_required("View", "Ditti App Dashboard")

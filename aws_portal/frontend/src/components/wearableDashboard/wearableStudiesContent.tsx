@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { IWearableDetails, ViewProps } from "../../interfaces";
-import { getAccess, makeRequest } from "../../utils";
+import { ViewProps } from "../../interfaces";
+import { getAccess } from "../../utils";
 import Card from "../cards/card";
 import ViewContainer from "../containers/viewContainer";
 import CardContentRow from "../cards/cardContentRow";
@@ -10,6 +10,14 @@ import Link from "../links/link";
 import WearableStudySummary from "./wearableStudySummary";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { SmallLoader } from "../loader";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+
+interface IWearableDetails {
+  [key: number]: {
+    numSubjects: number;
+    numSubjectsWithApi: number;
+  }
+}
 
 
 export default function WearableStudiesContent({
@@ -18,10 +26,31 @@ export default function WearableStudiesContent({
   handleClick
 }: ViewProps) {
   const [canViewWearableData, setCanViewWearableData] = useState<Set<number>>(new Set());
-  const [wearableDetails, setWearableDetails] = useState<IWearableDetails>({});
   const [loading, setLoading] = useState(true);
-  
+
   const { studies, studiesLoading } = useStudiesContext();
+  const { studySubjects, studySubjectLoading } = useCoordinatorStudySubjectContext();
+
+  const wearableDetails: IWearableDetails = {};
+  for (const ss of studySubjects) {
+      // Count `hasApi` if the current subject has at least 1 API connected and is active in at least one study
+      const hasApi = Number(
+          ss.apis.length &&
+          ss.studies.some(s => new Date(s.expiresOn) > new Date())
+      );
+  
+      for (const join of ss.studies) {
+          if (wearableDetails[join.study.id]) {
+              wearableDetails[join.study.id].numSubjects += 1;
+              wearableDetails[join.study.id].numSubjectsWithApi += hasApi;
+          } else {
+              wearableDetails[join.study.id] = {
+                  numSubjects: 1,
+                  numSubjectsWithApi: hasApi
+              };
+          }
+      }
+  }
 
   useEffect(() => {
     const updatedCanViewWearableData: Set<number> = new Set();
@@ -36,11 +65,6 @@ export default function WearableStudiesContent({
       )
     );
 
-    promises.push(
-      makeRequest("/db/get-study-wearable-details")
-        .then((res: IWearableDetails) => setWearableDetails(res))
-        .catch(() => console.error("Error retrieving study wearable details. Check permissions."))
-    )
     Promise.all(promises).then(() => {
       setCanViewWearableData(updatedCanViewWearableData);
       setLoading(false);
@@ -70,7 +94,7 @@ export default function WearableStudiesContent({
     }
   };
 
-  if (loading || studiesLoading) {
+  if (loading || studiesLoading || studySubjectLoading) {
     return (
       <ViewContainer>
         <Card width="md">
