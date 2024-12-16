@@ -430,7 +430,6 @@ def init_integration_testing_db():
     admin_group = AccessGroup(name="Admin", app=admin_app)
     query = Permission.definition == tuple_("*", "*")
     wildcard = Permission.query.filter(query).first()
-    print(wildcard)
     JoinAccessGroupPermission(access_group=admin_group, permission=wildcard)
     db.session.add(admin_app)
     db.session.add(admin_group)
@@ -438,7 +437,6 @@ def init_integration_testing_db():
     # Create the Ditti Admin access group
     ditti_app = App(name="Ditti App Dashboard")
     ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
-    print(wildcard)
     JoinAccessGroupPermission(
         access_group=ditti_admin_group, permission=wildcard)
     query = Permission.definition == tuple_("View", "Ditti App Dashboard")

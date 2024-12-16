@@ -19,7 +19,7 @@ export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<
   // Set headers
   opts.headers = {
     ...opts.headers,
-    ...((jwt && !(opts.headers && "Authorization" in opts.headers) ) && { Authorization: `Bearer ${jwt}` }),
+    ...((jwt && !(opts.headers && "Authorization" in opts.headers)) && { Authorization: `Bearer ${jwt}` }),
   };
 
   // Add additional headers for specific request methods
@@ -55,6 +55,63 @@ export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<
 
   return body;
 };
+
+
+export async function downloadExcelFromUrl(url: string): Promise<string | void> {
+  try {
+    const jwt = localStorage.getItem("jwt");
+    const opts: RequestInit = {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+        Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      },
+    };
+
+    const response = await fetch(`${process.env.REACT_APP_FLASK_SERVER}${url}`, opts);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+    }
+
+    // Handle case where no data is found
+    const contentType = response.headers.get("Content-Type");
+    if (contentType && contentType.includes("application/json")) {
+      const jsonResponse: ResponseBody = await response.json();
+      if (jsonResponse.msg && jsonResponse.msg.includes("not found")) {
+        return jsonResponse.msg;
+      }
+    }
+
+    // Extract the filename from the "Content-Disposition" header
+    const contentDisposition = response.headers.get("Content-Disposition");
+    let filename = "download.xlsx"; // Default filename
+    if (contentDisposition && contentDisposition.includes("filename=")) {
+      filename = contentDisposition.split("filename=")[1].split(";")[0].replace(/"/g, "");
+    }
+
+    // Read the response as a Blob
+    const blob = await response.blob();
+
+    // Create a temporary anchor element to trigger the download
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+
+    // Append the link to the document and trigger a click event
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up by removing the link element and revoking the object URL
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+  } catch (error) {
+    console.error("Error downloading participant data:", error);
+    return "Error downloading participant data.";
+  }
+}
+
 
 /**
  * Checks if the user has permission to perform a specified action on a resource.

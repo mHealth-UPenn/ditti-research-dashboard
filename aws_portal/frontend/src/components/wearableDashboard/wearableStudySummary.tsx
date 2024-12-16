@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Study, ViewProps } from "../../interfaces";
-import { getAccess, makeRequest } from "../../utils";
+import { downloadExcelFromUrl, getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import Subjects from "../dittiApp/subjects";
 import SubjectsEdit from "../dittiApp/subjectsEdit";
@@ -78,7 +78,13 @@ export default function WearableStudySummary({
   /**
    * Download all of the study's data in excel format
    */
-  const downloadExcel = async (): Promise<void> => console.log("Download");
+  const downloadExcel = async (): Promise<void> => {
+    const url = `/admin/fitbit_data/download/study/${studyId}?app=3`;
+    const res = await downloadExcelFromUrl(url);
+    if (res) {
+      flashMessage(<span>{res}</span>, "danger");
+    }
+  };
 
   const { dittiId, email, name, acronym } = studyDetails;
 

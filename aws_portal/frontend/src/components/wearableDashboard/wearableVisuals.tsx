@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { IStudySubject, Study, UserDetails, ViewProps } from "../../interfaces";
 import SubjectsEdit from "../dittiApp/subjectsEdit";
-import { getAccess } from "../../utils";
+import { downloadExcelFromUrl, getAccess } from "../../utils";
 import { SmallLoader } from "../loader";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
@@ -45,7 +45,13 @@ export default function WearableVisuals({
       });
   }, [studyDetails.id]);
 
-  const downloadExcel = async (): Promise<void> => console.log("Download.");
+  const downloadExcel = async (): Promise<void> => {
+    const url = `/admin/fitbit_data/download/participant/${studySubject.dittiId}?app=3`;
+    const res = await downloadExcelFromUrl(url);
+    if (res) {
+      flashMessage(<span>{res}</span>, "danger");
+    }
+  };
 
   // TODO: Update this to pull from join table instead
   // const expTimeDate = new Date(user.expTime);
