@@ -5,6 +5,7 @@ import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
 import Link from "../links/link";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import WearableVisuals from "./wearableVisuals";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -12,19 +13,19 @@ import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStu
  * studyDetials: the current study's information
  */
 interface WearableStudySubjectsProps extends ViewProps {
-  studyPrefix: string;
+  studyDetails: Study;
   canViewWearableData: boolean;
 }
 
 export default function WearableStudySubjects({
-  studyPrefix,
+  studyDetails,
   canViewWearableData,
+  flashMessage,
+  goBack,
   handleClick,
 }: WearableStudySubjectsProps) {
-  const { studySubjects, studySubjectLoading } = useCoordinatorStudySubjectContext();
-  console.log(studyPrefix)
-  console.log(studySubjects)
-  const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyPrefix}\\d`).test(ss.dittiId));
+  const { studySubjects } = useCoordinatorStudySubjectContext();
+  const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));
 
   const getSubjectSummary = (subject: IStudySubject): React.ReactElement => {
     // get the number of days until the subject's id expires
@@ -34,14 +35,15 @@ export default function WearableStudySubjects({
     const handleClickSubject = () =>
       handleClick(
         [subject.dittiId],
-        <React.Fragment />
-        // <SubjectVisuals
-        //   flashMessage={flashMessage}
-        //   goBack={goBack}
-        //   handleClick={handleClick}
-        //   studyDetails={studyDetails}
-        //   studySubject={subject}
-        // />
+        // TODO: Revise the current nav architecture so that navigating to new views can still access context
+        // The current nav architecture still relies on prop drilling for some views like this one
+        <WearableVisuals
+          flashMessage={flashMessage}
+          goBack={goBack}
+          handleClick={handleClick}
+          studyDetails={studyDetails}
+          studySubject={subject}
+        />
       );
 
     return (

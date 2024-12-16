@@ -134,4 +134,4 @@ export default function WearableVisuals({
       </Card>
     </ViewContainer>
   );
-};
+}

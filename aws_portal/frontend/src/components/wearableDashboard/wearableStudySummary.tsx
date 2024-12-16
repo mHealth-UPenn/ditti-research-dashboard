@@ -12,6 +12,7 @@ import Button from "../buttons/button";
 import CardContentRow from "../cards/cardContentRow";
 import { APP_ENV } from "../../environment";
 import WearableStudySubjects from "./wearableStudySubjects";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 
 /**
  * Information for study contacts
@@ -87,6 +88,7 @@ export default function WearableStudySummary({
   };
 
   const { dittiId, email, name, acronym } = studyDetails;
+  const { studySubjectLoading } = useCoordinatorStudySubjectContext();
 
   const handleClickEnrollSubject = () =>
     handleClick(
@@ -113,7 +115,7 @@ export default function WearableStudySummary({
       />
     );
 
-  if (loading) {
+  if (loading || studySubjectLoading) {
     return (
       <ViewContainer>
         <Card width="md">
@@ -169,7 +171,7 @@ export default function WearableStudySummary({
           flashMessage={flashMessage}
           goBack={goBack}
           handleClick={handleClick}
-          studyPrefix={dittiId}
+          studyDetails={studyDetails}
           canViewWearableData={canViewWearableData} />
       </Card>
 
