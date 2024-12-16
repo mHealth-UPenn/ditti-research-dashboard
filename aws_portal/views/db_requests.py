@@ -11,7 +11,6 @@ from aws_portal.models import (
 )
 # from aws_portal.utils.auth import auth_required
 from aws_portal.utils.db import populate_model
-from aws_portal.utils.auth import auth_required
 
 blueprint = Blueprint("db", __name__, url_prefix="/db")
 logger = logging.getLogger(__name__)
