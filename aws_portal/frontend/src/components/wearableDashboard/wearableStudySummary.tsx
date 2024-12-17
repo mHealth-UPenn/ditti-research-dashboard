@@ -47,7 +47,7 @@ export default function WearableStudySummary({
     // check whether the user can enroll new subjects
     const promises: Promise<any>[] = [];
     promises.push(
-      getAccess(3, "Create", "Users", studyId)
+      getAccess(3, "Create", "Participants", studyId)
         .then(() => setCanCreate(true))
         .catch(() => setCanCreate(false))
     );

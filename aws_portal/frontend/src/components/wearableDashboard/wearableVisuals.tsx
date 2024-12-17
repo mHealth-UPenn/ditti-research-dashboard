@@ -83,7 +83,7 @@ export default function WearableVisuals({
 
   useEffect(() => {
     const promises: Promise<unknown>[] = [];
-    promises.push(getAccess(3, "Edit", "Users", studyDetails.id)
+    promises.push(getAccess(3, "Edit", "Participants", studyDetails.id)
       .then(() => setCanEdit(true)));
     promises.push(getAccess(3, "Invoke", "Data Retrieval Task", studyDetails.id)
       .then(() => setCanInvoke(true)));

@@ -53,7 +53,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
     // check whether the user can enroll new subjects
     const promises: Promise<any>[] = [];
     promises.push(
-      getAccess(2, "Create", "Users", studyId)
+      getAccess(2, "Create", "Participants", studyId)
         .then(() => setCanCreate(true))
         .catch(() => setCanCreate(false))
     );

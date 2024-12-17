@@ -76,7 +76,17 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
 };
 
 
-export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWithChildren<{ dittiId: string }>) => {
+export interface ICoordinatorWearableDataProvider {
+  dittiId: string;
+  studyId: number;
+}
+
+
+export const CoordinatorWearableDataProvider = ({
+  children,
+  dittiId,
+  studyId,
+}: PropsWithChildren<ICoordinatorWearableDataProvider>) => {
   const start = new Date();
   start.setDate(start.getDate() - 7);
 
@@ -100,6 +110,7 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
     params.append("start_date", formatDate(start));
     params.append("end_date", formatDate(end));
     params.append("app", "3");
+    params.append("study", studyId.toString());
     const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`
 
     let data: ISleepLog[] = await makeRequest(url);
@@ -134,7 +145,10 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
     const fetchDataProcessingTasks = async () => {
       try {
         if (APP_ENV === "production" || APP_ENV === "development") {
-          const url = `/data_processing_task/?app=3`;
+          const params = new URLSearchParams();
+          params.append("app", "3");
+          params.append("study", studyId.toString());
+          const url = `/data_processing_task/?${params.toString()}`;
           const tasks: IDataProcessingTask[] = await makeRequest(url);
           console.log("All tasks", tasks);
           const syncingTask = tasks.find(task => task.status == "Pending" || task.status == "InProgress");
@@ -157,7 +171,10 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
 
   const scheduleSyncCheck = (taskId: number) => {
     const id = setInterval(async () => {
-      const url = `/data_processing_task/${taskId}?app=3`;
+      const params = new URLSearchParams();
+      params.append("app", "3");
+      params.append("study", studyId.toString());
+      const url = `/data_processing_task/${taskId}?${params.toString()}`;
       const tasks: IDataProcessingTask[] = await makeRequest(url);
       console.log("Schedule sync check tasks", tasks)
       if (!(tasks[0].status == "Pending" || tasks[0].status == "InProgress")) {
@@ -186,7 +203,10 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
 
   const syncData = async () => {
     if (!isSyncing) {
-      const url = `/data_processing_task/invoke?app=3`;
+      const params = new URLSearchParams();
+      params.append("app", "3");
+      params.append("study", studyId.toString());
+      const url = `/data_processing_task/invoke?${params.toString()}`;
       const opts: RequestInit = {
         method: "POST",
         body: JSON.stringify({ app: 3 }),

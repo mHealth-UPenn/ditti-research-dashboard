@@ -6,8 +6,7 @@ from flask_migrate import upgrade
 from aws_portal.extensions import db, cache
 from aws_portal.models import (
     init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
-    init_integration_testing_db, init_demo_db, init_study_subject,
-    init_lambda_task
+    init_integration_testing_db, init_study_subject, init_lambda_task
 )
 
 
@@ -79,15 +78,6 @@ def reset_db_click():
 def init_integration_testing_db_click():
     init_integration_testing_db()
     click.echo("Database successfully initialized.")
-
-
-@click.command("init-demo-db")
-@with_appcontext
-def init_demo_db_click():
-    if init_demo_db():
-        click.echo("Demo database successfully initialized.")
-    else:
-        click.echo("Demo database not initialized.")
 
 
 @click.command("init-study-subject")

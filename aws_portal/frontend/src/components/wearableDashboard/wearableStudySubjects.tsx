@@ -38,13 +38,15 @@ export default function WearableStudySubjects({
         [subject.dittiId],
         // TODO: Revise the current nav architecture so that navigating to new views can still access context
         // The current nav architecture still relies on prop drilling for some views like this one
-        <CoordinatorWearableDataProvider dittiId={subject.dittiId}>
-          <WearableVisuals
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick}
-            studyDetails={studyDetails}
-            studySubject={subject} />
+        <CoordinatorWearableDataProvider
+          dittiId={subject.dittiId}
+          studyId={studyDetails.id}>
+            <WearableVisuals
+              flashMessage={flashMessage}
+              goBack={goBack}
+              handleClick={handleClick}
+              studyDetails={studyDetails}
+              studySubject={subject} />
         </CoordinatorWearableDataProvider>
       );
 

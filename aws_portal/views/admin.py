@@ -1381,7 +1381,7 @@ def about_sleep_template_archive():
 
 
 @blueprint.route("/study_subject")
-@auth_required("View", "Study Subjects")  # A user can CRUD study subjects without access to the admin dashboard
+@auth_required("View", "Participants")  # A user can CRUD study subjects without access to the admin dashboard
 def study_subject():
     """
     Get one study subject or a list of all study subjects. This will return one
@@ -1441,7 +1441,7 @@ def study_subject():
 
 
 @blueprint.route("/study_subject/create", methods=["POST"])
-@auth_required("Create", "Study Subjects")
+@auth_required("Create", "Participants")
 def study_subject_create():
     """
     Create a new study subject.
@@ -1588,7 +1588,7 @@ def study_subject_create():
 
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
-@auth_required("Archive", "Study Subjects")
+@auth_required("Archive", "Participants")
 def study_subject_archive():
     """
     Archive a study subject.
@@ -1642,7 +1642,7 @@ def study_subject_archive():
 
 
 @blueprint.route("/study_subject/edit", methods=["POST"])
-@auth_required("Edit", "Study Subjects")
+@auth_required("Edit", "Participants")
 def study_subject_edit():
     """
     Edit an existing study subject
