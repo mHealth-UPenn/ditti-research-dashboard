@@ -1,11 +1,17 @@
+from functools import lru_cache, wraps
 import json
+import logging
+
+from flask import current_app, make_response, request
 import jwt
 from jwt.exceptions import InvalidTokenError, PyJWTError, ExpiredSignatureError
 import requests
 from requests.exceptions import RequestException
-import logging
-from functools import lru_cache, wraps
-from flask import current_app, make_response, request
+from sqlalchemy import select, func
+
+from aws_portal.extensions import db
+from aws_portal.models import StudySubject
+
 
 logger = logging.getLogger(__name__)
 
@@ -283,9 +289,20 @@ def cognito_auth_required(f):
         # Verify ID token and extract `ditti_id`
         try:
             claims = verify_token(True, id_token, token_use="id")
-            ditti_id = claims.get("cognito:username")
-            if not ditti_id:
+            cognito_ditti_id = claims.get("cognito:username")
+
+            if not cognito_ditti_id:
                 return make_response({"msg": "cognito:username not found in token."}, 400)
+
+            # Cognito stores ditti IDs in lowercase, so retrieve actual ditti ID from the database instead.
+            stmt = select(StudySubject.ditti_id)\
+                .where(func.lower(StudySubject.ditti_id) == cognito_ditti_id)
+            ditti_id = db.session.execute(stmt).scalar()
+
+            if ditti_id is None:
+                logger.warning(f"Participant with cognito:username {cognito_ditti_id} not found in database.")
+                return make_response({"msg": f"Participant {cognito_ditti_id} not found."}, 400)
+
         except ExpiredSignatureError:
             return make_response({"msg": "ID token has expired."}, 401)
         except InvalidTokenError as e:
