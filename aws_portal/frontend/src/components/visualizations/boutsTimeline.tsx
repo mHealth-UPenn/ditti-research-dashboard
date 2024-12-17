@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import Timeline from "./timeline";
 import { IVisualizationProps } from "../../interfaces";
+import colors from "../../colors";
 
 /**
  * A period of time when a subject is considered to be actively tapping
@@ -12,8 +13,10 @@ interface Bout {
   start: number;
   stop?: number;
   label?: string;
+  color?: string;
 }
 
+// TODO: Extend a new "ITimelineProps"
 /**
  * getTaps: get tap data
  * studyDetails: details of the subject's study
@@ -21,10 +24,25 @@ interface Bout {
  */
 interface BoutsTimelineProps extends IVisualizationProps {
   timestamps: number[];
+  audioTimestamps?: number[];
+  title?: string;
+  hideAxis?: boolean;
+  hideStops?: boolean;
+  hideTicks?: boolean;
+  xScaleOffset?: number;
+  strokeWidth?: number;
+  color?: string;
+  axisColor?: string;
+  strokeDashArray?: string;
 }
 
-const BoutsTimeline = ({ timestamps, ...props }: BoutsTimelineProps) => {
-  console.log(timestamps.length)
+const BoutsTimeline = ({
+  timestamps,
+  audioTimestamps,
+  title = "Bouts",
+  hideAxis = true,
+  ...props
+}: BoutsTimelineProps) => {
   const bouts = useMemo(() => {
     const _bouts: Bout[] = [];
     let first: number;
@@ -63,7 +81,8 @@ const BoutsTimeline = ({ timestamps, ...props }: BoutsTimelineProps) => {
         _bouts.push({
           start: first,
           stop: last + 600000,
-          label: `${(count / ((last - first) / (600000))).toFixed(1)} taps/min`
+          label: `${(count / ((last - first) / (600000))).toFixed(1)} taps/min`,
+          color: colors.secondary,
         });
         first = current;
         group = [first];
@@ -72,7 +91,10 @@ const BoutsTimeline = ({ timestamps, ...props }: BoutsTimelineProps) => {
 
       // If there are less than 5 taps and more than 10 minutes have passed then append each tap separately
       else if (count < 5 && (current - last) >= 60000) {
-        group.forEach(timestamp => _bouts.push({ start: timestamp }));
+        group.forEach(timestamp => _bouts.push({
+          start: timestamp,
+          color: colors.secondary,
+        }));
         first = current;
         group = [first];
         count = 1;
@@ -85,7 +107,7 @@ const BoutsTimeline = ({ timestamps, ...props }: BoutsTimelineProps) => {
 
         // Append each preceding timestamp as a single tap
         group.slice(0, idx).forEach(timestamp =>
-          _bouts.push({ start: timestamp })
+          _bouts.push({ start: timestamp, color: colors.secondary })
         );
 
         // Use the remaining timestamps within one minute of the current time to try and start another bout
@@ -109,13 +131,24 @@ const BoutsTimeline = ({ timestamps, ...props }: BoutsTimelineProps) => {
           _bouts.push({
             start: first,
             stop: current + 600000,
-            label: `${(count / ((current - first) / (600000))).toFixed(1)} taps/min`
+            label: `${(count / ((current - first) / (600000))).toFixed(1)} taps/min`,
+            color: colors.secondary,
           });
         }
 
         // Else append each tap as a single tap
         else {
-          group.forEach(timestamp => _bouts.push({ start: timestamp }));
+          group.forEach(timestamp => _bouts.push({
+            start: timestamp,
+            color: colors.secondary
+          }));
+        }
+
+        // Append any audio taps separately
+        if (audioTimestamps) {
+          audioTimestamps.forEach(timestamp =>
+            _bouts.push({ start: timestamp, color: colors.secondaryLight })
+          );
         }
       }
     });
@@ -123,7 +156,8 @@ const BoutsTimeline = ({ timestamps, ...props }: BoutsTimelineProps) => {
     return _bouts;
   }, [timestamps]);
 
-  return <Timeline groups={bouts} title="Bouts" hideAxis={true} {...props} />;
+  return <Timeline
+    groups={bouts} title={title} hideAxis={hideAxis} {...props} />;
 };
 
 export default BoutsTimeline;

@@ -12,7 +12,9 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import { differenceInDays } from "date-fns";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import BoutsTimeline from "./boutsTimeline";
 
 
 
@@ -33,6 +35,7 @@ type ILevelGroupsClassic = Record<ISleepLevelClassic, IGroup[]>;
 
 interface IWearableVisualizationContentProps extends IVisualizationProps {
   showDayControls?: boolean;
+  showTapsData?: boolean;
   horizontalPadding?: boolean;
 }
 
@@ -43,6 +46,7 @@ const WearableVisualizationContent = ({
   marginBottom,
   marginLeft,
   showDayControls = false,
+  showTapsData = false,
   horizontalPadding = false,
 }: IWearableVisualizationContentProps) => {
 
@@ -72,6 +76,18 @@ const WearableVisualizationContent = ({
     decrementStartDate,
     incrementStartDate
   } = useWearableData();
+
+  const { dataLoading, taps, audioTaps } = useDittiDataContext();
+
+  const timestamps = useMemo(() => taps
+      .filter(tap => tap.dittiId === "TA001")
+      .map(tap => tap.time.getTime())
+  , [taps]);
+
+  const audioTimestamps = useMemo(() => audioTaps
+      .filter(tap => tap.dittiId === "TA001")
+      .map(tap => tap.time.getTime())
+  , [taps]);
 
   const margin = {
     top: marginTop !== undefined ? marginTop : defaultMargin.top,
@@ -153,7 +169,7 @@ const WearableVisualizationContent = ({
     setRow4(updatedRow4);
   }, [dataIsUpdated, firstDateOfSleep, isLoading]);
 
-  if (isLoading || !xScale) {
+  if (isLoading || !xScale || dataLoading) {
     return <></>;
   }
 
@@ -213,6 +229,17 @@ const WearableVisualizationContent = ({
             color={colors.wearableDeep}
             axisColor={colors.wearableDeep}
             xScaleOffset={offset} />
+          {showTapsData &&
+            <>
+              <div className="mb-4" />
+              <BoutsTimeline
+                timestamps={timestamps}
+                audioTimestamps={audioTimestamps}
+                hideTicks={true}
+                xScaleOffset={offset}
+                title="" />
+            </>
+          }
           <svg className="absolute top-0" width={width} height={80}>
             <Brush
               xScale={xScale}
@@ -254,7 +281,7 @@ const WearableVisualizationContent = ({
               <span className="text-xs">Deep</span>
             </div>
           </div>
-          <div className="flex">
+          <div className="flex mb-1">
             <span className="text-xs font-bold w-[3rem]">Classic:</span>
             <div className="flex mr-4">
               <div className="bg-[repeating-linear-gradient(90deg,#E04B6F,#E04B6F_1px,transparent_1px,transparent_2px)] w-[1rem] mr-2" />
@@ -269,6 +296,27 @@ const WearableVisualizationContent = ({
               <span className="text-xs">Asleep</span>
             </div>
           </div>
+          {showTapsData &&
+            <div className="flex">
+              <span className="text-xs font-bold w-[3rem]">Taps:</span>
+              <div className="flex items-center mr-4">
+                <div className="bg-secondary w-[0.6rem] h-[0.6rem] mr-2 rounded-lg" />
+                <span className="text-xs">Tap</span>
+              </div>
+              <div className="flex items-center mr-4">
+                <div className="relative flex items-center">
+                  <div className="bg-secondary w-[0.6rem] h-[0.6rem] mr-2 rounded-lg" />
+                  <div className="bg-secondary w-[0.6rem] h-[0.6rem] mr-2 rounded-lg" />
+                  <div className="absolute h-[2px] w-[1.25rem] bg-secondary" />
+                </div>
+                <span className="text-xs">Tapping Bout</span>
+              </div>
+              <div className="flex items-center mr-4">
+                <div className="bg-light w-[0.6rem] h-[0.6rem] mr-2 rounded-lg" />
+                <span className="text-xs">Audio Tap</span>
+              </div>
+            </div>
+          }
         </div>
         <div className="flex flex-col items-end mb-4 sm:mb-0">
           <div className="flex">

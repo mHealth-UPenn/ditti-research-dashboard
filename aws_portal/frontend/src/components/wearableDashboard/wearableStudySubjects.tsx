@@ -6,12 +6,11 @@ import ActiveIcon from "../icons/activeIcon";
 import Link from "../links/link";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import WearableVisuals from "./wearableVisuals";
-import { CoordinatorWearableDataProvider } from "../../contexts/wearableDataContext";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
  * getTaps: get tap data
- * studyDetials: the current study's information
+ * studyDetails: the current study's information
  */
 interface WearableStudySubjectsProps extends ViewProps {
   studyDetails: Study;
@@ -38,16 +37,12 @@ export default function WearableStudySubjects({
         [subject.dittiId],
         // TODO: Revise the current nav architecture so that navigating to new views can still access context
         // The current nav architecture still relies on prop drilling for some views like this one
-        <CoordinatorWearableDataProvider
-          dittiId={subject.dittiId}
-          studyId={studyDetails.id}>
-            <WearableVisuals
-              flashMessage={flashMessage}
-              goBack={goBack}
-              handleClick={handleClick}
-              studyDetails={studyDetails}
-              studySubject={subject} />
-        </CoordinatorWearableDataProvider>
+        <WearableVisuals
+          flashMessage={flashMessage}
+          goBack={goBack}
+          handleClick={handleClick}
+          subject={subject}
+          studyDetails={studyDetails} />
       );
 
     return (

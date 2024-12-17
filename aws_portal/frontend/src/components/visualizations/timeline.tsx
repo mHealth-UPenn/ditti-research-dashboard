@@ -12,6 +12,7 @@ type GroupData = {
   stop?: number;
   label?: string;
   strokeDashArray?: string;
+  color?: string;
 };
 
 interface TimelineProps extends IVisualizationProps {
@@ -109,16 +110,16 @@ const Timeline: React.FC<TimelineProps> = ({
         return (
           <React.Fragment key={i}>
             {!hideStops && group.start >= start &&
-              <circle cx={startX} cy={y} r={5} fill={color} />
+              <circle cx={startX} cy={y} r={5} fill={group.color || color} />
             }
             <Line
               from={{ x: startX, y }}
               to={{ x: stopX, y }}
-              stroke={color}
+              stroke={group.color || color}
               strokeWidth={strokeWidth}
               strokeDasharray={group.strokeDashArray || strokeDashArray} />
             {!hideStops && stop >= group.stop &&
-              <circle cx={stopX} cy={y} r={5} fill={color} />
+              <circle cx={stopX} cy={y} r={5} fill={group.color || color} />
             }
             {tooltipRect}
           </React.Fragment>
@@ -126,7 +127,7 @@ const Timeline: React.FC<TimelineProps> = ({
       }
       return (
         <React.Fragment key={i}>
-          {!hideStops && <circle cx={startX} cy={y} r={5} fill={color} />}
+          {!hideStops && <circle cx={startX} cy={y} r={5} fill={group.color || color} />}
           {tooltipRect}
         </React.Fragment>
       );
