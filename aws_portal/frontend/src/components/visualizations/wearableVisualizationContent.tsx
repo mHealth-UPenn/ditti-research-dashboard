@@ -81,19 +81,23 @@ const WearableVisualizationContent = ({
   }
 
   useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
     const updatedRow1 = [];
     const updatedRow2 = [];
     const updatedRow3 = [];
     const updatedRow4 = [];
 
-    let filteredSleepLogs = [...sleepLogs]
+    let filteredSleepLogs = [...sleepLogs];
     if (dataIsUpdated && firstDateOfSleep) {
       filteredSleepLogs = filteredSleepLogs.filter(sl =>
         new Date(sl.dateOfSleep) <= firstDateOfSleep
       );
     }
 
-    filteredSleepLogs.forEach((sl, i) => {
+    filteredSleepLogs.forEach(sl => {
       if (sl.type === "stages") {
         const levelGroups: ILevelGroupsStages = {
           wake: [],
@@ -147,7 +151,7 @@ const WearableVisualizationContent = ({
     setRow2(updatedRow2);
     setRow3(updatedRow3);
     setRow4(updatedRow4);
-  }, [dataIsUpdated, firstDateOfSleep]);
+  }, [dataIsUpdated, firstDateOfSleep, isLoading]);
 
   if (isLoading || !xScale) {
     return <></>;

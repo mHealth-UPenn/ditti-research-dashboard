@@ -179,8 +179,6 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
     }
   };
 
-  console.log(sleepLogs.length)
-
   return (
     <CoordinatorWearableDataContext.Provider value={{
         startDate,
