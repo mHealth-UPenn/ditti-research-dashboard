@@ -10,8 +10,8 @@ import { IVisualizationProps } from "../../interfaces";
  */
 interface Bout {
   start: number;
-  stop: number;
-  label: string;
+  stop?: number;
+  label?: string;
 }
 
 /**
@@ -24,6 +24,7 @@ interface BoutsTimelineProps extends IVisualizationProps {
 }
 
 const BoutsTimeline = ({ timestamps, ...props }: BoutsTimelineProps) => {
+  console.log(timestamps.length)
   const bouts = useMemo(() => {
     const _bouts: Bout[] = [];
     let first: number;
@@ -32,9 +33,8 @@ const BoutsTimeline = ({ timestamps, ...props }: BoutsTimelineProps) => {
     let group: number[];
     let count = 0;
 
-    timestamps.forEach((timestamp) => {
-
-      // on first iteration
+    timestamps.sort().forEach((timestamp, i) => {
+      // On first iteration
       if (!count) {
         first = timestamp;
         group = [first];
@@ -44,47 +44,78 @@ const BoutsTimeline = ({ timestamps, ...props }: BoutsTimelineProps) => {
 
       current = timestamp;
 
-      // if this tap is less than one minute after the first tap
+      // If this tap is less than one minute after the first tap then continue the current bout
       if (current - first < 60000) {
         last = current;
         group.push(current);
         count += 1;
       }
 
-      // else if there were 5 taps or more in the first minute and less than 30
-      // minutes have passed between this tap and the last tap then the bout
-      // begins at the first tap
+      // If there are 5 taps or more and less than 30 minutes have passed continue the current bout
       else if (count >= 5 && (current - last) < 1800000) {
         last = current;
         group.push(current);
         count += 1;
       }
 
-      // else if there were 5 taps or more in the first minute and more than 10
-      // minutes have passed then the bout ends at 10 minutes after the last
-      // tap
-      else if (count >= 5 && (last - first) > 60000) {
+      // If there are 5 taps or more and 30 minutes or more have passed then the bout ends 10 minutes after the last tap
+      else if (count >= 5 && (current - last) >= 1800000) {
         _bouts.push({
           start: first,
-          stop: last + 1800000,
-          label: `${(count / ((last - first) / (60 * 1000))).toFixed(1)} taps/min`
+          stop: last + 600000,
+          label: `${(count / ((last - first) / (600000))).toFixed(1)} taps/min`
         });
         first = current;
         group = [first];
         count = 1;
       }
 
-      // else if there were less than 5 taps in the first minute or tapping
-      // lasted for less than one minute then no bout has begun
+      // If there are less than 5 taps and more than 10 minutes have passed then append each tap separately
+      else if (count < 5 && (current - last) >= 60000) {
+        group.forEach(timestamp => _bouts.push({ start: timestamp }));
+        first = current;
+        group = [first];
+        count = 1;
+      }
+
+      // Otherwise append all taps that are one minute or more before the current tap separately
       else {
-        group = group.filter(timestamp => current - timestamp < 60000);
+        // Get the index of the first timestamp within one minute of the current time
+        const idx = group.findIndex(timestamp => current - timestamp < 60000);
+
+        // Append each preceding timestamp as a single tap
+        group.slice(0, idx).forEach(timestamp =>
+          _bouts.push({ start: timestamp })
+        );
+
+        // Use the remaining timestamps within one minute of the current time to try and start another bout
+        group = group.slice(idx);
+
         if (group.length) {
+          // Append each tap as a single tap, no bout
           first = group[0];
           count = group.length;
         } else {
           first = current;
           group = [first];
           count = 1;
+        }
+      }
+
+      // If on the last iteration
+      if (i === timestamps.length - 1) {
+        // If a valid bout
+        if (count >= 5 && (current - first) >= 600000) {
+          _bouts.push({
+            start: first,
+            stop: current + 600000,
+            label: `${(count / ((current - first) / (600000))).toFixed(1)} taps/min`
+          });
+        }
+
+        // Else append each tap as a single tap
+        else {
+          group.forEach(timestamp => _bouts.push({ start: timestamp }));
         }
       }
     });

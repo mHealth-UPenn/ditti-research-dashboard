@@ -150,10 +150,8 @@ export const CoordinatorWearableDataProvider = ({
           params.append("study", studyId.toString());
           const url = `/data_processing_task/?${params.toString()}`;
           const tasks: IDataProcessingTask[] = await makeRequest(url);
-          console.log("All tasks", tasks);
           const syncingTask = tasks.find(task => task.status == "Pending" || task.status == "InProgress");
           if (syncingTask) {
-            console.log("Syncing task", syncingTask);
             setIsSyncing(true);
             scheduleSyncCheck(syncingTask.id);
           }
@@ -176,7 +174,6 @@ export const CoordinatorWearableDataProvider = ({
       params.append("study", studyId.toString());
       const url = `/data_processing_task/${taskId}?${params.toString()}`;
       const tasks: IDataProcessingTask[] = await makeRequest(url);
-      console.log("Schedule sync check tasks", tasks)
       if (!(tasks[0].status == "Pending" || tasks[0].status == "InProgress")) {
         clearInterval(id);
         setIsSyncing(false);
@@ -189,7 +186,6 @@ export const CoordinatorWearableDataProvider = ({
 
         fetchSleepDataAsync(updatedStartDate, updatedEndDate)
           .then(data => {
-            console.log("New sleep data", data);
             setSleepLogs(data);
             if (data.length) {
               setFirstDateOfSleep(new Date(data[0].dateOfSleep));
@@ -214,7 +210,6 @@ export const CoordinatorWearableDataProvider = ({
 
       type ResponseBody = { msg: string; task: IDataProcessingTask; };
       const res: ResponseBody  = await makeRequest(url, opts);
-      console.log("syncData response", res);
 
       setIsSyncing(true);
       scheduleSyncCheck(res.task.id);
