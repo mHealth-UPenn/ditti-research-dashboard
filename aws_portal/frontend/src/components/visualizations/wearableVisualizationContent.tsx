@@ -36,6 +36,7 @@ type ILevelGroupsClassic = Record<ISleepLevelClassic, IGroup[]>;
 interface IWearableVisualizationContentProps extends IVisualizationProps {
   showDayControls?: boolean;
   showTapsData?: boolean;
+  dittiId?: string;
   horizontalPadding?: boolean;
 }
 
@@ -47,6 +48,7 @@ const WearableVisualizationContent = ({
   marginLeft,
   showDayControls = false,
   showTapsData = false,
+  dittiId,
   horizontalPadding = false,
 }: IWearableVisualizationContentProps) => {
 
@@ -80,12 +82,12 @@ const WearableVisualizationContent = ({
   const { dataLoading, taps, audioTaps } = useDittiDataContext();
 
   const timestamps = useMemo(() => taps
-      .filter(tap => tap.dittiId === "TA001")
+      .filter(tap => tap.dittiId === dittiId)
       .map(tap => tap.time.getTime())
   , [taps]);
 
   const audioTimestamps = useMemo(() => audioTaps
-      .filter(tap => tap.dittiId === "TA001")
+      .filter(tap => tap.dittiId === dittiId)
       .map(tap => tap.time.getTime())
   , [taps]);
 

@@ -184,6 +184,7 @@ export default function WearableVisualsContent({
           <WearableVisualization
             showDayControls={true}
             showTapsData={canViewTaps}
+            dittiId={studySubject.dittiId}
             horizontalPadding={md} />
         </CardContentRow>
       </Card>

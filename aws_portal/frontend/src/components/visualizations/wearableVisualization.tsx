@@ -4,6 +4,7 @@ import WearableVisualizationContent from "./wearableVisualizationContent";
 interface IWearableVisualizationProps {
   showDayControls?: boolean;
   showTapsData?: boolean;
+  dittiId?: string;
   horizontalPadding?: boolean;
 }
 
@@ -11,6 +12,7 @@ interface IWearableVisualizationProps {
 const WearableVisualization = ({
   showDayControls = false,
   showTapsData = false,
+  dittiId,
   horizontalPadding = false,
 }: IWearableVisualizationProps) => {
   return (
@@ -24,6 +26,7 @@ const WearableVisualization = ({
         <WearableVisualizationContent
           showDayControls={showDayControls}
           showTapsData={showTapsData}
+          dittiId={dittiId}
           horizontalPadding={horizontalPadding} />
     </VisualizationController>
   );
