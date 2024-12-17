@@ -13,6 +13,32 @@ import { APP_ENV } from "../../environment";
 import { CoordinatorWearableDataProvider } from "../../contexts/wearableDataContext";
 import WearableVisualization from "../visualizations/wearableVisualization";
 
+
+function getWindowDimensions() {
+  const { innerWidth: width, innerHeight: height } = window;
+  return {
+    width,
+    height
+  };
+}
+
+
+function useWindowDimensions() {
+  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+
+  useEffect(() => {
+    function handleResize() {
+      setWindowDimensions(getWindowDimensions());
+    }
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return windowDimensions;
+}
+
+
 /**
  * getTaps: get tap data
  * studyDetails: details of the subject's study
@@ -87,6 +113,10 @@ export default function WearableVisuals({
       // />
     );
 
+  // Custom breakpoint used only for managing certain visx properties
+  const { width: windowWidth } = useWindowDimensions();
+  const md = windowWidth >= 768;
+
   if (loading) {
     return (
       <ViewContainer>
@@ -107,7 +137,7 @@ export default function WearableVisuals({
             <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
           </div>
 
-          <div className="flex flex-col md:flex-row">
+          <div className="hidden md:flex flex-col md:flex-row">
             {/* download the subject's data as excel */}
             <Button
               variant="secondary"
@@ -126,10 +156,30 @@ export default function WearableVisuals({
             </Button>
           </div>
         </CardContentRow>
+        <CardContentRow>
+          <div className="flex md:hidden">
+            {/* download the subject's data as excel */}
+            <Button
+              variant="secondary"
+              className="mr-2"
+              onClick={downloadExcel}
+              rounded={true}>
+                Download Excel
+            </Button>
+            {/* if the user can edit, show the edit button */}
+            <Button
+              variant="secondary"
+              onClick={handleClickEditDetails}
+              disabled={!(canEdit || APP_ENV === "demo")}
+              rounded={true}>
+              Edit Details
+            </Button>
+          </div>
+        </CardContentRow>
 
         <CardContentRow>
             <CoordinatorWearableDataProvider dittiId={studySubject.dittiId}>
-              <WearableVisualization showDayControls={true} />
+              <WearableVisualization showDayControls={true} horizontalPadding={md} />
             </CoordinatorWearableDataProvider>
           </CardContentRow>
       </Card>

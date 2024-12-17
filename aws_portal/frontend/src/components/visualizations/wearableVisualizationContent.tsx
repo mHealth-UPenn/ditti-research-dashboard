@@ -15,6 +15,7 @@ import { KeyboardArrowUp } from "@mui/icons-material";
 import { useEffect, useState } from "react";
 
 
+
 const getWeekday = (date: Date) => {
   return date.toLocaleDateString("en-US", { weekday: "long" });
 };
@@ -32,6 +33,7 @@ type ILevelGroupsClassic = Record<ISleepLevelClassic, IGroup[]>;
 
 interface IWearableVisualizationContentProps extends IVisualizationProps {
   showDayControls?: boolean;
+  horizontalPadding?: boolean;
 }
 
 
@@ -41,6 +43,7 @@ const WearableVisualizationContent = ({
   marginBottom,
   marginLeft,
   showDayControls = false,
+  horizontalPadding = false,
 }: IWearableVisualizationContentProps) => {
 
   // Sleep logs may straddle multiple timeline windows, so initialize one array
@@ -157,8 +160,8 @@ const WearableVisualizationContent = ({
     const offset = (differenceInDays(day, new Date()) + 1) * 24 * 60 * 60 * 1000;
 
     visualizations.push(
-      <div key={day.toISOString()} className="relative flex items-center mb-8">
-        <span className="absolute font-bold text-sm [writing-mode:vertical-lr] rotate-180">{title}</span>
+      <div key={day.toISOString()} className="relative flex items-center mb-10 md:mb-8">
+        <span className="absolute hidden md:flex font-bold text-sm [writing-mode:vertical-lr] rotate-180">{title}</span>
         <div>
           <svg className="absolute" width={width} height={80}>
             <GridColumns
@@ -169,6 +172,7 @@ const WearableVisualizationContent = ({
               strokeDasharray="5,5"
               numTicks={window.screen.width > 600 ? 10 : 5} />
           </svg>
+          <span className="md:hidden absolute font-bold text-sm top-[-28px]">{title}</span>
           <Timeline
             groups={row1}
             hideAxis={true}
@@ -225,7 +229,7 @@ const WearableVisualizationContent = ({
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex flex-col-reverse justify-center sm:flex-row sm:items-center sm:justify-between mb-2">
         <div className="flex flex-col">
           <div className="flex mb-1">
             <span className="text-xs font-bold w-[3rem]">Stages:</span>
@@ -262,7 +266,7 @@ const WearableVisualizationContent = ({
             </div>
           </div>
         </div>
-        <div className="flex flex-col items-end">
+        <div className="flex flex-col items-end mb-4 sm:mb-0">
           <div className="flex">
             {showDayControls &&
               <>
@@ -299,7 +303,7 @@ const WearableVisualizationContent = ({
           </div>
         </div>
       </div>
-      <svg className="relative top-[10px]" width={width} height={50}>
+      <svg className="relative top-[10px]" width={width} height={horizontalPadding ? 50 : 90}>
         <AxisTop
           top={50}
           scale={xScale}
@@ -307,6 +311,7 @@ const WearableVisualizationContent = ({
           tickLength={20}
           tickStroke={colors.light}
           numTicks={window.screen.width > 600 ? 10 : 5}
+          tickValues={horizontalPadding ? xScale.ticks() : xScale.ticks().slice(1, xScale.ticks().length - 1)}
           tickFormat={v => getTime(v as Date)}
           tickLabelProps={{ angle: -45, dy: -10 }} />
       </svg>
