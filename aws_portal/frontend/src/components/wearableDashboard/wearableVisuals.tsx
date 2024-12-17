@@ -10,8 +10,10 @@ import Title from "../text/title";
 import Subtitle from "../text/subtitle";
 import Button from "../buttons/button";
 import { APP_ENV } from "../../environment";
-import { CoordinatorWearableDataProvider } from "../../contexts/wearableDataContext";
+import { CoordinatorWearableDataProvider, useWearableData } from "../../contexts/wearableDataContext";
 import WearableVisualization from "../visualizations/wearableVisualization";
+import SyncIcon from '@mui/icons-material/Sync';
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 
 
 function getWindowDimensions() {
@@ -58,6 +60,8 @@ export default function WearableVisuals({
 }: WearableVisualsProps) {
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const { isSyncing, syncData } = useWearableData();
 
   const scope = [...(new Set(studySubject.apis.map(api => api.scope).flat()))];
   const endDate = new Date(Math.max(...studySubject.studies.map(s => new Date(s.expiresOn).getTime())));
@@ -132,56 +136,52 @@ export default function WearableVisuals({
       <Card>
         {/* the subject's details */}
         <CardContentRow>
-          <div className="flex flex-col">
-            <Title>{studySubject.dittiId}</Title>
-            <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
-          </div>
+          <div className="flex flex-grow flex-col lg:flex-row lg:justify-between">
+            <div className="flex flex-col mb-4 lg:mb-0">
+              <Title>{studySubject.dittiId}</Title>
+              <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
+            </div>
 
-          <div className="hidden md:flex flex-col md:flex-row">
-            {/* download the subject's data as excel */}
-            <Button
-              variant="secondary"
-              className="mb-2 md:mb-0 md:mr-2"
-              onClick={downloadExcel}
-              rounded={true}>
-                Download Excel
-            </Button>
-            {/* if the user can edit, show the edit button */}
-            <Button
-              variant="secondary"
-              onClick={handleClickEditDetails}
-              disabled={!(canEdit || APP_ENV === "demo")}
-              rounded={true}>
-              Edit Details
-            </Button>
-          </div>
-        </CardContentRow>
-        <CardContentRow>
-          <div className="flex md:hidden">
-            {/* download the subject's data as excel */}
-            <Button
-              variant="secondary"
-              className="mr-2"
-              onClick={downloadExcel}
-              rounded={true}>
-                Download Excel
-            </Button>
-            {/* if the user can edit, show the edit button */}
-            <Button
-              variant="secondary"
-              onClick={handleClickEditDetails}
-              disabled={!(canEdit || APP_ENV === "demo")}
-              rounded={true}>
-              Edit Details
-            </Button>
+            <div className="flex flex-col lg:flex-row">
+              <div className="flex mb-2 lg:mb-0 lg:mr-2">
+                {/* download the subject's data as excel */}
+                <Button
+                  variant="secondary"
+                  className="mr-2"
+                  onClick={downloadExcel}
+                  rounded={true}>
+                    Download Excel
+                </Button>
+                {/* if the user can edit, show the edit button */}
+                <Button
+                  variant="secondary"
+                  onClick={handleClickEditDetails}
+                  disabled={!(canEdit || APP_ENV === "demo")}
+                  rounded={true}>
+                  Edit Details
+                </Button>
+              </div>
+              <div className="flex">
+                {/* download the subject's data as excel */}
+                <Button
+                  variant="secondary"
+                  onClick={syncData}
+                  rounded={true}
+                  disabled={isSyncing}>
+                    <span className="mr-2">
+                      {isSyncing ? "Data Syncing..." : "Sync Data"}
+                    </span>
+                    <SyncIcon
+                      className={isSyncing ? "animate-spin-reverse-slow" : ""} />
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContentRow>
 
         <CardContentRow>
-            <CoordinatorWearableDataProvider dittiId={studySubject.dittiId}>
-              <WearableVisualization showDayControls={true} horizontalPadding={md} />
-            </CoordinatorWearableDataProvider>
-          </CardContentRow>
+          <WearableVisualization showDayControls={true} horizontalPadding={md} />
+        </CardContentRow>
       </Card>
     </ViewContainer>
   );

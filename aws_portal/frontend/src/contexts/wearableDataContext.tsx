@@ -1,5 +1,5 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from "react";
-import { ISleepLog,  IWearableDataContextType } from "../interfaces";
+import { IDataProcessingTask, ISleepLog,  IWearableDataContextType } from "../interfaces";
 import { APP_ENV } from "../environment";
 import DataFactory from "../dataFactory";
 import { makeRequest } from "../utils";
@@ -84,6 +84,7 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
   const [endDate, setEndDate] = useState<Date>(new Date());  // End today
   const [sleepLogs, setSleepLogs] = useState<ISleepLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [dataIsUpdated, setDataIsUpdated] = useState(false);
   const [firstDateOfSleep, setFirstDateOfSleep] = useState<Date | null>(null);
 
@@ -130,10 +131,75 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
       }
     };
 
+    const fetchDataProcessingTasks = async () => {
+      try {
+        if (APP_ENV === "production" || APP_ENV === "development") {
+          const url = `/data_processing_task/?app=3`;
+          const tasks: IDataProcessingTask[] = await makeRequest(url);
+          console.log("All tasks", tasks);
+          const syncingTask = tasks.find(task => task.status == "Pending" || task.status == "InProgress");
+          if (syncingTask) {
+            console.log("Syncing task", syncingTask);
+            setIsSyncing(true);
+            scheduleSyncCheck(syncingTask.id);
+          }
+        }
+      } catch (error: any) {
+        console.error(error);
+      }
+    };
+
     const promises: Promise<void>[] = [];
     promises.push(fetchSleepData());
+    promises.push(fetchDataProcessingTasks());
     Promise.all(promises).finally(() => setIsLoading(false))
   }, []);
+
+  const scheduleSyncCheck = (taskId: number) => {
+    const id = setInterval(async () => {
+      const url = `/data_processing_task/${taskId}?app=3`;
+      const tasks: IDataProcessingTask[] = await makeRequest(url);
+      console.log("Schedule sync check tasks", tasks)
+      if (!(tasks[0].status == "Pending" || tasks[0].status == "InProgress")) {
+        clearInterval(id);
+        setIsSyncing(false);
+
+        const updatedStartDate = new Date();
+        updatedStartDate.setDate(updatedStartDate.getDate() - 7);
+        setStartDate(updatedStartDate);
+        const updatedEndDate = new Date();
+        setEndDate(updatedEndDate);
+
+        fetchSleepDataAsync(updatedStartDate, updatedEndDate)
+          .then(data => {
+            console.log("New sleep data", data);
+            setSleepLogs(data);
+            if (data.length) {
+              setFirstDateOfSleep(new Date(data[0].dateOfSleep));
+            }
+            setDataIsUpdated(false);
+          })
+          .catch(error => console.error(`Error updating sleep log data: ${error}`));
+      }
+    }, 1000);
+  };
+
+  const syncData = async () => {
+    if (!isSyncing) {
+      const url = `/data_processing_task/invoke?app=3`;
+      const opts: RequestInit = {
+        method: "POST",
+        body: JSON.stringify({ app: 3 }),
+      }
+
+      type ResponseBody = { msg: string; task: IDataProcessingTask; };
+      const res: ResponseBody  = await makeRequest(url, opts);
+      console.log("syncData response", res);
+
+      setIsSyncing(true);
+      scheduleSyncCheck(res.task.id);
+    }
+  };
 
   const canIncrementStartDate = useMemo(() => {
     const today = new Date();
@@ -185,11 +251,13 @@ export const CoordinatorWearableDataProvider = ({ children, dittiId }: PropsWith
         endDate,
         sleepLogs,
         isLoading,
+        isSyncing,
         dataIsUpdated,
         firstDateOfSleep,
         canIncrementStartDate,
         decrementStartDate,
         incrementStartDate,
+        syncData,
       }}>
         {children}
     </CoordinatorWearableDataContext.Provider>

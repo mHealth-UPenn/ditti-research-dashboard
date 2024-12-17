@@ -11,10 +11,10 @@ blueprint = Blueprint("data_processing_task", __name__,
 logger = logging.getLogger(__name__)
 
 
-@blueprint.route("/", methods=["GET"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("View", "Lambda Task")
-def get_data_processing_tasks():
+@blueprint.route("/", defaults={"task_id": None}, methods=["GET"])
+@blueprint.route("/<int:task_id>", methods=["GET"])
+@auth_required("View", "Lambda Task")  # Allow actions from any dashboard
+def get_data_processing_tasks(task_id: int | None):
     """
     Retrieve all data processing tasks sorted by creation date.
 
@@ -49,8 +49,11 @@ def get_data_processing_tasks():
     }
     """
     try:
-        # Retrieve all tasks sorted by created_on in descending order (most recent first)
-        tasks = LambdaTask.query.order_by(LambdaTask.created_on.desc()).all()
+        if task_id is not None:
+            tasks = LambdaTask.query.filter(LambdaTask.id == task_id).all()
+        else:
+            # Retrieve all tasks sorted by created_on in descending order (most recent first)
+            tasks = LambdaTask.query.order_by(LambdaTask.created_on.desc()).all()
         res = [task.meta for task in tasks]
         return jsonify(res), 200
 
@@ -62,7 +65,6 @@ def get_data_processing_tasks():
 
 
 @blueprint.route("/invoke", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
 @auth_required("Invoke", "Lambda Task")
 def invoke_data_processing_task():
     """

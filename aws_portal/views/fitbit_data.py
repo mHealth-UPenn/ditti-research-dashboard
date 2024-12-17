@@ -209,6 +209,7 @@ def download_fitbit_participant(ditti_id: str):
         # Execute the query and fetch the results
         results = db.session.execute(stmt).all()
 
+        # TODO: Only return if ditti ID is not found, not when no data is found
         if len(results) == 0:
             return make_response({"msg": f"Participant with Ditti ID {ditti_id} not found."}, 200)
 

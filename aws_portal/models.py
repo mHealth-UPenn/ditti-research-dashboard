@@ -369,9 +369,10 @@ def init_integration_testing_db():
             "Dev data initialization attempted on non-localhost database")
 
     # Create all possible `(action, resource)` permission combinations
-    actions = ["*", "Create", "View", "Edit", "Archive", "Delete"]
+    actions = ["*", "Create", "View", "Edit", "Archive", "Delete", "Invoke"]
     resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Wearable Dashboard", "Accounts", "Access Groups",
-                 "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps", "Wearable Data"]
+                 "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps",
+                 "Wearable Data", "Lambda Task"]
 
     for action in actions:
         for resource in resources:
@@ -843,8 +844,11 @@ real-time data essential for understanding the physiological effects of mindfuln
     for join in study_subject_apis:
         JoinStudySubjectApi(**join)
 
-    db.session.add(LambdaTask(status="Pending"))
+    db.session.commit()
 
+
+def init_lambda_task(status: str):
+    db.session.add(LambdaTask(status=status))
     db.session.commit()
 
 

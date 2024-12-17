@@ -394,8 +394,10 @@ export interface IWearableDataContextType {
   endDate: Date;
   sleepLogs: ISleepLog[];
   isLoading: boolean;
+  isSyncing?: boolean;
   dataIsUpdated?: boolean;
   firstDateOfSleep?: Date | null;
+  syncData?: () => void;
   decrementStartDate?: () => void;
   incrementStartDate?: () => void;
   canIncrementStartDate?: boolean;
@@ -406,4 +408,21 @@ export interface IVisualizationProps {
   marginRight?: number;
   marginBottom?: number;
   marginLeft?: number;
+}
+
+type DataProcessingTaskStatus = "Pending"
+  | "InProgress"
+  | "Success"
+  | "Failed"
+  | "CompletedWithErrors";
+
+export interface IDataProcessingTask {
+  id: number;
+  status: DataProcessingTaskStatus;
+  billedMs: string;
+  createdOn: string;
+  updatedOn: string;
+  completedOn: string;
+  logFile: string | null;
+  errorCode: string | null;
 }

@@ -6,7 +6,8 @@ from flask_migrate import upgrade
 from aws_portal.extensions import db, cache
 from aws_portal.models import (
     init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
-    init_integration_testing_db, init_demo_db, init_study_subject
+    init_integration_testing_db, init_demo_db, init_study_subject,
+    init_lambda_task
 )
 
 
@@ -103,3 +104,10 @@ def init_study_subject_click(ditti_id):
 @with_appcontext
 def clear_cache_click():
     cache.clear()
+
+
+@click.command("init-lambda-task")
+@click.option("--status", default="InProgress")
+@with_appcontext
+def init_lambda_task_click(status):
+    init_lambda_task(status)

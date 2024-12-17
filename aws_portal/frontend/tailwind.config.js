@@ -4,7 +4,17 @@ import colors from "./src/colors";
 module.exports = {
   content: ["./src/**/*.{html,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      animation: {
+        "spin-reverse-slow": "spin-reverse 2s linear infinite",
+      },
+      keyframes: {
+        "spin-reverse": {
+          "from": { transform: "rotate(0deg)" },
+          "to": { transform: "rotate(-360deg)" },
+        }
+      }
+    },
     colors: {
       "white": colors.white,
       "black": colors.black,
