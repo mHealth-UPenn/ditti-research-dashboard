@@ -1,4 +1,3 @@
-import StudiesProvider from "../../contexts/studiesContext";
 import StudySubjectProvider from "../../contexts/studySubjectContext";
 import { useAuth } from "../../hooks/useAuth";
 import Button from "../buttons/button";

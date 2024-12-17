@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IStudySubject, Study, UserDetails, ViewProps } from "../../interfaces";
-import SubjectsEdit from "../dittiApp/subjectsEdit";
+import { IStudySubject, Study, ViewProps } from "../../interfaces";
 import { downloadExcelFromUrl, getAccess } from "../../utils";
 import { SmallLoader } from "../loader";
 import ViewContainer from "../containers/viewContainer";
@@ -10,10 +9,9 @@ import Title from "../text/title";
 import Subtitle from "../text/subtitle";
 import Button from "../buttons/button";
 import { APP_ENV } from "../../environment";
-import { CoordinatorWearableDataProvider, useWearableData } from "../../contexts/wearableDataContext";
+import { useWearableData } from "../../contexts/wearableDataContext";
 import WearableVisualization from "../visualizations/wearableVisualization";
 import SyncIcon from '@mui/icons-material/Sync';
-import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 
 
 function getWindowDimensions() {

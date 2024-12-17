@@ -1,5 +1,5 @@
 import React from "react";
-import { IStudySubject, Study, UserDetails, ViewProps } from "../../interfaces";
+import { IStudySubject, Study, ViewProps } from "../../interfaces";
 import { differenceInDays } from "date-fns";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
