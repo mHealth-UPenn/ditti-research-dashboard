@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 @blueprint.route("/", defaults={"task_id": None}, methods=["GET"])
 @blueprint.route("/<int:task_id>", methods=["GET"])
-@auth_required("View", "Lambda Task")  # Allow actions from any dashboard
+@auth_required("View", "Data Retrieval Task")  # Allow actions from any dashboard
 def get_data_processing_tasks(task_id: int | None):
     """
     Retrieve all data processing tasks sorted by creation date.
@@ -65,7 +65,7 @@ def get_data_processing_tasks(task_id: int | None):
 
 
 @blueprint.route("/invoke", methods=["POST"])
-@auth_required("Invoke", "Lambda Task")
+@auth_required("Invoke", "Data Retrieval Task")
 def invoke_data_processing_task():
     """
     Manually invoke a data processing task.

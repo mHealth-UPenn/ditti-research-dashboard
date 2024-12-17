@@ -372,7 +372,7 @@ def init_integration_testing_db():
     actions = ["*", "Create", "View", "Edit", "Archive", "Delete", "Invoke"]
     resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Wearable Dashboard", "Accounts", "Access Groups",
                  "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Users", "Taps",
-                 "Wearable Data", "Lambda Task"]
+                 "Wearable Data", "Data Retrieval Task"]
 
     for action in actions:
         for resource in resources:

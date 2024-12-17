@@ -31,8 +31,8 @@ function useWindowDimensions() {
       setWindowDimensions(getWindowDimensions());
     }
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return windowDimensions;
@@ -57,6 +57,7 @@ export default function WearableVisuals({
   handleClick
 }: WearableVisualsProps) {
   const [canEdit, setCanEdit] = useState(false);
+  const [canInvoke, setCanInvoke] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const { isSyncing, syncData } = useWearableData();
@@ -81,15 +82,15 @@ export default function WearableVisuals({
   );
 
   useEffect(() => {
-    getAccess(3, "Edit", "Users", studyDetails.id)
-      .then(() => {
-        setCanEdit(true);
-        setLoading(false);
-      })
-      .catch(() => {
-        setCanEdit(false);
-        setLoading(false);
-      });
+    const promises: Promise<unknown>[] = [];
+    promises.push(getAccess(3, "Edit", "Users", studyDetails.id)
+      .then(() => setCanEdit(true)));
+    promises.push(getAccess(3, "Invoke", "Data Retrieval Task", studyDetails.id)
+      .then(() => setCanInvoke(true)));
+
+    Promise.all(promises)
+      .then(() => setLoading(false))
+      .catch(() => setLoading(false));
   }, [studyDetails.id]);
 
   const downloadExcel = async (): Promise<void> => {
@@ -165,12 +166,12 @@ export default function WearableVisuals({
                   variant="secondary"
                   onClick={syncData}
                   rounded={true}
-                  disabled={isSyncing}>
+                  disabled={isSyncing || !canInvoke}>
                     <span className="mr-2">
-                      {isSyncing ? "Data Syncing..." : "Sync Data"}
+                      {isSyncing && canInvoke ? "Data Syncing..." : "Sync Data"}
                     </span>
                     <SyncIcon
-                      className={isSyncing ? "animate-spin-reverse-slow" : ""} />
+                      className={isSyncing && canInvoke ? "animate-spin-reverse-slow" : ""} />
                 </Button>
               </div>
             </div>
