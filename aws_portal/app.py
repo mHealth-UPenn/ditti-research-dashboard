@@ -6,7 +6,7 @@ from flask_jwt_extended.utils import create_access_token, current_user, get_jwt
 from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
     init_db_click, init_api_click, init_integration_testing_db_click, reset_db_click,
-    init_demo_db_click, init_study_subject_click
+    init_demo_db_click, init_study_subject_click, clear_cache_click
 )
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, tm
 from aws_portal.views import admin, aws_requests, base, db_requests, iam, participant
@@ -83,6 +83,7 @@ def register_commands(app):
     app.cli.add_command(reset_db_click)
     app.cli.add_command(init_demo_db_click)
     app.cli.add_command(init_study_subject_click)
+    app.cli.add_command(clear_cache_click)
 
 
 def register_extensions(app):

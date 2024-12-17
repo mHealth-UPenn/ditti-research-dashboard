@@ -3,7 +3,7 @@ from flask import current_app
 from flask.cli import with_appcontext
 from flask_migrate import upgrade
 
-from aws_portal.extensions import db
+from aws_portal.extensions import db, cache
 from aws_portal.models import (
     init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
     init_integration_testing_db, init_demo_db, init_study_subject
@@ -97,3 +97,9 @@ def init_study_subject_click(ditti_id):
         raise RuntimeError("Option `ditti_id` is required.")
     init_study_subject(ditti_id)
     click.echo("Study subject successfully initialized.")
+
+
+@click.command("clear-cache")
+@with_appcontext
+def clear_cache_click():
+    cache.clear()
