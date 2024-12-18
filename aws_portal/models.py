@@ -1699,6 +1699,7 @@ class Study(db.Model):
             "email": self.email,
             "roles": [r.meta for r in self.roles],
             "defaultExpiryDelta": self.default_expiry_delta,
+            "consentInformation": self.consent_information,
             "dataSummary": self.data_summary,
             "isQi": self.is_qi
         }
