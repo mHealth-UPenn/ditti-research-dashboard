@@ -82,6 +82,9 @@ export interface Role {
  * @property dittiId - The study's ditti ID.
  * @property email - The study's team email.
  * @property role - The role the user is assigned to for the study.
+ * @property defaultExpiryDelta - The default number of days that a subject is
+ *                                enrolled in the study.
+ * @property isQi - Is the study for quality improvement.
  */
 export interface Study {
   id: number;
@@ -90,6 +93,8 @@ export interface Study {
   dittiId: string;
   email: string;
   role?: Role;
+  defaultExpiryDelta: number;
+  isQi: boolean;
 }
 
 /**
