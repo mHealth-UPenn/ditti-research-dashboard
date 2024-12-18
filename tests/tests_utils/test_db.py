@@ -27,7 +27,7 @@ def test_populate_model_invalid_attribute(app):
     with pytest.raises(ValueError) as e:
         populate_model(study, data)
 
-    assert str(e.value) == "Invalid attribute: foo"
+    assert str(e.value) == "Invalid attribute: foo (mapped to foo)"
 
 
 def test_populate_model_skip_lists(app):
@@ -63,3 +63,40 @@ def test_populate_model_skip_relationships(app):
     db.session.commit()
     access_group = AccessGroup.query.get(1)
     assert access_group.app == app
+
+
+def test_populate_model_camel_to_snake(app):
+    study = Study.query.get(1)
+    data = {
+        "name": "baz",
+        "acronym": "BAZ",
+        "dittiId": "BZ"  # camelCase key
+    }
+
+    populate_model(study, data, use_camel_to_snake=True)
+    db.session.commit()
+    study = Study.query.get(1)
+    assert study.name == "baz"
+    assert study.acronym == "BAZ"
+    assert study.ditti_id == "BZ"
+
+
+def test_populate_model_custom_mapping(app):
+    study = Study.query.get(1)
+    data = {
+        "studyName": "baz",  # Custom key
+        "studyAcronym": "BAZ"
+    }
+
+    custom_mapping = {
+        "studyName": "name",
+        "studyAcronym": "acronym"
+    }
+
+    populate_model(study, data, custom_mapping=custom_mapping)
+    db.session.commit()
+    study = Study.query.get(1)
+
+    # Updated assertions to reflect expected results
+    assert study.name == "baz"
+    assert study.acronym == "BAZ"
