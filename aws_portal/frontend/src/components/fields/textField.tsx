@@ -21,6 +21,7 @@ interface TextFieldProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   feedback?: string;
   disabled?: boolean;
+  min?: string;
 }
 
 /**
