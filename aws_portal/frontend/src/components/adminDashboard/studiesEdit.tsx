@@ -14,64 +14,67 @@ import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 
-/**
- * The form's prefill
- */
-interface StudyPrefill {
-  name: string;
-  acronym: string;
-  dittiId: string;
-  email: string;
-}
-
-/**
- * studyId: the database primary key, 0 if creating a new entry
- */
 interface StudiesEditProps extends ViewProps {
   studyId: number;
 }
 
 const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage }) => {
-  const [state, setState] = useState<StudyPrefill & { loading: boolean }>({
-    name: "",
-    acronym: "",
-    dittiId: "",
-    email: "",
-    loading: true,
-  });
+  // Separate state hooks for each form field and loading state
+  const [name, setName] = useState<string>("");
+  const [acronym, setAcronym] = useState<string>("");
+  const [dittiId, setDittiId] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // set any form prefill data and hide the loader
-    getPrefill().then((prefill: StudyPrefill) =>
-      setState(prevState => ({ ...prevState, ...prefill, loading: false }))
-    );
-  }, [studyId]);
+    // Fetch prefill data if editing an existing study
+    const fetchPrefill = async () => {
+      try {
+        const prefillData = await getPrefill();
+        setName(prefillData.name);
+        setAcronym(prefillData.acronym);
+        setDittiId(prefillData.dittiId);
+        setEmail(prefillData.email);
+      } catch (error) {
+        console.error("Error fetching study data:", error);
+        flashMessage(
+          <span>
+            <b>Failed to load study data.</b>
+            <br />
+            {error instanceof Error ? error.message : "Unknown error"}
+          </span>,
+          "danger"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrefill();
+  }, [studyId, flashMessage]);
 
   /**
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<StudyPrefill> => {
-    const id = studyId;
+  const getPrefill = async (): Promise<{ name: string; acronym: string; dittiId: string; email: string }> => {
+    if (studyId === 0) {
+      // Creating a new study, return empty prefill data
+      return {
+        name: "",
+        acronym: "",
+        dittiId: "",
+        email: "",
+      };
+    }
 
-    // if editing an existing entry, return prefill data, else return empty data
-    return id
-      ? makeRequest("/admin/study?app=1&id=" + id).then(makePrefill)
-      : {
-          name: "",
-          acronym: "",
-          dittiId: "",
-          email: "",
-        };
-  };
+    // Fetch existing study data from the backend
+    const data: Study[] = await makeRequest(`/admin/study?app=1&id=${studyId}`);
+    if (!data || data.length === 0) {
+      throw new Error("Study not found.");
+    }
 
-  /**
-   * Map the data returned from the backend to form prefill data
-   * @param res - the response body
-   * @returns - the form prefill data
-   */
-  const makePrefill = (res: Study[]): StudyPrefill => {
-    const study = res[0];
+    const study = data[0];
     return {
       name: study.name,
       acronym: study.acronym,
@@ -85,8 +88,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
    * a new entry, else make a request to edit an existing entry
    */
   const post = async (): Promise<void> => {
-    const { acronym, dittiId, email, name } = state;
-    const data = { acronym, ditti_id: dittiId, email, name };
+    const data = { acronym, dittiId, email, name };
     const id = studyId;
     const body = {
       app: 1, // Admin Dashboard = 1
@@ -96,9 +98,12 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/study/edit" : "/admin/study/create";
 
-    await makeRequest(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    try {
+      const response: ResponseBody = await makeRequest(url, opts);
+      handleSuccess(response);
+    } catch (error) {
+      handleFailure(error as ResponseBody);
+    }
   };
 
   /**
@@ -128,7 +133,6 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
     flashMessage(msg, "danger");
   };
 
-  const { name, acronym, dittiId, email, loading } = state;
   const buttonText = studyId ? "Update" : "Create";
 
   if (loading) {
@@ -147,28 +151,27 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         <FormTitle>{studyId ? "Edit " : "Create "} Study</FormTitle>
         <FormRow>
           <FormField>
+            {/* TODO: use textarea for consent information */}
             <TextField
               id="name"
               type="text"
               placeholder=""
               value={name}
               label="Name"
-              onKeyup={(text: string) =>
-                setState(prevState => ({ ...prevState, name: text }))
-              }
-              feedback="" />
+              onKeyup={(text: string) => setName(text)}
+              feedback=""
+            />
           </FormField>
           <FormField>
             <TextField
               id="email"
-              type="text"
+              type="email" // Changed type to 'email' for better validation
               placeholder=""
               value={email}
               label="Team Email"
-              onKeyup={(text: string) =>
-                setState(prevState => ({ ...prevState, email: text }))
-              }
-              feedback="" />
+              onKeyup={(text: string) => setEmail(text)}
+              feedback=""
+            />
           </FormField>
         </FormRow>
         <FormRow>
@@ -179,10 +182,9 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               placeholder=""
               value={acronym}
               label="Acronym"
-              onKeyup={(text: string) =>
-                setState(prevState => ({ ...prevState, acronym: text }))
-              }
-              feedback="" />
+              onKeyup={(text: string) => setAcronym(text)}
+              feedback=""
+            />
           </FormField>
           <FormField>
             <TextField
@@ -191,10 +193,9 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               placeholder=""
               value={dittiId}
               label="Ditti ID"
-              onKeyup={(text: string) =>
-                setState(prevState => ({ ...prevState, dittiId: text }))
-              }
-              feedback="" />
+              onKeyup={(text: string) => setDittiId(text)}
+              feedback=""
+            />
           </FormField>
         </FormRow>
       </Form>
