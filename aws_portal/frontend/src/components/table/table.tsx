@@ -132,17 +132,16 @@ const Table: React.FC<TableProps> = ({
   if (sort) {
     let index = 0;
     headers.forEach((header, i) => {
-      const isSortHeader = header.name === (sort ? sort.name : sortDefault);
+      const isSortHeader = header.name === sort.name;
       if (isSortHeader) index = i;
-      return {
-        ...header,
-        ascending: isSortHeader ? sort.ascending : -1
-      }
     });
 
     rows = rows.sort((a, b) => {
-      if (a[index].sortValue < b[index].sortValue) return sort.ascending ? -1 : 1;
-      else if (a[index].sortValue > b[index].sortValue) return sort.ascending ? 1 : -1;
+      const aValue = a[index].sortValue;
+      const bValue = b[index].sortValue;
+
+      if (aValue < bValue) return sort.ascending ? -1 : 1;
+      else if (aValue > bValue) return sort.ascending ? 1 : -1;
       else return 0;
     });
   }
