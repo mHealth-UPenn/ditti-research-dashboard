@@ -36,14 +36,13 @@ def get_participant(ditti_id: str):
 
         # Serialize the StudySubject data to include required fields
         try:
-            # participant_data = serialize_participant(study_subject)
-            pass
+            participant_data = serialize_participant(study_subject)
         except Exception as serialize_err:
             logger.error(f"Error serializing participant data for ditti_id {
                          ditti_id}: {str(serialize_err)}")
             return make_response({"msg": "Error processing participant data."}, 500)
 
-        return jsonify(study_subject.meta)
+        return jsonify(participant_data)
 
     except SQLAlchemyError as db_err:
         logger.error(f"Database error retrieving participant data for ditti_id {
