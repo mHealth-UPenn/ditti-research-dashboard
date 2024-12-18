@@ -694,7 +694,7 @@ def test_study_subject_edit_success(
         (
             "Extra Fields in Edit Payload",
             "extra_fields_ditti_id",
-            {"studies": [], "apis": [], "unexpected_field": "unexpected_value"},
+            {"studies": [], "apis": [], "unexpectedField": "unexpected value"},
             "Internal server error when editing study subject"
         )
     ]
