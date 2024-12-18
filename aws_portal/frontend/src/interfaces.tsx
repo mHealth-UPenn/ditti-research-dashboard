@@ -82,9 +82,10 @@ export interface Role {
  * @property dittiId - The study's ditti ID.
  * @property email - The study's team email.
  * @property role - The role the user is assigned to for the study.
- * @property defaultExpiryDelta - The default number of days that a subject is
- *                                enrolled in the study.
- * @property isQi - Is the study for quality improvement.
+ * @property defaultExpiryDelta - The default number of days that a subject is enrolled in the study.
+ * @property consentInformation - The consent text shown to a study subject.
+ * @property dataSummary - Text describing why participant data is collected.
+ * @property isQi - Indicates if the study is QI (Quality Improvement).
  */
 export interface Study {
   id: number;
@@ -94,6 +95,8 @@ export interface Study {
   email: string;
   role?: Role;
   defaultExpiryDelta: number;
+  consentInformation?: string;
+  dataSummary?: string;
   isQi: boolean;
 }
 
