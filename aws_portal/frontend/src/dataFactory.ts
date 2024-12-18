@@ -250,6 +250,8 @@ class DataFactory {
           acronym: "SLEEP-IT",
           dittiId: "sit",
           email: "sleep.it@research.edu",
+          defaultExpiryDelta: 30,
+          isQi: false,
         },
         {
           id: 2,
@@ -257,8 +259,11 @@ class DataFactory {
           acronym: "CALM-SLEEP",
           dittiId: "cs",
           email: "calm.sleep@research.edu",
+          defaultExpiryDelta: 45,
+          isQi: true,
         }
       ];
+
       if (APP_ENV !== "demo") {
         try {
           this.studies = await makeRequest("/db/get-studies?app=2");
