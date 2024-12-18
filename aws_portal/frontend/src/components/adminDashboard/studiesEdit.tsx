@@ -19,12 +19,17 @@ interface StudiesEditProps extends ViewProps {
 }
 
 const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage }) => {
-  // Separate state hooks for each form field and loading state
   const [name, setName] = useState<string>("");
   const [acronym, setAcronym] = useState<string>("");
   const [dittiId, setDittiId] = useState<string>("");
   const [email, setEmail] = useState<string>("");
+  const [defaultExpiryDelta, setDefaultExpiryDelta] = useState<number>(14);
+  const [consentInformation, setConsentInformation] = useState<string>("");
+  const [dataSummary, setDataSummary] = useState<string>("");
+  const [isQi, setIsQi] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const [expiryError, setExpiryError] = useState<string>("");
 
   useEffect(() => {
     // Fetch prefill data if editing an existing study
@@ -35,6 +40,10 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         setAcronym(prefillData.acronym);
         setDittiId(prefillData.dittiId);
         setEmail(prefillData.email);
+        setDefaultExpiryDelta(prefillData.defaultExpiryDelta);
+        setConsentInformation(prefillData.consentInformation || "");
+        setDataSummary(prefillData.dataSummary || "");
+        setIsQi(prefillData.isQi);
       } catch (error) {
         console.error("Error fetching study data:", error);
         flashMessage(
@@ -57,7 +66,16 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<{ name: string; acronym: string; dittiId: string; email: string }> => {
+  const getPrefill = async (): Promise<{
+    name: string; 
+    acronym: string; 
+    dittiId: string; 
+    email: string;
+    defaultExpiryDelta: number;
+    consentInformation?: string;
+    dataSummary?: string;
+    isQi: boolean;
+  }> => {
     if (studyId === 0) {
       // Creating a new study, return empty prefill data
       return {
@@ -65,6 +83,10 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         acronym: "",
         dittiId: "",
         email: "",
+        defaultExpiryDelta: 14,
+        consentInformation: "",
+        dataSummary: "",
+        isQi: false,
       };
     }
 
@@ -80,7 +102,29 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
       acronym: study.acronym,
       dittiId: study.dittiId,
       email: study.email,
+      defaultExpiryDelta: study.defaultExpiryDelta,
+      consentInformation: study.consentInformation,
+      dataSummary: study.dataSummary,
+      isQi: study.isQi
     };
+  };
+
+  /**
+   * Validate the form field(s)
+   * @returns - boolean indicating if the form is valid
+   */
+  const validateForm = (): boolean => {
+    let valid = true;
+
+    // Validate Default Expiry Delta
+    if (defaultExpiryDelta < 0) {
+      setExpiryError("Default Expiry Time must be nonnegative.");
+      valid = false;
+    } else {
+      setExpiryError("");
+    }
+
+    return valid;
   };
 
   /**
@@ -88,7 +132,26 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
    * a new entry, else make a request to edit an existing entry
    */
   const post = async (): Promise<void> => {
-    const data = { acronym, dittiId, email, name };
+    if (!validateForm()) {
+      flashMessage(
+        <span>
+          <b>Please fix the errors in the form before submitting.</b>
+        </span>,
+        "danger"
+      );
+      return;
+    }
+
+    const data = { 
+      acronym, 
+      dittiId, 
+      email, 
+      name,
+      defaultExpiryDelta,
+      consentInformation,
+      dataSummary,
+      isQi
+    };
     const id = studyId;
     const body = {
       app: 1, // Admin Dashboard = 1
@@ -151,7 +214,6 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         <FormTitle>{studyId ? "Edit " : "Create "} Study</FormTitle>
         <FormRow>
           <FormField>
-            {/* TODO: use textarea for consent information */}
             <TextField
               id="name"
               type="text"
@@ -198,32 +260,93 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
             />
           </FormField>
         </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="defaultExpiryDelta"
+              type="number"
+              placeholder="14"
+              min="0"
+              value={defaultExpiryDelta.toString()}
+              label="Default Expiry Time (days)"
+              onKeyup={(text: string) => {
+                const value = parseInt(text, 10);
+                setDefaultExpiryDelta(isNaN(value) ? 0 : value);
+              }}
+              feedback={expiryError}
+            />
+          </FormField>
+          <FormField>
+            <label htmlFor="isQi" className="mb-1 block">
+              Quality Improvement Study?
+            </label>
+            <div className="flex items-center h-[2.75rem] border border-light p-2">
+              <input
+                id="isQi"
+                type="checkbox"
+                checked={isQi}
+                onChange={(e) => setIsQi(e.target.checked)}
+              />
+            </div>
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="consentInformation"
+              type="textarea"
+              placeholder=""
+              value={consentInformation}
+              label="Consent Information"
+              onKeyup={(text: string) => setConsentInformation(text)}
+              feedback=""
+            />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="dataSummary"
+              type="textarea"
+              placeholder=""
+              value={dataSummary}
+              label="Data Summary"
+              onKeyup={(text: string) => setDataSummary(text)}
+              feedback=""
+            />
+          </FormField>
+        </FormRow>
       </Form>
       <FormSummary>
         <FormSummaryTitle>Study Summary</FormSummaryTitle>
         <FormSummaryContent>
           <FormSummaryText>
-            Name:
-            <br />
+            <b>Name:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{name}
-            <br />
-            <br />
-            Team Email:
-            <br />
+            <br /><br />
+            <b>Team Email:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{email}
-            <br />
-            <br />
-            Acronym:
-            <br />
+            <br /><br />
+            <b>Acronym:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{acronym}
-            <br />
-            <br />
-            Ditti ID:
-            <br />
+            <br /><br />
+            <b>Ditti ID:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
+            <br /><br />
+            <b>Default Expiry Delta (days):</b><br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{defaultExpiryDelta}
+            <br /><br />
+            <b>Is QI:</b><br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{isQi ? "Yes" : "No"}
+            <br /><br />
+            <b>Consent Information:</b><br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{consentInformation}
+            <br /><br />
+            <b>Data Summary:</b><br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{dataSummary}
             <br />
           </FormSummaryText>
-          <FormSummaryButton onClick={post}>
+          <FormSummaryButton onClick={post} disabled={loading}>
             {buttonText}
           </FormSummaryButton>
         </FormSummaryContent>
