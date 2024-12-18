@@ -10,18 +10,21 @@ import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 
+const COLUMNS: Column[] = [
+  { name: "Acronym", searchable: true, sortable: true, width: 10 },
+  { name: "Name", searchable: true, sortable: true, width: 30 },
+  { name: "Ditti ID", searchable: true, sortable: true, width: 10 },
+  { name: "Email", searchable: true, sortable: true, width: 20 },
+  { name: "Default Expiry Delta", searchable: false, sortable: true, width: 15 },
+  { name: "QI", searchable: false, sortable: true, width: 10 },
+  { name: "", searchable: false, sortable: false, width: 5 },
+];
+
 const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
   const [studies, setStudies] = useState<Study[]>([]);
-  const [columns] = useState<Column[]>([
-    { name: "Acronym", searchable: true, sortable: true, width: 10 },
-    { name: "Name", searchable: true, sortable: true, width: 45 },
-    { name: "Ditti ID", searchable: true, sortable: true, width: 10 },
-    { name: "Email", searchable: true, sortable: true, width: 25 },
-    { name: "", searchable: false, sortable: false, width: 10 }
-  ]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,40 +53,42 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
    */
   const getData = (): TableData[][] => {
     return studies.map((s: Study) => {
-      const { acronym, dittiId, email, id, name } = s;
+      const { acronym, dittiId, email, id, name, defaultExpiryDelta, isQi } = s;
       return [
         {
-          contents: (
-            <span>{acronym}</span>
-          ),
+          contents: <span>{acronym}</span>,
           searchValue: acronym,
           sortValue: acronym
         },
         {
-          contents: (
-            <span>{name}</span>
-          ),
+          contents: <span>{name}</span>,
           searchValue: name,
           sortValue: name
         },
         {
-          contents: (
-            <span>{dittiId}</span>
-          ),
+          contents: <span>{dittiId}</span>,
           searchValue: dittiId,
           sortValue: dittiId
         },
         {
-          contents: (
-            <span>{email}</span>
-          ),
+          contents: <span>{email}</span>,
           searchValue: email,
           sortValue: email
         },
         {
+          contents: <span>{defaultExpiryDelta} days</span>,
+          searchValue: defaultExpiryDelta.toString(),
+          sortValue: defaultExpiryDelta
+        },
+        {
+          contents: <span>{isQi ? "Yes" : "No"}</span>,
+          searchValue: isQi ? "Yes" : "No",
+          sortValue: isQi ? "Yes" : "No"
+        },
+        {
           contents: (
             <div className="flex w-full h-full">
-              {canEdit &&
+              {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
@@ -95,27 +100,30 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
                         studyId={id}
                         flashMessage={flashMessage}
                         goBack={goBack}
-                        handleClick={handleClick} />
+                        handleClick={handleClick}
+                      />
                     )
-                  }>
-                    Edit
+                  }
+                >
+                  Edit
                 </Button>
-              }
-              {canArchive &&
+              )}
+              {canArchive && (
                 <Button
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteStudy(id)}>
-                    Archive
+                  onClick={() => deleteStudy(id)}
+                >
+                  Archive
                 </Button>
-              }
+              )}
             </div>
           ),
           searchValue: "",
           sortValue: "",
           paddingX: 0,
-          paddingY: 0,
+          paddingY: 0
         }
       ];
     });
@@ -183,19 +191,17 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
             handleClick={handleClick}
           />
         )
-      }>
-        Create +
+      }
+    >
+      Create +
     </Button>
   ) : (
     <React.Fragment />
-  )
+  );
 
-  const navbar =
-    <Navbar
-      active="Studies"
-      flashMessage={flashMessage}
-      goBack={goBack}
-      handleClick={handleClick} />
+  const navbar = (
+    <Navbar active="Studies" flashMessage={flashMessage} goBack={goBack} handleClick={handleClick} />
+  );
 
   if (loading) {
     return (
@@ -213,14 +219,15 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
       {navbar}
       <ListContent>
         <Table
-          columns={columns}
+          columns={COLUMNS}
           control={tableControl}
           controlWidth={10}
           data={getData()}
           includeControl={true}
           includeSearch={true}
           paginationPer={10}
-          sortDefault="" />
+          sortDefault=""
+        />
       </ListContent>
     </ListView>
   );
