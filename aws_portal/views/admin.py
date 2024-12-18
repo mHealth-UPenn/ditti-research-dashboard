@@ -473,12 +473,12 @@ def study_edit():
         edit: {
             name: str,
             acronym: str,
-            ditti_id: str,
+            dittiId: str,
             email: str,
-            default_expiry_delta: int (optional),
-            consent_information: str (optional),
-            data_summary: str (optional),
-            is_qi: bool (optional)
+            defaultExpiryDelta: int (optional),
+            consentInformation: str (optional),
+            dataSummary: str (optional),
+            isQi: bool (optional)
         }
     }
 
@@ -502,7 +502,7 @@ def study_edit():
         study_id = request.json["id"]
         study = Study.query.get(study_id)
 
-        populate_model(study, data)
+        populate_model(study, data, use_camel_to_snake=True)
         db.session.commit()
         msg = "Study Edited Successfully"
 
