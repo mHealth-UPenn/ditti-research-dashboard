@@ -1698,6 +1698,7 @@ class Study(db.Model):
             "dittiId": self.ditti_id,
             "email": self.email,
             "roles": [r.meta for r in self.roles],
+            "defaultExpiryDelta": self.default_expiry_delta,
             "dataSummary": self.data_summary,
             "isQi": self.is_qi
         }
