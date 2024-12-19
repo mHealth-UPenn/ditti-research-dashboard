@@ -268,6 +268,30 @@ export interface AudioFile {
 }
 
 /**
+ * Represents a data retrieval task mapped from the `lambda_task` database table.
+ *
+ * @property id - The primary key of the task.
+ * @property status - The current status of the task ("Pending", "InProgress", "Success", "Failed", "CompletedWithErrors").
+ * @property billedMs - The billed duration of the Lambda function in milliseconds.
+ * @property createdOn - The ISO 8601 timestamp indicating when the task was created.
+ * @property updatedOn - The ISO 8601 timestamp indicating when the task was last updated.
+ * @property completedOn - The ISO 8601 timestamp indicating when the task was completed, or null if not completed.
+ * @property logFile - The S3 URI of the task's log file, or null if not available.
+ * @property errorCode - The error code associated with the task, or null if no error occurred.
+ */
+export interface DataRetrievalTask {
+  id: number;
+  status: "Pending" | "InProgress" | "Success" | "Failed" | "CompletedWithErrors";
+  billedMs: number | null;
+  createdOn: string;
+  updatedOn: string;
+  completedOn: string | null;
+  logFile: string | null;
+  errorCode: string | null;
+}
+
+
+/**
  * Defines the authentication context structure.
  * @property isIamAuthenticated - Indicates if the user is authenticated with IAM (Identity and Access Management).
  * @property isCognitoAuthenticated - Indicates if the user is authenticated with Amazon Cognito.
