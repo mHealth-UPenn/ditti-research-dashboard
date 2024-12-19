@@ -12,6 +12,13 @@ import { useStudiesContext } from "../../contexts/studiesContext";
 import { SmallLoader } from "../loader";
 import CoordinatorStudySubjectProvider, { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 
+
+/**
+ * Interface for details of each study to display.
+ * @key number: The study ID.
+ * @property numSubjects: The number of subjects enrolled in the study.
+ * @property numSubjectsWithApi: The number of subjects who are enrolled in the study and who have connected any API.
+ */
 interface IWearableDetails {
   [key: number]: {
     numSubjects: number;
@@ -31,32 +38,33 @@ export default function WearableStudiesContent({
   const { studies, studiesLoading } = useStudiesContext();
   const { studySubjects, studySubjectLoading } = useCoordinatorStudySubjectContext();
 
+  // The summary details to show for each study
   const wearableDetails: IWearableDetails = {};
   for (const ss of studySubjects) {
-      // Count `hasApi` if the current subject has at least 1 API connected and is active in at least one study
-      const hasApi = Number(
-          ss.apis.length &&
-          ss.studies.some(s => new Date(s.expiresOn) > new Date())
-      );
-  
-      for (const join of ss.studies) {
-          if (wearableDetails[join.study.id]) {
-              wearableDetails[join.study.id].numSubjects += 1;
-              wearableDetails[join.study.id].numSubjectsWithApi += hasApi;
-          } else {
-              wearableDetails[join.study.id] = {
-                  numSubjects: 1,
-                  numSubjectsWithApi: hasApi
-              };
-          }
+    // Count `hasApi` if the current subject has at least 1 API connected and is active in at least one study
+    const hasApi = Number(
+      ss.apis.length &&
+      ss.studies.some(s => new Date(s.expiresOn) > new Date())
+    );
+
+    for (const join of ss.studies) {
+      if (wearableDetails[join.study.id]) {
+        wearableDetails[join.study.id].numSubjects += 1;
+        wearableDetails[join.study.id].numSubjectsWithApi += hasApi;
+      } else {
+        wearableDetails[join.study.id] = {
+          numSubjects: 1,
+          numSubjectsWithApi: hasApi
+        };
       }
+    }
   }
 
+  // Get which studies the current user can view wearable data for on load
   useEffect(() => {
     const updatedCanViewWearableData: Set<number> = new Set();
-
     const promises: Promise<unknown>[] = [];
-    
+
     studies.forEach(s =>
       promises.push(
         getAccess(3, "View", "Wearable Data", s.id)
@@ -71,16 +79,17 @@ export default function WearableStudiesContent({
     });
   }, [studies]);
 
+
   /**
    * Handle when a user clicks on a study
    * @param id - the study's database primary key
    */
   const handleClickStudy = (id: number): void => {
-    // get the study
+    // Get the study
     const study = studies.find((s) => s.id === id);
 
     if (study) {
-      // set the view
+      // Set the view
       const view = (
         <CoordinatorStudySubjectProvider>
           <WearableStudySummary
@@ -94,6 +103,7 @@ export default function WearableStudiesContent({
       handleClick([study.acronym], view, false);
     }
   };
+
 
   if (loading || studiesLoading || studySubjectLoading) {
     return (
@@ -112,17 +122,19 @@ export default function WearableStudiesContent({
           <Title>Studies</Title>
         </CardContentRow>
         {
-          // for each study the user has access to
+          // For each study the user has access to
           studies.map((s) => {
             return (
               <CardContentRow key={s.id} className="border-b border-light">
                 <div className="flex items-start">
-                  {/* active tapping icon */}
+
+                  {/* Active icon */}
                   {canViewWearableData.has(s.id) ?
                     <ActiveIcon active={true} className="mr-2" /> :
                     // Optimistic hydration
                     <ActiveIcon active={false} className="mr-2" />
                   }
+
                   {/* link to study summary */}
                   <div className="flex flex-col">
                     <Link onClick={() => handleClickStudy(s.id)}>
@@ -131,19 +143,21 @@ export default function WearableStudiesContent({
                     <span className="text-sm">{s.name}</span>
                   </div>
                 </div>
+
+                {/* Study summary details */}
                 <div className="flex flex-col">
                   <div className="text-sm font-bold">
                     {
                       s.id in wearableDetails
-                      ? wearableDetails[s.id].numSubjectsWithApi
-                      : 0
+                        ? wearableDetails[s.id].numSubjectsWithApi
+                        : 0
                     } subjects with connected APIs
                   </div>
                   <div className="text-sm">
                     {
                       s.id in wearableDetails
-                      ? wearableDetails[s.id].numSubjects
-                      : 0
+                        ? wearableDetails[s.id].numSubjects
+                        : 0
                     } enrolled subjects
                   </div>
                 </div>

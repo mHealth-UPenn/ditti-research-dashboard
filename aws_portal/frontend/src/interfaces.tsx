@@ -400,6 +400,7 @@ export interface IWearableDataContextType {
   syncData?: () => void;
   decrementStartDate?: () => void;
   incrementStartDate?: () => void;
+  resetStartDate?: () => void;
   canIncrementStartDate?: boolean;
 }
 

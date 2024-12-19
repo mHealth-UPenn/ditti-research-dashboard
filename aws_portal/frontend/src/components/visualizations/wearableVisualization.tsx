@@ -1,6 +1,13 @@
 import VisualizationController from "./visualizationController";
 import WearableVisualizationContent from "./wearableVisualizationContent";
 
+/**
+ * Props to pass to the wearable visualization.
+@ @property showDayControls: `showDayControls` to pass to `WearableVisualizationContent`.
+@ @property showTapsData: `showTapsData` to pass to `WearableVisualizationContent`.
+@ @property dittiId: `dittiId` to pass to `WearableVisualizationContent`.
+@ @property horizontalPadding: Whether to add horizontal padding to the visualization.
+ */
 interface IWearableVisualizationProps {
   showDayControls?: boolean;
   showTapsData?: boolean;

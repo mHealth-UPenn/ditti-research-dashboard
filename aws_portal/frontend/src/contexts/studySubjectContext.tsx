@@ -8,9 +8,7 @@ import DataFactory from "../dataFactory";
 export const StudySubjectContext = createContext<StudySubjectContextType | undefined>(undefined);
 
 
-/**
- * StudySubjectProvider component that wraps children with the study subject context.
- */
+// StudySubjectProvider component that wraps children with the study subject context.
 export default function StudySubjectProvider({
   children
 }: PropsWithChildren<unknown>) {
@@ -26,8 +24,8 @@ export default function StudySubjectProvider({
     return null;
   }, []);
 
+  // Fetch the participant's enrolled studies and connected APIs
   useEffect(() => {
-    // Use a list to mirror context design pattern
     const promises: Promise<any>[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
@@ -43,6 +41,7 @@ export default function StudySubjectProvider({
     Promise.all(promises).then(() => setStudySubjectLoading(false));
   }, []);
 
+  // Async fetch the participant's enrolled studies and connected APIs
   const getStudySubject = async (): Promise<[StudyJoin[], ApiJoin[]]> => {
     let studiesData: StudyJoin[] = [];
     let apisData: ApiJoin[] = [];
@@ -72,6 +71,7 @@ export default function StudySubjectProvider({
 }
 
 
+// Hook for accessing context data
 export function useStudySubjectContext() {
   const context = useContext(StudySubjectContext);
   if (!context) {

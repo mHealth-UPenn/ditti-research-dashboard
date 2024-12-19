@@ -7,15 +7,17 @@ import Link from "../links/link";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import WearableVisuals from "./wearableVisuals";
 
+
 /**
- * studyPrefix: the ditti app prefix of the current study
- * getTaps: get tap data
- * studyDetails: the current study's information
+ * Props for wearable study subjects.
+ * @property studyDetails: The details of study to list subjects for.
+ * @property canViewWearableData: Whether the current user can view wearable data for the current study.
  */
 interface WearableStudySubjectsProps extends ViewProps {
   studyDetails: Study;
   canViewWearableData: boolean;
 }
+
 
 export default function WearableStudySubjects({
   studyDetails,
@@ -25,10 +27,12 @@ export default function WearableStudySubjects({
   handleClick,
 }: WearableStudySubjectsProps) {
   const { studySubjects } = useCoordinatorStudySubjectContext();
+
+  // Get only study subjects with prefixes that equal the current study's prefix
   const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));
 
   const getSubjectSummary = (subject: IStudySubject): React.ReactElement => {
-    // get the number of days until the subject's id expires
+    // Use the last `expiresOn` date as the date of last data collection
     const endDate = new Date(Math.max(...subject.studies.map(s => new Date(s.expiresOn).getTime())));
     const expiresOn = differenceInDays(endDate, new Date());
 
@@ -51,9 +55,11 @@ export default function WearableStudySubjects({
         className="border-b border-light">
           <div className="flex flex-col">
             <div className="flex items-center">
-              {/* active tapping icon */}
+
+              {/* Active icon */}
               {canViewWearableData && <ActiveIcon active={true} className="mr-2" />}
-              {/* link to the subject's summary page */}
+
+              {/* Link to the subject's visualization */}
               {canViewWearableData ?
                 <Link onClick={handleClickSubject}>
                   {subject.dittiId}
@@ -64,6 +70,7 @@ export default function WearableStudySubjects({
             <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
           </div>
 
+          {/* A list of connected APIs for the current study subject */}
           {canViewWearableData &&
             <div className="flex flex-grow-0 overflow-x-hidden">
               <div className="hidden md:flex items-center">

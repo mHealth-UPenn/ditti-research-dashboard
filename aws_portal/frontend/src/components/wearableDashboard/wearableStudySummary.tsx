@@ -14,8 +14,13 @@ import { APP_ENV } from "../../environment";
 import WearableStudySubjects from "./wearableStudySubjects";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 
+
 /**
- * Information for study contacts
+ * Information for study contacts.
+ * @property fullName: The contact's full name.
+ * @property email: The contact's email.
+ * @property phoneNumber: The contact's phone number.
+ * @property role: The contact's role.
  */
 interface StudyContact {
   fullName: string;
@@ -24,12 +29,15 @@ interface StudyContact {
   role: string;
 }
 
+
 /**
- * studyId: the study's database primary key
+ * Props for the wearable study summary.
+ * @property studyId: the study's database primary key
  */
 interface WearableStudySummaryProps extends ViewProps {
   studyId: number;
 }
+
 
 export default function WearableStudySummary({
   flashMessage,
@@ -43,8 +51,8 @@ export default function WearableStudySummary({
   const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
   const [loading, setLoading] = useState(true);
 
+  // Get permissions and study information on load
   useEffect(() => {
-    // check whether the user can enroll new subjects
     const promises: Promise<any>[] = [];
     promises.push(
       getAccess(3, "Create", "Participants", studyId)
@@ -58,27 +66,23 @@ export default function WearableStudySummary({
         .catch(() => setCanViewWearableData(false))
     );
 
-    // get other accounts that have access to this study
     promises.push(
       makeRequest(
         "/db/get-study-contacts?app=3&study=" + studyId
       ).then((contacts: StudyContact[]) => setStudyContacts(contacts))
     );
 
-    // get this study's information
     promises.push(
       makeRequest(
         "/db/get-study-details?app=3&study=" + studyId
       ).then((details: Study) => setStudyDetails(details))
     );
 
-    // when all promises resolve, hide the loader
     Promise.all(promises).then(() => setLoading(false));
   }, [studyId]);
 
-  /**
-   * Download all of the study's data in excel format
-   */
+
+  // Download all of the study's data in excel format.
   const downloadExcel = async (): Promise<void> => {
     const url = `/admin/fitbit_data/download/study/${studyId}?app=3`;
     const res = await downloadExcelFromUrl(url);
@@ -90,6 +94,7 @@ export default function WearableStudySummary({
   const { dittiId, email, name, acronym } = studyDetails;
   const { studySubjectLoading } = useCoordinatorStudySubjectContext();
 
+  // Handle when the user clicks Enroll Subject
   const handleClickEnrollSubject = () =>
     handleClick(
       ["Enroll"],
@@ -104,6 +109,7 @@ export default function WearableStudySummary({
       />
     );
 
+  // Handle when the user clicks View All Subjects
   const handleClickViewAllSubjects = () =>
     handleClick(
       ["Subjects"],
@@ -131,6 +137,8 @@ export default function WearableStudySummary({
   return (
     <ViewContainer>
       <Card width="md">
+
+        {/* Study information and Excel download button */}
         <CardContentRow>
           <div className="flex flex-col">
             <Title>{acronym}</Title>
@@ -147,6 +155,7 @@ export default function WearableStudySummary({
             </Button>}
         </CardContentRow>
 
+        {/* Buttons for enrolling and viewing participants */}
         <CardContentRow>
           <Title>Active Subjects</Title>
           <div className="flex">
@@ -167,6 +176,7 @@ export default function WearableStudySummary({
           </div>
         </CardContentRow>
 
+        {/* The list of participants in this study */}
         <WearableStudySubjects
           flashMessage={flashMessage}
           goBack={goBack}
@@ -175,6 +185,7 @@ export default function WearableStudySummary({
           canViewWearableData={canViewWearableData} />
       </Card>
 
+      {/* The list of study contacts */}
       <Card width="sm">
         {/* list of study contacts */}
         <CardContentRow>

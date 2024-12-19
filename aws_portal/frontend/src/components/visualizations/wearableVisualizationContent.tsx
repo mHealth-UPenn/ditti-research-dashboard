@@ -1,7 +1,7 @@
 import colors from "../../colors";
 import { useVisualizationContext } from "../../contexts/visualizationContext";
 import { useWearableData } from "../../contexts/wearableDataContext";
-import { ISleepLevelClassic, ISleepLevelStages, ISleepLog, IVisualizationProps } from "../../interfaces";
+import { ISleepLevelClassic, ISleepLevelStages, IVisualizationProps } from "../../interfaces";
 import Timeline from "./timeline";
 import { AxisTop } from "@visx/axis";
 import { GridColumns } from '@visx/grid';
@@ -17,22 +17,45 @@ import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import BoutsTimeline from "./boutsTimeline";
 
 
-
-const getWeekday = (date: Date) => {
+/**
+ * Get the weekday of a date.
+ * @param date: The date to get the weekday of.
+ * @returns string - The weekday string.
+ */
+const getWeekday = (date: Date): string => {
   return date.toLocaleDateString("en-US", { weekday: "long" });
 };
 
 
+/**
+ * Get the time of a date in 12-hour H:MM format.
+ * @param date: The date to get the time of.
+ * @returns string - The formatted time.
+ */
 const getTime = (date: Date) => {
   return date.toLocaleTimeString(
     "en-US", { hour12: true, hour: "numeric", minute: "numeric" }
   );
 }
 
+// Interface for sleep level ranges to display
 interface IGroup { start: number; stop: number; strokeDashArray: string; }
+
+// Sleep level data for stages data
 type ILevelGroupsStages = Record<ISleepLevelStages, IGroup[]>;
+
+// Sleep level data for classic data
 type ILevelGroupsClassic = Record<ISleepLevelClassic, IGroup[]>;
 
+
+/**
+ * Props for the wearable visualization.
+ * @property showDayControls: Whether to show buttons for controlling the start date of the visualization.
+ * @property showTapsData: Whether to show taps data with wearable data.
+ * @property dittiId: The Ditti ID of the participant whose data is being visualized.
+ * @property horizontalPadding: Whether horizontal padding is added to the visualization. If it is not, then hide the
+ *   first and last x axis ticks and add extra padding on top of each weekday visualization to make space for a label.
+ */
 interface IWearableVisualizationContentProps extends IVisualizationProps {
   showDayControls?: boolean;
   showTapsData?: boolean;
@@ -76,11 +99,13 @@ const WearableVisualizationContent = ({
     dataIsUpdated,
     canIncrementStartDate,
     decrementStartDate,
-    incrementStartDate
+    incrementStartDate,
+    resetStartDate,
   } = useWearableData();
 
   const { dataLoading, taps, audioTaps } = useDittiDataContext();
 
+  // Get only the taps and audio taps that belong to the current participant.
   const timestamps = useMemo(() => taps
       .filter(tap => tap.dittiId === dittiId)
       .map(tap => tap.time.getTime())
@@ -91,6 +116,7 @@ const WearableVisualizationContent = ({
       .map(tap => tap.time.getTime())
   , [taps]);
 
+  // Optionally override the default margins if passed as props
   const margin = {
     top: marginTop !== undefined ? marginTop : defaultMargin.top,
     right: marginRight !== undefined ? marginRight : defaultMargin.right,
@@ -98,6 +124,7 @@ const WearableVisualizationContent = ({
     left: marginLeft !== undefined ? marginLeft : defaultMargin.left,
   }
 
+  // Generate the row visualizations on load and when data changes.
   useEffect(() => {
     if (isLoading) {
       return;
@@ -108,6 +135,8 @@ const WearableVisualizationContent = ({
     const updatedRow3 = [];
     const updatedRow4 = [];
 
+    // If data is being updated, only get new data that is not currently being visualized (any data that appears before
+    // the earliest sleep log)
     let filteredSleepLogs = [...sleepLogs];
     if (dataIsUpdated && firstDateOfSleep) {
       filteredSleepLogs = filteredSleepLogs.filter(sl =>
@@ -116,6 +145,7 @@ const WearableVisualizationContent = ({
     }
 
     filteredSleepLogs.forEach(sl => {
+      // Create groups for stages data
       if (sl.type === "stages") {
         const levelGroups: ILevelGroupsStages = {
           wake: [],
@@ -134,11 +164,15 @@ const WearableVisualizationContent = ({
           })
         });
 
+        // Insert new data to the beginning of data to be visualized
         updatedRow1.push(...levelGroups.wake);
         updatedRow2.push(...levelGroups.rem);
         updatedRow3.push(...levelGroups.light);
         updatedRow4.push(...levelGroups.deep);
-      } else {
+      }
+
+      // Else create groups for classic data
+      else {
         const levelGroups: ILevelGroupsClassic = {
           awake: [],
           restless: [],
@@ -155,36 +189,53 @@ const WearableVisualizationContent = ({
           })
         });
 
+        // Insert new data to the beginning of data to be visualized
         updatedRow1.push(...levelGroups.awake);
         updatedRow3.push(...levelGroups.restless);
         updatedRow4.push(...levelGroups.asleep);
       }
     });
 
+    // Append existing data to the end of data to be visualized
     updatedRow1.push(...row1);
     updatedRow2.push(...row2);
     updatedRow3.push(...row3);
     updatedRow4.push(...row4);
+
     setRow1(updatedRow1);
     setRow2(updatedRow2);
     setRow3(updatedRow3);
     setRow4(updatedRow4);
   }, [dataIsUpdated, firstDateOfSleep, isLoading]);
 
+  // Reset the zoom and start date
+  const resetVisualization = () => {
+    resetZoom();
+    if (resetStartDate) {
+      resetStartDate();
+    }
+  };
+
   if (isLoading || !xScale || dataLoading) {
     return <></>;
   }
 
-  // Iterate through each day
+  // Iterate through each day currently being visualized
   const visualizations: React.ReactElement[] = [];
   for (let day = new Date(startDate); day < endDate; day.setDate(day.getDate() + 1)) {
     const title = getWeekday(day);
+
+    // Calculate the offset from today to the day to visualize in milliseconds
     const offset = (differenceInDays(day, new Date()) + 1) * 24 * 60 * 60 * 1000;
 
     visualizations.push(
       <div key={day.toISOString()} className="relative flex items-center mb-10 md:mb-8">
+
+        {/* The weekday label to display to the left on large screens */}
         <span className="absolute hidden md:flex font-bold text-sm [writing-mode:vertical-lr] rotate-180">{title}</span>
         <div>
+
+          {/* Vertical grid lines for all timelines in this day */}
           <svg className="absolute" width={width} height={80}>
             <GridColumns
               scale={xScale}
@@ -194,7 +245,11 @@ const WearableVisualizationContent = ({
               strokeDasharray="5,5"
               numTicks={window.screen.width > 600 ? 10 : 5} />
           </svg>
+
+          {/* The weekday label to display on top on small screens */}
           <span className="md:hidden absolute font-bold text-sm top-[-28px]">{title}</span>
+
+          {/* Timelines for all four levels (wake, rem, light, deep) */}
           <Timeline
             groups={row1}
             hideAxis={true}
@@ -231,6 +286,8 @@ const WearableVisualizationContent = ({
             color={colors.wearableDeep}
             axisColor={colors.wearableDeep}
             xScaleOffset={offset} />
+
+          {/* Taps data to display, if any */}
           {showTapsData &&
             <>
               <div className="mb-4" />
@@ -242,6 +299,8 @@ const WearableVisualizationContent = ({
                 title="" />
             </>
           }
+
+          {/* Brush for clicking and dragging to zoom */}
           <svg className="absolute top-0" width={width} height={80}>
             <Brush
               xScale={xScale}
@@ -264,6 +323,8 @@ const WearableVisualizationContent = ({
     <div className="flex flex-col">
       <div className="flex flex-col-reverse justify-center sm:flex-row sm:items-center sm:justify-between mb-2">
         <div className="flex flex-col">
+
+          {/* Stages data legend */}
           <div className="flex mb-1">
             <span className="text-xs font-bold w-[3rem]">Stages:</span>
             <div className="flex mr-4">
@@ -283,6 +344,8 @@ const WearableVisualizationContent = ({
               <span className="text-xs">Deep</span>
             </div>
           </div>
+
+          {/* Classic data legend */}
           <div className="flex mb-1">
             <span className="text-xs font-bold w-[3rem]">Classic:</span>
             <div className="flex mr-4">
@@ -298,6 +361,8 @@ const WearableVisualizationContent = ({
               <span className="text-xs">Asleep</span>
             </div>
           </div>
+
+          {/* Taps data legend */}
           {showTapsData &&
             <div className="flex">
               <span className="text-xs font-bold w-[3rem]">Taps:</span>
@@ -322,6 +387,8 @@ const WearableVisualizationContent = ({
         </div>
         <div className="flex flex-col items-end mb-4 sm:mb-0">
           <div className="flex">
+
+            {/* Controls for changing the visualization start date, if shown */}
             {showDayControls &&
               <>
                 <Button
@@ -343,11 +410,13 @@ const WearableVisualizationContent = ({
                 </Button>
               </>
             }
+
+            {/* Button for resetting visualization */}
             <Button
               square={true}
               size="sm"
               variant="primary"
-              onClick={resetZoom}
+              onClick={resetVisualization}
               rounded={true}>
                 <ReplayIcon />
             </Button>
@@ -357,6 +426,8 @@ const WearableVisualizationContent = ({
           </div>
         </div>
       </div>
+
+      {/* Time ticks at the top of the visualization */}
       <svg className="relative top-[10px]" width={width} height={horizontalPadding ? 50 : 90}>
         <AxisTop
           top={50}
@@ -369,6 +440,7 @@ const WearableVisualizationContent = ({
           tickFormat={v => getTime(v as Date)}
           tickLabelProps={{ angle: -45, dy: -10 }} />
       </svg>
+
       {visualizations}
     </div>
   );

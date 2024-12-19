@@ -14,15 +14,20 @@ import WearableVisualization from "../visualizations/wearableVisualization";
 import SyncIcon from '@mui/icons-material/Sync';
 
 
-function getWindowDimensions() {
+/**
+ * Fetch the width and height of the current window.
+ * @returns { width: number; height: number; }
+ */
+function getWindowDimensions(): { width: number; height: number; } {
   const { innerWidth: width, innerHeight: height } = window;
-  return {
-    width,
-    height
-  };
+  return { width, height };
 }
 
 
+/**
+ * Hook for fetching the current window size.
+ * @returns { width: number; height: number; }
+ */
 function useWindowDimensions() {
   const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
 
@@ -40,14 +45,15 @@ function useWindowDimensions() {
 
 
 /**
- * getTaps: get tap data
- * studyDetails: details of the subject's study
- * user: details of the subject
+ * Interface for wearable visuals content
+ * @property subject: The study subject being visualized.
+ * @property studyDetails: The details of the current study.
  */
 interface WearableVisualsProps extends ViewProps {
   studyDetails: Study;
   studySubject: IStudySubject;
 }
+
 
 export default function WearableVisualsContent({
   studyDetails,
@@ -63,12 +69,9 @@ export default function WearableVisualsContent({
 
   const { isSyncing, syncData } = useWearableData();
 
+  // Use the last `expiresOn` as the date of last data collection
   const endDate = new Date(Math.max(...studySubject.studies.map(s => new Date(s.expiresOn).getTime())));
-  const expTimeAdjusted = new Date(
-    endDate.getTime() - endDate.getTimezoneOffset() * 60000
-  );
-
-  const dateOpts = {
+  const dateOpts: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
     day: "numeric",
@@ -76,11 +79,9 @@ export default function WearableVisualsContent({
     minute: "2-digit"
   };
 
-  const expTimeFormatted = expTimeAdjusted.toLocaleDateString(
-    "en-US",
-    dateOpts as Intl.DateTimeFormatOptions
-  );
+  const expTimeFormatted = endDate.toLocaleDateString("en-US", dateOpts);
 
+  // Get user access permission on load
   useEffect(() => {
     const promises: Promise<unknown>[] = [];
     promises.push(getAccess(3, "Edit", "Participants", studyDetails.id)
@@ -95,6 +96,7 @@ export default function WearableVisualsContent({
       .catch(() => setLoading(false));
   }, [studyDetails.id]);
 
+  // Download the current participant's data in Excel format.
   const downloadExcel = async (): Promise<void> => {
     const url = `/admin/fitbit_data/download/participant/${studySubject.dittiId}?app=3`;
     const res = await downloadExcelFromUrl(url);
@@ -103,6 +105,7 @@ export default function WearableVisualsContent({
     }
   };
 
+  // Handle when the user clicks Edit Details
   const handleClickEditDetails = () =>
     handleClick(
       ["Edit"],
@@ -135,14 +138,16 @@ export default function WearableVisualsContent({
   return (
     <ViewContainer>
       <Card>
-        {/* the subject's details */}
         <CardContentRow>
           <div className="flex flex-grow flex-col lg:flex-row lg:justify-between">
+
+            {/* The participant's details */}
             <div className="flex flex-col mb-4 lg:mb-0">
               <Title>{studySubject.dittiId}</Title>
               <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
             </div>
 
+            {/* Buttons for downloading Excel data and editing details */}
             <div className="flex flex-col lg:flex-row">
               <div className="flex mb-2 lg:mb-0 lg:mr-2">
                 {/* download the subject's data as excel */}
@@ -162,8 +167,9 @@ export default function WearableVisualsContent({
                   Edit Details
                 </Button>
               </div>
+
+              {/* Button for syncing data and invoking a data processing task */}
               <div className="flex">
-                {/* download the subject's data as excel */}
                 <Button
                   variant="secondary"
                   onClick={syncData}
@@ -180,6 +186,7 @@ export default function WearableVisualsContent({
           </div>
         </CardContentRow>
 
+        {/* The wearable visualization */}
         <CardContentRow>
           <WearableVisualization
             showDayControls={true}

@@ -8,9 +8,7 @@ import DataFactory from "../dataFactory";
 export const CoordinatorStudySubjectContext = createContext<CoordinatorStudySubjectContextType | undefined>(undefined);
 
 
-/**
- * CoordinatorStudySubjectProvider component that wraps children with the study subject context.
- */
+// CoordinatorStudySubjectProvider component that wraps children with the study subject context.
 export default function CoordinatorStudySubjectProvider({
   children
 }: PropsWithChildren<unknown>) {
@@ -25,6 +23,7 @@ export default function CoordinatorStudySubjectProvider({
     return null;
   }, []);
 
+  // Fetch study subjects on load
   useEffect(() => {
     const fetchStudySubjects = async () => {
       if (APP_ENV === "production" || APP_ENV === "development") {
@@ -47,6 +46,7 @@ export default function CoordinatorStudySubjectProvider({
 }
 
 
+// Hook for retrieving context data
 export function useCoordinatorStudySubjectContext() {
   const context = useContext(CoordinatorStudySubjectContext);
   if (!context) {

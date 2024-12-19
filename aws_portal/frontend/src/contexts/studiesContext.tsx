@@ -12,9 +12,7 @@ interface IStudiesProviderProps {
 }
 
 
-/**
- * StudiesProvider component that wraps children with studies context.
- */
+// StudiesProvider component that wraps children with studies context.
 export default function StudiesProvider({
   app,
   children
@@ -29,8 +27,8 @@ export default function StudiesProvider({
     return null;
   }, []);
 
+  // Fetch studies on load
   useEffect(() => {
-    // Use a list to mirror context design pattern
     const promises: Promise<any>[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
@@ -42,6 +40,7 @@ export default function StudiesProvider({
     Promise.all(promises).then(() => setStudiesLoading(false));
   }, []);
 
+  // Make an sync request to get studies from the database
   const getStudiesAsync = async (): Promise<Study[]> => {
     let studies: Study[] = [];
 
@@ -67,6 +66,7 @@ export default function StudiesProvider({
 }
 
 
+// Hook for accessing context data
 export function useStudiesContext() {
   const context = useContext(StudiesContext);
   if (!context) {

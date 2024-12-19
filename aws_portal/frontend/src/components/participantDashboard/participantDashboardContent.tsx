@@ -15,17 +15,22 @@ const ParticipantDashboardContent = () => {
   const { dittiId } = useAuth();
   const { studies, apis, studySubjectLoading } = useStudySubjectContext();
 
+  // Use the earliest `startsOn` date as the beginning of data collection
   const startDate = new Date(Math.min(...studies.map(s => new Date(s.startsOn).getTime())));
+
+  // Use the latest `expiresOn` date as the end of data collection
   const endDate = new Date(Math.max(...studies.map(s => new Date(s.expiresOn).getTime())));
   const scope = [...(new Set(apis.map(api => api.scope).flat()))];
 
   // For now assume we are only connecting Fitbit API
   const fitbitConnected = apis.length > 0;
 
+  // Redirect after authenticating with Fitbit
   const handleRedirect = () => {
     window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/fitbit/authorize`;
   };
 
+  // Redirect to form for requesting deletion of account
   const handleClickManageData = () => {
     window.location.href = "https://hosting.med.upenn.edu/forms/DittiApp/view.php?id=10677";
   };
@@ -46,11 +51,16 @@ const ParticipantDashboardContent = () => {
   return (
     <>
       <Card width="md">
+
+        {/* Title */}
         <CardContentRow>
           <Title>Your User ID: {dittiId}</Title>
           {!fitbitConnected &&
+            // Button for connecting Fitbit if not connected already
             <Button onClick={handleRedirect} rounded={true}>Connect FitBit</Button>
           }
+
+        {/* Information to display if the Fitbit API is connected */}
         </CardContentRow>
         {fitbitConnected &&
           <>
@@ -60,6 +70,8 @@ const ParticipantDashboardContent = () => {
                 <span>We will no longer collect your data after this date.</span>
               </div>
             </CardContentRow>
+
+            {/* Data visualization */}
             <CardContentRow>
               <ParticipantWearableDataProvider>
                 <WearableVisualization />
@@ -69,6 +81,7 @@ const ParticipantDashboardContent = () => {
         }
       </Card>
 
+      {/* Data summary and study information to show if Fitbit is connected */}
       {fitbitConnected &&
         <Card width="sm">
           <CardContentRow>

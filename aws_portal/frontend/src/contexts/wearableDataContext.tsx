@@ -5,10 +5,18 @@ import DataFactory from "../dataFactory";
 import { makeRequest } from "../utils";
 
 
+// Context return type for participants
 const ParticipantWearableDataContext = createContext<IWearableDataContextType | undefined>(undefined);
+
+// Context return type for coordinators
 const CoordinatorWearableDataContext = createContext<IWearableDataContextType | undefined>(undefined);
 
 
+/**
+ * Format a date in YYYY-MM-DD format.
+ * @param date The date to format.
+ * @returns string: The formatted date.
+ */
 const formatDate = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -17,10 +25,12 @@ const formatDate = (date: Date) => {
 }
 
 
+// ParticipantWearableDataProvider component that wraps children with the study subject context.
 export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<any>) => {
   const start = new Date();
   start.setDate(start.getDate() - 6);
 
+  // For now participants do not have the ability to change the start and end dates
   const [startDate, setStartDate] = useState<Date>(start);  // Start one week ago
   const [endDate, setEndDate] = useState<Date>(new Date());  // End today
   const [sleepLogs, setSleepLogs] = useState<ISleepLog[]>([]);
@@ -34,6 +44,8 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
   }, []);
 
   useEffect(() => {
+
+    // Async fetch sleep data
     const fetchSleepData = async () => {
       try {
         if (APP_ENV === "production" || APP_ENV === "development") {
@@ -42,11 +54,14 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
           params.append("end_date", formatDate(endDate));
           const url = `/participant/fitbit_data?${params.toString()}`
           let data: ISleepLog[] = await makeRequest(url);
+
+          // Sort data in reverse chronological order
           data = data.sort((a, b) => {
             if (a.dateOfSleep > b.dateOfSleep) return 1;
             else if (a.dateOfSleep < b.dateOfSleep) return -1;
             else return 0;
-          })
+          });
+          console.log(data)
 
           setSleepLogs(data);
         } else if (dataFactory) {
@@ -260,6 +275,13 @@ export const CoordinatorWearableDataProvider = ({
     }
   };
 
+  const resetStartDate = () => {
+    const start = new Date();
+    start.setDate(start.getDate() - 7);
+    setStartDate(start);
+    setEndDate(new Date());
+  };
+
   return (
     <CoordinatorWearableDataContext.Provider value={{
         startDate,
@@ -272,6 +294,7 @@ export const CoordinatorWearableDataProvider = ({
         canIncrementStartDate,
         decrementStartDate,
         incrementStartDate,
+        resetStartDate,
         syncData,
       }}>
         {children}

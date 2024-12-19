@@ -4,6 +4,12 @@ import useDittiData from "../../hooks/useDittiData";
 import { IStudySubject, Study, ViewProps } from "../../interfaces";
 import WearableVisualsContent from "./wearableVisualsContent";
 
+
+/**
+ * Props to pass to wearable visuals.
+ * @property subject: The study subject being visualized.
+ * @property studyDetails: The details of the current study.
+ */
 interface IWearableVisualsProps extends ViewProps {
   subject: IStudySubject;
   studyDetails: Study;
@@ -29,6 +35,7 @@ export default function WearableVisuals({
   } = useDittiData();
 
   return (
+    // Wrap the visualization in wearable and ditti data providers
     <CoordinatorWearableDataProvider
       dittiId={subject.dittiId}
       studyId={studyDetails.id}>
