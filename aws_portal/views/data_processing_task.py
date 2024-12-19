@@ -18,13 +18,17 @@ def get_data_processing_tasks(task_id: int | None):
     """
     Retrieve all data processing tasks sorted by creation date.
 
+    Optionally, retrieve a specific data processing task by ID. If task_id is provided, the response will contain a
+    single task.
+
     Request:
     --------
     GET /data_processing_task/
+    GET /data_processing_task/<task_id>
 
     Query Parameters:
     -----------------
-    app: 1                        # Required
+    app: int
 
     Response (200 OK):
     ------------------
