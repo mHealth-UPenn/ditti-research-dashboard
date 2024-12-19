@@ -3,8 +3,9 @@ import Accounts from "./accounts";
 import Studies from "./studies";
 import AccessGroups from "./accessGroups";
 import Roles from "./roles";
-import { ViewProps } from "../../interfaces";
 import AboutSleepTemplates from "./aboutSleepTemplates";
+import DataRetrievalTasks from "./dataRetrievalTasks";
+import { ViewProps } from "../../interfaces";
 import Link from "../links/link";
 
 /**
@@ -65,6 +66,17 @@ const Navbar: React.FC<NavbarProps> = ({ active, handleClick, flashMessage, goBa
       name: "About Sleep Templates",
       view: (
         <AboutSleepTemplates
+          handleClick={handleClick}
+          flashMessage={flashMessage}
+          goBack={goBack}
+        />
+      )
+    },
+    {
+      active: false,
+      name: "Data Retrieval Tasks",
+      view: (
+        <DataRetrievalTasks
           handleClick={handleClick}
           flashMessage={flashMessage}
           goBack={goBack}
