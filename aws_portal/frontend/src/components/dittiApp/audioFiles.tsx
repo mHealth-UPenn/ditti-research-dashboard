@@ -65,7 +65,7 @@ const AudioFiles: React.FC<ViewProps> = ({
     const promises: Promise<void>[] = [];
     // Get whether user can upload audio files
     promises.push(
-      getAccess(2, "Create", "Users")
+      getAccess(2, "Create", "Participants")
         .then(() => setCanCreateAudioFiles(true))
         .catch(() => setCanCreateAudioFiles(false))
     );

@@ -93,6 +93,40 @@ export interface Study {
 }
 
 /**
+ * Represents a join between a study subject and a study they are enrolled in.
+ * @property study - The study the study subject is enrolled in.
+ * @property didConsent - Whether the study subject consented to being enrolled in the study.
+ * @property createdOn - When the study subject was enrolled in the study. Actually the date when the database entry was
+ *   created.
+ * @property expiresOn - When the study subject's participation in the study ends.
+ */
+export interface StudyJoin {
+  study: Study;
+  didConsent: boolean;
+  createdOn: string;
+  startsOn: string;
+  expiresOn: string;
+  dataSummary: string;
+}
+
+/**
+ * Represents a join between a study subject and an api they granted access to.
+ * @property apiUserUuid - The study subject's unique ID with the API.
+ * @property scope - The scope that the study subject granted with the API.
+ * @property api - The API the study subject granted access to.
+ * @property lastSyncDate - The last time data from this API was synced with the database.
+ * @property createdOn - When the study subject granted access to the API. Actually the data when the database entry was
+ *   created.
+ */
+export interface ApiJoin {
+  apiUserUuid: string;
+  scope: string[];
+  api: { id: number; name: string; };
+  lastSyncDate: string;
+  createdOn: string;
+}
+
+/**
  * Represents a sleep template with descriptive content.
  * @property id - The database primary key.
  * @property name - The name of the sleep template.
@@ -289,6 +323,58 @@ export interface AuthContextType {
 }
 
 
+/**
+ * Defines the context containing information about studies.
+ * @property studies - The studies fetched from the database.
+ * @property studiesLoading - Whether data is being fetched from the database.
+ */
+export interface StudiesContextType {
+  studies: Study[];
+  studiesLoading: boolean;
+}
+
+
+/**
+ * Defines the context containing information about a study subject.
+ * @property studies - The studies the study subject is enrolled information and information about their enrollment.
+ * @property apis - The APIs the study subject granted access to and information about the access granted.
+ * @property studySubjectLoading - Whether data is being fetched from the database.
+ */
+export interface StudySubjectContextType {
+  studies: StudyJoin[];
+  apis: ApiJoin[];
+  studySubjectLoading: boolean;
+}
+
+
+/**
+ * Defines the context containing information about a coordinator's study subjects.
+ * @property studySubjects - The study subjects and information about their study enrollments.
+ * @property studySubjectLoading - Whether data is being fetched from the database.
+ */
+export interface CoordinatorStudySubjectContextType {
+  studySubjects: IStudySubject[];
+  studySubjectLoading: boolean;
+}
+
+
+/**
+ * The study subject data structure as it is returned from the database.
+ * @property id - The database primary key.
+ * @property createdOn - When the database entry for the study subject was created.
+ * @property dittiId - The study subject's primary key.
+ * @property studies - The studies that the study subject is enrolled in and information about their enrollment.
+ * @property apis - The APIs that the study subject granted access to and information about the access they granted.
+ */
+export interface IStudySubject {
+  id: number;
+  createdOn: string;
+  dittiId: string;
+  studies: StudyJoin[];
+  apis: ApiJoin[];
+}
+
+
 export interface IFlashMessage {
   id: number;
   element: React.ReactElement;
@@ -296,32 +382,123 @@ export interface IFlashMessage {
   closeRef: React.RefObject<HTMLDivElement>;
 }
 
+
+/**
+ * Stages sleep levels.
+ */
 export type ISleepLevelStages = "deep" | "light" | "rem" | "wake";
+
+
+/**
+ * Classic sleep levels.
+ */
 export type ISleepLevelClassic = "asleep" | "restless" | "awake";
 
+
+/**
+ * Represents a sleep level with details about the level and duration.
+ * @property dateTime - The timestamp of the sleep level.
+ * @property level - The sleep level (stages or classic).
+ * @property seconds - The duration of the sleep level in seconds.
+ * @property isShort - Whether the sleep level is considered short.
+ */
 export interface ISleepLevel {
-  dateTime: Date;
+  dateTime: string;
   level: ISleepLevelStages | ISleepLevelClassic;
   seconds: number;
   isShort: boolean | null;
 }
 
+
+/**
+ * Represents a sleep log entry.
+ * @property dateOfSleep - The date of the sleep log.
+ * @property logType - The type of log entry.
+ * @property type - The type of sleep log.
+ * @property levels - The sleep levels for the log entry.
+ */
 export interface ISleepLog {
-  dateOfSleep: Date;
-  startTime: Date;
+  dateOfSleep: string;
+  logType: "auto_detected" | "manual";
   type: "stages" | "classic";
   levels: ISleepLevel[];
 }
 
+
+/**
+ * Defines the context containing information about wearable data.
+ * @property startDate - The start date of the data range.
+ * @property endDate - The end date of the data range.
+ * @property sleepLogs - The sleep logs for the data range.
+ * @property isLoading - Whether data is being fetched from the database.
+ * @property isSyncing - Whether data is being synced with the wearable API.
+ * @property dataIsUpdated - Whether the current data has been updated since the first load.
+ * @property firstDateOfSleep - The first date of sleep data available.
+ * @property syncData - Function to invoke a data processing task and sync data with the wearable API.
+ * @property decrementStartDate - Function to decrement the start and end dates by one day.
+ * @property incrementStartDate - Function to increment the start and end dates by one day.
+ * @property resetStartDate - Function to reset the start and end dates.
+ * @property canIncrementStartDate - Whether the start date can be incremented.
+ */
 export interface IWearableDataContextType {
+  startDate: Date;
+  endDate: Date;
   sleepLogs: ISleepLog[];
   isLoading: boolean;
-  error: string | null;
+  isSyncing?: boolean;
+  dataIsUpdated?: boolean;
+  firstDateOfSleep?: Date | null;
+  syncData?: () => void;
+  decrementStartDate?: () => void;
+  incrementStartDate?: () => void;
+  resetStartDate?: () => void;
+  canIncrementStartDate?: boolean;
 }
 
+
+/**
+ * Default props to pass to any visualization component.
+ * @property marginTop - The default margin at the top of the visualization.
+ * @property marginRight - The default margin at the right of the visualization.
+ * @property marginBottom - The default margin at the bottom of the visualization.
+ * @property marginLeft - The default margin at the left of the visualization.
+ */
 export interface IVisualizationProps {
   marginTop?: number;
   marginRight?: number;
   marginBottom?: number;
   marginLeft?: number;
+}
+
+
+/**
+ * Represents a data processing task status.
+ */
+type DataProcessingTaskStatus = "Pending"
+  | "InProgress"
+  | "Success"
+  | "Failed"
+  | "CompletedWithErrors";
+
+
+/**
+ * Represents a data processing task.
+ * @property id - The database primary key.
+ * @property status - The status of the data processing task.
+ * @property billedMs - The amount of milliseconds the task took to process (not used).
+ * @property createdOn - When the task was created.
+ * @property updatedOn - When the task was last updated.
+ * @property completedOn - When the task was completed.
+ * @property logFile - The S3 URI of the function's log file.
+ * @property errorCode - The error code if the task failed.
+ */
+export interface IDataProcessingTask {
+  id: number;
+  status: DataProcessingTaskStatus;
+  billedMs: string;
+  createdOn: string;
+  updatedOn: string;
+  completedOn: string;
+  logFile: string | null;
+  errorCode: string | null;
 }

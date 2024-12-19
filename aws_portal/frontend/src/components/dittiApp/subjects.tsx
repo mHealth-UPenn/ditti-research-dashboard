@@ -75,14 +75,14 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
     // get whether the user can enroll subjects
     const promises: Promise<any>[] = [];
     promises.push(
-      getAccess(2, "Create", "Users", id)
+      getAccess(2, "Create", "Participants", id)
         .then(() => setCanCreate(true))
         .catch(() => setCanCreate(false))
     );
 
     // get whether the user can edit subjects
     promises.push(
-      getAccess(2, "Edit", "Users", id)
+      getAccess(2, "Edit", "Participants", id)
         .then(() => setCanEdit(true))
         .catch(() => setCanEdit(false))
     );

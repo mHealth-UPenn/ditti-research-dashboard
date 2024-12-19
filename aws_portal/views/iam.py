@@ -167,7 +167,7 @@ def get_access():  # TODO: write unit test
 
     Options
     -------
-    app: 1 | 2
+    app: 1 | 2 | 3
     study: int
     action: str
     resource: str

@@ -46,7 +46,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
   const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === user.userPermissionId);
 
   useEffect(() => {
-    getAccess(2, "Edit", "Users", studyDetails.id)
+    getAccess(2, "Edit", "Participants", studyDetails.id)
       .then(() => {
         setCanEdit(true);
         setLoading(false);

@@ -64,7 +64,7 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
   useEffect(() => {
     setBouts(getBouts(taps));
 
-    getAccess(2, "Edit", "Users", studyDetails.id)
+    getAccess(2, "Edit", "Participants", studyDetails.id)
       .then(() => {
         setCanEdit(true);
         setLoading(false);

@@ -8,6 +8,7 @@ import { getAccess } from "../utils";
 import Card from "./cards/card";
 import CardContentRow from "./cards/cardContentRow";
 import ViewContainer from "./containers/viewContainer";
+import WearableStudies from "./wearableDashboard/wearableStudies";
 
 /**
  * Home component: renders available apps for the user
@@ -40,6 +41,16 @@ const Home: React.FC<ViewProps> = ({
           flashMessage={flashMessage} />
       ),
     },
+    {
+      breadcrumbs: ["Wearable Dashboard"],
+      name: "Wearable Dashboard",
+      view: (
+        <WearableStudies
+          handleClick={handleClick}
+          goBack={goBack}
+          flashMessage={flashMessage} />
+      ),
+    },
   ]);
 
   const [loading, setLoading] = useState(true);
@@ -55,8 +66,13 @@ const Home: React.FC<ViewProps> = ({
       setApps((prevApps) => prevApps.filter((app) => app.name !== "Ditti App Dashboard"));
     });
 
+    // check whether the user can view the ditti app dashboard
+    const wear = getAccess(3, "View", "Wearable Dashboard").catch(() => {
+      setApps((prevApps) => prevApps.filter((app) => app.name !== "Wearable Dashboard"));
+    });
+
     // when all promises resolve, hide the loader
-    Promise.all([admin, ditti]).then(() => setLoading(false));
+    Promise.all([admin, ditti, wear]).then(() => setLoading(false));
   }, []);
 
   if (loading) {

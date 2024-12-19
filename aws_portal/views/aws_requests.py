@@ -316,7 +316,7 @@ def get_users():  # TODO: create unit test
 
 @blueprint.route("/user/create", methods=["POST"])
 @auth_required("View", "Ditti App Dashboard")
-@auth_required("Create", "Users")
+@auth_required("Create", "Participants")
 def user_create():
     """
     Create a new user
@@ -371,7 +371,7 @@ def user_create():
 
 @blueprint.route("/user/edit", methods=["POST"])
 @auth_required("View", "Ditti App Dashboard")
-@auth_required("Edit", "Users")
+@auth_required("Edit", "Participants")
 def user_edit():
     """
     Edit an exisitng user

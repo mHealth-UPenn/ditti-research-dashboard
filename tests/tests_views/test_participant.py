@@ -153,8 +153,8 @@ def test_get_participant_user_not_found(authenticated_client):
         mock_verify_token.side_effect = verify_token_nonexistent_user_side_effect
 
         response = authenticated_client.get("/participant")
-        assert response.status_code == 404
-        assert response.get_json() == {"msg": "User not found or is archived."}
+        assert response.status_code == 400
+        assert response.get_json() == {"msg": "Participant nonexistent_user not found."}
 
 
 def test_get_participant_exception_handling(authenticated_client, study_subject):
@@ -229,8 +229,8 @@ def test_revoke_api_access_user_not_found(authenticated_client):
         mock_verify_token.side_effect = verify_token_nonexistent_user_side_effect
 
         response = authenticated_client.delete("/participant/api/TestAPI")
-        assert response.status_code == 404
-        assert response.get_json() == {"msg": "User not found."}
+        assert response.status_code == 400
+        assert response.get_json() == {"msg": "Participant dne_ditti_id not found."}
 
 
 def test_revoke_api_access_api_not_found(authenticated_client, study_subject):

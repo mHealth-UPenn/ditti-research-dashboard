@@ -574,9 +574,13 @@ class StudySubjectService(DBService):
                 )
                 self.connection.execute(insert_summary_stmt)
 
-    def update_last_sync_date(self):
+    def update_last_sync_date(self, last_sync_date: str | None = None):
         """
         Updates the `last_sync_date` for the current study subject to the current timestamp.
+
+        Args:
+        - last_sync_date (str, optional): The date to set last sync to. If not passed, `function_timestamp` is used
+            by default.
 
         Raises:
             RuntimeError: If called outside of the `iter_entries` block or without a valid index.
@@ -585,16 +589,23 @@ class StudySubjectService(DBService):
         if self.__index is None:
             raise RuntimeError("No index found. `insert_data` must be called inside `iter_entries` block.")
 
+        if last_sync_date is None:
+            last_sync_date = function_timestamp
+
         entry = self.__entries[self.__index]
 
         self.connection.execute(
             update(self.api_table)
             .where(self.api_table.c.study_subject_id == entry.id)
-            .values(last_sync_date=datetime.strptime(function_timestamp, "%Y-%m-%dT%H:%M:%S.%f"))
+            .values(last_sync_date=datetime.strptime(last_sync_date, "%Y-%m-%dT%H:%M:%S.%f"))
         )
 
         logger.info(
-            "Updated last_sync_date", extra={"study_subject_id": entry.id}
+            "Updated last_sync_date",
+            extra={
+                "study_subject_id": entry.id,
+                "last_sync_date": datetime.strptime(last_sync_date, "%Y-%m-%dT%H:%M:%S.%f")
+            }
         )
 
 
@@ -895,9 +906,30 @@ def handler(event, context):
                             )
                             raise NestedError
 
-                        # Try updating `api.last_sync_date` to the current `function_timestamp`
+                        # Try updating `api.last_sync_date` to the latest `dateOfSleep` in `data`
+                        last_sync_date = None
                         try:
-                            study_subject_service.update_last_sync_date()
+                            last_sync_date = max(
+                                sleep_record["dateOfSleep"]
+                                for sleep_record in data
+                            )
+                            # Convert to string matching the same format as `function_timestamp`
+                            last_sync_date = datetime.strptime(
+                                last_sync_date + timedelta(days=1),  # Next sync should start from the next day
+                                "%Y-%m-%d"
+                            ).isoformat(timespec="milliseconds")
+                        except Exception as e:
+                            logger.warning(
+                                "Error parsing `last_sync_date` from sleep data. Falling back to `function_timestamp`.",
+                                extra={
+                                    "study_subject_id": entry.id,
+                                    "error": e,
+                                }
+                            )
+                        try:
+                            study_subject_service.update_last_sync_date(
+                                last_sync_date
+                            )
 
                         # On error continue to next study subject
                         except Exception:

@@ -1,24 +1,26 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Study, ViewProps } from "../../interfaces";
-import { getAccess, makeRequest } from "../../utils";
+import { downloadExcelFromUrl, getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import StudySubjects from "./studySubjects";
-import Subjects from "./subjects";
-import SubjectsEdit from "./subjectsEdit";
-import { Workbook } from "exceljs";
-import { saveAs } from "file-saver";
-import { format } from "date-fns";
+import Subjects from "../dittiApp/subjects";
+import SubjectsEdit from "../dittiApp/subjectsEdit";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
 import Title from "../text/title";
 import Subtitle from "../text/subtitle";
 import Button from "../buttons/button";
 import CardContentRow from "../cards/cardContentRow";
-import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
+import WearableStudySubjects from "./wearableStudySubjects";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+
 
 /**
- * Information for study contacts
+ * Information for study contacts.
+ * @property fullName: The contact's full name.
+ * @property email: The contact's email.
+ * @property phoneNumber: The contact's phone number.
+ * @property role: The contact's role.
  */
 interface StudyContact {
   fullName: string;
@@ -27,120 +29,72 @@ interface StudyContact {
   role: string;
 }
 
+
 /**
- * getTaps: get tap data
- * studyId: the study's database primary key
+ * Props for the wearable study summary.
+ * @property studyId: the study's database primary key
  */
-interface StudySummaryProps extends ViewProps {
+interface WearableStudySummaryProps extends ViewProps {
   studyId: number;
 }
 
-const StudySummary: React.FC<StudySummaryProps> = ({
+
+export default function WearableStudySummary({
   flashMessage,
   goBack,
   handleClick,
   studyId
-}) => {
+}: WearableStudySummaryProps) {
   const [canCreate, setCanCreate] = useState(false);
-  const [canViewTaps, setCanViewTaps] = useState(false);
+  const [canViewWearableData, setCanViewWearableData] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
   const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
   const [loading, setLoading] = useState(true);
 
-  const { taps, audioTaps } = useDittiDataContext();
-
+  // Get permissions and study information on load
   useEffect(() => {
-    // check whether the user can enroll new subjects
     const promises: Promise<any>[] = [];
     promises.push(
-      getAccess(2, "Create", "Participants", studyId)
+      getAccess(3, "Create", "Participants", studyId)
         .then(() => setCanCreate(true))
         .catch(() => setCanCreate(false))
     );
 
     promises.push(
-      getAccess(2, "View", "Taps", studyId)
-        .then(() => setCanViewTaps(true))
-        .catch(() => setCanViewTaps(false))
+      getAccess(3, "View", "Wearable Data", studyId)
+        .then(() => setCanViewWearableData(true))
+        .catch(() => setCanViewWearableData(false))
     );
 
-    // get other accounts that have access to this study
     promises.push(
       makeRequest(
-        "/db/get-study-contacts?app=2&study=" + studyId
+        "/db/get-study-contacts?app=3&study=" + studyId
       ).then((contacts: StudyContact[]) => setStudyContacts(contacts))
     );
 
-    // get this study's information
     promises.push(
       makeRequest(
-        "/db/get-study-details?app=2&study=" + studyId
+        "/db/get-study-details?app=3&study=" + studyId
       ).then((details: Study) => setStudyDetails(details))
     );
 
-    // when all promises resolve, hide the loader
     Promise.all(promises).then(() => setLoading(false));
   }, [studyId]);
 
-  /**
-   * Download all of the study's data in excel format
-   */
+
+  // Download all of the study's data in excel format.
   const downloadExcel = async (): Promise<void> => {
-    const workbook = new Workbook();
-    const sheet = workbook.addWorksheet("Sheet 1");
-    const id = studyDetails.acronym;
-    const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
-
-    const tapsData = taps.filter(t =>
-      // Retrieve taps from only the current study
-      t.dittiId.startsWith(studyDetails.dittiId)
-    ).map(t => {
-      return [t.dittiId, t.time, t.timezone, "", ""];
-    });
-
-    const audioTapsData = audioTaps.filter(t =>
-      // Retrieve taps from only the current study
-      t.dittiId.startsWith(studyDetails.dittiId)
-    ).map(t => {
-      return [t.dittiId, t.time, t.timezone, t.action, t.audioFileTitle];
-    });
-
-    const data = tapsData.concat(audioTapsData).sort((a, b) => {
-      if (a[1] > b[1]) return 1;
-      else if (a[1] < b[1]) return -1;
-      else return 0;
-    }).sort((a, b) => {
-      if (a[0] > b[0]) return 1;
-      else if (a[0] < b[0]) return -1;
-      else return 0;
-    });
-
-    sheet.columns = [
-      { header: "Ditti ID", width: 10 },
-      { header: "Taps", width: 20 },
-      { header: "Timezone", width: 30 },
-      { header: "Audio Tap Action", width: 15 },
-      { header: "Audio File Title", width: 20 },
-    ];
-
-    sheet.getColumn("B").numFmt = "DD/MM/YYYY HH:mm:ss";
-
-    // add data to the workbook
-    sheet.addRows(data);
-
-    // write the workbook to a blob
-    workbook.xlsx.writeBuffer().then((data) => {
-      const blob = new Blob([data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      });
-
-      // download the blob
-      saveAs(blob, fileName + ".xlsx");
-    });
+    const url = `/admin/fitbit_data/download/study/${studyId}?app=3`;
+    const res = await downloadExcelFromUrl(url);
+    if (res) {
+      flashMessage(<span>{res}</span>, "danger");
+    }
   };
 
   const { dittiId, email, name, acronym } = studyDetails;
+  const { studySubjectLoading } = useCoordinatorStudySubjectContext();
 
+  // Handle when the user clicks Enroll Subject
   const handleClickEnrollSubject = () =>
     handleClick(
       ["Enroll"],
@@ -155,6 +109,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
       />
     );
 
+  // Handle when the user clicks View All Subjects
   const handleClickViewAllSubjects = () =>
     handleClick(
       ["Subjects"],
@@ -166,7 +121,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
       />
     );
 
-  if (loading) {
+  if (loading || studySubjectLoading) {
     return (
       <ViewContainer>
         <Card width="md">
@@ -182,6 +137,8 @@ const StudySummary: React.FC<StudySummaryProps> = ({
   return (
     <ViewContainer>
       <Card width="md">
+
+        {/* Study information and Excel download button */}
         <CardContentRow>
           <div className="flex flex-col">
             <Title>{acronym}</Title>
@@ -189,7 +146,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
             <Subtitle>Study email: {email}</Subtitle>
             <Subtitle>Ditti acronym: {dittiId}</Subtitle>
           </div>
-          {canViewTaps &&
+          {canViewWearableData &&
             <Button
               onClick={downloadExcel}
               variant="secondary"
@@ -198,6 +155,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
             </Button>}
         </CardContentRow>
 
+        {/* Buttons for enrolling and viewing participants */}
         <CardContentRow>
           <Title>Active Subjects</Title>
           <div className="flex">
@@ -218,15 +176,16 @@ const StudySummary: React.FC<StudySummaryProps> = ({
           </div>
         </CardContentRow>
 
-        <StudySubjects
+        {/* The list of participants in this study */}
+        <WearableStudySubjects
           flashMessage={flashMessage}
           goBack={goBack}
           handleClick={handleClick}
           studyDetails={studyDetails}
-          studyPrefix={dittiId}
-          canViewTaps={canViewTaps} />
+          canViewWearableData={canViewWearableData} />
       </Card>
 
+      {/* The list of study contacts */}
       <Card width="sm">
         {/* list of study contacts */}
         <CardContentRow>
@@ -246,6 +205,4 @@ const StudySummary: React.FC<StudySummaryProps> = ({
       </Card>
     </ViewContainer>
   );
-};
-
-export default StudySummary;
+}
