@@ -15,10 +15,20 @@ interface IDittiDataContext {
 const DittiDataContext = createContext<IDittiDataContext | undefined>(undefined);
 
 
-export const useDittiDataContext = () => {
+export const useDittiDataContext = (): IDittiDataContext => {
   const context = useContext(DittiDataContext);
   if (!context) {
-    throw new Error("useDittiDataContext must be used within a DittiDataContext provider");
+    // Do not throw error and return empty data to accommodate call on participant dashboard.
+    return {
+      dataLoading: false,
+      studies: [],
+      taps: [],
+      audioTaps: [],
+      audioFiles: [],
+      users: [],
+      refreshAudioFiles: async () => { return; },
+      getUserByDittiId: async (id: string) => ({} as User),
+    }
   }
   return context;
 };
