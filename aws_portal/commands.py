@@ -58,7 +58,7 @@ def init_api_click():
     init_api(click)
 
 
-@click.command("reset-db")
+@click.command("reset-db", help="Reset the database.")
 @with_appcontext
 def reset_db_click():
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
@@ -73,15 +73,15 @@ def reset_db_click():
     click.echo("Database successfully reset.")
 
 
-@click.command("init-integration-testing-db")
+@click.command("init-integration-testing-db", help="Initialize the integration testing database.")
 @with_appcontext
 def init_integration_testing_db_click():
     init_integration_testing_db()
     click.echo("Database successfully initialized.")
 
 
-@click.command("init-study-subject")
-@click.option("--ditti_id")
+@click.command("init-study-subject", help="Create a new StudySubject database entry.")
+@click.option("--ditti_id", default=None, help="The ditti_id of the StudySubject.")
 @with_appcontext
 def init_study_subject_click(ditti_id):
     if ditti_id is None:
@@ -90,14 +90,14 @@ def init_study_subject_click(ditti_id):
     click.echo("Study subject successfully initialized.")
 
 
-@click.command("clear-cache")
+@click.command("clear-cache", help="Clear the Flask cache.")
 @with_appcontext
 def clear_cache_click():
     cache.clear()
 
 
-@click.command("init-lambda-task")
-@click.option("--status", default="InProgress")
+@click.command("init-lambda-task", help="Create a new LambdaTask database entry.")
+@click.option("--status", default="InProgress", help="The status of the LambdaTask.")
 @with_appcontext
 def init_lambda_task_click(status):
     init_lambda_task(status)

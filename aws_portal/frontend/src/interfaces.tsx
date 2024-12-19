@@ -323,6 +323,11 @@ export interface AuthContextType {
 }
 
 
+/**
+ * Defines the context containing information about studies.
+ * @property studies - The studies fetched from the database.
+ * @property studiesLoading - Whether data is being fetched from the database.
+ */
 export interface StudiesContextType {
   studies: Study[];
   studiesLoading: boolean;
@@ -342,6 +347,11 @@ export interface StudySubjectContextType {
 }
 
 
+/**
+ * Defines the context containing information about a coordinator's study subjects.
+ * @property studySubjects - The study subjects and information about their study enrollments.
+ * @property studySubjectLoading - Whether data is being fetched from the database.
+ */
 export interface CoordinatorStudySubjectContextType {
   studySubjects: IStudySubject[];
   studySubjectLoading: boolean;
@@ -372,9 +382,26 @@ export interface IFlashMessage {
   closeRef: React.RefObject<HTMLDivElement>;
 }
 
+
+/**
+ * Stages sleep levels.
+ */
 export type ISleepLevelStages = "deep" | "light" | "rem" | "wake";
+
+
+/**
+ * Classic sleep levels.
+ */
 export type ISleepLevelClassic = "asleep" | "restless" | "awake";
 
+
+/**
+ * Represents a sleep level with details about the level and duration.
+ * @property dateTime - The timestamp of the sleep level.
+ * @property level - The sleep level (stages or classic).
+ * @property seconds - The duration of the sleep level in seconds.
+ * @property isShort - Whether the sleep level is considered short.
+ */
 export interface ISleepLevel {
   dateTime: string;
   level: ISleepLevelStages | ISleepLevelClassic;
@@ -382,6 +409,14 @@ export interface ISleepLevel {
   isShort: boolean | null;
 }
 
+
+/**
+ * Represents a sleep log entry.
+ * @property dateOfSleep - The date of the sleep log.
+ * @property logType - The type of log entry.
+ * @property type - The type of sleep log.
+ * @property levels - The sleep levels for the log entry.
+ */
 export interface ISleepLog {
   dateOfSleep: string;
   logType: "auto_detected" | "manual";
@@ -389,6 +424,22 @@ export interface ISleepLog {
   levels: ISleepLevel[];
 }
 
+
+/**
+ * Defines the context containing information about wearable data.
+ * @property startDate - The start date of the data range.
+ * @property endDate - The end date of the data range.
+ * @property sleepLogs - The sleep logs for the data range.
+ * @property isLoading - Whether data is being fetched from the database.
+ * @property isSyncing - Whether data is being synced with the wearable API.
+ * @property dataIsUpdated - Whether the current data has been updated since the first load.
+ * @property firstDateOfSleep - The first date of sleep data available.
+ * @property syncData - Function to invoke a data processing task and sync data with the wearable API.
+ * @property decrementStartDate - Function to decrement the start and end dates by one day.
+ * @property incrementStartDate - Function to increment the start and end dates by one day.
+ * @property resetStartDate - Function to reset the start and end dates.
+ * @property canIncrementStartDate - Whether the start date can be incremented.
+ */
 export interface IWearableDataContextType {
   startDate: Date;
   endDate: Date;
@@ -404,6 +455,14 @@ export interface IWearableDataContextType {
   canIncrementStartDate?: boolean;
 }
 
+
+/**
+ * Default props to pass to any visualization component.
+ * @property marginTop - The default margin at the top of the visualization.
+ * @property marginRight - The default margin at the right of the visualization.
+ * @property marginBottom - The default margin at the bottom of the visualization.
+ * @property marginLeft - The default margin at the left of the visualization.
+ */
 export interface IVisualizationProps {
   marginTop?: number;
   marginRight?: number;
@@ -411,12 +470,28 @@ export interface IVisualizationProps {
   marginLeft?: number;
 }
 
+
+/**
+ * Represents a data processing task status.
+ */
 type DataProcessingTaskStatus = "Pending"
   | "InProgress"
   | "Success"
   | "Failed"
   | "CompletedWithErrors";
 
+
+/**
+ * Represents a data processing task.
+ * @property id - The database primary key.
+ * @property status - The status of the data processing task.
+ * @property billedMs - The amount of milliseconds the task took to process (not used).
+ * @property createdOn - When the task was created.
+ * @property updatedOn - When the task was last updated.
+ * @property completedOn - When the task was completed.
+ * @property logFile - The S3 URI of the function's log file.
+ * @property errorCode - The error code if the task failed.
+ */
 export interface IDataProcessingTask {
   id: number;
   status: DataProcessingTaskStatus;

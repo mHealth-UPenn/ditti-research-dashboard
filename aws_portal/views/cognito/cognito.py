@@ -183,6 +183,8 @@ def logout():
 def check_login():
     """
     Checks if the user is authenticated via Cognito.
+
+    If they are authenticated, returns the user's ditti_id from the database.
     """
     id_token = request.cookies.get("id_token")
     if not id_token:

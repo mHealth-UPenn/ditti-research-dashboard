@@ -57,7 +57,13 @@ export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<
 };
 
 
+/**
+ * Downloads a file from a specified URL.
+ * @param url - The URL of the file to download.
+ * @returns A promise that resolves to the filename or an error message.
+ */
 export async function downloadExcelFromUrl(url: string): Promise<string | void> {
+  // Fetch the file from the server
   try {
     const jwt = localStorage.getItem("jwt");
     const opts: RequestInit = {

@@ -943,9 +943,6 @@ class Account(db.Model):
             # return all permissions for the app
             permissions = q1
 
-        print(app_id, study_id)
-        print(permissions.all())
-
         return permissions
 
     def validate_ask(self, action, resource, permissions):

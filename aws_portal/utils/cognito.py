@@ -1,7 +1,6 @@
 from functools import lru_cache, wraps
 import json
 import logging
-import traceback
 
 from flask import current_app, make_response, request
 import jwt
@@ -244,7 +243,8 @@ def cognito_auth_required(f):
     Decorator for routes to enforce Cognito authentication using tokens from cookies.
 
     This decorator verifies the access and ID tokens from cookies, handles token refresh if needed,
-    extracts `ditti_id` from the ID token, and passes it to the decorated function.
+    and extracts `cognito:username` from the ID token. The cognito username is then used to query the database, retrieve
+    the participant's Ditti ID, and pass it to the decorated function.
 
     Args:
         f (Callable): The route function to decorate.
