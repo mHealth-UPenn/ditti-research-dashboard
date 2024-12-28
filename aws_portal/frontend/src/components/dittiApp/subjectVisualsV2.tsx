@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Study, UserDetails, ViewProps } from "../../interfaces";
+import { IStudySubjectDetails, Study, UserDetails, ViewProps } from "../../interfaces";
 import SubjectsEdit from "./subjectsEdit";
 import { differenceInMilliseconds, format } from "date-fns";
 import { Workbook } from "exceljs";
@@ -28,12 +28,12 @@ import { APP_ENV } from "../../environment";
  */
 interface SubjectVisualsV2Props extends ViewProps {
   studyDetails: Study;
-  user: UserDetails;
+  studySubject: IStudySubjectDetails;
 }
 
 const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
   studyDetails,
-  user,
+  studySubject,
   flashMessage,
   goBack,
   handleClick
@@ -42,8 +42,8 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
   const [loading, setLoading] = useState(true);
 
   const { taps, audioTaps } = useDittiDataContext();
-  const filteredTaps = taps.filter((t) => t.dittiId === user.userPermissionId);
-  const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === user.userPermissionId);
+  const filteredTaps = taps.filter((t) => t.dittiId === studySubject.dittiId);
+  const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === studySubject.dittiId);
 
   useEffect(() => {
     getAccess(2, "Edit", "Participants", studyDetails.id)
@@ -61,7 +61,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
     const id = studyDetails.acronym;
-    const fileName = format(new Date(), `'${user.userPermissionId}_'yyyy-MM-dd'_'HH:mm:ss`);
+    const fileName = format(new Date(), `'${studySubject.dittiId}_'yyyy-MM-dd'_'HH:mm:ss`);
 
     const tapsData = filteredTaps.map(t => {
       return [t.dittiId, t.time, t.timezone, "", ""];
@@ -101,7 +101,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     });
   };
 
-  const expTimeDate = new Date(user.expTime);
+  const expTimeDate = new Date(studySubject.expTime);
   const expTimeAdjusted = new Date(
     expTimeDate.getTime() - expTimeDate.getTimezoneOffset() * 60000
   );
@@ -144,7 +144,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     handleClick(
       ["Edit"],
       <SubjectsEdit
-        dittiId={user.userPermissionId}
+        dittiId={studySubject.dittiId}
         studyDetails={studyDetails}
         flashMessage={flashMessage}
         goBack={goBack}
@@ -168,7 +168,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
         {/* the subject's details */}
         <CardContentRow>
           <div className="flex flex-col">
-            <Title>{user.userPermissionId}</Title>
+            <Title>{studySubject.dittiId}</Title>
             <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
           </div>
 

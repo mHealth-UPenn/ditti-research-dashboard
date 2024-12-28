@@ -2,8 +2,10 @@ import React, { useState, useEffect, createRef } from "react";
 import TextField from "../fields/textField";
 import {
   AboutSleepTemplate,
+  IStudySubjectDetails,
   ResponseBody,
   Study,
+  StudySubjectPrefill,
   User,
   UserDetails,
   ViewProps
@@ -26,6 +28,7 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import { APP_ENV } from "../../environment";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import sanitize from "sanitize-html";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 
 /**
  * dittiId: the subject's ditti id
@@ -57,7 +60,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   const [loading, setLoading] = useState<boolean>(true);
   const previewRef = createRef<HTMLDivElement>();
 
-  const { getUserByDittiId } = useDittiDataContext();
+  const { getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
 
   useEffect(() => {
     if (previewRef.current && information !== "") {
@@ -72,19 +75,14 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
     );
 
     // get the form's prefill
-    const fetchPrefill = getPrefill().then((prefill: UserDetails) => {
-      setTapPermission(prefill.tapPermission);
-      setInformation(prefill.information);
-      setUserPermissionId(prefill.userPermissionId);
-      setExpTime(prefill.expTime);
-      setTeamEmail(prefill.teamEmail);
-      setCreatedAt(prefill.createdAt);
-    });
+    const prefill = getPrefill();
+    setTapPermission(prefill.tapPermission);
+    setInformation(prefill.information);
+    setUserPermissionId(prefill.dittiId);
+    setExpTime(prefill.expTime);
 
     // when all promises finish, hide the loader
-    Promise.all([fetchTemplates, fetchPrefill]).then(() =>
-      setLoading(false)
-    );
+    Promise.all([fetchTemplates]).then(() => setLoading(false));
   }, [dittiId]);
 
   useEffect(() => {
@@ -101,18 +99,17 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<UserDetails> => {
+  const getPrefill = (): StudySubjectPrefill => {
     if (dittiId) {
-      return await getUserByDittiId(dittiId).then(makePrefill);
-    } 
+      return makePrefill(getStudySubjectByDittiId(dittiId));
+    }
 
     return {
       tapPermission: false,
       information: "",
-      userPermissionId: "",
+      dittiId: "",
+      startTime: (new Date()).toISOString().replace("Z", ""),
       expTime: "",
-      teamEmail: "",
-      createdAt: ""
     }
   };
 
@@ -121,20 +118,26 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
    * @param res - the response body
    * @returns - the form prefill data
    */
-  const makePrefill = (user: User): UserDetails => {
+  const makePrefill = (studySubject: IStudySubjectDetails): StudySubjectPrefill => {
     const selectedTemplate = aboutSleepTemplates.filter(
-      (ast: AboutSleepTemplate) => ast.text === user.information
+      (ast: AboutSleepTemplate) => ast.text === studySubject.information
     )[0];
-
     if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
 
+    const currStudy = studySubject.studies.find(s => s.study.id == studyDetails.id);
+    const startTime = currStudy
+      ? currStudy.startsOn.replace("Z", "")
+      : (new Date()).toISOString().replace("Z", "");
+    const expTime = currStudy
+      ? currStudy.startsOn.replace("Z", "")
+      : studySubject.expTime.replace("Z", "");
+
     return {
-      tapPermission: user.tap_permission,
-      information: user.information,
-      userPermissionId: user.user_permission_id,
-      expTime: user.exp_time,
-      teamEmail: user.team_email,
-      createdAt: user.createdAt
+      tapPermission: studySubject.tapPermission,
+      information: studySubject.information,
+      dittiId: studySubject.dittiId,
+      startTime,
+      expTime,
     };
   };
 
@@ -236,7 +239,6 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
       </FormView>
     );
   }
-  console.log(expTime)
 
   return (
     <FormView>

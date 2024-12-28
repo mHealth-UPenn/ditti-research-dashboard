@@ -1,3 +1,4 @@
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import DittiDataContext from "../../contexts/dittiDataContext";
 import { CoordinatorWearableDataProvider } from "../../contexts/wearableDataContext";
 import useDittiData from "../../hooks/useDittiData";
@@ -29,9 +30,7 @@ export default function WearableVisuals({
     taps,
     audioTaps,
     audioFiles,
-    users,
     refreshAudioFiles,
-    getUserByDittiId,
   } = useDittiData();
 
   return (
@@ -45,9 +44,7 @@ export default function WearableVisuals({
             taps,
             audioTaps,
             audioFiles,
-            users,
             refreshAudioFiles,
-            getUserByDittiId,
           }}>
             <WearableVisualsContent
               flashMessage={flashMessage}

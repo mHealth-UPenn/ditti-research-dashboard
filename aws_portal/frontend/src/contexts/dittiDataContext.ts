@@ -7,9 +7,7 @@ interface IDittiDataContext {
   taps: TapDetails[]
   audioTaps: AudioTapDetails[]
   audioFiles: AudioFile[]
-  users: UserDetails[];
   refreshAudioFiles: () => Promise<void>;
-  getUserByDittiId: (id: string) => Promise<User>;
 }
 
 const DittiDataContext = createContext<IDittiDataContext | undefined>(undefined);
@@ -25,9 +23,7 @@ export const useDittiDataContext = (): IDittiDataContext => {
       taps: [],
       audioTaps: [],
       audioFiles: [],
-      users: [],
       refreshAudioFiles: async () => { return; },
-      getUserByDittiId: async (id: string) => ({} as User),
     }
   }
   return context;

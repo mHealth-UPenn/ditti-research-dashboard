@@ -182,11 +182,19 @@ export interface UserDetails {
 
 
 /**
- * Study subject data used for the SubjectsEdit view
- * @property startTime - When the user's enrollment in the study begins
+ * Study subject data used for the SubjectsEdit form
+ * @property tapPermission - Indicates if the participant has access to taps.
+ * @property information - Content from the assigned about sleep template.
+ * @property dittiId - The participant's Ditti ID
+ * @property startTime - When the participant's enrollment in the study begins
+ * @property expTime - When the participant's enrollment in the study begins
  */
-export interface StudySubjectPrefill extends UserDetails {
+export interface StudySubjectPrefill {
+  tapPermission: boolean;
+  information: string;
+  dittiId: string;
   startTime: string;
+  expTime: string;
 }
 
 
@@ -367,6 +375,7 @@ export interface StudySubjectContextType {
 export interface CoordinatorStudySubjectContextType {
   studySubjects: IStudySubjectDetails[];
   studySubjectLoading: boolean;
+  getStudySubjectByDittiId: (id: string) => IStudySubjectDetails;
 }
 
 
@@ -388,9 +397,21 @@ export interface IStudySubject {
 
 
 /**
- * A combination of participant data fetched from both the database and AWS.
+ * A combination of participant data fetched from both the database and AWS, minus `userPermissionId` in favor of
+ * `dittiId`
  */
-export interface IStudySubjectDetails extends IStudySubject, UserDetails {}
+export interface IStudySubjectDetails {
+  id: number;
+  createdOn: string;
+  dittiId: string;
+  studies: StudyJoin[];
+  apis: ApiJoin[];
+  tapPermission: boolean;
+  information: string;
+  expTime: string;
+  teamEmail: string;
+  createdAt: string;
+}
 
 
 export interface IFlashMessage {

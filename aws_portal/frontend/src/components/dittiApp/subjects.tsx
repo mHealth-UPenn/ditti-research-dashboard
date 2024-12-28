@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { getAccess } from "../../utils";
-import { Study, UserDetails, ViewProps } from "../../interfaces";
+import { IStudySubjectDetails, Study, UserDetails, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import SubjectsEdit from "./subjectsEdit";
 import SubjectVisuals from "./subjectVisualsV2";
@@ -16,6 +16,7 @@ import Subtitle from "../text/subtitle";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 
 /**
  * studyDetails: the details of the study that subjects will be listed for
@@ -36,9 +37,9 @@ const Subjects = ({
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const { users } = useDittiDataContext();
-  const filteredUsers = users.filter(
-    u => u.userPermissionId.startsWith(studyDetails.dittiId)
+  const { studySubjects } = useCoordinatorStudySubjectContext();
+  const filteredStudySubjects = studySubjects.filter(
+    u => u.dittiId.startsWith(studyDetails.dittiId)
   );
 
   const columns: Column[] = [
@@ -112,59 +113,59 @@ const Subjects = ({
     minute: "2-digit"
   };
 
-  const tableData: TableData[][] = filteredUsers.map((user: UserDetails) => {
+  const tableData: TableData[][] = filteredStudySubjects.map((studySubject: IStudySubjectDetails) => {
     return [
       {
         contents: (
           <>
-            {/* if the user has tap permission, link to a subject visuals page */}
-            {(user.tapPermission && canViewTaps) ? (
+            {/* if the studySubject has tap permission, link to a subject visuals page */}
+            {(studySubject.tapPermission && canViewTaps) ? (
               <Link
                 onClick={() =>
                   handleClick(
-                    [user.userPermissionId],
+                    [studySubject.dittiId],
                     <SubjectVisuals
                       flashMessage={flashMessage}
                       goBack={goBack}
                       handleClick={handleClick}
                       studyDetails={studyDetails}
-                      user={user} />
+                      studySubject={studySubject} />
                   )
                 }>
-                  {user.userPermissionId}
+                  {studySubject.dittiId}
               </Link>
             ) : (
-              user.userPermissionId
+              studySubject.dittiId
             )}
           </>
         ),
-        searchValue: user.userPermissionId,
-        sortValue: user.userPermissionId
+        searchValue: studySubject.dittiId,
+        sortValue: studySubject.dittiId
       },
       {
         contents: (
           <span>
-            {new Date(user.expTime).toLocaleDateString("en-US", dateOptions)}
+            {new Date(studySubject.expTime).toLocaleDateString("en-US", dateOptions)}
           </span>
         ),
         searchValue: "",
-        sortValue: user.expTime
+        sortValue: studySubject.expTime
       },
       {
         contents: (
           <span>
-            {new Date(user.createdAt).toLocaleDateString("en-US", dateOptions)}
+            {new Date(studySubject.createdAt).toLocaleDateString("en-US", dateOptions)}
           </span>
         ),
         searchValue: "",
-        sortValue: user.createdAt
+        sortValue: studySubject.createdAt
       },
       {
         contents: (
-          <span>{user.tapPermission ? "Yes" : "No"}</span>
+          <span>{studySubject.tapPermission ? "Yes" : "No"}</span>
         ),
         searchValue: "",
-        sortValue: user.tapPermission ? "1" : "0"
+        sortValue: studySubject.tapPermission ? "1" : "0"
       },
       {
         contents: (
@@ -176,9 +177,9 @@ const Subjects = ({
               className="h-full flex-grow"
               onClick={() =>
                 handleClick(
-                  ["Edit", user.userPermissionId],
+                  ["Edit", studySubject.dittiId],
                   <SubjectsEdit
-                    dittiId={user.userPermissionId}
+                    dittiId={studySubject.dittiId}
                     studyDetails={studyDetails}
                     flashMessage={flashMessage}
                     goBack={goBack}

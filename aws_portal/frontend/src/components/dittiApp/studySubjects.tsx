@@ -1,11 +1,12 @@
 import React from "react";
-import { Study, UserDetails, ViewProps } from "../../interfaces";
+import { IStudySubjectDetails, Study, UserDetails, ViewProps } from "../../interfaces";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import SubjectVisuals from "./subjectVisualsV2";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
 import Link from "../links/link";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -26,20 +27,21 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
   goBack,
   handleClick,
 }) => {
-  const { users, taps, audioTaps } = useDittiDataContext();
-  const filteredUsers = users.filter(u => u.userPermissionId.startsWith(studyPrefix));
+  const { taps, audioTaps } = useDittiDataContext();
+  const { studySubjects } = useCoordinatorStudySubjectContext();
+  const filteredStudySubjects = studySubjects.filter(ss => ss.dittiId.startsWith(studyPrefix));
 
   /**
    * Render recent summary tap data for a user
    * @param user 
    * @returns 
    */
-  const getSubjectSummary = (user: UserDetails): React.ReactElement => {
+  const getSubjectSummary = (studySubject: IStudySubjectDetails): React.ReactElement => {
     let summaryTaps: React.ReactElement[];
     let totalTaps = 0;
 
-    // if the user has access to tapping
-    if (user.tapPermission) {
+    // if the studySubject has access to tapping
+    if (studySubject.tapPermission) {
       // for each day of the week
       summaryTaps = [6, 5, 4, 3, 2, 1, 0].map((i) => {
         const today = new Date(new Date().setHours(9, 0, 0, 0));
@@ -54,14 +56,14 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
         const filteredTaps = taps
           .filter(
             (t) =>
-              t.dittiId === user.userPermissionId &&
+              t.dittiId === studySubject.dittiId &&
               isWithinInterval(new Date(t.time), { start, end })
           ).length;
 
         const filteredAudioTaps = audioTaps
           .filter(
             (t) =>
-              t.dittiId === user.userPermissionId &&
+              t.dittiId === studySubject.dittiId &&
               isWithinInterval(new Date(t.time), { start, end })
           ).length;
 
@@ -83,13 +85,13 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
       const tapsCount = taps
         .filter(
           (t) =>
-            t.dittiId === user.userPermissionId &&
+            t.dittiId === studySubject.dittiId &&
             isWithinInterval(new Date(t.time), { start, end: new Date() })
         ).length;
       const audioTapsCount = audioTaps
         .filter(
           (t) =>
-            t.dittiId === user.userPermissionId &&
+            t.dittiId === studySubject.dittiId &&
             isWithinInterval(new Date(t.time), { start, end: new Date() })
         ).length;
       totalTaps = tapsCount + audioTapsCount;
@@ -109,34 +111,34 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
     }
 
     // get the number of days until the user's id expires
-    const expiresOn = differenceInDays(new Date(user.expTime), new Date());
+    const expiresOn = differenceInDays(new Date(studySubject.expTime), new Date());
 
     const handleClickSubject = () =>
       handleClick(
-        [user.userPermissionId],
+        [studySubject.dittiId],
         <SubjectVisuals
           flashMessage={flashMessage}
           goBack={goBack}
           handleClick={handleClick}
           studyDetails={studyDetails}
-          user={user}
+          studySubject={studySubject}
         />
       );
 
     return (
       <CardContentRow
-        key={user.userPermissionId}
+        key={studySubject.dittiId}
         className="border-b border-light">
           <div className="flex flex-col">
             <div className="flex items-center">
               {/* active tapping icon */}
               {canViewTaps && <ActiveIcon active={!!totalTaps} className="mr-2" />}
-              {/* link to the user's summary page */}
+              {/* link to the studySubject's summary page */}
               {canViewTaps ?
                 <Link onClick={handleClickSubject}>
-                  {user.userPermissionId}
+                  {studySubject.dittiId}
                 </Link> :
-                <span>{user.userPermissionId}</span>
+                <span>{studySubject.dittiId}</span>
               }
             </div>
             <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
@@ -153,8 +155,8 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
   };
 
   // all users whose ids have not expired
-  const activeUsers = filteredUsers.filter(
-    (u: UserDetails) => new Date() < new Date(u.expTime)
+  const activeUsers = filteredStudySubjects.filter(
+    ss => new Date() < new Date(ss.expTime)
   );
 
   return (

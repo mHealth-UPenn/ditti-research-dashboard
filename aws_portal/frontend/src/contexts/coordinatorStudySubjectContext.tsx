@@ -30,7 +30,8 @@ export default function CoordinatorStudySubjectProvider({
 
   /**
    * Joins participant data fetched from the database and from AWS by Ditti ID. If a Ditti ID exists in only one data
-   * source, then an empty placeholder is filled in for the other.
+   * source, then an empty placeholder is filled in for the other. `UserDetails.userPermissionId` is removed from the
+   * joined data in favor of `dittiId`.
    * @param studySubjects - Participant data fetched from the database.
    * @param userDetails - Participant data fetched from AWS.
    * @returns - Merged participant data.
@@ -74,9 +75,25 @@ export default function CoordinatorStudySubjectProvider({
     for (const id of ids) {
       const matchedStudySubject = studySubjectMap.get(id) || emptyStudySubject;
       const matchedUserDetail = userDetailsMap.get(id) || emptyUser;
-      if (matchedUserDetail) {
-        result.push({ ...matchedStudySubject, ...matchedUserDetail });
-      }
+
+      // Build the result minus `userPermissionId`
+      const dittiId = matchedStudySubject.dittiId === ""
+        ? matchedUserDetail.userPermissionId
+        : matchedStudySubject.dittiId;
+
+      const res = {
+        id: matchedStudySubject.id,
+        createdOn: matchedStudySubject.createdOn,
+        dittiId: dittiId,
+        studies: matchedStudySubject.studies,
+        apis: matchedStudySubject.apis,
+        tapPermission: matchedUserDetail.tapPermission,
+        information: matchedUserDetail.information,
+        expTime: matchedUserDetail.expTime,
+        teamEmail: matchedUserDetail.teamEmail,
+        createdAt: matchedUserDetail.createdAt,
+      };
+      result.push(res);
     }
 
     return result;
@@ -116,9 +133,30 @@ export default function CoordinatorStudySubjectProvider({
     });
   }, []);
 
+  const getStudySubjectByDittiId = (id: string): IStudySubjectDetails => {
+    const studySubjectsFiltered = studySubjects.filter(ss => ss.dittiId === id);
+
+    if (studySubjectsFiltered.length) {
+      return studySubjectsFiltered[0];
+    }
+
+    return {
+      id: -1,
+      createdOn: "",
+      dittiId: "",
+      studies: [],
+      apis: [],
+      tapPermission: false,
+      information: "",
+      expTime: "",
+      teamEmail: "",
+      createdAt: "",
+    }
+  }
+
   return (
     <CoordinatorStudySubjectContext.Provider
-      value={{ studySubjects, studySubjectLoading }}>
+      value={{ studySubjects, studySubjectLoading, getStudySubjectByDittiId }}>
         {children}
     </CoordinatorStudySubjectContext.Provider>
   );
