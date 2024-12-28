@@ -47,14 +47,12 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   goBack,
   flashMessage,
 }) => {
-  const [state, setState] = useState<UserDetails>({
-    tapPermission: false,
-    information: "",
-    userPermissionId: "",
-    expTime: "",
-    teamEmail: "",
-    createdAt: ""
-  });
+  const [tapPermission, setTapPermission] = useState(false);
+  const [information, setInformation] = useState("");
+  const [userPermissionId, setUserPermissionId] = useState("");
+  const [expTime, setExpTime] = useState("");
+  const [teamEmail, setTeamEmail] = useState("");
+  const [createdAt, setCreatedAt] = useState("");
 
   const [aboutSleepTemplates, setAboutSleepTemplates] = useState<AboutSleepTemplate[]>([]);
   const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] = useState<AboutSleepTemplate>({} as AboutSleepTemplate);
@@ -64,8 +62,8 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   const { getUserByDittiId } = useDittiDataContext();
 
   useEffect(() => {
-    if (previewRef.current && state.information !== "") {
-      previewRef.current.innerHTML = sanitize(state.information);
+    if (previewRef.current && information !== "") {
+      previewRef.current.innerHTML = sanitize(information);
     }
   }, [previewRef]);
 
@@ -76,9 +74,14 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
     );
 
     // get the form's prefill
-    const fetchPrefill = getPrefill().then((prefill: UserDetails) =>
-      setState(prefill)
-    );
+    const fetchPrefill = getPrefill().then((prefill: UserDetails) => {
+      setTapPermission(prefill.tapPermission);
+      setInformation(prefill.information);
+      setUserPermissionId(prefill.userPermissionId);
+      setExpTime(prefill.expTime);
+      setTeamEmail(prefill.teamEmail);
+      setCreatedAt(prefill.createdAt);
+    });
 
     // when all promises finish, hide the loader
     Promise.all([fetchTemplates, fetchPrefill]).then(() =>
@@ -91,7 +94,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
       if (aboutSleepTemplateSelected.text) {
         previewRef.current.innerHTML = sanitize(aboutSleepTemplateSelected.text);
       } else {
-        previewRef.current.innerHTML = sanitize(state.information);
+        previewRef.current.innerHTML = sanitize(information);
       }
     }
   }, [aboutSleepTemplateSelected]);
@@ -142,8 +145,6 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
    * a new entry, else make a request to edit an exiting entry
    */
   const post = async (): Promise<void> => {
-    const { tapPermission, userPermissionId, expTime, teamEmail } = state;
-
     const data = {
       tap_permission: tapPermission,
       information: aboutSleepTemplateSelected.text,
@@ -248,11 +249,9 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
               id="dittiId"
               type="text"
               placeholder=""
-              value={state.userPermissionId.replace(studyPrefix, "")}
+              value={userPermissionId.replace(studyPrefix, "")}
               label="Ditti ID"
-              onKeyup={(text: string) => {
-                setState(prev => ({ ...prev, userPermissionId: studyPrefix + text }));
-              }}
+              onKeyup={text => setUserPermissionId(studyPrefix + text)}
               feedback="">
                 {/* superimpose the study prefix on the form field */}
                 <div className="flex items-center text-link h-full px-2 bg-extra-light border-r border-light">
@@ -277,19 +276,17 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
               id="expiresOn"
               type="datetime-local"
               placeholder=""
-              value={state.expTime.replace("Z", "")}
+              value={expTime.replace("Z", "")}
               label="Expires On"
-              onKeyup={(text: string) =>
-                setState(prev => ({ ...prev, expTime: text + ":00.000Z" }))
-              }
+              onKeyup={text => setExpTime(text + ":00.000Z")}
               feedback="" />
           </FormField>
           <FormField>
             <CheckField
               id="tapping-access"
-              prefill={state.tapPermission}
+              prefill={tapPermission}
               label="Tapping Access"
-              onChange={(val) => setState(prev => ({ ...prev, tapPermission: val }))} />
+              onChange={setTapPermission} />
           </FormField>
         </FormRow>
         <FormRow>
@@ -321,7 +318,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
           <FormSummaryText>
             Ditti ID:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{state.userPermissionId}
+            &nbsp;&nbsp;&nbsp;&nbsp;{userPermissionId}
             <br />
             <br />
             Team email:
@@ -332,14 +329,14 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
             Expires on:
             <br />
             &nbsp;&nbsp;&nbsp;&nbsp;
-            {state.expTime
-              ? new Date(state.expTime).toLocaleDateString("en-US", dateOptions)
+            {expTime
+              ? new Date(expTime).toLocaleDateString("en-US", dateOptions)
               : ""}
             <br />
             <br />
             Tapping access:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{state.tapPermission ? "Yes" : "No"}
+            &nbsp;&nbsp;&nbsp;&nbsp;{tapPermission ? "Yes" : "No"}
             <br />
             <br />
             About sleep template:
