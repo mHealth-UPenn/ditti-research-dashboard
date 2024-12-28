@@ -9,11 +9,12 @@ import { SmallLoader } from "../loader";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import Button from "../buttons/button";
+import { Link } from "react-router-dom";
 
 /**
  * Functional component representing Accounts.
  */
-const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
+const Accounts = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -174,22 +175,14 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
           contents: (
             <div className="flex w-full h-full">
               {canEdit &&
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="h-full flex-grow"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit", name],
-                      <AccountsEdit
-                        accountId={id}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick} />
-                    )
-                  }>
-                    Edit
-                </Button>
+                <Link to={`/coordinator/admin/accounts/edit?id=${id}`}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-full flex-grow">
+                      Edit
+                  </Button>
+                </Link>
               }
               {canArchive &&
                 <Button
@@ -233,7 +226,7 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
    * @param res - the response body
    */
   const handleSuccess = (res: ResponseBody) => {
-    flashMessage(<span>{res.msg}</span>, "success");
+    // flashMessage(<span>{res.msg}</span>, "success");
     setLoading(true);
 
     // Refresh the table's data
@@ -255,33 +248,19 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
       </span>
     );
 
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   // If the user has permission to create, show the create button
   const tableControl = canCreate ? (
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Create"],
-          <AccountsEdit
-            accountId={0}
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick} />
-        )
-      } >
-        Create +
-    </Button>
+    <Link to={`/coordinator/admin/accounts/create`}>
+      <Button variant="primary">
+          Create +
+      </Button>
+    </Link>
   ) : <React.Fragment />;
 
-  const navbar =
-    <Navbar
-      active="Accounts"
-      flashMessage={flashMessage}
-      goBack={goBack}
-      handleClick={handleClick} />;
+  const navbar = <Navbar active="Accounts" />;
 
   if (loading) {
     return (

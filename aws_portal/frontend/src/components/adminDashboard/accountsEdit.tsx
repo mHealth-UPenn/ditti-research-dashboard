@@ -23,6 +23,7 @@ import FormSummaryTitle from "../text/formSummaryTitle";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
+import { useSearchParams } from "react-router-dom";
 
 type Action =
   | {
@@ -129,13 +130,6 @@ const reducer = (state: AccountsEditState, action: Action) => {
 
 
 /**
- * accountId: the database primary key, 0 if creating a new entry
- */
-interface AccountsEditProps extends ViewProps {
-  accountId: number;
-}
-
-/**
  * study: the database primary key of study the role is selected for
  * role: the role's database primary key
  */
@@ -189,11 +183,11 @@ const initialState: AccountsEditState = {
   password: ""
 };
 
-const AccountsEdit = ({
-  accountId,
-  flashMessage,
-  goBack,
-}: AccountsEditProps) => {
+const AccountsEdit = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const accountId = id ? parseInt(id) : 0
+
   const [state, dispatch] = useReducer(reducer, initialState);
   const {
     accessGroups,
@@ -371,8 +365,8 @@ const AccountsEdit = ({
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
-    flashMessage(<span>{res.msg}</span>, "success");
+    // goBack();
+    // flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -389,7 +383,7 @@ const AccountsEdit = ({
       </span>
     );
 
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   /**

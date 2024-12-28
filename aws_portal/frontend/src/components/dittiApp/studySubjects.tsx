@@ -4,7 +4,7 @@ import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import SubjectVisuals from "./subjectVisualsV2";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
-import Link from "../links/link";
+import Link from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 

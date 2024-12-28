@@ -6,7 +6,7 @@ import ViewContainer from "../containers/viewContainer";
 import CardContentRow from "../cards/cardContentRow";
 import Title from "../text/title";
 import ActiveIcon from "../icons/activeIcon";
-import Link from "../links/link";
+import Link from "../links/linkComponent";
 import WearableStudySummary from "./wearableStudySummary";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { SmallLoader } from "../loader";

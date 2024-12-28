@@ -10,7 +10,7 @@ import { APP_ENV } from "../../environment";
 import Button from "../buttons/button";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
-import Link from "../links/link";
+import Link from "../links/linkComponent";
 import Title from "../text/title";
 import Subtitle from "../text/subtitle";
 import ListView from "../containers/lists/listView";

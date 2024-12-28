@@ -9,8 +9,9 @@ import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
+import { Link } from "react-router-dom";
 
-const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
+const Roles = () => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canArchive, setCanArchive] = useState<boolean>(false);
@@ -105,23 +106,14 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
           contents: (
             <div className="flex w-full h-full">
               {canEdit &&
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="h-full flex-grow"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit", name],
-                      <RolesEdit
-                        roleId={id}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick}
-                      />
-                    )
-                  }>
-                    Edit
-                </Button>
+                <Link to={`/coordinator/admin/roles/edit?id=${id}`}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-full flex-grow">
+                      Edit
+                  </Button>
+                </Link>
               }
               {canArchive &&
                 <Button
@@ -166,7 +158,7 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
    * @param res - the response body
    */
   const handleSuccess = (res: ResponseBody) => {
-    flashMessage(<span>{res.msg}</span>, "success");
+    // flashMessage(<span>{res.msg}</span>, "success");
 
     // show the loading screen
     setLoading(true);
@@ -192,36 +184,21 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
       </span>
     );
 
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   // if the user has permission to create, show the create button
   const tableControl = canCreate ? (
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Create"],
-          <RolesEdit
-            roleId={0}
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick}
-          />
-        )
-      }>
-        Create +
-    </Button>
+    <Link to={`/coordinator/admin/roles/create`}>
+      <Button variant="primary">
+          Create +
+      </Button>
+    </Link>
   ) : (
     <></>
   );
 
-  const navbar =
-    <Navbar
-      active="Roles"
-      flashMessage={flashMessage}
-      goBack={goBack}
-      handleClick={handleClick} />;
+  const navbar = <Navbar active="Roles" />;
 
   if (loading) {
     return (

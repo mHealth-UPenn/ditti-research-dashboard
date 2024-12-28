@@ -23,6 +23,7 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import CloseIcon from "@mui/icons-material/Close";
+import { useSearchParams } from "react-router-dom";
 
 /**
  * The form's prefill
@@ -33,14 +34,12 @@ interface AccessGroupPrefill {
   permissions: Permission[];
 }
 
-/**
- * accessGroupId: the database primary key, 0 if creating a new entry
- */
-interface AccessGroupsEditProps extends ViewProps {
-  accessGroupId: number;
-}
 
-const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsEditProps) => {
+const AccessGroupsEdit = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const accessGroupId = id ? parseInt(id) : 0
+
   const [actions, setActions] = useState<ActionResource[]>([]);
   const [resources, setResources] = useState<ActionResource[]>([]);
   const [apps, setApps] = useState<App[]>([]);
@@ -268,8 +267,8 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
-    flashMessage(<span>{res.msg}</span>, "success");
+    // goBack();
+    // flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -286,7 +285,7 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
       </span>
     );
 
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   /**
@@ -349,7 +348,7 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
             <div className="mb-1">App</div>
             <div className="border-light">
               <Select
-                id={accessGroupId}
+                id={accessGroupId || 0}
                 opts={apps.map((a: App) => ({
                   value: a.id,
                   label: a.name

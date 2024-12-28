@@ -8,9 +8,9 @@ import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
+import { Link } from "react-router-dom";
 
-const AccessGroups: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
-  // State
+const AccessGroups = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -120,23 +120,14 @@ const AccessGroups: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }
           contents: (
             <div className="flex w-full h-full">
               {canEdit &&
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="h-full flex-grow"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit", name],
-                      <AccessGroupsEdit
-                        accessGroupId={id}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick}
-                      />
-                    )
-                  }>
-                    Edit
-                </Button>
+                <Link to={`/coordinator/admin/access-groups/edit?id=${id}`}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-full flex-grow">
+                      Edit
+                  </Button>
+                </Link>
               }
               {canArchive &&
                 <Button
@@ -173,7 +164,7 @@ const AccessGroups: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }
   };
 
   const handleSuccess = (res: ResponseBody) => {
-    flashMessage(<span>{res.msg}</span>, "success");
+    // flashMessage(<span>{res.msg}</span>, "success");
     setLoading(true);
 
     // Refresh the table's data
@@ -192,34 +183,19 @@ const AccessGroups: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }
       </span>
     );
 
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   // If the user has permission to create, show the create button
   const tableControl = canCreate ? (
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Create"],
-          <AccessGroupsEdit
-            accessGroupId={0}
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick}
-          />
-        )
-      }>
-        Create +
-    </Button>
+    <Link to={`/coordinator/admin/access-groups/create`}>
+      <Button variant="primary">
+          Create +
+      </Button>
+    </Link>
   ) : <React.Fragment />;
 
-  const navbar =
-    <Navbar
-      handleClick={handleClick}
-      active="Access Groups"
-      flashMessage={flashMessage}
-      goBack={goBack} />
+  const navbar = <Navbar active="Access Groups" />
 
   if (loading) {
     return (

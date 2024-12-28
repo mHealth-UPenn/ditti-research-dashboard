@@ -9,8 +9,9 @@ import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
+import { Link } from "react-router-dom";
 
-const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
+const Studies = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -84,22 +85,14 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
           contents: (
             <div className="flex w-full h-full">
               {canEdit &&
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="h-full flex-grow"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit", acronym],
-                      <StudiesEdit
-                        studyId={id}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick} />
-                    )
-                  }>
-                    Edit
-                </Button>
+                <Link to={`/coordinator/admin/studies/edit?id=${id}`}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-full flex-grow">
+                      Edit
+                  </Button>
+                </Link>
               }
               {canArchive &&
                 <Button
@@ -143,7 +136,7 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
    * @param id - the archived study id
    */
   const handleSuccess = async (id: number) => {
-    flashMessage(<span>Study archived successfully.</span>, "success");
+    // flashMessage(<span>Study archived successfully.</span>, "success");
 
     // show the loading screen
     setLoading(true);
@@ -167,35 +160,20 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
         {res.msg ? res.msg : "Internal server error"}
       </span>
     );
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   const tableControl = canCreate ? (
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Create"],
-          <StudiesEdit
-            studyId={0}
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick}
-          />
-        )
-      }>
+    <Link to={`/coordinator/admin/studies/create`}>
+      <Button variant="primary">
         Create +
-    </Button>
+      </Button>
+    </Link>
   ) : (
     <React.Fragment />
   )
 
-  const navbar =
-    <Navbar
-      active="Studies"
-      flashMessage={flashMessage}
-      goBack={goBack}
-      handleClick={handleClick} />
+  const navbar = <Navbar active="Studies" />
 
   if (loading) {
     return (

@@ -12,7 +12,7 @@ import CardContentRow from "../cards/cardContentRow";
 import Button from "../buttons/button";
 import Title from "../text/title";
 import ActiveIcon from "../icons/activeIcon";
-import Link from "../links/link";
+import Link from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 

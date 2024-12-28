@@ -22,6 +22,7 @@ import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import CloseIcon from "@mui/icons-material/Close";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { useSearchParams } from "react-router-dom";
 
 /**
  * The form's prefill
@@ -31,14 +32,11 @@ interface RolesPrefill {
   permissions: Permission[];
 }
 
-/**
- * roleId: the database primary key, 0 if creating a new entry
- */
-interface RolesEditProps extends ViewProps {
-  roleId: number;
-}
+const RolesEdit = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const roleId = id ? parseInt(id) : 0
 
-const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) => {
   const [actions, setActions] = useState<ActionResource[]>([]);
   const [resources, setResources] = useState<ActionResource[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -199,8 +197,8 @@ const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) =
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
-    flashMessage(<span>{res.msg}</span>, "success");
+    // goBack();
+    // flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -217,7 +215,7 @@ const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) =
       </span>
     );
 
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   /**

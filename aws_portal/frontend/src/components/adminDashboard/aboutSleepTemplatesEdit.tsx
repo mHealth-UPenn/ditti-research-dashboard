@@ -14,6 +14,7 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import sanitize from "sanitize-html";
+import { useSearchParams } from "react-router-dom";
 
 /**
  * The form's prefill
@@ -23,18 +24,11 @@ interface AboutSleepTemplatePrefill {
   text: string;
 }
 
-/**
- * aboutSleepTemplateId: the database primary key, 0 if creating a new entry
- */
-interface AboutSleepTempaltesEditProps extends ViewProps {
-  aboutSleepTemplateId: number;
-}
+const AboutSleepTemplatesEdit = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const aboutSleepTemplateId = id ? parseInt(id) : 0
 
-const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
-  aboutSleepTemplateId,
-  goBack,
-  flashMessage
-}) => {
   const [name, setName] = useState<string>("");
   const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
@@ -55,7 +49,7 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
     };
 
     fetchPrefill();
-  }, [aboutSleepTemplateId]);
+  }, []);
 
   /**
    * Get the form prefill if editing
@@ -117,8 +111,8 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
-    flashMessage(<span>{res.msg}</span>, "success");
+    // goBack();
+    // flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -135,7 +129,7 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
       </span>
     );
 
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   const buttonText = aboutSleepTemplateId ? "Update" : "Create";
@@ -196,4 +190,4 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
   );
 };
 
-export default AboutSleepTempaltesEdit;
+export default AboutSleepTemplatesEdit;

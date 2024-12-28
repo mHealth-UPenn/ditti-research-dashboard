@@ -12,12 +12,9 @@ import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
+import { Link } from "react-router-dom";
 
-const AboutSleepTemplates: React.FC<ViewProps> = ({
-  flashMessage,
-  goBack,
-  handleClick,
-}) => {
+const AboutSleepTemplates = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -89,22 +86,14 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
           contents: (
             <div className="flex w-full h-full">
               {canEdit &&
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="h-full flex-grow"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit", name],
-                      <AboutSleepTemplatesEdit
-                        aboutSleepTemplateId={id}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick} />
-                    )
-                  }>
-                    Edit
-                </Button>
+                <Link to={`/coordinator/admin/about-sleep-templates/edit?id=${id}`}>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="h-full flex-grow">
+                      Edit
+                  </Button>
+                </Link>
               }
               {canArchive &&
                 <Button
@@ -151,7 +140,7 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
   const handleSuccess = (res: ResponseBody) => {
     // show the loading screen
     setLoading(true);
-    flashMessage(<span>{res.msg}</span>, "success");
+    // flashMessage(<span>{res.msg}</span>, "success");
 
     // refresh the table's data
     makeRequest("/admin/about-sleep-template?app=1").then(
@@ -176,33 +165,17 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
       </span>
     );
 
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   // if the user has permission to create, show the create button
   const tableControl = canCreate ?
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Create"],
-          <AboutSleepTemplatesEdit
-            aboutSleepTemplateId={0}
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick} />
-        )
-      }>
-        Create +
-    </Button> :
+    <Link to={`/coordinator/admin/about-sleep-templates/create`}>
+      <Button variant="primary">Create +</Button>
+    </Link> :
     <React.Fragment />;
 
-  const navbar =
-    <Navbar
-      active="About Sleep Templates"
-      flashMessage={flashMessage}
-      goBack={goBack}
-      handleClick={handleClick} />;
+  const navbar = <Navbar active="About Sleep Templates" />;
 
   if (loading) {
     return (

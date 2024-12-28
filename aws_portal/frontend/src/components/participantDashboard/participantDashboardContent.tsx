@@ -3,7 +3,7 @@ import Card from '../cards/card';
 import CardContentRow from '../cards/cardContentRow';
 import Title from '../text/title';
 import Button from '../buttons/button';
-import Link from '../links/link';
+import Link from '../links/linkComponent';
 import { Link as RouterLink } from "react-router-dom";
 import { ParticipantWearableDataProvider } from '../../contexts/wearableDataContext';
 import WearableVisualization from '../visualizations/wearableVisualization';

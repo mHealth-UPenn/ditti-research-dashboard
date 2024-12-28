@@ -13,6 +13,7 @@ import FormSummaryTitle from "../text/formSummaryTitle";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { useSearchParams } from "react-router-dom";
 
 /**
  * The form's prefill
@@ -24,14 +25,12 @@ interface StudyPrefill {
   email: string;
 }
 
-/**
- * studyId: the database primary key, 0 if creating a new entry
- */
-interface StudiesEditProps extends ViewProps {
-  studyId: number;
-}
 
-const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage }) => {
+const StudiesEdit = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const studyId = id ? parseInt(id) : 0
+
   const [state, setState] = useState<StudyPrefill & { loading: boolean }>({
     name: "",
     acronym: "",
@@ -107,8 +106,8 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
-    flashMessage(<span>{res.msg}</span>, "success");
+    // goBack();
+    // flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -125,7 +124,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
       </span>
     );
 
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   const { name, acronym, dittiId, email, loading } = state;

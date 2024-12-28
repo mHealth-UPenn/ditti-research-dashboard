@@ -35,10 +35,7 @@ const Home: React.FC<ViewProps> = ({
       breadcrumbs: ["Admin Dashboard", "Accounts"],
       name: "Admin Dashboard",
       view: (
-        <Accounts
-          handleClick={handleClick}
-          goBack={goBack}
-          flashMessage={flashMessage} />
+        <Accounts />
       ),
     },
     {

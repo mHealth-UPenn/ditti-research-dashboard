@@ -13,6 +13,17 @@ import "./output.css";
 import { FullLoader } from "./components/loader";
 import PrivacyPolicy from "./pages/privacyPolicy";
 import TermsOfUse from "./pages/termsOfUse";
+import Accounts from "./components/adminDashboard/accounts";
+import AccountsEdit from "./components/adminDashboard/accountsEdit";
+import AboutSleepTemplates from "./components/adminDashboard/aboutSleepTemplates";
+import AboutSleepTemplatesEdit from "./components/adminDashboard/aboutSleepTemplatesEdit";
+import AccessGroups from "./components/adminDashboard/accessGroups";
+import AccessGroupsEdit from "./components/adminDashboard/accessGroupsEdit";
+import Roles from "./components/adminDashboard/roles";
+import RolesEdit from "./components/adminDashboard/rolesEdit";
+import Studies from "./components/adminDashboard/studies";
+import StudiesEdit from "./components/adminDashboard/studiesEdit";
+import AdminDashboard from "./components/adminDashboard/adminDashboard";
 
 /**
  * Root component wrapped with AuthProvider for authentication context.
@@ -53,6 +64,74 @@ const router = createBrowserRouter([
             </>
           </ProtectedRoute>
         ),
+        children: [
+          {
+            path: "admin",
+            element: <AdminDashboard />,
+            children: [
+              {
+                path: "about-sleep-templates",
+                element: <AboutSleepTemplates />,
+              },
+              {
+                path: "about-sleep-templates/create",
+                element: <AboutSleepTemplatesEdit />
+              },
+              {
+                path: "about-sleep-templates/edit",
+                element: <AboutSleepTemplatesEdit />
+              },
+              {
+                path: "access-groups",
+                element: <AccessGroups />,
+              },
+              {
+                path: "access-groups/create",
+                element: <AccessGroupsEdit />
+              },
+              {
+                path: "access-groups/edit",
+                element: <AccessGroupsEdit />
+              },
+              {
+                path: "accounts",
+                element: <Accounts />,
+              },
+              {
+                path: "accounts/create",
+                element: <AccountsEdit />
+              },
+              {
+                path: "accounts/edit",
+                element: <AccountsEdit />
+              },
+              {
+                path: "roles",
+                element: <Roles />,
+              },
+              {
+                path: "roles/create",
+                element: <RolesEdit />
+              },
+              {
+                path: "roles/edit",
+                element: <RolesEdit />
+              },
+              {
+                path: "studies",
+                element: <Studies />,
+              },
+              {
+                path: "studies/create",
+                element: <StudiesEdit />
+              },
+              {
+                path: "studies/edit",
+                element: <StudiesEdit />
+              },
+            ]
+          }
+        ]
       },
       {
         path: "login",

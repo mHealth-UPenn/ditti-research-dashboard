@@ -8,6 +8,7 @@ import { IFlashMessage } from "../interfaces";
 import FlashMessage, { FlashMessageVariant } from "./flashMessage/flashMessage";
 import DittiDataContext from "../contexts/dittiDataContext";
 import useDittiData from "../hooks/useDittiData";
+import { Outlet } from "react-router-dom";
 
 type Action =
   | { type: "INIT"; name: string; view: React.ReactElement }
@@ -249,16 +250,16 @@ const Dashboard: React.FC = () => {
           }
 
           {/* current view */}
-          <DittiDataContext.Provider value={{
+          {/* <DittiDataContext.Provider value={{
               dataLoading,
               studies,
               taps,
               audioTaps,
               audioFiles,
               refreshAudioFiles,
-            }}>
-              {view}
-          </DittiDataContext.Provider>
+            }}> */}
+          <Outlet />
+          {/* </DittiDataContext.Provider> */}
         </div>
       </div>
     </main>
