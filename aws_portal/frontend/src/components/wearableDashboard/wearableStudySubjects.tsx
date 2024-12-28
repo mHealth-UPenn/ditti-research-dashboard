@@ -27,6 +27,7 @@ export default function WearableStudySubjects({
   handleClick,
 }: WearableStudySubjectsProps) {
   const { studySubjects } = useCoordinatorStudySubjectContext();
+  console.log(studySubjects)
 
   // Get only study subjects with prefixes that equal the current study's prefix
   const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));

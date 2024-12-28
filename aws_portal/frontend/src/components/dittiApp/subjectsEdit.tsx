@@ -47,6 +47,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   const [tapPermission, setTapPermission] = useState(false);
   const [information, setInformation] = useState("");
   const [userPermissionId, setUserPermissionId] = useState("");
+  const [startTime, setStartTime] = useState("");
   const [expTime, setExpTime] = useState("");
   const [teamEmail, setTeamEmail] = useState("");
   const [createdAt, setCreatedAt] = useState("");
@@ -235,6 +236,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
       </FormView>
     );
   }
+  console.log(expTime)
 
   return (
     <FormView>
@@ -270,7 +272,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
         <FormRow>
           <FormField>
             <TextField
-              id="expiresOn"
+              id="startsOn"
               type="datetime-local"
               placeholder=""
               value={expTime.replace("Z", "")}
@@ -279,11 +281,14 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
               feedback="" />
           </FormField>
           <FormField>
-            <CheckField
-              id="tapping-access"
-              prefill={tapPermission}
-              label="Tapping Access"
-              onChange={setTapPermission} />
+            <TextField
+              id="expiresOn"
+              type="datetime-local"
+              placeholder=""
+              value={expTime.replace("Z", "")}
+              label="Expires On"
+              onKeyup={text => setExpTime(text + ":00.000Z")}
+              feedback="" />
           </FormField>
         </FormRow>
         <FormRow>
@@ -301,6 +306,13 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
                 callback={selectAboutSleepTemplate}
                 getDefault={getSelectedAboutSleepTemplate} />
             </div>
+          </FormField>
+          <FormField>
+            <CheckField
+              id="tapping-access"
+              prefill={tapPermission}
+              label="Tapping Access"
+              onChange={setTapPermission} />
           </FormField>
         </FormRow>
         <FormTitle className="mt-6">About Sleep Template Preview</FormTitle>

@@ -11,7 +11,7 @@ export default function WearableStudies({
 }: ViewProps) {
   return (
       <StudiesProvider app={3}>
-        <CoordinatorStudySubjectProvider>
+        <CoordinatorStudySubjectProvider app={3}>
           <WearableStudiesContent
             flashMessage={flashMessage}
             goBack={goBack}

@@ -91,7 +91,7 @@ export default function WearableStudiesContent({
     if (study) {
       // Set the view
       const view = (
-        <CoordinatorStudySubjectProvider>
+        <CoordinatorStudySubjectProvider app={3}>
           <WearableStudySummary
             flashMessage={flashMessage}
             handleClick={handleClick}

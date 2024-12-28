@@ -180,6 +180,16 @@ export interface UserDetails {
   createdAt: string;
 }
 
+
+/**
+ * Study subject data used for the SubjectsEdit view
+ * @property startTime - When the user's enrollment in the study begins
+ */
+export interface StudySubjectPrefill extends UserDetails {
+  startTime: string;
+}
+
+
 /**
  * User data as returned from the backend.
  */
@@ -355,7 +365,7 @@ export interface StudySubjectContextType {
  * @property studySubjectLoading - Whether data is being fetched from the database.
  */
 export interface CoordinatorStudySubjectContextType {
-  studySubjects: IStudySubject[];
+  studySubjects: IStudySubjectDetails[];
   studySubjectLoading: boolean;
 }
 
@@ -375,6 +385,12 @@ export interface IStudySubject {
   studies: StudyJoin[];
   apis: ApiJoin[];
 }
+
+
+/**
+ * A combination of participant data fetched from both the database and AWS.
+ */
+export interface IStudySubjectDetails extends IStudySubject, UserDetails {}
 
 
 export interface IFlashMessage {
