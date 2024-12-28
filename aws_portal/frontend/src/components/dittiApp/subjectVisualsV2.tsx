@@ -145,9 +145,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
       ["Edit"],
       <SubjectsEdit
         dittiId={user.userPermissionId}
-        studyId={studyDetails.id}
-        studyEmail={studyDetails.email}
-        studyPrefix={studyDetails.dittiId}
+        studyDetails={studyDetails}
         flashMessage={flashMessage}
         goBack={goBack}
         handleClick={handleClick}

@@ -3,6 +3,7 @@ import TextField from "../fields/textField";
 import {
   AboutSleepTemplate,
   ResponseBody,
+  Study,
   User,
   UserDetails,
   ViewProps
@@ -34,16 +35,12 @@ import sanitize from "sanitize-html";
  */
 interface SubjectsEditProps extends ViewProps {
   dittiId: string;
-  studyId: number;
-  studyPrefix: string;
-  studyEmail: string;
+  studyDetails: Study;
 }
 
 const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   dittiId,
-  studyId,
-  studyPrefix,
-  studyEmail,
+  studyDetails,
   goBack,
   flashMessage,
 }) => {
@@ -156,7 +153,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
     const id = dittiId;
     const body = {
       app: 2,  // Ditti Dashboard = 2
-      study: studyId,
+      study: studyDetails.id,
       ...(id ? { user_permission_id: id, edit: data } : { create: data })
     };
 
@@ -249,13 +246,13 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
               id="dittiId"
               type="text"
               placeholder=""
-              value={userPermissionId.replace(studyPrefix, "")}
+              value={userPermissionId.replace(studyDetails.dittiId, "")}
               label="Ditti ID"
-              onKeyup={text => setUserPermissionId(studyPrefix + text)}
+              onKeyup={text => setUserPermissionId(studyDetails.dittiId + text)}
               feedback="">
                 {/* superimpose the study prefix on the form field */}
                 <div className="flex items-center text-link h-full px-2 bg-extra-light border-r border-light">
-                  <i>{studyPrefix}</i>
+                  <i>{studyDetails.dittiId}</i>
                 </div>
             </TextField>
           </FormField>
@@ -264,7 +261,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
           <FormField>
             <TextField
               label="Team Email"
-              value={studyEmail}
+              value={studyDetails.email}
               disabled={true} />
           </FormField>
         </FormRow>
@@ -323,7 +320,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
             <br />
             Team email:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{studyEmail}
+            &nbsp;&nbsp;&nbsp;&nbsp;{studyDetails.email}
             <br />
             <br />
             Expires on:

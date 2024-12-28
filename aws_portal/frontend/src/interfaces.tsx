@@ -90,6 +90,8 @@ export interface Study {
   dittiId: string;
   email: string;
   role?: Role;
+  defaultExpiryDelta: number;
+  consentInformation: string;
 }
 
 /**

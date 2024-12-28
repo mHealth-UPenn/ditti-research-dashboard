@@ -149,9 +149,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
         dittiId=""
         goBack={goBack}
         handleClick={handleClick}
-        studyId={studyId}
-        studyPrefix={dittiId}
-        studyEmail={email}
+        studyDetails={studyDetails}
       />
     );
 

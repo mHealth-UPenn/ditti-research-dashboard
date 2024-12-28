@@ -103,9 +103,7 @@ export default function WearableStudySummary({
         dittiId=""
         goBack={goBack}
         handleClick={handleClick}
-        studyId={studyId}
-        studyPrefix={dittiId}
-        studyEmail={email}
+        studyDetails={studyDetails}
       />
     );
 

@@ -25,7 +25,12 @@ interface SubjectsProps extends ViewProps {
   studyDetails: Study;
 }
 
-const Subjects: React.FC<SubjectsProps> = (props) => {
+const Subjects = ({
+  studyDetails,
+  flashMessage,
+  goBack,
+  handleClick,
+}: SubjectsProps) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
@@ -33,7 +38,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
 
   const { users } = useDittiDataContext();
   const filteredUsers = users.filter(
-    u => u.userPermissionId.startsWith(props.studyDetails.dittiId)
+    u => u.userPermissionId.startsWith(studyDetails.dittiId)
   );
 
   const columns: Column[] = [
@@ -70,7 +75,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
   ];
 
   useEffect(() => {
-    const { dittiId, id } = props.studyDetails;
+    const { dittiId, id } = studyDetails;
 
     // get whether the user can enroll subjects
     const promises: Promise<any>[] = [];
@@ -96,10 +101,9 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
 
     // when all promises complete, hide the loader
     Promise.all(promises).then(() => setLoading(false));
-  }, [props.studyDetails]);
+  }, [studyDetails]);
 
-  const { flashMessage, goBack, handleClick } = props;
-  const { id, dittiId, email } = props.studyDetails;
+  const { id, dittiId, email } = studyDetails;
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
@@ -123,7 +127,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
                       flashMessage={flashMessage}
                       goBack={goBack}
                       handleClick={handleClick}
-                      studyDetails={props.studyDetails}
+                      studyDetails={studyDetails}
                       user={user} />
                   )
                 }>
@@ -175,9 +179,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
                   ["Edit", user.userPermissionId],
                   <SubjectsEdit
                     dittiId={user.userPermissionId}
-                    studyId={id}
-                    studyEmail={email}
-                    studyPrefix={dittiId}
+                    studyDetails={studyDetails}
                     flashMessage={flashMessage}
                     goBack={goBack}
                     handleClick={handleClick} />
@@ -204,9 +206,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
           ["Create"],
           <SubjectsEdit
             dittiId=""
-            studyId={id}
-            studyEmail={email}
-            studyPrefix={dittiId}
+            studyDetails={studyDetails}
             flashMessage={flashMessage}
             goBack={goBack}
             handleClick={handleClick} />
@@ -231,7 +231,7 @@ const Subjects: React.FC<SubjectsProps> = (props) => {
     <ListView>
       <ListContent>
         <div className="flex flex-col mb-8">
-          <Title>{props.studyDetails.name}</Title>
+          <Title>{studyDetails.name}</Title>
           <Subtitle>All subjects</Subtitle>
         </div>
         <Table
