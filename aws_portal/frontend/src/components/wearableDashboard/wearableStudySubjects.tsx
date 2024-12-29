@@ -7,6 +7,7 @@ import LinkComponent from "../links/linkComponent";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import WearableVisuals from "./wearableVisuals";
 import { Link } from "react-router-dom";
+import { SmallLoader } from "../loader";
 
 
 /**
@@ -24,8 +25,7 @@ export default function WearableStudySubjects({
   studyDetails,
   canViewWearableData,
 }: WearableStudySubjectsProps) {
-  const { studySubjects } = useCoordinatorStudySubjectContext();
-  console.log(studySubjects)
+  const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
 
   // Get only study subjects with prefixes that equal the current study's prefix
   const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));
@@ -96,6 +96,10 @@ export default function WearableStudySubjects({
   // const activeUsers = filteredUsers.filter(
   //   (u: UserDetails) => new Date() < new Date(u.expTime)
   // );
+
+  if (studySubjectLoading) {
+    return <SmallLoader />;
+  }
 
   return (
     <>

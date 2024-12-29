@@ -25,7 +25,7 @@ const StudiesView = () => {
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState(true);
   const [canViewTaps, setCanViewTaps] = useState<Set<number>>(new Set());
 
-  const { taps, audioFiles } = useDittiDataContext();
+  const { dataLoading, taps, audioFiles } = useDittiDataContext();
   const { studiesLoading, studies } = useStudiesContext();
 
   useEffect(() => {
@@ -110,7 +110,7 @@ const StudiesView = () => {
   //   />
   // );
 
-  if (loading || studiesLoading) {
+  if (loading || studiesLoading || dataLoading) {
     return (
       <ViewContainer>
         <Card width="md">

@@ -64,7 +64,7 @@ export default function WearableVisualsContent({
 
   const { isSyncing, syncData } = useWearableData();
   
-  const { getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
   const { studiesLoading, getStudyById } = useStudiesContext();
 
   const study = getStudyById(studyId);
@@ -128,7 +128,7 @@ export default function WearableVisualsContent({
   const { width: windowWidth } = useWindowDimensions();
   const md = windowWidth >= 768;
 
-  if (loading || studiesLoading) {
+  if (loading || studiesLoading || studySubjectLoading) {
     return (
       <ViewContainer>
         <Card width="lg">

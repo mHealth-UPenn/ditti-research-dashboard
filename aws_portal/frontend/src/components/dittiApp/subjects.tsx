@@ -32,7 +32,7 @@ const Subjects = () => {
   const [loading, setLoading] = useState<boolean>(true);
   
   const { studiesLoading, getStudyById } = useStudiesContext();
-  const { studySubjects } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
 
   const study = getStudyById(studyId);
   const filteredStudySubjects = studySubjects.filter(
@@ -189,7 +189,7 @@ const Subjects = () => {
       </Button>
     </Link>
 
-if (loading || studiesLoading) {
+if (loading || studiesLoading || studySubjectLoading) {
   return (
     <ViewContainer>
       <Card>

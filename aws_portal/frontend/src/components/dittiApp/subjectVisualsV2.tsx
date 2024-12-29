@@ -34,10 +34,9 @@ const SubjectVisualsV2 = () => {
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const { taps, audioTaps } = useDittiDataContext();
-  
+  const { dataLoading, taps, audioTaps } = useDittiDataContext();
   const { studiesLoading, getStudyById } = useStudiesContext();
-  const { getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
 
   useEffect(() => {
     getAccess(2, "Edit", "Participants", studyId)
@@ -151,7 +150,7 @@ const SubjectVisualsV2 = () => {
   //     />
   //   );
 
-  if (loading || studiesLoading) {
+  if (loading || studiesLoading || dataLoading || studySubjectLoading) {
     return (
       <ViewContainer>
         <Card>

@@ -9,6 +9,7 @@ import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
 import { getStartAndExpiryTimes } from "../../utils";
+import { SmallLoader } from "../loader";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -24,12 +25,12 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
   study,
   canViewTaps,
 }) => {
-  const { taps, audioTaps } = useDittiDataContext();
-  const { studySubjects } = useCoordinatorStudySubjectContext();
+  const { dataLoading, taps, audioTaps } = useDittiDataContext();
+  const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
+
   const filteredStudySubjects = studySubjects.filter(ss => ss.dittiId.startsWith(study.dittiId));
 
   const summaries: React.ReactElement[] = [];
-
   filteredStudySubjects.forEach((studySubject) => {
     let summaryTaps: React.ReactElement[];
     let totalTaps = 0;
@@ -156,6 +157,10 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
       </CardContentRow>
     );
   });
+
+  if (dataLoading || studySubjectLoading) {
+    return <SmallLoader />
+  }
 
   return (
     <>

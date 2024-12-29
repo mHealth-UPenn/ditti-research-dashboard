@@ -50,11 +50,12 @@ const AudioFileUpload = () => {
 
   const fileInputRef = createRef<HTMLInputElement>();
 
-  const { audioFiles } = useDittiDataContext();
+  const { dataLoading, audioFiles } = useDittiDataContext();
+  const { studiesLoading, studies } = useStudiesContext();
+
   const existingFiles = new Set();
   audioFiles.forEach(af => existingFiles.add(af.fileName))
 
-  const { studiesLoading, studies } = useStudiesContext();
 
   /**
    * Get a set of presigned URLs for uploading audio files to S3.
@@ -342,7 +343,7 @@ const AudioFileUpload = () => {
     uploadProgress.reduce((a, b) => a + b) / uploadProgress.length
   ) : 0;
 
-  if (studiesLoading) {
+  if (studiesLoading || dataLoading) {
     return (
       <FormView>
         <Form>

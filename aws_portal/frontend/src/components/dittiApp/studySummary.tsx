@@ -40,7 +40,7 @@ const StudySummary = () => {
   const [loading, setLoading] = useState(true);
 
   const { studiesLoading, getStudyById } = useStudiesContext();
-  const { taps, audioTaps } = useDittiDataContext();
+  const { dataLoading, taps, audioTaps } = useDittiDataContext();
 
   const study = getStudyById(studyId);
 
@@ -154,7 +154,7 @@ const StudySummary = () => {
   //     />
   //   );
 
-  if (loading || studiesLoading) {
+  if (loading || studiesLoading || dataLoading) {
     return (
       <ViewContainer>
         <Card width="md">

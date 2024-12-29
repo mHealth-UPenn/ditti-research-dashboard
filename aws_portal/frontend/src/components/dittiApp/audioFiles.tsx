@@ -17,7 +17,7 @@ const AudioFiles = () => {
   const [canDeleteAudioFiles, setCanDeleteAudioFiles] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const { audioFiles, refreshAudioFiles } = useDittiDataContext();
+  const { dataLoading, audioFiles, refreshAudioFiles } = useDittiDataContext();
 
   const columns: Column[] = [
     {
@@ -205,7 +205,7 @@ const AudioFiles = () => {
       </Button>
     </Link>
 
-  if (loading) {
+  if (loading || dataLoading) {
     return (
       <ListView>
         <ListContent />
