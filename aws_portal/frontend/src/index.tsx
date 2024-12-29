@@ -79,13 +79,17 @@ const router = createBrowserRouter([
         ),
         children: [
           {
-            path: "apps",
+            path: "",
             element: <Apps />,
           },
           {
             path: "admin",
             element: <AdminDashboard />,
             children: [
+              {
+                path: "",
+                element: <Accounts />,
+              },
               {
                 path: "about-sleep-templates",
                 element: <AboutSleepTemplates />,
@@ -153,16 +157,16 @@ const router = createBrowserRouter([
             element: <DittiAppDashboard />,
             children: [
               {
+                path: "",
+                element: <StudiesView />,
+              },
+              {
                 path: "audio",
                 element: <AudioFiles />
               },
               {
                 path: "audio/upload",
                 element: <AudioFileUpload />
-              },
-              {
-                path: "studies",
-                element: <StudiesView />,
               },
               {
                 path: "study",
@@ -191,7 +195,7 @@ const router = createBrowserRouter([
             element: <WearableDashboard />,
             children: [
               {
-                path: "studies",
+                path: "",
                 element: <WearableStudies />,
               },
               {

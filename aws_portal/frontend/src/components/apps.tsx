@@ -20,17 +20,17 @@ const Apps = () => {
     {
       breadcrumbs: ["Ditti App"],
       name: "Ditti App Dashboard",
-      link: "/coordinator/ditti/studies",
+      link: "/coordinator/ditti",
     },
     {
       breadcrumbs: ["Wearable Dashboard"],
       name: "Wearable Dashboard",
-      link: "/coordinator/wearable/studies",
+      link: "/coordinator/wearable",
     },
     {
       breadcrumbs: ["Admin Dashboard", "Accounts"],
       name: "Admin Dashboard",
-      link: "/coordinator/admin/accounts",
+      link: "/coordinator/admin",
     },
   ]);
 
