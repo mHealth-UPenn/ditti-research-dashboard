@@ -18,6 +18,7 @@ import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 import { Link, useSearchParams } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
+import { useNavbarContext } from "../../contexts/navbarContext";
 
 /**
  * Information for study contacts
@@ -30,45 +31,54 @@ interface StudyContact {
 }
 
 const StudySummary = () => {
-  const [searchParams] = useSearchParams();
-  const sid = searchParams.get("sid");
-  const studyId = sid ? parseInt(sid) : 0;
+  // const [searchParams] = useSearchParams();
+  // const sid = searchParams.get("sid");
+  // const study.id = sid ? parseInt(sid) : 0;
 
   const [canCreate, setCanCreate] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { studiesLoading, getStudyById } = useStudiesContext();
+  const { studiesLoading, study } = useStudiesContext();
   const { dataLoading, taps, audioTaps } = useDittiDataContext();
+  // const { addBreadcrumb } = useNavbarContext();
 
-  const study = getStudyById(studyId);
+  // const study = getStudyById(study.id);
+
+  // useEffect(() => {
+  //   if (study) {
+  //     addBreadcrumb({ name: study.acronym, link: `/coordinator/ditti/study?sid=${study.id}`});
+  //   }
+  // }, [study]);
 
   useEffect(() => {
-    // check whether the user can enroll new subjects
-    const promises: Promise<any>[] = [];
-    promises.push(
-      getAccess(2, "Create", "Participants", studyId)
-        .then(() => setCanCreate(true))
-        .catch(() => setCanCreate(false))
-    );
+    if (study) {
+      // check whether the user can enroll new subjects
+      const promises: Promise<any>[] = [];
+      promises.push(
+        getAccess(2, "Create", "Participants", study.id)
+          .then(() => setCanCreate(true))
+          .catch(() => setCanCreate(false))
+      );
 
-    promises.push(
-      getAccess(2, "View", "Taps", studyId)
-        .then(() => setCanViewTaps(true))
-        .catch(() => setCanViewTaps(false))
-    );
+      promises.push(
+        getAccess(2, "View", "Taps", study.id)
+          .then(() => setCanViewTaps(true))
+          .catch(() => setCanViewTaps(false))
+      );
 
-    // get other accounts that have access to this study
-    promises.push(
-      makeRequest(
-        "/db/get-study-contacts?app=2&study=" + studyId
-      ).then((contacts: StudyContact[]) => setStudyContacts(contacts))
-    );
+      // get other accounts that have access to this study
+      promises.push(
+        makeRequest(
+          "/db/get-study-contacts?app=2&study=" + study.id
+        ).then((contacts: StudyContact[]) => setStudyContacts(contacts))
+      );
 
-    // when all promises resolve, hide the loader
-    Promise.all(promises).then(() => setLoading(false));
-  }, [studyId]);
+      // when all promises resolve, hide the loader
+      Promise.all(promises).then(() => setLoading(false));
+    }
+  }, [study]);
 
   /**
    * Download all of the study's data in excel format
@@ -190,7 +200,7 @@ const StudySummary = () => {
           <Title>Active Subjects</Title>
           <div className="flex">
             {(canCreate || APP_ENV === "demo") &&
-              <Link to={`/coordinator/ditti/participants/enroll?sid=${studyId}`}>
+              <Link to={`/coordinator/ditti/participants/enroll?sid=${study?.id}`}>
                 <Button
                   className="mr-2"
                   rounded={true}>

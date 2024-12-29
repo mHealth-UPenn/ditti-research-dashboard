@@ -48,13 +48,13 @@ function useWindowDimensions() {
 
 
 interface IWearableVisualsContentProps {
-  studyId: number;
+  // studyId: number;
   dittiId: string;
 }
 
 
 export default function WearableVisualsContent({
-  studyId,
+  // studyId,
   dittiId,
 }: IWearableVisualsContentProps) {
   const [canEdit, setCanEdit] = useState(false);
@@ -65,9 +65,9 @@ export default function WearableVisualsContent({
   const { isSyncing, syncData } = useWearableData();
   
   const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
-  const { studiesLoading, getStudyById } = useStudiesContext();
+  const { studiesLoading, study } = useStudiesContext();
 
-  const study = getStudyById(studyId);
+  // const study = getStudyById(studyId);
   const studySubject = getStudySubjectByDittiId(dittiId);
 
   // Use the last `expiresOn` as the date of last data collection
@@ -86,18 +86,20 @@ export default function WearableVisualsContent({
 
   // Get user access permission on load
   useEffect(() => {
-    const promises: Promise<unknown>[] = [];
-    promises.push(getAccess(3, "Edit", "Participants", studyId)
-      .then(() => setCanEdit(true)));
-    promises.push(getAccess(3, "Invoke", "Data Retrieval Task", studyId)
-      .then(() => setCanInvoke(true)));
-    promises.push(getAccess(3, "View", "Taps", studyId)
-      .then(() => setCanViewTaps(true)));
+    if (study) {
+      const promises: Promise<unknown>[] = [];
+      promises.push(getAccess(3, "Edit", "Participants", study.id)
+        .then(() => setCanEdit(true)));
+      promises.push(getAccess(3, "Invoke", "Data Retrieval Task", study.id)
+        .then(() => setCanInvoke(true)));
+      promises.push(getAccess(3, "View", "Taps", study.id)
+        .then(() => setCanViewTaps(true)));
 
-    Promise.all(promises)
-      .then(() => setLoading(false))
-      .catch(() => setLoading(false));
-  }, []);
+      Promise.all(promises)
+        .then(() => setLoading(false))
+        .catch(() => setLoading(false));
+    }
+  }, [study]);
 
   // Download the current participant's data in Excel format.
   const downloadExcel = async (): Promise<void> => {
@@ -162,7 +164,7 @@ export default function WearableVisualsContent({
                     Download Excel
                 </Button>
                 {/* if the user can edit, show the edit button */}
-                <Link to={`/coordinator/wearable/participants/edit?dittiId=${studySubject?.dittiId}&sid=${studyId}`}>
+                <Link to={`/coordinator/wearable/participants/edit?dittiId=${studySubject?.dittiId}&sid=${study?.id}`}>
                   <Button
                     variant="secondary"
                     disabled={!(canEdit || APP_ENV === "demo")}

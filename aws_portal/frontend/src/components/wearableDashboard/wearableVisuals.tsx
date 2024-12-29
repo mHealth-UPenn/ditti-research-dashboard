@@ -32,7 +32,7 @@ export default function WearableVisuals() {
             audioFiles,
             refreshAudioFiles,
           }}>
-            <WearableVisualsContent studyId={studyId} dittiId={dittiId} />
+            <WearableVisualsContent dittiId={dittiId} />
         </DittiDataContext.Provider>
     </CoordinatorWearableDataProvider>
   );

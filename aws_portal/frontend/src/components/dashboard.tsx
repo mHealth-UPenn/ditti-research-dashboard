@@ -8,6 +8,7 @@ import FlashMessage, { FlashMessageVariant } from "./flashMessage/flashMessage";
 import DittiDataContext from "../contexts/dittiDataContext";
 import useDittiData from "../hooks/useDittiData";
 import { Outlet } from "react-router-dom";
+import NavbarContextProvider from "../contexts/navbarContext";
 
 // type Action =
 //   | { type: "INIT"; name: string; view: React.ReactElement }
@@ -230,13 +231,8 @@ const Dashboard: React.FC = () => {
 
         {/* main dashboard */}
         <div className="flex flex-col flex-grow max-w-[calc(100vw-16rem) overflow-hidden relative">
-
-          {/* navigation bar */}
-          {/* <Navbar
-            breadcrumbs={breadcrumbs}
-            handleBack={goBack}
-            handleClick={setView}
-            hasHistory={history.length > 0} /> */}
+          <NavbarContextProvider>
+            <Navbar />
 
           {/* flash messages */}
           {/* {!!flashMessages.length &&
@@ -254,7 +250,8 @@ const Dashboard: React.FC = () => {
               audioFiles,
               refreshAudioFiles,
             }}> */}
-          <Outlet />
+            <Outlet />
+          </NavbarContextProvider>
           {/* </DittiDataContext.Provider> */}
         </div>
       </div>

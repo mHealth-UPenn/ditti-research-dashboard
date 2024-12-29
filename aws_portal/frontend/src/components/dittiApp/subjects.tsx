@@ -31,10 +31,10 @@ const Subjects = () => {
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   
-  const { studiesLoading, getStudyById } = useStudiesContext();
+  const { studiesLoading, study } = useStudiesContext();
   const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
 
-  const study = getStudyById(studyId);
+  // const study = getStudyById(studyId);
   const filteredStudySubjects = studySubjects.filter(
     ss => ss.dittiId.startsWith(study?.dittiId || "undefined")  // TODO: use regex instead
   );

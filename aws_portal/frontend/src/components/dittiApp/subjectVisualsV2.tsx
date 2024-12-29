@@ -35,7 +35,7 @@ const SubjectVisualsV2 = () => {
   const [loading, setLoading] = useState(true);
 
   const { dataLoading, taps, audioTaps } = useDittiDataContext();
-  const { studiesLoading, getStudyById } = useStudiesContext();
+  const { studiesLoading, study } = useStudiesContext();
   const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
 
   useEffect(() => {
@@ -54,7 +54,7 @@ const SubjectVisualsV2 = () => {
   const filteredTaps = taps.filter((t) => t.dittiId === dittiId);
   const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === dittiId);
 
-  const study = getStudyById(studyId);
+  // const study = getStudyById(studyId);
   const timestamps = useMemo(
     () => filteredTaps.map(t => t.time.getTime()), [filteredTaps]
   );

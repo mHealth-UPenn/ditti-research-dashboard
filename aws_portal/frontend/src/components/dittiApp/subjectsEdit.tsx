@@ -49,10 +49,10 @@ const SubjectsEdit = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const previewRef = createRef<HTMLDivElement>();
   
-  const { studiesLoading, getStudyById } = useStudiesContext();
+  const { studiesLoading, study } = useStudiesContext();
   const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
 
-  const study = getStudyById(studyId);
+  // const study = getStudyById(studyId);
   const studySubject = getStudySubjectByDittiId(dittiId);
 
   useEffect(() => {

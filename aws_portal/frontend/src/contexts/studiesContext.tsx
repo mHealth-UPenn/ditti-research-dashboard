@@ -4,6 +4,8 @@ import { makeRequest } from "../utils";
 import { StudiesContextType, Study } from "../interfaces";
 import { APP_ENV } from "../environment";
 import DataFactory from "../dataFactory";
+import { useNavbarContext } from "./navbarContext";
+import { useSearchParams } from "react-router-dom";
 
 export const StudiesContext = createContext<StudiesContextType | undefined>(undefined);
 
@@ -17,8 +19,14 @@ export default function StudiesProvider({
   app,
   children
 }: PropsWithChildren<IStudiesProviderProps>) {
+  const [searchParams] = useSearchParams();
+  const sid = searchParams.get("sid");
+  const studyId = sid ? parseInt(sid) : 0;
+
   const [studies, setStudies] = useState<Study[]>([]);
+  const [study, setStudy] = useState<Study | null>(null);
   const [studiesLoading, setStudiesLoading] = useState(true);
+  const { setStudyCrumb } = useNavbarContext();
 
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
@@ -46,24 +54,25 @@ export default function StudiesProvider({
 
   // Fetch studies on load
   useEffect(() => {
-    const promises: Promise<any>[] = [];
-
     if (APP_ENV === "production" || APP_ENV === "development") {
-      promises.push(getStudiesAsync().then(setStudies));
+      getStudiesAsync().then(studies => {
+        setStudies(studies)
+        const study = studies.find(s => s.id === studyId);
+        if (study) {
+          setStudy(study);
+          setStudyCrumb({ name: study.acronym, link: `/coordinator/ditti/study?sid=${study.id}` });
+        }
+        setStudiesLoading(false)
+      });
     } else if (APP_ENV === "demo" && dataFactory) {
       setStudies(dataFactory.studies);
+      setStudiesLoading(false);
     }
-
-    Promise.all(promises).then(() => setStudiesLoading(false));
-  }, []);
-
-  const getStudyById = (studyId: number): Study | undefined => {
-    return studies.find(s => s.id === studyId);
-  }
+  }, [studyId]);
 
   return (
     <StudiesContext.Provider
-      value={{ studies, studiesLoading, getStudyById }}>
+      value={{ studies, studiesLoading, study }}>
         {children}
     </StudiesContext.Provider>
   );

@@ -351,7 +351,8 @@ export interface AuthContextType {
 export interface StudiesContextType {
   studies: Study[];
   studiesLoading: boolean;
-  getStudyById: (studyId: number) => Study | undefined;
+  // getStudyById: (studyId: number) => Study | undefined;
+  study: Study | null;
 }
 
 
@@ -541,4 +542,16 @@ export interface IDataProcessingTask {
   completedOn: string;
   logFile: string | null;
   errorCode: string | null;
+}
+
+
+export interface IBreadcrumb {
+  name: string;
+  link: string | null;
+}
+
+
+export interface NavbarContextType {
+  breadcrumbs: IBreadcrumb[];
+  setStudyCrumb: (studyCrumb: IBreadcrumb) => void;
 }
