@@ -37,6 +37,8 @@ import StudiesView from "./components/dittiApp/studiesView";
 import Apps from "./components/apps";
 import AudioFiles from "./components/dittiApp/audioFiles";
 import AudioFileUpload from "./components/dittiApp/audioFileUpload";
+import WearableSubjects from "./components/wearableDashboard/wearableSubjects";
+import WearableSubjectsEdit from "./components/wearableDashboard/wearableSubjectsEdit";
 
 /**
  * Root component wrapped with AuthProvider for authentication context.
@@ -345,14 +347,16 @@ const router = createBrowserRouter([
               },
               {
                 path: "participants",
-                element: <Subjects />,
+                element: <WearableSubjects />,
                 handle: {
-                  breadcrumbs: [{ name: "Participants", link: "/coordinator/wearable/participants" }],
+                  breadcrumbs: [
+                    { name: "<Study>", link: null },
+                    { name: "Participants", link: "/coordinator/wearable/participants" }],
                 },
               },
               {
                 path: "participants/enroll",
-                element: <SubjectsEdit />,
+                element: <WearableSubjectsEdit />,
                 handle: {
                   breadcrumbs: [
                     { name: "<Study>", link: null },

@@ -4,8 +4,7 @@ import Table from "../table/table";
 import { getAccess } from "../../utils";
 import { IStudySubjectDetails, Study, UserDetails, ViewProps } from "../../interfaces";
 import { SmallLoader } from "../loader";
-import SubjectsEdit from "./subjectsEdit";
-import SubjectVisuals from "./subjectVisualsV2";
+import SubjectsEdit from "./wearableSubjectsEdit";
 import { APP_ENV } from "../../environment";
 import Button from "../buttons/button";
 import ViewContainer from "../containers/viewContainer";
@@ -22,9 +21,9 @@ import { useStudiesContext } from "../../contexts/studiesContext";
 import SubjectsContent from "../subjects/subjectsContent";
 
 
-const Subjects = () => {
-  return <SubjectsContent app={"ditti"} />;
+const WearableSubjects = () => {
+  return <SubjectsContent app={"wearable"} />;
 };
 
 
-export default Subjects;
+export default WearableSubjects;

@@ -34,9 +34,9 @@ import { useStudiesContext } from "../../contexts/studiesContext";
 import SubjectsEditContent from "../subjects/subjectsEditContent";
 
 
-const SubjectsEdit = () => {
-  return <SubjectsEditContent app={"ditti"} />
+const WearableSubjectsEdit = () => {
+  return <SubjectsEditContent app={"wearable"} />
 };
 
 
-export default SubjectsEdit;
+export default WearableSubjectsEdit;
