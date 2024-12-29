@@ -9,7 +9,6 @@ import { differenceInMilliseconds } from "date-fns";
 // TODO: extend to customize default values when needed in future vizualizations
 const useDittiData = () => {
   const [dataLoading, setDataLoading] = useState(true);
-  const [studies, setStudies] = useState<Study[]>([]);
   const [taps, setTaps] = useState<TapDetails[]>([]);
   const [audioTaps, setAudioTaps] = useState<AudioTapDetails[]>([]);
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
@@ -36,12 +35,6 @@ const useDittiData = () => {
           setAudioFiles(dataFactory.audioFiles);
         }
       }));
-    }
-
-    if (APP_ENV === "production" || APP_ENV === "development") {
-      promises.push(getStudiesAsync().then(setStudies));
-    } else if (APP_ENV === "demo" && dataFactory) {
-      setStudies(dataFactory.studies);
     }
 
     Promise.all(promises).then(() => setDataLoading(false));
@@ -142,7 +135,6 @@ const useDittiData = () => {
 
   return {
     dataLoading,
-    studies,
     taps,
     audioTaps,
     audioFiles,

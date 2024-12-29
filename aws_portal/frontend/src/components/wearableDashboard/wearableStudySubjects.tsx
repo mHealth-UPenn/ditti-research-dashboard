@@ -3,9 +3,10 @@ import { IStudySubject, Study, ViewProps } from "../../interfaces";
 import { differenceInDays } from "date-fns";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
-import Link from "../links/linkComponent";
+import LinkComponent from "../links/linkComponent";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import WearableVisuals from "./wearableVisuals";
+import { Link } from "react-router-dom";
 
 
 /**
@@ -13,7 +14,7 @@ import WearableVisuals from "./wearableVisuals";
  * @property studyDetails: The details of study to list subjects for.
  * @property canViewWearableData: Whether the current user can view wearable data for the current study.
  */
-interface WearableStudySubjectsProps extends ViewProps {
+interface WearableStudySubjectsProps {
   studyDetails: Study;
   canViewWearableData: boolean;
 }
@@ -22,9 +23,6 @@ interface WearableStudySubjectsProps extends ViewProps {
 export default function WearableStudySubjects({
   studyDetails,
   canViewWearableData,
-  flashMessage,
-  goBack,
-  handleClick,
 }: WearableStudySubjectsProps) {
   const { studySubjects } = useCoordinatorStudySubjectContext();
   console.log(studySubjects)
@@ -37,18 +35,18 @@ export default function WearableStudySubjects({
     const endDate = new Date(Math.max(...subject.studies.map(s => new Date(s.expiresOn).getTime())));
     const expiresOn = differenceInDays(endDate, new Date());
 
-    const handleClickSubject = () =>
-      handleClick(
-        [subject.dittiId],
-        // TODO: Revise the current nav architecture so that navigating to new views can still access context
-        // The current nav architecture still relies on prop drilling for some views like this one
-        <WearableVisuals
-          flashMessage={flashMessage}
-          goBack={goBack}
-          handleClick={handleClick}
-          subject={subject}
-          studyDetails={studyDetails} />
-      );
+    // const handleClickSubject = () =>
+    //   handleClick(
+    //     [subject.dittiId],
+    //     // TODO: Revise the current nav architecture so that navigating to new views can still access context
+    //     // The current nav architecture still relies on prop drilling for some views like this one
+    //     <WearableVisuals
+    //       flashMessage={flashMessage}
+    //       goBack={goBack}
+    //       handleClick={handleClick}
+    //       subject={subject}
+    //       studyDetails={studyDetails} />
+    //   );
 
     return (
       <CardContentRow
@@ -62,8 +60,10 @@ export default function WearableStudySubjects({
 
               {/* Link to the subject's visualization */}
               {canViewWearableData ?
-                <Link onClick={handleClickSubject}>
-                  {subject.dittiId}
+                <Link to={`/coordinator/wearable/participants/view?dittiId=${subject.dittiId}`}>
+                  <LinkComponent>
+                    {subject.dittiId}
+                  </LinkComponent>
                 </Link> :
                 <span>{subject.dittiId}</span>
               }

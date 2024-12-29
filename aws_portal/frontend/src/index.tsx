@@ -24,6 +24,17 @@ import RolesEdit from "./components/adminDashboard/rolesEdit";
 import Studies from "./components/adminDashboard/studies";
 import StudiesEdit from "./components/adminDashboard/studiesEdit";
 import AdminDashboard from "./components/adminDashboard/adminDashboard";
+import DittiAppDashboard from "./components/dittiApp/dittiAppDashboard";
+import StudySummary from "./components/dittiApp/studySummary";
+import Subjects from "./components/dittiApp/subjects";
+import SubjectsEdit from "./components/dittiApp/subjectsEdit";
+import SubjectVisualsV2 from "./components/dittiApp/subjectVisualsV2";
+import WearableDashboard from "./components/wearableDashboard/wearableDashboard";
+import WearableStudies from "./components/wearableDashboard/wearableStudies";
+import WearableStudySummary from "./components/wearableDashboard/wearableStudySummary";
+import WearableVisuals from "./components/wearableDashboard/wearableVisuals";
+import StudiesView from "./components/dittiApp/studiesView";
+import Apps from "./components/apps";
 
 /**
  * Root component wrapped with AuthProvider for authentication context.
@@ -65,6 +76,10 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [
+          {
+            path: "apps",
+            element: <Apps />,
+          },
           {
             path: "admin",
             element: <AdminDashboard />,
@@ -128,6 +143,66 @@ const router = createBrowserRouter([
               {
                 path: "studies/edit",
                 element: <StudiesEdit />
+              },
+            ]
+          },
+          {
+            path: "ditti",
+            element: <DittiAppDashboard />,
+            children: [
+              {
+                path: "studies",
+                element: <StudiesView />,
+              },
+              {
+                path: "study",
+                element: <StudySummary />,
+              },
+              {
+                path: "participants",
+                element: <Subjects />,
+              },
+              {
+                path: "participants/enroll",
+                element: <SubjectsEdit />,
+              },
+              {
+                path: "participants/edit",
+                element: <SubjectsEdit />,
+              },
+              {
+                path: "participants/view",
+                element: <SubjectVisualsV2 />,
+              },
+            ]
+          },
+          {
+            path: "wearables",
+            element: <WearableDashboard />,
+            children: [
+              {
+                path: "studies",
+                element: <WearableStudies />,
+              },
+              {
+                path: "study",
+                element: <WearableStudySummary />,
+              },
+              {
+                path: "participants",
+                element: <Subjects />,
+              },
+              {
+                path: "participants/enroll",
+                element: <SubjectsEdit />,
+              },
+              {
+                path: "participants/edit",
+                element: <SubjectsEdit />,
+              },
+              {
+                path: "participants/view",
+                element: <WearableVisuals />,
               },
             ]
           }

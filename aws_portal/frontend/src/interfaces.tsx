@@ -351,6 +351,7 @@ export interface AuthContextType {
 export interface StudiesContextType {
   studies: Study[];
   studiesLoading: boolean;
+  getStudyById: (studyId: number) => Study | undefined;
 }
 
 

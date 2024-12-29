@@ -11,7 +11,7 @@ import { useAuth } from "../hooks/useAuth";
  * accountDetails: the current user's data
  * hideMenu: a function to hide the user menu
  */
-interface AccountMenuProps extends ViewProps {
+interface AccountMenuProps {
   prefill: AccountDetails;
   accountMenuRef: RefObject<HTMLDivElement>;
   hideMenu: () => void;
@@ -21,7 +21,6 @@ const AccountMenu = ({
   prefill,
   accountMenuRef,
   hideMenu,
-  flashMessage,
 }: AccountMenuProps) => {
   const [email, setEmail] = useState(prefill.email);
   const [firstName, setFirstName] = useState(prefill.firstName);
@@ -70,7 +69,7 @@ const AccountMenu = ({
    * @param res - The response from the login endpoint
    */
   const handleSuccess = (res: ResponseBody) => {
-    flashMessage(<span>{res.msg}</span>, "success");
+    // flashMessage(<span>{res.msg}</span>, "success");
     setEdit(false);
     setEditPassword(false);
   }
@@ -89,7 +88,7 @@ const AccountMenu = ({
       </span>
     );
 
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
     setEdit(false);
     setEditPassword(false);
   }

@@ -4,12 +4,12 @@ import Card from "../cards/card";
 import { SmallLoader } from "../loader";
 import CoordinatorStudySubjectProvider from "../../contexts/coordinatorStudySubjectContext";
 import { Outlet } from "react-router-dom";
+import StudiesProvider from "../../contexts/studiesContext";
 
 
 function DittiAppDashboard() {
   const {
     dataLoading,
-    studies,
     taps,
     audioTaps,
     audioFiles,
@@ -25,18 +25,19 @@ function DittiAppDashboard() {
   }
 
   return (
-    <CoordinatorStudySubjectProvider app={2}>
-      <DittiDataContext.Provider value={{
-        dataLoading,
-        studies,
-        taps,
-        audioTaps,
-        audioFiles,
-        refreshAudioFiles,
-      }}>
-        <Outlet />
-      </DittiDataContext.Provider>
-    </CoordinatorStudySubjectProvider>
+    <StudiesProvider app={2}>
+      <CoordinatorStudySubjectProvider app={2}>
+        <DittiDataContext.Provider value={{
+          dataLoading,
+          taps,
+          audioTaps,
+          audioFiles,
+          refreshAudioFiles,
+        }}>
+          <Outlet />
+        </DittiDataContext.Provider>
+      </CoordinatorStudySubjectProvider>
+    </StudiesProvider>
   );
 }
 

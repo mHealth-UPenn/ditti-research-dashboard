@@ -8,7 +8,7 @@ import DataFactory from "../dataFactory";
 export const StudiesContext = createContext<StudiesContextType | undefined>(undefined);
 
 interface IStudiesProviderProps {
-  app: 1 | 2 | 3;  // Ditti App, Admin Dashboard, Wearable Dashboard
+  app: 2 | 3;  // Ditti App, Wearable Dashboard
 }
 
 
@@ -25,19 +25,6 @@ export default function StudiesProvider({
       return new DataFactory();
     }
     return null;
-  }, []);
-
-  // Fetch studies on load
-  useEffect(() => {
-    const promises: Promise<any>[] = [];
-
-    if (APP_ENV === "production" || APP_ENV === "development") {
-      promises.push(getStudiesAsync().then(setStudies));
-    } else if (APP_ENV === "demo" && dataFactory) {
-      setStudies(dataFactory.studies);
-    }
-
-    Promise.all(promises).then(() => setStudiesLoading(false));
   }, []);
 
   // Make an sync request to get studies from the database
@@ -57,9 +44,26 @@ export default function StudiesProvider({
     return studies;
   };
 
+  // Fetch studies on load
+  useEffect(() => {
+    const promises: Promise<any>[] = [];
+
+    if (APP_ENV === "production" || APP_ENV === "development") {
+      promises.push(getStudiesAsync().then(setStudies));
+    } else if (APP_ENV === "demo" && dataFactory) {
+      setStudies(dataFactory.studies);
+    }
+
+    Promise.all(promises).then(() => setStudiesLoading(false));
+  }, []);
+
+  const getStudyById = (studyId: number): Study | undefined => {
+    return studies.find(s => s.id === studyId);
+  }
+
   return (
     <StudiesContext.Provider
-      value={{ studies, studiesLoading }}>
+      value={{ studies, studiesLoading, getStudyById }}>
         {children}
     </StudiesContext.Provider>
   );

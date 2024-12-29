@@ -29,24 +29,15 @@ import { APP_ENV } from "../../environment";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import sanitize from "sanitize-html";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useSearchParams } from "react-router-dom";
+import { useStudiesContext } from "../../contexts/studiesContext";
 
-/**
- * dittiId: the subject's ditti id
- * studyId: the study's database primary key
- * studyPrefix: the study's ditti prefix
- * studyEmail: the study's team email
- */
-interface SubjectsEditProps extends ViewProps {
-  dittiId: string;
-  studyDetails: Study;
-}
+const SubjectsEdit = () => {
+  const [searchParams] = useSearchParams();
+  const sid = searchParams.get("sid");
+  const studyId = sid ? parseInt(sid) : 0;
+  const dittiId = searchParams.get("dittiId");
 
-const SubjectsEdit: React.FC<SubjectsEditProps> = ({
-  dittiId,
-  studyDetails,
-  goBack,
-  flashMessage,
-}) => {
   const [tapPermission, setTapPermission] = useState(false);
   const [information, setInformation] = useState("");
   const [userPermissionId, setUserPermissionId] = useState("");
@@ -59,8 +50,11 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] = useState<AboutSleepTemplate>({} as AboutSleepTemplate);
   const [loading, setLoading] = useState<boolean>(true);
   const previewRef = createRef<HTMLDivElement>();
-
+  
+  const { studiesLoading, getStudyById } = useStudiesContext();
   const { getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
+
+  const study = getStudyById(studyId);
 
   useEffect(() => {
     if (previewRef.current && information !== "") {
@@ -124,7 +118,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
     )[0];
     if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
 
-    const currStudy = studySubject.studies.find(s => s.study.id == studyDetails.id);
+    const currStudy = studySubject.studies.find(s => s.study.id == studyId);
     const startTime = currStudy
       ? currStudy.startsOn.replace("Z", "")
       : (new Date()).toISOString().replace("Z", "");
@@ -157,7 +151,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
     const id = dittiId;
     const body = {
       app: 2,  // Ditti Dashboard = 2
-      study: studyDetails.id,
+      study: studyId,
       ...(id ? { user_permission_id: id, edit: data } : { create: data })
     };
 
@@ -175,8 +169,8 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
-    flashMessage(<span>{res.msg}</span>, "success");
+    // goBack();
+    // flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -192,7 +186,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
         {res.msg ? res.msg : "Internal server error"}
       </span>
     );
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   };
 
   /**
@@ -230,7 +224,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
   // if dittiId is 0, the user is enrolling a new subject
   const buttonText = dittiId ? "Update" : "Create";
 
-  if (loading) {
+  if (loading || studiesLoading) {
     return (
       <FormView>
         <Form>
@@ -250,13 +244,13 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
               id="dittiId"
               type="text"
               placeholder=""
-              value={userPermissionId.replace(studyDetails.dittiId, "")}
+              value={userPermissionId.replace(study?.dittiId || "", "")}
               label="Ditti ID"
-              onKeyup={text => setUserPermissionId(studyDetails.dittiId + text)}
+              onKeyup={text => setUserPermissionId(study?.dittiId + text)}
               feedback="">
                 {/* superimpose the study prefix on the form field */}
                 <div className="flex items-center text-link h-full px-2 bg-extra-light border-r border-light">
-                  <i>{studyDetails.dittiId}</i>
+                  <i>{study?.dittiId}</i>
                 </div>
             </TextField>
           </FormField>
@@ -265,7 +259,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
           <FormField>
             <TextField
               label="Team Email"
-              value={studyDetails.email}
+              value={study?.email || ""}
               disabled={true} />
           </FormField>
         </FormRow>
@@ -334,7 +328,7 @@ const SubjectsEdit: React.FC<SubjectsEditProps> = ({
             <br />
             Team email:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{studyDetails.email}
+            &nbsp;&nbsp;&nbsp;&nbsp;{study?.email}
             <br />
             <br />
             Expires on:

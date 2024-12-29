@@ -16,6 +16,8 @@ import Button from "../buttons/button";
 import CardContentRow from "../cards/cardContentRow";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
+import { Link, useSearchParams } from "react-router-dom";
+import { useStudiesContext } from "../../contexts/studiesContext";
 
 /**
  * Information for study contacts
@@ -27,27 +29,20 @@ interface StudyContact {
   role: string;
 }
 
-/**
- * getTaps: get tap data
- * studyId: the study's database primary key
- */
-interface StudySummaryProps extends ViewProps {
-  studyId: number;
-}
+const StudySummary = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const studyId = id ? parseInt(id) : 0;
 
-const StudySummary: React.FC<StudySummaryProps> = ({
-  flashMessage,
-  goBack,
-  handleClick,
-  studyId
-}) => {
   const [canCreate, setCanCreate] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
-  const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
   const [loading, setLoading] = useState(true);
 
+  const { studiesLoading, getStudyById } = useStudiesContext();
   const { taps, audioTaps } = useDittiDataContext();
+
+  const study = getStudyById(studyId);
 
   useEffect(() => {
     // check whether the user can enroll new subjects
@@ -71,13 +66,6 @@ const StudySummary: React.FC<StudySummaryProps> = ({
       ).then((contacts: StudyContact[]) => setStudyContacts(contacts))
     );
 
-    // get this study's information
-    promises.push(
-      makeRequest(
-        "/db/get-study-details?app=2&study=" + studyId
-      ).then((details: Study) => setStudyDetails(details))
-    );
-
     // when all promises resolve, hide the loader
     Promise.all(promises).then(() => setLoading(false));
   }, [studyId]);
@@ -86,21 +74,25 @@ const StudySummary: React.FC<StudySummaryProps> = ({
    * Download all of the study's data in excel format
    */
   const downloadExcel = async (): Promise<void> => {
+    if (!study) {
+      return;
+    }
+
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
-    const id = studyDetails.acronym;
+    const id = study.acronym;
     const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
 
     const tapsData = taps.filter(t =>
       // Retrieve taps from only the current study
-      t.dittiId.startsWith(studyDetails.dittiId)
+      t.dittiId.startsWith(study.dittiId)
     ).map(t => {
       return [t.dittiId, t.time, t.timezone, "", ""];
     });
 
     const audioTapsData = audioTaps.filter(t =>
       // Retrieve taps from only the current study
-      t.dittiId.startsWith(studyDetails.dittiId)
+      t.dittiId.startsWith(study.dittiId)
     ).map(t => {
       return [t.dittiId, t.time, t.timezone, t.action, t.audioFileTitle];
     });
@@ -139,32 +131,30 @@ const StudySummary: React.FC<StudySummaryProps> = ({
     });
   };
 
-  const { dittiId, email, name, acronym } = studyDetails;
+  // const handleClickEnrollSubject = () =>
+  //   handleClick(
+  //     ["Enroll"],
+  //     <SubjectsEdit
+  //       flashMessage={flashMessage}
+  //       dittiId=""
+  //       goBack={goBack}
+  //       handleClick={handleClick}
+  //       study={study}
+  //     />
+  //   );
 
-  const handleClickEnrollSubject = () =>
-    handleClick(
-      ["Enroll"],
-      <SubjectsEdit
-        flashMessage={flashMessage}
-        dittiId=""
-        goBack={goBack}
-        handleClick={handleClick}
-        studyDetails={studyDetails}
-      />
-    );
+  // const handleClickViewAllSubjects = () =>
+  //   handleClick(
+  //     ["Subjects"],
+  //     <Subjects
+  //       flashMessage={flashMessage}
+  //       goBack={goBack}
+  //       handleClick={handleClick}
+  //       study={study}
+  //     />
+  //   );
 
-  const handleClickViewAllSubjects = () =>
-    handleClick(
-      ["Subjects"],
-      <Subjects
-        flashMessage={flashMessage}
-        goBack={goBack}
-        handleClick={handleClick}
-        studyDetails={studyDetails}
-      />
-    );
-
-  if (loading) {
+  if (loading || studiesLoading) {
     return (
       <ViewContainer>
         <Card width="md">
@@ -182,10 +172,10 @@ const StudySummary: React.FC<StudySummaryProps> = ({
       <Card width="md">
         <CardContentRow>
           <div className="flex flex-col">
-            <Title>{acronym}</Title>
-            <Subtitle>{name}</Subtitle>
-            <Subtitle>Study email: {email}</Subtitle>
-            <Subtitle>Ditti acronym: {dittiId}</Subtitle>
+            <Title>{study?.acronym}</Title>
+            <Subtitle>{study?.name}</Subtitle>
+            <Subtitle>Study email: {study?.email}</Subtitle>
+            <Subtitle>Ditti acronym: {study?.dittiId}</Subtitle>
           </div>
           {canViewTaps &&
             <Button
@@ -200,29 +190,25 @@ const StudySummary: React.FC<StudySummaryProps> = ({
           <Title>Active Subjects</Title>
           <div className="flex">
             {(canCreate || APP_ENV === "demo") &&
-              <Button
-                className="mr-2"
-                onClick={handleClickEnrollSubject}
-                rounded={true}>
-                  Enroll subject +
-              </Button>
+              <Link to="/coordinator/ditti/participants/enroll">
+                <Button
+                  className="mr-2"
+                  rounded={true}>
+                    Enroll subject +
+                </Button>
+              </Link>
             }
-            <Button
-              variant="secondary"
-              onClick={handleClickViewAllSubjects}
-              rounded={true}>
-                View all subjects
-            </Button>
+            <Link to={`/coordinator/ditti/participants?sid=${study?.id}`}>
+              <Button
+                variant="secondary"
+                rounded={true}>
+                  View all subjects
+              </Button>
+            </Link>
           </div>
         </CardContentRow>
 
-        <StudySubjects
-          flashMessage={flashMessage}
-          goBack={goBack}
-          handleClick={handleClick}
-          studyDetails={studyDetails}
-          studyPrefix={dittiId}
-          canViewTaps={canViewTaps} />
+        <StudySubjects studyPrefix={study?.dittiId || ""} canViewTaps={canViewTaps} />
       </Card>
 
       <Card width="sm">

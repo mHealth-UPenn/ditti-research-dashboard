@@ -83,7 +83,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setFirstLogin(true);
         } else {
           setFirstLogin(false);
-          navigate("/coordinator");
+          navigate("/coordinator/apps");
         }
       }
     } catch (error) {

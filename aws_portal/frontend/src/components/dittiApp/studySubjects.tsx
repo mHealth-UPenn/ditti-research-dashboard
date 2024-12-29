@@ -4,28 +4,24 @@ import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import SubjectVisuals from "./subjectVisualsV2";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
-import Link from "../links/linkComponent";
+import LinkComponent from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { Link } from "react-router-dom";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
  * getTaps: get tap data
  * studyDetials: the current study's information
  */
-interface StudySubjectsProps extends ViewProps {
+interface StudySubjectsProps {
   studyPrefix: string;
-  studyDetails: Study;
   canViewTaps: boolean;
 }
 
 const StudySubjects: React.FC<StudySubjectsProps> = ({
   studyPrefix,
-  studyDetails,
   canViewTaps,
-  flashMessage,
-  goBack,
-  handleClick,
 }) => {
   const { taps, audioTaps } = useDittiDataContext();
   const { studySubjects } = useCoordinatorStudySubjectContext();
@@ -113,17 +109,17 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
     // get the number of days until the user's id expires
     const expiresOn = differenceInDays(new Date(studySubject.expTime), new Date());
 
-    const handleClickSubject = () =>
-      handleClick(
-        [studySubject.dittiId],
-        <SubjectVisuals
-          flashMessage={flashMessage}
-          goBack={goBack}
-          handleClick={handleClick}
-          studyDetails={studyDetails}
-          studySubject={studySubject}
-        />
-      );
+    // const handleClickSubject = () =>
+    //   handleClick(
+    //     [studySubject.dittiId],
+    //     <SubjectVisuals
+    //       flashMessage={flashMessage}
+    //       goBack={goBack}
+    //       handleClick={handleClick}
+    //       studyDetails={studyDetails}
+    //       studySubject={studySubject}
+    //     />
+    //   );
 
     return (
       <CardContentRow
@@ -135,8 +131,10 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
               {canViewTaps && <ActiveIcon active={!!totalTaps} className="mr-2" />}
               {/* link to the studySubject's summary page */}
               {canViewTaps ?
-                <Link onClick={handleClickSubject}>
-                  {studySubject.dittiId}
+                <Link to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}`}>
+                  <LinkComponent>
+                    {studySubject.dittiId}
+                  </LinkComponent>
                 </Link> :
                 <span>{studySubject.dittiId}</span>
               }

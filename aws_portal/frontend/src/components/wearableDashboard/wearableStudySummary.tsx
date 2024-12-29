@@ -13,6 +13,7 @@ import CardContentRow from "../cards/cardContentRow";
 import { APP_ENV } from "../../environment";
 import WearableStudySubjects from "./wearableStudySubjects";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { Link, useSearchParams } from "react-router-dom";
 
 
 /**
@@ -30,21 +31,11 @@ interface StudyContact {
 }
 
 
-/**
- * Props for the wearable study summary.
- * @property studyId: the study's database primary key
- */
-interface WearableStudySummaryProps extends ViewProps {
-  studyId: number;
-}
+export default function WearableStudySummary() {
+  const [searchParams] = useSearchParams();
+  const sid = searchParams.get("sid");
+  const studyId = sid ? parseInt(sid) : 0;
 
-
-export default function WearableStudySummary({
-  flashMessage,
-  goBack,
-  handleClick,
-  studyId
-}: WearableStudySummaryProps) {
   const [canCreate, setCanCreate] = useState(false);
   const [canViewWearableData, setCanViewWearableData] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
@@ -86,38 +77,38 @@ export default function WearableStudySummary({
   const downloadExcel = async (): Promise<void> => {
     const url = `/admin/fitbit_data/download/study/${studyId}?app=3`;
     const res = await downloadExcelFromUrl(url);
-    if (res) {
-      flashMessage(<span>{res}</span>, "danger");
-    }
+    // if (res) {
+    //   flashMessage(<span>{res}</span>, "danger");
+    // }
   };
 
   const { dittiId, email, name, acronym } = studyDetails;
   const { studySubjectLoading } = useCoordinatorStudySubjectContext();
 
   // Handle when the user clicks Enroll Subject
-  const handleClickEnrollSubject = () =>
-    handleClick(
-      ["Enroll"],
-      <SubjectsEdit
-        flashMessage={flashMessage}
-        dittiId=""
-        goBack={goBack}
-        handleClick={handleClick}
-        studyDetails={studyDetails}
-      />
-    );
+  // const handleClickEnrollSubject = () =>
+  //   handleClick(
+  //     ["Enroll"],
+  //     <SubjectsEdit
+  //       flashMessage={flashMessage}
+  //       dittiId=""
+  //       goBack={goBack}
+  //       handleClick={handleClick}
+  //       studyDetails={studyDetails}
+  //     />
+  //   );
 
   // Handle when the user clicks View All Subjects
-  const handleClickViewAllSubjects = () =>
-    handleClick(
-      ["Subjects"],
-      <Subjects
-        flashMessage={flashMessage}
-        goBack={goBack}
-        handleClick={handleClick}
-        studyDetails={studyDetails}
-      />
-    );
+  // const handleClickViewAllSubjects = () =>
+  //   handleClick(
+  //     ["Subjects"],
+  //     <Subjects
+  //       flashMessage={flashMessage}
+  //       goBack={goBack}
+  //       handleClick={handleClick}
+  //       studyDetails={studyDetails}
+  //     />
+  //   );
 
   if (loading || studySubjectLoading) {
     return (
@@ -158,27 +149,26 @@ export default function WearableStudySummary({
           <Title>Active Subjects</Title>
           <div className="flex">
             {(canCreate || APP_ENV === "demo") &&
-              <Button
-                className="mr-2"
-                onClick={handleClickEnrollSubject}
-                rounded={true}>
-                  Enroll subject +
-              </Button>
+              <Link to="/coordinator/wearable/participants/enroll">
+                <Button
+                  className="mr-2"
+                  rounded={true}>
+                    Enroll subject +
+                </Button>
+              </Link>
             }
-            <Button
-              variant="secondary"
-              onClick={handleClickViewAllSubjects}
-              rounded={true}>
-                View all subjects
-            </Button>
+            <Link to={`/coordinator/wearable/participants?sid=${studyId}`}>
+              <Button
+                variant="secondary"
+                rounded={true}>
+                  View all subjects
+              </Button>
+            </Link>
           </div>
         </CardContentRow>
 
         {/* The list of participants in this study */}
         <WearableStudySubjects
-          flashMessage={flashMessage}
-          goBack={goBack}
-          handleClick={handleClick}
           studyDetails={studyDetails}
           canViewWearableData={canViewWearableData} />
       </Card>

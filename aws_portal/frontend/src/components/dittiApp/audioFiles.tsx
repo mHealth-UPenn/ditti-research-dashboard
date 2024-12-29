@@ -9,13 +9,10 @@ import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
+import { Link } from "react-router-dom";
 
 
-const AudioFiles: React.FC<ViewProps> = ({
-  handleClick,
-  goBack,
-  flashMessage,
-}) => {
+const AudioFiles = () => {
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState<boolean>(false);
   const [canDeleteAudioFiles, setCanDeleteAudioFiles] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -91,24 +88,24 @@ const AudioFiles: React.FC<ViewProps> = ({
             body: JSON.stringify({ app: 2, id, _version })
           }
         );
-        flashMessage(<span>Audio file deleted successfully</span>, "success");
+        // flashMessage(<span>Audio file deleted successfully</span>, "success");
         setLoading(true);
 
         refreshAudioFiles()
           .then(() => setLoading(false))
-          .catch(() =>
-            flashMessage(
-              <span>
-                And error occured while reloading the page. Please refresh and
-                try again.
-              </span>,
-              "danger"
-            )
-          );
+          // .catch(() =>
+          //   flashMessage(
+          //     <span>
+          //       And error occured while reloading the page. Please refresh and
+          //       try again.
+          //     </span>,
+          //     "danger"
+          //   )
+          // );
       } catch (error) {
         console.error(error);
         const e = error as { msg: string };
-        flashMessage(<span>An unexpected error occured: {e.msg}</span>, "danger");
+        // flashMessage(<span>An unexpected error occured: {e.msg}</span>, "danger");
       }
     }
   }
@@ -199,21 +196,14 @@ const AudioFiles: React.FC<ViewProps> = ({
 
   // if the user can enroll subjects, include an enroll button
   const tableControl =
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Upload"],
-          <AudioFileUpload
-            goBack={goBack}
-            flashMessage={flashMessage}
-            handleClick={handleClick} />
-        )
-      }
-      disabled={!(canCreateAudioFiles || APP_ENV === "demo")}
-      rounded={true}>
-        Upload +
-    </Button>
+    <Link to="/coordinator/ditti/audio-files/upload">
+      <Button
+        variant="primary"
+        disabled={!(canCreateAudioFiles || APP_ENV === "demo")}
+        rounded={true}>
+          Upload +
+      </Button>
+    </Link>
 
   if (loading) {
     return (

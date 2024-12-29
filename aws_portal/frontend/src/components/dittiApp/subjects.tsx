@@ -10,36 +10,33 @@ import { APP_ENV } from "../../environment";
 import Button from "../buttons/button";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
-import Link from "../links/linkComponent";
+import LinkComponent from "../links/linkComponent";
 import Title from "../text/title";
 import Subtitle from "../text/subtitle";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { Link, useSearchParams } from "react-router-dom";
+import { useStudiesContext } from "../../contexts/studiesContext";
 
-/**
- * studyDetails: the details of the study that subjects will be listed for
- * getTaps: get tap data
- */
-interface SubjectsProps extends ViewProps {
-  studyDetails: Study;
-}
 
-const Subjects = ({
-  studyDetails,
-  flashMessage,
-  goBack,
-  handleClick,
-}: SubjectsProps) => {
+const Subjects = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const studyId = id ? parseInt(id) : 0;
+
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-
+  
+  const { studiesLoading, getStudyById } = useStudiesContext();
   const { studySubjects } = useCoordinatorStudySubjectContext();
+
+  const study = getStudyById(studyId);
   const filteredStudySubjects = studySubjects.filter(
-    u => u.dittiId.startsWith(studyDetails.dittiId)
+    ss => ss.dittiId.startsWith(study?.dittiId || "undefined")  // TODO: use regex instead
   );
 
   const columns: Column[] = [
@@ -76,35 +73,32 @@ const Subjects = ({
   ];
 
   useEffect(() => {
-    const { dittiId, id } = studyDetails;
-
     // get whether the user can enroll subjects
     const promises: Promise<any>[] = [];
     promises.push(
-      getAccess(2, "Create", "Participants", id)
+      getAccess(2, "Create", "Participants", studyId)
         .then(() => setCanCreate(true))
         .catch(() => setCanCreate(false))
     );
 
     // get whether the user can edit subjects
     promises.push(
-      getAccess(2, "Edit", "Participants", id)
+      getAccess(2, "Edit", "Participants", studyId)
         .then(() => setCanEdit(true))
         .catch(() => setCanEdit(false))
     );
 
     // get whether the user can edit subjects
     promises.push(
-      getAccess(2, "View", "Taps", id)
+      getAccess(2, "View", "Taps", studyId)
         .then(() => setCanViewTaps(true))
         .catch(() => setCanViewTaps(false))
     );
 
     // when all promises complete, hide the loader
     Promise.all(promises).then(() => setLoading(false));
-  }, [studyDetails]);
+  }, []);
 
-  const { id, dittiId, email } = studyDetails;
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
@@ -120,19 +114,10 @@ const Subjects = ({
           <>
             {/* if the studySubject has tap permission, link to a subject visuals page */}
             {(studySubject.tapPermission && canViewTaps) ? (
-              <Link
-                onClick={() =>
-                  handleClick(
-                    [studySubject.dittiId],
-                    <SubjectVisuals
-                      flashMessage={flashMessage}
-                      goBack={goBack}
-                      handleClick={handleClick}
-                      studyDetails={studyDetails}
-                      studySubject={studySubject} />
-                  )
-                }>
+              <Link to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}`}>
+                <LinkComponent>
                   {studySubject.dittiId}
+                </LinkComponent>
               </Link>
             ) : (
               studySubject.dittiId
@@ -171,24 +156,15 @@ const Subjects = ({
         contents: (
           <div className="flex w-full h-full">
             {/* if the user can edit, link to the edit subject page */}
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-full flex-grow"
-              onClick={() =>
-                handleClick(
-                  ["Edit", studySubject.dittiId],
-                  <SubjectsEdit
-                    dittiId={studySubject.dittiId}
-                    studyDetails={studyDetails}
-                    flashMessage={flashMessage}
-                    goBack={goBack}
-                    handleClick={handleClick} />
-                )
-              }
-              disabled={!(canEdit || APP_ENV === "demo")}>
-                Edit
-            </Button>
+            <Link to={`/coordinator/ditti/participants/edit?dittiId=${studySubject.dittiId}`}>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-full flex-grow"
+                disabled={!(canEdit || APP_ENV === "demo")}>
+                  Edit
+              </Button>
+            </Link>
           </div>
         ),
         searchValue: "",
@@ -201,38 +177,29 @@ const Subjects = ({
 
   // if the user can enroll subjects, include an enroll button
   const tableControl =
-    <Button
-      onClick={() =>
-        handleClick(
-          ["Create"],
-          <SubjectsEdit
-            dittiId=""
-            studyDetails={studyDetails}
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick} />
-        )
-      }
-      disabled={!(canCreate || APP_ENV === "demo")}
-      rounded={true}>
-        Create +
-    </Button>
+    <Link to="/coordinator/ditti/participants/enroll">
+      <Button
+        disabled={!(canCreate || APP_ENV === "demo")}
+        rounded={true}>
+          Create +
+      </Button>
+    </Link>
 
-  if (loading) {
-    return (
-      <ViewContainer>
-        <Card>
-          <SmallLoader />
-        </Card>
-      </ViewContainer>
-    );
-  }
+if (loading || studiesLoading) {
+  return (
+    <ViewContainer>
+      <Card>
+        <SmallLoader />
+      </Card>
+    </ViewContainer>
+  );
+}
 
   return (
     <ListView>
       <ListContent>
         <div className="flex flex-col mb-8">
-          <Title>{studyDetails.name}</Title>
+          <Title>{study?.name}</Title>
           <Subtitle>All subjects</Subtitle>
         </div>
         <Table

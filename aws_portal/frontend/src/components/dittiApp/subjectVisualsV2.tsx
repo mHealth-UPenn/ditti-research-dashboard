@@ -20,33 +20,27 @@ import Subtitle from "../text/subtitle";
 import Button from "../buttons/button";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
+import { Link, useSearchParams } from "react-router-dom";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useStudiesContext } from "../../contexts/studiesContext";
 
-/**
- * getTaps: get tap data
- * studyDetails: details of the subject's study
- * user: details of the subject
- */
-interface SubjectVisualsV2Props extends ViewProps {
-  studyDetails: Study;
-  studySubject: IStudySubjectDetails;
-}
 
-const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
-  studyDetails,
-  studySubject,
-  flashMessage,
-  goBack,
-  handleClick
-}) => {
+const SubjectVisualsV2 = () => {
+  const [searchParams] = useSearchParams();
+  const sid = searchParams.get("sid");
+  const studyId = sid ? parseInt(sid) : 0;
+  const dittiId = searchParams.get("dittiId") || "";
+
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const { taps, audioTaps } = useDittiDataContext();
-  const filteredTaps = taps.filter((t) => t.dittiId === studySubject.dittiId);
-  const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === studySubject.dittiId);
+  
+  const { studiesLoading, getStudyById } = useStudiesContext();
+  const { getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
 
   useEffect(() => {
-    getAccess(2, "Edit", "Participants", studyDetails.id)
+    getAccess(2, "Edit", "Participants", studyId)
       .then(() => {
         setCanEdit(true);
         setLoading(false);
@@ -55,13 +49,39 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
         setCanEdit(false);
         setLoading(false);
       });
-  }, [studyDetails.id]);
+  }, [studyId]);
+
+  const studySubject = getStudySubjectByDittiId(dittiId);
+  const filteredTaps = taps.filter((t) => t.dittiId === dittiId);
+  const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === dittiId);
+
+  const study = getStudyById(studyId);
+  const timestamps = useMemo(
+    () => filteredTaps.map(t => t.time.getTime()), [filteredTaps]
+  );
+
+  const timezones = useMemo(() => {
+    const timezones: { time: number; name: string }[] = [];
+    let prevTimezone: string | null = null;
+    [...filteredTaps, ...filteredAudioTaps].sort(
+      (a, b) => differenceInMilliseconds(a.time, b.time)
+    ).forEach(t => {
+      const name = t.timezone === ""
+        ? "GMT Universal Coordinated Time"
+        : t.timezone;
+      if (name !== prevTimezone) {
+        timezones.push({ time: t.time.getTime(), name });
+        prevTimezone = name;
+      }
+    });
+  return timezones;
+  }, [filteredTaps, filteredAudioTaps]);
 
   const downloadExcel = async (): Promise<void> => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
-    const id = studyDetails.acronym;
-    const fileName = format(new Date(), `'${studySubject.dittiId}_'yyyy-MM-dd'_'HH:mm:ss`);
+    const id = study?.acronym;
+    const fileName = format(new Date(), `'${dittiId}_'yyyy-MM-dd'_'HH:mm:ss`);
 
     const tapsData = filteredTaps.map(t => {
       return [t.dittiId, t.time, t.timezone, "", ""];
@@ -119,40 +139,19 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
     dateOpts as Intl.DateTimeFormatOptions
   );
 
-  const timestamps = useMemo(
-    () => filteredTaps.map(t => t.time.getTime()), [filteredTaps]
-  );
+  // const handleClickEditDetails = () =>
+  //   handleClick(
+  //     ["Edit"],
+  //     <SubjectsEdit
+  //       dittiId={dittiId}
+  //       studyDetails={studyDetails}
+  //       flashMessage={flashMessage}
+  //       goBack={goBack}
+  //       handleClick={handleClick}
+  //     />
+  //   );
 
-  const timezones = useMemo(() => {
-    const timezones: { time: number; name: string }[] = [];
-    let prevTimezone: string | null = null;
-    [...filteredTaps, ...filteredAudioTaps].sort(
-      (a, b) => differenceInMilliseconds(a.time, b.time)
-    ).forEach(t => {
-      const name = t.timezone === ""
-        ? "GMT Universal Coordinated Time"
-        : t.timezone;
-      if (name !== prevTimezone) {
-        timezones.push({ time: t.time.getTime(), name });
-        prevTimezone = name;
-      }
-    });
-  return timezones;
-  }, [filteredTaps, filteredAudioTaps]);
-
-  const handleClickEditDetails = () =>
-    handleClick(
-      ["Edit"],
-      <SubjectsEdit
-        dittiId={studySubject.dittiId}
-        studyDetails={studyDetails}
-        flashMessage={flashMessage}
-        goBack={goBack}
-        handleClick={handleClick}
-      />
-    );
-
-  if (loading) {
+  if (loading || studiesLoading) {
     return (
       <ViewContainer>
         <Card>
@@ -168,7 +167,7 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
         {/* the subject's details */}
         <CardContentRow>
           <div className="flex flex-col">
-            <Title>{studySubject.dittiId}</Title>
+            <Title>{dittiId}</Title>
             <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
           </div>
 
@@ -182,13 +181,14 @@ const SubjectVisualsV2: React.FC<SubjectVisualsV2Props> = ({
                 Download Excel
             </Button>
             {/* if the user can edit, show the edit button */}
-            <Button
-              variant="secondary"
-              onClick={handleClickEditDetails}
-              disabled={!(canEdit || APP_ENV === "demo")}
-              rounded={true}>
-              Edit Details
-            </Button>
+            <Link to={`/coordinator/ditti/participants/edit?dittiId=${dittiId}`}>
+              <Button
+                variant="secondary"
+                disabled={!(canEdit || APP_ENV === "demo")}
+                rounded={true}>
+                  Edit Details
+              </Button>
+            </Link>
           </div>
         </CardContentRow>
 

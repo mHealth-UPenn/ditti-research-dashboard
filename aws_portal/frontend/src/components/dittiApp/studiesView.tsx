@@ -12,22 +12,21 @@ import CardContentRow from "../cards/cardContentRow";
 import Button from "../buttons/button";
 import Title from "../text/title";
 import ActiveIcon from "../icons/activeIcon";
-import Link from "../links/linkComponent";
+import LinkComponent from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
+import { Link } from "react-router-dom";
+import { useStudiesContext } from "../../contexts/studiesContext";
 
 
-const StudiesView: React.FC<ViewProps> = ({
-  flashMessage,
-  goBack,
-  handleClick
-}) => {
+const StudiesView = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [canViewAudioFiles, setCanViewAudioFiles] = useState(true);
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState(true);
   const [canViewTaps, setCanViewTaps] = useState<Set<number>>(new Set());
 
-  const { studies, taps, audioFiles } = useDittiDataContext();
+  const { taps, audioFiles } = useDittiDataContext();
+  const { studiesLoading, studies } = useStudiesContext();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -74,44 +73,44 @@ const StudiesView: React.FC<ViewProps> = ({
    * Handle when a user clicks on a study
    * @param id - the study's database primary key
    */
-  const handleClickStudy = (id: number): void => {
-    // get the study
-    const study = studies.find((s) => s.id === id);
+  // const handleClickStudy = (id: number): void => {
+  //   // get the study
+  //   const study = studies.find((s) => s.id === id);
 
-    if (study) {
-      // set the view
-      const view = (
-        <StudySummary
-          flashMessage={flashMessage}
-          handleClick={handleClick}
-          goBack={goBack}
-          studyId={study.id}
-        />
-      );
+  //   if (study) {
+  //     // set the view
+  //     const view = (
+  //       <StudySummary
+  //         flashMessage={flashMessage}
+  //         handleClick={handleClick}
+  //         goBack={goBack}
+  //         studyId={study.id}
+  //       />
+  //     );
 
-      handleClick([study.acronym], view, false);
-    }
-  };
+  //     handleClick([study.acronym], view, false);
+  //   }
+  // };
 
-  const handleClickUploadAudioFile = () => handleClick(
-    ["Audio File", "Upload"],
-    <AudioFileUpload
-      goBack={goBack}
-      flashMessage={flashMessage}
-      handleClick={handleClick}
-    />
-  );
+  // const handleClickUploadAudioFile = () => handleClick(
+  //   ["Audio File", "Upload"],
+  //   <AudioFileUpload
+  //     goBack={goBack}
+  //     flashMessage={flashMessage}
+  //     handleClick={handleClick}
+  //   />
+  // );
 
-  const handleClickViewAudioFiles = () => handleClick(
-    ["Audio File"],
-    <AudioFiles
-      goBack={goBack}
-      flashMessage={flashMessage}
-      handleClick={handleClick}
-    />
-  );
+  // const handleClickViewAudioFiles = () => handleClick(
+  //   ["Audio File"],
+  //   <AudioFiles
+  //     goBack={goBack}
+  //     flashMessage={flashMessage}
+  //     handleClick={handleClick}
+  //   />
+  // );
 
-  if (loading) {
+  if (loading || studiesLoading) {
     return (
       <ViewContainer>
         <Card width="md">
@@ -164,8 +163,10 @@ const StudiesView: React.FC<ViewProps> = ({
                   }
                   {/* link to study summary */}
                   <div className="flex flex-col">
-                    <Link onClick={() => handleClickStudy(s.id)}>
-                      {s.acronym}
+                    <Link to={`/coordinator/ditti/study?sid=${s.id}`}>
+                      <LinkComponent>
+                        {s.acronym}
+                      </LinkComponent>
                     </Link>
                     <span className="text-sm">{s.name}</span>
                   </div>
@@ -211,19 +212,21 @@ const StudiesView: React.FC<ViewProps> = ({
           <CardContentRow>
             <div className="flex">
               {(canCreateAudioFiles || APP_ENV === "demo") &&
-                <Button
-                  onClick={handleClickUploadAudioFile}
-                  className="mr-2"
-                  rounded={true}>
-                    Upload +
-                </Button>
+                <Link to="/coordinator/ditti/audio-files/upload">
+                  <Button
+                    className="mr-2"
+                    rounded={true}>
+                      Upload +
+                  </Button>
+                </Link>
               }
-              <Button
-                variant="secondary"
-                onClick={handleClickViewAudioFiles}
-                rounded={true}>
-                  View all
-              </Button>
+              <Link to="/coordinator/ditti/audio-files">
+                <Button
+                  variant="secondary"
+                  rounded={true}>
+                    View all
+                </Button>
+              </Link>
             </div>
           </CardContentRow>
           <CardContentRow className="border-b border-light">
