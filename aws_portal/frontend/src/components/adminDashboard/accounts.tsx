@@ -175,14 +175,18 @@ const Accounts = () => {
           contents: (
             <div className="flex w-full h-full">
               {canEdit &&
-                <Link to={`/coordinator/admin/accounts/edit?id=${id}`}>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="h-full flex-grow">
-                      Edit
-                  </Button>
-                </Link>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-full flex-grow"
+                  fullWidth={true}
+                  fullHeight={true}>
+                    <Link
+                      className="w-full h-full flex items-center justify-center"
+                      to={`/coordinator/admin/accounts/edit?id=${id}`}>
+                        Edit
+                    </Link>
+                </Button>
               }
               {canArchive &&
                 <Button

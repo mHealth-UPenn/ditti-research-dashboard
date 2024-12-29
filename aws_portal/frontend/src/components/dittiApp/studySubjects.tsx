@@ -8,6 +8,7 @@ import LinkComponent from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
+import { getStartAndExpiryTimes } from "../../utils";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
@@ -15,26 +16,30 @@ import { Link } from "react-router-dom";
  * studyDetials: the current study's information
  */
 interface StudySubjectsProps {
-  studyPrefix: string;
+  study: Study;
   canViewTaps: boolean;
 }
 
 const StudySubjects: React.FC<StudySubjectsProps> = ({
-  studyPrefix,
+  study,
   canViewTaps,
 }) => {
   const { taps, audioTaps } = useDittiDataContext();
   const { studySubjects } = useCoordinatorStudySubjectContext();
-  const filteredStudySubjects = studySubjects.filter(ss => ss.dittiId.startsWith(studyPrefix));
+  const filteredStudySubjects = studySubjects.filter(ss => ss.dittiId.startsWith(study.dittiId));
 
-  /**
-   * Render recent summary tap data for a user
-   * @param user 
-   * @returns 
-   */
-  const getSubjectSummary = (studySubject: IStudySubjectDetails): React.ReactElement => {
+  const summaries: React.ReactElement[] = [];
+
+  filteredStudySubjects.forEach((studySubject) => {
     let summaryTaps: React.ReactElement[];
     let totalTaps = 0;
+
+    const { expTime } = getStartAndExpiryTimes(studySubject, study.id);
+
+    // Skip expired participants
+    if (new Date() >= new Date(expTime)) {
+      return;
+    }
 
     // if the studySubject has access to tapping
     if (studySubject.tapPermission) {
@@ -107,7 +112,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
     }
 
     // get the number of days until the user's id expires
-    const expiresOn = differenceInDays(new Date(studySubject.expTime), new Date());
+    const expiresOn = differenceInDays(new Date(expTime), new Date());
 
     // const handleClickSubject = () =>
     //   handleClick(
@@ -121,7 +126,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
     //     />
     //   );
 
-    return (
+    summaries.push(
       <CardContentRow
         key={studySubject.dittiId}
         className="border-b border-light">
@@ -131,7 +136,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
               {canViewTaps && <ActiveIcon active={!!totalTaps} className="mr-2" />}
               {/* link to the studySubject's summary page */}
               {canViewTaps ?
-                <Link to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}`}>
+                <Link to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${study.id}`}>
                   <LinkComponent>
                     {studySubject.dittiId}
                   </LinkComponent>
@@ -150,16 +155,11 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
           }
       </CardContentRow>
     );
-  };
-
-  // all users whose ids have not expired
-  const activeUsers = filteredStudySubjects.filter(
-    ss => new Date() < new Date(ss.expTime)
-  );
+  });
 
   return (
     <>
-      {activeUsers.length ? activeUsers.map(getSubjectSummary) : "No active subjects"}
+      {summaries.length ? summaries : "No active subjects"}
     </>
   );
 };

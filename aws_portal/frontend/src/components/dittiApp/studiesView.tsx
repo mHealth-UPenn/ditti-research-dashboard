@@ -212,7 +212,7 @@ const StudiesView = () => {
           <CardContentRow>
             <div className="flex">
               {(canCreateAudioFiles || APP_ENV === "demo") &&
-                <Link to="/coordinator/ditti/audio-files/upload">
+                <Link to="/coordinator/ditti/audio/upload">
                   <Button
                     className="mr-2"
                     rounded={true}>
@@ -220,7 +220,7 @@ const StudiesView = () => {
                   </Button>
                 </Link>
               }
-              <Link to="/coordinator/ditti/audio-files">
+              <Link to="/coordinator/ditti/audio">
                 <Button
                   variant="secondary"
                   rounded={true}>

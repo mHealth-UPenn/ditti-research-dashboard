@@ -60,7 +60,7 @@ export default function WearableStudySubjects({
 
               {/* Link to the subject's visualization */}
               {canViewWearableData ?
-                <Link to={`/coordinator/wearable/participants/view?dittiId=${subject.dittiId}`}>
+                <Link to={`/coordinator/wearable/participants/view?dittiId=${subject.dittiId}&sid=${studyDetails.id}`}>
                   <LinkComponent>
                     {subject.dittiId}
                   </LinkComponent>

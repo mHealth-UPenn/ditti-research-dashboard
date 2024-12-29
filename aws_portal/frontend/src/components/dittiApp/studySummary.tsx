@@ -31,8 +31,8 @@ interface StudyContact {
 
 const StudySummary = () => {
   const [searchParams] = useSearchParams();
-  const id = searchParams.get("id");
-  const studyId = id ? parseInt(id) : 0;
+  const sid = searchParams.get("sid");
+  const studyId = sid ? parseInt(sid) : 0;
 
   const [canCreate, setCanCreate] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);
@@ -190,7 +190,7 @@ const StudySummary = () => {
           <Title>Active Subjects</Title>
           <div className="flex">
             {(canCreate || APP_ENV === "demo") &&
-              <Link to="/coordinator/ditti/participants/enroll">
+              <Link to={`/coordinator/ditti/participants/enroll?sid=${studyId}`}>
                 <Button
                   className="mr-2"
                   rounded={true}>
@@ -208,7 +208,7 @@ const StudySummary = () => {
           </div>
         </CardContentRow>
 
-        <StudySubjects studyPrefix={study?.dittiId || ""} canViewTaps={canViewTaps} />
+        <StudySubjects study={study || {} as Study} canViewTaps={canViewTaps} />
       </Card>
 
       <Card width="sm">

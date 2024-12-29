@@ -1,4 +1,4 @@
-import { ResponseBody } from "./interfaces";
+import { IStudySubjectDetails, ResponseBody } from "./interfaces";
 
 // TODO: Find out what this was meant for
 // const crossorigin = Boolean(process.env.CROSSORIGIN);
@@ -139,3 +139,18 @@ export const getAccess = async (
   const res: ResponseBody = await makeRequest(url);
   if (res.msg !== "Authorized") throw new Error("Unauthorized");
 };
+
+
+export const getStartAndExpiryTimes = (
+  studySubject: IStudySubjectDetails,
+  studyId?: number,
+) => {
+  const currStudy = studySubject.studies.find(s => s.study.id == studyId || -1);
+  const startTime = currStudy
+    ? currStudy.startsOn.replace("Z", "")
+    : (new Date()).toISOString().replace("Z", "");
+  const expTime = currStudy
+    ? currStudy.expiresOn.replace("Z", "")
+    : studySubject.expTime.replace("Z", "");
+  return { startTime, expTime }
+}

@@ -41,6 +41,8 @@ export default function CoordinatorStudySubjectProvider({
     userDetails: UserDetails[]
   ): IStudySubjectDetails[] => {
     const result: IStudySubjectDetails[] = [];
+    console.log("studySubjects", studySubjects)
+    console.log("userDetails", userDetails)
 
     // Get all unique Ditti IDs in the database and on AWS
     const ids = new Set([

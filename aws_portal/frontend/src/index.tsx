@@ -35,6 +35,8 @@ import WearableStudySummary from "./components/wearableDashboard/wearableStudySu
 import WearableVisuals from "./components/wearableDashboard/wearableVisuals";
 import StudiesView from "./components/dittiApp/studiesView";
 import Apps from "./components/apps";
+import AudioFiles from "./components/dittiApp/audioFiles";
+import AudioFileUpload from "./components/dittiApp/audioFileUpload";
 
 /**
  * Root component wrapped with AuthProvider for authentication context.
@@ -151,6 +153,14 @@ const router = createBrowserRouter([
             element: <DittiAppDashboard />,
             children: [
               {
+                path: "audio",
+                element: <AudioFiles />
+              },
+              {
+                path: "audio/upload",
+                element: <AudioFileUpload />
+              },
+              {
                 path: "studies",
                 element: <StudiesView />,
               },
@@ -177,7 +187,7 @@ const router = createBrowserRouter([
             ]
           },
           {
-            path: "wearables",
+            path: "wearable",
             element: <WearableDashboard />,
             children: [
               {

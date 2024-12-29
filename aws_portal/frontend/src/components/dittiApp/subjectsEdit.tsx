@@ -10,7 +10,7 @@ import {
   UserDetails,
   ViewProps
 } from "../../interfaces";
-import { makeRequest } from "../../utils";
+import { getStartAndExpiryTimes, makeRequest } from "../../utils";
 import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
 import Select from "../fields/select";
@@ -117,14 +117,7 @@ const SubjectsEdit = () => {
       (ast: AboutSleepTemplate) => ast.text === studySubject.information
     )[0];
     if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
-
-    const currStudy = studySubject.studies.find(s => s.study.id == studyId);
-    const startTime = currStudy
-      ? currStudy.startsOn.replace("Z", "")
-      : (new Date()).toISOString().replace("Z", "");
-    const expTime = currStudy
-      ? currStudy.startsOn.replace("Z", "")
-      : studySubject.expTime.replace("Z", "");
+    const { startTime, expTime } = getStartAndExpiryTimes(studySubject, studyId);
 
     return {
       tapPermission: studySubject.tapPermission,

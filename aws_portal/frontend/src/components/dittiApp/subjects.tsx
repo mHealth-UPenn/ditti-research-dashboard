@@ -23,8 +23,8 @@ import { useStudiesContext } from "../../contexts/studiesContext";
 
 const Subjects = () => {
   const [searchParams] = useSearchParams();
-  const id = searchParams.get("id");
-  const studyId = id ? parseInt(id) : 0;
+  const sid = searchParams.get("sid");
+  const studyId = sid ? parseInt(sid) : 0;
 
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
@@ -114,7 +114,7 @@ const Subjects = () => {
           <>
             {/* if the studySubject has tap permission, link to a subject visuals page */}
             {(studySubject.tapPermission && canViewTaps) ? (
-              <Link to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}`}>
+              <Link to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${studyId}`}>
                 <LinkComponent>
                   {studySubject.dittiId}
                 </LinkComponent>
@@ -156,15 +156,19 @@ const Subjects = () => {
         contents: (
           <div className="flex w-full h-full">
             {/* if the user can edit, link to the edit subject page */}
-            <Link to={`/coordinator/ditti/participants/edit?dittiId=${studySubject.dittiId}`}>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-full flex-grow"
-                disabled={!(canEdit || APP_ENV === "demo")}>
-                  Edit
-              </Button>
-            </Link>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-full flex-grow"
+              disabled={!(canEdit || APP_ENV === "demo")}
+              fullWidth={true}
+              fullHeight={true}>
+                <Link
+                  className="w-full h-full flex items-center justify-center"
+                  to={`/coordinator/ditti/participants/edit?dittiId=${studySubject.dittiId}&sid=${studyId}`}>
+                    Edit
+                </Link>
+            </Button>
           </div>
         ),
         searchValue: "",
@@ -177,7 +181,7 @@ const Subjects = () => {
 
   // if the user can enroll subjects, include an enroll button
   const tableControl =
-    <Link to="/coordinator/ditti/participants/enroll">
+    <Link to={`/coordinator/ditti/participants/enroll?sid=${studyId}`}>
       <Button
         disabled={!(canCreate || APP_ENV === "demo")}
         rounded={true}>

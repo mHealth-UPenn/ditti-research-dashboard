@@ -196,7 +196,7 @@ const AudioFiles = () => {
 
   // if the user can enroll subjects, include an enroll button
   const tableControl =
-    <Link to="/coordinator/ditti/audio-files/upload">
+    <Link to="/coordinator/ditti/audio/upload">
       <Button
         variant="primary"
         disabled={!(canCreateAudioFiles || APP_ENV === "demo")}

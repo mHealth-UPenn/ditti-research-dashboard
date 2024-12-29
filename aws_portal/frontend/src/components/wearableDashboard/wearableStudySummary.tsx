@@ -149,7 +149,7 @@ export default function WearableStudySummary() {
           <Title>Active Subjects</Title>
           <div className="flex">
             {(canCreate || APP_ENV === "demo") &&
-              <Link to="/coordinator/wearable/participants/enroll">
+              <Link to={`/coordinator/wearable/participants/enroll?sid=${studyId}`}>
                 <Button
                   className="mr-2"
                   rounded={true}>

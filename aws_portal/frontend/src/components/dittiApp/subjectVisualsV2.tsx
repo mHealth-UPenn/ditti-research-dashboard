@@ -181,7 +181,7 @@ const SubjectVisualsV2 = () => {
                 Download Excel
             </Button>
             {/* if the user can edit, show the edit button */}
-            <Link to={`/coordinator/ditti/participants/edit?dittiId=${dittiId}`}>
+            <Link to={`/coordinator/ditti/participants/edit?dittiId=${dittiId}&sid=${studyId}`}>
               <Button
                 variant="secondary"
                 disabled={!(canEdit || APP_ENV === "demo")}
