@@ -36,15 +36,13 @@ const SubjectsEdit = () => {
   const [searchParams] = useSearchParams();
   const sid = searchParams.get("sid");
   const studyId = sid ? parseInt(sid) : 0;
-  const dittiId = searchParams.get("dittiId");
+  const dittiId = searchParams.get("dittiId") || "";
 
   const [tapPermission, setTapPermission] = useState(false);
   const [information, setInformation] = useState("");
   const [userPermissionId, setUserPermissionId] = useState("");
   const [startTime, setStartTime] = useState("");
   const [expTime, setExpTime] = useState("");
-  const [teamEmail, setTeamEmail] = useState("");
-  const [createdAt, setCreatedAt] = useState("");
 
   const [aboutSleepTemplates, setAboutSleepTemplates] = useState<AboutSleepTemplate[]>([]);
   const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] = useState<AboutSleepTemplate>({} as AboutSleepTemplate);
@@ -52,9 +50,10 @@ const SubjectsEdit = () => {
   const previewRef = createRef<HTMLDivElement>();
   
   const { studiesLoading, getStudyById } = useStudiesContext();
-  const { getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
 
   const study = getStudyById(studyId);
+  const studySubject = getStudySubjectByDittiId(dittiId);
 
   useEffect(() => {
     if (previewRef.current && information !== "") {
@@ -63,21 +62,24 @@ const SubjectsEdit = () => {
   }, [previewRef]);
 
   useEffect(() => {
+    if (studySubject) {
+      // get the form's prefill
+      const prefill = getPrefill(studySubject);
+      setTapPermission(prefill.tapPermission);
+      setInformation(prefill.information);
+      setUserPermissionId(prefill.dittiId);
+      setExpTime(prefill.expTime);
+    }
+  }, [studySubject]);
+
+  useEffect(() => {
     // get all about sleep templates
     const fetchTemplates = makeRequest("/db/get-about-sleep-templates").then(
       (templates: AboutSleepTemplate[]) => setAboutSleepTemplates(templates)
     );
-
-    // get the form's prefill
-    const prefill = getPrefill();
-    setTapPermission(prefill.tapPermission);
-    setInformation(prefill.information);
-    setUserPermissionId(prefill.dittiId);
-    setExpTime(prefill.expTime);
-
     // when all promises finish, hide the loader
     Promise.all([fetchTemplates]).then(() => setLoading(false));
-  }, [dittiId]);
+  }, []);
 
   useEffect(() => {
     if (previewRef.current) {
@@ -93,30 +95,12 @@ const SubjectsEdit = () => {
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = (): StudySubjectPrefill => {
-    if (dittiId) {
-      return makePrefill(getStudySubjectByDittiId(dittiId));
-    }
-
-    return {
-      tapPermission: false,
-      information: "",
-      dittiId: "",
-      startTime: (new Date()).toISOString().replace("Z", ""),
-      expTime: "",
-    }
-  };
-
-  /**
-   * Map the data returned from the backend to form prefill data
-   * @param res - the response body
-   * @returns - the form prefill data
-   */
-  const makePrefill = (studySubject: IStudySubjectDetails): StudySubjectPrefill => {
+  const getPrefill = (studySubject: IStudySubjectDetails): StudySubjectPrefill => {
     const selectedTemplate = aboutSleepTemplates.filter(
       (ast: AboutSleepTemplate) => ast.text === studySubject.information
     )[0];
     if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
+
     const { startTime, expTime } = getStartAndExpiryTimes(studySubject, studyId);
 
     return {
@@ -138,7 +122,7 @@ const SubjectsEdit = () => {
       information: aboutSleepTemplateSelected.text,
       user_permission_id: userPermissionId,
       exp_time: expTime,
-      team_email: teamEmail
+      team_email: study?.email
     };
 
     const id = dittiId;
@@ -217,7 +201,7 @@ const SubjectsEdit = () => {
   // if dittiId is 0, the user is enrolling a new subject
   const buttonText = dittiId ? "Update" : "Create";
 
-  if (loading || studiesLoading) {
+  if (loading || studiesLoading || studySubjectLoading) {
     return (
       <FormView>
         <Form>

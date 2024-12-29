@@ -135,25 +135,8 @@ export default function CoordinatorStudySubjectProvider({
     });
   }, []);
 
-  const getStudySubjectByDittiId = (id: string): IStudySubjectDetails => {
-    const studySubjectsFiltered = studySubjects.filter(ss => ss.dittiId === id);
-
-    if (studySubjectsFiltered.length) {
-      return studySubjectsFiltered[0];
-    }
-
-    return {
-      id: -1,
-      createdOn: "",
-      dittiId: "",
-      studies: [],
-      apis: [],
-      tapPermission: false,
-      information: "",
-      expTime: "",
-      teamEmail: "",
-      createdAt: "",
-    }
+  const getStudySubjectByDittiId = (dittiId: string): IStudySubjectDetails | undefined => {
+    return studySubjects.find(ss => ss.dittiId === dittiId);
   }
 
   return (

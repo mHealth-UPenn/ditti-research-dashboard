@@ -121,7 +121,7 @@ const SubjectVisualsV2 = () => {
     });
   };
 
-  const expTimeDate = new Date(studySubject.expTime);
+  const expTimeDate = studySubject ? new Date(studySubject.expTime) : new Date();
   const expTimeAdjusted = new Date(
     expTimeDate.getTime() - expTimeDate.getTimezoneOffset() * 60000
   );

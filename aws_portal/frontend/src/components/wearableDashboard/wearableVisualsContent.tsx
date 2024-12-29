@@ -71,7 +71,9 @@ export default function WearableVisualsContent({
   const studySubject = getStudySubjectByDittiId(dittiId);
 
   // Use the last `expiresOn` as the date of last data collection
-  const endDate = new Date(Math.max(...studySubject.studies.map(s => new Date(s.expiresOn).getTime())));
+  const endDate = studySubject
+    ? new Date(Math.max(...studySubject.studies.map(s => new Date(s.expiresOn).getTime())))
+    : new Date();
   const dateOpts: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
@@ -99,7 +101,7 @@ export default function WearableVisualsContent({
 
   // Download the current participant's data in Excel format.
   const downloadExcel = async (): Promise<void> => {
-    const url = `/admin/fitbit_data/download/participant/${studySubject.dittiId}?app=3`;
+    const url = `/admin/fitbit_data/download/participant/${studySubject?.dittiId}?app=3`;
     const res = await downloadExcelFromUrl(url);
     // if (res) {
     //   flashMessage(<span>{res}</span>, "danger");
@@ -144,7 +146,7 @@ export default function WearableVisualsContent({
 
             {/* The participant's details */}
             <div className="flex flex-col mb-4 lg:mb-0">
-              <Title>{studySubject.dittiId}</Title>
+              <Title>{studySubject?.dittiId}</Title>
               <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
             </div>
 
@@ -160,7 +162,7 @@ export default function WearableVisualsContent({
                     Download Excel
                 </Button>
                 {/* if the user can edit, show the edit button */}
-                <Link to={`/coordinator/wearable/participants/edit?dittiId=${studySubject.dittiId}&sid=${studyId}`}>
+                <Link to={`/coordinator/wearable/participants/edit?dittiId=${studySubject?.dittiId}&sid=${studyId}`}>
                   <Button
                     variant="secondary"
                     disabled={!(canEdit || APP_ENV === "demo")}
@@ -193,7 +195,7 @@ export default function WearableVisualsContent({
           <WearableVisualization
             showDayControls={true}
             showTapsData={canViewTaps}
-            dittiId={studySubject.dittiId}
+            dittiId={studySubject?.dittiId}
             horizontalPadding={md} />
         </CardContentRow>
       </Card>

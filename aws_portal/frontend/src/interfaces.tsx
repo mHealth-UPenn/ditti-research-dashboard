@@ -376,7 +376,7 @@ export interface StudySubjectContextType {
 export interface CoordinatorStudySubjectContextType {
   studySubjects: IStudySubjectDetails[];
   studySubjectLoading: boolean;
-  getStudySubjectByDittiId: (id: string) => IStudySubjectDetails;
+  getStudySubjectByDittiId: (id: string) => IStudySubjectDetails | undefined;
 }
 
 
