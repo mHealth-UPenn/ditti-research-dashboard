@@ -28,6 +28,8 @@ export default function StudiesProvider({
   const [studiesLoading, setStudiesLoading] = useState(true);
   const { setStudyCrumb } = useNavbarContext();
 
+  const appSlug = app === 2 ? "ditti" : "wearable";
+
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
       return new DataFactory();
@@ -60,7 +62,7 @@ export default function StudiesProvider({
         const study = studies.find(s => s.id === studyId);
         if (study) {
           setStudy(study);
-          setStudyCrumb({ name: study.acronym, link: `/coordinator/ditti/study?sid=${study.id}` });
+          setStudyCrumb({ name: study.acronym, link: `/coordinator/${appSlug}/study?sid=${study.id}` });
         }
         setStudiesLoading(false)
       });

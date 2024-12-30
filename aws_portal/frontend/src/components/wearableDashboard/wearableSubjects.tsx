@@ -2,7 +2,7 @@ import SubjectsContent from "../subjects/subjectsContent";
 
 
 const WearableSubjects = () => {
-  return <SubjectsContent app={"wearable"} />;
+  return <SubjectsContent app={3} />;
 };
 
 

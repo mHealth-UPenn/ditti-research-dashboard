@@ -19,7 +19,7 @@ import { useStudiesContext } from "../../contexts/studiesContext";
 
 
 interface ISubjectsContentProps {
-  app: "ditti" | "wearable";
+  app: 2 | 3;
 }
 
 
@@ -27,10 +27,13 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
+  const [canViewWearableData, setCanViewWearableData] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   
   const { studiesLoading, study } = useStudiesContext();
   const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
+
+  const appSlug = app === 2 ? "ditti" : "wearable";
 
   const filteredStudySubjects = studySubjects.filter(
     ss => ss.dittiId.startsWith(study?.dittiId || "undefined")  // TODO: use regex instead
@@ -77,29 +80,31 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
 
   useEffect(() => {
     if (study) {
-      // get whether the user can enroll subjects
       const promises: Promise<any>[] = [];
       promises.push(
-        getAccess(2, "Create", "Participants", study.id)
+        getAccess(app, "Create", "Participants", study.id)
           .then(() => setCanCreate(true))
           .catch(() => setCanCreate(false))
       );
 
-      // get whether the user can edit subjects
       promises.push(
-        getAccess(2, "Edit", "Participants", study.id)
+        getAccess(app, "Edit", "Participants", study.id)
           .then(() => setCanEdit(true))
           .catch(() => setCanEdit(false))
       );
 
-      // get whether the user can edit subjects
       promises.push(
-        getAccess(2, "View", "Taps", study.id)
+        getAccess(app, "View", "Taps", study.id)
           .then(() => setCanViewTaps(true))
           .catch(() => setCanViewTaps(false))
       );
 
-      // when all promises complete, hide the loader
+      promises.push(
+        getAccess(app, "View", "Wearable Data", study.id)
+          .then(() => setCanViewWearableData(true))
+          .catch(() => setCanViewWearableData(false))
+      );
+
       Promise.all(promises).then(() => setLoading(false));
     }
   }, [study]);
@@ -119,16 +124,20 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
       {
         contents: (
           <>
-            {/* if the studySubject has tap permission, link to a subject visuals page */}
-            {(studySubject.tapPermission && canViewTaps) ? (
-              <Link to={`/coordinator/${app}/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
-                <LinkComponent>
-                  {studySubject.dittiId}
-                </LinkComponent>
-              </Link>
-            ) : (
-              studySubject.dittiId
-            )}
+            {(app === 2 && studySubject.tapPermission && canViewTaps)
+              ? <Link to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
+                  <LinkComponent>
+                    {studySubject.dittiId}
+                  </LinkComponent>
+                </Link>
+              : canViewWearableData
+                ? <Link to={`/coordinator/wearable/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
+                    <LinkComponent>
+                      {studySubject.dittiId}
+                    </LinkComponent>
+                  </Link>
+                : studySubject.dittiId
+            }
           </>
         ),
         searchValue: studySubject.dittiId,
@@ -181,7 +190,7 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
               fullHeight={true}>
                 <Link
                   className="w-full h-full flex items-center justify-center"
-                  to={`/coordinator/${app}/participants/edit?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
+                  to={`/coordinator/${appSlug}/participants/edit?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
                     Edit
                 </Link>
             </Button>
@@ -197,7 +206,7 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
 
   // if the user can enroll subjects, include an enroll button
   const tableControl =
-    <Link to={`/coordinator/${app}/participants/enroll?sid=${study?.id}`}>
+    <Link to={`/coordinator/${appSlug}/participants/enroll?sid=${study?.id}`}>
       <Button
         disabled={!(canCreate || APP_ENV === "demo")}
         rounded={true}>
@@ -207,11 +216,11 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
 
 if (loading || studiesLoading || studySubjectLoading) {
   return (
-    <ViewContainer>
-      <Card>
+    <ListView>
+      <ListContent>
         <SmallLoader />
-      </Card>
-    </ViewContainer>
+      </ListContent>
+    </ListView>
   );
 }
 

@@ -2,7 +2,7 @@ import SubjectsContent from "../subjects/subjectsContent";
 
 
 const Subjects = () => {
-  return <SubjectsContent app={"ditti"} />;
+  return <SubjectsContent app={2} />;
 };
 
 
