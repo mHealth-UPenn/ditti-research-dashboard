@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../cards/card';
 import CardContentRow from '../cards/cardContentRow';
@@ -9,9 +10,12 @@ import { ParticipantWearableDataProvider } from '../../contexts/wearableDataCont
 import WearableVisualization from '../visualizations/wearableVisualization';
 import { useStudySubjectContext } from '../../contexts/studySubjectContext';
 import { SmallLoader } from '../loader';
-
+import ConsentModal from '../containers/consentModal'
 
 const ParticipantDashboardContent = () => {
+  const [isConsentOpen, setIsConsentOpen] = useState<boolean>(false);
+  const [consentError, setConsentError] = useState<string>("");
+
   const { dittiId } = useAuth();
   const { studies, apis, studySubjectLoading } = useStudySubjectContext();
 
@@ -35,6 +39,28 @@ const ParticipantDashboardContent = () => {
     window.location.href = "https://hosting.med.upenn.edu/forms/DittiApp/view.php?id=10677";
   };
 
+  // Handlers for Consent Modal actions
+  const handleConsentAccept = () => {
+    setIsConsentOpen(false);
+    setConsentError('');
+    handleRedirect();
+  };
+
+  const handleConsentDeny = () => {
+    setIsConsentOpen(false);
+    setConsentError('You must consent to connect your FitBit data.');
+  };
+
+  const handleConsentClose = () => {
+    setIsConsentOpen(false);
+    setConsentError('You must choose an option to continue.');
+  };
+
+  // Handler for Connect FitBit button click
+  const handleConnectFitBitClick = () => {
+    setIsConsentOpen(true);
+  };
+
   if (studySubjectLoading) {
     return (
       <>
@@ -53,15 +79,24 @@ const ParticipantDashboardContent = () => {
       <Card width="md">
 
         {/* Title */}
-        <CardContentRow>
+        <CardContentRow className="justify-between">
           <Title>Your User ID: {dittiId}</Title>
-          {!fitbitConnected &&
-            // Button for connecting Fitbit if not connected already
-            <Button onClick={handleRedirect} rounded={true}>Connect FitBit</Button>
-          }
+          {!fitbitConnected && (
+            <div className="flex flex-col items-end relative">
+              <Button onClick={handleConnectFitBitClick} rounded={true}>
+                Connect FitBit
+              </Button>
+              {/* Error message without reserving space */}
+              {consentError && (
+                <span className="absolute top-full mt-2 text-red-500 text-sm right-0">
+                  {consentError}
+                </span>
+              )}
+            </div>
+          )}
+        </CardContentRow>
 
         {/* Information to display if the Fitbit API is connected */}
-        </CardContentRow>
         {fitbitConnected &&
           <>
             <CardContentRow>
@@ -124,12 +159,26 @@ const ParticipantDashboardContent = () => {
           </CardContentRow>
           <CardContentRow>
             <div className="flex flex-col">
-              <RouterLink className="link" to={{ pathname: "/terms-of-use" }}>Terms of Use</RouterLink>
-              <RouterLink className="link" to={{ pathname: "/privacy-policy" }}>Privacy Policy</RouterLink>
+              <RouterLink className="link" to="/terms-of-use">Terms of Use</RouterLink>
+              <RouterLink className="link" to="/privacy-policy">Privacy Policy</RouterLink>
             </div>
           </CardContentRow>
         </Card>
       }
+
+      {/* Consent Modal */}
+      <ConsentModal
+        isOpen={isConsentOpen}
+        onAccept={handleConsentAccept}
+        onDeny={handleConsentDeny}
+        onClose={handleConsentClose}
+        contentHtml={`
+          <p>
+            By accepting, you agree that your data will be used solely for 
+            research purposes described in our terms. You can withdraw consent at any time.
+          </p>
+        `}
+      />
     </>
   );
 };
