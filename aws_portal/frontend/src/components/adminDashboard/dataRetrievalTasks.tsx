@@ -135,9 +135,7 @@ const DataRetrievalTasks: React.FC<ViewProps> = ({ flashMessage, goBack, handleC
         },
         {
           contents: task.logFile ? (
-            <a href={task.logFile} target="_blank" rel="noopener noreferrer">
-              {task.logFile}
-            </a>
+            <span>{task.logFile}</span>
           ) : (
             <span>N/A</span>
           ),
