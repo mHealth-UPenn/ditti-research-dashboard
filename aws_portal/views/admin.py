@@ -1455,6 +1455,7 @@ def study_subject_create():
             studies: [
                 {
                     id: int,
+                    starts_on: str (optional),
                     expires_on: str (optional),
                     did_consent: bool
                 },

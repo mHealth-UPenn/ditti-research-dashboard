@@ -108,8 +108,11 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       const expiresOn = new Date();
       const expiryDelta = study?.defaultExpiryDelta || 14;
       expiresOn.setDate(expiresOn.getDate() + expiryDelta);
+      const dittiExpTime = new Date(expiresOn);
+      dittiExpTime.setDate(dittiExpTime.getDate() + 1);
       setEnrollmentStart(startsOn);
       setEnrollmentEnd(expiresOn);
+      setDittiExpTime(dittiExpTime);
     }
   }, [studySubject]);
 
@@ -145,19 +148,42 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       team_email: study?.email
     };
 
-    const id = dittiId;
-    const body = {
-      app: 2,  // Ditti Dashboard = 2
+    const bodyAWS = {
+      app: app === "ditti" ? 2 : 3,
       study: study?.id || 0,
-      ...(id ? { user_permission_id: id, edit: dataAWS } : { create: dataAWS })
+      ...(dittiId ? { user_permission_id: dittiId, edit: dataAWS } : { create: dataAWS })
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
-    const url = id ? "/aws/user/edit" : "/aws/user/create";
+    const optsAWS = { method: "POST", body: JSON.stringify(bodyAWS) };
+    const urlAWS = dittiId ? "/aws/user/edit" : "/aws/user/create";
+    const postAWS = makeRequest(urlAWS, optsAWS);
 
-    await makeRequest(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    const dataDB = {
+      ditti_id: userPermissionId,
+      studies: [
+        {
+          id: study?.id || 0,
+          starts_on: enrollmentStart.toISOString(),
+          expires_on: enrollmentEnd.toISOString(),
+        }
+      ]
+    }
+
+    const bodyDB = {
+      app: app === "ditti" ? 2 : 3,
+      study: study?.id || 0,
+      ...(studySubject ? { id: studySubject.id, edit: dataDB } : { create: dataDB })
+    };
+
+    const optsDB = { method: "POST", body: JSON.stringify(bodyDB) };
+    const urlDB = studySubject ? "/admin/study_subject/edit" : "/admin/study_subject/create";
+    const postDB = makeRequest(urlDB, optsDB);
+
+    const promises: Promise<ResponseBody>[] = [postAWS, postDB];
+    console.log(promises);
+    Promise.all(promises)
+      .then(([resAWS, _]) => handleSuccess(resAWS))
+      .catch(error => handleFailure(error))
   };
 
   /**

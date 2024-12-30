@@ -37,7 +37,6 @@ export default function FlashMessageContextProvider({
 
   const closeMessage = (id: number) => {
     setFlashMessages(prevFlashMessages => {
-      console.log("id", id)
       let updatedFlashMessages = [...prevFlashMessages];
       updatedFlashMessages = updatedFlashMessages.filter((fm) => fm.id != id);
       return updatedFlashMessages;

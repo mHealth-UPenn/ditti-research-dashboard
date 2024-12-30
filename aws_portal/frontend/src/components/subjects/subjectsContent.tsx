@@ -44,7 +44,7 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
       width: 15
     },
     {
-      name: "Ditti ID Expires On",
+      name: "Ditti ID Expiry Date",
       searchable: false,
       sortable: true,
       width: 20
