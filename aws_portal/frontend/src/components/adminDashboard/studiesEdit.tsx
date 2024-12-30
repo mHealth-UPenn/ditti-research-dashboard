@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, createRef } from "react";
 import TextField from "../fields/textField";
 import { ResponseBody, Study, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
@@ -13,6 +13,7 @@ import FormSummaryTitle from "../text/formSummaryTitle";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
+import sanitize from "sanitize-html";
 
 interface StudiesEditProps extends ViewProps {
   studyId: number;
@@ -28,8 +29,9 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
   const [dataSummary, setDataSummary] = useState<string>("");
   const [isQi, setIsQi] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-
   const [expiryError, setExpiryError] = useState<string>("");
+
+  const consentPreviewRef = createRef<HTMLDivElement>();
 
   useEffect(() => {
     // Fetch prefill data if editing an existing study
@@ -61,6 +63,13 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
 
     fetchPrefill();
   }, [studyId, flashMessage]);
+
+  // Sanitize and set consentInformation in the preview
+  useEffect(() => {
+    if (consentPreviewRef.current && consentInformation !== "") {
+      consentPreviewRef.current.innerHTML = sanitize(consentInformation);
+    }
+  }, [consentInformation, consentPreviewRef]);
 
   /**
    * Get the form prefill if editing
@@ -340,8 +349,8 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
             &nbsp;&nbsp;&nbsp;&nbsp;{isQi ? "Yes" : "No"}
             <br /><br />
             <b>Consent Information:</b><br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{consentInformation}
-            <br /><br />
+            <div ref={consentPreviewRef} className="ml-4" />
+            <br />
             <b>Data Summary:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{dataSummary}
             <br />
