@@ -141,16 +141,23 @@ export const getAccess = async (
 };
 
 
-export const getStartAndExpiryTimes = (
+export const getStartOnAndExpiresOnForStudy = (
   studySubject: IStudySubjectDetails,
   studyId?: number,
 ) => {
   const currStudy = studySubject.studies.find(s => s.study.id == studyId || -1);
-  const startTime = currStudy
-    ? currStudy.startsOn.replace("Z", "")
-    : (new Date()).toISOString().replace("Z", "");
-  const expTime = currStudy
-    ? currStudy.expiresOn.replace("Z", "")
-    : studySubject.expTime.replace("Z", "");
-  return { startTime, expTime }
+
+  if (currStudy) {
+    const { startsOn, expiresOn } = currStudy;
+    return { startsOn, expiresOn };
+  }
+
+  const startTime = new Date();
+  const endTime = new Date();
+  endTime.setDate(endTime.getDate() + 14);
+
+  return {
+    startsOn: startTime.toISOString(),
+    expiresOn: endTime.toISOString()
+  };
 }

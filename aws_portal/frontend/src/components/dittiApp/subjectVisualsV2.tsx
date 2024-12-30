@@ -3,7 +3,7 @@ import { differenceInMilliseconds, format } from "date-fns";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import "./subjectVisuals.css";
-import { getAccess } from "../../utils";
+import { getAccess, getStartOnAndExpiresOnForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
 import TimestampHistogram from "../visualizations/timestampHistogram";
 import VisualizationController from "../visualizations/visualizationController";
@@ -21,6 +21,7 @@ import { APP_ENV } from "../../environment";
 import { Link, useSearchParams } from "react-router-dom";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { useStudiesContext } from "../../contexts/studiesContext";
+import { IStudySubjectDetails } from "../../interfaces";
 
 
 const SubjectVisualsV2 = () => {
@@ -49,6 +50,7 @@ const SubjectVisualsV2 = () => {
   }, [studyId]);
 
   const studySubject = getStudySubjectByDittiId(dittiId);
+  const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject || {} as IStudySubjectDetails, study?.id || 0);
   const filteredTaps = taps.filter((t) => t.dittiId === dittiId);
   const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === dittiId);
 
@@ -117,23 +119,15 @@ const SubjectVisualsV2 = () => {
     });
   };
 
-  const expTimeDate = studySubject ? new Date(studySubject.expTime) : new Date();
-  const expTimeAdjusted = new Date(
-    expTimeDate.getTime() - expTimeDate.getTimezoneOffset() * 60000
-  );
-
-  const dateOpts = {
+  const dateOpts: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
+    // hour: "numeric",
+    // minute: "2-digit"
   };
 
-  const expTimeFormatted = expTimeAdjusted.toLocaleDateString(
-    "en-US",
-    dateOpts as Intl.DateTimeFormatOptions
-  );
+  const expTime = (new Date(expiresOn)).toLocaleDateString("en-US", dateOpts);
 
   if (loading || studiesLoading || dataLoading || studySubjectLoading) {
     return (
@@ -152,7 +146,7 @@ const SubjectVisualsV2 = () => {
         <CardContentRow>
           <div className="flex flex-col">
             <Title>{dittiId}</Title>
-            <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
+            <Subtitle>Enrollment ends on: {expTime}</Subtitle>
           </div>
 
           <div className="flex flex-col md:flex-row">

@@ -1,5 +1,5 @@
 import React from "react";
-import { IStudySubject, Study } from "../../interfaces";
+import { IStudySubject, IStudySubjectDetails, Study } from "../../interfaces";
 import { differenceInDays } from "date-fns";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
@@ -7,6 +7,8 @@ import LinkComponent from "../links/linkComponent";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
 import { SmallLoader } from "../loader";
+import { getStartOnAndExpiresOnForStudy } from "../../utils";
+import { useStudiesContext } from "../../contexts/studiesContext";
 
 
 /**
@@ -25,14 +27,14 @@ export default function WearableStudySubjects({
   canViewWearableData,
 }: WearableStudySubjectsProps) {
   const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
+  const { study } = useStudiesContext();
 
   // Get only study subjects with prefixes that equal the current study's prefix
   const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));
 
-  const getSubjectSummary = (subject: IStudySubject): React.ReactElement => {
-    // Use the last `expiresOn` date as the date of last data collection
-    const endDate = new Date(Math.max(...subject.studies.map(s => new Date(s.expiresOn).getTime())));
-    const expiresOn = differenceInDays(endDate, new Date());
+  const getSubjectSummary = (subject: IStudySubjectDetails): React.ReactElement => {
+    const { expiresOn } = getStartOnAndExpiresOnForStudy(subject, study?.id || 0);
+    const expiresOnDiff = differenceInDays(new Date(expiresOn), new Date());
 
     return (
       <CardContentRow
@@ -54,7 +56,7 @@ export default function WearableStudySubjects({
                 <span>{subject.dittiId}</span>
               }
             </div>
-            <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
+            <i className="w-max">Enrollment ends in: {expiresOnDiff ? expiresOnDiff + " days" : "Today"}</i>
           </div>
 
           {/* A list of connected APIs for the current study subject */}

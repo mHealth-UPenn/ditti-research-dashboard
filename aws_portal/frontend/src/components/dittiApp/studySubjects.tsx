@@ -7,7 +7,7 @@ import LinkComponent from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
-import { getStartAndExpiryTimes } from "../../utils";
+import { getStartOnAndExpiresOnForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
 
 /**
@@ -34,10 +34,10 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
     let summaryTaps: React.ReactElement[];
     let totalTaps = 0;
 
-    const { expTime } = getStartAndExpiryTimes(studySubject, study.id);
+    const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study.id);
 
     // Skip expired participants
-    if (new Date() >= new Date(expTime)) {
+    if (new Date() >= new Date(expiresOn)) {
       return;
     }
 
@@ -112,7 +112,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
     }
 
     // get the number of days until the user's id expires
-    const expiresOn = differenceInDays(new Date(expTime), new Date());
+    const expiresOnDiff = differenceInDays(new Date(expiresOn), new Date());
 
     summaries.push(
       <CardContentRow
@@ -132,7 +132,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
                 <span>{studySubject.dittiId}</span>
               }
             </div>
-            <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
+            <i className="w-max">Enrollment ends in: {expiresOnDiff ? expiresOnDiff + " days" : "Today"}</i>
             {/* summary tap data */}
           </div>
 

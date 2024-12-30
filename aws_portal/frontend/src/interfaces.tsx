@@ -410,7 +410,7 @@ export interface IStudySubjectDetails {
   apis: ApiJoin[];
   tapPermission: boolean;
   information: string;
-  expTime: string;
+  dittiExpTime: string;
   teamEmail: string;
   createdAt: string;
 }

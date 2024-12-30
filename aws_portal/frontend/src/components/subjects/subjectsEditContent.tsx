@@ -6,7 +6,7 @@ import {
   ResponseBody,
   StudySubjectPrefill,
 } from "../../interfaces";
-import { getStartAndExpiryTimes, makeRequest } from "../../utils";
+import { getStartOnAndExpiresOnForStudy, makeRequest } from "../../utils";
 import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
 import Select from "../fields/select";
@@ -36,8 +36,6 @@ interface ISubjectsEditContentProps {
 
 const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const [searchParams] = useSearchParams();
-  const sid = searchParams.get("sid");
-  const studyId = sid ? parseInt(sid) : 0;
   const dittiId = searchParams.get("dittiId") || "";
 
   const [tapPermission, setTapPermission] = useState(false);
@@ -106,7 +104,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     )[0];
     if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
 
-    const { startTime, expTime } = getStartAndExpiryTimes(studySubject, studyId);
+    const { startsOn, expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id || 0);
 
     return {
       tapPermission: studySubject.tapPermission,
@@ -133,7 +131,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     const id = dittiId;
     const body = {
       app: 2,  // Ditti Dashboard = 2
-      study: studyId,
+      study: study?.id || 0,
       ...(id ? { user_permission_id: id, edit: data } : { create: data })
     };
 

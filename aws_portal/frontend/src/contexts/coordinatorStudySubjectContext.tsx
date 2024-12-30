@@ -91,7 +91,7 @@ export default function CoordinatorStudySubjectProvider({
         apis: matchedStudySubject.apis,
         tapPermission: matchedUserDetail.tapPermission,
         information: matchedUserDetail.information,
-        expTime: matchedUserDetail.expTime,
+        dittiExpTime: matchedUserDetail.expTime,
         teamEmail: matchedUserDetail.teamEmail,
         createdAt: matchedUserDetail.createdAt,
       };
