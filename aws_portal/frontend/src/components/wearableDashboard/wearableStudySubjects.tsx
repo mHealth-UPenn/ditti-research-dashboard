@@ -1,11 +1,10 @@
 import React from "react";
-import { IStudySubject, Study, ViewProps } from "../../interfaces";
+import { IStudySubject, Study } from "../../interfaces";
 import { differenceInDays } from "date-fns";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
 import LinkComponent from "../links/linkComponent";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
-import WearableVisuals from "./wearableVisuals";
 import { Link } from "react-router-dom";
 import { SmallLoader } from "../loader";
 
@@ -34,19 +33,6 @@ export default function WearableStudySubjects({
     // Use the last `expiresOn` date as the date of last data collection
     const endDate = new Date(Math.max(...subject.studies.map(s => new Date(s.expiresOn).getTime())));
     const expiresOn = differenceInDays(endDate, new Date());
-
-    // const handleClickSubject = () =>
-    //   handleClick(
-    //     [subject.dittiId],
-    //     // TODO: Revise the current nav architecture so that navigating to new views can still access context
-    //     // The current nav architecture still relies on prop drilling for some views like this one
-    //     <WearableVisuals
-    //       flashMessage={flashMessage}
-    //       goBack={goBack}
-    //       handleClick={handleClick}
-    //       subject={subject}
-    //       studyDetails={studyDetails} />
-    //   );
 
     return (
       <CardContentRow
@@ -91,11 +77,6 @@ export default function WearableStudySubjects({
       </CardContentRow>
     );
   };
-
-  // all users whose ids have not expired
-  // const activeUsers = filteredUsers.filter(
-  //   (u: UserDetails) => new Date() < new Date(u.expTime)
-  // );
 
   if (studySubjectLoading) {
     return <SmallLoader />;

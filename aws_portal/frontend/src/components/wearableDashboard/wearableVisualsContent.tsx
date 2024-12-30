@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { IStudySubject, Study, ViewProps } from "../../interfaces";
+import { useState, useEffect } from "react";
 import { downloadExcelFromUrl, getAccess } from "../../utils";
 import { SmallLoader } from "../loader";
 import ViewContainer from "../containers/viewContainer";
@@ -15,6 +14,7 @@ import SyncIcon from '@mui/icons-material/Sync';
 import { Link } from "react-router-dom";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { useStudiesContext } from "../../contexts/studiesContext";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 
 /**
@@ -48,13 +48,11 @@ function useWindowDimensions() {
 
 
 interface IWearableVisualsContentProps {
-  // studyId: number;
   dittiId: string;
 }
 
 
 export default function WearableVisualsContent({
-  // studyId,
   dittiId,
 }: IWearableVisualsContentProps) {
   const [canEdit, setCanEdit] = useState(false);
@@ -66,8 +64,8 @@ export default function WearableVisualsContent({
   
   const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
   const { studiesLoading, study } = useStudiesContext();
+  const { flashMessage } = useFlashMessageContext();
 
-  // const study = getStudyById(studyId);
   const studySubject = getStudySubjectByDittiId(dittiId);
 
   // Use the last `expiresOn` as the date of last data collection
@@ -105,26 +103,10 @@ export default function WearableVisualsContent({
   const downloadExcel = async (): Promise<void> => {
     const url = `/admin/fitbit_data/download/participant/${studySubject?.dittiId}?app=3`;
     const res = await downloadExcelFromUrl(url);
-    // if (res) {
-    //   flashMessage(<span>{res}</span>, "danger");
-    // }
+    if (res) {
+      flashMessage(<span>{res}</span>, "danger");
+    }
   };
-
-  // Handle when the user clicks Edit Details
-  // const handleClickEditDetails = () =>
-  //   handleClick(
-  //     ["Edit"],
-  //     <React.Fragment />
-  //     // <SubjectsEdit
-  //     //   dittiId={user.userPermissionId}
-  //     //   studyId={studyDetails.id}
-  //     //   studyEmail={studyDetails.email}
-  //     //   studyPrefix={studyDetails.dittiId}
-  //     //   flashMessage={flashMessage}
-  //     //   goBack={goBack}
-  //     //   handleClick={handleClick}
-  //     // />
-  //   );
 
   // Custom breakpoint used only for managing certain visx properties
   const { width: windowWidth } = useWindowDimensions();

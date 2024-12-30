@@ -1,4 +1,3 @@
-import { PropsWithChildren } from "react";
 import CoordinatorStudySubjectProvider from "../../contexts/coordinatorStudySubjectContext";
 import { Outlet } from "react-router-dom";
 import StudiesProvider from "../../contexts/studiesContext";

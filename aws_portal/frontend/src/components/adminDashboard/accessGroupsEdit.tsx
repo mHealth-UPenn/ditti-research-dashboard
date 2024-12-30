@@ -7,7 +7,6 @@ import {
   App,
   Permission,
   ResponseBody,
-  ViewProps
 } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";

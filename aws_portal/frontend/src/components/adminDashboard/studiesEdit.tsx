@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import TextField from "../fields/textField";
-import { ResponseBody, Study, ViewProps } from "../../interfaces";
+import { ResponseBody, Study } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import FormView from "../containers/forms/formView";

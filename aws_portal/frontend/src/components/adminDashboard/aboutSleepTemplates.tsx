@@ -1,13 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {
-  AboutSleepTemplate,
-  ResponseBody,
-  ViewProps,
-} from "../../interfaces";
+import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
-import AboutSleepTemplatesEdit from "./aboutSleepTemplatesEdit";
 import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";

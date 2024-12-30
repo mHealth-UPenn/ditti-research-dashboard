@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import AccountsEdit from "./accountsEdit";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import Navbar from "./navbar";
 import { getAccess, makeRequest } from "../../utils";
-import { Account, ResponseBody, ViewProps } from "../../interfaces";
+import { Account, ResponseBody } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";

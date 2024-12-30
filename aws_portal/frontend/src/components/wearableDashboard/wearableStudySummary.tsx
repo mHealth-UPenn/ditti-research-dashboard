@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
-import { Study, ViewProps } from "../../interfaces";
+import { Study } from "../../interfaces";
 import { downloadExcelFromUrl, getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import Subjects from "../dittiApp/subjects";
-import SubjectsEdit from "../dittiApp/subjectsEdit";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
 import Title from "../text/title";
@@ -14,6 +12,7 @@ import { APP_ENV } from "../../environment";
 import WearableStudySubjects from "./wearableStudySubjects";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link, useSearchParams } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 
 /**
@@ -41,6 +40,8 @@ export default function WearableStudySummary() {
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
   const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
   const [loading, setLoading] = useState(true);
+
+  const { flashMessage } = useFlashMessageContext();
 
   // Get permissions and study information on load
   useEffect(() => {
@@ -77,38 +78,13 @@ export default function WearableStudySummary() {
   const downloadExcel = async (): Promise<void> => {
     const url = `/admin/fitbit_data/download/study/${studyId}?app=3`;
     const res = await downloadExcelFromUrl(url);
-    // if (res) {
-    //   flashMessage(<span>{res}</span>, "danger");
-    // }
+    if (res) {
+      flashMessage(<span>{res}</span>, "danger");
+    }
   };
 
   const { dittiId, email, name, acronym } = studyDetails;
   const { studySubjectLoading } = useCoordinatorStudySubjectContext();
-
-  // Handle when the user clicks Enroll Subject
-  // const handleClickEnrollSubject = () =>
-  //   handleClick(
-  //     ["Enroll"],
-  //     <SubjectsEdit
-  //       flashMessage={flashMessage}
-  //       dittiId=""
-  //       goBack={goBack}
-  //       handleClick={handleClick}
-  //       studyDetails={studyDetails}
-  //     />
-  //   );
-
-  // Handle when the user clicks View All Subjects
-  // const handleClickViewAllSubjects = () =>
-  //   handleClick(
-  //     ["Subjects"],
-  //     <Subjects
-  //       flashMessage={flashMessage}
-  //       goBack={goBack}
-  //       handleClick={handleClick}
-  //       studyDetails={studyDetails}
-  //     />
-  //   );
 
   if (loading || studySubjectLoading) {
     return (

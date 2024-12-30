@@ -8,7 +8,6 @@ import {
   ResponseBody,
   Role,
   Study,
-  ViewProps
 } from "../../interfaces";
 import Select from "../fields/select";
 import { makeRequest } from "../../utils";

@@ -1,7 +1,6 @@
 import React from "react";
-import { IStudySubjectDetails, Study, UserDetails, ViewProps } from "../../interfaces";
+import { Study } from "../../interfaces";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
-import SubjectVisuals from "./subjectVisualsV2";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
 import LinkComponent from "../links/linkComponent";
@@ -114,18 +113,6 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
 
     // get the number of days until the user's id expires
     const expiresOn = differenceInDays(new Date(expTime), new Date());
-
-    // const handleClickSubject = () =>
-    //   handleClick(
-    //     [studySubject.dittiId],
-    //     <SubjectVisuals
-    //       flashMessage={flashMessage}
-    //       goBack={goBack}
-    //       handleClick={handleClick}
-    //       studyDetails={studyDetails}
-    //       studySubject={studySubject}
-    //     />
-    //   );
 
     summaries.push(
       <CardContentRow

@@ -1,6 +1,6 @@
-import React, { createRef, useEffect, useState } from "react";
+import { createRef, useEffect, useState } from "react";
 import { makeRequest } from "../utils";
-import { AccountDetails, ViewProps } from "../interfaces";
+import { AccountDetails } from "../interfaces";
 import AccountMenu from "./accountMenu";
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';

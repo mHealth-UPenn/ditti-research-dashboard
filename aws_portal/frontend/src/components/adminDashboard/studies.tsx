@@ -1,10 +1,9 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { ResponseBody, Study, ViewProps } from "../../interfaces";
+import { ResponseBody, Study } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
-import StudiesEdit from "./studiesEdit";
 import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";

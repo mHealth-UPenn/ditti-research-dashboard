@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "./navbar";
 import Table, { Column, TableData } from "../table/table";
-import AccessGroupsEdit from "./accessGroupsEdit";
-import { AccessGroup, ResponseBody, ViewProps } from "../../interfaces";
+import { AccessGroup, ResponseBody } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import Button from "../buttons/button";

@@ -1,14 +1,10 @@
-import React, { useState, useEffect, createRef } from "react";
+import { useState, useEffect, createRef } from "react";
 import TextField from "../fields/textField";
 import {
   AboutSleepTemplate,
   IStudySubjectDetails,
   ResponseBody,
-  Study,
   StudySubjectPrefill,
-  User,
-  UserDetails,
-  ViewProps
 } from "../../interfaces";
 import { getStartAndExpiryTimes, makeRequest } from "../../utils";
 import CheckField from "../fields/checkField";
@@ -26,7 +22,6 @@ import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummarySubtext from "../containers/forms/formSummarySubtext";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 import { APP_ENV } from "../../environment";
-import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import sanitize from "sanitize-html";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { useNavigate, useSearchParams } from "react-router-dom";

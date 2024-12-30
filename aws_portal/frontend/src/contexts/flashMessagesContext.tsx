@@ -1,17 +1,9 @@
 // TODO: Extend implementation to Ditti App Dashboard
-import { createContext, useState, useEffect, PropsWithChildren, useMemo, useContext, createRef } from "react";
-import { makeRequest } from "../utils";
-import { IBreadcrumb, FlashMessageContextType, Study, IFlashMessage } from "../interfaces";
-import { APP_ENV } from "../environment";
-import DataFactory from "../dataFactory";
-import { useMatches } from "react-router-dom";
+import { createContext, useState, PropsWithChildren, useMemo, useContext, createRef } from "react";
+import { FlashMessageContextType, IFlashMessage } from "../interfaces";
 import FlashMessage, { FlashMessageVariant } from "../components/flashMessage/flashMessage";
 
 export const FlashMessageContext = createContext<FlashMessageContextType | undefined>(undefined);
-
-interface IHandle {
-  breadcrumbs: IBreadcrumb[];
-}
 
 
 // FlashMessageContextProvider component that wraps children with studies context.

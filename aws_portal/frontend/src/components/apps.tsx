@@ -1,8 +1,5 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ReactComponent as Right } from "../icons/right.svg";
-import { ViewProps } from "../interfaces";
-import StudiesView from "./dittiApp/studiesView";
-import Accounts from "./adminDashboard/accounts";
 import { SmallLoader } from "./loader";
 import { getAccess } from "../utils";
 import Card from "./cards/card";
@@ -14,8 +11,6 @@ import { Link } from "react-router-dom";
  * Home component: renders available apps for the user
  */
 const Apps = () => {
-  // apps are hardcoded here because for now there is no real need to add more
-  // than two
   const [apps, setApps] = useState([
     {
       breadcrumbs: ["Ditti App"],

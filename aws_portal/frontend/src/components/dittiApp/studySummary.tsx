@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { Study, ViewProps } from "../../interfaces";
+import { useState, useEffect } from "react";
+import { Study } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import StudySubjects from "./studySubjects";
-import Subjects from "./subjects";
-import SubjectsEdit from "./subjectsEdit";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
@@ -16,9 +14,8 @@ import Button from "../buttons/button";
 import CardContentRow from "../cards/cardContentRow";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
-import { useNavbarContext } from "../../contexts/navbarContext";
 
 /**
  * Information for study contacts
@@ -31,10 +28,6 @@ interface StudyContact {
 }
 
 const StudySummary = () => {
-  // const [searchParams] = useSearchParams();
-  // const sid = searchParams.get("sid");
-  // const study.id = sid ? parseInt(sid) : 0;
-
   const [canCreate, setCanCreate] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
@@ -42,15 +35,6 @@ const StudySummary = () => {
 
   const { studiesLoading, study } = useStudiesContext();
   const { dataLoading, taps, audioTaps } = useDittiDataContext();
-  // const { addBreadcrumb } = useNavbarContext();
-
-  // const study = getStudyById(study.id);
-
-  // useEffect(() => {
-  //   if (study) {
-  //     addBreadcrumb({ name: study.acronym, link: `/coordinator/ditti/study?sid=${study.id}`});
-  //   }
-  // }, [study]);
 
   useEffect(() => {
     if (study) {
@@ -140,29 +124,6 @@ const StudySummary = () => {
       saveAs(blob, fileName + ".xlsx");
     });
   };
-
-  // const handleClickEnrollSubject = () =>
-  //   handleClick(
-  //     ["Enroll"],
-  //     <SubjectsEdit
-  //       flashMessage={flashMessage}
-  //       dittiId=""
-  //       goBack={goBack}
-  //       handleClick={handleClick}
-  //       study={study}
-  //     />
-  //   );
-
-  // const handleClickViewAllSubjects = () =>
-  //   handleClick(
-  //     ["Subjects"],
-  //     <Subjects
-  //       flashMessage={flashMessage}
-  //       goBack={goBack}
-  //       handleClick={handleClick}
-  //       study={study}
-  //     />
-  //   );
 
   if (loading || studiesLoading || dataLoading) {
     return (

@@ -1,11 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Study, ViewProps } from "../../interfaces";
-import { getAccess, makeRequest } from "../../utils";
+import { useEffect, useState } from "react";
+import { getAccess } from "../../utils";
 import { SmallLoader } from "../loader";
-import StudySummary from "./studySummary";
 import { sub } from "date-fns";
-import AudioFileUpload from "./audioFileUpload";
-import AudioFiles from "./audioFiles";
 import Card from "../cards/card";
 import ViewContainer from "../containers/viewContainer";
 import CardContentRow from "../cards/cardContentRow";
@@ -68,47 +64,6 @@ const StudiesView = () => {
     }
     updateCanViewTaps();
   }, [studies]);
-
-  /**
-   * Handle when a user clicks on a study
-   * @param id - the study's database primary key
-   */
-  // const handleClickStudy = (id: number): void => {
-  //   // get the study
-  //   const study = studies.find((s) => s.id === id);
-
-  //   if (study) {
-  //     // set the view
-  //     const view = (
-  //       <StudySummary
-  //         flashMessage={flashMessage}
-  //         handleClick={handleClick}
-  //         goBack={goBack}
-  //         studyId={study.id}
-  //       />
-  //     );
-
-  //     handleClick([study.acronym], view, false);
-  //   }
-  // };
-
-  // const handleClickUploadAudioFile = () => handleClick(
-  //   ["Audio File", "Upload"],
-  //   <AudioFileUpload
-  //     goBack={goBack}
-  //     flashMessage={flashMessage}
-  //     handleClick={handleClick}
-  //   />
-  // );
-
-  // const handleClickViewAudioFiles = () => handleClick(
-  //   ["Audio File"],
-  //   <AudioFiles
-  //     goBack={goBack}
-  //     flashMessage={flashMessage}
-  //     handleClick={handleClick}
-  //   />
-  // );
 
   if (loading || studiesLoading || dataLoading) {
     return (

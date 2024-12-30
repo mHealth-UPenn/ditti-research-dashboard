@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { getAccess, makeRequest } from "../../utils";
-import { ViewProps } from "../../interfaces";
-import AudioFileUpload from "./audioFileUpload";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
@@ -95,15 +93,15 @@ const AudioFiles = () => {
 
         refreshAudioFiles()
           .then(() => setLoading(false))
-          // .catch(() =>
-          //   flashMessage(
-          //     <span>
-          //       And error occured while reloading the page. Please refresh and
-          //       try again.
-          //     </span>,
-          //     "danger"
-          //   )
-          // );
+          .catch(() =>
+            flashMessage(
+              <span>
+                And error occured while reloading the page. Please refresh and
+                try again.
+              </span>,
+              "danger"
+            )
+          );
       } catch (error) {
         console.error(error);
         const e = error as { msg: string };

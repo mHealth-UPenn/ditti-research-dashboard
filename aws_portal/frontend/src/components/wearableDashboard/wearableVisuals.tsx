@@ -1,11 +1,8 @@
 import { useSearchParams } from "react-router-dom";
-import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import DittiDataContext from "../../contexts/dittiDataContext";
 import { CoordinatorWearableDataProvider } from "../../contexts/wearableDataContext";
 import useDittiData from "../../hooks/useDittiData";
-import { IStudySubject, Study, ViewProps } from "../../interfaces";
 import WearableVisualsContent from "./wearableVisualsContent";
-import { useStudiesContext } from "../../contexts/studiesContext";
 
 
 export default function WearableVisuals() {

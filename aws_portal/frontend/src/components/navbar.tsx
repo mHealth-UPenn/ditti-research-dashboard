@@ -1,6 +1,4 @@
-import * as React from "react";
-import { ReactComponent as Back } from "../icons/left.svg";
-import { Link, useMatches } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { IBreadcrumb } from "../interfaces";
 import { useNavbarContext } from "../contexts/navbarContext";
 
@@ -10,11 +8,6 @@ interface IHandle {
 
 
 const Navbar = () => {
-  // const matches = useMatches();
-
-  // const breadcrumbs = matches
-  //   .filter(match => match.handle ? (match.handle as IHandle).breadcrumbs : false)
-  //   .flatMap(match => (match.handle as IHandle).breadcrumbs);
   const { breadcrumbs } = useNavbarContext();
 
   return (

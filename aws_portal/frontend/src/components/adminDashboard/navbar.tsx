@@ -1,10 +1,3 @@
-import * as React from "react";
-import Accounts from "./accounts";
-import Studies from "./studies";
-import AccessGroups from "./accessGroups";
-import Roles from "./roles";
-import { ViewProps } from "../../interfaces";
-import AboutSleepTemplates from "./aboutSleepTemplates";
 import LinkComponent from "../links/linkComponent";
 import { Link } from "react-router-dom";
 

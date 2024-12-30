@@ -1,6 +1,6 @@
-import React, { useState, ChangeEvent, createRef, useEffect } from "react";
+import { useState, ChangeEvent, createRef } from "react";
 import TextField from "../fields/textField";
-import { Study, ResponseBody, ViewProps } from "../../interfaces";
+import { ResponseBody } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import Select from "../fields/select";
 import RadioField from "../fields/radioField";
@@ -201,32 +201,6 @@ const AudioFileUpload = () => {
     } finally {
       setUploading(false);
     }
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    // go back to the list view and flash a message
-    navigate(-1);
-    flashMessage(<span>{res.msg}</span>, "success");
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
-    );
-    flashMessage(msg, "danger");
   };
 
   const selectStudy = (id: number): void => {

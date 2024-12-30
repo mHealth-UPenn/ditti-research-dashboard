@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
-import { ViewProps } from "../../interfaces";
 import { getAccess } from "../../utils";
 import Card from "../cards/card";
 import ViewContainer from "../containers/viewContainer";
 import CardContentRow from "../cards/cardContentRow";
 import Title from "../text/title";
 import ActiveIcon from "../icons/activeIcon";
-import WearableStudySummary from "./wearableStudySummary";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { SmallLoader } from "../loader";
-import CoordinatorStudySubjectProvider, { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import LinkComponent from "../links/linkComponent";
 import { Link } from "react-router-dom";
 
@@ -75,31 +73,6 @@ export default function WearableStudies() {
       setLoading(false);
     });
   }, [studies]);
-
-
-  /**
-   * Handle when a user clicks on a study
-   * @param id - the study's database primary key
-   */
-  // const handleClickStudy = (id: number): void => {
-  //   // Get the study
-  //   const study = studies.find((s) => s.id === id);
-
-  //   if (study) {
-  //     // Set the view
-  //     const view = (
-  //       <CoordinatorStudySubjectProvider app={3}>
-  //         <WearableStudySummary
-  //           flashMessage={flashMessage}
-  //           handleClick={handleClick}
-  //           goBack={goBack}
-  //           studyId={study.id} />
-  //       </CoordinatorStudySubjectProvider>
-  //     );
-
-  //     handleClick([study.acronym], view, false);
-  //   }
-  // };
 
 
   if (loading || studiesLoading || studySubjectLoading) {

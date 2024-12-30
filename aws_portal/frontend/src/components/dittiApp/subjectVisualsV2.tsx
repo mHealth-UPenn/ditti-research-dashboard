@@ -1,6 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { IStudySubjectDetails, Study, UserDetails, ViewProps } from "../../interfaces";
-import SubjectsEdit from "./subjectsEdit";
+import { useState, useEffect, useMemo } from "react";
 import { differenceInMilliseconds, format } from "date-fns";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
@@ -54,7 +52,6 @@ const SubjectVisualsV2 = () => {
   const filteredTaps = taps.filter((t) => t.dittiId === dittiId);
   const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === dittiId);
 
-  // const study = getStudyById(studyId);
   const timestamps = useMemo(
     () => filteredTaps.map(t => t.time.getTime()), [filteredTaps]
   );
@@ -137,18 +134,6 @@ const SubjectVisualsV2 = () => {
     "en-US",
     dateOpts as Intl.DateTimeFormatOptions
   );
-
-  // const handleClickEditDetails = () =>
-  //   handleClick(
-  //     ["Edit"],
-  //     <SubjectsEdit
-  //       dittiId={dittiId}
-  //       studyDetails={studyDetails}
-  //       flashMessage={flashMessage}
-  //       goBack={goBack}
-  //       handleClick={handleClick}
-  //     />
-  //   );
 
   if (loading || studiesLoading || dataLoading || studySubjectLoading) {
     return (

@@ -1,6 +1,6 @@
-import React, { useState, useEffect, createRef } from "react";
+import { useState, useEffect, createRef } from "react";
 import TextField from "../fields/textField";
-import { AboutSleepTemplate, ResponseBody, ViewProps } from "../../interfaces";
+import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import FormView from "../containers/forms/formView";
