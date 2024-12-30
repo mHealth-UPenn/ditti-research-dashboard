@@ -20,6 +20,21 @@ export default function FlashMessageContextProvider({
 }: PropsWithChildren<unknown>) {
   const [flashMessages, setFlashMessages] = useState<IFlashMessage[]>([]);
 
+  useEffect(() => {
+    flashMessages.forEach(flashMessage => {
+      const closeDiv = flashMessage.closeRef.current;
+      if (closeDiv && !closeDiv.onclick) {
+        closeDiv.onclick = () => closeMessage(flashMessage.id);
+      }
+
+      const containerDiv = flashMessage.containerRef.current;
+      if (containerDiv) {
+        setTimeout(() => containerDiv.style.opacity = "0", 3000);
+        setTimeout(() => closeMessage(flashMessage.id), 5000)
+      }
+    });
+  }, [flashMessages]);
+
   const flashMessage = (msg: React.ReactElement, variant: FlashMessageVariant) => {
     const updatedFlashMessages = [...flashMessages];
     const containerRef = createRef<HTMLDivElement>();
@@ -38,15 +53,6 @@ export default function FlashMessageContextProvider({
         closeRef={closeRef}>
           {msg}
       </FlashMessage>;
-
-    if (closeRef.current) {
-      closeRef.current.onclick = () => closeMessage(id);
-    }
-
-    if (containerRef.current) {
-      setTimeout(() => containerRef.current!.style.opacity = "0", 3000);
-      setTimeout(() => closeMessage(id), 5000);
-    }
 
     // Add the message to the page
     updatedFlashMessages.push({ id, element, containerRef, closeRef });
