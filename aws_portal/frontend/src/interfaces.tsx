@@ -420,7 +420,6 @@ export interface IFlashMessage {
   id: number;
   element: React.ReactElement;
   containerRef: React.RefObject<HTMLDivElement>;
-  closeRef: React.RefObject<HTMLDivElement>;
 }
 
 
