@@ -1,13 +1,6 @@
 import React from "react";
 import Button from "../buttons/button";
-
-interface ConsentModalProps {
-  isOpen: boolean;
-  onAccept: () => void;
-  onDeny: () => void;
-  onClose: () => void;
-  contentHtml: string; // This is the raw HTML to display inside the modal
-}
+import { ConsentModalProps } from "../../interfaces";
 
 const ConsentModal: React.FC<ConsentModalProps> = ({
   isOpen,

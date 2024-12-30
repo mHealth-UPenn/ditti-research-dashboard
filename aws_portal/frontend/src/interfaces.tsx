@@ -278,6 +278,14 @@ export interface ViewProps {
   ) => void;
 }
 
+export interface ConsentModalProps {
+  isOpen: boolean;
+  onAccept: () => void;
+  onDeny: () => void;
+  onClose: () => void;
+  contentHtml: string;
+}
+
 /**
  * Account data as used by the dashboard header.
  * @property firstName - The account holder's first name.
