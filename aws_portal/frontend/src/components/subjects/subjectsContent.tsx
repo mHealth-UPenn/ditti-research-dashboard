@@ -130,7 +130,7 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
                     {studySubject.dittiId}
                   </LinkComponent>
                 </Link>
-              : canViewWearableData
+              : (studySubject.apis.length && canViewWearableData)
                 ? <Link to={`/coordinator/wearable/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
                     <LinkComponent>
                       {studySubject.dittiId}

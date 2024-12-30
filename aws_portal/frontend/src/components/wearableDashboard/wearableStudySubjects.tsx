@@ -47,7 +47,7 @@ export default function WearableStudySubjects({
               {canViewWearableData && <ActiveIcon active={true} className="mr-2" />}
 
               {/* Link to the subject's visualization */}
-              {canViewWearableData ?
+              {canViewWearableData && subject.apis.length ?
                 <Link to={`/coordinator/wearable/participants/view?dittiId=${subject.dittiId}&sid=${studyDetails.id}`}>
                   <LinkComponent>
                     {subject.dittiId}
