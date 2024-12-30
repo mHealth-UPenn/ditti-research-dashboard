@@ -53,7 +53,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const previewRef = createRef<HTMLDivElement>();
   
   const { studiesLoading, study } = useStudiesContext();
-  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, getStudySubjectByDittiId, fetchStudySubjects } = useCoordinatorStudySubjectContext();
 
   const { flashMessage } = useFlashMessageContext();
   const navigate = useNavigate();
@@ -192,6 +192,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
+    fetchStudySubjects();
     navigate(-1);
     flashMessage(<span>{res.msg}</span>, "success");
   };
