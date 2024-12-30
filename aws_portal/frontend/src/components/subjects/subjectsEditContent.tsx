@@ -44,6 +44,8 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const [dittiExpTime, setDittiExpTime] = useState(new Date());
   const [enrollmentStart, setEnrollmentStart] = useState(new Date());
   const [enrollmentEnd, setEnrollmentEnd] = useState(new Date());
+  const [enrollmentFeedback, setEnrollmentFeedback] = useState("");
+  const [dittiExpTimeFeedback, setDittiExpTimeFeedback] = useState("");
 
   const [aboutSleepTemplates, setAboutSleepTemplates] = useState<AboutSleepTemplate[]>([]);
   const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] = useState<AboutSleepTemplate>({} as AboutSleepTemplate);
@@ -56,8 +58,28 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const { flashMessage } = useFlashMessageContext();
   const navigate = useNavigate();
 
-  // const study = getStudyById(studyId);
   const studySubject = dittiId ? getStudySubjectByDittiId(dittiId) : null;
+
+  useEffect(() => {
+    if (dittiExpTime <= enrollmentEnd) {
+      setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.")
+    } else {
+      setDittiExpTimeFeedback("");
+    }
+  }, [enrollmentEnd, dittiExpTime]);
+
+  useEffect(() => {
+    if (enrollmentEnd <= enrollmentStart) {
+      setEnrollmentFeedback("Enrollment end date must be after enrollment start date.")
+    } else {
+      setEnrollmentFeedback("");
+    }
+    if (dittiExpTime <= enrollmentEnd) {
+      setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.")
+    } else {
+      setDittiExpTimeFeedback("");
+    }
+  }, [enrollmentStart, enrollmentEnd, dittiExpTime]);
 
   useEffect(() => {
     if (previewRef.current && information !== "") {
@@ -255,7 +277,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               value={formatDateForInput(enrollmentStart)}
               label="Enrollment Start Date"
               onKeyup={text => setEnrollmentStart(new Date(text))}
-              feedback="" />
+              feedback={enrollmentFeedback} />
           </FormField>
           <FormField>
             <TextField
@@ -265,7 +287,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               value={formatDateForInput(enrollmentEnd)}
               label="Enrollment End Date"
               onKeyup={text => setEnrollmentEnd(new Date(text))}
-              feedback="" />
+              feedback={enrollmentFeedback} />
           </FormField>
         </FormRow>
         <FormRow>
@@ -277,7 +299,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               value={formatDateForInput(dittiExpTime)}
               label="Ditti ID Expiry Date"
               onKeyup={text => setDittiExpTime(new Date(text))}
-              feedback="" />
+              feedback={dittiExpTimeFeedback} />
           </FormField>
           <FormField>
             <CheckField
