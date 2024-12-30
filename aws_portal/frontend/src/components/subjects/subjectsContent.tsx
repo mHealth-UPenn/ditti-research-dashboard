@@ -210,7 +210,7 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
       <Button
         disabled={!(canCreate || APP_ENV === "demo")}
         rounded={true}>
-          Create +
+          Enroll +
       </Button>
     </Link>
 

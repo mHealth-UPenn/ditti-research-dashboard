@@ -246,7 +246,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   };
 
   // if dittiId is 0, the user is enrolling a new subject
-  const buttonText = dittiId ? "Update" : "Create";
+  const buttonText = dittiId ? "Update" : "Enroll";
   const enrollmentStartFormatted = enrollmentStart
     ? new Date(enrollmentStart).toLocaleDateString("en-US", dateOptions)
     : ""
