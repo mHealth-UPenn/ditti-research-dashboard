@@ -146,20 +146,20 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
       {
         contents: (
           <span>
-            {new Date(startsOn).toLocaleDateString("en-US", dateOptions)}
+            {startsOn.toLocaleDateString("en-US", dateOptions)}
           </span>
         ),
         searchValue: "",
-        sortValue: startsOn
+        sortValue: startsOn.toLocaleDateString("en-US", dateOptions)
       },
       {
         contents: (
           <span>
-            {new Date(expiresOn).toLocaleDateString("en-US", dateOptions)}
+            {expiresOn.toLocaleDateString("en-US", dateOptions)}
           </span>
         ),
         searchValue: "",
-        sortValue: expiresOn
+        sortValue: expiresOn.toLocaleDateString("en-US", dateOptions)
       },
       {
         contents: (
