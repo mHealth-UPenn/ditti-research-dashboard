@@ -495,11 +495,8 @@ class Query:
     def __init__(self, key, query=None):
         if query is not None:
             self.check_query(query)
-            self.expression = self.build_query(query)
 
-        else:
-            self.expression = None
-
+        self.expression = self.build_query(query)
         self.key = key
 
     def scan(self, **kwargs):  # TODO update unit test
@@ -583,6 +580,8 @@ class Query:
         -------
         DynamoDB.conditions.Attr
         """
+        if query is None:
+            return cls.get_expression_from_string("~\"_deleted\"")
 
         # get paranthetical subexperssions
         blocks = cls.build_blocks(query)
@@ -698,7 +697,7 @@ class Query:
 
         # on last call
         if not blocks:
-            return expressions[-1]
+            return expressions[-1] & cls.get_expression_from_string("~\"_deleted\"")
 
         return cls.build_expression(blocks, expressions)
 
@@ -727,6 +726,7 @@ class Query:
 
         # get the subexpressions values
         values = re.findall(cls.values, string) or [""]
+        print(popped, key, condition, values)
 
         # build the expression
         if condition == "==":
