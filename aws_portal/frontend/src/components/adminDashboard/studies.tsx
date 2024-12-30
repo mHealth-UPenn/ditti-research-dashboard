@@ -10,6 +10,7 @@ import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 const Studies = () => {
   const [canCreate, setCanCreate] = useState(false);
@@ -24,6 +25,7 @@ const Studies = () => {
     { name: "", searchable: false, sortable: false, width: 10 }
   ]);
   const [loading, setLoading] = useState(true);
+  const { flashMessage } = useFlashMessageContext();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -140,7 +142,7 @@ const Studies = () => {
    * @param id - the archived study id
    */
   const handleSuccess = async (id: number) => {
-    // flashMessage(<span>Study archived successfully.</span>, "success");
+    flashMessage(<span>Study archived successfully.</span>, "success");
 
     // show the loading screen
     setLoading(true);
@@ -164,7 +166,7 @@ const Studies = () => {
         {res.msg ? res.msg : "Internal server error"}
       </span>
     );
-    // flashMessage(msg, "danger");
+    flashMessage(msg, "danger");
   };
 
   const tableControl = canCreate ? (

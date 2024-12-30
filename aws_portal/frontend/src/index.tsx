@@ -39,6 +39,7 @@ import AudioFiles from "./components/dittiApp/audioFiles";
 import AudioFileUpload from "./components/dittiApp/audioFileUpload";
 import WearableSubjects from "./components/wearableDashboard/wearableSubjects";
 import WearableSubjectsEdit from "./components/wearableDashboard/wearableSubjectsEdit";
+import FlashMessageContextProvider from "./contexts/flashMessagesContext";
 
 /**
  * Root component wrapped with AuthProvider for authentication context.
@@ -73,10 +74,10 @@ const router = createBrowserRouter([
         path: "coordinator",
         element: (
           <ProtectedRoute authMethod='iam'>
-            <>
+            <FlashMessageContextProvider>
               <FullLoader loading={false} msg="" />
               <Dashboard />
-            </>
+            </FlashMessageContextProvider>
           </ProtectedRoute>
         ),
         children: [

@@ -10,6 +10,7 @@ import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 const Roles = () => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
@@ -37,6 +38,7 @@ const Roles = () => {
     }
   ]);
   const [loading, setLoading] = useState<boolean>(true);
+  const { flashMessage } = useFlashMessageContext();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -162,7 +164,7 @@ const Roles = () => {
    * @param res - the response body
    */
   const handleSuccess = (res: ResponseBody) => {
-    // flashMessage(<span>{res.msg}</span>, "success");
+    flashMessage(<span>{res.msg}</span>, "success");
 
     // show the loading screen
     setLoading(true);
@@ -188,7 +190,7 @@ const Roles = () => {
       </span>
     );
 
-    // flashMessage(msg, "danger");
+    flashMessage(msg, "danger");
   };
 
   // if the user has permission to create, show the create button

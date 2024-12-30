@@ -29,8 +29,9 @@ import { APP_ENV } from "../../environment";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import sanitize from "sanitize-html";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 
 interface ISubjectsEditContentProps {
@@ -57,6 +58,9 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   
   const { studiesLoading, study } = useStudiesContext();
   const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
+
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
 
   // const study = getStudyById(studyId);
   const studySubject = getStudySubjectByDittiId(dittiId);
@@ -152,8 +156,8 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    // goBack();
-    // flashMessage(<span>{res.msg}</span>, "success");
+    navigate(-1);
+    flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -169,7 +173,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
         {res.msg ? res.msg : "Internal server error"}
       </span>
     );
-    // flashMessage(msg, "danger");
+    flashMessage(msg, "danger");
   };
 
   /**

@@ -13,7 +13,8 @@ import FormSummaryTitle from "../text/formSummaryTitle";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 /**
  * The form's prefill
@@ -30,6 +31,9 @@ const StudiesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
   const studyId = id ? parseInt(id) : 0
+
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
 
   const [state, setState] = useState<StudyPrefill & { loading: boolean }>({
     name: "",
@@ -106,8 +110,8 @@ const StudiesEdit = () => {
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    // goBack();
-    // flashMessage(<span>{res.msg}</span>, "success");
+    navigate(-1);
+    flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -124,7 +128,7 @@ const StudiesEdit = () => {
       </span>
     );
 
-    // flashMessage(msg, "danger");
+    flashMessage(msg, "danger");
   };
 
   const { name, acronym, dittiId, email, loading } = state;

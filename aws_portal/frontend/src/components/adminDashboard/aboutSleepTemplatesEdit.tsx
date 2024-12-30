@@ -14,7 +14,8 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import sanitize from "sanitize-html";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 /**
  * The form's prefill
@@ -33,6 +34,9 @@ const AboutSleepTemplatesEdit = () => {
   const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const previewRef = createRef<HTMLDivElement>();
+
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (previewRef.current) {
@@ -111,8 +115,8 @@ const AboutSleepTemplatesEdit = () => {
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    // goBack();
-    // flashMessage(<span>{res.msg}</span>, "success");
+    navigate(-1);
+    flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -129,7 +133,7 @@ const AboutSleepTemplatesEdit = () => {
       </span>
     );
 
-    // flashMessage(msg, "danger");
+    flashMessage(msg, "danger");
   };
 
   const buttonText = aboutSleepTemplateId ? "Update" : "Create";

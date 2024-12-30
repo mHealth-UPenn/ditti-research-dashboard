@@ -22,6 +22,8 @@ import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
 import { useStudiesContext } from "../../contexts/studiesContext";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useNavigate } from "react-router-dom";
 
 
 interface IFile {
@@ -52,6 +54,9 @@ const AudioFileUpload = () => {
 
   const { dataLoading, audioFiles } = useDittiDataContext();
   const { studiesLoading, studies } = useStudiesContext();
+
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
 
   const existingFiles = new Set();
   audioFiles.forEach(af => existingFiles.add(af.fileName))
@@ -177,7 +182,7 @@ const AudioFileUpload = () => {
       isValid = false;
     }
     if (selectedFiles.length === 0 || !isValid) {
-      // flashMessage(<span>Please fix errors in the form.</span>, "danger");
+      flashMessage(<span>Please fix errors in the form.</span>, "danger");
       return;
     }
 
@@ -187,12 +192,12 @@ const AudioFileUpload = () => {
       const urls = await getPresignedUrls();
       await uploadFiles(urls);
       await insertFiles();
-      // goBack();
-      // flashMessage(<span>All files successfully uploaded.</span>, "success");
+      navigate(-1);
+      flashMessage(<span>All files successfully uploaded.</span>, "success");
     } catch (error) {
       const axiosError = error as AxiosError
       console.error("Error uploading files:", error);
-      // flashMessage(<span>Error uploading files: {axiosError.message}</span>, "danger");
+      flashMessage(<span>Error uploading files: {axiosError.message}</span>, "danger");
     } finally {
       setUploading(false);
     }
@@ -204,8 +209,8 @@ const AudioFileUpload = () => {
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    // goBack();
-    // flashMessage(<span>{res.msg}</span>, "success");
+    navigate(-1);
+    flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -221,7 +226,7 @@ const AudioFileUpload = () => {
         {res.msg ? res.msg : "Internal server error"}
       </span>
     );
-    // flashMessage(msg, "danger");
+    flashMessage(msg, "danger");
   };
 
   const selectStudy = (id: number): void => {

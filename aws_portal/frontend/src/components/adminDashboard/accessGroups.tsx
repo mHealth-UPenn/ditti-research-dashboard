@@ -9,6 +9,7 @@ import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 const AccessGroups = () => {
   const [canCreate, setCanCreate] = useState(false);
@@ -16,6 +17,7 @@ const AccessGroups = () => {
   const [canArchive, setCanArchive] = useState(false);
   const [accessGroups, setAccessGroups] = useState<AccessGroup[]>([]);
   const [loading, setLoading] = useState(true);
+  const { flashMessage } = useFlashMessageContext();
 
   const columns: Column[] = [
     {
@@ -168,7 +170,7 @@ const AccessGroups = () => {
   };
 
   const handleSuccess = (res: ResponseBody) => {
-    // flashMessage(<span>{res.msg}</span>, "success");
+    flashMessage(<span>{res.msg}</span>, "success");
     setLoading(true);
 
     // Refresh the table's data
@@ -187,7 +189,7 @@ const AccessGroups = () => {
       </span>
     );
 
-    // flashMessage(msg, "danger");
+    flashMessage(msg, "danger");
   };
 
   // If the user has permission to create, show the create button

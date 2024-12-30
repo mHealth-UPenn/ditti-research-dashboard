@@ -10,6 +10,7 @@ import ListContent from "../containers/lists/listContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 
 const AudioFiles = () => {
@@ -18,6 +19,7 @@ const AudioFiles = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const { dataLoading, audioFiles, refreshAudioFiles } = useDittiDataContext();
+  const { flashMessage } = useFlashMessageContext();
 
   const columns: Column[] = [
     {
@@ -88,7 +90,7 @@ const AudioFiles = () => {
             body: JSON.stringify({ app: 2, id, _version })
           }
         );
-        // flashMessage(<span>Audio file deleted successfully</span>, "success");
+        flashMessage(<span>Audio file deleted successfully</span>, "success");
         setLoading(true);
 
         refreshAudioFiles()
@@ -105,7 +107,7 @@ const AudioFiles = () => {
       } catch (error) {
         console.error(error);
         const e = error as { msg: string };
-        // flashMessage(<span>An unexpected error occured: {e.msg}</span>, "danger");
+        flashMessage(<span>An unexpected error occured: {e.msg}</span>, "danger");
       }
     }
   }

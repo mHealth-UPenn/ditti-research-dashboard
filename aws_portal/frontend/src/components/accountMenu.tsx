@@ -6,6 +6,7 @@ import { makeRequest } from "../utils";
 import AsyncButton from "./buttons/asyncButton";
 import Button from "./buttons/button";
 import { useAuth } from "../hooks/useAuth";
+import { useFlashMessageContext } from "../contexts/flashMessagesContext";
 
 /**
  * accountDetails: the current user's data
@@ -32,6 +33,7 @@ const AccountMenu = ({
   const [editPassword, setEditPassword] = useState(false);
 
   const { iamLogout } = useAuth();
+  const { flashMessage } = useFlashMessageContext();
 
   /**
    * Make a POST request with changes
@@ -69,7 +71,7 @@ const AccountMenu = ({
    * @param res - The response from the login endpoint
    */
   const handleSuccess = (res: ResponseBody) => {
-    // flashMessage(<span>{res.msg}</span>, "success");
+    flashMessage(<span>{res.msg}</span>, "success");
     setEdit(false);
     setEditPassword(false);
   }
@@ -88,7 +90,7 @@ const AccountMenu = ({
       </span>
     );
 
-    // flashMessage(msg, "danger");
+    flashMessage(msg, "danger");
     setEdit(false);
     setEditPassword(false);
   }

@@ -555,3 +555,9 @@ export interface NavbarContextType {
   breadcrumbs: IBreadcrumb[];
   setStudyCrumb: (studyCrumb: IBreadcrumb) => void;
 }
+
+
+export interface FlashMessageContextType {
+  flashMessages: IFlashMessage[];
+  flashMessage: (msg: React.ReactElement, variant: FlashMessageVariant) => void;
+}

@@ -23,7 +23,8 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import CloseIcon from "@mui/icons-material/Close";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 /**
  * The form's prefill
@@ -47,6 +48,9 @@ const AccessGroupsEdit = () => {
   const [name, setName] = useState<string>("");
   const [appSelected, setAppSelected] = useState<App>({} as App);
   const [permissions, setPermissions] = useState<Permission[]>([]);
+
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -267,8 +271,8 @@ const AccessGroupsEdit = () => {
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    // goBack();
-    // flashMessage(<span>{res.msg}</span>, "success");
+    navigate(-1);
+    flashMessage(<span>{res.msg}</span>, "success");
   };
 
   /**
@@ -285,7 +289,7 @@ const AccessGroupsEdit = () => {
       </span>
     );
 
-    // flashMessage(msg, "danger");
+    flashMessage(msg, "danger");
   };
 
   /**

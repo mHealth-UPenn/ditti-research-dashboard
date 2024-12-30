@@ -9,6 +9,7 @@ import DittiDataContext from "../contexts/dittiDataContext";
 import useDittiData from "../hooks/useDittiData";
 import { Outlet } from "react-router-dom";
 import NavbarContextProvider from "../contexts/navbarContext";
+import { useFlashMessageContext } from "../contexts/flashMessagesContext";
 
 // type Action =
 //   | { type: "INIT"; name: string; view: React.ReactElement }
@@ -213,6 +214,7 @@ const Dashboard: React.FC = () => {
   // };
 
   // const popMessage = (id: number) => dispatch({ type: "CLOSE_MESSAGE", id });
+  const { flashMessages } = useFlashMessageContext();
 
   return (
     <main className="flex flex-col h-screen">
@@ -235,11 +237,11 @@ const Dashboard: React.FC = () => {
             <Navbar />
 
           {/* flash messages */}
-          {/* {!!flashMessages.length &&
+          {!!flashMessages.length &&
             <div className="flash-message-container">
               {flashMessages.map((fm) => fm.element)}
             </div>
-          } */}
+          }
 
           {/* current view */}
           {/* <DittiDataContext.Provider value={{

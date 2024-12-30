@@ -13,6 +13,7 @@ import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 const AboutSleepTemplates = () => {
   const [canCreate, setCanCreate] = useState(false);
@@ -22,6 +23,7 @@ const AboutSleepTemplates = () => {
     AboutSleepTemplate[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const { flashMessage } = useFlashMessageContext();
 
   const columns: Column[] = [
     {
@@ -144,7 +146,7 @@ const AboutSleepTemplates = () => {
   const handleSuccess = (res: ResponseBody) => {
     // show the loading screen
     setLoading(true);
-    // flashMessage(<span>{res.msg}</span>, "success");
+    flashMessage(<span>{res.msg}</span>, "success");
 
     // refresh the table's data
     makeRequest("/admin/about-sleep-template?app=1").then(
@@ -169,7 +171,7 @@ const AboutSleepTemplates = () => {
       </span>
     );
 
-    // flashMessage(msg, "danger");
+    flashMessage(msg, "danger");
   };
 
   // if the user has permission to create, show the create button
