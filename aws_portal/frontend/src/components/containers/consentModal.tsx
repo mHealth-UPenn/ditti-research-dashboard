@@ -44,7 +44,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({
           dangerouslySetInnerHTML={{ __html: contentHtml }}
         />
 
-        {/* Modal footer: Accept / Deny / Close */}
+        {/* Modal footer: Accept / Deny */}
         <div className="flex items-center justify-end space-x-3 rtl:space-x-reverse">
           <Button onClick={onAccept} rounded={true} size="sm" variant="success">
             Accept
