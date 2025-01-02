@@ -91,7 +91,7 @@ export interface Study {
   email: string;
   role?: Role;
   defaultExpiryDelta: number;
-  consentInformation: string;
+  consentInformation?: string;
 }
 
 /**
@@ -371,8 +371,8 @@ export interface StudiesContextType {
  * @property studySubjectLoading - Whether data is being fetched from the database.
  */
 export interface StudySubjectContextType {
-  studies: StudyJoin[];
-  apis: ApiJoin[];
+  studies: IParticipantStudy[];
+  apis: IParticipantApi[];
   studySubjectLoading: boolean;
 }
 
@@ -403,6 +403,27 @@ export interface IStudySubject {
   dittiId: string;
   studies: StudyJoin[];
   apis: ApiJoin[];
+}
+
+export interface IParticipantApi {
+  scope: string[];
+  apiName: string;
+}
+
+export interface IParticipantStudy {
+  studyName: string;
+  studyId: number;
+  createdOn: string;
+  startsOn: string;
+  expiresOn?: string;
+  consentInformation?: string;
+  dataSummary?: string;
+}
+
+export interface IParticipant {
+  dittiId: string;
+  apis: IParticipantApi[];
+  studies: IParticipantStudy[];
 }
 
 

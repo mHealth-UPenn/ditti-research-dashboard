@@ -23,8 +23,20 @@ const ParticipantDashboardContent = () => {
   const startDate = new Date(Math.min(...studies.map(s => new Date(s.startsOn).getTime())));
 
   // Use the latest `expiresOn` date as the end of data collection
-  const endDate = new Date(Math.max(...studies.map(s => new Date(s.expiresOn).getTime())));
-  const scope = [...(new Set(apis.map(api => api.scope).flat()))];
+  const endDate = (() => {
+    const validTimestamps = studies
+      .map(s => (s.expiresOn ? new Date(s.expiresOn).getTime() : null)) // Map to timestamps, handle undefined
+      .filter(timestamp => timestamp !== null) as number[]; // Filter out nulls and assert as number[]
+  
+    if (validTimestamps.length === 0) {
+      return null; // No valid dates
+    }
+  
+    return new Date(Math.max(...validTimestamps)); // Get the latest date
+  })();
+  
+  const scope = [...new Set(apis.map(api => api.scope).flat())];
+  
 
   // For now assume we are only connecting Fitbit API
   const fitbitConnected = apis.length > 0;
@@ -101,8 +113,23 @@ const ParticipantDashboardContent = () => {
           <>
             <CardContentRow>
               <div className="flex flex-col">
-                <span>Expires on: <b>{endDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</b></span>
-                <span>We will no longer collect your data after this date.</span>
+                <span>
+                  Expires on:{" "}
+                  <b>
+                    {endDate
+                      ? endDate.toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "No expiration date available"}
+                  </b>
+                </span>
+                <span>
+                  {endDate
+                    ? "We will no longer collect your data after this date."
+                    : "We will no longer collect your data if disconnected."}
+                </span>
               </div>
             </CardContentRow>
 
