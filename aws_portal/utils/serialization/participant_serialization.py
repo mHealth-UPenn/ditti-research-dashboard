@@ -34,8 +34,10 @@ class ParticipantStudyModel(BaseModel):
     study_name: str
     study_id: int
     created_on: datetime
+    starts_on: datetime
     expires_on: Optional[datetime] = None
-    data_summary: Optional[Any] = None
+    consent_information: Optional[str] = None
+    data_summary: Optional[str] = None
 
     model_config = common_config
 
@@ -46,7 +48,9 @@ class ParticipantStudyModel(BaseModel):
                 "study_name": obj.study.name,
                 "study_id": obj.study.id,
                 "created_on": obj.created_on,
+                "starts_on": obj.created_on,  # TODO: Different format than created_on
                 "expires_on": obj.expires_on,
+                "consent_information": getattr(obj.study, "consent_information", None),
                 "data_summary": getattr(obj.study, "data_summary", None)
             }
         return obj
