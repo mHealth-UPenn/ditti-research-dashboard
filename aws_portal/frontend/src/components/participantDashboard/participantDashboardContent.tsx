@@ -1,18 +1,18 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import Card from '../cards/card';
-import CardContentRow from '../cards/cardContentRow';
-import Title from '../text/title';
-import Button from '../buttons/button';
-import Link from '../links/linkComponent';
+import { useState, useMemo, useEffect } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import Card from "../cards/card";
+import CardContentRow from "../cards/cardContentRow";
+import Title from "../text/title";
+import Button from "../buttons/button";
+import Link from "../links/linkComponent";
 import { Link as RouterLink } from "react-router-dom";
-import { ParticipantWearableDataProvider } from '../../contexts/wearableDataContext';
-import WearableVisualization from '../visualizations/wearableVisualization';
-import { useStudySubjectContext } from '../../contexts/studySubjectContext';
-import { SmallLoader } from '../loader';
-import ConsentModal from '../containers/consentModal';
-import { makeRequest } from '../../utils';
-import { IParticipantStudy } from '../../interfaces';
+import { ParticipantWearableDataProvider } from "../../contexts/wearableDataContext";
+import WearableVisualization from "../visualizations/wearableVisualization";
+import { useStudySubjectContext } from "../../contexts/studySubjectContext";
+import { SmallLoader } from "../loader";
+import ConsentModal from "../containers/consentModal";
+import { makeRequest } from "../../utils";
+import { IParticipantStudy } from "../../interfaces";
 
 const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
 
@@ -81,9 +81,9 @@ const ParticipantDashboardContent = () => {
       await Promise.all(
         unconsentedStudies.map(study => {
           return makeRequest(`/participant/study/${study.studyId}/consent`, {
-            method: 'PATCH',
+            method: "PATCH",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify({ didConsent: true }),
           });
@@ -91,7 +91,7 @@ const ParticipantDashboardContent = () => {
       );
 
       // Clear error, close modal
-      setConsentError('');
+      setConsentError("");
       setIsConsentOpen(false);
 
       // Refetch data to ensure consistency
@@ -102,19 +102,19 @@ const ParticipantDashboardContent = () => {
       handleRedirect();
     } catch (err: any) {
       console.error(err);
-      const errorMsg = err.msg || 'There was a problem updating your consent. Please try again.';
+      const errorMsg = err.msg || "There was a problem updating your consent. Please try again.";
       setConsentError(errorMsg);
     }
   };
 
   const handleConsentDeny = () => {
     setIsConsentOpen(false);
-    setConsentError('You must consent to connect your FitBit data.');
+    setConsentError("You must consent to connect your FitBit data.");
   };
 
   const handleConsentClose = () => {
     setIsConsentOpen(false);
-    setConsentError('You must choose an option to continue.');
+    setConsentError("You must choose an option to continue.");
   };
 
   // If there are no unconsented studies, proceed to Fitbit flow
@@ -137,7 +137,7 @@ const ParticipantDashboardContent = () => {
     }
 
     // Build a combined block of all unconsented study info
-    let content = '';
+    let content = "";
     unconsentedStudies.forEach(study => {
       content += `
         <h4>${study.studyName}</h4>
@@ -236,9 +236,9 @@ const ParticipantDashboardContent = () => {
               <div className="flex flex-col">
                 <span>Between these dates:</span>
                 <span className="font-bold">
-                  &nbsp;&nbsp;&nbsp;&nbsp;{startDate ? startDate.toLocaleDateString() : 'N/A'}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{startDate ? startDate.toLocaleDateString() : "N/A"}
                   {" - "}
-                  {endDate ? endDate.toLocaleDateString() : 'N/A'}
+                  {endDate ? endDate.toLocaleDateString() : "N/A"}
                 </span>
               </div>
             </div>
@@ -248,7 +248,7 @@ const ParticipantDashboardContent = () => {
           </CardContentRow>
           <CardContentRow>
             <span>
-              {studies.length > 0 ? studies[0].dataSummary : 'No data summary available.'}
+              {studies.length > 0 ? studies[0].dataSummary : "No data summary available."}
             </span>
           </CardContentRow>
           <CardContentRow>
