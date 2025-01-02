@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import Card from '../cards/card';
 import CardContentRow from '../cards/cardContentRow';
@@ -12,6 +12,8 @@ import { useStudySubjectContext } from '../../contexts/studySubjectContext';
 import { SmallLoader } from '../loader';
 import ConsentModal from '../containers/consentModal'
 
+const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
+
 const ParticipantDashboardContent = () => {
   const [isConsentOpen, setIsConsentOpen] = useState<boolean>(false);
   const [consentError, setConsentError] = useState<string>("");
@@ -19,24 +21,31 @@ const ParticipantDashboardContent = () => {
   const { dittiId } = useAuth();
   const { studies, apis, studySubjectLoading } = useStudySubjectContext();
 
-  // Use the earliest `startsOn` date as the beginning of data collection
-  const startDate = new Date(Math.min(...studies.map(s => new Date(s.startsOn).getTime())));
+  useEffect(() => {
+    console.log(studies);
+  }, [studies]);
 
-  // Use the latest `expiresOn` date as the end of data collection
-  const endDate = (() => {
+  // Use the earliest startsOn date as the beginning of data collection
+  const startDate = useMemo(() => {
+    if (studies.length === 0) return null;
+    return new Date(Math.min(...studies.map(s => new Date(s.startsOn).getTime())));
+  }, [studies]);
+
+  // Use the latest expiresOn date as the end of data collection
+  const endDate = useMemo(() => {
+    if (studies.length === 0) return null;
     const validTimestamps = studies
       .map(s => (s.expiresOn ? new Date(s.expiresOn).getTime() : null)) // Map to timestamps, handle undefined
       .filter(timestamp => timestamp !== null) as number[]; // Filter out nulls and assert as number[]
-  
+
     if (validTimestamps.length === 0) {
       return null; // No valid dates
     }
-  
+
     return new Date(Math.max(...validTimestamps)); // Get the latest date
-  })();
-  
-  const scope = [...new Set(apis.map(api => api.scope).flat())];
-  
+  }, [studies]);
+
+  const scope = useMemo(() => [...new Set(apis.map(api => api.scope).flat())], [apis]);
 
   // For now assume we are only connecting Fitbit API
   const fitbitConnected = apis.length > 0;
@@ -50,6 +59,8 @@ const ParticipantDashboardContent = () => {
   const handleClickManageData = () => {
     window.location.href = "https://hosting.med.upenn.edu/forms/DittiApp/view.php?id=10677";
   };
+
+  // TODO: Update study consent in database
 
   // Handlers for Consent Modal actions
   const handleConsentAccept = () => {
@@ -70,8 +81,27 @@ const ParticipantDashboardContent = () => {
 
   // Handler for Connect FitBit button click
   const handleConnectFitBitClick = () => {
+    if (studies.length === 0) {
+      setConsentError('You are not enrolled in any studies.');
+      return;
+    }
     setIsConsentOpen(true);
   };
+
+  // Generate the contentHtml based on the number of enrolled studies
+  const consentContentHtml = useMemo(() => {
+    if (studies.length === 0) {
+      return `<p>You are not enrolled in any studies. Please enroll in a study to connect your FitBit data.</p>`;
+    } else if (studies.length === 1) {
+      return `<h4>${studies[0].studyName}</h4><p>${studies[0].consentInformation || defaultConsentContentText}</p>`;
+    } else {
+      let content = '';
+      studies.forEach(study => {
+        content += `<h4>${study.studyName}</h4><p>${study.consentInformation || defaultConsentContentText}</p>`;
+      });
+      return content;
+    }
+  }, [studies]);
 
   if (studySubjectLoading) {
     return (
@@ -162,7 +192,7 @@ const ParticipantDashboardContent = () => {
               <div className="flex flex-col">
                 <span>Between these dates:</span>
                 <span className="font-bold">
-                  &nbsp;&nbsp;&nbsp;&nbsp;{startDate?.toLocaleDateString()} - {endDate?.toLocaleDateString()}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{startDate ? startDate.toLocaleDateString() : 'N/A'} - {endDate ? endDate.toLocaleDateString() : 'N/A'}
                 </span>
               </div>
             </div>
@@ -171,7 +201,7 @@ const ParticipantDashboardContent = () => {
             <Title>Why are we collecting your data?</Title>
           </CardContentRow>
           <CardContentRow>
-            <span>{studies.length && studies[0].dataSummary}</span>
+            <span>{studies.length > 0 ? studies[0].dataSummary : 'No data summary available.'}</span>
           </CardContentRow>
           <CardContentRow>
             <Title>Manage my data</Title>
@@ -199,12 +229,7 @@ const ParticipantDashboardContent = () => {
         onAccept={handleConsentAccept}
         onDeny={handleConsentDeny}
         onClose={handleConsentClose}
-        contentHtml={`
-          <p>
-            By accepting, you agree that your data will be used solely for 
-            research purposes described in our terms. You can withdraw consent at any time.
-          </p>
-        `}
+        contentHtml={consentContentHtml}
       />
     </>
   );
