@@ -16,10 +16,6 @@ export default function StudySubjectProvider({
   const [apis, setApis] = useState<IParticipantApi[]>([])
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
 
-  useEffect(() => {
-    console.log("studies context", studies);
-  }, [studies]);
-
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
       // return new DataFactory();
@@ -53,7 +49,6 @@ export default function StudySubjectProvider({
     if (APP_ENV === "production" || APP_ENV === "development") {
       await makeRequest(`/participant`)
         .then((res: IParticipant) => {
-          console.log('res', res);
           studiesData = res.studies;
           apisData = res.apis;
         })
