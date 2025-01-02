@@ -10,20 +10,31 @@ import { ParticipantWearableDataProvider } from '../../contexts/wearableDataCont
 import WearableVisualization from '../visualizations/wearableVisualization';
 import { useStudySubjectContext } from '../../contexts/studySubjectContext';
 import { SmallLoader } from '../loader';
-import ConsentModal from '../containers/consentModal'
+import ConsentModal from '../containers/consentModal';
+import { makeRequest } from '../../utils';
+import { IParticipantStudy } from '../../interfaces';
 
 const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
 
 const ParticipantDashboardContent = () => {
   const [isConsentOpen, setIsConsentOpen] = useState<boolean>(false);
   const [consentError, setConsentError] = useState<string>("");
+  const [unconsentedStudies, setUnconsentedStudies] = useState<IParticipantStudy[]>([]);
 
   const { dittiId } = useAuth();
-  const { studies, apis, studySubjectLoading } = useStudySubjectContext();
+  const { studies, apis, studySubjectLoading, refetch } = useStudySubjectContext();
 
-  useEffect(() => {
-    console.log(studies);
-  }, [studies]);
+  // Gather all studies where the user has not consented
+  useEffect(() => getStudiesNeedConsent, [studies]);
+
+  const getStudiesNeedConsent = () => {
+    const studiesNeedConsent = studies.filter(s => !s.didConsent);
+    if (studiesNeedConsent.length > 0) {
+      setUnconsentedStudies(studiesNeedConsent);
+    } else {
+      setUnconsentedStudies([]);
+    }
+  };
 
   // Use the earliest startsOn date as the beginning of data collection
   const startDate = useMemo(() => {
@@ -35,8 +46,8 @@ const ParticipantDashboardContent = () => {
   const endDate = useMemo(() => {
     if (studies.length === 0) return null;
     const validTimestamps = studies
-      .map(s => (s.expiresOn ? new Date(s.expiresOn).getTime() : null)) // Map to timestamps, handle undefined
-      .filter(timestamp => timestamp !== null) as number[]; // Filter out nulls and assert as number[]
+      .map(s => (s.expiresOn ? new Date(s.expiresOn).getTime() : null))
+      .filter(timestamp => timestamp !== null) as number[];
 
     if (validTimestamps.length === 0) {
       return null; // No valid dates
@@ -60,13 +71,40 @@ const ParticipantDashboardContent = () => {
     window.location.href = "https://hosting.med.upenn.edu/forms/DittiApp/view.php?id=10677";
   };
 
-  // TODO: Update study consent in database
+  const handleConsentAccept = async () => {
+    if (unconsentedStudies.length === 0) {
+      setIsConsentOpen(false);
+      return;
+    }
 
-  // Handlers for Consent Modal actions
-  const handleConsentAccept = () => {
-    setIsConsentOpen(false);
-    setConsentError('');
-    handleRedirect();
+    try {
+      await Promise.all(
+        unconsentedStudies.map(study => {
+          return makeRequest(`/participant/study/${study.studyId}/consent`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ didConsent: true }),
+          });
+        })
+      );
+
+      // Clear error, close modal
+      setConsentError('');
+      setIsConsentOpen(false);
+
+      // Refetch data to ensure consistency
+      await refetch();
+      getStudiesNeedConsent();
+
+      // Redirect to Fitbit authorization after successful consent
+      handleRedirect();
+    } catch (err: any) {
+      console.error(err);
+      const errorMsg = err.msg || 'There was a problem updating your consent. Please try again.';
+      setConsentError(errorMsg);
+    }
   };
 
   const handleConsentDeny = () => {
@@ -79,29 +117,35 @@ const ParticipantDashboardContent = () => {
     setConsentError('You must choose an option to continue.');
   };
 
-  // Handler for Connect FitBit button click
+  // If there are no unconsented studies, proceed to Fitbit flow
+  // otherwise, prompt them to consent
   const handleConnectFitBitClick = () => {
-    if (studies.length === 0) {
-      setConsentError('You are not enrolled in any studies.');
-      return;
+    if (unconsentedStudies.length === 0) {
+      handleRedirect();
+    } else {
+      setIsConsentOpen(true);
     }
-    setIsConsentOpen(true);
   };
 
-  // Generate the contentHtml based on the number of enrolled studies
+  // Build HTML for all unconsented studies at once
   const consentContentHtml = useMemo(() => {
     if (studies.length === 0) {
       return `<p>You are not enrolled in any studies. Please enroll in a study to connect your FitBit data.</p>`;
-    } else if (studies.length === 1) {
-      return `<h4>${studies[0].studyName}</h4><p>${studies[0].consentInformation || defaultConsentContentText}</p>`;
-    } else {
-      let content = '';
-      studies.forEach(study => {
-        content += `<h4>${study.studyName}</h4><p>${study.consentInformation || defaultConsentContentText}</p>`;
-      });
-      return content;
     }
-  }, [studies]);
+    if (unconsentedStudies.length === 0) {
+      return `<p>You have already consented to all your studies.</p>`;
+    }
+
+    // Build a combined block of all unconsented study info
+    let content = '';
+    unconsentedStudies.forEach(study => {
+      content += `
+        <h4>${study.studyName}</h4>
+        <p>${study.consentInformation || defaultConsentContentText}</p>
+      `;
+    });
+    return content;
+  }, [studies, unconsentedStudies]);
 
   if (studySubjectLoading) {
     return (
@@ -139,7 +183,7 @@ const ParticipantDashboardContent = () => {
         </CardContentRow>
 
         {/* Information to display if the Fitbit API is connected */}
-        {fitbitConnected &&
+        {fitbitConnected && (
           <>
             <CardContentRow>
               <div className="flex flex-col">
@@ -170,11 +214,11 @@ const ParticipantDashboardContent = () => {
               </ParticipantWearableDataProvider>
             </CardContentRow>
           </>
-        }
+        )}
       </Card>
 
       {/* Data summary and study information to show if Fitbit is connected */}
-      {fitbitConnected &&
+      {fitbitConnected && (
         <Card width="sm">
           <CardContentRow>
             <Title>Your Data</Title>
@@ -183,16 +227,18 @@ const ParticipantDashboardContent = () => {
             <div className="flex flex-col">
               <div className="flex flex-col mb-4">
                 <span>Data being collected:</span>
-                {scope.map((s, i) =>
+                {scope.map((s, i) => (
                   <span key={i} className="font-bold capitalize">
                     &nbsp;&nbsp;&nbsp;&nbsp;{s}
                   </span>
-                )}
+                ))}
               </div>
               <div className="flex flex-col">
                 <span>Between these dates:</span>
                 <span className="font-bold">
-                  &nbsp;&nbsp;&nbsp;&nbsp;{startDate ? startDate.toLocaleDateString() : 'N/A'} - {endDate ? endDate.toLocaleDateString() : 'N/A'}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{startDate ? startDate.toLocaleDateString() : 'N/A'}
+                  {" - "}
+                  {endDate ? endDate.toLocaleDateString() : 'N/A'}
                 </span>
               </div>
             </div>
@@ -201,7 +247,9 @@ const ParticipantDashboardContent = () => {
             <Title>Why are we collecting your data?</Title>
           </CardContentRow>
           <CardContentRow>
-            <span>{studies.length > 0 ? studies[0].dataSummary : 'No data summary available.'}</span>
+            <span>
+              {studies.length > 0 ? studies[0].dataSummary : 'No data summary available.'}
+            </span>
           </CardContentRow>
           <CardContentRow>
             <Title>Manage my data</Title>
@@ -221,7 +269,7 @@ const ParticipantDashboardContent = () => {
             </div>
           </CardContentRow>
         </Card>
-      }
+      )}
 
       {/* Consent Modal */}
       <ConsentModal

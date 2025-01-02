@@ -62,9 +62,23 @@ export default function StudySubjectProvider({
     return [studiesData, apisData];
   };
 
+  // Function to refetch participant data
+  const refetch = async () => {
+    setStudySubjectLoading(true);
+    try {
+      const [studiesData, apisData] = await getStudySubject();
+      setStudies(studiesData);
+      setApis(apisData);
+    } catch (error) {
+      console.error("Failed to refetch participant data:", error);
+    } finally {
+      setStudySubjectLoading(false);
+    }
+  };
+
   return (
     <StudySubjectContext.Provider
-      value={{ studies, apis, studySubjectLoading }}>
+      value={{ studies, apis, studySubjectLoading, refetch }}>
         {children}
     </StudySubjectContext.Provider>
   );

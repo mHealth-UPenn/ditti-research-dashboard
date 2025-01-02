@@ -374,6 +374,7 @@ export interface StudySubjectContextType {
   studies: IParticipantStudy[];
   apis: IParticipantApi[];
   studySubjectLoading: boolean;
+  refetch: () => Promise<void>;
 }
 
 
