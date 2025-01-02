@@ -417,6 +417,7 @@ export interface IParticipantStudy {
   startsOn: string;
   expiresOn?: string;
   consentInformation?: string;
+  didConsent: boolean;
   dataSummary?: string;
 }
 

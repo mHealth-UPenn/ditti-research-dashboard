@@ -33,6 +33,7 @@ class ParticipantApiModel(BaseModel):
 class ParticipantStudyModel(BaseModel):
     study_name: str
     study_id: int
+    did_consent: bool
     created_on: datetime
     starts_on: datetime
     expires_on: datetime
@@ -47,6 +48,7 @@ class ParticipantStudyModel(BaseModel):
             return {
                 "study_name": obj.study.name,
                 "study_id": obj.study.id,
+                "did_consent": obj.did_consent,
                 "created_on": obj.created_on,
                 "starts_on": obj.created_on,  # TODO: Ensure same format as created_on
                 "expires_on": obj.expires_on,
