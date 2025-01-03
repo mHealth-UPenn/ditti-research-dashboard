@@ -14,6 +14,7 @@ import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 import sanitize from "sanitize-html";
+import { scaleIdentity } from "d3";
 
 interface StudiesEditProps extends ViewProps {
   studyId: number;
@@ -216,7 +217,8 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
       </FormView>
     );
   }
-
+  // TODO: No preview on the right hand side. Instead
+  // TODO: Add one preview for both consentInformation and dataSummary at the bottom of the form similiar to About Sleep Template Preview
   return (
     <FormView>
       <Form>
@@ -275,6 +277,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               id="defaultExpiryDelta"
               type="number"
               placeholder="14"
+              // TODO: min may not work because it is a managed text field, possibly fix with useEffect
               min="0"
               value={defaultExpiryDelta.toString()}
               label="Default Expiry Time (days)"
@@ -290,6 +293,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               Quality Improvement Study?
             </label>
             <div className="flex items-center h-[2.75rem] border border-light p-2">
+              {/* TODO: Use textField instead? */}
               <input
                 id="isQi"
                 type="checkbox"
@@ -301,6 +305,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         </FormRow>
         <FormRow>
           <FormField>
+            {/* TODO: " Desc: This is the consent form that the participant must accept to when connecting their Fitbit API" */}
             <TextField
               id="consentInformation"
               type="textarea"
@@ -314,6 +319,8 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         </FormRow>
         <FormRow>
           <FormField>
+            {/* TODO: Desc: This text will be shown on the participant dashboard as a brief summary of how their data will be used */}
+            {/* Sanitize this as html as well */}
             <TextField
               id="dataSummary"
               type="textarea"
