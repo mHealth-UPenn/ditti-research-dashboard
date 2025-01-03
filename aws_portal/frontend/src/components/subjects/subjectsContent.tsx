@@ -118,7 +118,7 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
   };
 
   const tableData: TableData[][] = filteredStudySubjects.map((studySubject: IStudySubjectDetails) => {
-    const { startsOn, expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id || 0);
+    const { startsOn, expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id);
 
     return [
       {

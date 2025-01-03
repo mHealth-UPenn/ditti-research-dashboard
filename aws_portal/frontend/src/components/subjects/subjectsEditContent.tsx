@@ -89,7 +89,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
 
   useEffect(() => {
     if (studySubject) {
-      const { startsOn, expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id || 0);
+      const { startsOn, expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id);
 
       const selectedTemplate = aboutSleepTemplates.filter(
         (ast: AboutSleepTemplate) => ast.text === studySubject.information

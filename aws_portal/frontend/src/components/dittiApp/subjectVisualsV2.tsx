@@ -50,7 +50,7 @@ const SubjectVisualsV2 = () => {
   }, [studyId]);
 
   const studySubject = getStudySubjectByDittiId(dittiId);
-  const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject || {} as IStudySubjectDetails, study?.id || 0);
+  const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id);
   const filteredTaps = taps.filter((t) => t.dittiId === dittiId);
   const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === dittiId);
 

@@ -142,9 +142,16 @@ export const getAccess = async (
 
 
 export const getStartOnAndExpiresOnForStudy = (
-  studySubject: IStudySubjectDetails,
+  studySubject?: IStudySubjectDetails,
   studyId?: number,
 ) => {
+  if (!studySubject || !studyId) {
+    const startsOn = new Date();
+    const expiresOn = new Date();
+    expiresOn.setDate(expiresOn.getDate() + 14);
+    return { startsOn, expiresOn };
+  }
+
   const currStudy = studySubject.studies.find(s => s.study.id == studyId || -1);
 
   if (currStudy) {
