@@ -200,7 +200,7 @@ const AccessGroups = () => {
     </Link>
   ) : <React.Fragment />;
 
-  const navbar = <Navbar active="Access Groups" />
+  const navbar = <Navbar activeView="Access Groups" />
 
   if (loading) {
     return (

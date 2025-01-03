@@ -1,11 +1,6 @@
 import { useState, useEffect, createRef } from "react";
 import TextField from "../fields/textField";
-import {
-  AboutSleepTemplate,
-  IStudySubjectDetails,
-  ResponseBody,
-  StudySubjectPrefill,
-} from "../../interfaces";
+import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { formatDateForInput, getStartOnAndExpiresOnForStudy, makeRequest } from "../../utils";
 import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
@@ -29,6 +24,9 @@ import { useStudiesContext } from "../../contexts/studiesContext";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 
+/**
+ * @property {"ditti" | "wearable"} app - The app (Ditti or Wearable)
+ */
 interface ISubjectsEditContentProps {
   app: "ditti" | "wearable";
 }
@@ -60,6 +58,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
 
   const studySubject = dittiId ? getStudySubjectByDittiId(dittiId) : null;
 
+  // Validate the form and set any error messages
   useEffect(() => {
     if (dittiExpTime <= enrollmentEnd) {
       setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.")
@@ -81,12 +80,14 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     }
   }, [enrollmentStart, enrollmentEnd, dittiExpTime]);
 
+  // Sanitize the about sleep template and set the preview
   useEffect(() => {
     if (previewRef.current && information !== "") {
       previewRef.current.innerHTML = sanitize(information);
     }
   }, [previewRef]);
 
+  // Load any data to prefill the form with, if any
   useEffect(() => {
     if (studySubject) {
       const { startsOn, expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id);
@@ -116,6 +117,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     }
   }, [studySubject]);
 
+  // Fetch about sleep templates from the database
   useEffect(() => {
     // get all about sleep templates
     const fetchTemplates = makeRequest("/db/get-about-sleep-templates").then(
@@ -125,6 +127,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     Promise.all([fetchTemplates]).then(() => setLoading(false));
   }, []);
 
+  // Update the preview when an about sleep template is selected
   useEffect(() => {
     if (previewRef.current) {
       if (aboutSleepTemplateSelected.text) {
@@ -136,10 +139,11 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   }, [aboutSleepTemplateSelected]);
 
   /**
-   * POST changes to the backend. Make a request to create an entry if creating
-   * a new entry, else make a request to edit an exiting entry
+   * POST changes to the backend. Make a request to create an entry if creating a new entry, else make a request to edit
+   * an exiting entry. One request is made to the AWS backend and another to the database backend.
    */
   const post = async (): Promise<void> => {
+    // Prepare and make the request to the AWS backend
     const dataAWS = {
       tap_permission: tapPermission,
       information: aboutSleepTemplateSelected.text,
@@ -158,6 +162,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     const urlAWS = dittiId ? "/aws/user/edit" : "/aws/user/create";
     const postAWS = makeRequest(urlAWS, optsAWS);
 
+    // Prepare and make the request to the database backend
     const dataDB = {
       ditti_id: userPermissionId,
       studies: [
@@ -180,7 +185,6 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     const postDB = makeRequest(urlDB, optsDB);
 
     const promises: Promise<ResponseBody>[] = [postAWS, postDB];
-    console.log(promises);
     Promise.all(promises)
       .then(([resAWS, _]) => handleSuccess(resAWS))
       .catch(error => handleFailure(error))
@@ -241,11 +245,9 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     year: "numeric",
     month: "short",
     day: "numeric",
-    // hour: "2-digit",
-    // minute: "2-digit"
   };
 
-  // if dittiId is 0, the user is enrolling a new subject
+  // If dittiId is 0, the user is enrolling a new subject
   const buttonText = dittiId ? "Update" : "Enroll";
   const enrollmentStartFormatted = enrollmentStart
     ? new Date(enrollmentStart).toLocaleDateString("en-US", dateOptions)

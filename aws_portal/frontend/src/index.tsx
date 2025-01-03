@@ -56,6 +56,11 @@ const Root: React.FC = () => {
 
 /**
  * Define application routes with nested routes for protected areas and login pages.
+ * 
+ * `handle.breadcrumbs` is used to display breadcrumbs in the Navbar component. `handle.breadcrumbs` is an array of
+ * objects with `name` and `link` keys. The `name` key is the breadcrumb text and the `link` key is the breadcrumb link.
+ * Either can contain a template string that is automatically replaced with the `studySlug`, `sidParam`, and
+ * `dittiIdParam` values. `link` can also be null if the breadcrumb is not meant to be clickable.
  */
 const router = createBrowserRouter([
   {

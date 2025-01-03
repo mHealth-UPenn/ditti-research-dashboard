@@ -82,6 +82,9 @@ export interface Role {
  * @property dittiId - The study's ditti ID.
  * @property email - The study's team email.
  * @property role - The role the user is assigned to for the study.
+ * @property defaultExpiryDelta - The default number of days after a study subject's enrollment that their participation
+ *   in the study ends.
+ * @property consentInformation - The text that the study subject must consent to before connecting their API.
  */
 export interface Study {
   id: number;
@@ -351,7 +354,6 @@ export interface AuthContextType {
 export interface StudiesContextType {
   studies: Study[];
   studiesLoading: boolean;
-  // getStudyById: (studyId: number) => Study | undefined;
   study: Study | null;
 }
 
@@ -373,6 +375,9 @@ export interface StudySubjectContextType {
  * Defines the context containing information about a coordinator's study subjects.
  * @property studySubjects - The study subjects and information about their study enrollments.
  * @property studySubjectLoading - Whether data is being fetched from the database.
+ * @property getStudySubjectByDittiId - Function to get a study subject by their Ditti ID.
+ * @property fetchStudySubjects - Function to fetch study subjects from the database. This is useful for refreshing
+ *  data after enrolling or updating a study subject.
  */
 export interface CoordinatorStudySubjectContextType {
   studySubjects: IStudySubjectDetails[];
@@ -545,12 +550,24 @@ export interface IDataProcessingTask {
 }
 
 
+/**
+ * Breadcrumbs for display in the Navbar component.
+ * @property name - The name of the breadcrumb to display in the navbar.
+ * @property link - The link to navigate to when the breadcrumb is clicked.
+ */
 export interface IBreadcrumb {
   name: string;
   link: string | null;
 }
 
 
+/**
+ * Defines the context containing information about the navbar.
+ * @property breadcrumbs - The breadcrumbs to display in the navbar.
+ * @property setStudySlug - Function to set the study slug in the breadcrumbs.
+ * @property setSidParam - Function to set the SID parameter in the breadcrumbs.
+ * @property setDittiIdParam - Function to set the Ditti ID parameter in the breadcrumbs.
+ */
 export interface NavbarContextType {
   breadcrumbs: IBreadcrumb[];
   setStudySlug: (studyCrumb: string) => void;
@@ -559,6 +576,11 @@ export interface NavbarContextType {
 }
 
 
+/**
+ * Defines the context containing information about the flash messages.
+ * @property flashMessages - The flash messages to display on the page.
+ * @property flashMessage - Function to flash a message on the page.
+ */
 export interface FlashMessageContextType {
   flashMessages: IFlashMessage[];
   flashMessage: (msg: React.ReactElement, variant: FlashMessageVariant) => void;

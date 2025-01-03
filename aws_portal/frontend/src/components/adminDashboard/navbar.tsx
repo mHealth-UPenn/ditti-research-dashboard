@@ -1,14 +1,15 @@
 import LinkComponent from "../links/linkComponent";
 import { Link } from "react-router-dom";
 
+
 /**
- * active: the active view
+ * @property {string} activeView - The name of the active view
  */
 interface NavbarProps {
-  active: string;
+  activeView: "Accounts" | "Studies" | "Roles" | "Access Groups" | "About Sleep Templates";
 }
 
-const Navbar = ({ active }: NavbarProps) => {
+const Navbar = ({ activeView }: NavbarProps) => {
   const views = [
     {
       active: false,
@@ -37,16 +38,16 @@ const Navbar = ({ active }: NavbarProps) => {
     }
   ];
 
-  // set the current view as active
+  // Set the current view as active
   views.forEach(v => {
-    if (v.name === active) {
+    if (v.name === activeView) {
       v.active = true;
     }
   });
 
   return (
     <div className="flex items-center justify-left px-6 lg:px-12 bg-white select-none whitespace-nowrap">
-      {/* if the view is active, highlight it using bg-dark */}
+      {/* If the view is active, highlight it using bg-dark */}
       {views.map((v, i) => (
         v.active ?
           <div

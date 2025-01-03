@@ -6,18 +6,19 @@ import { IStudySubjectDetails} from "../../interfaces";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
 import Button from "../buttons/button";
-import ViewContainer from "../containers/viewContainer";
-import Card from "../cards/card";
 import LinkComponent from "../links/linkComponent";
 import Title from "../text/title";
 import Subtitle from "../text/subtitle";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
 
 
+/**
+ * @property {2 | 3} app - The app number (2 for Ditti, 3 for Wearable)
+ */
 interface ISubjectsContentProps {
   app: 2 | 3;
 }

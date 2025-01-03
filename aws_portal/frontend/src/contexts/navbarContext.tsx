@@ -26,6 +26,7 @@ export default function NavbarContextProvider({
   const [sidParam, setSidParam] = useState("");
   const [dittiIdParam, setDittiIdParam] = useState("");
 
+  // Format any breadcrumbs with `studySlug`, `sidParam`, and `dittiIdParam`
   useEffect(() => {
     let updatedBreadcrumbs = matches
       .filter(match => match.handle ? (match.handle as IHandle).breadcrumbs : false)
