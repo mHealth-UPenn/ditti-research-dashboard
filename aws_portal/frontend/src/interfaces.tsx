@@ -553,7 +553,9 @@ export interface IBreadcrumb {
 
 export interface NavbarContextType {
   breadcrumbs: IBreadcrumb[];
-  setStudyCrumb: (studyCrumb: IBreadcrumb) => void;
+  setStudySlug: (studyCrumb: string) => void;
+  setSidParam: (sid: string) => void;
+  setDittiIdParam: (dittiId: string) => void;
 }
 
 

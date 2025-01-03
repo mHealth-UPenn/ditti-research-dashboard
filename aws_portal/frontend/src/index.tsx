@@ -277,7 +277,7 @@ const router = createBrowserRouter([
                 path: "study",
                 element: <StudySummary />,
                 handle: {
-                  breadcrumbs: [{ name: "<Study>", link: null }],
+                  breadcrumbs: [{ name: "{study}", link: "/coordinator/ditti/study?sid={sid}" }],
                 },
               },
               {
@@ -285,8 +285,8 @@ const router = createBrowserRouter([
                 element: <Subjects />,
                 handle: {
                   breadcrumbs: [
-                    { name: "<Study>", link: null },
-                    { name: "Participants", link: "/coordinator/ditti/participants" }
+                    { name: "{study}", link: "/coordinator/ditti/study?sid={sid}" },
+                    { name: "Participants", link: "/coordinator/ditti/participants?sid={sid}" }
                   ],
                 },
               },
@@ -295,9 +295,9 @@ const router = createBrowserRouter([
                 element: <SubjectsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "<Study>", link: null },
-                    { name: "Participants", link: "/coordinator/ditti/participants" },
-                    { name: "Enroll", link: "/coordinator/ditti/participants/enroll" }
+                    { name: "{study}", link: "/coordinator/ditti/study?sid={sid}" },
+                    { name: "Participants", link: "/coordinator/ditti/participants?sid={sid}" },
+                    { name: "Enroll", link: "/coordinator/ditti/participants/enroll?sid={sid}" }
                   ],
                 },
               },
@@ -306,9 +306,9 @@ const router = createBrowserRouter([
                 element: <SubjectsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "<Study>", link: null },
-                    { name: "Participants", link: "/coordinator/ditti/participants" },
-                    { name: "Edit", link: "/coordinator/ditti/participants/edit" }
+                    { name: "{study}", link: "/coordinator/ditti/study?sid={sid}" },
+                    { name: "Participants", link: "/coordinator/ditti/participants?sid={sid}" },
+                    { name: "Edit", link: "/coordinator/ditti/participants/edit?dittiId={dittiId}&sid={sid}" }
                   ],
                 },
               },
@@ -317,9 +317,9 @@ const router = createBrowserRouter([
                 element: <SubjectVisualsV2 />,
                 handle: {
                   breadcrumbs: [
-                    { name: "<Study>", link: null },
-                    { name: "Participants", link: "/coordinator/ditti/participants" },
-                    { name: "View", link: "/coordinator/ditti/participants/view" }
+                    { name: "{study}", link: "/coordinator/ditti/study?sid={sid}" },
+                    { name: "Participants", link: "/coordinator/ditti/participants?sid={sid}" },
+                    { name: "View", link: "/coordinator/ditti/participants/view?&dittiId={dittiId}&sid={sid}" }
                   ],
                 },
               },
@@ -343,7 +343,7 @@ const router = createBrowserRouter([
                 path: "study",
                 element: <WearableStudySummary />,
                 handle: {
-                  breadcrumbs: [{ name: "<Study>", link: null }],
+                  breadcrumbs: [{ name: "{study}", link: "/coordinator/wearable/participants?sid={sid}" }],
                 },
               },
               {
@@ -351,8 +351,8 @@ const router = createBrowserRouter([
                 element: <WearableSubjects />,
                 handle: {
                   breadcrumbs: [
-                    { name: "<Study>", link: null },
-                    { name: "Participants", link: "/coordinator/wearable/participants" }],
+                    { name: "{study}", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" }],
                 },
               },
               {
@@ -360,9 +360,9 @@ const router = createBrowserRouter([
                 element: <WearableSubjectsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "<Study>", link: null },
-                    { name: "Participants", link: "/coordinator/wearable/participants" },
-                    { name: "Enroll", link: "/coordinator/wearable/participants/enroll" }
+                    { name: "{study}", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "Enroll", link: "/coordinator/wearable/participants/enroll?sid={sid}" }
                   ],
                 },
               },
@@ -371,9 +371,9 @@ const router = createBrowserRouter([
                 element: <SubjectsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "<Study>", link: null },
-                    { name: "Participants", link: "/coordinator/wearable/participants" },
-                    { name: "Edit", link: "/coordinator/wearable/participants/edit" }
+                    { name: "{study}", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "Edit", link: "/coordinator/wearable/participants/edit?dittiId={dittiId}&sid={sid}" }
                   ],
                 },
               },
@@ -382,9 +382,9 @@ const router = createBrowserRouter([
                 element: <WearableVisuals />,
                 handle: {
                   breadcrumbs: [
-                    { name: "<Study>", link: null },
-                    { name: "Participants", link: "/coordinator/wearable/participants" },
-                    { name: "View", link: "/coordinator/wearable/participants/view" }
+                    { name: "{study}", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "View", link: "/coordinator/wearable/participants/view?dittiId={dittiId}&sid={sid}" }
                   ],
                 },
               },
