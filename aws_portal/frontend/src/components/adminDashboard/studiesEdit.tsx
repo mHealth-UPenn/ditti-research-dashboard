@@ -9,12 +9,12 @@ import FormSummary from "../containers/forms/formSummary";
 import FormTitle from "../text/formTitle";
 import FormRow from "../containers/forms/formRow";
 import FormField from "../containers/forms/formField";
+import CheckField from "../fields/checkField";
 import FormSummaryTitle from "../text/formSummaryTitle";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 import sanitize from "sanitize-html";
-import { scaleIdentity } from "d3";
 
 interface StudiesEditProps extends ViewProps {
   studyId: number;
@@ -289,18 +289,12 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
             />
           </FormField>
           <FormField>
-            <label htmlFor="isQi" className="mb-1 block">
-              Quality Improvement Study?
-            </label>
-            <div className="flex items-center h-[2.75rem] border border-light p-2">
-              {/* TODO: Use textField instead? */}
-              <input
-                id="isQi"
-                type="checkbox"
-                checked={isQi}
-                onChange={(e) => setIsQi(e.target.checked)}
-              />
-            </div>
+            <CheckField
+              id="isQi"
+              label="Quality Improvement Study?"
+              prefill={isQi}
+              onChange={setIsQi}
+            />
           </FormField>
         </FormRow>
         <FormRow>
