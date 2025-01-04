@@ -10,6 +10,8 @@ import React, { PropsWithChildren } from "react";
  * onKeyup (optional): a callback function on keyup
  * feedback (optional): feedback when an error is made
  * disabled (optional): whether to disable the field
+ * min (optional): minimum value for number inputs
+ * max (optional): maximum value for number inputs
  */
 interface TextFieldProps {
   value: string;
@@ -21,7 +23,8 @@ interface TextFieldProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   feedback?: string;
   disabled?: boolean;
-  min?: string;
+  min?: number;
+  max?: number;
 }
 
 /**
@@ -37,6 +40,8 @@ const TextField = ({
   feedback,
   disabled,
   value,
+  min,
+  max,
   children,
 }: PropsWithChildren<TextFieldProps>) => {
   const handleKeyUp = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -47,46 +52,58 @@ const TextField = ({
 
   return (
     <>
-        {/* if a label was passed as a prop */}
-        {label &&
-          <div className="mb-1">
-            <label htmlFor={id}>
-              {label}
-            </label>
-          </div>
-        }
-        <div className={`flex items-center ${type === "textarea" ? "h-[24rem]" : "h-[2.75rem]"} border border-light ${disabled ? "bg-extra-light" : ""}`}>
-          {/* place children here as prefix icons (e.g., a password icon) */}
-          {children || null}
-
-          {/* the input */}
-          <div className="flex items-center flex-grow h-full p-2">
-            {/* textares require a unique e.target class */}
-            {type === "textarea" ? (
-              <textarea
-                className={`w-full h-full resize-none focus:outline-none ${disabled && "italic text-link"}`}
-                onChange={handleKeyUp}
-                onKeyDown={onKeyDown}
-                disabled={disabled}
-                value={value} />
-            ) : (
-              <input
-                className={`w-full focus:outline-none ${disabled && "italic text-link"}`}
-                type={type || "text"}
-                placeholder={placeholder || ""}
-                onChange={handleKeyUp}
-                onKeyDown={onKeyDown}
-                disabled={disabled}
-                value={value} />
-            )}
-          </div>
+      {/* if a label was passed as a prop */}
+      {label && (
+        <div className="mb-1">
+          <label htmlFor={id}>{label}</label>
         </div>
+      )}
+      <div
+        className={`flex items-center ${
+          type === "textarea" ? "h-[24rem]" : "h-[2.75rem]"
+        } border border-light ${disabled ? "bg-extra-light" : ""}`}
+      >
+        {/* place children here as prefix icons (e.g., a password icon) */}
+        {children || null}
 
-        {/* feedback on error */}
-        <span
-          className={`text-sm text-[red] ${feedback && feedback !== "" ? "" : "hidden"}`}>
-            {feedback}
-        </span>
+        {/* the input */}
+        <div className="flex items-center flex-grow h-full p-2">
+          {/* textareas require a unique e.target class */}
+          {type === "textarea" ? (
+            <textarea
+              className={`w-full h-full resize-none focus:outline-none ${
+                disabled && "italic text-link"
+              }`}
+              onChange={handleKeyUp}
+              onKeyDown={onKeyDown}
+              disabled={disabled}
+              value={value}
+            />
+          ) : (
+            <input
+              className={`w-full focus:outline-none ${
+                disabled && "italic text-link"
+              }`}
+              type={type || "text"}
+              placeholder={placeholder || ""}
+              onChange={handleKeyUp}
+              onKeyDown={onKeyDown}
+              disabled={disabled}
+              value={value}
+              {...(type === "number" ? { min, max } : {})} // Pass min and max if type is number
+            />
+          )}
+        </div>
+      </div>
+
+      {/* feedback on error */}
+      <span
+        className={`text-sm text-[red] ${
+          feedback && feedback !== "" ? "" : "hidden"
+        }`}
+      >
+        {feedback}
+      </span>
     </>
   );
 };

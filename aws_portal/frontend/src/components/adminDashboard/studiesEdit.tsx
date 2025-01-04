@@ -1,5 +1,6 @@
 import React, { useEffect, useState, createRef } from "react";
 import TextField from "../fields/textField";
+import CheckField from "../fields/checkField"; // Ensure CheckField is imported
 import { ResponseBody, Study, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
@@ -9,7 +10,6 @@ import FormSummary from "../containers/forms/formSummary";
 import FormTitle from "../text/formTitle";
 import FormRow from "../containers/forms/formRow";
 import FormField from "../containers/forms/formField";
-import CheckField from "../fields/checkField";
 import FormSummaryTitle from "../text/formSummaryTitle";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
@@ -73,13 +73,25 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
   }, [consentInformation, consentPreviewRef]);
 
   /**
+   * Ensure that defaultExpiryDelta is non-negative
+   */
+  useEffect(() => {
+    if (defaultExpiryDelta < 0) {
+      setDefaultExpiryDelta(0);
+      setExpiryError("Default Enrollment Period must be nonnegative.");
+    } else {
+      setExpiryError("");
+    }
+  }, [defaultExpiryDelta]);
+
+  /**
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
   const getPrefill = async (): Promise<{
-    name: string; 
-    acronym: string; 
-    dittiId: string; 
+    name: string;
+    acronym: string;
+    dittiId: string;
     email: string;
     defaultExpiryDelta: number;
     consentInformation?: string;
@@ -115,26 +127,8 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
       defaultExpiryDelta: study.defaultExpiryDelta,
       consentInformation: study.consentInformation,
       dataSummary: study.dataSummary,
-      isQi: study.isQi
+      isQi: study.isQi,
     };
-  };
-
-  /**
-   * Validate the form field(s)
-   * @returns - boolean indicating if the form is valid
-   */
-  const validateForm = (): boolean => {
-    let valid = true;
-
-    // Validate Default Enrollment Period
-    if (defaultExpiryDelta < 0) {
-      setExpiryError("Default Enrollment Period must be nonnegative.");
-      valid = false;
-    } else {
-      setExpiryError("");
-    }
-
-    return valid;
   };
 
   /**
@@ -142,20 +136,10 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
    * a new entry, else make a request to edit an existing entry
    */
   const post = async (): Promise<void> => {
-    if (!validateForm()) {
-      flashMessage(
-        <span>
-          <b>Please fix the errors in the form before submitting.</b>
-        </span>,
-        "danger"
-      );
-      return;
-    }
-
-    const data = { 
-      acronym, 
-      dittiId, 
-      email, 
+    const data = {
+      acronym,
+      dittiId,
+      email,
       name,
       defaultExpiryDelta,
       consentInformation,
@@ -277,8 +261,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               id="defaultExpiryDelta"
               type="number"
               placeholder="14"
-              // TODO: min may not work because it is a managed text field, possibly fix with useEffect
-              min="0"
+              min={0}
               value={defaultExpiryDelta.toString()}
               label="Default Enrollment Period (days)"
               onKeyup={(text: string) => {
