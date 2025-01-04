@@ -15,8 +15,7 @@ const COLUMNS: Column[] = [
   { name: "Name", searchable: true, sortable: true, width: 30 },
   { name: "Ditti ID", searchable: true, sortable: true, width: 10 },
   { name: "Email", searchable: true, sortable: true, width: 20 },
-  // TODO: Change Default Expiry Delta to Default Enrollment Period everywhere
-  { name: "Default Expiry Delta", searchable: false, sortable: true, width: 15 },
+  { name: "Default Enrollment Period", searchable: false, sortable: true, width: 15 },
   { name: "QI", searchable: false, sortable: true, width: 10 },
   { name: "", searchable: false, sortable: false, width: 5 },
 ];

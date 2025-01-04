@@ -126,9 +126,9 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
   const validateForm = (): boolean => {
     let valid = true;
 
-    // Validate Default Expiry Delta
+    // Validate Default Enrollment Period
     if (defaultExpiryDelta < 0) {
-      setExpiryError("Default Expiry Time must be nonnegative.");
+      setExpiryError("Default Enrollment Period must be nonnegative.");
       valid = false;
     } else {
       setExpiryError("");
@@ -280,7 +280,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               // TODO: min may not work because it is a managed text field, possibly fix with useEffect
               min="0"
               value={defaultExpiryDelta.toString()}
-              label="Default Expiry Time (days)"
+              label="Default Enrollment Period (days)"
               onKeyup={(text: string) => {
                 const value = parseInt(text, 10);
                 setDefaultExpiryDelta(isNaN(value) ? 0 : value);
@@ -349,7 +349,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
             <b>Ditti ID:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
             <br /><br />
-            <b>Default Expiry Delta (days):</b><br />
+            <b>Default Enrollment Period (days):</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{defaultExpiryDelta}
             <br /><br />
             <b>Is QI:</b><br />
