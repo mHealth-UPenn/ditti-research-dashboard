@@ -7,6 +7,7 @@ import React, { PropsWithChildren } from "react";
  * prefill (optional): a default value (which cannot be changed)
  * value (optional): the field's value (which can be changed)
  * label (optional): the field's label
+ * description (optional): additional information about the field
  * onKeyup (optional): a callback function on keyup
  * feedback (optional): feedback when an error is made
  * disabled (optional): whether to disable the field
@@ -19,6 +20,7 @@ interface TextFieldProps {
   type?: string;
   placeholder?: string;
   label?: string;
+  description?: string; // Added description prop
   onKeyup?: (text: string) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   feedback?: string;
@@ -35,6 +37,7 @@ const TextField = ({
   type,
   placeholder,
   label,
+  description,
   onKeyup,
   onKeyDown,
   feedback,
@@ -58,6 +61,14 @@ const TextField = ({
           <label htmlFor={id}>{label}</label>
         </div>
       )}
+
+      {/* Render description if provided */}
+      {description && (
+        <div className="mb-1">
+          <small className="text-gray-600">{description}</small>
+        </div>
+      )}
+
       <div
         className={`flex items-center ${
           type === "textarea" ? "h-[24rem]" : "h-[2.75rem]"

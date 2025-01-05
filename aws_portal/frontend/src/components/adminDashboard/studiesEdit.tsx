@@ -289,13 +289,13 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         </FormRow>
         <FormRow>
           <FormField>
-            {/* TODO: " Desc: This is the consent form that the participant must accept to when connecting their Fitbit API" */}
             <TextField
               id="consentInformation"
               type="textarea"
               placeholder=""
               value={consentInformation}
               label="Consent Information"
+              description="Participants must accept this consent form when connecting their Fitbit API."
               onKeyup={(text: string) => setConsentInformation(text)}
               feedback=""
             />
@@ -306,14 +306,13 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         </FormRow>
         <FormRow>
           <FormField>
-            {/* TODO: Desc: This text will be shown on the participant dashboard as a brief summary of how their data will be used */}
-            {/* Sanitize this as html as well */}
             <TextField
               id="dataSummary"
               type="textarea"
               placeholder=""
               value={dataSummary}
               label="Data Summary"
+              description="This text will appear on the participant dashboard as a brief summary of how their data will be used."
               onKeyup={(text: string) => setDataSummary(text)}
               feedback=""
             />
