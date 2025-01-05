@@ -1,6 +1,6 @@
 import React, { useEffect, useState, createRef } from "react";
 import TextField from "../fields/textField";
-import CheckField from "../fields/checkField"; // Ensure CheckField is imported
+import CheckField from "../fields/checkField";
 import { ResponseBody, Study, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
@@ -33,6 +33,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
   const [expiryError, setExpiryError] = useState<string>("");
 
   const consentPreviewRef = createRef<HTMLDivElement>();
+  const dataSummaryPreviewRef = createRef<HTMLDivElement>();
 
   useEffect(() => {
     // Fetch prefill data if editing an existing study
@@ -71,6 +72,13 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
       consentPreviewRef.current.innerHTML = sanitize(consentInformation);
     }
   }, [consentInformation, consentPreviewRef]);
+
+  // Sanitize and set dataSummary in the preview
+  useEffect(() => {
+    if (dataSummaryPreviewRef.current && dataSummary !== "") {
+      dataSummaryPreviewRef.current.innerHTML = sanitize(dataSummary);
+    }
+  }, [dataSummary, dataSummaryPreviewRef]);
 
   /**
    * Ensure that defaultExpiryDelta is non-negative
@@ -201,8 +209,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
       </FormView>
     );
   }
-  // TODO: No preview on the right hand side. Instead
-  // TODO: Add one preview for both consentInformation and dataSummary at the bottom of the form similiar to About Sleep Template Preview
+
   return (
     <FormView>
       <Form>
@@ -294,6 +301,9 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
             />
           </FormField>
         </FormRow>
+        <FormRow className="mb-8">
+          <div ref={consentPreviewRef} className="px-4" />
+        </FormRow>
         <FormRow>
           <FormField>
             {/* TODO: Desc: This text will be shown on the participant dashboard as a brief summary of how their data will be used */}
@@ -308,6 +318,9 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               feedback=""
             />
           </FormField>
+        </FormRow>
+        <FormRow className="mb-8">
+          <div ref={dataSummaryPreviewRef} className="px-4" />
         </FormRow>
       </Form>
       <FormSummary>
@@ -331,12 +344,6 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
             <br /><br />
             <b>Is QI:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{isQi ? "Yes" : "No"}
-            <br /><br />
-            <b>Consent Information:</b><br />
-            <div ref={consentPreviewRef} className="ml-4" />
-            <br />
-            <b>Data Summary:</b><br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{dataSummary}
             <br />
           </FormSummaryText>
           <FormSummaryButton onClick={post} disabled={loading}>

@@ -1,20 +1,27 @@
 import { PropsWithChildren } from "react";
+import clsx from "clsx";
 
 interface FormRowProps {
   forceRow?: boolean;
+  className?: string;
 }
-
 
 const FormRow = ({
   forceRow = false,
-  children
+  className,
+  children,
 }: PropsWithChildren<FormRowProps>) => {
   return (
-    <div className={`flex ${!forceRow && "flex-col"} md:flex-row`}>
+    <div
+      className={clsx(
+        "flex",
+        { "flex-col": !forceRow, "md:flex-row": true },
+        className
+      )}
+    >
       {children}
     </div>
   );
 };
-
 
 export default FormRow;
