@@ -1494,6 +1494,7 @@ def study_subject_create():
         msg: "Internal server error when creating study subject"
     }
     """
+    print(request.json.get("create"))
     try:
         data = request.json.get("create")
         if not data:
@@ -1543,6 +1544,7 @@ def study_subject_create():
                 study_subject=study_subject,
                 study=study,
                 did_consent=did_consent,
+                starts_on=study_entry.get("starts_on"),
                 expires_on=expires_on
             )
             db.session.add(join_study)

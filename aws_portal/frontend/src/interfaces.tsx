@@ -161,7 +161,7 @@ export interface ActionResource {
  */
 export interface ResponseBody {
   msg: string;
-  csrfAccessToken: string;
+  csrfAccessToken?: string;
   jwt?: string;
 }
 

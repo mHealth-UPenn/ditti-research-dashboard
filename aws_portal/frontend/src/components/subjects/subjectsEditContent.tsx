@@ -40,9 +40,9 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const [information, setInformation] = useState("");
   const [userPermissionId, setUserPermissionId] = useState("");
   const [userPermissionIdFeedback, setUserPermissionIdFeedback] = useState("");
-  const [dittiExpTime, setDittiExpTime] = useState(new Date());
-  const [enrollmentStart, setEnrollmentStart] = useState(new Date());
-  const [enrollmentEnd, setEnrollmentEnd] = useState(new Date());
+  const [dittiExpTime, setDittiExpTime] = useState("");
+  const [enrollmentStart, setEnrollmentStart] = useState("");
+  const [enrollmentEnd, setEnrollmentEnd] = useState("");
   const [enrollmentFeedback, setEnrollmentFeedback] = useState("");
   const [dittiExpTimeFeedback, setDittiExpTimeFeedback] = useState("");
   const [aboutSleepTemplates, setAboutSleepTemplates] = useState<AboutSleepTemplate[]>([]);
@@ -144,9 +144,9 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       setTapPermission(studySubject.tapPermission);
       setInformation(studySubject.information);
       setUserPermissionId(studySubject.dittiId.replace(study?.dittiId || "", ""));
-      setDittiExpTime(new Date(studySubject.dittiExpTime.replace("Z", "")));
-      setEnrollmentStart(startsOn);
-      setEnrollmentEnd(expiresOn);
+      setDittiExpTime(formatDateForInput(new Date(studySubject.dittiExpTime.replace("Z", ""))));
+      setEnrollmentStart(formatDateForInput(startsOn));
+      setEnrollmentEnd(formatDateForInput(expiresOn));
     } else {
       const startsOn = new Date();
       const expiresOn = new Date();
@@ -154,9 +154,9 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       expiresOn.setDate(expiresOn.getDate() + expiryDelta);
       const dittiExpTime = new Date(expiresOn);
       dittiExpTime.setDate(dittiExpTime.getDate() + 1);
-      setEnrollmentStart(startsOn);
-      setEnrollmentEnd(expiresOn);
-      setDittiExpTime(dittiExpTime);
+      setEnrollmentStart(formatDateForInput(startsOn));
+      setEnrollmentEnd(formatDateForInput(expiresOn));
+      setDittiExpTime(formatDateForInput(dittiExpTime));
     }
   }, [studySubject]);
 
@@ -191,7 +191,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       tap_permission: tapPermission,
       information: aboutSleepTemplateSelected.text,
       user_permission_id: study?.dittiId + userPermissionId,
-      exp_time: dittiExpTime,
+      exp_time: dittiExpTime + "T00:00:00.000Z",
       team_email: study?.email
     };
 
@@ -211,8 +211,8 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       studies: [
         {
           id: study?.id || 0,
-          starts_on: enrollmentStart.toISOString(),
-          expires_on: enrollmentEnd.toISOString(),
+          starts_on: enrollmentStart + "T00:00:00.000Z",
+          expires_on: enrollmentEnd + "T00:00:00.000Z",
         }
       ]
     }
@@ -348,9 +348,9 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               id="enrollment-start"
               type="date"
               placeholder=""
-              value={formatDateForInput(enrollmentStart)}
+              value={enrollmentStart}
               label="Enrollment Start Date"
-              onKeyup={text => setEnrollmentStart(new Date(text))}
+              onKeyup={text => setEnrollmentStart(text + "T00:00Z")}
               feedback={enrollmentFeedback}
               required={true} />
           </FormField>
@@ -359,9 +359,9 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               id="enrollment-end"
               type="date"
               placeholder=""
-              value={formatDateForInput(enrollmentEnd)}
+              value={enrollmentEnd}
               label="Enrollment End Date"
-              onKeyup={text => setEnrollmentEnd(new Date(text))}
+              onKeyup={text => setEnrollmentEnd(text + "T00:00Z")}
               feedback={enrollmentFeedback}
               required={true} />
           </FormField>
@@ -372,9 +372,9 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               id="ditti-expiry"
               type="date"
               placeholder=""
-              value={formatDateForInput(dittiExpTime)}
+              value={dittiExpTime}
               label="Ditti ID Expiry Date"
-              onKeyup={text => setDittiExpTime(new Date(text))}
+              onKeyup={text => setDittiExpTime(text + "T00:00Z")}
               feedback={dittiExpTimeFeedback}
               required={true} />
           </FormField>
