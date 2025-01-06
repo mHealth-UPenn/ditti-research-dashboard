@@ -1,4 +1,4 @@
-import { useState, useEffect, createRef } from "react";
+import { useState, useEffect, createRef, FocusEvent, useRef } from "react";
 import TextField from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { formatDateForInput, getStartOnAndExpiresOnForStudy, makeRequest } from "../../utils";
@@ -39,17 +39,20 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const [tapPermission, setTapPermission] = useState(false);
   const [information, setInformation] = useState("");
   const [userPermissionId, setUserPermissionId] = useState("");
+  const [userPermissionIdFeedback, setUserPermissionIdFeedback] = useState("");
   const [dittiExpTime, setDittiExpTime] = useState(new Date());
   const [enrollmentStart, setEnrollmentStart] = useState(new Date());
   const [enrollmentEnd, setEnrollmentEnd] = useState(new Date());
   const [enrollmentFeedback, setEnrollmentFeedback] = useState("");
   const [dittiExpTimeFeedback, setDittiExpTimeFeedback] = useState("");
-
   const [aboutSleepTemplates, setAboutSleepTemplates] = useState<AboutSleepTemplate[]>([]);
   const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] = useState<AboutSleepTemplate>({} as AboutSleepTemplate);
+  const [formIsValid, setFormIsValid] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
+
   const previewRef = createRef<HTMLDivElement>();
-  
+  const dittiIdInputRef = createRef<HTMLInputElement>();
+
   const { studiesLoading, study } = useStudiesContext();
   const { studySubjectLoading, getStudySubjectByDittiId, fetchStudySubjects } = useCoordinatorStudySubjectContext();
 
@@ -57,27 +60,61 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const navigate = useNavigate();
 
   const studySubject = dittiId ? getStudySubjectByDittiId(dittiId) : null;
+  const userPermissionIdRef = useRef(userPermissionId);
+
+  // Update the ref whenever userPermissionId changes
+  useEffect(() => {
+    userPermissionIdRef.current = userPermissionId;
+  }, [userPermissionId]);
+
+  const validateDittiId = () => {
+    let isValid = true;
+
+    if (userPermissionIdRef.current === "") {
+      isValid = false;
+      setUserPermissionIdFeedback("Ditti ID is required.");
+    } else {
+      setUserPermissionIdFeedback("");
+    }
+
+    setFormIsValid(isValid);
+  };
+
+  // Add event listeners for validating Ditti ID field
+  useEffect(() => {
+    if (dittiIdInputRef.current) {
+      dittiIdInputRef.current.addEventListener("blur", validateDittiId);
+      return () => dittiIdInputRef.current?.removeEventListener("blur", validateDittiId);
+    }
+  }, [dittiIdInputRef]);
+
 
   // Validate the form and set any error messages
   useEffect(() => {
+    let isValid = true;
+
     if (dittiExpTime <= enrollmentEnd) {
-      setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.")
+      setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.");
+      isValid = false;
     } else {
       setDittiExpTimeFeedback("");
     }
-  }, [enrollmentEnd, dittiExpTime]);
 
-  useEffect(() => {
     if (enrollmentEnd <= enrollmentStart) {
-      setEnrollmentFeedback("Enrollment end date must be after enrollment start date.")
+      setEnrollmentFeedback("Enrollment end date must be after enrollment start date.");
+      isValid = false;
     } else {
       setEnrollmentFeedback("");
     }
+
     if (dittiExpTime <= enrollmentEnd) {
-      setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.")
+      setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.");
+      isValid = false;
     } else {
       setDittiExpTimeFeedback("");
     }
+  
+    setFormIsValid(isValid);
   }, [enrollmentStart, enrollmentEnd, dittiExpTime]);
 
   // Sanitize the about sleep template and set the preview
@@ -100,7 +137,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
 
       setTapPermission(studySubject.tapPermission);
       setInformation(studySubject.information);
-      setUserPermissionId(studySubject.dittiId);
+      setUserPermissionId(studySubject.dittiId.replace(study?.dittiId || "", ""));
       setDittiExpTime(new Date(studySubject.dittiExpTime.replace("Z", "")));
       setEnrollmentStart(startsOn);
       setEnrollmentEnd(expiresOn);
@@ -147,7 +184,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     const dataAWS = {
       tap_permission: tapPermission,
       information: aboutSleepTemplateSelected.text,
-      user_permission_id: userPermissionId,
+      user_permission_id: study?.dittiId + userPermissionId,
       exp_time: dittiExpTime,
       team_email: study?.email
     };
@@ -164,7 +201,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
 
     // Prepare and make the request to the database backend
     const dataDB = {
-      ditti_id: userPermissionId,
+      ditti_id: study?.dittiId + userPermissionId,
       studies: [
         {
           id: study?.id || 0,
@@ -276,10 +313,12 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               id="dittiId"
               type="text"
               placeholder=""
-              value={userPermissionId.replace(study?.dittiId || "", "")}
+              value={userPermissionId}
               label="Ditti ID"
-              onKeyup={text => setUserPermissionId(study?.dittiId + text)}
-              feedback="">
+              onKeyup={text => setUserPermissionId(text)}
+              feedback={userPermissionIdFeedback}
+              required={true}
+              inputRef={dittiIdInputRef}>
                 {/* superimpose the study prefix on the form field */}
                 <div className="flex items-center text-link h-full px-2 bg-extra-light border-r border-light">
                   <i>{study?.dittiId}</i>
@@ -306,7 +345,8 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               value={formatDateForInput(enrollmentStart)}
               label="Enrollment Start Date"
               onKeyup={text => setEnrollmentStart(new Date(text))}
-              feedback={enrollmentFeedback} />
+              feedback={enrollmentFeedback}
+              required={true} />
           </FormField>
           <FormField>
             <TextField
@@ -316,7 +356,8 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               value={formatDateForInput(enrollmentEnd)}
               label="Enrollment End Date"
               onKeyup={text => setEnrollmentEnd(new Date(text))}
-              feedback={enrollmentFeedback} />
+              feedback={enrollmentFeedback}
+              required={true} />
           </FormField>
         </FormRow>
         <FormRow>
@@ -328,7 +369,8 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               value={formatDateForInput(dittiExpTime)}
               label="Ditti ID Expiry Date"
               onKeyup={text => setDittiExpTime(new Date(text))}
-              feedback={dittiExpTimeFeedback} />
+              feedback={dittiExpTimeFeedback}
+              required={true} />
           </FormField>
           <FormField>
             <CheckField
@@ -367,7 +409,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
           <FormSummaryText>
             Ditti ID:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{userPermissionId}
+            &nbsp;&nbsp;&nbsp;&nbsp;{study?.dittiId + userPermissionId}
             <br />
             <br />
             Team email:
@@ -402,7 +444,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
           <div>
             <FormSummaryButton
               onClick={post}
-              disabled={APP_ENV === "demo"}>
+              disabled={APP_ENV === "demo" || !formIsValid}>
                 {buttonText}
             </FormSummaryButton>
             {APP_ENV === "demo" &&

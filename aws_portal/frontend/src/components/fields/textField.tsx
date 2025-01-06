@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren, RefObject } from "react";
 
 /**
  * id (optional): an optional html id
@@ -10,6 +10,7 @@ import React, { PropsWithChildren } from "react";
  * onKeyup (optional): a callback function on keyup
  * feedback (optional): feedback when an error is made
  * disabled (optional): whether to disable the field
+ * required (optional): whether the field is required. If required, display a required asterisk.
  */
 interface TextFieldProps {
   value: string;
@@ -21,6 +22,9 @@ interface TextFieldProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   feedback?: string;
   disabled?: boolean;
+  required?: boolean;
+  inputRef?: RefObject<HTMLInputElement>;
+  textAreaRef?: RefObject<HTMLTextAreaElement>;
 }
 
 /**
@@ -36,6 +40,9 @@ const TextField = ({
   feedback,
   disabled,
   value,
+  required = false,
+  inputRef,
+  textAreaRef,
   children,
 }: PropsWithChildren<TextFieldProps>) => {
   const handleKeyUp = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -50,7 +57,7 @@ const TextField = ({
         {label &&
           <div className="mb-1">
             <label htmlFor={id}>
-              {label}
+              {label}{required && <span className="ml-1 text-[red]">*</span>}
             </label>
           </div>
         }
@@ -67,7 +74,8 @@ const TextField = ({
                 onChange={handleKeyUp}
                 onKeyDown={onKeyDown}
                 disabled={disabled}
-                value={value} />
+                value={value}
+                ref={textAreaRef} />
             ) : (
               <input
                 className={`w-full focus:outline-none ${disabled && "italic text-link"}`}
@@ -76,7 +84,8 @@ const TextField = ({
                 onChange={handleKeyUp}
                 onKeyDown={onKeyDown}
                 disabled={disabled}
-                value={value} />
+                value={value}
+                ref={inputRef} />
             )}
           </div>
         </div>
