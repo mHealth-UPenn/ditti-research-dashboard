@@ -348,7 +348,7 @@ const router = createBrowserRouter([
                 path: "study",
                 element: <WearableStudySummary />,
                 handle: {
-                  breadcrumbs: [{ name: "{study}", link: "/coordinator/wearable/participants?sid={sid}" }],
+                  breadcrumbs: [{ name: "{study}", link: "/coordinator/wearable/study?sid={sid}" }],
                 },
               },
               {
@@ -356,7 +356,7 @@ const router = createBrowserRouter([
                 element: <WearableSubjects />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "{study}", link: "/coordinator/wearable/study?sid={sid}" },
                     { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" }],
                 },
               },
@@ -365,7 +365,7 @@ const router = createBrowserRouter([
                 element: <WearableSubjectsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "{study}", link: "/coordinator/wearable/study?sid={sid}" },
                     { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" },
                     { name: "Enroll", link: "/coordinator/wearable/participants/enroll?sid={sid}" }
                   ],
@@ -376,7 +376,7 @@ const router = createBrowserRouter([
                 element: <SubjectsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "{study}", link: "/coordinator/wearable/study?sid={sid}" },
                     { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" },
                     { name: "Edit", link: "/coordinator/wearable/participants/edit?dittiId={dittiId}&sid={sid}" }
                   ],
@@ -387,7 +387,7 @@ const router = createBrowserRouter([
                 element: <WearableVisuals />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/wearable/participants?sid={sid}" },
+                    { name: "{study}", link: "/coordinator/wearable/study?sid={sid}" },
                     { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" },
                     { name: "View", link: "/coordinator/wearable/participants/view?dittiId={dittiId}&sid={sid}" }
                   ],

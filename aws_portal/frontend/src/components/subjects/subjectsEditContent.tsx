@@ -93,6 +93,12 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   useEffect(() => {
     let isValid = true;
 
+    if (userPermissionId === "") {
+      isValid = false;
+    } else {
+      setUserPermissionIdFeedback("");
+    }
+
     if (dittiExpTime <= enrollmentEnd) {
       setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.");
       isValid = false;
@@ -115,7 +121,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     }
   
     setFormIsValid(isValid);
-  }, [enrollmentStart, enrollmentEnd, dittiExpTime]);
+  }, [enrollmentStart, enrollmentEnd, dittiExpTime, userPermissionId]);
 
   // Sanitize the about sleep template and set the preview
   useEffect(() => {
