@@ -42,8 +42,9 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const [userPermissionIdFeedback, setUserPermissionIdFeedback] = useState("");
   const [dittiExpTime, setDittiExpTime] = useState("");
   const [enrollmentStart, setEnrollmentStart] = useState("");
+  const [enrollmentStartFeedback, setEnrollmentStartFeedback] = useState("");
   const [enrollmentEnd, setEnrollmentEnd] = useState("");
-  const [enrollmentFeedback, setEnrollmentFeedback] = useState("");
+  const [enrollmentEndFeedback, setEnrollmentEndFeedback] = useState("");
   const [dittiExpTimeFeedback, setDittiExpTimeFeedback] = useState("");
   const [aboutSleepTemplates, setAboutSleepTemplates] = useState<AboutSleepTemplate[]>([]);
   const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] = useState<AboutSleepTemplate>({} as AboutSleepTemplate);
@@ -92,6 +93,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   // Validate the form and set any error messages
   useEffect(() => {
     let isValid = true;
+    const today = formatDateForInput(new Date());
 
     if (userPermissionId === "") {
       isValid = false;
@@ -99,7 +101,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       setUserPermissionIdFeedback("");
     }
 
-    if (dittiExpTime <= enrollmentEnd) {
+    if (dittiExpTime < enrollmentEnd) {
       setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.");
       isValid = false;
     } else {
@@ -107,17 +109,19 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     }
 
     if (enrollmentEnd <= enrollmentStart) {
-      setEnrollmentFeedback("Enrollment end date must be after enrollment start date.");
+      setEnrollmentStartFeedback("Enrollment end date must be after enrollment start date.");
+      setEnrollmentEndFeedback("Enrollment end date must be after enrollment start date.");
       isValid = false;
     } else {
-      setEnrollmentFeedback("");
+      setEnrollmentStartFeedback("");
+      setEnrollmentEndFeedback("");
     }
 
-    if (dittiExpTime <= enrollmentEnd) {
-      setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.");
+    if (enrollmentEnd <= today) {
+      setEnrollmentEndFeedback("Enrollment end date must be a future date.");
       isValid = false;
     } else {
-      setDittiExpTimeFeedback("");
+      setEnrollmentEndFeedback("");
     }
   
     setFormIsValid(isValid);
@@ -152,11 +156,9 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       const expiresOn = new Date();
       const expiryDelta = study?.defaultExpiryDelta || 14;
       expiresOn.setDate(expiresOn.getDate() + expiryDelta);
-      const dittiExpTime = new Date(expiresOn);
-      dittiExpTime.setDate(dittiExpTime.getDate() + 1);
       setEnrollmentStart(formatDateForInput(startsOn));
       setEnrollmentEnd(formatDateForInput(expiresOn));
-      setDittiExpTime(formatDateForInput(dittiExpTime));
+      setDittiExpTime(formatDateForInput(expiresOn));
     }
   }, [studySubject]);
 
@@ -350,8 +352,8 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               placeholder=""
               value={enrollmentStart}
               label="Enrollment Start Date"
-              onKeyup={text => setEnrollmentStart(text + "T00:00Z")}
-              feedback={enrollmentFeedback}
+              onKeyup={setEnrollmentStart}
+              feedback={enrollmentStartFeedback}
               required={true} />
           </FormField>
           <FormField>
@@ -361,8 +363,8 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               placeholder=""
               value={enrollmentEnd}
               label="Enrollment End Date"
-              onKeyup={text => setEnrollmentEnd(text + "T00:00Z")}
-              feedback={enrollmentFeedback}
+              onKeyup={setEnrollmentEnd}
+              feedback={enrollmentEndFeedback}
               required={true} />
           </FormField>
         </FormRow>
@@ -374,7 +376,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               placeholder=""
               value={dittiExpTime}
               label="Ditti ID Expiry Date"
-              onKeyup={text => setDittiExpTime(text + "T00:00Z")}
+              onKeyup={setDittiExpTime}
               feedback={dittiExpTimeFeedback}
               required={true} />
           </FormField>
