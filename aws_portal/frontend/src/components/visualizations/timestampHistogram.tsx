@@ -43,7 +43,7 @@ const formatTimeZoneTick = (v: Date | NumberValue, timezones?: { time: number; n
   }
 
   if (index === timezones.length) {
-    return timezones[index - 1].name;
+    return timezones[index - 1]?.name || "";
   }
   return timezones[index]?.name || "";
 };
