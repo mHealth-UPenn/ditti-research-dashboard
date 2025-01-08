@@ -345,7 +345,8 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
               onKeyup={text => setUserPermissionId(text)}
               feedback={userPermissionIdFeedback}
               required={true}
-              inputRef={dittiIdInputRef}>
+              inputRef={dittiIdInputRef}
+              disabled={Boolean(studySubject)}>
                 {/* superimpose the study prefix on the form field */}
                 <div className="flex items-center text-link h-full px-2 bg-extra-light border-r border-light">
                   <i>{study?.dittiId}</i>
