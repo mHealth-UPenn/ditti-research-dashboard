@@ -889,7 +889,6 @@ def test_study_subject_get_all(get_admin, post_admin, create_study_subject):
     # Check if response is empty
     if res.data:
         data_res = json.loads(res.data)
-        print(data_res)
     else:
         data_res = []
 
