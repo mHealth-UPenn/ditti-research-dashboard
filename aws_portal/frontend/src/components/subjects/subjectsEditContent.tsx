@@ -118,41 +118,46 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     let isValid = true;
     const today = formatDateForInput(new Date());
 
-    const updatedTemporaryPasswordValidation = { ...cognitoPasswordValidation };
+    // Only validate password when creating a new study subject
+    if (!studySubject) {
+      const updatedTemporaryPasswordValidation = { ...cognitoPasswordValidation };
 
-    if (temporaryPassword.length < 8) {
-      updatedTemporaryPasswordValidation.isMinLen = false;
-      isValid = false;
-    } else {
-      updatedTemporaryPasswordValidation.isMinLen = true;
-    }
-  
-    if (!numberRegex.test(temporaryPassword)) {
-      updatedTemporaryPasswordValidation.containsNumber = false;
-      isValid = false;
-    } else {
-      updatedTemporaryPasswordValidation.containsNumber = true;
-    }
-  
-    if (!specialCharRegex.test(temporaryPassword)) {
-      updatedTemporaryPasswordValidation.containsSpecial = false;
-      isValid = false;
-    } else {
-      updatedTemporaryPasswordValidation.containsSpecial = true;
-    }
-  
-    if (!uppercaseRegex.test(temporaryPassword)) {
-      updatedTemporaryPasswordValidation.containsUppercase = false;
-      isValid = false;
-    } else {
-      updatedTemporaryPasswordValidation.containsUppercase = true;
-    }
-  
-    if (!lowercaseRegex.test(temporaryPassword)) {
-      updatedTemporaryPasswordValidation.containsLowercase = false;
-      isValid = false;
-    } else {
-      updatedTemporaryPasswordValidation.containsLowercase = true;
+      if (temporaryPassword.length < 8) {
+        updatedTemporaryPasswordValidation.isMinLen = false;
+        isValid = false;
+      } else {
+        updatedTemporaryPasswordValidation.isMinLen = true;
+      }
+    
+      if (!numberRegex.test(temporaryPassword)) {
+        updatedTemporaryPasswordValidation.containsNumber = false;
+        isValid = false;
+      } else {
+        updatedTemporaryPasswordValidation.containsNumber = true;
+      }
+    
+      if (!specialCharRegex.test(temporaryPassword)) {
+        updatedTemporaryPasswordValidation.containsSpecial = false;
+        isValid = false;
+      } else {
+        updatedTemporaryPasswordValidation.containsSpecial = true;
+      }
+    
+      if (!uppercaseRegex.test(temporaryPassword)) {
+        updatedTemporaryPasswordValidation.containsUppercase = false;
+        isValid = false;
+      } else {
+        updatedTemporaryPasswordValidation.containsUppercase = true;
+      }
+    
+      if (!lowercaseRegex.test(temporaryPassword)) {
+        updatedTemporaryPasswordValidation.containsLowercase = false;
+        isValid = false;
+      } else {
+        updatedTemporaryPasswordValidation.containsLowercase = true;
+      }
+
+      setTemporaryPasswordValidation(updatedTemporaryPasswordValidation);
     }
 
     if (userPermissionId === "") {
@@ -184,7 +189,6 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       setEnrollmentEndFeedback("");
     }
   
-    setTemporaryPasswordValidation(updatedTemporaryPasswordValidation);
     setFormIsValid(isValid);
   }, [
     enrollmentStart,
@@ -306,7 +310,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
         study: study?.id || 0,
         data: {
           cognitoUsername: study?.dittiId + userPermissionId,
-          temporaryPassword: "Abc123!@#$",
+          temporaryPassword: temporaryPassword,
         },
       };
 
@@ -430,27 +434,29 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
           </FormField>
         </FormRow>
 
-        <FormRow>
-          <FormField>
-            <TextField
-              id="temporary-password"
-              type="password"
-              placeholder=""
-              value={temporaryPassword}
-              label="Temporary Password"
-              onKeyup={setTemporaryPassword}
-              required={true} />
-          </FormField>
-          <FormField>
-            <div className="flex flex-col">
-              <span className={`text-sm ${temporaryPasswordValidation.isMinLen ? "text-[green]" : "text-[red]"}`}>Must be 8 at least characters</span>
-              <span className={`text-sm ${temporaryPasswordValidation.containsNumber ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 number</span>
-              <span className={`text-sm ${temporaryPasswordValidation.containsSpecial ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 special character</span>
-              <span className={`text-sm ${temporaryPasswordValidation.containsUppercase ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 uppercase letter</span>
-              <span className={`text-sm ${temporaryPasswordValidation.containsLowercase ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 lowercase letter</span>
-            </div>
-          </FormField>
-        </FormRow>
+        {!studySubject &&
+          <FormRow>
+            <FormField>
+              <TextField
+                id="temporary-password"
+                type="password"
+                placeholder=""
+                value={temporaryPassword}
+                label="Temporary Password"
+                onKeyup={setTemporaryPassword}
+                required={true} />
+            </FormField>
+            <FormField>
+              <div className="flex flex-col">
+                <span className={`text-sm ${temporaryPasswordValidation.isMinLen ? "text-[green]" : "text-[red]"}`}>Must be 8 at least characters</span>
+                <span className={`text-sm ${temporaryPasswordValidation.containsNumber ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 number</span>
+                <span className={`text-sm ${temporaryPasswordValidation.containsSpecial ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 special character</span>
+                <span className={`text-sm ${temporaryPasswordValidation.containsUppercase ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 uppercase letter</span>
+                <span className={`text-sm ${temporaryPasswordValidation.containsLowercase ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 lowercase letter</span>
+              </div>
+            </FormField>
+          </FormRow>
+        }
 
         {/* the raw timestamp includes ":00.000Z" */}
         <FormRow>
