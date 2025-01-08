@@ -226,6 +226,43 @@ def check_login():
 @blueprint.route("/register/participant", methods=["POST"])
 @auth_required("Create", "Participants")
 def register_participant():
+    """
+    Registers a study participant in AWS Cognito with a temporary password.
+
+    This endpoint allows a research coordinator to create a new participant account
+    in the AWS Cognito user pool. The research coordinator provides a Cognito username
+    and a temporary password that the participant will use to log in initially.
+
+    The temporary password will require the participant to reset their password
+    upon first login.
+
+    Request Body:
+        app (int): The app where the request is being made from
+        data (dict): A JSON object containing the following fields:
+            - cognitoUsername (str): The unique username for the participant.
+            - temporaryPassword (str): A temporary password for the participant.
+
+    Returns:
+        Response: A JSON response with one of the following:
+            - 201 Created: Participant registered successfully.
+            - 400 Bad Request: Missing required fields.
+            - 500 Internal Server Error: AWS Cognito or other server-side errors.
+
+    Example:
+        POST /cognito/register/participant
+        {
+            "app": 2,
+            "data": {
+                "cognitoUsername": "testuser",
+                "temporaryPassword": "TempPass123!"
+            }
+        }
+
+    Response (201):
+        {
+            "msg": "Participant registered with AWS Cognito successfully."
+        }
+    """
     client = boto3.client("cognito-idp")
     try:
         # Validate incoming request
