@@ -185,7 +185,8 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating a new entry, else make a request to edit
-   * an exiting entry. One request is made to the AWS backend and another to the database backend.
+   * an exiting entry. One request is made to the AWS backend and another to the database backend. Another request is
+   * made to the Cognito backend if a new participant is being enrolled.
    */
   const post = async (): Promise<void> => {
     // Prepare and make the request to the AWS backend
@@ -217,7 +218,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
           expires_on: enrollmentEnd + "T00:00:00.000Z",
         }
       ]
-    }
+    };
 
     const bodyDB = {
       app: app === "ditti" ? 2 : 3,
@@ -230,6 +231,24 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     const postDB = makeRequest(urlDB, optsDB);
 
     const promises: Promise<ResponseBody>[] = [postAWS, postDB];
+
+    // If enrolling a new participant, make a request to the Cognito backend
+    if (!studySubject) {
+      const bodyCognito = {
+        app: app === "ditti" ? 2 : 3,
+        study: study?.id || 0,
+        data: {
+          cognitoUsername: study?.dittiId + userPermissionId,
+          temporaryPassword: "Abc123!@#$",
+        },
+      };
+
+      const optsCognito = { method: "POST", body: JSON.stringify(bodyCognito) };
+      const urlCognito = "/cognito/register/participant";
+      const postCognito = makeRequest(urlCognito, optsCognito);
+      promises.push(postCognito);
+    }
+
     await Promise.all(promises)
       .then(([resAWS, _]) => handleSuccess(resAWS))
       .catch(error => handleFailure(error))

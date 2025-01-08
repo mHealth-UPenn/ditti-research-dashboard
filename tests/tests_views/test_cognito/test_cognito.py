@@ -415,7 +415,7 @@ def test_register_participant_success(mock_boto3_client, post_admin):
     )
 
     # Assertions
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert response.json == {"msg": "Participant registered with AWS Cognito successfully."}
     mock_cognito.admin_create_user.assert_called_once_with(
         UserPoolId="us-east-1_example",

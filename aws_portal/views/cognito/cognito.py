@@ -237,7 +237,8 @@ def register_participant():
     upon first login.
 
     Request Body:
-        app (int): The app where the request is being made from
+        app (int): The app where the request is being made from.
+        study (int): The ID of the study the participant is being enrolled for.
         data (dict): A JSON object containing the following fields:
             - cognitoUsername (str): The unique username for the participant.
             - temporaryPassword (str): A temporary password for the participant.
@@ -252,6 +253,7 @@ def register_participant():
         POST /cognito/register/participant
         {
             "app": 2,
+            "study": 1,
             "data": {
                 "cognitoUsername": "testuser",
                 "temporaryPassword": "TempPass123!"
@@ -281,7 +283,7 @@ def register_participant():
             MessageAction="SUPPRESS"
         )
 
-        return jsonify({"msg": "Participant registered with AWS Cognito successfully."}), 201
+        return jsonify({"msg": "Participant registered with AWS Cognito successfully."}), 200
 
     except ClientError as e:
         error_code = e.response["Error"]["Code"]
