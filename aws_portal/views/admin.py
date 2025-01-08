@@ -1494,7 +1494,6 @@ def study_subject_create():
         msg: "Internal server error when creating study subject"
     }
     """
-    print(request.json.get("create"))
     try:
         data = request.json.get("create")
         if not data:
