@@ -729,7 +729,7 @@ def handler(event, context):
     logger.info("Retrieved function_id", extra={"function_id": function_id})
 
     try:
-        config = {}
+        config = {"S3_BUCKET": os.getenv("S3_BUCKET")}
         tokens_config = {}
 
         # Load secrets
