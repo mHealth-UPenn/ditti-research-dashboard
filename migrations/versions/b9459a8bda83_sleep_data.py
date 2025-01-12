@@ -93,8 +93,7 @@ def upgrade():
     with op.batch_alter_table('study', schema=None) as batch_op:
         # Make 'default_expiry_delta' non-nullable
         batch_op.alter_column('default_expiry_delta',
-                              existing_type=sa.INTEGER(),
-                              nullable=False)
+                              existing_type=sa.INTEGER())
         # Add 'data_summary' and 'is_qi' columns
         batch_op.add_column(
             sa.Column('data_summary', sa.Text(), nullable=True))
@@ -112,6 +111,11 @@ def upgrade():
         batch_op.alter_column(
             "is_qi",
             existing_type=sa.BOOLEAN(),
+            nullable=False,
+        )
+        batch_op.alter_column(
+            "default_expiry_delta",
+            existing_type=sa.INTEGER(),
             nullable=False,
         )
 
@@ -145,7 +149,7 @@ def upgrade():
     # 8. Modify 'study_subject' Table
     with op.batch_alter_table('study_subject', schema=None) as batch_op:
         # Add 'ditti_id' column
-        batch_op.add_column(sa.Column('ditti_id', sa.String(), nullable=False))
+        batch_op.add_column(sa.Column('ditti_id', sa.String()))
         # Drop unique constraint on 'email'
         batch_op.drop_constraint('study_subject_email_key', type_='unique')
         # Create unique constraint on 'ditti_id' with an explicit name
@@ -153,6 +157,21 @@ def upgrade():
             'study_subject_ditti_id_key', ['ditti_id'])
         # Drop 'is_confirmed' and 'email' columns
         batch_op.drop_column('is_confirmed')
+
+    # Copy data from 'email' to 'ditti_id'
+    op.execute(
+        """
+        UPDATE study_subject
+        SET ditti_id = email
+        """
+    )
+
+    with op.batch_alter_table("study_subject", schema=None) as batch_op:
+        batch_op.alter_column(
+            "ditti_id",
+            existing_type=sa.String(),
+            nullable=False,
+        )
         batch_op.drop_column('email')
 
     # 9. Add 'sleep_logs' Relationship

@@ -735,7 +735,7 @@ def handler(event, context):
         # Load secrets
         if TESTING or STAGING:
             config = {
-                "DB_URI": os.getenv("DB_URI"),
+                "FLASK_DB": os.getenv("FLASK_DB"),
                 "S3_BUCKET": os.getenv("S3_BUCKET"),
             }
 
@@ -754,7 +754,7 @@ def handler(event, context):
 
         # Database connection setup
         try:
-            db = DB(config["DB_URI"])
+            db = DB(config["FLASK_DB"])
             lambda_task_service = LambdaTaskService(db)
             study_subject_service = StudySubjectService(db)
 
@@ -969,7 +969,7 @@ def handler(event, context):
             bucket_name = config["S3_BUCKET"]
 
             # Prepare the S3 filename including function_id
-            log_file = f"{function_id}_{logger.log_filename}"
+            log_file = f"{function_id}_{os.path.split(logger.log_filename)[1]}"
             s3_client.upload_file(logger.log_filename, bucket_name, log_file)
 
             logger.info(

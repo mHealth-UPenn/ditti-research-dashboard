@@ -17,5 +17,24 @@
           "app": "aws-portal"
         },
         "touch": false
+    },
+    "staging": {
+        "app_function": "run.app",
+        "aws_region": "us-east-1",
+        "environment_variables": {
+            "FLASK_CONFIG": "Production",
+            "AWS_SECRET_NAME": "secret-aws-portal-staging"
+        },
+        "events": [{
+            "function": "rds_stopper.stop",
+            "expression": "rate(1 hour)"
+        }],
+        "log_level": "INFO",
+        "project_name": "aws-portal-staging",
+        "runtime": "python3.12",
+        "tags": {
+          "app": "aws-portal"
+        },
+        "touch": false
     }
 }

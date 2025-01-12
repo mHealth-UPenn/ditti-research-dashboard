@@ -1,4 +1,4 @@
-aws_portal/frontend/*
+aws_portal/frontend/
 .vscode/
 env/
 tests/
@@ -8,3 +8,16 @@ Dockerfile
 docker-compose.yaml
 README.md
 zappa_settings.json
+.DS_Store
+.dockerignore
+.git
+.gitignore
+.pytest_cache
+**/__pycache__
+*.json
+*.sql
+functions/
+migrations/
+x.py
+y.py
+z.py
