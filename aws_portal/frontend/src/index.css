@@ -238,3 +238,12 @@ p {
 .wearable-title {
   transform: rotate(-90deg) translateY(-50%);
 }
+
+.ql-container-form {
+  box-sizing: border-box;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  height: 60%;
+  margin: 0px;
+  position: relative;
+}

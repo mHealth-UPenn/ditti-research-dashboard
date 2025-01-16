@@ -1,4 +1,5 @@
 import { FlashMessageVariant } from "./components/flashMessage/flashMessage";
+import { QuillOptions } from "quill";
 
 /**
  * Represents an account with user details and permissions.
@@ -356,4 +357,17 @@ export interface IVisualizationProps {
   marginRight?: number;
   marginBottom?: number;
   marginLeft?: number;
+}
+
+export interface QuillFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  label?: string;
+  description?: string;
+  placeholder?: string;
+  id?: string;
+  config?: QuillOptions;
+  className?: string;
+  containerClassName?: string;
+  readOnly?: boolean;
 }
