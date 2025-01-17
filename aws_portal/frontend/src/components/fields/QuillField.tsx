@@ -5,6 +5,9 @@ import sanitizeHtml from "sanitize-html";
 import { QuillFieldProps } from "../../interfaces";
 import "quill/dist/quill.snow.css";
 
+// TODO: Links are not assumed to be external
+// TODO: Unnecessary preview
+
 const QuillField: React.FC<QuillFieldProps> = ({
   value,
   onChange,
@@ -83,15 +86,15 @@ const QuillField: React.FC<QuillFieldProps> = ({
     return () => {
       debouncedOnChange.cancel();
     };
-  }, [quillConfig, containerClassName, debouncedOnChange, value]);
+    // Removed 'value' from dependencies to prevent re-running on every value change
+  }, [quillConfig, containerClassName, debouncedOnChange]);
 
   /**
-   * Synchronize external `value` prop changes with the Quill editor content.
-   * 
-   * - Prevents redundant updates by comparing current and new HTML
-   * - Sanitizes the incoming content before injecting it into the editor
-   * - Restores cursor position after content updates
+   * Remove the effect that synchronizes external `value` prop changes with Quill.
+   * This prevents Quill from overwriting its internal state with the `value` prop.
    */
+  // Removed the following useEffect:
+  /*
   useEffect(() => {
     if (!quillInstanceRef.current) return;
 
@@ -107,6 +110,7 @@ const QuillField: React.FC<QuillFieldProps> = ({
       }
     }
   }, [value]);
+  */
 
   /**
    * Dynamically toggle the editor's `readOnly` state when the prop changes.

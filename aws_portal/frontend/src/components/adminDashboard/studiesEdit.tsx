@@ -1,6 +1,7 @@
 import React, { useEffect, useState, createRef } from "react";
 import TextField from "../fields/textField";
 import CheckField from "../fields/checkField";
+import QuillField from "../fields/QuillField";
 import { ResponseBody, Study, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
@@ -116,7 +117,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         defaultExpiryDelta: 14,
         consentInformation: "",
         dataSummary: "",
-        isQi: false,
+        isQi: false
       };
     }
 
@@ -135,7 +136,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
       defaultExpiryDelta: study.defaultExpiryDelta,
       consentInformation: study.consentInformation,
       dataSummary: study.dataSummary,
-      isQi: study.isQi,
+      isQi: study.isQi
     };
   };
 
@@ -229,7 +230,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
           <FormField>
             <TextField
               id="email"
-              type="email" // Changed type to 'email' for better validation
+              type="email"
               placeholder=""
               value={email}
               label="Team Email"
@@ -289,15 +290,13 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         </FormRow>
         <FormRow>
           <FormField>
-            <TextField
+            <QuillField
               id="consentInformation"
-              type="textarea"
-              placeholder=""
-              value={consentInformation}
+              containerClassName="ql-container-form"
               label="Consent Information"
               description="Participants must accept this consent form when connecting their Fitbit API."
-              onKeyup={(text: string) => setConsentInformation(text)}
-              feedback=""
+              value={consentInformation}
+              onChange={setConsentInformation}
             />
           </FormField>
         </FormRow>
@@ -306,15 +305,13 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
         </FormRow>
         <FormRow>
           <FormField>
-            <TextField
+            <QuillField
               id="dataSummary"
-              type="textarea"
-              placeholder=""
-              value={dataSummary}
+              containerClassName="ql-container-form"
               label="Data Summary"
               description="This text will appear on the participant dashboard as a brief summary of how their data will be used."
-              onKeyup={(text: string) => setDataSummary(text)}
-              feedback=""
+              value={dataSummary}
+              onChange={setDataSummary}
             />
           </FormField>
         </FormRow>
