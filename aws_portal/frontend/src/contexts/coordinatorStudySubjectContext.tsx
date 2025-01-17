@@ -41,8 +41,6 @@ export default function CoordinatorStudySubjectProvider({
     userDetails: UserDetails[]
   ): IStudySubjectDetails[] => {
     const result: IStudySubjectDetails[] = [];
-    console.log("studySubjects", studySubjects)
-    console.log("userDetails", userDetails)
 
     // Get all unique Ditti IDs in the database and on AWS
     const ids = new Set([
@@ -91,7 +89,7 @@ export default function CoordinatorStudySubjectProvider({
         apis: matchedStudySubject.apis,
         tapPermission: matchedUserDetail.tapPermission,
         information: matchedUserDetail.information,
-        expTime: matchedUserDetail.expTime,
+        dittiExpTime: matchedUserDetail.expTime,
         teamEmail: matchedUserDetail.teamEmail,
         createdAt: matchedUserDetail.createdAt,
       };
@@ -101,39 +99,43 @@ export default function CoordinatorStudySubjectProvider({
     return result;
   };
 
-  // Fetch study subjects on load
-  useEffect(() => {
-    // Fetch data from the database
-    const fetchStudySubjects = async (): Promise<IStudySubject[]> => {
-      if (APP_ENV === "production" || APP_ENV === "development") {
-        const data: IStudySubject[] = await makeRequest(`/admin/study_subject?app=${app}`);
-        return data;
-      }
-      return [];
-    };
+  // Fetch data from the database
+  const fetchStudySubjectsDB = async (): Promise<IStudySubject[]> => {
+    if (APP_ENV === "production" || APP_ENV === "development") {
+      const data: IStudySubject[] = await makeRequest(`/admin/study_subject?app=${app}`);
+      return data;
+    }
+    return [];
+  };
 
-    // Fetch data from AWS
-    const fetchStudySubjectsAWS = async (): Promise<UserDetails[]> => {
-      if (APP_ENV === "production" || APP_ENV === "development") {
-        const data: UserDetails[] = await makeRequest(`/aws/get-users?app=${app}`);
-        return data;
-      }
-      return [];
-    };
+  // Fetch data from AWS
+  const fetchStudySubjectsAWS = async (): Promise<UserDetails[]> => {
+    if (APP_ENV === "production" || APP_ENV === "development") {
+      const data: UserDetails[] = await makeRequest(`/aws/get-users?app=${app}`);
+      return data;
+    }
+    return [];
+  };
 
+  const fetchStudySubjects = () => {
+    setStudySubjectLoading(true);
     const promises: [Promise<IStudySubject[]>, Promise<UserDetails[]>] = [
-      fetchStudySubjects(),
+      fetchStudySubjectsDB(),
       fetchStudySubjectsAWS(),
     ];
 
     Promise.all(promises).then(([studySubjects, studySubjectsAWS]) => {
       setStudySubjects(joinByDittiIdAndUserPermissionId(studySubjects, studySubjectsAWS));
-      setStudySubjectLoading(false)
+      setStudySubjectLoading(false);
     })
     .catch(error => {
       console.error(`Failed to fetch participants: ${error}. Check coordinator permissions.`)
+      setStudySubjectLoading(false);
     });
-  }, []);
+  }
+
+  // Fetch study subjects on load
+  useEffect(() => fetchStudySubjects, []);
 
   const getStudySubjectByDittiId = (dittiId: string): IStudySubjectDetails | undefined => {
     return studySubjects.find(ss => ss.dittiId === dittiId);
@@ -141,8 +143,13 @@ export default function CoordinatorStudySubjectProvider({
 
   return (
     <CoordinatorStudySubjectContext.Provider
-      value={{ studySubjects, studySubjectLoading, getStudySubjectByDittiId }}>
-        {children}
+      value={{
+          studySubjects,
+          studySubjectLoading,
+          getStudySubjectByDittiId,
+          fetchStudySubjects
+        }}>
+          {children}
     </CoordinatorStudySubjectContext.Provider>
   );
 }

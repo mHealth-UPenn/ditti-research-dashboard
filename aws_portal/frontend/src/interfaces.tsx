@@ -387,6 +387,7 @@ export interface CoordinatorStudySubjectContextType {
   studySubjects: IStudySubjectDetails[];
   studySubjectLoading: boolean;
   getStudySubjectByDittiId: (id: string) => IStudySubjectDetails | undefined;
+  fetchStudySubjects: () => void;
 }
 
 
@@ -441,7 +442,7 @@ export interface IStudySubjectDetails {
   apis: ApiJoin[];
   tapPermission: boolean;
   information: string;
-  expTime: string;
+  dittiExpTime: string;
   teamEmail: string;
   createdAt: string;
 }

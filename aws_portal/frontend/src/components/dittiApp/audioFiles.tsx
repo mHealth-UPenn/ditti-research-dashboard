@@ -96,7 +96,7 @@ const AudioFiles = () => {
           .catch(() =>
             flashMessage(
               <span>
-                And error occured while reloading the page. Please refresh and
+                And error occurred while reloading the page. Please refresh and
                 try again.
               </span>,
               "danger"
@@ -105,7 +105,7 @@ const AudioFiles = () => {
       } catch (error) {
         console.error(error);
         const e = error as { msg: string };
-        flashMessage(<span>An unexpected error occured: {e.msg}</span>, "danger");
+        flashMessage(<span>An unexpected error occurred: {e.msg}</span>, "danger");
       }
     }
   }

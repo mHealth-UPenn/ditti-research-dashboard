@@ -6,7 +6,7 @@ import {
   ResponseBody,
   StudySubjectPrefill,
 } from "../../interfaces";
-import { getStartAndExpiryTimes, makeRequest } from "../../utils";
+import { formatDateForInput, getStartOnAndExpiresOnForStudy, makeRequest } from "../../utils";
 import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
 import Select from "../fields/select";
@@ -36,15 +36,16 @@ interface ISubjectsEditContentProps {
 
 const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const [searchParams] = useSearchParams();
-  const sid = searchParams.get("sid");
-  const studyId = sid ? parseInt(sid) : 0;
   const dittiId = searchParams.get("dittiId") || "";
 
   const [tapPermission, setTapPermission] = useState(false);
   const [information, setInformation] = useState("");
   const [userPermissionId, setUserPermissionId] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [expTime, setExpTime] = useState("");
+  const [dittiExpTime, setDittiExpTime] = useState(new Date());
+  const [enrollmentStart, setEnrollmentStart] = useState(new Date());
+  const [enrollmentEnd, setEnrollmentEnd] = useState(new Date());
+  const [enrollmentFeedback, setEnrollmentFeedback] = useState("");
+  const [dittiExpTimeFeedback, setDittiExpTimeFeedback] = useState("");
 
   const [aboutSleepTemplates, setAboutSleepTemplates] = useState<AboutSleepTemplate[]>([]);
   const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] = useState<AboutSleepTemplate>({} as AboutSleepTemplate);
@@ -52,13 +53,33 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const previewRef = createRef<HTMLDivElement>();
   
   const { studiesLoading, study } = useStudiesContext();
-  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, getStudySubjectByDittiId, fetchStudySubjects } = useCoordinatorStudySubjectContext();
 
   const { flashMessage } = useFlashMessageContext();
   const navigate = useNavigate();
 
-  // const study = getStudyById(studyId);
-  const studySubject = getStudySubjectByDittiId(dittiId);
+  const studySubject = dittiId ? getStudySubjectByDittiId(dittiId) : null;
+
+  useEffect(() => {
+    if (dittiExpTime <= enrollmentEnd) {
+      setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.")
+    } else {
+      setDittiExpTimeFeedback("");
+    }
+  }, [enrollmentEnd, dittiExpTime]);
+
+  useEffect(() => {
+    if (enrollmentEnd <= enrollmentStart) {
+      setEnrollmentFeedback("Enrollment end date must be after enrollment start date.")
+    } else {
+      setEnrollmentFeedback("");
+    }
+    if (dittiExpTime <= enrollmentEnd) {
+      setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.")
+    } else {
+      setDittiExpTimeFeedback("");
+    }
+  }, [enrollmentStart, enrollmentEnd, dittiExpTime]);
 
   useEffect(() => {
     if (previewRef.current && information !== "") {
@@ -68,12 +89,30 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
 
   useEffect(() => {
     if (studySubject) {
-      // get the form's prefill
-      const prefill = getPrefill(studySubject);
-      setTapPermission(prefill.tapPermission);
-      setInformation(prefill.information);
-      setUserPermissionId(prefill.dittiId);
-      setExpTime(prefill.expTime);
+      const { startsOn, expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id || 0);
+
+      const selectedTemplate = aboutSleepTemplates.filter(
+        (ast: AboutSleepTemplate) => ast.text === studySubject.information
+      )[0];
+
+      if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
+
+      setTapPermission(studySubject.tapPermission);
+      setInformation(studySubject.information);
+      setUserPermissionId(studySubject.dittiId);
+      setDittiExpTime(new Date(studySubject.dittiExpTime.replace("Z", "")));
+      setEnrollmentStart(startsOn);
+      setEnrollmentEnd(expiresOn);
+    } else {
+      const startsOn = new Date();
+      const expiresOn = new Date();
+      const expiryDelta = study?.defaultExpiryDelta || 14;
+      expiresOn.setDate(expiresOn.getDate() + expiryDelta);
+      const dittiExpTime = new Date(expiresOn);
+      dittiExpTime.setDate(dittiExpTime.getDate() + 1);
+      setEnrollmentStart(startsOn);
+      setEnrollmentEnd(expiresOn);
+      setDittiExpTime(dittiExpTime);
     }
   }, [studySubject]);
 
@@ -97,52 +136,54 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   }, [aboutSleepTemplateSelected]);
 
   /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = (studySubject: IStudySubjectDetails): StudySubjectPrefill => {
-    const selectedTemplate = aboutSleepTemplates.filter(
-      (ast: AboutSleepTemplate) => ast.text === studySubject.information
-    )[0];
-    if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
-
-    const { startTime, expTime } = getStartAndExpiryTimes(studySubject, studyId);
-
-    return {
-      tapPermission: studySubject.tapPermission,
-      information: studySubject.information,
-      dittiId: studySubject.dittiId,
-      startTime,
-      expTime,
-    };
-  };
-
-  /**
    * POST changes to the backend. Make a request to create an entry if creating
    * a new entry, else make a request to edit an exiting entry
    */
   const post = async (): Promise<void> => {
-    const data = {
+    const dataAWS = {
       tap_permission: tapPermission,
       information: aboutSleepTemplateSelected.text,
       user_permission_id: userPermissionId,
-      exp_time: expTime,
+      exp_time: dittiExpTime,
       team_email: study?.email
     };
 
-    const id = dittiId;
-    const body = {
-      app: 2,  // Ditti Dashboard = 2
-      study: studyId,
-      ...(id ? { user_permission_id: id, edit: data } : { create: data })
+    const bodyAWS = {
+      app: app === "ditti" ? 2 : 3,
+      study: study?.id || 0,
+      ...(dittiId ? { user_permission_id: dittiId, edit: dataAWS } : { create: dataAWS })
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
-    const url = id ? "/aws/user/edit" : "/aws/user/create";
+    const optsAWS = { method: "POST", body: JSON.stringify(bodyAWS) };
+    const urlAWS = dittiId ? "/aws/user/edit" : "/aws/user/create";
+    const postAWS = makeRequest(urlAWS, optsAWS);
 
-    await makeRequest(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    const dataDB = {
+      ditti_id: userPermissionId,
+      studies: [
+        {
+          id: study?.id || 0,
+          starts_on: enrollmentStart.toISOString(),
+          expires_on: enrollmentEnd.toISOString(),
+        }
+      ]
+    }
+
+    const bodyDB = {
+      app: app === "ditti" ? 2 : 3,
+      study: study?.id || 0,
+      ...(studySubject ? { id: studySubject.id, edit: dataDB } : { create: dataDB })
+    };
+
+    const optsDB = { method: "POST", body: JSON.stringify(bodyDB) };
+    const urlDB = studySubject ? "/admin/study_subject/edit" : "/admin/study_subject/create";
+    const postDB = makeRequest(urlDB, optsDB);
+
+    const promises: Promise<ResponseBody>[] = [postAWS, postDB];
+    console.log(promises);
+    Promise.all(promises)
+      .then(([resAWS, _]) => handleSuccess(resAWS))
+      .catch(error => handleFailure(error))
   };
 
   /**
@@ -151,6 +192,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
+    fetchStudySubjects();
     navigate(-1);
     flashMessage(<span>{res.msg}</span>, "success");
   };
@@ -199,12 +241,18 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
+    // hour: "2-digit",
+    // minute: "2-digit"
   };
 
   // if dittiId is 0, the user is enrolling a new subject
-  const buttonText = dittiId ? "Update" : "Create";
+  const buttonText = dittiId ? "Update" : "Enroll";
+  const enrollmentStartFormatted = enrollmentStart
+    ? new Date(enrollmentStart).toLocaleDateString("en-US", dateOptions)
+    : ""
+  const enrollmentEndFormatted = enrollmentEnd
+    ? new Date(enrollmentEnd).toLocaleDateString("en-US", dateOptions)
+    : ""
 
   if (loading || studiesLoading || studySubjectLoading) {
     return (
@@ -250,23 +298,42 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
         <FormRow>
           <FormField>
             <TextField
-              id="startsOn"
-              type="datetime-local"
+              id="enrollment-start"
+              type="date"
               placeholder=""
-              value={expTime.replace("Z", "")}
-              label="Expires On"
-              onKeyup={text => setExpTime(text + ":00.000Z")}
-              feedback="" />
+              value={formatDateForInput(enrollmentStart)}
+              label="Enrollment Start Date"
+              onKeyup={text => setEnrollmentStart(new Date(text))}
+              feedback={enrollmentFeedback} />
           </FormField>
           <FormField>
             <TextField
-              id="expiresOn"
-              type="datetime-local"
+              id="enrollment-end"
+              type="date"
               placeholder=""
-              value={expTime.replace("Z", "")}
-              label="Expires On"
-              onKeyup={text => setExpTime(text + ":00.000Z")}
-              feedback="" />
+              value={formatDateForInput(enrollmentEnd)}
+              label="Enrollment End Date"
+              onKeyup={text => setEnrollmentEnd(new Date(text))}
+              feedback={enrollmentFeedback} />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="ditti-expiry"
+              type="date"
+              placeholder=""
+              value={formatDateForInput(dittiExpTime)}
+              label="Ditti ID Expiry Date"
+              onKeyup={text => setDittiExpTime(new Date(text))}
+              feedback={dittiExpTimeFeedback} />
+          </FormField>
+          <FormField>
+            <CheckField
+              id="tapping-access"
+              prefill={tapPermission}
+              label="Tapping Access"
+              onChange={setTapPermission} />
           </FormField>
         </FormRow>
         <FormRow>
@@ -284,13 +351,6 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
                 callback={selectAboutSleepTemplate}
                 getDefault={getSelectedAboutSleepTemplate} />
             </div>
-          </FormField>
-          <FormField>
-            <CheckField
-              id="tapping-access"
-              prefill={tapPermission}
-              label="Tapping Access"
-              onChange={setTapPermission} />
           </FormField>
         </FormRow>
         <FormTitle className="mt-6">About Sleep Template Preview</FormTitle>
@@ -313,11 +373,17 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
             &nbsp;&nbsp;&nbsp;&nbsp;{study?.email}
             <br />
             <br />
-            Expires on:
+            Enrollment Period:
             <br />
             &nbsp;&nbsp;&nbsp;&nbsp;
-            {expTime
-              ? new Date(expTime).toLocaleDateString("en-US", dateOptions)
+            {enrollmentStartFormatted} - {enrollmentEndFormatted}
+            <br />
+            <br />
+            Ditti Expires on:
+            <br />
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            {dittiExpTime
+              ? new Date(dittiExpTime).toLocaleDateString("en-US", dateOptions)
               : ""}
             <br />
             <br />

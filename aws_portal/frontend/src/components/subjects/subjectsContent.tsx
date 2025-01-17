@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
-import { getAccess } from "../../utils";
+import { getAccess, getStartOnAndExpiresOnForStudy } from "../../utils";
 import { IStudySubjectDetails} from "../../interfaces";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
@@ -19,22 +19,21 @@ import { useStudiesContext } from "../../contexts/studiesContext";
 
 
 interface ISubjectsContentProps {
-  app: "ditti" | "wearable";
+  app: 2 | 3;
 }
 
 
 const SubjectsContent = ({ app }: ISubjectsContentProps) => {
-  const [searchParams] = useSearchParams();
-  const sid = searchParams.get("sid");
-  const studyId = sid ? parseInt(sid) : 0;
-
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
+  const [canViewWearableData, setCanViewWearableData] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   
   const { studiesLoading, study } = useStudiesContext();
   const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
+
+  const appSlug = app === 2 ? "ditti" : "wearable";
 
   const filteredStudySubjects = studySubjects.filter(
     ss => ss.dittiId.startsWith(study?.dittiId || "undefined")  // TODO: use regex instead
@@ -48,16 +47,22 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
       width: 15
     },
     {
-      name: "Expires On",
+      name: "Ditti ID Expiry Date",
       searchable: false,
       sortable: true,
-      width: 30
+      width: 20
     },
     {
-      name: "Created On",
+      name: "Enrollment Start Date",
       searchable: false,
       sortable: true,
-      width: 30
+      width: 20
+    },
+    {
+      name: "Enrollment End Date",
+      searchable: false,
+      sortable: true,
+      width: 20
     },
     {
       name: "Tapping",
@@ -74,55 +79,65 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
   ];
 
   useEffect(() => {
-    // get whether the user can enroll subjects
-    const promises: Promise<any>[] = [];
-    promises.push(
-      getAccess(2, "Create", "Participants", studyId)
-        .then(() => setCanCreate(true))
-        .catch(() => setCanCreate(false))
-    );
+    if (study) {
+      const promises: Promise<any>[] = [];
+      promises.push(
+        getAccess(app, "Create", "Participants", study.id)
+          .then(() => setCanCreate(true))
+          .catch(() => setCanCreate(false))
+      );
 
-    // get whether the user can edit subjects
-    promises.push(
-      getAccess(2, "Edit", "Participants", studyId)
-        .then(() => setCanEdit(true))
-        .catch(() => setCanEdit(false))
-    );
+      promises.push(
+        getAccess(app, "Edit", "Participants", study.id)
+          .then(() => setCanEdit(true))
+          .catch(() => setCanEdit(false))
+      );
 
-    // get whether the user can edit subjects
-    promises.push(
-      getAccess(2, "View", "Taps", studyId)
-        .then(() => setCanViewTaps(true))
-        .catch(() => setCanViewTaps(false))
-    );
+      promises.push(
+        getAccess(app, "View", "Taps", study.id)
+          .then(() => setCanViewTaps(true))
+          .catch(() => setCanViewTaps(false))
+      );
 
-    // when all promises complete, hide the loader
-    Promise.all(promises).then(() => setLoading(false));
-  }, []);
+      promises.push(
+        getAccess(app, "View", "Wearable Data", study.id)
+          .then(() => setCanViewWearableData(true))
+          .catch(() => setCanViewWearableData(false))
+      );
+
+      Promise.all(promises).then(() => setLoading(false));
+    }
+  }, [study]);
 
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
+    // hour: "2-digit",
+    // minute: "2-digit"
   };
 
   const tableData: TableData[][] = filteredStudySubjects.map((studySubject: IStudySubjectDetails) => {
+    const { startsOn, expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id || 0);
+
     return [
       {
         contents: (
           <>
-            {/* if the studySubject has tap permission, link to a subject visuals page */}
-            {(studySubject.tapPermission && canViewTaps) ? (
-              <Link to={`/coordinator/${app}/participants/view?dittiId=${studySubject.dittiId}&sid=${studyId}`}>
-                <LinkComponent>
-                  {studySubject.dittiId}
-                </LinkComponent>
-              </Link>
-            ) : (
-              studySubject.dittiId
-            )}
+            {(app === 2 && studySubject.tapPermission && canViewTaps)
+              ? <Link to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
+                  <LinkComponent>
+                    {studySubject.dittiId}
+                  </LinkComponent>
+                </Link>
+              : (studySubject.apis.length && canViewWearableData)
+                ? <Link to={`/coordinator/wearable/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
+                    <LinkComponent>
+                      {studySubject.dittiId}
+                    </LinkComponent>
+                  </Link>
+                : studySubject.dittiId
+            }
           </>
         ),
         searchValue: studySubject.dittiId,
@@ -131,20 +146,29 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
       {
         contents: (
           <span>
-            {new Date(studySubject.expTime).toLocaleDateString("en-US", dateOptions)}
+            {new Date(studySubject.dittiExpTime).toLocaleDateString("en-US", dateOptions)}
           </span>
         ),
         searchValue: "",
-        sortValue: studySubject.expTime
+        sortValue: studySubject.dittiExpTime
       },
       {
         contents: (
           <span>
-            {new Date(studySubject.createdAt).toLocaleDateString("en-US", dateOptions)}
+            {startsOn.toLocaleDateString("en-US", dateOptions)}
           </span>
         ),
         searchValue: "",
-        sortValue: studySubject.createdAt
+        sortValue: startsOn.toLocaleDateString("en-US", dateOptions)
+      },
+      {
+        contents: (
+          <span>
+            {expiresOn.toLocaleDateString("en-US", dateOptions)}
+          </span>
+        ),
+        searchValue: "",
+        sortValue: expiresOn.toLocaleDateString("en-US", dateOptions)
       },
       {
         contents: (
@@ -166,7 +190,7 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
               fullHeight={true}>
                 <Link
                   className="w-full h-full flex items-center justify-center"
-                  to={`/coordinator/${app}/participants/edit?dittiId=${studySubject.dittiId}&sid=${studyId}`}>
+                  to={`/coordinator/${appSlug}/participants/edit?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
                     Edit
                 </Link>
             </Button>
@@ -182,21 +206,21 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
 
   // if the user can enroll subjects, include an enroll button
   const tableControl =
-    <Link to={`/coordinator/${app}/participants/enroll?sid=${studyId}`}>
+    <Link to={`/coordinator/${appSlug}/participants/enroll?sid=${study?.id}`}>
       <Button
         disabled={!(canCreate || APP_ENV === "demo")}
         rounded={true}>
-          Create +
+          Enroll +
       </Button>
     </Link>
 
 if (loading || studiesLoading || studySubjectLoading) {
   return (
-    <ViewContainer>
-      <Card>
+    <ListView>
+      <ListContent>
         <SmallLoader />
-      </Card>
-    </ViewContainer>
+      </ListContent>
+    </ListView>
   );
 }
 

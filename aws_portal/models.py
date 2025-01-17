@@ -703,6 +703,12 @@ def init_lambda_task(status: str):
     db.session.commit()
 
 
+def delete_lambda_tasks():
+    for task in LambdaTask.query.all():
+        db.session.delete(task)
+    db.session.commit()
+
+
 def init_study_subject(ditti_id):
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
     if "localhost" not in db_uri:

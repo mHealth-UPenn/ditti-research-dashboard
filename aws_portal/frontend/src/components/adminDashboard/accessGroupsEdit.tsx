@@ -282,7 +282,7 @@ const AccessGroupsEdit = () => {
     // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
-        <b>An unexpected error occured</b>
+        <b>An unexpected error occurred</b>
         <br />
         {res.msg ? res.msg : "Internal server error"}
       </span>

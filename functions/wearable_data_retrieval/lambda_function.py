@@ -779,8 +779,7 @@ def handler(event, context):
                 raise DBFetchError
 
             try:
-                # lambda_task_service.update_status("InProgress")
-                pass
+                lambda_task_service.update_status("InProgress")
 
             # On error raise exception and exit
             except Exception:

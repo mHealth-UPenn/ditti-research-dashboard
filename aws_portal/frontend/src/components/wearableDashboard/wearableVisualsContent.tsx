@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { downloadExcelFromUrl, getAccess } from "../../utils";
+import { downloadExcelFromUrl, getAccess, getStartOnAndExpiresOnForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
@@ -15,6 +15,7 @@ import { Link } from "react-router-dom";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { IStudySubjectDetails } from "../../interfaces";
 
 
 /**
@@ -67,20 +68,17 @@ export default function WearableVisualsContent({
   const { flashMessage } = useFlashMessageContext();
 
   const studySubject = getStudySubjectByDittiId(dittiId);
+  const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject || {} as IStudySubjectDetails, study?.id || 0);
 
-  // Use the last `expiresOn` as the date of last data collection
-  const endDate = studySubject
-    ? new Date(Math.max(...studySubject.studies.map(s => new Date(s.expiresOn).getTime())))
-    : new Date();
   const dateOpts: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
+    // hour: "numeric",
+    // minute: "2-digit"
   };
 
-  const expTimeFormatted = endDate.toLocaleDateString("en-US", dateOpts);
+  const expTimeFormatted = (new Date(expiresOn)).toLocaleDateString("en-US", dateOpts);
 
   // Get user access permission on load
   useEffect(() => {
@@ -131,7 +129,7 @@ export default function WearableVisualsContent({
             {/* The participant's details */}
             <div className="flex flex-col mb-4 lg:mb-0">
               <Title>{studySubject?.dittiId}</Title>
-              <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
+              <Subtitle>Enrollment ends on: {expTimeFormatted}</Subtitle>
             </div>
 
             {/* Buttons for downloading Excel data and editing details */}
