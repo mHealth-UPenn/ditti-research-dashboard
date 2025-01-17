@@ -14,9 +14,9 @@ import ListContent from "../containers/lists/listContent";
 const COLUMNS: Column[] = [
   { name: "ID", searchable: false, sortable: true, width: 5 },
   { name: "Status", searchable: false, sortable: true, width: 15 },
-  { name: "Billed (ms)", searchable: false, sortable: true, width: 10 },
+  // { name: "Billed (ms)", searchable: false, sortable: true, width: 10 },
   { name: "Created On", searchable: false, sortable: true, width: 15 },
-  { name: "Updated On", searchable: false, sortable: true, width: 15 },
+  // { name: "Updated On", searchable: false, sortable: true, width: 15 },
   { name: "Completed On", searchable: false, sortable: true, width: 15 },
   { name: "Log File", searchable: true, sortable: false, width: 20 },
   { name: "Error Code", searchable: true, sortable: false, width: 5 },
@@ -113,21 +113,21 @@ const DataRetrievalTasks: React.FC<ViewProps> = ({ flashMessage, goBack, handleC
           searchValue: statusDisplay,
           sortValue: statusDisplay,
         },
-        {
-          contents: <span>{task.billedMs || 0}</span>,
-          searchValue: (task.billedMs || 0).toString(),
-          sortValue: task.billedMs || 0,
-        },
+        // {
+        //   contents: <span>{task.billedMs || 0}</span>,
+        //   searchValue: (task.billedMs || 0).toString(),
+        //   sortValue: task.billedMs || 0,
+        // },
         {
           contents: <span>{created.display}</span>,
           searchValue: created.display,
           sortValue: created.sortValue,
         },
-        {
-          contents: <span>{updated.display}</span>,
-          searchValue: updated.display,
-          sortValue: updated.sortValue,
-        },
+        // {
+        //   contents: <span>{updated.display}</span>,
+        //   searchValue: updated.display,
+        //   sortValue: updated.sortValue,
+        // },
         {
           contents: <span>{completed.display}</span>,
           searchValue: completed.display,
