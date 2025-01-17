@@ -6,7 +6,6 @@ import { QuillFieldProps } from "../../interfaces";
 import "quill/dist/quill.snow.css";
 
 // TODO: Links are not assumed to be external
-// TODO: Unnecessary preview
 
 const QuillField: React.FC<QuillFieldProps> = ({
   value,

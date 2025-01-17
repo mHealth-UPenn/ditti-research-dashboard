@@ -1,4 +1,4 @@
-import React, { useEffect, useState, createRef } from "react";
+import React, { useEffect, useState } from "react";
 import TextField from "../fields/textField";
 import CheckField from "../fields/checkField";
 import QuillField from "../fields/QuillField";
@@ -15,7 +15,6 @@ import FormSummaryTitle from "../text/formSummaryTitle";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
-import sanitize from "sanitize-html";
 
 interface StudiesEditProps extends ViewProps {
   studyId: number;
@@ -32,9 +31,6 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
   const [isQi, setIsQi] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [expiryError, setExpiryError] = useState<string>("");
-
-  const consentPreviewRef = createRef<HTMLDivElement>();
-  const dataSummaryPreviewRef = createRef<HTMLDivElement>();
 
   useEffect(() => {
     // Fetch prefill data if editing an existing study
@@ -66,20 +62,6 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
 
     fetchPrefill();
   }, [studyId, flashMessage]);
-
-  // Sanitize and set consentInformation in the preview
-  useEffect(() => {
-    if (consentPreviewRef.current && consentInformation !== "") {
-      consentPreviewRef.current.innerHTML = sanitize(consentInformation);
-    }
-  }, [consentInformation, consentPreviewRef]);
-
-  // Sanitize and set dataSummary in the preview
-  useEffect(() => {
-    if (dataSummaryPreviewRef.current && dataSummary !== "") {
-      dataSummaryPreviewRef.current.innerHTML = sanitize(dataSummary);
-    }
-  }, [dataSummary, dataSummaryPreviewRef]);
 
   /**
    * Ensure that defaultExpiryDelta is non-negative
@@ -300,9 +282,6 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
             />
           </FormField>
         </FormRow>
-        <FormRow className="mb-8">
-          <div ref={consentPreviewRef} className="px-4" />
-        </FormRow>
         <FormRow>
           <FormField>
             <QuillField
@@ -314,9 +293,6 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
               onChange={setDataSummary}
             />
           </FormField>
-        </FormRow>
-        <FormRow className="mb-8">
-          <div ref={dataSummaryPreviewRef} className="px-4" />
         </FormRow>
       </Form>
       <FormSummary>
