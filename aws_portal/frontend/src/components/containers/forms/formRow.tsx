@@ -1,5 +1,4 @@
 import { PropsWithChildren } from "react";
-import clsx from "clsx";
 
 interface FormRowProps {
   forceRow?: boolean;
@@ -8,20 +7,16 @@ interface FormRowProps {
 
 const FormRow = ({
   forceRow = false,
-  className,
+  className = "",
   children,
 }: PropsWithChildren<FormRowProps>) => {
-  return (
-    <div
-      className={clsx(
-        "flex",
-        { "flex-col": !forceRow, "md:flex-row": true },
-        className
-      )}
-    >
-      {children}
-    </div>
-  );
+  const classes = [
+    "flex",
+    forceRow ? "md:flex-row" : "flex-col md:flex-row",
+    className
+  ].filter(Boolean).join(" ");
+
+  return <div className={classes}>{children}</div>;
 };
 
 export default FormRow;
