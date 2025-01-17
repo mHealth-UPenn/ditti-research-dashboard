@@ -107,14 +107,9 @@ const ParticipantDashboardContent = () => {
     }
   };
 
-  const handleConsentDeny = () => {
-    setIsConsentOpen(false);
-    setConsentError("You must consent to connect your FitBit data.");
-  };
-
   const handleConsentClose = () => {
     setIsConsentOpen(false);
-    setConsentError("You must choose an option to continue.");
+    setConsentError("You must accept the consent terms to connect your Fitbit API, please try again.");
   };
 
   // If there are no unconsented studies, proceed to Fitbit flow
@@ -174,7 +169,7 @@ const ParticipantDashboardContent = () => {
               </Button>
               {/* Error message without reserving space */}
               {consentError && (
-                <span className="absolute top-full mt-2 text-red-500 text-sm right-0">
+                <span className="absolute top-full mt-2 text-danger-dark text-xs right-0">
                   {consentError}
                 </span>
               )}
@@ -275,7 +270,7 @@ const ParticipantDashboardContent = () => {
       <ConsentModal
         isOpen={isConsentOpen}
         onAccept={handleConsentAccept}
-        onDeny={handleConsentDeny}
+        onDeny={handleConsentClose}
         onClose={handleConsentClose}
         contentHtml={consentContentHtml}
       />
