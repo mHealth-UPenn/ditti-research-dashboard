@@ -46,10 +46,10 @@ const ConsentModal: React.FC<ConsentModalProps> = ({
 
         {/* Modal footer: Accept / Deny */}
         <div className="flex items-center justify-end space-x-3 rtl:space-x-reverse">
-          <Button onClick={onAccept} rounded={true} size="sm" variant="success">
+          <Button onClick={onAccept} rounded={true} size="sm" variant="successDark">
             Accept
           </Button>
-          <Button onClick={onDeny} rounded={true} size="sm" variant="danger">
+          <Button onClick={onDeny} rounded={true} size="sm" variant="dangerDark">
             Deny
           </Button>
         </div>
