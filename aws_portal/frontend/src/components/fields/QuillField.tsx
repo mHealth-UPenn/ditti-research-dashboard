@@ -22,7 +22,6 @@ const QuillField: React.FC<QuillFieldProps> = ({
 
   /**
    * Combine default toolbar configuration with user-provided modules
-   * 
    * Memoizing this prevents recalculations unless `config.modules` changes.
    */
   const mergedModules = useMemo(() => {
@@ -85,29 +84,6 @@ const QuillField: React.FC<QuillFieldProps> = ({
     };
     // Removed 'value' from dependencies to prevent re-running on every value change
   }, [quillConfig, containerClassName, debouncedOnChange]);
-
-  /**
-   * Remove the effect that synchronizes external `value` prop changes with Quill.
-   * This prevents Quill from overwriting its internal state with the `value` prop.
-   */
-  // Removed the following useEffect:
-  /*
-  useEffect(() => {
-    if (!quillInstanceRef.current) return;
-
-    const currentHtml = quillInstanceRef.current.root.innerHTML;
-    const safeHtml = sanitizeHtml(value);
-
-    if (currentHtml !== safeHtml) {
-      const selection = quillInstanceRef.current.getSelection();
-      quillInstanceRef.current.clipboard.dangerouslyPasteHTML(safeHtml);
-
-      if (selection) {
-        quillInstanceRef.current.setSelection(selection);
-      }
-    }
-  }, [value]);
-  */
 
   /**
    * Dynamically toggle the editor's `readOnly` state when the prop changes.
