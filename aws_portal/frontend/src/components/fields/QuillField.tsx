@@ -5,8 +5,6 @@ import sanitizeHtml from "sanitize-html";
 import { QuillFieldProps } from "../../interfaces";
 import "quill/dist/quill.snow.css";
 
-// TODO: Links are not assumed to be external
-
 const QuillField: React.FC<QuillFieldProps> = ({
   value,
   onChange,
