@@ -35,6 +35,8 @@
         "tags": {
           "app": "aws-portal"
         },
-        "touch": false
+        "touch": false,
+        "certificate_arn": "arn:aws:acm:us-east-1:732878590761:certificate/cebcbb89-12a0-437d-b3c7-c708bcdca9d4",
+        "domain": "staging-app.ditti.us"
     }
 }
