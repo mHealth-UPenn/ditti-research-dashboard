@@ -115,7 +115,7 @@ const QuillField: React.FC<QuillFieldProps> = ({
       <div
         ref={editorRef}
         id={id}
-        className="border border-gray-300 rounded p-2 w-full
+        className="border border-gray-300 rounded-b p-2 w-full
                    min-h-[10rem] focus:outline-none focus:ring-2
                    focus:ring-blue-500"
       />
