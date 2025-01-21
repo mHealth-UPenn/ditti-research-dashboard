@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import sanitize from "sanitize-html";
 import { useAuth } from "../../hooks/useAuth";
 import Card from "../cards/card";
 import CardContentRow from "../cards/cardContentRow";
@@ -136,7 +137,7 @@ const ParticipantDashboardContent = () => {
     unconsentedStudies.forEach(study => {
       content += `
         <h4>${study.studyName}</h4>
-        <p>${study.consentInformation || defaultConsentContentText}</p>
+        <p>${sanitize(study.consentInformation || "") || defaultConsentContentText}</p>
       `;
     });
     return content;
