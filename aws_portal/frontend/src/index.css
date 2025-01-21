@@ -238,3 +238,13 @@ p {
 .wearable-title {
   transform: rotate(-90deg) translateY(-50%);
 }
+
+.ql-editor.ql-modal h1,
+.ql-editor.ql-modal h2,
+.ql-editor.ql-modal h3,
+.ql-editor.ql-modal h4,
+.ql-editor.ql-modal h5,
+.ql-editor.ql-modal h6,
+.ql-editor.ql-modal p {
+  margin: 1rem 0;
+}

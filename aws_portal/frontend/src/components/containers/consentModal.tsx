@@ -53,7 +53,7 @@ const ConsentModal: FC<ConsentModalProps> = memo(
 
           {/* Modal body */}
           <div
-            className="p-4 overflow-auto text-black"
+            className="p-4 overflow-auto text-black text-sm ql-modal ql-editor"
             dangerouslySetInnerHTML={{ __html: sanitize(contentHtml) }}
           />
 
