@@ -59,10 +59,10 @@ const ConsentModal: FC<ConsentModalProps> = memo(
 
           {/* Modal footer */}
           <div className="p-4 flex items-center justify-end space-x-3 rtl:space-x-reverse">
-            <Button onClick={onAccept} rounded size="sm" variant="successDark">
+            <Button onClick={onAccept} rounded size="sm" variant="success">
               Accept
             </Button>
-            <Button onClick={onDeny} rounded size="sm" variant="dangerDark">
+            <Button onClick={onDeny} rounded size="sm" variant="danger">
               Deny
             </Button>
           </div>
