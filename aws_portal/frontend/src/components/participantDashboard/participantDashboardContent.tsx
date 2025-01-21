@@ -170,7 +170,7 @@ const ParticipantDashboardContent = () => {
               </Button>
               {/* Error message without reserving space */}
               {consentError && (
-                <span className="absolute top-full mt-2 text-danger-dark text-xs right-0">
+                <span className="absolute top-full mt-2 text-danger text-xs right-0">
                   {consentError}
                 </span>
               )}
