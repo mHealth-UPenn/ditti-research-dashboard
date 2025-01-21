@@ -1,4 +1,5 @@
 import { FC, memo } from "react";
+import sanitize from "sanitize-html";
 import Button from "../buttons/button";
 import { ConsentModalProps } from "../../interfaces";
 
@@ -53,7 +54,7 @@ const ConsentModal: FC<ConsentModalProps> = memo(
           {/* Modal body */}
           <div
             className="p-4 overflow-auto text-black"
-            dangerouslySetInnerHTML={{ __html: contentHtml }}
+            dangerouslySetInnerHTML={{ __html: sanitize(contentHtml) }}
           />
 
           {/* Modal footer */}
