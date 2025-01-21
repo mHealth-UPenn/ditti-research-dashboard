@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import TextField from "../fields/textField";
 import CheckField from "../fields/checkField";
-import QuillField from "../fields/QuillField";
+import QuillField from "../fields/quillField";
 import { ResponseBody, Study, ViewProps } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
