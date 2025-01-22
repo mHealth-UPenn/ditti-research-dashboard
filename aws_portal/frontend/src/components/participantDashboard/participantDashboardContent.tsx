@@ -137,7 +137,7 @@ const ParticipantDashboardContent = () => {
     unconsentedStudies.forEach(study => {
       content += `
         <h4>${study.studyName}</h4>
-        <p>${sanitize(study.consentInformation || "") || defaultConsentContentText}</p>
+        <div>${sanitize(study.consentInformation || "") || defaultConsentContentText}</div>
       `;
     });
     return content;
