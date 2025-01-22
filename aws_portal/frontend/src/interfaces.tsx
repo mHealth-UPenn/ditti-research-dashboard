@@ -90,6 +90,8 @@ export interface Study {
   dittiId: string;
   email: string;
   role?: Role;
+  defaultExpiryDelta: number;
+  consentInformation?: string;
 }
 
 /**
@@ -178,6 +180,24 @@ export interface UserDetails {
   createdAt: string;
 }
 
+
+/**
+ * Study subject data used for the SubjectsEdit form
+ * @property tapPermission - Indicates if the participant has access to taps.
+ * @property information - Content from the assigned about sleep template.
+ * @property dittiId - The participant's Ditti ID
+ * @property startTime - When the participant's enrollment in the study begins
+ * @property expTime - When the participant's enrollment in the study begins
+ */
+export interface StudySubjectPrefill {
+  tapPermission: boolean;
+  information: string;
+  dittiId: string;
+  startTime: string;
+  expTime: string;
+}
+
+
 /**
  * User data as returned from the backend.
  */
@@ -258,6 +278,14 @@ export interface ViewProps {
   ) => void;
 }
 
+export interface ConsentModalProps {
+  isOpen: boolean;
+  onAccept: () => void;
+  onDeny: () => void;
+  onClose: () => void;
+  contentHtml: string;
+}
+
 /**
  * Account data as used by the dashboard header.
  * @property firstName - The account holder's first name.
@@ -331,6 +359,8 @@ export interface AuthContextType {
 export interface StudiesContextType {
   studies: Study[];
   studiesLoading: boolean;
+  // getStudyById: (studyId: number) => Study | undefined;
+  study: Study | null;
 }
 
 
@@ -341,9 +371,10 @@ export interface StudiesContextType {
  * @property studySubjectLoading - Whether data is being fetched from the database.
  */
 export interface StudySubjectContextType {
-  studies: StudyJoin[];
-  apis: ApiJoin[];
+  studies: IParticipantStudy[];
+  apis: IParticipantApi[];
   studySubjectLoading: boolean;
+  refetch: () => Promise<void>;
 }
 
 
@@ -353,8 +384,10 @@ export interface StudySubjectContextType {
  * @property studySubjectLoading - Whether data is being fetched from the database.
  */
 export interface CoordinatorStudySubjectContextType {
-  studySubjects: IStudySubject[];
+  studySubjects: IStudySubjectDetails[];
   studySubjectLoading: boolean;
+  getStudySubjectByDittiId: (id: string) => IStudySubjectDetails | undefined;
+  fetchStudySubjects: () => void;
 }
 
 
@@ -374,12 +407,51 @@ export interface IStudySubject {
   apis: ApiJoin[];
 }
 
+export interface IParticipantApi {
+  scope: string[];
+  apiName: string;
+}
+
+export interface IParticipantStudy {
+  studyName: string;
+  studyId: number;
+  createdOn: string;
+  startsOn: string;
+  expiresOn?: string;
+  consentInformation?: string;
+  didConsent: boolean;
+  dataSummary?: string;
+}
+
+export interface IParticipant {
+  dittiId: string;
+  apis: IParticipantApi[];
+  studies: IParticipantStudy[];
+}
+
+
+/**
+ * A combination of participant data fetched from both the database and AWS, minus `userPermissionId` in favor of
+ * `dittiId`
+ */
+export interface IStudySubjectDetails {
+  id: number;
+  createdOn: string;
+  dittiId: string;
+  studies: StudyJoin[];
+  apis: ApiJoin[];
+  tapPermission: boolean;
+  information: string;
+  dittiExpTime: string;
+  teamEmail: string;
+  createdAt: string;
+}
+
 
 export interface IFlashMessage {
   id: number;
   element: React.ReactElement;
   containerRef: React.RefObject<HTMLDivElement>;
-  closeRef: React.RefObject<HTMLDivElement>;
 }
 
 
@@ -501,4 +573,22 @@ export interface IDataProcessingTask {
   completedOn: string;
   logFile: string | null;
   errorCode: string | null;
+}
+
+
+export interface IBreadcrumb {
+  name: string;
+  link: string | null;
+}
+
+
+export interface NavbarContextType {
+  breadcrumbs: IBreadcrumb[];
+  setStudyCrumb: (studyCrumb: IBreadcrumb) => void;
+}
+
+
+export interface FlashMessageContextType {
+  flashMessages: IFlashMessage[];
+  flashMessage: (msg: React.ReactElement, variant: FlashMessageVariant) => void;
 }

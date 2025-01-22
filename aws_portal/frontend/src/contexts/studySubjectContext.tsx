@@ -1,7 +1,7 @@
 // TODO: Extend implementation to Ditti App Dashboard
 import { createContext, useState, useEffect, PropsWithChildren, useMemo, useContext } from "react";
 import { makeRequest } from "../utils";
-import { StudySubjectContextType, Study, StudyJoin, ApiJoin, IStudySubject } from "../interfaces";
+import { StudySubjectContextType, IParticipant, IParticipantApi, IParticipantStudy } from "../interfaces";
 import { APP_ENV } from "../environment";
 import DataFactory from "../dataFactory";
 
@@ -12,8 +12,8 @@ export const StudySubjectContext = createContext<StudySubjectContextType | undef
 export default function StudySubjectProvider({
   children
 }: PropsWithChildren<unknown>) {
-  const [studies, setStudies] = useState<StudyJoin[]>([]);
-  const [apis, setApis] = useState<ApiJoin[]>([])
+  const [studies, setStudies] = useState<IParticipantStudy[]>([]);
+  const [apis, setApis] = useState<IParticipantApi[]>([])
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
 
   const dataFactory: DataFactory | null = useMemo(() => {
@@ -42,13 +42,13 @@ export default function StudySubjectProvider({
   }, []);
 
   // Async fetch the participant's enrolled studies and connected APIs
-  const getStudySubject = async (): Promise<[StudyJoin[], ApiJoin[]]> => {
-    let studiesData: StudyJoin[] = [];
-    let apisData: ApiJoin[] = [];
+  const getStudySubject = async (): Promise<[IParticipantStudy[], IParticipantApi[]]> => {
+    let studiesData: IParticipantStudy[] = [];
+    let apisData: IParticipantApi[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
-      const data: IStudySubject | void = await makeRequest(`/participant`)
-        .then((res: IStudySubject) => {
+      await makeRequest(`/participant`)
+        .then((res: IParticipant) => {
           studiesData = res.studies;
           apisData = res.apis;
         })
@@ -62,9 +62,23 @@ export default function StudySubjectProvider({
     return [studiesData, apisData];
   };
 
+  // Function to refetch participant data
+  const refetch = async () => {
+    setStudySubjectLoading(true);
+    try {
+      const [studiesData, apisData] = await getStudySubject();
+      setStudies(studiesData);
+      setApis(apisData);
+    } catch (error) {
+      console.error("Failed to refetch participant data:", error);
+    } finally {
+      setStudySubjectLoading(false);
+    }
+  };
+
   return (
     <StudySubjectContext.Provider
-      value={{ studies, apis, studySubjectLoading }}>
+      value={{ studies, apis, studySubjectLoading, refetch }}>
         {children}
     </StudySubjectContext.Provider>
   );

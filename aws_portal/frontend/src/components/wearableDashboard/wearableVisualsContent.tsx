@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { IStudySubject, Study, ViewProps } from "../../interfaces";
-import { downloadExcelFromUrl, getAccess } from "../../utils";
+import { useState, useEffect } from "react";
+import { downloadExcelFromUrl, getAccess, getStartOnAndExpiresOnForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
@@ -12,6 +11,11 @@ import { APP_ENV } from "../../environment";
 import { useWearableData } from "../../contexts/wearableDataContext";
 import WearableVisualization from "../visualizations/wearableVisualization";
 import SyncIcon from '@mui/icons-material/Sync';
+import { Link } from "react-router-dom";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useStudiesContext } from "../../contexts/studiesContext";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { IStudySubjectDetails } from "../../interfaces";
 
 
 /**
@@ -44,88 +48,69 @@ function useWindowDimensions() {
 }
 
 
-/**
- * Interface for wearable visuals content
- * @property subject: The study subject being visualized.
- * @property studyDetails: The details of the current study.
- */
-interface WearableVisualsProps extends ViewProps {
-  studyDetails: Study;
-  studySubject: IStudySubject;
+interface IWearableVisualsContentProps {
+  dittiId: string;
 }
 
 
 export default function WearableVisualsContent({
-  studyDetails,
-  studySubject,
-  flashMessage,
-  goBack,
-  handleClick
-}: WearableVisualsProps) {
+  dittiId,
+}: IWearableVisualsContentProps) {
   const [canEdit, setCanEdit] = useState(false);
   const [canInvoke, setCanInvoke] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const { isSyncing, syncData } = useWearableData();
+  
+  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
+  const { studiesLoading, study } = useStudiesContext();
+  const { flashMessage } = useFlashMessageContext();
 
-  // Use the last `expiresOn` as the date of last data collection
-  const endDate = new Date(Math.max(...studySubject.studies.map(s => new Date(s.expiresOn).getTime())));
+  const studySubject = getStudySubjectByDittiId(dittiId);
+  const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject || {} as IStudySubjectDetails, study?.id || 0);
+
   const dateOpts: Intl.DateTimeFormatOptions = {
     year: "numeric",
     month: "short",
     day: "numeric",
-    hour: "numeric",
-    minute: "2-digit"
+    // hour: "numeric",
+    // minute: "2-digit"
   };
 
-  const expTimeFormatted = endDate.toLocaleDateString("en-US", dateOpts);
+  const expTimeFormatted = (new Date(expiresOn)).toLocaleDateString("en-US", dateOpts);
 
   // Get user access permission on load
   useEffect(() => {
-    const promises: Promise<unknown>[] = [];
-    promises.push(getAccess(3, "Edit", "Participants", studyDetails.id)
-      .then(() => setCanEdit(true)));
-    promises.push(getAccess(3, "Invoke", "Data Retrieval Task", studyDetails.id)
-      .then(() => setCanInvoke(true)));
-    promises.push(getAccess(3, "View", "Taps", studyDetails.id)
-      .then(() => setCanViewTaps(true)));
+    if (study) {
+      const promises: Promise<unknown>[] = [];
+      promises.push(getAccess(3, "Edit", "Participants", study.id)
+        .then(() => setCanEdit(true)));
+      promises.push(getAccess(3, "Invoke", "Data Retrieval Task", study.id)
+        .then(() => setCanInvoke(true)));
+      promises.push(getAccess(3, "View", "Taps", study.id)
+        .then(() => setCanViewTaps(true)));
 
-    Promise.all(promises)
-      .then(() => setLoading(false))
-      .catch(() => setLoading(false));
-  }, [studyDetails.id]);
+      Promise.all(promises)
+        .then(() => setLoading(false))
+        .catch(() => setLoading(false));
+    }
+  }, [study]);
 
   // Download the current participant's data in Excel format.
   const downloadExcel = async (): Promise<void> => {
-    const url = `/admin/fitbit_data/download/participant/${studySubject.dittiId}?app=3`;
+    const url = `/admin/fitbit_data/download/participant/${studySubject?.dittiId}?app=3`;
     const res = await downloadExcelFromUrl(url);
     if (res) {
       flashMessage(<span>{res}</span>, "danger");
     }
   };
 
-  // Handle when the user clicks Edit Details
-  const handleClickEditDetails = () =>
-    handleClick(
-      ["Edit"],
-      <React.Fragment />
-      // <SubjectsEdit
-      //   dittiId={user.userPermissionId}
-      //   studyId={studyDetails.id}
-      //   studyEmail={studyDetails.email}
-      //   studyPrefix={studyDetails.dittiId}
-      //   flashMessage={flashMessage}
-      //   goBack={goBack}
-      //   handleClick={handleClick}
-      // />
-    );
-
   // Custom breakpoint used only for managing certain visx properties
   const { width: windowWidth } = useWindowDimensions();
   const md = windowWidth >= 768;
 
-  if (loading) {
+  if (loading || studiesLoading || studySubjectLoading) {
     return (
       <ViewContainer>
         <Card width="lg">
@@ -143,8 +128,8 @@ export default function WearableVisualsContent({
 
             {/* The participant's details */}
             <div className="flex flex-col mb-4 lg:mb-0">
-              <Title>{studySubject.dittiId}</Title>
-              <Subtitle>Expires on: {expTimeFormatted}</Subtitle>
+              <Title>{studySubject?.dittiId}</Title>
+              <Subtitle>Enrollment ends on: {expTimeFormatted}</Subtitle>
             </div>
 
             {/* Buttons for downloading Excel data and editing details */}
@@ -159,13 +144,14 @@ export default function WearableVisualsContent({
                     Download Excel
                 </Button>
                 {/* if the user can edit, show the edit button */}
-                <Button
-                  variant="secondary"
-                  onClick={handleClickEditDetails}
-                  disabled={!(canEdit || APP_ENV === "demo")}
-                  rounded={true}>
-                  Edit Details
-                </Button>
+                <Link to={`/coordinator/wearable/participants/edit?dittiId=${studySubject?.dittiId}&sid=${study?.id}`}>
+                  <Button
+                    variant="secondary"
+                    disabled={!(canEdit || APP_ENV === "demo")}
+                    rounded={true}>
+                      Edit Details
+                  </Button>
+                </Link>
               </div>
 
               {/* Button for syncing data and invoking a data processing task */}
@@ -191,7 +177,7 @@ export default function WearableVisualsContent({
           <WearableVisualization
             showDayControls={true}
             showTapsData={canViewTaps}
-            dittiId={studySubject.dittiId}
+            dittiId={studySubject?.dittiId}
             horizontalPadding={md} />
         </CardContentRow>
       </Card>

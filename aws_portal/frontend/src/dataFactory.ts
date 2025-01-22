@@ -250,6 +250,8 @@ class DataFactory {
           acronym: "SLEEP-IT",
           dittiId: "sit",
           email: "sleep.it@research.edu",
+          defaultExpiryDelta: 14,
+          consentInformation: "Consent Information",
         },
         {
           id: 2,
@@ -257,6 +259,8 @@ class DataFactory {
           acronym: "CALM-SLEEP",
           dittiId: "cs",
           email: "calm.sleep@research.edu",
+          defaultExpiryDelta: 28,
+          consentInformation: "Consent Information",
         }
       ];
       if (APP_ENV !== "demo") {

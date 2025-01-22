@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { Study, ViewProps } from "../../interfaces";
+import { useState, useEffect } from "react";
+import { Study } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import StudySubjects from "./studySubjects";
-import Subjects from "./subjects";
-import SubjectsEdit from "./subjectsEdit";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
@@ -16,6 +14,8 @@ import Button from "../buttons/button";
 import CardContentRow from "../cards/cardContentRow";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
+import { Link } from "react-router-dom";
+import { useStudiesContext } from "../../contexts/studiesContext";
 
 /**
  * Information for study contacts
@@ -27,80 +27,66 @@ interface StudyContact {
   role: string;
 }
 
-/**
- * getTaps: get tap data
- * studyId: the study's database primary key
- */
-interface StudySummaryProps extends ViewProps {
-  studyId: number;
-}
-
-const StudySummary: React.FC<StudySummaryProps> = ({
-  flashMessage,
-  goBack,
-  handleClick,
-  studyId
-}) => {
+const StudySummary = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
-  const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
   const [loading, setLoading] = useState(true);
 
-  const { taps, audioTaps } = useDittiDataContext();
+  const { studiesLoading, study } = useStudiesContext();
+  const { dataLoading, taps, audioTaps } = useDittiDataContext();
 
   useEffect(() => {
-    // check whether the user can enroll new subjects
-    const promises: Promise<any>[] = [];
-    promises.push(
-      getAccess(2, "Create", "Participants", studyId)
-        .then(() => setCanCreate(true))
-        .catch(() => setCanCreate(false))
-    );
+    if (study) {
+      // check whether the user can enroll new subjects
+      const promises: Promise<any>[] = [];
+      promises.push(
+        getAccess(2, "Create", "Participants", study.id)
+          .then(() => setCanCreate(true))
+          .catch(() => setCanCreate(false))
+      );
 
-    promises.push(
-      getAccess(2, "View", "Taps", studyId)
-        .then(() => setCanViewTaps(true))
-        .catch(() => setCanViewTaps(false))
-    );
+      promises.push(
+        getAccess(2, "View", "Taps", study.id)
+          .then(() => setCanViewTaps(true))
+          .catch(() => setCanViewTaps(false))
+      );
 
-    // get other accounts that have access to this study
-    promises.push(
-      makeRequest(
-        "/db/get-study-contacts?app=2&study=" + studyId
-      ).then((contacts: StudyContact[]) => setStudyContacts(contacts))
-    );
+      // get other accounts that have access to this study
+      promises.push(
+        makeRequest(
+          "/db/get-study-contacts?app=2&study=" + study.id
+        ).then((contacts: StudyContact[]) => setStudyContacts(contacts))
+      );
 
-    // get this study's information
-    promises.push(
-      makeRequest(
-        "/db/get-study-details?app=2&study=" + studyId
-      ).then((details: Study) => setStudyDetails(details))
-    );
-
-    // when all promises resolve, hide the loader
-    Promise.all(promises).then(() => setLoading(false));
-  }, [studyId]);
+      // when all promises resolve, hide the loader
+      Promise.all(promises).then(() => setLoading(false));
+    }
+  }, [study]);
 
   /**
    * Download all of the study's data in excel format
    */
   const downloadExcel = async (): Promise<void> => {
+    if (!study) {
+      return;
+    }
+
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
-    const id = studyDetails.acronym;
+    const id = study.acronym;
     const fileName = format(new Date(), `'${id}_'yyyy-MM-dd'_'HH:mm:ss`);
 
     const tapsData = taps.filter(t =>
       // Retrieve taps from only the current study
-      t.dittiId.startsWith(studyDetails.dittiId)
+      t.dittiId.startsWith(study.dittiId)
     ).map(t => {
       return [t.dittiId, t.time, t.timezone, "", ""];
     });
 
     const audioTapsData = audioTaps.filter(t =>
       // Retrieve taps from only the current study
-      t.dittiId.startsWith(studyDetails.dittiId)
+      t.dittiId.startsWith(study.dittiId)
     ).map(t => {
       return [t.dittiId, t.time, t.timezone, t.action, t.audioFileTitle];
     });
@@ -139,34 +125,7 @@ const StudySummary: React.FC<StudySummaryProps> = ({
     });
   };
 
-  const { dittiId, email, name, acronym } = studyDetails;
-
-  const handleClickEnrollSubject = () =>
-    handleClick(
-      ["Enroll"],
-      <SubjectsEdit
-        flashMessage={flashMessage}
-        dittiId=""
-        goBack={goBack}
-        handleClick={handleClick}
-        studyId={studyId}
-        studyPrefix={dittiId}
-        studyEmail={email}
-      />
-    );
-
-  const handleClickViewAllSubjects = () =>
-    handleClick(
-      ["Subjects"],
-      <Subjects
-        flashMessage={flashMessage}
-        goBack={goBack}
-        handleClick={handleClick}
-        studyDetails={studyDetails}
-      />
-    );
-
-  if (loading) {
+  if (loading || studiesLoading || dataLoading) {
     return (
       <ViewContainer>
         <Card width="md">
@@ -184,10 +143,10 @@ const StudySummary: React.FC<StudySummaryProps> = ({
       <Card width="md">
         <CardContentRow>
           <div className="flex flex-col">
-            <Title>{acronym}</Title>
-            <Subtitle>{name}</Subtitle>
-            <Subtitle>Study email: {email}</Subtitle>
-            <Subtitle>Ditti acronym: {dittiId}</Subtitle>
+            <Title>{study?.acronym}</Title>
+            <Subtitle>{study?.name}</Subtitle>
+            <Subtitle>Study email: {study?.email}</Subtitle>
+            <Subtitle>Ditti acronym: {study?.dittiId}</Subtitle>
           </div>
           {canViewTaps &&
             <Button
@@ -202,29 +161,25 @@ const StudySummary: React.FC<StudySummaryProps> = ({
           <Title>Active Subjects</Title>
           <div className="flex">
             {(canCreate || APP_ENV === "demo") &&
-              <Button
-                className="mr-2"
-                onClick={handleClickEnrollSubject}
-                rounded={true}>
-                  Enroll subject +
-              </Button>
+              <Link to={`/coordinator/ditti/participants/enroll?sid=${study?.id}`}>
+                <Button
+                  className="mr-2"
+                  rounded={true}>
+                    Enroll subject +
+                </Button>
+              </Link>
             }
-            <Button
-              variant="secondary"
-              onClick={handleClickViewAllSubjects}
-              rounded={true}>
-                View all subjects
-            </Button>
+            <Link to={`/coordinator/ditti/participants?sid=${study?.id}`}>
+              <Button
+                variant="secondary"
+                rounded={true}>
+                  View all subjects
+              </Button>
+            </Link>
           </div>
         </CardContentRow>
 
-        <StudySubjects
-          flashMessage={flashMessage}
-          goBack={goBack}
-          handleClick={handleClick}
-          studyDetails={studyDetails}
-          studyPrefix={dittiId}
-          canViewTaps={canViewTaps} />
+        <StudySubjects study={study || {} as Study} canViewTaps={canViewTaps} />
       </Card>
 
       <Card width="sm">

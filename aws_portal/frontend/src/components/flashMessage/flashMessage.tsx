@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren, useEffect } from "react";
 
 const variantsBgMap = {
   success: "bg-success-light",
@@ -17,25 +17,37 @@ export type FlashMessageVariant = "success" | "info" | "danger";
 interface FlashMessageProps {
   variant: FlashMessageVariant;
   containerRef: React.RefObject<HTMLDivElement>;
-  closeRef: React.RefObject<HTMLDivElement>;
+  onClose: () => void;
 }
 
 
 const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
   variant,
   containerRef,
-  closeRef,
+  onClose,
   children,
 }) => {
+  useEffect(() => {
+    const opacityTimeout = setTimeout(() => {
+      if (containerRef.current) {
+        containerRef.current.style.opacity = "0";
+      }
+    }, 3000);
+
+    const closeTimeout = setTimeout(() => onClose(), 5000);
+
+    return () => {
+      clearTimeout(opacityTimeout);
+      clearTimeout(closeTimeout);
+    };
+  }, []);
+
   return (
     <div
       className={`flex justify-between shadow-lg rounded-lg opacity-100 transition-all duration-[2s] z-50 select-none ${variantsBgMap[variant]} ${variantsTextMap[variant]}`}
       ref={containerRef}>
         <div className="p-4">
           <span>{children}</span>
-        </div>
-        <div className="py-4 px-8 hover:text-black cursor-pointer" ref={closeRef}>
-          <span>x</span>
         </div>
     </div>
   );

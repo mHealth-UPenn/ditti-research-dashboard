@@ -8,7 +8,6 @@ import {
   ResponseBody,
   Role,
   Study,
-  ViewProps
 } from "../../interfaces";
 import Select from "../fields/select";
 import { makeRequest } from "../../utils";
@@ -23,6 +22,8 @@ import FormSummaryTitle from "../text/formSummaryTitle";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 type Action =
   | {
@@ -129,13 +130,6 @@ const reducer = (state: AccountsEditState, action: Action) => {
 
 
 /**
- * accountId: the database primary key, 0 if creating a new entry
- */
-interface AccountsEditProps extends ViewProps {
-  accountId: number;
-}
-
-/**
  * study: the database primary key of study the role is selected for
  * role: the role's database primary key
  */
@@ -189,11 +183,11 @@ const initialState: AccountsEditState = {
   password: ""
 };
 
-const AccountsEdit = ({
-  accountId,
-  flashMessage,
-  goBack,
-}: AccountsEditProps) => {
+const AccountsEdit = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const accountId = id ? parseInt(id) : 0
+
   const [state, dispatch] = useReducer(reducer, initialState);
   const {
     accessGroups,
@@ -209,6 +203,9 @@ const AccountsEdit = ({
     studiesSelected,
     password
   } = state;
+
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
 
   useEffect(() => {
 
@@ -371,7 +368,7 @@ const AccountsEdit = ({
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
+    navigate(-1);
     flashMessage(<span>{res.msg}</span>, "success");
   };
 
@@ -383,7 +380,7 @@ const AccountsEdit = ({
     // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
-        <b>An unexpected error occured</b>
+        <b>An unexpected error occurred</b>
         <br />
         {res.msg ? res.msg : "Internal server error"}
       </span>

@@ -601,13 +601,11 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
                         handleClick(
                           ["Edit"],
                           <SubjectsEdit
-                            dittiId={user.userPermissionId}
-                            studyId={studyDetails.id}
-                            studyEmail={studyDetails.email}
-                            studyPrefix={studyDetails.dittiId}
-                            flashMessage={flashMessage}
-                            goBack={goBack}
-                            handleClick={handleClick}
+                            // dittiId={user.userPermissionId}
+                            // studyDetails={studyDetails}
+                            // flashMessage={flashMessage}
+                            // goBack={goBack}
+                            // handleClick={handleClick}
                           />
                         )
                       }

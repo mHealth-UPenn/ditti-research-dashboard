@@ -1,11 +1,14 @@
 import React from "react";
-import { IStudySubject, Study, ViewProps } from "../../interfaces";
+import { IStudySubject, IStudySubjectDetails, Study } from "../../interfaces";
 import { differenceInDays } from "date-fns";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
-import Link from "../links/link";
+import LinkComponent from "../links/linkComponent";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
-import WearableVisuals from "./wearableVisuals";
+import { Link } from "react-router-dom";
+import { SmallLoader } from "../loader";
+import { getStartOnAndExpiresOnForStudy } from "../../utils";
+import { useStudiesContext } from "../../contexts/studiesContext";
 
 
 /**
@@ -13,7 +16,7 @@ import WearableVisuals from "./wearableVisuals";
  * @property studyDetails: The details of study to list subjects for.
  * @property canViewWearableData: Whether the current user can view wearable data for the current study.
  */
-interface WearableStudySubjectsProps extends ViewProps {
+interface WearableStudySubjectsProps {
   studyDetails: Study;
   canViewWearableData: boolean;
 }
@@ -22,32 +25,16 @@ interface WearableStudySubjectsProps extends ViewProps {
 export default function WearableStudySubjects({
   studyDetails,
   canViewWearableData,
-  flashMessage,
-  goBack,
-  handleClick,
 }: WearableStudySubjectsProps) {
-  const { studySubjects } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
+  const { study } = useStudiesContext();
 
   // Get only study subjects with prefixes that equal the current study's prefix
   const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));
 
-  const getSubjectSummary = (subject: IStudySubject): React.ReactElement => {
-    // Use the last `expiresOn` date as the date of last data collection
-    const endDate = new Date(Math.max(...subject.studies.map(s => new Date(s.expiresOn).getTime())));
-    const expiresOn = differenceInDays(endDate, new Date());
-
-    const handleClickSubject = () =>
-      handleClick(
-        [subject.dittiId],
-        // TODO: Revise the current nav architecture so that navigating to new views can still access context
-        // The current nav architecture still relies on prop drilling for some views like this one
-        <WearableVisuals
-          flashMessage={flashMessage}
-          goBack={goBack}
-          handleClick={handleClick}
-          subject={subject}
-          studyDetails={studyDetails} />
-      );
+  const getSubjectSummary = (subject: IStudySubjectDetails): React.ReactElement => {
+    const { expiresOn } = getStartOnAndExpiresOnForStudy(subject, study?.id || 0);
+    const expiresOnDiff = differenceInDays(new Date(expiresOn), new Date());
 
     return (
       <CardContentRow
@@ -60,14 +47,16 @@ export default function WearableStudySubjects({
               {canViewWearableData && <ActiveIcon active={true} className="mr-2" />}
 
               {/* Link to the subject's visualization */}
-              {canViewWearableData ?
-                <Link onClick={handleClickSubject}>
-                  {subject.dittiId}
+              {canViewWearableData && subject.apis.length ?
+                <Link to={`/coordinator/wearable/participants/view?dittiId=${subject.dittiId}&sid=${studyDetails.id}`}>
+                  <LinkComponent>
+                    {subject.dittiId}
+                  </LinkComponent>
                 </Link> :
                 <span>{subject.dittiId}</span>
               }
             </div>
-            <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
+            <i className="w-max">Enrollment ends in: {expiresOnDiff ? expiresOnDiff + " days" : "Today"}</i>
           </div>
 
           {/* A list of connected APIs for the current study subject */}
@@ -91,10 +80,9 @@ export default function WearableStudySubjects({
     );
   };
 
-  // all users whose ids have not expired
-  // const activeUsers = filteredUsers.filter(
-  //   (u: UserDetails) => new Date() < new Date(u.expTime)
-  // );
+  if (studySubjectLoading) {
+    return <SmallLoader />;
+  }
 
   return (
     <>

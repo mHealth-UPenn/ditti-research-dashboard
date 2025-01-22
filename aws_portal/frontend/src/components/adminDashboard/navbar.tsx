@@ -1,75 +1,39 @@
-import * as React from "react";
-import Accounts from "./accounts";
-import Studies from "./studies";
-import AccessGroups from "./accessGroups";
-import Roles from "./roles";
-import { ViewProps } from "../../interfaces";
-import AboutSleepTemplates from "./aboutSleepTemplates";
-import Link from "../links/link";
+import LinkComponent from "../links/linkComponent";
+import { Link } from "react-router-dom";
 
 /**
  * active: the active view
  */
-interface NavbarProps extends ViewProps {
+interface NavbarProps {
   active: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ active, handleClick, flashMessage, goBack }) => {
+const Navbar = ({ active }: NavbarProps) => {
   const views = [
     {
       active: false,
       name: "Accounts",
-      view: (
-        <Accounts
-          handleClick={handleClick}
-          flashMessage={flashMessage}
-          goBack={goBack}
-        />
-      )
+      link: "/coordinator/admin/accounts"
     },
     {
       active: false,
       name: "Studies",
-      view: (
-        <Studies
-          handleClick={handleClick}
-          flashMessage={flashMessage}
-          goBack={goBack}
-        />
-      )
+      link: "/coordinator/admin/studies"
     },
     {
       active: false,
       name: "Roles",
-      view: (
-        <Roles
-          handleClick={handleClick}
-          flashMessage={flashMessage}
-          goBack={goBack}
-        />
-      )
+      link: "/coordinator/admin/roles"
     },
     {
       active: false,
       name: "Access Groups",
-      view: (
-        <AccessGroups
-          handleClick={handleClick}
-          flashMessage={flashMessage}
-          goBack={goBack}
-        />
-      )
+      link: "/coordinator/admin/access-groups"
     },
     {
       active: false,
       name: "About Sleep Templates",
-      view: (
-        <AboutSleepTemplates
-          handleClick={handleClick}
-          flashMessage={flashMessage}
-          goBack={goBack}
-        />
-      )
+      link: "/coordinator/admin/about-sleep-templates"
     }
   ];
 
@@ -91,10 +55,10 @@ const Navbar: React.FC<NavbarProps> = ({ active, handleClick, flashMessage, goBa
               {v.name}
           </div> :
           <div key={i} className="flex h-full">
-            <Link
-              className="flex items-center justify-center px-3 lg:px-4 xl:px-8 h-full w-full no-underline hover:bg-extra-light text-center"
-              onClick={() => handleClick([v.name], v.view, true)}>
-                {v.name}
+            <Link to={v.link}>
+              <LinkComponent className="flex items-center justify-center px-3 lg:px-4 xl:px-8 h-full w-full no-underline hover:bg-extra-light text-center">
+                  {v.name}
+              </LinkComponent>
             </Link>
           </div>
       ))}

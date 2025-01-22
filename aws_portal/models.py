@@ -455,7 +455,7 @@ real-time data essential for understanding the physiological effects of mindfuln
             "ditti_id": "TA",
             "email": "test.study.A@studyAemail.com",
             "default_expiry_delta": 14,
-            "consent_information": "",
+            "consent_information": "By accepting, you agree that your data will be used. You can withdraw consent at any time.",
             "data_summary": data_summary,
         },
         {
@@ -464,7 +464,7 @@ real-time data essential for understanding the physiological effects of mindfuln
             "ditti_id": "TB",
             "email": "test.study.B@studyBemail.com",
             "default_expiry_delta": 14,
-            "consent_information": "",
+            "consent_information": "By accepting, you agree that your data will be used. You cannot withdraw consent.",
             "data_summary": data_summary,
         }
     ]
@@ -537,7 +537,8 @@ real-time data essential for understanding the physiological effects of mindfuln
 
     # Create an account for each role
     # Assign each role to Study A to test whether permissions are scoped to Study A only
-    other_role = Role.query.filter(Role.name == "Can View Participants").first()
+    other_role = Role.query.filter(
+        Role.name == "Can View Participants").first()
     for role_name in roles.keys():
         account = Account(
             public_id=str(uuid.uuid4()),
@@ -699,6 +700,12 @@ real-time data essential for understanding the physiological effects of mindfuln
 
 def init_lambda_task(status: str):
     db.session.add(LambdaTask(status=status))
+    db.session.commit()
+
+
+def delete_lambda_tasks():
+    for task in LambdaTask.query.all():
+        db.session.delete(task)
     db.session.commit()
 
 
@@ -1559,6 +1566,8 @@ class Study(db.Model):
             "dittiId": self.ditti_id,
             "email": self.email,
             "roles": [r.meta for r in self.roles],
+            "defaultExpiryDelta": self.default_expiry_delta,
+            "consentInformation": self.consent_information,
             "dataSummary": self.data_summary,
             "isQi": self.is_qi
         }

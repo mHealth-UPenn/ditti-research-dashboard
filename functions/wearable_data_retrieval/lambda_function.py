@@ -779,8 +779,7 @@ def handler(event, context):
                 raise DBFetchError
 
             try:
-                # lambda_task_service.update_status("InProgress")
-                pass
+                lambda_task_service.update_status("InProgress")
 
             # On error raise exception and exit
             except Exception:
@@ -913,11 +912,16 @@ def handler(event, context):
                                 sleep_record["dateOfSleep"]
                                 for sleep_record in data
                             )
+
+                            # Set last sync date to midnight next day
+                            last_sync_date = datetime.fromisoformat(last_sync_date)
+                            last_sync_date += timedelta(days=1)
+                            last_sync_date = last_sync_date.strftime("%Y-%m-%d")
+                            last_sync_date = datetime.strptime(last_sync_date, "%Y-%m-%d")
+
                             # Convert to string matching the same format as `function_timestamp`
-                            last_sync_date = datetime.strptime(
-                                last_sync_date + timedelta(days=1),  # Next sync should start from the next day
-                                "%Y-%m-%d"
-                            ).isoformat(timespec="milliseconds")
+                            last_sync_date = last_sync_date.isoformat(timespec="milliseconds")
+
                         except Exception as e:
                             logger.warning(
                                 "Error parsing `last_sync_date` from sleep data. Falling back to `function_timestamp`.",

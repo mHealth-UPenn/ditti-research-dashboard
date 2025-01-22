@@ -66,11 +66,7 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
           onClick={() =>
             setView(
               s.acronym,
-              <StudySummary
-                flashMessage={flashMessage}
-                handleClick={handleClick}
-                goBack={goBack}
-                studyId={s.id} />
+              <StudySummary />
             )
           }>
             {s.acronym}

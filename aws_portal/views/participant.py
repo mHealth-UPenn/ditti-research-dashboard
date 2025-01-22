@@ -1,9 +1,9 @@
 import logging
 import boto3
-from flask import Blueprint, jsonify, make_response, current_app
+from flask import Blueprint, jsonify, make_response, current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 from aws_portal.extensions import db, tm
-from aws_portal.models import Api, StudySubject, JoinStudySubjectApi
+from aws_portal.models import Api, JoinStudySubjectStudy, StudySubject, JoinStudySubjectApi
 from aws_portal.utils.cognito import cognito_auth_required
 from aws_portal.utils.serialization import serialize_participant
 from aws_portal.utils.auth import auth_required
@@ -51,6 +51,77 @@ def get_participant(ditti_id: str):
     except Exception as e:
         logger.error(f"Unhandled error retrieving participant data for ditti_id {
                      ditti_id}: {str(e)}")
+        return make_response({"msg": "Unexpected server error."}, 500)
+
+
+@blueprint.route("/study/<int:study_id>/consent", methods=["PATCH"])
+@cognito_auth_required
+def update_consent(study_id: int, ditti_id: str):
+    """
+    Endpoint to update a participant's consent status for a specific study.
+
+    Args:
+        study_id (int): The ID of the study.
+        ditti_id (str): The unique ID of the study subject, provided by the decorator.
+
+    Request Body:
+        {
+            "didConsent": true  // or false
+        }
+
+    Returns:
+        JSON response indicating success or failure of the consent update.
+    """
+    try:
+        # Parse JSON request body
+        data = request.get_json()
+        if not data or "didConsent" not in data:
+            logger.warning(f"Missing 'didConsent' in request body for ditti_id {
+                           ditti_id}, study_id {study_id}.")
+            return make_response({"msg": "Field 'didConsent' is required."}, 400)
+
+        did_consent = data["didConsent"]
+        if not isinstance(did_consent, bool):
+            logger.warning(f"Invalid 'did_consent' type for ditti_id {
+                           ditti_id}, study_id {study_id}. Expected boolean.")
+            return make_response({"msg": "'didConsent' must be a boolean."}, 400)
+
+        # Retrieve the StudySubject by ditti_id
+        study_subject = StudySubject.query.filter_by(
+            ditti_id=ditti_id, is_archived=False).first()
+        if not study_subject:
+            logger.info(f"StudySubject with ditti_id {
+                        ditti_id} not found or is archived.")
+            return make_response({"msg": "User not found or is archived."}, 404)
+
+        # Retrieve the JoinStudySubjectStudy entry
+        join_entry = JoinStudySubjectStudy.query.filter_by(
+            study_subject_id=study_subject.id,
+            study_id=study_id
+        ).first()
+
+        if not join_entry:
+            logger.info(f"JoinStudySubjectStudy entry not found for ditti_id {
+                        ditti_id}, study_id {study_id}.")
+            return make_response({"msg": "Study enrollment not found."}, 404)
+
+        # Update the did_consent field
+        join_entry.did_consent = did_consent
+        db.session.commit()
+
+        logger.info(f"Updated did_consent to {did_consent} for ditti_id {
+                    ditti_id}, study_id {study_id}.")
+        return jsonify({"msg": "Consent status updated successfully."})
+
+    except SQLAlchemyError as db_err:
+        logger.error(f"Database error updating consent for ditti_id {
+                     ditti_id}, study_id {study_id}: {str(db_err)}")
+        db.session.rollback()
+        return make_response({"msg": "Database error updating consent status."}, 500)
+    except Exception as e:
+        logger.error(f"Unhandled error updating consent for ditti_id {
+                     ditti_id}, study_id {study_id}: {str(e)}")
+        db.session.rollback()
         return make_response({"msg": "Unexpected server error."}, 500)
 
 

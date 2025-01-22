@@ -1,6 +1,6 @@
-import React, { createRef, useEffect, useState } from "react";
+import { createRef, useEffect, useState } from "react";
 import { makeRequest } from "../utils";
-import { AccountDetails, ViewProps } from "../interfaces";
+import { AccountDetails } from "../interfaces";
 import AccountMenu from "./accountMenu";
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
@@ -8,7 +8,7 @@ import CloseIcon from '@mui/icons-material/Close';
 /**
  * The Header component now functions as a functional component.
  */
-const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
+const Header = () => {
   const [accountDetails, setAccountDetails] = useState<AccountDetails>({} as AccountDetails);
   const [loading, setLoading] = useState<boolean>(true);
   const [showMenu, setShowMenu] = useState<boolean>(false);
@@ -79,9 +79,6 @@ const Header: React.FC<ViewProps> = ({ handleClick, goBack, flashMessage }) => {
           }
           <AccountMenu
             prefill={accountDetails}
-            handleClick={handleClick}
-            goBack={goBack}
-            flashMessage={flashMessage}
             accountMenuRef={accountMenuRef}
             hideMenu={() => setShowMenu(false)} />
         </>
