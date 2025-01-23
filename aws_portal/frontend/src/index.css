@@ -247,3 +247,22 @@ p {
   margin: 0px;
   position: relative;
 }
+
+.ql-container-form {
+  box-sizing: border-box;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  height: 20rem;
+  margin: 0px;
+  position: relative;
+}
+
+.ql-editor.ql-modal h1,
+.ql-editor.ql-modal h2,
+.ql-editor.ql-modal h3,
+.ql-editor.ql-modal h4,
+.ql-editor.ql-modal h5,
+.ql-editor.ql-modal h6,
+.ql-editor.ql-modal p {
+  margin: 1rem 0;
+}

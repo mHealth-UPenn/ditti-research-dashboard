@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 @admin_fitbit_blueprint.route("/<string:ditti_id>", methods=["GET"])
-@auth_required("View", "Admin Dashboard")
+@auth_required("View", "Wearable Dashboard")
 @auth_required("View", "Wearable Data")
 def admin_get_fitbit_data(ditti_id: str):
     """
@@ -209,6 +209,7 @@ def download_fitbit_participant(ditti_id: str):
         # Execute the query and fetch the results
         results = db.session.execute(stmt).all()
 
+        # TODO: Only return if ditti ID is not found, not when no data is found
         if len(results) == 0:
             return make_response({"msg": f"Participant with Ditti ID {ditti_id} not found."}, 200)
 

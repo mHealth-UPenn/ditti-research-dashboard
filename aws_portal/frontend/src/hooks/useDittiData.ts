@@ -9,11 +9,9 @@ import { differenceInMilliseconds } from "date-fns";
 // TODO: extend to customize default values when needed in future vizualizations
 const useDittiData = () => {
   const [dataLoading, setDataLoading] = useState(true);
-  const [studies, setStudies] = useState<Study[]>([]);
   const [taps, setTaps] = useState<TapDetails[]>([]);
   const [audioTaps, setAudioTaps] = useState<AudioTapDetails[]>([]);
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
-  const [users, setUsers] = useState<UserDetails[]>([]);
 
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
@@ -29,22 +27,14 @@ const useDittiData = () => {
       promises.push(getTapsAsync().then(setTaps));
       promises.push(getAudioTapsAsync().then(setAudioTaps));
       promises.push(getAudioFilesAsync().then(setAudioFiles));
-      promises.push(getUsersAsync().then(setUsers));
     } else if ((APP_ENV === "development" || APP_ENV === "demo") && dataFactory) {
       promises.push(dataFactory.init().then(() => {
         if (dataFactory) {
           setTaps(dataFactory.taps);
           setAudioTaps(dataFactory.audioTaps);
           setAudioFiles(dataFactory.audioFiles);
-          setUsers(dataFactory.users);
         }
       }));
-    }
-
-    if (APP_ENV === "production" || APP_ENV === "development") {
-      promises.push(getStudiesAsync().then(setStudies));
-    } else if (APP_ENV === "demo" && dataFactory) {
-      setStudies(dataFactory.studies);
     }
 
     Promise.all(promises).then(() => setDataLoading(false));
@@ -139,71 +129,16 @@ const useDittiData = () => {
     return audioFiles;
   };
 
-  const getUsersAsync = async () => {
-    let users: UserDetails[] = [];
-
-    if (APP_ENV === "production") {
-      users = await makeRequest("/aws/get-users?app=2")
-        .catch(() => {
-          console.error("Unable to fetch users. Check account permissions.")
-          return [];
-        });
-    } else if (dataFactory) {
-      users = dataFactory.users;
-    }
-
-    console.debug("Users:", users);
-    return users;
-  };
-
   const refreshAudioFiles = async () => {
     setAudioFiles(await getAudioFilesAsync());
   }
 
-  const getUserByDittiId = async (id: string): Promise<User> => {
-    const userFilter = users.filter(u => u.userPermissionId === id);
-
-    if (userFilter.length) {
-      const user = userFilter[0];
-      return {
-        tap_permission: user.tapPermission,
-        information: user.information,
-        user_permission_id: user.userPermissionId,
-        exp_time: user.expTime,
-        team_email: user.teamEmail,
-        createdAt: user.createdAt,
-        __typename: "",
-        _lastChangedAt: 0,
-        _version: 0,
-        updatedAt: "",
-        id: "",
-      }
-    }
-
-    return {
-      tap_permission: true,
-      information: "",
-      user_permission_id: "",
-      exp_time: "",
-      team_email: "",
-      createdAt: "",
-      __typename: "",
-      _lastChangedAt: 0,
-      _version: 0,
-      updatedAt: "",
-      id: "",
-    }
-  }
-
   return {
     dataLoading,
-    studies,
     taps,
     audioTaps,
     audioFiles,
-    users,
     refreshAudioFiles,
-    getUserByDittiId,
   };
 };
 

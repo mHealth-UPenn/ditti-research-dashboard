@@ -1,6 +1,6 @@
-import React, { useState, useEffect, createRef } from "react";
+import { useState, useEffect, createRef } from "react";
 import TextField from "../fields/textField";
-import { AboutSleepTemplate, ResponseBody, ViewProps } from "../../interfaces";
+import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import FormView from "../containers/forms/formView";
@@ -14,6 +14,8 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import sanitize from "sanitize-html";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 /**
  * The form's prefill
@@ -23,22 +25,18 @@ interface AboutSleepTemplatePrefill {
   text: string;
 }
 
-/**
- * aboutSleepTemplateId: the database primary key, 0 if creating a new entry
- */
-interface AboutSleepTempaltesEditProps extends ViewProps {
-  aboutSleepTemplateId: number;
-}
+const AboutSleepTemplatesEdit = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const aboutSleepTemplateId = id ? parseInt(id) : 0
 
-const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
-  aboutSleepTemplateId,
-  goBack,
-  flashMessage
-}) => {
   const [name, setName] = useState<string>("");
   const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const previewRef = createRef<HTMLDivElement>();
+
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (previewRef.current) {
@@ -55,7 +53,7 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
     };
 
     fetchPrefill();
-  }, [aboutSleepTemplateId]);
+  }, []);
 
   /**
    * Get the form prefill if editing
@@ -117,7 +115,7 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
+    navigate(-1);
     flashMessage(<span>{res.msg}</span>, "success");
   };
 
@@ -129,7 +127,7 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
     // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
-        <b>An unexpected error occured</b>
+        <b>An unexpected error occurred</b>
         <br />
         {res.msg ? res.msg : "Internal server error"}
       </span>
@@ -196,4 +194,4 @@ const AboutSleepTempaltesEdit: React.FC<AboutSleepTempaltesEditProps> = ({
   );
 };
 
-export default AboutSleepTempaltesEdit;
+export default AboutSleepTemplatesEdit;

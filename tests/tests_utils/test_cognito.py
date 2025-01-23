@@ -289,7 +289,9 @@ def test_verify_token_jwt_decode_exception(app):
                     verify_token(True, token, token_use="id")
 
 
-def test_cognito_auth_required_success(app):
+@patch("aws_portal.extensions.db.session.execute")
+def test_cognito_auth_required_success(mock_execute, app):
+    mock_execute.return_value.scalar.return_value = "user123"
     with app.app_context():
 
         @app.route("/protected")
@@ -337,9 +339,11 @@ def test_cognito_auth_required_missing_tokens(app):
         assert response.get_json() == {"msg": "Missing authentication tokens."}
 
 
-def test_cognito_auth_required_expired_access_token_with_refresh(app):
-    with app.app_context():
+@patch("aws_portal.extensions.db.session.execute")
+def test_cognito_auth_required_expired_access_token_with_refresh(mock_execute, app):
+    mock_execute.return_value.scalar.return_value = "user123"
 
+    with app.app_context():
         @app.route("/protected")
         @cognito_auth_required
         def protected(ditti_id):
@@ -498,9 +502,10 @@ def test_cognito_auth_required_invalid_id_token(app):
                 "msg": "Invalid ID token: Invalid ID token"}
 
 
-def test_cognito_auth_required_expired_id_token(app):
+@patch("aws_portal.extensions.db.session.execute")
+def test_cognito_auth_required_expired_id_token(mock_execute, app):
+    mock_execute.return_value.scalar.return_value = "user123"
     with app.app_context():
-
         @app.route("/protected")
         @cognito_auth_required
         def protected(ditti_id):

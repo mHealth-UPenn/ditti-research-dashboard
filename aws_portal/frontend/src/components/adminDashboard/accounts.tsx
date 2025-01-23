@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from "react";
-import AccountsEdit from "./accountsEdit";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import Navbar from "./navbar";
 import { getAccess, makeRequest } from "../../utils";
-import { Account, ResponseBody, ViewProps } from "../../interfaces";
+import { Account, ResponseBody } from "../../interfaces";
 import { SmallLoader } from "../loader";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import Button from "../buttons/button";
+import { Link } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 /**
  * Functional component representing Accounts.
  */
-const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
+const Accounts = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -57,6 +58,7 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
     }
   ]);
   const [loading, setLoading] = useState(true);
+  const { flashMessage } = useFlashMessageContext();
 
   useEffect(() => {
     // Check user permissions
@@ -178,17 +180,13 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
                   variant="secondary"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit", name],
-                      <AccountsEdit
-                        accountId={id}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick} />
-                    )
-                  }>
-                    Edit
+                  fullWidth={true}
+                  fullHeight={true}>
+                    <Link
+                      className="w-full h-full flex items-center justify-center"
+                      to={`/coordinator/admin/accounts/edit?id=${id}`}>
+                        Edit
+                    </Link>
                 </Button>
               }
               {canArchive &&
@@ -249,7 +247,7 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
   const handleFailure = (res: ResponseBody) => {
     const msg = (
       <span>
-        <b>An unexpected error occured</b>
+        <b>An unexpected error occurred</b>
         <br />
         {res.msg ? res.msg : "Internal server error"}
       </span>
@@ -260,28 +258,14 @@ const Accounts: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) =>
 
   // If the user has permission to create, show the create button
   const tableControl = canCreate ? (
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Create"],
-          <AccountsEdit
-            accountId={0}
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick} />
-        )
-      } >
-        Create +
-    </Button>
+    <Link to={`/coordinator/admin/accounts/create`}>
+      <Button variant="primary">
+          Create +
+      </Button>
+    </Link>
   ) : <React.Fragment />;
 
-  const navbar =
-    <Navbar
-      active="Accounts"
-      flashMessage={flashMessage}
-      goBack={goBack}
-      handleClick={handleClick} />;
+  const navbar = <Navbar active="Accounts" />;
 
   if (loading) {
     return (

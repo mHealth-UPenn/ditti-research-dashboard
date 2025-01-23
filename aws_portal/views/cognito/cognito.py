@@ -1,9 +1,12 @@
-import logging
 from datetime import datetime, timezone
+import logging
 from urllib.parse import urlencode
+
+from flask import Blueprint, current_app, make_response, redirect, request, session
 import jwt
 import requests
-from flask import Blueprint, current_app, make_response, redirect, request, session
+from sqlalchemy import select, func
+
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
 from aws_portal.utils.cognito import verify_token
@@ -180,6 +183,8 @@ def logout():
 def check_login():
     """
     Checks if the user is authenticated via Cognito.
+
+    If they are authenticated, returns the user's ditti_id from the database.
     """
     id_token = request.cookies.get("id_token")
     if not id_token:
@@ -187,10 +192,25 @@ def check_login():
 
     try:
         claims = verify_token(True, id_token, token_use="id")
+        cognito_ditti_id = claims.get("cognito:username")
+
+        if not cognito_ditti_id:
+            return make_response({"msg": "cognito:username not found in token."}, 400)
+
+        # Cognito stores ditti IDs in lowercase, so retrieve actual ditti ID from the database instead.
+        stmt = select(StudySubject.ditti_id)\
+            .where(func.lower(StudySubject.ditti_id) == cognito_ditti_id)
+        ditti_id = db.session.execute(stmt).scalar()
+
+        if ditti_id is None:
+            logger.warning(f"Participant with cognito:username {cognito_ditti_id} not found in database.")
+            return make_response({"msg": f"Participant {cognito_ditti_id} not found."}, 400)
+
         body = {
             "msg": "Login successful",
-            "dittiId": claims.get("cognito:username"),
+            "dittiId": ditti_id,
         }
+
         return make_response(body, 200)
     except jwt.ExpiredSignatureError:
         logger.warning("ID token has expired.")

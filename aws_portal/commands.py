@@ -3,10 +3,11 @@ from flask import current_app
 from flask.cli import with_appcontext
 from flask_migrate import upgrade
 
-from aws_portal.extensions import db
+from aws_portal.extensions import db, cache
 from aws_portal.models import (
     init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
-    init_integration_testing_db, init_demo_db, init_study_subject
+    init_integration_testing_db, init_study_subject, init_lambda_task,
+    delete_lambda_tasks
 )
 
 
@@ -58,7 +59,7 @@ def init_api_click():
     init_api(click)
 
 
-@click.command("reset-db")
+@click.command("reset-db", help="Reset the database.")
 @with_appcontext
 def reset_db_click():
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
@@ -73,27 +74,37 @@ def reset_db_click():
     click.echo("Database successfully reset.")
 
 
-@click.command("init-integration-testing-db")
+@click.command("init-integration-testing-db", help="Initialize the integration testing database.")
 @with_appcontext
 def init_integration_testing_db_click():
     init_integration_testing_db()
     click.echo("Database successfully initialized.")
 
 
-@click.command("init-demo-db")
-@with_appcontext
-def init_demo_db_click():
-    if init_demo_db():
-        click.echo("Demo database successfully initialized.")
-    else:
-        click.echo("Demo database not initialized.")
-
-
-@click.command("init-study-subject")
-@click.option("--ditti_id")
+@click.command("init-study-subject", help="Create a new StudySubject database entry.")
+@click.option("--ditti_id", default=None, help="The ditti_id of the StudySubject.")
 @with_appcontext
 def init_study_subject_click(ditti_id):
     if ditti_id is None:
         raise RuntimeError("Option `ditti_id` is required.")
     init_study_subject(ditti_id)
     click.echo("Study subject successfully initialized.")
+
+
+@click.command("clear-cache", help="Clear the Flask cache.")
+@with_appcontext
+def clear_cache_click():
+    cache.clear()
+
+
+@click.command("init-lambda-task", help="Create a new LambdaTask database entry.")
+@click.option("--status", default="InProgress", help="The status of the LambdaTask.")
+@with_appcontext
+def init_lambda_task_click(status):
+    init_lambda_task(status)
+
+
+@click.command("delete-lambda-tasks", help="Delete all LambdaTask database entries.")
+@with_appcontext
+def delete_lambda_tasks_click():
+    delete_lambda_tasks()

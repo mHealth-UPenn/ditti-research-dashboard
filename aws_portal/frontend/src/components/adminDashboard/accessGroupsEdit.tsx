@@ -7,7 +7,6 @@ import {
   App,
   Permission,
   ResponseBody,
-  ViewProps
 } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
@@ -23,6 +22,8 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import CloseIcon from "@mui/icons-material/Close";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 /**
  * The form's prefill
@@ -33,14 +34,12 @@ interface AccessGroupPrefill {
   permissions: Permission[];
 }
 
-/**
- * accessGroupId: the database primary key, 0 if creating a new entry
- */
-interface AccessGroupsEditProps extends ViewProps {
-  accessGroupId: number;
-}
 
-const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsEditProps) => {
+const AccessGroupsEdit = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const accessGroupId = id ? parseInt(id) : 0
+
   const [actions, setActions] = useState<ActionResource[]>([]);
   const [resources, setResources] = useState<ActionResource[]>([]);
   const [apps, setApps] = useState<App[]>([]);
@@ -48,6 +47,9 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
   const [name, setName] = useState<string>("");
   const [appSelected, setAppSelected] = useState<App>({} as App);
   const [permissions, setPermissions] = useState<Permission[]>([]);
+
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -268,7 +270,7 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
+    navigate(-1);
     flashMessage(<span>{res.msg}</span>, "success");
   };
 
@@ -280,7 +282,7 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
     // flash the message from the backend or "Internal server error"
     const msg = (
       <span>
-        <b>An unexpected error occured</b>
+        <b>An unexpected error occurred</b>
         <br />
         {res.msg ? res.msg : "Internal server error"}
       </span>
@@ -349,7 +351,7 @@ const AccessGroupsEdit = ({ accessGroupId, goBack, flashMessage }: AccessGroupsE
             <div className="mb-1">App</div>
             <div className="border-light">
               <Select
-                id={accessGroupId}
+                id={accessGroupId || 0}
                 opts={apps.map((a: App) => ({
                   value: a.id,
                   label: a.name

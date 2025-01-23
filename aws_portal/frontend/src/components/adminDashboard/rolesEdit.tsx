@@ -6,7 +6,6 @@ import {
   Permission,
   ResponseBody,
   Role,
-  ViewProps
 } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
@@ -22,6 +21,8 @@ import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import CloseIcon from "@mui/icons-material/Close";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 /**
  * The form's prefill
@@ -31,19 +32,19 @@ interface RolesPrefill {
   permissions: Permission[];
 }
 
-/**
- * roleId: the database primary key, 0 if creating a new entry
- */
-interface RolesEditProps extends ViewProps {
-  roleId: number;
-}
+const RolesEdit = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const roleId = id ? parseInt(id) : 0
 
-const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) => {
   const [actions, setActions] = useState<ActionResource[]>([]);
   const [resources, setResources] = useState<ActionResource[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [name, setName] = useState<string>("");
   const [permissions, setPermissions] = useState<Permission[]>([]);
+
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
 
   useEffect(() => {
 
@@ -199,7 +200,7 @@ const RolesEdit: React.FC<RolesEditProps> = ({ roleId, goBack, flashMessage }) =
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
+    navigate(-1);
     flashMessage(<span>{res.msg}</span>, "success");
   };
 

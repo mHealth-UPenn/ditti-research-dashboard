@@ -8,6 +8,9 @@ class Default:
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "secret")
 
     CORS_ALLOW_HEADERS = ["Authorization", "Content-Type", "X-CSRF-TOKEN"]
+
+    # Headers for the client to access when downloading Excel files
+    CORS_EXPOSE_HEADERS = ["Content-Type", "Content-Disposition"]
     CORS_SUPPORTS_CREDENTIALS = True
 
     JWT_TOKEN_LOCATION = "headers"

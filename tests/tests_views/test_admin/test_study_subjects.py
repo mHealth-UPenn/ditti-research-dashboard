@@ -5,6 +5,12 @@ from aws_portal.models import Api, Study, StudySubject
 from aws_portal.extensions import db
 import traceback
 
+# Years to use for setting expiry dates
+year = datetime.now().year + 1
+next_year = datetime.now().year + 2
+next_next_year = datetime.now().year + 3
+
+
 # ===========================
 # Fixtures for Initial Setup
 # ===========================
@@ -144,7 +150,7 @@ def test_study_subject_create(post_admin, create_studies, create_apis):
             "studies": [
                 {
                     "id": 1,
-                    "expires_on": "2024-12-31T23:59:59Z",
+                    "expires_on": f"{year}-12-31T23:59:59Z",
                     "did_consent": True,
                 }
             ],
@@ -179,7 +185,7 @@ def test_study_subject_create(post_admin, create_studies, create_apis):
     assert join_study.study_id == 1
     assert join_study.did_consent is True
     assert join_study.expires_on.replace(tzinfo=timezone.utc) == datetime(
-        2024, 12, 31, 23, 59, 59, tzinfo=timezone.utc
+        year, 12, 31, 23, 59, 59, tzinfo=timezone.utc
     )
     assert len(subject.apis) == 1
     join_api = subject.apis[0]
@@ -201,7 +207,7 @@ def test_study_subject_archive(
             "studies": [
                 {
                     "id": 2,
-                    "expires_on": "2025-06-30T12:00:00Z",
+                    "expires_on": f"{next_year}-06-30T12:00:00Z",
                     "did_consent": False,
                 }
             ],
@@ -261,8 +267,8 @@ def test_study_subject_edit_remove_studies(post_admin, create_study_subject):
     subject = create_study_subject(
         ditti_id="remove_studies_ditti_id",
         studies=[
-            get_study_entry(1, "2024-12-31T23:59:59Z", True),
-            get_study_entry(2, "2025-06-30T12:00:00Z", False),
+            get_study_entry(1, f"{year}-12-31T23:59:59Z", True),
+            get_study_entry(2, f"{next_year}-06-30T12:00:00Z", False),
         ],
         apis=[],
     )
@@ -421,7 +427,7 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
     subject = create_study_subject(
         ditti_id="existing_study_add_ditti_id",
         studies=[
-            get_study_entry(1, "2024-12-31T23:59:59Z", True),
+            get_study_entry(1, f"{year}-12-31T23:59:59Z", True),
         ],
         apis=[],
     )
@@ -435,7 +441,7 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
             "studies": [
                 {
                     "id": 1,  # Already associated
-                    "expires_on": "2025-12-31T23:59:59Z",
+                    "expires_on": f"{next_year}-12-31T23:59:59Z",
                     "did_consent": False,
                 }
             ],
@@ -457,7 +463,7 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
     assert join_study.study_id == 1
     assert join_study.did_consent is False
     assert join_study.expires_on.replace(tzinfo=timezone.utc) == datetime(
-        2025, 12, 31, 23, 59, 59, tzinfo=timezone.utc
+        next_year, 12, 31, 23, 59, 59, tzinfo=timezone.utc
     )
 
 # ===========================
@@ -481,8 +487,8 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
             "study_edit_subject_ditti_id",
             {
                 "studies": [
-                    get_study_entry(1, "2025-12-31T23:59:59Z", False),
-                    get_study_entry(2, "2026-06-30T12:00:00Z", True),
+                    get_study_entry(1, f"{next_year}-12-31T23:59:59Z", False),
+                    get_study_entry(2, f"{next_next_year}-06-30T12:00:00Z", True),
                 ]
             },
             None,  # No change to ditti_id
@@ -491,14 +497,14 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
                     "study_id": 1,
                     "did_consent": False,
                     "expires_on": datetime(
-                        2025, 12, 31, 23, 59, 59, tzinfo=timezone.utc
+                        next_year, 12, 31, 23, 59, 59, tzinfo=timezone.utc
                     ),
                 },
                 {
                     "study_id": 2,
                     "did_consent": True,
                     "expires_on": datetime(
-                        2026, 6, 30, 12, 0, 0, tzinfo=timezone.utc
+                        next_next_year, 6, 30, 12, 0, 0, tzinfo=timezone.utc
                     ),
                 },
             ],
@@ -653,7 +659,7 @@ def test_study_subject_edit_success(
         (
             "Invalid Study ID",
             "invalid_study_id_ditti_id",
-            {"studies": [get_study_entry(9999, "2025-12-31T23:59:59Z", True)]},
+            {"studies": [get_study_entry(9999, f"{next_year}-12-31T23:59:59Z", True)]},
             "Invalid study ID: 9999",
         ),
         (
@@ -674,7 +680,7 @@ def test_study_subject_edit_success(
             "missing_study_id_ditti_id",
             # Missing 'id'
             {"studies": [
-                {"expires_on": "2025-12-31T23:59:59Z", "did_consent": True}]},
+                {"expires_on": f"{next_year}-12-31T23:59:59Z", "did_consent": True}]},
             "Study ID is required in studies",
         ),
         (
@@ -735,7 +741,7 @@ def test_study_subject_edit_errors(
         db.session.commit()
         # Update edit_payload with the archived study ID
         edit_payload = {"studies": [get_study_entry(
-            archived_study.id, "2025-12-31T23:59:59Z", True)]}
+            archived_study.id, f"{next_year}-12-31T23:59:59Z", True)]}
 
     if test_name == "Associate Archived API":
         # Create and archive an API with a dynamic ID
@@ -752,7 +758,7 @@ def test_study_subject_edit_errors(
         subject = create_study_subject(
             ditti_id=initial_ditti_id,
             studies=[
-                get_study_entry(1, "2024-12-31T23:59:59Z", True)
+                get_study_entry(1, f"{year}-12-31T23:59:59Z", True)
             ],
             apis=[
                 get_api_entry(1, "existing-api-user-uuid", ["read"])

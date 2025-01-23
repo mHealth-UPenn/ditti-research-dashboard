@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { scaleLinear } from '@visx/scale';
 import { Bar } from '@visx/shape';
 import { Brush } from '@visx/brush';
@@ -13,13 +13,25 @@ import colors from '../../colors';
 import { NumberValue } from 'd3';
 import { IVisualizationProps } from '../../interfaces';
 
+/**
+ * Props for the timestamp histogram.
+ * @property: Timestamps for each tap to visualize.
+ * @property: Timezones in the tapping data, where `time` is the first timestamp in the timezone called `name`.
+ */
 interface TimestampHistogramProps extends IVisualizationProps {
   timestamps: number[];
   timezones?: { time: number; name: string }[];
 }
 
 
-const formatTick = (v: Date | NumberValue, i: number) => {
+/**
+ * Formats ticks for the visualization in `H:MM AM/PM` format. The first tick of the visualization will show the day
+ * (Monday, Tuesday, etc.).
+ * @param v: The date to format a tick for.
+ * @param i: The tick's index.
+ * @returns: string - The formatted date.
+ */
+const formatTick = (v: Date | NumberValue, i: number): string => {
   const date = new Date(v.valueOf())
   const day = date.toLocaleDateString("en-US", { weekday: "long" });
   if (!(i && date.getHours() + date.getMinutes() + date.getSeconds())) {
@@ -32,7 +44,17 @@ const formatTick = (v: Date | NumberValue, i: number) => {
 };
 
 
-const formatTimeZoneTick = (v: Date | NumberValue, timezones?: { time: number; name: string; }[]) => {
+/**
+ * Get the timezone of a tick on the visualization. Given the tick `v` and a list of `timezones`, return the name of the
+ * first timezone that appears after the tick. If no timezones appear after the tick, return the last timezone.
+ * @param v: The date to retrieve the timezone for.
+ * @param timezones: The list of timezones.
+ * @returns: string - The name of the timezone.
+ */
+const formatTimeZoneTick = (
+  v: Date | NumberValue,
+  timezones?: { time: number; name: string; }[]
+): string => {
   if (!timezones) {
     return "";
   }
@@ -43,7 +65,7 @@ const formatTimeZoneTick = (v: Date | NumberValue, timezones?: { time: number; n
   }
 
   if (index === timezones.length) {
-    return timezones[index - 1].name;
+    return timezones[index - 1]?.name || "";
   }
   return timezones[index]?.name || "";
 };
@@ -65,10 +87,8 @@ const TimestampHistogram = ({
     xTicks,
     onZoomChange,
   } = useVisualizationContext();
-  // Guard against null xScale
-  if (!xScale) return <></>;
-  timezones?.forEach(tz => console.log(new Date(tz.time), tz.name))
 
+  // Override the default margin if any was passed as props.
   const margin = {
     top: marginTop !== undefined ? marginTop : defaultMargin.top,
     right: marginRight !== undefined ? marginRight : defaultMargin.right,
@@ -76,16 +96,20 @@ const TimestampHistogram = ({
     left: marginLeft !== undefined ? marginLeft : defaultMargin.left,
   }
 
+  // Bin the histogram data using `xScale`
   const histogramData = useMemo(() => {
-    const domain = xScale.domain();
-    const thresholds = xScale.ticks(xTicks).map(t => t.getTime());
+    const domain = xScale ? xScale.domain() : [];
+    const thresholds = xScale ? xScale.ticks(xTicks).map(t => t.getTime()) : [];
     const bins = d3Histogram()
       .domain([domain[0].getTime(), domain[1].getTime()])
       .thresholds(thresholds)(timestamps);
     return bins;
   }, [timestamps, xScale, width]);
 
+  // Get the largest bin the the histogram
   const maxBinSize = Math.max(...histogramData.map((bin) => bin.length));
+
+  // Define the height of the visualization depending on the largest bin
   const numYVals =
     maxBinSize > 300
     ? (maxBinSize - maxBinSize % 50) + 100
@@ -95,11 +119,13 @@ const TimestampHistogram = ({
       : (maxBinSize - maxBinSize % 10) + 10
     )
 
+  // Define the number of y ticks depending on the height of the histogram
   const numYTicks =
     numYVals > 100
     ? numYVals / 50
     : Math.max(2, numYVals / 10);
-    
+
+  // Define the `yScale` of the
   const yScale = useMemo(() => {
     return scaleLinear({
       domain: [0, numYVals],
@@ -116,6 +142,7 @@ const TimestampHistogram = ({
     tooltipOpen,
   } = useTooltip();
 
+  // Show the tooltip when hovering over a bin, if any
   const handleMouseEnter = useCallback(
     (target: SVGRectElement, numTaps: number, width: number) => {
       showTooltip({
@@ -126,11 +153,13 @@ const TimestampHistogram = ({
     }, [showTooltip]
   );
 
+  // Hide the tooltip when not hovering over a bin
   const handleMouseLeave = useCallback(hideTooltip, [hideTooltip]);
 
+  // Get all midnight timestamps that are visible in `xScale`
   const getMidnightDates = () => {
-    const start = xScale.domain()[0];
-    const stop = xScale.domain()[1];
+    const start = xScale ? xScale.domain()[0] : new Date();
+    const stop = xScale ? xScale.domain()[1] : new Date();
 
     const midnightDates = [];
 
@@ -145,10 +174,16 @@ const TimestampHistogram = ({
     return midnightDates;
   };
 
+  if (!xScale) return <></>;
+
   return (
     <div className="relative">
       <svg width={width} height={height}>
+
+        {/* The visualization background */}
         <rect width={width} height={height} fill="white" />
+
+        {/* Grid rows and columns, including bold columns on midnight timestamps */}
         <GridRows
           scale={yScale}
           left={margin.left}
@@ -171,6 +206,7 @@ const TimestampHistogram = ({
           strokeWidth={2}
           tickValues={getMidnightDates()} />
 
+        {/* Draggable brush for zooming in */}
         <Brush
           xScale={xScale}
           yScale={yScale}
@@ -183,6 +219,7 @@ const TimestampHistogram = ({
           }}
           resetOnEnd={true} />
 
+        {/* The bins of the histogram visualization */}
         {
           histogramData.map((bin, index) => {
             const width = Math.max(0, xScale(bin.x1 ? bin.x1 : 0) - xScale(bin.x0 ? bin.x0 : 0) - 1);
@@ -201,11 +238,14 @@ const TimestampHistogram = ({
           )
         }
 
+        {/* Bottom axis with weekday and timestamps */}
         <AxisBottom
           top={height - margin.bottom}
           scale={xScale}
           tickLabelProps={{ angle: 45, dx: -5, textAnchor: "start" }}
           tickFormat={formatTick} />
+
+        {/* Bottom axis to show the timezone at the first tick of `xScale` */}
         {timezones &&
           <AxisBottom
             top={height - margin.bottom}
@@ -214,6 +254,8 @@ const TimestampHistogram = ({
             tickFormat={(v) => formatTimeZoneTick(v, timezones)}
             tickValues={[xScale.domain()[0]]} />
         }
+
+        {/* Vertical axis with title */}
         <AxisLeft
           left={margin.left}
           scale={yScale}
@@ -223,6 +265,8 @@ const TimestampHistogram = ({
           labelOffset={30}
           tickLabelProps={{ className: "text-xs" }} />
       </svg>
+
+      {/* Tooltip to show on hover, if any */}
       {
         tooltipOpen &&
         <Tooltip

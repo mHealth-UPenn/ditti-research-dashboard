@@ -64,7 +64,7 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
   useEffect(() => {
     setBouts(getBouts(taps));
 
-    getAccess(2, "Edit", "Users", studyDetails.id)
+    getAccess(2, "Edit", "Participants", studyDetails.id)
       .then(() => {
         setCanEdit(true);
         setLoading(false);
@@ -601,13 +601,11 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
                         handleClick(
                           ["Edit"],
                           <SubjectsEdit
-                            dittiId={user.userPermissionId}
-                            studyId={studyDetails.id}
-                            studyEmail={studyDetails.email}
-                            studyPrefix={studyDetails.dittiId}
-                            flashMessage={flashMessage}
-                            goBack={goBack}
-                            handleClick={handleClick}
+                            // dittiId={user.userPermissionId}
+                            // studyDetails={studyDetails}
+                            // flashMessage={flashMessage}
+                            // goBack={goBack}
+                            // handleClick={handleClick}
                           />
                         )
                       }

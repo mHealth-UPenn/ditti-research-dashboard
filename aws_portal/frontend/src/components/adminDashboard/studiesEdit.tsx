@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import TextField from "../fields/textField";
 import CheckField from "../fields/checkField";
 import QuillField from "../fields/quillField";
-import { ResponseBody, Study, ViewProps } from "../../interfaces";
+import { ResponseBody, Study } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
 import FormView from "../containers/forms/formView";
@@ -15,12 +15,16 @@ import FormSummaryTitle from "../text/formSummaryTitle";
 import FormSummaryText from "../containers/forms/formSummaryText";
 import FormSummaryButton from "../containers/forms/formSummaryButton";
 import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
-interface StudiesEditProps extends ViewProps {
-  studyId: number;
-}
+const StudiesEdit = () => {
+  const [searchParams] = useSearchParams();
+  const id = searchParams.get("id");
+  const studyId = id ? parseInt(id) : 0
 
-const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage }) => {
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
   const [name, setName] = useState<string>("");
   const [acronym, setAcronym] = useState<string>("");
   const [dittiId, setDittiId] = useState<string>("");
@@ -160,7 +164,7 @@ const StudiesEdit: React.FC<StudiesEditProps> = ({ studyId, goBack, flashMessage
    */
   const handleSuccess = (res: ResponseBody) => {
     // go back to the list view and flash a message
-    goBack();
+    navigate(-1);
     flashMessage(<span>{res.msg}</span>, "success");
   };
 
