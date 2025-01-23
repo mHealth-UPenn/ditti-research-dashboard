@@ -15,8 +15,8 @@ const COLUMNS: Column[] = [
   { name: "Ditti ID", searchable: true, sortable: true, width: 10 },
   { name: "Email", searchable: true, sortable: true, width: 20 },
   { name: "Default Enrollment Period", searchable: false, sortable: true, width: 15 },
-  { name: "QI", searchable: false, sortable: true, width: 10 },
-  { name: "", searchable: false, sortable: false, width: 5 },
+  { name: "QI", searchable: false, sortable: true, width: 5 },
+  { name: "", searchable: false, sortable: false, width: 10 },
 ];
 import { Link } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";

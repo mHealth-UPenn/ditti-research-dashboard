@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo, memo } from "react";
 import Quill, { QuillOptions } from "quill";
 import { debounce } from "lodash";
-import sanitizeHtml, { AllowedAttribute } from "sanitize-html";
+import sanitizeHtml from "sanitize-html";
 import { QuillFieldProps } from "../../interfaces";
 import "quill/dist/quill.snow.css";
 
@@ -74,14 +74,9 @@ const QuillField: React.FC<QuillFieldProps> = ({
 
       // Set initial content in the editor, sanitizing it for safety
       if (value) {
-        const safeHtml = sanitizeHtml(value, {
-          allowedAttributes: {
-            li: ["data-list", "class"] as AllowedAttribute[],
-          },
-        });
-      
+        const safeHtml = sanitizeHtml(value);
         quillInstanceRef.current.clipboard.dangerouslyPasteHTML(safeHtml);
-      }      
+      }
     }
 
     return () => {
@@ -117,13 +112,15 @@ const QuillField: React.FC<QuillFieldProps> = ({
       )}
 
       {/* The container where the Quill editor is mounted */}
-      <div
-        ref={editorRef}
-        id={id}
-        className="border border-gray-300 rounded-b p-2 w-full
-                   min-h-[10rem] focus:outline-none focus:ring-2
-                   focus:ring-blue-500"
-      />
+      <div>
+        <div
+          ref={editorRef}
+          id={id}
+          className="border border-gray-300 rounded-b p-2 w-full
+                    min-h-[10rem] focus:outline-none focus:ring-2
+                    focus:ring-blue-500"
+        />
+      </div>
     </div>
   );
 };

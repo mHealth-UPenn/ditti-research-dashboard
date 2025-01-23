@@ -1,5 +1,5 @@
 import { FC, memo } from "react";
-import sanitize from "sanitize-html";
+import sanitize, { AllowedAttribute } from "sanitize-html";
 import Button from "../buttons/button";
 import { ConsentModalProps } from "../../interfaces";
 
@@ -16,10 +16,10 @@ const ConsentModal: FC<ConsentModalProps> = memo(
       >
         {/* Modal container */}
         <div
-          className="relative w-full sm:max-w-md m-4 bg-white rounded-xl shadow-lg flex flex-col max-h-[90vh]"
+          className="relative w-full sm:max-w-[70vw] md:max-w-[60vw] lg:max-w-[50vw] xl:max-w-[40vw] m-4 bg-white rounded-xl shadow-lg flex flex-col max-h-[90vh]"
         >
           {/* Modal header */}
-          <div className="flex items-center justify-between p-4">
+          <div className="flex items-center justify-between p-8">
             <h3
               id="consent-modal-title"
               className="m-0 text-xl font-semibold text-black"
@@ -53,12 +53,20 @@ const ConsentModal: FC<ConsentModalProps> = memo(
 
           {/* Modal body */}
           <div
-            className="p-4 overflow-auto text-black text-sm ql-modal ql-editor"
-            dangerouslySetInnerHTML={{ __html: sanitize(contentHtml) }}
+            className="overflow-auto text-black text-sm ql-modal ql-editor"
+            dangerouslySetInnerHTML={{
+              __html: sanitize(
+                contentHtml, {
+                allowedAttributes: {
+                  li: ["data-list", "class"] as AllowedAttribute[],
+                },
+              })
+            }}
+            style={{ padding: "0 2rem" }}
           />
 
           {/* Modal footer */}
-          <div className="p-4 flex items-center justify-end space-x-3 rtl:space-x-reverse">
+          <div className="p-8 flex items-center justify-end space-x-3 rtl:space-x-reverse">
             <Button onClick={onAccept} rounded size="sm" variant="success">
               Accept
             </Button>

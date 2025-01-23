@@ -243,16 +243,7 @@ p {
   box-sizing: border-box;
   font-family: Helvetica, Arial, sans-serif;
   font-size: 13px;
-  height: 20rem;
-  margin: 0px;
-  position: relative;
-}
-
-.ql-container-form {
-  box-sizing: border-box;
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: 13px;
-  height: 20rem;
+  height: 20rem !important;
   margin: 0px;
   position: relative;
 }
@@ -265,4 +256,14 @@ p {
 .ql-editor.ql-modal h6,
 .ql-editor.ql-modal p {
   margin: 1rem 0;
+}
+
+.ql-editor.ql-modal li[data-list="bullet"] {
+  list-style: disc;
+  list-style-position: inside;
+}
+
+.ql-editor.ql-modal li[data-list="ordered"] {
+  list-style: disc;
+  list-style-position: inside;
 }

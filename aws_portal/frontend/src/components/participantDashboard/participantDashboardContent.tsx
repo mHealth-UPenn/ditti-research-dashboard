@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import sanitize from "sanitize-html";
+import sanitizeHtml, { AllowedAttribute } from "sanitize-html";
 import { useAuth } from "../../hooks/useAuth";
 import Card from "../cards/card";
 import CardContentRow from "../cards/cardContentRow";
@@ -135,10 +135,14 @@ const ParticipantDashboardContent = () => {
     // Build a combined block of all unconsented study info
     let content = "";
     unconsentedStudies.forEach(study => {
-      content += `
-        <h4>${study.studyName}</h4>
-        <div>${sanitize(study.consentInformation || "") || defaultConsentContentText}</div>
-      `;
+      const sanitized = sanitizeHtml(
+          study.consentInformation || "", {
+          allowedAttributes: {
+            li: ["data-list", "class"] as AllowedAttribute[],
+          },
+        })
+        || defaultConsentContentText;    
+      content += `<h4>${study.studyName}</h4><div>${sanitized}</div>`;
     });
     return content;
   }, [studies, unconsentedStudies]);
