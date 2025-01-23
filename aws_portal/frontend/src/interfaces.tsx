@@ -625,56 +625,6 @@ export interface FlashMessageContextType {
 }
 
 
-/**
- * Represents a data processing task status.
- */
-type DataProcessingTaskStatus = "Pending"
-  | "InProgress"
-  | "Success"
-  | "Failed"
-  | "CompletedWithErrors";
-
-
-/**
- * Represents a data processing task.
- * @property id - The database primary key.
- * @property status - The status of the data processing task.
- * @property billedMs - The amount of milliseconds the task took to process (not used).
- * @property createdOn - When the task was created.
- * @property updatedOn - When the task was last updated.
- * @property completedOn - When the task was completed.
- * @property logFile - The S3 URI of the function's log file.
- * @property errorCode - The error code if the task failed.
- */
-export interface IDataProcessingTask {
-  id: number;
-  status: DataProcessingTaskStatus;
-  billedMs: string;
-  createdOn: string;
-  updatedOn: string;
-  completedOn: string;
-  logFile: string | null;
-  errorCode: string | null;
-}
-
-
-export interface IBreadcrumb {
-  name: string;
-  link: string | null;
-}
-
-
-export interface NavbarContextType {
-  breadcrumbs: IBreadcrumb[];
-  setStudyCrumb: (studyCrumb: IBreadcrumb) => void;
-}
-
-
-export interface FlashMessageContextType {
-  flashMessages: IFlashMessage[];
-  flashMessage: (msg: React.ReactElement, variant: FlashMessageVariant) => void;
-}
-
 export interface QuillFieldProps {
   value: string;
   onChange: (value: string) => void;

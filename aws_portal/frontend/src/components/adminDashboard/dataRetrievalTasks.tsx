@@ -7,6 +7,7 @@ import Navbar from "./navbar";
 import { SmallLoader } from "../loader";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 /**
  * Defines the table columns for displaying data retrieval tasks.
@@ -63,9 +64,11 @@ function formatDate(isoDate: string | null): { display: string; sortValue: strin
  * @param goBack - Function to navigate back.
  * @param handleClick - Function to handle navigation link clicks.
  */
-const DataRetrievalTasks: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
+const DataRetrievalTasks = () => {
   const [tasks, setTasks] = useState<DataRetrievalTask[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const { flashMessage } = useFlashMessageContext();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -154,7 +157,7 @@ const DataRetrievalTasks: React.FC<ViewProps> = ({ flashMessage, goBack, handleC
   const tableControl = <></>;
 
   const navbar = (
-    <Navbar active="Data Retrieval Tasks" flashMessage={flashMessage} goBack={goBack} handleClick={handleClick} />
+    <Navbar active="Data Retrieval Tasks" />
   );
 
   if (loading) {
