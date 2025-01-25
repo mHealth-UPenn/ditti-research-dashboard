@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import TextField from "../fields/textField";
+import CheckField from "../fields/checkField";
+import QuillField from "../fields/quillField";
 import { ResponseBody, Study } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
@@ -16,17 +18,6 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
-/**
- * The form's prefill
- */
-interface StudyPrefill {
-  name: string;
-  acronym: string;
-  dittiId: string;
-  email: string;
-}
-
-
 const StudiesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
@@ -34,52 +25,104 @@ const StudiesEdit = () => {
 
   const { flashMessage } = useFlashMessageContext();
   const navigate = useNavigate();
-
-  const [state, setState] = useState<StudyPrefill & { loading: boolean }>({
-    name: "",
-    acronym: "",
-    dittiId: "",
-    email: "",
-    loading: true,
-  });
+  const [name, setName] = useState<string>("");
+  const [acronym, setAcronym] = useState<string>("");
+  const [dittiId, setDittiId] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [defaultExpiryDelta, setDefaultExpiryDelta] = useState<number>(14);
+  const [consentInformation, setConsentInformation] = useState<string>("");
+  const [dataSummary, setDataSummary] = useState<string>("");
+  const [isQi, setIsQi] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [expiryError, setExpiryError] = useState<string>("");
 
   useEffect(() => {
-    // set any form prefill data and hide the loader
-    getPrefill().then((prefill: StudyPrefill) =>
-      setState(prevState => ({ ...prevState, ...prefill, loading: false }))
-    );
+    // Fetch prefill data if editing an existing study
+    const fetchPrefill = async () => {
+      try {
+        const prefillData = await getPrefill();
+        setName(prefillData.name);
+        setAcronym(prefillData.acronym);
+        setDittiId(prefillData.dittiId);
+        setEmail(prefillData.email);
+        setDefaultExpiryDelta(prefillData.defaultExpiryDelta);
+        setConsentInformation(prefillData.consentInformation || "");
+        setDataSummary(prefillData.dataSummary || "");
+        setIsQi(prefillData.isQi);
+      } catch (error) {
+        console.error("Error fetching study data:", error);
+        flashMessage(
+          <span>
+            <b>Failed to load study data.</b>
+            <br />
+            {error instanceof Error ? error.message : "Unknown error"}
+          </span>,
+          "danger"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPrefill();
   }, [studyId]);
+
+  /**
+   * Ensure that defaultExpiryDelta is non-negative
+   */
+  useEffect(() => {
+    if (defaultExpiryDelta < 0) {
+      setDefaultExpiryDelta(0);
+      setExpiryError("Default Enrollment Period must be nonnegative.");
+    } else {
+      setExpiryError("");
+    }
+  }, [defaultExpiryDelta]);
 
   /**
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<StudyPrefill> => {
-    const id = studyId;
+  const getPrefill = async (): Promise<{
+    name: string;
+    acronym: string;
+    dittiId: string;
+    email: string;
+    defaultExpiryDelta: number;
+    consentInformation?: string;
+    dataSummary?: string;
+    isQi: boolean;
+  }> => {
+    if (studyId === 0) {
+      // Creating a new study, return empty prefill data
+      return {
+        name: "",
+        acronym: "",
+        dittiId: "",
+        email: "",
+        defaultExpiryDelta: 14,
+        consentInformation: "",
+        dataSummary: "",
+        isQi: false
+      };
+    }
 
-    // if editing an existing entry, return prefill data, else return empty data
-    return id
-      ? makeRequest("/admin/study?app=1&id=" + id).then(makePrefill)
-      : {
-          name: "",
-          acronym: "",
-          dittiId: "",
-          email: "",
-        };
-  };
+    // Fetch existing study data from the backend
+    const data: Study[] = await makeRequest(`/admin/study?app=1&id=${studyId}`);
+    if (!data || data.length === 0) {
+      throw new Error("Study not found.");
+    }
 
-  /**
-   * Map the data returned from the backend to form prefill data
-   * @param res - the response body
-   * @returns - the form prefill data
-   */
-  const makePrefill = (res: Study[]): StudyPrefill => {
-    const study = res[0];
+    const study = data[0];
     return {
       name: study.name,
       acronym: study.acronym,
       dittiId: study.dittiId,
       email: study.email,
+      defaultExpiryDelta: study.defaultExpiryDelta,
+      consentInformation: study.consentInformation,
+      dataSummary: study.dataSummary,
+      isQi: study.isQi
     };
   };
 
@@ -88,8 +131,16 @@ const StudiesEdit = () => {
    * a new entry, else make a request to edit an existing entry
    */
   const post = async (): Promise<void> => {
-    const { acronym, dittiId, email, name } = state;
-    const data = { acronym, ditti_id: dittiId, email, name };
+    const data = {
+      acronym,
+      dittiId,
+      email,
+      name,
+      defaultExpiryDelta,
+      consentInformation,
+      dataSummary,
+      isQi
+    };
     const id = studyId;
     const body = {
       app: 1, // Admin Dashboard = 1
@@ -99,9 +150,12 @@ const StudiesEdit = () => {
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/study/edit" : "/admin/study/create";
 
-    await makeRequest(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    try {
+      const response: ResponseBody = await makeRequest(url, opts);
+      handleSuccess(response);
+    } catch (error) {
+      handleFailure(error as ResponseBody);
+    }
   };
 
   /**
@@ -131,7 +185,6 @@ const StudiesEdit = () => {
     flashMessage(msg, "danger");
   };
 
-  const { name, acronym, dittiId, email, loading } = state;
   const buttonText = studyId ? "Update" : "Create";
 
   if (loading) {
@@ -156,22 +209,20 @@ const StudiesEdit = () => {
               placeholder=""
               value={name}
               label="Name"
-              onKeyup={(text: string) =>
-                setState(prevState => ({ ...prevState, name: text }))
-              }
-              feedback="" />
+              onKeyup={(text: string) => setName(text)}
+              feedback=""
+            />
           </FormField>
           <FormField>
             <TextField
               id="email"
-              type="text"
+              type="email"
               placeholder=""
               value={email}
               label="Team Email"
-              onKeyup={(text: string) =>
-                setState(prevState => ({ ...prevState, email: text }))
-              }
-              feedback="" />
+              onKeyup={(text: string) => setEmail(text)}
+              feedback=""
+            />
           </FormField>
         </FormRow>
         <FormRow>
@@ -182,10 +233,9 @@ const StudiesEdit = () => {
               placeholder=""
               value={acronym}
               label="Acronym"
-              onKeyup={(text: string) =>
-                setState(prevState => ({ ...prevState, acronym: text }))
-              }
-              feedback="" />
+              onKeyup={(text: string) => setAcronym(text)}
+              feedback=""
+            />
           </FormField>
           <FormField>
             <TextField
@@ -194,10 +244,58 @@ const StudiesEdit = () => {
               placeholder=""
               value={dittiId}
               label="Ditti ID"
-              onKeyup={(text: string) =>
-                setState(prevState => ({ ...prevState, dittiId: text }))
-              }
-              feedback="" />
+              onKeyup={(text: string) => setDittiId(text)}
+              feedback=""
+            />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <TextField
+              id="defaultExpiryDelta"
+              type="number"
+              placeholder="14"
+              min={0}
+              value={defaultExpiryDelta.toString()}
+              label="Default Enrollment Period (days)"
+              onKeyup={(text: string) => {
+                const value = parseInt(text, 10);
+                setDefaultExpiryDelta(isNaN(value) ? 0 : value);
+              }}
+              feedback={expiryError}
+            />
+          </FormField>
+          <FormField>
+            <CheckField
+              id="isQi"
+              label="Quality Improvement Study?"
+              prefill={isQi}
+              onChange={setIsQi}
+            />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <QuillField
+              id="consentInformation"
+              containerClassName="ql-container-form"
+              label="Consent Information"
+              description="Participants must accept this consent form when connecting their Fitbit API."
+              value={consentInformation}
+              onChange={setConsentInformation}
+            />
+          </FormField>
+        </FormRow>
+        <FormRow>
+          <FormField>
+            <QuillField
+              id="dataSummary"
+              containerClassName="ql-container-form"
+              label="Data Summary"
+              description="This text will appear on the participant dashboard as a brief summary of how their data will be used."
+              value={dataSummary}
+              onChange={setDataSummary}
+            />
           </FormField>
         </FormRow>
       </Form>
@@ -205,27 +303,26 @@ const StudiesEdit = () => {
         <FormSummaryTitle>Study Summary</FormSummaryTitle>
         <FormSummaryContent>
           <FormSummaryText>
-            Name:
-            <br />
+            <b>Name:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{name}
-            <br />
-            <br />
-            Team Email:
-            <br />
+            <br /><br />
+            <b>Team Email:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{email}
-            <br />
-            <br />
-            Acronym:
-            <br />
+            <br /><br />
+            <b>Acronym:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{acronym}
-            <br />
-            <br />
-            Ditti ID:
-            <br />
+            <br /><br />
+            <b>Ditti ID:</b><br />
             &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
+            <br /><br />
+            <b>Default Enrollment Period (days):</b><br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{defaultExpiryDelta}
+            <br /><br />
+            <b>Is QI:</b><br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{isQi ? "Yes" : "No"}
             <br />
           </FormSummaryText>
-          <FormSummaryButton onClick={post}>
+          <FormSummaryButton onClick={post} disabled={loading}>
             {buttonText}
           </FormSummaryButton>
         </FormSummaryContent>

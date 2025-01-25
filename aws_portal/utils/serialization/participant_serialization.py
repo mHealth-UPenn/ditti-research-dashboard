@@ -33,9 +33,12 @@ class ParticipantApiModel(BaseModel):
 class ParticipantStudyModel(BaseModel):
     study_name: str
     study_id: int
+    did_consent: bool
     created_on: datetime
-    expires_on: Optional[datetime] = None
-    data_summary: Optional[Any] = None
+    starts_on: datetime
+    expires_on: datetime
+    consent_information: Optional[str] = None
+    data_summary: Optional[str] = None
 
     model_config = common_config
 
@@ -45,8 +48,11 @@ class ParticipantStudyModel(BaseModel):
             return {
                 "study_name": obj.study.name,
                 "study_id": obj.study.id,
+                "did_consent": obj.did_consent,
                 "created_on": obj.created_on,
+                "starts_on": obj.created_on,  # TODO: Ensure same format as created_on
                 "expires_on": obj.expires_on,
+                "consent_information": getattr(obj.study, "consent_information", None),
                 "data_summary": getattr(obj.study, "data_summary", None)
             }
         return obj

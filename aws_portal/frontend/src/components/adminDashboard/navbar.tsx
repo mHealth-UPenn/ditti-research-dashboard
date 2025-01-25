@@ -1,3 +1,11 @@
+import * as React from "react";
+import Accounts from "./accounts";
+import Studies from "./studies";
+import AccessGroups from "./accessGroups";
+import Roles from "./roles";
+import AboutSleepTemplates from "./aboutSleepTemplates";
+import DataRetrievalTasks from "./dataRetrievalTasks";
+import { ViewProps } from "../../interfaces";
 import LinkComponent from "../links/linkComponent";
 import { Link } from "react-router-dom";
 
@@ -6,7 +14,7 @@ import { Link } from "react-router-dom";
  * @property {string} activeView - The name of the active view
  */
 interface NavbarProps {
-  activeView: "Accounts" | "Studies" | "Roles" | "Access Groups" | "About Sleep Templates";
+  activeView: "Accounts" | "Studies" | "Roles" | "Access Groups" | "About Sleep Templates" | "Data Retrieval Tasks";
 }
 
 const Navbar = ({ activeView }: NavbarProps) => {
@@ -35,6 +43,11 @@ const Navbar = ({ activeView }: NavbarProps) => {
       active: false,
       name: "About Sleep Templates",
       link: "/coordinator/admin/about-sleep-templates"
+    },
+    {
+      active: false,
+      name: "Data Retrieval Tasks",
+      link: "/coordinator/admin/data-retrieval-tasks"
     }
   ];
 

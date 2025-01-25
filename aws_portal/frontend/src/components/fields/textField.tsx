@@ -7,10 +7,13 @@ import React, { PropsWithChildren, RefObject } from "react";
  * prefill (optional): a default value (which cannot be changed)
  * value (optional): the field's value (which can be changed)
  * label (optional): the field's label
+ * description (optional): additional information about the field
  * onKeyup (optional): a callback function on keyup
  * feedback (optional): feedback when an error is made
  * disabled (optional): whether to disable the field
  * required (optional): whether the field is required. If required, display a required asterisk.
+ * min (optional): minimum value for number inputs
+ * max (optional): maximum value for number inputs
  */
 interface TextFieldProps {
   value: string;
@@ -18,6 +21,7 @@ interface TextFieldProps {
   type?: string;
   placeholder?: string;
   label?: string;
+  description?: string; // Added description prop
   onKeyup?: (text: string) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   feedback?: string;
@@ -25,6 +29,8 @@ interface TextFieldProps {
   required?: boolean;
   inputRef?: RefObject<HTMLInputElement>;
   textAreaRef?: RefObject<HTMLTextAreaElement>;
+  min?: number;
+  max?: number;
 }
 
 /**
@@ -35,6 +41,7 @@ const TextField = ({
   type,
   placeholder,
   label,
+  description,
   onKeyup,
   onKeyDown,
   feedback,
@@ -43,6 +50,8 @@ const TextField = ({
   required = false,
   inputRef,
   textAreaRef,
+  min,
+  max,
   children,
 }: PropsWithChildren<TextFieldProps>) => {
   const handleKeyUp = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -53,48 +62,70 @@ const TextField = ({
 
   return (
     <>
-        {/* if a label was passed as a prop */}
-        {label &&
-          <div className="mb-1">
-            <label htmlFor={id}>
-              {label}{required && <span className="ml-1 text-[red]">*</span>}
-            </label>
-          </div>
-        }
-        <div className={`flex items-center ${type === "textarea" ? "h-[24rem]" : "h-[2.75rem]"} border border-light ${disabled ? "bg-extra-light" : ""}`}>
-          {/* place children here as prefix icons (e.g., a password icon) */}
-          {children || null}
-
-          {/* the input */}
-          <div className="flex items-center flex-grow h-full p-2">
-            {/* textares require a unique e.target class */}
-            {type === "textarea" ? (
-              <textarea
-                className={`w-full h-full resize-none focus:outline-none ${disabled && "italic text-link"}`}
-                onChange={handleKeyUp}
-                onKeyDown={onKeyDown}
-                disabled={disabled}
-                value={value}
-                ref={textAreaRef} />
-            ) : (
-              <input
-                className={`w-full focus:outline-none ${disabled && "italic text-link"}`}
-                type={type || "text"}
-                placeholder={placeholder || ""}
-                onChange={handleKeyUp}
-                onKeyDown={onKeyDown}
-                disabled={disabled}
-                value={value}
-                ref={inputRef} />
-            )}
-          </div>
+      {/* if a label was passed as a prop */}
+      {label &&
+        <div className="mb-1">
+          <label htmlFor={id}>
+            {label}{required && <span className="ml-1 text-[red]">*</span>}
+          </label>
         </div>
+      }
 
-        {/* feedback on error */}
-        <span
-          className={`text-sm text-[red] ${feedback && feedback !== "" ? "" : "hidden"}`}>
-            {feedback}
-        </span>
+      {/* Render description if provided */}
+      {description && (
+        <div className="mb-1">
+          <small className="text-gray-600">{description}</small>
+        </div>
+      )}
+
+      <div
+        className={`flex items-center ${
+          type === "textarea" ? "h-[24rem]" : "h-[2.75rem]"
+        } border border-light ${disabled ? "bg-extra-light" : ""}`}
+      >
+        {/* place children here as prefix icons (e.g., a password icon) */}
+        {children || null}
+
+        {/* the input */}
+        <div className="flex items-center flex-grow h-full p-2">
+          {/* textareas require a unique e.target class */}
+          {type === "textarea" ? (
+            <textarea
+              className={`w-full h-full resize-none focus:outline-none ${
+                disabled && "italic text-link"
+              }`}
+              onChange={handleKeyUp}
+              onKeyDown={onKeyDown}
+              disabled={disabled}
+              value={value}
+              ref={textAreaRef} 
+            />
+          ) : (
+            <input
+              className={`w-full focus:outline-none ${
+                disabled && "italic text-link"
+              }`}
+              type={type || "text"}
+              placeholder={placeholder || ""}
+              onChange={handleKeyUp}
+              onKeyDown={onKeyDown}
+              disabled={disabled}
+              value={value}
+              {...(type === "number" ? { min, max } : {})} // Pass min and max if type is number
+              ref={inputRef} 
+            />
+          )}
+        </div>
+      </div>
+
+      {/* feedback on error */}
+      <span
+        className={`text-sm text-[red] ${
+          feedback && feedback !== "" ? "" : "hidden"
+        }`}
+      >
+        {feedback}
+      </span>
     </>
   );
 };

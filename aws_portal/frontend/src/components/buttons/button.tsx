@@ -1,7 +1,7 @@
 import { PropsWithChildren } from "react";
 
 export interface ButtonProps {
-  variant?: "primary" | "secondary" | "tertiary" | "danger" | "success";
+  variant?: "primary" | "secondary" | "tertiary" | "danger" | "dangerDark" | "success" | "successDark";
   size?: "sm" | "md" | "lg";
   disabled?: boolean;
   square?: boolean;
@@ -36,7 +36,9 @@ const Button = ({
     secondary: "bg-secondary text-white [&:hover:not(:disabled)]:bg-secondary-hover",
     tertiary: "bg-white text-link border-link border-2 [&:hover:not(:disabled)]:bg-extra-light",
     danger: "bg-danger text-white [&:hover:not(:disabled)]:bg-danger-hover",
+    dangerDark: "bg-danger-dark text-white [&:hover:not(:disabled)]:bg-danger",
     success: "bg-success text-white [&:hover:not(:disabled)]:bg-success-hover",
+    successDark: "bg-success-dark text-white [&:hover:not(:disabled)]:bg-success",
   }
 
   const roundedMap = {

@@ -40,6 +40,7 @@ import AudioFileUpload from "./components/dittiApp/audioFileUpload";
 import WearableSubjects from "./components/wearableDashboard/wearableSubjects";
 import WearableSubjectsEdit from "./components/wearableDashboard/wearableSubjectsEdit";
 import FlashMessageContextProvider from "./contexts/flashMessagesContext";
+import DataRetrievalTasks from "./components/adminDashboard/dataRetrievalTasks";
 
 /**
  * Root component wrapped with AuthProvider for authentication context.
@@ -189,6 +190,13 @@ const router = createBrowserRouter([
                     { name: "Accounts", link: "/coordinator/admin/accounts" },
                     { name: "Edit", link: "/coordinator/admin/accounts/edit" }
                   ],
+                },
+              },
+              {
+                path: "data-retrieval-tasks",
+                element: <DataRetrievalTasks />,
+                handle: {
+                  breadcrumbs: [{ name: "Data Retrieval Tasks", link: "/coordinator/admin/data-retrieval-tasks" }],
                 },
               },
               {

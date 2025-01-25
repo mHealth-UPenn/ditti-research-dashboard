@@ -1,4 +1,5 @@
 import { FlashMessageVariant } from "./components/flashMessage/flashMessage";
+import { QuillOptions } from "quill";
 
 /**
  * Represents an account with user details and permissions.
@@ -82,9 +83,10 @@ export interface Role {
  * @property dittiId - The study's ditti ID.
  * @property email - The study's team email.
  * @property role - The role the user is assigned to for the study.
- * @property defaultExpiryDelta - The default number of days after a study subject's enrollment that their participation
- *   in the study ends.
- * @property consentInformation - The text that the study subject must consent to before connecting their API.
+ * @property defaultExpiryDelta - The default number of days that a subject is enrolled in the study.
+ * @property consentInformation - The consent text shown to a study subject.
+ * @property dataSummary - Text describing why participant data is collected.
+ * @property isQi - Indicates if the study is QI (Quality Improvement).
  */
 export interface Study {
   id: number;
@@ -94,7 +96,9 @@ export interface Study {
   email: string;
   role?: Role;
   defaultExpiryDelta: number;
-  consentInformation: string;
+  consentInformation?: string;
+  dataSummary?: string;
+  isQi: boolean;
 }
 
 /**
@@ -281,6 +285,14 @@ export interface ViewProps {
   ) => void;
 }
 
+export interface ConsentModalProps {
+  isOpen: boolean;
+  onAccept: () => void;
+  onDeny: () => void;
+  onClose: () => void;
+  contentHtml: string;
+}
+
 /**
  * Account data as used by the dashboard header.
  * @property firstName - The account holder's first name.
@@ -315,6 +327,30 @@ export interface AudioFile {
   studies?: string[];
   length?: number;
 }
+
+/**
+ * Represents a data retrieval task mapped from the `lambda_task` database table.
+ *
+ * @property id - The primary key of the task.
+ * @property status - The current status of the task ("Pending", "InProgress", "Success", "Failed", "CompletedWithErrors").
+ * @property billedMs - The billed duration of the Lambda function in milliseconds.
+ * @property createdOn - The ISO 8601 timestamp indicating when the task was created.
+ * @property updatedOn - The ISO 8601 timestamp indicating when the task was last updated.
+ * @property completedOn - The ISO 8601 timestamp indicating when the task was completed, or null if not completed.
+ * @property logFile - The S3 URI of the task's log file, or null if not available.
+ * @property errorCode - The error code associated with the task, or null if no error occurred.
+ */
+export interface DataRetrievalTask {
+  id: number;
+  status: "Pending" | "InProgress" | "Success" | "Failed" | "CompletedWithErrors";
+  billedMs: number | null;
+  createdOn: string;
+  updatedOn: string;
+  completedOn: string | null;
+  logFile: string | null;
+  errorCode: string | null;
+}
+
 
 /**
  * Defines the authentication context structure.
@@ -365,9 +401,10 @@ export interface StudiesContextType {
  * @property studySubjectLoading - Whether data is being fetched from the database.
  */
 export interface StudySubjectContextType {
-  studies: StudyJoin[];
-  apis: ApiJoin[];
+  studies: IParticipantStudy[];
+  apis: IParticipantApi[];
   studySubjectLoading: boolean;
+  refetch: () => Promise<void>;
 }
 
 
@@ -401,6 +438,28 @@ export interface IStudySubject {
   dittiId: string;
   studies: StudyJoin[];
   apis: ApiJoin[];
+}
+
+export interface IParticipantApi {
+  scope: string[];
+  apiName: string;
+}
+
+export interface IParticipantStudy {
+  studyName: string;
+  studyId: number;
+  createdOn: string;
+  startsOn: string;
+  expiresOn?: string;
+  consentInformation?: string;
+  didConsent: boolean;
+  dataSummary?: string;
+}
+
+export interface IParticipant {
+  dittiId: string;
+  apis: IParticipantApi[];
+  studies: IParticipantStudy[];
 }
 
 
@@ -584,4 +643,18 @@ export interface NavbarContextType {
 export interface FlashMessageContextType {
   flashMessages: IFlashMessage[];
   flashMessage: (msg: React.ReactElement, variant: FlashMessageVariant) => void;
+}
+
+
+export interface QuillFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  label?: string;
+  description?: string;
+  placeholder?: string;
+  id?: string;
+  config?: QuillOptions;
+  className?: string;
+  containerClassName?: string;
+  readOnly?: boolean;
 }
