@@ -176,7 +176,7 @@ const AboutSleepTemplates = () => {
     </Link> :
     <React.Fragment />;
 
-  const navbar = <Navbar active="About Sleep Templates" />;
+  const navbar = <Navbar activeView="About Sleep Templates" />;
 
   if (loading) {
     return (

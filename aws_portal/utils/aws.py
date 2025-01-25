@@ -570,7 +570,8 @@ class Query:
     @classmethod
     def build_query(cls, query):
         """
-        Build the query expression to pass to DynamoDB.Table.scan
+        Build the query expression to pass to DynamoDB.Table.scan. The resulting query returns only elements that have
+        not been deleted.
 
         Args
         ----
@@ -580,21 +581,23 @@ class Query:
         -------
         DynamoDB.conditions.Attr
         """
+        # Build an expression to filter any deleted elements
+        deleted_exp = cls.get_expression_from_string("~\"_deleted\"")
         if query is None:
-            return cls.get_expression_from_string("~\"_deleted\"")
+            return deleted_exp
 
         # get paranthetical subexperssions
         blocks = cls.build_blocks(query)
 
         # build the expression
-        expression = cls.build_expression(blocks)
+        expression = cls.build_expression(blocks) & deleted_exp
 
         return expression
 
     @classmethod
     def build_blocks(cls, query, blocks=None):
         """
-        Extracts paranthentical subexpressions from a given query
+        Extracts paranthentical subexpressions from a given query. The expression is
 
         Args
         ----
@@ -697,7 +700,7 @@ class Query:
 
         # on last call
         if not blocks:
-            return expressions[-1] & cls.get_expression_from_string("~\"_deleted\"")
+            return expressions[-1]
 
         return cls.build_expression(blocks, expressions)
 
@@ -726,7 +729,6 @@ class Query:
 
         # get the subexpressions values
         values = re.findall(cls.values, string) or [""]
-        print(popped, key, condition, values)
 
         # build the expression
         if condition == "==":

@@ -202,7 +202,7 @@ const Roles = () => {
     <></>
   );
 
-  const navbar = <Navbar active="Roles" />;
+  const navbar = <Navbar activeView="Roles" />;
 
   if (loading) {
     return (

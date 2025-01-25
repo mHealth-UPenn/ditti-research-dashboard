@@ -68,7 +68,7 @@ export default function WearableVisualsContent({
   const { flashMessage } = useFlashMessageContext();
 
   const studySubject = getStudySubjectByDittiId(dittiId);
-  const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject || {} as IStudySubjectDetails, study?.id || 0);
+  const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id);
 
   const dateOpts: Intl.DateTimeFormatOptions = {
     year: "numeric",

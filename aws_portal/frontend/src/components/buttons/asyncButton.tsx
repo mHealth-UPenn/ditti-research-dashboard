@@ -59,7 +59,7 @@ const AsyncButton = ({
     <Button
       variant={variant}
       size={size}
-      disabled={disabled}
+      disabled={disabled || loading}
       square={square}
       fullWidth={fullWidth}
       fullHeight={fullHeight}

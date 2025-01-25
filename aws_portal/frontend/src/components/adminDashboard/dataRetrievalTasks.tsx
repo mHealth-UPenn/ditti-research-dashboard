@@ -157,7 +157,7 @@ const DataRetrievalTasks = () => {
   const tableControl = <></>;
 
   const navbar = (
-    <Navbar active="Data Retrieval Tasks" />
+    <Navbar activeView="Data Retrieval Tasks" />
   );
 
   if (loading) {

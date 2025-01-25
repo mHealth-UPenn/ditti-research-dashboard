@@ -1567,6 +1567,7 @@ def study_subject_create():
                 study_subject=study_subject,
                 study=study,
                 did_consent=did_consent,
+                starts_on=study_entry.get("starts_on"),
                 expires_on=expires_on
             )
             db.session.add(join_study)

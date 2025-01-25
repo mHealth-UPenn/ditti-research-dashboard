@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import StudiesProvider from "../../contexts/studiesContext";
 
 
+// React Router container for passing context to the WearableDashboard
 function WearableDashboard() {
   return (
     <StudiesProvider app={3}>

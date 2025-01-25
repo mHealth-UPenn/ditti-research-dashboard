@@ -10,15 +10,16 @@ import { Link } from "react-router-dom";
 import { getStartOnAndExpiresOnForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
 
+
 /**
- * studyPrefix: the ditti app prefix of the current study
- * getTaps: get tap data
- * studyDetials: the current study's information
+ * @property {Study} study - The study to display subjects for.
+ * @property {boolean} canViewTaps - Whether the logged in coordinator can view tapping data.
  */
 interface StudySubjectsProps {
   study: Study;
   canViewTaps: boolean;
 }
+
 
 const StudySubjects: React.FC<StudySubjectsProps> = ({
   study,
@@ -27,6 +28,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
   const { dataLoading, taps, audioTaps } = useDittiDataContext();
   const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
 
+  // Get only study subjects enrolled in the current study
   const filteredStudySubjects = studySubjects.filter(ss => ss.dittiId.startsWith(study.dittiId));
 
   const summaries: React.ReactElement[] = [];

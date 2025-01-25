@@ -265,7 +265,7 @@ const Accounts = () => {
     </Link>
   ) : <React.Fragment />;
 
-  const navbar = <Navbar active="Accounts" />;
+  const navbar = <Navbar activeView="Accounts" />;
 
   if (loading) {
     return (

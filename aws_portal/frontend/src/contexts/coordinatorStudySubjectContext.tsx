@@ -1,4 +1,3 @@
-// TODO: Extend implementation to Ditti App Dashboard
 import { createContext, useState, useEffect, PropsWithChildren, useMemo, useContext } from "react";
 import { makeRequest } from "../utils";
 import { IStudySubject, CoordinatorStudySubjectContextType, UserDetails, IStudySubjectDetails } from "../interfaces";
@@ -117,6 +116,7 @@ export default function CoordinatorStudySubjectProvider({
     return [];
   };
 
+  // Fetch and join data from AWS and the database
   const fetchStudySubjects = () => {
     setStudySubjectLoading(true);
     const promises: [Promise<IStudySubject[]>, Promise<UserDetails[]>] = [
@@ -137,6 +137,11 @@ export default function CoordinatorStudySubjectProvider({
   // Fetch study subjects on load
   useEffect(() => fetchStudySubjects, []);
 
+  /**
+   * Get a study subject by Ditti ID from fetched data.
+   * @param dittiId - The Ditti ID of the study subject to get.
+   * @returns - The study subject with the given Ditti ID, or `undefined` if not found.
+   */
   const getStudySubjectByDittiId = (dittiId: string): IStudySubjectDetails | undefined => {
     return studySubjects.find(ss => ss.dittiId === dittiId);
   }

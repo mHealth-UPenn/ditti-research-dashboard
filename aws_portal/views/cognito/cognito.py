@@ -2,7 +2,9 @@ from datetime import datetime, timezone
 import logging
 from urllib.parse import urlencode
 
-from flask import Blueprint, current_app, make_response, redirect, request, session
+import boto3
+from botocore.exceptions import ClientError
+from flask import Blueprint, current_app, make_response, redirect, request, session, jsonify
 import jwt
 import requests
 from sqlalchemy import select, func
@@ -10,6 +12,7 @@ from sqlalchemy import select, func
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
 from aws_portal.utils.cognito import verify_token
+from aws_portal.utils.auth import auth_required
 
 blueprint = Blueprint("cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
@@ -218,3 +221,72 @@ def check_login():
     except jwt.InvalidTokenError as e:
         logger.warning(f"Invalid ID token: {str(e)}")
         return make_response({"msg": f"Invalid token: {str(e)}"}, 401)
+
+
+@blueprint.route("/register/participant", methods=["POST"])
+@auth_required("Create", "Participants")
+def register_participant():
+    """
+    Registers a study participant in AWS Cognito with a temporary password.
+
+    This endpoint allows a research coordinator to create a new participant account
+    in the AWS Cognito user pool. The research coordinator provides a Cognito username
+    and a temporary password that the participant will use to log in initially.
+
+    The temporary password will require the participant to reset their password
+    upon first login.
+
+    Request Body:
+        app (int): The app where the request is being made from.
+        study (int): The ID of the study the participant is being enrolled for.
+        data (dict): A JSON object containing the following fields:
+            - cognitoUsername (str): The unique username for the participant.
+            - temporaryPassword (str): A temporary password for the participant.
+
+    Returns:
+        Response: A JSON response with one of the following:
+            - 201 Created: Participant registered successfully.
+            - 400 Bad Request: Missing required fields.
+            - 500 Internal Server Error: AWS Cognito or other server-side errors.
+
+    Example:
+        POST /cognito/register/participant
+        {
+            "app": 2,
+            "study": 1,
+            "data": {
+                "cognitoUsername": "testuser",
+                "temporaryPassword": "TempPass123!"
+            }
+        }
+
+    Response (201):
+        {
+            "msg": "Participant registered with AWS Cognito successfully."
+        }
+    """
+    client = boto3.client("cognito-idp")
+    try:
+        # Validate incoming request
+        data = request.json.get("data")
+        cognito_username = data.get("cognitoUsername")
+        temporary_password = data.get("temporaryPassword")
+
+        if not cognito_username or not temporary_password:
+            return jsonify({"error": "Cognito username and temporary password are required."}), 400
+
+        # Create user in Cognito
+        client.admin_create_user(
+            UserPoolId=current_app.config["COGNITO_PARTICIPANT_USER_POOL_ID"],
+            Username=cognito_username,
+            TemporaryPassword=temporary_password,
+            MessageAction="SUPPRESS"
+        )
+
+        return jsonify({"msg": "Participant registered with AWS Cognito successfully."}), 200
+
+    except ClientError as e:
+        error_code = e.response["Error"]["Code"]
+        return jsonify({"msg": f"AWS Cognito error: {error_code}"}), 500
+    except Exception as e:
+        return jsonify({"msg": "An unexpected error occurred."}), 500

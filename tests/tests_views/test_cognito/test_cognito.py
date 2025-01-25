@@ -1,3 +1,5 @@
+import json
+
 import jwt
 import pytest
 import requests
@@ -389,3 +391,114 @@ def test_cognito_logout_without_cookies(app, client_with_cognito):
             cookies = parse_set_cookies(set_cookies)
             assert cookies.get("id_token") == ""
             assert cookies.get("access_token") == ""
+
+
+@patch("aws_portal.views.cognito.cognito.boto3.client")
+@patch("aws_portal.models.Account.validate_ask", lambda *_: None)
+def test_register_participant_success(mock_boto3_client, post_admin):
+    # Mock Cognito client
+    mock_cognito = MagicMock()
+    mock_boto3_client.return_value = mock_cognito
+
+    # Define request data
+    data = {
+        "data": {
+            "cognitoUsername": "testuser",
+            "temporaryPassword": "TempPass123!"
+        }
+    }
+
+    # Send POST request
+    response = post_admin(
+        "/cognito/register/participant",
+        data=json.dumps(data)
+    )
+
+    # Assertions
+    assert response.status_code == 200
+    assert response.json == {"msg": "Participant registered with AWS Cognito successfully."}
+    mock_cognito.admin_create_user.assert_called_once_with(
+        UserPoolId="us-east-1_example",
+        Username="testuser",
+        TemporaryPassword="TempPass123!",
+        MessageAction="SUPPRESS"
+    )
+
+
+@patch("aws_portal.views.cognito.cognito.boto3.client")
+@patch("aws_portal.models.Account.validate_ask", lambda *_: None)
+def test_register_participant_missing_fields(mock_boto3_client, post_admin):
+    # Define incomplete request data
+    data = {
+        "data": {
+            "cognitoUsername": "testuser"
+        }
+    }
+
+    # Send POST request
+    response = post_admin(
+        "/cognito/register/participant",
+        data=json.dumps(data)
+    )
+
+    # Assertions
+    assert response.status_code == 400
+    assert response.json == {"error": "Cognito username and temporary password are required."}
+
+
+@patch("aws_portal.views.cognito.cognito.boto3.client")
+@patch("aws_portal.models.Account.validate_ask", lambda *_: None)
+def test_register_participant_cognito_error(mock_boto3_client, post_admin):
+    # Mock Cognito client to raise a ClientError
+    mock_cognito = MagicMock()
+    mock_cognito.admin_create_user.side_effect = Exception("AWS Cognito error")
+    mock_boto3_client.return_value = mock_cognito
+
+    # Define request data
+    data = {
+        "data": {
+            "cognitoUsername": "testuser",
+            "temporaryPassword": "TempPass123!"
+        }
+    }
+
+    # Send POST request
+    response = post_admin(
+        "/cognito/register/participant",
+        data=json.dumps(data)
+    )
+
+    # Assertions
+    assert response.status_code == 500
+    assert response.json == {"msg": "An unexpected error occurred."}
+
+
+@patch("aws_portal.views.cognito.cognito.boto3.client")
+@patch("aws_portal.models.Account.validate_ask", lambda *_: None)
+def test_register_participant_aws_client_error(mock_boto3_client, post_admin):
+    from botocore.exceptions import ClientError
+
+    # Mock Cognito client to raise a ClientError
+    mock_cognito = MagicMock()
+    mock_cognito.admin_create_user.side_effect = ClientError(
+        {"Error": {"Code": "UsernameExistsException"}}, "AdminCreateUser"
+    )
+    mock_boto3_client.return_value = mock_cognito
+
+    # Define request data
+    data = {
+        "data": {
+            "cognitoUsername": "testuser",
+            "temporaryPassword": "TempPass123!"
+        }
+    }
+
+    # Send POST request
+    response = post_admin(
+        "/cognito/register/participant",
+        data=json.dumps(data)
+    )
+
+    # Assertions
+    assert response.status_code == 500
+    assert response.json == {"msg": "AWS Cognito error: UsernameExistsException"}
