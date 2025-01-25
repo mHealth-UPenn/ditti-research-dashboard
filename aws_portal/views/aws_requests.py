@@ -134,7 +134,6 @@ def get_taps():  # TODO update unit test
 
     # get all taps
     taps = Query("Tap").scan()["Items"]
-
     df_users = pd.DataFrame(users, columns=["id", "user_permission_id"])\
         .rename(columns={"user_permission_id": "dittiId"})
 

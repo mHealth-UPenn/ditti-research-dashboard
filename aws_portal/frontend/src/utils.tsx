@@ -141,10 +141,26 @@ export const getAccess = async (
 };
 
 
+/**
+ * Given a study subject and study, fetch the study from the study subject's list of studies and return the study
+ * subject's enrollment start and end dates for that study. If the study is not found or if `studySubject` is `null`,
+ * return default dates.
+ * @param studySubject - The study subject to get enrollment dates for.
+ * @param studyId - The study to get enrollment dates for.
+ * @returns { startsOn: Date, expiresOn: Date } - The study subject's enrollment start and end dates for the study.
+ */
 export const getStartOnAndExpiresOnForStudy = (
-  studySubject: IStudySubjectDetails,
+  studySubject?: IStudySubjectDetails,
   studyId?: number,
 ) => {
+  // Return default dates if study subject or study ID is not provided
+  if (!studySubject || !studyId) {
+    const startsOn = new Date();
+    const expiresOn = new Date();
+    expiresOn.setDate(expiresOn.getDate() + 14);
+    return { startsOn, expiresOn };
+  }
+
   const currStudy = studySubject.studies.find(s => s.study.id == studyId || -1);
 
   if (currStudy) {
@@ -152,6 +168,7 @@ export const getStartOnAndExpiresOnForStudy = (
     return { startsOn: new Date(startsOn), expiresOn: new Date(expiresOn) };
   }
 
+  // Return default dates if the study is not found
   const startsOn = new Date();
   const expiresOn = new Date();
   expiresOn.setDate(expiresOn.getDate() + 14);
@@ -160,6 +177,11 @@ export const getStartOnAndExpiresOnForStudy = (
 }
 
 
+/**
+ * Format a date specifically for an input element.
+ * @param date - The date to format
+ * @returns A string representing the date in the format "YYYY-MM-DD".
+ */
 export const formatDateForInput = (date: Date) => {
   // Get the year, month, and day
   const year = date.getFullYear();

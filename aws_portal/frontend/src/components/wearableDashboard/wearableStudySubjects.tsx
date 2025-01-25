@@ -33,7 +33,7 @@ export default function WearableStudySubjects({
   const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));
 
   const getSubjectSummary = (subject: IStudySubjectDetails): React.ReactElement => {
-    const { expiresOn } = getStartOnAndExpiresOnForStudy(subject, study?.id || 0);
+    const { expiresOn } = getStartOnAndExpiresOnForStudy(subject, study?.id);
     const expiresOnDiff = differenceInDays(new Date(expiresOn), new Date());
 
     return (

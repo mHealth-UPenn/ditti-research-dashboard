@@ -1,4 +1,4 @@
-import React, { PropsWithChildren } from "react";
+import React, { PropsWithChildren, RefObject } from "react";
 
 /**
  * id (optional): an optional html id
@@ -11,6 +11,7 @@ import React, { PropsWithChildren } from "react";
  * onKeyup (optional): a callback function on keyup
  * feedback (optional): feedback when an error is made
  * disabled (optional): whether to disable the field
+ * required (optional): whether the field is required. If required, display a required asterisk.
  * min (optional): minimum value for number inputs
  * max (optional): maximum value for number inputs
  */
@@ -25,6 +26,9 @@ interface TextFieldProps {
   onKeyDown?: (e: React.KeyboardEvent) => void;
   feedback?: string;
   disabled?: boolean;
+  required?: boolean;
+  inputRef?: RefObject<HTMLInputElement>;
+  textAreaRef?: RefObject<HTMLTextAreaElement>;
   min?: number;
   max?: number;
 }
@@ -43,6 +47,9 @@ const TextField = ({
   feedback,
   disabled,
   value,
+  required = false,
+  inputRef,
+  textAreaRef,
   min,
   max,
   children,
@@ -56,11 +63,13 @@ const TextField = ({
   return (
     <>
       {/* if a label was passed as a prop */}
-      {label && (
+      {label &&
         <div className="mb-1">
-          <label htmlFor={id}>{label}</label>
+          <label htmlFor={id}>
+            {label}{required && <span className="ml-1 text-[red]">*</span>}
+          </label>
         </div>
-      )}
+      }
 
       {/* Render description if provided */}
       {description && (
@@ -89,6 +98,7 @@ const TextField = ({
               onKeyDown={onKeyDown}
               disabled={disabled}
               value={value}
+              ref={textAreaRef} 
             />
           ) : (
             <input
@@ -102,6 +112,7 @@ const TextField = ({
               disabled={disabled}
               value={value}
               {...(type === "number" ? { min, max } : {})} // Pass min and max if type is number
+              ref={inputRef} 
             />
           )}
         </div>

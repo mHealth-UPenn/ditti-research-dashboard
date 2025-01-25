@@ -26,7 +26,7 @@ export default function StudiesProvider({
   const [studies, setStudies] = useState<Study[]>([]);
   const [study, setStudy] = useState<Study | null>(null);
   const [studiesLoading, setStudiesLoading] = useState(true);
-  const { setStudyCrumb } = useNavbarContext();
+  const { setStudySlug, setSidParam } = useNavbarContext();
 
   const appSlug = app === 2 ? "ditti" : "wearable";
 
@@ -62,7 +62,8 @@ export default function StudiesProvider({
         const study = studies.find(s => s.id === studyId);
         if (study) {
           setStudy(study);
-          setStudyCrumb({ name: study.acronym, link: `/coordinator/${appSlug}/study?sid=${study.id}` });
+          setStudySlug(study.acronym);
+          setSidParam(study.id.toString());
         }
         setStudiesLoading(false)
       });

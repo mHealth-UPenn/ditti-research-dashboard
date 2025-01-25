@@ -184,7 +184,7 @@ const Studies = () => {
     <React.Fragment />
   );
 
-  const navbar = <Navbar active="Studies" />
+  const navbar = <Navbar activeView="Studies" />
 
   if (loading) {
     return (

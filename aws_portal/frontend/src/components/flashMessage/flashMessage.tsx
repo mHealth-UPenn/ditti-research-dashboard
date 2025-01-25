@@ -14,6 +14,12 @@ const variantsTextMap = {
 
 export type FlashMessageVariant = "success" | "info" | "danger";
 
+
+/**
+ * @property {FlashMessageVariant} variant - The variant of the message (success, info, danger).
+ * @property {React.RefObject<HTMLDivElement>} containerRef - A refObject pointing to the container div.
+ * @property {Callable} onClose - A function to call when the flash message closes.
+ */
 interface FlashMessageProps {
   variant: FlashMessageVariant;
   containerRef: React.RefObject<HTMLDivElement>;
@@ -27,6 +33,7 @@ const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
   onClose,
   children,
 }) => {
+  // Set a timeout to fade out the message after 3 seconds
   useEffect(() => {
     const opacityTimeout = setTimeout(() => {
       if (containerRef.current) {

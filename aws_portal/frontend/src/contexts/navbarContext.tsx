@@ -10,6 +10,11 @@ interface IHandle {
 }
 
 
+const formatString = (template: string, values: Record<string, string>): string => {
+  return template.replace(/\{(\w+)\}/g, (_, key) => values[key] || "");
+}
+
+
 // NavbarContextProvider component that wraps children with studies context.
 export default function NavbarContextProvider({
   children
@@ -17,25 +22,39 @@ export default function NavbarContextProvider({
   const matches = useMatches();
 
   const [breadcrumbs, setBreadcrumbs] = useState<IBreadcrumb[]>([]);
-  const [studyCrumb, setStudyCrumb] = useState<IBreadcrumb | null>(null);
+  const [studySlug, setStudySlug] = useState("");
+  const [sidParam, setSidParam] = useState("");
+  const [dittiIdParam, setDittiIdParam] = useState("");
 
+  // Format any breadcrumbs with `studySlug`, `sidParam`, and `dittiIdParam`
   useEffect(() => {
     let updatedBreadcrumbs = matches
       .filter(match => match.handle ? (match.handle as IHandle).breadcrumbs : false)
       .flatMap(match => (match.handle as IHandle).breadcrumbs);
 
-    if (studyCrumb) {
-      updatedBreadcrumbs = updatedBreadcrumbs.map(b =>
-        b.name === "<Study>" ? studyCrumb : b
-      );
-    }
+    const formatValues = {
+      study: studySlug,
+      sid: sidParam,
+      dittiId: dittiIdParam,
+    };
+    
+    updatedBreadcrumbs = updatedBreadcrumbs.map(breadcrumb => ({
+      name: formatString(breadcrumb.name, formatValues),
+      link: breadcrumb.link
+        ? formatString(breadcrumb.link, formatValues)
+        : null,
+    }));
 
     setBreadcrumbs(updatedBreadcrumbs);
-  }, [matches, studyCrumb]);
+  }, [matches, studySlug, dittiIdParam]);
 
   return (
-    <NavbarContext.Provider value={{ breadcrumbs, setStudyCrumb }}>
-      {children}
+    <NavbarContext.Provider value={{
+        breadcrumbs,
+        setStudySlug,
+        setSidParam,
+        setDittiIdParam }}>
+          {children}
     </NavbarContext.Provider>
   );
 }
