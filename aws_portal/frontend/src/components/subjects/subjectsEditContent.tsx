@@ -37,10 +37,6 @@ interface ISubjectsEditContentProps {
  */
 const cognitoPasswordValidation = {
   isMinLen: false,  // At least 8 characters
-  containsNumber: false,
-  containsSpecial: false,
-  containsUppercase: false,
-  containsLowercase: false,
 };
 
 
@@ -127,34 +123,6 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
         isValid = false;
       } else {
         updatedTemporaryPasswordValidation.isMinLen = true;
-      }
-    
-      if (!numberRegex.test(temporaryPassword)) {
-        updatedTemporaryPasswordValidation.containsNumber = false;
-        isValid = false;
-      } else {
-        updatedTemporaryPasswordValidation.containsNumber = true;
-      }
-    
-      if (!specialCharRegex.test(temporaryPassword)) {
-        updatedTemporaryPasswordValidation.containsSpecial = false;
-        isValid = false;
-      } else {
-        updatedTemporaryPasswordValidation.containsSpecial = true;
-      }
-    
-      if (!uppercaseRegex.test(temporaryPassword)) {
-        updatedTemporaryPasswordValidation.containsUppercase = false;
-        isValid = false;
-      } else {
-        updatedTemporaryPasswordValidation.containsUppercase = true;
-      }
-    
-      if (!lowercaseRegex.test(temporaryPassword)) {
-        updatedTemporaryPasswordValidation.containsLowercase = false;
-        isValid = false;
-      } else {
-        updatedTemporaryPasswordValidation.containsLowercase = true;
       }
 
       setTemporaryPasswordValidation(updatedTemporaryPasswordValidation);
@@ -435,27 +403,23 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
         </FormRow>
 
         {!studySubject &&
-          <FormRow>
-            <FormField>
-              <TextField
-                id="temporary-password"
-                type="password"
-                placeholder=""
-                value={temporaryPassword}
-                label="Temporary Password"
-                onKeyup={setTemporaryPassword}
-                required={true} />
-            </FormField>
-            <FormField>
-              <div className="flex flex-col">
-                <span className={`text-sm ${temporaryPasswordValidation.isMinLen ? "text-[green]" : "text-[red]"}`}>Must be 8 at least characters</span>
-                <span className={`text-sm ${temporaryPasswordValidation.containsNumber ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 number</span>
-                <span className={`text-sm ${temporaryPasswordValidation.containsSpecial ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 special character</span>
-                <span className={`text-sm ${temporaryPasswordValidation.containsUppercase ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 uppercase letter</span>
-                <span className={`text-sm ${temporaryPasswordValidation.containsLowercase ? "text-[green]" : "text-[red]"}`}>Must contain at least 1 lowercase letter</span>
-              </div>
-            </FormField>
-          </FormRow>
+          <>
+            <FormRow>
+              <FormField>
+                <TextField
+                  id="temporary-password"
+                  type="password"
+                  placeholder=""
+                  value={temporaryPassword}
+                  label="Temporary Password"
+                  onKeyup={setTemporaryPassword}
+                  required={true} />
+                <div className="flex flex-col">
+                  <span className={`text-sm ${temporaryPasswordValidation.isMinLen ? "text-[green]" : "text-[red]"}`}>Must be 8 at least characters</span>
+                </div>
+              </FormField>
+            </FormRow>
+          </>
         }
 
         {/* the raw timestamp includes ":00.000Z" */}
