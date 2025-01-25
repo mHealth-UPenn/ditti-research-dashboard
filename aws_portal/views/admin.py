@@ -4,7 +4,7 @@ import traceback
 import uuid
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
-from aws_portal.extensions import db
+from aws_portal.extensions import db, sanitizer
 from aws_portal.models import (
     AboutSleepTemplate, AccessGroup, Account, Action, App, Api,
     JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
@@ -443,6 +443,18 @@ def study_create():
 
         study = Study()
 
+        # Ensure `consent_summary` and `data_summary` HTML are sanitized
+        try:
+            study.consent_information = sanitizer.sanitize(data["consentInformation"])
+            del data["consentInformation"]
+        except KeyError:
+            pass
+        try:
+            study.data_summary = sanitizer.sanitize(data["dataSummary"])
+            del data["dataSummary"]
+        except KeyError:
+            pass
+
         populate_model(study, data, use_camel_to_snake=True)
         db.session.add(study)
         db.session.commit()
@@ -501,6 +513,18 @@ def study_edit():
         data = request.json["edit"]
         study_id = request.json["id"]
         study = Study.query.get(study_id)
+
+        # Ensure `consent_summary` and `data_summary` HTML are sanitized
+        try:
+            study.consent_information = sanitizer.sanitize(data["consentInformation"])
+            del data["consentInformation"]
+        except KeyError:
+            pass
+        try:
+            study.data_summary = sanitizer.sanitize(data["dataSummary"])
+            del data["dataSummary"]
+        except KeyError:
+            pass
 
         populate_model(study, data, use_camel_to_snake=True)
         db.session.commit()
