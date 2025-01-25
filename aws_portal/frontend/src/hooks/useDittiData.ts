@@ -77,7 +77,6 @@ const useDittiData = () => {
       differenceInMilliseconds(new Date(a.time), new Date(b.time))
     );
 
-    console.debug("Taps:", taps);
     return taps;
   };
 
@@ -109,7 +108,6 @@ const useDittiData = () => {
       differenceInMilliseconds(new Date(a.time), new Date(b.time))
     );
 
-    console.debug("AudioTaps:", audioTaps);
     return audioTaps;
   };
 

@@ -180,7 +180,6 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     const postDB = makeRequest(urlDB, optsDB);
 
     const promises: Promise<ResponseBody>[] = [postAWS, postDB];
-    console.log(promises);
     Promise.all(promises)
       .then(([resAWS, _]) => handleSuccess(resAWS))
       .catch(error => handleFailure(error))
