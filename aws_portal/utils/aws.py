@@ -726,7 +726,6 @@ class Query:
 
         # get the subexpressions values
         values = re.findall(cls.values, string) or [""]
-        print(popped, key, condition, values)
 
         # build the expression
         if condition == "==":
