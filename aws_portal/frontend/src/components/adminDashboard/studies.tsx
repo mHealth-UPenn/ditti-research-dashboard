@@ -1,28 +1,33 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { ResponseBody, Study, ViewProps } from "../../interfaces";
+import { ResponseBody, Study } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
-import StudiesEdit from "./studiesEdit";
 import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 
-const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
+const COLUMNS: Column[] = [
+  { name: "Acronym", searchable: true, sortable: true, width: 10 },
+  { name: "Name", searchable: true, sortable: true, width: 30 },
+  { name: "Ditti ID", searchable: true, sortable: true, width: 10 },
+  { name: "Email", searchable: true, sortable: true, width: 20 },
+  { name: "Default Enrollment Period", searchable: false, sortable: true, width: 15 },
+  { name: "QI", searchable: false, sortable: true, width: 5 },
+  { name: "", searchable: false, sortable: false, width: 10 },
+];
+import { Link } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+
+const Studies = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
   const [studies, setStudies] = useState<Study[]>([]);
-  const [columns] = useState<Column[]>([
-    { name: "Acronym", searchable: true, sortable: true, width: 10 },
-    { name: "Name", searchable: true, sortable: true, width: 45 },
-    { name: "Ditti ID", searchable: true, sortable: true, width: 10 },
-    { name: "Email", searchable: true, sortable: true, width: 25 },
-    { name: "", searchable: false, sortable: false, width: 10 }
-  ]);
   const [loading, setLoading] = useState(true);
+  const { flashMessage } = useFlashMessageContext();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,72 +55,71 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
    */
   const getData = (): TableData[][] => {
     return studies.map((s: Study) => {
-      const { acronym, dittiId, email, id, name } = s;
+      const { acronym, dittiId, email, id, name, defaultExpiryDelta, isQi } = s;
       return [
         {
-          contents: (
-            <span>{acronym}</span>
-          ),
+          contents: <span>{acronym}</span>,
           searchValue: acronym,
           sortValue: acronym
         },
         {
-          contents: (
-            <span>{name}</span>
-          ),
+          contents: <span>{name}</span>,
           searchValue: name,
           sortValue: name
         },
         {
-          contents: (
-            <span>{dittiId}</span>
-          ),
+          contents: <span>{dittiId}</span>,
           searchValue: dittiId,
           sortValue: dittiId
         },
         {
-          contents: (
-            <span>{email}</span>
-          ),
+          contents: <span>{email}</span>,
           searchValue: email,
           sortValue: email
         },
         {
+          contents: <span>{defaultExpiryDelta} days</span>,
+          searchValue: defaultExpiryDelta.toString(),
+          sortValue: defaultExpiryDelta
+        },
+        {
+          contents: <span>{isQi ? "Yes" : "No"}</span>,
+          searchValue: isQi ? "Yes" : "No",
+          sortValue: isQi ? "Yes" : "No"
+        },
+        {
           contents: (
             <div className="flex w-full h-full">
-              {canEdit &&
+              {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit", acronym],
-                      <StudiesEdit
-                        studyId={id}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick} />
-                    )
-                  }>
-                    Edit
+                  fullWidth={true}
+                  fullHeight={true}>
+                    <Link
+                      className="w-full h-full flex items-center justify-center"
+                      to={`/coordinator/admin/studies/edit?id=${id}`}>
+                        Edit
+                    </Link>
                 </Button>
-              }
-              {canArchive &&
+              )}
+              {canArchive && (
                 <Button
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteStudy(id)}>
-                    Archive
+                  onClick={() => deleteStudy(id)}
+                >
+                  Archive
                 </Button>
-              }
+              )}
             </div>
           ),
           searchValue: "",
           sortValue: "",
           paddingX: 0,
-          paddingY: 0,
+          paddingY: 0
         }
       ];
     });
@@ -171,31 +175,16 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
   };
 
   const tableControl = canCreate ? (
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Create"],
-          <StudiesEdit
-            studyId={0}
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick}
-          />
-        )
-      }>
+    <Link to={`/coordinator/admin/studies/create`}>
+      <Button variant="primary">
         Create +
-    </Button>
+      </Button>
+    </Link>
   ) : (
     <React.Fragment />
-  )
+  );
 
-  const navbar =
-    <Navbar
-      active="Studies"
-      flashMessage={flashMessage}
-      goBack={goBack}
-      handleClick={handleClick} />
+  const navbar = <Navbar active="Studies" />
 
   if (loading) {
     return (
@@ -213,14 +202,15 @@ const Studies: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => 
       {navbar}
       <ListContent>
         <Table
-          columns={columns}
+          columns={COLUMNS}
           control={tableControl}
           controlWidth={10}
           data={getData()}
           includeControl={true}
           includeSearch={true}
           paginationPer={10}
-          sortDefault="" />
+          sortDefault=""
+        />
       </ListContent>
     </ListView>
   );

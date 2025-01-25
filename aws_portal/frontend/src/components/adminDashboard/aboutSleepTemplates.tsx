@@ -1,23 +1,16 @@
 import React, { useState, useEffect } from "react";
-import {
-  AboutSleepTemplate,
-  ResponseBody,
-  ViewProps,
-} from "../../interfaces";
+import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
-import AboutSleepTemplatesEdit from "./aboutSleepTemplatesEdit";
 import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
+import { Link } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
-const AboutSleepTemplates: React.FC<ViewProps> = ({
-  flashMessage,
-  goBack,
-  handleClick,
-}) => {
+const AboutSleepTemplates = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -25,6 +18,7 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
     AboutSleepTemplate[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const { flashMessage } = useFlashMessageContext();
 
   const columns: Column[] = [
     {
@@ -93,17 +87,13 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
                   variant="secondary"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit", name],
-                      <AboutSleepTemplatesEdit
-                        aboutSleepTemplateId={id}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick} />
-                    )
-                  }>
-                    Edit
+                  fullWidth={true}
+                  fullHeight={true}>
+                    <Link
+                      className="w-full h-full flex items-center justify-center"
+                      to={`/coordinator/admin/about-sleep-templates/edit?id=${id}`}>
+                        Edit
+                    </Link>
                 </Button>
               }
               {canArchive &&
@@ -181,28 +171,12 @@ const AboutSleepTemplates: React.FC<ViewProps> = ({
 
   // if the user has permission to create, show the create button
   const tableControl = canCreate ?
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Create"],
-          <AboutSleepTemplatesEdit
-            aboutSleepTemplateId={0}
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick} />
-        )
-      }>
-        Create +
-    </Button> :
+    <Link to={`/coordinator/admin/about-sleep-templates/create`}>
+      <Button variant="primary">Create +</Button>
+    </Link> :
     <React.Fragment />;
 
-  const navbar =
-    <Navbar
-      active="About Sleep Templates"
-      flashMessage={flashMessage}
-      goBack={goBack}
-      handleClick={handleClick} />;
+  const navbar = <Navbar active="About Sleep Templates" />;
 
   if (loading) {
     return (

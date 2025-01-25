@@ -1,7 +1,8 @@
 from pydantic import ConfigDict
+import re
 
 
-def to_camel(string: str) -> str:
+def snake_to_camel(string: str) -> str:
     """
     Converts a snake_case string to camelCase.
     """
@@ -9,10 +10,17 @@ def to_camel(string: str) -> str:
     return parts[0] + "".join(word.capitalize() for word in parts[1:])
 
 
+def camel_to_snake(name: str) -> str:
+    """
+    Converts a camelCase string to snake_case.
+    """
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+
+
 common_config = ConfigDict(
     from_attributes=True,
     extra="forbid",  # Disallow extra fields
-    alias_generator=to_camel,
+    alias_generator=snake_to_camel,
     populate_by_name=True,
     use_enum_values=True
 )

@@ -1,16 +1,16 @@
-import * as React from "react";
 import { useState, useEffect } from "react";
-import { ResponseBody, Role, ViewProps } from "../../interfaces";
+import { ResponseBody, Role } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import Table, { Column, TableData } from "../table/table";
 import Navbar from "./navbar";
-import RolesEdit from "./rolesEdit";
 import { SmallLoader } from "../loader";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
+import { Link } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
-const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
+const Roles = () => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canArchive, setCanArchive] = useState<boolean>(false);
@@ -36,6 +36,7 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
     }
   ]);
   const [loading, setLoading] = useState<boolean>(true);
+  const { flashMessage } = useFlashMessageContext();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -109,18 +110,13 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
                   variant="secondary"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() =>
-                    handleClick(
-                      ["Edit", name],
-                      <RolesEdit
-                        roleId={id}
-                        flashMessage={flashMessage}
-                        goBack={goBack}
-                        handleClick={handleClick}
-                      />
-                    )
-                  }>
-                    Edit
+                  fullWidth={true}
+                  fullHeight={true}>
+                    <Link
+                      className="w-full h-full flex items-center justify-center"
+                      to={`/coordinator/admin/roles/edit?id=${id}`}>
+                        Edit
+                    </Link>
                 </Button>
               }
               {canArchive &&
@@ -197,31 +193,16 @@ const Roles: React.FC<ViewProps> = ({ flashMessage, goBack, handleClick }) => {
 
   // if the user has permission to create, show the create button
   const tableControl = canCreate ? (
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Create"],
-          <RolesEdit
-            roleId={0}
-            flashMessage={flashMessage}
-            goBack={goBack}
-            handleClick={handleClick}
-          />
-        )
-      }>
-        Create +
-    </Button>
+    <Link to={`/coordinator/admin/roles/create`}>
+      <Button variant="primary">
+          Create +
+      </Button>
+    </Link>
   ) : (
     <></>
   );
 
-  const navbar =
-    <Navbar
-      active="Roles"
-      flashMessage={flashMessage}
-      goBack={goBack}
-      handleClick={handleClick} />;
+  const navbar = <Navbar active="Roles" />;
 
   if (loading) {
     return (

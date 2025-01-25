@@ -1,45 +1,48 @@
 import React from "react";
-import { Study, UserDetails, ViewProps } from "../../interfaces";
+import { Study } from "../../interfaces";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
-import SubjectVisuals from "./subjectVisualsV2";
 import CardContentRow from "../cards/cardContentRow";
 import ActiveIcon from "../icons/activeIcon";
-import Link from "../links/link";
+import LinkComponent from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { Link } from "react-router-dom";
+import { getStartOnAndExpiresOnForStudy } from "../../utils";
+import { SmallLoader } from "../loader";
 
 /**
  * studyPrefix: the ditti app prefix of the current study
  * getTaps: get tap data
  * studyDetials: the current study's information
  */
-interface StudySubjectsProps extends ViewProps {
-  studyPrefix: string;
-  studyDetails: Study;
+interface StudySubjectsProps {
+  study: Study;
   canViewTaps: boolean;
 }
 
 const StudySubjects: React.FC<StudySubjectsProps> = ({
-  studyPrefix,
-  studyDetails,
+  study,
   canViewTaps,
-  flashMessage,
-  goBack,
-  handleClick,
 }) => {
-  const { users, taps, audioTaps } = useDittiDataContext();
-  const filteredUsers = users.filter(u => u.userPermissionId.startsWith(studyPrefix));
+  const { dataLoading, taps, audioTaps } = useDittiDataContext();
+  const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
 
-  /**
-   * Render recent summary tap data for a user
-   * @param user 
-   * @returns 
-   */
-  const getSubjectSummary = (user: UserDetails): React.ReactElement => {
+  const filteredStudySubjects = studySubjects.filter(ss => ss.dittiId.startsWith(study.dittiId));
+
+  const summaries: React.ReactElement[] = [];
+  filteredStudySubjects.forEach((studySubject) => {
     let summaryTaps: React.ReactElement[];
     let totalTaps = 0;
 
-    // if the user has access to tapping
-    if (user.tapPermission) {
+    const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study.id);
+
+    // Skip expired participants
+    if (new Date() >= new Date(expiresOn)) {
+      return;
+    }
+
+    // if the studySubject has access to tapping
+    if (studySubject.tapPermission) {
       // for each day of the week
       summaryTaps = [6, 5, 4, 3, 2, 1, 0].map((i) => {
         const today = new Date(new Date().setHours(9, 0, 0, 0));
@@ -54,14 +57,14 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
         const filteredTaps = taps
           .filter(
             (t) =>
-              t.dittiId === user.userPermissionId &&
+              t.dittiId === studySubject.dittiId &&
               isWithinInterval(new Date(t.time), { start, end })
           ).length;
 
         const filteredAudioTaps = audioTaps
           .filter(
             (t) =>
-              t.dittiId === user.userPermissionId &&
+              t.dittiId === studySubject.dittiId &&
               isWithinInterval(new Date(t.time), { start, end })
           ).length;
 
@@ -83,13 +86,13 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
       const tapsCount = taps
         .filter(
           (t) =>
-            t.dittiId === user.userPermissionId &&
+            t.dittiId === studySubject.dittiId &&
             isWithinInterval(new Date(t.time), { start, end: new Date() })
         ).length;
       const audioTapsCount = audioTaps
         .filter(
           (t) =>
-            t.dittiId === user.userPermissionId &&
+            t.dittiId === studySubject.dittiId &&
             isWithinInterval(new Date(t.time), { start, end: new Date() })
         ).length;
       totalTaps = tapsCount + audioTapsCount;
@@ -109,37 +112,27 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
     }
 
     // get the number of days until the user's id expires
-    const expiresOn = differenceInDays(new Date(user.expTime), new Date());
+    const expiresOnDiff = differenceInDays(new Date(expiresOn), new Date());
 
-    const handleClickSubject = () =>
-      handleClick(
-        [user.userPermissionId],
-        <SubjectVisuals
-          flashMessage={flashMessage}
-          goBack={goBack}
-          handleClick={handleClick}
-          studyDetails={studyDetails}
-          user={user}
-        />
-      );
-
-    return (
+    summaries.push(
       <CardContentRow
-        key={user.userPermissionId}
+        key={studySubject.dittiId}
         className="border-b border-light">
           <div className="flex flex-col">
             <div className="flex items-center">
               {/* active tapping icon */}
               {canViewTaps && <ActiveIcon active={!!totalTaps} className="mr-2" />}
-              {/* link to the user's summary page */}
+              {/* link to the studySubject's summary page */}
               {canViewTaps ?
-                <Link onClick={handleClickSubject}>
-                  {user.userPermissionId}
+                <Link to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${study.id}`}>
+                  <LinkComponent>
+                    {studySubject.dittiId}
+                  </LinkComponent>
                 </Link> :
-                <span>{user.userPermissionId}</span>
+                <span>{studySubject.dittiId}</span>
               }
             </div>
-            <i className="w-max">Expires in: {expiresOn ? expiresOn + " days" : "Today"}</i>
+            <i className="w-max">Enrollment ends in: {expiresOnDiff ? expiresOnDiff + " days" : "Today"}</i>
             {/* summary tap data */}
           </div>
 
@@ -150,16 +143,15 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
           }
       </CardContentRow>
     );
-  };
+  });
 
-  // all users whose ids have not expired
-  const activeUsers = filteredUsers.filter(
-    (u: UserDetails) => new Date() < new Date(u.expTime)
-  );
+  if (dataLoading || studySubjectLoading) {
+    return <SmallLoader />
+  }
 
   return (
     <>
-      {activeUsers.length ? activeUsers.map(getSubjectSummary) : "No active subjects"}
+      {summaries.length ? summaries : "No active subjects"}
     </>
   );
 };

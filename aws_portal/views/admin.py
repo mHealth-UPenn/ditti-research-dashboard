@@ -4,7 +4,7 @@ import traceback
 import uuid
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
-from aws_portal.extensions import db
+from aws_portal.extensions import db, sanitizer
 from aws_portal.models import (
     AboutSleepTemplate, AccessGroup, Account, Action, App, Api,
     JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
@@ -438,12 +438,24 @@ def study_create():
         if not data:
             return make_response({"msg": "No data provided"}, 400)
 
-        if "default_expiry_delta" not in data:
-            return make_response({"msg": "default_expiry_delta was not provided"}, 400)
+        if "defaultExpiryDelta" not in data:
+            return make_response({"msg": "defaultExpiryDelta was not provided"}, 400)
 
         study = Study()
 
-        populate_model(study, data)
+        # Ensure `consent_summary` and `data_summary` HTML are sanitized
+        try:
+            study.consent_information = sanitizer.sanitize(data["consentInformation"])
+            del data["consentInformation"]
+        except KeyError:
+            pass
+        try:
+            study.data_summary = sanitizer.sanitize(data["dataSummary"])
+            del data["dataSummary"]
+        except KeyError:
+            pass
+
+        populate_model(study, data, use_camel_to_snake=True)
         db.session.add(study)
         db.session.commit()
         msg = "Study Created Successfully"
@@ -473,12 +485,12 @@ def study_edit():
         edit: {
             name: str,
             acronym: str,
-            ditti_id: str,
+            dittiId: str,
             email: str,
-            default_expiry_delta: int (optional),
-            consent_information: str (optional),
-            data_summary: str (optional),
-            is_qi: bool (optional)
+            defaultExpiryDelta: int (optional),
+            consentInformation: str (optional),
+            dataSummary: str (optional),
+            isQi: bool (optional)
         }
     }
 
@@ -502,7 +514,19 @@ def study_edit():
         study_id = request.json["id"]
         study = Study.query.get(study_id)
 
-        populate_model(study, data)
+        # Ensure `consent_summary` and `data_summary` HTML are sanitized
+        try:
+            study.consent_information = sanitizer.sanitize(data["consentInformation"])
+            del data["consentInformation"]
+        except KeyError:
+            pass
+        try:
+            study.data_summary = sanitizer.sanitize(data["dataSummary"])
+            del data["dataSummary"]
+        except KeyError:
+            pass
+
+        populate_model(study, data, use_camel_to_snake=True)
         db.session.commit()
         msg = "Study Edited Successfully"
 
@@ -1455,6 +1479,7 @@ def study_subject_create():
             studies: [
                 {
                     id: int,
+                    starts_on: str (optional),
                     expires_on: str (optional),
                     did_consent: bool
                 },

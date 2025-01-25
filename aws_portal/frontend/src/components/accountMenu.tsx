@@ -6,12 +6,13 @@ import { makeRequest } from "../utils";
 import AsyncButton from "./buttons/asyncButton";
 import Button from "./buttons/button";
 import { useAuth } from "../hooks/useAuth";
+import { useFlashMessageContext } from "../contexts/flashMessagesContext";
 
 /**
  * accountDetails: the current user's data
  * hideMenu: a function to hide the user menu
  */
-interface AccountMenuProps extends ViewProps {
+interface AccountMenuProps {
   prefill: AccountDetails;
   accountMenuRef: RefObject<HTMLDivElement>;
   hideMenu: () => void;
@@ -21,7 +22,6 @@ const AccountMenu = ({
   prefill,
   accountMenuRef,
   hideMenu,
-  flashMessage,
 }: AccountMenuProps) => {
   const [email, setEmail] = useState(prefill.email);
   const [firstName, setFirstName] = useState(prefill.firstName);
@@ -33,6 +33,7 @@ const AccountMenu = ({
   const [editPassword, setEditPassword] = useState(false);
 
   const { iamLogout } = useAuth();
+  const { flashMessage } = useFlashMessageContext();
 
   /**
    * Make a POST request with changes

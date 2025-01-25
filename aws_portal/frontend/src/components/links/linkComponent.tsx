@@ -1,17 +1,17 @@
 import { PropsWithChildren } from "react";
 
 
-interface LinkProps {
+interface LinkComponentProps {
   onClick?: () => void;
   className?: string;
 }
 
 
-const Link = ({
+const LinkComponent = ({
   onClick,
   className = "",
   children
-}: PropsWithChildren<LinkProps>) => {
+}: PropsWithChildren<LinkComponentProps>) => {
   return (
     <span
       className={`${className} text-link underline hover:text-link-hover cursor-pointer`}
@@ -22,4 +22,4 @@ const Link = ({
 };
 
 
-export default Link;
+export default LinkComponent;

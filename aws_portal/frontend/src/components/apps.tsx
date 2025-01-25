@@ -1,55 +1,31 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { ReactComponent as Right } from "../icons/right.svg";
-import { ViewProps } from "../interfaces";
-import StudiesView from "./dittiApp/studies";
-import Accounts from "./adminDashboard/accounts";
 import { SmallLoader } from "./loader";
 import { getAccess } from "../utils";
 import Card from "./cards/card";
 import CardContentRow from "./cards/cardContentRow";
 import ViewContainer from "./containers/viewContainer";
-import WearableStudies from "./wearableDashboard/wearableStudies";
+import { Link } from "react-router-dom";
 
 /**
  * Home component: renders available apps for the user
  */
-const Home: React.FC<ViewProps> = ({
-  flashMessage,
-  goBack,
-  handleClick
-}) => {
-  // apps are hardcoded here because for now there is no real need to add more
-  // than two
+const Apps = () => {
   const [apps, setApps] = useState([
     {
       breadcrumbs: ["Ditti App"],
       name: "Ditti App Dashboard",
-      view: (
-        <StudiesView
-          handleClick={handleClick}
-          goBack={goBack}
-          flashMessage={flashMessage} />
-      ),
-    },
-    {
-      breadcrumbs: ["Admin Dashboard", "Accounts"],
-      name: "Admin Dashboard",
-      view: (
-        <Accounts
-          handleClick={handleClick}
-          goBack={goBack}
-          flashMessage={flashMessage} />
-      ),
+      link: "/coordinator/ditti",
     },
     {
       breadcrumbs: ["Wearable Dashboard"],
       name: "Wearable Dashboard",
-      view: (
-        <WearableStudies
-          handleClick={handleClick}
-          goBack={goBack}
-          flashMessage={flashMessage} />
-      ),
+      link: "/coordinator/wearable",
+    },
+    {
+      breadcrumbs: ["Admin Dashboard", "Accounts"],
+      name: "Admin Dashboard",
+      link: "/coordinator/admin",
     },
   ]);
 
@@ -91,18 +67,19 @@ const Home: React.FC<ViewProps> = ({
         <Card
           key={i}
           width="sm"
-          className="cursor-pointer hover:ring hover:ring-inse hover:ring-light"
-          onClick={() => handleClick(app.breadcrumbs, app.view)}>
-            <CardContentRow>
-              <p className="text-xl">{app.name}</p>
-            </CardContentRow>
-            <div className="flex justify-end w-full mt-24">
-              <Right />
-            </div>
+          className="cursor-pointer hover:ring hover:ring-inse hover:ring-light">
+            <Link to={app.link}>
+              <CardContentRow>
+                <p className="text-xl">{app.name}</p>
+              </CardContentRow>
+              <div className="flex justify-end w-full mt-24">
+                <Right />
+              </div>
+            </Link>
         </Card>
       ))}
     </ViewContainer>
   );
 };
 
-export default Home;
+export default Apps;

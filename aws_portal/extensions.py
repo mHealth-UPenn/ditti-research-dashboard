@@ -5,6 +5,8 @@ from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_caching import Cache
+from html_sanitizer import Sanitizer
+
 from shared.tokens_manager import TokensManager
 
 
@@ -20,3 +22,9 @@ cache = Cache(config={
 })
 
 tm = TokensManager()
+
+sanitizer = Sanitizer({
+    "attributes": {
+        "li": ("class", "data-list")
+    }
+})

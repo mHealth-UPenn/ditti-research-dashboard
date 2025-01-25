@@ -1,6 +1,6 @@
-import React, { useState, ChangeEvent, createRef, useEffect } from "react";
+import { useState, ChangeEvent, createRef } from "react";
 import TextField from "../fields/textField";
-import { Study, ResponseBody, ViewProps } from "../../interfaces";
+import { ResponseBody } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import Select from "../fields/select";
 import RadioField from "../fields/radioField";
@@ -21,6 +21,9 @@ import FormSummaryContent from "../containers/forms/formSummaryContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
+import { useStudiesContext } from "../../contexts/studiesContext";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useNavigate } from "react-router-dom";
 
 
 interface IFile {
@@ -32,10 +35,7 @@ interface IFile {
 }
 
 
-const AudioFileUpload: React.FC<ViewProps> = ({
-  goBack,
-  flashMessage,
-}) => {
+const AudioFileUpload = () => {
   const [category, setCategory] = useState("");
   const [availability, setAvailability] = useState("All Users");
   const [dittiId, setDittiId] = useState("");
@@ -52,9 +52,15 @@ const AudioFileUpload: React.FC<ViewProps> = ({
 
   const fileInputRef = createRef<HTMLInputElement>();
 
-  const { studies, audioFiles } = useDittiDataContext();
+  const { dataLoading, audioFiles } = useDittiDataContext();
+  const { studiesLoading, studies } = useStudiesContext();
+
+  const { flashMessage } = useFlashMessageContext();
+  const navigate = useNavigate();
+
   const existingFiles = new Set();
   audioFiles.forEach(af => existingFiles.add(af.fileName))
+
 
   /**
    * Get a set of presigned URLs for uploading audio files to S3.
@@ -186,7 +192,7 @@ const AudioFileUpload: React.FC<ViewProps> = ({
       const urls = await getPresignedUrls();
       await uploadFiles(urls);
       await insertFiles();
-      goBack();
+      navigate(-1);
       flashMessage(<span>All files successfully uploaded.</span>, "success");
     } catch (error) {
       const axiosError = error as AxiosError
@@ -195,32 +201,6 @@ const AudioFileUpload: React.FC<ViewProps> = ({
     } finally {
       setUploading(false);
     }
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    // go back to the list view and flash a message
-    goBack();
-    flashMessage(<span>{res.msg}</span>, "success");
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
-    );
-    flashMessage(msg, "danger");
   };
 
   const selectStudy = (id: number): void => {
@@ -341,6 +321,16 @@ const AudioFileUpload: React.FC<ViewProps> = ({
   const percentComplete = uploadProgress.length ? Math.floor(
     uploadProgress.reduce((a, b) => a + b) / uploadProgress.length
   ) : 0;
+
+  if (studiesLoading || dataLoading) {
+    return (
+      <FormView>
+        <Form>
+          <SmallLoader />
+        </Form>
+      </FormView>
+    )
+  }
 
   return (
     <FormView>

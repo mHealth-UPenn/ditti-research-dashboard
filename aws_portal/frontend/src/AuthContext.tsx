@@ -99,7 +99,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     localStorage.removeItem("jwt");
     setIsIamAuthenticated(false);
     setDittiId(null);
-    navigate("/coordinator/login");
+
+    // Replace window location to clear any dangling processes (e.g., scheduled querying for data processing tasks)
+    window.location.href = "/coordinator/login";
   }, [navigate]);
 
   /**

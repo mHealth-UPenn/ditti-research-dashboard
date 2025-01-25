@@ -6,7 +6,8 @@ from flask_migrate import upgrade
 from aws_portal.extensions import db, cache
 from aws_portal.models import (
     init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
-    init_integration_testing_db, init_study_subject, init_lambda_task
+    init_integration_testing_db, init_study_subject, init_lambda_task,
+    delete_lambda_tasks
 )
 
 
@@ -101,3 +102,9 @@ def clear_cache_click():
 @with_appcontext
 def init_lambda_task_click(status):
     init_lambda_task(status)
+
+
+@click.command("delete-lambda-tasks", help="Delete all LambdaTask database entries.")
+@with_appcontext
+def delete_lambda_tasks_click():
+    delete_lambda_tasks()

@@ -1,4 +1,4 @@
-import { ResponseBody } from "./interfaces";
+import { IStudySubjectDetails, ResponseBody } from "./interfaces";
 
 // TODO: Find out what this was meant for
 // const crossorigin = Boolean(process.env.CROSSORIGIN);
@@ -139,3 +139,33 @@ export const getAccess = async (
   const res: ResponseBody = await makeRequest(url);
   if (res.msg !== "Authorized") throw new Error("Unauthorized");
 };
+
+
+export const getStartOnAndExpiresOnForStudy = (
+  studySubject: IStudySubjectDetails,
+  studyId?: number,
+) => {
+  const currStudy = studySubject.studies.find(s => s.study.id == studyId || -1);
+
+  if (currStudy) {
+    const { startsOn, expiresOn } = currStudy;
+    return { startsOn: new Date(startsOn), expiresOn: new Date(expiresOn) };
+  }
+
+  const startsOn = new Date();
+  const expiresOn = new Date();
+  expiresOn.setDate(expiresOn.getDate() + 14);
+
+  return { startsOn, expiresOn };
+}
+
+
+export const formatDateForInput = (date: Date) => {
+  // Get the year, month, and day
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+  const day = String(date.getDate()).padStart(2, '0');
+
+  // Format the date string
+  return `${year}-${month}-${day}`;
+}

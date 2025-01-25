@@ -1,26 +1,63 @@
-import { useAuth } from '../../hooks/useAuth';
-import Card from '../cards/card';
-import CardContentRow from '../cards/cardContentRow';
-import Title from '../text/title';
-import Button from '../buttons/button';
-import Link from '../links/link';
+import { useState, useMemo, useEffect } from "react";
+import sanitizeHtml, { AllowedAttribute } from "sanitize-html";
+import { useAuth } from "../../hooks/useAuth";
+import Card from "../cards/card";
+import CardContentRow from "../cards/cardContentRow";
+import Title from "../text/title";
+import Button from "../buttons/button";
+import Link from "../links/linkComponent";
 import { Link as RouterLink } from "react-router-dom";
-import { ParticipantWearableDataProvider } from '../../contexts/wearableDataContext';
-import WearableVisualization from '../visualizations/wearableVisualization';
-import { useStudySubjectContext } from '../../contexts/studySubjectContext';
-import { SmallLoader } from '../loader';
+import { ParticipantWearableDataProvider } from "../../contexts/wearableDataContext";
+import WearableVisualization from "../visualizations/wearableVisualization";
+import { useStudySubjectContext } from "../../contexts/studySubjectContext";
+import { SmallLoader } from "../loader";
+import ConsentModal from "../containers/consentModal";
+import { makeRequest } from "../../utils";
+import { IParticipantStudy } from "../../interfaces";
 
+const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
 
 const ParticipantDashboardContent = () => {
+  const [isConsentOpen, setIsConsentOpen] = useState<boolean>(false);
+  const [consentError, setConsentError] = useState<string>("");
+  const [unconsentedStudies, setUnconsentedStudies] = useState<IParticipantStudy[]>([]);
+
   const { dittiId } = useAuth();
-  const { studies, apis, studySubjectLoading } = useStudySubjectContext();
+  const { studies, apis, studySubjectLoading, refetch } = useStudySubjectContext();
 
-  // Use the earliest `startsOn` date as the beginning of data collection
-  const startDate = new Date(Math.min(...studies.map(s => new Date(s.startsOn).getTime())));
+  // Gather all studies where the user has not consented
+  useEffect(() => getStudiesNeedConsent, [studies]);
 
-  // Use the latest `expiresOn` date as the end of data collection
-  const endDate = new Date(Math.max(...studies.map(s => new Date(s.expiresOn).getTime())));
-  const scope = [...(new Set(apis.map(api => api.scope).flat()))];
+  const getStudiesNeedConsent = () => {
+    const studiesNeedConsent = studies.filter(s => !s.didConsent);
+    if (studiesNeedConsent.length > 0) {
+      setUnconsentedStudies(studiesNeedConsent);
+    } else {
+      setUnconsentedStudies([]);
+    }
+  };
+
+  // Use the earliest startsOn date as the beginning of data collection
+  const startDate = useMemo(() => {
+    if (studies.length === 0) return null;
+    return new Date(Math.min(...studies.map(s => new Date(s.startsOn).getTime())));
+  }, [studies]);
+
+  // Use the latest expiresOn date as the end of data collection
+  const endDate = useMemo(() => {
+    if (studies.length === 0) return null;
+    const validTimestamps = studies
+      .map(s => (s.expiresOn ? new Date(s.expiresOn).getTime() : null))
+      .filter(timestamp => timestamp !== null) as number[];
+
+    if (validTimestamps.length === 0) {
+      return null; // No valid dates
+    }
+
+    return new Date(Math.max(...validTimestamps)); // Get the latest date
+  }, [studies]);
+
+  const scope = useMemo(() => [...new Set(apis.map(api => api.scope).flat())], [apis]);
 
   // For now assume we are only connecting Fitbit API
   const fitbitConnected = apis.length > 0;
@@ -34,6 +71,81 @@ const ParticipantDashboardContent = () => {
   const handleClickManageData = () => {
     window.location.href = "https://hosting.med.upenn.edu/forms/DittiApp/view.php?id=10677";
   };
+
+  const handleConsentAccept = async () => {
+    if (unconsentedStudies.length === 0) {
+      setIsConsentOpen(false);
+      return;
+    }
+
+    try {
+      await Promise.all(
+        unconsentedStudies.map(study => {
+          return makeRequest(`/participant/study/${study.studyId}/consent`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ didConsent: true }),
+          });
+        })
+      );
+
+      // Clear error, close modal
+      setConsentError("");
+      setIsConsentOpen(false);
+
+      // Refetch data to ensure consistency
+      await refetch();
+      getStudiesNeedConsent();
+
+      // Redirect to Fitbit authorization after successful consent
+      handleRedirect();
+    } catch (err: any) {
+      console.error(err);
+      const errorMsg = err.msg || "There was a problem updating your consent. Please try again.";
+      setConsentError(errorMsg);
+    }
+  };
+
+  const handleConsentClose = () => {
+    setIsConsentOpen(false);
+    setConsentError("You must accept the consent terms to connect your Fitbit API, please try again.");
+  };
+
+  // If there are no unconsented studies, proceed to Fitbit flow
+  // otherwise, prompt them to consent
+  const handleConnectFitBitClick = () => {
+    if (unconsentedStudies.length === 0) {
+      handleRedirect();
+    } else {
+      setIsConsentOpen(true);
+    }
+  };
+
+  // Build HTML for all unconsented studies at once
+  const consentContentHtml = useMemo(() => {
+    if (studies.length === 0) {
+      return `<p>You are not enrolled in any studies. Please enroll in a study to connect your FitBit data.</p>`;
+    }
+    if (unconsentedStudies.length === 0) {
+      return `<p>You have already consented to all your studies.</p>`;
+    }
+
+    // Build a combined block of all unconsented study info
+    let content = "";
+    unconsentedStudies.forEach(study => {
+      const sanitized = sanitizeHtml(
+          study.consentInformation || "", {
+          allowedAttributes: {
+            li: ["data-list", "class"] as AllowedAttribute[],
+          },
+        })
+        || defaultConsentContentText;    
+      content += `<h4>${study.studyName}</h4><div>${sanitized}</div>`;
+    });
+    return content;
+  }, [studies, unconsentedStudies]);
 
   if (studySubjectLoading) {
     return (
@@ -53,21 +165,45 @@ const ParticipantDashboardContent = () => {
       <Card width="md">
 
         {/* Title */}
-        <CardContentRow>
+        <CardContentRow className="justify-between">
           <Title>Your User ID: {dittiId}</Title>
-          {!fitbitConnected &&
-            // Button for connecting Fitbit if not connected already
-            <Button onClick={handleRedirect} rounded={true}>Connect FitBit</Button>
-          }
+          {!fitbitConnected && (
+            <div className="flex flex-col items-end relative">
+              <Button onClick={handleConnectFitBitClick} rounded={true}>
+                Connect FitBit
+              </Button>
+              {/* Error message without reserving space */}
+              {consentError && (
+                <span className="absolute top-full mt-2 text-danger text-xs right-0">
+                  {consentError}
+                </span>
+              )}
+            </div>
+          )}
+        </CardContentRow>
 
         {/* Information to display if the Fitbit API is connected */}
-        </CardContentRow>
-        {fitbitConnected &&
+        {fitbitConnected && (
           <>
             <CardContentRow>
               <div className="flex flex-col">
-                <span>Expires on: <b>{endDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</b></span>
-                <span>We will no longer collect your data after this date.</span>
+                <span>
+                  Expires on:{" "}
+                  <b>
+                    {endDate
+                      ? endDate.toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })
+                      : "No expiration date available"}
+                  </b>
+                </span>
+                <span>
+                  {endDate
+                    ? "We will no longer collect your data after this date."
+                    : "We will no longer collect your data if disconnected."}
+                </span>
               </div>
             </CardContentRow>
 
@@ -78,11 +214,11 @@ const ParticipantDashboardContent = () => {
               </ParticipantWearableDataProvider>
             </CardContentRow>
           </>
-        }
+        )}
       </Card>
 
       {/* Data summary and study information to show if Fitbit is connected */}
-      {fitbitConnected &&
+      {fitbitConnected && (
         <Card width="sm">
           <CardContentRow>
             <Title>Your Data</Title>
@@ -91,16 +227,18 @@ const ParticipantDashboardContent = () => {
             <div className="flex flex-col">
               <div className="flex flex-col mb-4">
                 <span>Data being collected:</span>
-                {scope.map((s, i) =>
+                {scope.map((s, i) => (
                   <span key={i} className="font-bold capitalize">
                     &nbsp;&nbsp;&nbsp;&nbsp;{s}
                   </span>
-                )}
+                ))}
               </div>
               <div className="flex flex-col">
                 <span>Between these dates:</span>
                 <span className="font-bold">
-                  &nbsp;&nbsp;&nbsp;&nbsp;{startDate?.toLocaleDateString()} - {endDate?.toLocaleDateString()}
+                  &nbsp;&nbsp;&nbsp;&nbsp;{startDate ? startDate.toLocaleDateString() : "N/A"}
+                  {" - "}
+                  {endDate ? endDate.toLocaleDateString() : "N/A"}
                 </span>
               </div>
             </div>
@@ -109,7 +247,9 @@ const ParticipantDashboardContent = () => {
             <Title>Why are we collecting your data?</Title>
           </CardContentRow>
           <CardContentRow>
-            <span>{studies.length && studies[0].dataSummary}</span>
+            <span>
+              {studies.length > 0 ? studies[0].dataSummary : "No data summary available."}
+            </span>
           </CardContentRow>
           <CardContentRow>
             <Title>Manage my data</Title>
@@ -124,12 +264,21 @@ const ParticipantDashboardContent = () => {
           </CardContentRow>
           <CardContentRow>
             <div className="flex flex-col">
-              <RouterLink className="link" to={{ pathname: "/terms-of-use" }}>Terms of Use</RouterLink>
-              <RouterLink className="link" to={{ pathname: "/privacy-policy" }}>Privacy Policy</RouterLink>
+              <RouterLink className="link" to="/terms-of-use">Terms of Use</RouterLink>
+              <RouterLink className="link" to="/privacy-policy">Privacy Policy</RouterLink>
             </div>
           </CardContentRow>
         </Card>
-      }
+      )}
+
+      {/* Consent Modal */}
+      <ConsentModal
+        isOpen={isConsentOpen}
+        onAccept={handleConsentAccept}
+        onDeny={handleConsentClose}
+        onClose={handleConsentClose}
+        contentHtml={consentContentHtml}
+      />
     </>
   );
 };

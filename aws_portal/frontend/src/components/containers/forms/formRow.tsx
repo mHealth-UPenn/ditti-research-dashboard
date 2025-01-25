@@ -2,19 +2,21 @@ import { PropsWithChildren } from "react";
 
 interface FormRowProps {
   forceRow?: boolean;
+  className?: string;
 }
-
 
 const FormRow = ({
   forceRow = false,
-  children
+  className = "",
+  children,
 }: PropsWithChildren<FormRowProps>) => {
-  return (
-    <div className={`flex ${!forceRow && "flex-col"} md:flex-row`}>
-      {children}
-    </div>
-  );
-};
+  const classes = [
+    "flex",
+    forceRow ? "md:flex-row" : "flex-col md:flex-row",
+    className
+  ].filter(Boolean).join(" ");
 
+  return <div className={classes}>{children}</div>;
+};
 
 export default FormRow;

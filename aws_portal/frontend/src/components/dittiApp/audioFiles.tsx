@@ -1,26 +1,23 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
 import { getAccess, makeRequest } from "../../utils";
-import { ViewProps } from "../../interfaces";
-import AudioFileUpload from "./audioFileUpload";
 import Button from "../buttons/button";
 import ListView from "../containers/lists/listView";
 import ListContent from "../containers/lists/listContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
+import { Link } from "react-router-dom";
+import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 
-const AudioFiles: React.FC<ViewProps> = ({
-  handleClick,
-  goBack,
-  flashMessage,
-}) => {
+const AudioFiles = () => {
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState<boolean>(false);
   const [canDeleteAudioFiles, setCanDeleteAudioFiles] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const { audioFiles, refreshAudioFiles } = useDittiDataContext();
+  const { dataLoading, audioFiles, refreshAudioFiles } = useDittiDataContext();
+  const { flashMessage } = useFlashMessageContext();
 
   const columns: Column[] = [
     {
@@ -99,7 +96,7 @@ const AudioFiles: React.FC<ViewProps> = ({
           .catch(() =>
             flashMessage(
               <span>
-                And error occured while reloading the page. Please refresh and
+                And error occurred while reloading the page. Please refresh and
                 try again.
               </span>,
               "danger"
@@ -108,7 +105,7 @@ const AudioFiles: React.FC<ViewProps> = ({
       } catch (error) {
         console.error(error);
         const e = error as { msg: string };
-        flashMessage(<span>An unexpected error occured: {e.msg}</span>, "danger");
+        flashMessage(<span>An unexpected error occurred: {e.msg}</span>, "danger");
       }
     }
   }
@@ -199,23 +196,16 @@ const AudioFiles: React.FC<ViewProps> = ({
 
   // if the user can enroll subjects, include an enroll button
   const tableControl =
-    <Button
-      variant="primary"
-      onClick={() =>
-        handleClick(
-          ["Upload"],
-          <AudioFileUpload
-            goBack={goBack}
-            flashMessage={flashMessage}
-            handleClick={handleClick} />
-        )
-      }
-      disabled={!(canCreateAudioFiles || APP_ENV === "demo")}
-      rounded={true}>
-        Upload +
-    </Button>
+    <Link to="/coordinator/ditti/audio/upload">
+      <Button
+        variant="primary"
+        disabled={!(canCreateAudioFiles || APP_ENV === "demo")}
+        rounded={true}>
+          Upload +
+      </Button>
+    </Link>
 
-  if (loading) {
+  if (loading || dataLoading) {
     return (
       <ListView>
         <ListContent />
