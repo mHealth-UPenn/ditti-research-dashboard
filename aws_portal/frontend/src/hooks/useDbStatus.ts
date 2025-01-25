@@ -10,7 +10,7 @@ import { ResponseBody } from "../interfaces";
  * @returns {boolean} - `true` if the database is still loading or unreachable, `false` if connected.
  */
 export const useDbStatus = () => {
-  const [loadingDb, setLoadingDb] = useState<boolean>(false);
+  const [loadingDb, setLoadingDb] = useState<boolean>(true);
 
   useEffect(() => {
     let intervalId: ReturnType<typeof setInterval>;
@@ -18,6 +18,7 @@ export const useDbStatus = () => {
     const touch = async (): Promise<string> => {
       try {
         const res: ResponseBody = await makeRequest("/touch");
+        if (res.msg === "OK") setLoadingDb(false);
         if (res.msg === "OK" && intervalId) clearInterval(intervalId);
         return res.msg;
       } catch {
@@ -27,7 +28,6 @@ export const useDbStatus = () => {
 
     touch().then((msg: string) => {
       if (msg !== "OK") {
-        setLoadingDb(true);
         intervalId = setInterval(() => touch(), 2000);
       }
     });
