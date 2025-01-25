@@ -8,6 +8,7 @@ ENV ZAPPA_RUNNING_IN_DOCKER=True
 
 RUN pip3 install --upgrade pip && pip3 install wheel
 RUN pip3 install boto3 \
+    cryptography \
     Flask==2.3.3 \
     Flask-APScheduler \
     Flask-Bcrypt \

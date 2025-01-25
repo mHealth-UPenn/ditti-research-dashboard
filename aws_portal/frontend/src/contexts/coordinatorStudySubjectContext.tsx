@@ -135,7 +135,7 @@ export default function CoordinatorStudySubjectProvider({
   }
 
   // Fetch study subjects on load
-  useEffect(() => fetchStudySubjects, []);
+  useEffect(fetchStudySubjects, []);
 
   const getStudySubjectByDittiId = (dittiId: string): IStudySubjectDetails | undefined => {
     return studySubjects.find(ss => ss.dittiId === dittiId);

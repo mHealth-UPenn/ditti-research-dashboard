@@ -70,10 +70,9 @@ export default function WearableStudies() {
 
     Promise.all(promises).then(() => {
       setCanViewWearableData(updatedCanViewWearableData);
-      setLoading(false);
-    });
+    }).catch(console.error)
+    .finally(() => setLoading(false));
   }, [studies]);
-
 
   if (loading || studiesLoading || studySubjectLoading) {
     return (

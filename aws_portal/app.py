@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta, timezone, UTC
 import json
+from logging.config import dictConfig
 import os
-from flask import Flask, Response
+from flask import Flask, Response, request
 from flask_jwt_extended.utils import create_access_token, current_user, get_jwt
 from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
@@ -19,6 +20,22 @@ from aws_portal.views import (
 )
 from aws_portal.views.cognito import cognito, fitbit
 
+dictConfig({
+    "version": 1,
+    "formatters": {"default": {
+        "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+    }},
+    "handlers": {"wsgi": {
+        "class": "logging.StreamHandler",
+        "stream": "ext://flask.logging.wsgi_errors_stream",
+        "formatter": "default"
+    }},
+    "root": {
+        "level": "INFO",
+        "handlers": ["wsgi"]
+    }
+})
+
 
 def create_app(testing=False):
     # set the static folder as the react frontend
@@ -34,6 +51,9 @@ def create_app(testing=False):
     register_blueprints(app)
     register_commands(app)
     register_extensions(app)
+
+    # @app.before_request
+    # def log_request():
 
     # after each request refresh JWTs that expire within 15 minutes
     @app.after_request
@@ -57,6 +77,13 @@ def create_app(testing=False):
 
         except (RuntimeError, KeyError):
             return response
+
+    @app.after_request
+    def log_response(response: Response):
+        app.logger.info(f"Request: [{request.method}] {request.url} {response.status}")
+        if request.data:
+            app.logger.info(f"Request body: {request.data}")
+        return response
 
     return app
 
