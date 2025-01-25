@@ -438,12 +438,12 @@ def study_create():
         if not data:
             return make_response({"msg": "No data provided"}, 400)
 
-        if "default_expiry_delta" not in data:
-            return make_response({"msg": "default_expiry_delta was not provided"}, 400)
+        if "defaultExpiryDelta" not in data:
+            return make_response({"msg": "defaultExpiryDelta was not provided"}, 400)
 
         study = Study()
 
-        populate_model(study, data)
+        populate_model(study, data, use_camel_to_snake=True)
         db.session.add(study)
         db.session.commit()
         msg = "Study Created Successfully"

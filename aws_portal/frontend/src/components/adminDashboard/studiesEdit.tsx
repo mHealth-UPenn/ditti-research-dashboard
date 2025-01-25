@@ -65,7 +65,7 @@ const StudiesEdit = () => {
     };
 
     fetchPrefill();
-  }, [studyId, flashMessage]);
+  }, [studyId]);
 
   /**
    * Ensure that defaultExpiryDelta is non-negative
