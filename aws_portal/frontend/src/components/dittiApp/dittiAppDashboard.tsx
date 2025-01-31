@@ -5,6 +5,7 @@ import { SmallLoader } from "../loader";
 import CoordinatorStudySubjectProvider from "../../contexts/coordinatorStudySubjectContext";
 import { Outlet } from "react-router-dom";
 import StudiesProvider from "../../contexts/studiesContext";
+import ViewContainer from "../containers/viewContainer";
 
 
 // React Router container for the Ditti App Dashboard for wrapping it in context providers
@@ -19,9 +20,11 @@ function DittiAppDashboard() {
 
   if (dataLoading) {
     return (
-      <Card width="md">
-        <SmallLoader />
-      </Card>
+      <ViewContainer>
+        <Card width="md">
+          <SmallLoader />
+        </Card>
+      </ViewContainer>
     );
   }
 
