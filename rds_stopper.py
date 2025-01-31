@@ -11,7 +11,7 @@ def stop():
     logs = boto3.client("logs")
 
     # get all HTTP requests from the last two hours
-    name = "/aws/lambda/aws-portal-app"
+    name = os.getenv("AWS_LOG_GROUP_NAME")
     pattern = (
         "[level, utc, id, ip, user, username, timestamp, request=*HTTP*, sta" +
         "tus, bytes]"
