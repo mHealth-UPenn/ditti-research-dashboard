@@ -18,6 +18,7 @@ if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
 # import the app after the environment variables are exported
 from aws_portal.app import create_app
 
+# NOTE: Zappa wraps the app object in production-ready WSGI middleware
 app = create_app()
 
 if __name__ == "__main__":
