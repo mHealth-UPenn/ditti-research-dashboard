@@ -87,30 +87,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     userPermissionIdRef.current = userPermissionId;
   }, [userPermissionId]);
 
-  const validateDittiId = () => {
-    let isValid = true;
-
-    if (userPermissionIdRef.current === "") {
-      isValid = false;
-      setUserPermissionIdFeedback("Ditti ID is required.");
-    } else {
-      setUserPermissionIdFeedback("");
-    }
-
-    setFormIsValid(isValid);
-  };
-
-  // Add event listeners for validating Ditti ID field
-  useEffect(() => {
-    if (dittiIdInputRef.current) {
-      dittiIdInputRef.current.addEventListener("blur", validateDittiId);
-      return () => dittiIdInputRef.current?.removeEventListener("blur", validateDittiId);
-    }
-  }, [dittiIdInputRef]);
-
-
-  // Validate the form and set any error messages
-  useEffect(() => {
+  const validateForm = () => {
     let isValid = true;
     const today = formatDateForInput(new Date());
 
@@ -128,8 +105,16 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       setTemporaryPasswordValidation(updatedTemporaryPasswordValidation);
     }
 
-    if (userPermissionId === "") {
+    if (userPermissionIdRef.current === "") {
       isValid = false;
+      setUserPermissionIdFeedback("Ditti ID is required.");
+    } else {
+      setUserPermissionIdFeedback("");
+    }
+
+    if (/\D/.test(userPermissionId)) {
+      isValid = false;
+      setUserPermissionIdFeedback("Ditti ID must contain only numbers.");
     } else {
       setUserPermissionIdFeedback("");
     }
@@ -158,7 +143,19 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     }
   
     setFormIsValid(isValid);
-  }, [
+  };
+
+  // Add event listeners for validating Ditti ID field
+  useEffect(() => {
+    if (dittiIdInputRef.current) {
+      dittiIdInputRef.current.addEventListener("blur", validateForm);
+      return () => dittiIdInputRef.current?.removeEventListener("blur", validateForm);
+    }
+  }, [dittiIdInputRef]);
+
+
+  // Validate the form and set any error messages
+  useEffect(validateForm, [
     enrollmentStart,
     enrollmentEnd,
     dittiExpTime,

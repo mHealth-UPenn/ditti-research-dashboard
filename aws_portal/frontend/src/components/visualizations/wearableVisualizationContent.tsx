@@ -15,6 +15,7 @@ import { KeyboardArrowUp } from "@mui/icons-material";
 import { useEffect, useMemo, useState } from "react";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import BoutsTimeline from "./boutsTimeline";
+import { SmallLoader } from "../loader";
 
 
 /**
@@ -317,6 +318,10 @@ const WearableVisualizationContent = ({
         </div>
       </div>
     )
+  }
+
+  if (isLoading || dataLoading) {
+    return <SmallLoader />;
   }
 
   return (
