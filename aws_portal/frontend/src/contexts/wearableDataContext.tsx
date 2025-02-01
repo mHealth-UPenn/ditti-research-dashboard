@@ -3,7 +3,7 @@ import { IDataProcessingTask, ISleepLog,  IWearableDataContextType } from "../in
 import { APP_ENV } from "../environment";
 import DataFactory from "../dataFactory";
 import { makeRequest } from "../utils";
-import { useFlashMessageContext } from "./flashMessagesContext";
+// import { useFlashMessageContext } from "./flashMessagesContext";
 
 
 // Context return type for participants
@@ -37,7 +37,7 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
   const [sleepLogs, setSleepLogs] = useState<ISleepLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const { flashMessage } = useFlashMessageContext();
+  // const { flashMessage } = useFlashMessageContext();
 
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
@@ -48,13 +48,13 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
 
   const handleFailure = (error: any) => {
     console.error(error);
-    const msg = 
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {error.msg ? error.msg : "Internal server error"}
-      </span>
-    flashMessage(msg, "danger");
+    // const msg = 
+    //   <span>
+    //     <b>An unexpected error occurred</b>
+    //     <br />
+    //     {error.msg ? error.msg : "Internal server error"}
+    //   </span>
+    // flashMessage(msg, "danger");
   }
 
   useEffect(() => {
@@ -134,7 +134,7 @@ export const CoordinatorWearableDataProvider = ({
   // The date of the first sleep log entry
   const [firstDateOfSleep, setFirstDateOfSleep] = useState<Date | null>(null);
 
-  const { flashMessage } = useFlashMessageContext();
+  // const { flashMessage } = useFlashMessageContext();
 
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
@@ -151,7 +151,7 @@ export const CoordinatorWearableDataProvider = ({
         <br />
         {error.msg ? error.msg : "Internal server error"}
       </span>
-    flashMessage(msg, "danger");
+    // flashMessage(msg, "danger");
   }
 
   /**
