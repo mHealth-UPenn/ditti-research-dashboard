@@ -218,7 +218,7 @@ const WearableVisualizationContent = ({
   };
 
   if (isLoading || !xScale || dataLoading) {
-    return <></>;
+    return <SmallLoader />;
   }
 
   // Iterate through each day currently being visualized
@@ -318,10 +318,6 @@ const WearableVisualizationContent = ({
         </div>
       </div>
     )
-  }
-
-  if (isLoading || dataLoading) {
-    return <SmallLoader />;
   }
 
   return (
