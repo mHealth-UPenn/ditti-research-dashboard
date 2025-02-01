@@ -14,6 +14,7 @@ import { SmallLoader } from "../loader";
 import ConsentModal from "../containers/consentModal";
 import { makeRequest } from "../../utils";
 import { IParticipantStudy } from "../../interfaces";
+import sanitize from "sanitize-html";
 
 const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
 
@@ -247,9 +248,19 @@ const ParticipantDashboardContent = () => {
             <Title>Why are we collecting your data?</Title>
           </CardContentRow>
           <CardContentRow>
-            <span>
-              {studies.length > 0 ? studies[0].dataSummary : "No data summary available."}
-            </span>
+            <span
+              className="ql-editor ql-modal text-sm"
+              dangerouslySetInnerHTML={{
+                __html: sanitize(
+                  studies.length > 0
+                    ? (studies[0].dataSummary || "No data summary available.")
+                    : "No data summary available.",
+                  {
+                    allowedAttributes: {
+                      li: ["data-list", "class"] as AllowedAttribute[],
+                    },
+                  })
+              }} />
           </CardContentRow>
           <CardContentRow>
             <Title>Manage my data</Title>
