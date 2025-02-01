@@ -2,8 +2,11 @@ from datetime import datetime, timedelta, timezone, UTC
 import json
 from logging.config import dictConfig
 import os
+import traceback
+
 from flask import Flask, Response, request
 from flask_jwt_extended.utils import create_access_token, current_user, get_jwt
+
 from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
     init_db_click, init_api_click, init_integration_testing_db_click, reset_db_click,
@@ -81,8 +84,6 @@ def create_app(testing=False):
     @app.after_request
     def log_response(response: Response):
         app.logger.info(f"Request: [{request.method}] {request.url} {response.status}")
-        if request.data:
-            app.logger.info(f"Request body: {request.data}")
         return response
 
     return app

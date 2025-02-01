@@ -12,10 +12,7 @@ def stop():
 
     # get all HTTP requests from the last two hours
     name = os.getenv("AWS_LOG_GROUP_NAME")
-    pattern = (
-        "[level, utc, id, ip, user, username, timestamp, request=*HTTP*, sta" +
-        "tus, bytes]"
-    )
+    pattern = os.getenv("AWS_LOG_PATTERN")
     start = int((datetime.now() - timedelta(hours=2)).timestamp() * 1000)
     res = logs.filter_log_events(
         logGroupName=name,

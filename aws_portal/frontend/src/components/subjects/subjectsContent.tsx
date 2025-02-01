@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import Table from "../table/table";
-import { getAccess, getStartOnAndExpiresOnForStudy } from "../../utils";
+import { getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { IStudySubjectDetails} from "../../interfaces";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
@@ -119,7 +119,7 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
   };
 
   const tableData: TableData[][] = filteredStudySubjects.map((studySubject: IStudySubjectDetails) => {
-    const { startsOn, expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id);
+    const { startsOn, expiresOn } = getEnrollmentInfoForStudy(studySubject, study?.id);
 
     return [
       {

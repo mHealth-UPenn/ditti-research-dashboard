@@ -426,6 +426,7 @@ class StudySubjectService(DBService):
                             self.study.c.expires_on > self.api.c.last_sync_date,
                         ),
                         self.study.c.starts_on < earliest_sleep_log_subquery,  # Get any entries with past data that was not pulled
+                        earliest_sleep_log_subquery == None  # Get any entries where no sleep logs exist
                     )
                 )
             )
@@ -818,7 +819,10 @@ def handler(event, context):
 
                 # Handle edge case when a participant's `starts_on` changes to an earlier date
                 # Generate an additional URL for fetching retroactive data
-                if entry.earliest_sleep_log and entry.starts_on.date() < entry.earliest_sleep_log - timedelta(days=1):
+                if (
+                    (entry.earliest_sleep_log is None)
+                    or (entry.earliest_sleep_log and entry.starts_on.date() < entry.earliest_sleep_log - timedelta(days=1))
+                ):
                     logger.info(
                         "Participant's `starts_on` value is before their earliest sleep log. Generating extra URL for fetching retroactive data.",
                         extra={
@@ -827,11 +831,16 @@ def handler(event, context):
                             "earliest_sleep_log": entry.earliest_sleep_log,
                         }
                     )
+
+                    end_date = None
+                    if entry.earliest_sleep_log is not None:
+                        end_date = str(entry.earliest_sleep_log - timedelta(days=1))
+
                     urls.append(build_url(
                         entry,
                         start_date=str(entry.starts_on.date()),
-                        end_date=str(entry.earliest_sleep_log - timedelta(days=1)))
-                    )
+                        end_date=end_date,
+                    ))
 
                 # Try querying the fitbit API for this study subject
                 data = []
@@ -922,12 +931,12 @@ def handler(event, context):
                             # Convert to string matching the same format as `function_timestamp`
                             last_sync_date = last_sync_date.isoformat(timespec="milliseconds")
 
-                        except Exception as e:
+                        except Exception:
                             logger.warning(
                                 "Error parsing `last_sync_date` from sleep data. Falling back to `function_timestamp`.",
                                 extra={
                                     "study_subject_id": entry.id,
-                                    "error": e,
+                                    "error": traceback.format_exc(),
                                 }
                             )
                         try:

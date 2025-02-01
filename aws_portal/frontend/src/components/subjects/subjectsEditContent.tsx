@@ -1,7 +1,7 @@
 import { useState, useEffect, createRef, FocusEvent, useRef } from "react";
 import TextField from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
-import { formatDateForInput, getStartOnAndExpiresOnForStudy, makeRequest } from "../../utils";
+import { formatDateForInput, getEnrollmentInfoForStudy, makeRequest } from "../../utils";
 import CheckField from "../fields/checkField";
 import { SmallLoader } from "../loader";
 import Select from "../fields/select";
@@ -176,7 +176,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   // Load any data to prefill the form with, if any
   useEffect(() => {
     if (studySubject) {
-      const { startsOn, expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id);
+      const { startsOn, expiresOn } = getEnrollmentInfoForStudy(studySubject, study?.id);
 
       const selectedTemplate = aboutSleepTemplates.filter(
         (ast: AboutSleepTemplate) => ast.text === studySubject.information
@@ -248,6 +248,10 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     const postAWS = makeRequest(urlAWS, optsAWS);
 
     // Prepare and make the request to the database backend
+    const { didConsent } = studySubject ?
+      getEnrollmentInfoForStudy(studySubject, study?.id)
+      : { didConsent: false};
+
     const dataDB = {
       ditti_id: study?.dittiId + userPermissionId,
       studies: [
@@ -255,6 +259,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
           id: study?.id || 0,
           starts_on: enrollmentStart + "T00:00:00.000Z",
           expires_on: enrollmentEnd + "T00:00:00.000Z",
+          did_consent: didConsent,
         }
       ]
     };

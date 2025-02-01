@@ -149,7 +149,7 @@ export const getAccess = async (
  * @param studyId - The study to get enrollment dates for.
  * @returns { startsOn: Date, expiresOn: Date } - The study subject's enrollment start and end dates for the study.
  */
-export const getStartOnAndExpiresOnForStudy = (
+export const getEnrollmentInfoForStudy = (
   studySubject?: IStudySubjectDetails,
   studyId?: number,
 ) => {
@@ -164,8 +164,12 @@ export const getStartOnAndExpiresOnForStudy = (
   const currStudy = studySubject.studies.find(s => s.study.id == studyId || -1);
 
   if (currStudy) {
-    const { startsOn, expiresOn } = currStudy;
-    return { startsOn: new Date(startsOn), expiresOn: new Date(expiresOn) };
+    const { startsOn, expiresOn, didConsent } = currStudy;
+    return {
+      startsOn: new Date(startsOn),
+      expiresOn: new Date(expiresOn),
+      didConsent
+    };
   }
 
   // Return default dates if the study is not found
@@ -173,7 +177,7 @@ export const getStartOnAndExpiresOnForStudy = (
   const expiresOn = new Date();
   expiresOn.setDate(expiresOn.getDate() + 14);
 
-  return { startsOn, expiresOn };
+  return { startsOn, expiresOn, didConsent: false };
 }
 
 

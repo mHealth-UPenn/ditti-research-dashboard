@@ -7,7 +7,7 @@ import LinkComponent from "../links/linkComponent";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
 import { SmallLoader } from "../loader";
-import { getStartOnAndExpiresOnForStudy } from "../../utils";
+import { getEnrollmentInfoForStudy } from "../../utils";
 import { useStudiesContext } from "../../contexts/studiesContext";
 
 
@@ -33,7 +33,7 @@ export default function WearableStudySubjects({
   const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));
 
   const getSubjectSummary = (subject: IStudySubjectDetails): React.ReactElement => {
-    const { expiresOn } = getStartOnAndExpiresOnForStudy(subject, study?.id);
+    const { expiresOn } = getEnrollmentInfoForStudy(subject, study?.id);
     const expiresOnDiff = differenceInDays(new Date(expiresOn), new Date());
 
     return (

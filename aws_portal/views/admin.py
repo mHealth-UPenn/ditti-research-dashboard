@@ -1780,19 +1780,29 @@ def study_subject_edit():
                 else:
                     expires_on = None  # Let the event listener set it
 
+                starts_on_str = study_entry.get("starts_on")
+                if starts_on_str:
+                    try:
+                        starts_on = datetime.fromisoformat(
+                            starts_on_str.replace("Z", "+00:00"))
+                    except ValueError:
+                        return make_response({"msg": f"Invalid date format for starts_on: {starts_on_str}"}, 400)
+
                 join = JoinStudySubjectStudy.query.get(
                     (study_subject_id, study_id))
                 if join:
                     # Update existing association
                     join.did_consent = did_consent
                     join.expires_on = expires_on
+                    join.starts_on = starts_on
                 else:
                     # Create new association
                     new_join = JoinStudySubjectStudy(
                         study_subject=study_subject,
                         study=study,
                         did_consent=did_consent,
-                        expires_on=expires_on
+                        expires_on=expires_on,
+                        starts_on=starts_on,
                     )
                     db.session.add(new_join)
 

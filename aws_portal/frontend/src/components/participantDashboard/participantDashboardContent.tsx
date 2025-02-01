@@ -25,9 +25,6 @@ const ParticipantDashboardContent = () => {
   const { dittiId } = useAuth();
   const { studies, apis, studySubjectLoading, refetch } = useStudySubjectContext();
 
-  // Gather all studies where the user has not consented
-  useEffect(() => getStudiesNeedConsent, [studies]);
-
   const getStudiesNeedConsent = () => {
     const studiesNeedConsent = studies.filter(s => !s.didConsent);
     if (studiesNeedConsent.length > 0) {
@@ -36,6 +33,9 @@ const ParticipantDashboardContent = () => {
       setUnconsentedStudies([]);
     }
   };
+
+  // Gather all studies where the user has not consented
+  useEffect(getStudiesNeedConsent, [studies]);
 
   // Use the earliest startsOn date as the beginning of data collection
   const startDate = useMemo(() => {

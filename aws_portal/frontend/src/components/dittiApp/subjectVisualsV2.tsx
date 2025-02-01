@@ -3,7 +3,7 @@ import { differenceInMilliseconds, format } from "date-fns";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import "./subjectVisuals.css";
-import { getAccess, getStartOnAndExpiresOnForStudy } from "../../utils";
+import { getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
 import TimestampHistogram from "../visualizations/timestampHistogram";
 import VisualizationController from "../visualizations/visualizationController";
@@ -50,7 +50,7 @@ const SubjectVisualsV2 = () => {
   }, [studyId]);
 
   const studySubject = getStudySubjectByDittiId(dittiId);
-  const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id);
+  const { expiresOn } = getEnrollmentInfoForStudy(studySubject, study?.id);
   const filteredTaps = taps.filter((t) => t.dittiId === dittiId);
   const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === dittiId);
 

@@ -7,7 +7,7 @@ import LinkComponent from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
-import { getStartOnAndExpiresOnForStudy } from "../../utils";
+import { getEnrollmentInfoForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
 
 
@@ -36,7 +36,7 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
     let summaryTaps: React.ReactElement[];
     let totalTaps = 0;
 
-    const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study.id);
+    const { expiresOn } = getEnrollmentInfoForStudy(studySubject, study.id);
 
     // Skip expired participants
     if (new Date() >= new Date(expiresOn)) {

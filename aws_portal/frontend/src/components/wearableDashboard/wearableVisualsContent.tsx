@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { downloadExcelFromUrl, getAccess, getStartOnAndExpiresOnForStudy } from "../../utils";
+import { downloadExcelFromUrl, getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
 import ViewContainer from "../containers/viewContainer";
 import Card from "../cards/card";
@@ -68,7 +68,7 @@ export default function WearableVisualsContent({
   const { flashMessage } = useFlashMessageContext();
 
   const studySubject = getStudySubjectByDittiId(dittiId);
-  const { expiresOn } = getStartOnAndExpiresOnForStudy(studySubject, study?.id);
+  const { expiresOn } = getEnrollmentInfoForStudy(studySubject, study?.id);
 
   const dateOpts: Intl.DateTimeFormatOptions = {
     year: "numeric",
