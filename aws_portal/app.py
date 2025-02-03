@@ -21,7 +21,8 @@ from aws_portal.views import (
     admin, aws_requests, base, data_processing_task, db_requests, iam,
     participant, fitbit_data
 )
-from aws_portal.views.cognito import cognito, fitbit
+from aws_portal.views.cognito import cognito
+from aws_portal.views.api import fitbit
 
 dictConfig({
     "version": 1,
@@ -83,7 +84,8 @@ def create_app(testing=False):
 
     @app.after_request
     def log_response(response: Response):
-        app.logger.info(f"Request: [{request.method}] {request.url} {response.status}")
+        app.logger.info(f"Request: [{request.method}] {
+                        request.url} {response.status}")
         return response
 
     return app

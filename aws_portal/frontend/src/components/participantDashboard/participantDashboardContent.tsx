@@ -65,7 +65,7 @@ const ParticipantDashboardContent = () => {
 
   // Redirect after authenticating with Fitbit
   const handleRedirect = () => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/fitbit/authorize`;
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/api/fitbit/authorize`;
   };
 
   // Redirect to form for requesting deletion of account

@@ -16,7 +16,7 @@ from shared.fitbit import (
     get_fitbit_oauth_session
 )
 
-blueprint = Blueprint("cognito_fitbit", __name__, url_prefix="/cognito/fitbit")
+blueprint = Blueprint("api_fitbit", __name__, url_prefix="/api/fitbit")
 logger = logging.getLogger(__name__)
 
 
