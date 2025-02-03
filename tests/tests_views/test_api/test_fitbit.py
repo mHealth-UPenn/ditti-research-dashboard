@@ -73,9 +73,9 @@ def auth_client(client, study_subject):
 
 def test_fitbit_authorize_success(app, auth_client, study_subject, fitbit_api):
     # Mock generate_code_verifier and create_code_challenge
-    with patch("aws_portal.views.cognito.fitbit.generate_code_verifier") as mock_gen_verifier, \
-            patch("aws_portal.views.cognito.fitbit.create_code_challenge") as mock_code_challenge, \
-            patch("aws_portal.views.cognito.fitbit.os.urandom") as mock_urandom:
+    with patch("aws_portal.views.api.fitbit.generate_code_verifier") as mock_gen_verifier, \
+            patch("aws_portal.views.api.fitbit.create_code_challenge") as mock_code_challenge, \
+            patch("aws_portal.views.api.fitbit.os.urandom") as mock_urandom:
 
         mock_gen_verifier.return_value = "test_code_verifier"
         mock_code_challenge.return_value = "test_code_challenge"
@@ -88,7 +88,7 @@ def test_fitbit_authorize_success(app, auth_client, study_subject, fitbit_api):
         with patch.object(WebApplicationClient, "prepare_request_uri") as mock_prepare_uri:
             mock_prepare_uri.return_value = "https://www.fitbit.com/oauth2/authorize?params"
 
-            response = auth_client.get("/cognito/fitbit/authorize")
+            response = auth_client.get("/api/fitbit/authorize")
 
             # Check that the response is a redirect (302)
             assert response.status_code == 302
@@ -130,7 +130,7 @@ def test_fitbit_callback_success_new_association(app, auth_client, study_subject
         )
 
         # Mock token endpoint response
-        with patch("aws_portal.views.cognito.fitbit.requests.post") as mock_post:
+        with patch("aws_portal.views.api.fitbit.requests.post") as mock_post:
             mock_response = MagicMock()
             mock_response.raise_for_status.return_value = None
             mock_response.text = json.dumps({
@@ -145,7 +145,7 @@ def test_fitbit_callback_success_new_association(app, auth_client, study_subject
             # Mock tm.add_or_update_api_token
             with patch.object(tm, "add_or_update_api_token") as mock_add_update_api_token:
                 response = auth_client.get(
-                    "/cognito/fitbit/callback", query_string=query_params)
+                    "/api/fitbit/callback", query_string=query_params)
 
                 # Check redirection to success page
                 assert response.status_code == 302
@@ -189,7 +189,7 @@ def test_fitbit_callback_state_mismatch(app, auth_client, study_subject):
     }
 
     response = auth_client.get(
-        "/cognito/fitbit/callback", query_string=query_params)
+        "/api/fitbit/callback", query_string=query_params)
     # Expect a 400 Bad Request due to state mismatch
     assert response.status_code == 400
     assert response.get_json() == {"msg": "Invalid authorization state."}
@@ -206,7 +206,7 @@ def test_fitbit_callback_missing_code(app, auth_client, study_subject):
     }
 
     response = auth_client.get(
-        "/cognito/fitbit/callback", query_string=query_params)
+        "/api/fitbit/callback", query_string=query_params)
     # Expect a 400 Bad Request due to missing authorization code
     assert response.status_code == 400
     assert response.get_json() == {"msg": "Authorization code missing."}
@@ -229,11 +229,11 @@ def test_fitbit_callback_token_exchange_failure(app, auth_client, study_subject)
             "grant_type=authorization_code&code=test_code&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&code_verifier=test_code_verifier"
         )
 
-        with patch("aws_portal.views.cognito.fitbit.requests.post") as mock_post:
+        with patch("aws_portal.views.api.fitbit.requests.post") as mock_post:
             mock_post.side_effect = Exception("Network error")
 
             response = auth_client.get(
-                "/cognito/fitbit/callback", query_string=query_params)
+                "/api/fitbit/callback", query_string=query_params)
             # Expect a 400 due to token exchange failure
             assert response.status_code == 400
             # The updated code logs a generic error; check for "Failed to retrieve Fitbit tokens."
@@ -259,7 +259,7 @@ def test_fitbit_callback_missing_fitbit_api_entry(app, auth_client, study_subjec
         )
 
         # Mock a successful token response
-        with patch("aws_portal.views.cognito.fitbit.requests.post") as mock_post:
+        with patch("aws_portal.views.api.fitbit.requests.post") as mock_post:
             mock_response = MagicMock()
             mock_response.raise_for_status.return_value = None
             mock_response.text = json.dumps({
@@ -276,7 +276,7 @@ def test_fitbit_callback_missing_fitbit_api_entry(app, auth_client, study_subjec
                 mock_api_query.filter_by.return_value.first.return_value = None
 
                 response = auth_client.get(
-                    "/cognito/fitbit/callback", query_string=query_params)
+                    "/api/fitbit/callback", query_string=query_params)
                 # Expect 500 since Fitbit API not configured
                 assert response.status_code == 500
                 assert response.get_json() == {
@@ -300,7 +300,7 @@ def test_fitbit_callback_error_storing_tokens(app, auth_client, study_subject, f
             "grant_type=authorization_code&code=test_code&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&code_verifier=test_code_verifier"
         )
 
-        with patch("aws_portal.views.cognito.fitbit.requests.post") as mock_post:
+        with patch("aws_portal.views.api.fitbit.requests.post") as mock_post:
             mock_response = MagicMock()
             mock_response.raise_for_status.return_value = None
             mock_response.text = json.dumps({
@@ -315,7 +315,7 @@ def test_fitbit_callback_error_storing_tokens(app, auth_client, study_subject, f
             # Mock add_or_update_api_token to raise an exception
             with patch.object(tm, "add_or_update_api_token", side_effect=Exception("AWS Secrets Manager error")):
                 response = auth_client.get(
-                    "/cognito/fitbit/callback", query_string=query_params)
+                    "/api/fitbit/callback", query_string=query_params)
                 # Expect 500 due to error storing tokens
                 assert response.status_code == 500
                 assert response.get_json() == {
@@ -324,24 +324,24 @@ def test_fitbit_callback_error_storing_tokens(app, auth_client, study_subject, f
 
 def test_fitbit_authorize_unauthenticated(client):
     # No authentication cookies set
-    response = client.get("/cognito/fitbit/authorize")
+    response = client.get("/api/fitbit/authorize")
     # Expect unauthorized response since decorator requires auth tokens
     assert response.status_code == 401
     assert response.get_json() == {"msg": "Missing authentication tokens."}
 
 
 def test_fitbit_authorize_concurrent_requests(app, auth_client):
-    with patch("aws_portal.views.cognito.fitbit.generate_code_verifier") as mock_gen_verifier, \
-            patch("aws_portal.views.cognito.fitbit.create_code_challenge") as mock_code_challenge, \
-            patch("aws_portal.views.cognito.fitbit.os.urandom") as mock_urandom:
+    with patch("aws_portal.views.api.fitbit.generate_code_verifier") as mock_gen_verifier, \
+            patch("aws_portal.views.api.fitbit.create_code_challenge") as mock_code_challenge, \
+            patch("aws_portal.views.api.fitbit.os.urandom") as mock_urandom:
 
         mock_gen_verifier.return_value = "test_code_verifier"
         mock_code_challenge.return_value = "test_code_challenge"
         mock_urandom.return_value = b"\x00" * 32
 
         # Simulate two concurrent requests
-        response1 = auth_client.get("/cognito/fitbit/authorize")
-        response2 = auth_client.get("/cognito/fitbit/authorize")
+        response1 = auth_client.get("/api/fitbit/authorize")
+        response2 = auth_client.get("/api/fitbit/authorize")
 
         assert response1.status_code == 302
         assert response2.status_code == 302
@@ -364,7 +364,7 @@ def test_fitbit_callback_token_scope_validation(app, auth_client, study_subject,
     }
 
     with patch.object(WebApplicationClient, "prepare_token_request") as mock_prepare_token_request, \
-            patch("aws_portal.views.cognito.fitbit.requests.post") as mock_post:
+            patch("aws_portal.views.api.fitbit.requests.post") as mock_post:
 
         mock_prepare_token_request.return_value = (
             "https://api.fitbit.com/oauth2/token",
@@ -391,7 +391,7 @@ def test_fitbit_callback_token_scope_validation(app, auth_client, study_subject,
             mock_add_update_api_token.side_effect = add_update_side_effect
 
             response = auth_client.get(
-                "/cognito/fitbit/callback", query_string=query_params)
+                "/api/fitbit/callback", query_string=query_params)
 
             assert response.status_code == 302
             join_entry = JoinStudySubjectApi.query.filter_by(
@@ -417,12 +417,12 @@ def test_fitbit_sleep_list(app, auth_client, study_subject, fitbit_api):
         db.session.add(join_entry)
         db.session.commit()
 
-    with patch("aws_portal.views.cognito.fitbit.get_fitbit_oauth_session") as mock_get_session:
+    with patch("aws_portal.views.api.fitbit.get_fitbit_oauth_session") as mock_get_session:
         mock_session = MagicMock()
         mock_get_session.return_value = mock_session
         mock_session.get.return_value.json.return_value = {"sleep": []}
 
-        response = auth_client.get("/cognito/fitbit/sleep_list")
+        response = auth_client.get("/api/fitbit/sleep_list")
         assert response.status_code == 200
         data = response.get_json()
         assert "sleep" in data
@@ -437,7 +437,7 @@ def test_fitbit_sleep_list_not_linked(app, auth_client, study_subject, fitbit_ap
     ).delete()
     db.session.commit()
 
-    response = auth_client.get("/cognito/fitbit/sleep_list")
+    response = auth_client.get("/api/fitbit/sleep_list")
     assert response.status_code == 401
     assert response.get_json() == {
         "msg": "Fitbit API not linked to your account."}
