@@ -1,6 +1,6 @@
 from functools import wraps
 import logging
-from flask import current_app, make_response, request
+from flask import make_response, request
 from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlalchemy import select, func
 from aws_portal.extensions import db
@@ -49,6 +49,11 @@ def participant_auth_required(f):
         try:
             claims = service.verify_token(id_token, "id")
             cognito_username = claims.get("cognito:username")
+
+            if not cognito_username:
+                return make_response({"msg": "cognito:username not found in token."}, 400)
+
+            # Cognito stores ditti IDs in lowercase, so retrieve actual ditti ID from the database instead.
             stmt = select(StudySubject.ditti_id).where(
                 func.lower(StudySubject.ditti_id) == cognito_username)
             ditti_id = db.session.execute(stmt).scalar()
@@ -57,12 +62,13 @@ def participant_auth_required(f):
                 logger.error(f"Participant {cognito_username} not found.")
                 return make_response({"msg": "Participant not found."}, 400)
 
+            # Pass `ditti_id` to the decorated function
             return f(*args, ditti_id=ditti_id, **kwargs)
         except ExpiredSignatureError as e:
             logger.error(f"Token expired: {str(e)}")
             return make_response({"msg": "Token expired."}, 401)
         except InvalidTokenError as e:
             logger.error(f"Invalid token: {str(e)}")
-            return make_response({"msg": f"Invalid token: {str(e)}"}, 401)
+            return make_response({"msg": f"Invalid token."}, 401)
 
     return decorated

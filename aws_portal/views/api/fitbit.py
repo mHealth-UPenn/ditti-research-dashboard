@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @blueprint.route("/authorize")
 @participant_auth_required
-def fitbit_authorize():
+def fitbit_authorize(ditti_id: str):
     """
     Initiates the OAuth2 authorization flow with Fitbit.
 
