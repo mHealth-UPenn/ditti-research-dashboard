@@ -54,9 +54,13 @@ def participant_auth_required(f):
                 return make_response({"msg": "cognito:username not found in token."}, 400)
 
             # Cognito stores ditti IDs in lowercase, so retrieve actual ditti ID from the database instead.
-            stmt = select(StudySubject.ditti_id).where(
-                func.lower(StudySubject.ditti_id) == cognito_username)
-            ditti_id = db.session.execute(stmt).scalar()
+            try:
+                stmt = select(StudySubject.ditti_id).where(
+                    func.lower(StudySubject.ditti_id) == cognito_username)
+                ditti_id = db.session.execute(stmt).scalar()
+            except Exception as e:
+                logger.error(f"Database error: {str(e)}")
+                return make_response({"msg": f"Database error."}, 500)
 
             if not ditti_id:
                 logger.error(f"Participant {cognito_username} not found.")
