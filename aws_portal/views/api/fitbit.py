@@ -10,7 +10,7 @@ from flask import (
 from oauthlib.oauth2 import WebApplicationClient
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, JoinStudySubjectApi, StudySubject
-from aws_portal.utils.cognito import cognito_auth_required
+from aws_portal.utils.cognito.participant.decorators import participant_auth_required
 from shared.fitbit import (
     generate_code_verifier, create_code_challenge,
     get_fitbit_oauth_session
@@ -21,8 +21,8 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/authorize")
-@cognito_auth_required
-def fitbit_authorize(ditti_id: str):
+@participant_auth_required
+def fitbit_authorize():
     """
     Initiates the OAuth2 authorization flow with Fitbit.
 
@@ -72,7 +72,7 @@ def fitbit_authorize(ditti_id: str):
 
 
 @blueprint.route("/callback")
-@cognito_auth_required
+@participant_auth_required
 def fitbit_callback(ditti_id: str):
     """
     Handles the OAuth2 callback from Fitbit after user authorization.
@@ -222,7 +222,7 @@ def fitbit_callback(ditti_id: str):
 
 
 @blueprint.route("/sleep_list")
-@cognito_auth_required
+@participant_auth_required
 def fitbit_sleep_list(ditti_id: str):
     """
     Test: Retrieves the user's sleep data from Fitbit.
