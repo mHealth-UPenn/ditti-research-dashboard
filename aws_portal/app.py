@@ -15,14 +15,14 @@ from aws_portal.commands import (
 )
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, tm
 from aws_portal.views import admin, aws_requests, base, db_requests, iam, participant
-# from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, scheduler, cache
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, cache
 from aws_portal.views import (
     admin, aws_requests, base, data_processing_task, db_requests, iam,
     participant, fitbit_data
 )
-from aws_portal.views.cognito import cognito
+from aws_portal.views.cognito.participant import auth as participant_auth
 from aws_portal.views.api import fitbit
+
 
 dictConfig({
     "version": 1,
@@ -97,7 +97,7 @@ def register_blueprints(app):
     app.register_blueprint(base.blueprint)
     app.register_blueprint(db_requests.blueprint)
     app.register_blueprint(iam.blueprint)
-    app.register_blueprint(cognito.blueprint)
+    app.register_blueprint(participant_auth.blueprint)
     app.register_blueprint(fitbit.blueprint)
     app.register_blueprint(participant.blueprint)
     app.register_blueprint(data_processing_task.blueprint)
