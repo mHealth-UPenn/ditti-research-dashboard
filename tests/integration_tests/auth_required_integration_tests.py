@@ -4,7 +4,7 @@ import json
 from typing import TypedDict
 import uuid
 
-from flask import Flask
+from flask import Flask, Response
 from flask.testing import FlaskClient
 from sqlalchemy import select, tuple_
 
@@ -47,18 +47,33 @@ def green(text: str) -> str:
     return f"\033[32m{text}\033[0m"
 
 
+def red(text: str) -> str:
+    return f"\033[31m{text}\033[0m"
+
+
+def handle_response(res: Response):
+    print(res)
+    data = json.loads(res.data)
+    try:
+        print(data["msg"])
+    except TypeError:
+        print(f"Response with {len(data)} entries.")
+    except KeyError:
+        print(f"'msg' not in response with keys: {data.keys()}.")
+    except Exception:
+        print("Getting response data failed.")
+
+
 def get(client: FlaskClient, app: int, headers: dict, url: str):
     print(f"\n{yellow("GET")} {blue(url)}")
     res = client.get(f"{url}?app={app}", headers=headers)
-    print(res)
-    print(json.loads(res.data))
+    handle_response(res)
 
 
 def post(client: FlaskClient, body: dict, headers: dict, url: str):
     print(f"\n{green("POST")} {blue(url)}")
     res = client.post(url, data=body, headers=headers)
-    print(res)
-    print(json.loads(res.data))
+    handle_response(res)
 
 
 def login(app: Flask, client: FlaskClient):
@@ -101,9 +116,6 @@ def admin(client: FlaskClient, app_id: int, headers: dict):
     post(client, create_body, post_headers, "/admin/role/create")
     post(client, edit_body, post_headers, "/admin/role/edit")
     post(client, archive_body, post_headers, "/admin/role/archive")
-    get(client, app_id, headers, "/admin/app")
-    post(client, create_body, post_headers, "/admin/app/create")
-    post(client, edit_body, post_headers, "/admin/app/edit")
     get(client, app_id, headers, "/admin/action")
     get(client, app_id, headers, "/admin/resource")
     get(client, app_id, headers, "/admin/about-sleep-template")
@@ -144,8 +156,8 @@ class AccountContext:
             db.session.delete(access_group)
         db.session.commit()
 
-    def add_access_group(self, name: str, permissions: list[Permission]):
-        access_group = m.AccessGroup(name=name)
+    def add_access_group(self, name: str, permissions: list[Permission], app_id: int):
+        access_group = m.AccessGroup(name=name, app_id=app_id)
         self.access_groups.append(access_group)
 
         for action, resource in PermissionList(permissions):
@@ -154,32 +166,50 @@ class AccountContext:
             permission = db.session.execute(query).scalars().first()
             if not permission:
                 permission = m.Permission(action=action, resource=resource)
-            m.JoinAccessGroupPermission(
-                access_group=access_group,
-                permission=permission
-            )
+            join = m.JoinAccessGroupPermission()
+            join.permission = permission
+            access_group.permissions.append(join)
 
-        m.JoinAccountAccessGroup(
-            account=self.account,
-            access_group=access_group
-        )
+        join = m.JoinAccountAccessGroup()
+        join.access_group = access_group
+        self.account.access_groups.append(join)
         db.session.add(access_group)
         db.session.commit()
 
 
 
 def main(app: Flask, client: FlaskClient, account: AccountContext):
+    print(f"\n\n{"=" * 40} STARTING TESTS {"=" * 40}\n\n")
     headers = login(app, client)
 
     # 1. Admin - No Authorization
+    print(red("\n\nTesting Admin - No Authorization"))
     admin(client, 1, headers)
 
-    # 2. Admin - With Admin Authorization
+    # 2. Admin - With Ditti Admin Authorization, From Admin Dashboard
+    print(red("\n\nTesting Admin - With Ditti Admin Authorization"))
+    permissions: list[Permission] = [
+        {"action": "View", "resource": "Ditti Dashboard"},
+        {"action": "*", "resource": "*"},
+    ]
+    account.add_access_group("Test Ditti Admin", permissions, 2)
+    admin(client, 1, headers)
+
+    # 3. Admin - With Ditti Admin Authorization, From Ditti Dashboard
+    print(red("\n\nAdmin - With Ditti Admin Authorization, From Ditti Dashboard"))
+    admin(client, 2, headers)
+
+    # 4. Admin - With Ditti Admin Authorization, From Wearable Dashboard
+    print(red("\n\nAdmin - With Ditti Admin Authorization, From Wearable Dashboard"))
+    admin(client, 3, headers)
+
+    # 5. Admin - With Admin Authorization
+    print(red("\n\nTesting Admin - With Admin Authorization"))
     permissions: list[Permission] = [
         {"action": "View", "resource": "Admin Dashboard"},
         {"action": "*", "resource": "*"},
     ]
-    account.add_access_group("Test Admin", permissions)
+    account.add_access_group("Test Admin", permissions, 1)
     admin(client, 1, headers)
 
 
