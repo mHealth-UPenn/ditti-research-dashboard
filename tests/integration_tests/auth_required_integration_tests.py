@@ -1,14 +1,38 @@
 from base64 import b64encode
 from datetime import datetime, UTC
 import json
+from typing import TypedDict
 import uuid
 
 from flask import Flask
 from flask.testing import FlaskClient
+from sqlalchemy import select, tuple_
 
 from aws_portal.app import create_app
 from aws_portal.extensions import db
 import aws_portal.models as m
+
+
+class Permission(TypedDict):
+    action: str
+    resource: str
+
+
+class PermissionList:
+    def __init__(self, permissions: list[Permission]):
+        self._permissions = permissions
+        self._index = 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self._index < len(self._permissions):
+            permission = self._permissions[self._index]
+            self._index += 1
+            return permission['action'], permission['resource']
+        else:
+            raise StopIteration
 
 
 def blue(text: str) -> str:
@@ -96,8 +120,12 @@ def admin(client: FlaskClient, app_id: int, headers: dict):
     post(client, archive_body, post_headers, "/admin/api/archive")
 
 
-class AccountManager:
+class AccountContext:
+    access_groups: list[m.AccessGroup]
+    account: m.Account
+
     def __enter__(self):
+        self.access_groups = []
         self.account = m.Account()
         self.account.first_name = "foo"
         self.account.last_name = "bar"
@@ -112,15 +140,52 @@ class AccountManager:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         db.session.delete(self.account)
+        for access_group in self.access_groups:
+            db.session.delete(access_group)
         db.session.commit()
+
+    def add_access_group(self, name: str, permissions: list[Permission]):
+        access_group = m.AccessGroup(name=name)
+        self.access_groups.append(access_group)
+
+        for action, resource in PermissionList(permissions):
+            query = select(m.Permission)\
+                .where(m.Permission.definition == tuple_(action, resource))
+            permission = db.session.execute(query).scalars().first()
+            if not permission:
+                permission = m.Permission(action=action, resource=resource)
+            m.JoinAccessGroupPermission(
+                access_group=access_group,
+                permission=permission
+            )
+
+        m.JoinAccountAccessGroup(
+            account=self.account,
+            access_group=access_group
+        )
+        db.session.add(access_group)
+        db.session.commit()
+
+
+
+def main(app: Flask, client: FlaskClient, account: AccountContext):
+    headers = login(app, client)
+
+    # 1. Admin - No Authorization
+    admin(client, 1, headers)
+
+    # 2. Admin - With Admin Authorization
+    permissions: list[Permission] = [
+        {"action": "View", "resource": "Admin Dashboard"},
+        {"action": "*", "resource": "*"},
+    ]
+    account.add_access_group("Test Admin", permissions)
+    admin(client, 1, headers)
 
 
 if __name__ == "__main__":
     app = create_app(testing=True)
     with app.app_context():
-        with AccountManager() as account:
+        with AccountContext() as account:
             with app.test_client() as client:
-                headers = login(app, client)
-
-                # 1. Admin - No Authorization
-                admin(client, 1, headers)
+                main(app, client, account)
