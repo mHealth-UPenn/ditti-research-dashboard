@@ -2,11 +2,52 @@ from base64 import b64encode
 from datetime import datetime, UTC
 import json
 from typing import TypedDict
+from unittest.mock import patch
 import uuid
 
-from flask import Flask, Response
+from flask import Flask, Response, make_response
 from flask.testing import FlaskClient
 from sqlalchemy import select, tuple_
+
+
+# Mock endpoints that return 200 OK on all authorized requests
+def return_200_on_auth():
+    return make_response({"msg": "Authorized request."}, 200)
+
+
+patch("aws_portal.views.admin.account", return_200_on_auth)
+patch("aws_portal.views.admin.account_create", return_200_on_auth)
+patch("aws_portal.views.admin.account_edit", return_200_on_auth)
+patch("aws_portal.views.admin.account_archive", return_200_on_auth)
+patch("aws_portal.views.admin.study", return_200_on_auth)
+patch("aws_portal.views.admin.study_create", return_200_on_auth)
+patch("aws_portal.views.admin.study_edit", return_200_on_auth)
+patch("aws_portal.views.admin.study_archive", return_200_on_auth)
+patch("aws_portal.views.admin.access_group", return_200_on_auth)
+patch("aws_portal.views.admin.access_group_create", return_200_on_auth)
+patch("aws_portal.views.admin.access_group_edit", return_200_on_auth)
+patch("aws_portal.views.admin.access_group_archive", return_200_on_auth)
+patch("aws_portal.views.admin.role", return_200_on_auth)
+patch("aws_portal.views.admin.role_create", return_200_on_auth)
+patch("aws_portal.views.admin.role_edit", return_200_on_auth)
+patch("aws_portal.views.admin.role_archive", return_200_on_auth)
+patch("aws_portal.views.admin.app", return_200_on_auth)
+patch("aws_portal.views.admin.app_create", return_200_on_auth)
+patch("aws_portal.views.admin.app_edit", return_200_on_auth)
+patch("aws_portal.views.admin.action", return_200_on_auth)
+patch("aws_portal.views.admin.resource", return_200_on_auth)
+patch("aws_portal.views.admin.about_sleep_template", return_200_on_auth)
+patch("aws_portal.views.admin.about_sleep_template_create", return_200_on_auth)
+patch("aws_portal.views.admin.about_sleep_template_edit", return_200_on_auth)
+patch("aws_portal.views.admin.about_sleep_template_archive", return_200_on_auth)
+patch("aws_portal.views.admin.study_subject", return_200_on_auth)
+patch("aws_portal.views.admin.study_subject_create", return_200_on_auth)
+patch("aws_portal.views.admin.study_subject_archive", return_200_on_auth)
+patch("aws_portal.views.admin.study_subject_edit", return_200_on_auth)
+patch("aws_portal.views.admin.api", return_200_on_auth)
+patch("aws_portal.views.admin.api_create", return_200_on_auth)
+patch("aws_portal.views.admin.api_edit", return_200_on_auth)
+patch("aws_portal.views.admin.api_archive", return_200_on_auth)
 
 from aws_portal.app import create_app
 from aws_portal.extensions import db
@@ -77,7 +118,7 @@ def post(client: FlaskClient, body: dict, headers: dict, url: str):
 
 
 def login(app: Flask, client: FlaskClient):
-    auth = "foo@email.com:abc123"
+    auth = "fooemail.com:abc123"
     auth = b64encode(auth.encode("utf-8"))
     headers = {"Authorization": f"Basic {auth.decode()}"}
     res = client.post("/iam/login", headers=headers)
@@ -141,7 +182,7 @@ class AccountContext:
         self.account = m.Account()
         self.account.first_name = "foo"
         self.account.last_name = "bar"
-        self.account.email = "foo@email.com"
+        self.account.email = "fooemail.com"
         self.account.is_confirmed = True
         self.account.public_id = str(uuid.uuid4())
         self.account.created_on = datetime.now(UTC)
