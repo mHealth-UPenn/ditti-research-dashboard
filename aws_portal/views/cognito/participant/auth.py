@@ -99,6 +99,7 @@ def cognito_callback():
             db.session.commit()
 
         # Store study subject ID in session and prepare the response
+        # TODO: Unclear if still necessary
         session["study_subject_id"] = study_subject.id
 
         # Redirect to the front-end ParticipantDashboard
@@ -107,9 +108,9 @@ def cognito_callback():
 
         # Set tokens in secure, HTTP-only cookies
         response.set_cookie(
-            "id_token", token_data["id_token"], httponly=True, secure=True, samesite="None")
+            "participant_id_token", token_data["id_token"], httponly=True, secure=True, samesite="None")
         response.set_cookie(
-            "access_token", token_data["access_token"], httponly=True, secure=True, samesite="None")
+            "participant_access_token", token_data["access_token"], httponly=True, secure=True, samesite="None")
 
         return response
     except Exception as e:
@@ -129,11 +130,10 @@ def logout():
         "response_type": "code"
     })
 
-    # TODO: Fix id_token and access_token overlap with two user pools
     response = make_response(redirect(logout_url))
-    response.set_cookie("id_token", "", expires=0,
+    response.set_cookie("participant_id_token", "", expires=0,
                         httponly=True, secure=True, samesite="None")
-    response.set_cookie("access_token", "", expires=0,
+    response.set_cookie("participant_access_token", "", expires=0,
                         httponly=True, secure=True, samesite="None")
     return response
 
@@ -143,7 +143,7 @@ def logout():
 @blueprint.route("/check-login", methods=["GET"])
 def check_login():
     """Verify active login status and return ditti id"""
-    id_token = request.cookies.get("id_token")
+    id_token = request.cookies.get("participant_id_token")
     if not id_token:
         return make_response({"msg": "Not authenticated"}, 401)
 

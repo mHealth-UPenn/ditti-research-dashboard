@@ -285,9 +285,9 @@ def delete_participant(ditti_id: str):
 
         # Clear cookies
         response = make_response({"msg": "Account deleted successfully."})
-        response.delete_cookie("id_token")
-        response.delete_cookie("access_token")
-        response.delete_cookie("refresh_token")
+        response.delete_cookie("participant_id_token")
+        response.delete_cookie("participant_access_token")
+        response.delete_cookie("participant_refresh_token")
         return response
 
     except SQLAlchemyError as db_err:

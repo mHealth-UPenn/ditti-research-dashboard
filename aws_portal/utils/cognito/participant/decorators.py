@@ -14,9 +14,9 @@ def participant_auth_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         service = get_participant_service()
-        id_token = request.cookies.get("id_token")
-        access_token = request.cookies.get("access_token")
-        refresh_token = request.cookies.get("refresh_token")
+        id_token = request.cookies.get("participant_id_token")
+        access_token = request.cookies.get("participant_access_token")
+        refresh_token = request.cookies.get("participant_refresh_token")
 
         if not id_token or not access_token:
             return make_response({"msg": "Missing authentication tokens."}, 401)
@@ -34,7 +34,7 @@ def participant_auth_required(f):
                 service.verify_token(new_access_token, "access")
                 response = make_response()
                 response.set_cookie(
-                    "access_token", new_access_token, httponly=True, secure=True)
+                    "participant_access_token", new_access_token, httponly=True, secure=True)
                 access_token = new_access_token
             except InvalidTokenError as e:
                 logger.error(f"Refresh token invalid: {str(e)}")
