@@ -14,13 +14,13 @@ from aws_portal.utils.auth import auth_required
 
 blueprint = Blueprint("participant_cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
+service = get_participant_service()
 
 
 def build_cognito_url(path: str, params: dict) -> str:
     """
     Constructs a full URL for Cognito by combining the base domain, path, and query parameters.
     """
-    service = get_participant_service()
     base_url = f"https://{service.config.domain}"
     return f"{base_url}{path}?{urlencode(params)}"
 
@@ -34,10 +34,10 @@ def login():
     scope = "openid" + (" aws.cognito.signin.user.admin" if elevated else "")
 
     return redirect(build_cognito_url("/login", {
-        "client_id": get_participant_service().config.client_id,
+        "client_id": service.config.client_id,
         "response_type": "code",
         "scope": scope,
-        "redirect_uri": get_participant_service().config.redirect_uri,
+        "redirect_uri": service.config.redirect_uri,
     }))
 
 
@@ -53,7 +53,6 @@ def cognito_callback():
     Error responses:
         400 - Error fetching tokens, expired token, or invalid token.
     """
-    service = get_participant_service()
     # Retrieve authorization code from the request
     code = request.args.get("code")
     if not code:
@@ -123,7 +122,6 @@ def cognito_callback():
 def logout():
     """Log out the user, clear session, and clear Cognito cookies"""
     session.clear()
-    service = get_participant_service()
 
     logout_url = build_cognito_url("/logout", {
         "client_id": service.config.client_id,
@@ -150,7 +148,6 @@ def check_login():
         return make_response({"msg": "Not authenticated"}, 401)
 
     try:
-        service = get_participant_service()
         claims = service.verify_token(id_token, "id")
         cognito_ditti_id = claims.get("cognito:username")
 
