@@ -79,7 +79,8 @@ def cognito_callback():
 
     # Check for Account in database or create a new one
     try:
-        id_claims = service.verify_token(token_data["id_token"], "id")
+        id_claims = service.verify_token(
+            token_data["researcher_id_token"], "id")
         email = id_claims["email"]
 
         account = Account.query.filter_by(email=email).first()
@@ -119,12 +120,31 @@ def cognito_callback():
 
         # Set tokens in secure, HTTP-only cookies
         response.set_cookie(
-            "id_token", token_data["id_token"], httponly=True, secure=True, samesite="None")
+            "researcher_id_token", token_data["id_token"], httponly=True, secure=True, samesite="None")
         response.set_cookie(
-            "access_token", token_data["access_token"], httponly=True, secure=True, samesite="None")
+            "researcher_access_token", token_data["access_token"], httponly=True, secure=True, samesite="None")
 
         return response
     except Exception as e:
         logger.error(f"Auth error: {str(e)}")
         db.session.rollback()
         return make_response({"msg": "Authentication error."}, 400)
+
+
+@blueprint.route("/logout")
+def logout():
+    """Log out the user, clear session, and clear Cognito cookies"""
+    session.clear()
+
+    logout_url = build_cognito_url("/logout", {
+        "client_id": service.config.client_id,
+        "logout_uri": service.config.logout_uri,
+        "response_type": "code"
+    })
+
+    response = make_response(redirect(logout_url))
+    response.set_cookie("researcher_id_token", "", expires=0,
+                        httponly=True, secure=True, samesite="None")
+    response.set_cookie("researcher_access_token", "", expires=0,
+                        httponly=True, secure=True, samesite="None")
+    return response
