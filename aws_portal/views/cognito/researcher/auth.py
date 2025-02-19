@@ -148,3 +148,42 @@ def logout():
     response.set_cookie("researcher_access_token", "", expires=0,
                         httponly=True, secure=True, samesite="None")
     return response
+
+
+@blueprint.route("/check-login", methods=["GET"])
+def check_login():
+    """Verify active login status and return email"""
+    id_token = request.cookies.get("researcher_id_token")
+    if not id_token:
+        return make_response({"msg": "Not authenticated"}, 401)
+
+    try:
+        claims = service.verify_token(id_token, "id")
+        email = claims.get("email")
+
+        if not email:
+            return make_response({"msg": "email not found in token."}, 400)
+
+        # Cognito stores ditti IDs in lowercase, so retrieve actual ditti ID from the database instead.
+        # TODO: Test to see if this is necessary
+        stmt = select(Account.email).where(
+            func.lower(Account.email) == email
+        )
+        email = db.session.execute(stmt).scalar()
+
+        if email is None:
+            logger.warning(
+                f"Participant with email {email} not found in database.")
+            return make_response({"msg": f"Participant {email} not found."}, 400)
+
+        return jsonify({
+            "msg": "Login successful",
+            "email": email
+        }), 200
+
+    except ExpiredSignatureError as e:
+        logger.warning(f"ID token expired: {str(e)}")
+        return make_response({"msg": "ID Token expired."}, 401)
+    except InvalidTokenError as e:
+        logger.error(f"Invalid ID token: {str(e)}")
+        return make_response({"msg": f"Invalid ID token."}, 401)
