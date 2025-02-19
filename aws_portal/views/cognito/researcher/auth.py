@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
 import logging
 from urllib.parse import urlencode
-import boto3
-from botocore.exceptions import ClientError
 from flask import Blueprint, current_app, make_response, redirect, request, session, jsonify
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 import requests
@@ -10,7 +8,7 @@ from sqlalchemy import select, func
 from aws_portal.extensions import db
 from aws_portal.models import Account
 from aws_portal.utils.cognito.service import get_researcher_service
-from aws_portal.utils.auth import auth_required
+from aws_portal.utils.cognito.researcher.decorators import researcher_auth_required
 
 blueprint = Blueprint("participant_cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
@@ -190,7 +188,7 @@ def check_login():
 
 
 @blueprint.route("/get-access")
-# TODO: @researcher_auth_required, email will come from the decorator
+@researcher_auth_required
 def get_access(email: str):
     """
     Check whether the user has permissions for an action and resource for a
