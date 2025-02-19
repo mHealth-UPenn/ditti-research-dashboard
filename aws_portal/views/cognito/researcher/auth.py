@@ -80,7 +80,7 @@ def cognito_callback():
     # Check for Account in database or create a new one
     try:
         id_claims = service.verify_token(
-            token_data["researcher_id_token"], "id")
+            token_data["id_token"], "id")
         email = id_claims["email"]
 
         account = Account.query.filter_by(email=email).first()
