@@ -187,3 +187,48 @@ def check_login():
     except InvalidTokenError as e:
         logger.error(f"Invalid ID token: {str(e)}")
         return make_response({"msg": f"Invalid ID token."}, 401)
+
+
+@blueprint.route("/get-access")
+# TODO: @researcher_auth_required, email will come from the decorator
+def get_access(email: str):
+    """
+    Check whether the user has permissions for an action and resource for a
+    given app and study
+
+    Options
+    -------
+    app: 1 | 2 | 3
+    study: int
+    action: str
+    resource: str
+
+    Response Syntax (200)
+    ---------------------
+    {
+        msg: "Authorized" or
+            "Unauthorized"
+    }
+    """
+    msg = "Authorized"
+    app_id = request.args.get("app")
+    study_id = request.args.get("study")
+    action = request.args.get("action")
+    resource = request.args.get("resource")
+
+    # Retrieve the Account by email
+    account = Account.query.filter_by(
+        email=email, is_archived=False
+    ).first()
+    if not account:
+        logger.info(f"Account with email {email} not found or is archived.")
+        return make_response({"msg": "User not found."}, 404)
+    permissions = account.get_permissions(app_id, study_id)
+
+    try:
+        account.validate_ask(action, resource, permissions)
+
+    except ValueError:
+        msg = "Unauthorized"
+
+    return jsonify({"msg": msg})

@@ -11,6 +11,7 @@ from aws_portal.utils.auth import validate_password
 blueprint = Blueprint("iam", __name__, url_prefix="/iam")
 
 
+# Replaced in aws_portal/views/cognito/researcher/auth.py
 @blueprint.route("/check-login")
 @jwt_required()
 def check_login():
@@ -30,6 +31,7 @@ def check_login():
     return jsonify({"msg": msg, "csrfAccessToken": get_jwt()["csrf"]})
 
 
+# Replaced in aws_portal/views/cognito/researcher/auth.py
 @blueprint.route("/login", methods=["POST"])
 @cross_origin(
     allow_headers=["Authorization", "Content-Type", "X-CSRF-TOKEN"],
@@ -93,6 +95,7 @@ def login():
     return make_response({"msg": "Invalid login credentials"},  403)
 
 
+# Replaced in aws_portal/views/cognito/researcher/auth.py
 @blueprint.route("/logout", methods=["POST"])
 @jwt_required()
 def logout():  # TODO: remove
@@ -116,6 +119,7 @@ def logout():  # TODO: remove
     return res
 
 
+# Unnecessary
 @blueprint.route("/set-password", methods=["POST"])
 @jwt_required()
 def set_password():
@@ -158,6 +162,7 @@ def set_password():
     return jsonify({"msg": "Password set successful"})
 
 
+# Moved to aws_portal/views/cognito/researcher/auth.py and edit for Cognito
 @blueprint.route("/get-access")
 @jwt_required()
 def get_access():  # TODO: write unit test
@@ -184,6 +189,7 @@ def get_access():  # TODO: write unit test
     study_id = request.args.get("study")
     action = request.args.get("action")
     resource = request.args.get("resource")
+    # TODO: current_user the user's Account entry
     permissions = current_user.get_permissions(app_id, study_id)
 
     try:
