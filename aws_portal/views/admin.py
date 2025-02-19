@@ -1289,6 +1289,7 @@ def about_sleep_template_create():
         data = request.json["create"]
         about_sleep_template = AboutSleepTemplate()
 
+        data["text"] = sanitizer.sanitize(data["text"])
         populate_model(about_sleep_template, data)
         db.session.add(about_sleep_template)
         db.session.commit()
@@ -1342,6 +1343,11 @@ def about_sleep_template_edit():
         about_sleep_template = AboutSleepTemplate.query.get(
             about_sleep_template_id
         )
+
+        try:
+            data["text"] = sanitizer.sanitize(data["text"])
+        except KeyError:
+            pass
 
         populate_model(about_sleep_template, data)
         db.session.commit()
