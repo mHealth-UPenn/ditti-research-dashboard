@@ -16,6 +16,7 @@ import FormSummaryButton from "../containers/forms/formSummaryButton";
 import sanitize from "sanitize-html";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import QuillField from "../fields/quillField";
 
 /**
  * The form's prefill
@@ -163,17 +164,15 @@ const AboutSleepTemplatesEdit = () => {
         </FormRow>
         <FormRow>
           <FormField>
-            <TextField
+            <QuillField
               id="text"
-              type="textarea"
-              value={text}
+              containerClassName="ql-container-form"
               label="Text"
-              onKeyup={setText} />
+              description="This is what the user will see when they view the About Sleep screen on the mobile app."
+              value={text}
+              onChange={setText}
+            />
           </FormField>
-        </FormRow>
-        <FormTitle className="mt-6">Preview</FormTitle>
-        <FormRow>
-          <div ref={previewRef} className="px-4" />
         </FormRow>
       </Form>
       <FormSummary>
