@@ -202,3 +202,16 @@ def get_participant_service():
         logout_uri=current_app.config["COGNITO_PARTICIPANT_LOGOUT_URI"],
     )
     return CognitoService(config)
+
+
+def get_researcher_service():
+    config = CognitoPoolConfig(
+        client_id=current_app.config["COGNITO_RESEARCHER_CLIENT_ID"],
+        client_secret=current_app.config["COGNITO_RESEARCHER_CLIENT_SECRET"],
+        domain=current_app.config["COGNITO_RESEARCHER_DOMAIN"],
+        region=current_app.config["COGNITO_RESEARCHER_REGION"],
+        user_pool_id=current_app.config["COGNITO_RESEARCHER_USER_POOL_ID"],
+        redirect_uri=current_app.config["COGNITO_RESEARCHER_REDIRECT_URI"],
+        logout_uri=current_app.config["COGNITO_RESEARCHER_LOGOUT_URI"],
+    )
+    return CognitoService(config)
