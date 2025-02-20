@@ -11,7 +11,8 @@ from aws_portal.models import (
     JoinRolePermission, Permission, Resource, Role, Study, StudySubject,
     JoinStudySubjectStudy, JoinStudySubjectApi
 )
-from aws_portal.utils.auth import auth_required, validate_password
+from aws_portal.utils.auth import validate_password
+from aws_portal.utils.cognito.researcher.decorators import researcher_db_auth_required
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/account")
-@auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("View", "Admin Dashboard")
 def account():
     """
     Get one account or a list of all accounts. This will return one account if
@@ -67,9 +68,10 @@ def account():
         return make_response({"msg": "Internal server error when retriving accounts"}, 500)
 
 
+# TODO: Edit behavior for Cognito
 @blueprint.route("/account/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Accounts")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Create", "Accounts")
 def account_create():
     """
     Create a new account.
@@ -163,9 +165,10 @@ def account_create():
     return jsonify({"msg": msg})
 
 
+# TODO: Edit behavior for Cognito
 @blueprint.route("/account/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Accounts")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Edit", "Accounts")
 def account_edit():
     """
     Edit an existing account
@@ -301,8 +304,8 @@ def account_edit():
 
 
 @blueprint.route("/account/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Accounts")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Archive", "Accounts")
 def account_archive():
     """
     Archive an account. This action has the same effect as deleting an entry
@@ -346,7 +349,7 @@ def account_archive():
 
 
 @blueprint.route("/study")
-@auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("View", "Admin Dashboard")
 def study():
     """
     Get one study or a list of all studies. This will return one study if the
@@ -393,8 +396,8 @@ def study():
 
 
 @blueprint.route("/study/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Studies")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Create", "Studies")
 def study_create():
     """
     Create a new study.
@@ -445,7 +448,8 @@ def study_create():
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
-            study.consent_information = sanitizer.sanitize(data["consentInformation"])
+            study.consent_information = sanitizer.sanitize(
+                data["consentInformation"])
             del data["consentInformation"]
         except KeyError:
             pass
@@ -471,8 +475,8 @@ def study_create():
 
 
 @blueprint.route("/study/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Studies")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Edit", "Studies")
 def study_edit():
     """
     Edit an existing study
@@ -516,7 +520,8 @@ def study_edit():
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
-            study.consent_information = sanitizer.sanitize(data["consentInformation"])
+            study.consent_information = sanitizer.sanitize(
+                data["consentInformation"])
             del data["consentInformation"]
         except KeyError:
             pass
@@ -541,8 +546,8 @@ def study_edit():
 
 
 @blueprint.route("/study/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Studies")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Archive", "Studies")
 def study_archive():
     """
     Archive a study. This action has the same effect as deleting an entry
@@ -586,7 +591,7 @@ def study_archive():
 
 
 @blueprint.route("/access-group")
-@auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("View", "Admin Dashboard")
 def access_group():
     """
     Get one access group or a list of all studies. This will return one access
@@ -635,8 +640,8 @@ def access_group():
 
 
 @blueprint.route("/access-group/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Access Groups")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Create", "Access Groups")
 def access_group_create():
     """
     Create a new access group.
@@ -710,8 +715,8 @@ def access_group_create():
 
 
 @blueprint.route("/access-group/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Access Groups")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Edit", "Access Groups")
 def access_group_edit():
     """
     Edit an existing access group.
@@ -797,8 +802,8 @@ def access_group_edit():
 
 
 @blueprint.route("/access-group/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Access Groups")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Archive", "Access Groups")
 def access_group_archive():
     """
     Archive an access group. This action has the same effect as deleting an entry
@@ -842,7 +847,7 @@ def access_group_archive():
 
 
 @blueprint.route("/role")
-@auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("View", "Admin Dashboard")
 def role():
     """
     Get one role or a list of all studies. This will return one role if the
@@ -889,8 +894,8 @@ def role():
 
 
 @blueprint.route("/role/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Roles")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Create", "Roles")
 def role_create():
     """
     Create a new role.
@@ -959,8 +964,8 @@ def role_create():
 
 
 @blueprint.route("/role/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Roles")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Edit", "Roles")
 def role_edit():
     """
     Edit an existing role.
@@ -1037,8 +1042,8 @@ def role_edit():
 
 
 @blueprint.route("/role/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Role")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Archive", "Role")
 def role_archive():  # TODO: create unit test
     """
     Archive a role. This action has the same effect as deleting an entry
@@ -1082,7 +1087,7 @@ def role_archive():  # TODO: create unit test
 
 
 @blueprint.route("/app")
-@auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("View", "Admin Dashboard")
 def app():
     apps = App.query.all()
     res = [a.meta for a in apps]
@@ -1090,8 +1095,8 @@ def app():
 
 
 @blueprint.route("/app/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Apps")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Create", "Apps")
 def app_create():
     data = request.json["create"]
     app = App()
@@ -1113,8 +1118,8 @@ def app_create():
 
 
 @blueprint.route("/app/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Apps")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Edit", "Apps")
 def app_edit():
     data = request.json["edit"]
     app_id = request.json["id"]
@@ -1137,7 +1142,7 @@ def app_edit():
 
 
 @blueprint.route("/action")
-@auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("View", "Admin Dashboard")
 def action():  # TODO: write unit test
     """
     Get all actions
@@ -1171,7 +1176,7 @@ def action():  # TODO: write unit test
 
 
 @blueprint.route("/resource")
-@auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("View", "Admin Dashboard")
 def resource():  # TODO: write unit test
     """
     Get all resources
@@ -1205,7 +1210,7 @@ def resource():  # TODO: write unit test
 
 
 @blueprint.route("/about-sleep-template")
-@auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("View", "Admin Dashboard")
 def about_sleep_template():
     """
     Get one about sleep template or a list of all studies. This will return one
@@ -1258,8 +1263,8 @@ def about_sleep_template():
 
 
 @blueprint.route("/about-sleep-template/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Studies")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Create", "Studies")
 def about_sleep_template_create():
     """
     Create a new about sleep template.
@@ -1306,8 +1311,8 @@ def about_sleep_template_create():
 
 
 @blueprint.route("/about-sleep-template/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Studies")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Edit", "Studies")
 def about_sleep_template_edit():
     """
     Edit an existing about sleep template
@@ -1364,8 +1369,8 @@ def about_sleep_template_edit():
 
 
 @blueprint.route("/about-sleep-template/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Studies")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Archive", "Studies")
 def about_sleep_template_archive():
     """
     Archive an about sleep template. This action has the same effect as
@@ -1411,7 +1416,8 @@ def about_sleep_template_archive():
 
 
 @blueprint.route("/study_subject")
-@auth_required("View", "Participants")  # A user can CRUD study subjects without access to the admin dashboard
+# A user can CRUD study subjects without access to the admin dashboard
+@researcher_db_auth_required("View", "Participants")
 def study_subject():
     """
     Get one study subject or a list of all study subjects. This will return one
@@ -1471,7 +1477,7 @@ def study_subject():
 
 
 @blueprint.route("/study_subject/create", methods=["POST"])
-@auth_required("Create", "Participants")
+@researcher_db_auth_required("Create", "Participants")
 def study_subject_create():
     """
     Create a new study subject.
@@ -1620,7 +1626,7 @@ def study_subject_create():
 
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
-@auth_required("Archive", "Participants")
+@researcher_db_auth_required("Archive", "Participants")
 def study_subject_archive():
     """
     Archive a study subject.
@@ -1674,7 +1680,7 @@ def study_subject_archive():
 
 
 @blueprint.route("/study_subject/edit", methods=["POST"])
-@auth_required("Edit", "Participants")
+@researcher_db_auth_required("Edit", "Participants")
 def study_subject_edit():
     """
     Edit an existing study subject
@@ -1872,8 +1878,8 @@ def study_subject_edit():
 
 
 @blueprint.route("/api")
-@auth_required("View", "Admin Dashboard")
-@auth_required("View", "APIs")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("View", "APIs")
 def api():
     """
     Get one API or a list of all APIs. This will return one API if the API's
@@ -1921,8 +1927,8 @@ def api():
 
 
 @blueprint.route("/api/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "APIs")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Create", "APIs")
 def api_create():
     """
     Create a new API.
@@ -1984,8 +1990,8 @@ def api_create():
 
 
 @blueprint.route("/api/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "APIs")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Edit", "APIs")
 def api_edit():
     """
     Edit an existing API.
@@ -2055,8 +2061,8 @@ def api_edit():
 
 
 @blueprint.route("/api/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "APIs")
+@researcher_db_auth_required("View", "Admin Dashboard")
+@researcher_db_auth_required("Archive", "APIs")
 def api_archive():
     """
     Archive an API. This action has the same effect as deleting an entry
