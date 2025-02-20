@@ -3,7 +3,7 @@ import traceback
 from flask import Blueprint, jsonify, make_response
 from aws_portal.extensions import db
 from aws_portal.models import LambdaTask
-from aws_portal.utils.auth import auth_required
+from aws_portal.utils.cognito.researcher.decorators import researcher_db_auth_required
 from aws_portal.utils.lambda_task import create_and_invoke_lambda_task
 
 blueprint = Blueprint("data_processing_task", __name__,
@@ -13,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 @blueprint.route("/", defaults={"task_id": None}, methods=["GET"])
 @blueprint.route("/<int:task_id>", methods=["GET"])
-@auth_required("View", "Data Retrieval Task")  # Allow actions from any dashboard
-def get_data_processing_tasks(task_id: int | None):
+@researcher_db_auth_required("View", "Data Retrieval Task")
+def get_data_processing_tasks(task_id: int | None, email=None):
     """
     Retrieve all data processing tasks sorted by creation date.
 
@@ -57,7 +57,8 @@ def get_data_processing_tasks(task_id: int | None):
             tasks = LambdaTask.query.filter(LambdaTask.id == task_id).all()
         else:
             # Retrieve all tasks sorted by created_on in descending order (most recent first)
-            tasks = LambdaTask.query.order_by(LambdaTask.created_on.desc()).all()
+            tasks = LambdaTask.query.order_by(
+                LambdaTask.created_on.desc()).all()
         res = [task.meta for task in tasks]
         return jsonify(res), 200
 
@@ -69,8 +70,8 @@ def get_data_processing_tasks(task_id: int | None):
 
 
 @blueprint.route("/invoke", methods=["POST"])
-@auth_required("Invoke", "Data Retrieval Task")
-def invoke_data_processing_task():
+@researcher_db_auth_required("Invoke", "Data Retrieval Task")
+def invoke_data_processing_task(email=None):
     """
     Manually invoke a data processing task.
 
