@@ -77,3 +77,41 @@ def researcher_auth_required(f):
             return make_response({"msg": f"Invalid token."}, 401)
 
     return decorated
+
+
+def researcher_db_auth_required(action, resource=None):
+    """
+    Verifies Cognito tokens (via researcher_auth_required) and then checks 
+    the old DB-based permissions for the given action/resource.
+    """
+    def decorator(f):
+        @researcher_auth_required
+        def wrapper(*args, email=None, **kwargs):
+            # Fetch the Account for the verified email
+            account = db.session.query(Account)\
+                .filter_by(email=email, is_archived=False)\
+                .first()
+            if not account:
+                return make_response({"msg": "User account not found."}, 404)
+
+            # Just like in auth_required, gather app_id / study_id
+            # from request.args or request.json (adjust as needed)
+            data = request.args or request.json or {}
+            app_id = data.get("app")
+            study_id = data.get("study")
+            # If resource was not passed, we might read resource from the request
+            this_resource = resource or data.get("resource")
+
+            # Check if user has needed permissions
+            try:
+                permissions = account.get_permissions(app_id, study_id)
+                account.validate_ask(action, this_resource, permissions)
+
+            except ValueError:
+                # The user doesn't have permission
+                return make_response({"msg": "Unauthorized"}, 403)
+
+            # If everything is okay, call the original endpoint
+            return f(*args, **kwargs)
+        return wrapper
+    return decorator
