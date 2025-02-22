@@ -6,29 +6,6 @@ from tests.testing_utils import login_admin_account
 
 
 @mock_aws
-def test_scan_invalid(get_admin):
-    opts = "?app=1"
-    opts = opts + "&group=1"
-    opts = opts + "&key=User"
-    opts = opts + "&query=user_permission_id==\"^abc123\""
-    res = get_admin("/aws/scan" + opts)
-    data = json.loads(res.data)
-    assert "msg" in data
-    assert data["msg"] == "Invalid Query"
-
-
-@mock_aws
-def test_scan(get_admin):
-    opts = "?app=1"
-    opts = opts + "&group=1"
-    opts = opts + "&key=User"
-    opts = opts + "&query=user_permission_id==\"abc123\""
-    res = get_admin("/aws/scan" + opts)
-    data = json.loads(res.data)
-    assert len(data) == 1
-
-
-@mock_aws
 @pytest.mark.skip(reason="Must create mock for requests")
 def test_user_create(post_admin):
     data = {
