@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { makeRequest } from "../utils";
 import { ResponseBody } from "../interfaces";
 import TextField from "../components/fields/textField";
@@ -183,7 +183,7 @@ const LoginPage: React.FC = () => {
         <div className="hidden sm:flex items-center mr-12 xl:mr-20">
           <img className="shadow-xl w-[10rem] xl:w-[12rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
         </div>
-        <div className="flex flex-grow items-center justify-center bg-white mx-[auto] max-w-[24rem] sm:max-w-[64rem]">
+        <div className="relative flex flex-col justify-center bg-white mx-[auto] min-w-[24rem]">
           <div className="flex flex-col mx-8 xl:mx-16">
             <div className="flex justify-center mb-8 sm:hidden">
               <div className="p-4 bg-extra-light rounded-xl shadow-lg">
@@ -207,6 +207,16 @@ const LoginPage: React.FC = () => {
               {flashMessages.map((fm) => fm.element)}
             </div>
             {firstLogin ? setPasswordFields : loginFields}
+          </div>
+          <div className="absolute bottom-0 w-full flex flex-col items-center pb-24">
+          <div className="mb-4">
+            <Link className="link" to={{ pathname: "/terms-of-use" }}>Terms of Use</Link>
+            <span>&nbsp;&nbsp;|&nbsp;&nbsp;</span>
+            <Link className="link" to={{ pathname: "/privacy-policy" }}>Privacy Policy</Link>
+          </div>
+          <div className="text-xs text-center">
+            Copyright © 2025<br />the Trustees of the University of Pennsylvania
+          </div>
           </div>
         </div>
       </div>
