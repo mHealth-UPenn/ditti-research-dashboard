@@ -4,6 +4,7 @@ antlr4-python3-runtime==4.13.1
 APScheduler==3.10.4
 argcomplete==3.4.0
 attrs==23.2.0
+Authlib==1.4.1
 aws-sam-translator==1.89.0
 aws-xray-sdk==2.14.0
 bcrypt==4.1.3
