@@ -1,78 +1,110 @@
 from functools import wraps
 import logging
 from flask import make_response, request
-from jwt import ExpiredSignatureError, InvalidTokenError
-from sqlalchemy import select, func
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
-from aws_portal.utils.cognito.service import get_participant_service
+from aws_portal.utils.cognito.participant.auth_utils import init_oauth_client, validate_access_token, parse_and_validate_id_token
 
 logger = logging.getLogger(__name__)
 
 
 def participant_auth_required(f):
+    """
+    Decorator to authenticate participants using Cognito tokens.
+
+    This decorator:
+    1. Validates the access and ID tokens from cookies
+    2. Refreshes tokens if expired
+    3. Extracts the participant's ditti_id from the database
+    4. Passes the ditti_id to the decorated function
+
+    Args:
+        f: The function to decorate
+
+    Returns:
+        The decorated function with added authentication
+    """
     @wraps(f)
     def decorated(*args, **kwargs):
-        service = get_participant_service()
+        # Initialize OAuth client if needed
+        init_oauth_client()
+
+        # Get tokens from cookies
         id_token = request.cookies.get("id_token")
         access_token = request.cookies.get("access_token")
         refresh_token = request.cookies.get("refresh_token")
 
+        # Check if required tokens exist
         if not id_token or not access_token:
+            logger.warning("Missing required authentication tokens")
             return make_response({"msg": "Missing authentication tokens."}, 401)
 
-        # Verify access token and handle token refresh if expired
+        # Validate access token and refresh if needed
+        success, result = validate_access_token(access_token, refresh_token)
+
+        if not success:
+            logger.warning(f"Access token validation failed: {result}")
+            return make_response({"msg": result}, 401)
+
+        # If token was refreshed, store new token for response
+        new_access_token = None
+        if isinstance(result, dict) and "new_token" in result:
+            new_access_token = result["new_token"]
+
+        # Validate ID token and get user info
         try:
-            service.verify_token(access_token, "access")
-        except ExpiredSignatureError:
-            # Attempt to refresh access token if expired
-            if not refresh_token:
-                return make_response({"msg": "Missing refresh token."}, 401)
+            # Parse ID token - we can't use a nonce for existing tokens in decorators
+            # but we'll enforce stricter validation in production
+            success, userinfo = parse_and_validate_id_token(id_token)
+
+            if not success:
+                logger.warning(f"ID token validation failed: {userinfo}")
+                return make_response({"msg": userinfo}, 401)
+
+            cognito_username = userinfo.get("cognito:username")
+
+            # Get ditti_id from database (Cognito stores ditti IDs in lowercase)
             try:
-                # Refresh the access token
-                new_access_token = service.refresh_access_token(refresh_token)
-                service.verify_token(new_access_token, "access")
-                response = make_response()
-                response.set_cookie(
-                    "access_token", new_access_token, httponly=True, secure=True)
-                access_token = new_access_token
-            except InvalidTokenError as e:
-                logger.error(f"Refresh token invalid: {str(e)}")
-                return make_response({"msg": f"Invalid token: {str(e)}"}, 401)
-            except Exception as e:
-                logger.error(f"Failed to refresh token: {str(e)}")
-                return make_response({"msg": f"Failed to refresh token."}, 401)
-        except InvalidTokenError as e:
-            logger.error(f"Invalid token: {str(e)}")
-            return make_response({"msg": f"Invalid token: {str(e)}"}, 401)
+                # Using SQLAlchemy ORM query instead of raw SQL
+                study_subject = StudySubject.query.filter(
+                    db.func.lower(
+                        StudySubject.ditti_id) == cognito_username.lower()
+                ).first()
 
-        try:
-            claims = service.verify_token(id_token, "id")
-            cognito_username = claims.get("cognito:username")
+                if not study_subject:
+                    logger.error(f"Participant {cognito_username} not found.")
+                    return make_response({"msg": "Participant not found."}, 400)
 
-            if not cognito_username:
-                return make_response({"msg": "cognito:username not found in token."}, 400)
+                ditti_id = study_subject.ditti_id
 
-            # Cognito stores ditti IDs in lowercase, so retrieve actual ditti ID from the database instead.
-            try:
-                stmt = select(StudySubject.ditti_id).where(
-                    func.lower(StudySubject.ditti_id) == cognito_username)
-                ditti_id = db.session.execute(stmt).scalar()
             except Exception as e:
                 logger.error(f"Database error: {str(e)}")
-                return make_response({"msg": f"Database error."}, 500)
+                return make_response({"msg": "Database error."}, 500)
 
-            if not ditti_id:
-                logger.error(f"Participant {cognito_username} not found.")
-                return make_response({"msg": "Participant not found."}, 400)
+            # Call the decorated function
+            response = f(*args, ditti_id=ditti_id, **kwargs)
 
-            # Pass `ditti_id` to the decorated function
-            return f(*args, ditti_id=ditti_id, **kwargs)
-        except ExpiredSignatureError as e:
-            logger.error(f"Token expired: {str(e)}")
-            return make_response({"msg": "Token expired."}, 401)
-        except InvalidTokenError as e:
-            logger.error(f"Invalid token: {str(e)}")
-            return make_response({"msg": f"Invalid token."}, 401)
+            # If we have a new access token, add it to the response
+            if new_access_token:
+                if isinstance(response, tuple):
+                    # Handle tuple responses (data, status_code)
+                    resp_obj = make_response(response[0], response[1])
+                    resp_obj.set_cookie(
+                        "access_token", new_access_token,
+                        httponly=True, secure=True, samesite="None"
+                    )
+                    return resp_obj
+                else:
+                    # Handle regular responses
+                    response.set_cookie(
+                        "access_token", new_access_token,
+                        httponly=True, secure=True, samesite="None"
+                    )
+
+            return response
+
+        except Exception as e:
+            logger.error(f"Authentication error: {str(e)}")
+            return make_response({"msg": "Authentication error."}, 401)
 
     return decorated
