@@ -2,7 +2,6 @@ from datetime import datetime, timedelta, timezone, UTC
 import json
 from logging.config import dictConfig
 import os
-import traceback
 
 from flask import Flask, Response, request
 from flask_jwt_extended.utils import create_access_token, current_user, get_jwt
@@ -13,7 +12,7 @@ from aws_portal.commands import (
     init_study_subject_click, clear_cache_click, init_lambda_task_click,
     delete_lambda_tasks_click
 )
-from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, tm
+from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, tm, oauth
 from aws_portal.views import admin, aws_requests, base, db_requests, iam, participant
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, cache
 from aws_portal.views import (
@@ -131,6 +130,7 @@ def register_extensions(app):
     jwt.init_app(app)
     migrate.init_app(app, db)
     tm.init_app(app)
+    oauth.init_app(app)
     # scheduler.init_app(app)
     # scheduler.start()
     cache.init_app(app)

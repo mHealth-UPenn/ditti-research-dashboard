@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_caching import Cache
 from html_sanitizer import Sanitizer
+from authlib.integrations.flask_client import OAuth
 
 from shared.tokens_manager import TokensManager
 
@@ -22,6 +23,7 @@ cache = Cache(config={
 })
 
 tm = TokensManager()
+oauth = OAuth()
 
 sanitizer = Sanitizer({
     "attributes": {
