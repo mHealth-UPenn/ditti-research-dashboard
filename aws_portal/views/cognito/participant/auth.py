@@ -10,11 +10,13 @@ from aws_portal.extensions import db, oauth
 from aws_portal.models import StudySubject
 from aws_portal.utils.auth import auth_required
 from aws_portal.utils.cognito.participant.auth_utils import (
-    init_oauth_client, validate_token_for_authenticated_route
+    init_oauth_client, validate_token_for_authenticated_route, ParticipantAuth
 )
+from aws_portal.utils.cognito.common import generate_code_verifier, create_code_challenge
 
 blueprint = Blueprint("participant_cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
+auth = ParticipantAuth()
 
 
 def _create_or_get_study_subject(ditti_id):
@@ -105,8 +107,11 @@ def login():
     """
     Redirect users to the Cognito login page.
 
-    This endpoint generates a secure nonce, stores it in the session,
-    and redirects to the Cognito authorization endpoint with appropriate parameters.
+    This endpoint:
+    1. Generates a secure nonce for ID token validation
+    2. Generates a secure state parameter for CSRF protection
+    3. Generates PKCE code_verifier and code_challenge for authorization code security
+    4. Redirects to the Cognito authorization endpoint with all security parameters
 
     Query Parameters:
         elevated (bool): If "true", requests additional admin scopes
@@ -120,17 +125,29 @@ def login():
     elevated = request.args.get("elevated") == "true"
     scope = "openid" + (" aws.cognito.signin.user.admin" if elevated else "")
 
-    # Generate and store nonce
+    # Generate and store nonce for ID token validation
     nonce = secrets.token_urlsafe(32)
     session["cognito_nonce"] = nonce
     session["cognito_nonce_generated"] = int(
         datetime.now(timezone.utc).timestamp())
 
-    # Redirect to Cognito authorization endpoint
+    # Generate and store state for CSRF protection
+    state = secrets.token_urlsafe(32)
+    session["cognito_state"] = state
+
+    # Generate and store PKCE code_verifier and code_challenge
+    code_verifier = generate_code_verifier()
+    code_challenge = create_code_challenge(code_verifier)
+    session["cognito_code_verifier"] = code_verifier
+
+    # Redirect to Cognito authorization endpoint with all security parameters
     return oauth.oidc.authorize_redirect(
         current_app.config["COGNITO_PARTICIPANT_REDIRECT_URI"],
         scope=scope,
-        nonce=nonce
+        nonce=nonce,
+        state=state,
+        code_challenge=code_challenge,
+        code_challenge_method="S256"
     )
 
 
@@ -140,11 +157,13 @@ def cognito_callback():
     Handle Cognito's authorization callback.
 
     This endpoint:
-    1. Exchanges the authorization code for tokens
-    2. Validates the ID token with the stored nonce
-    3. Creates or retrieves the user in the database
-    4. Sets secure cookies with the tokens
-    5. Redirects to the frontend application
+    1. Validates the state parameter to prevent CSRF attacks
+    2. Provides the code_verifier for PKCE validation
+    3. Exchanges the authorization code for tokens
+    4. Validates the ID token with the stored nonce
+    5. Creates or retrieves the user in the database
+    6. Sets secure cookies with the tokens
+    7. Redirects to the frontend application
 
     Returns:
         Redirect to frontend with tokens set in cookies, or
@@ -153,6 +172,19 @@ def cognito_callback():
     init_oauth_client()
 
     try:
+        # Validate state parameter to prevent CSRF attacks
+        state = session.pop("cognito_state", None)
+        state_in_request = request.args.get("state")
+        if not state or state != state_in_request:
+            logger.warning("Invalid state parameter in callback")
+            return make_response({"msg": "Invalid authorization state"}, 401)
+
+        # Get code_verifier for PKCE
+        code_verifier = session.pop("cognito_code_verifier", None)
+        if not code_verifier:
+            logger.warning("Missing code_verifier in session")
+            return make_response({"msg": "Authorization security error"}, 401)
+
         # Validate nonce
         nonce = session.pop("cognito_nonce", None)
         nonce_generated = session.pop("cognito_nonce_generated", 0)
@@ -164,8 +196,8 @@ def cognito_callback():
             logger.warning(f"Invalid or expired nonce. Age: {nonce_age}s")
             return make_response({"msg": "Authentication session expired"}, 401)
 
-        # Exchange code for tokens
-        token = oauth.oidc.authorize_access_token()
+        # Exchange code for tokens with PKCE code_verifier
+        token = oauth.oidc.authorize_access_token(code_verifier=code_verifier)
 
         # Parse ID token with nonce validation
         try:
