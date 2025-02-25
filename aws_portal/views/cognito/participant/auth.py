@@ -9,7 +9,9 @@ from sqlalchemy import select, func
 from aws_portal.extensions import db, oauth
 from aws_portal.models import StudySubject
 from aws_portal.utils.auth import auth_required
-from aws_portal.utils.cognito.participant.auth_utils import init_oauth_client, parse_and_validate_id_token
+from aws_portal.utils.cognito.participant.auth_utils import (
+    init_oauth_client, validate_token_for_authenticated_route
+)
 
 blueprint = Blueprint("participant_cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
@@ -28,7 +30,7 @@ def _create_or_get_study_subject(ditti_id):
             error_response: Error response object if error occurred, None otherwise
     """
     try:
-        # Check for study subject in database
+        # Check for existing study subject
         study_subject = StudySubject.query.filter_by(ditti_id=ditti_id).first()
 
         if study_subject:
@@ -38,7 +40,7 @@ def _create_or_get_study_subject(ditti_id):
                 return None, make_response({"msg": "Account is archived."}, 400)
             return study_subject, None
 
-        # If not found, create a new study subject
+        # Create new study subject
         study_subject = StudySubject(
             created_on=datetime.now(timezone.utc),
             ditti_id=ditti_id,
@@ -56,60 +58,45 @@ def _create_or_get_study_subject(ditti_id):
 
 
 def _get_cognito_logout_url():
-    """
-    Build the Cognito logout URL with appropriate parameters.
+    """Build the Cognito logout URL with appropriate parameters."""
+    domain = current_app.config["COGNITO_PARTICIPANT_DOMAIN"]
+    client_id = current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"]
+    logout_uri = current_app.config["COGNITO_PARTICIPANT_LOGOUT_URI"]
 
-    Returns:
-        str: Complete Cognito logout URL
-    """
-    base_url = f"https://{current_app.config['COGNITO_PARTICIPANT_DOMAIN']}/logout"
     params = {
-        "client_id": current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"],
-        "logout_uri": current_app.config["COGNITO_PARTICIPANT_LOGOUT_URI"],
+        "client_id": client_id,
+        "logout_uri": logout_uri,
         "response_type": "code"
     }
-    return f"{base_url}?{urlencode(params)}"
+    return f"https://{domain}/logout?{urlencode(params)}"
 
 
-def _get_ditti_id_from_token(id_token, nonce=None):
-    """
-    Extract and validate ditti_id from an ID token.
-
-    Args:
-        id_token (str): The ID token to parse
-        nonce (str): Optional nonce for token validation
-
-    Returns:
-        tuple: (ditti_id, error_response)
-            ditti_id: The extracted ditti_id if successful, None otherwise
-            error_response: Error response object if error occurred, None otherwise
-    """
-    # Use the shared function to parse and validate the token
-    success, result = parse_and_validate_id_token(id_token, nonce)
-
-    if not success:
-        # Handle the error case
-        return None, make_response({"msg": result}, 401)
-
-    # Success case - extract the cognito username
-    userinfo = result
-    cognito_username = userinfo.get("cognito:username")
-
-    # Get actual ditti_id from database (Cognito stores ditti IDs lowercase)
+def _get_ditti_id_from_token(id_token):
+    """Extract ditti_id from a validated ID token."""
     try:
+        # Validate token
+        success, userinfo = validate_token_for_authenticated_route(id_token)
+
+        if not success:
+            return None, make_response({"msg": userinfo}, 401)
+
+        # Extract cognito username
+        cognito_username = userinfo.get("cognito:username")
+
+        # Get ditti_id from database
         stmt = select(StudySubject.ditti_id).where(
-            func.lower(StudySubject.ditti_id) == cognito_username
+            func.lower(StudySubject.ditti_id) == cognito_username.lower()
         )
         ditti_id = db.session.execute(stmt).scalar()
 
         if not ditti_id:
-            logger.warning(
-                f"Participant with cognito:username {cognito_username} not found.")
+            logger.warning(f"Participant {cognito_username} not found.")
             return None, make_response({"msg": f"Participant {cognito_username} not found."}, 400)
 
         return ditti_id, None
+
     except Exception as e:
-        logger.error(f"Database error retrieving ditti_id: {str(e)}")
+        logger.error(f"Error extracting ditti_id from token: {str(e)}")
         return None, make_response({"msg": "Database error."}, 500)
 
 
@@ -133,15 +120,13 @@ def login():
     elevated = request.args.get("elevated") == "true"
     scope = "openid" + (" aws.cognito.signin.user.admin" if elevated else "")
 
-    # Generate and store a nonce for OIDC security
+    # Generate and store nonce
     nonce = secrets.token_urlsafe(32)
     session["cognito_nonce"] = nonce
-
-    # Store nonce generation time to enforce expiration
     session["cognito_nonce_generated"] = int(
         datetime.now(timezone.utc).timestamp())
 
-    # Redirect to Cognito login
+    # Redirect to Cognito authorization endpoint
     return oauth.oidc.authorize_redirect(
         current_app.config["COGNITO_PARTICIPANT_REDIRECT_URI"],
         scope=scope,
@@ -168,43 +153,41 @@ def cognito_callback():
     init_oauth_client()
 
     try:
-        # Retrieve and use nonce from session with validation
+        # Validate nonce
         nonce = session.pop("cognito_nonce", None)
         nonce_generated = session.pop("cognito_nonce_generated", 0)
 
-        # Check if nonce is missing or expired (nonces valid for max 5 minutes)
+        # Check if nonce is valid
         nonce_age = int(datetime.now(
             timezone.utc).timestamp()) - nonce_generated
-        if not nonce or nonce_age > 300:  # 5 minutes in seconds
-            logger.warning(
-                f"Invalid or expired nonce for OIDC callback. Age: {nonce_age}s")
-            return make_response({"msg": "Authentication session expired."}, 401)
+        if not nonce or nonce_age > 300:  # 5 minutes expiration
+            logger.warning(f"Invalid or expired nonce. Age: {nonce_age}s")
+            return make_response({"msg": "Authentication session expired"}, 401)
 
-        # Exchange authorization code for tokens
+        # Exchange code for tokens
         token = oauth.oidc.authorize_access_token()
 
-        # Extract and validate user information with required nonce
-        success, result = parse_and_validate_id_token(token["id_token"], nonce)
-        if not success:
-            logger.error(f"Failed to validate ID token: {result}")
-            return make_response({"msg": f"Authentication failed: {result}"}, 401)
+        # Parse ID token with nonce validation
+        try:
+            userinfo = oauth.oidc.parse_id_token(token, nonce=nonce)
+        except Exception as e:
+            logger.error(f"Failed to validate ID token: {str(e)}")
+            return make_response({"msg": f"Authentication failed: {str(e)}"}, 401)
 
-        userinfo = result
+        # Get or create study subject
         ditti_id = userinfo.get("cognito:username")
-
-        # Create or get study subject
         study_subject, error = _create_or_get_study_subject(ditti_id)
         if error:
             return error
 
-        # Set session values
+        # Set session data
         session["study_subject_id"] = study_subject.id
         session["user"] = userinfo
 
         # Create response with redirect to frontend
-        response = make_response(redirect(
-            current_app.config.get("CORS_ORIGINS", "http://localhost:3000")
-        ))
+        frontend_url = current_app.config.get(
+            "CORS_ORIGINS", "http://localhost:3000")
+        response = make_response(redirect(frontend_url))
 
         # Set tokens in secure cookies
         response.set_cookie(
@@ -226,7 +209,7 @@ def cognito_callback():
     except Exception as e:
         logger.error(f"Authentication error: {str(e)}")
         db.session.rollback()
-        return make_response({"msg": "Authentication error."}, 400)
+        return make_response({"msg": f"Authentication error: {str(e)}"}, 400)
 
 
 @blueprint.route("/logout")
@@ -248,11 +231,10 @@ def logout():
     # Clear session
     session.clear()
 
-    # Build logout URL and create response
-    logout_url = _get_cognito_logout_url()
-    response = make_response(redirect(logout_url))
+    # Create response with redirect to Cognito logout
+    response = make_response(redirect(_get_cognito_logout_url()))
 
-    # Clear cookies
+    # Clear all auth cookies
     for cookie_name in ["id_token", "access_token", "refresh_token"]:
         response.set_cookie(
             cookie_name, "", expires=0,
@@ -279,18 +261,17 @@ def check_login():
     """
     init_oauth_client()
 
-    # Check if token exists
+    # Check for ID token
     id_token = request.cookies.get("id_token")
     if not id_token:
         return make_response({"msg": "Not authenticated"}, 401)
 
-    # Get ditti_id from token - in check-login we can't use a nonce
-    # but we'll enforce stricter validation in production environments
+    # Get ditti ID from token
     ditti_id, error = _get_ditti_id_from_token(id_token)
     if error:
         return error
 
-    # Return success response with ditti_id
+    # Return success with ditti ID
     return jsonify({
         "msg": "Login successful",
         "dittiId": ditti_id
@@ -343,15 +324,18 @@ def register_participant():
     data = request.json.get("data", {})
 
     try:
+        # Extract required fields
         cognito_username = data.get("cognitoUsername")
         temporary_password = data.get("temporaryPassword")
 
+        # Validate required fields
         if not cognito_username or not temporary_password:
             return jsonify({"error": "Missing required field."}), 400
 
         # Create user in Cognito
+        user_pool_id = current_app.config["COGNITO_PARTICIPANT_USER_POOL_ID"]
         client.admin_create_user(
-            UserPoolId=current_app.config["COGNITO_PARTICIPANT_USER_POOL_ID"],
+            UserPoolId=user_pool_id,
             Username=cognito_username,
             TemporaryPassword=temporary_password,
             MessageAction="SUPPRESS"

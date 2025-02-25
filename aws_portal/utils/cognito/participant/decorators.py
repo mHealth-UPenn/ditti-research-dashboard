@@ -3,14 +3,16 @@ import logging
 from flask import make_response, request
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
-from aws_portal.utils.cognito.participant.auth_utils import init_oauth_client, validate_access_token, parse_and_validate_id_token
+from aws_portal.utils.cognito.participant.auth_utils import (
+    init_oauth_client, validate_access_token, validate_token_for_authenticated_route
+)
 
 logger = logging.getLogger(__name__)
 
 
 def participant_auth_required(f):
     """
-    Decorator to authenticate participants using Cognito tokens.
+    Decorator that authenticates participants using Cognito tokens.
 
     This decorator:
     1. Validates the access and ID tokens from cookies
@@ -22,11 +24,11 @@ def participant_auth_required(f):
         f: The function to decorate
 
     Returns:
-        The decorated function with added authentication
+        The decorated function with authentication added
     """
     @wraps(f)
     def decorated(*args, **kwargs):
-        # Initialize OAuth client if needed
+        # Initialize OAuth client
         init_oauth_client()
 
         # Get tokens from cookies
@@ -34,7 +36,7 @@ def participant_auth_required(f):
         access_token = request.cookies.get("access_token")
         refresh_token = request.cookies.get("refresh_token")
 
-        # Check if required tokens exist
+        # Validate that required tokens exist
         if not id_token or not access_token:
             logger.warning("Missing required authentication tokens")
             return make_response({"msg": "Missing authentication tokens."}, 401)
@@ -43,29 +45,36 @@ def participant_auth_required(f):
         success, result = validate_access_token(access_token, refresh_token)
 
         if not success:
+            # Handle refresh token expiration
+            if "refresh token expired" in result.lower():
+                return make_response({"msg": result, "requires_relogin": True}, 401)
+
             logger.warning(f"Access token validation failed: {result}")
             return make_response({"msg": result}, 401)
 
-        # If token was refreshed, store new token for response
+        # Store new access token if it was refreshed
         new_access_token = None
         if isinstance(result, dict) and "new_token" in result:
             new_access_token = result["new_token"]
 
-        # Validate ID token and get user info
+        # Validate ID token
         try:
-            # Parse ID token - we can't use a nonce for existing tokens in decorators
-            # but we'll enforce stricter validation in production
-            success, userinfo = parse_and_validate_id_token(id_token)
+            success, userinfo = validate_token_for_authenticated_route(
+                id_token)
 
             if not success:
+                # Handle token expiration
+                if "token expired" in userinfo.lower():
+                    return make_response({"msg": userinfo, "requires_relogin": True}, 401)
+
                 logger.warning(f"ID token validation failed: {userinfo}")
                 return make_response({"msg": userinfo}, 401)
 
-            cognito_username = userinfo.get("cognito:username")
-
-            # Get ditti_id from database (Cognito stores ditti IDs in lowercase)
+            # Get ditti_id from database
             try:
-                # Using SQLAlchemy ORM query instead of raw SQL
+                cognito_username = userinfo.get("cognito:username")
+
+                # Find study subject by ditti_id (case-insensitive)
                 study_subject = StudySubject.query.filter(
                     db.func.lower(
                         StudySubject.ditti_id) == cognito_username.lower()
@@ -84,7 +93,7 @@ def participant_auth_required(f):
             # Call the decorated function
             response = f(*args, ditti_id=ditti_id, **kwargs)
 
-            # If we have a new access token, add it to the response
+            # Add refreshed access token to response if needed
             if new_access_token:
                 if isinstance(response, tuple):
                     # Handle tuple responses (data, status_code)
