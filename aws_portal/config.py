@@ -73,6 +73,18 @@ class Default:
     #     }
     # ]
 
+    # Researcher Cognito configuration
+    COGNITO_RESEARCHER_CLIENT_ID = os.environ.get(
+        "COGNITO_RESEARCHER_CLIENT_ID")
+    COGNITO_RESEARCHER_CLIENT_SECRET = os.environ.get(
+        "COGNITO_RESEARCHER_CLIENT_SECRET")
+    COGNITO_RESEARCHER_DOMAIN = os.getenv("COGNITO_RESEARCHER_DOMAIN")
+    COGNITO_RESEARCHER_REGION = os.getenv("COGNITO_RESEARCHER_REGION")
+    COGNITO_RESEARCHER_USER_POOL_ID = os.getenv(
+        "COGNITO_RESEARCHER_USER_POOL_ID")
+    COGNITO_RESEARCHER_REDIRECT_URI = "http://localhost:5000/researcher_cognito/callback"
+    COGNITO_RESEARCHER_LOGOUT_URI = "http://localhost:3000/coordinator/login"
+
 
 class Staging(Default):
     ENV = "production"
@@ -120,6 +132,16 @@ class Production(Default):
     API_AUTHORIZE_REDIRECT = os.environ.get("API_AUTHORIZE_REDIRECT")
 
     TM_FSTRING = "{api_name}-tokens"
+
+    # Researcher Cognito Production configuration
+    COGNITO_RESEARCHER_USER_POOL_ID = os.environ.get(
+        "COGNITO_RESEARCHER_USER_POOL_ID")
+    COGNITO_RESEARCHER_REDIRECT_URI = os.environ.get(
+        "COGNITO_RESEARCHER_REDIRECT_URI")
+    COGNITO_RESEARCHER_LOGOUT_URI = os.environ.get(
+        "COGNITO_RESEARCHER_LOGOUT_URI")
+    COGNITO_RESEARCHER_DOMAIN = os.environ.get("COGNITO_RESEARCHER_DOMAIN")
+    COGNITO_RESEARCHER_REGION = os.environ.get("COGNITO_RESEARCHER_REGION")
 
 
 class Testing(Default):

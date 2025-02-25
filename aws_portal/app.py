@@ -20,6 +20,7 @@ from aws_portal.views import (
     participant, fitbit_data
 )
 from aws_portal.views.cognito.participant import auth as participant_auth
+from aws_portal.views.cognito.researcher import auth as researcher_auth
 from aws_portal.views.api import fitbit
 
 
@@ -97,6 +98,7 @@ def register_blueprints(app):
     app.register_blueprint(db_requests.blueprint)
     app.register_blueprint(iam.blueprint)
     app.register_blueprint(participant_auth.blueprint)
+    app.register_blueprint(researcher_auth.blueprint)
     app.register_blueprint(fitbit.blueprint)
     app.register_blueprint(participant.blueprint)
     app.register_blueprint(data_processing_task.blueprint)
