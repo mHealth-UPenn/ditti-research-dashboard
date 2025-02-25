@@ -1,6 +1,6 @@
 import { RefObject } from "react";
 import { useState } from "react";
-import { AccountDetails, ResponseBody, ViewProps } from "../interfaces";
+import { AccountDetails, ResponseBody } from "../interfaces";
 import TextField from "./fields/textField";
 import { makeRequest } from "../utils";
 import AsyncButton from "./buttons/asyncButton";
@@ -32,7 +32,7 @@ const AccountMenu = ({
   const [edit, setEdit] = useState(false);
   const [editPassword, setEditPassword] = useState(false);
 
-  const { iamLogout } = useAuth();
+  const { researcherLogout } = useAuth();
   const { flashMessage } = useFlashMessageContext();
 
   /**
@@ -104,12 +104,6 @@ const AccountMenu = ({
     setEdit(false);
     setEditPassword(false);
     hideMenu();
-  }
-
-  const logout = () => {
-    localStorage.removeItem("jwt");
-    // refresh the window to show the login page
-    location.reload();
   }
 
   return (
@@ -228,7 +222,7 @@ const AccountMenu = ({
           <div className="border-light border-b mb-6" />
           <div className="flex items-center justify-between">
             <span>Logout</span>
-            <Button variant="danger" size="sm" onClick={iamLogout} rounded={true}>
+            <Button variant="danger" size="sm" onClick={researcherLogout} rounded={true}>
               Logout
             </Button>
           </div>

@@ -1,54 +1,40 @@
-import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { FullLoader } from "../components/loader";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
-import "./loginPage.css";
+import { FullLoader } from "../components/loader";
 import Button from "../components/buttons/button";
 import { Link } from "react-router-dom";
+import "./loginPage.css";
 
 /**
- * ParticipantLoginPage component for Cognito authentication with database touch and loader
+ * Login page for researchers using Cognito authentication
  */
-const ParticipantLoginPage: React.FC = () => {
-  const [isElevated, setIsElevated] = useState(false);
-
-  const { cognitoLogin } = useAuth();
+const ResearcherLoginPage: React.FC = () => {
   const loadingDb = useDbStatus();
-  const location = useLocation();
+  const navigate = useNavigate();
+  
+  const {
+    isResearcherAuthenticated,
+    isResearcherLoading,
+    researcherLogin
+  } = useAuth();
 
+  /**
+   * Redirects authenticated researchers to the coordinator dashboard
+   */
   useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const elevatedParam = urlParams.get("elevated");
-    setIsElevated(elevatedParam === "true");
-  }, [location.search]);
-
-  // Enter triggers login
-  useEffect(() => {
-    if (!loadingDb) {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Enter") {
-          cognitoLogin();
-        }
-      };
-
-      window.addEventListener("keydown", handleKeyDown);
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-      };
+    if (isResearcherAuthenticated) {
+      navigate("/coordinator");
     }
-  }, [loadingDb, cognitoLogin]);
+  }, [isResearcherAuthenticated, navigate]);
 
-  // Unused because this functionality is currently disabled
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleCognitoLogin = () => {
-    if (isElevated) {
-      cognitoLogin({ elevated: true });
-    } else {
-      cognitoLogin();
-    }
-  };
+  // Show loading screen while authentication is in progress
+  if (isResearcherLoading || loadingDb) {
+    return <FullLoader loading={true} msg="Checking authentication..." />;
+  }
 
+  // The main component content
   return (
     <>
       <FullLoader
@@ -68,14 +54,14 @@ const ParticipantLoginPage: React.FC = () => {
             </div>
             <div className="mb-16">
               <p className="text-4xl">Ditti</p>
-              <p>Participant Dashboard</p>
+              <p>Researcher Dashboard</p>
             </div>
             <div className="flex flex-col xl:mx-16">
               <div className="flex justify-center">
                 <p className="mb-4 whitespace-nowrap">Continue to our secure sign in:</p>
               </div>
               <div className="flex justify-center">
-                <Button rounded={true} onClick={cognitoLogin}>Sign in</Button>
+                <Button rounded={true} onClick={researcherLogin}>Sign in</Button>
               </div>
             </div>
           </div>
@@ -90,4 +76,4 @@ const ParticipantLoginPage: React.FC = () => {
   );
 };
 
-export default ParticipantLoginPage;
+export default ResearcherLoginPage; 

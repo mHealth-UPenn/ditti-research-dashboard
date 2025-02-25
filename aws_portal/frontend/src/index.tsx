@@ -1,8 +1,8 @@
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider, Outlet, RouteObject } from "react-router-dom";
-import LoginPage from "./pages/loginPage";
 import ParticipantLoginPage from "./pages/participantLoginPage";
+import ResearcherLoginPage from "./pages/researcherLoginPage";
 import Dashboard from "./components/dashboard";
 import ParticipantDashboard from "./components/participantDashboard/participantDashboard";
 import ProtectedRoute from "./components/protectedRoute";
@@ -79,7 +79,7 @@ const router = createBrowserRouter([
       {
         path: "coordinator",
         element: (
-          <ProtectedRoute authMethod='iam'>
+          <ProtectedRoute authMethod='researcher'>
             <FlashMessageContextProvider>
               <FullLoader loading={false} msg="" />
               <Dashboard />
@@ -411,7 +411,7 @@ const router = createBrowserRouter([
       },
       {
         path: "coordinator/login",
-        element: <LoginPage />,
+        element: <ResearcherLoginPage />,
       },
       // Additional routes can be added here
     ],

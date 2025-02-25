@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Buffer } from "buffer";
 import { makeRequest } from "./utils";
 import { AuthContextType } from "./interfaces";
 
@@ -10,35 +9,16 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
  * AuthProvider component that wraps children with authentication context.
  */
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isIamAuthenticated, setIsIamAuthenticated] = useState<boolean>(false);
   const [isCognitoAuthenticated, setIsCognitoAuthenticated] = useState<boolean>(false);
+  const [isResearcherAuthenticated, setIsResearcherAuthenticated] = useState<boolean>(false);
   const [firstLogin, setFirstLogin] = useState<boolean>(false);
-  const [isIamLoading, setIsIamLoading] = useState<boolean>(true);
   const [isCognitoLoading, setIsCognitoLoading] = useState<boolean>(true);
-  const [csrfToken, setCsrfToken] = useState<string>(localStorage.getItem("csrfToken") || "");
+  const [isResearcherLoading, setIsResearcherLoading] = useState<boolean>(true);
   const [dittiId, setDittiId] = useState<string | null>(null);
+  const [accountInfo, setAccountInfo] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    /**
-     * Checks IAM authentication status on component mount.
-     */
-    const checkIamAuthStatus = async () => {
-      try {
-        const jwt = localStorage.getItem("jwt");
-        if (jwt) {
-          const res = await makeRequest("/iam/check-login", { method: "GET" });
-          setIsIamAuthenticated(res.msg === "Login successful");
-        } else {
-          setIsIamAuthenticated(false);
-        }
-      } catch {
-        setIsIamAuthenticated(false);
-      } finally {
-        setIsIamLoading(false);
-      }
-    };
-
     /**
      * Checks Cognito authentication status on component mount.
      */
@@ -56,53 +36,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     };
 
-    checkIamAuthStatus();
-    checkCognitoAuthStatus();
-  }, []);
-
-  /**
-   * Logs in the user by making a request with basic authentication.
-   * @param email - The user's email
-   * @param password - The user's password
-   */
-  const iamLogin = useCallback(async (email: string, password: string): Promise<void> => {
-    const auth = Buffer.from(`${email}:${password}`).toString("base64");
-    const headers = { Authorization: `Basic ${auth}` };
-    const opts = { method: "POST", headers };
-
-    try {
-      const res = await makeRequest("/iam/login", opts);
-      if (res.jwt) {
-        localStorage.setItem("jwt", res.jwt);
-        if (res.csrfAccessToken) {
-          setCsrfToken(res.csrfAccessToken);
-          localStorage.setItem("csrfToken", res.csrfAccessToken);
+    /**
+     * Checks Researcher Cognito authentication status on component mount.
+     */
+    const checkResearcherAuthStatus = async () => {
+      try {
+        const res = await makeRequest("/researcher_cognito/check-login", { method: "GET" });
+        if (res.msg === "Login successful") {
+          setIsResearcherAuthenticated(true);
+          setAccountInfo({
+            email: res.email,
+            firstName: res.firstName,
+            lastName: res.lastName,
+            accountId: res.accountId
+          });
         }
-        setIsIamAuthenticated(true);
-        if (res.msg === "First login") {
-          setFirstLogin(true);
-        } else {
-          setFirstLogin(false);
-          navigate("/coordinator");
-        }
+      } catch {
+        setIsResearcherAuthenticated(false);
+        setAccountInfo(null);
+      } finally {
+        setIsResearcherLoading(false);
       }
-    } catch (error) {
-      setIsIamAuthenticated(false);
-      throw error;
-    }
-  }, [navigate]);
+    };
 
-  /**
-   * Logs out the IAM user by clearing stored tokens and redirecting to login.
-   */
-  const iamLogout = useCallback((): void => {
-    localStorage.removeItem("jwt");
-    setIsIamAuthenticated(false);
-    setDittiId(null);
-
-    // Replace window location to clear any dangling processes (e.g., scheduled querying for data processing tasks)
-    window.location.href = "/coordinator/login";
-  }, [navigate]);
+    checkCognitoAuthStatus();
+    checkResearcherAuthStatus();
+  }, []);
 
   /**
    * Redirects to Cognito login page.
@@ -120,20 +79,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setDittiId(null);
   }, []);
 
+  /**
+   * Redirects to Researcher Cognito login page.
+   */
+  const researcherLogin = useCallback((): void => {
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/researcher_cognito/login`;
+  }, [navigate]);
+
+  /**
+   * Logs out the Researcher from Cognito by redirecting to the logout endpoint.
+   */
+  const researcherLogout = useCallback((): void => {
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/researcher_cognito/logout`;
+    setIsResearcherAuthenticated(false);
+    setAccountInfo(null);
+  }, [navigate]);
+
   return (
     <AuthContext.Provider
       value={{
-        isIamAuthenticated,
         isCognitoAuthenticated,
-        isIamLoading,
+        isResearcherAuthenticated,
         isCognitoLoading,
+        isResearcherLoading,
         firstLogin,
-        csrfToken,
         dittiId,
-        iamLogin,
-        iamLogout,
+        accountInfo,
         cognitoLogin,
         cognitoLogout,
+        researcherLogin,
+        researcherLogout,
         setFirstLogin,
       }}
     >

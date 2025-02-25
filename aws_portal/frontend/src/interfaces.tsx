@@ -354,30 +354,37 @@ export interface DataRetrievalTask {
 
 /**
  * Defines the authentication context structure.
- * @property isIamAuthenticated - Indicates if the user is authenticated with IAM (Identity and Access Management).
  * @property isCognitoAuthenticated - Indicates if the user is authenticated with Amazon Cognito.
- * @property isIamLoading - Indicates if the IAM authentication status is being checked.
+ * @property isResearcherAuthenticated - Indicates if the user is authenticated with Researcher Cognito.
  * @property isCognitoLoading - Indicates if the Cognito authentication status is being checked.
+ * @property isResearcherLoading - Indicates if the Researcher Cognito authentication status is being checked.
  * @property firstLogin - Indicates if it's the user's first login.
- * @property csrfToken - The CSRF token for secure requests.
- * @property iamLogin - Function to log in the user with email and password with IAM.
- * @property iamLogout - Function to log out the user with IAM.
+ * @property dittiId - The Ditti ID of the authenticated participant.
+ * @property accountInfo - Information about the authenticated researcher.
  * @property cognitoLogin - Function to log in the user specifically with Cognito authentication.
  * @property cognitoLogout - Function to log out the user from Cognito.
+ * @property researcherLogin - Function to log in the researcher with Cognito authentication.
+ * @property researcherLogout - Function to log out the researcher from Cognito.
  * @property setFirstLogin - Sets whether this is the user's first login.
  */
 export interface AuthContextType {
-  isIamAuthenticated: boolean;
   isCognitoAuthenticated: boolean;
-  isIamLoading: boolean;
+  isResearcherAuthenticated: boolean;
   isCognitoLoading: boolean;
+  isResearcherLoading: boolean;
   firstLogin: boolean;
-  csrfToken: string;
   dittiId: string | null;
-  iamLogin: (email: string, password: string) => Promise<void>;
-  iamLogout: () => void;
+  accountInfo: {
+    msg: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    accountId: string;
+  };
   cognitoLogin: (options?: { elevated: boolean }) => void;
   cognitoLogout: () => void;
+  researcherLogin: (options?: { elevated: boolean }) => void;
+  researcherLogout: () => void;
   setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
