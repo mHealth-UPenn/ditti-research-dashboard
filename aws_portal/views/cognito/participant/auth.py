@@ -14,7 +14,7 @@ from aws_portal.utils.cognito.participant.auth_utils import (
 )
 from aws_portal.utils.cognito.common import (
     generate_code_verifier, create_code_challenge, initialize_oauth_and_security_params,
-    clear_auth_cookies, set_auth_cookies, validate_security_params
+    clear_auth_cookies, set_auth_cookies, validate_security_params, get_cognito_logout_url
 )
 
 blueprint = Blueprint("participant_cognito", __name__, url_prefix="/cognito")
@@ -60,20 +60,6 @@ def _create_or_get_study_subject(ditti_id):
         logger.error(f"Database error with study subject: {str(e)}")
         db.session.rollback()
         return None, make_response({"msg": "System error. Please try again later."}, 500)
-
-
-def _get_cognito_logout_url():
-    """Build the Cognito logout URL with appropriate parameters."""
-    domain = current_app.config["COGNITO_PARTICIPANT_DOMAIN"]
-    client_id = current_app.config["COGNITO_PARTICIPANT_CLIENT_ID"]
-    logout_uri = current_app.config["COGNITO_PARTICIPANT_LOGOUT_URI"]
-
-    params = {
-        "client_id": client_id,
-        "logout_uri": logout_uri,
-        "response_type": "code"
-    }
-    return f"https://{domain}/logout?{urlencode(params)}"
 
 
 def _get_ditti_id_from_token(id_token):
@@ -256,7 +242,7 @@ def logout():
     session.clear()
 
     # Create response with redirect to Cognito logout
-    response = make_response(redirect(_get_cognito_logout_url()))
+    response = make_response(redirect(get_cognito_logout_url("participant")))
 
     # Clear all auth cookies
     return clear_auth_cookies(response)

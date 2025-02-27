@@ -10,6 +10,7 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from flask import current_app, session, make_response
 import secrets
 from datetime import datetime, timezone
+from urllib.parse import urlencode
 
 logger = logging.getLogger(__name__)
 
@@ -441,3 +442,30 @@ def validate_security_params(request_state):
         "code_verifier": code_verifier,
         "nonce": nonce
     }
+
+
+def get_cognito_logout_url(user_type):
+    """
+    Build the Cognito logout URL with appropriate parameters.
+
+    Args:
+        user_type (str): Either "participant" or "researcher"
+
+    Returns:
+        str: The Cognito logout URL
+    """
+    # Get the appropriate configuration based on user type
+    prefix = f"COGNITO_{user_type.upper()}"
+    domain = current_app.config[f"{prefix}_DOMAIN"]
+    client_id = current_app.config[f"{prefix}_CLIENT_ID"]
+    logout_uri = current_app.config[f"{prefix}_LOGOUT_URI"]
+
+    # Build the query parameters
+    params = {
+        "client_id": client_id,
+        "logout_uri": logout_uri,
+        "response_type": "code"
+    }
+
+    # Return the full logout URL
+    return f"https://{domain}/logout?{urlencode(params)}"
