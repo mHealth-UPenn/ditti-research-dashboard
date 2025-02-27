@@ -55,12 +55,12 @@ def participant_auth_required(decorated_func=None):
         if not study_subject:
             logger.warning(
                 f"No study subject found for ID: {cognito_username}")
-            return make_response({"msg": "Study subject not found"}, 404)
+            return make_response({"msg": "User profile not found"}, 404)
 
         if study_subject.is_archived:
             logger.warning(
                 f"Attempt to access with archived study subject: {cognito_username}")
-            return make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
+            return make_response({"msg": "Account unavailable. Please contact support."}, 403)
 
         # Call the decorated function with ditti_id instead of study_subject
         return decorated_func(ditti_id=study_subject.ditti_id, *args, **kwargs)

@@ -42,19 +42,19 @@ def _get_email_from_token(id_token):
         success, userinfo = validate_token_for_authenticated_route(id_token)
 
         if not success:
-            return None, make_response({"msg": userinfo}, 401)
+            return None, make_response({"msg": "Authentication failed"}, 401)
 
         # Extract email
         email = userinfo.get("email")
         if not email:
             logger.warning("No email found in ID token")
-            return None, make_response({"msg": "Invalid token content"}, 401)
+            return None, make_response({"msg": "Authentication failed"}, 401)
 
         return email, None
 
     except Exception as e:
         logger.error(f"Error extracting email from token: {str(e)}")
-        return None, make_response({"msg": "Token validation error."}, 500)
+        return None, make_response({"msg": "System error. Please try again later."}, 500)
 
 
 @blueprint.route("/login")
@@ -126,13 +126,13 @@ def cognito_callback():
         state_in_request = request.args.get("state")
         if not state or state != state_in_request:
             logger.warning("Invalid state parameter in callback")
-            return make_response({"msg": "Invalid authorization state"}, 401)
+            return make_response({"msg": "Invalid authentication request"}, 401)
 
         # Get code_verifier for PKCE
         code_verifier = session.pop("cognito_code_verifier", None)
         if not code_verifier:
             logger.warning("Missing code_verifier in session")
-            return make_response({"msg": "Authorization security error"}, 401)
+            return make_response({"msg": "Authentication request rejected"}, 401)
 
         # Validate nonce
         nonce = session.pop("cognito_nonce", None)
@@ -154,13 +154,13 @@ def cognito_callback():
             userinfo = oauth.researcher_oidc.parse_id_token(token, nonce=nonce)
         except Exception as e:
             logger.error(f"Failed to validate ID token: {str(e)}")
-            return make_response({"msg": f"Authentication failed: {str(e)}"}, 401)
+            return make_response({"msg": "Authentication failed"}, 401)
 
         # Get email from userinfo
         email = userinfo.get("email")
         if not email:
             logger.error("No email found in ID token")
-            return make_response({"msg": "Invalid token content"}, 401)
+            return make_response({"msg": "Authentication failed"}, 401)
 
         # Check if an account with this email exists, regardless of archived status
         any_account = Account.query.filter_by(email=email).first()
@@ -168,7 +168,7 @@ def cognito_callback():
         # If account exists but is archived
         if any_account and any_account.is_archived:
             logger.warning(f"Attempt to login with archived account: {email}")
-            return make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
+            return make_response({"msg": "Account unavailable. Please contact support."}, 403)
 
         # Get active account from database (not archived)
         account = get_account_from_email(email)
@@ -176,10 +176,10 @@ def cognito_callback():
             if any_account:  # This shouldn't happen given the check above, but just for defensive coding
                 logger.warning(
                     f"Attempt to login with archived account: {email}")
-                return make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
+                return make_response({"msg": "Account unavailable. Please contact support."}, 403)
             else:
                 logger.error(f"No account found for email: {email}")
-                return make_response({"msg": "Account not found"}, 401)
+                return make_response({"msg": "Invalid credentials"}, 401)
 
         # Set session data
         session["account_id"] = account.id
@@ -211,7 +211,7 @@ def cognito_callback():
     except Exception as e:
         logger.error(f"Authentication error: {str(e)}")
         db.session.rollback()
-        return make_response({"msg": f"Authentication error: {str(e)}"}, 400)
+        return make_response({"msg": "Authentication failed"}, 400)
 
 
 @blueprint.route("/logout")
@@ -267,7 +267,7 @@ def check_login():
     # Check for ID token
     id_token = request.cookies.get("id_token")
     if not id_token:
-        return make_response({"msg": "Not authenticated"}, 401)
+        return make_response({"msg": "Authentication required"}, 401)
 
     # Get email from token
     email, error = _get_email_from_token(id_token)
@@ -280,17 +280,17 @@ def check_login():
     # If account exists but is archived
     if any_account and any_account.is_archived:
         logger.warning(f"Attempt to login with archived account: {email}")
-        return make_response({"msg": "Account is archived"}, 403)
+        return make_response({"msg": "Account unavailable. Please contact support."}, 403)
 
     # Get active account from database (not archived)
     account = auth.get_account_from_email(email)
     if not account:
         if any_account:  # This shouldn't happen given the check above, but just for defensive coding
             logger.warning(f"Attempt to login with archived account: {email}")
-            return make_response({"msg": "Account is archived"}, 403)
+            return make_response({"msg": "Account unavailable. Please contact support."}, 403)
         else:
             logger.warning(f"No account found for email: {email}")
-            return make_response({"msg": "Account not found"}, 404)
+            return make_response({"msg": "User profile not found"}, 404)
 
     # Return success with account info
     return jsonify({
@@ -329,11 +329,11 @@ def upload_researchers(account):
 
     # Check if file was uploaded
     if 'file' not in request.files:
-        return jsonify({"error": "No file provided"}), 400
+        return jsonify({"msg": "Missing required information"}), 400
 
     file = request.files['file']
     if not file or file.filename == '':
-        return jsonify({"error": "No file selected"}), 400
+        return jsonify({"msg": "Missing required information"}), 400
 
     # Process CSV file
     try:
@@ -345,7 +345,7 @@ def upload_researchers(account):
         required_fields = ['email', 'given_name', 'family_name']
         for field in required_fields:
             if field not in csv_reader.fieldnames:
-                return jsonify({"error": f"CSV is missing required field: {field}"}), 400
+                return jsonify({"msg": "File format invalid. Missing required fields."}), 400
 
         # Track results
         results = {
@@ -409,10 +409,10 @@ def upload_researchers(account):
                 results["errors"].append(f"Error with {email}: {str(e)}")
 
         return jsonify({
-            "msg": "Researchers CSV processing complete",
+            "msg": "File processed successfully",
             "summary": results
         }), 200
 
     except Exception as e:
         logger.error(f"CSV processing error: {str(e)}")
-        return jsonify({"error": f"Failed to process CSV: {str(e)}"}), 500
+        return jsonify({"msg": "File processing failed"}), 500

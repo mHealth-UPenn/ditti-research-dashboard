@@ -36,7 +36,7 @@ def cognito_auth_required(validate_token_func):
 
             if not success:
                 # If validation failed, result contains error message
-                return make_response({"msg": result}, 401)
+                return make_response({"msg": "Authentication failed"}, 401)
 
             # If validation succeeded, pass the token claims in kwargs
             kwargs["token_claims"] = result

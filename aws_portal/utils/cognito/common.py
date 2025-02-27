@@ -123,7 +123,7 @@ class CognitoAuthBase:
             if not refresh_token:
                 logger.warning(
                     "Access token expired but no refresh token available")
-                return False, "Token expired and no refresh token available"
+                return False, "Session expired. Please login again."
 
             # Attempt token refresh
             try:
@@ -150,11 +150,11 @@ class CognitoAuthBase:
                     if status_code == 400 and error_body.get("error") == "invalid_grant":
                         logger.error(
                             "Refresh token has expired or been revoked")
-                        return False, "Refresh token expired - please log in again"
+                        return False, "Session expired. Please login again."
 
                     logger.error(
                         f"Failed to refresh token: HTTP {status_code} - {error_body}")
-                    return False, "Failed to refresh token"
+                    return False, "Session refresh failed. Please login again."
 
                 # Success - return new token
                 token_data = response.json()
@@ -164,11 +164,11 @@ class CognitoAuthBase:
 
             except Exception as e:
                 logger.error(f"Error refreshing token: {str(e)}")
-                return False, "Error during token refresh"
+                return False, "Session refresh failed. Please login again."
 
         except Exception as e:
             logger.error(f"Token validation error: {str(e)}")
-            return False, "Invalid token format"
+            return False, "Authentication failed"
 
     def validate_token_for_authenticated_route(self, id_token):
         """
@@ -199,7 +199,7 @@ class CognitoAuthBase:
             if unverified_claims.get("token_use") != "id":
                 logger.error(
                     f"Invalid token use: {unverified_claims.get('token_use')}")
-                return False, "Invalid token type"
+                return False, "Authentication failed"
 
             # Check issuer
             region = self.get_config("REGION")
@@ -207,20 +207,20 @@ class CognitoAuthBase:
             expected_issuer = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
             if unverified_claims.get("iss") != expected_issuer:
                 logger.error(f"Invalid issuer: {unverified_claims.get('iss')}")
-                return False, "Invalid token issuer"
+                return False, "Authentication failed"
 
             # Check audience
             expected_audience = self.get_config("CLIENT_ID")
             if unverified_claims.get("aud") != expected_audience:
                 logger.error(
                     f"Invalid audience: {unverified_claims.get('aud')}")
-                return False, "Invalid token audience"
+                return False, "Authentication failed"
 
             # Check expiration
             now = int(time.time())
             if unverified_claims.get("exp", 0) <= now:
                 logger.warning("ID token has expired")
-                return False, "Token expired"
+                return False, "Session expired. Please login again."
 
             # Manually verify signature using PyJWT instead of Authlib
             try:
@@ -231,7 +231,7 @@ class CognitoAuthBase:
                 if not jwks:
                     logger.error(
                         f"Failed to fetch JWKS: {jwks_url}")
-                    return False, "Failed to validate token: couldn't fetch keys"
+                    return False, "Authentication service unavailable"
 
                 # Find the key that matches our token's key ID
                 kid = unverified_header.get("kid")
@@ -243,7 +243,7 @@ class CognitoAuthBase:
 
                 if not key:
                     logger.error(f"No matching key found for kid: {kid}")
-                    return False, "Token validation failed: no matching key"
+                    return False, "Authentication failed"
 
                 # Get public key in PEM format for PyJWT
                 from jwt.algorithms import RSAAlgorithm
@@ -270,21 +270,21 @@ class CognitoAuthBase:
 
             except jwt.ExpiredSignatureError:
                 logger.warning("Token has expired during verification")
-                return False, "Token expired"
+                return False, "Session expired. Please login again."
             except jwt.InvalidTokenError as e:
                 logger.error(f"Invalid token during verification: {str(e)}")
-                return False, f"Invalid token: {str(e)}"
+                return False, "Authentication failed"
             except Exception as e:
                 logger.error(
                     f"Error during manual token verification: {str(e)}")
-                return False, f"Authentication error: {str(e)}"
+                return False, "Authentication failed"
 
         except ExpiredSignatureError:
             logger.warning("ID token has expired")
-            return False, "Token expired"
+            return False, "Session expired. Please login again."
         except InvalidTokenError as e:
             logger.error(f"Invalid ID token: {str(e)}")
-            return False, f"Invalid token: {str(e)}"
+            return False, "Authentication failed"
         except Exception as e:
             logger.error(f"Error validating ID token: {str(e)}")
-            return False, f"Authentication error: {str(e)}"
+            return False, "Authentication failed"

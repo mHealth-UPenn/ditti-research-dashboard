@@ -56,7 +56,7 @@ def researcher_auth_required(action=None, resource=None):
             if any_account and any_account.is_archived:
                 logger.warning(
                     f"Attempt to access with archived account: {email}")
-                return make_response({"msg": "Account is archived"}, 403)
+                return make_response({"msg": "Account unavailable. Please contact support."}, 403)
 
             # Get account from database (already filtered for non-archived)
             auth = ResearcherAuth()
@@ -64,7 +64,7 @@ def researcher_auth_required(action=None, resource=None):
             if not account:
                 # This should not happen with the above check, but just in case
                 logger.warning(f"No active account found for email: {email}")
-                return make_response({"msg": "Account not found or is archived"}, 401)
+                return make_response({"msg": "Invalid credentials"}, 401)
 
             # Call the decorated function with account instead of token_claims
             return decorated_function(account=account, *args, **kwargs)
@@ -94,7 +94,7 @@ def researcher_auth_required(action=None, resource=None):
             if any_account and any_account.is_archived:
                 logger.warning(
                     f"Attempt to access with archived account: {email}")
-                return make_response({"msg": "Account is archived"}, 403)
+                return make_response({"msg": "Account unavailable. Please contact support."}, 403)
 
             # Get account from database (already filtered for non-archived)
             auth = ResearcherAuth()
@@ -102,7 +102,7 @@ def researcher_auth_required(action=None, resource=None):
             if not account:
                 # This should not happen with the above check, but just in case
                 logger.warning(f"No active account found for email: {email}")
-                return make_response({"msg": "Account not found or is archived"}, 401)
+                return make_response({"msg": "Invalid credentials"}, 401)
 
             # Check permissions if action was provided
             if action:
@@ -125,7 +125,7 @@ def researcher_auth_required(action=None, resource=None):
                                                     study, action, resource_to_check)
                     logger.warning(
                         f"Unauthorized request from {account}: {ask}")
-                    return make_response({"msg": "Unauthorized Request"}, 403)
+                    return make_response({"msg": "Insufficient permissions"}, 403)
 
             # Call the decorated function with account
             return func(account=account, *args, **kwargs)

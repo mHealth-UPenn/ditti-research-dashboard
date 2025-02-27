@@ -39,7 +39,7 @@ def _create_or_get_study_subject(ditti_id):
             if study_subject.is_archived:
                 logger.warning(
                     f"Attempt to login with archived account: {ditti_id}")
-                return None, make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
+                return None, make_response({"msg": "Account unavailable. Please contact support."}, 403)
             return study_subject, None
 
         # Create new study subject
@@ -56,7 +56,7 @@ def _create_or_get_study_subject(ditti_id):
     except Exception as e:
         logger.error(f"Database error with study subject: {str(e)}")
         db.session.rollback()
-        return None, make_response({"msg": "Database error."}, 500)
+        return None, make_response({"msg": "System error. Please try again later."}, 500)
 
 
 def _get_cognito_logout_url():
@@ -92,7 +92,7 @@ def _get_ditti_id_from_token(id_token):
         success, userinfo = validate_token_for_authenticated_route(id_token)
 
         if not success:
-            return None, make_response({"msg": userinfo}, 401)
+            return None, make_response({"msg": "Authentication failed"}, 401)
 
         # Extract cognito username
         cognito_username = userinfo.get("cognito:username")
@@ -108,7 +108,7 @@ def _get_ditti_id_from_token(id_token):
         if any_subject and any_subject.is_archived:
             logger.warning(
                 f"Attempt to access with archived study subject: {cognito_username}")
-            return None, make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
+            return None, make_response({"msg": "Account unavailable. Please contact support."}, 403)
 
         # Get active study subject from database (not archived)
         stmt = select(StudySubject.ditti_id).where(
@@ -121,17 +121,17 @@ def _get_ditti_id_from_token(id_token):
             if any_subject:  # This shouldn't happen given the check above, but just for defensive coding
                 logger.warning(
                     f"Attempt to access with archived study subject: {cognito_username}")
-                return None, make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
+                return None, make_response({"msg": "Account unavailable. Please contact support."}, 403)
             else:
                 logger.warning(
                     f"No study subject found for ID: {cognito_username}")
-                return None, make_response({"msg": "Study subject not found"}, 404)
+                return None, make_response({"msg": "User profile not found"}, 404)
 
         return ditti_id, None
 
     except Exception as e:
         logger.error(f"Error extracting ditti_id from token: {str(e)}")
-        return None, make_response({"msg": "Database error."}, 500)
+        return None, make_response({"msg": "System error. Please try again later."}, 500)
 
 
 @blueprint.route("/login")
@@ -210,13 +210,13 @@ def cognito_callback():
         state_in_request = request.args.get("state")
         if not state or state != state_in_request:
             logger.warning("Invalid state parameter in callback")
-            return make_response({"msg": "Invalid authorization state"}, 401)
+            return make_response({"msg": "Invalid authentication request"}, 401)
 
         # Get code_verifier for PKCE
         code_verifier = session.pop("cognito_code_verifier", None)
         if not code_verifier:
             logger.warning("Missing code_verifier in session")
-            return make_response({"msg": "Authorization security error"}, 401)
+            return make_response({"msg": "Authentication request rejected"}, 401)
 
         # Validate nonce
         nonce = session.pop("cognito_nonce", None)
@@ -237,7 +237,7 @@ def cognito_callback():
             userinfo = oauth.oidc.parse_id_token(token, nonce=nonce)
         except Exception as e:
             logger.error(f"Failed to validate ID token: {str(e)}")
-            return make_response({"msg": f"Authentication failed: {str(e)}"}, 401)
+            return make_response({"msg": "Authentication failed"}, 401)
 
         # Get or create study subject
         ditti_id = userinfo.get("cognito:username")
@@ -274,7 +274,7 @@ def cognito_callback():
     except Exception as e:
         logger.error(f"Authentication error: {str(e)}")
         db.session.rollback()
-        return make_response({"msg": f"Authentication error: {str(e)}"}, 400)
+        return make_response({"msg": "Authentication failed"}, 400)
 
 
 @blueprint.route("/logout")
@@ -330,7 +330,7 @@ def check_login():
     # Check for ID token
     id_token = request.cookies.get("id_token")
     if not id_token:
-        return make_response({"msg": "Not authenticated"}, 401)
+        return make_response({"msg": "Authentication required"}, 401)
 
     # Get ditti ID from token
     ditti_id, error = _get_ditti_id_from_token(id_token)
@@ -396,7 +396,7 @@ def register_participant():
 
         # Validate required fields
         if not cognito_username or not temporary_password:
-            return jsonify({"error": "Missing required field."}), 400
+            return jsonify({"msg": "Missing required information"}), 400
 
         # Create user in Cognito
         user_pool_id = current_app.config["COGNITO_PARTICIPANT_USER_POOL_ID"]
@@ -407,12 +407,12 @@ def register_participant():
             MessageAction="SUPPRESS"
         )
 
-        return jsonify({"msg": "Participant registered successfully."}), 200
+        return jsonify({"msg": "Registration successful"}), 200
 
     except ClientError as e:
         error_code = e.response["Error"]["Code"]
         logger.error(f"Cognito registration error: {error_code}")
-        return jsonify({"msg": f"Cognito registration error."}), 500
+        return jsonify({"msg": "Registration failed. Please try again."}), 500
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
-        return jsonify({"msg": "Registration error."}), 500
+        return jsonify({"msg": "Registration failed. Please try again."}), 500
