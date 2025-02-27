@@ -1,19 +1,16 @@
 from datetime import datetime, timezone
 import logging
-from urllib.parse import urlencode
 import boto3
 from botocore.exceptions import ClientError
-from flask import Blueprint, current_app, make_response, redirect, request, session, jsonify
-import secrets
+from flask import Blueprint, current_app, make_response, redirect, request, session
 from sqlalchemy import select, func
 from aws_portal.extensions import db, oauth
 from aws_portal.models import StudySubject
-from aws_portal.utils.auth import auth_required
 from aws_portal.utils.cognito.participant.auth_utils import (
     init_oauth_client, validate_token_for_authenticated_route, ParticipantAuth
 )
 from aws_portal.utils.cognito.common import (
-    generate_code_verifier, create_code_challenge, initialize_oauth_and_security_params,
+    initialize_oauth_and_security_params,
     clear_auth_cookies, set_auth_cookies, validate_security_params, get_cognito_logout_url,
     create_error_response, create_success_response, AUTH_ERROR_MESSAGES
 )

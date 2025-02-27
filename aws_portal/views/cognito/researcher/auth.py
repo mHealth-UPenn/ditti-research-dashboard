@@ -1,23 +1,15 @@
-from datetime import datetime, timezone
 import logging
-from urllib.parse import urlencode
-import boto3
-import csv
-import io
-from botocore.exceptions import ClientError
-from flask import Blueprint, current_app, make_response, redirect, request, session, jsonify
-import secrets
+from flask import Blueprint, current_app, make_response, redirect, request, session
 from aws_portal.extensions import db, oauth
 from aws_portal.models import Account
 from aws_portal.utils.cognito.researcher.auth_utils import (
-    init_researcher_oauth_client, validate_token_for_authenticated_route, get_account_from_email, ResearcherAuth
+    init_researcher_oauth_client, validate_token_for_authenticated_route, ResearcherAuth
 )
 from aws_portal.utils.cognito.common import (
-    generate_code_verifier, create_code_challenge, initialize_oauth_and_security_params,
-    clear_auth_cookies, set_auth_cookies, validate_security_params, get_cognito_logout_url,
-    create_error_response, create_success_response, AUTH_ERROR_MESSAGES
+    initialize_oauth_and_security_params, clear_auth_cookies, set_auth_cookies,
+    validate_security_params, get_cognito_logout_url, create_error_response,
+    create_success_response, AUTH_ERROR_MESSAGES
 )
-from aws_portal.utils.cognito.researcher.decorators import researcher_auth_required
 
 blueprint = Blueprint("researcher_cognito", __name__,
                       url_prefix="/researcher_cognito")
