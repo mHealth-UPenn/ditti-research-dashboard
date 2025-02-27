@@ -178,7 +178,7 @@ class CognitoAuthBase:
             if not refresh_token:
                 logger.warning(
                     "Access token expired but no refresh token available")
-                return False, "Session expired. Please login again."
+                return False, AUTH_ERROR_MESSAGES["session_expired"]
 
             # Attempt token refresh
             try:
@@ -205,11 +205,11 @@ class CognitoAuthBase:
                     if status_code == 400 and error_body.get("error") == "invalid_grant":
                         logger.error(
                             "Refresh token has expired or been revoked")
-                        return False, "Session expired. Please login again."
+                        return False, AUTH_ERROR_MESSAGES["session_expired"]
 
                     logger.error(
                         f"Failed to refresh token: HTTP {status_code} - {error_body}")
-                    return False, "Session refresh failed. Please login again."
+                    return False, AUTH_ERROR_MESSAGES["session_expired"]
 
                 # Success - return new token
                 token_data = response.json()
@@ -219,11 +219,11 @@ class CognitoAuthBase:
 
             except Exception as e:
                 logger.error(f"Error refreshing token: {str(e)}")
-                return False, "Session refresh failed. Please login again."
+                return False, AUTH_ERROR_MESSAGES["session_expired"]
 
         except Exception as e:
             logger.error(f"Token validation error: {str(e)}")
-            return False, "Authentication failed"
+            return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
     def validate_token_for_authenticated_route(self, id_token):
         """
@@ -254,7 +254,7 @@ class CognitoAuthBase:
             if unverified_claims.get("token_use") != "id":
                 logger.error(
                     f"Invalid token use: {unverified_claims.get('token_use')}")
-                return False, "Authentication failed"
+                return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
             # Check issuer
             region = self.get_config("REGION")
@@ -262,20 +262,20 @@ class CognitoAuthBase:
             expected_issuer = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
             if unverified_claims.get("iss") != expected_issuer:
                 logger.error(f"Invalid issuer: {unverified_claims.get('iss')}")
-                return False, "Authentication failed"
+                return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
             # Check audience
             expected_audience = self.get_config("CLIENT_ID")
             if unverified_claims.get("aud") != expected_audience:
                 logger.error(
                     f"Invalid audience: {unverified_claims.get('aud')}")
-                return False, "Authentication failed"
+                return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
             # Check expiration
             now = int(time.time())
             if unverified_claims.get("exp", 0) <= now:
                 logger.warning("ID token has expired")
-                return False, "Session expired. Please login again."
+                return False, AUTH_ERROR_MESSAGES["session_expired"]
 
             # Manually verify signature using PyJWT instead of Authlib
             try:
@@ -286,7 +286,7 @@ class CognitoAuthBase:
                 if not jwks:
                     logger.error(
                         f"Failed to fetch JWKS: {jwks_url}")
-                    return False, "Authentication service unavailable"
+                    return False, AUTH_ERROR_MESSAGES["system_error"]
 
                 # Find the key that matches our token's key ID
                 kid = unverified_header.get("kid")
@@ -298,7 +298,7 @@ class CognitoAuthBase:
 
                 if not key:
                     logger.error(f"No matching key found for kid: {kid}")
-                    return False, "Authentication failed"
+                    return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
                 # Get public key in PEM format for PyJWT
                 from jwt.algorithms import RSAAlgorithm
@@ -325,24 +325,24 @@ class CognitoAuthBase:
 
             except jwt.ExpiredSignatureError:
                 logger.warning("Token has expired during verification")
-                return False, "Session expired. Please login again."
+                return False, AUTH_ERROR_MESSAGES["session_expired"]
             except jwt.InvalidTokenError as e:
                 logger.error(f"Invalid token during verification: {str(e)}")
-                return False, "Authentication failed"
+                return False, AUTH_ERROR_MESSAGES["auth_failed"]
             except Exception as e:
                 logger.error(
                     f"Error during manual token verification: {str(e)}")
-                return False, "Authentication failed"
+                return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
         except ExpiredSignatureError:
             logger.warning("ID token has expired")
-            return False, "Session expired. Please login again."
+            return False, AUTH_ERROR_MESSAGES["session_expired"]
         except InvalidTokenError as e:
             logger.error(f"Invalid ID token: {str(e)}")
-            return False, "Authentication failed"
+            return False, AUTH_ERROR_MESSAGES["auth_failed"]
         except Exception as e:
             logger.error(f"Error validating ID token: {str(e)}")
-            return False, "Authentication failed"
+            return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
 
 def clear_auth_cookies(response):
@@ -419,13 +419,21 @@ def validate_security_params(request_state):
     state = session.pop("cognito_state", None)
     if not state or state != request_state:
         logger.warning("Invalid state parameter in callback")
-        return False, make_response({"msg": "Invalid authentication request"}, 401)
+        return False, create_error_response(
+            AUTH_ERROR_MESSAGES["invalid_request"],
+            status_code=401,
+            error_code="INVALID_STATE"
+        )
 
     # Get code_verifier for PKCE
     code_verifier = session.pop("cognito_code_verifier", None)
     if not code_verifier:
         logger.warning("Missing code_verifier in session")
-        return False, make_response({"msg": "Authentication request rejected"}, 401)
+        return False, create_error_response(
+            AUTH_ERROR_MESSAGES["invalid_request"],
+            status_code=401,
+            error_code="MISSING_CODE_VERIFIER"
+        )
 
     # Validate nonce
     nonce = session.pop("cognito_nonce", None)
@@ -435,7 +443,11 @@ def validate_security_params(request_state):
     nonce_age = int(datetime.now(timezone.utc).timestamp()) - nonce_generated
     if not nonce or nonce_age > 300:  # 5 minutes expiration
         logger.warning(f"Invalid or expired nonce. Age: {nonce_age}s")
-        return False, make_response({"msg": "Authentication session expired"}, 401)
+        return False, create_error_response(
+            AUTH_ERROR_MESSAGES["session_expired"],
+            status_code=401,
+            error_code="EXPIRED_NONCE"
+        )
 
     # Return success with security parameters
     return True, {
@@ -469,3 +481,61 @@ def get_cognito_logout_url(user_type):
 
     # Return the full logout URL
     return f"https://{domain}/logout?{urlencode(params)}"
+
+
+def create_error_response(message, status_code=401, error_code=None):
+    """
+    Create a standardized error response.
+
+    Args:
+        message (str): The user-friendly error message
+        status_code (int): The HTTP status code (default: 401)
+        error_code (str, optional): An optional error code for the client
+
+    Returns:
+        Response: A Flask response with standardized error format
+    """
+    response = {
+        "msg": message
+    }
+
+    if error_code:
+        response["code"] = error_code
+
+    return make_response(response, status_code)
+
+
+def create_success_response(data=None, message="Operation successful", status_code=200):
+    """
+    Create a standardized success response.
+
+    Args:
+        data (dict, optional): The response data
+        message (str): The success message (default: "Operation successful")
+        status_code (int): The HTTP status code (default: 200)
+
+    Returns:
+        tuple: (response_dict, status_code) for Flask to convert to a JSON response
+    """
+    response = {
+        "msg": message
+    }
+
+    if data:
+        # Merge data directly into response instead of nesting it
+        response.update(data)
+
+    return response, status_code
+
+
+# Standard error messages
+AUTH_ERROR_MESSAGES = {
+    "auth_failed": "Authentication failed",
+    "auth_required": "Authentication required",
+    "invalid_request": "Invalid request parameters",
+    "session_expired": "Session expired. Please login again",
+    "account_archived": "Account unavailable. Please contact support",
+    "system_error": "System error. Please try again later",
+    "not_found": "Resource not found",
+    "invalid_credentials": "Invalid credentials"
+}

@@ -14,7 +14,8 @@ from aws_portal.utils.cognito.participant.auth_utils import (
 )
 from aws_portal.utils.cognito.common import (
     generate_code_verifier, create_code_challenge, initialize_oauth_and_security_params,
-    clear_auth_cookies, set_auth_cookies, validate_security_params, get_cognito_logout_url
+    clear_auth_cookies, set_auth_cookies, validate_security_params, get_cognito_logout_url,
+    create_error_response, create_success_response, AUTH_ERROR_MESSAGES
 )
 
 blueprint = Blueprint("participant_cognito", __name__, url_prefix="/cognito")
@@ -42,7 +43,11 @@ def _create_or_get_study_subject(ditti_id):
             if study_subject.is_archived:
                 logger.warning(
                     f"Attempt to login with archived account: {ditti_id}")
-                return None, make_response({"msg": "Account unavailable. Please contact support."}, 403)
+                return None, create_error_response(
+                    AUTH_ERROR_MESSAGES["account_archived"],
+                    status_code=403,
+                    error_code="ACCOUNT_ARCHIVED"
+                )
             return study_subject, None
 
         # Create new study subject
@@ -59,7 +64,11 @@ def _create_or_get_study_subject(ditti_id):
     except Exception as e:
         logger.error(f"Database error with study subject: {str(e)}")
         db.session.rollback()
-        return None, make_response({"msg": "System error. Please try again later."}, 500)
+        return None, create_error_response(
+            AUTH_ERROR_MESSAGES["system_error"],
+            status_code=500,
+            error_code="DATABASE_ERROR"
+        )
 
 
 def _get_ditti_id_from_token(id_token):
@@ -81,13 +90,21 @@ def _get_ditti_id_from_token(id_token):
         success, userinfo = validate_token_for_authenticated_route(id_token)
 
         if not success:
-            return None, make_response({"msg": "Authentication failed"}, 401)
+            return None, create_error_response(
+                AUTH_ERROR_MESSAGES["auth_failed"],
+                status_code=401,
+                error_code="INVALID_TOKEN"
+            )
 
         # Extract cognito username
         cognito_username = userinfo.get("cognito:username")
         if not cognito_username:
             logger.warning("No cognito:username found in token claims")
-            return None, make_response({"msg": "Authentication failed"}, 401)
+            return None, create_error_response(
+                AUTH_ERROR_MESSAGES["auth_failed"],
+                status_code=401,
+                error_code="MISSING_USERNAME"
+            )
 
         # Check if a study subject with this ID exists, regardless of archived status
         any_subject = StudySubject.query.filter_by(
@@ -97,7 +114,11 @@ def _get_ditti_id_from_token(id_token):
         if any_subject and any_subject.is_archived:
             logger.warning(
                 f"Attempt to access with archived study subject: {cognito_username}")
-            return None, make_response({"msg": "Account unavailable. Please contact support."}, 403)
+            return None, create_error_response(
+                AUTH_ERROR_MESSAGES["account_archived"],
+                status_code=403,
+                error_code="ACCOUNT_ARCHIVED"
+            )
 
         # Get active study subject from database (not archived)
         stmt = select(StudySubject.ditti_id).where(
@@ -110,17 +131,29 @@ def _get_ditti_id_from_token(id_token):
             if any_subject:  # This shouldn't happen given the check above, but just for defensive coding
                 logger.warning(
                     f"Attempt to access with archived study subject: {cognito_username}")
-                return None, make_response({"msg": "Account unavailable. Please contact support."}, 403)
+                return None, create_error_response(
+                    AUTH_ERROR_MESSAGES["account_archived"],
+                    status_code=403,
+                    error_code="ACCOUNT_ARCHIVED"
+                )
             else:
                 logger.warning(
                     f"No study subject found for ID: {cognito_username}")
-                return None, make_response({"msg": "User profile not found"}, 404)
+                return None, create_error_response(
+                    AUTH_ERROR_MESSAGES["not_found"],
+                    status_code=404,
+                    error_code="USER_NOT_FOUND"
+                )
 
         return ditti_id, None
 
     except Exception as e:
         logger.error(f"Error extracting ditti_id from token: {str(e)}")
-        return None, make_response({"msg": "System error. Please try again later."}, 500)
+        return None, create_error_response(
+            AUTH_ERROR_MESSAGES["system_error"],
+            status_code=500,
+            error_code="TOKEN_PROCESSING_ERROR"
+        )
 
 
 @blueprint.route("/login")
@@ -196,7 +229,11 @@ def cognito_callback():
             userinfo = oauth.oidc.parse_id_token(token, nonce=nonce)
         except Exception as e:
             logger.error(f"Failed to validate ID token: {str(e)}")
-            return make_response({"msg": "Authentication failed"}, 401)
+            return create_error_response(
+                AUTH_ERROR_MESSAGES["auth_failed"],
+                status_code=401,
+                error_code="TOKEN_VALIDATION_FAILED"
+            )
 
         # Get or create study subject
         ditti_id = userinfo.get("cognito:username")
@@ -219,7 +256,11 @@ def cognito_callback():
     except Exception as e:
         logger.error(f"Authentication error: {str(e)}")
         db.session.rollback()
-        return make_response({"msg": "Authentication failed"}, 400)
+        return create_error_response(
+            AUTH_ERROR_MESSAGES["auth_failed"],
+            status_code=400,
+            error_code="AUTHENTICATION_ERROR"
+        )
 
 
 @blueprint.route("/logout")
@@ -269,7 +310,11 @@ def check_login():
     # Check for ID token
     id_token = request.cookies.get("id_token")
     if not id_token:
-        return make_response({"msg": "Authentication required"}, 401)
+        return create_error_response(
+            AUTH_ERROR_MESSAGES["auth_required"],
+            status_code=401,
+            error_code="NO_TOKEN"
+        )
 
     # Get ditti ID from token
     ditti_id, error = _get_ditti_id_from_token(id_token)
@@ -277,10 +322,12 @@ def check_login():
         return error
 
     # Return success with ditti ID
-    return jsonify({
-        "msg": "Login successful",
-        "dittiId": ditti_id
-    }), 200
+    return create_success_response(
+        data={
+            "dittiId": ditti_id,
+            "msg": "Login successful"
+        }
+    )
 
 
 @blueprint.route("/register/participant", methods=["POST"])
@@ -305,25 +352,9 @@ def register_participant():
 
     Returns:
         Response: A JSON response with one of the following:
-            - 201 Created: Participant registered successfully.
+            - 200 OK: Participant registered successfully.
             - 400 Bad Request: Missing required fields.
             - 500 Internal Server Error: AWS Cognito or other server-side errors.
-
-    Example:
-        POST /cognito/register/participant
-        {
-            "app": 2,
-            "study": 1,
-            "data": {
-                "cognitoUsername": "testuser",
-                "temporaryPassword": "TempPass123!"
-            }
-        }
-
-    Response (201):
-        {
-            "msg": "Participant registered with AWS Cognito successfully."
-        }
     """
     client = boto3.client("cognito-idp")
     data = request.json.get("data", {})
@@ -335,7 +366,11 @@ def register_participant():
 
         # Validate required fields
         if not cognito_username or not temporary_password:
-            return jsonify({"msg": "Missing required information"}), 400
+            return create_error_response(
+                "Missing required information",
+                status_code=400,
+                error_code="MISSING_FIELDS"
+            )
 
         # Create user in Cognito
         user_pool_id = current_app.config["COGNITO_PARTICIPANT_USER_POOL_ID"]
@@ -346,12 +381,25 @@ def register_participant():
             MessageAction="SUPPRESS"
         )
 
-        return jsonify({"msg": "Registration successful"}), 200
+        return create_success_response(
+            data={
+                "username": cognito_username,
+                "msg": "Registration successful"
+            }
+        )
 
     except ClientError as e:
         error_code = e.response["Error"]["Code"]
         logger.error(f"Cognito registration error: {error_code}")
-        return jsonify({"msg": "Registration failed. Please try again."}), 500
+        return create_error_response(
+            "Registration failed. Please try again.",
+            status_code=500,
+            error_code=f"COGNITO_ERROR_{error_code}"
+        )
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
-        return jsonify({"msg": "Registration failed. Please try again."}), 500
+        return create_error_response(
+            "Registration failed. Please try again.",
+            status_code=500,
+            error_code="REGISTRATION_ERROR"
+        )

@@ -14,7 +14,8 @@ from aws_portal.utils.cognito.researcher.auth_utils import (
 )
 from aws_portal.utils.cognito.common import (
     generate_code_verifier, create_code_challenge, initialize_oauth_and_security_params,
-    clear_auth_cookies, set_auth_cookies, validate_security_params, get_cognito_logout_url
+    clear_auth_cookies, set_auth_cookies, validate_security_params, get_cognito_logout_url,
+    create_error_response, create_success_response, AUTH_ERROR_MESSAGES
 )
 from aws_portal.utils.cognito.researcher.decorators import researcher_auth_required
 
@@ -43,13 +44,21 @@ def _get_account_from_token(id_token):
         success, userinfo = validate_token_for_authenticated_route(id_token)
 
         if not success:
-            return None, make_response({"msg": "Authentication failed"}, 401)
+            return None, create_error_response(
+                AUTH_ERROR_MESSAGES["auth_failed"],
+                status_code=401,
+                error_code="INVALID_TOKEN"
+            )
 
         # Extract email
         email = userinfo.get("email")
         if not email:
             logger.warning("No email found in ID token")
-            return None, make_response({"msg": "Authentication failed"}, 401)
+            return None, create_error_response(
+                AUTH_ERROR_MESSAGES["auth_failed"],
+                status_code=401,
+                error_code="MISSING_EMAIL"
+            )
 
         # Check if an account with this email exists, regardless of archived status
         any_account = Account.query.filter_by(email=email).first()
@@ -57,7 +66,11 @@ def _get_account_from_token(id_token):
         # If account exists but is archived
         if any_account and any_account.is_archived:
             logger.warning(f"Attempt to access with archived account: {email}")
-            return None, make_response({"msg": "Account unavailable. Please contact support."}, 403)
+            return None, create_error_response(
+                AUTH_ERROR_MESSAGES["account_archived"],
+                status_code=403,
+                error_code="ACCOUNT_ARCHIVED"
+            )
 
         # Get active account from database (not archived)
         account = auth.get_account_from_email(email)
@@ -65,16 +78,28 @@ def _get_account_from_token(id_token):
             if any_account:  # This shouldn't happen given the check above, but just for defensive coding
                 logger.warning(
                     f"Attempt to access with archived account: {email}")
-                return None, make_response({"msg": "Account unavailable. Please contact support."}, 403)
+                return None, create_error_response(
+                    AUTH_ERROR_MESSAGES["account_archived"],
+                    status_code=403,
+                    error_code="ACCOUNT_ARCHIVED"
+                )
             else:
                 logger.warning(f"No account found for email: {email}")
-                return None, make_response({"msg": "Invalid credentials"}, 401)
+                return None, create_error_response(
+                    AUTH_ERROR_MESSAGES["invalid_credentials"],
+                    status_code=401,
+                    error_code="ACCOUNT_NOT_FOUND"
+                )
 
         return account, None
 
     except Exception as e:
         logger.error(f"Error retrieving account from token: {str(e)}")
-        return None, make_response({"msg": "System error. Please try again later."}, 500)
+        return None, create_error_response(
+            AUTH_ERROR_MESSAGES["system_error"],
+            status_code=500,
+            error_code="TOKEN_PROCESSING_ERROR"
+        )
 
 
 @blueprint.route("/login")
@@ -144,7 +169,11 @@ def cognito_callback():
             userinfo = oauth.researcher_oidc.parse_id_token(token, nonce=nonce)
         except Exception as e:
             logger.error(f"Failed to validate ID token: {str(e)}")
-            return make_response({"msg": "Authentication failed"}, 401)
+            return create_error_response(
+                AUTH_ERROR_MESSAGES["auth_failed"],
+                status_code=401,
+                error_code="TOKEN_VALIDATION_FAILED"
+            )
 
         # Extract account using ID token (which includes validation and archive checks)
         account, error = _get_account_from_token(token["id_token"])
@@ -167,7 +196,11 @@ def cognito_callback():
     except Exception as e:
         logger.error(f"Authentication error: {str(e)}")
         db.session.rollback()
-        return make_response({"msg": "Authentication failed"}, 400)
+        return create_error_response(
+            AUTH_ERROR_MESSAGES["auth_failed"],
+            status_code=400,
+            error_code="AUTHENTICATION_ERROR"
+        )
 
 
 @blueprint.route("/logout")
@@ -216,7 +249,11 @@ def check_login():
     # Check for ID token
     id_token = request.cookies.get("id_token")
     if not id_token:
-        return make_response({"msg": "Authentication required"}, 401)
+        return create_error_response(
+            AUTH_ERROR_MESSAGES["auth_required"],
+            status_code=401,
+            error_code="NO_TOKEN"
+        )
 
     # Get account from token
     account, error = _get_account_from_token(id_token)
@@ -224,13 +261,15 @@ def check_login():
         return error
 
     # Return success with account info
-    return jsonify({
-        "msg": "Login successful",
-        "email": account.email,
-        "firstName": account.first_name,
-        "lastName": account.last_name,
-        "accountId": account.id
-    }), 200
+    return create_success_response(
+        data={
+            "email": account.email,
+            "firstName": account.first_name,
+            "lastName": account.last_name,
+            "accountId": account.id,
+            "msg": "Login successful"
+        }
+    )
 
 
 @blueprint.route("/upload-researchers", methods=["POST"])
@@ -260,11 +299,19 @@ def upload_researchers(account):
 
     # Check if file was uploaded
     if 'file' not in request.files:
-        return jsonify({"msg": "Missing required information"}), 400
+        return create_error_response(
+            "Missing required information",
+            status_code=400,
+            error_code="MISSING_FILE"
+        )
 
     file = request.files['file']
     if not file or file.filename == '':
-        return jsonify({"msg": "Missing required information"}), 400
+        return create_error_response(
+            "Missing required information",
+            status_code=400,
+            error_code="EMPTY_FILE"
+        )
 
     # Process CSV file
     try:
@@ -276,7 +323,11 @@ def upload_researchers(account):
         required_fields = ['email', 'given_name', 'family_name']
         for field in required_fields:
             if field not in csv_reader.fieldnames:
-                return jsonify({"msg": "File format invalid. Missing required fields."}), 400
+                return create_error_response(
+                    "File format invalid. Missing required fields.",
+                    status_code=400,
+                    error_code="INVALID_CSV_FORMAT"
+                )
 
         # Track results
         results = {
@@ -339,11 +390,17 @@ def upload_researchers(account):
                 results["failed"] += 1
                 results["errors"].append(f"Error with {email}: {str(e)}")
 
-        return jsonify({
-            "msg": "File processed successfully",
-            "summary": results
-        }), 200
+        return create_success_response(
+            data={
+                "summary": results,
+                "msg": "File processed successfully"
+            }
+        )
 
     except Exception as e:
         logger.error(f"CSV processing error: {str(e)}")
-        return jsonify({"msg": "File processing failed"}), 500
+        return create_error_response(
+            "File processing failed",
+            status_code=500,
+            error_code="CSV_PROCESSING_ERROR"
+        )
