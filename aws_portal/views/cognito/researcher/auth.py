@@ -35,8 +35,20 @@ def _get_cognito_logout_url():
     return f"https://{domain}/logout?{urlencode(params)}"
 
 
-def _get_email_from_token(id_token):
-    """Extract email from a validated ID token."""
+def _get_account_from_token(id_token):
+    """
+    Extract account from a validated ID token.
+
+    Validates the token and ensures the account exists and is not archived.
+
+    Args:
+        id_token (str): The ID token to validate
+
+    Returns:
+        tuple: (account, error_response)
+            account: The researcher's Account object if valid, None otherwise
+            error_response: Error response object if error occurred, None otherwise
+    """
     try:
         # Validate token
         success, userinfo = validate_token_for_authenticated_route(id_token)
@@ -50,10 +62,29 @@ def _get_email_from_token(id_token):
             logger.warning("No email found in ID token")
             return None, make_response({"msg": "Authentication failed"}, 401)
 
-        return email, None
+        # Check if an account with this email exists, regardless of archived status
+        any_account = Account.query.filter_by(email=email).first()
+
+        # If account exists but is archived
+        if any_account and any_account.is_archived:
+            logger.warning(f"Attempt to access with archived account: {email}")
+            return None, make_response({"msg": "Account unavailable. Please contact support."}, 403)
+
+        # Get active account from database (not archived)
+        account = auth.get_account_from_email(email)
+        if not account:
+            if any_account:  # This shouldn't happen given the check above, but just for defensive coding
+                logger.warning(
+                    f"Attempt to access with archived account: {email}")
+                return None, make_response({"msg": "Account unavailable. Please contact support."}, 403)
+            else:
+                logger.warning(f"No account found for email: {email}")
+                return None, make_response({"msg": "Invalid credentials"}, 401)
+
+        return account, None
 
     except Exception as e:
-        logger.error(f"Error extracting email from token: {str(e)}")
+        logger.error(f"Error retrieving account from token: {str(e)}")
         return None, make_response({"msg": "System error. Please try again later."}, 500)
 
 
@@ -156,30 +187,10 @@ def cognito_callback():
             logger.error(f"Failed to validate ID token: {str(e)}")
             return make_response({"msg": "Authentication failed"}, 401)
 
-        # Get email from userinfo
-        email = userinfo.get("email")
-        if not email:
-            logger.error("No email found in ID token")
-            return make_response({"msg": "Authentication failed"}, 401)
-
-        # Check if an account with this email exists, regardless of archived status
-        any_account = Account.query.filter_by(email=email).first()
-
-        # If account exists but is archived
-        if any_account and any_account.is_archived:
-            logger.warning(f"Attempt to login with archived account: {email}")
-            return make_response({"msg": "Account unavailable. Please contact support."}, 403)
-
-        # Get active account from database (not archived)
-        account = get_account_from_email(email)
-        if not account:
-            if any_account:  # This shouldn't happen given the check above, but just for defensive coding
-                logger.warning(
-                    f"Attempt to login with archived account: {email}")
-                return make_response({"msg": "Account unavailable. Please contact support."}, 403)
-            else:
-                logger.error(f"No account found for email: {email}")
-                return make_response({"msg": "Invalid credentials"}, 401)
+        # Extract account using ID token (which includes validation and archive checks)
+        account, error = _get_account_from_token(token["id_token"])
+        if error:
+            return error
 
         # Set session data
         session["account_id"] = account.id
@@ -270,27 +281,9 @@ def check_login():
         return make_response({"msg": "Authentication required"}, 401)
 
     # Get email from token
-    email, error = _get_email_from_token(id_token)
+    account, error = _get_account_from_token(id_token)
     if error:
         return error
-
-    # Check if an account with this email exists, regardless of archived status
-    any_account = Account.query.filter_by(email=email).first()
-
-    # If account exists but is archived
-    if any_account and any_account.is_archived:
-        logger.warning(f"Attempt to login with archived account: {email}")
-        return make_response({"msg": "Account unavailable. Please contact support."}, 403)
-
-    # Get active account from database (not archived)
-    account = auth.get_account_from_email(email)
-    if not account:
-        if any_account:  # This shouldn't happen given the check above, but just for defensive coding
-            logger.warning(f"Attempt to login with archived account: {email}")
-            return make_response({"msg": "Account unavailable. Please contact support."}, 403)
-        else:
-            logger.warning(f"No account found for email: {email}")
-            return make_response({"msg": "User profile not found"}, 404)
 
     # Return success with account info
     return jsonify({
