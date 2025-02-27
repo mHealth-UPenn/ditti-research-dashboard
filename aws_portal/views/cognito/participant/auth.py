@@ -39,7 +39,7 @@ def _create_or_get_study_subject(ditti_id):
             if study_subject.is_archived:
                 logger.warning(
                     f"Attempt to login with archived account: {ditti_id}")
-                return None, make_response({"msg": "Account is archived."}, 400)
+                return None, make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
             return study_subject, None
 
         # Create new study subject
@@ -74,7 +74,19 @@ def _get_cognito_logout_url():
 
 
 def _get_ditti_id_from_token(id_token):
-    """Extract ditti_id from a validated ID token."""
+    """
+    Extract ditti_id from a validated ID token.
+
+    Validates the token and ensures the study subject exists and is not archived.
+
+    Args:
+        id_token (str): The ID token to validate
+
+    Returns:
+        tuple: (ditti_id, error_response)
+            ditti_id: The study subject's ditti_id if valid, None otherwise
+            error_response: Error response object if error occurred, None otherwise
+    """
     try:
         # Validate token
         success, userinfo = validate_token_for_authenticated_route(id_token)
@@ -84,16 +96,36 @@ def _get_ditti_id_from_token(id_token):
 
         # Extract cognito username
         cognito_username = userinfo.get("cognito:username")
+        if not cognito_username:
+            logger.warning("No cognito:username found in token claims")
+            return None, make_response({"msg": "Authentication failed"}, 401)
 
-        # Get ditti_id from database
+        # Check if a study subject with this ID exists, regardless of archived status
+        any_subject = StudySubject.query.filter_by(
+            ditti_id=cognito_username).first()
+
+        # If study subject exists but is archived
+        if any_subject and any_subject.is_archived:
+            logger.warning(
+                f"Attempt to access with archived study subject: {cognito_username}")
+            return None, make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
+
+        # Get active study subject from database (not archived)
         stmt = select(StudySubject.ditti_id).where(
-            func.lower(StudySubject.ditti_id) == cognito_username.lower()
+            func.lower(StudySubject.ditti_id) == cognito_username.lower(),
+            StudySubject.is_archived == False
         )
         ditti_id = db.session.execute(stmt).scalar()
 
         if not ditti_id:
-            logger.warning(f"Participant {cognito_username} not found.")
-            return None, make_response({"msg": f"Participant {cognito_username} not found."}, 400)
+            if any_subject:  # This shouldn't happen given the check above, but just for defensive coding
+                logger.warning(
+                    f"Attempt to access with archived study subject: {cognito_username}")
+                return None, make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
+            else:
+                logger.warning(
+                    f"No study subject found for ID: {cognito_username}")
+                return None, make_response({"msg": "Study subject not found"}, 404)
 
         return ditti_id, None
 
@@ -168,6 +200,7 @@ def cognito_callback():
     Returns:
         Redirect to frontend with tokens set in cookies, or
         400 Bad Request on authentication errors
+        403 Forbidden if study subject is archived
     """
     init_oauth_client()
 
@@ -289,7 +322,8 @@ def check_login():
     Returns:
         200 OK with ditti_id on success
         401 Unauthorized if not authenticated or token invalid
-        400 Bad Request if user not found
+        403 Forbidden if study subject is archived
+        404 Not Found if study subject not found
     """
     init_oauth_client()
 

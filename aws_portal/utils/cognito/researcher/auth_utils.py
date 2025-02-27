@@ -29,11 +29,22 @@ class ResearcherAuth(CognitoAuthBase):
         }
 
     def get_account_from_email(self, email):
-        """Get Account object from email address."""
+        """
+        Get Account object from email address.
+
+        Args:
+            email (str): The email address to search for
+
+        Returns:
+            Account or None: The matching non-archived account or None if not found
+
+        Note:
+            Only returns accounts that are not archived
+        """
         if not email:
             return None
 
-        return Account.query.filter_by(email=email).first()
+        return Account.query.filter_by(email=email, is_archived=False).first()
 
 
 def init_researcher_oauth_client():
@@ -89,7 +100,7 @@ def get_account_from_email(email):
         email (str): Email address to look up
 
     Returns:
-        Account or None: The matching Account object or None if not found
+        Account or None: The matching non-archived Account object or None if not found
     """
     auth = ResearcherAuth()
     return auth.get_account_from_email(email)

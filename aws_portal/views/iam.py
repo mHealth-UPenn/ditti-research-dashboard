@@ -7,6 +7,7 @@ from flask_jwt_extended import (
 from aws_portal.extensions import db
 from aws_portal.models import Account, BlockedToken
 from aws_portal.utils.auth import validate_password
+from aws_portal.utils.cognito.researcher.decorators import researcher_auth_required
 
 blueprint = Blueprint("iam", __name__, url_prefix="/iam")
 
@@ -159,8 +160,8 @@ def set_password():
 
 
 @blueprint.route("/get-access")
-@jwt_required()
-def get_access():  # TODO: write unit test
+@researcher_auth_required
+def get_access(account):
     """
     Check whether the user has permissions for an action and resource for a
     given app and study
@@ -184,11 +185,10 @@ def get_access():  # TODO: write unit test
     study_id = request.args.get("study")
     action = request.args.get("action")
     resource = request.args.get("resource")
-    permissions = current_user.get_permissions(app_id, study_id)
+    permissions = account.get_permissions(app_id, study_id)
 
     try:
-        current_user.validate_ask(action, resource, permissions)
-
+        account.validate_ask(action, resource, permissions)
     except ValueError:
         msg = "Unauthorized"
 

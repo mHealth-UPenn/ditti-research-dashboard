@@ -21,6 +21,7 @@ def participant_auth_required(decorated_func=None):
     1. Validates the token using the base cognito_auth_required decorator
     2. Gets the study_subject from the database based on the token claims
     3. Passes the ditti_id to the decorated function
+    4. Ensures archived study subjects cannot authenticate
 
     Args:
         decorated_func (function, optional): The function to decorate. If None, returns a decorator.
@@ -59,7 +60,7 @@ def participant_auth_required(decorated_func=None):
         if study_subject.is_archived:
             logger.warning(
                 f"Attempt to access with archived study subject: {cognito_username}")
-            return make_response({"msg": "Study subject is archived"}, 403)
+            return make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
 
         # Call the decorated function with ditti_id instead of study_subject
         return decorated_func(ditti_id=study_subject.ditti_id, *args, **kwargs)

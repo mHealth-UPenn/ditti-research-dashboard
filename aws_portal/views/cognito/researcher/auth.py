@@ -116,6 +116,7 @@ def cognito_callback():
     Returns:
         Redirect to frontend with tokens set in cookies, or
         400 Bad Request on authentication errors
+        403 Forbidden if account is archived
     """
     init_researcher_oauth_client()
 
@@ -161,11 +162,24 @@ def cognito_callback():
             logger.error("No email found in ID token")
             return make_response({"msg": "Invalid token content"}, 401)
 
-        # Get account from database
+        # Check if an account with this email exists, regardless of archived status
+        any_account = Account.query.filter_by(email=email).first()
+
+        # If account exists but is archived
+        if any_account and any_account.is_archived:
+            logger.warning(f"Attempt to login with archived account: {email}")
+            return make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
+
+        # Get active account from database (not archived)
         account = get_account_from_email(email)
         if not account:
-            logger.error(f"No account found for email: {email}")
-            return make_response({"msg": "Account not found"}, 401)
+            if any_account:  # This shouldn't happen given the check above, but just for defensive coding
+                logger.warning(
+                    f"Attempt to login with archived account: {email}")
+                return make_response({"msg": "Account is archived. Please contact an administrator."}, 403)
+            else:
+                logger.error(f"No account found for email: {email}")
+                return make_response({"msg": "Account not found"}, 401)
 
         # Set session data
         session["account_id"] = account.id
@@ -245,7 +259,8 @@ def check_login():
     Returns:
         200 OK with account info on success
         401 Unauthorized if not authenticated or token invalid
-        400 Bad Request if user not found
+        403 Forbidden if account is archived
+        404 Not Found if account doesn't exist
     """
     init_researcher_oauth_client()
 
@@ -259,10 +274,23 @@ def check_login():
     if error:
         return error
 
-    # Get account from database
+    # Check if an account with this email exists, regardless of archived status
+    any_account = Account.query.filter_by(email=email).first()
+
+    # If account exists but is archived
+    if any_account and any_account.is_archived:
+        logger.warning(f"Attempt to login with archived account: {email}")
+        return make_response({"msg": "Account is archived"}, 403)
+
+    # Get active account from database (not archived)
     account = auth.get_account_from_email(email)
     if not account:
-        return make_response({"msg": "Account not found"}, 401)
+        if any_account:  # This shouldn't happen given the check above, but just for defensive coding
+            logger.warning(f"Attempt to login with archived account: {email}")
+            return make_response({"msg": "Account is archived"}, 403)
+        else:
+            logger.warning(f"No account found for email: {email}")
+            return make_response({"msg": "Account not found"}, 404)
 
     # Return success with account info
     return jsonify({

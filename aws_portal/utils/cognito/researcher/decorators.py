@@ -22,6 +22,7 @@ def researcher_auth_required(action=None, resource=None):
     1. Validates the token using the base cognito_auth_required decorator
     2. If action/resource are specified, also checks the researcher's permissions
     3. Passes the account to the decorated function instead of token_claims
+    4. Ensures archived accounts cannot authenticate
 
     Args:
         action (str, optional): The action to check permissions for
@@ -48,12 +49,22 @@ def researcher_auth_required(action=None, resource=None):
                 logger.warning("No email found in token claims")
                 return make_response({"msg": "Authentication failed"}, 401)
 
-            # Get account from database
+            # Check if an account with this email exists, regardless of archived status
+            any_account = Account.query.filter_by(email=email).first()
+
+            # If account exists but is archived
+            if any_account and any_account.is_archived:
+                logger.warning(
+                    f"Attempt to access with archived account: {email}")
+                return make_response({"msg": "Account is archived"}, 403)
+
+            # Get account from database (already filtered for non-archived)
             auth = ResearcherAuth()
             account = auth.get_account_from_email(email)
             if not account:
-                logger.warning(f"No account found for email: {email}")
-                return make_response({"msg": "Account not found"}, 401)
+                # This should not happen with the above check, but just in case
+                logger.warning(f"No active account found for email: {email}")
+                return make_response({"msg": "Account not found or is archived"}, 401)
 
             # Call the decorated function with account instead of token_claims
             return decorated_function(account=account, *args, **kwargs)
@@ -76,12 +87,22 @@ def researcher_auth_required(action=None, resource=None):
                 logger.warning("No email found in token claims")
                 return make_response({"msg": "Authentication failed"}, 401)
 
-            # Get account from database
+            # Check if an account with this email exists, regardless of archived status
+            any_account = Account.query.filter_by(email=email).first()
+
+            # If account exists but is archived
+            if any_account and any_account.is_archived:
+                logger.warning(
+                    f"Attempt to access with archived account: {email}")
+                return make_response({"msg": "Account is archived"}, 403)
+
+            # Get account from database (already filtered for non-archived)
             auth = ResearcherAuth()
             account = auth.get_account_from_email(email)
             if not account:
-                logger.warning(f"No account found for email: {email}")
-                return make_response({"msg": "Account not found"}, 401)
+                # This should not happen with the above check, but just in case
+                logger.warning(f"No active account found for email: {email}")
+                return make_response({"msg": "Account not found or is archived"}, 401)
 
             # Check permissions if action was provided
             if action:
