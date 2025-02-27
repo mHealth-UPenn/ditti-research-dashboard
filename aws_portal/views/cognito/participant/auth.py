@@ -17,6 +17,7 @@ from aws_portal.utils.cognito.common import (
     clear_auth_cookies, set_auth_cookies, validate_security_params, get_cognito_logout_url,
     create_error_response, create_success_response, AUTH_ERROR_MESSAGES
 )
+from aws_portal.utils.cognito.researcher.decorators import researcher_auth_required
 
 blueprint = Blueprint("participant_cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
@@ -331,8 +332,8 @@ def check_login():
 
 
 @blueprint.route("/register/participant", methods=["POST"])
-@auth_required("Create", "Participants")
-def register_participant():
+@researcher_auth_required("Create", "Participants")
+def register_participant(account):
     """
     Registers a study participant in AWS Cognito with a temporary password.
 
