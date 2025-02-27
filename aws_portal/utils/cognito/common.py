@@ -7,7 +7,7 @@ import requests
 from functools import lru_cache
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from flask import current_app, session
+from flask import current_app, session, make_response
 import secrets
 from datetime import datetime, timezone
 
@@ -362,3 +362,82 @@ def clear_auth_cookies(response):
         )
 
     return response
+
+
+def set_auth_cookies(response, token):
+    """
+    Set authentication cookies on a response.
+
+    Args:
+        response: Flask response object to set cookies on
+        token: Dict containing tokens (id_token, access_token, and optionally refresh_token)
+
+    Returns:
+        The response object with set cookies
+    """
+    # Set ID token cookie
+    response.set_cookie(
+        "id_token", token["id_token"],
+        httponly=True, secure=True, samesite="None"
+    )
+
+    # Set access token cookie
+    response.set_cookie(
+        "access_token", token["access_token"],
+        httponly=True, secure=True, samesite="None"
+    )
+
+    # Set refresh token cookie if present
+    if "refresh_token" in token:
+        response.set_cookie(
+            "refresh_token", token["refresh_token"],
+            httponly=True, secure=True, samesite="None"
+        )
+
+    return response
+
+
+def validate_security_params(request_state):
+    """
+    Validate the security parameters in a callback request.
+
+    This function:
+    1. Validates the state parameter to prevent CSRF attacks
+    2. Retrieves the code_verifier for PKCE validation
+    3. Validates the nonce
+
+    Args:
+        request_state (str): The state parameter from the request
+
+    Returns:
+        tuple: (success, result)
+            - If success is True, result is a dict with code_verifier
+            - If success is False, result is a response object with error details
+    """
+    # Validate state parameter to prevent CSRF attacks
+    state = session.pop("cognito_state", None)
+    if not state or state != request_state:
+        logger.warning("Invalid state parameter in callback")
+        return False, make_response({"msg": "Invalid authentication request"}, 401)
+
+    # Get code_verifier for PKCE
+    code_verifier = session.pop("cognito_code_verifier", None)
+    if not code_verifier:
+        logger.warning("Missing code_verifier in session")
+        return False, make_response({"msg": "Authentication request rejected"}, 401)
+
+    # Validate nonce
+    nonce = session.pop("cognito_nonce", None)
+    nonce_generated = session.pop("cognito_nonce_generated", 0)
+
+    # Check if nonce is valid
+    nonce_age = int(datetime.now(timezone.utc).timestamp()) - nonce_generated
+    if not nonce or nonce_age > 300:  # 5 minutes expiration
+        logger.warning(f"Invalid or expired nonce. Age: {nonce_age}s")
+        return False, make_response({"msg": "Authentication session expired"}, 401)
+
+    # Return success with security parameters
+    return True, {
+        "code_verifier": code_verifier,
+        "nonce": nonce
+    }

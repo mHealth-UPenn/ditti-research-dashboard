@@ -14,7 +14,7 @@ from aws_portal.utils.cognito.researcher.auth_utils import (
 )
 from aws_portal.utils.cognito.common import (
     generate_code_verifier, create_code_challenge, initialize_oauth_and_security_params,
-    clear_auth_cookies
+    clear_auth_cookies, set_auth_cookies, validate_security_params
 )
 from aws_portal.utils.cognito.researcher.decorators import researcher_auth_required
 
@@ -141,29 +141,13 @@ def cognito_callback():
     init_researcher_oauth_client()
 
     try:
-        # Validate state parameter to prevent CSRF attacks
-        state = session.pop("cognito_state", None)
-        state_in_request = request.args.get("state")
-        if not state or state != state_in_request:
-            logger.warning("Invalid state parameter in callback")
-            return make_response({"msg": "Invalid authentication request"}, 401)
+        # Validate security parameters
+        success, result = validate_security_params(request.args.get("state"))
+        if not success:
+            return result
 
-        # Get code_verifier for PKCE
-        code_verifier = session.pop("cognito_code_verifier", None)
-        if not code_verifier:
-            logger.warning("Missing code_verifier in session")
-            return make_response({"msg": "Authentication request rejected"}, 401)
-
-        # Validate nonce
-        nonce = session.pop("cognito_nonce", None)
-        nonce_generated = session.pop("cognito_nonce_generated", 0)
-
-        # Check if nonce is valid
-        nonce_age = int(datetime.now(
-            timezone.utc).timestamp()) - nonce_generated
-        if not nonce or nonce_age > 300:  # 5 minutes expiration
-            logger.warning(f"Invalid or expired nonce. Age: {nonce_age}s")
-            return make_response({"msg": "Authentication session expired"}, 401)
+        code_verifier = result["code_verifier"]
+        nonce = result["nonce"]
 
         # Exchange code for tokens with PKCE code_verifier
         token = oauth.researcher_oidc.authorize_access_token(
@@ -191,22 +175,8 @@ def cognito_callback():
         admin_url = f"{frontend_url}/coordinator"
         response = make_response(redirect(admin_url))
 
-        # Set tokens in secure cookies
-        response.set_cookie(
-            "id_token", token["id_token"],
-            httponly=True, secure=True, samesite="None"
-        )
-        response.set_cookie(
-            "access_token", token["access_token"],
-            httponly=True, secure=True, samesite="None"
-        )
-        if "refresh_token" in token:
-            response.set_cookie(
-                "refresh_token", token["refresh_token"],
-                httponly=True, secure=True, samesite="None"
-            )
-
-        return response
+        # Set auth cookies
+        return set_auth_cookies(response, token)
 
     except Exception as e:
         logger.error(f"Authentication error: {str(e)}")
