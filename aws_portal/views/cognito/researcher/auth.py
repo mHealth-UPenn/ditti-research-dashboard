@@ -12,7 +12,10 @@ from aws_portal.models import Account
 from aws_portal.utils.cognito.researcher.auth_utils import (
     init_researcher_oauth_client, validate_token_for_authenticated_route, get_account_from_email, ResearcherAuth
 )
-from aws_portal.utils.cognito.common import generate_code_verifier, create_code_challenge
+from aws_portal.utils.cognito.common import (
+    generate_code_verifier, create_code_challenge, initialize_oauth_and_security_params,
+    clear_auth_cookies
+)
 from aws_portal.utils.cognito.researcher.decorators import researcher_auth_required
 
 blueprint = Blueprint("researcher_cognito", __name__,
@@ -102,30 +105,16 @@ def login():
     Returns:
         Redirect to Cognito login page
     """
-    init_researcher_oauth_client()
-
-    # Generate and store nonce for ID token validation
-    nonce = secrets.token_urlsafe(32)
-    session["cognito_nonce"] = nonce
-    session["cognito_nonce_generated"] = int(
-        datetime.now(timezone.utc).timestamp())
-
-    # Generate and store state for CSRF protection
-    state = secrets.token_urlsafe(32)
-    session["cognito_state"] = state
-
-    # Generate and store PKCE code_verifier and code_challenge
-    code_verifier = generate_code_verifier()
-    code_challenge = create_code_challenge(code_verifier)
-    session["cognito_code_verifier"] = code_verifier
+    # Initialize OAuth client and generate security parameters
+    security_params = initialize_oauth_and_security_params("researcher")
 
     # Redirect to Cognito authorization endpoint with all security parameters
     return oauth.researcher_oidc.authorize_redirect(
         current_app.config["COGNITO_RESEARCHER_REDIRECT_URI"],
         scope="openid email profile",
-        nonce=nonce,
-        state=state,
-        code_challenge=code_challenge,
+        nonce=security_params["nonce"],
+        state=security_params["state"],
+        code_challenge=security_params["code_challenge"],
         code_challenge_method="S256"
     )
 
@@ -248,13 +237,7 @@ def logout():
     response = make_response(redirect(_get_cognito_logout_url()))
 
     # Clear all auth cookies
-    for cookie_name in ["id_token", "access_token", "refresh_token"]:
-        response.set_cookie(
-            cookie_name, "", expires=0,
-            httponly=True, secure=True, samesite="None"
-        )
-
-    return response
+    return clear_auth_cookies(response)
 
 
 @blueprint.route("/check-login", methods=["GET"])
@@ -264,14 +247,13 @@ def check_login():
 
     This endpoint:
     1. Checks if the ID token exists in cookies
-    2. Validates the token and extracts the email
+    2. Validates the token and extracts the account
     3. Returns the account info on success
 
     Returns:
         200 OK with account info on success
-        401 Unauthorized if not authenticated or token invalid
+        401 Unauthorized if not authenticated or token invalid or account not found
         403 Forbidden if account is archived
-        404 Not Found if account doesn't exist
     """
     init_researcher_oauth_client()
 
@@ -280,7 +262,7 @@ def check_login():
     if not id_token:
         return make_response({"msg": "Authentication required"}, 401)
 
-    # Get email from token
+    # Get account from token
     account, error = _get_account_from_token(id_token)
     if error:
         return error

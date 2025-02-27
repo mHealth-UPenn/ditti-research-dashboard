@@ -12,7 +12,10 @@ from aws_portal.utils.auth import auth_required
 from aws_portal.utils.cognito.participant.auth_utils import (
     init_oauth_client, validate_token_for_authenticated_route, ParticipantAuth
 )
-from aws_portal.utils.cognito.common import generate_code_verifier, create_code_challenge
+from aws_portal.utils.cognito.common import (
+    generate_code_verifier, create_code_challenge, initialize_oauth_and_security_params,
+    clear_auth_cookies
+)
 
 blueprint = Blueprint("participant_cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
@@ -151,34 +154,20 @@ def login():
     Returns:
         Redirect to Cognito login page
     """
-    init_oauth_client()
+    # Initialize OAuth client and generate security parameters
+    security_params = initialize_oauth_and_security_params("participant")
 
     # Determine scope based on elevated parameter
     elevated = request.args.get("elevated") == "true"
     scope = "openid" + (" aws.cognito.signin.user.admin" if elevated else "")
 
-    # Generate and store nonce for ID token validation
-    nonce = secrets.token_urlsafe(32)
-    session["cognito_nonce"] = nonce
-    session["cognito_nonce_generated"] = int(
-        datetime.now(timezone.utc).timestamp())
-
-    # Generate and store state for CSRF protection
-    state = secrets.token_urlsafe(32)
-    session["cognito_state"] = state
-
-    # Generate and store PKCE code_verifier and code_challenge
-    code_verifier = generate_code_verifier()
-    code_challenge = create_code_challenge(code_verifier)
-    session["cognito_code_verifier"] = code_verifier
-
     # Redirect to Cognito authorization endpoint with all security parameters
     return oauth.oidc.authorize_redirect(
         current_app.config["COGNITO_PARTICIPANT_REDIRECT_URI"],
         scope=scope,
-        nonce=nonce,
-        state=state,
-        code_challenge=code_challenge,
+        nonce=security_params["nonce"],
+        state=security_params["state"],
+        code_challenge=security_params["code_challenge"],
         code_challenge_method="S256"
     )
 
@@ -300,13 +289,7 @@ def logout():
     response = make_response(redirect(_get_cognito_logout_url()))
 
     # Clear all auth cookies
-    for cookie_name in ["id_token", "access_token", "refresh_token"]:
-        response.set_cookie(
-            cookie_name, "", expires=0,
-            httponly=True, secure=True, samesite="None"
-        )
-
-    return response
+    return clear_auth_cookies(response)
 
 
 @blueprint.route("/check-login", methods=["GET"])

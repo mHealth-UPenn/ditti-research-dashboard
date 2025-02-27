@@ -7,9 +7,63 @@ import requests
 from functools import lru_cache
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from flask import current_app
+from flask import current_app, session
+import secrets
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
+
+
+def initialize_oauth_and_security_params(user_type):
+    """
+    Initialize OAuth client and generate security parameters for authentication flow.
+
+    This function:
+    1. Initializes the appropriate OAuth client (participant or researcher)
+    2. Generates a secure nonce for ID token validation
+    3. Generates a secure state parameter for CSRF protection
+    4. Generates PKCE code_verifier and code_challenge for authorization code security
+
+    Args:
+        user_type (str): Either "participant" or "researcher"
+
+    Returns:
+        dict: Security parameters needed for OAuth authentication
+            - nonce: The generated nonce
+            - state: The generated state parameter
+            - code_verifier: The PKCE code verifier
+            - code_challenge: The PKCE code challenge
+    """
+    # Initialize the appropriate OAuth client
+    if user_type == "participant":
+        from aws_portal.utils.cognito.participant.auth_utils import init_oauth_client
+        init_oauth_client()
+    else:  # researcher
+        from aws_portal.utils.cognito.researcher.auth_utils import init_researcher_oauth_client
+        init_researcher_oauth_client()
+
+    # Generate and store nonce for ID token validation
+    nonce = secrets.token_urlsafe(32)
+    session["cognito_nonce"] = nonce
+    session["cognito_nonce_generated"] = int(
+        datetime.now(timezone.utc).timestamp())
+
+    # Generate and store state for CSRF protection
+    state = secrets.token_urlsafe(32)
+    session["cognito_state"] = state
+
+    # Generate and store PKCE code_verifier and code_challenge
+    code_verifier = generate_code_verifier()
+    code_challenge = create_code_challenge(code_verifier)
+    session["cognito_code_verifier"] = code_verifier
+
+    # Return all security parameters
+    return {
+        "nonce": nonce,
+        "state": state,
+        "code_verifier": code_verifier,
+        "code_challenge": code_challenge
+    }
 
 
 # Cache for JWKS to avoid repeated HTTP requests
@@ -288,3 +342,23 @@ class CognitoAuthBase:
         except Exception as e:
             logger.error(f"Error validating ID token: {str(e)}")
             return False, "Authentication failed"
+
+
+def clear_auth_cookies(response):
+    """
+    Clear authentication cookies from a response.
+
+    Args:
+        response: Flask response object to clear cookies from
+
+    Returns:
+        The response object with cleared cookies
+    """
+    # Clear all auth cookies
+    for cookie_name in ["id_token", "access_token", "refresh_token"]:
+        response.set_cookie(
+            cookie_name, "", expires=0,
+            httponly=True, secure=True, samesite="None"
+        )
+
+    return response
