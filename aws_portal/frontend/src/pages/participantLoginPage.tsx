@@ -8,12 +8,12 @@ import Button from "../components/buttons/button";
 import { Link } from "react-router-dom";
 
 /**
- * ParticipantLoginPage component for Cognito authentication with database touch and loader
+ * ParticipantLoginPage component for participant authentication with database touch and loader
  */
 const ParticipantLoginPage: React.FC = () => {
   const [isElevated, setIsElevated] = useState(false);
 
-  const { cognitoLogin } = useAuth();
+  const { participantLogin } = useAuth();
   const loadingDb = useDbStatus();
   const location = useLocation();
 
@@ -28,7 +28,7 @@ const ParticipantLoginPage: React.FC = () => {
     if (!loadingDb) {
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Enter") {
-          cognitoLogin();
+          participantLogin();
         }
       };
 
@@ -37,15 +37,15 @@ const ParticipantLoginPage: React.FC = () => {
         window.removeEventListener("keydown", handleKeyDown);
       };
     }
-  }, [loadingDb, cognitoLogin]);
+  }, [loadingDb, participantLogin]);
 
   // Unused because this functionality is currently disabled
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleCognitoLogin = () => {
+  const handleParticipantLogin = () => {
     if (isElevated) {
-      cognitoLogin({ elevated: true });
+      participantLogin({ elevated: true });
     } else {
-      cognitoLogin();
+      participantLogin();
     }
   };
 
@@ -75,7 +75,7 @@ const ParticipantLoginPage: React.FC = () => {
                 <p className="mb-4 whitespace-nowrap">Continue to our secure sign in:</p>
               </div>
               <div className="flex justify-center">
-                <Button rounded={true} onClick={cognitoLogin}>Sign in</Button>
+                <Button rounded={true} onClick={participantLogin}>Sign in</Button>
               </div>
             </div>
           </div>

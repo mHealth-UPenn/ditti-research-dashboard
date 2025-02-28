@@ -9,10 +9,10 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
  * AuthProvider component that wraps children with authentication context.
  */
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isCognitoAuthenticated, setIsCognitoAuthenticated] = useState<boolean>(false);
+  const [isParticipantAuthenticated, setIsParticipantAuthenticated] = useState<boolean>(false);
   const [isResearcherAuthenticated, setIsResearcherAuthenticated] = useState<boolean>(false);
   const [firstLogin, setFirstLogin] = useState<boolean>(false);
-  const [isCognitoLoading, setIsCognitoLoading] = useState<boolean>(true);
+  const [isParticipantLoading, setIsParticipantLoading] = useState<boolean>(true);
   const [isResearcherLoading, setIsResearcherLoading] = useState<boolean>(true);
   const [dittiId, setDittiId] = useState<string | null>(null);
   const [accountInfo, setAccountInfo] = useState<any>(null);
@@ -20,19 +20,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     /**
-     * Checks Cognito authentication status on component mount.
+     * Checks Participant authentication status on component mount.
      */
-    const checkCognitoAuthStatus = async () => {
+    const checkParticipantAuthStatus = async () => {
       try {
         const res = await makeRequest("/auth/participant/check-login", { method: "GET" });
         if (res.msg === "Login successful") {
-          setIsCognitoAuthenticated(true);
+          setIsParticipantAuthenticated(true);
           setDittiId(res.dittiId);
         }
       } catch {
-        setIsCognitoAuthenticated(false);
+        setIsParticipantAuthenticated(false);
       } finally {
-        setIsCognitoLoading(false);
+        setIsParticipantLoading(false);
       }
     };
 
@@ -59,23 +59,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     };
 
-    checkCognitoAuthStatus();
+    checkParticipantAuthStatus();
     checkResearcherAuthStatus();
   }, []);
 
   /**
-   * Redirects to Cognito login page.
+   * Redirects to Participant login page.
    */
-  const cognitoLogin = useCallback((): void => {
+  const participantLogin = useCallback((): void => {
     window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/participant/login`;
   }, []);
 
   /**
-   * Logs out the Cognito user by redirecting to the logout endpoint.
+   * Logs out the Participant user by redirecting to the logout endpoint.
    */
-  const cognitoLogout = useCallback((): void => {
+  const participantLogout = useCallback((): void => {
     window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/participant/logout`;
-    setIsCognitoAuthenticated(false);
+    setIsParticipantAuthenticated(false);
     setDittiId(null);
   }, []);
 
@@ -98,15 +98,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   return (
     <AuthContext.Provider
       value={{
-        isCognitoAuthenticated,
+        isParticipantAuthenticated,
         isResearcherAuthenticated,
-        isCognitoLoading,
+        isParticipantLoading,
         isResearcherLoading,
         firstLogin,
         dittiId,
         accountInfo,
-        cognitoLogin,
-        cognitoLogout,
+        participantLogin,
+        participantLogout,
         researcherLogin,
         researcherLogout,
         setFirstLogin,

@@ -71,7 +71,7 @@ const router = createBrowserRouter([
       {
         index: true,
         element: (
-          <ProtectedRoute authMethod='cognito'>
+          <ProtectedRoute authMethod="participant">
             <ParticipantDashboard />
           </ProtectedRoute>
         ),

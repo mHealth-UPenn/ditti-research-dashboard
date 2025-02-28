@@ -354,23 +354,23 @@ export interface DataRetrievalTask {
 
 /**
  * Defines the authentication context structure.
- * @property isCognitoAuthenticated - Indicates if the user is authenticated with Amazon Cognito.
- * @property isResearcherAuthenticated - Indicates if the user is authenticated with Researcher Cognito.
- * @property isCognitoLoading - Indicates if the Cognito authentication status is being checked.
- * @property isResearcherLoading - Indicates if the Researcher Cognito authentication status is being checked.
+ * @property isParticipantAuthenticated - Indicates if the user is authenticated as a participant.
+ * @property isResearcherAuthenticated - Indicates if the user is authenticated as a researcher.
+ * @property isParticipantLoading - Indicates if the participant authentication status is being checked.
+ * @property isResearcherLoading - Indicates if the researcher authentication status is being checked.
  * @property firstLogin - Indicates if it's the user's first login.
  * @property dittiId - The Ditti ID of the authenticated participant.
  * @property accountInfo - Information about the authenticated researcher.
- * @property cognitoLogin - Function to log in the user specifically with Cognito authentication.
- * @property cognitoLogout - Function to log out the user from Cognito.
- * @property researcherLogin - Function to log in the researcher with Cognito authentication.
- * @property researcherLogout - Function to log out the researcher from Cognito.
+ * @property participantLogin - Function to log in with participant authentication.
+ * @property participantLogout - Function to log out from participant authentication.
+ * @property researcherLogin - Function to log in with researcher authentication.
+ * @property researcherLogout - Function to log out from researcher authentication.
  * @property setFirstLogin - Sets whether this is the user's first login.
  */
 export interface AuthContextType {
-  isCognitoAuthenticated: boolean;
+  isParticipantAuthenticated: boolean;
   isResearcherAuthenticated: boolean;
-  isCognitoLoading: boolean;
+  isParticipantLoading: boolean;
   isResearcherLoading: boolean;
   firstLogin: boolean;
   dittiId: string | null;
@@ -381,8 +381,8 @@ export interface AuthContextType {
     lastName: string;
     accountId: string;
   };
-  cognitoLogin: (options?: { elevated: boolean }) => void;
-  cognitoLogout: () => void;
+  participantLogin: (options?: { elevated: boolean }) => void;
+  participantLogout: () => void;
   researcherLogin: (options?: { elevated: boolean }) => void;
   researcherLogout: () => void;
   setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
