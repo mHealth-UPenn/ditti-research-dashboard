@@ -1,9 +1,9 @@
 import logging
 from flask import Blueprint
-from aws_portal.utils.cognito.controllers import ResearcherAuthController
+from aws_portal.auth.controllers import ResearcherAuthController
 
-blueprint = Blueprint("researcher_cognito", __name__,
-                      url_prefix="/researcher_cognito")
+blueprint = Blueprint("researcher_auth", __name__,
+                      url_prefix="/auth/researcher")
 logger = logging.getLogger(__name__)
 
 # Create auth controller instance

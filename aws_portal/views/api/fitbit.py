@@ -10,7 +10,7 @@ from flask import (
 from oauthlib.oauth2 import WebApplicationClient
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, JoinStudySubjectApi, StudySubject
-from aws_portal.utils.cognito.auth.participant import participant_auth_required
+from aws_portal.auth.decorators import participant_auth_required
 from shared.fitbit import (
     generate_code_verifier, create_code_challenge,
     get_fitbit_oauth_session

@@ -43,10 +43,21 @@ class Default:
 
     COGNITO_PARTICIPANT_DOMAIN = os.getenv("COGNITO_PARTICIPANT_DOMAIN")
     COGNITO_PARTICIPANT_REGION = os.getenv("COGNITO_PARTICIPANT_REGION")
-    COGNITO_PARTICIPANT_REDIRECT_URI = "http://localhost:5000/cognito/callback"
+    COGNITO_PARTICIPANT_REDIRECT_URI = "http://localhost:5000/auth/participant/callback"
     COGNITO_PARTICIPANT_LOGOUT_URI = "http://localhost:3000/login"
     COGNITO_PARTICIPANT_USER_POOL_ID = os.getenv(
         "COGNITO_PARTICIPANT_USER_POOL_ID")
+
+    COGNITO_RESEARCHER_CLIENT_ID = os.environ.get(
+        "COGNITO_RESEARCHER_CLIENT_ID")
+    COGNITO_RESEARCHER_CLIENT_SECRET = os.environ.get(
+        "COGNITO_RESEARCHER_CLIENT_SECRET")
+    COGNITO_RESEARCHER_DOMAIN = os.getenv("COGNITO_RESEARCHER_DOMAIN")
+    COGNITO_RESEARCHER_REGION = os.getenv("COGNITO_RESEARCHER_REGION")
+    COGNITO_RESEARCHER_USER_POOL_ID = os.getenv(
+        "COGNITO_RESEARCHER_USER_POOL_ID")
+    COGNITO_RESEARCHER_REDIRECT_URI = "http://localhost:5000/auth/researcher/callback"
+    COGNITO_RESEARCHER_LOGOUT_URI = "http://localhost:3000/coordinator/login"
 
     TM_FSTRING = os.getenv("TM_FSTRING")
 
@@ -72,18 +83,6 @@ class Default:
     #         "minute": 0
     #     }
     # ]
-
-    # Researcher Cognito configuration
-    COGNITO_RESEARCHER_CLIENT_ID = os.environ.get(
-        "COGNITO_RESEARCHER_CLIENT_ID")
-    COGNITO_RESEARCHER_CLIENT_SECRET = os.environ.get(
-        "COGNITO_RESEARCHER_CLIENT_SECRET")
-    COGNITO_RESEARCHER_DOMAIN = os.getenv("COGNITO_RESEARCHER_DOMAIN")
-    COGNITO_RESEARCHER_REGION = os.getenv("COGNITO_RESEARCHER_REGION")
-    COGNITO_RESEARCHER_USER_POOL_ID = os.getenv(
-        "COGNITO_RESEARCHER_USER_POOL_ID")
-    COGNITO_RESEARCHER_REDIRECT_URI = "http://localhost:5000/researcher_cognito/callback"
-    COGNITO_RESEARCHER_LOGOUT_URI = "http://localhost:3000/coordinator/login"
 
 
 class Staging(Default):

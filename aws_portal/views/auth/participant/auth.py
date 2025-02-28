@@ -2,12 +2,12 @@ import logging
 import boto3
 from botocore.exceptions import ClientError
 from flask import Blueprint, current_app, request
-from aws_portal.utils.cognito.auth.researcher import researcher_auth_required
-from aws_portal.utils.cognito.constants import AUTH_ERROR_MESSAGES
-from aws_portal.utils.cognito.controllers import ParticipantAuthController
-from aws_portal.utils.cognito.utils.responses import create_error_response, create_success_response
+from aws_portal.auth.decorators import researcher_auth_required
+from aws_portal.auth.controllers import ParticipantAuthController
+from aws_portal.auth.utils.responses import create_error_response, create_success_response
 
-blueprint = Blueprint("participant_cognito", __name__, url_prefix="/cognito")
+blueprint = Blueprint("participant_auth", __name__,
+                      url_prefix="/auth/participant")
 logger = logging.getLogger(__name__)
 
 # Create auth controller instance

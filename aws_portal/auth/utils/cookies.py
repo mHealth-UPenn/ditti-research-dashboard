@@ -1,5 +1,4 @@
 import logging
-from flask import make_response
 
 logger = logging.getLogger(__name__)
 

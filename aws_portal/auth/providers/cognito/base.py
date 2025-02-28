@@ -4,8 +4,8 @@ from flask import current_app
 import jwt
 import requests
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from aws_portal.utils.cognito.constants import AUTH_ERROR_MESSAGES
-from aws_portal.utils.cognito.utils.tokens import get_cognito_jwks
+from aws_portal.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
+from aws_portal.auth.utils.tokens import get_cognito_jwks
 
 logger = logging.getLogger(__name__)
 

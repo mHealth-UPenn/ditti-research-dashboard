@@ -1,13 +1,9 @@
 import logging
 import os
-import time
 import base64
 import hashlib
 import requests
 from functools import lru_cache
-import jwt
-from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from flask import current_app
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,7 @@
 import logging
-from aws_portal.utils.cognito.auth.researcher import ResearcherAuth, init_researcher_oauth_client
-from aws_portal.utils.cognito.constants import AUTH_ERROR_MESSAGES
-from aws_portal.utils.cognito.controllers.base import AuthControllerBase
-from aws_portal.utils.cognito.utils.responses import create_error_response, create_success_response
+from aws_portal.auth.providers.cognito import ResearcherAuth, init_researcher_oauth_client, AUTH_ERROR_MESSAGES
+from aws_portal.auth.controllers.base import AuthControllerBase
+from aws_portal.auth.utils.responses import create_error_response, create_success_response
 
 logger = logging.getLogger(__name__)
 

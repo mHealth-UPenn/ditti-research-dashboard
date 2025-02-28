@@ -24,7 +24,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
      */
     const checkCognitoAuthStatus = async () => {
       try {
-        const res = await makeRequest("/cognito/check-login", { method: "GET" });
+        const res = await makeRequest("/auth/participant/check-login", { method: "GET" });
         if (res.msg === "Login successful") {
           setIsCognitoAuthenticated(true);
           setDittiId(res.dittiId);
@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
      */
     const checkResearcherAuthStatus = async () => {
       try {
-        const res = await makeRequest("/researcher_cognito/check-login", { method: "GET" });
+        const res = await makeRequest("/auth/researcher/check-login", { method: "GET" });
         if (res.msg === "Login successful") {
           setIsResearcherAuthenticated(true);
           setAccountInfo({
@@ -67,14 +67,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Redirects to Cognito login page.
    */
   const cognitoLogin = useCallback((): void => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/login`;
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/participant/login`;
   }, []);
 
   /**
    * Logs out the Cognito user by redirecting to the logout endpoint.
    */
   const cognitoLogout = useCallback((): void => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/logout`;
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/participant/logout`;
     setIsCognitoAuthenticated(false);
     setDittiId(null);
   }, []);
@@ -83,14 +83,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Redirects to Researcher Cognito login page.
    */
   const researcherLogin = useCallback((): void => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/researcher_cognito/login`;
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/researcher/login`;
   }, [navigate]);
 
   /**
    * Logs out the Researcher from Cognito by redirecting to the logout endpoint.
    */
   const researcherLogout = useCallback((): void => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/researcher_cognito/logout`;
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/researcher/logout`;
     setIsResearcherAuthenticated(false);
     setAccountInfo(null);
   }, [navigate]);

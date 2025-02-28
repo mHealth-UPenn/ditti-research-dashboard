@@ -3,10 +3,9 @@ from flask import request
 import logging
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
-from aws_portal.utils.cognito.auth.participant import ParticipantAuth, init_oauth_client
-from aws_portal.utils.cognito.constants import AUTH_ERROR_MESSAGES
-from aws_portal.utils.cognito.controllers.base import AuthControllerBase
-from aws_portal.utils.cognito.utils.responses import create_error_response, create_success_response
+from aws_portal.auth.providers.cognito import ParticipantAuth, init_participant_oauth_client, AUTH_ERROR_MESSAGES
+from aws_portal.auth.controllers.base import AuthControllerBase
+from aws_portal.auth.utils.responses import create_error_response, create_success_response
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ class ParticipantAuthController(AuthControllerBase):
 
     def init_oauth_client(self):
         """Initialize the OAuth client."""
-        init_oauth_client()
+        init_participant_oauth_client()
 
     def get_scope(self):
         """Get the OAuth scope.

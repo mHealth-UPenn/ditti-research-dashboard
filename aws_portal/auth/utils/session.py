@@ -2,7 +2,7 @@ import logging
 import secrets
 from datetime import datetime, timezone
 from flask import session
-from aws_portal.utils.cognito.utils.tokens import generate_code_verifier, create_code_challenge
+from aws_portal.auth.utils.tokens import generate_code_verifier, create_code_challenge
 
 logger = logging.getLogger(__name__)
 

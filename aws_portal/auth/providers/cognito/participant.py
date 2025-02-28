@@ -1,10 +1,8 @@
-import functools
 import logging
-from flask import make_response
 from sqlalchemy import func
 from aws_portal.extensions import oauth
 from aws_portal.models import StudySubject
-from aws_portal.utils.cognito.auth.base import CognitoAuthBase
+from aws_portal.auth.providers.cognito import CognitoAuthBase
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +82,7 @@ class ParticipantAuth(CognitoAuthBase):
         return study_subject, None
 
 
-def init_oauth_client():
+def init_participant_oauth_client():
     """
     Initialize OAuth client for Cognito if not already configured.
 
@@ -111,61 +109,3 @@ def init_oauth_client():
             userinfo_endpoint=f"https://{domain}/oauth2/userInfo",
             jwks_uri=f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/jwks.json"
         )
-
-
-def participant_auth_required(decorated_func=None):
-    """
-    Decorator that authenticates participants using Cognito tokens.
-
-    This decorator:
-    1. Validates the token using the auth_manager
-    2. Gets the study_subject from the database based on the token claims
-    3. Passes the ditti_id to the decorated function
-    4. Ensures archived study subjects cannot authenticate
-
-    Args:
-        decorated_func (function, optional): The function to decorate. If None, returns a decorator.
-
-    Returns:
-        The decorated function with authentication added
-    """
-    # Return a decorator if called without arguments
-    if decorated_func is None:
-        return lambda f: participant_auth_required(f)
-
-    @functools.wraps(decorated_func)
-    def wrapper(*args, **kwargs):
-        from flask import request
-
-        # Check for token in Authorization header
-        auth_header = request.headers.get("Authorization")
-        if auth_header and auth_header.startswith("Bearer "):
-            id_token = auth_header[7:]  # Remove "Bearer " prefix
-        else:
-            # Check for token in cookies
-            id_token = request.cookies.get("id_token")
-
-        if not id_token:
-            logger.warning("No token found in request")
-            return make_response({"msg": "Authentication required"}, 401)
-
-        # Create auth manager and validate token
-        auth_manager = ParticipantAuth()
-        study_subject, error_msg = auth_manager.get_study_subject_from_token(
-            id_token)
-
-        if not study_subject:
-            # If validation failed, return error response
-            logger.warning(f"Token validation failed: {error_msg}")
-
-            if error_msg == "User profile not found":
-                return make_response({"msg": error_msg}, 404)
-            elif error_msg == "Account unavailable. Please contact support.":
-                return make_response({"msg": error_msg}, 403)
-            else:
-                return make_response({"msg": error_msg if error_msg else "Authentication failed"}, 401)
-
-        # Call the decorated function with ditti_id instead of study_subject
-        return decorated_func(ditti_id=study_subject.ditti_id, *args, **kwargs)
-
-    return wrapper

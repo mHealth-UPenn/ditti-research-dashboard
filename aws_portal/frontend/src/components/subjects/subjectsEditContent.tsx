@@ -285,7 +285,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
       };
 
       const optsCognito = { method: "POST", body: JSON.stringify(bodyCognito) };
-      const urlCognito = "/cognito/register/participant";
+      const urlCognito = "/auth/participant/register/participant";
       const postCognito = makeRequest(urlCognito, optsCognito);
       promises.push(postCognito);
     }

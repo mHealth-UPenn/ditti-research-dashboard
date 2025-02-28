@@ -2,10 +2,10 @@ import logging
 from urllib.parse import urlencode
 from flask import current_app, make_response, redirect, request, session
 from aws_portal.extensions import db, oauth
-from aws_portal.utils.cognito.constants import AUTH_ERROR_MESSAGES
-from aws_portal.utils.cognito.utils.cookies import clear_auth_cookies, set_auth_cookies
-from aws_portal.utils.cognito.utils.responses import create_error_response
-from aws_portal.utils.cognito.utils.session import AuthFlowSession
+from aws_portal.auth.providers.cognito import AUTH_ERROR_MESSAGES
+from aws_portal.auth.utils import (
+    clear_auth_cookies, set_auth_cookies, create_error_response, AuthFlowSession
+)
 
 logger = logging.getLogger(__name__)
 
