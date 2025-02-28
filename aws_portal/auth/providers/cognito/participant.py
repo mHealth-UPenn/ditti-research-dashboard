@@ -91,7 +91,7 @@ def init_participant_oauth_client():
     """
     from flask import current_app
 
-    if "oidc" not in oauth._clients:
+    if "participant_oidc" not in oauth._clients:
         region = current_app.config["COGNITO_PARTICIPANT_REGION"]
         user_pool_id = current_app.config["COGNITO_PARTICIPANT_USER_POOL_ID"]
         domain = current_app.config["COGNITO_PARTICIPANT_DOMAIN"]
@@ -99,7 +99,7 @@ def init_participant_oauth_client():
         client_secret = current_app.config["COGNITO_PARTICIPANT_CLIENT_SECRET"]
 
         oauth.register(
-            name="oidc",
+            name="participant_oidc",
             client_id=client_id,
             client_secret=client_secret,
             server_metadata_url=f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/openid-configuration",

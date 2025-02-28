@@ -20,7 +20,7 @@ class AuthControllerBase:
             user_type (str): Either "participant" or "researcher"
         """
         self.user_type = user_type
-        self.oauth_client_name = "oidc" if user_type == "participant" else "researcher_oidc"
+        self.oauth_client_name = "participant_oidc" if user_type == "participant" else "researcher_oidc"
         self.auth_manager = None  # To be set by subclasses
 
     def init_oauth_client(self):
