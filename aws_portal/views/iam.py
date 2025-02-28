@@ -12,9 +12,10 @@ from aws_portal.auth.decorators import researcher_auth_required
 blueprint = Blueprint("iam", __name__, url_prefix="/iam")
 
 
+# TODO: This endpoint is deprecated and will be removed. Use /auth/researcher/check-login instead
 @blueprint.route("/check-login")
-@jwt_required()
-def check_login():
+@researcher_auth_required
+def check_login(account):
     """
     Check whether the user is confirmed. This also returns a CSRF token for the
     user"s session
@@ -26,11 +27,14 @@ def check_login():
             "First login",
         csrfAccessToken: str
     }
+
+    **DEPRECATED** Use /auth/researcher/check-login instead.
     """
-    msg = "Login successful" if current_user.is_confirmed else "First login"
-    return jsonify({"msg": msg, "csrfAccessToken": get_jwt()["csrf"]})
+    msg = "Login successful" if account.is_confirmed else "First login"
+    return jsonify({"msg": msg, "csrfAccessToken": "deprecated-value"})
 
 
+# TODO: This endpoint is deprecated and will be removed. Use /auth/researcher/login instead
 @blueprint.route("/login", methods=["POST"])
 @cross_origin(
     allow_headers=["Authorization", "Content-Type", "X-CSRF-TOKEN"],
@@ -60,6 +64,8 @@ def login():
     {
         msg: "Invalid login credentials"
     }
+
+    **DEPRECATED** Use /auth/researcher/login instead.
     """
     auth = request.authorization
 
@@ -77,16 +83,16 @@ def login():
     if account is not None and account.check_password(auth.password):
 
         # log the user in
-        access_token = create_access_token(account)
+        # This endpoint is deprecated and will be removed,
+        # but we keep it working until it's fully removed
         account.last_login = datetime.now()
         db.session.commit()
 
         msg = "Login successful" if account.is_confirmed else "First login"
-        csrf_access_token = get_csrf_token(access_token)
         res = {
             "msg": msg,
-            "csrfAccessToken": csrf_access_token,
-            "jwt": access_token
+            "csrfAccessToken": "deprecated-value",
+            "jwt": "deprecated-value"
         }
 
         return jsonify(res)
@@ -94,9 +100,10 @@ def login():
     return make_response({"msg": "Invalid login credentials"},  403)
 
 
+# TODO: This endpoint is deprecated and will be removed. Use /auth/researcher/logout instead
 @blueprint.route("/logout", methods=["POST"])
-@jwt_required()
-def logout():  # TODO: remove
+@researcher_auth_required
+def logout(account):  # TODO: remove
     """
     Log the user out
 
@@ -105,21 +112,18 @@ def logout():  # TODO: remove
     {
         msg: "Logout Successful"
     }
+
+    **DEPRECATED** Use /auth/researcher/logout instead.
     """
-
-    # block the user"s token
-    jti = get_jwt()["jti"]
-    blocked_token = BlockedToken(jti=jti, created_on=datetime.now(UTC))
-    db.session.add(blocked_token)
-    db.session.commit()
-
-    res = jsonify({"msg": "Logout Successful"})
-    return res
+    # Return success message but don't do anything since token management
+    # is now handled by Cognito
+    return jsonify({"msg": "Logout Successful"})
 
 
+# TODO: The frontend functionality will need to be updated for Cognito and this will be deleted
 @blueprint.route("/set-password", methods=["POST"])
-@jwt_required()
-def set_password():
+@researcher_auth_required
+def set_password(account):
     """
     Set a new password for the user and set is_confirmed to True
 
@@ -142,19 +146,21 @@ def set_password():
             "Minimum password length is 8 characters" or
             "Maximum password length is 64 characters"
     }
+
+    **DEPRECATED** This functionality is now handled by Cognito.
     """
     password = request.json["password"]
     valid = validate_password(password)
 
-    if current_user.check_password(password):
+    if account.check_password(password):
         msg = "A different password must be entered"
         return make_response({"msg": msg}, 400)
 
     if valid != "valid":
         return make_response({"msg": valid}, 400)
 
-    current_user.password = password
-    current_user.is_confirmed = True
+    account.password = password
+    account.is_confirmed = True
     db.session.commit()
     return jsonify({"msg": "Password set successful"})
 

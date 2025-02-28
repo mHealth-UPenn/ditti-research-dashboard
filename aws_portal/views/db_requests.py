@@ -3,7 +3,6 @@ import logging
 import traceback
 
 from flask import Blueprint, jsonify, make_response, request
-from flask_jwt_extended import current_user, jwt_required
 from sqlalchemy.sql import tuple_
 
 from aws_portal.extensions import db
@@ -11,7 +10,7 @@ from aws_portal.models import (
     AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,
     JoinAccountStudy, Study, StudySubject, JoinStudySubjectStudy
 )
-# from aws_portal.utils.auth import auth_required
+from aws_portal.auth.decorators import researcher_auth_required
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint("db", __name__, url_prefix="/db")
@@ -19,21 +18,20 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/get-apps")
-@jwt_required()
-def get_apps():
+@researcher_auth_required
+def get_apps(account):
     apps = App.query\
         .join(AccessGroup, AccessGroup.app_id == App.id)\
         .join(JoinAccountAccessGroup)\
-        .filter(JoinAccountAccessGroup.account_id == current_user.id)\
+        .filter(JoinAccountAccessGroup.account_id == account.id)\
         .all()
 
     return jsonify([a.meta for a in apps])
 
 
 @blueprint.route("/get-studies")
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def get_studies():  # TODO rewrite unit test
+@researcher_auth_required("View", "Ditti App Dashboard")
+def get_studies(account):  # TODO rewrite unit test
     """
     Get the data of all studies that the user has access to
 
@@ -58,15 +56,15 @@ def get_studies():  # TODO rewrite unit test
     """
     try:
         app_id = request.args["app"]
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
+        permissions = account.get_permissions(app_id)
+        account.validate_ask("View", "All Studies", permissions)
         q = Study.query.filter(~Study.is_archived)
 
     except ValueError:
         q = Study.query\
             .filter(~Study.is_archived)\
             .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == current_user.id)
+            .filter(JoinAccountStudy.account_id == account.id)
 
     except Exception:
         exc = traceback.format_exc()
@@ -79,9 +77,8 @@ def get_studies():  # TODO rewrite unit test
 
 
 @blueprint.route("/get-study-details")
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def get_study_details():
+@researcher_auth_required("View", "Ditti App Dashboard")
+def get_study_details(account):
     """
     Get the details of a given study
 
@@ -103,8 +100,8 @@ def get_study_details():
 
         # if the user has permissions to view all studies, a join table might
         # not exist. Just get the study
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
+        permissions = account.get_permissions(app_id)
+        account.validate_ask("View", "All Studies", permissions)
         study = Study.query.get(study_id)
 
     except ValueError:
@@ -112,7 +109,7 @@ def get_study_details():
             .join(JoinAccountStudy)\
             .filter(
                 JoinAccountStudy.primary_key == tuple_(
-                  current_user.id, study_id
+                    account.id, study_id
                 )
             ).first()
 
@@ -121,9 +118,8 @@ def get_study_details():
 
 
 @blueprint.route("/get-study-contacts")
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def get_study_contacts():
+@researcher_auth_required("View", "Ditti App Dashboard")
+def get_study_contacts(account):
     """
     Get the contacts of a given study. This will return the contact information
     of only accounts that are explictly given access to a study. Accounts that
@@ -154,8 +150,8 @@ def get_study_contacts():
 
         # if the user has permissions to view all studies, a join table might
         # not exist. Just get the study
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
+        permissions = account.get_permissions(app_id)
+        account.validate_ask("View", "All Studies", permissions)
         study = Study.query.get(study_id)
 
     except ValueError:
@@ -163,7 +159,7 @@ def get_study_contacts():
             .join(JoinAccountStudy)\
             .filter(
                 JoinAccountStudy.primary_key == tuple_(
-                    current_user.id, study_id
+                    account.id, study_id
                 )
             ).first()
 
@@ -193,9 +189,8 @@ def get_study_contacts():
 
 
 @blueprint.route("/get-account-details")
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def get_account_details():
+@researcher_auth_required("View", "Ditti App Dashboard")
+def get_account_details(account):
     """
     Get the current user"s account details
 
@@ -209,19 +204,18 @@ def get_account_details():
     }
     """
     res = {
-        "firstName": current_user.first_name,
-        "lastName": current_user.last_name,
-        "email": current_user.email,
-        "phoneNumber": current_user.phone_number
+        "firstName": account.first_name,
+        "lastName": account.last_name,
+        "email": account.email,
+        "phoneNumber": account.phone_number
     }
 
     return jsonify(res)
 
 
 @blueprint.route("/edit-account-details", methods=["POST"])
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def edit_account_details():
+@researcher_auth_required("View", "Ditti App Dashboard")
+def edit_account_details(account):
     """
     Edit the current user"s account details
 
@@ -247,7 +241,7 @@ def edit_account_details():
     }
     """
     try:
-        populate_model(current_user, request.json)
+        populate_model(account, request.json)
         db.session.commit()
         msg = "Account details updated successfully"
 
@@ -262,9 +256,8 @@ def edit_account_details():
 
 
 @blueprint.route("/get-about-sleep-templates")
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def get_about_sleep_templates():
+@researcher_auth_required("View", "Ditti App Dashboard")
+def get_about_sleep_templates(account):
     """
     Get all about sleep templates
 

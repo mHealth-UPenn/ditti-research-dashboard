@@ -11,7 +11,8 @@ from aws_portal.models import (
     JoinRolePermission, Permission, Resource, Role, Study, StudySubject,
     JoinStudySubjectStudy, JoinStudySubjectApi
 )
-from aws_portal.utils.auth import auth_required, validate_password
+from aws_portal.auth.decorators import researcher_auth_required
+from aws_portal.utils.auth import validate_password
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
@@ -19,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/account")
-@auth_required("View", "Admin Dashboard")
-def account():
+@researcher_auth_required("View", "Admin Dashboard")
+def account(account):
     """
     Get one account or a list of all accounts. This will return one account if
     the account's database primary key is passed as a URL option
@@ -68,9 +69,9 @@ def account():
 
 
 @blueprint.route("/account/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Accounts")
-def account_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Accounts")
+def account_create(account):
     """
     Create a new account.
 
@@ -164,9 +165,9 @@ def account_create():
 
 
 @blueprint.route("/account/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Accounts")
-def account_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Accounts")
+def account_edit(account):
     """
     Edit an existing account
 
@@ -301,9 +302,9 @@ def account_edit():
 
 
 @blueprint.route("/account/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Accounts")
-def account_archive():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Accounts")
+def account_archive(account):
     """
     Archive an account. This action has the same effect as deleting an entry
     from the database. However, archived items are only filtered from queries
@@ -346,8 +347,8 @@ def account_archive():
 
 
 @blueprint.route("/study")
-@auth_required("View", "Admin Dashboard")
-def study():
+@researcher_auth_required("View", "Admin Dashboard")
+def study(account):
     """
     Get one study or a list of all studies. This will return one study if the
     study's database primary key is passed as a URL option
@@ -393,9 +394,9 @@ def study():
 
 
 @blueprint.route("/study/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Studies")
-def study_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Studies")
+def study_create(account):
     """
     Create a new study.
 
@@ -445,7 +446,8 @@ def study_create():
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
-            study.consent_information = sanitizer.sanitize(data["consentInformation"])
+            study.consent_information = sanitizer.sanitize(
+                data["consentInformation"])
             del data["consentInformation"]
         except KeyError:
             pass
@@ -471,9 +473,9 @@ def study_create():
 
 
 @blueprint.route("/study/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Studies")
-def study_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Studies")
+def study_edit(account):
     """
     Edit an existing study
 
@@ -516,7 +518,8 @@ def study_edit():
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
-            study.consent_information = sanitizer.sanitize(data["consentInformation"])
+            study.consent_information = sanitizer.sanitize(
+                data["consentInformation"])
             del data["consentInformation"]
         except KeyError:
             pass
@@ -541,9 +544,9 @@ def study_edit():
 
 
 @blueprint.route("/study/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Studies")
-def study_archive():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Studies")
+def study_archive(account):
     """
     Archive a study. This action has the same effect as deleting an entry
     from the database. However, archived items are only filtered from queries
@@ -586,8 +589,8 @@ def study_archive():
 
 
 @blueprint.route("/access-group")
-@auth_required("View", "Admin Dashboard")
-def access_group():
+@researcher_auth_required("View", "Admin Dashboard")
+def access_group(account):
     """
     Get one access group or a list of all studies. This will return one access
     group if the access groups's database primary key is passed as a URL option
@@ -635,9 +638,9 @@ def access_group():
 
 
 @blueprint.route("/access-group/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Access Groups")
-def access_group_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Access Groups")
+def access_group_create(account):
     """
     Create a new access group.
 
@@ -710,9 +713,9 @@ def access_group_create():
 
 
 @blueprint.route("/access-group/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Access Groups")
-def access_group_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Access Groups")
+def access_group_edit(account):
     """
     Edit an existing access group.
 
@@ -797,9 +800,9 @@ def access_group_edit():
 
 
 @blueprint.route("/access-group/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Access Groups")
-def access_group_archive():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Access Groups")
+def access_group_archive(account):
     """
     Archive an access group. This action has the same effect as deleting an entry
     from the database. However, archived items are only filtered from queries
@@ -842,8 +845,8 @@ def access_group_archive():
 
 
 @blueprint.route("/role")
-@auth_required("View", "Admin Dashboard")
-def role():
+@researcher_auth_required("View", "Admin Dashboard")
+def role(account):
     """
     Get one role or a list of all studies. This will return one role if the
     role's database primary key is passed as a URL option
@@ -889,9 +892,9 @@ def role():
 
 
 @blueprint.route("/role/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Roles")
-def role_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Roles")
+def role_create(account):
     """
     Create a new role.
 
@@ -959,9 +962,9 @@ def role_create():
 
 
 @blueprint.route("/role/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Roles")
-def role_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Roles")
+def role_edit(account):
     """
     Edit an existing role.
 
@@ -1037,9 +1040,9 @@ def role_edit():
 
 
 @blueprint.route("/role/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Role")
-def role_archive():  # TODO: create unit test
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Role")
+def role_archive(account):  # TODO: create unit test
     """
     Archive a role. This action has the same effect as deleting an entry
     from the database. However, archived items are only filtered from queries
@@ -1082,17 +1085,17 @@ def role_archive():  # TODO: create unit test
 
 
 @blueprint.route("/app")
-@auth_required("View", "Admin Dashboard")
-def app():
+@researcher_auth_required("View", "Admin Dashboard")
+def app(account):
     apps = App.query.all()
     res = [a.meta for a in apps]
     return jsonify(res)
 
 
 @blueprint.route("/app/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Apps")
-def app_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Apps")
+def app_create(account):
     data = request.json["create"]
     app = App()
 
@@ -1113,9 +1116,9 @@ def app_create():
 
 
 @blueprint.route("/app/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Apps")
-def app_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Apps")
+def app_edit(account):
     data = request.json["edit"]
     app_id = request.json["id"]
     app = App.query.get(app_id)
@@ -1137,8 +1140,8 @@ def app_edit():
 
 
 @blueprint.route("/action")
-@auth_required("View", "Admin Dashboard")
-def action():  # TODO: write unit test
+@researcher_auth_required("View", "Admin Dashboard")
+def action(account):  # TODO: write unit test
     """
     Get all actions
 
@@ -1171,8 +1174,8 @@ def action():  # TODO: write unit test
 
 
 @blueprint.route("/resource")
-@auth_required("View", "Admin Dashboard")
-def resource():  # TODO: write unit test
+@researcher_auth_required("View", "Admin Dashboard")
+def resource(account):  # TODO: write unit test
     """
     Get all resources
 
@@ -1205,8 +1208,8 @@ def resource():  # TODO: write unit test
 
 
 @blueprint.route("/about-sleep-template")
-@auth_required("View", "Admin Dashboard")
-def about_sleep_template():
+@researcher_auth_required("View", "Admin Dashboard")
+def about_sleep_template(account):
     """
     Get one about sleep template or a list of all studies. This will return one
     about sleep template if the about sleep template"s database primary key is
@@ -1258,9 +1261,9 @@ def about_sleep_template():
 
 
 @blueprint.route("/about-sleep-template/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Studies")
-def about_sleep_template_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Studies")
+def about_sleep_template_create(account):
     """
     Create a new about sleep template.
 
@@ -1306,9 +1309,9 @@ def about_sleep_template_create():
 
 
 @blueprint.route("/about-sleep-template/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Studies")
-def about_sleep_template_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Studies")
+def about_sleep_template_edit(account):
     """
     Edit an existing about sleep template
 
@@ -1364,9 +1367,9 @@ def about_sleep_template_edit():
 
 
 @blueprint.route("/about-sleep-template/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Studies")
-def about_sleep_template_archive():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Studies")
+def about_sleep_template_archive(account):
     """
     Archive an about sleep template. This action has the same effect as
     deleting an entry from the database. However, archived items are only
@@ -1411,8 +1414,8 @@ def about_sleep_template_archive():
 
 
 @blueprint.route("/study_subject")
-@auth_required("View", "Participants")  # A user can CRUD study subjects without access to the admin dashboard
-def study_subject():
+@researcher_auth_required("View", "Participants")
+def study_subject(account):
     """
     Get one study subject or a list of all study subjects. This will return one
     study subject if the study subject's database primary key is passed as a URL option.
@@ -1471,8 +1474,8 @@ def study_subject():
 
 
 @blueprint.route("/study_subject/create", methods=["POST"])
-@auth_required("Create", "Participants")
-def study_subject_create():
+@researcher_auth_required("Create", "Participants")
+def study_subject_create(account):
     """
     Create a new study subject.
 
@@ -1620,8 +1623,8 @@ def study_subject_create():
 
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
-@auth_required("Archive", "Participants")
-def study_subject_archive():
+@researcher_auth_required("Archive", "Participants")
+def study_subject_archive(account):
     """
     Archive a study subject.
 
@@ -1674,8 +1677,8 @@ def study_subject_archive():
 
 
 @blueprint.route("/study_subject/edit", methods=["POST"])
-@auth_required("Edit", "Participants")
-def study_subject_edit():
+@researcher_auth_required("Edit", "Participants")
+def study_subject_edit(account):
     """
     Edit an existing study subject
 
@@ -1872,9 +1875,9 @@ def study_subject_edit():
 
 
 @blueprint.route("/api")
-@auth_required("View", "Admin Dashboard")
-@auth_required("View", "APIs")
-def api():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("View", "APIs")
+def api(account):
     """
     Get one API or a list of all APIs. This will return one API if the API's
     database primary key is passed as a URL option.
@@ -1921,9 +1924,9 @@ def api():
 
 
 @blueprint.route("/api/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "APIs")
-def api_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "APIs")
+def api_create(account):
     """
     Create a new API.
 
@@ -1984,9 +1987,9 @@ def api_create():
 
 
 @blueprint.route("/api/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "APIs")
-def api_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "APIs")
+def api_edit(account):
     """
     Edit an existing API.
 
@@ -2055,13 +2058,13 @@ def api_edit():
 
 
 @blueprint.route("/api/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "APIs")
-def api_archive():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "APIs")
+def api_archive(account):
     """
     Archive an API. This action has the same effect as deleting an entry
-    from the database. However, archived items are only filtered from queries
-    and can be retrieved.
+    from the database without actually deleting it. An API that is archived
+    still exists in the database but is not included in queries
 
     Request syntax
     --------------

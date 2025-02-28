@@ -4,9 +4,8 @@ from flask import Blueprint, jsonify, make_response, current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, JoinStudySubjectStudy, StudySubject, JoinStudySubjectApi
-from aws_portal.auth.decorators import participant_auth_required
+from aws_portal.auth.decorators import participant_auth_required, researcher_auth_required
 from aws_portal.utils.serialization import serialize_participant
-from aws_portal.utils.auth import auth_required
 
 blueprint = Blueprint("participant", __name__, url_prefix="/participant")
 logger = logging.getLogger(__name__)
@@ -194,10 +193,10 @@ def revoke_api_access(api_name: str, ditti_id: str):
 
 
 @blueprint.route("<string:ditti_id>", methods=["DELETE"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Participants")
-@auth_required("Delete", "Wearable Data")
-def delete_participant(ditti_id: str):
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Participants")
+@researcher_auth_required("Delete", "Wearable Data")
+def delete_participant(account, ditti_id: str):
     """
     Endpoint to delete a participant's account and all associated API data.
     Deletes API tokens and data, archives the StudySubject in the database,
