@@ -7,7 +7,7 @@ from flask_jwt_extended import (
 from aws_portal.extensions import db
 from aws_portal.models import Account, BlockedToken
 from aws_portal.utils.auth import validate_password
-from aws_portal.utils.cognito.researcher.decorators import researcher_auth_required
+from aws_portal.utils.cognito.auth import researcher_auth_required
 
 blueprint = Blueprint("iam", __name__, url_prefix="/iam")
 

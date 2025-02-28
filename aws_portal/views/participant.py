@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, make_response, current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, JoinStudySubjectStudy, StudySubject, JoinStudySubjectApi
-from aws_portal.utils.cognito.participant.decorators import participant_auth_required
+from aws_portal.utils.cognito.auth import participant_auth_required
 from aws_portal.utils.serialization import serialize_participant
 from aws_portal.utils.auth import auth_required
 

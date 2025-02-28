@@ -1,157 +1,17 @@
-from datetime import datetime, timezone
 import logging
 import boto3
 from botocore.exceptions import ClientError
-from flask import Blueprint, current_app, make_response, redirect, request, session
-from sqlalchemy import select, func
-from aws_portal.extensions import db, oauth
-from aws_portal.models import StudySubject
-from aws_portal.utils.cognito.participant.auth_utils import (
-    init_oauth_client, validate_token_for_authenticated_route, ParticipantAuth
-)
-from aws_portal.utils.cognito.common import (
-    initialize_oauth_and_security_params,
-    clear_auth_cookies, set_auth_cookies, validate_security_params, get_cognito_logout_url,
-    create_error_response, create_success_response, AUTH_ERROR_MESSAGES
-)
-from aws_portal.utils.cognito.researcher.decorators import researcher_auth_required
+from flask import Blueprint, current_app, request
+from aws_portal.utils.cognito.auth.researcher import researcher_auth_required
+from aws_portal.utils.cognito.constants import AUTH_ERROR_MESSAGES
+from aws_portal.utils.cognito.controllers import ParticipantAuthController
+from aws_portal.utils.cognito.utils.responses import create_error_response, create_success_response
 
 blueprint = Blueprint("participant_cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
-auth = ParticipantAuth()
 
-
-def _create_or_get_study_subject(ditti_id):
-    """
-    Find an existing study subject or create a new one.
-
-    Args:
-        ditti_id (str): The participant's ditti ID
-
-    Returns:
-        tuple: (study_subject, error_response)
-            study_subject: The StudySubject object if found/created successfully, None otherwise
-            error_response: Error response object if error occurred, None otherwise
-    """
-    try:
-        # Check for existing study subject
-        study_subject = StudySubject.query.filter_by(ditti_id=ditti_id).first()
-
-        if study_subject:
-            if study_subject.is_archived:
-                logger.warning(
-                    f"Attempt to login with archived account: {ditti_id}")
-                return None, create_error_response(
-                    AUTH_ERROR_MESSAGES["account_archived"],
-                    status_code=403,
-                    error_code="ACCOUNT_ARCHIVED"
-                )
-            return study_subject, None
-
-        # Create new study subject
-        study_subject = StudySubject(
-            created_on=datetime.now(timezone.utc),
-            ditti_id=ditti_id,
-            is_archived=False
-        )
-        db.session.add(study_subject)
-        db.session.commit()
-
-        return study_subject, None
-
-    except Exception as e:
-        logger.error(f"Database error with study subject: {str(e)}")
-        db.session.rollback()
-        return None, create_error_response(
-            AUTH_ERROR_MESSAGES["system_error"],
-            status_code=500,
-            error_code="DATABASE_ERROR"
-        )
-
-
-def _get_ditti_id_from_token(id_token):
-    """
-    Extract ditti_id from a validated ID token.
-
-    Validates the token and ensures the study subject exists and is not archived.
-
-    Args:
-        id_token (str): The ID token to validate
-
-    Returns:
-        tuple: (ditti_id, error_response)
-            ditti_id: The study subject's ditti_id if valid, None otherwise
-            error_response: Error response object if error occurred, None otherwise
-    """
-    try:
-        # Validate token
-        success, userinfo = validate_token_for_authenticated_route(id_token)
-
-        if not success:
-            return None, create_error_response(
-                AUTH_ERROR_MESSAGES["auth_failed"],
-                status_code=401,
-                error_code="INVALID_TOKEN"
-            )
-
-        # Extract cognito username
-        cognito_username = userinfo.get("cognito:username")
-        if not cognito_username:
-            logger.warning("No cognito:username found in token claims")
-            return None, create_error_response(
-                AUTH_ERROR_MESSAGES["auth_failed"],
-                status_code=401,
-                error_code="MISSING_USERNAME"
-            )
-
-        # Check if a study subject with this ID exists, regardless of archived status
-        any_subject = StudySubject.query.filter_by(
-            ditti_id=cognito_username).first()
-
-        # If study subject exists but is archived
-        if any_subject and any_subject.is_archived:
-            logger.warning(
-                f"Attempt to access with archived study subject: {cognito_username}")
-            return None, create_error_response(
-                AUTH_ERROR_MESSAGES["account_archived"],
-                status_code=403,
-                error_code="ACCOUNT_ARCHIVED"
-            )
-
-        # Get active study subject from database (not archived)
-        stmt = select(StudySubject.ditti_id).where(
-            func.lower(StudySubject.ditti_id) == cognito_username.lower(),
-            StudySubject.is_archived == False
-        )
-        ditti_id = db.session.execute(stmt).scalar()
-
-        if not ditti_id:
-            if any_subject:  # This shouldn't happen given the check above, but just for defensive coding
-                logger.warning(
-                    f"Attempt to access with archived study subject: {cognito_username}")
-                return None, create_error_response(
-                    AUTH_ERROR_MESSAGES["account_archived"],
-                    status_code=403,
-                    error_code="ACCOUNT_ARCHIVED"
-                )
-            else:
-                logger.warning(
-                    f"No study subject found for ID: {cognito_username}")
-                return None, create_error_response(
-                    AUTH_ERROR_MESSAGES["not_found"],
-                    status_code=404,
-                    error_code="USER_NOT_FOUND"
-                )
-
-        return ditti_id, None
-
-    except Exception as e:
-        logger.error(f"Error extracting ditti_id from token: {str(e)}")
-        return None, create_error_response(
-            AUTH_ERROR_MESSAGES["system_error"],
-            status_code=500,
-            error_code="TOKEN_PROCESSING_ERROR"
-        )
+# Create auth controller instance
+auth_controller = ParticipantAuthController()
 
 
 @blueprint.route("/login")
@@ -171,22 +31,7 @@ def login():
     Returns:
         Redirect to Cognito login page
     """
-    # Initialize OAuth client and generate security parameters
-    security_params = initialize_oauth_and_security_params("participant")
-
-    # Determine scope based on elevated parameter
-    elevated = request.args.get("elevated") == "true"
-    scope = "openid" + (" aws.cognito.signin.user.admin" if elevated else "")
-
-    # Redirect to Cognito authorization endpoint with all security parameters
-    return oauth.oidc.authorize_redirect(
-        current_app.config["COGNITO_PARTICIPANT_REDIRECT_URI"],
-        scope=scope,
-        nonce=security_params["nonce"],
-        state=security_params["state"],
-        code_challenge=security_params["code_challenge"],
-        code_challenge_method="S256"
-    )
+    return auth_controller.login()
 
 
 @blueprint.route("/callback")
@@ -208,57 +53,7 @@ def cognito_callback():
         400 Bad Request on authentication errors
         403 Forbidden if study subject is archived
     """
-    init_oauth_client()
-
-    try:
-        # Validate security parameters
-        success, result = validate_security_params(request.args.get("state"))
-        if not success:
-            return result
-
-        code_verifier = result["code_verifier"]
-        nonce = result["nonce"]
-
-        # Exchange code for tokens with PKCE code_verifier
-        token = oauth.oidc.authorize_access_token(code_verifier=code_verifier)
-
-        # Parse ID token with nonce validation
-        try:
-            userinfo = oauth.oidc.parse_id_token(token, nonce=nonce)
-        except Exception as e:
-            logger.error(f"Failed to validate ID token: {str(e)}")
-            return create_error_response(
-                AUTH_ERROR_MESSAGES["auth_failed"],
-                status_code=401,
-                error_code="TOKEN_VALIDATION_FAILED"
-            )
-
-        # Get or create study subject
-        ditti_id = userinfo.get("cognito:username")
-        study_subject, error = _create_or_get_study_subject(ditti_id)
-        if error:
-            return error
-
-        # Set session data
-        session["study_subject_id"] = study_subject.id
-        session["user"] = userinfo
-
-        # Create response with redirect to frontend
-        frontend_url = current_app.config.get(
-            "CORS_ORIGINS", "http://localhost:3000")
-        response = make_response(redirect(frontend_url))
-
-        # Set auth cookies
-        return set_auth_cookies(response, token)
-
-    except Exception as e:
-        logger.error(f"Authentication error: {str(e)}")
-        db.session.rollback()
-        return create_error_response(
-            AUTH_ERROR_MESSAGES["auth_failed"],
-            status_code=400,
-            error_code="AUTHENTICATION_ERROR"
-        )
+    return auth_controller.callback()
 
 
 @blueprint.route("/logout")
@@ -275,16 +70,7 @@ def logout():
     Returns:
         Redirect to Cognito logout URL with cookies cleared
     """
-    init_oauth_client()
-
-    # Clear session
-    session.clear()
-
-    # Create response with redirect to Cognito logout
-    response = make_response(redirect(get_cognito_logout_url("participant")))
-
-    # Clear all auth cookies
-    return clear_auth_cookies(response)
+    return auth_controller.logout()
 
 
 @blueprint.route("/check-login", methods=["GET"])
@@ -303,29 +89,7 @@ def check_login():
         403 Forbidden if study subject is archived
         404 Not Found if study subject not found
     """
-    init_oauth_client()
-
-    # Check for ID token
-    id_token = request.cookies.get("id_token")
-    if not id_token:
-        return create_error_response(
-            AUTH_ERROR_MESSAGES["auth_required"],
-            status_code=401,
-            error_code="NO_TOKEN"
-        )
-
-    # Get ditti ID from token
-    ditti_id, error = _get_ditti_id_from_token(id_token)
-    if error:
-        return error
-
-    # Return success with ditti ID
-    return create_success_response(
-        data={
-            "dittiId": ditti_id,
-            "msg": "Login successful"
-        }
-    )
+    return auth_controller.check_login()
 
 
 @blueprint.route("/register/participant", methods=["POST"])

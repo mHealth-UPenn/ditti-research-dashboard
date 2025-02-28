@@ -10,7 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from aws_portal.extensions import cache, db
 from aws_portal.models import Study, StudySubject, SleepLog, SleepLevel
-from aws_portal.utils.cognito.participant.decorators import participant_auth_required
+from aws_portal.utils.cognito.auth import participant_auth_required
 from aws_portal.utils.auth import auth_required
 from aws_portal.utils.fitbit_data import (
     validate_date_range,
