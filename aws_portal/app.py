@@ -10,7 +10,7 @@ from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
     init_db_click, init_api_click, init_integration_testing_db_click, reset_db_click,
     init_study_subject_click, clear_cache_click, init_lambda_task_click,
-    delete_lambda_tasks_click
+    delete_lambda_tasks_click, export_accounts_to_cognito_click
 )
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, tm, oauth
 from aws_portal.views import admin, aws_requests, base, db_requests, iam, participant
@@ -117,6 +117,7 @@ def register_commands(app):
     app.cli.add_command(clear_cache_click)
     app.cli.add_command(init_lambda_task_click)
     app.cli.add_command(delete_lambda_tasks_click)
+    app.cli.add_command(export_accounts_to_cognito_click)
 
 
 def register_extensions(app):
