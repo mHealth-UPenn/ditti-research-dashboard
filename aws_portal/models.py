@@ -11,7 +11,11 @@ from sqlalchemy.orm import validates
 from sqlalchemy.sql.schema import UniqueConstraint
 
 from aws_portal.extensions import bcrypt, db, jwt
-from aws_portal.rbac.api import with_rbac, with_rbac_study_permission
+from aws_portal.rbac.api import (
+    with_rbac,
+    with_rbac_study_permission,
+    with_rbac_app_permission,
+)
 from aws_portal.rbac.models import (
     JoinAccountPermission,
     JoinAccountRole,
@@ -19,6 +23,7 @@ from aws_portal.rbac.models import (
     JoinRolePermission,
     Permission,
     RBACAccountMixin,
+    RBACAppMixin,
     RBACStudyMixin,
     Role,
 )
@@ -325,7 +330,8 @@ class Account(db.Model, RBACAccountMixin):
         return "<Account %s>" % self.email
 
 
-class App(db.Model):
+@with_rbac("name")
+class App(db.Model, RBACAppMixin):
     """
     The app table mapping class.
 
@@ -353,7 +359,7 @@ class App(db.Model):
 
 
 @with_rbac("acronym")
-class Study(db.Model):
+class Study(db.Model, RBACStudyMixin):
     """
     The study table mapping class.
 
@@ -431,6 +437,7 @@ class BlockedToken(db.Model):
         return "<BlockedToken %s>" % self.id
 
 
+@with_rbac_study_permission("GetAboutSleepTemplates")
 class AboutSleepTemplate(db.Model):
     """
     The about_sleep_template table mapping class.
@@ -732,6 +739,7 @@ class JoinStudySubjectApi(db.Model):
         return "<JoinStudySubjectApi %s-%s>" % self.primary_key
 
 
+@with_rbac_app_permission("GetAPIs")
 class Api(db.Model):
     """
     The api table mapping class.
@@ -993,6 +1001,7 @@ class SleepSummary(db.Model):
         return f"<SleepSummary {self.level.value} for SleepLog {self.sleep_log_id}>"
 
 
+@with_rbac_app_permission("GetLambdaTasks")
 class LambdaTask(db.Model):
     """
     The lambda_task table mapping class.

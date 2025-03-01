@@ -311,42 +311,51 @@ class JoinAccountStudy(db.Model):
         return "<JoinAccountStudy %s-%s>" % self.primary_key
 
 
-class JoinAccountRole(db.Model):
-    __tablename__ = "join_account_role"
+class JoinAccountApp(db.Model):
+    __tablename__ = "join_account_app"
     account_id = db.Column(db.
         Integer,
         db.ForeignKey("account.id", ondelete="CASCADE"),
         primary_key=True,
     )
+    app_id = db.Column(db.
+        Integer,
+        db.ForeignKey("app.id", ondelete="CASCADE"),
+        primary_key=True,
+    )
+    account = db.relationship("Account", back_populates="apps")
+    app = db.relationship("App")
+
     role_id = db.Column(db.
         Integer,
         db.ForeignKey("role.id", ondelete="CASCADE"),
-        primary_key=True,
+        nullable=False,
     )
-    study_id = db.Column(db.
-        Integer,
-        db.ForeignKey("study.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-    account = db.relationship("Account", back_populates="roles")
     role = db.relationship("Role")
-    study = db.relationship("Study")
 
+    @hybrid_property
+    def primary_key(self):
+        """
+        tuple of int: an entry's primary key.
+        """
+        return self.account_id, self.app_id
 
-class JoinAccountPermission(db.Model):
-    __tablename__ = "join_account_permission"
-    account_id = db.Column(db.
-        Integer,
-        db.ForeignKey("account.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-    permission_id = db.Column(db.
-        Integer,
-        db.ForeignKey("permission.id", ondelete="CASCADE"),
-        primary_key=True,
-    )
-    account = db.relationship("Account", back_populates="permissions")
-    permission = db.relationship("Permission")
+    @primary_key.expression
+    def primary_key(cls):
+        return tuple_(cls.account_id, cls.app_id)
+
+    @property
+    def meta(self):
+        """
+        dict: an entry's metadata.
+        """
+        return {
+            **self.app.meta,
+            "role": self.role.meta
+        }
+
+    def __repr__(self):
+        return "<JoinAccountApp %s-%s>" % self.primary_key
 
 
 class RBACBase:
@@ -366,17 +375,9 @@ class RBACAccountMixin(RBACBase):
         )
 
     @declared_attr
-    def roles(cls) -> Mapped[JoinAccountRole]:
+    def apps(cls) -> Mapped[JoinAccountApp]:
         return db.relationship(
-            "JoinAccountRole",
-            back_populates="account",
-            cascade="all, delete-orphan",
-        )
-
-    @declared_attr
-    def permissions(cls) -> Mapped[JoinAccountPermission]:
-        return db.relationship(
-            "JoinAccountPermission",
+            "JoinAccountApp",
             back_populates="account",
             cascade="all, delete-orphan",
         )
@@ -384,3 +385,7 @@ class RBACAccountMixin(RBACBase):
 
 class RBACStudyMixin(RBACBase):
     rbac_type: RBACType = "study"
+
+
+class RBACAppMixin(RBACBase):
+    rbac_type: RBACType = "app"
