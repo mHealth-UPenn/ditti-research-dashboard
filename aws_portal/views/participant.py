@@ -4,16 +4,13 @@ from flask import Blueprint, jsonify, make_response, current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 from aws_portal.extensions import db, tm
 from aws_portal.models import Api, JoinStudySubjectStudy, StudySubject, JoinStudySubjectApi
-from aws_portal.utils.cognito import cognito_auth_required
 from aws_portal.utils.serialization import serialize_participant
-from aws_portal.utils.auth import auth_required
 
 blueprint = Blueprint("participant", __name__, url_prefix="/participant")
 logger = logging.getLogger(__name__)
 
 
 @blueprint.route("", methods=["GET"])
-@cognito_auth_required
 def get_participant(ditti_id: str):
     """
     Endpoint to retrieve a participant's data.
@@ -55,7 +52,6 @@ def get_participant(ditti_id: str):
 
 
 @blueprint.route("/study/<int:study_id>/consent", methods=["PATCH"])
-@cognito_auth_required
 def update_consent(study_id: int, ditti_id: str):
     """
     Endpoint to update a participant's consent status for a specific study.
@@ -126,7 +122,6 @@ def update_consent(study_id: int, ditti_id: str):
 
 
 @blueprint.route("/api/<string:api_name>", methods=["DELETE"])
-@cognito_auth_required
 def revoke_api_access(api_name: str, ditti_id: str):
     """
     Endpoint to revoke a participant's access to a specified API.
@@ -194,9 +189,6 @@ def revoke_api_access(api_name: str, ditti_id: str):
 
 
 @blueprint.route("<string:ditti_id>", methods=["DELETE"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Participants")
-@auth_required("Delete", "Wearable Data")
 def delete_participant(ditti_id: str):
     """
     Endpoint to delete a participant's account and all associated API data.

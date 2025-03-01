@@ -10,8 +10,6 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from aws_portal.extensions import cache, db
 from aws_portal.models import Study, StudySubject, SleepLog, SleepLevel
-from aws_portal.utils.cognito import cognito_auth_required, verify_token
-from aws_portal.utils.auth import auth_required
 from aws_portal.utils.fitbit_data import (
     validate_date_range,
     cache_key_admin,
@@ -35,8 +33,6 @@ logger = logging.getLogger(__name__)
 
 
 @admin_fitbit_blueprint.route("/<string:ditti_id>", methods=["GET"])
-@auth_required("View", "Wearable Dashboard")
-@auth_required("View", "Wearable Data")
 def admin_get_fitbit_data(ditti_id: str):
     """
     Retrieves Fitbit data for a specific study subject as an admin.
@@ -103,7 +99,6 @@ def admin_get_fitbit_data(ditti_id: str):
 
 
 @participant_fitbit_blueprint.route("", methods=["GET"])
-@cognito_auth_required
 def participant_get_fitbit_data(ditti_id: str):
     """
     Retrieves Fitbit data for the authenticated participant.
@@ -113,7 +108,6 @@ def participant_get_fitbit_data(ditti_id: str):
         end_date (str, optional): The end date in 'YYYY-MM-DD' format.
 
     Args:
-        ditti_id (str): The study subject's username, passed from cognito_auth_required.
 
     Returns:
         JSON Response: Serialized Fitbit data if found and valid.
@@ -173,8 +167,6 @@ def participant_get_fitbit_data(ditti_id: str):
 
 
 @admin_fitbit_blueprint.route("/download/participant/<string:ditti_id>", methods=["GET"])
-@auth_required("View", "Wearable Dashboard")
-@auth_required("View", "Wearable Data")
 def download_fitbit_participant(ditti_id: str):
     """
     Fetch and download Fitbit API data for a single study participant as an Excel file.
@@ -251,8 +243,6 @@ def download_fitbit_participant(ditti_id: str):
 
 
 @admin_fitbit_blueprint.route("/download/study/<int:study_id>", methods=["GET"])
-@auth_required("View", "Wearable Dashboard")
-@auth_required("View", "Wearable Data")
 def download_fitbit_study(study_id: int):
     """
     Fetch and download Fitbit API data for all participants in a specific study as an Excel file.

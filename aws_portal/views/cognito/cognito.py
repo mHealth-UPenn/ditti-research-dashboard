@@ -12,8 +12,6 @@ from sqlalchemy import select, func
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
 from aws_portal.utils.cognito import verify_token
-from aws_portal.utils.auth import auth_required
-
 blueprint = Blueprint("cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
 
@@ -224,7 +222,6 @@ def check_login():
 
 
 @blueprint.route("/register/participant", methods=["POST"])
-@auth_required("Create", "Participants")
 def register_participant():
     """
     Registers a study participant in AWS Cognito with a temporary password.

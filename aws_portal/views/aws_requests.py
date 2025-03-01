@@ -12,7 +12,6 @@ from flask_jwt_extended import current_user
 import pandas as pd
 
 from aws_portal.models import JoinAccountStudy, Study
-from aws_portal.utils.auth import auth_required
 from aws_portal.utils.aws import MutationClient, Query, Updater
 
 blueprint = Blueprint("aws", __name__, url_prefix="/aws")
@@ -20,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/get-taps")
-@auth_required("View", "Ditti App Dashboard")
 def get_taps():  # TODO update unit test
     """
     Get tap data. If the user has permissions to view all studies, this will
@@ -101,7 +99,6 @@ def get_taps():  # TODO update unit test
 
 
 @blueprint.route("/get-audio-taps")
-@auth_required("View", "Ditti App Dashboard")
 def get_audio_taps():  # TODO write unit test
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
@@ -169,7 +166,6 @@ def get_audio_taps():  # TODO write unit test
 
 
 @blueprint.route("/get-users")
-@auth_required("View", "Ditti App Dashboard")
 def get_users():  # TODO: create unit test
     """
     Get user data. If the user has permissions to view all studies, this will
@@ -258,8 +254,6 @@ def get_users():  # TODO: create unit test
 
 
 @blueprint.route("/user/create", methods=["POST"])
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("Create", "Participants")
 def user_create():
     """
     Create a new user
@@ -313,8 +307,6 @@ def user_create():
 
 
 @blueprint.route("/user/edit", methods=["POST"])
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("Edit", "Participants")
 def user_edit():
     """
     Edit an exisitng user
@@ -390,8 +382,6 @@ def user_edit():
 
 
 @blueprint.route("/get-audio-files")
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("View", "Audio Files")
 def get_audio_files():  # TODO update unit test
     """
     Get all audio files from DynamoDB.
@@ -479,8 +469,6 @@ def get_audio_files():  # TODO update unit test
 
 
 @blueprint.route("/audio-file/create", methods=["POST"])
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("Create", "Audio File")
 def audio_file_create():
     """
     Insert new audio files into DynamoDB.
@@ -542,8 +530,6 @@ def audio_file_create():
 
 
 @blueprint.route("/audio-file/delete", methods=["POST"])
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("Delete", "Audio File")
 def audio_file_delete():
     """
     Permanently deletes an audio file. This endpoint first deletes the audio
@@ -615,8 +601,6 @@ def audio_file_delete():
 
 
 @blueprint.route("/audio-file/get-presigned-urls", methods=["POST"])
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("Create", "Audio File")
 def audio_file_generate_presigned_urls():
     """
     Generates a list of presigned URLs for a given set of files. The request

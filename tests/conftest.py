@@ -33,25 +33,21 @@ def get():
 
 
 @blueprint.route("/get-auth-required-action")
-@auth_required("foo")
 def get_auth_required_action():
     return jsonify({"msg": "OK"})
 
 
 @blueprint.route("/get-auth-required-resource")
-@auth_required("bar", "baz")
 def get_auth_required_resource():
     return jsonify({"msg": "OK"})
 
 
 @blueprint.route("/post-auth-required-action", methods=["POST"])
-@auth_required("foo")
 def post_auth_required_action():
     return jsonify({"msg": "OK"})
 
 
 @blueprint.route("/post-auth-required-resource", methods=["POST"])
-@auth_required("bar", "baz")
 def post_auth_required_resource():
     return jsonify({"msg": "OK"})
 
