@@ -1,9 +1,11 @@
 from typing import Any, Literal
 
+from flask_jwt_extended.utils import current_user
 from sqlalchemy import and_, or_, select
 from sqlalchemy.sql import Select
 from sqlalchemy.orm import InstrumentedAttribute
 
+from aws_portal.extensions import db
 from aws_portal.rbac.models import JoinRolePermission, JoinAccountApp, JoinAccountStudy, Permission
 from aws_portal.rbac.query_class import _QueryClass
 
@@ -43,10 +45,7 @@ def with_rbac_study_permission(permission_value: str):
     def decorator(cls):
         @classmethod
         def _select(cls, *entities: list[Any], **__kw: Any) -> Select[Any]:
-            account_id = 1
-
-            # If no user, return empty query
-            if not account_id:
+            if not current_user:
                 return select(cls).where(False)
 
             study_ids = select(RBACManager.StudyTable.id) \
@@ -54,7 +53,7 @@ def with_rbac_study_permission(permission_value: str):
                 .join(JoinRolePermission, JoinAccountStudy.role_id == JoinRolePermission.role_id) \
                 .join(Permission, JoinRolePermission.permission_id == Permission.id) \
                 .where(and_(
-                    JoinAccountStudy.account_id == account_id,
+                    JoinAccountStudy.account_id == current_user.id,
                     or_(
                         Permission.value == permission_value,
                         Permission.value == "*",
@@ -77,10 +76,8 @@ def with_rbac_app_permission(permission_value: str):
     def decorator(cls):
         @classmethod
         def _select(cls, *entities: list[Any], **__kw: Any) -> Select[Any]:
-            account_id = 1
-
             # If no user, return empty query
-            if not account_id:
+            if not current_user:
                 return select(cls).where(False)
 
             app_ids = select(RBACManager.AppTable.id) \
@@ -88,7 +85,7 @@ def with_rbac_app_permission(permission_value: str):
                 .join(JoinRolePermission, JoinAccountApp.role_id == JoinRolePermission.role_id) \
                 .join(Permission, JoinRolePermission.permission_id == Permission.id) \
                 .where(and_(
-                    JoinAccountApp.account_id == account_id,
+                    JoinAccountApp.account_id == current_user.id,
                     or_(
                         Permission.value == permission_value,
                         Permission.value == "*",
@@ -109,42 +106,40 @@ def with_rbac_app_permission(permission_value: str):
 def with_rbac_permission(permission_value: str, rbac_type: RBACType):
     def decorator(func):
         def wrapper(*args, **kwargs):
-            account_id = 1
-
-            # If no user, return 403
-            if not account_id:
+            # Unit test that no user returns 403
+            if not current_user:
                 return "Forbidden", 403
 
-            if rbac_type == "account":
-                table = RBACManager.AccountTable
-                join_table = JoinAccountApp
-                join_column = "account_id"
-            elif rbac_type == "app":
-                table = RBACManager.AppTable
-                join_table = JoinAccountApp
-                join_column = "app_id"
-            elif rbac_type == "study":
-                table = RBACManager.StudyTable
-                join_table = JoinAccountStudy
-                join_column = "study_id"
-            else:
-                raise ValueError(f"Invalid rbac_type: {rbac_type}")
+            match rbac_type:
+                case "app":  # Unit test that user without app access returns 403
+                    table = RBACManager.AppTable
+                    join_table = JoinAccountApp
+                    join_column = "app_id"
+                case "study":  # Unit test that user without study access returns 403
+                    table = RBACManager.StudyTable
+                    join_table = JoinAccountStudy
+                    join_column = "study_id"
+                case _:  # Unit test that user without account access returns 403
+                    raise ValueError(f"Invalid rbac_type: {rbac_type}")
 
             query = select(table.id) \
                 .join(join_table, table.id == getattr(join_table, join_column)) \
                 .join(JoinRolePermission, getattr(join_table, "role_id") == JoinRolePermission.role_id) \
                 .join(Permission, JoinRolePermission.permission_id == Permission.id) \
                 .where(and_(
-                    getattr(join_table, "account_id") == account_id,
+                    getattr(join_table, "account_id") == current_user.id,
                     or_(
                         Permission.value == permission_value,
                         Permission.value == "*",
                     )
                 ))
 
-            if not query.scalar():
+            if not db.session.execute(query).scalars().all():
                 return "Forbidden", 403
 
+            # Unit test that user with app access returns 200
+            # Unit test that user with study access returns 200
+            # Unit test that user with wildcard access returns 200
             return func(*args, **kwargs)
 
         return wrapper

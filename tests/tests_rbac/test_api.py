@@ -5,13 +5,14 @@ from aws_portal.rbac.models import RBACAccountMixin, RBACAppMixin, RBACStudyMixi
 from sqlalchemy import Column, String, Integer, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from unittest.mock import patch
-from aws_portal.rbac.api import with_rbac_study_permission
-from aws_portal.rbac.models import JoinAccountStudy, JoinRolePermission, Permission
+from aws_portal.rbac.api import with_rbac_study_permission, with_rbac_app_permission
+from aws_portal.rbac.models import JoinAccountStudy, JoinRolePermission, Permission, JoinAccountApp
 from sqlalchemy import select
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask
 from flask.testing import FlaskClient
 from aws_portal.extensions import db
+from aws_portal.rbac.api import with_rbac_permission
 
 
 @pytest.fixture(scope="module")
@@ -28,6 +29,9 @@ def test_client():
         db.drop_all()
 
 
+#################################
+# Tests for with_rbac decorator #
+#################################
 def test_with_rbac_no_rbac_type():
     class Invalid(db.Model):
         __tablename__ = "invalid"
@@ -82,18 +86,6 @@ class Study(db.Model, RBACStudyMixin):
     rbac_type = "study"
 
 
-class StudyData(db.Model):
-    __tablename__ = "study_data"
-    id = Column(Integer, primary_key=True)
-    study_id = Column(Integer)
-    rbac_type = "study"
-
-
-@with_rbac_study_permission("GetData")
-class StudyDataWithPermission(StudyData):
-    pass
-
-
 def test_with_rbac_account():
     assert hasattr(Account, "rbac_name")
     assert Account.rbac_name == Account.email
@@ -110,6 +102,21 @@ def test_with_rbac_study():
     assert hasattr(Study, "rbac_name")
     assert Study.rbac_name == Study.acronym
     assert RBACManager.StudyTable == Study
+
+
+########################################
+# Tests for with_rbac_study_permission #
+########################################
+class StudyData(db.Model):
+    __tablename__ = "study_data"
+    id = Column(Integer, primary_key=True)
+    study_id = Column(Integer)
+    rbac_type = "study"
+
+
+@with_rbac_study_permission("GetData")
+class StudyDataWithPermission(StudyData):
+    pass
 
 
 def test_with_rbac_study_permission_no_user(test_client: FlaskClient):
@@ -134,3 +141,100 @@ def test_with_rbac_study_permission_with_access(test_client: FlaskClient):
     with patch("aws_portal.rbac.api.current_user", type("User", (object,), {"id": 1})):
         query = StudyDataWithPermission.select(StudyDataWithPermission.id)
         assert str(db.session.execute(query).scalars().all()) == str(db.session.execute(select(StudyDataWithPermission.id)).scalars().all())
+
+
+######################################
+# Tests for with_rbac_app_permission #
+######################################
+class AppData(db.Model):
+    __tablename__ = "app_data"
+    id = Column(Integer, primary_key=True)
+    app_id = Column(Integer)
+    rbac_type = "app"
+
+
+@with_rbac_app_permission("GetData")
+class AppDataWithPermission(AppData):
+    pass
+
+
+def test_with_rbac_app_permission_no_user(test_client: FlaskClient):
+    with patch("aws_portal.rbac.api.current_user", None):
+        query = AppDataWithPermission.select()
+        assert db.session.execute(query).scalars().all() == []
+
+
+def test_with_rbac_app_permission_no_app_access(test_client: FlaskClient):
+    with patch("aws_portal.rbac.api.current_user", type("User", (object,), {"id": 1})):
+        query = AppDataWithPermission.select(AppDataWithPermission.id)
+        assert db.session.execute(query).scalars().all() == []
+
+
+def test_with_rbac_app_permission_with_access(test_client: FlaskClient):
+    db.session.add(Permission(value="GetData"))
+    db.session.add(Role(name="Role 1"))
+    db.session.add(JoinRolePermission(role_id=1, permission_id=1))
+    db.session.add(JoinAccountApp(account_id=1, app_id=1, role_id=1))
+    db.session.commit()
+
+    with patch("aws_portal.rbac.api.current_user", type("User", (object,), {"id": 1})):
+        query = AppDataWithPermission.select(AppDataWithPermission.id)
+        assert str(db.session.execute(query).scalars().all()) == str(db.session.execute(select(AppDataWithPermission.id)).scalars().all())
+
+
+##################################
+# Tests for with_rbac_permission #
+##################################
+@with_rbac_permission("GetData", "app")
+def get_app_resource():
+    return "Success", 200
+
+
+@with_rbac_permission("GetData", "study")
+def get_study_resource():
+    return "Success", 200
+
+
+def test_with_rbac_permission_no_user(test_client: FlaskClient):
+    with patch("aws_portal.rbac.api.current_user", None):
+        response = get_app_resource()
+        assert response == ("Forbidden", 403)
+
+
+def test_with_rbac_permission_no_app_access(test_client: FlaskClient):
+    with patch("aws_portal.rbac.api.current_user", type("User", (object,), {"id": 1})):
+        response = get_app_resource()
+        assert response == ("Forbidden", 403)
+
+
+def test_with_rbac_permission_with_app_access(test_client: FlaskClient):
+    db.session.add(App(name="App 1"))
+    db.session.add(Permission(value="GetData"))
+    db.session.add(Role(name="Role 1"))
+    db.session.add(JoinRolePermission(role_id=1, permission_id=1))
+    db.session.add(JoinAccountApp(account_id=1, app_id=1, role_id=1))
+    db.session.commit()
+
+    with patch("aws_portal.rbac.api.current_user", type("User", (object,), {"id": 1})):
+        response = get_app_resource()
+        assert response == ("Success", 200)
+
+
+def test_with_rbac_permission_no_study_access(test_client: FlaskClient):
+    with patch("aws_portal.rbac.api.current_user", type("User", (object,), {"id": 1})):
+        response = get_study_resource()
+        assert response == ("Forbidden", 403)
+
+
+def test_with_rbac_permission_with_study_access(test_client: FlaskClient):
+    db.session.add(Study(acronym="Study 1"))
+    db.session.add(Permission(value="GetData"))
+    db.session.add(Role(name="Role 1"))
+    db.session.add(JoinRolePermission(role_id=1, permission_id=1))
+    db.session.add(JoinAccountStudy(account_id=1, study_id=1, role_id=1))
+    db.session.commit()
+
+    with patch("aws_portal.rbac.api.current_user", type("User", (object,), {"id": 1})):
+        response = get_study_resource()
+        assert response == ("Success", 200)
+
