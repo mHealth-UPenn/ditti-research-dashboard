@@ -13,10 +13,9 @@ from aws_portal.commands import (
     delete_lambda_tasks_click, export_accounts_to_cognito_click
 )
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, tm, oauth
-from aws_portal.views import admin, aws_requests, base, db_requests, iam, participant
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, cache
 from aws_portal.views import (
-    admin, aws_requests, base, data_processing_task, db_requests, iam,
+    admin, aws_requests, base, data_processing_task, db_requests,
     participant, fitbit_data
 )
 from aws_portal.views.auth import participant_auth_blueprint, researcher_auth_blueprint
@@ -95,7 +94,6 @@ def register_blueprints(app):
     app.register_blueprint(aws_requests.blueprint)
     app.register_blueprint(base.blueprint)
     app.register_blueprint(db_requests.blueprint)
-    app.register_blueprint(iam.blueprint)
     app.register_blueprint(participant_auth_blueprint)
     app.register_blueprint(researcher_auth_blueprint)
     app.register_blueprint(fitbit.blueprint)
