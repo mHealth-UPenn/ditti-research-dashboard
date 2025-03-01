@@ -4,7 +4,7 @@ from sqlalchemy import and_, or_, select
 from sqlalchemy.sql import Select
 from sqlalchemy.orm import InstrumentedAttribute
 
-from aws_portal.rbac.models import JoinRolePermission, JoinAccountRole, Permission
+from aws_portal.rbac.models import JoinRolePermission, JoinAccountApp, JoinAccountStudy, Permission
 from aws_portal.rbac.query_class import _QueryClass
 
 type RBACType = Literal["account", "app", "study"]
@@ -50,11 +50,11 @@ def with_rbac_study_permission(permission_value: str):
                 return select(cls).where(False)
 
             study_ids = select(RBACManager.StudyTable.id) \
-                .join(JoinAccountRole, RBACManager.StudyTable.id == JoinAccountRole.study_id) \
-                .join(JoinRolePermission, JoinAccountRole.role_id == JoinRolePermission.role_id) \
+                .join(JoinAccountStudy, RBACManager.StudyTable.id == JoinAccountStudy.study_id) \
+                .join(JoinRolePermission, JoinAccountStudy.role_id == JoinRolePermission.role_id) \
                 .join(Permission, JoinRolePermission.permission_id == Permission.id) \
                 .where(and_(
-                    JoinAccountRole.account_id == account_id,
+                    JoinAccountStudy.account_id == account_id,
                     or_(
                         Permission.value == permission_value,
                         Permission.value == "*",
@@ -84,11 +84,11 @@ def with_rbac_app_permission(permission_value: str):
                 return select(cls).where(False)
 
             app_ids = select(RBACManager.AppTable.id) \
-                .join(JoinAccountRole, RBACManager.AppTable.id == JoinAccountRole.app_id) \
-                .join(JoinRolePermission, JoinAccountRole.role_id == JoinRolePermission.role_id) \
+                .join(JoinAccountApp, RBACManager.AppTable.id == JoinAccountApp.app_id) \
+                .join(JoinRolePermission, JoinAccountApp.role_id == JoinRolePermission.role_id) \
                 .join(Permission, JoinRolePermission.permission_id == Permission.id) \
                 .where(and_(
-                    JoinAccountRole.account_id == account_id,
+                    JoinAccountApp.account_id == account_id,
                     or_(
                         Permission.value == permission_value,
                         Permission.value == "*",
@@ -102,5 +102,51 @@ def with_rbac_app_permission(permission_value: str):
         cls.select = _select
         cls.query_class = _QueryClass()
         return cls
+
+    return decorator
+
+
+def with_rbac_permission(permission_value: str, rbac_type: RBACType):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            account_id = 1
+
+            # If no user, return 403
+            if not account_id:
+                return "Forbidden", 403
+
+            if rbac_type == "account":
+                table = RBACManager.AccountTable
+                join_table = JoinAccountApp
+                join_column = "account_id"
+            elif rbac_type == "app":
+                table = RBACManager.AppTable
+                join_table = JoinAccountApp
+                join_column = "app_id"
+            elif rbac_type == "study":
+                table = RBACManager.StudyTable
+                join_table = JoinAccountStudy
+                join_column = "study_id"
+            else:
+                raise ValueError(f"Invalid rbac_type: {rbac_type}")
+
+            query = select(table.id) \
+                .join(join_table, table.id == getattr(join_table, join_column)) \
+                .join(JoinRolePermission, getattr(join_table, "role_id") == JoinRolePermission.role_id) \
+                .join(Permission, JoinRolePermission.permission_id == Permission.id) \
+                .where(and_(
+                    getattr(join_table, "account_id") == account_id,
+                    or_(
+                        Permission.value == permission_value,
+                        Permission.value == "*",
+                    )
+                ))
+
+            if not query.scalar():
+                return "Forbidden", 403
+
+            return func(*args, **kwargs)
+
+        return wrapper
 
     return decorator
