@@ -100,7 +100,8 @@ def init_researcher_oauth_client():
             client_id=client_id,
             client_secret=client_secret,
             server_metadata_url=f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/openid-configuration",
-            client_kwargs={"scope": "openid email profile"},
+            client_kwargs={
+                "scope": "openid email profile aws.cognito.signin.user.admin"},
             authorize_url=f"https://{domain}/oauth2/authorize",
             access_token_url=f"https://{domain}/oauth2/token",
             userinfo_endpoint=f"https://{domain}/oauth2/userInfo",

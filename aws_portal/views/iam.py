@@ -1,40 +1,29 @@
-from datetime import datetime, UTC
-from flask import Blueprint, jsonify, make_response, request
+from datetime import datetime
+from flask import Blueprint, jsonify, make_response, request, redirect, url_for
 from flask_cors import cross_origin
-from flask_jwt_extended import (
-    create_access_token, current_user, get_csrf_token, get_jwt, jwt_required
-)
-from aws_portal.extensions import db
-from aws_portal.models import Account, BlockedToken
-from aws_portal.utils.auth import validate_password
 from aws_portal.auth.decorators import researcher_auth_required
+import io
+import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 blueprint = Blueprint("iam", __name__, url_prefix="/iam")
 
 
-# TODO: This endpoint is deprecated and will be removed. Use /auth/researcher/check-login instead
 @blueprint.route("/check-login")
 @researcher_auth_required
 def check_login(account):
     """
-    Check whether the user is confirmed. This also returns a CSRF token for the
-    user"s session
+    DEPRECATED: Use /auth/researcher/check-login instead.
 
-    Response Syntax
-    ---------------
-    {
-        msg: "Login successful" or
-            "First login",
-        csrfAccessToken: str
-    }
-
-    **DEPRECATED** Use /auth/researcher/check-login instead.
+    This endpoint now redirects to the new implementation.
     """
-    msg = "Login successful" if account.is_confirmed else "First login"
-    return jsonify({"msg": msg, "csrfAccessToken": "deprecated-value"})
+    logger.warning(
+        "Deprecated endpoint /iam/check-login used. Use /auth/researcher/check-login instead.")
+    return redirect(url_for("researcher_auth.check_login"))
 
 
-# TODO: This endpoint is deprecated and will be removed. Use /auth/researcher/login instead
 @blueprint.route("/login", methods=["POST"])
 @cross_origin(
     allow_headers=["Authorization", "Content-Type", "X-CSRF-TOKEN"],
@@ -42,160 +31,69 @@ def check_login(account):
 )
 def login():
     """
-    Login the user and return a CSRF token for the user"s session. This
-    requires an authorization header
+    DEPRECATED: Use /auth/researcher/login instead.
 
-    Response Syntax (200) 
-    ---------------------
-    {
-        msg: "Login successful" or
-            "First login",
-        csrfAccessToken: str
-    }
-
-    Request Syntax (401)
-    --------------------
-    {
-        msg: "Login credentials are required"
-    }
-
-    Request Syntax (403)
-    --------------------
-    {
-        msg: "Invalid login credentials"
-    }
-
-    **DEPRECATED** Use /auth/researcher/login instead.
+    This login method is no longer supported. The application now uses Cognito authentication.
     """
-    auth = request.authorization
-
-    # if the authorization header is missing or incomplete
-    if not auth or not auth.username or not auth.password:
-        return make_response({"msg": "Login credentials are required"}, 401)
-
-    account = Account.query.filter(
-        (Account.email == auth.username) &
-        ~Account.is_archived
-    ).first()
-
-    # if the account with a matching email exists and is not archived and the
-    # password is correct
-    if account is not None and account.check_password(auth.password):
-
-        # log the user in
-        # This endpoint is deprecated and will be removed,
-        # but we keep it working until it's fully removed
-        account.last_login = datetime.now()
-        db.session.commit()
-
-        msg = "Login successful" if account.is_confirmed else "First login"
-        res = {
-            "msg": msg,
-            "csrfAccessToken": "deprecated-value",
-            "jwt": "deprecated-value"
-        }
-
-        return jsonify(res)
-
-    return make_response({"msg": "Invalid login credentials"},  403)
+    logger.warning(
+        "Deprecated endpoint /iam/login used. Use /auth/researcher/login instead.")
+    return make_response({
+        "msg": "This login method is deprecated. Please use Cognito authentication at /auth/researcher/login"
+    }, 410)  # 410 Gone
 
 
-# TODO: This endpoint is deprecated and will be removed. Use /auth/researcher/logout instead
 @blueprint.route("/logout", methods=["POST"])
 @researcher_auth_required
-def logout(account):  # TODO: remove
+def logout(account):
     """
-    Log the user out
+    DEPRECATED: Use /auth/researcher/logout instead.
 
-    Response Syntax (200)
-    ---------------------
-    {
-        msg: "Logout Successful"
-    }
-
-    **DEPRECATED** Use /auth/researcher/logout instead.
+    This endpoint now redirects to the new implementation.
     """
-    # Return success message but don't do anything since token management
-    # is now handled by Cognito
-    return jsonify({"msg": "Logout Successful"})
+    logger.warning(
+        "Deprecated endpoint /iam/logout used. Use /auth/researcher/logout instead.")
+    return redirect(url_for("researcher_auth.logout"))
 
 
-# TODO: The frontend functionality will need to be updated for Cognito and this will be deleted
 @blueprint.route("/set-password", methods=["POST"])
 @researcher_auth_required
 def set_password(account):
     """
-    Set a new password for the user and set is_confirmed to True
+    DEPRECATED: Use /auth/researcher/change-password instead.
 
-    Request Syntax
-    --------------
-    {
-        password: str
-    }
-
-    Response syntax (200)
-    ---------------------
-    {
-        msg: "Password set successful"
-    }
-
-    Response syntax (400)
-    ---------------------
-    {
-        msg: "A different password must be entered" or
-            "Minimum password length is 8 characters" or
-            "Maximum password length is 64 characters"
-    }
-
-    **DEPRECATED** This functionality is now handled by Cognito.
+    This endpoint transforms the request to match the new API and redirects to it.
     """
-    password = request.json["password"]
-    valid = validate_password(password)
+    logger.warning(
+        "Deprecated endpoint /iam/set-password used. Use /auth/researcher/change-password instead.")
 
-    if account.check_password(password):
-        msg = "A different password must be entered"
-        return make_response({"msg": msg}, 400)
+    # Convert the old request format to the new format
+    if request.json and request.json.get("password"):
+        # Transform the request to match the new expected format
+        # Create a new request body in the format expected by the new endpoint
+        new_body = {
+            "newPassword": request.json.get("password")
+        }
 
-    if valid != "valid":
-        return make_response({"msg": valid}, 400)
+        # Convert to JSON string and create a custom response object
+        request.environ["wsgi.input"] = io.BytesIO(
+            json.dumps(new_body).encode("utf-8"))
+        request.environ["CONTENT_LENGTH"] = len(json.dumps(new_body))
+        request.environ["CONTENT_TYPE"] = "application/json"
 
-    account.password = password
-    account.is_confirmed = True
-    db.session.commit()
-    return jsonify({"msg": "Password set successful"})
+        # Redirect to the new endpoint, preserving the method
+        return redirect(url_for("researcher_auth.change_password"), code=307)
+    else:
+        return make_response({"msg": "Password is required"}, 400)
 
 
 @blueprint.route("/get-access")
 @researcher_auth_required
 def get_access(account):
     """
-    Check whether the user has permissions for an action and resource for a
-    given app and study
+    DEPRECATED: Use /auth/researcher/get-access instead.
 
-    Options
-    -------
-    app: 1 | 2 | 3
-    study: int
-    action: str
-    resource: str
-
-    Response Syntax (200)
-    ---------------------
-    {
-        msg: "Authorized" or
-            "Unauthorized"
-    }
+    This endpoint now redirects to the new implementation.
     """
-    msg = "Authorized"
-    app_id = request.args.get("app")
-    study_id = request.args.get("study")
-    action = request.args.get("action")
-    resource = request.args.get("resource")
-    permissions = account.get_permissions(app_id, study_id)
-
-    try:
-        account.validate_ask(action, resource, permissions)
-    except ValueError:
-        msg = "Unauthorized"
-
-    return jsonify({"msg": msg})
+    logger.warning(
+        "Deprecated endpoint /iam/get-access used. Use /auth/researcher/get-access instead.")
+    return redirect(url_for("researcher_auth.get_access", **request.args))

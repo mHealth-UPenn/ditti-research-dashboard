@@ -24,7 +24,7 @@ class ResearcherAuthController(AuthControllerBase):
         Returns:
             str: The OAuth scope
         """
-        return "openid email profile"
+        return "openid email profile aws.cognito.signin.user.admin"
 
     def get_redirect_url(self):
         """Get the URL to redirect to after login.
