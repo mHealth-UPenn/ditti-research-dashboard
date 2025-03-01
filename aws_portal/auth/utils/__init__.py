@@ -23,6 +23,10 @@ from aws_portal.auth.utils.tokens import (
     generate_code_verifier,
     create_code_challenge,
 )
+from aws_portal.auth.utils.auth_helpers import (
+    get_token_from_request,
+    check_permissions,
+)
 
 __all__ = [
     "set_auth_cookies",
@@ -34,4 +38,6 @@ __all__ = [
     "generate_code_verifier",
     "create_code_challenge",
     "validate_password",  # Deprecated, maintained for backward compatibility
+    "get_token_from_request",
+    "check_permissions",
 ]
