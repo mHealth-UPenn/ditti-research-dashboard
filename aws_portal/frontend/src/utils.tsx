@@ -133,7 +133,7 @@ export const getAccess = async (
   resource: string,
   study?: number
 ): Promise<void> => {
-  let url = `/iam/get-access?app=${app}&action=${action}&resource=${resource}`;
+  let url = `/auth/researcher/get-access?app=${app}&action=${action}&resource=${resource}`;
   if (study) url += `&study=${study}`;
 
   const res: ResponseBody = await makeRequest(url);
