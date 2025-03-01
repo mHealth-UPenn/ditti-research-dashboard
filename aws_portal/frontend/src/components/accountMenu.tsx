@@ -9,34 +9,60 @@ import { useAuth } from "../hooks/useAuth";
 import { useFlashMessageContext } from "../contexts/flashMessagesContext";
 
 /**
- * accountDetails: the current user's data
- * hideMenu: a function to hide the user menu
+ * Extended interface for AccountDetails to include isFirstLogin
+ */
+interface AccountMenuDetails extends AccountDetails {
+  isFirstLogin?: boolean;
+}
+
+/**
+ * Account menu props interface
  */
 interface AccountMenuProps {
-  prefill: AccountDetails;
+  prefill: AccountMenuDetails;
   accountMenuRef: RefObject<HTMLDivElement>;
   hideMenu: () => void;
 }
 
+/**
+ * Password error type to handle validation
+ */
+type PasswordError = 
+  | "PASSWORDS_DONT_MATCH" 
+  | "PASSWORD_TOO_SHORT" 
+  | "CURRENT_PASSWORD_REQUIRED" 
+  | null;
+
+/**
+ * Account Menu component for managing user account details and password
+ */
 const AccountMenu = ({
   prefill,
   accountMenuRef,
   hideMenu,
 }: AccountMenuProps) => {
+  // Account details state
   const [email, setEmail] = useState(prefill.email);
   const [firstName, setFirstName] = useState(prefill.firstName);
   const [lastName, setLastName] = useState(prefill.lastName);
   const [phoneNumber, setPhoneNumber] = useState(prefill.phoneNumber);
+  
+  // Password state
+  const [currentPassword, setCurrentPassword] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
   const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
+  const [passwordError, setPasswordError] = useState<PasswordError>(null);
+  
+  // UI state
   const [edit, setEdit] = useState(false);
   const [editPassword, setEditPassword] = useState(false);
 
+  // Hooks
   const { researcherLogout } = useAuth();
   const { flashMessage } = useFlashMessageContext();
 
   /**
-   * Make a POST request with changes
+   * Make a POST request with account detail changes
    */
   const post = async () => {
     const body = {
@@ -46,64 +72,166 @@ const AccountMenu = ({
       phone_number: phoneNumber,
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
+    const opts = { 
+      method: "POST", 
+      body: JSON.stringify(body),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    };
+    
     await makeRequest("/db/edit-account-details", opts)
       .then(handleSuccess)
       .catch(handleFailure);
   }
 
   /**
-   * Set a user's password during their first login
-   * @returns - A response from the set password endpoint
+   * Validate password requirements
+   * @returns A password error or null if validation passes
    */
-  const setPassword = () => {
-    // if the user's password doesn't match the confirm password field
-    if (!(passwordValue === confirmPasswordValue)) throw "Passwords do not match";
-    const body = JSON.stringify({ password: setPasswordValue });
-    const opts = { method: "POST", body: body };
-    return makeRequest("/iam/set-password", opts);
+  const validatePassword = (): PasswordError => {
+    // Check if passwords match
+    if (passwordValue !== confirmPasswordValue) {
+      return "PASSWORDS_DONT_MATCH";
+    }
+    
+    // Check password complexity
+    if (passwordValue.length < 8) {
+      return "PASSWORD_TOO_SHORT";
+    }
+    
+    // Check if current password is required (not first login)
+    if (!prefill.isFirstLogin && !currentPassword) {
+      return "CURRENT_PASSWORD_REQUIRED";
+    }
+    
+    return null;
+  };
+
+  /**
+   * Set a user's password during their first login or change an existing password
+   * @returns A response from the change password endpoint
+   */
+  const setPassword = async () => {
+    // Clear any previous errors
+    setPasswordError(null);
+    
+    // Validate password
+    const error = validatePassword();
+    if (error) {
+      setPasswordError(error);
+      throw getErrorMessage(error);
+    }
+    
+    // Prepare request body
+    const body: Record<string, string> = {
+      newPassword: passwordValue
+    };
+    
+    // Add previous password if not first login
+    if (!prefill.isFirstLogin) {
+      body.previousPassword = currentPassword;
+    }
+    
+    // Set up request options
+    const opts: RequestInit = { 
+      method: "POST", 
+      body: JSON.stringify(body),
+      credentials: "include", // Ensure cookies are sent with the request
+      headers: {
+        "Content-Type": "application/json"
+      }
+    };
+    
+    return makeRequest("/auth/researcher/change-password", opts);
   }
 
+  /**
+   * Get readable error message from password error code
+   */
+  const getErrorMessage = (error: PasswordError): string => {
+    switch (error) {
+      case "PASSWORDS_DONT_MATCH":
+        return "Passwords do not match";
+      case "PASSWORD_TOO_SHORT":
+        return "Password must be at least 8 characters long";
+      case "CURRENT_PASSWORD_REQUIRED":
+        return "Current password is required";
+      default:
+        return "Unknown error";
+    }
+  };
+
+  /**
+   * Attempt to set the password and handle success/failure
+   */
   const trySetPassword = () => setPassword().then(handleSuccess, handleFailure);
 
   /**
    * Handle a successful response
-   * @param res - The response from the login endpoint
+   * @param res - The response from the API
    */
   const handleSuccess = (res: ResponseBody) => {
     flashMessage(<span>{res.msg}</span>, "success");
-    setEdit(false);
-    setEditPassword(false);
+    resetForm();
   }
 
   /**
    * Handle a failed response
-   * @param res - The response from the login endpoint
+   * @param res - The error response from the API
    */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the server or "Internal server error"
+  const handleFailure = (res: ResponseBody | Error) => {
+    // Format error message
+    const errorMessage = res instanceof Error ? res.message : (res.msg || "Internal server error");
+    
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg ? res.msg : "Internal server error"}
+        {errorMessage}
       </span>
     );
 
     flashMessage(msg, "danger");
+    
+    // Only reset edit states, not the password fields to allow user to fix errors
     setEdit(false);
     setEditPassword(false);
   }
 
   /**
-   * Hide the account menu
+   * Reset form state and clear sensitive data
    */
-  const hide = () => {
-    setPasswordValue("");
-    setConfirmPasswordValue("");
+  const resetForm = () => {
     setEdit(false);
     setEditPassword(false);
+    clearSensitiveData();
+  }
+
+  /**
+   * Clear all sensitive data fields
+   */
+  const clearSensitiveData = () => {
+    setCurrentPassword("");
+    setPasswordValue("");
+    setConfirmPasswordValue("");
+    setPasswordError(null);
+  }
+
+  /**
+   * Hide the account menu and clear sensitive data
+   */
+  const hide = () => {
+    clearSensitiveData();
+    resetForm();
     hideMenu();
+  }
+
+  /**
+   * Get error feedback message for password fields
+   */
+  const getPasswordErrorFeedback = (errorType: PasswordError): string => {
+    return errorType ? getErrorMessage(errorType) : "";
   }
 
   return (
@@ -201,13 +329,26 @@ const AccountMenu = ({
           </div>
           {editPassword &&
             <>
+              {!prefill.isFirstLogin && (
+                <div className="mb-4">
+                  <TextField
+                    id="currentPassword"
+                    label="Current password"
+                    type="password"
+                    onKeyup={setCurrentPassword}
+                    value={currentPassword}
+                    feedback={passwordError === "CURRENT_PASSWORD_REQUIRED" ? getPasswordErrorFeedback(passwordError) : ""} />
+                </div>
+              )}
               <div className="mb-4">
                 <TextField
-                  id="setPassword"
+                  id="newPassword"
                   label="Enter a new password"
                   type="password"
                   onKeyup={setPasswordValue}
-                  value={passwordValue} />
+                  value={passwordValue}
+                  description="Password must be at least 8 characters long"
+                  feedback={passwordError === "PASSWORD_TOO_SHORT" ? getPasswordErrorFeedback(passwordError) : ""} />
               </div>
               <div className="mb-6">
                 <TextField
@@ -215,7 +356,8 @@ const AccountMenu = ({
                   label="Confirm your password"
                   type="password"
                   onKeyup={setConfirmPasswordValue}
-                  value={confirmPasswordValue} />
+                  value={confirmPasswordValue}
+                  feedback={passwordError === "PASSWORDS_DONT_MATCH" ? getPasswordErrorFeedback(passwordError) : ""} />
               </div>
             </>
           }
