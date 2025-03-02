@@ -6,15 +6,22 @@ from sqlalchemy.sql import Select
 from sqlalchemy.orm import InstrumentedAttribute
 
 from aws_portal.extensions import db
-from aws_portal.rbac.models import JoinRolePermission, JoinAccountApp, JoinAccountStudy, Permission
-from aws_portal.rbac.query_class import _QueryClass
+from aws_portal.rbac.models import (
+    AppPermission,
+    AppRole,
+    JoinAccountAppRole,
+    JoinAccountStudy,
+    JoinAppRolePermission,
+    JoinStudyRolePermission,
+    StudyPermission,
+)
+from aws_portal.rbac.mixins import _QueryClass
 
-type RBACType = Literal["account", "app", "study"]
+type RBACType = Literal["account", "study"]
 
 
 class RBACManager:
     AccountTable = None
-    AppTable = None
     StudyTable = None
 
 
@@ -29,8 +36,6 @@ def with_rbac(attr: str):
         match cls.rbac_type:
             case "account":
                 RBACManager.AccountTable = cls
-            case "app":
-                RBACManager.AppTable = cls
             case "study":
                 RBACManager.StudyTable = cls
             case _:
@@ -50,13 +55,13 @@ def with_rbac_study_permission(permission_value: str):
 
             study_ids = select(RBACManager.StudyTable.id) \
                 .join(JoinAccountStudy, RBACManager.StudyTable.id == JoinAccountStudy.study_id) \
-                .join(JoinRolePermission, JoinAccountStudy.role_id == JoinRolePermission.role_id) \
-                .join(Permission, JoinRolePermission.permission_id == Permission.id) \
+                .join(JoinStudyRolePermission, JoinAccountStudy.study_role_id == JoinStudyRolePermission.study_role_id) \
+                .join(StudyPermission, JoinStudyRolePermission.study_permission_id == StudyPermission.id) \
                 .where(and_(
                     JoinAccountStudy.account_id == current_user.id,
                     or_(
-                        Permission.value == permission_value,
-                        Permission.value == "*",
+                        StudyPermission.value == permission_value,
+                        StudyPermission.value == "*",
                     )
                 ))
 
@@ -71,75 +76,67 @@ def with_rbac_study_permission(permission_value: str):
     return decorator
 
 
-def with_rbac_app_permission(permission_value: str):
-    """Decorator to enforce app-level permissions on SQLAlchemy queries."""
-    def decorator(cls):
-        @classmethod
-        def _select(cls, *entities: list[Any], **__kw: Any) -> Select[Any]:
-            # If no user, return empty query
-            if not current_user:
-                return select(cls).where(False)
-
-            app_ids = select(RBACManager.AppTable.id) \
-                .join(JoinAccountApp, RBACManager.AppTable.id == JoinAccountApp.app_id) \
-                .join(JoinRolePermission, JoinAccountApp.role_id == JoinRolePermission.role_id) \
-                .join(Permission, JoinRolePermission.permission_id == Permission.id) \
-                .where(and_(
-                    JoinAccountApp.account_id == current_user.id,
-                    or_(
-                        Permission.value == permission_value,
-                        Permission.value == "*",
-                    )
-                ))
-
-            return select(*entities, **__kw) \
-                .join(RBACManager.AppTable, cls.app_id == RBACManager.AppTable.id) \
-                .filter(RBACManager.AppTable.id.in_(app_ids))
-
-        cls.select = _select
-        cls.query_class = _QueryClass()
-        return cls
-
-    return decorator
-
-
-def with_rbac_permission(permission_value: str, rbac_type: RBACType):
+def rbac_required(permission_value: str):
     def decorator(func):
         def wrapper(*args, **kwargs):
-            # Unit test that no user returns 403
             if not current_user:
                 return "Forbidden", 403
 
-            match rbac_type:
-                case "app":  # Unit test that user without app access returns 403
-                    table = RBACManager.AppTable
-                    join_table = JoinAccountApp
-                    join_column = "app_id"
-                case "study":  # Unit test that user without study access returns 403
-                    table = RBACManager.StudyTable
-                    join_table = JoinAccountStudy
-                    join_column = "study_id"
-                case _:  # Unit test that user without account access returns 403
-                    raise ValueError(f"Invalid rbac_type: {rbac_type}")
-
-            query = select(table.id) \
-                .join(join_table, table.id == getattr(join_table, join_column)) \
-                .join(JoinRolePermission, getattr(join_table, "role_id") == JoinRolePermission.role_id) \
-                .join(Permission, JoinRolePermission.permission_id == Permission.id) \
+            query = select(AppPermission.id) \
+                .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id) \
+                .join(AppRole, JoinAppRolePermission.app_role_id == AppRole.id) \
+                .join(JoinAccountAppRole, AppRole.id == JoinAccountAppRole.app_role_id) \
                 .where(and_(
-                    getattr(join_table, "account_id") == current_user.id,
+                    JoinAccountAppRole.account_id == current_user.id,
                     or_(
-                        Permission.value == permission_value,
-                        Permission.value == "*",
+                        AppPermission.value == permission_value,
+                        AppPermission.value == "*",
                     )
                 ))
+            
+            # Debug queries
+            # print("================================")
+            # query = select(AppPermission.id)
+            # print(db.session.execute(query).scalars().all())
+            # print("================================")
+            # query = select(AppPermission.id) \
+            #     .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id)
+            # print(db.session.execute(query).scalars().all())
+            # print("================================")
+            # query = select(AppPermission.id) \
+            #     .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id) \
+            #     .join(AppRole, JoinAppRolePermission.app_role == AppRole.id)
+            # print(db.session.execute(query).scalars().all())
+            # print("================================")
+            # query = select(AppPermission.id) \
+            #     .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id) \
+            #     .join(AppRole, JoinAppRolePermission.app_role == AppRole.id) \
+            #     .join(JoinAccountAppRole, AppRole.id == JoinAccountAppRole.app_role_id)
+            # print(db.session.execute(query).scalars().all())
+            # print("================================")
+            # query = select(AppPermission.id) \
+            #     .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id) \
+            #     .join(AppRole, JoinAppRolePermission.app_role == AppRole.id) \
+            #     .join(JoinAccountAppRole, AppRole.id == JoinAccountAppRole.app_role_id) \
+            #     .where(JoinAccountAppRole.account_id == current_user.id)
+            # print(db.session.execute(query).scalars().all())
+            # print("================================")
+            # query = select(AppPermission.id) \
+            #     .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id) \
+            #     .join(AppRole, JoinAppRolePermission.app_role == AppRole.id) \
+            #     .join(JoinAccountAppRole, AppRole.id == JoinAccountAppRole.app_role_id) \
+            #     .where(and_(
+            #         JoinAccountAppRole.account_id == current_user.id,
+            #         or_(
+            #             AppPermission.value == permission_value,
+            #             AppPermission.value == "*",
+            #         )
+            #     ))
+            # print(db.session.execute(query).scalars().all())
 
             if not db.session.execute(query).scalars().all():
                 return "Forbidden", 403
 
-            # Unit test that user with app access returns 200
-            # Unit test that user with study access returns 200
-            # Unit test that user with wildcard access returns 200
             return func(*args, **kwargs)
 
         return wrapper
