@@ -1,20 +1,20 @@
-import colors from "../../colors";
+import { colors } from "../../colors";
 import { useVisualizationContext } from "../../contexts/visualizationContext";
 import { useWearableData } from "../../contexts/wearableDataContext";
 import { ISleepLevelClassic, ISleepLevelStages, IVisualizationProps } from "../../interfaces";
-import Timeline from "./timeline";
+import { Timeline } from "./timeline";
 import { AxisTop } from "@visx/axis";
 import { GridColumns } from '@visx/grid';
 import { Brush } from '@visx/brush';
 import { scaleLinear } from '@visx/scale';
-import Button from "../buttons/button";
+import { Button } from "../buttons/button";
 import ReplayIcon from '@mui/icons-material/Replay';
 import { differenceInDays } from "date-fns";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { useEffect, useMemo, useState } from "react";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
-import BoutsTimeline from "./boutsTimeline";
+import { BoutsTimeline } from "./boutsTimeline";
 import { SmallLoader } from "../loader";
 
 
@@ -65,7 +65,7 @@ interface IWearableVisualizationContentProps extends IVisualizationProps {
 }
 
 
-const WearableVisualizationContent = ({
+export const WearableVisualizationContent = ({
   marginTop,
   marginRight,
   marginBottom,
@@ -446,6 +446,3 @@ const WearableVisualizationContent = ({
     </div>
   );
 };
-
-
-export default WearableVisualizationContent;

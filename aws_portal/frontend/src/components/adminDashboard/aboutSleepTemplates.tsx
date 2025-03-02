@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
-import Table, { Column, TableData } from "../table/table";
-import Navbar from "./navbar";
+import { Table, Column, TableData } from "../table/table";
+import { Navbar } from "./navbar";
 import { SmallLoader } from "../loader";
-import Button from "../buttons/button";
-import ListView from "../containers/lists/listView";
-import ListContent from "../containers/lists/listContent";
+import { Button } from "../buttons/button";
+import { ListView } from "../containers/lists/listView";
+import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
-const AboutSleepTemplates = () => {
+export const AboutSleepTemplates = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -206,5 +206,3 @@ const AboutSleepTemplates = () => {
     </ListView>
   );
 };
-
-export default AboutSleepTemplates;

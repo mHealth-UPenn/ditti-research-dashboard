@@ -1,12 +1,12 @@
-import Header from "./header";
-import Navbar from "./navbar";
+import { Header } from "./header";
+import { Navbar } from "./navbar";
 import "./dashboard.css";
 import { Outlet } from "react-router-dom";
-import NavbarContextProvider from "../contexts/navbarContext";
+import { NavbarContextProvider } from "../contexts/navbarContext";
 import { useFlashMessageContext } from "../contexts/flashMessagesContext";
 
 
-const Dashboard = () => {
+export const Dashboard = () => {
   const { flashMessages } = useFlashMessageContext();
 
   return (
@@ -42,6 +42,3 @@ const Dashboard = () => {
     </main>
   );
 };
-
-
-export default Dashboard;

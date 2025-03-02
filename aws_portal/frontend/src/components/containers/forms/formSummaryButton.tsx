@@ -1,5 +1,5 @@
 import { PropsWithChildren } from "react";
-import AsyncButton from "../../buttons/asyncButton";
+import { AsyncButton } from "../../buttons/asyncButton";
 
 interface FormSummaryButtonProps {
   disabled?: boolean;
@@ -7,7 +7,7 @@ interface FormSummaryButtonProps {
 }
 
 
-const FormSummaryButton = ({
+export const FormSummaryButton = ({
   disabled,
   onClick,
   children
@@ -24,6 +24,3 @@ const FormSummaryButton = ({
     </div>
   );
 };
-
-
-export default FormSummaryButton;

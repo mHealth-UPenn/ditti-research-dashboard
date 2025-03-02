@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { makeRequest } from "../utils";
 import { ResponseBody } from "../interfaces";
-import TextField from "../components/fields/textField";
+import { TextField } from "../components/fields/textField";
 import { FullLoader } from "../components/loader";
-import AsyncButton from "../components/buttons/asyncButton";
+import { AsyncButton } from "../components/buttons/asyncButton";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
 import "./loginPage.css";
@@ -12,7 +12,7 @@ import "./loginPage.css";
 /**
  * LoginPage component for IAM authentication
  */
-const LoginPage: React.FC = () => {
+export const LoginPage: React.FC = () => {
   const [flashMessages, setFlashMessages] = useState<{ id: number; element: React.ReactElement }[]>([]);
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -196,5 +196,3 @@ const LoginPage: React.FC = () => {
     </>
   );
 };
-
-export default LoginPage;

@@ -3,7 +3,7 @@ import { createContext, useState, useEffect, PropsWithChildren, useMemo, useCont
 import { makeRequest } from "../utils";
 import { StudiesContextType, Study } from "../interfaces";
 import { APP_ENV } from "../environment";
-import DataFactory from "../dataFactory";
+import { DataFactory } from "../dataFactory";
 import { useNavbarContext } from "./navbarContext";
 import { useSearchParams } from "react-router-dom";
 
@@ -15,7 +15,7 @@ interface IStudiesProviderProps {
 
 
 // StudiesProvider component that wraps children with studies context.
-export default function StudiesProvider({
+export function StudiesProvider({
   app,
   children
 }: PropsWithChildren<IStudiesProviderProps>) {

@@ -2,11 +2,11 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { ViewProps, DataRetrievalTask } from "../../interfaces";
 import { makeRequest } from "../../utils";
-import Table, { Column, TableData } from "../table/table";
-import Navbar from "./navbar";
+import { Table, Column, TableData } from "../table/table";
+import { Navbar } from "./navbar";
 import { SmallLoader } from "../loader";
-import ListView from "../containers/lists/listView";
-import ListContent from "../containers/lists/listContent";
+import { ListView } from "../containers/lists/listView";
+import { ListContent } from "../containers/lists/listContent";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 /**
@@ -64,7 +64,7 @@ function formatDate(isoDate: string | null): { display: string; sortValue: strin
  * @param goBack - Function to navigate back.
  * @param handleClick - Function to handle navigation link clicks.
  */
-const DataRetrievalTasks = () => {
+export const DataRetrievalTasks = () => {
   const [tasks, setTasks] = useState<DataRetrievalTask[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -189,5 +189,3 @@ const DataRetrievalTasks = () => {
     </ListView>
   );
 };
-
-export default DataRetrievalTasks;

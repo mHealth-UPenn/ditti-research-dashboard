@@ -9,7 +9,7 @@ interface IDittiDataContext {
   refreshAudioFiles: () => Promise<void>;
 }
 
-const DittiDataContext = createContext<IDittiDataContext | undefined>(undefined);
+export const DittiDataContext = createContext<IDittiDataContext | undefined>(undefined);
 
 
 export const useDittiDataContext = (): IDittiDataContext => {
@@ -26,6 +26,3 @@ export const useDittiDataContext = (): IDittiDataContext => {
   }
   return context;
 };
-
-
-export default DittiDataContext;

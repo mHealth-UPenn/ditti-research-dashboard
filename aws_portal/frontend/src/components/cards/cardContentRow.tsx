@@ -5,7 +5,7 @@ interface CardContentRowProps {
 }
 
 
-const CardContentRow = ({
+export const CardContentRow = ({
   className = "",
   children,
 }: PropsWithChildren<CardContentRowProps>) => {
@@ -17,6 +17,3 @@ const CardContentRow = ({
     </div>
   );
 };
-
-
-export default CardContentRow;

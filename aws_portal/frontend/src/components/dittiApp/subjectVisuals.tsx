@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
-import TextField from "../fields/textField";
-import SubjectsEdit from "./subjectsEdit";
+import { TextField } from "../fields/textField";
+import { SubjectsEdit } from "./subjectsEdit";
 import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
 import { ReactComponent as Right } from "../../icons/arrowRight.svg";
 import { ReactComponent as ZoomIn } from "../../icons/zoomIn.svg";
@@ -44,7 +44,7 @@ interface SubjectVisualsProps extends ViewProps {
   user: UserDetails;
 }
 
-const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
+export const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
   getTaps,
   getAudioTaps,
   studyDetails,
@@ -688,5 +688,3 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
     </div>
   );
 };
-
-export default SubjectVisuals;

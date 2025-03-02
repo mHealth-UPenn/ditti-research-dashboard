@@ -7,7 +7,7 @@ interface LinkComponentProps {
 }
 
 
-const LinkComponent = ({
+export const LinkComponent = ({
   onClick,
   className = "",
   children
@@ -20,6 +20,3 @@ const LinkComponent = ({
     </span>
   );
 };
-
-
-export default LinkComponent;

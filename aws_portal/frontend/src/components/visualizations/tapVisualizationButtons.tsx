@@ -6,10 +6,10 @@ import RemoveIcon from '@mui/icons-material/Remove';
 import ReplayIcon from '@mui/icons-material/Replay';
 
 import { useVisualizationContext } from "../../contexts/visualizationContext";
-import Button from "../buttons/button";
+import { Button } from "../buttons/button";
 
 
-const TapVisualizationButtons: React.FC = () => {
+export const TapVisualizationButtons: React.FC = () => {
   const {
     minRangeReached,
     maxRangeReached,
@@ -72,6 +72,3 @@ const TapVisualizationButtons: React.FC = () => {
     </div>
   );
 }
-
-
-export default TapVisualizationButtons;

@@ -1,11 +1,11 @@
 import { useSearchParams } from "react-router-dom";
-import DittiDataContext from "../../contexts/dittiDataContext";
+import { DittiDataContext } from "../../contexts/dittiDataContext";
 import { CoordinatorWearableDataProvider } from "../../contexts/wearableDataContext";
-import useDittiData from "../../hooks/useDittiData";
-import WearableVisualsContent from "./wearableVisualsContent";
+import { useDittiData } from "../../hooks/useDittiData";
+import { WearableVisualsContent } from "./wearableVisualsContent";
 
 
-export default function WearableVisuals() {
+export function WearableVisuals() {
   const [searchParams] = useSearchParams();
   const sid = searchParams.get("sid");
   const studyId = sid ? parseInt(sid) : 0;

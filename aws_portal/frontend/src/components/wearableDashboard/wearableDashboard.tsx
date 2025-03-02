@@ -1,10 +1,10 @@
-import CoordinatorStudySubjectProvider from "../../contexts/coordinatorStudySubjectContext";
+import { CoordinatorStudySubjectProvider } from "../../contexts/coordinatorStudySubjectContext";
 import { Outlet } from "react-router-dom";
-import StudiesProvider from "../../contexts/studiesContext";
+import { StudiesProvider } from "../../contexts/studiesContext";
 
 
 // React Router container for passing context to the WearableDashboard
-function WearableDashboard() {
+export function WearableDashboard() {
   return (
     <StudiesProvider app={3}>
       <CoordinatorStudySubjectProvider app={3}>
@@ -13,6 +13,3 @@ function WearableDashboard() {
     </StudiesProvider>
   );
 }
-
-
-export default WearableDashboard;

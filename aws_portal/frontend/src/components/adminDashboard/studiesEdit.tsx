@@ -1,24 +1,24 @@
 import { useEffect, useState } from "react";
-import TextField from "../fields/textField";
-import CheckField from "../fields/checkField";
-import QuillField from "../fields/quillField";
+import { TextField } from "../fields/textField";
+import { CheckField } from "../fields/checkField";
+import { MemoizedQuillField as QuillField } from "../fields/quillField";
 import { ResponseBody, Study } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import FormView from "../containers/forms/formView";
-import Form from "../containers/forms/form";
-import FormSummary from "../containers/forms/formSummary";
-import FormTitle from "../text/formTitle";
-import FormRow from "../containers/forms/formRow";
-import FormField from "../containers/forms/formField";
-import FormSummaryTitle from "../text/formSummaryTitle";
-import FormSummaryText from "../containers/forms/formSummaryText";
-import FormSummaryButton from "../containers/forms/formSummaryButton";
-import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { FormView } from "../containers/forms/formView";
+import { Form } from "../containers/forms/form";
+import { FormSummary } from "../containers/forms/formSummary";
+import { FormTitle } from "../text/formTitle";
+import { FormRow } from "../containers/forms/formRow";
+import { FormField } from "../containers/forms/formField";
+import { FormSummaryTitle } from "../text/formSummaryTitle";
+import { FormSummaryText } from "../containers/forms/formSummaryText";
+import { FormSummaryButton } from "../containers/forms/formSummaryButton";
+import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
-const StudiesEdit = () => {
+export const StudiesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
   const studyId = id ? parseInt(id) : 0
@@ -330,5 +330,3 @@ const StudiesEdit = () => {
     </FormView>
   );
 };
-
-export default StudiesEdit;

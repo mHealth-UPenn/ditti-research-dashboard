@@ -14,7 +14,7 @@ interface RadioFieldProps {
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-const RadioField: React.FC<RadioFieldProps> = ({
+export const RadioField: React.FC<RadioFieldProps> = ({
     id,
     label,
     checked,
@@ -56,5 +56,3 @@ const RadioField: React.FC<RadioFieldProps> = ({
     </div>
   );
 };
-
-export default RadioField;

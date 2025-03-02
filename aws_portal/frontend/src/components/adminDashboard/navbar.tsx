@@ -1,12 +1,12 @@
 import * as React from "react";
-import Accounts from "./accounts";
-import Studies from "./studies";
-import AccessGroups from "./accessGroups";
-import Roles from "./roles";
-import AboutSleepTemplates from "./aboutSleepTemplates";
-import DataRetrievalTasks from "./dataRetrievalTasks";
+import { Accounts } from "./accounts";
+import { Studies } from "./studies";
+import { AccessGroups } from "./accessGroups";
+import { Roles } from "./roles";
+import { AboutSleepTemplates } from "./aboutSleepTemplates";
+import { DataRetrievalTasks } from "./dataRetrievalTasks";
 import { ViewProps } from "../../interfaces";
-import LinkComponent from "../links/linkComponent";
+import { LinkComponent } from "../links/linkComponent";
 import { Link } from "react-router-dom";
 
 
@@ -17,7 +17,7 @@ interface NavbarProps {
   activeView: "Accounts" | "Studies" | "Roles" | "Access Groups" | "About Sleep Templates" | "Data Retrieval Tasks";
 }
 
-const Navbar = ({ activeView }: NavbarProps) => {
+export const Navbar = ({ activeView }: NavbarProps) => {
   const views = [
     {
       active: false,
@@ -79,5 +79,3 @@ const Navbar = ({ activeView }: NavbarProps) => {
     </div>
   );
 };
-
-export default Navbar;

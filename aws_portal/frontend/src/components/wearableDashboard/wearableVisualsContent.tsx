@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
 import { downloadExcelFromUrl, getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
-import ViewContainer from "../containers/viewContainer";
-import Card from "../cards/card";
-import CardContentRow from "../cards/cardContentRow";
-import Title from "../text/title";
-import Subtitle from "../text/subtitle";
-import Button from "../buttons/button";
+import { ViewContainer } from "../containers/viewContainer";
+import { Card } from "../cards/card";
+import { CardContentRow } from "../cards/cardContentRow";
+import { Title } from "../text/title";
+import { Subtitle } from "../text/subtitle";
+import { Button } from "../buttons/button";
 import { APP_ENV } from "../../environment";
 import { useWearableData } from "../../contexts/wearableDataContext";
-import WearableVisualization from "../visualizations/wearableVisualization";
+import { WearableVisualization } from "../visualizations/wearableVisualization";
 import SyncIcon from '@mui/icons-material/Sync';
 import { Link } from "react-router-dom";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
@@ -53,7 +53,7 @@ interface IWearableVisualsContentProps {
 }
 
 
-export default function WearableVisualsContent({
+export function WearableVisualsContent({
   dittiId,
 }: IWearableVisualsContentProps) {
   const [canEdit, setCanEdit] = useState(false);

@@ -5,7 +5,7 @@ interface IViewContainerProps {
 }
 
 
-const ViewContainer = ({
+export const ViewContainer = ({
   navbar = true,
   children
 }: PropsWithChildren<IViewContainerProps>) => {
@@ -22,6 +22,3 @@ const ViewContainer = ({
     </div>
   );
 };
-
-
-export default ViewContainer;

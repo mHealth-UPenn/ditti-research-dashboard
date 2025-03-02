@@ -13,7 +13,7 @@ const widthMap = {
 }
 
 
-const Card = ({
+export const Card = ({
   width = "lg",
   className = "",
   onClick,
@@ -29,6 +29,3 @@ const Card = ({
     </div>
   );
 };
-
-
-export default Card;

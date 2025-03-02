@@ -222,7 +222,7 @@ const generateSleepLogs = (): ISleepLog[] => {
 }
 
 
-class DataFactory {
+export class DataFactory {
   private initialized: boolean;
   public studies: Study[];
   public taps: TapDetails[];
@@ -286,5 +286,3 @@ class DataFactory {
     }
   }
 }
-
-export default DataFactory;

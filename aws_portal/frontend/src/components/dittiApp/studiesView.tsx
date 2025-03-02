@@ -2,20 +2,20 @@ import { useEffect, useState } from "react";
 import { getAccess } from "../../utils";
 import { SmallLoader } from "../loader";
 import { sub } from "date-fns";
-import Card from "../cards/card";
-import ViewContainer from "../containers/viewContainer";
-import CardContentRow from "../cards/cardContentRow";
-import Button from "../buttons/button";
-import Title from "../text/title";
-import ActiveIcon from "../icons/activeIcon";
-import LinkComponent from "../links/linkComponent";
+import { Card } from "../cards/card";
+import { ViewContainer } from "../containers/viewContainer";
+import { CardContentRow } from "../cards/cardContentRow";
+import { Button } from "../buttons/button";
+import { Title } from "../text/title";
+import { ActiveIcon } from "../icons/activeIcon";
+import { LinkComponent } from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
 
 
-const StudiesView = () => {
+export const StudiesView = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [canViewAudioFiles, setCanViewAudioFiles] = useState(true);
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState(true);
@@ -193,5 +193,3 @@ const StudiesView = () => {
     </ViewContainer>
   );
 };
-
-export default StudiesView;

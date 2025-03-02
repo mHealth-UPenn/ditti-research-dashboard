@@ -13,7 +13,7 @@ export interface ButtonProps {
 }
 
 
-const Button = ({
+export const Button = ({
   variant = "primary",
   size = "md",
   disabled = false,
@@ -56,6 +56,3 @@ const Button = ({
     </button>
   );
 };
-
-
-export default Button;

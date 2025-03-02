@@ -1,10 +1,7 @@
-import SubjectsEditContent from "../subjects/subjectsEditContent";
+import { SubjectsEditContent } from "../subjects/subjectsEditContent";
 
 
 // A wrapper to initialize the SubjectsEditContent component with the wearable app
-const WearableSubjectsEdit = () => {
+export const WearableSubjectsEdit = () => {
   return <SubjectsEditContent app={"wearable"} />
 };
-
-
-export default WearableSubjectsEdit;

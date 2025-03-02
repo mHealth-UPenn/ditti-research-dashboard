@@ -36,7 +36,7 @@ interface TextFieldProps {
 /**
  * Functional component version of TextField
  */
-const TextField = ({
+export const TextField = ({
   id,
   type,
   placeholder,
@@ -129,5 +129,3 @@ const TextField = ({
     </>
   );
 };
-
-export default TextField;

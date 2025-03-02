@@ -16,7 +16,7 @@ const formatString = (template: string, values: Record<string, string>): string 
 
 
 // NavbarContextProvider component that wraps children with studies context.
-export default function NavbarContextProvider({
+export function NavbarContextProvider({
   children
 }: PropsWithChildren<unknown>) {
   const matches = useMatches();

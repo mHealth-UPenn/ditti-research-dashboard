@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { getAccess } from "../../utils";
-import Card from "../cards/card";
-import ViewContainer from "../containers/viewContainer";
-import CardContentRow from "../cards/cardContentRow";
-import Title from "../text/title";
-import ActiveIcon from "../icons/activeIcon";
+import { Card } from "../cards/card";
+import { ViewContainer } from "../containers/viewContainer";
+import { CardContentRow } from "../cards/cardContentRow";
+import { Title } from "../text/title";
+import { ActiveIcon } from "../icons/activeIcon";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { SmallLoader } from "../loader";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
-import LinkComponent from "../links/linkComponent";
+import { LinkComponent } from "../links/linkComponent";
 import { Link } from "react-router-dom";
 
 
@@ -26,7 +26,7 @@ interface IWearableDetails {
 }
 
 
-export default function WearableStudies() {
+export function WearableStudies() {
   const [canViewWearableData, setCanViewWearableData] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 

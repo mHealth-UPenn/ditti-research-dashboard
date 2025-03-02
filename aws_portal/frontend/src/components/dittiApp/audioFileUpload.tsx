@@ -1,23 +1,23 @@
 import { useState, ChangeEvent, createRef } from "react";
-import TextField from "../fields/textField";
+import { TextField } from "../fields/textField";
 import { ResponseBody } from "../../interfaces";
 import { makeRequest } from "../../utils";
-import Select from "../fields/select";
-import RadioField from "../fields/radioField";
+import { Select } from "../fields/select";
+import { RadioField } from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
 import axios, { AxiosError } from "axios";
-import FormView from "../containers/forms/formView";
-import Form from "../containers/forms/form";
-import FormTitle from "../text/formTitle";
-import FormRow from "../containers/forms/formRow";
-import FormField from "../containers/forms/formField";
-import FormSummary from "../containers/forms/formSummary";
-import FormSummaryTitle from "../text/formSummaryTitle";
-import FormSummaryText from "../containers/forms/formSummaryText";
-import FormSummaryButton from "../containers/forms/formSummaryButton";
-import FormSummarySubtext from "../containers/forms/formSummarySubtext";
-import Button from "../buttons/button";
-import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { FormView } from "../containers/forms/formView";
+import { Form } from "../containers/forms/form";
+import { FormTitle } from "../text/formTitle";
+import { FormRow } from "../containers/forms/formRow";
+import { FormField } from "../containers/forms/formField";
+import { FormSummary } from "../containers/forms/formSummary";
+import { FormSummaryTitle } from "../text/formSummaryTitle";
+import { FormSummaryText } from "../containers/forms/formSummaryText";
+import { FormSummaryButton } from "../containers/forms/formSummaryButton";
+import { FormSummarySubtext } from "../containers/forms/formSummarySubtext";
+import { Button } from "../buttons/button";
+import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
@@ -35,7 +35,7 @@ interface IFile {
 }
 
 
-const AudioFileUpload = () => {
+export const AudioFileUpload = () => {
   const [category, setCategory] = useState("");
   const [availability, setAvailability] = useState("All Users");
   const [dittiId, setDittiId] = useState("");
@@ -566,5 +566,3 @@ const AudioFileUpload = () => {
     </FormView>
   );
 };
-
-export default AudioFileUpload;

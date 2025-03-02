@@ -4,13 +4,13 @@ import { FullLoader } from "../components/loader";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
 import "./loginPage.css";
-import Button from "../components/buttons/button";
+import { Button } from "../components/buttons/button";
 import { Link } from "react-router-dom";
 
 /**
  * ParticipantLoginPage component for Cognito authentication with database touch and loader
  */
-const ParticipantLoginPage: React.FC = () => {
+export const ParticipantLoginPage: React.FC = () => {
   const [isElevated, setIsElevated] = useState(false);
 
   const { cognitoLogin } = useAuth();
@@ -87,5 +87,3 @@ const ParticipantLoginPage: React.FC = () => {
     </>
   );
 };
-
-export default ParticipantLoginPage;

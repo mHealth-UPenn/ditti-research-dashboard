@@ -5,7 +5,7 @@ interface FormFieldProps {
 }
 
 
-const FormField = ({
+export const FormField = ({
   className,
   children
 }: PropsWithChildren<FormFieldProps>) => {
@@ -15,6 +15,3 @@ const FormField = ({
     </div>
   );
 };
-
-
-export default FormField;

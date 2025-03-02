@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import TextField from "../fields/textField";
+import { TextField } from "../fields/textField";
 import SearchIcon from '@mui/icons-material/Search';
 
 interface TableControlProps {
@@ -10,7 +10,7 @@ interface TableControlProps {
   onSearch: (text: string) => void;
 }
 
-const TableControl: React.FC<TableControlProps> = ({
+export const TableControl: React.FC<TableControlProps> = ({
   control,
   controlWidth,
   includeControl,
@@ -49,5 +49,3 @@ const TableControl: React.FC<TableControlProps> = ({
     </div>
   );
 };
-
-export default TableControl;

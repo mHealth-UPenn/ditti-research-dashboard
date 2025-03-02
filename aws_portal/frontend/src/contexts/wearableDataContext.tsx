@@ -1,7 +1,7 @@
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from "react";
 import { IDataProcessingTask, ISleepLog,  IWearableDataContextType } from "../interfaces";
 import { APP_ENV } from "../environment";
-import DataFactory from "../dataFactory";
+import { DataFactory } from "../dataFactory";
 import { makeRequest } from "../utils";
 // import { useFlashMessageContext } from "./flashMessagesContext";
 

@@ -2,12 +2,12 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { ResponseBody, Study } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
-import Table, { Column, TableData } from "../table/table";
-import Navbar from "./navbar";
+import { Table, Column, TableData } from "../table/table";
+import { Navbar } from "./navbar";
 import { SmallLoader } from "../loader";
-import Button from "../buttons/button";
-import ListView from "../containers/lists/listView";
-import ListContent from "../containers/lists/listContent";
+import { Button } from "../buttons/button";
+import { ListView } from "../containers/lists/listView";
+import { ListContent } from "../containers/lists/listContent";
 
 const COLUMNS: Column[] = [
   { name: "Acronym", searchable: true, sortable: true, width: 10 },
@@ -21,7 +21,7 @@ const COLUMNS: Column[] = [
 import { Link } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
-const Studies = () => {
+export const Studies = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -215,5 +215,3 @@ const Studies = () => {
     </ListView>
   );
 };
-
-export default Studies;

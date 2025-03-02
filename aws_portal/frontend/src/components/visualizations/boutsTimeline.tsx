@@ -1,7 +1,7 @@
 import { useMemo } from "react";
-import Timeline from "./timeline";
+import { Timeline } from "./timeline";
 import { IVisualizationProps } from "../../interfaces";
-import colors from "../../colors";
+import { colors } from "../../colors";
 
 /**
  * A period of time when a subject is considered to be actively tapping
@@ -45,7 +45,7 @@ interface BoutsTimelineProps extends IVisualizationProps {
   strokeDashArray?: string;
 }
 
-const BoutsTimeline = ({
+export const BoutsTimeline = ({
   timestamps,
   audioTimestamps,
   title = "Bouts",
@@ -180,5 +180,3 @@ const BoutsTimeline = ({
   return <Timeline
     groups={bouts} title={title} hideAxis={hideAxis} {...props} />;
 };
-
-export default BoutsTimeline;

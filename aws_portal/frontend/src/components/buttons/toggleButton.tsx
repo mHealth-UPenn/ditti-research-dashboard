@@ -1,5 +1,5 @@
 import * as React from "react";
-import Button, { ButtonProps } from "./button";
+import { Button, ButtonProps } from "./button";
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 /**
@@ -15,7 +15,7 @@ interface ToggleButtonProps extends ButtonProps {
   remove: (id: number) => void;
 }
 
-const ToggleButton: React.FC<ToggleButtonProps> = ({
+export const ToggleButton: React.FC<ToggleButtonProps> = ({
   id,
   active,
   add,
@@ -45,5 +45,3 @@ const ToggleButton: React.FC<ToggleButtonProps> = ({
     </Button>
   );
 };
-
-export default ToggleButton;

@@ -1,22 +1,22 @@
 import { useState, useEffect, createRef } from "react";
-import TextField from "../fields/textField";
+import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import FormView from "../containers/forms/formView";
-import Form from "../containers/forms/form";
-import FormTitle from "../text/formTitle";
-import FormRow from "../containers/forms/formRow";
-import FormField from "../containers/forms/formField";
-import FormSummary from "../containers/forms/formSummary";
-import FormSummaryTitle from "../text/formSummaryTitle";
-import FormSummaryContent from "../containers/forms/formSummaryContent";
-import FormSummaryText from "../containers/forms/formSummaryText";
-import FormSummaryButton from "../containers/forms/formSummaryButton";
+import { FormView } from "../containers/forms/formView";
+import { Form } from "../containers/forms/form";
+import { FormTitle } from "../text/formTitle";
+import { FormRow } from "../containers/forms/formRow";
+import { FormField } from "../containers/forms/formField";
+import { FormSummary } from "../containers/forms/formSummary";
+import { FormSummaryTitle } from "../text/formSummaryTitle";
+import { FormSummaryContent } from "../containers/forms/formSummaryContent";
+import { FormSummaryText } from "../containers/forms/formSummaryText";
+import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import sanitize from "sanitize-html";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
-import QuillField from "../fields/quillField";
+import { MemoizedQuillField as QuillField } from "../fields/quillField";
 
 /**
  * The form's prefill
@@ -26,7 +26,7 @@ interface AboutSleepTemplatePrefill {
   text: string;
 }
 
-const AboutSleepTemplatesEdit = () => {
+export const AboutSleepTemplatesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
   const aboutSleepTemplateId = id ? parseInt(id) : 0
@@ -192,5 +192,3 @@ const AboutSleepTemplatesEdit = () => {
     </FormView>
   );
 };
-
-export default AboutSleepTemplatesEdit;

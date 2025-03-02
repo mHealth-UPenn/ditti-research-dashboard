@@ -13,7 +13,7 @@ interface CheckFieldProps {
   onChange?: (val: boolean) => void;
 }
 
-const CheckField: React.FC<CheckFieldProps> = ({ id, prefill, label, onChange }) => {
+export const CheckField: React.FC<CheckFieldProps> = ({ id, prefill, label, onChange }) => {
   return (
     <div className="flex flex-col h-full">
       <div className="hidden md:flex mb-1">&nbsp;</div>
@@ -37,5 +37,3 @@ const CheckField: React.FC<CheckFieldProps> = ({ id, prefill, label, onChange })
     </div>
   );
 };
-
-export default CheckField;

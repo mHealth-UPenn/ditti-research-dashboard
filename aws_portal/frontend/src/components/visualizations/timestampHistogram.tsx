@@ -9,7 +9,7 @@ import { GridRows, GridColumns } from '@visx/grid';
 import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 
 import { useVisualizationContext } from '../../contexts/visualizationContext';
-import colors from '../../colors';
+import { colors } from '../../colors';
 import { NumberValue } from 'd3';
 import { IVisualizationProps } from '../../interfaces';
 
@@ -71,7 +71,7 @@ const formatTimeZoneTick = (
 };
 
 
-const TimestampHistogram = ({
+export const TimestampHistogram = ({
   timestamps,
   timezones,
   marginTop,
@@ -290,5 +290,3 @@ const TimestampHistogram = ({
     </div>
   );
 };
-
-export default TimestampHistogram;
