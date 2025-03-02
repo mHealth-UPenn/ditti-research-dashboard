@@ -1,321 +1,339 @@
-# aws-portal
+# Ditti Research Dashboard
 
-This Flask/React single page application is a convenient dashboard that can be used to interact with data stored on AWS DynamoDB. In production, the React frontend is statically hosted on S3 and provisioned through a secure HTTPS connection with CloudFront. The Flask backend is deployed with Zappa as a Lambda function and interfaces with a PostgreSQL database that is hosted using RDS. To minimize running costs, `rds_stopper.py` includes a function that stops the RDS instance after the application has been inactive for two hours. `rds_stopper.py` is scheduled by Zappa to run hourly.
+The **Ditti Research Dashboard** was created to provide a single, centralized platform for managing and visualizing data collected from the **Penn Ditti Mobile App**. With this dashboard, research coordinators and clinicians can efficiently enroll new subjects and monitor adherence to behavioral sleep interventions.
 
-## Prerequisites
+**🏥 Dashboard for Research and Clinical Data Management:**
 
-Four deployment scripts (`deploy-dev.sh`, `deploy-prod.sh`, `react-build-dev.sh`, and `react-build-prod.sh`) are included for convenience and must be run in a Linux OS, WSL, Git Bash, or other platforms that provide a bash shell. If using Windows, WSL is recommended. Ensure Node.js, Docker, and the AWS CLI are installed. If using Windows, Python must also be installed. Configure the AWS CLI (see: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html).
+The Ditti Research Dashboard allows researchers and clinicians to manage and visualize **anonymized study data** from the Penn Ditti app, supporting the monitoring of behavioral sleep intervention adherence.
 
-## Deploy Locally
+**🔑 Comprehensive Role and Permission Control:**
 
-Ensure Docker is installed and running. Create an empty PostgreSQL database using the development `postgres.env` file.
+The **Admin Dashboard** provides **granular role-based access controls**, enabling coordinators to manage **study-specific** and **app-wide permissions**.
 
-```sh
-docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
+**☁️ Scalable & HIPAA-compliant Cloud Infrastructure:**
+
+Built on **AWS** with **TypeScript, React.js, and Python**, the dashboard integrates user data from **DynamoDB** and is expanding to include a **Fitbit Dashboard** for visualizing participant sleep data.
+
+## Key Features
+
+- 📊 **Visualizations** of user interactions with the **Penn Ditti Mobile App**
+- 📝 **Interfaces** for managing study-related data and enrolling study subjects
+- 🎙️ **Tools** for labeling and uploading **audio files** for the Penn Ditti Mobile App
+- 🔧 **Administrative controls** for managing app-level and study-level permissions
+- ☁️ **Serverless architecture** to optimize cost-efficiency
+- 🔗 **Integrations** with third-party wearable device APIs
+- 🖼️ **Side-by-side visualizations** of wearable and Penn Ditti data
+
+## Tech Stack & Infrastructure
+
+**Backend:**
+
+- Python
+- Flask Web Framework
+- Zappa
+- PostgreSQL
+
+**Frontend:**
+
+- TypeScript
+- React.js
+- Tailwind CSS
+- Visx
+
+**AWS Services:**
+
+- Lambda
+- Cognito
+- AppSync
+- DynamoDB
+- S3
+- CloudFront
+- Secrets Manager
+- Relational Database Service (RDS)
+
+🚀 *The Ditti Research Dashboard is evolving to support deeper insights into behavioral sleep interventions and participant engagement.*
+
+## Running Locally
+
+### Prerequisites
+
+- Docker
+- Python
+- WSL, Linux, or MacOS
+
+### Setup
+
+Clone the repository:
+
+```bash
+git clone https://github.com/yourusername/aws-portal.git
+cd aws-portal
 ```
 
-Activate the Python virtual environment, install dependencies, and export credentials automatically with the development deploy script.
+Create and activate a virtual environment:
 
-```sh
-source deploy-dev.sh
+```bash
+python -m venv venv
+source venv/bin/activate
 ```
 
-Initialize the database (only must be done once per postgres container)
+Run the deploy script:
 
-```sh
-docker exec -i aws-pg psql -U user -d postgres < default.sql
-flask init-admin
+```bash
+./deploy-dev.sh init no-aws
 ```
 
-Save the following AWS credentials and variables in a file named `secret-aws.env`.
+Run the development server:
 
-| Name                | Value                                                                                      |
-| ------------------- | ------------------------------------------------------------------------------------------ |
-| APP_SYNC_HOST       | The AppSync host                                                                           |
-| AWS_TABLENAME_USER  | The DynamoDB User table name                                                               |
-| AWS_TABLENAME_TAP   | The DynamoDB Tap table name                                                                |
-| APPSYNC_ACCESS_KEY  | The access key of a user with permissions to make graphql queries to the AppSync instance  |
-| APPSYNC_SECRET_KEY  | The secret key of the same user                                                            |
-
-Run the app.
-
-```sh
+```bash
 flask run
 ```
 
-Install Node dependencies and run the React frontend.
+In a new terminal window, run the frontend:
 
-```sh
+```bash
 cd aws_portal/frontend
 npm install
 npm run start
 ```
 
-The app can now be accessed at `localhost:3000`. `localhost` must be used for JWT token authentication to work properly in the development environment.
+## Running Tests
 
-## Testing
+To run the test suite, use the following command:
 
-New changes must always be run through a set of unit tests. Unit tests have been written using `pytest`.
-
-## The Production Deploy Scripts
-
-The Lambda deploy script `deploy-prod.sh` will run pytest, build and push the app's Docker image, and deploy the app as a Lambda function using Zappa. If the app is already deployed, the deploy script will instead update the existing deployment with any changes. Before running the script, ensure Docker is running, your AWS CLI is configured, and you are using a shell that supports bash (e.g., a Linux OS, WSL, or Git Bash). The script can be run with the following options:
-
-| Option     | Description                                               |
-| ---------- | --------------------------------------------------------- |
-| --no-tests | Don't run pytest                                          |
-| --no-build | Don't build or push the Docker image                      |
-| --no-cache | Build the Docker image with the --no-cache option enabled |
-| -t/--tag   | Use a different image tag (default: latest)               |
-
-The React deploy script `react-build-prod.sh` will run `npm run build`, automatically copy frontend static files to your S3 bucket, and run an invalidation on your CloudFront distribution. The invalidation will update your distribution's cache with your latest build.
-
-## Deploy for Production
-
-Before completing the following steps, create a file named `secret-deploy.env` in the same folder as the four deploy scripts. While setting up the production environment with the following steps, save the following variables in this file.
-
-| Name                           | Value                                                                                                                                                                       |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| AWS_REGION                     | The region in which all AWS resources will be deployed (e.g., us-east-1). **Note:** all resources must be deployed in this region                                           |
-| AWS_ACCOUNT_ID                 | Your 12-digit account ID. This can be obtained by clicking your account name at the top right corner of the AWS console. Do not include dashes                              |
-| AWS_BUCKET                     | The name of your S3 bucket                                                                                                                                                  |
-| AWS_CLOUDFRONT_DISTRIBUTION_ID | The ID of your CloudFront distribution                                                                                                                                      |
-| AWS_CLOUDFRONT_DOMAIN_NAME     | The endpoint URL of your CloudFront distribution, including https://. This can be obtained from your distribution's dashboard, under **Details > Distribution domain name** |
-| AWS_ECR_REPO_NAME              | The name of your Elastic Container Registry repository                                                                                                                      |
-
-It is recommended you tag all AWS resources while you create them. This will simplify management and tracking of all resources that are related to this app.
-
-### Set Up Static Hosting with S3 and CloudFront
-
-Create an S3 bucket.
-
-1. Navigate to the S3 dashboard (https://s3.console.aws.amazon.com/s3) and click **Create bucket**.
-2. Enter a bucket name and select your AWS region.
-3. Under **Block Public Access settings for this bucket**, deselect **Block _all_ public access**.
-4. Click **Create bucket**.
-
-Enable static web hosting on the bucket you just created.
-
-1. Open the bucket you just created.
-2. Click **Properties**.
-3. Scroll to **Static website hosting** and click **Edit**.
-4. Under **Static website hosting**, click **Enable**.
-5. For **Index document**, enter **index.html**.
-6. Click **Save changes**.
-
-Create a CloudFront distribution with your S3 bucket as its origin.
-
-1. Navigate to the CloudFront dashboard (https://us-east-1.console.aws.amazon.com/cloudfront) and click **Create distribution**.
-2. Click on the **Origin domain** field. Under **Amazon S3**, select the bucket you just created. It should appear as **bucket name**.s3.amazonaws.com.
-3. Under **S3 bucket access**, select **Yes use OAI**.
-4. Under **Origin access identity**, select **Create new OAI** and click **Create**.
-5. Under **Default cache behavior > Viewer > Viewer protocol policy**, select **HTTPS only**.
-6. Under **Settings > Price class**, select your preferred price class. Use only North America and Europe is recommended.
-7. For **Default root object**, enter **index.html**.
-8. Click **Create distribution**.
-
-Create an access policy on your S3 bucket that allows your CloudFront distribution to get objects.
-
-1. In the left navigation bar, under **Security**, click **Origin access identities**.
-2. Copy the **ID** of the OAI that you just created.
-3. Navigate to the S3 dashboard (https://s3.console.aws.amazon.com/s3) and open your bucket.
-4. Click **Permissions**.
-5. Scroll to **Bucket policy** and click **Edit**.
-6. In the **Policy** field, paste the following text. Replace **ID** with the the OAI ID that you just copied and **Bucket Name** with the name of your bucket.
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Sid": "PublicReadGetObject",
-      "Effect": "Allow",
-      "Principal": {
-        "AWS": "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ID"
-      },
-      "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::Bucket Name/*"
-    }
-  ]
-}
+```bash
+pytest
 ```
 
-7. Click **Save changes**.
+## Backend Deployment Scripts
 
-### Create an Elastic Container Registry repository
+The repository includes several deployment scripts to facilitate the deployment process for different environments.
 
-1. Navigate to the ECR dashboard (https://us-east-1.console.aws.amazon.com/ecr) and click **Create repository**.
-2. Enter a name for your repository and click **Create repository**.
+### Development Deployment
 
-### Create a Relational Database Service Instance
+The `deploy-dev.sh` script sets up the development environment. It handles the creation of a Python virtual environment, installs required Python packages, exports environment variables, and optionally initializes the application.
 
-The following steps will create a database with the cheapest configuration available, which is sufficient for small and intermittent workloads.
-
-1. Navigate to the RDS dashboard (https://console.aws.amazon.com/rds) and click **Create database**.
-2. Under **Engine options > Engine type**, select **PostgreSQL**.
-3. Scroll to **Availability and durability**. Under **Deployment options**, select **Single DB instance**.
-4. Scroll to **Settings**. Enter a database identifier and a master password. **Note:** This password will grant external access to your database. It is _strongly_ recommended you randomly generate and save this password using a password manager.
-5. Scroll to **Instance configuration**. Under **DB instance class**, select **Burstable classes**. In the dropdown menu, select **db.t3.micro**.
-6. Scroll to **Storage**. In the dropdown menu under **Storage type**, select **General Purpose SSD (gp2)**.
-7. Under **Storage autoscaling**, deselect **Enable storage scaling**.
-8. Scroll to **Connectivity**. Under **Public access**, select **Yes**.
-9. Scroll to **Additional configuration** and open the additional configuration menu.
-10. For **Database options > Initial database name**, enter **postgres**.
-11. Under **Performance insights**, deselect **Turn on Performance Insights**.
-12. Under **Monitoring**, deselect **Enable Enhanced monitoring**.
-13. Under **Log exports**, select **PostgreSQL log**.
-14. Click **Create database**.
-
-Create an inbound rule on your database's VPC that allows inbound requests.
-
-1. Open the database instance you just created.
-2. Scroll to **Connectivity & security**. Click the link under **Security > VPC security groups**.
-3. Click the **Actions** dropdown menu at the top of the screen and select **Edit inbound rules**.
-4. Click **Add rule**.
-5. In the **Type** dropdown menu of the rule that you just added, select **PostgreSQL**.
-6. In the **Source** dropdown menu of the rule that you just added, select **Anywhere-IPv4**.
-7. Click **Save rules**.
-
-### Initialize the Database
-
-:warning: **Only run these commands once**. Running any of these commands a second time can have unintended consequences.
-
-Then, use a postgres docker container to initialize the remote database using the `default.sql` file. Replace **Password** with the master password that you created your database with. **Database Endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**. Note that the database endpoint will only be available after the database finishes creating.
-
-```sh
-docker run -dit --env-file postgres.env -e PGPASSWORD=Password --name temp-db postgres
-docker exec -i temp-db psql -U postgres -d postgres -h Database Endpoint < default.sql
+```bash
+./deploy-dev.sh [conda] [init] [no-aws]
 ```
 
-Run the flask command to create an admin account. Replace **URI** with the SQLAlchemy database URI (postgresql://postgres:**Password**@**Database Endpoint**/postgres). Replace **Admin Email** and **Admin Password** with your desired admin login credentials.
+- `conda`: Skip Python virtual environment setup if using Conda.
+- `init`: Run initialization commands for the application.
+- `no-aws`: Skip fetching secrets from AWS Secrets Manager.
 
-```sh
-flask init-admin --uri URI --email Admin Email --password Admin Password
+### Staging Deployment
+
+The `deploy-staging.sh` script is used for deploying to the staging environment. It supports options to skip tests, skip building the Docker image, and use the Docker cache.
+
+```bash
+./deploy-staging.sh [--no-tests] [--no-build] [--no-cache] [-t|--tag <tag>]
 ```
 
-### Deploy the Flask Backend to Lambda
+- `--no-tests`: Skip running tests.
+- `--no-build`: Skip building the Docker image.
+- `--no-cache`: Build the Docker image without using the cache.
+- `-t|--tag <tag>`: Specify the Docker image tag (default is `latest`).
 
-Ensure Docker is running, your AWS CLI is configured, and all variables are saved in `secret-deploy.env`. From command line that supports bash, run a test database container, deploy the development environment, and run the deploy script. Do not open the deployment's URL until after the following steps are complete.
+### Production Deployment
 
-```sh
-docker run -ditp 5432:5432 --name test-db --env-file postgres.env postgres
-source deploy-dev.sh
-./deploy-prod.sh
+The `deploy-prod.sh` script is used for deploying to the production environment. It supports the same options as the staging deployment script.
+
+```bash
+./deploy-prod.sh [--no-tests] [--no-build] [--no-cache] [-t|--tag <tag>]
 ```
 
-Optionally remove the test database when finished with deployment.
+- `--no-tests`: Skip running tests.
+- `--no-build`: Skip building the Docker image.
+- `--no-cache`: Build the Docker image without using the cache.
+- `-t|--tag <tag>`: Specify the Docker image tag (default is `latest`).
 
-```sh
-docker stop test-db
-docker rm test-db
-```
+These scripts ensure a smooth and consistent deployment process across different environments.
 
-### Create a User for Accessing AppSync
+**Note:** In production and staging environments, `run.py` retrieves secrets from AWS Secrets Manager and sets them as environment variables before creating the Flask app instance.
 
-1. Navigate to the IAM dashboard (https://us-east-1.console.aws.amazon.com/iamv2/home) and click **Users** in the menu to the left of the page.
-2. Click **Add Users**.
-3. Create a name for the user (e.g., aws-portal-appsync-access) and click **Next**.
-4. Under **Permissions options**, select **Attach policies directly**.
-5. Under **Permissions policies**, click **Create policy**.
-6. The the right of the header **Policy editor**, select **JSON**.
-7. Delete the text under **Policy editor** and replace it with the following. Replace **AppSync ARN** with the ARN of your App Sync instance. This can be retrieved from the AppSync instance's dashboard under **Settings > API ARN**.
+**Note:** In production, Zappa automatically wraps the app object in production-ready WSGI middleware.
 
-```json
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Action": [
-                "appsync:GraphQL"
-            ],
-            "Resource": [
-                "AppSync ARN/*"
-            ],
-            "Effect": "Allow"
-        }
-    ]
-}
-```
+## Frontend Deployment Scripts
 
-8. Click **Next**.
-9. Create a name for the policy (e.g., aws-portal-appsync-access) and click **Create Policy**.
-10. Return to the previos window or tab where you were creating the user. To the right of the **Permissions policies** header, click the **refresh button**.
-11. Search for the policy you just created, select it, and click **Next**.
-12. Click **Create user**.
-13. In the IAM Users page, locate and click on the user you just created.
-14. Select the **Security credentials** tab.
-15. To the right of the **Access keys** header, click **Create access key**.
-16. Under **Use case**, select **Application running on AWS compute service**.
-17. Select **I understand the above recommendation and want to proceed to create an access key.** and click **Next**.
-18. Enter a description tag (e.g., aws-portal-appsync-access) and click **Create access key**.
-19. Save the **Access key** and **Secret access key** in a secure location.
+### Production Build
 
-### Create a Secret Using Secrets Manager
+The `react-build-prod.sh` script is used for building and deploying the React frontend to the production environment. It exports deployment environment variables, builds the React app, uploads the built app to the specified AWS S3 bucket, and creates a CloudFront invalidation to update the app's frontend.
 
-1. Navigate to the Secrets Manager dashboard (https://us-east-1.console.aws.amazon.com/secretsmanager) and click **Store a new secret**.
-2. Under **Secret type**, select **Other type of secret**.
-3. Under **Key/value pairs**, enter the following rows. For the SQLAlchemy database URI, replace **Password** with the master password that you created your database with. **Database Endpoint** can be retrieved from your database's dashboard under **Connectivity & Security > Endpoint & port > Endpoint**.
-
-| Key                        | Value                                                                                          |
-| -------------------------- | ---------------------------------------------------------------------------------------------- |
-| APP_SYNC_HOST              | The AppSync host                                                                               |
-| AWS_TABLENAME_USER         | The DynamoDB User table name                                                                   |
-| AWS_TABLENAME_TAP          | The DynamoDB Tap table name                                                                    |
-| AWS_DB_INSTANCE_IDENTIFIER | The DB identifier of your database instance                                                    |
-| FLASK_DB                   | The SQLAlchemy database URI: postgresql://postgres:**Password**@**Database Endpoint**/postgres |
-| APPSYNC_ACCESS_KEY         | The access key of a user with permissions to make graphql queries to the AppSync instance      |
-| APPSYNC_SECRET_KEY         | The secret key of the same user                                                                |
-
-5. Click **Next**.
-6. For **Secret name**, enter **secret-aws-portal** and click **Next**.
-7. Click **Next** again, then click **Store**.
-
-### Allow Your Lambda Function to Access Your Secret and Database
-
-1. Navigate to the Lambda dashboard (https://us-east-1.console.aws.amazon.com/lambda) and under **Functions**, click **aws-portal-app**.
-2. Click **Configuration** and in the left navigation bar click **Permissions**.
-3. Click the link under **Execution role > Role name**.
-4. In the **Add permissions** dropdown menu, select **Create inline policy**.
-5. Click **JSON**.
-6. In the text field, past the following text. Replace **Secret ARN** and **Database ARN** with the ARNs of your secret and database instance. Your secret's ARN can be retrieved from your secret's dashboard, under **Secret details > Secret ARN**. Your database instance's ARN can be retrieved from your database instance's dashboard (click **Configuration** and it can be found under **Configuration > Amazon Resource Name (ARN)**).
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": "secretsmanager:GetSecretValue",
-      "Resource": "Secret ARN"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "rds:*",
-      "Resource": "Database ARN"
-    }
-  ]
-}
-```
-
-7. Click **Review policy**.
-8. Enter a name for your policy and click **Create policy**.
-
-### Deploy the React Frontend to S3
-
-1. Create an .env file named `secret-react.env` and save the following variables in the file. The app's API Gateway URL can be found by running `zappa status app | grep "API Gateway URL"`.
-
-| Name                   | Value                     |
-| ---------------------- | ------------------------- |
-| REACT_APP_FLASK_SERVER | The app's API Gateway URL |
-
-2. Run the React deploy script.
-
-```sh
+```bash
 ./react-build-prod.sh
 ```
 
-### Updating and Undeploying
+### Staging Build
 
-Any changes can be automatically applied to the deployed app using either of the production deployment scripts (`deploy-prod.sh` and `react-build-prod.sh`).
+The `react-build-staging.sh` script is used for building and deploying the React frontend to the staging environment. It follows the same steps as the production build script.
 
-If you wish to undeploy the app from Lambda, run `zappa undeploy app`. **Note:** If you run the deploy script again after undeploying the app, the Flask backend must be accessed with a new URL. You must update the `secret-react.env` file with the new URL in Step 1 of "Deploy the React Frontend to S3" and rerun the React deploy script.
+```bash
+./react-build-staging.sh
+```
+
+## Environment Configuration
+
+Refer to the following `.env.template` files for configuring environment variables:
+
+### .env.aws.template
+
+For configuring AWS services when running locally.
+
+| Variable Name               | Description                              |
+|-----------------------------|------------------------------------------|
+| APP_SYNC_HOST               | AppSync host URL.                         |
+| APPSYNC_ACCESS_KEY          | AppSync access key.                       |
+| APPSYNC_SECRET_KEY          | AppSync secret key.                       |
+| AWS_TABLENAME_USER          | DynamoDB table name for users.            |
+| AWS_TABLENAME_TAP           | DynamoDB table name for taps.             |
+| AWS_TABLENAME_AUDIO_FILE    | DynamoDB table name for audio files.      |
+| AWS_TABLENAME_AUDIO_TAP     | DynamoDB table name for audio taps.       |
+| AWS_AUDIO_FILE_BUCKET       | S3 bucket for audio files.                |
+| COGNITO_PARTICIPANT_CLIENT_ID | Cognito participant client ID.          |
+| COGNITO_PARTICIPANT_CLIENT_SECRET | Cognito participant client secret.  |
+| COGNITO_PARTICIPANT_DOMAIN  | Cognito participant domain.               |
+| COGNITO_PARTICIPANT_REGION  | Cognito participant region.               |
+| COGNITO_PARTICIPANT_USER_POOL_ID | Cognito participant user pool ID.    |
+| TM_FSTRING                  | Token manager configuration string. This expects to be a format string that takes one argument `api_name`. For example, `{api_name}-tokens-dev`.      |
+
+### .env.deploy.template
+
+For use when deploying to staging or production environments. To use, make two copies of this file: `.env.prod` and `.env.staging`.
+
+| Variable Name                   | Description                              |
+|---------------------------------|------------------------------------------|
+| AWS_REGION                      | AWS region.                               |
+| AWS_ACCOUNT_ID                  | The AWS account ID of the account that owns all AWS resources.                           |
+| AWS_BUCKET                      | The S3 bucket to use for static web hosting.                                |
+| AWS_CLOUDFRONT_DISTRIBUTION_ID  | CloudFront distribution ID.               |
+| AWS_CLOUDFRONT_DOMAIN_NAME      | CloudFront domain name.                   |
+| AWS_ECR_REPO_NAME               | ECR repository name.                      |
+
+### .env.local
+
+For configuring the local Flask app.
+
+| Variable Name                   | Description                              |
+|---------------------------------|------------------------------------------|
+| FLASK_CONFIG                    | Flask configuration (Default, Staging, Production, or Testing),                      |
+| FLASK_DEBUG                     | Flask debug mode.                         |
+| FLASK_LOG_LEVEL                 | Flask log level.                          |
+| FLASK_SECRET_KEY                | Flask secret key.                         |
+| FLASK_PEPPER                    | Flask pepper.                             |
+| FLASK_ADMIN_EMAIL               | Admin email. This will be used for logging in to the application when running locally.                             |
+| FLASK_ADMIN_PASSWORD            | Admin password. This will be used for logging in to the application when running locally.                           |
+| FLASK_DB                        | Flask database URI. This must match the credentials in `.env.postgres`.                       |
+| FLASK_APP                       | Flask app entry point.                    |
+| LOCAL_LAMBDA_ENDPOINT           | Local Lambda endpoint. This will be used for invoking data processing tasks.                    |
+
+### .env.postgres
+
+For configuring the local postgres container.
+
+| Variable Name                   | Description                              |
+|---------------------------------|------------------------------------------|
+| POSTGRES_USER                   | PostgreSQL user.                          |
+| POSTGRES_PASSWORD               | PostgreSQL password.                      |
+| POSTGRES_PORT                   | PostgreSQL port.                          |
+| POSTGRES_DB                     | PostgreSQL database name.                 |
+
+## Repo Structure
+
+Following are the main directories in the repository:
+
+| Directory  | Description                                      |
+|------------|--------------------------------------------------|
+| `backend`  | The Flask app.                                   |
+| `frontend` | The frontend React app.                          |
+| `functions`| Lambda functions, including the data processing task. |
+| `migrations`| Database migrations with `Flask-Migrate`.       |
+| `shared`   | Modules shared between backend and functions.    |
+| `tests`    | Testing scripts.                                 |
+
+## Zappa Serverless Deployment
+
+The Ditti Research Dashboard uses Zappa for serverless deployment to AWS Lambda. Below are the deployment scripts and their usage for different environments.
+
+### Zappa Settings
+
+The `zappa_settings.json` file contains the configuration for different environments such as `app` (production) and `staging`. Key settings include:
+
+- `app_function`: The entry point for the Flask app.
+- `aws_region`: The AWS region for deployment.
+- `environment_variables`: Environment variables for the app.
+- `events`: Scheduled events for Lambda functions.
+- `log_level`: Logging level.
+- `project_name`: The name of the project.
+- `runtime`: The Python runtime version.
+- `tags`: Tags for AWS resources.
+- `certificate_arn`: ARN for the SSL certificate.
+- `domain`: The domain name for the app.
+
+### RDS Stopper Script
+
+The `rds_stopper.py` script is designed to manage the state of an RDS instance based on recent activity. It checks for HTTP requests in the last two hours and stops the RDS instance if no requests are found.
+
+#### Key Functions
+
+- **Logging Setup:** Configures logging to capture information and errors.
+- **Stop Function:**
+  - Retrieves HTTP request logs from AWS CloudWatch.
+  - Checks for requests in the last two hours.
+  - If no requests are found, it checks the status of the RDS instance.
+  - Stops the RDS instance if it is running.
+
+#### Environment Variables
+
+The script relies on the following environment variables:
+
+- `AWS_LOG_GROUP_NAME`: The name of the CloudWatch log group.
+- `AWS_LOG_PATTERN`: The filter pattern for log events.
+- `AWS_DB_INSTANCE_IDENTIFIER`: The identifier of the RDS instance.
+
+#### Usage
+
+To use the script, ensure the required environment variables are set and execute the script. The script is scheduled to run every hour using Zappa's event configuration.
+
+## Wearable Data Retrieval
+
+The `functions/wearable_data_retrieval` directory contains a Lambda function designed to pull Fitbit sleep data from the Fitbit API for participants who have consented to participate in a research study. This function is part of the Ditti Research Dashboard and can be run locally using the provided bash scripts.
+
+### Key Files
+
+- **Dockerfile**: Defines the Docker image for the Lambda function.
+- **lambda_function.py**: Contains the main logic for retrieving and processing Fitbit sleep data.
+- **run_image.sh**: Builds and runs the Docker image locally.
+- **test_image.sh**: Tests the running Docker image by invoking the Lambda function.
+
+### Running Wearable Data Retrieval Locally
+
+To run the wearable data retrieval function locally, follow these steps:
+
+Build and Run the Docker Image:
+
+```bash
+./run_image.sh [--no-cache] [--debug] [--staging]
+```
+
+- `--no-cache`: Build the Docker image without using the cache.
+- `--debug`: Enable debug mode.
+- `--staging`: Run in staging mode.
+
+Test the Running Docker Image:
+
+```bash
+./test_image.sh
+```
+
+This will invoke the Lambda function locally and simulate the retrieval of Fitbit sleep data.
+
+### Wearable Data Retrieval Environment Variables
+
+Ensure the following environment variables are set in your `.env` file:
+
+- `AWS_REGION`: The AWS region.
+- `FITBIT_CLIENT_ID`: Fitbit API client ID.
+- `FITBIT_CLIENT_SECRET`: Fitbit API client secret.
+- `DATABASE_URI`: URI for connecting to the database.
+
+These scripts and configurations facilitate the development and testing of the wearable data retrieval function in a local environment before deploying it to AWS Lambda.
