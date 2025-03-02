@@ -12,6 +12,7 @@ from sqlalchemy import select, func
 from aws_portal.extensions import db
 from aws_portal.models import StudySubject
 from aws_portal.utils.cognito import verify_token
+
 blueprint = Blueprint("cognito", __name__, url_prefix="/cognito")
 logger = logging.getLogger(__name__)
 

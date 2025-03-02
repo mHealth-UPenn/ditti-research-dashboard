@@ -43,7 +43,6 @@ def account():
 
     Options
     -------
-    app: 1
     id: str
 
     Response syntax (200)
@@ -92,7 +91,6 @@ def account_create():
     Request syntax
     --------------
     {
-        app: 1,
         create: {
             ...Account data,
             access_groups: [
@@ -190,7 +188,6 @@ def account_edit():
     Request syntax
     --------------
     {
-        app: 1,
         id: int,
         edit: {
             ...Account data,
@@ -314,7 +311,6 @@ def account_archive():
     Request syntax
     --------------
     {
-        app: 1,
         id: int
     }
 
@@ -356,7 +352,6 @@ def study():
 
     Options
     -------
-    app: 1
     id: str
 
     Response syntax (200)
@@ -403,7 +398,6 @@ def study_create():
     Request syntax
     --------------
     {
-        app: 1,
         create: {
             name: str,
             acronym: str,
@@ -480,7 +474,6 @@ def study_edit():
     Request syntax
     --------------
     {
-        app: 1,
         id: int,
         edit: {
             name: str,
@@ -551,7 +544,6 @@ def study_archive():
     Request syntax
     --------------
     {
-        app: 1,
         id: int
     }
 
@@ -593,7 +585,6 @@ def role():
 
     Options
     -------
-    app: 1
     id: str
 
     Response syntax (200)
@@ -642,7 +633,6 @@ def role_create():
     Request syntax
     --------------
     {
-        app: 1,
         create: {
             ...Role data,
             permissions: [
@@ -715,7 +705,6 @@ def role_edit():
     Request syntax
     --------------
     {
-        app: 1,
         id: int,
         edit: {
             ...Role data,
@@ -798,7 +787,6 @@ def role_archive():
     Request syntax
     --------------
     {
-        app: 1,
         id: int
     }
 
@@ -842,7 +830,6 @@ def about_sleep_template():
 
     Options
     -------
-    app: 1
     id: str
 
     Response syntax (200)
@@ -894,7 +881,6 @@ def about_sleep_template_create():
     Request syntax
     --------------
     {
-        app: 1,
         create: {
             ...About sleep template data
         }
@@ -941,7 +927,6 @@ def about_sleep_template_edit():
     Request syntax
     --------------
     {
-        app: 1,
         id: int,
         edit: {
             ...About sleep template data
@@ -1000,7 +985,6 @@ def about_sleep_template_archive():
     Request syntax
     --------------
     {
-        app: 1,
         id: int
     }
 
@@ -1036,7 +1020,7 @@ def about_sleep_template_archive():
 
 
 @blueprint.route("/study_subject")
-@rbac_required("GetStudySubject")
+@rbac_required("GetParticipant")
 def study_subject():
     """
     Get one study subject or a list of all study subjects. This will return one
@@ -1044,7 +1028,6 @@ def study_subject():
 
     Options
     -------
-    app: 1
     id: str
 
     Response syntax (200)
@@ -1096,7 +1079,7 @@ def study_subject():
 
 
 @blueprint.route("/study_subject/create", methods=["POST"])
-@rbac_required("CreateStudySubject")
+@rbac_required("CreateParticipant")
 def study_subject_create():
     """
     Create a new study subject.
@@ -1104,7 +1087,6 @@ def study_subject_create():
     Request syntax
     --------------
     {
-        app: 1,
         create: {
             ditti_id: str,
             studies: [
@@ -1245,7 +1227,7 @@ def study_subject_create():
 
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
-@rbac_required("ArchiveStudySubject")
+@rbac_required("ArchiveParticipant")
 def study_subject_archive():
     """
     Archive a study subject.
@@ -1253,7 +1235,6 @@ def study_subject_archive():
     Request syntax
     --------------
     {
-        app: int,
         id: int
     }
 
@@ -1299,7 +1280,7 @@ def study_subject_archive():
 
 
 @blueprint.route("/study_subject/edit", methods=["POST"])
-@rbac_required("EditStudySubject")
+@rbac_required("EditParticipant")
 def study_subject_edit():
     """
     Edit an existing study subject
@@ -1307,7 +1288,6 @@ def study_subject_edit():
     Request syntax
     --------------
     {
-        app: 1,
         id: int,
         edit: {
             ditti_id: str,  # Optional
@@ -1505,7 +1485,6 @@ def api():
 
     Options
     -------
-    app: 1
     id: str
 
     Response syntax (200)
@@ -1553,7 +1532,6 @@ def api_create():
     Request syntax
     --------------
     {
-        app: 1,
         create: {
             name: str
         }
@@ -1615,7 +1593,6 @@ def api_edit():
     Request syntax
     --------------
     {
-        app: 1,
         id: int,
         edit: {
             name: str
@@ -1687,7 +1664,6 @@ def api_archive():
     Request syntax
     --------------
     {
-        app: 1,
         id: int
     }
 

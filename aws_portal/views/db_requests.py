@@ -4,13 +4,18 @@ import traceback
 
 from flask import Blueprint, jsonify, make_response, request
 from flask_jwt_extended import current_user, jwt_required
+from sqlalchemy import select
 from sqlalchemy.sql import tuple_
 
 from aws_portal.extensions import db
 from aws_portal.models import (
-    AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,
-    JoinAccountStudy, Study, StudySubject, JoinStudySubjectStudy
+    AboutSleepTemplate,
+    Account,
+    App,
+    JoinAccountApp,
+    Study,
 )
+from aws_portal.rbac.models import JoinAccountStudy
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint("db", __name__, url_prefix="/db")
@@ -20,18 +25,17 @@ logger = logging.getLogger(__name__)
 @blueprint.route("/get-apps")
 @jwt_required()
 def get_apps():
-    apps = App.query\
-        .join(AccessGroup, AccessGroup.app_id == App.id)\
-        .join(JoinAccountAccessGroup)\
-        .filter(JoinAccountAccessGroup.account_id == current_user.id)\
-        .all()
+    apps = select(App) \
+        .join(JoinAccountApp, App.id == JoinAccountApp.app_id) \
+        .where(JoinAccountApp.account_id == current_user.id)
 
+    apps = db.session.execute(apps).scalars().all()
     return jsonify([a.meta for a in apps])
 
 
 @blueprint.route("/get-studies")
 @jwt_required()
-def get_studies():  # TODO rewrite unit test
+def get_studies():
     """
     Get the data of all studies that the user has access to
 

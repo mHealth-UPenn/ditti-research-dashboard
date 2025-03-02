@@ -1,8 +1,11 @@
 import logging
 import traceback
+
 from flask import Blueprint, jsonify, make_response
+
 from aws_portal.extensions import db
 from aws_portal.models import LambdaTask
+from aws_portal.rbac.api import rbac_required
 from aws_portal.utils.lambda_task import create_and_invoke_lambda_task
 
 blueprint = Blueprint("data_processing_task", __name__,
@@ -12,6 +15,7 @@ logger = logging.getLogger(__name__)
 
 @blueprint.route("/", defaults={"task_id": None}, methods=["GET"])
 @blueprint.route("/<int:task_id>", methods=["GET"])
+@rbac_required("GetDataProcessingTask")
 def get_data_processing_tasks(task_id: int | None):
     """
     Retrieve all data processing tasks sorted by creation date.
@@ -67,6 +71,7 @@ def get_data_processing_tasks(task_id: int | None):
 
 
 @blueprint.route("/invoke", methods=["POST"])
+@rbac_required("InvokeDataProcessingTask")
 def invoke_data_processing_task():
     """
     Manually invoke a data processing task.

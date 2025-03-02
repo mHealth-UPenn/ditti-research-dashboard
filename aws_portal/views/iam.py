@@ -6,7 +6,6 @@ from flask_jwt_extended import (
 )
 from aws_portal.extensions import db
 from aws_portal.models import Account, BlockedToken
-from aws_portal.utils.auth import validate_password
 
 blueprint = Blueprint("iam", __name__, url_prefix="/iam")
 
@@ -143,14 +142,14 @@ def set_password():
     }
     """
     password = request.json["password"]
-    valid = validate_password(password)
+
+    if len(password) < 8:
+        msg = "Minimum password length is 8 characters"
+        return make_response({"msg": msg}, 400)
 
     if current_user.check_password(password):
         msg = "A different password must be entered"
         return make_response({"msg": msg}, 400)
-
-    if valid != "valid":
-        return make_response({"msg": valid}, 400)
 
     current_user.password = password
     current_user.is_confirmed = True

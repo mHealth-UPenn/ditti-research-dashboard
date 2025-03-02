@@ -1,4 +1,4 @@
-from functools import reduce
+from functools import reduce, wraps
 import json
 import logging
 import os
@@ -10,24 +10,72 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from flask import Blueprint, current_app, jsonify, make_response, request
 from flask_jwt_extended import current_user
 import pandas as pd
+from sqlalchemy import and_, select
 
-from aws_portal.models import JoinAccountStudy, Study
+from aws_portal.extensions import db
+from aws_portal.models import Study
+from aws_portal.rbac.models import (
+    AppPermission,
+    JoinAccountStudy,
+    JoinAccountAppRole,
+    JoinAppRolePermission
+)
+from aws_portal.rbac.api import rbac_required
 from aws_portal.utils.aws import MutationClient, Query, Updater
 
 blueprint = Blueprint("aws", __name__, url_prefix="/aws")
 logger = logging.getLogger(__name__)
 
 
+# Decorate endpoints that require a list of users
+def with_users(f):
+    @wraps(f)
+    def decorator(*args, **kwargs):
+        # add expressions to the query to return all taps for multiple studies
+        def f(left, right):
+            q = "user_permission_idBEGINS\"%s\"" % right
+            return left + ("OR" if left else "") + q
+
+        try:
+            # If the user has permission to view all studies, get all users
+            query = select(AppPermission.id) \
+                .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id) \
+                .join(JoinAccountAppRole, JoinAppRolePermission.app_role_id == JoinAccountAppRole.app_role_id) \
+                .where(and_(
+                    JoinAccountAppRole.account_id == current_user.id,
+                    AppPermission.value == "ViewAllStudies",
+                ))
+            permissions = db.session.execute(query).scalars().all()
+
+            if permissions:
+                users = Query("User").scan()["Items"]
+            else:
+                # Get users only for the studies the user as access to
+                studies = Study.query\
+                    .join(JoinAccountStudy)\
+                    .filter(JoinAccountStudy.account_id == current_user.id)\
+                    .all()
+                prefixes = [s.ditti_id for s in studies]
+                query = reduce(f, prefixes, "")
+                users = Query("User", query).scan()["Items"]
+
+        except Exception as e:
+            exc = traceback.format_exc()
+            logger.warning(exc)
+            return make_response({"msg": "Query failed due to internal server error."}, 500)
+
+        return f(users, *args, **kwargs)
+    return decorator
+
+
 @blueprint.route("/get-taps")
-def get_taps():  # TODO update unit test
+@rbac_required("GetTap")
+@with_users
+def get_taps(users):  # TODO update unit test
     """
     Get tap data. If the user has permissions to view all studies, this will
     return all tap data. Otherwise, this will return tap data for only the
     studies the user has access to
-
-    Options
-    -------
-    app: 2
 
     Response Syntax (200)
     ---------------------
@@ -45,38 +93,6 @@ def get_taps():  # TODO update unit test
         msg: "Query failed due to internal server error."
     }
     """
-
-    # add expressions to the query to return all taps for multiple studies
-    def f(left, right):
-        q = "user_permission_idBEGINS\"%s\"" % right
-        return left + ("OR" if left else "") + q
-
-    try:
-
-        # if the user has permission to view all studies, get all users
-        app_id = request.args["app"]
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
-        users = Query("User").scan()["Items"]
-
-    except ValueError:
-
-        # get users only for the studies the user as access to
-        studies = Study.query\
-            .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == current_user.id)\
-            .all()
-
-        prefixes = [s.ditti_id for s in studies]
-        query = reduce(f, prefixes, "")
-        users = Query("User", query).scan()["Items"]
-
-    except Exception as e:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-
-        return make_response({"msg": "Query failed due to internal server error."}, 500)
-
     # get all taps
     taps = Query("Tap").scan()["Items"]
     df_users = pd.DataFrame(users, columns=["id", "user_permission_id"])\
@@ -99,36 +115,9 @@ def get_taps():  # TODO update unit test
 
 
 @blueprint.route("/get-audio-taps")
-def get_audio_taps():  # TODO write unit test
-    # add expressions to the query to return all taps for multiple studies
-    def f(left, right):
-        q = "user_permission_idBEGINS\"%s\"" % right
-        return left + ("OR" if left else "") + q
-
-    try:
-        # if the user has permission to view all studies, get all users
-        app_id = request.args["app"]
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
-        users = Query("User").scan()["Items"]
-
-    except ValueError:
-        # get users only for the studies the user as access to
-        studies = Study.query\
-            .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == current_user.id)\
-            .all()
-
-        prefixes = [s.ditti_id for s in studies]
-        query = reduce(f, prefixes, "")
-        users = Query("User", query).scan()["Items"]
-
-    except Exception as e:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-
-        return make_response({"msg": "Query failed due to internal server error."}, 500)
-
+@rbac_required("GetAudioTap")
+@with_users
+def get_audio_taps(users):  # TODO write unit test
     # Get all audio files
     audio_files = Query("AudioFile").scan()["Items"]
 
@@ -166,15 +155,13 @@ def get_audio_taps():  # TODO write unit test
 
 
 @blueprint.route("/get-users")
-def get_users():  # TODO: create unit test
+@rbac_required("GetParticipant")
+@with_users
+def get_users(users):  # TODO: create unit test
     """
     Get user data. If the user has permissions to view all studies, this will
     return all user data. Otherwise, this will return user data for only the
     studies the user has access to
-
-    Options
-    -------
-    app: 2
 
     Response Syntax (200)
     ---------------------
@@ -196,12 +183,6 @@ def get_users():  # TODO: create unit test
         msg: "Query failed due to internal server error."
     }
     """
-
-    # add expressions to the query to return all users for multiple studies
-    def f(left, right):
-        q = "user_permission_idBEGINS\"%s\"" % right
-        return left + ("OR" if left else "") + q
-
     # gets only useful user data
     def map_users(user):
 
@@ -217,43 +198,12 @@ def get_users():  # TODO: create unit test
             "createdAt": user["createdAt"]
         }
 
-    users = None
-
-    try:
-
-        # if the user has permission to view all studies, get all studies
-        app_id = request.args["app"]
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
-        users = Query("User").scan()["Items"]
-        res = map(map_users, users)
-
-        return jsonify(list(res))
-
-    except ValueError:
-
-        # get only the studies the user has access to
-        studies = Study.query\
-            .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == current_user.id)\
-            .all()
-
-    except Exception as e:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-
-        return make_response({"msg": "Query failed due to internal server error."}, 500)
-
-    # get all users for the studies that were returned earlier
-    prefixes = [s.ditti_id for s in studies]
-    query = reduce(f, prefixes, "")
-    users = Query("User", query).scan()["Items"]
     res = map(map_users, users)
-
     return jsonify(list(res))
 
 
 @blueprint.route("/user/create", methods=["POST"])
+@rbac_required("CreateParticipant")
 def user_create():
     """
     Create a new user
@@ -261,7 +211,6 @@ def user_create():
     Request Syntax
     --------------
     {
-        app: 2,
         study: int,
         create: {
             exp_time: iso-formatted timestamp,
@@ -307,6 +256,7 @@ def user_create():
 
 
 @blueprint.route("/user/edit", methods=["POST"])
+@rbac_required("EditParticipant")
 def user_edit():
     """
     Edit an exisitng user
@@ -314,7 +264,6 @@ def user_edit():
     Request Syntax
     --------------
     {
-        app: 2,
         study: int,
         user_permission_id: str,
         edit: {
@@ -382,13 +331,10 @@ def user_edit():
 
 
 @blueprint.route("/get-audio-files")
+@rbac_required("GetAudioFile")
 def get_audio_files():  # TODO update unit test
     """
     Get all audio files from DynamoDB.
-
-    Options
-    -------
-    app: 2
 
     Response Syntax (200)
     ---------------------
@@ -469,6 +415,7 @@ def get_audio_files():  # TODO update unit test
 
 
 @blueprint.route("/audio-file/create", methods=["POST"])
+@rbac_required("CreateAudioFile")
 def audio_file_create():
     """
     Insert new audio files into DynamoDB.
@@ -476,7 +423,6 @@ def audio_file_create():
     Request Syntax
     --------------
     {
-        app: 2,
         create: [
             {
                 fileName: str,
@@ -530,6 +476,7 @@ def audio_file_create():
 
 
 @blueprint.route("/audio-file/delete", methods=["POST"])
+@rbac_required("DeleteAudioFile")
 def audio_file_delete():
     """
     Permanently deletes an audio file. This endpoint first deletes the audio
@@ -539,7 +486,6 @@ def audio_file_delete():
     Request syntax
     --------------
     {
-        app: 2,
         id: str,
         _version: int
     }
@@ -601,6 +547,7 @@ def audio_file_delete():
 
 
 @blueprint.route("/audio-file/get-presigned-urls", methods=["POST"])
+@rbac_required("GeneratePresignedURL")
 def audio_file_generate_presigned_urls():
     """
     Generates a list of presigned URLs for a given set of files. The request
@@ -609,7 +556,6 @@ def audio_file_generate_presigned_urls():
     Request syntax
     --------------
     {
-        app: 2,
         files: [
             {
                 key: str,

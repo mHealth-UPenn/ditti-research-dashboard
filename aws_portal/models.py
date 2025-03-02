@@ -243,6 +243,12 @@ class Account(db.Model, RBACAccountMixin):
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
     _password = db.Column(db.String, nullable=False)
 
+    apps = db.relationship(
+        "JoinAccountApp",
+        back_populates="account",
+        cascade="all, delete-orphan",
+    )
+
     @validates("created_on")
     def validate_created_on(self, key, val):
         """
@@ -340,6 +346,23 @@ class App(db.Model):
 
     def __repr__(self):
         return "<App %s>" % self.name
+
+
+class JoinAccountApp(db.Model):
+    __tablename__ = "join_account_app"
+    account_id = db.Column(
+        db.Integer,
+        db.ForeignKey("account.id", ondelete="CASCADE"),
+        primary_key=True
+    )
+    app_id = db.Column(
+        db.Integer,
+        db.ForeignKey("app.id"),
+        primary_key=True
+    )
+
+    account = db.relationship("Account", back_populates="apps")
+    app = db.relationship("App")
 
 
 @with_rbac("acronym")
