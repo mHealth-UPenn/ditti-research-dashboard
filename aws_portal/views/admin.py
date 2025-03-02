@@ -2,16 +2,32 @@ from datetime import datetime, UTC
 import logging
 import traceback
 import uuid
+
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
+
 from aws_portal.extensions import db, sanitizer
 from aws_portal.models import (
-    AboutSleepTemplate, AccessGroup, Account, Action, App, Api,
-    JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
-    JoinRolePermission, Permission, Resource, Role, Study, StudySubject,
-    JoinStudySubjectStudy, JoinStudySubjectApi
+    AboutSleepTemplate,
+    Account,
+    App,
+    Api,
+    JoinStudySubjectApi,
+    JoinStudySubjectStudy,
+    Study,
+    StudySubject,
 )
-from aws_portal.utils.auth import validate_password
+from aws_portal.rbac.api import rbac_required
+from aws_portal.rbac.models import (
+    AppPermission,
+    AppRole,
+    JoinAccountAppRole,
+    JoinAccountStudy,
+    JoinAppRolePermission,
+    JoinStudyRolePermission,
+    StudyPermission,
+    StudyRole
+)
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
@@ -19,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/account")
+@rbac_required("AdminGetAccount")
 def account():
     """
     Get one account or a list of all accounts. This will return one account if
@@ -67,6 +84,7 @@ def account():
 
 
 @blueprint.route("/account/create", methods=["POST"])
+@rbac_required("AdminCreateAccount")
 def account_create():
     """
     Create a new account.
@@ -125,9 +143,8 @@ def account_create():
             return make_response({"msg": msg}, 400)
 
         # the password must be valid
-        valid = validate_password(password)
-        if valid != "valid":
-            return make_response({"msg": valid}, 400)
+        if len(password) < 8:
+            return make_response({"msg": "Minimum password length is 8 characters"}, 400)
 
         account = Account()
 
@@ -135,16 +152,20 @@ def account_create():
         account.public_id = str(uuid.uuid4())
         account.created_on = datetime.now(UTC)
 
-        # add access groups
-        for entry in data["access_groups"]:
-            access_group = AccessGroup.query.get(entry["id"])
-            JoinAccountAccessGroup(access_group=access_group, account=account)
+        # Add app roles
+        for entry in data.get("app_roles", []):
+            db.session.add(JoinAccountAppRole(
+                account_id=account.id,
+                app_role_id=int(entry["id"]),
+            ))
 
-        # add studies
-        for entry in data["studies"]:
-            study = Study.query.get(entry["id"])
-            role = Role.query.get(entry["role"]["id"])
-            JoinAccountStudy(account=account, role=role, study=study)
+        # Add studies
+        for entry in data.get("studies", []):
+            db.session.add(JoinAccountStudy(
+                account_id=account.id,
+                study_id=int(entry["study_id"]),
+                role_id=int(entry["role_id"]),
+            ))
 
         db.session.add(account)
         db.session.commit()
@@ -161,6 +182,7 @@ def account_create():
 
 
 @blueprint.route("/account/edit", methods=["POST"])
+@rbac_required("AdminEditAccount")
 def account_edit():
     """
     Edit an existing account
@@ -228,59 +250,45 @@ def account_edit():
 
         # if there is a new password, it must be valid
         else:
-            valid = validate_password(password)
-
-            if valid != "valid":
-                return make_response({"msg": valid}, 400)
+            if len(password) < 8:
+                return make_response({"msg": "Minimum password length is 8 characters"}, 400)
 
         populate_model(account, data)
 
-        # if a list of access groups were provided
-        if "access_groups" in data:
+        # If a list of app roles were provided
+        if "app_roles" in data:
+            old_ids = set(join.app_role_id for join in account.app_roles)
+            new_ids = set(int(entry["id"]) for entry in data["app_roles"])
+            ids_to_remove = old_ids - new_ids
+            ids_to_add = new_ids - old_ids
 
-            # remove access groups that are not in the new list
-            for join in account.access_groups:
-                a_ids = [a["id"] for a in data["access_groups"]]
-
-                if join.access_group_id not in a_ids:
+            for join in account.app_roles:
+                if join.app_role_id in ids_to_remove:
                     db.session.delete(join)
 
-            # add new access groups
-            a_ids = [join.access_group_id for join in account.access_groups]
-            for entry in data["access_groups"]:
-                if entry["id"] not in a_ids:
-                    access_group = AccessGroup.query.get(entry["id"])
-                    JoinAccountAccessGroup(
-                        access_group=access_group,
-                        account=account
-                    )
+            for app_role_id in ids_to_add:
+                db.session.add(JoinAccountAppRole(
+                    account_id=account.id,
+                    app_role_id=app_role_id,
+                ))
 
-        # if a list of studies were provided
+        # If a list of studies were provided
         if "studies" in data:
+            old_ids = set((join.study_id, join.role_id) for join in account.studies)
+            new_ids = set((int(entry["study_id"]), int(entry["role_id"])) for entry in data["studies"])
+            ids_to_remove = old_ids - new_ids
+            ids_to_add = new_ids - old_ids
 
-            # remove studies that are not in the new list
             for join in account.studies:
-                s_ids = [s["id"] for s in data["studies"]]
-
-                if join.study_id not in s_ids:
+                if (join.study_id, join.role_id) in ids_to_remove:
                     db.session.delete(join)
 
-            s_ids = [join.study_id for join in account.studies]
-            for entry in data["studies"]:
-                study = Study.query.get(entry["id"])
-
-                # if the study is not new
-                if entry["id"] in s_ids:
-                    join = JoinAccountStudy.query.get((account.id, study.id))
-
-                    # update the role
-                    if join.role.id != int(entry["role"]["id"]):
-                        join.role = Role.query.get(entry["role"]["id"])
-
-                # add the study
-                else:
-                    role = Role.query.get(entry["role"]["id"])
-                    JoinAccountStudy(account=account, role=role, study=study)
+            for study_id, role_id in ids_to_add:
+                db.session.add(JoinAccountStudy(
+                    account_id=account.id,
+                    study_id=study_id,
+                    role_id=role_id,
+                ))
 
         db.session.commit()
         msg = "Account Edited Successfully"
@@ -296,6 +304,7 @@ def account_edit():
 
 
 @blueprint.route("/account/archive", methods=["POST"])
+@rbac_required("AdminArchiveAccount")
 def account_archive():
     """
     Archive an account. This action has the same effect as deleting an entry
@@ -339,6 +348,7 @@ def account_archive():
 
 
 @blueprint.route("/study")
+@rbac_required("AdminGetStudy")
 def study():
     """
     Get one study or a list of all studies. This will return one study if the
@@ -385,6 +395,7 @@ def study():
 
 
 @blueprint.route("/study/create", methods=["POST"])
+@rbac_required("AdminCreateStudy")
 def study_create():
     """
     Create a new study.
@@ -461,6 +472,7 @@ def study_create():
 
 
 @blueprint.route("/study/edit", methods=["POST"])
+@rbac_required("AdminEditStudy")
 def study_edit():
     """
     Edit an existing study
@@ -529,6 +541,7 @@ def study_edit():
 
 
 @blueprint.route("/study/archive", methods=["POST"])
+@rbac_required("AdminArchiveStudy")
 def study_archive():
     """
     Archive a study. This action has the same effect as deleting an entry
@@ -571,256 +584,8 @@ def study_archive():
     return jsonify({"msg": msg})
 
 
-@blueprint.route("/access-group")
-def access_group():
-    """
-    Get one access group or a list of all studies. This will return one access
-    group if the access groups's database primary key is passed as a URL option
-
-    Options
-    -------
-    app: 1
-    id: str
-
-    Response syntax (200)
-    ---------------------
-    [
-        {
-            ...Access group data
-        },
-        ...
-    ]
-
-    Response syntax (500)
-    ---------------------
-    {
-        msg: "Internal server error when retrieving access groups."
-    }
-    """
-    try:
-        i = request.args.get("id")
-
-        if i:
-            q = AccessGroup.query.filter(
-                ~AccessGroup.is_archived & (AccessGroup.id == int(i))
-            )
-
-        else:
-            q = AccessGroup.query.filter(~AccessGroup.is_archived)
-
-        res = [a.meta for a in q.all()]
-        return jsonify(res)
-
-    except Exception:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-        db.session.rollback()
-
-        return make_response({"msg": "Internal server error when retrieving access groups."}, 500)
-
-
-@blueprint.route("/access-group/create", methods=["POST"])
-def access_group_create():
-    """
-    Create a new access group.
-
-    Request syntax
-    --------------
-    {
-        app: 1,
-        create: {
-            ...Access group data
-            permissions: [
-                {
-                    action: str,
-                    resource: str
-                },
-                ...
-            ]
-        }
-    }
-
-    Response syntax (200)
-    ---------------------
-    {
-        msg: "Access Group Created Successfully"
-    }
-
-    Response syntax (500)
-    ---------------------
-    {
-        msg: "Internal server error when creating access group."
-    }
-    """
-    try:
-        data = request.json["create"]
-        access_group = AccessGroup()
-
-        populate_model(access_group, data)
-        app = App.query.get(data["app"])
-        access_group.app = app
-
-        # add permissions
-        for entry in data["permissions"]:
-            action = entry["action"]
-            resource = entry["resource"]
-            q = Permission.definition == tuple_(action, resource)
-            permission = Permission.query.filter(q).first()
-
-            # only create a permission if it does not already exist
-            if permission is None:
-                permission = Permission()
-                permission.action = entry["action"]
-                permission.resource = entry["resource"]
-
-            JoinAccessGroupPermission(
-                access_group=access_group,
-                permission=permission
-            )
-
-        db.session.add(access_group)
-        db.session.commit()
-        msg = "Access Group Created Successfully"
-
-    except Exception:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-        db.session.rollback()
-
-        return make_response({"msg": "Internal server error when creating access group."}, 500)
-
-    return jsonify({"msg": msg})
-
-
-@blueprint.route("/access-group/edit", methods=["POST"])
-def access_group_edit():
-    """
-    Edit an existing access group.
-
-    Request syntax
-    --------------
-    {
-        app: 1,
-        id: int,
-        edit: {
-            ...Access group data
-            permissions: [
-                {
-                    action: str,
-                    resource: str
-                },
-                ...
-            ]
-        }
-    }
-
-    All data in the request body are optional. Any attributes that are excluded
-    from the request body will not be changed.
-
-    Response syntax (200)
-    ---------------------
-    {
-        msg: "Access Group Edited Successfully"
-    }
-
-    Response syntax (500)
-    ---------------------
-    {
-        msg: "Internal server error when updating access group."
-    }
-    """
-    try:
-        data = request.json["edit"]
-        access_group_id = request.json["id"]
-        access_group = AccessGroup.query.get(access_group_id)
-
-        populate_model(access_group, data)
-
-        # if a new app is provided
-        if "app" in data:
-            app = App.query.get(data["app"])
-            access_group.app = app
-
-        # if new permissions are provided
-        if "permissions" in data:
-
-            # remove all existing permissions without deleting them
-            access_group.permissions = []
-
-            for entry in data["permissions"]:
-                action = entry["action"]
-                resource = entry["resource"]
-                q = Permission.definition == tuple_(action, resource)
-                permission = Permission.query.filter(q).first()
-
-                # only create a new permission if it doesn't already exist
-                if permission is None:
-                    permission = Permission()
-                    permission.action = entry["action"]
-                    permission.resource = entry["resource"]
-
-                JoinAccessGroupPermission(
-                    access_group=access_group,
-                    permission=permission
-                )
-
-        db.session.commit()
-        msg = "Access Group Edited Successfully"
-
-    except Exception:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-        db.session.rollback()
-
-        return make_response({"msg": "Internal server error when updating access group."}, 500)
-
-    return jsonify({"msg": msg})
-
-
-@blueprint.route("/access-group/archive", methods=["POST"])
-def access_group_archive():
-    """
-    Archive an access group. This action has the same effect as deleting an entry
-    from the database. However, archived items are only filtered from queries
-    and can be retrieved.
-
-    Request syntax
-    --------------
-    {
-        app: 1,
-        id: int
-    }
-
-    Response syntax (200)
-    ---------------------
-    {
-        msg: "Access Group Archived Successfully"
-    }
-
-    Response syntax (500)
-    ---------------------
-    {
-        msg: "Internal server error when archiving access group."
-    }
-    """
-    try:
-        access_group_id = request.json["id"]
-        access_group = AccessGroup.query.get(access_group_id)
-        access_group.is_archived = True
-        db.session.commit()
-        msg = "Access Group Archived Successfully"
-
-    except Exception:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-        db.session.rollback()
-
-        return make_response({"msg": "Internal server error when archiving access group."}, 500)
-
-    return jsonify({"msg": msg})
-
-
 @blueprint.route("/role")
+@rbac_required("AdminGetRole")
 def role():
     """
     Get one role or a list of all studies. This will return one role if the
@@ -848,12 +613,14 @@ def role():
     """
     try:
         i = request.args.get("id")
+        role_type = request.args.get("type")
+        table = AppRole if role_type == "app" else StudyRole
 
         if i:
-            q = Role.query.filter(~Role.is_archived & (Role.id == int(i)))
+            q = table.query.filter(~table.is_archived & (table.id == int(i)))
 
         else:
-            q = Role.query.filter(~Role.is_archived)
+            q = table.query.filter(~table.is_archived)
 
         res = [r.meta for r in q.all()]
         return jsonify(res)
@@ -867,6 +634,7 @@ def role():
 
 
 @blueprint.route("/role/create", methods=["POST"])
+@rbac_required("AdminCreateRole")
 def role_create():
     """
     Create a new role.
@@ -901,7 +669,11 @@ def role_create():
     """
     try:
         data = request.json["create"]
-        role = Role()
+        role_table = AppRole if data["type"] == "app" else StudyRole
+        perm_table = AppPermission if data["type"] == "app" else StudyPermission
+        join_table = JoinAppRolePermission if data["type"] == "app" \
+            else JoinStudyRolePermission
+        role = role_table()
 
         populate_model(role, data)
 
@@ -909,16 +681,16 @@ def role_create():
         for entry in data["permissions"]:
             action = entry["action"]
             resource = entry["resource"]
-            q = Permission.definition == tuple_(action, resource)
-            permission = Permission.query.filter(q).first()
+            q = perm_table.definition == tuple_(action, resource)
+            permission = perm_table.query.filter(q).first()
 
             # only create a permission if it does not already exist
             if permission is None:
-                permission = Permission()
+                permission = perm_table()
                 permission.action = entry["action"]
                 permission.resource = entry["resource"]
 
-            JoinRolePermission(role=role, permission=permission)
+            join_table(role=role, permission=permission)
 
         db.session.add(role)
         db.session.commit()
@@ -935,6 +707,7 @@ def role_create():
 
 
 @blueprint.route("/role/edit", methods=["POST"])
+@rbac_required("AdminEditRole")
 def role_edit():
     """
     Edit an existing role.
@@ -974,7 +747,11 @@ def role_edit():
     try:
         data = request.json["edit"]
         role_id = request.json["id"]
-        role = Role.query.get(role_id)
+        role_table = AppRole if data["type"] == "app" else StudyRole
+        perm_table = AppPermission if data["type"] == "app" else StudyPermission
+        join_table = JoinAppRolePermission if data["type"] == "app" \
+            else JoinStudyRolePermission
+        role = role_table.query.get(role_id)
 
         populate_model(role, data)
 
@@ -985,16 +762,16 @@ def role_edit():
         for entry in data["permissions"]:
             action = entry["action"]
             resource = entry["resource"]
-            q = Permission.definition == tuple_(action, resource)
-            permission = Permission.query.filter(q).first()
+            q = perm_table.definition == tuple_(action, resource)
+            permission = perm_table.query.filter(q).first()
 
             # only create a permission if it does not already exist
             if permission is None:
-                permission = Permission()
+                permission = perm_table()
                 permission.action = entry["action"]
                 permission.resource = entry["resource"]
 
-            JoinRolePermission(role=role, permission=permission)
+            join_table(role=role, permission=permission)
 
         db.session.add(role)
         db.session.commit()
@@ -1011,7 +788,8 @@ def role_edit():
 
 
 @blueprint.route("/role/archive", methods=["POST"])
-def role_archive():  # TODO: create unit test
+@rbac_required("AdminArchiveRole")
+def role_archive():
     """
     Archive a role. This action has the same effect as deleting an entry
     from the database. However, archived items are only filtered from queries
@@ -1038,7 +816,8 @@ def role_archive():  # TODO: create unit test
     """
     try:
         role_id = request.json["id"]
-        role = Role.query.get(role_id)
+        table = AppRole if request.json["type"] == "app" else StudyRole
+        role = table.query.get(role_id)
         role.is_archived = True
         db.session.commit()
         msg = "Role Archived Successfully"
@@ -1053,123 +832,8 @@ def role_archive():  # TODO: create unit test
     return jsonify({"msg": msg})
 
 
-@blueprint.route("/app")
-def app():
-    apps = App.query.all()
-    res = [a.meta for a in apps]
-    return jsonify(res)
-
-
-@blueprint.route("/app/create", methods=["POST"])
-def app_create():
-    data = request.json["create"]
-    app = App()
-
-    try:
-        populate_model(app, data)
-        db.session.add(app)
-        db.session.commit()
-        msg = "App Created Successfully"
-
-    except Exception:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-        db.session.rollback()
-
-        return make_response({"msg": "Internal server error when creating app."}, 500)
-
-    return jsonify({"msg": msg})
-
-
-@blueprint.route("/app/edit", methods=["POST"])
-def app_edit():
-    data = request.json["edit"]
-    app_id = request.json["id"]
-    app = App.query.get(app_id)
-
-    try:
-        populate_model(app, data)
-        db.session.add(app)
-        db.session.commit()
-        msg = "App Edited Successfully"
-
-    except Exception:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-        db.session.rollback()
-
-        return make_response({"msg": "Internal server error when updating app."}, 500)
-
-    return jsonify({"msg": msg})
-
-
-@blueprint.route("/action")
-def action():  # TODO: write unit test
-    """
-    Get all actions
-
-    Response syntax (200)
-    ---------------------
-    [
-        {
-            ...Action data
-        },
-        ...
-    ]
-
-    Response syntax (500)
-    ---------------------
-    {
-        msg: "Internal server when retrieving actions."
-    }
-    """
-    try:
-        actions = Action.query.all()
-        res = [a.meta for a in actions]
-        return jsonify(res)
-
-    except Exception:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-        db.session.rollback()
-
-        return make_response({"msg": "Internal server when retrieving actions."}, 500)
-
-
-@blueprint.route("/resource")
-def resource():  # TODO: write unit test
-    """
-    Get all resources
-
-    Response syntax (200)
-    ---------------------
-    [
-        {
-            ...Resource data
-        },
-        ...
-    ]
-
-    Response syntax (500)
-    ---------------------
-    {
-        msg: "Internal server error when retrieving resources."
-    }
-    """
-    try:
-        resources = Resource.query.all()
-        res = [r.meta for r in resources]
-        return jsonify(res)
-
-    except Exception:
-        exc = traceback.format_exc()
-        logger.warning(exc)
-        db.session.rollback()
-
-        return make_response({"msg": "Internal server error when retrieving resources."}, 500)
-
-
 @blueprint.route("/about-sleep-template")
+@rbac_required("AdminGetAboutSleepTemplate")
 def about_sleep_template():
     """
     Get one about sleep template or a list of all studies. This will return one
@@ -1222,6 +886,7 @@ def about_sleep_template():
 
 
 @blueprint.route("/about-sleep-template/create", methods=["POST"])
+@rbac_required("AdminCreateAboutSleepTemplate")
 def about_sleep_template_create():
     """
     Create a new about sleep template.
@@ -1268,6 +933,7 @@ def about_sleep_template_create():
 
 
 @blueprint.route("/about-sleep-template/edit", methods=["POST"])
+@rbac_required("AdminEditAboutSleepTemplate")
 def about_sleep_template_edit():
     """
     Edit an existing about sleep template
@@ -1324,6 +990,7 @@ def about_sleep_template_edit():
 
 
 @blueprint.route("/about-sleep-template/archive", methods=["POST"])
+@rbac_required("AdminArchiveAboutSleepTemplate")
 def about_sleep_template_archive():
     """
     Archive an about sleep template. This action has the same effect as
@@ -1369,6 +1036,7 @@ def about_sleep_template_archive():
 
 
 @blueprint.route("/study_subject")
+@rbac_required("GetStudySubject")
 def study_subject():
     """
     Get one study subject or a list of all study subjects. This will return one
@@ -1428,6 +1096,7 @@ def study_subject():
 
 
 @blueprint.route("/study_subject/create", methods=["POST"])
+@rbac_required("CreateStudySubject")
 def study_subject_create():
     """
     Create a new study subject.
@@ -1576,6 +1245,7 @@ def study_subject_create():
 
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
+@rbac_required("ArchiveStudySubject")
 def study_subject_archive():
     """
     Archive a study subject.
@@ -1629,6 +1299,7 @@ def study_subject_archive():
 
 
 @blueprint.route("/study_subject/edit", methods=["POST"])
+@rbac_required("EditStudySubject")
 def study_subject_edit():
     """
     Edit an existing study subject
@@ -1826,6 +1497,7 @@ def study_subject_edit():
 
 
 @blueprint.route("/api")
+@rbac_required("AdminGetApi")
 def api():
     """
     Get one API or a list of all APIs. This will return one API if the API's
@@ -1873,6 +1545,7 @@ def api():
 
 
 @blueprint.route("/api/create", methods=["POST"])
+@rbac_required("AdminCreateApi")
 def api_create():
     """
     Create a new API.
@@ -1934,6 +1607,7 @@ def api_create():
 
 
 @blueprint.route("/api/edit", methods=["POST"])
+@rbac_required("AdminEditApi")
 def api_edit():
     """
     Edit an existing API.
@@ -2003,6 +1677,7 @@ def api_edit():
 
 
 @blueprint.route("/api/archive", methods=["POST"])
+@rbac_required("AdminArchiveApi")
 def api_archive():
     """
     Archive an API. This action has the same effect as deleting an entry
