@@ -1,11 +1,17 @@
+from dotenv import load_dotenv
+
+load_dotenv("flask.env")
+
 from datetime import timedelta
 from functools import partial
 import os
+
 import boto3
 from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required
 from moto import mock_aws
 import pytest
+
 from aws_portal.app import create_app
 from aws_portal.extensions import db
 from aws_portal.models import (
