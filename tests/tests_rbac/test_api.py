@@ -11,12 +11,6 @@ from aws_portal.rbac.api import (
     with_rbac_study_permission,
 )
 from aws_portal.rbac.mixins import RBACAccountMixin,  RBACStudyMixin
-from aws_portal.rbac.models import (
-    AppPermission,
-    AppRole,
-    JoinAccountAppRole,
-    JoinAppRolePermission,
-)
 from tests.testing_utils import give_app_permissions, give_study_permissions
 
 
