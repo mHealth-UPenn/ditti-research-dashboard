@@ -361,14 +361,6 @@ class ResearcherAuthController(AuthControllerBase):
                 error_code="INVALID_PASSWORD"
             )
 
-        except client.exceptions.PasswordHistoryPolicyViolationException:
-            logger.warning("Password history policy violation")
-            return False, create_error_response(
-                AUTH_ERROR_MESSAGES["password_history_violation"],
-                status_code=400,
-                error_code="PASSWORD_HISTORY_VIOLATION"
-            )
-
         except client.exceptions.UserNotFoundException:
             logger.error("User not found during password change")
             return False, create_error_response(
@@ -417,13 +409,23 @@ class ResearcherAuthController(AuthControllerBase):
                 error_code="FORBIDDEN"
             )
 
-        except client.exceptions.InvalidParameterException:
-            logger.error("Invalid parameter during password change")
-            return False, create_error_response(
-                AUTH_ERROR_MESSAGES["invalid_parameters"],
-                status_code=400,
-                error_code="INVALID_PARAMETERS"
-            )
+        except client.exceptions.InvalidParameterException as e:
+            logger.error(f"Invalid parameter during password change: {str(e)}")
+
+            # Check the error message to see if it's a password format issue
+            error_message = str(e)
+            if "proposedPassword" in error_message:
+                return False, create_error_response(
+                    AUTH_ERROR_MESSAGES["invalid_password"],
+                    status_code=400,
+                    error_code="INVALID_PASSWORD"
+                )
+            else:
+                return False, create_error_response(
+                    AUTH_ERROR_MESSAGES["invalid_parameters"],
+                    status_code=400,
+                    error_code="INVALID_PARAMETERS"
+                )
 
         except client.exceptions.ResourceNotFoundException:
             logger.error("Resource not found during password change")

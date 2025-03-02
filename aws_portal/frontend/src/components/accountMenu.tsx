@@ -116,7 +116,7 @@ const AccountMenu = ({
 
   /**
    * Change an existing password
-   * @returns A response from the change password endpoint
+   * @returns A response from the change password endpoint or null if validation fails
    */
   const setPassword = async () => {
     // Clear any previous errors
@@ -126,7 +126,14 @@ const AccountMenu = ({
     const error = validatePassword();
     if (error) {
       setPasswordError(error);
-      throw getErrorMessage(error);
+      // Display the validation error directly through the flash message
+      // instead of throwing an error
+      flashMessage(
+        <span>{getErrorMessage(error)}</span>,
+        "danger"
+      );
+      // Return null to indicate validation failed without throwing an error
+      return null;
     }
     
     // Prepare request body - both passwords are always required
@@ -166,7 +173,19 @@ const AccountMenu = ({
   /**
    * Attempt to set the password and handle success/failure
    */
-  const trySetPassword = () => setPassword().then(handleSuccess, handleFailure);
+  const trySetPassword = async () => {
+    try {
+      // Since setPassword now returns null on validation error, handle that case
+      const result = await setPassword();
+      if (result) {
+        // Only handle success if we got a proper response
+        handleSuccess(result);
+      }
+    } catch (error) {
+      // Handle any errors, including LIMIT_EXCEEDED
+      handleFailure(error as Error | ResponseBody);
+    }
+  };
 
   /**
    * Handle a successful response
@@ -179,27 +198,65 @@ const AccountMenu = ({
   }
 
   /**
-   * Handle a failed response
+   * Handle a failed response from the server API (not local validation)
    * @param res - The error response from the API
    */
   const handleFailure = (res: ResponseBody | Error) => {
-    // Format error message
-    const errorMessage = res instanceof Error ? res.message : (res.msg || "Internal server error");
-    
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {errorMessage}
-      </span>
-    );
+    try {
+      // Format error message
+      const errorMessage = res instanceof Error 
+        ? res.message 
+        : (res.msg || "Internal server error");
+      
+      // Check for specific error codes to provide better feedback
+      let msgElement: React.ReactElement;
+      
+      if (!(res instanceof Error) && 'error_code' in res && typeof res.error_code === 'string') {
+        const errorCode = res.error_code;
+        
+        // For authentication errors, show with special heading
+        if (errorCode.includes('AUTH_') || 
+            errorCode === 'SESSION_EXPIRED' || 
+            errorCode === 'FORBIDDEN') {
+          msgElement = (
+            <span>
+              <b>Authentication Error</b>
+              <br />
+              {errorMessage}
+            </span>
+          );
+        }
+        // For all other errors, show just the message
+        // These are already user-friendly messages from the backend
+        else {
+          msgElement = <span>{errorMessage}</span>;
+        }
+      } else {
+        // Generic errors without error_code
+        msgElement = (
+          <span>
+            <b>An unexpected error occurred</b>
+            <br />
+            {errorMessage}
+          </span>
+        );
+      }
 
-    flashMessage(msg, "danger");
-    
-    // Only reset edit states, not the password fields to allow user to fix errors
-    setEdit(false);
-    setEditPassword(false);
-  }
+      flashMessage(msgElement, "danger");
+    } catch (flashError) {
+      // If even our error handler fails, at least log it and show a generic message
+      console.error("Error in error handler:", flashError);
+      flashMessage(<span>An error occurred. Please try again.</span>, "danger");
+    } finally {
+      // Always make sure we reset UI states regardless of what happened
+      if (editPassword) {
+        // We're in password edit mode - keep it open but reset loading states
+      } else {
+        // Only reset regular edit state (not password edit state)
+        setEdit(false);
+      }
+    }
+  };
 
   /**
    * Reset form state and clear sensitive data
