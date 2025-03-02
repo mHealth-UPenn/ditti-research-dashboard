@@ -1,10 +1,10 @@
 import logging
-from flask import current_app
+from flask import current_app, request
 from aws_portal.auth.providers.cognito import ResearcherAuth, init_researcher_oauth_client, AUTH_ERROR_MESSAGES
 from aws_portal.auth.controllers.base import AuthControllerBase
 from aws_portal.auth.utils import (
     create_error_response, create_success_response, get_researcher_cognito_client,
-    get_researcher, create_researcher, update_researcher
+    create_researcher, update_researcher
 )
 from aws_portal.extensions import db
 
@@ -156,7 +156,7 @@ class ResearcherAuthController(AuthControllerBase):
                 "lastName": account.last_name,
                 "accountId": account.id,
                 "isFirstLogin": is_first_login,
-                "msg": "Login successful"
+                "msg": AUTH_ERROR_MESSAGES["login_successful"]
             }
         )
 
@@ -180,7 +180,7 @@ class ResearcherAuthController(AuthControllerBase):
 
         if not email or not first_name or not last_name:
             logger.error("Missing required fields for account creation")
-            return False, "Email, first name, and last name are required"
+            return False, AUTH_ERROR_MESSAGES["missing_required_fields"]
 
         # Phone number is optional - only include if non-empty
         phone_number = account_data.get("phone_number")
@@ -216,7 +216,7 @@ class ResearcherAuthController(AuthControllerBase):
         email = account_data.get("email")
         if not email:
             logger.error("Missing email for account update")
-            return False, "Email is required for updating an account"
+            return False, AUTH_ERROR_MESSAGES["missing_email"]
 
         first_name = account_data.get("first_name")
         last_name = account_data.get("last_name")
@@ -261,39 +261,190 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
             logger.info(f"Disabled Cognito user: {email}")
-            return True, "Account disabled successfully"
+            return True, AUTH_ERROR_MESSAGES["account_disabled"]
 
         except Exception as e:
             logger.error(f"Failed to disable account in Cognito: {str(e)}")
-            return False, f"Failed to disable account: {str(e)}"
+            return False, AUTH_ERROR_MESSAGES["account_disable_error"]
 
     def sync_account_with_cognito(self, account):
         """
-        Sync an existing database account with Cognito.
-        If the account doesn't exist in Cognito, create it.
-        If it exists, update its attributes.
+        Synchronize account data with Cognito.
 
         Args:
-            account (Account): The account to sync
+            account: The Account object to synchronize
 
         Returns:
             tuple: (success, message)
-                success: True if account was synced successfully, False otherwise
+                success: True if account was synchronized successfully, False otherwise
                 message: Success/error message
         """
-        # Check if user exists in Cognito
-        user_info, _ = get_researcher(account.email)
-
         account_data = {
             "email": account.email,
             "first_name": account.first_name,
             "last_name": account.last_name,
-            "phone_number": account.phone_number
+            "phone_number": account.phone_number if hasattr(account, "phone_number") else None
         }
 
-        if user_info:
-            # User exists, update attributes
-            return self.update_account_in_cognito(account_data)
-        else:
-            # User doesn't exist, create it
-            return self.create_account_in_cognito(account_data)
+        return self.update_account_in_cognito(account_data)
+
+    def change_password(self, previous_password, new_password, access_token=None):
+        """
+        Change a researcher's password in Cognito.
+
+        Args:
+            previous_password (str): The user's current password
+            new_password (str): The new password to set
+            access_token (str, optional): The access token for the user. If not provided,
+                                          it will try to get it from the request.
+
+        Returns:
+            tuple: (success, message_or_response)
+                success: True if password was changed successfully, False otherwise
+                message_or_response: Success message or error response object
+        """
+        try:
+            # Validate input parameters
+            if not new_password:
+                return False, create_error_response(
+                    AUTH_ERROR_MESSAGES["missing_password"],
+                    status_code=400,
+                    error_code="MISSING_PASSWORD"
+                )
+
+            if not previous_password:
+                return False, create_error_response(
+                    AUTH_ERROR_MESSAGES["missing_previous_password"],
+                    status_code=400,
+                    error_code="MISSING_PREVIOUS_PASSWORD"
+                )
+
+            # If no access token was provided, try to get it from the request
+            if not access_token and request:
+                access_token = request.cookies.get('access_token')
+
+            if not access_token:
+                return False, create_error_response(
+                    AUTH_ERROR_MESSAGES["auth_required"],
+                    status_code=401,
+                    error_code="AUTH_REQUIRED"
+                )
+
+            # Initialize Cognito client
+            client = get_researcher_cognito_client()
+
+            # Change password using the access token
+            client.change_password(
+                PreviousPassword=previous_password,
+                ProposedPassword=new_password,
+                AccessToken=access_token
+            )
+
+            return True, create_success_response(
+                message=AUTH_ERROR_MESSAGES["password_change_success"]
+            )
+
+        except client.exceptions.NotAuthorizedException:
+            logger.warning(
+                "Incorrect password provided during password change")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["incorrect_password"],
+                status_code=400,
+                error_code="INCORRECT_PASSWORD"
+            )
+
+        except client.exceptions.InvalidPasswordException:
+            logger.warning("Invalid password format during password change")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["invalid_password"],
+                status_code=400,
+                error_code="INVALID_PASSWORD"
+            )
+
+        except client.exceptions.PasswordHistoryPolicyViolationException:
+            logger.warning("Password history policy violation")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["password_history_violation"],
+                status_code=400,
+                error_code="PASSWORD_HISTORY_VIOLATION"
+            )
+
+        except client.exceptions.UserNotFoundException:
+            logger.error("User not found during password change")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["user_not_found"],
+                status_code=404,
+                error_code="USER_NOT_FOUND"
+            )
+
+        except client.exceptions.UserNotConfirmedException:
+            logger.error("User not confirmed during password change")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["user_not_confirmed"],
+                status_code=400,
+                error_code="USER_NOT_CONFIRMED"
+            )
+
+        except client.exceptions.PasswordResetRequiredException:
+            logger.warning("Password reset required")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["password_reset_required"],
+                status_code=400,
+                error_code="PASSWORD_RESET_REQUIRED"
+            )
+
+        except client.exceptions.TooManyRequestsException:
+            logger.warning("Rate limit exceeded during password change")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["too_many_requests"],
+                status_code=429,
+                error_code="TOO_MANY_REQUESTS"
+            )
+
+        except client.exceptions.LimitExceededException:
+            logger.warning("Limit exceeded during password change")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["limit_exceeded"],
+                status_code=400,
+                error_code="LIMIT_EXCEEDED"
+            )
+
+        except client.exceptions.ForbiddenException:
+            logger.error("Forbidden request during password change")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["forbidden"],
+                status_code=403,
+                error_code="FORBIDDEN"
+            )
+
+        except client.exceptions.InvalidParameterException:
+            logger.error("Invalid parameter during password change")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["invalid_parameters"],
+                status_code=400,
+                error_code="INVALID_PARAMETERS"
+            )
+
+        except client.exceptions.ResourceNotFoundException:
+            logger.error("Resource not found during password change")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["resource_not_found"],
+                status_code=404,
+                error_code="RESOURCE_NOT_FOUND"
+            )
+
+        except client.exceptions.InternalErrorException:
+            logger.error("Cognito internal error during password change")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["internal_service_error"],
+                status_code=500,
+                error_code="INTERNAL_SERVICE_ERROR"
+            )
+
+        except Exception as e:
+            logger.error(f"Unexpected error during password change: {str(e)}")
+            return False, create_error_response(
+                AUTH_ERROR_MESSAGES["password_change_error"],
+                status_code=500,
+                error_code="PASSWORD_CHANGE_ERROR"
+            )

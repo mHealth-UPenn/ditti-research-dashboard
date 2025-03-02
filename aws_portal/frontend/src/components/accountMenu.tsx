@@ -129,7 +129,7 @@ const AccountMenu = ({
       throw getErrorMessage(error);
     }
     
-    // Prepare request body - always include current password
+    // Prepare request body - both passwords are always required
     // Cognito requires the previous password for all password changes
     const body: Record<string, string> = {
       newPassword: passwordValue,
