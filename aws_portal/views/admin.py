@@ -12,7 +12,6 @@ from aws_portal.models import (
     JoinStudySubjectStudy, JoinStudySubjectApi
 )
 from aws_portal.auth.decorators import researcher_auth_required
-from aws_portal.utils.auth import validate_password
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
@@ -73,7 +72,8 @@ def account(account):
 @researcher_auth_required("Create", "Accounts")
 def account_create(account):
     """
-    Create a new account.
+    Create a new account in the database and Cognito user pool.
+    Cognito will send an email with a temporary password to the user.
 
     Request syntax
     --------------
@@ -108,9 +108,7 @@ def account_create(account):
     Response syntax (400)
     ---------------------
     {
-        msg: "A password was not provided" or
-            "Minimum password length is 8 characters" or
-            "Maximum password length is 64 characters"
+        msg: "Error message from Cognito"
     }
 
     Response syntax (500)
@@ -120,46 +118,61 @@ def account_create(account):
     }
     """
     try:
+        from aws_portal.auth.controllers import ResearcherAuthController
+
+        # Get data from request
         data = request.json["create"]
-        password = data["password"]
 
-        # a password must be included
-        if not password:
-            msg = "A password was not provided."
-            return make_response({"msg": msg}, 400)
+        # Set empty phone number to None (NULL in database)
+        if "phone_number" in data and data["phone_number"] == "":
+            data["phone_number"] = None
 
-        # the password must be valid
-        valid = validate_password(password)
-        if valid != "valid":
-            return make_response({"msg": valid}, 400)
+        # Create database account
+        new_account = Account()
+        populate_model(new_account, data)
+        new_account.public_id = str(uuid.uuid4())
+        new_account.created_on = datetime.now(UTC)
+        new_account.is_confirmed = False  # Will be confirmed on first login
 
-        account = Account()
-
-        populate_model(account, data)
-        account.public_id = str(uuid.uuid4())
-        account.created_on = datetime.now(UTC)
-
-        # add access groups
+        # Add access groups
         for entry in data["access_groups"]:
             access_group = AccessGroup.query.get(entry["id"])
-            JoinAccountAccessGroup(access_group=access_group, account=account)
+            JoinAccountAccessGroup(
+                access_group=access_group, account=new_account)
 
-        # add studies
+        # Add studies
         for entry in data["studies"]:
             study = Study.query.get(entry["id"])
             role = Role.query.get(entry["role"]["id"])
-            JoinAccountStudy(account=account, role=role, study=study)
+            JoinAccountStudy(account=new_account, role=role, study=study)
 
-        db.session.add(account)
+        # Add account to database
+        db.session.add(new_account)
         db.session.commit()
-        msg = "Account Created Successfully"
 
-    except Exception:
+        # Create Cognito user
+        auth_controller = ResearcherAuthController()
+        success, message = auth_controller.create_account_in_cognito({
+            "email": new_account.email,
+            "first_name": new_account.first_name,
+            "last_name": new_account.last_name,
+            "phone_number": new_account.phone_number
+        })
+
+        if not success:
+            # If Cognito account creation fails, rollback database changes
+            db.session.delete(new_account)
+            db.session.commit()
+            return make_response({"msg": message}, 400)
+
+        msg = "Account Created Successfully. An email with temporary login credentials has been sent to the user."
+
+    except Exception as e:
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when creating account."}, 500)
+        return make_response({"msg": f"Internal server error when creating account. {str(e)}"}, 500)
 
     return jsonify({"msg": msg})
 
@@ -169,7 +182,7 @@ def account_create(account):
 @researcher_auth_required("Edit", "Accounts")
 def account_edit(account):
     """
-    Edit an existing account
+    Edit an existing account in the database and Cognito user pool.
 
     Request syntax
     --------------
@@ -208,9 +221,7 @@ def account_edit(account):
     Response syntax (400)
     ---------------------
     {
-        msg: "A password was not provided" or
-            "Minimum password length is 8 characters" or
-            "Maximum password length is 64 characters"
+        msg: "Error message"
     }
 
     Response syntax (500)
@@ -220,64 +231,62 @@ def account_edit(account):
     }
     """
     try:
+        from aws_portal.auth.controllers import ResearcherAuthController
+
+        # Get data from request
         data = request.json["edit"]
+
+        # Set empty phone number to None (NULL in database)
+        if "phone_number" in data and data["phone_number"] == "":
+            data["phone_number"] = None
+
         account_id = request.json["id"]
-        account = Account.query.get(account_id)
+        edited_account = Account.query.get(account_id)
 
-        try:
-            password = data["password"]
-            # avoid updating the account with an empty password
-            if not password:
-                del data["password"]
-        except KeyError:
-            pass
+        # Track if email is being changed
+        old_email = edited_account.email
 
-        # if there is a new password, it must be valid
-        else:
-            valid = validate_password(password)
-
-            if valid != "valid":
-                return make_response({"msg": valid}, 400)
-
-        populate_model(account, data)
+        # Update database account
+        populate_model(edited_account, data)
 
         # if a list of access groups were provided
         if "access_groups" in data:
 
             # remove access groups that are not in the new list
-            for join in account.access_groups:
+            for join in edited_account.access_groups:
                 a_ids = [a["id"] for a in data["access_groups"]]
 
                 if join.access_group_id not in a_ids:
                     db.session.delete(join)
 
             # add new access groups
-            a_ids = [join.access_group_id for join in account.access_groups]
+            a_ids = [join.access_group_id for join in edited_account.access_groups]
             for entry in data["access_groups"]:
                 if entry["id"] not in a_ids:
                     access_group = AccessGroup.query.get(entry["id"])
                     JoinAccountAccessGroup(
                         access_group=access_group,
-                        account=account
+                        account=edited_account
                     )
 
         # if a list of studies were provided
         if "studies" in data:
 
             # remove studies that are not in the new list
-            for join in account.studies:
+            for join in edited_account.studies:
                 s_ids = [s["id"] for s in data["studies"]]
 
                 if join.study_id not in s_ids:
                     db.session.delete(join)
 
-            s_ids = [join.study_id for join in account.studies]
+            s_ids = [join.study_id for join in edited_account.studies]
             for entry in data["studies"]:
                 study = Study.query.get(entry["id"])
 
                 # if the study is not new
                 if entry["id"] in s_ids:
-                    join = JoinAccountStudy.query.get((account.id, study.id))
+                    join = JoinAccountStudy.query.get(
+                        (edited_account.id, study.id))
 
                     # update the role
                     if join.role.id != int(entry["role"]["id"]):
@@ -286,9 +295,24 @@ def account_edit(account):
                 # add the study
                 else:
                     role = Role.query.get(entry["role"]["id"])
-                    JoinAccountStudy(account=account, role=role, study=study)
+                    JoinAccountStudy(account=edited_account,
+                                     role=role, study=study)
 
+        # Commit database changes
         db.session.commit()
+
+        # Update Cognito user
+        auth_controller = ResearcherAuthController()
+        success, message = auth_controller.update_account_in_cognito({
+            "email": edited_account.email,
+            "first_name": edited_account.first_name,
+            "last_name": edited_account.last_name,
+            "phone_number": edited_account.phone_number
+        })
+
+        if not success:
+            return make_response({"msg": f"Account updated in database but failed to update in Cognito: {message}"}, 400)
+
         msg = "Account Edited Successfully"
 
     except Exception:
@@ -306,9 +330,9 @@ def account_edit(account):
 @researcher_auth_required("Archive", "Accounts")
 def account_archive(account):
     """
-    Archive an account. This action has the same effect as deleting an entry
-    from the database. However, archived items are only filtered from queries
-    and can be retrieved.
+    Archive an account in the database and disable it in Cognito.
+    This action has the same effect as deleting an entry from the database.
+    However, archived items are only filtered from queries and can be retrieved.
 
     Request syntax
     --------------
@@ -330,10 +354,26 @@ def account_archive(account):
     }
     """
     try:
+        from aws_portal.auth.controllers import ResearcherAuthController
+
+        # Get account
         account_id = request.json["id"]
-        account = Account.query.get(account_id)
-        account.is_archived = True
+        archived_account = Account.query.get(account_id)
+
+        # Archive account in database
+        archived_account.is_archived = True
         db.session.commit()
+
+        # Disable account in Cognito
+        auth_controller = ResearcherAuthController()
+        success, message = auth_controller.disable_account_in_cognito(
+            archived_account.email)
+
+        if not success:
+            logger.warning(
+                f"Failed to disable Cognito account for {archived_account.email}: {message}")
+            # We don't return an error here because the account was successfully archived in the database
+
         msg = "Account Archived Successfully"
 
     except Exception:
@@ -2044,9 +2084,9 @@ def api_edit(account):
                 if existing_api:
                     return make_response({"msg": "API with the same name already exists"}, 400)
 
-        populate_model(api, data)
-        db.session.commit()
-        msg = "API Edited Successfully"
+                populate_model(api, data)
+                db.session.commit()
+                msg = "API Edited Successfully"
 
     except Exception:
         exc = traceback.format_exc()

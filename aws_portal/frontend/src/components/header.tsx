@@ -86,7 +86,7 @@ const Header = () => {
           <AccountMenu
             prefill={accountDetails}
             accountMenuRef={accountMenuRef}
-            hideMenu={() => setShowMenu(false)} />
+            hideMenu={() => handleCloseMenu()} />
         </>
       }
     </>

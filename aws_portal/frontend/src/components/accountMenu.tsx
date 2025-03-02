@@ -9,17 +9,10 @@ import { useAuth } from "../hooks/useAuth";
 import { useFlashMessageContext } from "../contexts/flashMessagesContext";
 
 /**
- * Extended interface for AccountDetails to include isFirstLogin
- */
-interface AccountMenuDetails extends AccountDetails {
-  isFirstLogin?: boolean;
-}
-
-/**
  * Account menu props interface
  */
 interface AccountMenuProps {
-  prefill: AccountMenuDetails;
+  prefill: AccountDetails;
   accountMenuRef: RefObject<HTMLDivElement>;
   hideMenu: () => void;
 }
@@ -29,7 +22,6 @@ interface AccountMenuProps {
  */
 type PasswordError = 
   | "PASSWORDS_DONT_MATCH" 
-  | "PASSWORD_TOO_SHORT" 
   | "CURRENT_PASSWORD_REQUIRED" 
   | null;
 
@@ -45,7 +37,7 @@ const AccountMenu = ({
   const [email, setEmail] = useState(prefill.email);
   const [firstName, setFirstName] = useState(prefill.firstName);
   const [lastName, setLastName] = useState(prefill.lastName);
-  const [phoneNumber, setPhoneNumber] = useState(prefill.phoneNumber);
+  const [phoneNumber, setPhoneNumber] = useState(prefill.phoneNumber || "");
   
   // Password state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -65,11 +57,29 @@ const AccountMenu = ({
    * Make a POST request with account detail changes
    */
   const post = async () => {
+    // Validate required fields
+    if (!firstName.trim()) {
+      flashMessage(<span>First name is required</span>, "danger");
+      return;
+    }
+    
+    if (!lastName.trim()) {
+      flashMessage(<span>Last name is required</span>, "danger");
+      return;
+    }
+    
+    if (!email.trim()) {
+      flashMessage(<span>Email is required</span>, "danger");
+      return;
+    }
+    
+    // Phone number is optional, so no validation needed
+    
     const body = {
       email,
       first_name: firstName,
       last_name: lastName,
-      phone_number: phoneNumber,
+      phone_number: phoneNumber, // This will be empty if not provided
     };
 
     const opts = { 
@@ -95,13 +105,9 @@ const AccountMenu = ({
       return "PASSWORDS_DONT_MATCH";
     }
     
-    // Check password complexity
-    if (passwordValue.length < 8) {
-      return "PASSWORD_TOO_SHORT";
-    }
-    
-    // Check if current password is required (not first login)
-    if (!prefill.isFirstLogin && !currentPassword) {
+    // Always require current password for any password change
+    // Cognito will validate this credential
+    if (!currentPassword) {
       return "CURRENT_PASSWORD_REQUIRED";
     }
     
@@ -109,7 +115,7 @@ const AccountMenu = ({
   };
 
   /**
-   * Set a user's password during their first login or change an existing password
+   * Change an existing password
    * @returns A response from the change password endpoint
    */
   const setPassword = async () => {
@@ -123,15 +129,12 @@ const AccountMenu = ({
       throw getErrorMessage(error);
     }
     
-    // Prepare request body
+    // Prepare request body - always include current password
+    // Cognito requires the previous password for all password changes
     const body: Record<string, string> = {
-      newPassword: passwordValue
+      newPassword: passwordValue,
+      previousPassword: currentPassword
     };
-    
-    // Add previous password if not first login
-    if (!prefill.isFirstLogin) {
-      body.previousPassword = currentPassword;
-    }
     
     // Set up request options
     const opts: RequestInit = { 
@@ -153,8 +156,6 @@ const AccountMenu = ({
     switch (error) {
       case "PASSWORDS_DONT_MATCH":
         return "Passwords do not match";
-      case "PASSWORD_TOO_SHORT":
-        return "Password must be at least 8 characters long";
       case "CURRENT_PASSWORD_REQUIRED":
         return "Current password is required";
       default:
@@ -174,6 +175,7 @@ const AccountMenu = ({
   const handleSuccess = (res: ResponseBody) => {
     flashMessage(<span>{res.msg}</span>, "success");
     resetForm();
+    hideMenu();
   }
 
   /**
@@ -216,15 +218,6 @@ const AccountMenu = ({
     setPasswordValue("");
     setConfirmPasswordValue("");
     setPasswordError(null);
-  }
-
-  /**
-   * Hide the account menu and clear sensitive data
-   */
-  const hide = () => {
-    clearSensitiveData();
-    resetForm();
-    hideMenu();
   }
 
   /**
@@ -329,17 +322,15 @@ const AccountMenu = ({
           </div>
           {editPassword &&
             <>
-              {!prefill.isFirstLogin && (
-                <div className="mb-4">
-                  <TextField
-                    id="currentPassword"
-                    label="Current password"
-                    type="password"
-                    onKeyup={setCurrentPassword}
-                    value={currentPassword}
-                    feedback={passwordError === "CURRENT_PASSWORD_REQUIRED" ? getPasswordErrorFeedback(passwordError) : ""} />
-                </div>
-              )}
+              <div className="mb-4">
+                <TextField
+                  id="currentPassword"
+                  label="Current password"
+                  type="password"
+                  onKeyup={setCurrentPassword}
+                  value={currentPassword}
+                  feedback={passwordError === "CURRENT_PASSWORD_REQUIRED" ? getPasswordErrorFeedback(passwordError) : ""} />
+              </div>
               <div className="mb-4">
                 <TextField
                   id="newPassword"
@@ -347,8 +338,8 @@ const AccountMenu = ({
                   type="password"
                   onKeyup={setPasswordValue}
                   value={passwordValue}
-                  description="Password must be at least 8 characters long"
-                  feedback={passwordError === "PASSWORD_TOO_SHORT" ? getPasswordErrorFeedback(passwordError) : ""} />
+                  description=""
+                  feedback={passwordError === "PASSWORDS_DONT_MATCH" ? getPasswordErrorFeedback(passwordError) : ""} />
               </div>
               <div className="mb-6">
                 <TextField

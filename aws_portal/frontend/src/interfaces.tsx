@@ -10,7 +10,7 @@ import { QuillOptions } from "quill";
  * @property lastName - The account holder's last name.
  * @property email - The account holder's email.
  * @property phoneNumber - The account holder's phone number.
- * @property isConfirmed - Whether the account has been logged in and the account holder has set their password.
+ * @property isConfirmed - Whether the account has been confirmed after first login.
  * @property accessGroups - The access groups the account has access to.
  * @property studies - The studies the account has access to.
  */
@@ -298,13 +298,13 @@ export interface ConsentModalProps {
  * @property firstName - The account holder's first name.
  * @property lastName - The account holder's last name.
  * @property email - The account holder's email.
- * @property phoneNumber - The account holder's phone number.
+ * @property phoneNumber - The account holder's phone number (optional).
  */
 export interface AccountDetails {
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber: string;
+  phoneNumber?: string;
 }
 
 /**
@@ -358,21 +358,21 @@ export interface DataRetrievalTask {
  * @property isResearcherAuthenticated - Indicates if the user is authenticated as a researcher.
  * @property isParticipantLoading - Indicates if the participant authentication status is being checked.
  * @property isResearcherLoading - Indicates if the researcher authentication status is being checked.
- * @property firstLogin - Indicates if it's the user's first login.
+ * @property isFirstLogin - Indicates if this is the user's first login session.
  * @property dittiId - The Ditti ID of the authenticated participant.
  * @property accountInfo - Information about the authenticated researcher.
  * @property participantLogin - Function to log in with participant authentication.
  * @property participantLogout - Function to log out from participant authentication.
  * @property researcherLogin - Function to log in with researcher authentication.
  * @property researcherLogout - Function to log out from researcher authentication.
- * @property setFirstLogin - Sets whether this is the user's first login.
+ * @property setIsFirstLogin - Sets whether this is the user's first login session.
  */
 export interface AuthContextType {
   isParticipantAuthenticated: boolean;
   isResearcherAuthenticated: boolean;
   isParticipantLoading: boolean;
   isResearcherLoading: boolean;
-  firstLogin: boolean;
+  isFirstLogin: boolean;
   dittiId: string | null;
   accountInfo: {
     msg: string;
@@ -385,7 +385,7 @@ export interface AuthContextType {
   participantLogout: () => void;
   researcherLogin: (options?: { elevated: boolean }) => void;
   researcherLogout: () => void;
-  setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
+  setIsFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 

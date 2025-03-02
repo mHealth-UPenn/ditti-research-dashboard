@@ -40,7 +40,6 @@ type Action =
     lastName?: string;
     email?: string;
     phoneNumber?: string
-    password?: string;
   }
   | { type: "SELECT_ROLE"; roleId: number; studyId: number }
   | { type: "SELECT_ACCESS_GROUP"; id: number }
@@ -56,17 +55,15 @@ const reducer = (state: AccountsEditState, action: Action) => {
       return { ...state, accessGroups, roles, studies, loading, ...prefill };
     }
     case "EDIT_FIELD": {
-      const { firstName, lastName, email, phoneNumber, password } = action;
+      const { firstName, lastName, email, phoneNumber } = action;
       if (firstName)
         return { ...state, firstName };
       if (lastName)
         return { ...state, lastName };
       if (email)
         return { ...state, email };
-      if (phoneNumber)
+      if (phoneNumber !== undefined)
         return { ...state, phoneNumber };
-      if (password)
-        return { ...state, password };
       return state;
     }
     case "SELECT_ROLE": {
@@ -145,7 +142,7 @@ interface AccountPrefill {
   email: string;
   firstName: string;
   lastName: string;
-  phoneNumber: string;
+  phoneNumber?: string;
   accessGroupsSelected: AccessGroup[];
   rolesSelected: RoleSelected[];
   studiesSelected: Study[];
@@ -157,14 +154,12 @@ interface AccountPrefill {
  * studies: all available studies for selection
  * columnsAccessGroups: columns for the access groups table
  * columnsStudies: columns for the studies table
- * password: the password to be set
  * loading: whether to show the loader
  */
 interface AccountsEditState extends AccountPrefill {
   accessGroups: AccessGroup[];
   roles: Role[];
   studies: Study[];
-  password: string;
   loading: boolean;
 }
 
@@ -180,7 +175,6 @@ const initialState: AccountsEditState = {
   rolesSelected: [],
   accessGroupsSelected: [],
   studiesSelected: [],
-  password: ""
 };
 
 const AccountsEdit = () => {
@@ -201,7 +195,6 @@ const AccountsEdit = () => {
     rolesSelected,
     accessGroupsSelected,
     studiesSelected,
-    password
   } = state;
 
   const { flashMessage } = useFlashMessageContext();
@@ -333,9 +326,24 @@ const AccountsEdit = () => {
    * a new entry, else make a request to edit an exiting entry
    */
   const post = async (): Promise<void> => {
-    // get all access groups that are assigned to the user
-    // const accessGroups = accessGroupsSelected.map(ag => { id: ag.id });
-
+    // Validate required fields
+    if (!firstName.trim()) {
+      flashMessage(<span><b>First name is required</b></span>, "danger");
+      return;
+    }
+    
+    if (!lastName.trim()) {
+      flashMessage(<span><b>Last name is required</b></span>, "danger");
+      return;
+    }
+    
+    if (!email.trim()) {
+      flashMessage(<span><b>Email is required</b></span>, "danger");
+      return;
+    }
+    
+    // Phone number is optional, so no validation needed
+    
     // get all studies and roles that are assigned to the user
     const studies = studiesSelected.map(s => {
       const role = rolesSelected.filter(r => r.study == s.id)[0];
@@ -347,9 +355,9 @@ const AccountsEdit = () => {
       email: email,
       first_name: firstName,
       last_name: lastName,
-      phone_number: phoneNumber,
+      phone_number: phoneNumber, // Will be empty string if not provided
       studies: studies,
-      password: password
+      password: "DEPRECATED" // Always send this hardcoded value
     };
 
     const body = {
@@ -668,24 +676,12 @@ const AccountsEdit = () => {
               id="phoneNumber"
               type="text"
               placeholder=""
-              value={phoneNumber}
+              value={phoneNumber || ""}
               label="Phone Number"
               onKeyup={(phoneNumber) => {
                 dispatch({ type: "EDIT_FIELD", phoneNumber });
               }}
               feedback="" />
-          </FormField>
-        </FormRow>
-        <FormRow>
-          <FormField>
-            <TextField
-              id="password"
-              type="password"
-              label={accountId ? "Change password" : "Password"}
-              onKeyup={(password) => {
-                dispatch({ type: "EDIT_FIELD", password });
-              }}
-              value={password} />
           </FormField>
         </FormRow>
         <FormRow>

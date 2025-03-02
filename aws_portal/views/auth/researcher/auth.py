@@ -160,7 +160,7 @@ def change_password(account):
                 message="Password changed successfully"
             )
         else:
-            # Scenario 2: First-time password setup
+            # Scenario 2: Password setup without previous password
             # We already have the account object from the decorator
             if not account:
                 return create_error_response(

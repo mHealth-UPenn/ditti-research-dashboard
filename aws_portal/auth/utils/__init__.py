@@ -8,9 +8,6 @@ from aws_portal.auth.utils.cookies import (
     set_auth_cookies,
     clear_auth_cookies,
 )
-from aws_portal.auth.utils.password import (
-    validate_password,
-)
 from aws_portal.auth.utils.responses import (
     create_error_response,
     create_success_response,
@@ -27,6 +24,13 @@ from aws_portal.auth.utils.auth_helpers import (
     get_token_from_request,
     check_permissions,
 )
+from aws_portal.auth.utils.researcher_cognito import (
+    get_researcher_cognito_client,
+    create_researcher,
+    update_researcher,
+    delete_researcher,
+    get_researcher,
+)
 
 __all__ = [
     "set_auth_cookies",
@@ -37,7 +41,11 @@ __all__ = [
     "get_cognito_jwks",
     "generate_code_verifier",
     "create_code_challenge",
-    "validate_password",  # Deprecated, maintained for backward compatibility
     "get_token_from_request",
     "check_permissions",
+    "get_researcher_cognito_client",
+    "create_researcher",
+    "update_researcher",
+    "delete_researcher",
+    "get_researcher"
 ]

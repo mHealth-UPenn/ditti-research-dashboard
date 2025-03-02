@@ -11,7 +11,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isParticipantAuthenticated, setIsParticipantAuthenticated] = useState<boolean>(false);
   const [isResearcherAuthenticated, setIsResearcherAuthenticated] = useState<boolean>(false);
-  const [firstLogin, setFirstLogin] = useState<boolean>(false);
+  const [isFirstLogin, setIsFirstLogin] = useState<boolean>(false);
   const [isParticipantLoading, setIsParticipantLoading] = useState<boolean>(true);
   const [isResearcherLoading, setIsResearcherLoading] = useState<boolean>(true);
   const [dittiId, setDittiId] = useState<string | null>(null);
@@ -50,6 +50,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             lastName: res.lastName,
             accountId: res.accountId
           });
+          
+          // Set isFirstLogin state directly from the response
+          if (res.isFirstLogin !== undefined) {
+            setIsFirstLogin(res.isFirstLogin);
+          }
         }
       } catch {
         setIsResearcherAuthenticated(false);
@@ -102,14 +107,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isResearcherAuthenticated,
         isParticipantLoading,
         isResearcherLoading,
-        firstLogin,
+        isFirstLogin,
         dittiId,
         accountInfo,
         participantLogin,
         participantLogout,
         researcherLogin,
         researcherLogout,
-        setFirstLogin,
+        setIsFirstLogin,
       }}
     >
       {children}
