@@ -53,6 +53,19 @@ Built on **AWS** with **TypeScript, React.js, and Python**, the dashboard integr
 
 🚀 *The Ditti Research Dashboard is evolving to support deeper insights into behavioral sleep interventions and participant engagement.*
 
+## Repo Structure
+
+Following are the main directories in the repository:
+
+| Directory  | Description                                      |
+|------------|--------------------------------------------------|
+| `backend`  | The Flask app.                                   |
+| `frontend` | The frontend React app.                          |
+| `functions`| Lambda functions, including the wearable data retrieval. |
+| `migrations`| Database migrations with `Flask-Migrate`.       |
+| `shared`   | Modules shared between backend and Lambda functions.    |
+| `tests`    | Testing scripts.                                 |
+
 ## Running Locally
 
 ### Prerequisites
@@ -105,6 +118,52 @@ To run the test suite, use the following command:
 pytest
 ```
 
+## Zappa Serverless Deployment
+
+The Ditti Research Dashboard uses Zappa for serverless deployment to AWS Lambda. Below are the deployment scripts and their usage for different environments.
+
+### Zappa Settings
+
+The `zappa_settings.json` file contains the configuration for different environments such as `app` (production) and `staging`. Key settings include:
+
+- `app_function`: The entry point for the Flask app.
+- `aws_region`: The AWS region for deployment.
+- `environment_variables`: Environment variables for the app.
+- `events`: Scheduled events for Lambda functions.
+- `log_level`: Logging level.
+- `project_name`: The name of the project.
+- `runtime`: The Python runtime version.
+- `tags`: Tags for AWS resources.
+- `certificate_arn`: ARN for the SSL certificate.
+- `domain`: The domain name for the app.
+
+**Note:** If you are bringing your own SSL certificate, make sure to run `zappa certify` from the command line after configuring your `zappa_settings.json`.
+
+### RDS Stopper Script
+
+The `rds_stopper.py` script is designed to manage the state of an RDS instance based on recent activity. It checks for HTTP requests in the last two hours and stops the RDS instance if no requests are found.
+
+#### Key Functions
+
+- **Logging Setup:** Configures logging to capture information and errors.
+- **Stop Function:**
+  - Retrieves HTTP request logs from AWS CloudWatch.
+  - Checks for requests in the last two hours.
+  - If no requests are found, it checks the status of the RDS instance.
+  - Stops the RDS instance if it is running.
+
+#### Environment Variables
+
+The script relies on the following environment variables:
+
+- `AWS_LOG_GROUP_NAME`: The name of the CloudWatch log group.
+- `AWS_LOG_PATTERN`: The filter pattern for log events.
+- `AWS_DB_INSTANCE_IDENTIFIER`: The identifier of the RDS instance.
+
+#### Usage
+
+To use the script, ensure the required environment variables are set and execute the script. The script is scheduled to run every hour using Zappa's event configuration.
+
 ## Backend Deployment Scripts
 
 The repository includes several deployment scripts to facilitate the deployment process for different environments.
@@ -119,7 +178,7 @@ The `deploy-dev.sh` script sets up the development environment. It handles the c
 
 - `conda`: Skip Python virtual environment setup if using Conda.
 - `init`: Run initialization commands for the application.
-- `no-aws`: Skip fetching secrets from AWS Secrets Manager.
+- `no-aws`: Skip fetching secrets from AWS Secrets Manager. Functionality for pulling secrets from Secrets Manager allows for storing 3rd-party credentials safely.
 
 ### Staging Deployment
 
@@ -237,62 +296,22 @@ For configuring the local postgres container.
 | POSTGRES_PORT                   | PostgreSQL port.                          |
 | POSTGRES_DB                     | PostgreSQL database name.                 |
 
-## Repo Structure
+### AWS Secrets Manager
 
-Following are the main directories in the repository:
+This application expects the following credentials to be pulled from the secrets manager with `deploy.dev`:
 
-| Directory  | Description                                      |
-|------------|--------------------------------------------------|
-| `backend`  | The Flask app.                                   |
-| `frontend` | The frontend React app.                          |
-| `functions`| Lambda functions, including the data processing task. |
-| `migrations`| Database migrations with `Flask-Migrate`.       |
-| `shared`   | Modules shared between backend and functions.    |
-| `tests`    | Testing scripts.                                 |
+| Variable Name            | Description                                      |
+|-----------------------|--------------------------------------------------|
+| FITBIT_CLIENT_SECRET  | The client secret for the Fitbit API integration.|
+| FITBIT_CLIENT_ID      | The client ID for the Fitbit API integration.    |
 
-## Zappa Serverless Deployment
+### Frontend .env.development
 
-The Ditti Research Dashboard uses Zappa for serverless deployment to AWS Lambda. Below are the deployment scripts and their usage for different environments.
+The frontend has one required env variable for running locally. It must also be set in `.env.production` when deploying with one of the React deploy scripts.
 
-### Zappa Settings
-
-The `zappa_settings.json` file contains the configuration for different environments such as `app` (production) and `staging`. Key settings include:
-
-- `app_function`: The entry point for the Flask app.
-- `aws_region`: The AWS region for deployment.
-- `environment_variables`: Environment variables for the app.
-- `events`: Scheduled events for Lambda functions.
-- `log_level`: Logging level.
-- `project_name`: The name of the project.
-- `runtime`: The Python runtime version.
-- `tags`: Tags for AWS resources.
-- `certificate_arn`: ARN for the SSL certificate.
-- `domain`: The domain name for the app.
-
-### RDS Stopper Script
-
-The `rds_stopper.py` script is designed to manage the state of an RDS instance based on recent activity. It checks for HTTP requests in the last two hours and stops the RDS instance if no requests are found.
-
-#### Key Functions
-
-- **Logging Setup:** Configures logging to capture information and errors.
-- **Stop Function:**
-  - Retrieves HTTP request logs from AWS CloudWatch.
-  - Checks for requests in the last two hours.
-  - If no requests are found, it checks the status of the RDS instance.
-  - Stops the RDS instance if it is running.
-
-#### Environment Variables
-
-The script relies on the following environment variables:
-
-- `AWS_LOG_GROUP_NAME`: The name of the CloudWatch log group.
-- `AWS_LOG_PATTERN`: The filter pattern for log events.
-- `AWS_DB_INSTANCE_IDENTIFIER`: The identifier of the RDS instance.
-
-#### Usage
-
-To use the script, ensure the required environment variables are set and execute the script. The script is scheduled to run every hour using Zappa's event configuration.
+| Variable Name | Description |
+| - | - |
+| REACT_APP_FLASK_SERVER | The endpoint for the frontend to use when communicating with the backend. |
 
 ## Wearable Data Retrieval
 
@@ -331,9 +350,14 @@ This will invoke the Lambda function locally and simulate the retrieval of Fitbi
 
 Ensure the following environment variables are set in your `.env` file:
 
-- `AWS_REGION`: The AWS region.
-- `FITBIT_CLIENT_ID`: Fitbit API client ID.
-- `FITBIT_CLIENT_SECRET`: Fitbit API client secret.
-- `DATABASE_URI`: URI for connecting to the database.
+| Variable Name       | Description                          |
+|---------------------|--------------------------------------|
+| DB_URI              | Connection to PostgreSQL.             |
+| S3_BUCKET           | S3 bucket for storing logs.           |
+| AWS_CONFIG_SECRET_NAME | AWS secrets manager configuration. |
+| AWS_KEYS_SECRET_NAME   | AWS keys secret name.              |
+| AWS_DEFAULT_REGION  | AWS region for running locally. |
+| AWS_ACCESS_KEY_ID   | AWS access key ID for running locally.                   |
+| AWS_SECRET_ACCESS_KEY | AWS secret access key for running locally.              |
 
 These scripts and configurations facilitate the development and testing of the wearable data retrieval function in a local environment before deploying it to AWS Lambda.
