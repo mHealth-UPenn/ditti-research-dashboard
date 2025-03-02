@@ -3,7 +3,7 @@ import boto3
 from flask import Blueprint, jsonify, make_response, current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 from aws_portal.extensions import db, tm
-from aws_portal.models import Api, JoinStudySubjectStudy, StudySubject, JoinStudySubjectApi
+from aws_portal.models import Api, StudySubject, JoinStudySubjectApi
 from aws_portal.utils.serialization import serialize_participant
 
 blueprint = Blueprint("participant", __name__, url_prefix="/participant")
@@ -91,15 +91,15 @@ def update_consent(study_id: int, ditti_id: str):
             return make_response({"msg": "User not found or is archived."}, 404)
 
         # Retrieve the JoinStudySubjectStudy entry
-        join_entry = JoinStudySubjectStudy.query.filter_by(
-            study_subject_id=study_subject.id,
-            study_id=study_id
-        ).first()
+        # join_entry = JoinStudySubjectStudy.query.filter_by(
+        #     study_subject_id=study_subject.id,
+        #     study_id=study_id
+        # ).first()
 
-        if not join_entry:
-            logger.info(f"JoinStudySubjectStudy entry not found for ditti_id {
-                        ditti_id}, study_id {study_id}.")
-            return make_response({"msg": "Study enrollment not found."}, 404)
+        # if not join_entry:
+        #     logger.info(f"JoinStudySubjectStudy entry not found for ditti_id {
+        #                 ditti_id}, study_id {study_id}.")
+        #     return make_response({"msg": "Study enrollment not found."}, 404)
 
         # Update the did_consent field
         join_entry.did_consent = did_consent

@@ -5,9 +5,13 @@ from flask_migrate import upgrade
 
 from aws_portal.extensions import db, cache
 from aws_portal.models import (
-    init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
-    init_integration_testing_db, init_study_subject, init_lambda_task,
-    delete_lambda_tasks
+    delete_lambda_tasks,
+    init_admin_account,
+    init_admin_app,
+    init_api,
+    init_db,
+    init_lambda_task,
+    # init_study_subject,
 )
 
 
@@ -20,17 +24,6 @@ def init_admin_app_click(uri):
 
     app = init_admin_app()
     click.echo(repr(app))
-
-
-@click.command("init-admin-group")
-@click.option("--uri", default=None, help="Overrides the SQLAlchemy URI.")
-@with_appcontext
-def init_admin_group_click(uri):
-    if uri is not None:
-        current_app.config["SQLALCHEMY_DATABASE_URI"] = uri
-
-    access_group = init_admin_group()
-    click.echo(repr(access_group))
 
 
 @click.command("init-admin")
@@ -74,21 +67,14 @@ def reset_db_click():
     click.echo("Database successfully reset.")
 
 
-@click.command("init-integration-testing-db", help="Initialize the integration testing database.")
-@with_appcontext
-def init_integration_testing_db_click():
-    init_integration_testing_db()
-    click.echo("Database successfully initialized.")
-
-
-@click.command("init-study-subject", help="Create a new StudySubject database entry.")
-@click.option("--ditti_id", default=None, help="The ditti_id of the StudySubject.")
-@with_appcontext
-def init_study_subject_click(ditti_id):
-    if ditti_id is None:
-        raise RuntimeError("Option `ditti_id` is required.")
-    init_study_subject(ditti_id)
-    click.echo("Study subject successfully initialized.")
+# @click.command("init-study-subject", help="Create a new StudySubject database entry.")
+# @click.option("--ditti_id", default=None, help="The ditti_id of the StudySubject.")
+# @with_appcontext
+# def init_study_subject_click(ditti_id):
+#     if ditti_id is None:
+#         raise RuntimeError("Option `ditti_id` is required.")
+#     init_study_subject(ditti_id)
+#     click.echo("Study subject successfully initialized.")
 
 
 @click.command("clear-cache", help="Clear the Flask cache.")

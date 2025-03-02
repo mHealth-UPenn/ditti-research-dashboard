@@ -1,13 +1,17 @@
 from datetime import timedelta
 import os
-from unittest.mock import patch
 
-from flask import Flask
+from dotenv import load_dotenv
 from moto import mock_aws
 import pytest
 
 from aws_portal.extensions import db
+from aws_portal.app import create_app
+from tests.testing_utils import create_unit_testing_db
 
+load_dotenv("flask.env")
+
+os.environ["FLASK_CONFIG"] = "Testing"
 os.environ["APP_SYNC_HOST"] = "https://testing"
 os.environ["AWS_TABLENAME_USER"] = "testing_table_user"
 os.environ["AWS_TABLENAME_TAP"] = "testing_table_tap"
@@ -15,7 +19,7 @@ os.environ["APPSYNC_ACCESS_KEY"] = "testing"
 os.environ["APPSYNC_SECRET_KEY"] = "testing"
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def with_mocked_tables():
     with mock_aws():
         import boto3
@@ -43,27 +47,17 @@ def with_mocked_tables():
         yield client
 
 
-@pytest.fixture()
-def client(with_mocked_tables):
-    app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["TESTING"] = True
-    db.init_app(app)
-
+@pytest.fixture(scope="session")
+def client():
+    app = create_app(testing=True)
     with app.app_context():
-        db.create_all()
-        yield app.test_client()
+        create_unit_testing_db()
+        with app.test_client() as client:
+            yield client
         db.drop_all()
 
 
-@pytest.fixture
-def client_with_mocked_user(client):
-    with patch("aws_portal.rbac.api.current_user", type("User", (object,), {"id": 1})):
-        yield client
-
-
-@pytest.fixture
+@pytest.fixture(scope="session")
 def timeout_client(app):
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=1)
     with app.test_client() as client:

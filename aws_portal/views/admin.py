@@ -13,7 +13,6 @@ from aws_portal.models import (
     App,
     Api,
     JoinStudySubjectApi,
-    JoinStudySubjectStudy,
     Study,
     StudySubject,
 )
@@ -1154,36 +1153,36 @@ def study_subject_create():
         study_subject.is_archived = False
 
         # Add study associations
-        studies_data = data.get("studies", [])
-        for study_entry in studies_data:
-            study_id = study_entry.get("id")
-            if not study_id:
-                return make_response({"msg": "Study ID is required in studies"}, 400)
-            study = Study.query.get(study_id)
-            if study is None:
-                return make_response({"msg": f"Invalid study ID: {study_id}"}, 400)
-            if study.is_archived:
-                return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
+        # studies_data = data.get("studies", [])
+        # for study_entry in studies_data:
+        #     study_id = study_entry.get("id")
+        #     if not study_id:
+        #         return make_response({"msg": "Study ID is required in studies"}, 400)
+        #     study = Study.query.get(study_id)
+        #     if study is None:
+        #         return make_response({"msg": f"Invalid study ID: {study_id}"}, 400)
+        #     if study.is_archived:
+        #         return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
 
-            did_consent = study_entry.get("did_consent", False)
-            expires_on_str = study_entry.get("expires_on")
-            if expires_on_str:
-                try:
-                    expires_on = datetime.fromisoformat(
-                        expires_on_str.replace("Z", "+00:00"))
-                except ValueError:
-                    return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
-            else:
-                expires_on = None  # Let the event listener set it
+        #     did_consent = study_entry.get("did_consent", False)
+        #     expires_on_str = study_entry.get("expires_on")
+        #     if expires_on_str:
+        #         try:
+        #             expires_on = datetime.fromisoformat(
+        #                 expires_on_str.replace("Z", "+00:00"))
+        #         except ValueError:
+        #             return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+        #     else:
+        #         expires_on = None  # Let the event listener set it
 
-            join_study = JoinStudySubjectStudy(
-                study_subject=study_subject,
-                study=study,
-                did_consent=did_consent,
-                starts_on=study_entry.get("starts_on"),
-                expires_on=expires_on
-            )
-            db.session.add(join_study)
+            # join_study = JoinStudySubjectStudy(
+            #     study_subject=study_subject,
+            #     study=study,
+            #     did_consent=did_consent,
+            #     starts_on=study_entry.get("starts_on"),
+            #     expires_on=expires_on
+            # )
+            # db.session.add(join_study)
 
         # Add API associations
         apis_data = data.get("apis", [])
@@ -1370,52 +1369,52 @@ def study_subject_edit():
                     db.session.delete(join)
 
             # Add or update studies
-            for study_entry in data["studies"]:
-                study_id = study_entry.get("id")
-                if not study_id:
-                    return make_response({"msg": "Study ID is required in studies"}, 400)
-                study = Study.query.get(study_id)
-                if study is None:
-                    return make_response({"msg": f"Invalid study ID: {study_id}"}, 400)
-                if study.is_archived:
-                    return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
+            # for study_entry in data["studies"]:
+            #     study_id = study_entry.get("id")
+            #     if not study_id:
+            #         return make_response({"msg": "Study ID is required in studies"}, 400)
+            #     study = Study.query.get(study_id)
+            #     if study is None:
+            #         return make_response({"msg": f"Invalid study ID: {study_id}"}, 400)
+            #     if study.is_archived:
+            #         return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
 
-                did_consent = study_entry.get("did_consent", False)
-                expires_on_str = study_entry.get("expires_on")
-                if expires_on_str:
-                    try:
-                        expires_on = datetime.fromisoformat(
-                            expires_on_str.replace("Z", "+00:00"))
-                    except ValueError:
-                        return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
-                else:
-                    expires_on = None  # Let the event listener set it
+            #     did_consent = study_entry.get("did_consent", False)
+            #     expires_on_str = study_entry.get("expires_on")
+            #     if expires_on_str:
+            #         try:
+            #             expires_on = datetime.fromisoformat(
+            #                 expires_on_str.replace("Z", "+00:00"))
+            #         except ValueError:
+            #             return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+            #     else:
+            #         expires_on = None  # Let the event listener set it
 
-                starts_on_str = study_entry.get("starts_on")
-                if starts_on_str:
-                    try:
-                        starts_on = datetime.fromisoformat(
-                            starts_on_str.replace("Z", "+00:00"))
-                    except ValueError:
-                        return make_response({"msg": f"Invalid date format for starts_on: {starts_on_str}"}, 400)
+            #     starts_on_str = study_entry.get("starts_on")
+            #     if starts_on_str:
+            #         try:
+            #             starts_on = datetime.fromisoformat(
+            #                 starts_on_str.replace("Z", "+00:00"))
+            #         except ValueError:
+            #             return make_response({"msg": f"Invalid date format for starts_on: {starts_on_str}"}, 400)
 
-                join = JoinStudySubjectStudy.query.get(
-                    (study_subject_id, study_id))
-                if join:
-                    # Update existing association
-                    join.did_consent = did_consent
-                    join.expires_on = expires_on
-                    join.starts_on = starts_on
-                else:
-                    # Create new association
-                    new_join = JoinStudySubjectStudy(
-                        study_subject=study_subject,
-                        study=study,
-                        did_consent=did_consent,
-                        expires_on=expires_on,
-                        starts_on=starts_on,
-                    )
-                    db.session.add(new_join)
+            #     join = JoinStudySubjectStudy.query.get(
+            #         (study_subject_id, study_id))
+            #     if join:
+            #         # Update existing association
+            #         join.did_consent = did_consent
+            #         join.expires_on = expires_on
+            #         join.starts_on = starts_on
+            #     else:
+            #         # Create new association
+            #         new_join = JoinStudySubjectStudy(
+            #             study_subject=study_subject,
+            #             study=study,
+            #             did_consent=did_consent,
+            #             expires_on=expires_on,
+            #             starts_on=starts_on,
+            #         )
+            #         db.session.add(new_join)
 
         # Update APIs if provided
         if data and "apis" in data:

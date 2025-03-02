@@ -4,7 +4,7 @@ import logging
 from datetime import datetime
 from typing import Any, List, Optional
 from pydantic import BaseModel, Field, field_serializer, model_validator
-from aws_portal.models import JoinStudySubjectApi, JoinStudySubjectStudy, StudySubject
+from aws_portal.models import JoinStudySubjectApi, StudySubject
 from .serialization_common import common_config
 
 logger = logging.getLogger(__name__)
@@ -42,20 +42,20 @@ class ParticipantStudyModel(BaseModel):
 
     model_config = common_config
 
-    @model_validator(mode="before")
-    def extract_study_fields(cls, obj):
-        if isinstance(obj, JoinStudySubjectStudy):
-            return {
-                "study_name": obj.study.name,
-                "study_id": obj.study.id,
-                "did_consent": obj.did_consent,
-                "created_on": obj.created_on,
-                "starts_on": obj.created_on,  # TODO: Ensure same format as created_on
-                "expires_on": obj.expires_on,
-                "consent_information": getattr(obj.study, "consent_information", None),
-                "data_summary": getattr(obj.study, "data_summary", None)
-            }
-        return obj
+    # @model_validator(mode="before")
+    # def extract_study_fields(cls, obj):
+    #     if isinstance(obj, JoinStudySubjectStudy):
+    #         return {
+    #             "study_name": obj.study.name,
+    #             "study_id": obj.study.id,
+    #             "did_consent": obj.did_consent,
+    #             "created_on": obj.created_on,
+    #             "starts_on": obj.created_on,  # TODO: Ensure same format as created_on
+    #             "expires_on": obj.expires_on,
+    #             "consent_information": getattr(obj.study, "consent_information", None),
+    #             "data_summary": getattr(obj.study, "data_summary", None)
+    #         }
+    #     return obj
 
     @field_serializer("created_on", "expires_on", mode="plain")
     def serialize_datetimes(value: Optional[datetime]) -> Optional[str]:

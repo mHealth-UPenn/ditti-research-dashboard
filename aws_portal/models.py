@@ -137,34 +137,34 @@ def delete_lambda_tasks():
     db.session.commit()
 
 
-def init_study_subject(ditti_id):
-    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
-    if "localhost" not in db_uri:
-        raise RuntimeError(
-            "init_study_subject requires a localhost database URI.")
+# def init_study_subject(ditti_id):
+#     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+#     if "localhost" not in db_uri:
+#         raise RuntimeError(
+#             "init_study_subject requires a localhost database URI.")
 
-    study_a = Study.query.get(1)
-    study_b = Study.query.get(2)
-    if study_a is None or study_b is None:
-        raise RuntimeError("Could not retrieve studies from the database.")
+#     study_a = Study.query.get(1)
+#     study_b = Study.query.get(2)
+#     if study_a is None or study_b is None:
+#         raise RuntimeError("Could not retrieve studies from the database.")
 
-    existing = StudySubject.query.filter(
-        StudySubject.ditti_id == ditti_id).first()
-    if existing is not None:
-        raise RuntimeError(f"Study subject with ditti_id {
-                           ditti_id} already exists.")
+#     existing = StudySubject.query.filter(
+#         StudySubject.ditti_id == ditti_id).first()
+#     if existing is not None:
+#         raise RuntimeError(f"Study subject with ditti_id {
+#                            ditti_id} already exists.")
 
-    study_subject = StudySubject(ditti_id=ditti_id)
+#     study_subject = StudySubject(ditti_id=ditti_id)
 
-    JoinStudySubjectStudy(
-        study_subject=study_subject,
-        study=study_b,
-        did_consent=True,
-        starts_on=datetime.now(UTC) - timedelta(days=7),
-    )
+#     JoinStudySubjectStudy(
+#         study_subject=study_subject,
+#         study=study_b,
+#         did_consent=True,
+#         starts_on=datetime.now(UTC) - timedelta(days=7),
+#     )
 
-    db.session.add(study_subject)
-    db.session.commit()
+#     db.session.add(study_subject)
+#     db.session.commit()
 
 
 @jwt.user_identity_loader
@@ -444,7 +444,6 @@ class BlockedToken(db.Model):
         return "<BlockedToken %s>" % self.id
 
 
-@with_rbac_study_permission("GetAboutSleepTemplates")
 class AboutSleepTemplate(db.Model):
     """
     The about_sleep_template table mapping class.
@@ -501,20 +500,17 @@ class StudySubject(db.Model):
     created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
     ditti_id = db.Column(db.String, nullable=False, unique=True)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
+    did_consent = db.Column(db.Boolean, default=False, nullable=False)
+    starts_on = db.Column(db.DateTime, default=func.now(), nullable=False)
+    expires_on = db.Column(db.DateTime, nullable=True)
 
-    # Ignore archived studies
-    studies = db.relationship(
-        "JoinStudySubjectStudy",
-        back_populates="study_subject",
-        cascade="all, delete-orphan",
-        primaryjoin=(
-            "and_("
-            "   StudySubject.id == JoinStudySubjectStudy.study_subject_id,"
-            "   JoinStudySubjectStudy.study_id == Study.id,"
-            "   Study.is_archived == False"
-            ")"
-        )
+    study_id = db.Column(
+        db.Integer,
+        db.ForeignKey("study.id"),  # Do not allow deletions on study table
+        nullable=False,
     )
+
+    study = db.relationship("Study")
 
     # Ignore archived apis
     apis = db.relationship(
@@ -537,63 +533,6 @@ class StudySubject(db.Model):
         lazy="dynamic"  # Use dynamic loading for large datasets
     )
 
-    @property
-    def meta(self):
-        return {
-            "id": self.id,
-            "createdOn": self.created_on.isoformat(),
-            "dittiId": self.ditti_id,
-            "studies": [join.meta for join in self.studies],
-            "apis": [join.meta for join in self.apis],
-            # "sleepLogs": [join.meta for join in self.sleep_logs]
-        }
-
-    def __repr__(self):
-        return f"<StudySubject {self.ditti_id}>"
-
-
-class JoinStudySubjectStudy(db.Model):
-    """
-    The join_study_subject_study table mapping class.
-
-    Vars
-    ----
-    study_subject_id: sqlalchemy.Column
-    study_id: sqlalchemy.Column
-    did_consent: sqlalchemy.Column
-        Whether the study subject consented to the collection of their data
-    created_on: sqlalchemy.Column
-        The timestamp of the account's creation, e.g., `datetime.now(UTC)`.
-        The created_on value cannot be modified.
-    starts_on: sqlalchemy.Column
-        When data collection for a study subject begins. Data from approved APIs
-        will be collected starting from no earlier than this date.
-    expires_on: sqlalchemy.Column
-        When the study subject is no longer a part of the study and data should no
-        longer be collected from any of the subject's approved APIs
-    study_subject: sqlalchemy.orm.relationship
-    study: sqlalchemy.orm.relationship
-    """
-    __tablename__ = "join_study_subject_study"
-
-    study_subject_id = db.Column(
-        db.Integer,
-        db.ForeignKey("study_subject.id", ondelete="CASCADE"),
-        primary_key=True
-    )
-    study_id = db.Column(
-        db.Integer,
-        db.ForeignKey("study.id"),  # Do not allow deletions on study table
-        primary_key=True
-    )
-    did_consent = db.Column(db.Boolean, default=False, nullable=False)
-    created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
-    starts_on = db.Column(db.DateTime, default=func.now(), nullable=False)
-    expires_on = db.Column(db.DateTime, nullable=True)
-
-    study_subject = db.relationship("StudySubject", back_populates="studies")
-    study = db.relationship("Study")
-
     @validates("created_on")
     def validate_created_on(self, key, val):
         """
@@ -610,36 +549,22 @@ class JoinStudySubjectStudy(db.Model):
             raise ValueError("expires_on must be a future date.")
         return value
 
-    @hybrid_property
-    def primary_key(self):
-        """
-        tuple of int: an entry's primary key.
-        """
-        return self.study_subject_id, self.study_id
-
-    @primary_key.expression
-    def primary_key(cls):
-        return tuple_(cls.study_subject_id, cls.study_id)
-
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
         return {
-            "didConsent": self.did_consent,
+            "id": self.id,
             "createdOn": self.created_on.isoformat(),
-            "startsOn": self.starts_on.isoformat(),
-            "expiresOn": self.expires_on.isoformat() if self.expires_on else None,
-            "dataSummary": self.study.data_summary,
-            "study": self.study.meta,
+            "dittiId": self.ditti_id,
+            "studies": [join.meta for join in self.studies],
+            "apis": [join.meta for join in self.apis],
+            # "sleepLogs": [join.meta for join in self.sleep_logs]
         }
 
     def __repr__(self):
-        return f"<JoinStudySubjectStudy {self.study_subject_id}-{self.study_id}>"
+        return f"<StudySubject {self.ditti_id}>"
 
 
-@event.listens_for(JoinStudySubjectStudy, "before_insert")
+@event.listens_for(StudySubject, "before_insert")
 def set_expires_on(mapper, connection, target):
     """
     Automatically set the expires_on field based on the Study's default_expiry_delta
@@ -863,6 +788,18 @@ class SleepLog(db.Model):
             raise ValueError("Efficiency must be between 0 and 100.")
         return value
 
+    @hybrid_property
+    def study_id(self):
+        """
+        int: The study ID of the study subject.
+        """
+        return self.study_subject.study_id
+
+    @study_id.expression
+    def study_id(cls):
+        return select(StudySubject.study_id) \
+            .where(StudySubject.id == cls.study_subject_id)
+
     @property
     def meta(self):
         """
@@ -937,6 +874,18 @@ class SleepLevel(db.Model):
 
     sleep_log = db.relationship("SleepLog", back_populates="levels")
 
+    @hybrid_property
+    def study_id(self):
+        """
+        int: The study ID of the study subject.
+        """
+        return self.sleep_log.study_id
+
+    @study_id.expression
+    def study_id(cls):
+        return select(SleepLog.study_id) \
+            .where(SleepLog.id == cls.sleep_log_id)
+
     @property
     def meta(self):
         """
@@ -990,6 +939,18 @@ class SleepSummary(db.Model):
     thirty_day_avg_minutes = db.Column(db.Integer, nullable=True)
 
     sleep_log = db.relationship("SleepLog", back_populates="summaries")
+
+    @hybrid_property
+    def study_id(self):
+        """
+        int: The study ID of the study subject.
+        """
+        return self.sleep_log.study_id
+
+    @study_id.expression
+    def study_id(cls):
+        return select(SleepLog.study_id) \
+            .where(SleepLog.id == cls.sleep_log_id)
 
     @property
     def meta(self):

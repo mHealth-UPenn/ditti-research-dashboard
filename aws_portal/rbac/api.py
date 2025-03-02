@@ -1,3 +1,4 @@
+from functools import wraps
 from typing import Any, Literal
 
 from flask_jwt_extended.utils import current_user
@@ -78,6 +79,7 @@ def with_rbac_study_permission(permission_value: str):
 
 def rbac_required(permission_value: str):
     def decorator(func):
+        @wraps(func)
         def wrapper(*args, **kwargs):
             if not current_user:
                 return "Forbidden", 403
@@ -93,46 +95,6 @@ def rbac_required(permission_value: str):
                         AppPermission.value == "*",
                     )
                 ))
-            
-            # Debug queries
-            # print("================================")
-            # query = select(AppPermission.id)
-            # print(db.session.execute(query).scalars().all())
-            # print("================================")
-            # query = select(AppPermission.id) \
-            #     .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id)
-            # print(db.session.execute(query).scalars().all())
-            # print("================================")
-            # query = select(AppPermission.id) \
-            #     .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id) \
-            #     .join(AppRole, JoinAppRolePermission.app_role == AppRole.id)
-            # print(db.session.execute(query).scalars().all())
-            # print("================================")
-            # query = select(AppPermission.id) \
-            #     .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id) \
-            #     .join(AppRole, JoinAppRolePermission.app_role == AppRole.id) \
-            #     .join(JoinAccountAppRole, AppRole.id == JoinAccountAppRole.app_role_id)
-            # print(db.session.execute(query).scalars().all())
-            # print("================================")
-            # query = select(AppPermission.id) \
-            #     .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id) \
-            #     .join(AppRole, JoinAppRolePermission.app_role == AppRole.id) \
-            #     .join(JoinAccountAppRole, AppRole.id == JoinAccountAppRole.app_role_id) \
-            #     .where(JoinAccountAppRole.account_id == current_user.id)
-            # print(db.session.execute(query).scalars().all())
-            # print("================================")
-            # query = select(AppPermission.id) \
-            #     .join(JoinAppRolePermission, AppPermission.id == JoinAppRolePermission.app_permission_id) \
-            #     .join(AppRole, JoinAppRolePermission.app_role == AppRole.id) \
-            #     .join(JoinAccountAppRole, AppRole.id == JoinAccountAppRole.app_role_id) \
-            #     .where(and_(
-            #         JoinAccountAppRole.account_id == current_user.id,
-            #         or_(
-            #             AppPermission.value == permission_value,
-            #             AppPermission.value == "*",
-            #         )
-            #     ))
-            # print(db.session.execute(query).scalars().all())
 
             if not db.session.execute(query).scalars().all():
                 return "Forbidden", 403
