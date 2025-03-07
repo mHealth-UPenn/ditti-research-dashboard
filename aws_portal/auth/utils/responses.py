@@ -35,12 +35,13 @@ def create_success_response(data=None, message="Operation successful", status_co
     Returns:
         tuple: (response_dict, status_code) for Flask to convert to a JSON response
     """
-    response = {
-        "msg": message
-    }
+    response = {}
 
     if data:
-        # Merge data directly into response instead of nesting it
+        # First merge data into response
         response.update(data)
+
+    # Then set the message to ensure it takes precedence
+    response["msg"] = message
 
     return response, status_code
