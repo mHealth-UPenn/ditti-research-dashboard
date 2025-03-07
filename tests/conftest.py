@@ -2,7 +2,7 @@ from datetime import timedelta
 from functools import partial
 import os
 import boto3
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, Flask
 from moto import mock_aws
 import pytest
 from aws_portal.app import create_app
@@ -15,8 +15,6 @@ from tests.testing_utils import (
     create_joins, create_tables, get_auth_headers, login_admin_account,
     login_test_account
 )
-from aws_portal.auth.controllers.participant import ParticipantAuthController
-from aws_portal.auth.controllers.researcher import ResearcherAuthController
 from aws_portal.auth.decorators import participant_auth_required
 
 os.environ["APP_SYNC_HOST"] = "https://testing"
@@ -339,3 +337,41 @@ def mock_auth_test_data():
             "refresh_token": "fake-refresh-token"
         }
     }
+
+
+@pytest.fixture
+def auth_app():
+    """
+    Create a test Flask application for auth controller tests.
+
+    This fixture provides all the necessary configuration for
+    all three types of auth controllers: base, participant, and researcher.
+    """
+    app = Flask(__name__)
+
+    # Set required config values
+    app.config["SECRET_KEY"] = "test-secret-key"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    # Base auth controller configs (TEST_USER)
+    app.config["TEST_USER_FRONTEND_URL"] = "http://test-frontend"
+    app.config["COGNITO_TEST_USER_DOMAIN"] = "https://auth.example.com"
+    app.config["COGNITO_TEST_USER_CLIENT_ID"] = "client123"
+    app.config["COGNITO_TEST_USER_REDIRECT_URI"] = "http://test-redirect"
+    app.config["COGNITO_TEST_USER_LOGOUT_URI"] = "http://test-logout"
+
+    # Participant auth controller configs
+    app.config["PARTICIPANT_FRONTEND_URL"] = "http://participant-frontend"
+    app.config["COGNITO_PARTICIPANT_DOMAIN"] = "https://auth.example.com"
+    app.config["COGNITO_PARTICIPANT_CLIENT_ID"] = "client123"
+    app.config["COGNITO_PARTICIPANT_REDIRECT_URI"] = "http://participant-redirect"
+    app.config["COGNITO_PARTICIPANT_LOGOUT_URI"] = "http://participant-logout"
+
+    # Researcher auth controller configs
+    app.config["RESEARCHER_FRONTEND_URL"] = "http://researcher-frontend"
+    app.config["COGNITO_RESEARCHER_DOMAIN"] = "https://auth.example.com"
+    app.config["COGNITO_RESEARCHER_CLIENT_ID"] = "client123"
+    app.config["COGNITO_RESEARCHER_REDIRECT_URI"] = "http://researcher-redirect"
+    app.config["COGNITO_RESEARCHER_LOGOUT_URI"] = "http://researcher-logout"
+
+    return app
