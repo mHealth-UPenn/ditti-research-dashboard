@@ -1,8 +1,9 @@
 import logging
 from sqlalchemy import func
 from aws_portal.extensions import oauth
-from aws_portal.models import StudySubject
+from aws_portal.models import StudySubject, Study
 from aws_portal.auth.providers.cognito import CognitoAuthBase
+from aws_portal.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
 
 logger = logging.getLogger(__name__)
 
@@ -72,12 +73,12 @@ class ParticipantAuth(CognitoAuthBase):
 
         if not study_subject:
             logger.warning(f"No study subject found for ID: {ditti_id}")
-            return None, "User profile not found"
+            return None, AUTH_ERROR_MESSAGES["not_found"]
 
         if study_subject.is_archived:
             logger.warning(
                 f"Attempt to access with archived study subject: {ditti_id}")
-            return None, "Account unavailable. Please contact support."
+            return None, AUTH_ERROR_MESSAGES["account_archived"]
 
         return study_subject, None
 
