@@ -15,6 +15,8 @@ from tests.testing_utils import (
     create_joins, create_tables, get_auth_headers, login_admin_account,
     login_test_account
 )
+from aws_portal.auth.controllers.participant import ParticipantAuthController
+from aws_portal.auth.controllers.researcher import ResearcherAuthController
 from aws_portal.auth.decorators import participant_auth_required
 
 os.environ["APP_SYNC_HOST"] = "https://testing"
@@ -76,6 +78,11 @@ def post_auth_required_resource(account):
 
 @pytest.fixture(scope="function")
 def with_mocked_tables():
+    """
+    Set up mocked DynamoDB tables for testing.
+
+    Creates test tables and populates sample data, yielding the boto3 client.
+    """
     with mock_aws():
         client = boto3.client("dynamodb")
         client.create_table(
@@ -103,6 +110,11 @@ def with_mocked_tables():
 
 @pytest.fixture
 def app(with_mocked_tables):
+    """
+    Create a test Flask application with initialized database.
+
+    Sets up a complete test environment with admin accounts and required tables.
+    """
     app = create_app(testing=True)
     app.register_blueprint(blueprint)
     with app.app_context():
@@ -119,12 +131,18 @@ def app(with_mocked_tables):
 
 @pytest.fixture
 def client(app):
+    """Create a Flask test client for the test application."""
     with app.test_client() as client:
         yield client
 
 
 @pytest.fixture
 def get(client):
+    """
+    Create a test GET request function with authentication headers.
+
+    Returns a partially applied function for making authenticated GET requests.
+    """
     res = login_test_account("foo", client)
     headers = get_auth_headers(res)
     get = partial(client.get, headers=headers)
@@ -133,6 +151,11 @@ def get(client):
 
 @pytest.fixture
 def get_admin(client):
+    """
+    Create a test GET request function with admin authentication.
+
+    Returns a partially applied function for making admin GET requests.
+    """
     res = login_admin_account(client)
     headers = get_auth_headers(res)
     get = partial(client.get, headers=headers)
@@ -141,6 +164,11 @@ def get_admin(client):
 
 @pytest.fixture
 def delete(client):
+    """
+    Create a test DELETE request function with authentication headers.
+
+    Returns a partially applied function for making authenticated DELETE requests.
+    """
     res = login_test_account("foo", client)
     headers = get_auth_headers(res)
     delete = partial(
@@ -154,6 +182,11 @@ def delete(client):
 
 @pytest.fixture
 def delete_admin(client):
+    """
+    Create a test DELETE request function with admin authentication.
+
+    Returns a partially applied function for making admin DELETE requests.
+    """
     res = login_admin_account(client)
     headers = get_auth_headers(res)
     delete = partial(
@@ -167,6 +200,11 @@ def delete_admin(client):
 
 @pytest.fixture
 def post(client):
+    """
+    Create a test POST request function with authentication headers.
+
+    Returns a partially applied function for making authenticated POST requests.
+    """
     res = login_test_account("foo", client)
     headers = get_auth_headers(res)
     post = partial(
@@ -180,6 +218,11 @@ def post(client):
 
 @pytest.fixture
 def post_admin(client):
+    """
+    Create a test POST request function with admin authentication.
+
+    Returns a partially applied function for making admin POST requests.
+    """
     res = login_admin_account(client)
     headers = get_auth_headers(res)
     post = partial(
@@ -193,9 +236,21 @@ def post_admin(client):
 
 @pytest.fixture
 def timeout_client(app):
+    """Create a test client with short token expiration for timeout tests."""
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=1)
     with app.test_client() as client:
         yield client
+
+
+@pytest.fixture
+def app_context(app):
+    """
+    Provide app context for tests that need it.
+
+    This avoids the "Working outside of application context" error.
+    """
+    with app.app_context():
+        yield
 
 
 # Auth provider common fixtures for tests
