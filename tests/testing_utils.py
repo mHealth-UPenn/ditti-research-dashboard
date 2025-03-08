@@ -2,9 +2,14 @@ from base64 import b64encode
 from datetime import datetime, timedelta, UTC
 import os
 import uuid
-
-from flask import current_app
+import time
+import json
+import jwt
+import pytest
+import boto3
+from flask import current_app, jsonify
 from flask_jwt_extended.utils import decode_token
+from unittest.mock import patch, MagicMock
 
 from aws_portal.extensions import bcrypt, db
 from aws_portal.models import (
@@ -389,14 +394,27 @@ def get_auth_headers(res, headers=None):
     return headers
 
 
-def get_account_from_response(res):
-    access_token = res.json.get("jwt")
-    if not access_token:
-        raise ValueError("JWT token not found in response.")
-    payload = decode_token(access_token)
-    public_id = payload.get("sub")
-    if not public_id:
-        raise ValueError("Public ID not found in JWT payload.")
-    account = Account.query.filter(Account.public_id == public_id).first()
+# New helper functions for Cognito authentication
 
-    return account
+def mock_cognito_tokens():
+    """Generate mock Cognito tokens for testing."""
+    return {
+        "access_token": "mock_access_token",
+        "id_token": "mock_id_token",
+        "refresh_token": "mock_refresh_token",
+        "expires_in": 3600
+    }
+
+
+def setup_auth_flow_session(client, user_type="participant"):
+    """Set up a mock authentication flow session."""
+    # Use the simpler session approach that was working in the test files
+    with client.session_transaction() as flask_session:
+        flask_session["cognito_state"] = "mock_state"
+        flask_session["cognito_code_verifier"] = "mock_code_verifier"
+        flask_session["cognito_nonce"] = "mock_nonce"
+        flask_session["cognito_nonce_generated"] = int(
+            datetime.now().timestamp())
+        flask_session["auth_flow_user_type"] = user_type
+
+    return "mock_state"

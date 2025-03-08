@@ -15,13 +15,16 @@ from tests.testing_utils import (
     create_joins, create_tables, get_auth_headers, login_admin_account,
     login_test_account
 )
+from unittest.mock import patch, MagicMock
 
+# Environment variables
 os.environ["APP_SYNC_HOST"] = "https://testing"
 os.environ["AWS_TABLENAME_USER"] = "testing_table_user"
 os.environ["AWS_TABLENAME_TAP"] = "testing_table_tap"
 os.environ["APPSYNC_ACCESS_KEY"] = "testing"
 os.environ["APPSYNC_SECRET_KEY"] = "testing"
 
+# Test blueprint and routes
 blueprint = Blueprint("test", __name__, url_prefix="/test")
 
 
@@ -55,6 +58,7 @@ def post_auth_required_resource(account):
     return jsonify({"msg": "OK"})
 
 
+# Infrastructure fixtures
 @pytest.fixture(scope="function")
 def with_mocked_tables():
     """
@@ -87,6 +91,7 @@ def with_mocked_tables():
         yield client
 
 
+# App and client fixtures
 @pytest.fixture
 def app(with_mocked_tables):
     """
@@ -116,6 +121,26 @@ def client(app):
 
 
 @pytest.fixture
+def app_context(app):
+    """
+    Provide app context for tests that need it.
+
+    This avoids the "Working outside of application context" error.
+    """
+    with app.app_context():
+        yield
+
+
+@pytest.fixture
+def timeout_client(app):
+    """Create a test client with short token expiration for timeout tests."""
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=1)
+    with app.test_client() as client:
+        yield client
+
+
+# HTTP method fixtures
+@pytest.fixture
 def get(client):
     """
     Create a test GET request function with authentication headers.
@@ -139,42 +164,6 @@ def get_admin(client):
     headers = get_auth_headers(res)
     get = partial(client.get, headers=headers)
     yield get
-
-
-@pytest.fixture
-def delete(client):
-    """
-    Create a test DELETE request function with authentication headers.
-
-    Returns a partially applied function for making authenticated DELETE requests.
-    """
-    res = login_test_account("foo", client)
-    headers = get_auth_headers(res)
-    delete = partial(
-        client.delete,
-        content_type="application/json",
-        headers=headers
-    )
-
-    yield delete
-
-
-@pytest.fixture
-def delete_admin(client):
-    """
-    Create a test DELETE request function with admin authentication.
-
-    Returns a partially applied function for making admin DELETE requests.
-    """
-    res = login_admin_account(client)
-    headers = get_auth_headers(res)
-    delete = partial(
-        client.delete,
-        content_type="application/json",
-        headers=headers
-    )
-
-    yield delete
 
 
 @pytest.fixture
@@ -214,25 +203,42 @@ def post_admin(client):
 
 
 @pytest.fixture
-def timeout_client(app):
-    """Create a test client with short token expiration for timeout tests."""
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=1)
-    with app.test_client() as client:
-        yield client
+def delete(client):
+    """
+    Create a test DELETE request function with authentication headers.
+
+    Returns a partially applied function for making authenticated DELETE requests.
+    """
+    res = login_test_account("foo", client)
+    headers = get_auth_headers(res)
+    delete = partial(
+        client.delete,
+        content_type="application/json",
+        headers=headers
+    )
+
+    yield delete
 
 
 @pytest.fixture
-def app_context(app):
+def delete_admin(client):
     """
-    Provide app context for tests that need it.
+    Create a test DELETE request function with admin authentication.
 
-    This avoids the "Working outside of application context" error.
+    Returns a partially applied function for making admin DELETE requests.
     """
-    with app.app_context():
-        yield
+    res = login_admin_account(client)
+    headers = get_auth_headers(res)
+    delete = partial(
+        client.delete,
+        content_type="application/json",
+        headers=headers
+    )
+
+    yield delete
 
 
-# Auth provider common fixtures for tests
+# Auth-related fixtures
 @pytest.fixture
 def base_cognito_auth():
     """
@@ -282,7 +288,7 @@ def researcher_auth_fixture():
     return ResearcherAuth()
 
 
-# Common test data for auth tests
+# Test data fixtures
 @pytest.fixture
 def mock_auth_test_data():
     """
@@ -320,18 +326,19 @@ def mock_auth_test_data():
     }
 
 
+# Auth app fixtures
 @pytest.fixture
 def auth_app():
     """
-    Create a test Flask application for auth controller tests.
+    Create a comprehensive test Flask application for all auth controller and views tests.
 
     This fixture provides all the necessary configuration for
-    all three types of auth controllers: base, participant, and researcher.
+    all types of auth controllers: base, participant, and researcher.
     """
-    app = Flask(__name__)
-
-    # Set required config values
-    app.config["SECRET_KEY"] = "test-secret-key"
+    app = create_app(testing=True)
+    app.config["TESTING"] = True
+    app.config["SECRET_KEY"] = "test-key"
+    app.config["SERVER_NAME"] = "localhost"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Base auth controller configs (TEST_USER)
@@ -343,16 +350,39 @@ def auth_app():
 
     # Participant auth controller configs
     app.config["PARTICIPANT_FRONTEND_URL"] = "http://participant-frontend"
-    app.config["COGNITO_PARTICIPANT_DOMAIN"] = "https://auth.example.com"
+    app.config["COGNITO_PARTICIPANT_DOMAIN"] = "test-domain.auth.us-east-1.amazoncognito.com"
     app.config["COGNITO_PARTICIPANT_CLIENT_ID"] = "client123"
     app.config["COGNITO_PARTICIPANT_REDIRECT_URI"] = "http://participant-redirect"
     app.config["COGNITO_PARTICIPANT_LOGOUT_URI"] = "http://participant-logout"
+    app.config["COGNITO_PARTICIPANT_REGION"] = "us-east-1"
+    app.config["COGNITO_PARTICIPANT_USER_POOL_ID"] = "test-pool-id"
+    app.config["COGNITO_PARTICIPANT_CLIENT_SECRET"] = "test-client-secret"
 
     # Researcher auth controller configs
     app.config["RESEARCHER_FRONTEND_URL"] = "http://researcher-frontend"
-    app.config["COGNITO_RESEARCHER_DOMAIN"] = "https://auth.example.com"
+    app.config["COGNITO_RESEARCHER_DOMAIN"] = "test-domain.auth.us-east-1.amazoncognito.com"
     app.config["COGNITO_RESEARCHER_CLIENT_ID"] = "client123"
     app.config["COGNITO_RESEARCHER_REDIRECT_URI"] = "http://researcher-redirect"
     app.config["COGNITO_RESEARCHER_LOGOUT_URI"] = "http://researcher-logout"
+    app.config["COGNITO_RESEARCHER_REGION"] = "us-east-1"
+    app.config["COGNITO_RESEARCHER_USER_POOL_ID"] = "test-pool-id"
+    app.config["COGNITO_RESEARCHER_CLIENT_SECRET"] = "test-client-secret"
 
     return app
+
+
+# Mock fixtures
+@pytest.fixture
+def mock_auth_oauth():
+    """Mock the OAuth client for auth testing."""
+    with patch("aws_portal.extensions.oauth") as mock_oauth:
+        # Create a mock OAuth client
+        mock_client = MagicMock()
+        mock_oauth._clients = {}
+        mock_oauth.register.return_value = mock_client
+        mock_oauth.create_client.return_value = mock_client
+
+        # Mock the authorize_redirect method
+        mock_client.authorize_redirect.return_value = "https://cognito-idp.mock-region.amazonaws.com/mock-auth-endpoint"
+
+        yield mock_oauth

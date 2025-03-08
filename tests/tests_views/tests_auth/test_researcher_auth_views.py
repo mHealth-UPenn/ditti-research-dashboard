@@ -5,74 +5,18 @@ from datetime import datetime
 
 from flask import Flask, Blueprint, jsonify, session, redirect
 from aws_portal.app import create_app
+from tests.testing_utils import setup_auth_flow_session, mock_cognito_tokens
 
 
 @pytest.fixture
-def app():
-    """Create a test Flask app with minimal configuration."""
-    app = create_app(testing=True)
-    app.config['TESTING'] = True
-    app.config['SECRET_KEY'] = 'test-key'
-    app.config['SERVER_NAME'] = 'localhost'
-
-    # Mock Cognito settings
-    app.config['COGNITO_RESEARCHER_REGION'] = 'us-east-1'
-    app.config['COGNITO_RESEARCHER_USER_POOL_ID'] = 'test-pool-id'
-    app.config['COGNITO_RESEARCHER_DOMAIN'] = 'test-domain.auth.us-east-1.amazoncognito.com'
-    app.config['COGNITO_RESEARCHER_CLIENT_ID'] = 'test-client-id'
-    app.config['COGNITO_RESEARCHER_CLIENT_SECRET'] = 'test-client-secret'
-
-    return app
-
-
-@pytest.fixture
-def client(app):
+def client(auth_app):
     """Create a test client."""
-    with app.test_client() as client:
+    with auth_app.test_client() as client:
         yield client
 
 
-@pytest.fixture
-def mock_oauth():
-    """Mock the OAuth client."""
-    with patch("aws_portal.extensions.oauth") as mock_oauth:
-        # Create a mock OAuth client
-        mock_client = MagicMock()
-        mock_oauth._clients = {}
-        mock_oauth.register.return_value = mock_client
-        mock_oauth.create_client.return_value = mock_client
-
-        # Mock the authorize_redirect method
-        mock_client.authorize_redirect.return_value = "https://cognito-idp.mock-region.amazonaws.com/mock-auth-endpoint"
-
-        yield mock_oauth
-
-
-def setup_auth_flow_session(client, user_type="researcher"):
-    """Set up a mock authentication flow session."""
-    with client.session_transaction() as flask_session:
-        flask_session["cognito_state"] = "mock_state"
-        flask_session["cognito_code_verifier"] = "mock_code_verifier"
-        flask_session["cognito_nonce"] = "mock_nonce"
-        flask_session["cognito_nonce_generated"] = int(
-            datetime.now().timestamp())
-        flask_session["auth_flow_user_type"] = user_type
-
-    return "mock_state"
-
-
-def mock_cognito_tokens():
-    """Generate mock Cognito tokens for testing."""
-    return {
-        "access_token": "mock_access_token",
-        "id_token": "mock_id_token",
-        "refresh_token": "mock_refresh_token",
-        "expires_in": 3600
-    }
-
-
 @patch("requests.get")
-def test_researcher_login_view(mock_get, client, mock_oauth):
+def test_researcher_login_view(mock_get, client, mock_auth_oauth):
     """Test researcher login view with mocked OAuth."""
     # Mock the HTTP requests
     mock_response = MagicMock()
