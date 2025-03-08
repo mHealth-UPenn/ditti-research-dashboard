@@ -1,12 +1,8 @@
 import json
 import pytest
 from unittest.mock import patch, MagicMock
-from datetime import datetime
-from botocore.exceptions import ClientError
-
-from flask import Flask, Blueprint, jsonify, session, redirect
-from aws_portal.app import create_app
-from tests.testing_utils import setup_auth_flow_session, mock_cognito_tokens
+from flask import jsonify, redirect
+from tests.testing_utils import setup_auth_flow_session
 
 
 @pytest.fixture
