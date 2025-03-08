@@ -15,7 +15,6 @@ from tests.testing_utils import (
     create_joins, create_tables, get_auth_headers, login_admin_account,
     login_test_account
 )
-from aws_portal.auth.decorators import participant_auth_required
 
 os.environ["APP_SYNC_HOST"] = "https://testing"
 os.environ["AWS_TABLENAME_USER"] = "testing_table_user"
@@ -24,24 +23,6 @@ os.environ["APPSYNC_ACCESS_KEY"] = "testing"
 os.environ["APPSYNC_SECRET_KEY"] = "testing"
 
 blueprint = Blueprint("test", __name__, url_prefix="/test")
-
-
-@blueprint.route("/participant-get")
-@participant_auth_required
-def participant_get(account):
-    return jsonify({"msg": "OK"})
-
-
-@blueprint.route("/researcher-get")
-@researcher_auth_required
-def researcher_get(account):
-    return jsonify({"msg": "OK"})
-
-
-@blueprint.route("/researcher-get-with-permission")
-@researcher_auth_required("Create", "Accounts")
-def researcher_get_with_permission(account):
-    return jsonify({"msg": "OK"})
 
 
 @blueprint.route("/get")
