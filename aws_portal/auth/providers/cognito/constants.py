@@ -33,5 +33,6 @@ AUTH_ERROR_MESSAGES = {
     "missing_email": "Email is required for updating an account",
     "account_disabled": "Account disabled successfully",
     "account_disable_error": "Failed to disable account",
-    "login_successful": "Login successful"
+    "login_successful": "Login successful",
+    "registration_successful": "Registration successful"
 }

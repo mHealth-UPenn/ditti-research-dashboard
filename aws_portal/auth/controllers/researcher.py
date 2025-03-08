@@ -155,9 +155,9 @@ class ResearcherAuthController(AuthControllerBase):
                 "firstName": account.first_name,
                 "lastName": account.last_name,
                 "accountId": account.id,
-                "isFirstLogin": is_first_login,
-                "msg": AUTH_ERROR_MESSAGES["login_successful"]
-            }
+                "isFirstLogin": is_first_login
+            },
+            message=AUTH_ERROR_MESSAGES["login_successful"]
         )
 
     def create_account_in_cognito(self, account_data):

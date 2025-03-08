@@ -4,6 +4,7 @@ from botocore.exceptions import ClientError
 from flask import Blueprint, current_app, request
 from aws_portal.auth.decorators import researcher_auth_required
 from aws_portal.auth.controllers import ParticipantAuthController
+from aws_portal.auth.providers.cognito import AUTH_ERROR_MESSAGES
 from aws_portal.auth.utils.responses import create_error_response, create_success_response
 
 blueprint = Blueprint("participant_auth", __name__,
@@ -144,10 +145,8 @@ def register_participant(account):
         )
 
         return create_success_response(
-            data={
-                "username": cognito_username,
-                "msg": "Registration successful"
-            }
+            data={"username": cognito_username},
+            message=AUTH_ERROR_MESSAGES["registration_successful"]
         )
 
     except ClientError as e:

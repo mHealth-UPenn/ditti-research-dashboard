@@ -154,8 +154,6 @@ class ParticipantAuthController(AuthControllerBase):
             Response: JSON response with ditti ID
         """
         return create_success_response(
-            data={
-                "dittiId": ditti_id,
-                "msg": "Login successful"
-            }
+            data={"dittiId": ditti_id},
+            message=AUTH_ERROR_MESSAGES["login_successful"]
         )
