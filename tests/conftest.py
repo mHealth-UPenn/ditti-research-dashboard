@@ -336,57 +336,6 @@ def mock_auth_oauth():
         yield
 
 
-@pytest.fixture(autouse=True)
-def cleanup_auth_patchers(client):
-    """
-    Clean up auth patchers after each test.
-
-    This fixture automatically runs after each test to clean up any auth patchers
-    that were added to the client during the test.
-    """
-    yield
-
-    # Clean up any auth patchers that were added
-    if hasattr(client, '_auth_patchers'):
-        for patcher in client._auth_patchers:
-            patcher.stop()
-        client._auth_patchers = []
-
-
-@pytest.fixture
-def auth_flow_setup(client):
-    """
-    Fixture to consistently set up authentication flow for tests.
-
-    Uses the setup_auth_flow_session utility to prepare a session with proper
-    authentication flow state.
-
-    Args:
-        client: Flask test client
-        user_type: The type of user for the auth flow (defaults to "participant")
-
-    Returns:
-        The mock state created by setup_auth_flow_session
-    """
-    return setup_auth_flow_session(client, user_type="participant")
-
-
-@pytest.fixture
-def participant_auth_flow_setup(client):
-    """
-    Fixture to set up authentication flow specifically for participant tests.
-    """
-    return setup_auth_flow_session(client, user_type="participant")
-
-
-@pytest.fixture
-def researcher_auth_flow_setup(client):
-    """
-    Fixture to set up authentication flow specifically for researcher tests.
-    """
-    return setup_auth_flow_session(client, user_type="researcher")
-
-
 @pytest.fixture
 def mock_model_not_found():
     """
