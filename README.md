@@ -1,5 +1,7 @@
 # aws-portal
 
+Hello
+
 This Flask/React single page application is a convenient dashboard that can be used to interact with data stored on AWS DynamoDB. In production, the React frontend is statically hosted on S3 and provisioned through a secure HTTPS connection with CloudFront. The Flask backend is deployed with Zappa as a Lambda function and interfaces with a PostgreSQL database that is hosted using RDS. To minimize running costs, `rds_stopper.py` includes a function that stops the RDS instance after the application has been inactive for two hours. `rds_stopper.py` is scheduled by Zappa to run hourly.
 
 ## Prerequisites
