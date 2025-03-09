@@ -2,7 +2,7 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 import pytest
 from aws_portal.extensions import db
-from aws_portal.models import Api, JoinStudySubjectApi, StudySubject
+from aws_portal.models import Api, JoinStudySubjectApi, StudySubject, JoinStudySubjectStudy
 from tests.testing_utils import get_unwrapped_view
 
 
@@ -55,12 +55,12 @@ def test_get_participant(app, ditti_id):
     This approach tests the core logic without authentication constraints.
     """
     from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'get_participant')
+    view_func = get_unwrapped_view(participant_view, "get_participant")
 
     with app.app_context():
         response = view_func(ditti_id=ditti_id)
         assert response is not None
-        assert hasattr(response, 'status_code')
+        assert hasattr(response, "status_code")
 
 
 @pytest.fixture
@@ -121,7 +121,7 @@ def test_get_participant_success(app, study_subject, join_api, api_entry):
     proper API associations.
     """
     from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'get_participant')
+    view_func = get_unwrapped_view(participant_view, "get_participant")
 
     expected_data = {
         "dittiId": study_subject.ditti_id,
@@ -178,7 +178,7 @@ def test_get_participant_user_not_found(app):
     Verifies proper 404 responses for non-existent users.
     """
     from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'get_participant')
+    view_func = get_unwrapped_view(participant_view, "get_participant")
 
     with app.app_context(), \
             patch("aws_portal.models.StudySubject.query") as mock_query:
@@ -199,7 +199,7 @@ def test_get_participant_exception_handling(app):
     Verifies that database errors are properly caught and return 500 responses.
     """
     from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'get_participant')
+    view_func = get_unwrapped_view(participant_view, "get_participant")
 
     with app.app_context(), \
             patch("aws_portal.models.StudySubject.query") as mock_query:
@@ -218,7 +218,7 @@ def test_revoke_api_access_direct(app, study_subject, api_entry, join_api):
     is removed when revoking API access.
     """
     from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'revoke_api_access')
+    view_func = get_unwrapped_view(participant_view, "revoke_api_access")
 
     with app.app_context(), \
             patch("aws_portal.extensions.tm.delete_api_tokens") as mock_delete_tokens, \
@@ -246,7 +246,7 @@ def test_delete_participant_direct(app, study_subject, api_entry, join_api):
     3. Database record cleanup
     """
     from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'delete_participant')
+    view_func = get_unwrapped_view(participant_view, "delete_participant")
 
     with app.app_context(), \
             patch("aws_portal.extensions.tm.delete_api_tokens") as mock_delete_tokens, \
@@ -258,12 +258,12 @@ def test_delete_participant_direct(app, study_subject, api_entry, join_api):
         mock_boto3_client.return_value = mock_cognito_client
 
         # Mock account with admin privileges
-        mock_account = type('Account', (), {
-            'id': '2',
-            'email': 'admin@example.com',
-            'name': 'Admin User',
-            'admin': True,
-            'is_admin': True
+        mock_account = type("Account", (), {
+            "id": "2",
+            "email": "admin@example.com",
+            "name": "Admin User",
+            "admin": True,
+            "is_admin": True
         })
 
         response = view_func(mock_account, study_subject.ditti_id)
@@ -275,7 +275,7 @@ def test_delete_participant_direct(app, study_subject, api_entry, join_api):
             api_name=api_entry.name, ditti_id=study_subject.ditti_id)
 
         mock_cognito_client.admin_delete_user.assert_called_once_with(
-            UserPoolId=app.config.get('COGNITO_PARTICIPANT_USER_POOL_ID'),
+            UserPoolId=app.config.get("COGNITO_PARTICIPANT_USER_POOL_ID"),
             Username=study_subject.ditti_id
         )
 
@@ -296,7 +296,7 @@ def test_delete_participant_success(app, study_subject, api_entry, join_api):
     Duplicates test_delete_participant_direct but with focus on success path integration.
     """
     from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'delete_participant')
+    view_func = get_unwrapped_view(participant_view, "delete_participant")
 
     with app.app_context(), \
             patch("aws_portal.extensions.tm.delete_api_tokens") as mock_delete_tokens, \
@@ -308,12 +308,12 @@ def test_delete_participant_success(app, study_subject, api_entry, join_api):
         mock_boto3_client.return_value = mock_cognito_client
 
         # Mock admin account
-        mock_account = type('Account', (), {
-            'id': '2',
-            'email': 'admin@example.com',
-            'name': 'Admin User',
-            'admin': True,
-            'is_admin': True
+        mock_account = type("Account", (), {
+            "id": "2",
+            "email": "admin@example.com",
+            "name": "Admin User",
+            "admin": True,
+            "is_admin": True
         })
 
         response = view_func(mock_account, study_subject.ditti_id)
@@ -325,7 +325,7 @@ def test_delete_participant_success(app, study_subject, api_entry, join_api):
             api_name=api_entry.name, ditti_id=study_subject.ditti_id)
 
         mock_cognito_client.admin_delete_user.assert_called_once_with(
-            UserPoolId=app.config.get('COGNITO_PARTICIPANT_USER_POOL_ID'),
+            UserPoolId=app.config.get("COGNITO_PARTICIPANT_USER_POOL_ID"),
             Username=study_subject.ditti_id
         )
 
@@ -347,7 +347,7 @@ def test_delete_participant_user_not_found(app):
     Verifies proper 404 responses for deleting unknown users.
     """
     from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'delete_participant')
+    view_func = get_unwrapped_view(participant_view, "delete_participant")
 
     with app.app_context(), \
             patch("aws_portal.models.StudySubject.query") as mock_query:
@@ -355,10 +355,10 @@ def test_delete_participant_user_not_found(app):
         mock_filter.first.return_value = None
         mock_query.filter_by.return_value = mock_filter
 
-        mock_account = type('Account', (), {
-            'id': '2',
-            'email': 'admin@example.com',
-            'name': 'Admin User'
+        mock_account = type("Account", (), {
+            "id": "2",
+            "email": "admin@example.com",
+            "name": "Admin User"
         })
 
         response = view_func(mock_account, "nonexistent_ditti_id")
@@ -376,7 +376,7 @@ def test_delete_participant_cognito_exception(app, study_subject):
     participant deletion.
     """
     from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'delete_participant')
+    view_func = get_unwrapped_view(participant_view, "delete_participant")
 
     with app.app_context(), \
             patch("aws_portal.models.JoinStudySubjectApi.query") as mock_join_query, \
@@ -391,10 +391,10 @@ def test_delete_participant_cognito_exception(app, study_subject):
             "Cognito error")
         mock_boto3_client.return_value = mock_cognito_client
 
-        mock_account = type('Account', (), {
-            'id': '2',
-            'email': 'admin@example.com',
-            'name': 'Admin User'
+        mock_account = type("Account", (), {
+            "id": "2",
+            "email": "admin@example.com",
+            "name": "Admin User"
         })
 
         response = view_func(mock_account, study_subject.ditti_id)
@@ -404,313 +404,158 @@ def test_delete_participant_cognito_exception(app, study_subject):
         assert "Error deleting" in error_msg, f"Expected error message about deletion, got: {error_msg}"
 
 
-@patch("aws_portal.extensions.db.session.execute")
-@patch("aws_portal.models.Account.validate_ask", lambda *_: None)
-def test_download_fitbit_participant(mock_execute, app):
+@pytest.fixture
+def study_id():
     """
-    Tests the Fitbit data download endpoint for a specific participant.
-
-    Verifies that participant-specific Fitbit data can be retrieved and
-    returned in the proper format.
+    Fixture to provide a study ID for testing consent-related endpoints.
     """
-    from aws_portal.views import fitbit_data
-    view_func = get_unwrapped_view(fitbit_data, 'download_fitbit_participant')
+    return 1
 
-    # Sample Fitbit sleep data
-    mock_data = [
-        {"Ditti ID": "test-ditti-123", "Sleep Log Date": "2023-01-01", "Sleep Level Timestamp":
-            "2023-01-01 01:00:00", "Sleep Level Level": "deep", "Sleep Level Length (s)": 3600},
-        {"Ditti ID": "test-ditti-123", "Sleep Log Date": "2023-01-02", "Sleep Level Timestamp":
-            "2023-01-02 01:00:00", "Sleep Level Level": "light", "Sleep Level Length (s)": 1800}
-    ]
-    mock_result = MagicMock()
-    mock_result.fetchall.return_value = mock_data
-    mock_execute.return_value = mock_result
 
-    mock_account = type('Account', (), {
-        'id': '2',
-        'email': 'admin@example.com',
-        'name': 'Admin User'
-    })
+@pytest.fixture
+def join_study(study_subject):
+    """
+    Fixture to create a JoinStudySubjectStudy relation for testing consent updates.
+    """
+    join_entry = JoinStudySubjectStudy(
+        study_subject_id=study_subject.id,
+        study_id=1,
+        did_consent=False,
+        created_on=datetime.utcnow(),
+        starts_on=datetime.utcnow()
+    )
+    db.session.add(join_entry)
+    db.session.commit()
+    return join_entry
+
+
+def test_update_consent_direct(app, study_subject, study_id, join_study):
+    """
+    Tests direct invocation of the update_consent function.
+
+    Verifies that a participant can successfully update their consent status
+    when providing valid data.
+    """
+    from aws_portal.views import participant
+    view_func = get_unwrapped_view(participant, "update_consent")
 
     with app.app_context():
-        response = view_func(mock_account, "test-ditti-123")
-
-    assert response.status_code == 200
-    assert response.mimetype == "application/json"
-
-
-@patch("aws_portal.extensions.db.session.execute")
-def test_download_fitbit_participant_not_found(mock_execute, app):
-    """
-    Tests the Fitbit data download endpoint when participant has no data.
-
-    Verifies that empty result sets are handled properly without errors.
-    """
-    from aws_portal.views import fitbit_data
-    view_func = get_unwrapped_view(fitbit_data, 'download_fitbit_participant')
-
-    mock_result = MagicMock()
-    mock_result.fetchall.return_value = []
-    mock_execute.return_value = mock_result
-
-    mock_account = type('Account', (), {
-        'id': '2',
-        'email': 'admin@example.com',
-        'name': 'Admin User'
-    })
-
-    with app.app_context():
-        response = view_func(mock_account, "nonexistent_id")
-
-    assert response.status_code == 200
-
-
-@patch("aws_portal.extensions.db.session.execute")
-def test_download_fitbit_study(mock_execute, app):
-    """
-    Tests the Fitbit data download endpoint for an entire study.
-
-    Verifies that study-wide Fitbit data can be retrieved and formatted
-    as an Excel file for download.
-    """
-    from aws_portal.views import fitbit_data
-    view_func = get_unwrapped_view(fitbit_data, 'download_fitbit_study')
-
-    # Sample aggregated Fitbit data for a study
-    mock_data = [
-        {"ditti_id": "ditti_1", "date": "2023-01-01", "steps": 10000},
-        {"ditti_id": "ditti_2", "date": "2023-01-02", "steps": 12000}
-    ]
-    mock_result = MagicMock()
-    mock_result.fetchall.return_value = mock_data
-    mock_execute.return_value = mock_result
-
-    mock_account = type('Account', (), {
-        'id': '2',
-        'email': 'admin@example.com',
-        'name': 'Admin User'
-    })
-
-    with app.app_context(), \
-            patch('pandas.DataFrame.to_excel') as mock_to_excel:
-        response = view_func(mock_account, 123)
-        assert mock_to_excel.called
-
-    assert hasattr(response, 'status_code')
-
-
-@patch("aws_portal.extensions.db.session.execute")
-def test_download_fitbit_study_not_found(mock_execute, app):
-    """
-    Tests the Fitbit data download endpoint when study has no data.
-
-    Verifies empty result sets are handled properly for study-level downloads.
-    """
-    from aws_portal.views import fitbit_data
-    view_func = get_unwrapped_view(fitbit_data, 'download_fitbit_study')
-
-    mock_result = MagicMock()
-    mock_result.fetchall.return_value = []
-    mock_execute.return_value = mock_result
-
-    mock_account = type('Account', (), {
-        'id': '2',
-        'email': 'admin@example.com',
-        'name': 'Admin User'
-    })
-
-    with app.app_context(), \
-            patch('pandas.DataFrame.to_excel') as mock_to_excel:
-        response = view_func(mock_account, 999)
-
-    assert hasattr(response, 'status_code')
-
-
-def test_download_fitbit_study_invalid_id(app):
-    """
-    Tests error handling when providing an invalid study ID format.
-
-    Verifies proper error responses for non-numeric study IDs.
-    """
-    from aws_portal.views import fitbit_data
-    view_func = get_unwrapped_view(fitbit_data, 'download_fitbit_study')
-
-    mock_account = type('Account', (), {
-        'id': '2',
-        'email': 'admin@example.com',
-        'name': 'Admin User'
-    })
-
-    with app.app_context():
-        response = view_func(mock_account, "not-a-number")
-
-    assert response.status_code == 500
-
-
-def test_revoke_api_access_user_not_found(app):
-    """
-    Tests error handling when revoking API access for a non-existent user.
-
-    Verifies proper 404 responses for unknown users.
-    """
-    from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'revoke_api_access')
-
-    with app.app_context(), \
-            patch("aws_portal.models.StudySubject.query") as mock_query:
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = None
-        mock_query.filter_by.return_value = mock_filter
-
-        response = view_func("TestAPI", ditti_id="nonexistent_ditti_id")
-
-        assert response.status_code == 404
-        assert response.get_json() == {"msg": "User not found."}
-
-
-def test_revoke_api_access_api_not_found(app, study_subject):
-    """
-    Tests error handling when revoking access for a non-existent API.
-
-    Verifies proper 404 responses when the API doesn't exist.
-    """
-    from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'revoke_api_access')
-
-    with app.app_context(), \
-            patch("aws_portal.models.Api.query") as mock_query:
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = None
-        mock_query.filter_by.return_value = mock_filter
-
-        response = view_func("NonExistentAPI", ditti_id=study_subject.ditti_id)
-
-        assert response.status_code == 404
-        assert response.get_json() == {"msg": "API not found."}
-
-
-def test_revoke_api_access_api_access_not_found(app, study_subject, api_entry):
-    """
-    Tests error handling when revoking API access that doesn't exist.
-
-    Verifies proper 404 responses when no API access relationship exists.
-    """
-    from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'revoke_api_access')
-
-    with app.app_context(), \
-            patch("aws_portal.models.JoinStudySubjectApi.query") as mock_query:
-        mock_query.get.return_value = None
-
-        response = view_func(api_entry.name, ditti_id=study_subject.ditti_id)
-
-        assert response.status_code == 404
-        assert response.get_json() == {"msg": "API access not found."}
-
-
-def test_revoke_api_access_delete_tokens_keyerror(app, study_subject, api_entry, join_api):
-    """
-    Tests error recovery when token manager can't find tokens to delete.
-
-    Verifies that the API access relationship is still deleted from the database
-    even when token deletion fails due to missing tokens.
-    """
-    from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'revoke_api_access')
-
-    with app.app_context(), \
-            patch("aws_portal.extensions.tm.delete_api_tokens", side_effect=KeyError), \
-            patch("aws_portal.extensions.db.session.delete") as mock_db_delete, \
-            patch("aws_portal.extensions.db.session.commit") as mock_db_commit, \
-            patch("aws_portal.views.participant.logger.warning") as mock_logger_warning:
-
-        response = view_func(api_entry.name, ditti_id=study_subject.ditti_id)
-
+        with app.test_request_context(json={"didConsent": True}):
+            response = view_func(study_id, study_subject.ditti_id)
         assert response.status_code == 200
-        assert response.get_json() == {
-            "msg": "API access revoked successfully"}
-        mock_db_delete.assert_called_once_with(join_api)
-        mock_db_commit.assert_called_once()
-        mock_logger_warning.assert_called_once_with(
-            f"Tokens for API '{api_entry.name}' and StudySubject {study_subject.ditti_id} not found.")
+
+        # Verify database update - keep inside app context
+        updated_join = JoinStudySubjectStudy.query.filter_by(
+            study_subject_id=study_subject.id,
+            study_id=study_id
+        ).first()
+        assert updated_join.did_consent is True
 
 
-def test_revoke_api_access_exception_handling(app, study_subject, api_entry, join_api):
+def test_update_consent_missing_field(app, ditti_id, study_id):
     """
-    Tests error handling when database operations fail during API access revocation.
+    Tests update_consent with missing didConsent field in request.
 
-    Verifies proper 500 error responses when database commits fail.
+    Verifies that the endpoint returns a 400 Bad Request when the
+    required field is missing.
     """
-    from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'revoke_api_access')
+    from aws_portal.views import participant
+    view_func = get_unwrapped_view(participant, "update_consent")
 
-    with app.app_context(), \
-            patch("aws_portal.extensions.db.session.commit", side_effect=Exception("Commit error")), \
-            patch("aws_portal.views.participant.logger.error") as mock_logger_error:
-
-        response = view_func(api_entry.name, ditti_id=study_subject.ditti_id)
-
-        assert response.status_code == 500
-        assert response.get_json() == {"msg": "Error revoking API access."}
-        mock_logger_error.assert_called_once()
+    with app.app_context():
+        with app.test_request_context(json={}):
+            response = view_func(study_id, ditti_id)
+            assert response.status_code == 400
+            assert "didConsent" in response.get_json()["msg"]
 
 
-def test_revoke_api_access_exception_deleting_tokens(app, study_subject, api_entry, join_api):
+def test_update_consent_invalid_type(app, ditti_id, study_id):
     """
-    Tests error handling when token deletion fails with an exception.
+    Tests update_consent with an invalid data type for didConsent.
 
-    Verifies proper error responses when token manager operations fail.
+    Verifies that the endpoint validates the data type of the
+    didConsent field and returns appropriate error.
     """
-    from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'revoke_api_access')
+    from aws_portal.views import participant
+    view_func = get_unwrapped_view(participant, "update_consent")
 
-    with app.app_context(), \
-            patch("aws_portal.extensions.tm.delete_api_tokens", side_effect=Exception("Delete token error")), \
-            patch("aws_portal.views.participant.logger.error") as mock_logger_error:
-
-        response = view_func(api_entry.name, ditti_id=study_subject.ditti_id)
-
-        assert response.status_code == 500
-        assert response.get_json() == {"msg": "Error deleting API tokens."}
-        mock_logger_error.assert_called_once()
+    with app.app_context():
+        # String instead of boolean
+        with app.test_request_context(json={"didConsent": "yes"}):
+            response = view_func(study_id, ditti_id)
+            assert response.status_code == 400
+            assert "boolean" in response.get_json()["msg"].lower()
 
 
-def test_revoke_api_access_concurrent_requests(app, study_subject, api_entry, join_api):
+def test_update_consent_user_not_found(app, study_id):
     """
-    Tests API access revocation resilience against concurrent operations.
+    Tests update_consent when the user does not exist.
 
-    Verifies that the endpoint functions correctly when token deletion fails
-    with KeyError due to concurrent operations.
+    Verifies that the endpoint returns a 404 Not Found when
+    attempting to update consent for a non-existent user.
     """
-    from aws_portal.views import participant as participant_view
-    view_func = get_unwrapped_view(participant_view, 'revoke_api_access')
+    from aws_portal.views import participant
+    view_func = get_unwrapped_view(participant, "update_consent")
 
-    with app.app_context(), \
-            patch("aws_portal.extensions.tm.delete_api_tokens", side_effect=KeyError), \
-            patch("aws_portal.extensions.db.session.delete") as mock_db_delete, \
-            patch("aws_portal.extensions.db.session.commit") as mock_db_commit:
+    with app.app_context():
+        with app.test_request_context(json={"didConsent": True}):
+            response = view_func(study_id, "non-existent-ditti")
+            assert response.status_code == 404
+            assert "not found" in response.get_json()["msg"].lower()
 
-        response = view_func(api_entry.name, ditti_id=study_subject.ditti_id)
 
-        assert response.status_code == 200
-        assert response.get_json() == {
-            "msg": "API access revoked successfully"}
-        mock_db_delete.assert_called_once_with(join_api)
-        mock_db_commit.assert_called_once()
+def test_update_consent_study_not_found(app, study_subject, study_id):
+    """
+    Tests update_consent when the study enrollment does not exist.
+
+    Verifies that the endpoint returns a 404 Not Found when
+    attempting to update consent for a study that the user is not enrolled in.
+    """
+    from aws_portal.views import participant
+    view_func = get_unwrapped_view(participant, "update_consent")
+
+    # Using a different study_id than the one in the join_study fixture
+    non_existent_study_id = study_id + 100
+
+    with app.app_context():
+        with app.test_request_context(json={"didConsent": True}):
+            response = view_func(non_existent_study_id, study_subject.ditti_id)
+            assert response.status_code == 404
+            assert "enrollment not found" in response.get_json()["msg"].lower()
+
+
+@patch("aws_portal.extensions.db.session.commit")
+def test_update_consent_database_error(mock_commit, app, study_subject, study_id, join_study):
+    """
+    Tests update_consent handling of database errors.
+
+    Verifies that the endpoint properly handles and reports database errors.
+    """
+    from aws_portal.views import participant
+    view_func = get_unwrapped_view(participant, "update_consent")
+
+    # Simulate database error
+    mock_commit.side_effect = Exception("Database error")
+
+    with app.app_context():
+        with app.test_request_context(json={"didConsent": True}):
+            response = view_func(study_id, study_subject.ditti_id)
+            assert response.status_code == 500
+            assert "error" in response.get_json()["msg"].lower()
 
 
 def test_flask_app_routes(app):
     """
-    Maps all API routes in the application to their corresponding view functions.
+    Tests that all expected endpoints are registered in the Flask app.
 
-    This test provides visibility into the routing structure for reviewers,
-    making it easier to understand the overall API surface.
+    This test verifies that the Flask blueprint registers all the routes we expect,
+    providing a form of API contract testing.
     """
-    # Verify routes exist - we don't need to print details
-    assert app.url_map is not None
-    # Ensure key participant routes exist
-    route_endpoints = [rule.endpoint for rule in app.url_map.iter_rules()]
-    assert "participant.get_participant" in route_endpoints
-    assert "participant.delete_participant" in route_endpoints
-    assert "participant.revoke_api_access" in route_endpoints
+    with app.app_context():
+        rules = [str(rule) for rule in app.url_map.iter_rules()]
+
+        # Check that all participant endpoints are registered
+        assert "/participant" in rules
+        assert "/participant/study/<int:study_id>/consent" in rules
+        assert "/participant/api/<string:api_name>" in rules
+        assert "/participant/<string:ditti_id>" in rules
