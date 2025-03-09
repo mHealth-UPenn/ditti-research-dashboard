@@ -111,7 +111,6 @@ def serialize_participant(study_subject: StudySubject) -> Optional[Dict[str, Any
         return serialized_data
 
     except ValidationError as ve:
-        print(ve)
         logger.error(
             f"Validation error in ParticipantModel for StudySubject {
                 study_subject.ditti_id}: {ve}"
