@@ -16,7 +16,7 @@ done
 
 # Run the tests
 export $(cat ../flask.env | xargs)
-pytest ../tests/tests_views/test_base.py
+pytest ../tests/
 if [ $? -ne 0 ]; then
   echo "Tests failed."
   docker stop pg
