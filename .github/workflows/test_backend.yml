@@ -40,5 +40,6 @@ jobs:
 
       - name: Run tests
         run: |
+          export AWS_DEFAULT_REGION=us-east-1
           export $(cat flask.env | xargs)
           pytest
