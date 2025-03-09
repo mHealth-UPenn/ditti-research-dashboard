@@ -79,7 +79,6 @@ class ParticipantStudyModel(BaseModel):
 
     @field_serializer("created_on", "expires_on", mode="plain")
     def serialize_datetimes(value: Optional[datetime]) -> Optional[str]:
-        print(value)
         return value.isoformat() if value else None
 
 
