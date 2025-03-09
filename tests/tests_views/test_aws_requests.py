@@ -1,8 +1,23 @@
 from flask import json
 from moto import mock_aws
 import pytest
+from unittest.mock import patch, MagicMock
 from aws_portal.utils.aws import Connection, Loader, Query
-from tests.testing_utils import login_admin_account
+from tests.testing_utils import mock_researcher_auth_for_testing
+
+
+@pytest.fixture
+def researcher_headers(client):
+    """Fixture providing researcher authentication headers"""
+    return mock_researcher_auth_for_testing(client, is_admin=False)
+
+
+@pytest.fixture
+def researcher_post(client, researcher_headers):
+    """Create a test POST request function with researcher authentication"""
+    def _post(url, data=None, **kwargs):
+        return client.post(url, data=data, content_type="application/json", headers=researcher_headers, **kwargs)
+    return _post
 
 
 @mock_aws
@@ -44,8 +59,7 @@ def test_user_create(post_admin):
         }
     }
 
-    data = json.dumps(data)
-    res = post_admin("/aws/user/create", data=data)
+    res = post_admin("/aws/user/create", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
     assert res["msg"] == "User Created Successfully"
@@ -88,8 +102,7 @@ def test_user_edit_invalid_acronym(post_admin):
         }
     }
 
-    data = json.dumps(data)
-    res = post_admin("/aws/user/edit", data=data)
+    res = post_admin("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
     assert res["msg"] == "Invalid study acronym: QU"
@@ -107,8 +120,7 @@ def test_user_edit_invalid_id(post_admin):
         }
     }
 
-    data = json.dumps(data)
-    res = post_admin("/aws/user/edit", data=data)
+    res = post_admin("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
     assert res["msg"] == "Invalid Ditti ID: FO000#"
@@ -126,8 +138,7 @@ def test_user_edit_id_not_found(post_admin):
         }
     }
 
-    data = json.dumps(data)
-    res = post_admin("/aws/user/edit", data=data)
+    res = post_admin("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
     assert res["msg"] == "Ditti ID not found: FO001"
@@ -135,7 +146,7 @@ def test_user_edit_id_not_found(post_admin):
 
 @mock_aws
 @pytest.mark.skip(reason="Must create mock for requests")
-def test_user_edit(post):
+def test_user_edit(researcher_post):
     query = "user_permission_id==\"FO000\""
     data = {
         "group": 2,
@@ -152,8 +163,7 @@ def test_user_edit(post):
     assert "information" in res["Items"][0]
     assert res["Items"][0]["information"] == ""
 
-    data = json.dumps(data)
-    res = post("/aws/user/edit", data=data)
+    res = researcher_post("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
     assert res["msg"] == "User Successfully Edited"
@@ -163,10 +173,8 @@ def test_user_edit(post):
     assert "information" in res["Items"][0]
     assert res["Items"][0]["information"] == "foo"
 
-    data = json.loads(data)
     data["edit"]["information"] = ""
-    data = json.dumps(data)
-    res = post("/aws/user/edit", data=data)
+    res = researcher_post("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
     assert res["msg"] == "User Successfully Edited"

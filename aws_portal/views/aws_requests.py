@@ -411,14 +411,20 @@ def user_edit(account):
     }
     """
     msg = "User Successfully Edited"
-    user_permission_id = request.json.get("user_permission_id")
+
+    # Handle request.json whether it's a string or already parsed
+    request_data = request.json
+    if isinstance(request_data, str):
+        request_data = json.loads(request_data)
+
+    user_permission_id = request_data.get("user_permission_id")
 
     # check that the ditti id is valid
     if re.search(r"[^\dA-Za-z]", user_permission_id) is not None:
         return jsonify({"msg": "Invalid Ditti ID: %s" % user_permission_id})
 
     acronym = re.sub(r"[\d]+", "", user_permission_id)
-    study_id = request.json.get("study")
+    study_id = request_data.get("study")
     study = Study.query.get(study_id)
 
     # check that the study acronym of the ditti id is valid
@@ -435,7 +441,7 @@ def user_edit(account):
     try:
         updater = Updater("User")
         updater.set_key_from_query(query)
-        updater.set_expression(request.json.get("edit"))
+        updater.set_expression(request_data.get("edit"))
         updater.update()
 
     except Exception as e:
