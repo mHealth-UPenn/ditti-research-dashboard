@@ -2074,6 +2074,9 @@ def api_edit(account):
         if not api:
             return make_response({"msg": f"API with ID {api_id} does not exist"}, 400)
 
+        # Initialize msg for the case when no changes are made
+        msg = "API Edited Successfully"
+
         if data and "name" in data:
             new_name = data["name"]
             if new_name != api.name:
@@ -2086,7 +2089,6 @@ def api_edit(account):
 
                 populate_model(api, data)
                 db.session.commit()
-                msg = "API Edited Successfully"
 
     except Exception:
         exc = traceback.format_exc()
