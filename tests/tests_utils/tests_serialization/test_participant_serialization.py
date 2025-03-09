@@ -20,7 +20,8 @@ def mock_study_subject_with_data():
     mock_study = MagicMock()
     mock_study.name = "Sleep Study"
     mock_study.id = 101
-    mock_study.data_summary = {"totalNights": 14, "averageAsleep": 420}
+    mock_study.consent_information = "Consent information"
+    mock_study.data_summary = "Data summary"
 
     # Mock JoinStudySubjectStudy
     mock_study_join = MagicMock(spec=JoinStudySubjectStudy)
@@ -55,12 +56,13 @@ def mock_study_subject_missing_expires_on():
     mock_study = MagicMock()
     mock_study.name = "No Expiry Study"
     mock_study.id = 202
-    mock_study.data_summary = None
+    mock_study.consent_information = "Consent information"
+    mock_study.data_summary = "Data summary"
 
     mock_study_join = MagicMock(spec=JoinStudySubjectStudy)
     mock_study_join.study = mock_study
     mock_study_join.created_on = datetime(2024, 2, 2, 12, 0, 0)
-    mock_study_join.expires_on = None  # Missing expires_on
+    mock_study_join.expires_on = None
 
     mock_subject = MagicMock(spec=StudySubject)
     mock_subject.ditti_id = "no-expiry-user"
@@ -93,8 +95,8 @@ def test_serialize_participant_with_data(app, mock_study_subject_with_data):
     assert study_data["studyId"] == 101
     assert study_data["createdOn"] == "2024-01-01T10:00:00"
     assert study_data["expiresOn"] == "2024-12-31T23:59:59"
-    assert study_data["dataSummary"] == {
-        "totalNights": 14, "averageAsleep": 420}
+    assert study_data["dataSummary"] == "Data summary"
+    assert study_data["consentInformation"] == "Consent information"
 
 
 def test_serialize_participant_empty(app, mock_study_subject_empty):
@@ -105,7 +107,6 @@ def test_serialize_participant_empty(app, mock_study_subject_empty):
     assert serialized["studies"] == []
 
 
-@pytest.mark.skip("This test should raise an error, log, and return None. Investigate caplog to ensure error is logged.")
 def test_serialize_participant_missing_expires_on(app, mock_study_subject_missing_expires_on):
     serialized = serialize_participant(mock_study_subject_missing_expires_on)
     assert isinstance(serialized, dict)
@@ -118,4 +119,3 @@ def test_serialize_participant_missing_expires_on(app, mock_study_subject_missin
     assert study_data["createdOn"] == "2024-02-02T12:00:00"
     # excluded due to None and exclude_none=True
     assert study_data.get("expiresOn") is None
-    assert study_data.get("dataSummary") is None

@@ -52,29 +52,34 @@ class ParticipantStudyModel(BaseModel):
     did_consent: bool
     created_on: datetime
     starts_on: datetime
-    expires_on: datetime
-    consent_information: Optional[str] = None
-    data_summary: Optional[str] = None
+    expires_on: Optional[datetime] = Field(None)
+    consent_information: Optional[str] = Field(None)
+    data_summary: Optional[str] = Field(None)
 
     model_config = common_config
 
     @model_validator(mode="before")
     def extract_study_fields(cls, obj):
         if isinstance(obj, JoinStudySubjectStudy):
-            return {
+            data = {
                 "study_name": obj.study.name,
                 "study_id": obj.study.id,
                 "did_consent": obj.did_consent,
                 "created_on": obj.created_on,
                 "starts_on": obj.created_on,  # TODO: Ensure same format as created_on
-                "expires_on": obj.expires_on,
-                "consent_information": getattr(obj.study, "consent_information", None),
-                "data_summary": getattr(obj.study, "data_summary", None)
             }
+            if expires_on := getattr(obj, "expires_on", None):
+                data["expires_on"] = expires_on
+            if consent_info := getattr(obj.study, "consent_information", None):
+                data["consent_information"] = consent_info
+            if data_summary := getattr(obj.study, "data_summary", None):
+                data["data_summary"] = data_summary
+            return data
         return obj
 
     @field_serializer("created_on", "expires_on", mode="plain")
     def serialize_datetimes(value: Optional[datetime]) -> Optional[str]:
+        print(value)
         return value.isoformat() if value else None
 
 
@@ -107,6 +112,7 @@ def serialize_participant(study_subject: StudySubject) -> Optional[Dict[str, Any
         return serialized_data
 
     except ValidationError as ve:
+        print(ve)
         logger.error(
             f"Validation error in ParticipantModel for StudySubject {
                 study_subject.ditti_id}: {ve}"
