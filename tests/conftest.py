@@ -11,10 +11,12 @@ from aws_portal.models import (
     init_admin_account, init_admin_app, init_admin_group, init_db, init_api
 )
 from tests.testing_utils import (
-    create_joins, create_tables, get_auth_headers, login_admin_account,
-    login_test_account
+    create_joins, create_tables, get_auth_headers,
+    login_test_account, mock_researcher_auth_for_testing, setup_auth_flow_session
 )
 from unittest.mock import patch
+import json
+from unittest.mock import MagicMock
 
 # Environment variables
 os.environ["APP_SYNC_HOST"] = "https://testing"
@@ -118,8 +120,11 @@ def get(client):
     """
     res = login_test_account("foo", client)
     headers = get_auth_headers(res)
-    get = partial(client.get, headers=headers)
-    yield get
+
+    def _get(url, query_string=None, **kwargs):
+        return client.get(url, query_string=query_string, headers=headers, **kwargs)
+
+    return _get
 
 
 @pytest.fixture
@@ -129,10 +134,12 @@ def get_admin(client):
 
     Returns a partially applied function for making admin GET requests.
     """
-    res = login_admin_account(client)
-    headers = get_auth_headers(res)
-    get = partial(client.get, headers=headers)
-    yield get
+    headers = mock_researcher_auth_for_testing(client, is_admin=True)
+
+    def _get(url, query_string=None, **kwargs):
+        return client.get(url, query_string=query_string, headers=headers, **kwargs)
+
+    return _get
 
 
 @pytest.fixture
@@ -144,13 +151,11 @@ def post(client):
     """
     res = login_test_account("foo", client)
     headers = get_auth_headers(res)
-    post = partial(
-        client.post,
-        content_type="application/json",
-        headers=headers
-    )
 
-    yield post
+    def _post(url, data=None, **kwargs):
+        return client.post(url, data=json.dumps(data), content_type="application/json", headers=headers, **kwargs)
+
+    return _post
 
 
 @pytest.fixture
@@ -160,15 +165,12 @@ def post_admin(client):
 
     Returns a partially applied function for making admin POST requests.
     """
-    res = login_admin_account(client)
-    headers = get_auth_headers(res)
-    post = partial(
-        client.post,
-        content_type="application/json",
-        headers=headers
-    )
+    headers = mock_researcher_auth_for_testing(client, is_admin=True)
 
-    yield post
+    def _post(url, data=None, **kwargs):
+        return client.post(url, data=json.dumps(data), content_type="application/json", headers=headers, **kwargs)
+
+    return _post
 
 
 @pytest.fixture
@@ -180,13 +182,11 @@ def delete(client):
     """
     res = login_test_account("foo", client)
     headers = get_auth_headers(res)
-    delete = partial(
-        client.delete,
-        content_type="application/json",
-        headers=headers
-    )
 
-    yield delete
+    def _delete(url, data=None, **kwargs):
+        return client.delete(url, data=json.dumps(data) if data else None, content_type="application/json", headers=headers, **kwargs)
+
+    return _delete
 
 
 @pytest.fixture
@@ -196,15 +196,12 @@ def delete_admin(client):
 
     Returns a partially applied function for making admin DELETE requests.
     """
-    res = login_admin_account(client)
-    headers = get_auth_headers(res)
-    delete = partial(
-        client.delete,
-        content_type="application/json",
-        headers=headers
-    )
+    headers = mock_researcher_auth_for_testing(client, is_admin=True)
 
-    yield delete
+    def _delete(url, data=None, **kwargs):
+        return client.delete(url, data=json.dumps(data) if data else None, content_type="application/json", headers=headers, **kwargs)
+
+    return _delete
 
 
 # Auth-related fixtures
@@ -337,3 +334,97 @@ def mock_auth_oauth():
             patch('aws_portal.auth.controllers.participant.ParticipantAuthController.init_oauth_client'), \
             patch('aws_portal.auth.controllers.researcher.ResearcherAuthController.init_oauth_client'):
         yield
+
+
+@pytest.fixture(autouse=True)
+def cleanup_auth_patchers(client):
+    """
+    Clean up auth patchers after each test.
+
+    This fixture automatically runs after each test to clean up any auth patchers
+    that were added to the client during the test.
+    """
+    yield
+
+    # Clean up any auth patchers that were added
+    if hasattr(client, '_auth_patchers'):
+        for patcher in client._auth_patchers:
+            patcher.stop()
+        client._auth_patchers = []
+
+
+@pytest.fixture
+def auth_flow_setup(client):
+    """
+    Fixture to consistently set up authentication flow for tests.
+
+    Uses the setup_auth_flow_session utility to prepare a session with proper
+    authentication flow state.
+
+    Args:
+        client: Flask test client
+        user_type: The type of user for the auth flow (defaults to "participant")
+
+    Returns:
+        The mock state created by setup_auth_flow_session
+    """
+    return setup_auth_flow_session(client, user_type="participant")
+
+
+@pytest.fixture
+def participant_auth_flow_setup(client):
+    """
+    Fixture to set up authentication flow specifically for participant tests.
+    """
+    return setup_auth_flow_session(client, user_type="participant")
+
+
+@pytest.fixture
+def researcher_auth_flow_setup(client):
+    """
+    Fixture to set up authentication flow specifically for researcher tests.
+    """
+    return setup_auth_flow_session(client, user_type="researcher")
+
+
+@pytest.fixture
+def mock_model_not_found():
+    """
+    Generic fixture to mock a model query that returns no results.
+
+    Example usage:
+        def test_user_not_found(mock_model_not_found):
+            query_mock = mock_model_not_found(User)
+            # Test logic here...
+
+    Args:
+        model_class: The SQLAlchemy model class to mock
+
+    Returns:
+        A function that takes a model class and returns a mock query that will
+        return None for first() and empty list for all()
+    """
+    patchers = []
+
+    def _mock_model_not_found(model_class):
+        """Inner function to create the mock for a specific model class."""
+        patcher = patch.object(model_class, 'query')
+        mock_query = patcher.start()
+        patchers.append(patcher)
+
+        # Create mock filter methods
+        mock_filter = MagicMock()
+        mock_filter.first.return_value = None
+        mock_filter.all.return_value = []
+
+        # Setup common query methods to return the filter mock
+        mock_query.filter_by.return_value = mock_filter
+        mock_query.filter.return_value = mock_filter
+
+        return mock_query
+
+    yield _mock_model_not_found
+
+    # Clean up patchers
+    for patcher in patchers:
+        patcher.stop()

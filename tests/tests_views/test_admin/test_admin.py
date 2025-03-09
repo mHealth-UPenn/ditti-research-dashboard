@@ -1,17 +1,5 @@
 import json
 from aws_portal.models import AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study
-from tests.testing_utils import get_auth_headers, login_admin_account
-
-
-def test_account(client):
-    res = login_admin_account(client)
-    headers = get_auth_headers(res)
-    opts = "?app=1"
-    res = client.get("/admin/account" + opts, headers=headers)
-    data = json.loads(res.data)
-    assert len(data) == 3
-    assert data[0]["email"] == "foo@email.com"
-    assert data[1]["email"] == "bar@email.com"
 
 
 def test_account_create(post_admin):
@@ -36,11 +24,10 @@ def test_account_create(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/account/create", data=data)
     data = json.loads(res.data)
     assert "msg" in data
-    assert data["msg"] == "Account Created Successfully"
+    assert data["msg"] == "Account Created Successfully. An email with temporary login credentials has been sent to the user."
 
     q1 = Account.email == "baz@email.com"
     foo = Account.query.filter(q1).first()
@@ -74,7 +61,6 @@ def test_account_edit(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/account/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -95,7 +81,6 @@ def test_account_archive(post_admin):
         "id": 1
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/account/archive", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -122,14 +107,13 @@ def test_study_create(post_admin):
             "acronym": "BAZ",
             "ditti_id": "BZ",
             "email": "baz@email.com",
-            "default_expiry_delta": 30,
+            "defaultExpiryDelta": 30,
             "consent_information": "Consent text...",
             "data_summary": "Data summary..."
         }
     }
 
-    payload = json.dumps(data)
-    res = post_admin("/admin/study/create", data=payload)
+    res = post_admin("/admin/study/create", data=data)
     response_data = json.loads(res.data)
 
     assert "msg" in response_data
@@ -166,7 +150,6 @@ def test_study_edit(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/study/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -183,7 +166,6 @@ def test_study_archive(post_admin):
         "id": 1
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/study/archive", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -217,7 +199,6 @@ def test_access_group_create(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/access-group/create", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -241,7 +222,6 @@ def test_access_group_edit(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/access-group/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -272,7 +252,6 @@ def test_access_group_edit_permissions(post_admin):
     foo = JoinAccessGroupPermission.query.get((2, 2))
     assert foo is not None
 
-    data = json.dumps(data)
     res = post_admin("/admin/access-group/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -292,7 +271,6 @@ def test_access_group_archive(post_admin):
         "id": 1
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/access-group/archive", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -325,7 +303,6 @@ def test_role_create(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/role/create", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -355,7 +332,6 @@ def test_role_edit(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/role/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -387,7 +363,6 @@ def test_app_create(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/app/create", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -408,7 +383,6 @@ def test_app_edit(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/app/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data

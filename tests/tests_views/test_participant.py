@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from unittest.mock import MagicMock, patch
 import pytest
 from aws_portal.extensions import db
 from aws_portal.models import Api, JoinStudySubjectApi, StudySubject, JoinStudySubjectStudy
-from tests.testing_utils import get_unwrapped_view
+from tests.testing_utils import get_unwrapped_view, mock_researcher_auth_for_testing, mock_cognito_tokens, mock_db_query_result, mock_boto3_client
 
 
 @pytest.fixture
@@ -16,14 +16,6 @@ def ditti_id():
 
 
 @pytest.fixture
-def api_name():
-    """
-    Fixture to provide a standard API name for testing API integration points.
-    """
-    return "TestAPI"
-
-
-@pytest.fixture
 def view_func():
     """
     Fixture providing a minimal mock view function that returns a success status.
@@ -33,6 +25,102 @@ def view_func():
         return {"status": "success"}
 
     return mock_view_func
+
+
+@pytest.fixture
+def mock_participant_not_found(mock_model_not_found):
+    """
+    Fixture to consistently mock a participant not found scenario.
+
+    Uses the generic mock_model_not_found fixture for StudySubject.
+    """
+    return mock_model_not_found(StudySubject)
+
+
+@pytest.fixture
+def study_subject():
+    """
+    Fixture to create a StudySubject model instance for testing.
+    """
+    with db.session.no_autoflush:
+        subject = StudySubject(
+            ditti_id="test-ditti-123",
+            is_archived=False
+        )
+        db.session.add(subject)
+        db.session.commit()
+    return subject
+
+
+@pytest.fixture
+def api_entry():
+    """
+    Fixture to create an API model instance for testing.
+    """
+    with db.session.no_autoflush:
+        api = Api(
+            name="TestAPI",
+            is_archived=False
+        )
+        db.session.add(api)
+        db.session.commit()
+    return api
+
+
+@pytest.fixture
+def join_api(study_subject, api_entry):
+    """
+    Fixture to create a JoinStudySubjectApi relation for testing API access.
+    """
+    with db.session.no_autoflush:
+        join_entry = JoinStudySubjectApi(
+            study_subject_id=study_subject.id,
+            api_id=api_entry.id,
+            api_user_uuid="test-uuid",
+            scope=["test"]
+        )
+        db.session.add(join_entry)
+        db.session.commit()
+    return join_entry
+
+
+@pytest.fixture
+def auth_headers(client):
+    """
+    Fixture providing standardized authentication headers using the enhanced
+    mock_researcher_auth_for_testing utility.
+
+    This provides more consistent authentication behavior across tests.
+    """
+    return mock_researcher_auth_for_testing(client, is_admin=True)
+
+
+@pytest.fixture
+def study_id():
+    """
+    Fixture to provide a study ID for testing consent-related endpoints.
+    """
+    return 1
+
+
+@pytest.fixture
+def join_study(study_subject):
+    """
+    Fixture to create a join between a study subject and a study.
+
+    Creates a JoinStudySubjectStudy model instance for testing.
+    """
+    with db.session.no_autoflush:
+        join_entry = JoinStudySubjectStudy(
+            study_subject_id=study_subject.id,
+            study_id=1,
+            did_consent=False,
+            created_on=datetime.now(UTC),
+            starts_on=datetime.now(UTC)
+        )
+        db.session.add(join_entry)
+        db.session.commit()
+    return join_entry
 
 
 def test_view_directly(app, view_func, *args, **kwargs):
@@ -61,56 +149,6 @@ def test_get_participant(app, ditti_id):
         response = view_func(ditti_id=ditti_id)
         assert response is not None
         assert hasattr(response, "status_code")
-
-
-@pytest.fixture
-def study_subject():
-    """
-    Fixture providing a persistent StudySubject entity in the test database.
-
-    This creates a real database record for a study subject with a consistent 
-    ditti_id that can be referenced by multiple tests.
-    """
-    unique_ditti_id = "test-ditti-123"
-    subject = StudySubject(
-        created_on=datetime.now(),
-        ditti_id=unique_ditti_id,
-        is_archived=False
-    )
-    db.session.add(subject)
-    db.session.commit()
-    return subject
-
-
-@pytest.fixture
-def api_entry():
-    """
-    Fixture providing a persistent API entity in the test database.
-
-    Creates an API record that tests can reference when testing API integration flows.
-    """
-    api = Api(name="TestAPI", is_archived=False)
-    db.session.add(api)
-    db.session.commit()
-    return api
-
-
-@pytest.fixture
-def join_api(study_subject, api_entry):
-    """
-    Fixture providing a JoinStudySubjectApi entity linking a study subject with an API.
-
-    This represents the many-to-many relationship between participants and APIs.
-    """
-    join_entry = JoinStudySubjectApi(
-        study_subject_id=study_subject.id,
-        api_id=api_entry.id,
-        api_user_uuid="test_uuid",
-        scope=["read", "write"]
-    )
-    db.session.add(join_entry)
-    db.session.commit()
-    return join_entry
 
 
 def test_get_participant_success(app, study_subject, join_api, api_entry):
@@ -154,6 +192,7 @@ def test_get_participant_missing_id_token(client):
 
     Verifies proper 401 error handling for unauthenticated requests.
     """
+    # Simplified test using directly the client without setup
     response = client.get("/participant")
     assert response.status_code == 401
     assert response.get_json() == {"msg": "Authentication required"}
@@ -165,27 +204,23 @@ def test_get_participant_invalid_id_token_format(client):
 
     Verifies proper error handling for malformed authorization headers.
     """
+    # Use a more standardized approach with invalid headers
     headers = {"Authorization": "InvalidFormat"}
     response = client.get("/participant", headers=headers)
     assert response.status_code == 401
     assert "Authentication required" in response.get_json().get("msg", "")
 
 
-def test_get_participant_user_not_found(app):
+def test_get_participant_user_not_found(app, mock_participant_not_found):
     """
     Tests error handling when the requested participant doesn't exist.
 
-    Verifies proper 404 responses for non-existent users.
+    Uses the mock_participant_not_found fixture for consistent behavior across tests.
     """
     from aws_portal.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "get_participant")
 
-    with app.app_context(), \
-            patch("aws_portal.models.StudySubject.query") as mock_query:
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = None
-        mock_query.filter_by.return_value = mock_filter
-
+    with app.app_context():
         response = view_func(ditti_id="nonexistent_ditti_id")
 
         assert response.status_code == 404
@@ -280,20 +315,11 @@ def test_delete_participant_direct(app, study_subject, api_entry, join_api):
         )
 
 
-@pytest.fixture
-def mock_auth_header():
-    """
-    Fixture providing mock authentication headers for admin endpoints.
-    Used for testing routes that require admin authentication.
-    """
-    return {"Authorization": "Bearer fake_token"}
-
-
-def test_delete_participant_success(app, study_subject, api_entry, join_api):
+def test_delete_participant_success(app, study_subject, api_entry, join_api, auth_headers):
     """
     Tests the full participant deletion flow with an authenticated admin user.
 
-    Duplicates test_delete_participant_direct but with focus on success path integration.
+    Uses the enhanced auth_headers fixture for consistent authentication behavior.
     """
     from aws_portal.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "delete_participant")
@@ -307,7 +333,7 @@ def test_delete_participant_success(app, study_subject, api_entry, join_api):
         mock_cognito_client = MagicMock()
         mock_boto3_client.return_value = mock_cognito_client
 
-        # Mock admin account
+        # Use the account already set up by auth_headers
         mock_account = type("Account", (), {
             "id": "2",
             "email": "admin@example.com",
@@ -340,25 +366,21 @@ def test_delete_participant_missing_id_token(client):
     assert response.status_code == 401
 
 
-def test_delete_participant_user_not_found(app):
+def test_delete_participant_user_not_found(app, mock_participant_not_found):
     """
-    Tests error handling when attempting to delete a non-existent participant.
+    Tests error handling when trying to delete a non-existent participant.
 
-    Verifies proper 404 responses for deleting unknown users.
+    Uses the mock_participant_not_found fixture for consistent behavior across tests.
     """
     from aws_portal.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "delete_participant")
 
-    with app.app_context(), \
-            patch("aws_portal.models.StudySubject.query") as mock_query:
-        mock_filter = MagicMock()
-        mock_filter.first.return_value = None
-        mock_query.filter_by.return_value = mock_filter
-
+    with app.app_context():
         mock_account = type("Account", (), {
             "id": "2",
             "email": "admin@example.com",
-            "name": "Admin User"
+            "name": "Admin User",
+            "is_admin": True
         })
 
         response = view_func(mock_account, "nonexistent_ditti_id")
@@ -378,23 +400,26 @@ def test_delete_participant_cognito_exception(app, study_subject):
     from aws_portal.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "delete_participant")
 
+    # Use app_context fixture and setup simplified mocking
     with app.app_context(), \
-            patch("aws_portal.models.JoinStudySubjectApi.query") as mock_join_query, \
-            patch("boto3.client") as mock_boto3_client:
+            patch("aws_portal.models.JoinStudySubjectApi.query") as mock_join_query:
 
+        # Mock the join query to return empty list
         mock_filter = MagicMock()
         mock_filter.all.return_value = []
         mock_join_query.filter_by.return_value = mock_filter
 
-        mock_cognito_client = MagicMock()
-        mock_cognito_client.admin_delete_user.side_effect = Exception(
-            "Cognito error")
-        mock_boto3_client.return_value = mock_cognito_client
+        # Use our new mock_boto3_client utility to create a mock with an exception
+        mock_client = mock_boto3_client('cognito-idp', {
+            'admin_delete_user': Exception("Cognito error")
+        })
 
+        # Create a mock admin account
         mock_account = type("Account", (), {
             "id": "2",
             "email": "admin@example.com",
-            "name": "Admin User"
+            "name": "Admin User",
+            "is_admin": True
         })
 
         response = view_func(mock_account, study_subject.ditti_id)
@@ -402,31 +427,6 @@ def test_delete_participant_cognito_exception(app, study_subject):
         assert response.status_code == 500
         error_msg = response.get_json()["msg"]
         assert "Error deleting" in error_msg, f"Expected error message about deletion, got: {error_msg}"
-
-
-@pytest.fixture
-def study_id():
-    """
-    Fixture to provide a study ID for testing consent-related endpoints.
-    """
-    return 1
-
-
-@pytest.fixture
-def join_study(study_subject):
-    """
-    Fixture to create a JoinStudySubjectStudy relation for testing consent updates.
-    """
-    join_entry = JoinStudySubjectStudy(
-        study_subject_id=study_subject.id,
-        study_id=1,
-        did_consent=False,
-        created_on=datetime.utcnow(),
-        starts_on=datetime.utcnow()
-    )
-    db.session.add(join_entry)
-    db.session.commit()
-    return join_entry
 
 
 def test_update_consent_direct(app, study_subject, study_id, join_study):
