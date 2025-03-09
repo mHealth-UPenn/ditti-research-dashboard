@@ -52,29 +52,25 @@ class ParticipantStudyModel(BaseModel):
     did_consent: bool
     created_on: datetime
     starts_on: datetime
-    expires_on: Optional[datetime] = Field(None)
-    consent_information: Optional[str] = Field(None)
-    data_summary: Optional[str] = Field(None)
+    expires_on: Optional[datetime]
+    consent_information: Optional[str]
+    data_summary: Optional[str]
 
     model_config = common_config
 
     @model_validator(mode="before")
     def extract_study_fields(cls, obj):
         if isinstance(obj, JoinStudySubjectStudy):
-            data = {
+            return {
                 "study_name": obj.study.name,
                 "study_id": obj.study.id,
                 "did_consent": obj.did_consent,
                 "created_on": obj.created_on,
                 "starts_on": obj.created_on,  # TODO: Ensure same format as created_on
+                "expires_on": getattr(obj, "expires_on", None),
+                "consent_information": getattr(obj.study, "consent_information", None),
+                "data_summary": getattr(obj.study, "data_summary", None)
             }
-            if expires_on := getattr(obj, "expires_on", None):
-                data["expires_on"] = expires_on
-            if consent_info := getattr(obj.study, "consent_information", None):
-                data["consent_information"] = consent_info
-            if data_summary := getattr(obj.study, "data_summary", None):
-                data["data_summary"] = data_summary
-            return data
         return obj
 
     @field_serializer("created_on", "expires_on", mode="plain")
