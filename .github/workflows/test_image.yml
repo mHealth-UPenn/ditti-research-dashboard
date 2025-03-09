@@ -41,13 +41,14 @@ jobs:
             --network host \
             --env-file flask.env \
             -e FLASK_DB=postgresql://user:pass@localhost:5432/postgres \
+            -e AWS_DEFAULT_REGION=us-east-1 \
             --entrypoint flask \
             flask-app \
             run
 
       - name: Wait for Flask to be ready
         run: |
-          timeout=3
+          timeout=60
           while ! docker logs flask-container 2>&1 | grep -q "Debugger PIN"; do
             sleep 1
             timeout=$((timeout - 1))
