@@ -2,7 +2,7 @@ from datetime import timedelta
 from functools import partial
 import os
 import boto3
-from flask import Blueprint, jsonify, Flask
+from flask import Blueprint
 from moto import mock_aws
 import pytest
 from aws_portal.app import create_app
@@ -10,12 +10,11 @@ from aws_portal.extensions import db
 from aws_portal.models import (
     init_admin_account, init_admin_app, init_admin_group, init_db, init_api
 )
-from aws_portal.auth.decorators import researcher_auth_required
 from tests.testing_utils import (
     create_joins, create_tables, get_auth_headers, login_admin_account,
     login_test_account
 )
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 # Environment variables
 os.environ["APP_SYNC_HOST"] = "https://testing"
@@ -26,36 +25,6 @@ os.environ["APPSYNC_SECRET_KEY"] = "testing"
 
 # Test blueprint and routes
 blueprint = Blueprint("test", __name__, url_prefix="/test")
-
-
-@blueprint.route("/get")
-@researcher_auth_required
-def get(account):
-    return jsonify({"msg": "OK"})
-
-
-@blueprint.route("/get-auth-required-action")
-@researcher_auth_required("foo", "bar")
-def get_auth_required_action(account):
-    return jsonify({"msg": "OK"})
-
-
-@blueprint.route("/get-auth-required-resource")
-@researcher_auth_required("bar", "baz")
-def get_auth_required_resource(account):
-    return jsonify({"msg": "OK"})
-
-
-@blueprint.route("/post-auth-required-action", methods=["POST"])
-@researcher_auth_required("foo", "bar")
-def post_auth_required_action(account):
-    return jsonify({"msg": "OK"})
-
-
-@blueprint.route("/post-auth-required-resource", methods=["POST"])
-@researcher_auth_required("bar", "baz")
-def post_auth_required_resource(account):
-    return jsonify({"msg": "OK"})
 
 
 # Infrastructure fixtures
@@ -292,10 +261,9 @@ def researcher_auth_fixture():
 @pytest.fixture
 def mock_auth_test_data():
     """
-    Common test data for auth tests.
+    Provide test data for mocking authentication.
 
-    Provides standardized test data used across different auth test files,
-    ensuring consistency in testing claims and tokens.
+    Returns both user objects for mock decorators and claims/tokens for auth controllers.
     """
     return {
         "researcher_claims": {
@@ -330,59 +298,42 @@ def mock_auth_test_data():
 @pytest.fixture
 def auth_app():
     """
-    Create a comprehensive test Flask application for all auth controller and views tests.
+    Create a test Flask application with initialized database and mock auth decorators.
 
     This fixture provides all the necessary configuration for
-    all types of auth controllers: base, participant, and researcher.
+    authentication testing, including mocked OAuth clients.
     """
+    # Create a Flask test application
     app = create_app(testing=True)
-    app.config["TESTING"] = True
-    app.config["SECRET_KEY"] = "test-key"
-    app.config["SERVER_NAME"] = "localhost"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.register_blueprint(blueprint)
 
-    # Base auth controller configs (TEST_USER)
-    app.config["TEST_USER_FRONTEND_URL"] = "http://test-frontend"
-    app.config["COGNITO_TEST_USER_DOMAIN"] = "https://auth.example.com"
-    app.config["COGNITO_TEST_USER_CLIENT_ID"] = "client123"
-    app.config["COGNITO_TEST_USER_REDIRECT_URI"] = "http://test-redirect"
-    app.config["COGNITO_TEST_USER_LOGOUT_URI"] = "http://test-logout"
+    # Mock the auth
+    with app.app_context():
+        init_db()
+        init_admin_app()
+        init_admin_group()
+        init_admin_account()
+        init_api()
+        create_tables()
+        create_joins()
+        db.session.commit()
 
-    # Participant auth controller configs
-    app.config["PARTICIPANT_FRONTEND_URL"] = "http://participant-frontend"
-    app.config["COGNITO_PARTICIPANT_DOMAIN"] = "test-domain.auth.us-east-1.amazoncognito.com"
-    app.config["COGNITO_PARTICIPANT_CLIENT_ID"] = "client123"
-    app.config["COGNITO_PARTICIPANT_REDIRECT_URI"] = "http://participant-redirect"
-    app.config["COGNITO_PARTICIPANT_LOGOUT_URI"] = "http://participant-logout"
-    app.config["COGNITO_PARTICIPANT_REGION"] = "us-east-1"
-    app.config["COGNITO_PARTICIPANT_USER_POOL_ID"] = "test-pool-id"
-    app.config["COGNITO_PARTICIPANT_CLIENT_SECRET"] = "test-client-secret"
-
-    # Researcher auth controller configs
-    app.config["RESEARCHER_FRONTEND_URL"] = "http://researcher-frontend"
-    app.config["COGNITO_RESEARCHER_DOMAIN"] = "test-domain.auth.us-east-1.amazoncognito.com"
-    app.config["COGNITO_RESEARCHER_CLIENT_ID"] = "client123"
-    app.config["COGNITO_RESEARCHER_REDIRECT_URI"] = "http://researcher-redirect"
-    app.config["COGNITO_RESEARCHER_LOGOUT_URI"] = "http://researcher-logout"
-    app.config["COGNITO_RESEARCHER_REGION"] = "us-east-1"
-    app.config["COGNITO_RESEARCHER_USER_POOL_ID"] = "test-pool-id"
-    app.config["COGNITO_RESEARCHER_CLIENT_SECRET"] = "test-client-secret"
-
-    return app
+        # Mock the OAuth clients
+        with patch('aws_portal.auth.controllers.base.AuthControllerBase.init_oauth_client'), \
+                patch('aws_portal.auth.controllers.participant.ParticipantAuthController.init_oauth_client'), \
+                patch('aws_portal.auth.controllers.researcher.ResearcherAuthController.init_oauth_client'):
+            yield app
 
 
-# Mock fixtures
 @pytest.fixture
 def mock_auth_oauth():
-    """Mock the OAuth client for auth testing."""
-    with patch("aws_portal.extensions.oauth") as mock_oauth:
-        # Create a mock OAuth client
-        mock_client = MagicMock()
-        mock_oauth._clients = {}
-        mock_oauth.register.return_value = mock_client
-        mock_oauth.create_client.return_value = mock_client
+    """
+    Mock the OAuth client initialization for auth controllers.
 
-        # Mock the authorize_redirect method
-        mock_client.authorize_redirect.return_value = "https://cognito-idp.mock-region.amazonaws.com/mock-auth-endpoint"
-
-        yield mock_oauth
+    This fixture prevents real OAuth connections during tests.
+    """
+    # Mock the OAuth client initialization
+    with patch('aws_portal.auth.controllers.base.AuthControllerBase.init_oauth_client'), \
+            patch('aws_portal.auth.controllers.participant.ParticipantAuthController.init_oauth_client'), \
+            patch('aws_portal.auth.controllers.researcher.ResearcherAuthController.init_oauth_client'):
+        yield

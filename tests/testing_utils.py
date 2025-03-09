@@ -10,6 +10,7 @@ import boto3
 from flask import current_app, jsonify
 from flask_jwt_extended.utils import decode_token
 from unittest.mock import patch, MagicMock
+import functools
 
 from aws_portal.extensions import bcrypt, db
 from aws_portal.models import (
@@ -418,3 +419,31 @@ def setup_auth_flow_session(client, user_type="participant"):
         flask_session["auth_flow_user_type"] = user_type
 
     return "mock_state"
+
+
+def get_unwrapped_view(view_module, view_func_name):
+    """
+    Helper to access the original (unwrapped) view function without decorator effects.
+
+    This utility function is key to our testing strategy as it allows us to:
+    1. Test view functions directly without authentication requirements
+    2. Bypass route middleware and decorators
+    3. Focus tests on core business logic
+    4. Test error handling scenarios that are difficult to trigger through HTTP requests
+
+    Args:
+        view_module: The module containing the view function
+        view_func_name: The name of the view function
+
+    Returns:
+        The unwrapped view function that can be called directly
+    """
+    view_func = getattr(view_module, view_func_name, None)
+    if not view_func:
+        raise ValueError(f"View function {view_func_name} not found in module")
+
+    # Unwrap the function by accessing __wrapped__
+    while hasattr(view_func, '__wrapped__'):
+        view_func = view_func.__wrapped__
+
+    return view_func
