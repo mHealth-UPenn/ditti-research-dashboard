@@ -36,12 +36,14 @@ docker run \
   run
 
 # Wait for the Flask app to start, with a timeout of 60 seconds
-timeout=60
-while ! docker logs flask-container 2>&1 | grep -q "Debugger PIN"; do
+timeout=3
+while ! docker logs flask-container 2>&1 | grep -q "Debugger PINs"; do
   sleep 1
   timeout=$((timeout - 1))
   if [ $timeout -le 0 ]; then
     echo "Timeout waiting for the Flask app to start."
+    echo "Flask logs:"
+    docker logs flask-container
     docker stop pg
     docker rm pg
     docker stop flask-container
