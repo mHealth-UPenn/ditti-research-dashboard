@@ -498,14 +498,14 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
                     "did_consent": False,
                     "expires_on": datetime(
                         next_year, 12, 31, 23, 59, 59, tzinfo=timezone.utc
-                    ),
+                    ).isoformat(),
                 },
                 {
                     "study_id": 2,
                     "did_consent": True,
                     "expires_on": datetime(
                         next_next_year, 6, 30, 12, 0, 0, tzinfo=timezone.utc
-                    ),
+                    ).isoformat(),
                 },
             ],
             None,  # No change to APIs
@@ -642,7 +642,7 @@ def test_study_subject_edit_success(
             if "expires_on" in expected:
                 assert study.expires_on.replace(
                     tzinfo=timezone.utc
-                ) == expected["expires_on"]
+                ).isoformat() == expected["expires_on"]
             assert study.study_id == expected["study_id"]
             assert study.did_consent == expected["did_consent"]
     if expected_apis is not None:
