@@ -25,5 +25,7 @@ jobs:
         working-directory: aws_portal/frontend
 
       - name: Build frontend
-        run: npm run build
+        run: |
+          npx tailwindcss -i ./src/index.css -o ./src/output.css
+          npm run build
         working-directory: aws_portal/frontend
