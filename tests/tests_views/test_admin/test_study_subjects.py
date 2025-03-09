@@ -1,6 +1,6 @@
 import pytest
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from aws_portal.models import Api, Study, StudySubject
 from aws_portal.extensions import db
 import traceback
@@ -511,6 +511,28 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
             None,  # No change to APIs
         ),
         (
+            "Update studies without dates",
+            "study_edit_subject_ditti_id",
+            {
+                "studies": [
+                    get_study_entry(1, f"{next_year}-12-31T23:59:59Z", False),
+                    get_study_entry(2, f"{next_next_year}-06-30T12:00:00Z", True),
+                ]
+            },
+            None,  # No change to ditti_id
+            [
+                {
+                    "study_id": 1,
+                    "did_consent": False,
+                },
+                {
+                    "study_id": 2,
+                    "did_consent": True,
+                },
+            ],
+            None,  # No change to APIs
+        ),
+        (
             "Update APIs",
             "api_edit_subject_ditti_id",
             {
@@ -570,13 +592,13 @@ def test_study_subject_edit_success(
     initial_studies = []
     if expected_studies:
         for study in expected_studies:
-            initial_studies.append(
-                {
-                    "id": study["study_id"],
-                    "expires_on": study["expires_on"].isoformat(),
-                    "did_consent": study["did_consent"],
-                }
-            )
+            initial_study = {
+                "id": study["study_id"],
+                "did_consent": study["did_consent"],
+            }
+            if "expires_on" in study:
+                initial_study["expires_on"] = study["expires_on"]
+            initial_studies.append(initial_study)
     initial_apis = []
     if expected_apis:
         for api in expected_apis:
@@ -617,11 +639,12 @@ def test_study_subject_edit_success(
     if expected_studies is not None:
         assert len(edited_subject.studies) == len(expected_studies)
         for study, expected in zip(edited_subject.studies, expected_studies):
+            if "expires_on" in expected:
+                assert study.expires_on.replace(
+                    tzinfo=timezone.utc
+                ) == expected["expires_on"]
             assert study.study_id == expected["study_id"]
             assert study.did_consent == expected["did_consent"]
-            assert study.expires_on.replace(
-                tzinfo=timezone.utc
-            ) == expected["expires_on"]
     if expected_apis is not None:
         assert len(edited_subject.apis) == len(expected_apis)
         for api, expected in zip(edited_subject.apis, expected_apis):
