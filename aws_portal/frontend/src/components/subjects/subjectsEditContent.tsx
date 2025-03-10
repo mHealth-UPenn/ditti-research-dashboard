@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, createRef, FocusEvent, useRef } from "react";
+import { useState, useEffect, createRef, useRef } from "react";
 import TextField from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { formatDateForInput, getEnrollmentInfoForStudy, makeRequest } from "../../utils";
@@ -55,15 +55,6 @@ interface ISubjectsEditContentProps {
 const cognitoPasswordValidation = {
   isMinLen: false,  // At least 8 characters
 };
-
-
-/**
- * Regular expressions for password validation
- */
-const numberRegex = /\d/;
-const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
-const uppercaseRegex = /[A-Z]/;
-const lowercaseRegex = /[a-z]/;
 
 
 const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
@@ -308,7 +299,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     }
 
     await Promise.all(promises)
-      .then(([resAWS, _]) => handleSuccess(resAWS))
+      .then((res) => handleSuccess(res[0]))
       .catch(error => handleFailure(error))
   };
 

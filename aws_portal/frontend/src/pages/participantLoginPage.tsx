@@ -15,8 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import React, { useEffect } from "react";
 import { FullLoader } from "../components/loader";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
@@ -28,17 +27,8 @@ import { Link } from "react-router-dom";
  * ParticipantLoginPage component for Cognito authentication with database touch and loader
  */
 const ParticipantLoginPage: React.FC = () => {
-  const [isElevated, setIsElevated] = useState(false);
-
   const { cognitoLogin } = useAuth();
   const loadingDb = useDbStatus();
-  const location = useLocation();
-
-  useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const elevatedParam = urlParams.get("elevated");
-    setIsElevated(elevatedParam === "true");
-  }, [location.search]);
 
   // Enter triggers login
   useEffect(() => {
@@ -55,14 +45,6 @@ const ParticipantLoginPage: React.FC = () => {
       };
     }
   }, [loadingDb, cognitoLogin]);
-
-  const handleCognitoLogin = () => {
-    if (isElevated) {
-      cognitoLogin({ elevated: true });
-    } else {
-      cognitoLogin();
-    }
-  };
 
   return (
     <>

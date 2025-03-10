@@ -119,9 +119,9 @@ const ParticipantDashboardContent = () => {
 
       // Redirect to Fitbit authorization after successful consent
       handleRedirect();
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      const errorMsg = err.msg || "There was a problem updating your consent. Please try again.";
+      const errorMsg = "There was a problem updating your consent. Please try again.";
       setConsentError(errorMsg);
     }
   };

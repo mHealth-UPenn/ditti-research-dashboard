@@ -38,7 +38,6 @@ import { APP_ENV } from "../../environment";
 import { Link, useSearchParams } from "react-router-dom";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { useStudiesContext } from "../../contexts/studiesContext";
-import { IStudySubjectDetails } from "../../interfaces";
 
 
 const SubjectVisualsV2 = () => {
@@ -95,7 +94,6 @@ const SubjectVisualsV2 = () => {
   const downloadExcel = async (): Promise<void> => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
-    const id = study?.acronym;
     const fileName = format(new Date(), `'${dittiId}_'yyyy-MM-dd'_'HH:mm:ss`);
 
     const tapsData = filteredTaps.map(t => {

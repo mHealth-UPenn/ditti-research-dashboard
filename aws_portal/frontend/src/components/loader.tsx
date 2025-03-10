@@ -35,15 +35,6 @@ interface FullLoaderProps {
   msg: string;
 }
 
-/**
- * loadingStyle: the style as the loader is displayed
- * fadingStyle: the style as the loader is fading
- */
-interface FullLoaderState {
-  loadingStyle: React.CSSProperties;
-  fadingStyle: React.CSSProperties;
-}
-
 const Loader: React.FC<LoaderProps> = ({ style, msg }) => {
   return (
     <div
