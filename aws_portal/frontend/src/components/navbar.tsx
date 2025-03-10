@@ -16,12 +16,7 @@
  */
 
 import { Link } from "react-router-dom";
-import { IBreadcrumb } from "../interfaces";
 import { useNavbarContext } from "../contexts/navbarContext";
-
-interface IHandle {
-  breadcrumbs: IBreadcrumb[];
-}
 
 
 const Navbar = () => {

@@ -15,11 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { createContext, useState, useEffect, PropsWithChildren, useMemo, useContext } from "react";
+import { createContext, useState, useEffect, PropsWithChildren, useContext } from "react";
 import { makeRequest } from "../utils";
 import { IStudySubject, CoordinatorStudySubjectContextType, UserDetails, IStudySubjectDetails } from "../interfaces";
 import { APP_ENV } from "../environment";
-import DataFactory from "../dataFactory";
 
 export const CoordinatorStudySubjectContext = createContext<CoordinatorStudySubjectContextType | undefined>(undefined);
 
@@ -35,14 +34,6 @@ export default function CoordinatorStudySubjectProvider({
 }: PropsWithChildren<ICoordinatorStudySubjectProviderProps>) {
   const [studySubjects, setStudySubjects] = useState<IStudySubjectDetails[]>([]);
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
-
-  const dataFactory: DataFactory | null = useMemo(() => {
-    if (APP_ENV === "development" || APP_ENV === "demo") {
-      // return new DataFactory();
-      return null;  // Until this data is available in the data factory
-    }
-    return null;
-  }, []);
 
   /**
    * Joins participant data fetched from the database and from AWS by Ditti ID. If a Ditti ID exists in only one data

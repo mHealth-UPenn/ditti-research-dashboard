@@ -16,11 +16,10 @@
  */
 
 // TODO: Extend implementation to Ditti App Dashboard
-import { createContext, useState, useEffect, PropsWithChildren, useMemo, useContext } from "react";
+import { createContext, useState, useEffect, PropsWithChildren, useContext } from "react";
 import { makeRequest } from "../utils";
 import { StudySubjectContextType, IParticipant, IParticipantApi, IParticipantStudy } from "../interfaces";
 import { APP_ENV } from "../environment";
-import DataFactory from "../dataFactory";
 
 export const StudySubjectContext = createContext<StudySubjectContextType | undefined>(undefined);
 
@@ -33,26 +32,15 @@ export default function StudySubjectProvider({
   const [apis, setApis] = useState<IParticipantApi[]>([])
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
 
-  const dataFactory: DataFactory | null = useMemo(() => {
-    if (APP_ENV === "development" || APP_ENV === "demo") {
-      // return new DataFactory();
-      return null;  // Until this data is available in the data factory
-    }
-    return null;
-  }, []);
-
   // Fetch the participant's enrolled studies and connected APIs
   useEffect(() => {
-    const promises: Promise<any>[] = [];
+    const promises: Promise<void>[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
       promises.push(getStudySubject().then(([studiesData, apisData]) => {
         setStudies(studiesData);
         setApis(apisData);
       }));
-    // } else if (APP_ENV === "demo" && dataFactory) {
-    //   setStudies(dataFactory.studyJoins);
-    //   setApis(dataFactory.apiJoins);
     }
 
     Promise.all(promises).then(() => setStudySubjectLoading(false));

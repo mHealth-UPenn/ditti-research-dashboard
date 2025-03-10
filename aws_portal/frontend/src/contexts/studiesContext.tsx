@@ -45,8 +45,6 @@ export default function StudiesProvider({
   const [studiesLoading, setStudiesLoading] = useState(true);
   const { setStudySlug, setSidParam } = useNavbarContext();
 
-  const appSlug = app === 2 ? "ditti" : "wearable";
-
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
       return new DataFactory();
