@@ -30,7 +30,7 @@ const ResearcherLoginPage: React.FC = () => {
   }, [isResearcherAuthenticated, navigate]);
 
   // Show loading screen while authentication is in progress
-  if (isResearcherLoading || loadingDb) {
+  if (isResearcherLoading) {
     return <FullLoader loading={true} msg="Checking authentication..." />;
   }
 
