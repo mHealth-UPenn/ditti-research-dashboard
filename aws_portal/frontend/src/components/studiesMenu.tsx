@@ -36,11 +36,6 @@ interface StudiesMenuProps extends ViewProps {
 }
 
 export const StudiesMenu: React.FC<StudiesMenuProps> = ({
-  flashMessage,
-  handleClick,
-  getTaps,
-  getAudioTaps,
-  goBack,
   setView,
 }) => {
   const [studies, setStudies] = useState<Study[]>([]);

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import { TextField } from "../fields/textField";
 import { SubjectsEdit } from "./subjectsEdit";
@@ -66,17 +66,16 @@ export const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
   getAudioTaps,
   studyDetails,
   user,
-  flashMessage,
-  goBack,
   handleClick
 }) => {
   const [canEdit, setCanEdit] = useState(false);
   const [start, setStart] = useState(sub(new Date(new Date().setHours(9, 0, 0, 0)), { hours: 24 }));
   const [stop, setStop] = useState(new Date(new Date().setHours(9, 0, 0, 0)));
-  const [taps, setTaps] = useState(() => getTaps().filter((t) => t.dittiId === user.userPermissionId));
-  const [audioTaps, setAudioTaps] = useState(() => getAudioTaps().filter((t) => t.dittiId === user.userPermissionId));
   const [bouts, setBouts] = useState<Bout[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const taps = useMemo(() => getTaps().filter((t) => t.dittiId === user.userPermissionId), []);
+  const audioTaps = useMemo(() => getAudioTaps().filter((t) => t.dittiId === user.userPermissionId), []);
 
   useEffect(() => {
     setBouts(getBouts(taps));
