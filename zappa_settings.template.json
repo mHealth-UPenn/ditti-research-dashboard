@@ -1,44 +1,44 @@
 {
     "app": {
         "app_function": "run.app",
-        "aws_region": "us-east-1",
+        "aws_region": "{{ AWS_REGION }}",
         "environment_variables": {
             "FLASK_CONFIG": "Production",
-            "AWS_SECRET_NAME": "secret-aws-portal"
+            "AWS_SECRET_NAME": "{{ AWS_PRODUCTION_SECRET_NAME }}"
         },
         "events": [{
             "function": "rds_stopper.stop",
             "expression": "rate(1 hour)"
         }],
         "log_level": "INFO",
-        "project_name": "aws-portal",
+        "project_name": "{{ PROJECT_NAME }}",
         "runtime": "python3.12",
         "tags": {
-          "app": "aws-portal"
+            "{{ TAG_KEY }}": "{{ TAG_VALUE }}"
         },
         "touch": false,
-        "certificate_arn": "arn:aws:acm:us-east-1:732878590761:certificate/cebcbb89-12a0-437d-b3c7-c708bcdca9d4",
-        "domain": "app.ditti.us"
+        "certificate_arn": "{{ CERTIFICATE_ARN }}",
+        "domain": "{{ PRODUCTION_DOMAIN }}"
     },
     "staging": {
         "app_function": "run.app",
-        "aws_region": "us-east-1",
+        "aws_region": "{{ AWS_REGION }}",
         "environment_variables": {
             "FLASK_CONFIG": "Production",
-            "AWS_SECRET_NAME": "secret-aws-portal-staging"
+            "AWS_SECRET_NAME": "{{ AWS_STAGING_SECRET_NAME }}"
         },
         "events": [{
             "function": "rds_stopper.stop",
             "expression": "rate(1 hour)"
         }],
         "log_level": "INFO",
-        "project_name": "aws-portal-staging",
+        "project_name": "{{ PROJECT_NAME }}",
         "runtime": "python3.12",
         "tags": {
-          "app": "aws-portal"
+            "{{ TAG_KEY }}": "{{ TAG_VALUE }}"
         },
         "touch": false,
-        "certificate_arn": "arn:aws:acm:us-east-1:732878590761:certificate/cebcbb89-12a0-437d-b3c7-c708bcdca9d4",
-        "domain": "staging-app.ditti.us"
+        "certificate_arn": "{{ CERTIFICATE_ARN }}",
+        "domain": "{{ STAGING_DOMAIN }}"
     }
 }
