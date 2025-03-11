@@ -149,6 +149,15 @@ class ResearcherAuthController(AuthControllerBase):
                     f"Failed to update account confirmation status: {str(e)}")
                 db.session.rollback()
 
+        # Update the last_login timestamp
+        try:
+            from datetime import datetime, UTC
+            account.last_login = datetime.now(UTC)
+            db.session.commit()
+        except Exception as e:
+            logger.error(f"Failed to update last_login timestamp: {str(e)}")
+            db.session.rollback()
+
         return create_success_response(
             data={
                 "email": account.email,

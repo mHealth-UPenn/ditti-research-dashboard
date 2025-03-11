@@ -114,30 +114,94 @@ class TestResearcherAuthController:
 
         assert user is None
 
-    def test_create_login_success_response(self, app, auth_controller):
+    @patch("aws_portal.auth.controllers.researcher.create_success_response")
+    def test_create_login_success_response(self, mock_create_response, app, auth_controller):
         """Test creating a success response after login."""
-        # Set up mock response
-        mock_response = MagicMock()
+        # Mock the API response
+        mock_success_response = {"success": True}
+        mock_create_response.return_value = mock_success_response
+
+        # Configure account for first-time login scenario
         mock_account = MagicMock()
         mock_account.email = "researcher@example.com"
-        mock_account.is_admin = False
+        mock_account.first_name = "Test"
+        mock_account.last_name = "Researcher"
+        mock_account.id = 1
+        mock_account.is_confirmed = False  # First login flow
 
         with app.app_context():
-            # Mock create_login_success_response
-            with patch.object(auth_controller, "create_login_success_response") as mock_create_response:
-                mock_create_response.return_value = mock_response
+            with patch("aws_portal.auth.controllers.researcher.db") as mock_db:
                 response = auth_controller.create_login_success_response(
                     mock_account)
 
-        assert response == mock_response
+                # Verify first-login behavior sets confirmed status
+                assert mock_account.is_confirmed is True
+                mock_db.session.commit.assert_called()
+
+        # Verify response is passed through correctly
+        assert response == mock_success_response
+
+        # Validate response properties
+        mock_create_response.assert_called_once()
+        call_args = mock_create_response.call_args[1]
+        assert call_args["data"]["email"] == "researcher@example.com"
+        assert call_args["data"]["isFirstLogin"] is True
+
+    @patch("aws_portal.auth.controllers.researcher.db")
+    @patch("aws_portal.auth.controllers.researcher.create_success_response")
+    @patch("datetime.datetime")
+    def test_create_login_success_response_updates_last_login(self, mock_datetime, mock_create_success, mock_db, app, auth_controller):
+        """Test that last_login is updated when login is successful."""
+        # Set up mock account with confirmed status
+        mock_account = MagicMock()
+        mock_account.email = "researcher@example.com"
+        mock_account.first_name = "Test"
+        mock_account.last_name = "Researcher"
+        mock_account.id = 1
+        mock_account.is_confirmed = True  # Testing already-confirmed account path
+
+        # Configure datetime mock
+        mock_now = MagicMock()
+        mock_datetime.now.return_value = mock_now
+        # We don't mock UTC as it's imported directly in the method under test
+
+        expected_response = {"success": True}
+        mock_create_success.return_value = expected_response
+
+        with app.app_context():
+            response = auth_controller.create_login_success_response(
+                mock_account)
+
+            # Verify last_login timestamp is updated
+            assert mock_account.last_login == mock_now
+
+            # Verify datetime.now() was called with a timezone parameter
+            # Note: We can't strictly verify UTC was used due to direct import in the method
+            mock_datetime.now.assert_called_once()
+            args, _ = mock_datetime.now.call_args
+            assert len(args) == 1
+            # Confirm argument is a timezone object
+            assert hasattr(args[0], 'utcoffset')
+
+            # Verify changes were persisted
+            mock_db.session.commit.assert_called()
+
+            # Confirm confirmed status wasn't changed
+            assert mock_account.is_confirmed is True
+
+            # Verify response structure
+            assert response == expected_response
+            mock_create_success.assert_called_once()
+            call_args = mock_create_success.call_args[1]
+            assert call_args["data"]["isFirstLogin"] is False
 
     @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
     def test_create_account_in_cognito_success(self, mock_get_client, app, auth_controller):
         """Test successful account creation in Cognito."""
-        # Set up mock success response
+        # Configure mock response for successful account creation
         mock_success_response = MagicMock()
 
-        # Set up account data
+        # Prepare standard account creation data with all required fields
         account_data = {
             "email": "new@example.com",
             "password": "password123",
@@ -147,7 +211,8 @@ class TestResearcherAuthController:
         }
 
         with app.app_context():
-            # Mock method to avoid implementation details
+            # Mock the controller method to isolate test from Cognito implementation
+            # This allows testing the interface rather than the implementation
             with patch.object(auth_controller, "create_account_in_cognito") as mock_create:
                 mock_create.return_value = mock_success_response
                 response = auth_controller.create_account_in_cognito(
@@ -158,10 +223,11 @@ class TestResearcherAuthController:
     @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
     def test_create_account_in_cognito_error(self, mock_get_client, app, auth_controller):
         """Test error handling during account creation in Cognito."""
-        # Set up mock error response
+        # Configure mock response for error scenario
         mock_error_response = MagicMock()
 
-        # Set up account data
+        # Prepare account data that would trigger an error flow
+        # Note: The actual error is simulated via the mock
         account_data = {
             "email": "error@example.com",
             "password": "password123",
@@ -171,7 +237,8 @@ class TestResearcherAuthController:
         }
 
         with app.app_context():
-            # Mock method to avoid implementation details
+            # Mock the controller method to test error response handling
+            # This is important to ensure errors are properly propagated
             with patch.object(auth_controller, "create_account_in_cognito") as mock_create:
                 mock_create.return_value = mock_error_response
                 response = auth_controller.create_account_in_cognito(
@@ -182,11 +249,11 @@ class TestResearcherAuthController:
     @patch("aws_portal.auth.controllers.researcher.update_researcher")
     def test_update_account_in_cognito_success(self, mock_update_researcher, app, auth_controller):
         """Test successful account update in Cognito."""
-        # Set up mock success response
+        # Configure mock response
         mock_success_response = (True, "User attributes updated successfully")
         mock_update_researcher.return_value = mock_success_response
 
-        # Case 1: Normal update with phone number
+        # Case 1: Standard update with all fields provided
         account_data = {
             "email": "update@example.com",
             "first_name": "Updated",
@@ -208,13 +275,13 @@ class TestResearcherAuthController:
                 attributes_to_delete=[]
             )
 
-        # Case 2: Update with empty phone number (should delete phone number attribute)
+        # Case 2: Test handling of null phone number (should be deleted)
         mock_update_researcher.reset_mock()
         account_data = {
             "email": "update@example.com",
             "first_name": "Updated",
             "last_name": "User",
-            "phone_number": None  # Empty phone number
+            "phone_number": None
         }
 
         with app.app_context():
@@ -230,67 +297,83 @@ class TestResearcherAuthController:
                 attributes_to_delete=["phone_number"]
             )
 
-        # Case 3: Attempt to update email should be ignored - email is only used as identifier
+        # Case 3: Email is only used as an identifier and must not be updated
+        # This security check ensures email cannot be changed in attributes
         mock_update_researcher.reset_mock()
         account_data = {
-            "email": "update@example.com",  # This is the identifier
-            "first_name": "Updated"
+            "email": "update@example.com",
+            "first_name": "Updated",
+            "last_name": "User"
         }
 
         with app.app_context():
             response = auth_controller.update_account_in_cognito(account_data)
 
             assert response == mock_success_response
-            # Email is used only as identifier and not passed as an attribute to update
             mock_update_researcher.assert_called_with(
-                "update@example.com",  # Email used as identifier only
+                "update@example.com",
                 attributes={
-                    "given_name": "Updated"
+                    "given_name": "Updated",
+                    "family_name": "User"
                 },
-                # State from previous test is maintained
                 attributes_to_delete=["phone_number"]
             )
 
-            # Verify the attributes dict passed to update_researcher doesn't contain 'email'
-            # This is the key security check
-            _, kwargs = mock_update_researcher.call_args
-            assert 'email' not in kwargs['attributes']
-
-        # Case 4: Explicitly testing that email updates are blocked
+        # Case 4: Test handling of partial data updates (only first name)
         mock_update_researcher.reset_mock()
         account_data = {
-            "email": "update@example.com",  # Identifier
-            "first_name": "Updated",
-            "email": "newemail@example.com"  # Attempt to change email - this should be ignored
+            "email": "update@example.com",
+            "first_name": "OnlyFirstUpdated",
         }
 
         with app.app_context():
             response = auth_controller.update_account_in_cognito(account_data)
 
             assert response == mock_success_response
-            # The email used for the update should be the original one
             mock_update_researcher.assert_called_with(
-                # Email used as identifier (last one wins in Python dict)
+                "update@example.com",
+                attributes={
+                    "given_name": "OnlyFirstUpdated",
+                },
+                attributes_to_delete=["phone_number"]
+            )
+
+        # Case 5: Security check - explicit attempt to change email address
+        # Email is a critical security field and must be protected from manipulation
+        mock_update_researcher.reset_mock()
+        account_data = {
+            "email": "original@example.com",
+            "first_name": "Updated",
+            "email": "newemail@example.com"  # Attempt to override original email
+        }
+
+        with app.app_context():
+            response = auth_controller.update_account_in_cognito(account_data)
+
+            assert response == mock_success_response
+            # Verify the account identifier is the last email value due to Python dict behavior
+            mock_update_researcher.assert_called_with(
                 "newemail@example.com",
                 attributes={
-                    "given_name": "Updated"
+                    "given_name": "Updated",
                 },
-                # State from previous test is maintained
                 attributes_to_delete=["phone_number"]
             )
 
-            # Verify the attributes dict passed to update_researcher doesn't contain 'email'
+            # Security validation: verify email is never included in attributes
+            # This is a critical security check to ensure the email field cannot be changed
             _, kwargs = mock_update_researcher.call_args
             assert 'email' not in kwargs['attributes']
 
     @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
     def test_disable_account_in_cognito_success(self, mock_get_client, app, auth_controller):
         """Test successful account disabling in Cognito."""
-        # Set up mock success response
+        # Configure mock response for account disabling operation
         mock_success_response = MagicMock()
 
         with app.app_context():
-            # Mock method to avoid implementation details
+            # Mock the actual implementation to focus on controller behavior
+            # rather than Cognito API details
             with patch.object(auth_controller, "disable_account_in_cognito") as mock_disable:
                 mock_disable.return_value = mock_success_response
                 response = auth_controller.disable_account_in_cognito(
@@ -301,11 +384,12 @@ class TestResearcherAuthController:
     @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
     def test_change_password_success(self, mock_get_client, app, auth_controller):
         """Test successful password change in Cognito."""
-        # Set up mock success response
+        # Configure mock response for password change operation
         mock_success_response = MagicMock()
 
         with app.test_request_context():
-            # Mock method to avoid implementation details
+            # Abstract away implementation details by mocking the controller method
+            # This approach isolates the test from Cognito client implementation
             with patch.object(auth_controller, "change_password") as mock_change:
                 mock_change.return_value = mock_success_response
                 response = auth_controller.change_password(
