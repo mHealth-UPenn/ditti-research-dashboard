@@ -16,7 +16,7 @@
  */
 
 import * as React from "react";
-import TableCell from "./tableCell";
+import { TableCell } from "./tableCell";
 
 /**
  * data: the row's cells
@@ -30,7 +30,7 @@ interface TableRowProps {
   }[];
 }
 
-const TableRow: React.FC<TableRowProps> = ({ cells }) => {
+export const TableRow: React.FC<TableRowProps> = ({ cells }) => {
   return (
     <tr className="h-[3rem]">
       {cells.map((cell, i) =>
@@ -45,5 +45,3 @@ const TableRow: React.FC<TableRowProps> = ({ cells }) => {
     </tr>
   );
 };
-
-export default TableRow;

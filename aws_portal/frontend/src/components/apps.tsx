@@ -19,15 +19,15 @@ import { useEffect, useState } from "react";
 import { ReactComponent as Right } from "../icons/right.svg";
 import { SmallLoader } from "./loader";
 import { getAccess } from "../utils";
-import Card from "./cards/card";
-import CardContentRow from "./cards/cardContentRow";
-import ViewContainer from "./containers/viewContainer";
+import { Card } from "./cards/card";
+import { CardContentRow } from "./cards/cardContentRow";
+import { ViewContainer } from "./containers/viewContainer";
 import { Link } from "react-router-dom";
 
 /**
  * Home component: renders available apps for the user
  */
-const Apps = () => {
+export const Apps = () => {
   const [apps, setApps] = useState([
     {
       breadcrumbs: ["Ditti App"],
@@ -98,5 +98,3 @@ const Apps = () => {
     </ViewContainer>
   );
 };
-
-export default Apps;

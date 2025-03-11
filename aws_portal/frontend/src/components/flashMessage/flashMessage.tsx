@@ -44,7 +44,7 @@ interface FlashMessageProps {
 }
 
 
-const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
+export const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
   variant,
   containerRef,
   onClose,
@@ -76,6 +76,3 @@ const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
     </div>
   );
 }
-
-
-export default FlashMessage;

@@ -18,9 +18,9 @@
 import React from "react";
 import { Study } from "../../interfaces";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
-import CardContentRow from "../cards/cardContentRow";
-import ActiveIcon from "../icons/activeIcon";
-import LinkComponent from "../links/linkComponent";
+import { CardContentRow } from "../cards/cardContentRow";
+import { ActiveIcon } from "../icons/activeIcon";
+import { LinkComponent } from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
@@ -38,7 +38,7 @@ interface StudySubjectsProps {
 }
 
 
-const StudySubjects: React.FC<StudySubjectsProps> = ({
+export const StudySubjects: React.FC<StudySubjectsProps> = ({
   study,
   canViewTaps,
 }) => {
@@ -174,5 +174,3 @@ const StudySubjects: React.FC<StudySubjectsProps> = ({
     </>
   );
 };
-
-export default StudySubjects;

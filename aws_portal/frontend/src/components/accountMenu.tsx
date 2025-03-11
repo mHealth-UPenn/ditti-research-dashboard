@@ -18,10 +18,10 @@
 import { RefObject } from "react";
 import { useState } from "react";
 import { AccountDetails, ResponseBody, ViewProps } from "../interfaces";
-import TextField from "./fields/textField";
+import { TextField } from "./fields/textField";
 import { makeRequest } from "../utils";
-import AsyncButton from "./buttons/asyncButton";
-import Button from "./buttons/button";
+import { AsyncButton } from "./buttons/asyncButton";
+import { Button } from "./buttons/button";
 import { useAuth } from "../hooks/useAuth";
 import { useFlashMessageContext } from "../contexts/flashMessagesContext";
 
@@ -35,7 +35,7 @@ interface AccountMenuProps {
   hideMenu: () => void;
 }
 
-const AccountMenu = ({
+export const AccountMenu = ({
   prefill,
   accountMenuRef,
   hideMenu,
@@ -253,5 +253,3 @@ const AccountMenu = ({
     </div>
   );
 };
-
-export default AccountMenu;

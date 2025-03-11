@@ -19,7 +19,7 @@ import { createContext, useState, useEffect, PropsWithChildren, useMemo, useCont
 import { makeRequest } from "../utils";
 import { IStudySubject, CoordinatorStudySubjectContextType, UserDetails, IStudySubjectDetails } from "../interfaces";
 import { APP_ENV } from "../environment";
-import DataFactory from "../dataFactory";
+import { DataFactory } from "../dataFactory";
 
 export const CoordinatorStudySubjectContext = createContext<CoordinatorStudySubjectContextType | undefined>(undefined);
 
@@ -29,7 +29,7 @@ interface ICoordinatorStudySubjectProviderProps {
 
 
 // CoordinatorStudySubjectProvider component that wraps children with the study subject context.
-export default function CoordinatorStudySubjectProvider({
+export function CoordinatorStudySubjectProvider({
   app,
   children
 }: PropsWithChildren<ICoordinatorStudySubjectProviderProps>) {

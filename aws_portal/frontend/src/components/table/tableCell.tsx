@@ -24,7 +24,7 @@ interface TableCellProps {
 }
 
 
-const TableCell = ({
+export const TableCell = ({
   width,
   paddingX,
   paddingY,
@@ -54,6 +54,3 @@ const TableCell = ({
     </td>
   );
 };
-
-
-export default TableCell;

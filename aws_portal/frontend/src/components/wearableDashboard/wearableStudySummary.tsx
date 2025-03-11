@@ -19,14 +19,14 @@ import { useState, useEffect } from "react";
 import { Study } from "../../interfaces";
 import { downloadExcelFromUrl, getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import ViewContainer from "../containers/viewContainer";
-import Card from "../cards/card";
-import Title from "../text/title";
-import Subtitle from "../text/subtitle";
-import Button from "../buttons/button";
-import CardContentRow from "../cards/cardContentRow";
+import { ViewContainer } from "../containers/viewContainer";
+import { Card } from "../cards/card";
+import { Title } from "../text/title";
+import { Subtitle } from "../text/subtitle";
+import { Button } from "../buttons/button";
+import { CardContentRow } from "../cards/cardContentRow";
 import { APP_ENV } from "../../environment";
-import WearableStudySubjects from "./wearableStudySubjects";
+import { WearableStudySubjects } from "./wearableStudySubjects";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link, useSearchParams } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
@@ -47,7 +47,7 @@ interface StudyContact {
 }
 
 
-export default function WearableStudySummary() {
+export function WearableStudySummary() {
   const [searchParams] = useSearchParams();
   const sid = searchParams.get("sid");
   const studyId = sid ? parseInt(sid) : 0;

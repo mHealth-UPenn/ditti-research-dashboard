@@ -16,23 +16,23 @@
  */
 
 import { useState, useEffect, createRef, FocusEvent, useRef } from "react";
-import TextField from "../fields/textField";
+import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { formatDateForInput, getEnrollmentInfoForStudy, makeRequest } from "../../utils";
-import CheckField from "../fields/checkField";
+import { CheckField } from "../fields/checkField";
 import { SmallLoader } from "../loader";
-import Select from "../fields/select";
-import FormView from "../containers/forms/formView";
-import Form from "../containers/forms/form";
-import FormSummary from "../containers/forms/formSummary";
-import FormTitle from "../text/formTitle";
-import FormRow from "../containers/forms/formRow";
-import FormField from "../containers/forms/formField";
-import FormSummaryTitle from "../text/formSummaryTitle";
-import FormSummaryText from "../containers/forms/formSummaryText";
-import FormSummaryButton from "../containers/forms/formSummaryButton";
-import FormSummarySubtext from "../containers/forms/formSummarySubtext";
-import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { Select } from "../fields/select";
+import { FormView } from "../containers/forms/formView";
+import { Form } from "../containers/forms/form";
+import { FormSummary } from "../containers/forms/formSummary";
+import { FormTitle } from "../text/formTitle";
+import { FormRow } from "../containers/forms/formRow";
+import { FormField } from "../containers/forms/formField";
+import { FormSummaryTitle } from "../text/formSummaryTitle";
+import { FormSummaryText } from "../containers/forms/formSummaryText";
+import { FormSummaryButton } from "../containers/forms/formSummaryButton";
+import { FormSummarySubtext } from "../containers/forms/formSummarySubtext";
+import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { APP_ENV } from "../../environment";
 import sanitize from "sanitize-html";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
@@ -66,7 +66,7 @@ const uppercaseRegex = /[A-Z]/;
 const lowercaseRegex = /[a-z]/;
 
 
-const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
+export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const [searchParams] = useSearchParams();
   const dittiId = searchParams.get("dittiId") || "";
 
@@ -571,5 +571,3 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     </FormView>
   );
 };
-
-export default SubjectsEditContent;

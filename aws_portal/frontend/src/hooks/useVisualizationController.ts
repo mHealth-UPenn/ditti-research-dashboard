@@ -21,7 +21,7 @@ import { useParentSize } from '@visx/responsive'
 
 
 // TODO: extend to customize default values when needed in future vizualizations
-const useVisualizationController = (
+export const useVisualizationController = (
   defaultMargin: { top: number, right: number, bottom: number, left: number }
 ) => {
   const now = new Date();
@@ -151,6 +151,3 @@ const useVisualizationController = (
     zoomOut,
   };
 };
-
-
-export default useVisualizationController;

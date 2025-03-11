@@ -29,7 +29,7 @@ interface TableHeaderProps {
   onSort: (name: string, ascending: 0 | 1) => void;
 }
 
-const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
+export const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
   return (
     <tr className="h-[3rem]">
       {headers.map((h, i) => (
@@ -55,5 +55,3 @@ const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
     </tr>
   );
 };
-
-export default TableHeader;

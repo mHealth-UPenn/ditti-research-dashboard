@@ -18,16 +18,16 @@
 import { useState, useEffect } from "react";
 import { ResponseBody, Role } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
-import Table, { Column, TableData } from "../table/table";
-import Navbar from "./navbar";
+import { Table, Column, TableData } from "../table/table";
+import { Navbar } from "./navbar";
 import { SmallLoader } from "../loader";
-import Button from "../buttons/button";
-import ListView from "../containers/lists/listView";
-import ListContent from "../containers/lists/listContent";
+import { Button } from "../buttons/button";
+import { ListView } from "../containers/lists/listView";
+import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
-const Roles = () => {
+export const Roles = () => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canArchive, setCanArchive] = useState<boolean>(false);
@@ -249,5 +249,3 @@ const Roles = () => {
     </ListView>
   );
 };
-
-export default Roles;

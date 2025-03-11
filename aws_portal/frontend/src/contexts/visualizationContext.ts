@@ -46,6 +46,3 @@ export const useVisualizationContext = () => {
   }
   return context;
 };
-
-
-export default VisualizationContext;

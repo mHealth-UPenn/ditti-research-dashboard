@@ -15,18 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import DittiDataContext from "../../contexts/dittiDataContext";
-import useDittiData from "../../hooks/useDittiData";
-import Card from "../cards/card";
+import { DittiDataContext } from "../../contexts/dittiDataContext";
+import { useDittiData } from "../../hooks/useDittiData";
+import { Card } from "../cards/card";
 import { SmallLoader } from "../loader";
-import CoordinatorStudySubjectProvider from "../../contexts/coordinatorStudySubjectContext";
+import { CoordinatorStudySubjectProvider } from "../../contexts/coordinatorStudySubjectContext";
 import { Outlet } from "react-router-dom";
-import StudiesProvider from "../../contexts/studiesContext";
-import ViewContainer from "../containers/viewContainer";
+import { StudiesProvider } from "../../contexts/studiesContext";
+import { ViewContainer } from "../containers/viewContainer";
 
 
 // React Router container for the Ditti App Dashboard for wrapping it in context providers
-function DittiAppDashboard() {
+export function DittiAppDashboard() {
   const {
     dataLoading,
     taps,
@@ -61,6 +61,3 @@ function DittiAppDashboard() {
     </StudiesProvider>
   );
 }
-
-
-export default DittiAppDashboard;

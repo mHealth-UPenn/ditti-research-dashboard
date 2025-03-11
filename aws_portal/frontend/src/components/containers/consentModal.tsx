@@ -17,10 +17,10 @@
 
 import { FC, memo } from "react";
 import sanitize, { AllowedAttribute } from "sanitize-html";
-import Button from "../buttons/button";
+import { Button } from "../buttons/button";
 import { ConsentModalProps } from "../../interfaces";
 
-const ConsentModal: FC<ConsentModalProps> = memo(
+export const ConsentModal: FC<ConsentModalProps> = memo(
   ({ isOpen, onAccept, onDeny, onClose, contentHtml }) => {
     if (!isOpen) return null;
 
@@ -96,5 +96,3 @@ const ConsentModal: FC<ConsentModalProps> = memo(
     );
   }
 );
-
-export default ConsentModal;

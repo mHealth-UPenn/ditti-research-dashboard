@@ -20,13 +20,13 @@ import { createContext, useState, useEffect, PropsWithChildren, useMemo, useCont
 import { makeRequest } from "../utils";
 import { StudySubjectContextType, IParticipant, IParticipantApi, IParticipantStudy } from "../interfaces";
 import { APP_ENV } from "../environment";
-import DataFactory from "../dataFactory";
+import { DataFactory } from "../dataFactory";
 
 export const StudySubjectContext = createContext<StudySubjectContextType | undefined>(undefined);
 
 
 // StudySubjectProvider component that wraps children with the study subject context.
-export default function StudySubjectProvider({
+export function StudySubjectProvider({
   children
 }: PropsWithChildren<unknown>) {
   const [studies, setStudies] = useState<IParticipantStudy[]>([]);

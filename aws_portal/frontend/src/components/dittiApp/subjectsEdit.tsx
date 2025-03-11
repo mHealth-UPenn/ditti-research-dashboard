@@ -15,13 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import SubjectsEditContent from "../subjects/subjectsEditContent";
+import { SubjectsEditContent } from "../subjects/subjectsEditContent";
 
 
 // SubjectsEdit wrapper for initializing the SubjectsEditContent component for the Ditti App Dashboard
-const SubjectsEdit = () => {
+export const SubjectsEdit = () => {
   return <SubjectsEditContent app={"ditti"} />
 };
-
-
-export default SubjectsEdit;

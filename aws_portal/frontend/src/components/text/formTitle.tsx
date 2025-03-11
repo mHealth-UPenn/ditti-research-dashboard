@@ -22,7 +22,7 @@ interface FormTitleProps {
 }
 
 
-const FormTitle = ({
+export const FormTitle = ({
   children,
   className
 }: PropsWithChildren<FormTitleProps>) => {
@@ -30,6 +30,3 @@ const FormTitle = ({
     <p className={`text-xl pb-2 mb-8 w-full font-bold border-b border-light ${className}`}>{children}</p>
   );
 };
-
-
-export default FormTitle;

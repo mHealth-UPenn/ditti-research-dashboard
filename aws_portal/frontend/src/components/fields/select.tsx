@@ -35,7 +35,7 @@ interface SelectProps {
   getDefault?: (id: number) => number;
 }
 
-const Select: React.FC<SelectProps> = ({
+export const Select: React.FC<SelectProps> = ({
   id,
   opts,
   placeholder,
@@ -87,5 +87,3 @@ const Select: React.FC<SelectProps> = ({
     </div>
   );
 };
-
-export default Select;

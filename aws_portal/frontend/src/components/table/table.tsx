@@ -16,12 +16,12 @@
  */
 
 import React, { useState } from "react";
-import TableControl from "./tableControl";
-import TableHeader from "./tableHeader";
-import TableRow from "./tableRow";
+import { TableControl } from "./tableControl";
+import { TableHeader } from "./tableHeader";
+import { TableRow } from "./tableRow";
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import Button from "../buttons/button";
+import { Button } from "../buttons/button";
 
 /**
  * name: the name to display in the column header
@@ -102,7 +102,7 @@ interface TableProps {
   sortDefault: string;
 }
 
-const Table: React.FC<TableProps> = ({
+export const Table: React.FC<TableProps> = ({
   columns,
   control,
   controlWidth,
@@ -239,5 +239,3 @@ const Table: React.FC<TableProps> = ({
     </>
   );
 };
-
-export default Table;

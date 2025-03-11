@@ -19,16 +19,16 @@ import { useState, useEffect } from "react";
 import { Study } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import StudySubjects from "./studySubjects";
+import { StudySubjects } from "./studySubjects";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
-import ViewContainer from "../containers/viewContainer";
-import Card from "../cards/card";
-import Title from "../text/title";
-import Subtitle from "../text/subtitle";
-import Button from "../buttons/button";
-import CardContentRow from "../cards/cardContentRow";
+import { ViewContainer } from "../containers/viewContainer";
+import { Card } from "../cards/card";
+import { Title } from "../text/title";
+import { Subtitle } from "../text/subtitle";
+import { Button } from "../buttons/button";
+import { CardContentRow } from "../cards/cardContentRow";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
@@ -44,7 +44,7 @@ interface StudyContact {
   role: string;
 }
 
-const StudySummary = () => {
+export const StudySummary = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
@@ -219,5 +219,3 @@ const StudySummary = () => {
     </ViewContainer>
   );
 };
-
-export default StudySummary;
