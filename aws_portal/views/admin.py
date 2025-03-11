@@ -269,8 +269,14 @@ def account_edit(account):
         account_id = request.json["id"]
         edited_account = Account.query.get(account_id)
 
-        # Track if email is being changed
-        old_email = edited_account.email
+        # Prevent changing email as it's the primary account identifier
+        if "email" in data:
+            # Log any attempt to change email
+            if data["email"] != edited_account.email:
+                logger.warning(
+                    f"Attempt to change email from {edited_account.email} to {data['email']} was blocked")
+            # Remove email from data to prevent it from being updated
+            del data["email"]
 
         # Update database account
         populate_model(edited_account, data)

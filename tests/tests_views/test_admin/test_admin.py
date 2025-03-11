@@ -125,6 +125,26 @@ def test_account_edit(post_admin):
     foo = Account.query.get(1)
     assert foo.phone_number is None
 
+    # Case 5: Verify email changes are blocked
+    data = {
+        "app": 1,
+        "id": 1,
+        "edit": {
+            "email": "newemail@example.com",
+            "first_name": "UpdatedName"
+        }
+    }
+
+    res = post_admin("/admin/account/edit", data=data)
+    assert res.status_code == 200
+    data = json.loads(res.data)
+    assert data["msg"] == "Account Edited Successfully"
+
+    # Verify first name was updated but email was not
+    foo = Account.query.get(1)
+    assert foo.first_name == "UpdatedName"
+    assert foo.email != "newemail@example.com"  # Email should not change
+
 
 def test_account_archive(post_admin):
     data = {

@@ -134,6 +134,12 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
             # Prepare user attributes for update
             user_attributes = []
             for key, value in attributes.items():
+                # Never allow updating the email attribute
+                if key == "email":
+                    logger.warning(
+                        f"Attempt to update email attribute for user {email} was blocked")
+                    continue
+
                 # Only include attributes with non-empty values
                 if value is not None and value.strip() != "":
                     user_attributes.append({
@@ -154,6 +160,12 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
         # Process attributes to delete
         if attributes_to_delete:
             for attr_name in attributes_to_delete:
+                # Never allow deleting the email attribute (critical security measure)
+                if attr_name == "email":
+                    logger.warning(
+                        f"Attempt to delete email attribute for user {email} was blocked")
+                    continue
+
                 try:
                     # Delete specific attribute
                     client.admin_delete_user_attributes(

@@ -148,6 +148,47 @@ def test_update_researcher(mock_cognito_client, app_context):
         UserAttributeNames=["phone_number"]
     )
 
+    # Reset mocks
+    mock_cognito_client.reset_mock()
+
+    # Case 3: Email attribute update should be blocked
+    success, message = update_researcher(
+        email="researcher@example.com",
+        attributes={
+            "email": "newemail@example.com",
+            "first_name": "Updated"
+        }
+    )
+
+    # Verify that update succeeds but with email attribute blocked
+    assert success is True
+    assert message == "User attributes updated successfully"
+
+    # Check that email was not included in the update
+    call_args = mock_cognito_client.admin_update_user_attributes.call_args[1]
+    user_attributes = call_args["UserAttributes"]
+    attribute_names = [attr["Name"] for attr in user_attributes]
+    assert "email" not in attribute_names
+    assert "first_name" in attribute_names
+
+    # Reset mocks
+    mock_cognito_client.reset_mock()
+
+    # Case 4: Email attribute deletion should be blocked
+    success, message = update_researcher(
+        email="researcher@example.com",
+        attributes={},
+        attributes_to_delete=["email", "phone_number"]
+    )
+
+    # Verify that update succeeds but with email deletion blocked
+    assert success is True
+    assert message == "User attributes updated successfully"
+
+    # Check that admin_delete_user_attributes was not called with email
+    call_args = mock_cognito_client.admin_delete_user_attributes.call_args[1]
+    assert call_args["UserAttributeNames"] == ["phone_number"]
+
 
 def test_update_researcher_with_error(mock_cognito_client, app_context):
     """Test handling errors when updating researcher."""

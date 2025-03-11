@@ -732,8 +732,9 @@ const AccountsEdit = () => {
               placeholder=""
               value={email}
               label="Email"
-              onKeyup={(email) => dispatch({ type: "EDIT_FIELD", email })}
-              feedback="" />
+              onKeyup={accountId ? undefined : (email) => dispatch({ type: "EDIT_FIELD", email })}
+              feedback=""
+              disabled={accountId ? true : false} />
           </FormField>
           <FormField>
             <TextField

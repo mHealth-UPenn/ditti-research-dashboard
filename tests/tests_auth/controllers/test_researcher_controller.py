@@ -230,6 +230,59 @@ class TestResearcherAuthController:
                 attributes_to_delete=["phone_number"]
             )
 
+        # Case 3: Attempt to update email should be ignored - email is only used as identifier
+        mock_update_researcher.reset_mock()
+        account_data = {
+            "email": "update@example.com",  # This is the identifier
+            "first_name": "Updated"
+        }
+
+        with app.app_context():
+            response = auth_controller.update_account_in_cognito(account_data)
+
+            assert response == mock_success_response
+            # Email is used only as identifier and not passed as an attribute to update
+            mock_update_researcher.assert_called_with(
+                "update@example.com",  # Email used as identifier only
+                attributes={
+                    "given_name": "Updated"
+                },
+                # State from previous test is maintained
+                attributes_to_delete=["phone_number"]
+            )
+
+            # Verify the attributes dict passed to update_researcher doesn't contain 'email'
+            # This is the key security check
+            _, kwargs = mock_update_researcher.call_args
+            assert 'email' not in kwargs['attributes']
+
+        # Case 4: Explicitly testing that email updates are blocked
+        mock_update_researcher.reset_mock()
+        account_data = {
+            "email": "update@example.com",  # Identifier
+            "first_name": "Updated",
+            "email": "newemail@example.com"  # Attempt to change email - this should be ignored
+        }
+
+        with app.app_context():
+            response = auth_controller.update_account_in_cognito(account_data)
+
+            assert response == mock_success_response
+            # The email used for the update should be the original one
+            mock_update_researcher.assert_called_with(
+                # Email used as identifier (last one wins in Python dict)
+                "newemail@example.com",
+                attributes={
+                    "given_name": "Updated"
+                },
+                # State from previous test is maintained
+                attributes_to_delete=["phone_number"]
+            )
+
+            # Verify the attributes dict passed to update_researcher doesn't contain 'email'
+            _, kwargs = mock_update_researcher.call_args
+            assert 'email' not in kwargs['attributes']
+
     @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
     def test_disable_account_in_cognito_success(self, mock_get_client, app, auth_controller):
         """Test successful account disabling in Cognito."""
