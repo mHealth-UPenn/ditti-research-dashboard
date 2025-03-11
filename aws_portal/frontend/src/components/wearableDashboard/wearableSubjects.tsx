@@ -15,13 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import SubjectsContent from "../subjects/subjectsContent";
+import { SubjectsContent } from "../subjects/subjectsContent";
 
 
 // A wrapper to initialize the SubjectsContent component with the wearable app
-const WearableSubjects = () => {
+export const WearableSubjects = () => {
   return <SubjectsContent app={3} />;
 };
-
-
-export default WearableSubjects;

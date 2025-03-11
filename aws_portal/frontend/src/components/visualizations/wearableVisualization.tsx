@@ -15,8 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import VisualizationController from "./visualizationController";
-import WearableVisualizationContent from "./wearableVisualizationContent";
+import { VisualizationController } from "./visualizationController";
+import { WearableVisualizationContent } from "./wearableVisualizationContent";
 
 /**
  * Props to pass to the wearable visualization.
@@ -33,7 +33,7 @@ interface IWearableVisualizationProps {
 }
 
 
-const WearableVisualization = ({
+export const WearableVisualization = ({
   showDayControls = false,
   showTapsData = false,
   dittiId,
@@ -55,6 +55,3 @@ const WearableVisualization = ({
     </VisualizationController>
   );
 };
-
-
-export default WearableVisualization;

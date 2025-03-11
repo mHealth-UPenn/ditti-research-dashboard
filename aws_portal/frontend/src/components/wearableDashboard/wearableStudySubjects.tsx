@@ -18,9 +18,9 @@
 import React from "react";
 import { IStudySubjectDetails, Study } from "../../interfaces";
 import { differenceInDays } from "date-fns";
-import CardContentRow from "../cards/cardContentRow";
-import ActiveIcon from "../icons/activeIcon";
-import LinkComponent from "../links/linkComponent";
+import { CardContentRow } from "../cards/cardContentRow";
+import { ActiveIcon } from "../icons/activeIcon";
+import { LinkComponent } from "../links/linkComponent";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
 import { SmallLoader } from "../loader";
@@ -39,7 +39,7 @@ interface WearableStudySubjectsProps {
 }
 
 
-export default function WearableStudySubjects({
+export function WearableStudySubjects({
   studyDetails,
   canViewWearableData,
 }: WearableStudySubjectsProps) {

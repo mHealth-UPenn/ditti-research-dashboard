@@ -16,18 +16,18 @@
  */
 
 import React, { useState, useEffect } from "react";
-import Navbar from "./navbar";
-import Table, { Column, TableData } from "../table/table";
+import { Navbar } from "./navbar";
+import { Table, Column, TableData } from "../table/table";
 import { AccessGroup, ResponseBody } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import Button from "../buttons/button";
-import ListView from "../containers/lists/listView";
-import ListContent from "../containers/lists/listContent";
+import { Button } from "../buttons/button";
+import { ListView } from "../containers/lists/listView";
+import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
-const AccessGroups = () => {
+export const AccessGroups = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -247,5 +247,3 @@ const AccessGroups = () => {
     </ListView>
   );
 };
-
-export default AccessGroups;

@@ -18,13 +18,13 @@
 // TODO: Extend implementation to Ditti App Dashboard
 import { createContext, useState, PropsWithChildren, useContext, createRef } from "react";
 import { FlashMessageContextType, IFlashMessage } from "../interfaces";
-import FlashMessage, { FlashMessageVariant } from "../components/flashMessage/flashMessage";
+import { FlashMessage, FlashMessageVariant } from "../components/flashMessage/flashMessage";
 
 export const FlashMessageContext = createContext<FlashMessageContextType | undefined>(undefined);
 
 
 // FlashMessageContextProvider component that wraps children with studies context.
-export default function FlashMessageContextProvider({
+export function FlashMessageContextProvider({
   children
 }: PropsWithChildren<unknown>) {
   const [flashMessages, setFlashMessages] = useState<IFlashMessage[]>([]);

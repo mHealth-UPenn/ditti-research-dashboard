@@ -21,7 +21,7 @@ import { AxisBottom, AxisLeft } from "@visx/axis";
 import { scaleLinear } from '@visx/scale';
 import { useVisualizationContext } from "../../contexts/visualizationContext";
 import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
-import colors from "../../colors";
+import { colors } from "../../colors";
 import { IVisualizationProps } from "../../interfaces";
 
 
@@ -71,7 +71,7 @@ interface TimelineProps extends IVisualizationProps {
 }
 
 
-const Timeline: React.FC<TimelineProps> = ({
+export const Timeline: React.FC<TimelineProps> = ({
   groups,
   title,
   hideAxis,
@@ -234,5 +234,3 @@ const Timeline: React.FC<TimelineProps> = ({
     </div>
   );
 };
-
-export default Timeline;

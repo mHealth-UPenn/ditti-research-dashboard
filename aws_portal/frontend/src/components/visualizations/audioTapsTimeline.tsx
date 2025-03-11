@@ -16,14 +16,14 @@
  */
 
 import { AudioTapDetails, IVisualizationProps } from "../../interfaces";
-import Timeline from "./timeline";
+import { Timeline } from "./timeline";
 
 interface AudioTapsTimelineProps extends IVisualizationProps {
   audioTaps: AudioTapDetails[];
 }
 
 
-const AudioTapsTimeline = ({ audioTaps, ...props }: AudioTapsTimelineProps) => {
+export const AudioTapsTimeline = ({ audioTaps, ...props }: AudioTapsTimelineProps) => {
   const groups = audioTaps.map(at => ({
     start: at.time.getTime(),
     label: at.action,
@@ -31,6 +31,3 @@ const AudioTapsTimeline = ({ audioTaps, ...props }: AudioTapsTimelineProps) => {
 
   return <Timeline groups={groups} title="Audio" hideAxis={true} {...props} />
 };
-
-
-export default AudioTapsTimeline;

@@ -16,8 +16,8 @@
  */
 
 import React, { useState, useEffect } from "react";
-import TextField from "../fields/textField";
-import Select from "../fields/select";
+import { TextField } from "../fields/textField";
+import { Select } from "../fields/select";
 import {
   ActionResource,
   Permission,
@@ -26,18 +26,18 @@ import {
 } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import FormView from "../containers/forms/formView";
-import Form from "../containers/forms/form";
-import FormSummary from "../containers/forms/formSummary";
-import FormTitle from "../text/formTitle";
-import FormRow from "../containers/forms/formRow";
-import FormField from "../containers/forms/formField";
-import Button from "../buttons/button";
-import FormSummaryTitle from "../text/formSummaryTitle";
-import FormSummaryText from "../containers/forms/formSummaryText";
-import FormSummaryButton from "../containers/forms/formSummaryButton";
+import { FormView } from "../containers/forms/formView";
+import { Form } from "../containers/forms/form";
+import { FormSummary } from "../containers/forms/formSummary";
+import { FormTitle } from "../text/formTitle";
+import { FormRow } from "../containers/forms/formRow";
+import { FormField } from "../containers/forms/formField";
+import { Button } from "../buttons/button";
+import { FormSummaryTitle } from "../text/formSummaryTitle";
+import { FormSummaryText } from "../containers/forms/formSummaryText";
+import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import CloseIcon from "@mui/icons-material/Close";
-import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
@@ -49,7 +49,7 @@ interface RolesPrefill {
   permissions: Permission[];
 }
 
-const RolesEdit = () => {
+export const RolesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
   const roleId = id ? parseInt(id) : 0
@@ -364,5 +364,3 @@ const RolesEdit = () => {
     </FormView>
   );
 };
-
-export default RolesEdit;

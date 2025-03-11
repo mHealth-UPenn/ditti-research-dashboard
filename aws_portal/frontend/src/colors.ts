@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-const colors: { [key: string]: string } = {
+export const colors: { [key: string]: string } = {
   white: "#FFFFFF",
   black: "#000000",
   primary: "#3366FF",
@@ -42,5 +42,3 @@ const colors: { [key: string]: string } = {
   wearableLight: "#5489F5",
   wearableDeep: "#24499F",
 };
-
-export default colors;

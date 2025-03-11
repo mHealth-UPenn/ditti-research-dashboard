@@ -22,17 +22,17 @@ import { saveAs } from "file-saver";
 import "./subjectVisuals.css";
 import { getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
-import TimestampHistogram from "../visualizations/timestampHistogram";
-import VisualizationController from "../visualizations/visualizationController";
-import TapVisualizationButtons from "../visualizations/tapVisualizationButtons";
-import BoutsTimeline from "../visualizations/boutsTimeline";
-import AudioTapsTimeline from "../visualizations/audioTapsTimeline";
-import ViewContainer from "../containers/viewContainer";
-import Card from "../cards/card";
-import CardContentRow from "../cards/cardContentRow";
-import Title from "../text/title";
-import Subtitle from "../text/subtitle";
-import Button from "../buttons/button";
+import { TimestampHistogram } from "../visualizations/timestampHistogram";
+import { VisualizationController } from "../visualizations/visualizationController";
+import { TapVisualizationButtons } from "../visualizations/tapVisualizationButtons";
+import { BoutsTimeline } from "../visualizations/boutsTimeline";
+import { AudioTapsTimeline } from "../visualizations/audioTapsTimeline";
+import { ViewContainer } from "../containers/viewContainer";
+import { Card } from "../cards/card";
+import { CardContentRow } from "../cards/cardContentRow";
+import { Title } from "../text/title";
+import { Subtitle } from "../text/subtitle";
+import { Button } from "../buttons/button";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 import { Link, useSearchParams } from "react-router-dom";
@@ -40,7 +40,7 @@ import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStu
 import { useStudiesContext } from "../../contexts/studiesContext";
 
 
-const SubjectVisualsV2 = () => {
+export const SubjectVisualsV2 = () => {
   const [searchParams] = useSearchParams();
   const sid = searchParams.get("sid");
   const studyId = sid ? parseInt(sid) : 0;
@@ -196,5 +196,3 @@ const SubjectVisualsV2 = () => {
     </ViewContainer>
   );
 };
-
-export default SubjectVisualsV2;

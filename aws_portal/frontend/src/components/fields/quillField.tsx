@@ -147,4 +147,4 @@ const QuillField: React.FC<QuillFieldProps> = ({
   );
 };
 
-export default memo(QuillField);
+export const MemoizedQuillField = memo(QuillField);

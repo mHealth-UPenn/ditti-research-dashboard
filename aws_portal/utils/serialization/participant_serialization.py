@@ -52,9 +52,9 @@ class ParticipantStudyModel(BaseModel):
     did_consent: bool
     created_on: datetime
     starts_on: datetime
-    expires_on: datetime
-    consent_information: Optional[str] = None
-    data_summary: Optional[str] = None
+    expires_on: Optional[datetime]
+    consent_information: Optional[str]
+    data_summary: Optional[str]
 
     model_config = common_config
 
@@ -67,7 +67,7 @@ class ParticipantStudyModel(BaseModel):
                 "did_consent": obj.did_consent,
                 "created_on": obj.created_on,
                 "starts_on": obj.created_on,  # TODO: Ensure same format as created_on
-                "expires_on": obj.expires_on,
+                "expires_on": getattr(obj, "expires_on", None),
                 "consent_information": getattr(obj.study, "consent_information", None),
                 "data_summary": getattr(obj.study, "data_summary", None)
             }

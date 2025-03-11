@@ -18,24 +18,24 @@
 import { useState, useMemo, useEffect } from "react";
 import sanitizeHtml, { AllowedAttribute } from "sanitize-html";
 import { useAuth } from "../../hooks/useAuth";
-import Card from "../cards/card";
-import CardContentRow from "../cards/cardContentRow";
-import Title from "../text/title";
-import Button from "../buttons/button";
-import Link from "../links/linkComponent";
+import { Card } from "../cards/card";
+import { CardContentRow } from "../cards/cardContentRow";
+import { Title } from "../text/title";
+import { Button } from "../buttons/button";
+import { LinkComponent } from "../links/linkComponent";
 import { Link as RouterLink } from "react-router-dom";
 import { ParticipantWearableDataProvider } from "../../contexts/wearableDataContext";
-import WearableVisualization from "../visualizations/wearableVisualization";
+import { WearableVisualization } from "../visualizations/wearableVisualization";
 import { useStudySubjectContext } from "../../contexts/studySubjectContext";
 import { SmallLoader } from "../loader";
-import ConsentModal from "../containers/consentModal";
+import { ConsentModal } from "../containers/consentModal";
 import { makeRequest } from "../../utils";
 import { IParticipantStudy } from "../../interfaces";
 import sanitize from "sanitize-html";
 
 const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
 
-const ParticipantDashboardContent = () => {
+export const ParticipantDashboardContent = () => {
   const [isConsentOpen, setIsConsentOpen] = useState<boolean>(false);
   const [consentError, setConsentError] = useState<string>("");
   const [unconsentedStudies, setUnconsentedStudies] = useState<IParticipantStudy[]>([]);
@@ -283,9 +283,9 @@ const ParticipantDashboardContent = () => {
             <Title>Manage my data</Title>
           </CardContentRow>
           <CardContentRow>
-            <Link onClick={handleClickManageData}>
+            <LinkComponent onClick={handleClickManageData}>
               Request deletion of my account or data.
-            </Link>
+            </LinkComponent>
           </CardContentRow>
           <CardContentRow>
             <Title>Legal</Title>
@@ -310,5 +310,3 @@ const ParticipantDashboardContent = () => {
     </>
   );
 };
-
-export default ParticipantDashboardContent;

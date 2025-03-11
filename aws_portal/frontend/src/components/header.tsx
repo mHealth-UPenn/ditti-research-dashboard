@@ -18,14 +18,14 @@
 import { createRef, useEffect, useState } from "react";
 import { makeRequest } from "../utils";
 import { AccountDetails } from "../interfaces";
-import AccountMenu from "./accountMenu";
+import { AccountMenu } from "./accountMenu";
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
 
 /**
  * The Header component now functions as a functional component.
  */
-const Header = () => {
+export const Header = () => {
   const [accountDetails, setAccountDetails] = useState<AccountDetails>({} as AccountDetails);
   const [loading, setLoading] = useState<boolean>(true);
   const [showMenu, setShowMenu] = useState<boolean>(false);
@@ -103,5 +103,3 @@ const Header = () => {
     </>
   );
 };
-
-export default Header;

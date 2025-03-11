@@ -19,7 +19,7 @@ import { Link } from "react-router-dom";
 import { useNavbarContext } from "../contexts/navbarContext";
 
 
-const Navbar = () => {
+export const Navbar = () => {
   const { breadcrumbs } = useNavbarContext();
 
   return (
@@ -54,5 +54,3 @@ const Navbar = () => {
     </div>
   );
 }
-
-export default Navbar;

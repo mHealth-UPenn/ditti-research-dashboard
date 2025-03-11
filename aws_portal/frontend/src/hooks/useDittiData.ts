@@ -19,12 +19,12 @@ import { useEffect, useMemo, useState } from "react";
 import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails } from "../interfaces";
 import { APP_ENV } from "../environment";
 import { makeRequest } from "../utils";
-import DataFactory from "../dataFactory";
+import { DataFactory } from "../dataFactory";
 import { differenceInMilliseconds } from "date-fns";
 
 
 // TODO: extend to customize default values when needed in future vizualizations
-const useDittiData = () => {
+export const useDittiData = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [taps, setTaps] = useState<TapDetails[]>([]);
   const [audioTaps, setAudioTaps] = useState<AudioTapDetails[]>([]);
@@ -140,6 +140,3 @@ const useDittiData = () => {
     refreshAudioFiles,
   };
 };
-
-
-export default useDittiData;

@@ -18,7 +18,7 @@
 import React, { createRef, useEffect, useState } from "react";
 import { AudioTapDetails, Study, TapDetails, ViewProps } from "../interfaces";
 import { makeRequest } from "../utils";
-import StudySummary from "./dittiApp/studySummary";
+import { StudySummary } from "./dittiApp/studySummary";
 import { SmallLoader } from "./loader";
 import "./studiesMenu.css";
 import MenuIcon from '@mui/icons-material/Menu';
@@ -35,7 +35,7 @@ interface StudiesMenuProps extends ViewProps {
   setView: (name: string, view: React.ReactElement) => void;
 }
 
-const StudiesMenu: React.FC<StudiesMenuProps> = ({
+export const StudiesMenu: React.FC<StudiesMenuProps> = ({
   flashMessage,
   handleClick,
   getTaps,
@@ -110,5 +110,3 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
     </div>
   );
 };
-
-export default StudiesMenu;

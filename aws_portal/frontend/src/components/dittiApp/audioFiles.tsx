@@ -17,18 +17,18 @@
 
 import { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
-import Table from "../table/table";
+import { Table } from "../table/table";
 import { getAccess, makeRequest } from "../../utils";
-import Button from "../buttons/button";
-import ListView from "../containers/lists/listView";
-import ListContent from "../containers/lists/listContent";
+import { Button } from "../buttons/button";
+import { ListView } from "../containers/lists/listView";
+import { ListContent } from "../containers/lists/listContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 
-const AudioFiles = () => {
+export const AudioFiles = () => {
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState<boolean>(false);
   const [canDeleteAudioFiles, setCanDeleteAudioFiles] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -246,5 +246,3 @@ const AudioFiles = () => {
     </ListView>
   );
 };
-
-export default AudioFiles;

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import LinkComponent from "../links/linkComponent";
+import { LinkComponent } from "../links/linkComponent";
 import { Link } from "react-router-dom";
 
 
@@ -26,7 +26,7 @@ interface NavbarProps {
   activeView: "Accounts" | "Studies" | "Roles" | "Access Groups" | "About Sleep Templates" | "Data Retrieval Tasks";
 }
 
-const Navbar = ({ activeView }: NavbarProps) => {
+export const Navbar = ({ activeView }: NavbarProps) => {
   const views = [
     {
       active: false,
@@ -88,5 +88,3 @@ const Navbar = ({ activeView }: NavbarProps) => {
     </div>
   );
 };
-
-export default Navbar;

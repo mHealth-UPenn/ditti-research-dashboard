@@ -17,21 +17,21 @@
 
 import React, { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
-import Table from "../table/table";
-import Navbar from "./navbar";
+import { Table } from "../table/table";
+import { Navbar } from "./navbar";
 import { getAccess, makeRequest } from "../../utils";
 import { Account, ResponseBody } from "../../interfaces";
 import { SmallLoader } from "../loader";
-import ListView from "../containers/lists/listView";
-import ListContent from "../containers/lists/listContent";
-import Button from "../buttons/button";
+import { ListView } from "../containers/lists/listView";
+import { ListContent } from "../containers/lists/listContent";
+import { Button } from "../buttons/button";
 import { Link } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
 /**
  * Functional component representing Accounts.
  */
-const Accounts = () => {
+export const Accounts = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
@@ -312,5 +312,3 @@ const Accounts = () => {
     </ListView>
   );
 };
-
-export default Accounts;

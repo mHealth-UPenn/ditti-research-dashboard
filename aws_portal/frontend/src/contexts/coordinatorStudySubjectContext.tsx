@@ -28,7 +28,7 @@ interface ICoordinatorStudySubjectProviderProps {
 
 
 // CoordinatorStudySubjectProvider component that wraps children with the study subject context.
-export default function CoordinatorStudySubjectProvider({
+export function CoordinatorStudySubjectProvider({
   app,
   children
 }: PropsWithChildren<ICoordinatorStudySubjectProviderProps>) {

@@ -22,7 +22,7 @@ interface FormRowProps {
   className?: string;
 }
 
-const FormRow = ({
+export const FormRow = ({
   forceRow = false,
   className = "",
   children,
@@ -35,5 +35,3 @@ const FormRow = ({
 
   return <div className={classes}>{children}</div>;
 };
-
-export default FormRow;

@@ -17,17 +17,17 @@
 
 import { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
-import Table from "../table/table";
+import { Table } from "../table/table";
 import { getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { IStudySubjectDetails} from "../../interfaces";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
-import Button from "../buttons/button";
-import LinkComponent from "../links/linkComponent";
-import Title from "../text/title";
-import Subtitle from "../text/subtitle";
-import ListView from "../containers/lists/listView";
-import ListContent from "../containers/lists/listContent";
+import { Button } from "../buttons/button";
+import { LinkComponent } from "../links/linkComponent";
+import { Title } from "../text/title";
+import { Subtitle } from "../text/subtitle";
+import { ListView } from "../containers/lists/listView";
+import { ListContent } from "../containers/lists/listContent";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
@@ -41,7 +41,7 @@ interface ISubjectsContentProps {
 }
 
 
-const SubjectsContent = ({ app }: ISubjectsContentProps) => {
+export const SubjectsContent = ({ app }: ISubjectsContentProps) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
@@ -262,5 +262,3 @@ if (loading || studiesLoading || studySubjectLoading) {
     </ListView>
   );
 };
-
-export default SubjectsContent;

@@ -32,7 +32,7 @@ interface ProtectedRouteProps {
  * @param authMethod - The required authentication method ('iam' or 'cognito')
  * @returns The child component if authenticated, or a redirect to the login page otherwise.
  */
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, authMethod }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, authMethod }) => {
   const { isIamAuthenticated, isCognitoAuthenticated, isIamLoading, isCognitoLoading } = useAuth();
 
   if (authMethod === 'iam') {
@@ -49,5 +49,3 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, authMethod })
 
   return null;
 };
-
-export default ProtectedRoute;

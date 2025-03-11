@@ -25,7 +25,7 @@ export const StudySubjectContext = createContext<StudySubjectContextType | undef
 
 
 // StudySubjectProvider component that wraps children with the study subject context.
-export default function StudySubjectProvider({
+export function StudySubjectProvider({
   children
 }: PropsWithChildren<unknown>) {
   const [studies, setStudies] = useState<IParticipantStudy[]>([]);
