@@ -123,9 +123,23 @@ def account_create(account):
         # Get data from request
         data = request.json["create"]
 
-        # Set empty phone number to None (NULL in database)
-        if "phone_number" in data and data["phone_number"] == "":
-            data["phone_number"] = None
+        # Handle phone_number formatting and validation
+        if "phone_number" in data:
+            if data["phone_number"] == "":
+                # Explicitly set to None to trigger attribute deletion in Cognito
+                data["phone_number"] = None
+            elif data["phone_number"]:
+                # Strip any unwanted characters and ensure it starts with +
+                phone = data["phone_number"].strip()
+
+                # Validate phone number format - must be in E.164 format
+                # International format: +[country code][number]
+                import re
+                # Check for + followed by digits not starting with 0 (country codes don't start with 0)
+                if not re.match(r"^\+[1-9]\d*$", phone):
+                    return make_response({"msg": "Phone number must start with + followed by country code and digits"}, 400)
+
+                data["phone_number"] = phone
 
         # Create database account
         new_account = Account()
@@ -236,9 +250,21 @@ def account_edit(account):
         # Get data from request
         data = request.json["edit"]
 
-        # Set empty phone number to None (NULL in database)
-        if "phone_number" in data and data["phone_number"] == "":
-            data["phone_number"] = None
+        # Handle phone_number formatting and validation
+        if "phone_number" in data:
+            if data["phone_number"] == "":
+                data["phone_number"] = None
+            elif data["phone_number"]:
+                # Strip any unwanted characters and ensure it starts with +
+                phone = data["phone_number"].strip()
+
+                # Validate phone number format
+                import re
+                # Check for + followed by digits not starting with 0
+                if not re.match(r"^\+[1-9]\d*$", phone):
+                    return make_response({"msg": "Phone number must start with + followed by country code and digits"}, 400)
+
+                data["phone_number"] = phone
 
         account_id = request.json["id"]
         edited_account = Account.query.get(account_id)

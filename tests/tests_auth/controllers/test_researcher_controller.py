@@ -179,28 +179,56 @@ class TestResearcherAuthController:
 
         assert response == mock_error_response
 
-    @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
-    def test_update_account_in_cognito_success(self, mock_get_client, app, auth_controller):
+    @patch("aws_portal.auth.controllers.researcher.update_researcher")
+    def test_update_account_in_cognito_success(self, mock_update_researcher, app, auth_controller):
         """Test successful account update in Cognito."""
         # Set up mock success response
-        mock_success_response = MagicMock()
+        mock_success_response = (True, "User attributes updated successfully")
+        mock_update_researcher.return_value = mock_success_response
 
-        # Set up account data
+        # Case 1: Normal update with phone number
         account_data = {
             "email": "update@example.com",
             "first_name": "Updated",
             "last_name": "User",
-            "group": "newgroup"
+            "phone_number": "+14155551234"
         }
 
         with app.app_context():
-            # Mock method to avoid implementation details
-            with patch.object(auth_controller, "update_account_in_cognito") as mock_update:
-                mock_update.return_value = mock_success_response
-                response = auth_controller.update_account_in_cognito(
-                    account_data)
+            response = auth_controller.update_account_in_cognito(account_data)
 
-        assert response == mock_success_response
+            assert response == mock_success_response
+            mock_update_researcher.assert_called_with(
+                "update@example.com",
+                attributes={
+                    "given_name": "Updated",
+                    "family_name": "User",
+                    "phone_number": "+14155551234"
+                },
+                attributes_to_delete=[]
+            )
+
+        # Case 2: Update with empty phone number (should delete phone number attribute)
+        mock_update_researcher.reset_mock()
+        account_data = {
+            "email": "update@example.com",
+            "first_name": "Updated",
+            "last_name": "User",
+            "phone_number": None  # Empty phone number
+        }
+
+        with app.app_context():
+            response = auth_controller.update_account_in_cognito(account_data)
+
+            assert response == mock_success_response
+            mock_update_researcher.assert_called_with(
+                "update@example.com",
+                attributes={
+                    "given_name": "Updated",
+                    "family_name": "User"
+                },
+                attributes_to_delete=["phone_number"]
+            )
 
     @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
     def test_disable_account_in_cognito_success(self, mock_get_client, app, auth_controller):

@@ -101,48 +101,74 @@ def create_researcher(email, temp_password=None, attributes=None):
         return False, "Unexpected error creating user"
 
 
-def update_researcher(email, attributes=None):
+def update_researcher(email, attributes=None, attributes_to_delete=None):
     """
     Update a researcher's attributes in the Cognito user pool.
 
+    This function supports both adding/updating attributes and removing attributes.
+    For attributes that should be updated, provide them in the attributes dictionary.
+    For attributes that should be removed, list them in attributes_to_delete.
+
+    Note: Only non-required attributes can be deleted. Required attributes like email
+    cannot be removed but can be updated.
+
     Args:
         email (str): Researcher's email address (used as username)
-        attributes (dict, optional): User attributes to update
+        attributes (dict, optional): User attributes to update. Keys should match
+                                    Cognito attribute names (e.g., 'given_name', 'family_name', 'phone_number').
+        attributes_to_delete (list, optional): Attribute names to delete from the user's profile.
+                                              Standard Cognito attribute names should be used.
 
     Returns:
         tuple: (bool, str) - (success, message)
+            success: True if the operations completed successfully, False otherwise
+            message: A descriptive success or error message
     """
     try:
         # Initialize Cognito client
         client = get_researcher_cognito_client()
         user_pool_id = current_app.config["COGNITO_RESEARCHER_USER_POOL_ID"]
 
-        if not attributes:
-            # Nothing to update
-            return True, "No attributes to update"
+        # Process attributes to update
+        if attributes:
+            # Prepare user attributes for update
+            user_attributes = []
+            for key, value in attributes.items():
+                # Only include attributes with non-empty values
+                if value is not None and value.strip() != "":
+                    user_attributes.append({
+                        "Name": key,
+                        "Value": str(value)
+                    })
 
-        # Prepare user attributes for update
-        user_attributes = []
-        for key, value in attributes.items():
-            # Only include attributes with non-empty values
-            if value is not None and value.strip() != "":
-                user_attributes.append({
-                    "Name": key,
-                    "Value": str(value)
-                })
+            # If we have valid attributes to update, update them
+            if user_attributes:
+                # Update user attributes in Cognito
+                client.admin_update_user_attributes(
+                    UserPoolId=user_pool_id,
+                    Username=email,
+                    UserAttributes=user_attributes
+                )
+                logger.info(f"Updated Cognito user attributes for {email}")
 
-        # If no valid attributes to update, return early
-        if not user_attributes:
-            return True, "No valid attributes to update"
+        # Process attributes to delete
+        if attributes_to_delete:
+            for attr_name in attributes_to_delete:
+                try:
+                    # Delete specific attribute
+                    client.admin_delete_user_attributes(
+                        UserPoolId=user_pool_id,
+                        Username=email,
+                        UserAttributeNames=[attr_name]
+                    )
+                    logger.info(
+                        f"Deleted attribute {attr_name} for user {email}")
+                except ClientError as attr_error:
+                    # Log the error but continue processing other attributes
+                    # This prevents a single attribute failure from blocking other operations
+                    logger.warning(
+                        f"Failed to delete attribute {attr_name} for user {email}: {str(attr_error)}")
 
-        # Update user attributes in Cognito
-        client.admin_update_user_attributes(
-            UserPoolId=user_pool_id,
-            Username=email,
-            UserAttributes=user_attributes
-        )
-
-        logger.info(f"Updated Cognito user attributes for {email}")
         return True, "User attributes updated successfully"
 
     except ClientError as e:

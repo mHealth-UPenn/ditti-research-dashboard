@@ -177,6 +177,48 @@ const initialState: AccountsEditState = {
   studiesSelected: [],
 };
 
+// Function to format phone number - ensures consistent international format
+const formatPhoneNumber = (value: string): string => {
+  // Remove everything except digits and plus sign
+  const formattedValue = value.replace(/[^\d+]/g, "");
+  
+  // If empty, return empty string
+  if (!formattedValue) {
+    return "";
+  }
+  
+  // If it's just a plus sign with nothing after it, add "1" as default US country code
+  if (formattedValue === "+") {
+    return "+1";
+  }
+  
+  // If user entered digits without a plus sign, assume US number with +1 prefix
+  if (/^\d+$/.test(formattedValue)) {
+    return "+1" + formattedValue;
+  }
+  
+  // If it already has a plus sign
+  if (formattedValue.startsWith("+")) {
+    // Handle case of +0... which is invalid (country codes cannot start with 0)
+    if (formattedValue.length > 1 && formattedValue.charAt(1) === "0") {
+      // Replace the 0 with US country code 1
+      return "+1" + formattedValue.substring(2);
+    }
+    
+    // Check for valid international format: + followed by at least one digit
+    if (!/^\+\d+$/.test(formattedValue)) {
+      // If it has non-digit after the +, replace with +1
+      return "+1";
+    }
+    
+    // Valid international format, keep as is
+    return formattedValue;
+  }
+  
+  // Any other case, default to +1 prefix
+  return "+1" + formattedValue;
+};
+
 const AccountsEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
@@ -321,6 +363,12 @@ const AccountsEdit = () => {
     dispatch({ type: "REMOVE_STUDY", id });
   };
 
+  // Handle phone number input change
+  const handlePhoneNumberChange = (value: string) => {
+    const updatedPhoneNumber = formatPhoneNumber(value);
+    dispatch({ type: "EDIT_FIELD", phoneNumber: updatedPhoneNumber });
+  };
+
   /**
    * POST changes to the backend. Make a request to create an entry if creating
    * a new entry, else make a request to edit an exiting entry
@@ -342,24 +390,40 @@ const AccountsEdit = () => {
       return;
     }
     
-    // Phone number is optional, so no validation needed
+    // Validate phone number format if provided
+    if (phoneNumber && phoneNumber.trim()) {
+      // International phone numbers should start with + followed by at least 1 digit for country code
+      // Country codes typically don't start with 0 
+      const phoneRegex = /^\+[1-9]\d*$/;
+      if (!phoneRegex.test(phoneNumber)) {
+        flashMessage(
+          <span>
+            <b>Invalid phone number format</b> - Phone number must start with + followed by country code and digits
+          </span>, 
+          "danger"
+        );
+        return;
+      }
+    }
     
-    // get all studies and roles that are assigned to the user
+    // Construct studies data structure with role assignments
     const studies = studiesSelected.map(s => {
       const role = rolesSelected.filter(r => r.study == s.id)[0];
       return { id: s.id, role: role ? { id: role.role } : {} };
     });
 
+    // Prepare account data for API submission
     const data = {
       access_groups: accessGroupsSelected,
       email: email,
       first_name: firstName,
       last_name: lastName,
-      phone_number: phoneNumber, // Will be empty string if not provided
+      phone_number: phoneNumber || "", // Always send phone_number, empty string signals deletion
       studies: studies,
-      password: "DEPRECATED" // Always send this hardcoded value
+      password: "DEPRECATED" // Required by API contract but no longer used
     };
 
+    // Determine if this is an edit or create operation
     const body = {
       app: 1,  // Admin Dashboard = 1
       ...(accountId ? { id: accountId, edit: data } : { create: data })
@@ -678,10 +742,12 @@ const AccountsEdit = () => {
               placeholder=""
               value={phoneNumber || ""}
               label="Phone Number"
-              onKeyup={(phoneNumber) => {
-                dispatch({ type: "EDIT_FIELD", phoneNumber });
-              }}
-              feedback="" />
+              onKeyup={handlePhoneNumberChange}
+              feedback={
+                phoneNumber && phoneNumber.trim() && !/^\+[1-9]\d*$/.test(phoneNumber)
+                  ? "Phone number must start with + followed by country code and digits"
+                  : ""
+              } />
           </FormField>
         </FormRow>
         <FormRow>

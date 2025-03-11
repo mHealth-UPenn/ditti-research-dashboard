@@ -102,8 +102,9 @@ def test_update_researcher(mock_cognito_client, app_context):
     """Test updating a researcher in Cognito."""
     # Setup
     mock_cognito_client.admin_update_user_attributes.return_value = {}
+    mock_cognito_client.admin_delete_user_attributes.return_value = {}
 
-    # Execute
+    # Case 1: Normal attribute update
     success, message = update_researcher(
         email="researcher@example.com",
         attributes={
@@ -122,6 +123,30 @@ def test_update_researcher(mock_cognito_client, app_context):
     assert call_args["UserPoolId"] == "test-pool-id"
     assert call_args["Username"] == "researcher@example.com"
     assert len(call_args["UserAttributes"]) > 0
+
+    # Reset mocks
+    mock_cognito_client.reset_mock()
+
+    # Case 2: Test attribute deletion
+    success, message = update_researcher(
+        email="researcher@example.com",
+        attributes={"first_name": "Updated"},
+        attributes_to_delete=["phone_number"]
+    )
+
+    # Verify
+    assert success is True
+    assert message == "User attributes updated successfully"
+
+    # Verify update was called for regular attributes
+    mock_cognito_client.admin_update_user_attributes.assert_called_once()
+
+    # Verify delete was called for attributes to delete
+    mock_cognito_client.admin_delete_user_attributes.assert_called_once_with(
+        UserPoolId="test-pool-id",
+        Username="researcher@example.com",
+        UserAttributeNames=["phone_number"]
+    )
 
 
 def test_update_researcher_with_error(mock_cognito_client, app_context):

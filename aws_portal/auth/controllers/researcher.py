@@ -203,9 +203,17 @@ class ResearcherAuthController(AuthControllerBase):
         """
         Update an existing account in Cognito.
 
+        Handles both updating standard attributes and deletion of optional attributes.
+        For attributes that should be removed (like phone_number), include them in the
+        account_data with a None or empty value, and they'll be added to attributes_to_delete.
+
         Args:
             account_data (dict): Account information with keys:
-                email, first_name, last_name, phone_number
+                email (required): User's email address (used as identifier)
+                first_name (optional): User's first name
+                last_name (optional): User's last name
+                phone_number (optional): User's phone number in E.164 format (+[country code][number])
+                                        If explicitly set to None or empty string, the attribute will be deleted
 
         Returns:
             tuple: (success, message)
@@ -224,6 +232,7 @@ class ResearcherAuthController(AuthControllerBase):
 
         # Prepare user attributes to update
         attributes = {}
+        attributes_to_delete = []
 
         # Only include non-empty required fields
         if first_name is not None:
@@ -231,12 +240,15 @@ class ResearcherAuthController(AuthControllerBase):
         if last_name is not None:
             attributes["family_name"] = last_name
 
-        # Phone number is optional - only include if non-empty
+        # Handle phone number - include if non-empty, or mark for deletion if null/empty
         if phone_number:
             attributes["phone_number"] = phone_number
+        else:
+            # If phone_number is explicitly None or empty string, mark it for deletion
+            attributes_to_delete.append("phone_number")
 
         # Update user in Cognito
-        return update_researcher(email, attributes=attributes)
+        return update_researcher(email, attributes=attributes, attributes_to_delete=attributes_to_delete)
 
     def disable_account_in_cognito(self, email):
         """

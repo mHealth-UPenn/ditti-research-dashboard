@@ -41,6 +41,7 @@ def test_account_create(post_admin):
 
 
 def test_account_edit(post_admin):
+    # Case 1: Basic account edit
     data = {
         "app": 1,
         "id": 1,
@@ -73,6 +74,56 @@ def test_account_edit(post_admin):
     assert len(foo.studies) == 1
     assert foo.studies[0].study_id == 2
     assert foo.studies[0].role_id == 2
+
+    # Case 2: Adding a valid phone number
+    data = {
+        "app": 1,
+        "id": 1,
+        "edit": {
+            "phone_number": "+14155551234"
+        }
+    }
+
+    res = post_admin("/admin/account/edit", data=data)
+    assert res.status_code == 200
+    data = json.loads(res.data)
+    assert data["msg"] == "Account Edited Successfully"
+
+    # Verify phone number was saved
+    foo = Account.query.get(1)
+    assert foo.phone_number == "+14155551234"
+
+    # Case 3: Invalid phone number format
+    data = {
+        "app": 1,
+        "id": 1,
+        "edit": {
+            "phone_number": "+0123456789"  # Invalid: starts with +0
+        }
+    }
+
+    res = post_admin("/admin/account/edit", data=data)
+    assert res.status_code == 400
+    data = json.loads(res.data)
+    assert "phone number" in data["msg"].lower()
+
+    # Case 4: Removing phone number
+    data = {
+        "app": 1,
+        "id": 1,
+        "edit": {
+            "phone_number": ""  # Empty string to remove phone number
+        }
+    }
+
+    res = post_admin("/admin/account/edit", data=data)
+    assert res.status_code == 200
+    data = json.loads(res.data)
+    assert data["msg"] == "Account Edited Successfully"
+
+    # Verify phone number was removed
+    foo = Account.query.get(1)
+    assert foo.phone_number is None
 
 
 def test_account_archive(post_admin):
