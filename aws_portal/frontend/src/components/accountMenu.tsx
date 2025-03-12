@@ -76,6 +76,7 @@ const AccountMenu = ({
     // Phone number is optional, so no validation needed
     
     const body = {
+      app: 2,
       email,
       first_name: firstName,
       last_name: lastName,

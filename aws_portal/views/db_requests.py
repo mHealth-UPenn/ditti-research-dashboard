@@ -222,7 +222,8 @@ def edit_account_details(account):
     Request Syntax
     --------------
     {
-        ...Account data
+        ...Account data,
+        app: 2 (required) - The app ID is required for permission validation
     }
 
     All data in the request body are optional. Any attributes that are excluded
@@ -241,7 +242,11 @@ def edit_account_details(account):
     }
     """
     try:
-        populate_model(account, request.json)
+        account_data = dict(request.json)
+        if "app" in account_data:
+            del account_data["app"]
+
+        populate_model(account, account_data)
         db.session.commit()
         msg = "Account details updated successfully"
 
