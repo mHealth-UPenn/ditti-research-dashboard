@@ -1,4 +1,3 @@
-from datetime import datetime
 import logging
 import traceback
 
@@ -8,7 +7,7 @@ from sqlalchemy.sql import tuple_
 from aws_portal.extensions import db
 from aws_portal.models import (
     AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,
-    JoinAccountStudy, Study, StudySubject, JoinStudySubjectStudy
+    JoinAccountStudy, Study
 )
 from aws_portal.auth.decorators import researcher_auth_required
 from aws_portal.utils.db import populate_model
@@ -184,31 +183,6 @@ def get_study_contacts(account):
         }
 
         res.append(account)
-
-    return jsonify(res)
-
-
-@blueprint.route("/get-account-details")
-@researcher_auth_required("View", "Ditti App Dashboard")
-def get_account_details(account):
-    """
-    Get the current user"s account details
-
-    Response Syntax (200)
-    ---------------------
-    {
-        firstName: str,
-        lastName: str,
-        email: str,
-        phoneNumber: str
-    }
-    """
-    res = {
-        "firstName": account.first_name,
-        "lastName": account.last_name,
-        "email": account.email,
-        "phoneNumber": account.phone_number
-    }
 
     return jsonify(res)
 
