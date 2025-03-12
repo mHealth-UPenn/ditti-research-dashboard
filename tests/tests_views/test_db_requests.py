@@ -93,3 +93,22 @@ def test_account_details(researcher_get):
     res = json.loads(res.data)
     assert "firstName" in res
     assert res["firstName"] == "John"
+
+
+def test_get_about_sleep_templates(researcher_get):
+    """Test the endpoint to get about sleep templates with app parameter"""
+    with patch("aws_portal.models.AboutSleepTemplate.query") as mock_query:
+        # Mock the query to return a template
+        mock_template = MagicMock()
+        mock_template.meta = {"name": "Test Template",
+                              "content": "Sample content"}
+        mock_query.filter.return_value.all.return_value = [mock_template]
+
+        # Make the request with app parameter
+        res = researcher_get("/db/get-about-sleep-templates?app=2")
+        assert res.status_code == 200
+
+        data = json.loads(res.data)
+        assert len(data) == 1
+        assert data[0]["name"] == "Test Template"
+        assert data[0]["content"] == "Sample content"

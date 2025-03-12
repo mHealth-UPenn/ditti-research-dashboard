@@ -201,7 +201,7 @@ const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   // Fetch about sleep templates from the database
   useEffect(() => {
     // get all about sleep templates
-    const fetchTemplates = makeRequest("/db/get-about-sleep-templates").then(
+    const fetchTemplates = makeRequest(`/db/get-about-sleep-templates?app=${app === "ditti" ? 2 : 3}`).then(
       (templates: AboutSleepTemplate[]) => setAboutSleepTemplates(templates)
     );
     // when all promises finish, hide the loader

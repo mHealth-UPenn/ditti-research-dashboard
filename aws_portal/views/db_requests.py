@@ -261,6 +261,10 @@ def get_about_sleep_templates(account):
     """
     Get all about sleep templates
 
+    Options
+    -------
+    app: 2 | 3 (required) - The app ID is required for permission validation
+
     Response Syntax (200)
     ---------------
     [
@@ -277,14 +281,14 @@ def get_about_sleep_templates(account):
     }
     """
     try:
+        # Extract all non-archived sleep templates
         about_sleep_templates = AboutSleepTemplate.query.filter(
             ~AboutSleepTemplate.is_archived
-        )
+        ).all()
 
     except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
-
         return make_response({"msg": "Internal server error when retrieving about sleep templates."}, 500)
 
     res = [a.meta for a in about_sleep_templates]
