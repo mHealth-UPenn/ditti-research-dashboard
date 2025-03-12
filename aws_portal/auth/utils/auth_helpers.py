@@ -40,7 +40,12 @@ def check_permissions(auth_account: Account, action: str, resource_param: Option
             success: True if permission check passed, False otherwise
             error_response: Error response if check failed, None otherwise
     """
-    data = request.args or request.json or {}
+    # Get data from appropriate sources based on request method
+    if request.method == "GET":
+        data = request.args or {}
+    else:
+        data = request.json or request.args or {}
+
     app_id = data.get("app")
     study_id = data.get("study")
 
