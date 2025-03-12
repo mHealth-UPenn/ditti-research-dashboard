@@ -164,6 +164,7 @@ class ResearcherAuthController(AuthControllerBase):
                 "firstName": account.first_name,
                 "lastName": account.last_name,
                 "accountId": account.id,
+                "phoneNumber": account.phone_number,
                 "isFirstLogin": is_first_login
             },
             message=AUTH_ERROR_MESSAGES["login_successful"]

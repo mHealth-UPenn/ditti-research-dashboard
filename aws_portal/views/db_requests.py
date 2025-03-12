@@ -248,6 +248,20 @@ def edit_account_details(account):
 
         populate_model(account, account_data)
         db.session.commit()
+
+        # Update Cognito user to keep account details in sync
+        from aws_portal.auth.controllers.researcher import ResearcherAuthController
+        auth_controller = ResearcherAuthController()
+        success, message = auth_controller.update_account_in_cognito({
+            "email": account.email,
+            "first_name": account.first_name,
+            "last_name": account.last_name,
+            "phone_number": account.phone_number
+        })
+
+        if not success:
+            return make_response({"msg": f"Account updated in database but failed to update in Cognito: {message}"}, 400)
+
         msg = "Account details updated successfully"
 
     except Exception:

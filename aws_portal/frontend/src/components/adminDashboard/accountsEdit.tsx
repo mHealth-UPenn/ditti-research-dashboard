@@ -10,7 +10,7 @@ import {
   Study,
 } from "../../interfaces";
 import Select from "../fields/select";
-import { makeRequest } from "../../utils";
+import { makeRequest, formatPhoneNumber } from "../../utils";
 import { SmallLoader } from "../loader";
 import FormView from "../containers/forms/formView";
 import Form from "../containers/forms/form";
@@ -175,48 +175,6 @@ const initialState: AccountsEditState = {
   rolesSelected: [],
   accessGroupsSelected: [],
   studiesSelected: [],
-};
-
-// Function to format phone number - ensures consistent international format
-const formatPhoneNumber = (value: string): string => {
-  // Remove everything except digits and plus sign
-  const formattedValue = value.replace(/[^\d+]/g, "");
-  
-  // If empty, return empty string
-  if (!formattedValue) {
-    return "";
-  }
-  
-  // If it's just a plus sign with nothing after it, add "1" as default US country code
-  if (formattedValue === "+") {
-    return "+1";
-  }
-  
-  // If user entered digits without a plus sign, assume US number with +1 prefix
-  if (/^\d+$/.test(formattedValue)) {
-    return "+1" + formattedValue;
-  }
-  
-  // If it already has a plus sign
-  if (formattedValue.startsWith("+")) {
-    // Handle case of +0... which is invalid (country codes cannot start with 0)
-    if (formattedValue.length > 1 && formattedValue.charAt(1) === "0") {
-      // Replace the 0 with US country code 1
-      return "+1" + formattedValue.substring(2);
-    }
-    
-    // Check for valid international format: + followed by at least one digit
-    if (!/^\+\d+$/.test(formattedValue)) {
-      // If it has non-digit after the +, replace with +1
-      return "+1";
-    }
-    
-    // Valid international format, keep as is
-    return formattedValue;
-  }
-  
-  // Any other case, default to +1 prefix
-  return "+1" + formattedValue;
 };
 
 const AccountsEdit = () => {

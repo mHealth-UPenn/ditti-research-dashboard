@@ -22,7 +22,7 @@ const Header = () => {
         firstName: accountInfo.firstName,
         lastName: accountInfo.lastName,
         email: accountInfo.email,
-        phoneNumber: ""
+        phoneNumber: accountInfo.phoneNumber || ""
       });
       setLoading(false);
     }

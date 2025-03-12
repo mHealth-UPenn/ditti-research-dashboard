@@ -2,7 +2,7 @@ import { RefObject } from "react";
 import { useState } from "react";
 import { AccountDetails, ResponseBody } from "../interfaces";
 import TextField from "./fields/textField";
-import { makeRequest } from "../utils";
+import { makeRequest, formatPhoneNumber } from "../utils";
 import AsyncButton from "./buttons/asyncButton";
 import Button from "./buttons/button";
 import { useAuth } from "../hooks/useAuth";
@@ -38,6 +38,7 @@ const AccountMenu = ({
   const [firstName, setFirstName] = useState(prefill.firstName);
   const [lastName, setLastName] = useState(prefill.lastName);
   const [phoneNumber, setPhoneNumber] = useState(prefill.phoneNumber || "");
+  const [phoneNumberError, setPhoneNumberError] = useState<string>("");
   
   // Password state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -53,34 +54,60 @@ const AccountMenu = ({
   const { researcherLogout } = useAuth();
   const { flashMessage } = useFlashMessageContext();
 
+  // Handle phone number change with formatting
+  const handlePhoneNumberChange = (value: string) => {
+    const formattedNumber = formatPhoneNumber(value);
+    setPhoneNumber(formattedNumber);
+    
+    // Validate the phone number format
+    if (formattedNumber && !/^\+[1-9]\d*$/.test(formattedNumber)) {
+      setPhoneNumberError("Phone number must start with + followed by country code and digits");
+    } else {
+      setPhoneNumberError("");
+    }
+  };
+
   /**
    * Make a POST request with account detail changes
    */
   const post = async () => {
     // Validate required fields
     if (!firstName.trim()) {
-      flashMessage(<span>First name is required</span>, "danger");
+      flashMessage(<span><b>First name is required</b></span>, "danger");
       return;
     }
     
     if (!lastName.trim()) {
-      flashMessage(<span>Last name is required</span>, "danger");
+      flashMessage(<span><b>Last name is required</b></span>, "danger");
       return;
     }
     
     if (!email.trim()) {
-      flashMessage(<span>Email is required</span>, "danger");
+      flashMessage(<span><b>Email is required</b></span>, "danger");
       return;
     }
     
-    // Phone number is optional, so no validation needed
+    // Validate phone number format if provided
+    if (phoneNumber && phoneNumber.trim()) {
+      // International phone numbers should start with + followed by at least 1 digit for country code
+      const phoneRegex = /^\+[1-9]\d*$/;
+      if (!phoneRegex.test(phoneNumber)) {
+        flashMessage(
+          <span>
+            <b>Invalid phone number format</b> - Phone number must start with + followed by country code and digits
+          </span>, 
+          "danger"
+        );
+        return;
+      }
+    }
     
     const body = {
       app: 2,
       email,
       first_name: firstName,
       last_name: lastName,
-      phone_number: phoneNumber, // This will be empty if not provided
+      phone_number: phoneNumber, // Will be properly formatted or empty string
     };
 
     const opts = { 
@@ -260,12 +287,25 @@ const AccountMenu = ({
   };
 
   /**
-   * Reset form state and clear sensitive data
+   * Reset the form state to initial values without submitting any changes
    */
   const resetForm = () => {
+    // Reset account details to prefill values
+    setFirstName(prefill.firstName);
+    setLastName(prefill.lastName);
+    setEmail(prefill.email);
+    setPhoneNumber(prefill.phoneNumber || "");
+    setPhoneNumberError("");
+    
+    // Reset password fields
+    setCurrentPassword("");
+    setPasswordValue("");
+    setConfirmPasswordValue("");
+    setPasswordError(null);
+    
+    // Exit edit modes
     setEdit(false);
     setEditPassword(false);
-    clearSensitiveData();
   }
 
   /**
@@ -306,62 +346,63 @@ const AccountMenu = ({
           </div>
           <div className="mb-4">
             {edit ? (
-              <TextField
-                id="firstName"
-                label="First Name"
-                value={firstName}
-                onKeyup={setFirstName} />
+              <div>
+                <TextField
+                  id="email"
+                  label="Email"
+                  value={email}
+                  disabled={true} />
+                  
+                <TextField
+                  id="first-name"
+                  label="First Name"
+                  value={firstName}
+                  onKeyup={setFirstName} />
+                  
+                <TextField
+                  id="last-name"
+                  label="Last Name"
+                  value={lastName}
+                  onKeyup={setLastName} />
+                  
+                <TextField
+                  id="phone-number"
+                  label="Phone Number"
+                  value={phoneNumber}
+                  onKeyup={handlePhoneNumberChange}
+                  feedback={phoneNumberError} />
+              </div>
             ) : (
-              <span>
-                <b>First Name</b>
-                <br />
-                &nbsp;&nbsp;&nbsp;&nbsp;{firstName}
-              </span>
-            )}
-          </div>
-          <div className="mb-4">
-            {edit ? (
-              <TextField
-                id="lastName"
-                label="Last Name"
-                value={lastName}
-                onKeyup={setLastName} />
-            ) : (
-              <span>
-                <b>Last Name</b>
-                <br />
-                &nbsp;&nbsp;&nbsp;&nbsp;{lastName}
-              </span>
-            )}
-          </div>
-          <div className="mb-4">
-            {edit ? (
-              <TextField
-                id="email"
-                label="Email"
-                value={email}
-                onKeyup={setEmail} />
-            ) : (
-              <span>
-                <b>Email</b>
-                <br />
-                &nbsp;&nbsp;&nbsp;&nbsp;{email}
-              </span>
-            )}
-          </div>
-          <div className="mb-6">
-            {edit ? (
-              <TextField
-                id="phoneNumber"
-                label="Phone Number"
-                value={phoneNumber}
-                onKeyup={setPhoneNumber} />
-            ) : (
-              <span>
-                <b>Phone Number</b>
-                <br />
-                &nbsp;&nbsp;&nbsp;&nbsp;{phoneNumber}
-              </span>
+              <div>
+                <div className="mb-4">
+                  <span>
+                    <b>First Name</b>
+                    <br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;{firstName}
+                  </span>
+                </div>
+                <div className="mb-4">
+                  <span>
+                    <b>Last Name</b>
+                    <br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;{lastName}
+                  </span>
+                </div>
+                <div className="mb-4">
+                  <span>
+                    <b>Email</b>
+                    <br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;{email}
+                  </span>
+                </div>
+                <div className="mb-4">
+                  <span>
+                    <b>Phone Number</b>
+                    <br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;{phoneNumber || 'Not provided'}
+                  </span>
+                </div>
+              </div>
             )}
           </div>
           <div className="border-b border-light mb-6" />

@@ -380,6 +380,7 @@ export interface AuthContextType {
     firstName: string;
     lastName: string;
     accountId: string;
+    phoneNumber?: string;
   };
   participantLogin: (options?: { elevated: boolean }) => void;
   participantLogout: () => void;

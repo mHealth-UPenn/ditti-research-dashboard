@@ -48,7 +48,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             email: res.email,
             firstName: res.firstName,
             lastName: res.lastName,
-            accountId: res.accountId
+            accountId: res.accountId,
+            phoneNumber: res.phoneNumber
           });
           
           // Set isFirstLogin state directly from the response
