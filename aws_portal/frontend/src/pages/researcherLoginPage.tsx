@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
 import { FullLoader } from "../components/loader";
+import { useEnterKeyLogin } from "../hooks/useKeyboardEvent";
 import Button from "../components/buttons/button";
 import { Link } from "react-router-dom";
 import "./loginPage.css";
@@ -21,6 +22,8 @@ const ResearcherLoginPage: React.FC = () => {
     isResearcherLoading,
     researcherLogin
   } = useAuth();
+  // Setup Enter key to trigger login when not loading
+  useEnterKeyLogin(!loadingDb, researcherLogin);
 
   /**
    * Redirects already authenticated researchers to the coordinator dashboard

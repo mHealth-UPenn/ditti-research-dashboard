@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FullLoader } from "../components/loader";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
+import { useEnterKeyLogin } from "../hooks/useKeyboardEvent";
 import "./loginPage.css";
 import Button from "../components/buttons/button";
 import { Link } from "react-router-dom";
@@ -19,6 +20,8 @@ const ParticipantLoginPage: React.FC = () => {
   const { participantLogin, isParticipantAuthenticated } = useAuth();
   const loadingDb = useDbStatus();
   const location = useLocation();
+  // Setup Enter key to trigger login when not loading
+  useEnterKeyLogin(!loadingDb, participantLogin);
 
   /**
    * Redirects already authenticated participants to the root dashboard
@@ -29,27 +32,12 @@ const ParticipantLoginPage: React.FC = () => {
     }
   }, [isParticipantAuthenticated, navigate]);
 
+  // Parse URL parameters for elevated mode
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
     const elevatedParam = urlParams.get("elevated");
     setIsElevated(elevatedParam === "true");
   }, [location.search]);
-
-  // Enter triggers login
-  useEffect(() => {
-    if (!loadingDb) {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Enter") {
-          participantLogin();
-        }
-      };
-
-      window.addEventListener("keydown", handleKeyDown);
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-      };
-    }
-  }, [loadingDb, participantLogin]);
 
   // Unused because this functionality is currently disabled
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
