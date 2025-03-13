@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FullLoader } from "../components/loader";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
@@ -8,14 +8,26 @@ import Button from "../components/buttons/button";
 import { Link } from "react-router-dom";
 
 /**
- * ParticipantLoginPage component for participant authentication with database touch and loader
+ * ParticipantLoginPage component for participant authentication.
+ * Navigation after successful authentication is handled by the backend.
+ * Already authenticated participants are redirected to the root dashboard.
  */
 const ParticipantLoginPage: React.FC = () => {
   const [isElevated, setIsElevated] = useState(false);
+  const navigate = useNavigate();
 
-  const { participantLogin } = useAuth();
+  const { participantLogin, isParticipantAuthenticated } = useAuth();
   const loadingDb = useDbStatus();
   const location = useLocation();
+
+  /**
+   * Redirects already authenticated participants to the root dashboard
+   */
+  useEffect(() => {
+    if (isParticipantAuthenticated) {
+      navigate("/");
+    }
+  }, [isParticipantAuthenticated, navigate]);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);

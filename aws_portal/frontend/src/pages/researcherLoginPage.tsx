@@ -8,7 +8,9 @@ import { Link } from "react-router-dom";
 import "./loginPage.css";
 
 /**
- * Login page for researchers using Cognito authentication
+ * Login page for researchers using Cognito authentication.
+ * Navigation after successful authentication is handled by the backend.
+ * Already authenticated researchers are redirected to the coordinator dashboard.
  */
 const ResearcherLoginPage: React.FC = () => {
   const loadingDb = useDbStatus();
@@ -21,7 +23,7 @@ const ResearcherLoginPage: React.FC = () => {
   } = useAuth();
 
   /**
-   * Redirects authenticated researchers to the coordinator dashboard
+   * Redirects already authenticated researchers to the coordinator dashboard
    */
   useEffect(() => {
     if (isResearcherAuthenticated) {
