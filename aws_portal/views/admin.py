@@ -144,7 +144,6 @@ def account_create(account):
         # Create database account
         new_account = Account()
         populate_model(new_account, data)
-        new_account.public_id = str(uuid.uuid4())
         new_account.created_on = datetime.now(UTC)
         new_account.is_confirmed = False  # Will be confirmed on first login
 

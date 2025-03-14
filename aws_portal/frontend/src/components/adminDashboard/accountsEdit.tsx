@@ -377,8 +377,7 @@ const AccountsEdit = () => {
       first_name: firstName,
       last_name: lastName,
       phone_number: phoneNumber || "", // Always send phone_number, empty string signals deletion
-      studies: studies,
-      password: "DEPRECATED" // Required by API contract but no longer used
+      studies: studies
     };
 
     // Determine if this is an edit or create operation

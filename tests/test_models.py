@@ -74,11 +74,6 @@ class TestAccount:
         assert foo.first_name == "John"
         assert foo.last_name == "Smith"
 
-    def test_check_password(self, app):
-        q1 = Account.email == "foo@email.com"
-        foo = Account.query.filter(q1).first()
-        assert foo.check_password("foo")
-
     def test_get_permissions_access_group(self, app):
         q1 = Account.email == "foo@email.com"
         q2 = AccessGroup.name == "foo"

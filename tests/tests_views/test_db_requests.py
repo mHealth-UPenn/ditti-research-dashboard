@@ -88,13 +88,6 @@ def test_study_contacts_invalid_study(researcher_get):
     assert len(res) == 0
 
 
-def test_account_details(researcher_get):
-    res = researcher_get("/db/get-account-details")
-    res = json.loads(res.data)
-    assert "firstName" in res
-    assert res["firstName"] == "John"
-
-
 def test_get_about_sleep_templates(researcher_get):
     """Test the endpoint to get about sleep templates with app parameter"""
     with patch("aws_portal.models.AboutSleepTemplate.query") as mock_query:

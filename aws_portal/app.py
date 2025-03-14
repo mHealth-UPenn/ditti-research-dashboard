@@ -1,10 +1,7 @@
-from datetime import datetime, timedelta, timezone, UTC
-import json
 from logging.config import dictConfig
 import os
 
 from flask import Flask, Response, request
-from flask_jwt_extended.utils import create_access_token, current_user, get_jwt
 
 from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
@@ -12,8 +9,7 @@ from aws_portal.commands import (
     init_study_subject_click, clear_cache_click, init_lambda_task_click,
     delete_lambda_tasks_click, export_accounts_to_cognito_click
 )
-from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, tm, oauth
-from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, cache
+from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, cache, tm, oauth
 from aws_portal.views import (
     admin, aws_requests, base, data_processing_task, db_requests,
     participant, fitbit_data
@@ -56,29 +52,6 @@ def create_app(testing=False):
 
     # @app.before_request
     # def log_request():
-
-    # after each request refresh JWTs that expire within 15 minutes
-    @app.after_request
-    def refresh_expiring_jwts(response: Response):
-        try:
-            exp_timestamp = get_jwt()["exp"]
-            now = datetime.now(timezone.utc)
-            exp = now + timedelta(minutes=15)
-            target_timestamp = int(datetime.timestamp(exp))
-
-            # if the user"s JWT expires within 15 minutes
-            if target_timestamp > exp_timestamp:
-
-                # create a new token for the user
-                access_token = create_access_token(current_user)
-                data = response.json
-                data["jwt"] = access_token
-                response.data = json.dumps(data)
-
-            return response
-
-        except (RuntimeError, KeyError):
-            return response
 
     @app.after_request
     def log_response(response: Response):

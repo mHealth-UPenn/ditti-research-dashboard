@@ -9,7 +9,6 @@ def test_account_create(post_admin):
             "first_name": "foo",
             "last_name": "bar",
             "email": "baz@email.com",
-            "password": "foo123456",
             "access_groups": [
                 {"id": 1}
             ],
@@ -27,7 +26,7 @@ def test_account_create(post_admin):
     res = post_admin("/admin/account/create", data=data)
     data = json.loads(res.data)
     assert "msg" in data
-    assert data["msg"] == "Account Created Successfully. An email with temporary login credentials has been sent to the user."
+    assert "Account Created Successfully" in data["msg"]
 
     q1 = Account.email == "baz@email.com"
     foo = Account.query.filter(q1).first()

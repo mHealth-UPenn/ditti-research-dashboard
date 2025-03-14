@@ -2,13 +2,13 @@ from datetime import datetime, UTC, timedelta
 import enum
 import logging
 import os
-import uuid
 from flask import current_app
 from sqlalchemy import select, func, tuple_, event, Enum
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.sql.schema import UniqueConstraint
-from aws_portal.extensions import bcrypt, db, jwt
+from aws_portal.extensions import db
+import re
 
 
 logger = logging.getLogger(__name__)
@@ -110,14 +110,13 @@ def init_admin_group():
     return access_group
 
 
-def init_admin_account(email=None, password=None):
+def init_admin_account(email=None):
     """
     Initialize the admin account
 
     Args
     ----
     email: str (optional)
-    password: str (optional)
 
     Returns
     -------
@@ -130,7 +129,6 @@ def init_admin_account(email=None, password=None):
         admin access group does not exist.
     """
     email = email or os.getenv("FLASK_ADMIN_EMAIL")
-    password = password or os.getenv("FLASK_ADMIN_PASSWORD")
     admin = Account.query.filter(Account.email == email).first()
 
     if admin is not None:
@@ -149,7 +147,6 @@ def init_admin_account(email=None, password=None):
     ditti_group = AccessGroup.query.filter(query).first()
 
     admin = Account(
-        public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
         first_name="AWS",
         last_name="Admin",
@@ -158,7 +155,6 @@ def init_admin_account(email=None, password=None):
     )
 
     db.session.commit()
-    admin.password = password
     admin_join = JoinAccountAccessGroup(
         account=admin, access_group=admin_group
     )
@@ -477,14 +473,12 @@ real-time data essential for understanding the physiological effects of mindfuln
 
     # Create an admin account
     account = Account(
-        public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
         first_name="Jane",
         last_name="Doe",
         email=os.getenv("FLASK_ADMIN_EMAIL"),
         is_confirmed=True,
     )
-    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
     JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
     JoinAccountAccessGroup(account=account, access_group=wear_admin_group)
@@ -492,40 +486,34 @@ real-time data essential for understanding the physiological effects of mindfuln
 
     # Create a Ditti admin account to test whether permissions are scoped to the Ditti Dashboard only
     account = Account(
-        public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
         first_name="Jane",
         last_name="Doe",
         email="Ditti Admin",
         is_confirmed=True,
     )
-    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
     JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     db.session.add(account)
 
     # Create a Wearable admin account to test whether permissions are scoped to the Wearable Dashboard only
     account = Account(
-        public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
         first_name="Jane",
         last_name="Doe",
         email="Wearable Admin",
         is_confirmed=True,
     )
-    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
     JoinAccountAccessGroup(account=account, access_group=wear_admin_group)
     db.session.add(account)
 
     # Create a Study A Admin account to test whether permissions are scoped to Study A only
     account = Account(
-        public_id=str(uuid.uuid4()),
         created_on=datetime.now(UTC),
         first_name="Jane",
         last_name="Doe",
         email="Study A Admin",
         is_confirmed=True,
     )
-    account.password = os.getenv("FLASK_ADMIN_PASSWORD")
     role = Role.query.filter(Role.name == "Admin").first()
     JoinAccountStudy(account=account, study=study_a, role=role)
     JoinAccountAccessGroup(
@@ -541,14 +529,12 @@ real-time data essential for understanding the physiological effects of mindfuln
         Role.name == "Can View Participants").first()
     for role_name in roles.keys():
         account = Account(
-            public_id=str(uuid.uuid4()),
             created_on=datetime.now(UTC),
             first_name="Jane",
             last_name="Doe",
             email=role_name,
             is_confirmed=True,
         )
-        account.password = os.getenv("FLASK_ADMIN_PASSWORD")
         role = Role.query.filter(Role.name == role_name).first()
         JoinAccountStudy(account=account, study=study_a, role=role)
         JoinAccountStudy(account=account, study=study_b, role=other_role)
@@ -565,14 +551,12 @@ real-time data essential for understanding the physiological effects of mindfuln
     )
     for access_group_name in access_group_names:
         account = Account(
-            public_id=str(uuid.uuid4()),
             created_on=datetime.now(UTC),
             first_name="Jane",
             last_name="Doe",
             email=access_group_name,
             is_confirmed=True,
         )
-        account.password = os.getenv("FLASK_ADMIN_PASSWORD")
         access_group = AccessGroup.query.filter(
             AccessGroup.name == access_group_name
         ).first()
@@ -748,24 +732,6 @@ def init_study_subject(ditti_id):
     db.session.commit()
 
 
-@jwt.user_identity_loader
-def user_identity_lookup(account):
-    return account.public_id
-
-
-@jwt.user_lookup_loader
-def user_lookup_callback(_jwt_header, jwt_data):
-    identity = jwt_data["sub"]
-    return Account.query.filter(Account.public_id == identity).first()
-
-
-@jwt.token_in_blocklist_loader
-def check_if_token_revoked(jwt_header, jwt_payload):
-    jti = jwt_payload["jti"]
-    token = BlockedToken.query.filter(BlockedToken.jti == jti).first()
-    return token is not None
-
-
 class SleepLevelEnum(enum.Enum):
     wake = "wake"
     light = "light"
@@ -793,9 +759,6 @@ class Account(db.Model):
     Vars
     ----
     id: sqlalchemy.Column
-    public_id: sqlalchemy.Column
-        A random string to be used for JWT authentication, e.g.,
-        `public_id=str(uuid.uuid4())`.
     created_on: sqlalchemy.Column
         The timestamp of the account"s creation, e.g., `datetime.now(UTC)`.
         The created_on value cannot be modified.
@@ -804,6 +767,7 @@ class Account(db.Model):
     last_name: sqlalchemy.Column
     email: sqlalchemy.Column
     phone_number: sqlalchemy.Column
+        Phone number in E.164 format (+1XXXXXXXXXX)
     is_confirmed: sqlalchemy.Column
         Whether the account holder has logged in and set their password.
     is_archived: sqlalchemy.Column
@@ -812,7 +776,6 @@ class Account(db.Model):
     """
     __tablename__ = "account"
     id = db.Column(db.Integer, primary_key=True)
-    public_id = db.Column(db.String, nullable=False, unique=True)
     created_on = db.Column(db.DateTime, nullable=False)
     last_login = db.Column(db.DateTime)
     first_name = db.Column(db.String, nullable=False)
@@ -821,7 +784,6 @@ class Account(db.Model):
     phone_number = db.Column(db.String, nullable=True, unique=True)
     is_confirmed = db.Column(db.Boolean, default=False, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
-    _password = db.Column(db.String, nullable=False)
 
     # ignore archived access groups
     access_groups = db.relationship(
@@ -861,6 +823,23 @@ class Account(db.Model):
 
         return val
 
+    @validates("phone_number")
+    def validate_phone_number(self, key, value):
+        """
+        Validate phone number format. Must be in E.164 format.
+        For US numbers: +1 followed by 10 digits.
+        """
+        if value is None:
+            return None
+
+        # If it's already in valid E.164 format, return as is
+        if value and re.match(r'^\+[1-9]\d{1,14}$', value):
+            return value
+
+        # Invalid format
+        raise ValueError(
+            "Phone number must be in E.164 format (e.g., +12345678901)")
+
     @hybrid_property
     def full_name(self):
         """
@@ -871,37 +850,6 @@ class Account(db.Model):
     @full_name.expression
     def full_name(cls):
         return func.concat(cls.first_name, " ", cls.last_name)
-
-    @hybrid_property
-    def password(self):
-        """
-        str: The account holder"s password
-        """
-        return self._password
-
-    @password.setter
-    def password(self, val):
-        """
-        Hashes the password using bcrypt
-        """
-        password_hash = bcrypt.generate_password_hash(val).decode("utf-8")
-        self._password = password_hash
-        return True
-
-    def check_password(self, val):
-        """
-        Whether a password matches the account holder"s password.
-
-        Args
-        ----
-        val: str
-            The password to check.
-
-        Returns
-        -------
-        bool
-        """
-        return bcrypt.check_password_hash(self._password, val)
 
     def get_permissions(self, app_id, study_id=None):
         """
@@ -1802,7 +1750,7 @@ class JoinStudySubjectStudy(db.Model):
         """
         if self.created_on:
             raise ValueError(
-                "JoinStudySubjectApi.created_on cannot be modified.")
+                "JoinStudySubjectStudy.created_on cannot be modified.")
         return val
 
     @validates("expires_on")

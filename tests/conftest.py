@@ -1,5 +1,3 @@
-from datetime import timedelta
-from functools import partial
 import os
 import boto3
 from flask import Blueprint
@@ -11,8 +9,7 @@ from aws_portal.models import (
     init_admin_account, init_admin_app, init_admin_group, init_db, init_api
 )
 from tests.testing_utils import (
-    create_joins, create_tables, get_auth_headers,
-    login_test_account, mock_researcher_auth_for_testing, setup_auth_flow_session
+    create_joins, create_tables, mock_researcher_auth_for_testing
 )
 from unittest.mock import patch
 import json
@@ -103,31 +100,6 @@ def app_context(app):
 
 
 @pytest.fixture
-def timeout_client(app):
-    """Create a test client with short token expiration for timeout tests."""
-    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(seconds=1)
-    with app.test_client() as client:
-        yield client
-
-
-# HTTP method fixtures
-@pytest.fixture
-def get(client):
-    """
-    Create a test GET request function with authentication headers.
-
-    Returns a partially applied function for making authenticated GET requests.
-    """
-    res = login_test_account("foo", client)
-    headers = get_auth_headers(res)
-
-    def _get(url, query_string=None, **kwargs):
-        return client.get(url, query_string=query_string, headers=headers, **kwargs)
-
-    return _get
-
-
-@pytest.fixture
 def get_admin(client):
     """
     Create a test GET request function with admin authentication.
@@ -143,22 +115,6 @@ def get_admin(client):
 
 
 @pytest.fixture
-def post(client):
-    """
-    Create a test POST request function with authentication headers.
-
-    Returns a partially applied function for making authenticated POST requests.
-    """
-    res = login_test_account("foo", client)
-    headers = get_auth_headers(res)
-
-    def _post(url, data=None, **kwargs):
-        return client.post(url, data=json.dumps(data), content_type="application/json", headers=headers, **kwargs)
-
-    return _post
-
-
-@pytest.fixture
 def post_admin(client):
     """
     Create a test POST request function with admin authentication.
@@ -171,22 +127,6 @@ def post_admin(client):
         return client.post(url, data=json.dumps(data), content_type="application/json", headers=headers, **kwargs)
 
     return _post
-
-
-@pytest.fixture
-def delete(client):
-    """
-    Create a test DELETE request function with authentication headers.
-
-    Returns a partially applied function for making authenticated DELETE requests.
-    """
-    res = login_test_account("foo", client)
-    headers = get_auth_headers(res)
-
-    def _delete(url, data=None, **kwargs):
-        return client.delete(url, data=json.dumps(data) if data else None, content_type="application/json", headers=headers, **kwargs)
-
-    return _delete
 
 
 @pytest.fixture

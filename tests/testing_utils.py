@@ -1,18 +1,7 @@
-from base64 import b64encode
 from datetime import datetime, timedelta, UTC
 import os
-import uuid
-import time
-import json
-import jwt
-import pytest
-import boto3
-from flask import current_app, jsonify
-from flask_jwt_extended.utils import decode_token
-from unittest.mock import patch, MagicMock
-import functools
 
-from aws_portal.extensions import bcrypt, db
+from aws_portal.extensions import db
 from aws_portal.models import (
     AccessGroup, Account, App, BlockedToken, JoinAccessGroupPermission,
     JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
@@ -50,21 +39,17 @@ access_groups = [
 
 accounts = [
     {
-        "public_id": str(uuid.uuid4()),
         "created_on": datetime.now(UTC),
         "first_name": "John",
         "last_name": "Smith",
         "email": "foo@email.com",
-        "is_confirmed": True,
-        "_password": bcrypt.generate_password_hash("foo").decode("utf-8")
+        "is_confirmed": True
     },
     {
-        "public_id": str(uuid.uuid4()),
         "created_on": datetime.now(UTC),
         "first_name": "Jane",
         "last_name": "Doe",
-        "email": "bar@email.com",
-        "_password": bcrypt.generate_password_hash("bar").decode("utf-8")
+        "email": "bar@email.com"
     }
 ]
 
@@ -354,36 +339,7 @@ def create_joins():
     db.session.add(join_study_subject_api_bar)
 
 
-def login_test_account(name, client, password=None):
-    # This function interacts with Account.email and remains unchanged
-    q1 = Account.email == f"{name}@email.com"
-    foo = Account.query.filter(q1).first()
-    if not foo:
-        raise ValueError(f"No account found with email: {name}@email.com")
-    cred = b64encode(f"{foo.email}:{password or name}".encode())
-    headers = {"Authorization": f"Basic {cred.decode()}"}
-    res = client.post("/iam/login", headers=headers)
-
-    return res
-
-
-def get_auth_headers(res, headers=None):
-    csrf_token = res.json.get("csrfAccessToken")
-    if not csrf_token:
-        raise ValueError("CSRF token not found in response.")
-    headers = headers or {}
-    csrf_header_name = current_app.config["JWT_ACCESS_CSRF_HEADER_NAME"]
-    headers.update({csrf_header_name: csrf_token})
-
-    jwt_token = res.json.get("jwt")
-    if jwt_token:
-        headers.update({"Authorization": f"Bearer {jwt_token}"})
-
-    return headers
-
-
 # New helper functions for Cognito authentication
-
 def mock_cognito_tokens():
     """Generate mock Cognito tokens for testing."""
     return {
