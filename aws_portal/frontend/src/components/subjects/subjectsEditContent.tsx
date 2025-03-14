@@ -1,4 +1,21 @@
-import { useState, useEffect, createRef, FocusEvent, useRef } from "react";
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import { useState, useEffect, createRef, useRef } from "react";
 import TextField from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { formatDateForInput, getEnrollmentInfoForStudy, makeRequest } from "../../utils";
@@ -38,15 +55,6 @@ interface ISubjectsEditContentProps {
 const cognitoPasswordValidation = {
   isMinLen: false,  // At least 8 characters
 };
-
-
-/**
- * Regular expressions for password validation
- */
-const numberRegex = /\d/;
-const specialCharRegex = /[!@#$%^&*(),.?":{}|<>]/;
-const uppercaseRegex = /[A-Z]/;
-const lowercaseRegex = /[a-z]/;
 
 
 const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
