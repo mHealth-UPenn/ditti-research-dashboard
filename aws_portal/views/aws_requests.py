@@ -34,59 +34,6 @@ blueprint = Blueprint("aws", __name__, url_prefix="/aws")
 logger = logging.getLogger(__name__)
 
 
-# TODO: Remove unused endpoint.
-@blueprint.route("/scan")
-@researcher_auth_required("View", "Ditti App Dashboard")
-def scan(account):  # TODO update unit test
-    """
-    Query a dynamodb table
-
-    Options
-    -------
-    app: 2
-    key: str 
-        The short name of the table (User, Tap, etc.)
-    query: str (optional)
-        The expression to query the table with, for example:
-            "(a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))"
-        Valid conditionals include:
-            == - equals
-            != - not equals
-            <= - less than or equal to
-            >= - greater than or equal to
-            << - less than
-            >> - greater than
-            BETWEEN - between two values, e.g., "fooBETWEEN"bar""baz""
-            BEGINS - will return results that begin with a given value
-            CONTAINS - will return results that contain a given value
-            ~~ - will return results that are true
-            ~ - will return results that are false
-        Expressions are evaluated by paranthetical sub-expressions first, then
-        from left to right. Expressions can only contain these characters:
-            a-zA-Z0-9_-=":.<>()~!
-
-    Response Syntax (200)
-    ---------------------
-    [
-        ...Table data
-    ]
-
-    Response Syntax (200)
-    ---------------------
-    {
-        msg: "Invalid Query"
-    }
-    """
-    key = request.args.get("key")
-    query = request.args.get("query")
-
-    if re.search(Query.invalid_chars, query) is not None:
-        return jsonify({"msg": "Invalid Query"})
-
-    res = Query(key, query).scan()
-    return jsonify(res["Items"])
-
-
 @blueprint.route("/get-taps")
 @researcher_auth_required("View", "Ditti App Dashboard")
 def get_taps(account):  # TODO update unit test
