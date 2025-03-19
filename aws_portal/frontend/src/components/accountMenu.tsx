@@ -326,16 +326,6 @@ const AccountMenu = ({
   }
 
   /**
-   * Clear all sensitive data fields
-   */
-  const clearSensitiveData = () => {
-    setCurrentPassword("");
-    setPasswordValue("");
-    setConfirmPasswordValue("");
-    setPasswordError(null);
-  }
-
-  /**
    * Get error feedback message for password fields
    */
   const getPasswordErrorFeedback = (errorType: PasswordError): string => {
