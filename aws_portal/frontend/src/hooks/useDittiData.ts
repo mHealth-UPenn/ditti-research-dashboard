@@ -44,7 +44,7 @@ const useDittiData = () => {
     let studies: Study[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
-      studies = await makeRequest("/db/get-studies")
+      studies = await makeRequest("/db/get-studies?app=2")
         .catch(() => {
           console.error("Unable to fetch studies data. Check account permissions.")
           return [];

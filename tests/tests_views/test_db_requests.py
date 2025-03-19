@@ -46,7 +46,8 @@ def test_apps_admin(get_admin):
 
 
 def test_studies(researcher_get):
-    res = researcher_get("/db/get-studies")
+    opts = "?app=2"
+    res = researcher_get("/db/get-studies" + opts)
     res = json.loads(res.data)
     assert len(res) == 1
     assert res[0]["name"] == "foo"

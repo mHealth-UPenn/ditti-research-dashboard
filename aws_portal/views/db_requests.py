@@ -50,6 +50,10 @@ def get_studies(account):  # TODO rewrite unit test
     """
     Get the data of all studies that the user has access to
 
+    Options
+    -------
+    app: 2
+
     Response Syntax (200)
     ---------------
     [
@@ -66,7 +70,7 @@ def get_studies(account):  # TODO rewrite unit test
     }
     """
     try:
-        # Get all non-archived studies the user has access to
+        # Get studies that the account has access to
         q = Study.query\
             .filter(~Study.is_archived)\
             .join(JoinAccountStudy)\
@@ -83,7 +87,7 @@ def get_studies(account):  # TODO rewrite unit test
 
 
 @blueprint.route("/get-study-details")
-@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required
 def get_study_details(account):
     """
     Get the details of a given study
@@ -100,31 +104,22 @@ def get_study_details(account):
     }
     """
     study_id = request.args["study"]
-    app_id = request.args["app"]
 
-    try:
-
-        # if the user has permissions to view all studies, a join table might
-        # not exist. Just get the study
-        permissions = account.get_permissions(app_id)
-        account.validate_ask("View", "All Studies", permissions)
-        study = Study.query.get(study_id)
-
-    except ValueError:
-        study = Study.query\
-            .join(JoinAccountStudy)\
-            .filter(
-                JoinAccountStudy.primary_key == tuple_(
-                    account.id, study_id
-                )
-            ).first()
+    # Get study details for a study the user has access to
+    study = Study.query\
+        .join(JoinAccountStudy)\
+        .filter(
+            JoinAccountStudy.primary_key == tuple_(
+                account.id, study_id
+            )
+        ).first()
 
     res = study.meta if study is not None else {}
     return jsonify(res)
 
 
 @blueprint.route("/get-study-contacts")
-@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required
 def get_study_contacts(account):
     """
     Get the contacts of a given study. This will return the contact information
@@ -150,24 +145,15 @@ def get_study_contacts(account):
     ]
     """
     study_id = request.args["study"]
-    app_id = request.args["app"]
 
-    try:
-
-        # if the user has permissions to view all studies, a join table might
-        # not exist. Just get the study
-        permissions = account.get_permissions(app_id)
-        account.validate_ask("View", "All Studies", permissions)
-        study = Study.query.get(study_id)
-
-    except ValueError:
-        study = Study.query\
-            .join(JoinAccountStudy)\
-            .filter(
-                JoinAccountStudy.primary_key == tuple_(
-                    account.id, study_id
-                )
-            ).first()
+    # First check if user has access to this study
+    study = Study.query\
+        .join(JoinAccountStudy)\
+        .filter(
+            JoinAccountStudy.primary_key == tuple_(
+                account.id, study_id
+            )
+        ).first()
 
     # if the user does not have access to the study, return an empty list
     res = []
@@ -195,7 +181,7 @@ def get_study_contacts(account):
 
 
 @blueprint.route("/edit-account-details", methods=["POST"])
-@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required
 def edit_account_details(account):
     """
     Edit the current user"s account details
@@ -256,7 +242,7 @@ def edit_account_details(account):
 
 
 @blueprint.route("/get-about-sleep-templates")
-@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required
 def get_about_sleep_templates(account):
     """
     Get all about sleep templates

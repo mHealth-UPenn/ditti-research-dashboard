@@ -268,7 +268,7 @@ class DataFactory {
 
       if (APP_ENV !== "demo") {
         try {
-          this.studies = await makeRequest("/db/get-studies");
+          this.studies = await makeRequest("/db/get-studies?app=2");
         } catch (error) {
           console.error(error);
         }
