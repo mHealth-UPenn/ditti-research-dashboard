@@ -19,14 +19,15 @@ import logging
 import traceback
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
+from aws_portal.auth.controllers import ResearcherAuthController
+from aws_portal.auth.decorators import researcher_auth_required
 from aws_portal.extensions import db, sanitizer
 from aws_portal.models import (
-    AboutSleepTemplate, AccessGroup, Account, Action, App, Api,
+    AboutSleepTemplate, AccessGroup, Account, Action, Api, App,
     JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
-    JoinRolePermission, Permission, Resource, Role, Study, StudySubject,
-    JoinStudySubjectStudy, JoinStudySubjectApi
+    JoinRolePermission, JoinStudySubjectApi, JoinStudySubjectStudy,
+    Permission, Resource, Role, Study, StudySubject
 )
-from aws_portal.auth.decorators import researcher_auth_required
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
@@ -133,8 +134,6 @@ def account_create(account):
     }
     """
     try:
-        from aws_portal.auth.controllers import ResearcherAuthController
-
         # Get data from request
         data = request.json["create"]
 
