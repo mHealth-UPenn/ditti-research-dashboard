@@ -33,7 +33,7 @@ const StudiesMenu: React.FC<StudiesMenuProps> = ({
 
   useEffect(() => {
     // get the studies that the user has access to
-    makeRequest("/db/get-studies?app=2").then((studies: Study[]) => {
+    makeRequest("/db/get-studies").then((studies: Study[]) => {
       setStudies(studies);
       setLoading(false);
     });

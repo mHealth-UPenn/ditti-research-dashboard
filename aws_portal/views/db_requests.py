@@ -45,14 +45,10 @@ def get_apps(account):
 
 
 @blueprint.route("/get-studies")
-@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required
 def get_studies(account):  # TODO rewrite unit test
     """
     Get the data of all studies that the user has access to
-
-    Options
-    -------
-    app: 2
 
     Response Syntax (200)
     ---------------
@@ -70,12 +66,7 @@ def get_studies(account):  # TODO rewrite unit test
     }
     """
     try:
-        app_id = request.args["app"]
-        permissions = account.get_permissions(app_id)
-        account.validate_ask("View", "All Studies", permissions)
-        q = Study.query.filter(~Study.is_archived)
-
-    except ValueError:
+        # Get all non-archived studies the user has access to
         q = Study.query\
             .filter(~Study.is_archived)\
             .join(JoinAccountStudy)\
