@@ -385,13 +385,13 @@ def user_edit(account):
     if re.search(r"[^\dA-Za-z]", user_permission_id) is not None:
         return jsonify({"msg": "Invalid Ditti ID: %s" % user_permission_id})
 
-    acronym = re.sub(r"[\d]+", "", user_permission_id)
+    study_ditti_id = re.sub(r"[\d]+", "", user_permission_id)
     study_id = request_data.get("study")
     study = Study.query.get(study_id)
 
     # check that the study acronym of the ditti id is valid
-    if acronym != study.ditti_id:
-        return jsonify({"msg": "Invalid study acronym: %s" % acronym})
+    if study_ditti_id != study.ditti_id:
+        return jsonify({"msg": "Invalid study acronym: %s" % study_ditti_id})
 
     query = "user_permission_id==\"%s\"" % user_permission_id
     res = Query("User", query).scan()
