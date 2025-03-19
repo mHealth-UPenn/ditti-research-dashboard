@@ -15,15 +15,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Button from "../components/buttons/button";
 import { FullLoader } from "../components/loader";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
 import { useEnterKeyLogin } from "../hooks/useKeyboardEvent";
 import "./loginPage.css";
-import Button from "../components/buttons/button";
-import { Link } from "react-router-dom";
 
 /**
  * ParticipantLoginPage component for participant authentication.
@@ -31,12 +30,10 @@ import { Link } from "react-router-dom";
  * Already authenticated participants are redirected to the root dashboard.
  */
 const ParticipantLoginPage: React.FC = () => {
-  const [isElevated, setIsElevated] = useState(false);
   const navigate = useNavigate();
 
   const { participantLogin, isParticipantAuthenticated } = useAuth();
   const loadingDb = useDbStatus();
-  const location = useLocation();
   // Setup Enter key to trigger login when not loading
   useEnterKeyLogin(!loadingDb, participantLogin);
 
@@ -50,11 +47,13 @@ const ParticipantLoginPage: React.FC = () => {
   }, [isParticipantAuthenticated, navigate]);
 
   // Parse URL parameters for elevated mode
-  useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const elevatedParam = urlParams.get("elevated");
-    setIsElevated(elevatedParam === "true");
-  }, [location.search]);
+  // useEffect(() => {
+  //   const urlParams = new URLSearchParams(location.search);
+  //   const elevatedParam = urlParams.get("elevated");
+  //   setIsElevated(elevatedParam === "true");
+  //   // Add state [isElevated, setIsElevated]
+  //   // Add switch between participantLogin() and participantLogin({ elevated: true }) based on isElevated
+  // }, [location.search]); // useLocation();
 
   return (
     <>

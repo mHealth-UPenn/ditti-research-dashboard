@@ -90,6 +90,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Redirects to Participant login page.
    */
   const participantLogin = useCallback((): void => {
+    // For elevated mode, make sure to pass it as a url param
     window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/participant/login`;
   }, []);
 

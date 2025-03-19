@@ -48,6 +48,7 @@ def login():
     Returns:
         Redirect to Cognito login page
     """
+    # For elevated login, pass the "elevated" url param and add scope handling in auth_controller.login()
     return auth_controller.login()
 
 
