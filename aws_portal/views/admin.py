@@ -199,7 +199,7 @@ def account_create(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": f"Internal server error when creating account. {str(e)}"}, 500)
+        return make_response({"msg": "Internal server error when creating account."}, 500)
 
     return jsonify({"msg": msg})
 
