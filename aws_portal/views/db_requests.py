@@ -70,16 +70,24 @@ def get_studies(account):  # TODO rewrite unit test
     }
     """
     try:
-        # Get studies that the account has access to
-        q = Study.query\
-            .filter(~Study.is_archived)\
-            .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == account.id)
+        app_id = request.args["app"]
+
+        # Two-tiered access control: permission-based or direct association
+        try:
+            permissions = account.get_permissions(app_id)
+            account.validate_ask("View", "All Studies", permissions)
+            # User has global study access permission
+            q = Study.query.filter(~Study.is_archived)
+        except ValueError:
+            # User has only direct study associations
+            q = Study.query\
+                .filter(~Study.is_archived)\
+                .join(JoinAccountStudy)\
+                .filter(JoinAccountStudy.account_id == account.id)
 
     except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
-
         return make_response({"msg": "Internal server error when retrieving studies."}, 500)
 
     res = [s.meta for s in q.all()]
@@ -104,15 +112,23 @@ def get_study_details(account):
     }
     """
     study_id = request.args["study"]
+    app_id = request.args["app"]
 
-    # Get study details for a study the user has access to
-    study = Study.query\
-        .join(JoinAccountStudy)\
-        .filter(
-            JoinAccountStudy.primary_key == tuple_(
-                account.id, study_id
-            )
-        ).first()
+    try:
+        # Check for global study access permission first
+        permissions = account.get_permissions(app_id)
+        account.validate_ask("View", "All Studies", permissions)
+        # Global access path: direct study lookup
+        study = Study.query.get(study_id)
+    except ValueError:
+        # Limited access path: verify study association through join table
+        study = Study.query\
+            .join(JoinAccountStudy)\
+            .filter(
+                JoinAccountStudy.primary_key == tuple_(
+                    account.id, study_id
+                )
+            ).first()
 
     res = study.meta if study is not None else {}
     return jsonify(res)
@@ -145,22 +161,30 @@ def get_study_contacts(account):
     ]
     """
     study_id = request.args["study"]
+    app_id = request.args["app"]
 
-    # First check if user has access to this study
-    study = Study.query\
-        .join(JoinAccountStudy)\
-        .filter(
-            JoinAccountStudy.primary_key == tuple_(
-                account.id, study_id
-            )
-        ).first()
+    try:
+        # Dual access paths based on permissions
+        permissions = account.get_permissions(app_id)
+        account.validate_ask("View", "All Studies", permissions)
+        # For global access, retrieve study directly
+        study = Study.query.get(study_id)
+    except ValueError:
+        # For role-based access, verify association through join table
+        study = Study.query\
+            .join(JoinAccountStudy)\
+            .filter(
+                JoinAccountStudy.primary_key == tuple_(
+                    account.id, study_id
+                )
+            ).first()
 
-    # if the user does not have access to the study, return an empty list
+    # Return empty list if study not found or not accessible
     res = []
     if study is None:
         return jsonify(res)
 
-    # get all accounts that have access to this study
+    # Retrieve contact information for all study participants
     joins = JoinAccountStudy.query\
         .filter(JoinAccountStudy.study_id == study_id)\
         .join(Account)\
@@ -190,7 +214,7 @@ def edit_account_details(account):
     --------------
     {
         ...Account data,
-        app: 2 (required) - The app ID is required for permission validation
+        app: 2 (required) - The app ID is required for authentication context
     }
 
     All data in the request body are optional. Any attributes that are excluded
@@ -209,14 +233,16 @@ def edit_account_details(account):
     }
     """
     try:
+        # Extract account data from request, removing the app identifier
         account_data = dict(request.json)
         if "app" in account_data:
             del account_data["app"]
 
+        # Update the account in the database
         populate_model(account, account_data)
         db.session.commit()
 
-        # Update Cognito user to keep account details in sync
+        # Synchronize changes with Cognito user pool
         from aws_portal.auth.controllers.researcher import ResearcherAuthController
         auth_controller = ResearcherAuthController()
         success, message = auth_controller.update_account_in_cognito({
@@ -249,7 +275,7 @@ def get_about_sleep_templates(account):
 
     Options
     -------
-    app: 2 | 3 (required) - The app ID is required for permission validation
+    app: 2 | 3 (required) - The app ID is required for authentication context
 
     Response Syntax (200)
     ---------------
@@ -267,7 +293,7 @@ def get_about_sleep_templates(account):
     }
     """
     try:
-        # Extract all non-archived sleep templates
+        # Retrieve all active sleep templates - no additional access control required
         about_sleep_templates = AboutSleepTemplate.query.filter(
             ~AboutSleepTemplate.is_archived
         ).all()
