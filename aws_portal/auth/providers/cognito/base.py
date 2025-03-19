@@ -16,9 +16,10 @@
 
 import logging
 import time
-from flask import current_app
 import jwt
 import requests
+from flask import current_app
+from jwt.algorithms import RSAAlgorithm
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from aws_portal.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
 from aws_portal.auth.utils.tokens import get_cognito_jwks
@@ -198,7 +199,6 @@ class CognitoAuthBase:
                     return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
                 # Get public key in PEM format for PyJWT
-                from jwt.algorithms import RSAAlgorithm
                 public_key = RSAAlgorithm.from_jwk(key)
 
                 # Verify the token
