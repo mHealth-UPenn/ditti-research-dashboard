@@ -56,16 +56,6 @@ const ParticipantLoginPage: React.FC = () => {
     setIsElevated(elevatedParam === "true");
   }, [location.search]);
 
-  // Unused because this functionality is currently disabled
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleParticipantLogin = () => {
-    if (isElevated) {
-      participantLogin({ elevated: true });
-    } else {
-      participantLogin();
-    }
-  };
-
   return (
     <>
       <FullLoader
