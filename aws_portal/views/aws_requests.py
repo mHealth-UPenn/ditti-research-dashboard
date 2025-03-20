@@ -362,7 +362,7 @@ def user_edit(account):
     {
         msg: "User Successfully Edited" or
             "Invalid Ditti ID: ..." or
-            "Invalid study acronym: ..." or
+            "Invalid Ditti ID: ..." or
             "Ditti ID not found: ..."
     }
 
@@ -391,7 +391,7 @@ def user_edit(account):
 
     # check that the study acronym of the ditti id is valid
     if study_ditti_id != study.ditti_id:
-        return jsonify({"msg": "Invalid study acronym: %s" % study_ditti_id})
+        return jsonify({"msg": "Invalid Ditti ID: %s" % study_ditti_id})
 
     query = "user_permission_id==\"%s\"" % user_permission_id
     res = Query("User", query).scan()

@@ -82,7 +82,7 @@ def test_user_edit_invalid_acronym(post_admin):
     res = post_admin("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
-    assert res["msg"] == "Invalid study acronym: QU"
+    assert res["msg"] == "Invalid Ditti ID: QU"
 
 
 @mock_aws
