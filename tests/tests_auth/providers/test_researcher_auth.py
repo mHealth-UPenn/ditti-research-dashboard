@@ -10,58 +10,6 @@ def researcher_auth(researcher_auth_fixture):
     return researcher_auth_fixture
 
 
-def test_get_user_from_claims(researcher_auth, mock_auth_test_data):
-    """Test extracting user info from claims."""
-    # Setup
-    mock_claims = mock_auth_test_data["researcher_claims"]
-
-    # Execute
-    result = researcher_auth.get_user_from_claims(mock_claims)
-
-    # Verify
-    assert result == {
-        "email": "researcher@example.com",
-        "name": "Test Researcher"
-    }
-
-
-def test_get_user_from_empty_claims(researcher_auth):
-    """
-    Test extracting user info from empty claims.
-
-    Verifies the implementation gracefully handles empty input.
-    """
-    # Setup
-    empty_claims = {}
-
-    # Execute
-    result = researcher_auth.get_user_from_claims(empty_claims)
-
-    # Verify - the implementation returns empty string for missing name, not None
-    assert result["email"] is None
-    assert result["name"] == ""  # Implementation returns empty string not None
-
-
-def test_get_user_from_partial_claims(researcher_auth):
-    """
-    Test extracting user info from partial claims.
-
-    Verifies the implementation handles input with some missing fields.
-    """
-    # Setup
-    partial_claims = {
-        "email": "researcher@example.com",
-        # Missing name
-    }
-
-    # Execute
-    result = researcher_auth.get_user_from_claims(partial_claims)
-
-    # Verify - the implementation returns empty string for missing name, not None
-    assert result["email"] == "researcher@example.com"
-    assert result["name"] == ""  # Implementation returns empty string not None
-
-
 @patch("aws_portal.auth.providers.cognito.researcher.Account")
 def test_get_account_from_email(mock_account, researcher_auth):
     """Test getting an account from an email."""

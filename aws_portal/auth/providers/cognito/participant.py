@@ -30,14 +30,6 @@ class ParticipantAuth(CognitoAuthBase):
     def __init__(self):
         super().__init__("participant")
 
-    def get_user_from_claims(self, claims):
-        """Extract user information from ID token claims."""
-        return {
-            "id": claims.get("cognito:username"),
-            "email": claims.get("email"),
-            "name": claims.get("name", "")
-        }
-
     def get_study_subject_from_ditti_id(self, ditti_id, include_archived=False):
         """
         Get a study subject by ditti_id.

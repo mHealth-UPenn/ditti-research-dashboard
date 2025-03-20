@@ -28,13 +28,6 @@ class ResearcherAuth(CognitoAuthBase):
     def __init__(self):
         super().__init__("researcher")
 
-    def get_user_from_claims(self, claims):
-        """Extract user information from ID token claims."""
-        return {
-            "email": claims.get("email"),
-            "name": claims.get("name", "")
-        }
-
     def get_account_from_email(self, email, include_archived=False):
         """
         Get Account object from email address.

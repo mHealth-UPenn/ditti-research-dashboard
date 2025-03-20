@@ -10,61 +10,6 @@ def participant_auth(participant_auth_fixture):
     return participant_auth_fixture
 
 
-def test_get_user_from_claims(participant_auth, mock_auth_test_data):
-    """Test extracting user info from claims."""
-    # Setup
-    mock_claims = mock_auth_test_data["participant_claims"]
-
-    # Execute
-    result = participant_auth.get_user_from_claims(mock_claims)
-
-    # Verify
-    assert result == {
-        "id": "ditti_12345",
-        "email": "test@example.com",
-        "name": "Test User"
-    }
-
-
-def test_get_user_from_empty_claims(participant_auth):
-    """
-    Test extracting user info from empty claims.
-
-    Verifies the implementation gracefully handles empty input.
-    """
-    # Setup
-    empty_claims = {}
-
-    # Execute
-    result = participant_auth.get_user_from_claims(empty_claims)
-
-    # Verify - the implementation returns empty string for missing name, not None
-    assert result["id"] is None
-    assert result["email"] is None
-    assert result["name"] == ""  # Implementation returns empty string not None
-
-
-def test_get_user_from_partial_claims(participant_auth):
-    """
-    Test extracting user info from partial claims.
-
-    Verifies the implementation handles input with some missing fields.
-    """
-    # Setup
-    partial_claims = {
-        "cognito:username": "ditti_12345",
-        # Missing email and name
-    }
-
-    # Execute
-    result = participant_auth.get_user_from_claims(partial_claims)
-
-    # Verify - the implementation returns empty string for missing name, not None
-    assert result["id"] == "ditti_12345"
-    assert result["email"] is None
-    assert result["name"] == ""  # Implementation returns empty string not None
-
-
 @patch("aws_portal.auth.providers.cognito.participant.StudySubject")
 def test_get_study_subject_from_ditti_id(mock_study_subject, participant_auth):
     """Test getting a study subject from a ditti ID."""

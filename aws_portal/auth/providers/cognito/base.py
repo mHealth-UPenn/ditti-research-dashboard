@@ -240,15 +240,3 @@ class CognitoAuthBase:
         except Exception as e:
             logger.error(f"Error validating ID token: {str(e)}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]
-
-    def get_user_from_claims(self, claims):
-        """Extract user information from ID token claims.
-
-        Args:
-            claims (dict): The claims from the ID token
-
-        Returns:
-            dict: User information
-        """
-        raise NotImplementedError(
-            "Subclasses must implement get_user_from_claims")

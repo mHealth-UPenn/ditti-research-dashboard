@@ -156,14 +156,10 @@ def base_cognito_auth():
     from aws_portal.auth.providers.cognito.base import CognitoAuthBase
 
     class TestCognitoAuth(CognitoAuthBase):
-        """Test implementation of CognitoAuthBase."""
+        """Test implementation of CognitoAuthBase for testing."""
 
         def __init__(self):
             super().__init__(user_type="test")
-
-        def get_user_from_claims(self, claims):
-            """Extract user info from claims."""
-            return {"user_id": claims.get("sub"), "email": claims.get("email")}
 
         def get_config_prefix(self):
             """Return the config prefix for test implementation."""
