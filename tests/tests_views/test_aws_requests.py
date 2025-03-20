@@ -68,7 +68,7 @@ def test_user_create(post_admin):
 
 
 @mock_aws
-def test_user_edit_invalid_acronym(post_admin):
+def test_user_edit_invalid_study_ditti_id(post_admin):
     data = {
         "group": 2,
         "study": 1,
@@ -82,7 +82,7 @@ def test_user_edit_invalid_acronym(post_admin):
     res = post_admin("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
-    assert res["msg"] == "Invalid Ditti ID: QU"
+    assert res["msg"] == "Invalid study Ditti ID: QU"
 
 
 @mock_aws
@@ -100,7 +100,7 @@ def test_user_edit_invalid_id(post_admin):
     res = post_admin("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
-    assert res["msg"] == "Invalid Ditti ID: FO000#"
+    assert res["msg"] == "Invalid study or study subject Ditti ID: FO000#"
 
 
 @mock_aws

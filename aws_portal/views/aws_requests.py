@@ -361,8 +361,8 @@ def user_edit(account):
     ---------------------
     {
         msg: "User Successfully Edited" or
-            "Invalid Ditti ID: ..." or
-            "Invalid Ditti ID: ..." or
+            "Invalid study or study subject Ditti ID: ..." or
+            "Invalid study Ditti ID: ..." or
             "Ditti ID not found: ..."
     }
 
@@ -381,17 +381,17 @@ def user_edit(account):
 
     user_permission_id = request_data.get("user_permission_id")
 
-    # check that the ditti id is valid
+    # check that the user_permission_id is alphanumeric
     if re.search(r"[^\dA-Za-z]", user_permission_id) is not None:
-        return jsonify({"msg": "Invalid Ditti ID: %s" % user_permission_id})
+        return jsonify({"msg": "Invalid study or study subject Ditti ID: %s" % user_permission_id})
 
     study_ditti_id = re.sub(r"[\d]+", "", user_permission_id)
     study_id = request_data.get("study")
     study = Study.query.get(study_id)
 
-    # check that the study acronym of the ditti id is valid
+    # check that the ditti id is valid
     if study_ditti_id != study.ditti_id:
-        return jsonify({"msg": "Invalid Ditti ID: %s" % study_ditti_id})
+        return jsonify({"msg": "Invalid study Ditti ID: %s" % study_ditti_id})
 
     query = "user_permission_id==\"%s\"" % user_permission_id
     res = Query("User", query).scan()
