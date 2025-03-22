@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { IStudySubject, IStudySubjectDetails, Study } from "../../interfaces";
+import { IStudySubjectDetails, Study } from "../../interfaces";
 import { differenceInDays } from "date-fns";
 import { CardContentRow } from "../cards/cardContentRow";
 import { ActiveIcon } from "../icons/activeIcon";

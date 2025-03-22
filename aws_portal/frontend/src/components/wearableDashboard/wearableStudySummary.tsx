@@ -62,7 +62,7 @@ export function WearableStudySummary() {
 
   // Get permissions and study information on load
   useEffect(() => {
-    const promises: Promise<any>[] = [];
+    const promises: Promise<void>[] = [];
     promises.push(
       getAccess(3, "Create", "Participants", studyId)
         .then(() => setCanCreate(true))

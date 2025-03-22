@@ -15,9 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as React from "react";
 import { useState, useEffect } from "react";
-import { ViewProps, DataRetrievalTask } from "../../interfaces";
+import { DataRetrievalTask } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { Table, Column, TableData } from "../table/table";
 import { Navbar } from "./navbar";
@@ -93,7 +92,7 @@ export const DataRetrievalTasks = () => {
         // Fetch data retrieval tasks (View permission is handled by the server)
         const data: DataRetrievalTask[] = await makeRequest("/data_processing_task/?app=1");
         setTasks(data);
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error fetching tasks:", error);
         flashMessage(
           <span>
@@ -119,7 +118,6 @@ export const DataRetrievalTasks = () => {
     return tasks.map((task) => {
       const statusDisplay = humanReadableStatus(task.status);
       const created = formatDate(task.createdOn);
-      const updated = formatDate(task.updatedOn);
       const completed = formatDate(task.completedOn);
 
       return [

@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { AudioFile, AudioTap, AudioTapDetails, Study, Tap, TapDetails, User, UserDetails } from "../interfaces";
+import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails } from "../interfaces";
 import { APP_ENV } from "../environment";
 import { makeRequest } from "../utils";
 import { DataFactory } from "../dataFactory";
@@ -38,7 +38,7 @@ export const useDittiData = () => {
   }, []);
 
   useEffect(() => {
-    const promises: Promise<any>[] = [];
+    const promises: Promise<void>[] = [];
 
     if (APP_ENV === "production") {
       promises.push(getTapsAsync().then(setTaps));
@@ -56,22 +56,6 @@ export const useDittiData = () => {
 
     Promise.all(promises).then(() => setDataLoading(false));
   }, []);
-
-  const getStudiesAsync = async (): Promise<Study[]> => {
-    let studies: Study[] = [];
-
-    if (APP_ENV === "production" || APP_ENV === "development") {
-      studies = await makeRequest("/db/get-studies?app=2")
-        .catch(() => {
-          console.error("Unable to fetch studies data. Check account permissions.")
-          return [];
-        });
-    } else if (dataFactory) {
-      studies = dataFactory.studies;
-    }
-
-    return studies;
-  };
 
   const getTapsAsync = async (): Promise<TapDetails[]> => {
     let taps: TapDetails[] = [];

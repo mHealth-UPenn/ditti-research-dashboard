@@ -45,7 +45,7 @@ export const StudiesView = () => {
     const fetchData = async () => {
       try {
         // get all studies that the user has access to
-        const promises: Promise<any>[] = [];
+        const promises: Promise<void>[] = [];
 
         // get all tap and audio file data
         promises.push(

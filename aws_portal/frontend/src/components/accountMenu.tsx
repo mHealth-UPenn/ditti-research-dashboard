@@ -17,7 +17,7 @@
 
 import { RefObject } from "react";
 import { useState } from "react";
-import { AccountDetails, ResponseBody, ViewProps } from "../interfaces";
+import { AccountDetails, ResponseBody } from "../interfaces";
 import { TextField } from "./fields/textField";
 import { makeRequest } from "../utils";
 import { AsyncButton } from "./buttons/asyncButton";
@@ -38,7 +38,6 @@ interface AccountMenuProps {
 export const AccountMenu = ({
   prefill,
   accountMenuRef,
-  hideMenu,
 }: AccountMenuProps) => {
   const [email, setEmail] = useState(prefill.email);
   const [firstName, setFirstName] = useState(prefill.firstName);
@@ -110,23 +109,6 @@ export const AccountMenu = ({
     flashMessage(msg, "danger");
     setEdit(false);
     setEditPassword(false);
-  }
-
-  /**
-   * Hide the account menu
-   */
-  const hide = () => {
-    setPasswordValue("");
-    setConfirmPasswordValue("");
-    setEdit(false);
-    setEditPassword(false);
-    hideMenu();
-  }
-
-  const logout = () => {
-    localStorage.removeItem("jwt");
-    // refresh the window to show the login page
-    location.reload();
   }
 
   return (

@@ -56,7 +56,7 @@ export const StudySummary = () => {
   useEffect(() => {
     if (study) {
       // check whether the user can enroll new subjects
-      const promises: Promise<any>[] = [];
+      const promises: Promise<void>[] = [];
       promises.push(
         getAccess(2, "Create", "Participants", study.id)
           .then(() => setCanCreate(true))

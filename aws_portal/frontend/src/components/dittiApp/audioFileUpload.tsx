@@ -17,7 +17,6 @@
 
 import { useState, ChangeEvent, createRef } from "react";
 import { TextField } from "../fields/textField";
-import { ResponseBody } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { Select } from "../fields/select";
 import { RadioField } from "../fields/radioField";

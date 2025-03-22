@@ -24,7 +24,7 @@ import { Button, ButtonProps } from "./button";
  * type: the button's type (primary, secondary, etc.)
  */
 interface AsyncButtonProps extends ButtonProps {
-  onClick: () => Promise<any>;
+  onClick: () => Promise<void>;
 }
 
 

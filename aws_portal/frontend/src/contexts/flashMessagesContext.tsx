@@ -16,7 +16,7 @@
  */
 
 // TODO: Extend implementation to Ditti App Dashboard
-import { createContext, useState, PropsWithChildren, useMemo, useContext, createRef } from "react";
+import { createContext, useState, PropsWithChildren, useContext, createRef } from "react";
 import { FlashMessageContextType, IFlashMessage } from "../interfaces";
 import { FlashMessage, FlashMessageVariant } from "../components/flashMessage/flashMessage";
 

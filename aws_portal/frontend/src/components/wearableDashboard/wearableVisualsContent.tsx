@@ -32,7 +32,6 @@ import { Link } from "react-router-dom";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
-import { IStudySubjectDetails } from "../../interfaces";
 
 
 /**

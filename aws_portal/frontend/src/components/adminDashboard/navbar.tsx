@@ -15,14 +15,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as React from "react";
-import { Accounts } from "./accounts";
-import { Studies } from "./studies";
-import { AccessGroups } from "./accessGroups";
-import { Roles } from "./roles";
-import { AboutSleepTemplates } from "./aboutSleepTemplates";
-import { DataRetrievalTasks } from "./dataRetrievalTasks";
-import { ViewProps } from "../../interfaces";
 import { LinkComponent } from "../links/linkComponent";
 import { Link } from "react-router-dom";
 

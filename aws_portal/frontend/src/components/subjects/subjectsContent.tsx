@@ -98,7 +98,7 @@ export const SubjectsContent = ({ app }: ISubjectsContentProps) => {
 
   useEffect(() => {
     if (study) {
-      const promises: Promise<any>[] = [];
+      const promises: Promise<void>[] = [];
       promises.push(
         getAccess(app, "Create", "Participants", study.id)
           .then(() => setCanCreate(true))

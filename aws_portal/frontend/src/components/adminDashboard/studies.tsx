@@ -163,7 +163,7 @@ export const Studies = () => {
    * Handle a successful response
    * @param id - the archived study id
    */
-  const handleSuccess = async (id: number) => {
+  const handleSuccess = async () => {
     flashMessage(<span>Study archived successfully.</span>, "success");
 
     // show the loading screen
