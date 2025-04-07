@@ -1,7 +1,24 @@
-import React, { useState, useEffect } from "react";
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import React, { useState, useEffect, useMemo } from "react";
 import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
-import TextField from "../fields/textField";
-import SubjectsEdit from "./subjectsEdit";
+import { TextField } from "../fields/textField";
+import { SubjectsEdit } from "./subjectsEdit";
 import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
 import { ReactComponent as Right } from "../../icons/arrowRight.svg";
 import { ReactComponent as ZoomIn } from "../../icons/zoomIn.svg";
@@ -44,22 +61,21 @@ interface SubjectVisualsProps extends ViewProps {
   user: UserDetails;
 }
 
-const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
+export const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
   getTaps,
   getAudioTaps,
   studyDetails,
   user,
-  flashMessage,
-  goBack,
   handleClick
 }) => {
   const [canEdit, setCanEdit] = useState(false);
   const [start, setStart] = useState(sub(new Date(new Date().setHours(9, 0, 0, 0)), { hours: 24 }));
   const [stop, setStop] = useState(new Date(new Date().setHours(9, 0, 0, 0)));
-  const [taps, setTaps] = useState(() => getTaps().filter((t) => t.dittiId === user.userPermissionId));
-  const [audioTaps, setAudioTaps] = useState(() => getAudioTaps().filter((t) => t.dittiId === user.userPermissionId));
   const [bouts, setBouts] = useState<Bout[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const taps = useMemo(() => getTaps().filter((t) => t.dittiId === user.userPermissionId), []);
+  const audioTaps = useMemo(() => getAudioTaps().filter((t) => t.dittiId === user.userPermissionId), []);
 
   useEffect(() => {
     setBouts(getBouts(taps));
@@ -688,5 +704,3 @@ const SubjectVisuals: React.FC<SubjectVisualsProps> = ({
     </div>
   );
 };
-
-export default SubjectVisuals;

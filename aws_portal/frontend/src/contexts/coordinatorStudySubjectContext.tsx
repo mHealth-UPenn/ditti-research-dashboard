@@ -1,8 +1,24 @@
-import { createContext, useState, useEffect, PropsWithChildren, useMemo, useContext } from "react";
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import { createContext, useState, useEffect, PropsWithChildren, useContext } from "react";
 import { makeRequest } from "../utils";
 import { IStudySubject, CoordinatorStudySubjectContextType, UserDetails, IStudySubjectDetails } from "../interfaces";
 import { APP_ENV } from "../environment";
-import DataFactory from "../dataFactory";
 
 export const CoordinatorStudySubjectContext = createContext<CoordinatorStudySubjectContextType | undefined>(undefined);
 
@@ -12,20 +28,12 @@ interface ICoordinatorStudySubjectProviderProps {
 
 
 // CoordinatorStudySubjectProvider component that wraps children with the study subject context.
-export default function CoordinatorStudySubjectProvider({
+export function CoordinatorStudySubjectProvider({
   app,
   children
 }: PropsWithChildren<ICoordinatorStudySubjectProviderProps>) {
   const [studySubjects, setStudySubjects] = useState<IStudySubjectDetails[]>([]);
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
-
-  const dataFactory: DataFactory | null = useMemo(() => {
-    if (APP_ENV === "development" || APP_ENV === "demo") {
-      // return new DataFactory();
-      return null;  // Until this data is available in the data factory
-    }
-    return null;
-  }, []);
 
   /**
    * Joins participant data fetched from the database and from AWS by Ditti ID. If a Ditti ID exists in only one data

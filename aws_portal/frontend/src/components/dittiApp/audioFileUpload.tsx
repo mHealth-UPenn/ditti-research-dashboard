@@ -1,23 +1,39 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { useState, ChangeEvent, createRef } from "react";
-import TextField from "../fields/textField";
-import { ResponseBody } from "../../interfaces";
+import { TextField } from "../fields/textField";
 import { makeRequest } from "../../utils";
-import Select from "../fields/select";
-import RadioField from "../fields/radioField";
+import { Select } from "../fields/select";
+import { RadioField } from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
 import axios, { AxiosError } from "axios";
-import FormView from "../containers/forms/formView";
-import Form from "../containers/forms/form";
-import FormTitle from "../text/formTitle";
-import FormRow from "../containers/forms/formRow";
-import FormField from "../containers/forms/formField";
-import FormSummary from "../containers/forms/formSummary";
-import FormSummaryTitle from "../text/formSummaryTitle";
-import FormSummaryText from "../containers/forms/formSummaryText";
-import FormSummaryButton from "../containers/forms/formSummaryButton";
-import FormSummarySubtext from "../containers/forms/formSummarySubtext";
-import Button from "../buttons/button";
-import FormSummaryContent from "../containers/forms/formSummaryContent";
+import { FormView } from "../containers/forms/formView";
+import { Form } from "../containers/forms/form";
+import { FormTitle } from "../text/formTitle";
+import { FormRow } from "../containers/forms/formRow";
+import { FormField } from "../containers/forms/formField";
+import { FormSummary } from "../containers/forms/formSummary";
+import { FormSummaryTitle } from "../text/formSummaryTitle";
+import { FormSummaryText } from "../containers/forms/formSummaryText";
+import { FormSummaryButton } from "../containers/forms/formSummaryButton";
+import { FormSummarySubtext } from "../containers/forms/formSummarySubtext";
+import { Button } from "../buttons/button";
+import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
@@ -35,7 +51,7 @@ interface IFile {
 }
 
 
-const AudioFileUpload = () => {
+export const AudioFileUpload = () => {
   const [category, setCategory] = useState("");
   const [availability, setAvailability] = useState("All Users");
   const [dittiId, setDittiId] = useState("");
@@ -566,5 +582,3 @@ const AudioFileUpload = () => {
     </FormView>
   );
 };
-
-export default AudioFileUpload;

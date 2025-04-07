@@ -1,16 +1,33 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { useState, useEffect } from "react";
 import { ResponseBody, Role } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
-import Table, { Column, TableData } from "../table/table";
-import Navbar from "./navbar";
+import { Table, Column, TableData } from "../table/table";
+import { Navbar } from "./navbar";
 import { SmallLoader } from "../loader";
-import Button from "../buttons/button";
-import ListView from "../containers/lists/listView";
-import ListContent from "../containers/lists/listContent";
+import { Button } from "../buttons/button";
+import { ListView } from "../containers/lists/listView";
+import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
-const Roles = () => {
+export const Roles = () => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canArchive, setCanArchive] = useState<boolean>(false);
@@ -232,5 +249,3 @@ const Roles = () => {
     </ListView>
   );
 };
-
-export default Roles;

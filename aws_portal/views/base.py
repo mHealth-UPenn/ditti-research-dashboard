@@ -26,6 +26,33 @@ blueprint = Blueprint("base", __name__)
 logger = logging.getLogger(__name__)
 
 
+@blueprint.route("/health")
+def health_check():
+    """
+    Health check endpoint to verify the service is running.
+
+    Response Syntax (200)
+    ---------------------
+    {
+        msg: "Service is healthy."
+    }
+
+    Response syntax (500)
+    ---------------------
+    {
+        msg: "Service is unhealthy."
+    }
+    """
+    try:
+        with db.engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return jsonify({"msg": "Service is healthy."})
+    except Exception:
+        exc = traceback.format_exc()
+        logger.error(exc)
+        return make_response({"msg": "Service is unhealthy."}, 500)
+
+
 @blueprint.route("/touch")
 def touch():
     """

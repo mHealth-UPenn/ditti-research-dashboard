@@ -1,0 +1,70 @@
+name: Bug Report
+description: Report an issue or unexpected behavior.
+title: "[Bug]"
+labels:
+  - bug
+assignees:
+  - JStover95
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Report
+        Use this form to file a bug report.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        Provide a description of the bug.
+        **Note:** Also attach any relevant screenshots or error messages.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: "Outline the steps required to reproduce this bug."
+      placeholder: |
+        1. Step 1
+        2. Step 2
+        3. Step 3
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected Behavior
+      description: "Explain what you expected to happen."
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: "Provide details about your environment (OS, browser, etc.)."
+      placeholder: |
+        - OS: (e.g. Windows, Mac, Linux)
+        - Browser: (e.g. Chrome, Firefox)
+        - Branch/Version: (e.g. `main`)
+    validations:
+      required: true
+
+  - type: textarea
+    id: related-issues
+    attributes:
+      label: Related Issues (if applicable)
+      description: "List any related GitHub issues."
+      placeholder: |
+        - Related to #Issue
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context (if applicable)
+      description: "Add any other context about the problem here."

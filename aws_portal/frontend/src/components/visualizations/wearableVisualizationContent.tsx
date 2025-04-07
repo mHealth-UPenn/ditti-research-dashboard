@@ -1,20 +1,37 @@
-import colors from "../../colors";
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+import { colors } from "../../colors";
 import { useVisualizationContext } from "../../contexts/visualizationContext";
 import { useWearableData } from "../../contexts/wearableDataContext";
 import { ISleepLevelClassic, ISleepLevelStages, IVisualizationProps } from "../../interfaces";
-import Timeline from "./timeline";
+import { Timeline } from "./timeline";
 import { AxisTop } from "@visx/axis";
 import { GridColumns } from '@visx/grid';
 import { Brush } from '@visx/brush';
 import { scaleLinear } from '@visx/scale';
-import Button from "../buttons/button";
+import { Button } from "../buttons/button";
 import ReplayIcon from '@mui/icons-material/Replay';
 import { differenceInDays } from "date-fns";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { useEffect, useMemo, useState } from "react";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
-import BoutsTimeline from "./boutsTimeline";
+import { BoutsTimeline } from "./boutsTimeline";
 import { SmallLoader } from "../loader";
 
 
@@ -65,7 +82,7 @@ interface IWearableVisualizationContentProps extends IVisualizationProps {
 }
 
 
-const WearableVisualizationContent = ({
+export const WearableVisualizationContent = ({
   marginTop,
   marginRight,
   marginBottom,
@@ -446,6 +463,3 @@ const WearableVisualizationContent = ({
     </div>
   );
 };
-
-
-export default WearableVisualizationContent;

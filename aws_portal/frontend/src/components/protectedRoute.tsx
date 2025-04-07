@@ -32,7 +32,7 @@ interface ProtectedRouteProps {
  * @param authMethod - The required authentication method ('participant', or 'researcher')
  * @returns The child component if authenticated, or a redirect to the login page otherwise.
  */
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, authMethod }) => {
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, authMethod }) => {
   const {
     isParticipantAuthenticated, 
     isResearcherAuthenticated,
@@ -54,5 +54,3 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, authMethod })
 
   return null;
 };
-
-export default ProtectedRoute;

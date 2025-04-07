@@ -175,11 +175,11 @@ def test_study_create(post_admin):
         "create": {
             "name": "baz",
             "acronym": "BAZ",
-            "ditti_id": "BZ",
+            "dittiId": "BZ",
             "email": "baz@email.com",
             "defaultExpiryDelta": 30,
-            "consent_information": "Consent text...",
-            "data_summary": "Data summary..."
+            "consentInformation": "Consent text...",
+            "dataSummary": "Data summary..."
         }
     }
 

@@ -1,15 +1,32 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { useState, useEffect } from "react";
 import { Study } from "../../interfaces";
 import { downloadExcelFromUrl, getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import ViewContainer from "../containers/viewContainer";
-import Card from "../cards/card";
-import Title from "../text/title";
-import Subtitle from "../text/subtitle";
-import Button from "../buttons/button";
-import CardContentRow from "../cards/cardContentRow";
+import { ViewContainer } from "../containers/viewContainer";
+import { Card } from "../cards/card";
+import { Title } from "../text/title";
+import { Subtitle } from "../text/subtitle";
+import { Button } from "../buttons/button";
+import { CardContentRow } from "../cards/cardContentRow";
 import { APP_ENV } from "../../environment";
-import WearableStudySubjects from "./wearableStudySubjects";
+import { WearableStudySubjects } from "./wearableStudySubjects";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link, useSearchParams } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
@@ -30,7 +47,7 @@ interface StudyContact {
 }
 
 
-export default function WearableStudySummary() {
+export function WearableStudySummary() {
   const [searchParams] = useSearchParams();
   const sid = searchParams.get("sid");
   const studyId = sid ? parseInt(sid) : 0;
@@ -45,7 +62,7 @@ export default function WearableStudySummary() {
 
   // Get permissions and study information on load
   useEffect(() => {
-    const promises: Promise<any>[] = [];
+    const promises: Promise<void>[] = [];
     promises.push(
       getAccess(3, "Create", "Participants", studyId)
         .then(() => setCanCreate(true))

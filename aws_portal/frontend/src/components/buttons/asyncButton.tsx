@@ -16,7 +16,7 @@
  */
 
 import { PropsWithChildren, useState } from "react";
-import Button, { ButtonProps } from "./button";
+import { Button, ButtonProps } from "./button";
 
 /**
  * onClick: the function to handle clicks
@@ -24,11 +24,11 @@ import Button, { ButtonProps } from "./button";
  * type: the button's type (primary, secondary, etc.)
  */
 interface AsyncButtonProps extends ButtonProps {
-  onClick: () => Promise<any>;
+  onClick: () => Promise<void>;
 }
 
 
-const AsyncButton = ({
+export const AsyncButton = ({
   variant = "primary",
   size = "md",
   disabled = false,
@@ -98,5 +98,3 @@ const AsyncButton = ({
     </Button>
   );
 };
-
-export default AsyncButton;

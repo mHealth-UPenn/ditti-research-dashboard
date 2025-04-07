@@ -1,13 +1,30 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 // TODO: Extend implementation to Ditti App Dashboard
-import { createContext, useState, PropsWithChildren, useMemo, useContext, createRef } from "react";
+import { createContext, useState, PropsWithChildren, useContext, createRef } from "react";
 import { FlashMessageContextType, IFlashMessage } from "../interfaces";
-import FlashMessage, { FlashMessageVariant } from "../components/flashMessage/flashMessage";
+import { FlashMessage, FlashMessageVariant } from "../components/flashMessage/flashMessage";
 
 export const FlashMessageContext = createContext<FlashMessageContextType | undefined>(undefined);
 
 
 // FlashMessageContextProvider component that wraps children with studies context.
-export default function FlashMessageContextProvider({
+export function FlashMessageContextProvider({
   children
 }: PropsWithChildren<unknown>) {
   const [flashMessages, setFlashMessages] = useState<IFlashMessage[]>([]);

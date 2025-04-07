@@ -1,17 +1,34 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { useState, useEffect } from "react";
 import { Study } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader";
-import StudySubjects from "./studySubjects";
+import { StudySubjects } from "./studySubjects";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
-import ViewContainer from "../containers/viewContainer";
-import Card from "../cards/card";
-import Title from "../text/title";
-import Subtitle from "../text/subtitle";
-import Button from "../buttons/button";
-import CardContentRow from "../cards/cardContentRow";
+import { ViewContainer } from "../containers/viewContainer";
+import { Card } from "../cards/card";
+import { Title } from "../text/title";
+import { Subtitle } from "../text/subtitle";
+import { Button } from "../buttons/button";
+import { CardContentRow } from "../cards/cardContentRow";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
@@ -27,7 +44,7 @@ interface StudyContact {
   role: string;
 }
 
-const StudySummary = () => {
+export const StudySummary = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
@@ -39,7 +56,7 @@ const StudySummary = () => {
   useEffect(() => {
     if (study) {
       // check whether the user can enroll new subjects
-      const promises: Promise<any>[] = [];
+      const promises: Promise<void>[] = [];
       promises.push(
         getAccess(2, "Create", "Participants", study.id)
           .then(() => setCanCreate(true))
@@ -202,5 +219,3 @@ const StudySummary = () => {
     </ViewContainer>
   );
 };
-
-export default StudySummary;

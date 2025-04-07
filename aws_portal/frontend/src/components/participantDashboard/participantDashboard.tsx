@@ -15,14 +15,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import StudySubjectProvider from "../../contexts/studySubjectContext";
+import { StudySubjectProvider } from "../../contexts/studySubjectContext";
 import { useAuth } from "../../hooks/useAuth";
-import Button from "../buttons/button";
-import ViewContainer from "../containers/viewContainer";
-import ParticipantDashboardContent from "./participantDashboardContent";
+import { Button } from "../buttons/button";
+import { ViewContainer } from "../containers/viewContainer";
+import { ParticipantDashboardContent } from "./participantDashboardContent";
 
 
-export default function ParticipantDashboard() {
+export function ParticipantDashboard() {
   const { participantLogout } = useAuth();
 
   return (

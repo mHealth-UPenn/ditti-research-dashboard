@@ -18,10 +18,10 @@
 import { RefObject } from "react";
 import { useState } from "react";
 import { AccountDetails, ResponseBody } from "../interfaces";
-import TextField from "./fields/textField";
+import { TextField } from "./fields/textField";
 import { makeRequest, formatPhoneNumber } from "../utils";
-import AsyncButton from "./buttons/asyncButton";
-import Button from "./buttons/button";
+import { AsyncButton } from "./buttons/asyncButton";
+import { Button } from "./buttons/button";
 import { useAuth } from "../hooks/useAuth";
 import { useFlashMessageContext } from "../contexts/flashMessagesContext";
 
@@ -45,7 +45,7 @@ type PasswordError =
 /**
  * Account Menu component for managing user account details and password
  */
-const AccountMenu = ({
+export const AccountMenu = ({
   prefill,
   accountMenuRef,
   hideMenu,
@@ -321,6 +321,7 @@ const AccountMenu = ({
     setPasswordError(null);
     
     // Exit edit modes
+
     setEdit(false);
     setEditPassword(false);
   }
@@ -330,6 +331,7 @@ const AccountMenu = ({
    */
   const getPasswordErrorFeedback = (errorType: PasswordError): string => {
     return errorType ? getErrorMessage(errorType) : "";
+
   }
 
   return (
@@ -469,5 +471,3 @@ const AccountMenu = ({
     </div>
   );
 };
-
-export default AccountMenu;

@@ -1,41 +1,46 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 // TODO: Extend implementation to Ditti App Dashboard
-import { createContext, useState, useEffect, PropsWithChildren, useMemo, useContext } from "react";
+import { createContext, useState, useEffect, PropsWithChildren, useContext } from "react";
 import { makeRequest } from "../utils";
 import { StudySubjectContextType, IParticipant, IParticipantApi, IParticipantStudy } from "../interfaces";
 import { APP_ENV } from "../environment";
-import DataFactory from "../dataFactory";
 
 export const StudySubjectContext = createContext<StudySubjectContextType | undefined>(undefined);
 
 
 // StudySubjectProvider component that wraps children with the study subject context.
-export default function StudySubjectProvider({
+export function StudySubjectProvider({
   children
 }: PropsWithChildren<unknown>) {
   const [studies, setStudies] = useState<IParticipantStudy[]>([]);
   const [apis, setApis] = useState<IParticipantApi[]>([])
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
 
-  const dataFactory: DataFactory | null = useMemo(() => {
-    if (APP_ENV === "development" || APP_ENV === "demo") {
-      // return new DataFactory();
-      return null;  // Until this data is available in the data factory
-    }
-    return null;
-  }, []);
-
   // Fetch the participant's enrolled studies and connected APIs
   useEffect(() => {
-    const promises: Promise<any>[] = [];
+    const promises: Promise<void>[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
       promises.push(getStudySubject().then(([studiesData, apisData]) => {
         setStudies(studiesData);
         setApis(apisData);
       }));
-    // } else if (APP_ENV === "demo" && dataFactory) {
-    //   setStudies(dataFactory.studyJoins);
-    //   setApis(dataFactory.apiJoins);
     }
 
     Promise.all(promises).then(() => setStudySubjectLoading(false));

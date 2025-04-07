@@ -273,7 +273,14 @@ class TestQuery:
     def test_build_query(self):
         query = "foo==\"bar\""
         exp = Query.build_query(query)
-        assert_expression(exp, "foo", "=", "bar")
+        equals = exp.get_expression()["values"][0]
+        deleted = exp.get_expression()["values"][1]
+        assert exp.expression_operator == "AND"
+        assert equals.expression_operator == "="
+        assert equals.get_expression()["values"][0].name == "foo"
+        assert equals.get_expression()["values"][1] == "bar"
+        assert deleted.expression_operator == "NOT"
+        assert deleted.get_expression()["values"][0].get_expression()["values"][0].name
 
     @mock_aws
     def test_build_blocks(self):

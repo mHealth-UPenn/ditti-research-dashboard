@@ -1,7 +1,24 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from "react";
 import { IDataProcessingTask, ISleepLog,  IWearableDataContextType } from "../interfaces";
 import { APP_ENV } from "../environment";
-import DataFactory from "../dataFactory";
+import { DataFactory } from "../dataFactory";
 import { makeRequest } from "../utils";
 // import { useFlashMessageContext } from "./flashMessagesContext";
 
@@ -27,15 +44,16 @@ const formatDate = (date: Date) => {
 
 
 // ParticipantWearableDataProvider component that wraps children with the study subject context.
-export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<any>) => {
+export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<unknown>) => {
   const start = new Date();
   start.setDate(start.getDate() - 6);
 
-  // For now participants do not have the ability to change the start and end dates
-  const [startDate, setStartDate] = useState<Date>(start);  // Start one week ago
-  const [endDate, setEndDate] = useState<Date>(new Date());  // End today
   const [sleepLogs, setSleepLogs] = useState<ISleepLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  // For now participants do not have the ability to change the start and end dates
+  const startDate = start;  // Start one week ago
+  const endDate = new Date();  // End today
 
   // const { flashMessage } = useFlashMessageContext();
 
@@ -46,15 +64,8 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
     return null;
   }, []);
 
-  const handleFailure = (error: any) => {
+  const handleFailure = (error: unknown) => {
     console.error(error);
-    // const msg = 
-    //   <span>
-    //     <b>An unexpected error occurred</b>
-    //     <br />
-    //     {error.msg ? error.msg : "Internal server error"}
-    //   </span>
-    // flashMessage(msg, "danger");
   }
 
   useEffect(() => {
@@ -80,7 +91,7 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
           await dataFactory.init();
           setSleepLogs(dataFactory.sleepLogs);
         }
-      } catch (error: any) {
+      } catch (error) {
         handleFailure(error);
       }
     };
@@ -143,15 +154,8 @@ export const CoordinatorWearableDataProvider = ({
     return null;
   }, []);
 
-  const handleFailure = (error: any) => {
+  const handleFailure = (error: unknown) => {
     console.error(error);
-    const msg = 
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {error.msg ? error.msg : "Internal server error"}
-      </span>
-    // flashMessage(msg, "danger");
   }
 
   /**
@@ -192,7 +196,7 @@ export const CoordinatorWearableDataProvider = ({
           await dataFactory.init();
           setSleepLogs(dataFactory.sleepLogs);
         }
-      } catch (error: any) {
+      } catch (error) {
         handleFailure(error);
       }
     };
@@ -214,7 +218,7 @@ export const CoordinatorWearableDataProvider = ({
             scheduleSyncCheck(syncingTask.id);
           }
         }
-      } catch (error: any) {
+      } catch (error) {
         handleFailure(error);
       }
     };

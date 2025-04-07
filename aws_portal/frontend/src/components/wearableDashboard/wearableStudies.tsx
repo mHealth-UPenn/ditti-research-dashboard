@@ -1,14 +1,31 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { useEffect, useState } from "react";
 import { getAccess } from "../../utils";
-import Card from "../cards/card";
-import ViewContainer from "../containers/viewContainer";
-import CardContentRow from "../cards/cardContentRow";
-import Title from "../text/title";
-import ActiveIcon from "../icons/activeIcon";
+import { Card } from "../cards/card";
+import { ViewContainer } from "../containers/viewContainer";
+import { CardContentRow } from "../cards/cardContentRow";
+import { Title } from "../text/title";
+import { ActiveIcon } from "../icons/activeIcon";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { SmallLoader } from "../loader";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
-import LinkComponent from "../links/linkComponent";
+import { LinkComponent } from "../links/linkComponent";
 import { Link } from "react-router-dom";
 
 
@@ -26,7 +43,7 @@ interface IWearableDetails {
 }
 
 
-export default function WearableStudies() {
+export function WearableStudies() {
   const [canViewWearableData, setCanViewWearableData] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 

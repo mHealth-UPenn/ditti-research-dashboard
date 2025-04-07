@@ -1,21 +1,38 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { useEffect, useState } from "react";
 import { getAccess } from "../../utils";
 import { SmallLoader } from "../loader";
 import { sub } from "date-fns";
-import Card from "../cards/card";
-import ViewContainer from "../containers/viewContainer";
-import CardContentRow from "../cards/cardContentRow";
-import Button from "../buttons/button";
-import Title from "../text/title";
-import ActiveIcon from "../icons/activeIcon";
-import LinkComponent from "../links/linkComponent";
+import { Card } from "../cards/card";
+import { ViewContainer } from "../containers/viewContainer";
+import { CardContentRow } from "../cards/cardContentRow";
+import { Button } from "../buttons/button";
+import { Title } from "../text/title";
+import { ActiveIcon } from "../icons/activeIcon";
+import { LinkComponent } from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
 
 
-const StudiesView = () => {
+export const StudiesView = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [canViewAudioFiles, setCanViewAudioFiles] = useState(true);
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState(true);
@@ -28,7 +45,7 @@ const StudiesView = () => {
     const fetchData = async () => {
       try {
         // get all studies that the user has access to
-        const promises: Promise<any>[] = [];
+        const promises: Promise<void>[] = [];
 
         // get all tap and audio file data
         promises.push(
@@ -193,5 +210,3 @@ const StudiesView = () => {
     </ViewContainer>
   );
 };
-
-export default StudiesView;

@@ -1,6 +1,6 @@
 import pytest
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from aws_portal.models import Api, Study, StudySubject
 from aws_portal.extensions import db
 import traceback

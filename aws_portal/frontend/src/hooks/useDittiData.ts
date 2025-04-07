@@ -1,13 +1,30 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { useEffect, useMemo, useState } from "react";
-import { AudioFile, AudioTap, AudioTapDetails, Study, Tap, TapDetails, User, UserDetails } from "../interfaces";
+import { AudioFile, AudioTap, AudioTapDetails, Tap, TapDetails } from "../interfaces";
 import { APP_ENV } from "../environment";
 import { makeRequest } from "../utils";
-import DataFactory from "../dataFactory";
+import { DataFactory } from "../dataFactory";
 import { differenceInMilliseconds } from "date-fns";
 
 
 // TODO: extend to customize default values when needed in future vizualizations
-const useDittiData = () => {
+export const useDittiData = () => {
   const [dataLoading, setDataLoading] = useState(true);
   const [taps, setTaps] = useState<TapDetails[]>([]);
   const [audioTaps, setAudioTaps] = useState<AudioTapDetails[]>([]);
@@ -21,7 +38,7 @@ const useDittiData = () => {
   }, []);
 
   useEffect(() => {
-    const promises: Promise<any>[] = [];
+    const promises: Promise<void>[] = [];
 
     if (APP_ENV === "production") {
       promises.push(getTapsAsync().then(setTaps));
@@ -39,22 +56,6 @@ const useDittiData = () => {
 
     Promise.all(promises).then(() => setDataLoading(false));
   }, []);
-
-  const getStudiesAsync = async (): Promise<Study[]> => {
-    let studies: Study[] = [];
-
-    if (APP_ENV === "production" || APP_ENV === "development") {
-      studies = await makeRequest("/db/get-studies?app=2")
-        .catch(() => {
-          console.error("Unable to fetch studies data. Check account permissions.")
-          return [];
-        });
-    } else if (dataFactory) {
-      studies = dataFactory.studies;
-    }
-
-    return studies;
-  };
 
   const getTapsAsync = async (): Promise<TapDetails[]> => {
     let taps: TapDetails[] = [];
@@ -139,6 +140,3 @@ const useDittiData = () => {
     refreshAudioFiles,
   };
 };
-
-
-export default useDittiData;

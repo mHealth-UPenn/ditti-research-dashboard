@@ -16,9 +16,9 @@
  */
 
 import React, { useEffect, useReducer } from "react";
-import Table, { TableData } from "../table/table";
-import TextField from "../fields/textField";
-import ToggleButton from "../buttons/toggleButton";
+import { Table, TableData } from "../table/table";
+import { TextField } from "../fields/textField";
+import { ToggleButton } from "../buttons/toggleButton";
 import {
   AccessGroup,
   Account,
@@ -26,19 +26,19 @@ import {
   Role,
   Study,
 } from "../../interfaces";
-import Select from "../fields/select";
+import { Select } from "../fields/select";
 import { makeRequest, formatPhoneNumber } from "../../utils";
 import { SmallLoader } from "../loader";
-import FormView from "../containers/forms/formView";
-import Form from "../containers/forms/form";
-import FormSummary from "../containers/forms/formSummary";
-import FormTitle from "../text/formTitle";
-import FormRow from "../containers/forms/formRow";
-import FormField from "../containers/forms/formField";
-import FormSummaryTitle from "../text/formSummaryTitle";
-import FormSummaryContent from "../containers/forms/formSummaryContent";
-import FormSummaryText from "../containers/forms/formSummaryText";
-import FormSummaryButton from "../containers/forms/formSummaryButton";
+import { FormView } from "../containers/forms/formView";
+import { Form } from "../containers/forms/form";
+import { FormSummary } from "../containers/forms/formSummary";
+import { FormTitle } from "../text/formTitle";
+import { FormRow } from "../containers/forms/formRow";
+import { FormField } from "../containers/forms/formField";
+import { FormSummaryTitle } from "../text/formSummaryTitle";
+import { FormSummaryContent } from "../containers/forms/formSummaryContent";
+import { FormSummaryText } from "../containers/forms/formSummaryText";
+import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
@@ -194,7 +194,7 @@ const initialState: AccountsEditState = {
   studiesSelected: [],
 };
 
-const AccountsEdit = () => {
+export const AccountsEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
   const accountId = id ? parseInt(id) : 0
@@ -787,6 +787,3 @@ const AccountsEdit = () => {
     </FormView>
   );
 };
-
-
-export default AccountsEdit;

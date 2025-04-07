@@ -1864,6 +1864,7 @@ def study_subject_edit(account):
                     return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
 
                 did_consent = study_entry.get("did_consent", False)
+                expires_on = None
                 expires_on_str = study_entry.get("expires_on")
                 if expires_on_str:
                     try:
@@ -1874,6 +1875,7 @@ def study_subject_edit(account):
                 else:
                     expires_on = None  # Let the event listener set it
 
+                starts_on = None
                 starts_on_str = study_entry.get("starts_on")
                 if starts_on_str:
                     try:
@@ -1887,17 +1889,21 @@ def study_subject_edit(account):
                 if join:
                     # Update existing association
                     join.did_consent = did_consent
-                    join.expires_on = expires_on
-                    join.starts_on = starts_on
+                    if expires_on:
+                        join.expires_on = expires_on
+                    if starts_on:
+                        join.starts_on = starts_on
                 else:
                     # Create new association
                     new_join = JoinStudySubjectStudy(
                         study_subject=study_subject,
                         study=study,
                         did_consent=did_consent,
-                        expires_on=expires_on,
-                        starts_on=starts_on,
                     )
+                    if expires_on:
+                        new_join.expires_on = expires_on
+                    if starts_on:
+                        new_join.starts_on = starts_on
                     db.session.add(new_join)
 
         # Update APIs if provided

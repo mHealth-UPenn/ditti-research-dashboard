@@ -1,21 +1,37 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { useState, useEffect } from "react";
 import { downloadExcelFromUrl, getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
-import ViewContainer from "../containers/viewContainer";
-import Card from "../cards/card";
-import CardContentRow from "../cards/cardContentRow";
-import Title from "../text/title";
-import Subtitle from "../text/subtitle";
-import Button from "../buttons/button";
+import { ViewContainer } from "../containers/viewContainer";
+import { Card } from "../cards/card";
+import { CardContentRow } from "../cards/cardContentRow";
+import { Title } from "../text/title";
+import { Subtitle } from "../text/subtitle";
+import { Button } from "../buttons/button";
 import { APP_ENV } from "../../environment";
 import { useWearableData } from "../../contexts/wearableDataContext";
-import WearableVisualization from "../visualizations/wearableVisualization";
+import { WearableVisualization } from "../visualizations/wearableVisualization";
 import SyncIcon from '@mui/icons-material/Sync';
 import { Link } from "react-router-dom";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
-import { IStudySubjectDetails } from "../../interfaces";
 
 
 /**
@@ -53,7 +69,7 @@ interface IWearableVisualsContentProps {
 }
 
 
-export default function WearableVisualsContent({
+export function WearableVisualsContent({
   dittiId,
 }: IWearableVisualsContentProps) {
   const [canEdit, setCanEdit] = useState(false);

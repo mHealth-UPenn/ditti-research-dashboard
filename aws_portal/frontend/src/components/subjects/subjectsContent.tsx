@@ -1,16 +1,33 @@
+/* Ditti Research Dashboard
+ * Copyright (C) 2025 the Trustees of the University of Pennsylvania
+ *
+ * Ditti Research Dashboard is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Ditti Research Dashboard is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 import { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
-import Table from "../table/table";
+import { Table } from "../table/table";
 import { getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { IStudySubjectDetails} from "../../interfaces";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
-import Button from "../buttons/button";
-import LinkComponent from "../links/linkComponent";
-import Title from "../text/title";
-import Subtitle from "../text/subtitle";
-import ListView from "../containers/lists/listView";
-import ListContent from "../containers/lists/listContent";
+import { Button } from "../buttons/button";
+import { LinkComponent } from "../links/linkComponent";
+import { Title } from "../text/title";
+import { Subtitle } from "../text/subtitle";
+import { ListView } from "../containers/lists/listView";
+import { ListContent } from "../containers/lists/listContent";
 import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
@@ -24,7 +41,7 @@ interface ISubjectsContentProps {
 }
 
 
-const SubjectsContent = ({ app }: ISubjectsContentProps) => {
+export const SubjectsContent = ({ app }: ISubjectsContentProps) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
@@ -81,7 +98,7 @@ const SubjectsContent = ({ app }: ISubjectsContentProps) => {
 
   useEffect(() => {
     if (study) {
-      const promises: Promise<any>[] = [];
+      const promises: Promise<void>[] = [];
       promises.push(
         getAccess(app, "Create", "Participants", study.id)
           .then(() => setCanCreate(true))
@@ -245,5 +262,3 @@ if (loading || studiesLoading || studySubjectLoading) {
     </ListView>
   );
 };
-
-export default SubjectsContent;

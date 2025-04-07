@@ -1,3 +1,19 @@
+# Ditti Research Dashboard
+# Copyright (C) 2025 the Trustees of the University of Pennsylvania
+#
+# Ditti Research Dashboard is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published
+# by the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# Ditti Research Dashboard is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 from pydantic import ValidationError
 from typing import Any, Dict, Optional
 import logging
@@ -36,9 +52,9 @@ class ParticipantStudyModel(BaseModel):
     did_consent: bool
     created_on: datetime
     starts_on: datetime
-    expires_on: datetime
-    consent_information: Optional[str] = None
-    data_summary: Optional[str] = None
+    expires_on: Optional[datetime]
+    consent_information: Optional[str]
+    data_summary: Optional[str]
 
     model_config = common_config
 
@@ -51,7 +67,7 @@ class ParticipantStudyModel(BaseModel):
                 "did_consent": obj.did_consent,
                 "created_on": obj.created_on,
                 "starts_on": obj.created_on,  # TODO: Ensure same format as created_on
-                "expires_on": obj.expires_on,
+                "expires_on": getattr(obj, "expires_on", None),
                 "consent_information": getattr(obj.study, "consent_information", None),
                 "data_summary": getattr(obj.study, "data_summary", None)
             }
