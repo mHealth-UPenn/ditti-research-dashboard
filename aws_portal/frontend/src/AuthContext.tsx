@@ -32,8 +32,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isParticipantLoading, setIsParticipantLoading] = useState<boolean>(true);
   const [isResearcherLoading, setIsResearcherLoading] = useState<boolean>(true);
   const [dittiId, setDittiId] = useState<string | null>(null);
-  const [accountInfo, setAccountInfo] = useState<any>(null);
+  const INITIAL_ACCOUNT_STATE: AuthContextType["accountInfo"] = {
+    msg: "",
+    email: "",
+    firstName: "",
+    lastName: "",
+    accountId: "",
+    phoneNumber: undefined
+  };
+  const [accountInfo, setAccountInfo] = useState<AuthContextType["accountInfo"]>(INITIAL_ACCOUNT_STATE);
   const navigate = useNavigate();
+
+  const resetAccountInfo = useCallback(() => {
+    setAccountInfo(INITIAL_ACCOUNT_STATE);
+  }, []);
 
   useEffect(() => {
     /**
@@ -62,6 +74,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (res.msg === "Login successful") {
           setIsResearcherAuthenticated(true);
           setAccountInfo({
+            msg: res.msg,
             email: res.email,
             firstName: res.firstName,
             lastName: res.lastName,
@@ -70,13 +83,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           });
           
           // Set isFirstLogin state directly from the response
-          if (res.isFirstLogin !== undefined) {
-            setIsFirstLogin(res.isFirstLogin);
-          }
+          setIsFirstLogin(Boolean(res.isFirstLogin));
         }
       } catch {
         setIsResearcherAuthenticated(false);
-        setAccountInfo(null);
+        resetAccountInfo();
       } finally {
         setIsResearcherLoading(false);
       }
@@ -84,7 +95,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     checkParticipantAuthStatus();
     checkResearcherAuthStatus();
-  }, []);
+  }, [resetAccountInfo]);
 
   /**
    * Redirects to Participant login page.
@@ -116,8 +127,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const researcherLogout = useCallback((): void => {
     window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/researcher/logout`;
     setIsResearcherAuthenticated(false);
-    setAccountInfo(null);
-  }, [navigate]);
+    resetAccountInfo();
+  }, [resetAccountInfo]);
 
   return (
     <AuthContext.Provider
