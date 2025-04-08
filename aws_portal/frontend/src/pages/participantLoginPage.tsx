@@ -16,35 +16,44 @@
  */
 
 import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "../components/buttons/button";
 import { FullLoader } from "../components/loader";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
+import { useEnterKeyLogin } from "../hooks/useKeyboardEvent";
 import "./loginPage.css";
-import { Button } from "../components/buttons/button";
-import { Link } from "react-router-dom";
 
 /**
- * ParticipantLoginPage component for Cognito authentication with database touch and loader
+ * ParticipantLoginPage component for participant authentication.
+ * Navigation after successful authentication is handled by the backend.
+ * Already authenticated participants are redirected to the root dashboard.
  */
 export const ParticipantLoginPage: React.FC = () => {
-  const { cognitoLogin } = useAuth();
+  const navigate = useNavigate();
+
+  const { participantLogin, isParticipantAuthenticated } = useAuth();
   const loadingDb = useDbStatus();
+  // Setup Enter key to trigger login when not loading
+  useEnterKeyLogin(!loadingDb, participantLogin);
 
-  // Enter triggers login
+  /**
+   * Redirects already authenticated participants to the root dashboard
+   */
   useEffect(() => {
-    if (!loadingDb) {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Enter") {
-          cognitoLogin();
-        }
-      };
-
-      window.addEventListener("keydown", handleKeyDown);
-      return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-      };
+    if (isParticipantAuthenticated) {
+      navigate("/");
     }
-  }, [loadingDb, cognitoLogin]);
+  }, [isParticipantAuthenticated, navigate]);
+
+  // Parse URL parameters for elevated mode
+  // useEffect(() => {
+  //   const urlParams = new URLSearchParams(location.search);
+  //   const elevatedParam = urlParams.get("elevated");
+  //   setIsElevated(elevatedParam === "true");
+  //   // Add state [isElevated, setIsElevated]
+  //   // Add switch between participantLogin() and participantLogin({ elevated: true }) based on isElevated
+  // }, [location.search]); // useLocation();
 
   return (
     <>
@@ -55,8 +64,8 @@ export const ParticipantLoginPage: React.FC = () => {
         <div className="hidden sm:flex items-center mr-12 xl:mr-20">
           <img className="shadow-xl w-[10rem] xl:w-[12rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
         </div>
-        <div className="flex flex-col items-center justify-center bg-white mx-[auto] min-w-[24rem]">
-          <div className="flex flex-col justify-center mx-8 xl:mx-16">
+        <div className="relative flex flex-col justify-center bg-white mx-[auto] min-w-[24rem]">
+          <div className="flex flex-col mx-8 xl:mx-16">
             <div className="flex justify-center mb-8 sm:hidden">
               <div className="p-4 bg-extra-light rounded-xl shadow-lg">
                 <img className="w-[6rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
@@ -71,7 +80,7 @@ export const ParticipantLoginPage: React.FC = () => {
                 <p className="mb-4 whitespace-nowrap">Continue to our secure sign in:</p>
               </div>
               <div className="flex justify-center">
-                <Button rounded={true} onClick={cognitoLogin}>Sign in</Button>
+                <Button rounded={true} onClick={participantLogin}>Sign in</Button>
               </div>
             </div>
           </div>

@@ -14,20 +14,18 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime
 import logging
 import traceback
 
 from flask import Blueprint, jsonify, make_response, request
-from flask_jwt_extended import current_user, jwt_required
 from sqlalchemy.sql import tuple_
 
 from aws_portal.extensions import db
 from aws_portal.models import (
     AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,
-    JoinAccountStudy, Study, StudySubject, JoinStudySubjectStudy
+    JoinAccountStudy, Study
 )
-# from aws_portal.utils.auth import auth_required
+from aws_portal.auth.decorators import researcher_auth_required
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint("db", __name__, url_prefix="/db")
@@ -35,21 +33,20 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/get-apps")
-@jwt_required()
-def get_apps():
+@researcher_auth_required
+def get_apps(account):
     apps = App.query\
         .join(AccessGroup, AccessGroup.app_id == App.id)\
         .join(JoinAccountAccessGroup)\
-        .filter(JoinAccountAccessGroup.account_id == current_user.id)\
+        .filter(JoinAccountAccessGroup.account_id == account.id)\
         .all()
 
     return jsonify([a.meta for a in apps])
 
 
 @blueprint.route("/get-studies")
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def get_studies():  # TODO rewrite unit test
+@researcher_auth_required
+def get_studies(account):  # TODO rewrite unit test
     """
     Get the data of all studies that the user has access to
 
@@ -74,20 +71,23 @@ def get_studies():  # TODO rewrite unit test
     """
     try:
         app_id = request.args["app"]
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
-        q = Study.query.filter(~Study.is_archived)
 
-    except ValueError:
-        q = Study.query\
-            .filter(~Study.is_archived)\
-            .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == current_user.id)
+        # Two-tiered access control: permission-based or direct association
+        try:
+            permissions = account.get_permissions(app_id)
+            account.validate_ask("View", "All Studies", permissions)
+            # User has global study access permission
+            q = Study.query.filter(~Study.is_archived)
+        except ValueError:
+            # User has only direct study associations
+            q = Study.query\
+                .filter(~Study.is_archived)\
+                .join(JoinAccountStudy)\
+                .filter(JoinAccountStudy.account_id == account.id)
 
     except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
-
         return make_response({"msg": "Internal server error when retrieving studies."}, 500)
 
     res = [s.meta for s in q.all()]
@@ -95,9 +95,8 @@ def get_studies():  # TODO rewrite unit test
 
 
 @blueprint.route("/get-study-details")
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def get_study_details():
+@researcher_auth_required
+def get_study_details(account):
     """
     Get the details of a given study
 
@@ -116,19 +115,18 @@ def get_study_details():
     app_id = request.args["app"]
 
     try:
-
-        # if the user has permissions to view all studies, a join table might
-        # not exist. Just get the study
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
+        # Check for global study access permission first
+        permissions = account.get_permissions(app_id)
+        account.validate_ask("View", "All Studies", permissions)
+        # Global access path: direct study lookup
         study = Study.query.get(study_id)
-
     except ValueError:
+        # Limited access path: verify study association through join table
         study = Study.query\
             .join(JoinAccountStudy)\
             .filter(
                 JoinAccountStudy.primary_key == tuple_(
-                  current_user.id, study_id
+                    account.id, study_id
                 )
             ).first()
 
@@ -137,9 +135,8 @@ def get_study_details():
 
 
 @blueprint.route("/get-study-contacts")
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def get_study_contacts():
+@researcher_auth_required
+def get_study_contacts(account):
     """
     Get the contacts of a given study. This will return the contact information
     of only accounts that are explictly given access to a study. Accounts that
@@ -167,28 +164,27 @@ def get_study_contacts():
     app_id = request.args["app"]
 
     try:
-
-        # if the user has permissions to view all studies, a join table might
-        # not exist. Just get the study
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
+        # Dual access paths based on permissions
+        permissions = account.get_permissions(app_id)
+        account.validate_ask("View", "All Studies", permissions)
+        # For global access, retrieve study directly
         study = Study.query.get(study_id)
-
     except ValueError:
+        # For role-based access, verify association through join table
         study = Study.query\
             .join(JoinAccountStudy)\
             .filter(
                 JoinAccountStudy.primary_key == tuple_(
-                    current_user.id, study_id
+                    account.id, study_id
                 )
             ).first()
 
-    # if the user does not have access to the study, return an empty list
+    # Return empty list if study not found or not accessible
     res = []
     if study is None:
         return jsonify(res)
 
-    # get all accounts that have access to this study
+    # Retrieve contact information for all study participants
     joins = JoinAccountStudy.query\
         .filter(JoinAccountStudy.study_id == study_id)\
         .join(Account)\
@@ -208,43 +204,17 @@ def get_study_contacts():
     return jsonify(res)
 
 
-@blueprint.route("/get-account-details")
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def get_account_details():
-    """
-    Get the current user"s account details
-
-    Response Syntax (200)
-    ---------------------
-    {
-        firstName: str,
-        lastName: str,
-        email: str,
-        phoneNumber: str
-    }
-    """
-    res = {
-        "firstName": current_user.first_name,
-        "lastName": current_user.last_name,
-        "email": current_user.email,
-        "phoneNumber": current_user.phone_number
-    }
-
-    return jsonify(res)
-
-
 @blueprint.route("/edit-account-details", methods=["POST"])
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def edit_account_details():
+@researcher_auth_required
+def edit_account_details(account):
     """
     Edit the current user"s account details
 
     Request Syntax
     --------------
     {
-        ...Account data
+        ...Account data,
+        app: 2 (required) - The app ID is required for authentication context
     }
 
     All data in the request body are optional. Any attributes that are excluded
@@ -263,8 +233,28 @@ def edit_account_details():
     }
     """
     try:
-        populate_model(current_user, request.json)
+        # Extract account data from request, removing the app identifier
+        account_data = dict(request.json)
+        if "app" in account_data:
+            del account_data["app"]
+
+        # Update the account in the database
+        populate_model(account, account_data)
         db.session.commit()
+
+        # Synchronize changes with Cognito user pool
+        from aws_portal.auth.controllers.researcher import ResearcherAuthController
+        auth_controller = ResearcherAuthController()
+        success, message = auth_controller.update_account_in_cognito({
+            "email": account.email,
+            "first_name": account.first_name,
+            "last_name": account.last_name,
+            "phone_number": account.phone_number
+        })
+
+        if not success:
+            return make_response({"msg": f"Account updated in database but failed to update in Cognito: {message}"}, 400)
+
         msg = "Account details updated successfully"
 
     except Exception:
@@ -278,11 +268,14 @@ def edit_account_details():
 
 
 @blueprint.route("/get-about-sleep-templates")
-@jwt_required()
-# @auth_required("View", "Ditti App Dashboard")
-def get_about_sleep_templates():
+@researcher_auth_required
+def get_about_sleep_templates(account):
     """
     Get all about sleep templates
+
+    Options
+    -------
+    app: 2 | 3 (required) - The app ID is required for authentication context
 
     Response Syntax (200)
     ---------------
@@ -300,14 +293,14 @@ def get_about_sleep_templates():
     }
     """
     try:
+        # Retrieve all active sleep templates - no additional access control required
         about_sleep_templates = AboutSleepTemplate.query.filter(
             ~AboutSleepTemplate.is_archived
-        )
+        ).all()
 
     except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
-
         return make_response({"msg": "Internal server error when retrieving about sleep templates."}, 500)
 
     res = [a.meta for a in about_sleep_templates]

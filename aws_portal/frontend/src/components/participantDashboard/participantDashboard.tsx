@@ -23,7 +23,7 @@ import { ParticipantDashboardContent } from "./participantDashboardContent";
 
 
 export function ParticipantDashboard() {
-  const { cognitoLogout } = useAuth();
+  const { participantLogout } = useAuth();
 
   return (
     <main className="flex flex-col h-screen">
@@ -34,7 +34,7 @@ export function ParticipantDashboard() {
           <span className="text-sm whitespace-nowrap overflow-hidden">Participant Dashboard</span>
         </div>
         <div className="mr-8">
-          <Button variant="tertiary" size="sm" rounded={true} onClick={cognitoLogout}>Logout</Button>
+          <Button variant="tertiary" size="sm" rounded={true} onClick={participantLogout}>Logout</Button>
         </div>
       </div>
 

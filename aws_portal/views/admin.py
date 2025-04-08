@@ -17,17 +17,17 @@
 from datetime import datetime, UTC
 import logging
 import traceback
-import uuid
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
+from aws_portal.auth.controllers import ResearcherAuthController
+from aws_portal.auth.decorators import researcher_auth_required
 from aws_portal.extensions import db, sanitizer
 from aws_portal.models import (
-    AboutSleepTemplate, AccessGroup, Account, Action, App, Api,
+    AboutSleepTemplate, AccessGroup, Account, Action, Api, App,
     JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
-    JoinRolePermission, Permission, Resource, Role, Study, StudySubject,
-    JoinStudySubjectStudy, JoinStudySubjectApi
+    JoinRolePermission, JoinStudySubjectApi, JoinStudySubjectStudy,
+    Permission, Resource, Role, Study, StudySubject
 )
-from aws_portal.utils.auth import auth_required, validate_password
 from aws_portal.utils.db import populate_model
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
@@ -35,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/account")
-@auth_required("View", "Admin Dashboard")
-def account():
+@researcher_auth_required("View", "Admin Dashboard")
+def account(account):
     """
     Get one account or a list of all accounts. This will return one account if
     the account's database primary key is passed as a URL option
@@ -84,11 +84,12 @@ def account():
 
 
 @blueprint.route("/account/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Accounts")
-def account_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Accounts")
+def account_create(account):
     """
-    Create a new account.
+    Create a new account in the database and Cognito user pool.
+    Cognito will send an email with a temporary password to the user.
 
     Request syntax
     --------------
@@ -123,9 +124,7 @@ def account_create():
     Response syntax (400)
     ---------------------
     {
-        msg: "A password was not provided" or
-            "Minimum password length is 8 characters" or
-            "Maximum password length is 64 characters"
+        msg: "Error message from Cognito"
     }
 
     Response syntax (500)
@@ -135,41 +134,67 @@ def account_create():
     }
     """
     try:
+        # Get data from request
         data = request.json["create"]
-        password = data["password"]
 
-        # a password must be included
-        if not password:
-            msg = "A password was not provided."
-            return make_response({"msg": msg}, 400)
+        # Handle phone_number formatting and validation
+        if "phone_number" in data:
+            if data["phone_number"] == "":
+                # Explicitly set to None to trigger attribute deletion in Cognito
+                data["phone_number"] = None
+            elif data["phone_number"]:
+                # Strip any unwanted characters and ensure it starts with +
+                phone = data["phone_number"].strip()
 
-        # the password must be valid
-        valid = validate_password(password)
-        if valid != "valid":
-            return make_response({"msg": valid}, 400)
+                # Validate phone number format - must be in E.164 format
+                # International format: +[country code][number]
+                import re
+                # Check for + followed by digits not starting with 0 (country codes don't start with 0)
+                if not re.match(r"^\+[1-9]\d*$", phone):
+                    return make_response({"msg": "Phone number must start with + followed by country code and digits"}, 400)
 
-        account = Account()
+                data["phone_number"] = phone
 
-        populate_model(account, data)
-        account.public_id = str(uuid.uuid4())
-        account.created_on = datetime.now(UTC)
+        # Create database account
+        new_account = Account()
+        populate_model(new_account, data)
+        new_account.created_on = datetime.now(UTC)
+        new_account.is_confirmed = False  # Will be confirmed on first login
 
-        # add access groups
+        # Add access groups
         for entry in data["access_groups"]:
             access_group = AccessGroup.query.get(entry["id"])
-            JoinAccountAccessGroup(access_group=access_group, account=account)
+            JoinAccountAccessGroup(
+                access_group=access_group, account=new_account)
 
-        # add studies
+        # Add studies
         for entry in data["studies"]:
             study = Study.query.get(entry["id"])
             role = Role.query.get(entry["role"]["id"])
-            JoinAccountStudy(account=account, role=role, study=study)
+            JoinAccountStudy(account=new_account, role=role, study=study)
 
-        db.session.add(account)
+        # Add account to database
+        db.session.add(new_account)
         db.session.commit()
-        msg = "Account Created Successfully"
 
-    except Exception:
+        # Create Cognito user
+        auth_controller = ResearcherAuthController()
+        success, message = auth_controller.create_account_in_cognito({
+            "email": new_account.email,
+            "first_name": new_account.first_name,
+            "last_name": new_account.last_name,
+            "phone_number": new_account.phone_number
+        })
+
+        if not success:
+            # If Cognito account creation fails, rollback database changes
+            db.session.delete(new_account)
+            db.session.commit()
+            return make_response({"msg": message}, 400)
+
+        msg = "Account Created Successfully. An email with temporary login credentials has been sent to the user."
+
+    except Exception as e:
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
@@ -180,11 +205,11 @@ def account_create():
 
 
 @blueprint.route("/account/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Accounts")
-def account_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Accounts")
+def account_edit(account):
     """
-    Edit an existing account
+    Edit an existing account in the database and Cognito user pool.
 
     Request syntax
     --------------
@@ -223,9 +248,7 @@ def account_edit():
     Response syntax (400)
     ---------------------
     {
-        msg: "A password was not provided" or
-            "Minimum password length is 8 characters" or
-            "Maximum password length is 64 characters"
+        msg: "Error message"
     }
 
     Response syntax (500)
@@ -235,64 +258,80 @@ def account_edit():
     }
     """
     try:
+        from aws_portal.auth.controllers import ResearcherAuthController
+
+        # Get data from request
         data = request.json["edit"]
+
+        # Handle phone_number formatting and validation
+        if "phone_number" in data:
+            if data["phone_number"] == "":
+                data["phone_number"] = None
+            elif data["phone_number"]:
+                # Strip any unwanted characters and ensure it starts with +
+                phone = data["phone_number"].strip()
+
+                # Validate phone number format
+                import re
+                # Check for + followed by digits not starting with 0
+                if not re.match(r"^\+[1-9]\d*$", phone):
+                    return make_response({"msg": "Phone number must start with + followed by country code and digits"}, 400)
+
+                data["phone_number"] = phone
+
         account_id = request.json["id"]
-        account = Account.query.get(account_id)
+        edited_account = Account.query.get(account_id)
 
-        try:
-            password = data["password"]
-            # avoid updating the account with an empty password
-            if not password:
-                del data["password"]
-        except KeyError:
-            pass
+        # Prevent changing email as it's the primary account identifier
+        if "email" in data:
+            # Log any attempt to change email
+            if data["email"] != edited_account.email:
+                logger.warning(
+                    f"Attempt to change email from {edited_account.email} to {data['email']} was blocked")
+            # Remove email from data to prevent it from being updated
+            del data["email"]
 
-        # if there is a new password, it must be valid
-        else:
-            valid = validate_password(password)
-
-            if valid != "valid":
-                return make_response({"msg": valid}, 400)
-
-        populate_model(account, data)
+        # Update database account
+        populate_model(edited_account, data)
 
         # if a list of access groups were provided
         if "access_groups" in data:
 
             # remove access groups that are not in the new list
-            for join in account.access_groups:
+            for join in edited_account.access_groups:
                 a_ids = [a["id"] for a in data["access_groups"]]
 
                 if join.access_group_id not in a_ids:
                     db.session.delete(join)
 
             # add new access groups
-            a_ids = [join.access_group_id for join in account.access_groups]
+            a_ids = [join.access_group_id for join in edited_account.access_groups]
             for entry in data["access_groups"]:
                 if entry["id"] not in a_ids:
                     access_group = AccessGroup.query.get(entry["id"])
                     JoinAccountAccessGroup(
                         access_group=access_group,
-                        account=account
+                        account=edited_account
                     )
 
         # if a list of studies were provided
         if "studies" in data:
 
             # remove studies that are not in the new list
-            for join in account.studies:
+            for join in edited_account.studies:
                 s_ids = [s["id"] for s in data["studies"]]
 
                 if join.study_id not in s_ids:
                     db.session.delete(join)
 
-            s_ids = [join.study_id for join in account.studies]
+            s_ids = [join.study_id for join in edited_account.studies]
             for entry in data["studies"]:
                 study = Study.query.get(entry["id"])
 
                 # if the study is not new
                 if entry["id"] in s_ids:
-                    join = JoinAccountStudy.query.get((account.id, study.id))
+                    join = JoinAccountStudy.query.get(
+                        (edited_account.id, study.id))
 
                     # update the role
                     if join.role.id != int(entry["role"]["id"]):
@@ -301,9 +340,24 @@ def account_edit():
                 # add the study
                 else:
                     role = Role.query.get(entry["role"]["id"])
-                    JoinAccountStudy(account=account, role=role, study=study)
+                    JoinAccountStudy(account=edited_account,
+                                     role=role, study=study)
 
+        # Commit database changes
         db.session.commit()
+
+        # Update Cognito user
+        auth_controller = ResearcherAuthController()
+        success, message = auth_controller.update_account_in_cognito({
+            "email": edited_account.email,
+            "first_name": edited_account.first_name,
+            "last_name": edited_account.last_name,
+            "phone_number": edited_account.phone_number
+        })
+
+        if not success:
+            return make_response({"msg": f"Account updated in database but failed to update in Cognito: {message}"}, 400)
+
         msg = "Account Edited Successfully"
 
     except Exception:
@@ -317,13 +371,13 @@ def account_edit():
 
 
 @blueprint.route("/account/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Accounts")
-def account_archive():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Accounts")
+def account_archive(account):
     """
-    Archive an account. This action has the same effect as deleting an entry
-    from the database. However, archived items are only filtered from queries
-    and can be retrieved.
+    Archive an account in the database and disable it in Cognito.
+    This action has the same effect as deleting an entry from the database.
+    However, archived items are only filtered from queries and can be retrieved.
 
     Request syntax
     --------------
@@ -345,10 +399,26 @@ def account_archive():
     }
     """
     try:
+        from aws_portal.auth.controllers import ResearcherAuthController
+
+        # Get account
         account_id = request.json["id"]
-        account = Account.query.get(account_id)
-        account.is_archived = True
+        archived_account = Account.query.get(account_id)
+
+        # Archive account in database
+        archived_account.is_archived = True
         db.session.commit()
+
+        # Disable account in Cognito
+        auth_controller = ResearcherAuthController()
+        success, message = auth_controller.disable_account_in_cognito(
+            archived_account.email)
+
+        if not success:
+            logger.warning(
+                f"Failed to disable Cognito account for {archived_account.email}: {message}")
+            # We don't return an error here because the account was successfully archived in the database
+
         msg = "Account Archived Successfully"
 
     except Exception:
@@ -362,8 +432,8 @@ def account_archive():
 
 
 @blueprint.route("/study")
-@auth_required("View", "Admin Dashboard")
-def study():
+@researcher_auth_required("View", "Admin Dashboard")
+def study(account):
     """
     Get one study or a list of all studies. This will return one study if the
     study's database primary key is passed as a URL option
@@ -409,9 +479,9 @@ def study():
 
 
 @blueprint.route("/study/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Studies")
-def study_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Studies")
+def study_create(account):
     """
     Create a new study.
 
@@ -461,7 +531,8 @@ def study_create():
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
-            study.consent_information = sanitizer.sanitize(data["consentInformation"])
+            study.consent_information = sanitizer.sanitize(
+                data["consentInformation"])
             del data["consentInformation"]
         except KeyError:
             pass
@@ -487,9 +558,9 @@ def study_create():
 
 
 @blueprint.route("/study/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Studies")
-def study_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Studies")
+def study_edit(account):
     """
     Edit an existing study
 
@@ -532,7 +603,8 @@ def study_edit():
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
-            study.consent_information = sanitizer.sanitize(data["consentInformation"])
+            study.consent_information = sanitizer.sanitize(
+                data["consentInformation"])
             del data["consentInformation"]
         except KeyError:
             pass
@@ -557,9 +629,9 @@ def study_edit():
 
 
 @blueprint.route("/study/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Studies")
-def study_archive():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Studies")
+def study_archive(account):
     """
     Archive a study. This action has the same effect as deleting an entry
     from the database. However, archived items are only filtered from queries
@@ -602,8 +674,8 @@ def study_archive():
 
 
 @blueprint.route("/access-group")
-@auth_required("View", "Admin Dashboard")
-def access_group():
+@researcher_auth_required("View", "Admin Dashboard")
+def access_group(account):
     """
     Get one access group or a list of all studies. This will return one access
     group if the access groups's database primary key is passed as a URL option
@@ -651,9 +723,9 @@ def access_group():
 
 
 @blueprint.route("/access-group/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Access Groups")
-def access_group_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Access Groups")
+def access_group_create(account):
     """
     Create a new access group.
 
@@ -726,9 +798,9 @@ def access_group_create():
 
 
 @blueprint.route("/access-group/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Access Groups")
-def access_group_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Access Groups")
+def access_group_edit(account):
     """
     Edit an existing access group.
 
@@ -813,9 +885,9 @@ def access_group_edit():
 
 
 @blueprint.route("/access-group/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Access Groups")
-def access_group_archive():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Access Groups")
+def access_group_archive(account):
     """
     Archive an access group. This action has the same effect as deleting an entry
     from the database. However, archived items are only filtered from queries
@@ -858,8 +930,8 @@ def access_group_archive():
 
 
 @blueprint.route("/role")
-@auth_required("View", "Admin Dashboard")
-def role():
+@researcher_auth_required("View", "Admin Dashboard")
+def role(account):
     """
     Get one role or a list of all studies. This will return one role if the
     role's database primary key is passed as a URL option
@@ -905,9 +977,9 @@ def role():
 
 
 @blueprint.route("/role/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Roles")
-def role_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Roles")
+def role_create(account):
     """
     Create a new role.
 
@@ -975,9 +1047,9 @@ def role_create():
 
 
 @blueprint.route("/role/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Roles")
-def role_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Roles")
+def role_edit(account):
     """
     Edit an existing role.
 
@@ -1053,9 +1125,9 @@ def role_edit():
 
 
 @blueprint.route("/role/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Role")
-def role_archive():  # TODO: create unit test
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Role")
+def role_archive(account):  # TODO: create unit test
     """
     Archive a role. This action has the same effect as deleting an entry
     from the database. However, archived items are only filtered from queries
@@ -1098,17 +1170,17 @@ def role_archive():  # TODO: create unit test
 
 
 @blueprint.route("/app")
-@auth_required("View", "Admin Dashboard")
-def app():
+@researcher_auth_required("View", "Admin Dashboard")
+def app(account):
     apps = App.query.all()
     res = [a.meta for a in apps]
     return jsonify(res)
 
 
 @blueprint.route("/app/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Apps")
-def app_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Apps")
+def app_create(account):
     data = request.json["create"]
     app = App()
 
@@ -1129,9 +1201,9 @@ def app_create():
 
 
 @blueprint.route("/app/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Apps")
-def app_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Apps")
+def app_edit(account):
     data = request.json["edit"]
     app_id = request.json["id"]
     app = App.query.get(app_id)
@@ -1153,8 +1225,8 @@ def app_edit():
 
 
 @blueprint.route("/action")
-@auth_required("View", "Admin Dashboard")
-def action():  # TODO: write unit test
+@researcher_auth_required("View", "Admin Dashboard")
+def action(account):  # TODO: write unit test
     """
     Get all actions
 
@@ -1187,8 +1259,8 @@ def action():  # TODO: write unit test
 
 
 @blueprint.route("/resource")
-@auth_required("View", "Admin Dashboard")
-def resource():  # TODO: write unit test
+@researcher_auth_required("View", "Admin Dashboard")
+def resource(account):  # TODO: write unit test
     """
     Get all resources
 
@@ -1221,8 +1293,8 @@ def resource():  # TODO: write unit test
 
 
 @blueprint.route("/about-sleep-template")
-@auth_required("View", "Admin Dashboard")
-def about_sleep_template():
+@researcher_auth_required("View", "Admin Dashboard")
+def about_sleep_template(account):
     """
     Get one about sleep template or a list of all studies. This will return one
     about sleep template if the about sleep template"s database primary key is
@@ -1274,9 +1346,9 @@ def about_sleep_template():
 
 
 @blueprint.route("/about-sleep-template/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "Studies")
-def about_sleep_template_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "Studies")
+def about_sleep_template_create(account):
     """
     Create a new about sleep template.
 
@@ -1322,9 +1394,9 @@ def about_sleep_template_create():
 
 
 @blueprint.route("/about-sleep-template/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "Studies")
-def about_sleep_template_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "Studies")
+def about_sleep_template_edit(account):
     """
     Edit an existing about sleep template
 
@@ -1380,9 +1452,9 @@ def about_sleep_template_edit():
 
 
 @blueprint.route("/about-sleep-template/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "Studies")
-def about_sleep_template_archive():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "Studies")
+def about_sleep_template_archive(account):
     """
     Archive an about sleep template. This action has the same effect as
     deleting an entry from the database. However, archived items are only
@@ -1427,8 +1499,8 @@ def about_sleep_template_archive():
 
 
 @blueprint.route("/study_subject")
-@auth_required("View", "Participants")  # A user can CRUD study subjects without access to the admin dashboard
-def study_subject():
+@researcher_auth_required("View", "Participants")
+def study_subject(account):
     """
     Get one study subject or a list of all study subjects. This will return one
     study subject if the study subject's database primary key is passed as a URL option.
@@ -1487,8 +1559,8 @@ def study_subject():
 
 
 @blueprint.route("/study_subject/create", methods=["POST"])
-@auth_required("Create", "Participants")
-def study_subject_create():
+@researcher_auth_required("Create", "Participants")
+def study_subject_create(account):
     """
     Create a new study subject.
 
@@ -1636,8 +1708,8 @@ def study_subject_create():
 
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
-@auth_required("Archive", "Participants")
-def study_subject_archive():
+@researcher_auth_required("Archive", "Participants")
+def study_subject_archive(account):
     """
     Archive a study subject.
 
@@ -1690,8 +1762,8 @@ def study_subject_archive():
 
 
 @blueprint.route("/study_subject/edit", methods=["POST"])
-@auth_required("Edit", "Participants")
-def study_subject_edit():
+@researcher_auth_required("Edit", "Participants")
+def study_subject_edit(account):
     """
     Edit an existing study subject
 
@@ -1894,9 +1966,9 @@ def study_subject_edit():
 
 
 @blueprint.route("/api")
-@auth_required("View", "Admin Dashboard")
-@auth_required("View", "APIs")
-def api():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("View", "APIs")
+def api(account):
     """
     Get one API or a list of all APIs. This will return one API if the API's
     database primary key is passed as a URL option.
@@ -1943,9 +2015,9 @@ def api():
 
 
 @blueprint.route("/api/create", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Create", "APIs")
-def api_create():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Create", "APIs")
+def api_create(account):
     """
     Create a new API.
 
@@ -2006,9 +2078,9 @@ def api_create():
 
 
 @blueprint.route("/api/edit", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Edit", "APIs")
-def api_edit():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Edit", "APIs")
+def api_edit(account):
     """
     Edit an existing API.
 
@@ -2053,6 +2125,9 @@ def api_edit():
         if not api:
             return make_response({"msg": f"API with ID {api_id} does not exist"}, 400)
 
+        # Initialize msg for the case when no changes are made
+        msg = "API Edited Successfully"
+
         if data and "name" in data:
             new_name = data["name"]
             if new_name != api.name:
@@ -2063,9 +2138,8 @@ def api_edit():
                 if existing_api:
                     return make_response({"msg": "API with the same name already exists"}, 400)
 
-        populate_model(api, data)
-        db.session.commit()
-        msg = "API Edited Successfully"
+                populate_model(api, data)
+                db.session.commit()
 
     except Exception:
         exc = traceback.format_exc()
@@ -2077,13 +2151,13 @@ def api_edit():
 
 
 @blueprint.route("/api/archive", methods=["POST"])
-@auth_required("View", "Admin Dashboard")
-@auth_required("Archive", "APIs")
-def api_archive():
+@researcher_auth_required("View", "Admin Dashboard")
+@researcher_auth_required("Archive", "APIs")
+def api_archive(account):
     """
     Archive an API. This action has the same effect as deleting an entry
-    from the database. However, archived items are only filtered from queries
-    and can be retrieved.
+    from the database without actually deleting it. An API that is archived
+    still exists in the database but is not included in queries
 
     Request syntax
     --------------

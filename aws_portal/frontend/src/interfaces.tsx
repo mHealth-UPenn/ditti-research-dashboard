@@ -27,7 +27,7 @@ import { QuillOptions } from "quill";
  * @property lastName - The account holder's last name.
  * @property email - The account holder's email.
  * @property phoneNumber - The account holder's phone number.
- * @property isConfirmed - Whether the account has been logged in and the account holder has set their password.
+ * @property isConfirmed - Whether the account has been confirmed after first login.
  * @property accessGroups - The access groups the account has access to.
  * @property studies - The studies the account has access to.
  */
@@ -315,13 +315,13 @@ export interface ConsentModalProps {
  * @property firstName - The account holder's first name.
  * @property lastName - The account holder's last name.
  * @property email - The account holder's email.
- * @property phoneNumber - The account holder's phone number.
+ * @property phoneNumber - The account holder's phone number (optional).
  */
 export interface AccountDetails {
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber: string;
+  phoneNumber?: string;
 }
 
 /**
@@ -371,31 +371,39 @@ export interface DataRetrievalTask {
 
 /**
  * Defines the authentication context structure.
- * @property isIamAuthenticated - Indicates if the user is authenticated with IAM (Identity and Access Management).
- * @property isCognitoAuthenticated - Indicates if the user is authenticated with Amazon Cognito.
- * @property isIamLoading - Indicates if the IAM authentication status is being checked.
- * @property isCognitoLoading - Indicates if the Cognito authentication status is being checked.
- * @property firstLogin - Indicates if it's the user's first login.
- * @property csrfToken - The CSRF token for secure requests.
- * @property iamLogin - Function to log in the user with email and password with IAM.
- * @property iamLogout - Function to log out the user with IAM.
- * @property cognitoLogin - Function to log in the user specifically with Cognito authentication.
- * @property cognitoLogout - Function to log out the user from Cognito.
- * @property setFirstLogin - Sets whether this is the user's first login.
+ * @property isParticipantAuthenticated - Indicates if the user is authenticated as a participant.
+ * @property isResearcherAuthenticated - Indicates if the user is authenticated as a researcher.
+ * @property isParticipantLoading - Indicates if the participant authentication status is being checked.
+ * @property isResearcherLoading - Indicates if the researcher authentication status is being checked.
+ * @property isFirstLogin - Indicates if this is the user's first login session.
+ * @property dittiId - The Ditti ID of the authenticated participant.
+ * @property accountInfo - Information about the authenticated researcher.
+ * @property participantLogin - Function to log in with participant authentication.
+ * @property participantLogout - Function to log out from participant authentication.
+ * @property researcherLogin - Function to log in with researcher authentication.
+ * @property researcherLogout - Function to log out from researcher authentication.
+ * @property setIsFirstLogin - Sets whether this is the user's first login session.
  */
 export interface AuthContextType {
-  isIamAuthenticated: boolean;
-  isCognitoAuthenticated: boolean;
-  isIamLoading: boolean;
-  isCognitoLoading: boolean;
-  firstLogin: boolean;
-  csrfToken: string;
+  isParticipantAuthenticated: boolean;
+  isResearcherAuthenticated: boolean;
+  isParticipantLoading: boolean;
+  isResearcherLoading: boolean;
+  isFirstLogin: boolean;
   dittiId: string | null;
-  iamLogin: (email: string, password: string) => Promise<void>;
-  iamLogout: () => void;
-  cognitoLogin: (options?: { elevated: boolean }) => void;
-  cognitoLogout: () => void;
-  setFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
+  accountInfo: {
+    msg: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    accountId: string;
+    phoneNumber?: string;
+  };
+  participantLogin: (options?: { elevated: boolean }) => void;
+  participantLogout: () => void;
+  researcherLogin: (options?: { elevated: boolean }) => void;
+  researcherLogout: () => void;
+  setIsFirstLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 

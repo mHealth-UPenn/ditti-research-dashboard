@@ -16,11 +16,11 @@
  */
 
 import { createRef, useEffect, useState } from "react";
-import { makeRequest } from "../utils";
 import { AccountDetails } from "../interfaces";
 import { AccountMenu } from "./accountMenu";
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
+import { useAuth } from "../hooks/useAuth";
 
 /**
  * The Header component now functions as a functional component.
@@ -30,14 +30,20 @@ export const Header = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showMenu, setShowMenu] = useState<boolean>(false);
   const accountMenuRef = createRef<HTMLDivElement>();
+  const { isResearcherAuthenticated, accountInfo } = useAuth();
 
   useEffect(() => {
-    // get the user's account information
-    makeRequest("/db/get-account-details").then((accountDetails: AccountDetails) => {
-      setAccountDetails(accountDetails);
+    // If using researcher auth, use account info from Cognito
+    if (isResearcherAuthenticated && accountInfo) {
+      setAccountDetails({
+        firstName: accountInfo.firstName,
+        lastName: accountInfo.lastName,
+        email: accountInfo.email,
+        phoneNumber: accountInfo.phoneNumber || ""
+      });
       setLoading(false);
-    });
-  }, []);
+    }
+  }, [isResearcherAuthenticated, accountInfo]);
 
   const { email, firstName, lastName } = accountDetails;
   const name = firstName + " " + lastName;
@@ -97,7 +103,7 @@ export const Header = () => {
           <AccountMenu
             prefill={accountDetails}
             accountMenuRef={accountMenuRef}
-            hideMenu={() => setShowMenu(false)} />
+            hideMenu={() => handleCloseMenu()} />
         </>
       }
     </>

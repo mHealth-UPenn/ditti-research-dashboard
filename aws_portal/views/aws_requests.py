@@ -24,11 +24,10 @@ import traceback
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from flask import Blueprint, current_app, jsonify, make_response, request
-from flask_jwt_extended import current_user
 import pandas as pd
 
 from aws_portal.models import JoinAccountStudy, Study
-from aws_portal.utils.auth import auth_required
+from aws_portal.auth.decorators import researcher_auth_required
 from aws_portal.utils.aws import MutationClient, Query, Updater
 
 blueprint = Blueprint("aws", __name__, url_prefix="/aws")
@@ -36,8 +35,8 @@ logger = logging.getLogger(__name__)
 
 
 @blueprint.route("/get-taps")
-@auth_required("View", "Ditti App Dashboard")
-def get_taps():  # TODO update unit test
+@researcher_auth_required("View", "Ditti App Dashboard")
+def get_taps(account):  # TODO update unit test
     """
     Get tap data. If the user has permissions to view all studies, this will
     return all tap data. Otherwise, this will return tap data for only the
@@ -73,8 +72,8 @@ def get_taps():  # TODO update unit test
 
         # if the user has permission to view all studies, get all users
         app_id = request.args["app"]
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
+        permissions = account.get_permissions(app_id)
+        account.validate_ask("View", "All Studies", permissions)
         users = Query("User").scan()["Items"]
 
     except ValueError:
@@ -82,7 +81,7 @@ def get_taps():  # TODO update unit test
         # get users only for the studies the user as access to
         studies = Study.query\
             .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == current_user.id)\
+            .filter(JoinAccountStudy.account_id == account.id)\
             .all()
 
         prefixes = [s.ditti_id for s in studies]
@@ -117,8 +116,8 @@ def get_taps():  # TODO update unit test
 
 
 @blueprint.route("/get-audio-taps")
-@auth_required("View", "Ditti App Dashboard")
-def get_audio_taps():  # TODO write unit test
+@researcher_auth_required("View", "Ditti App Dashboard")
+def get_audio_taps(account):  # TODO write unit test
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
         q = "user_permission_idBEGINS\"%s\"" % right
@@ -127,15 +126,15 @@ def get_audio_taps():  # TODO write unit test
     try:
         # if the user has permission to view all studies, get all users
         app_id = request.args["app"]
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
+        permissions = account.get_permissions(app_id)
+        account.validate_ask("View", "All Studies", permissions)
         users = Query("User").scan()["Items"]
 
     except ValueError:
         # get users only for the studies the user as access to
         studies = Study.query\
             .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == current_user.id)\
+            .filter(JoinAccountStudy.account_id == account.id)\
             .all()
 
         prefixes = [s.ditti_id for s in studies]
@@ -185,8 +184,8 @@ def get_audio_taps():  # TODO write unit test
 
 
 @blueprint.route("/get-users")
-@auth_required("View", "Ditti App Dashboard")
-def get_users():  # TODO: create unit test
+@researcher_auth_required("View", "Ditti App Dashboard")
+def get_users(account):  # TODO: create unit test
     """
     Get user data. If the user has permissions to view all studies, this will
     return all user data. Otherwise, this will return user data for only the
@@ -243,8 +242,8 @@ def get_users():  # TODO: create unit test
 
         # if the user has permission to view all studies, get all studies
         app_id = request.args["app"]
-        permissions = current_user.get_permissions(app_id)
-        current_user.validate_ask("View", "All Studies", permissions)
+        permissions = account.get_permissions(app_id)
+        account.validate_ask("View", "All Studies", permissions)
         users = Query("User").scan()["Items"]
         res = map(map_users, users)
 
@@ -255,7 +254,7 @@ def get_users():  # TODO: create unit test
         # get only the studies the user has access to
         studies = Study.query\
             .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == current_user.id)\
+            .filter(JoinAccountStudy.account_id == account.id)\
             .all()
 
     except Exception as e:
@@ -266,6 +265,11 @@ def get_users():  # TODO: create unit test
 
     # get all users for the studies that were returned earlier
     prefixes = [s.ditti_id for s in studies]
+
+    # If no studies were found, return an empty list
+    if not prefixes:
+        return jsonify([])
+
     query = reduce(f, prefixes, "")
     users = Query("User", query).scan()["Items"]
     res = map(map_users, users)
@@ -274,9 +278,9 @@ def get_users():  # TODO: create unit test
 
 
 @blueprint.route("/user/create", methods=["POST"])
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("Create", "Participants")
-def user_create():
+@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required("Create", "Participants")
+def user_create(account):
     """
     Create a new user
 
@@ -329,9 +333,9 @@ def user_create():
 
 
 @blueprint.route("/user/edit", methods=["POST"])
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("Edit", "Participants")
-def user_edit():
+@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required("Edit", "Participants")
+def user_edit(account):
     """
     Edit an exisitng user
 
@@ -357,8 +361,8 @@ def user_edit():
     ---------------------
     {
         msg: "User Successfully Edited" or
-            "Invalid Ditti ID: ..." or
-            "Invalid study acronym: ..." or
+            "Invalid study or study subject Ditti ID: ..." or
+            "Invalid study Ditti ID: ..." or
             "Ditti ID not found: ..."
     }
 
@@ -369,19 +373,25 @@ def user_edit():
     }
     """
     msg = "User Successfully Edited"
-    user_permission_id = request.json.get("user_permission_id")
 
-    # check that the ditti id is valid
+    # Handle request.json whether it's a string or already parsed
+    request_data = request.json
+    if isinstance(request_data, str):
+        request_data = json.loads(request_data)
+
+    user_permission_id = request_data.get("user_permission_id")
+
+    # check that the user_permission_id is alphanumeric
     if re.search(r"[^\dA-Za-z]", user_permission_id) is not None:
-        return jsonify({"msg": "Invalid Ditti ID: %s" % user_permission_id})
+        return jsonify({"msg": "Invalid study or study subject Ditti ID: %s" % user_permission_id})
 
-    acronym = re.sub(r"[\d]+", "", user_permission_id)
-    study_id = request.json.get("study")
+    study_ditti_id = re.sub(r"[\d]+", "", user_permission_id)
+    study_id = request_data.get("study")
     study = Study.query.get(study_id)
 
-    # check that the study acronym of the ditti id is valid
-    if acronym != study.ditti_id:
-        return jsonify({"msg": "Invalid study acronym: %s" % acronym})
+    # check that the ditti id is valid
+    if study_ditti_id != study.ditti_id:
+        return jsonify({"msg": "Invalid study Ditti ID: %s" % study_ditti_id})
 
     query = "user_permission_id==\"%s\"" % user_permission_id
     res = Query("User", query).scan()
@@ -393,7 +403,7 @@ def user_edit():
     try:
         updater = Updater("User")
         updater.set_key_from_query(query)
-        updater.set_expression(request.json.get("edit"))
+        updater.set_expression(request_data.get("edit"))
         updater.update()
 
     except Exception as e:
@@ -406,9 +416,9 @@ def user_edit():
 
 
 @blueprint.route("/get-audio-files")
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("View", "Audio Files")
-def get_audio_files():  # TODO update unit test
+@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required("View", "Audio Files")
+def get_audio_files(account):  # TODO update unit test
     """
     Get all audio files from DynamoDB.
 
@@ -495,9 +505,9 @@ def get_audio_files():  # TODO update unit test
 
 
 @blueprint.route("/audio-file/create", methods=["POST"])
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("Create", "Audio File")
-def audio_file_create():
+@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required("Create", "Audio File")
+def audio_file_create(account):
     """
     Insert new audio files into DynamoDB.
 
@@ -548,7 +558,6 @@ def audio_file_create():
         if "data" not in data or not data["data"]:
             raise Exception(data["errors"][0]["message"])
 
-
     except Exception as e:
         exc = traceback.format_exc()
         logger.warning(exc)
@@ -558,9 +567,9 @@ def audio_file_create():
 
 
 @blueprint.route("/audio-file/delete", methods=["POST"])
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("Delete", "Audio File")
-def audio_file_delete():
+@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required("Delete", "Audio File")
+def audio_file_delete(account):
     """
     Permanently deletes an audio file. This endpoint first deletes the audio
     file from S3 then deletes the audio file from DynamoDB. If the deletion from
@@ -593,14 +602,16 @@ def audio_file_delete():
         # Get the audio file
         audio_file_id = request.json["id"]
         version = request.json["_version"]
-        audio_file = Query("AudioFile", f"id==\"{audio_file_id}\"").scan()["Items"][0]
+        audio_file = Query("AudioFile", f"id==\"{audio_file_id}\"").scan()[
+            "Items"][0]
 
         # Try deleting the audio file from S3
         try:
             key = audio_file["fileName"]
             bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
             client = boto3.client("s3")
-            deleted = client.delete_object(Bucket=bucket, Key=key)["DeleteMarker"]
+            deleted = client.delete_object(Bucket=bucket, Key=key)[
+                "DeleteMarker"]
 
             # Return an error if the audio file was not deleted
             if not deleted:
@@ -631,9 +642,9 @@ def audio_file_delete():
 
 
 @blueprint.route("/audio-file/get-presigned-urls", methods=["POST"])
-@auth_required("View", "Ditti App Dashboard")
-@auth_required("Create", "Audio File")
-def audio_file_generate_presigned_urls():
+@researcher_auth_required("View", "Ditti App Dashboard")
+@researcher_auth_required("Create", "Audio File")
+def audio_file_generate_presigned_urls(account):
     """
     Generates a list of presigned URLs for a given set of files. The request
     body must include a key for uploading to S3 and its MIME type.
@@ -689,6 +700,6 @@ def audio_file_generate_presigned_urls():
 
     except NoCredentialsError:
         return jsonify({"msg": "AWS credentials not available"}), 500
-    
+
     except ClientError:
         return jsonify({"msg": "Unknown error while generating presigned URLs"}), 500

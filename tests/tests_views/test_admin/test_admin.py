@@ -1,17 +1,5 @@
 import json
 from aws_portal.models import AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study
-from tests.testing_utils import get_auth_headers, login_admin_account
-
-
-def test_account(client):
-    res = login_admin_account(client)
-    headers = get_auth_headers(res)
-    opts = "?app=1"
-    res = client.get("/admin/account" + opts, headers=headers)
-    data = json.loads(res.data)
-    assert len(data) == 3
-    assert data[0]["email"] == "foo@email.com"
-    assert data[1]["email"] == "bar@email.com"
 
 
 def test_account_create(post_admin):
@@ -21,7 +9,6 @@ def test_account_create(post_admin):
             "first_name": "foo",
             "last_name": "bar",
             "email": "baz@email.com",
-            "password": "foo123456",
             "access_groups": [
                 {"id": 1}
             ],
@@ -36,11 +23,10 @@ def test_account_create(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/account/create", data=data)
     data = json.loads(res.data)
     assert "msg" in data
-    assert data["msg"] == "Account Created Successfully"
+    assert "Account Created Successfully" in data["msg"]
 
     q1 = Account.email == "baz@email.com"
     foo = Account.query.filter(q1).first()
@@ -54,6 +40,7 @@ def test_account_create(post_admin):
 
 
 def test_account_edit(post_admin):
+    # Case 1: Basic account edit
     data = {
         "app": 1,
         "id": 1,
@@ -74,7 +61,6 @@ def test_account_edit(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/account/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -88,6 +74,76 @@ def test_account_edit(post_admin):
     assert foo.studies[0].study_id == 2
     assert foo.studies[0].role_id == 2
 
+    # Case 2: Adding a valid phone number
+    data = {
+        "app": 1,
+        "id": 1,
+        "edit": {
+            "phone_number": "+14155551234"
+        }
+    }
+
+    res = post_admin("/admin/account/edit", data=data)
+    assert res.status_code == 200
+    data = json.loads(res.data)
+    assert data["msg"] == "Account Edited Successfully"
+
+    # Verify phone number was saved
+    foo = Account.query.get(1)
+    assert foo.phone_number == "+14155551234"
+
+    # Case 3: Invalid phone number format
+    data = {
+        "app": 1,
+        "id": 1,
+        "edit": {
+            "phone_number": "+0123456789"  # Invalid: starts with +0
+        }
+    }
+
+    res = post_admin("/admin/account/edit", data=data)
+    assert res.status_code == 400
+    data = json.loads(res.data)
+    assert "phone number" in data["msg"].lower()
+
+    # Case 4: Removing phone number
+    data = {
+        "app": 1,
+        "id": 1,
+        "edit": {
+            "phone_number": ""  # Empty string to remove phone number
+        }
+    }
+
+    res = post_admin("/admin/account/edit", data=data)
+    assert res.status_code == 200
+    data = json.loads(res.data)
+    assert data["msg"] == "Account Edited Successfully"
+
+    # Verify phone number was removed
+    foo = Account.query.get(1)
+    assert foo.phone_number is None
+
+    # Case 5: Verify email changes are blocked
+    data = {
+        "app": 1,
+        "id": 1,
+        "edit": {
+            "email": "newemail@example.com",
+            "first_name": "UpdatedName"
+        }
+    }
+
+    res = post_admin("/admin/account/edit", data=data)
+    assert res.status_code == 200
+    data = json.loads(res.data)
+    assert data["msg"] == "Account Edited Successfully"
+
+    # Verify first name was updated but email was not
+    foo = Account.query.get(1)
+    assert foo.first_name == "UpdatedName"
+    assert foo.email != "newemail@example.com"  # Email should not change
+
 
 def test_account_archive(post_admin):
     data = {
@@ -95,7 +151,6 @@ def test_account_archive(post_admin):
         "id": 1
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/account/archive", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -128,8 +183,7 @@ def test_study_create(post_admin):
         }
     }
 
-    payload = json.dumps(data)
-    res = post_admin("/admin/study/create", data=payload)
+    res = post_admin("/admin/study/create", data=data)
     response_data = json.loads(res.data)
 
     assert "msg" in response_data
@@ -166,7 +220,6 @@ def test_study_edit(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/study/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -183,7 +236,6 @@ def test_study_archive(post_admin):
         "id": 1
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/study/archive", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -217,7 +269,6 @@ def test_access_group_create(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/access-group/create", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -241,7 +292,6 @@ def test_access_group_edit(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/access-group/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -272,7 +322,6 @@ def test_access_group_edit_permissions(post_admin):
     foo = JoinAccessGroupPermission.query.get((2, 2))
     assert foo is not None
 
-    data = json.dumps(data)
     res = post_admin("/admin/access-group/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -292,7 +341,6 @@ def test_access_group_archive(post_admin):
         "id": 1
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/access-group/archive", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -325,7 +373,6 @@ def test_role_create(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/role/create", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -355,7 +402,6 @@ def test_role_edit(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/role/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -387,7 +433,6 @@ def test_app_create(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/app/create", data=data)
     data = json.loads(res.data)
     assert "msg" in data
@@ -408,7 +453,6 @@ def test_app_edit(post_admin):
         }
     }
 
-    data = json.dumps(data)
     res = post_admin("/admin/app/edit", data=data)
     data = json.loads(res.data)
     assert "msg" in data

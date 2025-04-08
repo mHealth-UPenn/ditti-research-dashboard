@@ -66,9 +66,9 @@ if [ $NOBUILD -eq 0 ]; then
     # include the zappa settings file in the docker image
     zappa save-python-settings-file staging
     if [ $NOCACHE -eq 1 ]; then
-        docker build --platform linux/amd64 --no-cache -t ${DOCKER_IMAGE} .
+        docker buildx build --platform linux/amd64 --provenance=false --output=type=docker --no-cache -t ${DOCKER_IMAGE} .
     else
-        docker build --platform linux/amd64 -t ${DOCKER_IMAGE} .
+        docker buildx build --platform linux/amd64 --provenance=false --output=type=docker -t ${DOCKER_IMAGE} .
     fi
     rm zappa_settings.py
 

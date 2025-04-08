@@ -17,7 +17,6 @@
 
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Buffer } from "buffer";
 import { makeRequest } from "./utils";
 import { AuthContextType } from "./interfaces";
 
@@ -27,131 +26,125 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
  * AuthProvider component that wraps children with authentication context.
  */
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isIamAuthenticated, setIsIamAuthenticated] = useState<boolean>(false);
-  const [isCognitoAuthenticated, setIsCognitoAuthenticated] = useState<boolean>(false);
-  const [firstLogin, setFirstLogin] = useState<boolean>(false);
-  const [isIamLoading, setIsIamLoading] = useState<boolean>(true);
-  const [isCognitoLoading, setIsCognitoLoading] = useState<boolean>(true);
-  const [csrfToken, setCsrfToken] = useState<string>(localStorage.getItem("csrfToken") || "");
+  const [isParticipantAuthenticated, setIsParticipantAuthenticated] = useState<boolean>(false);
+  const [isResearcherAuthenticated, setIsResearcherAuthenticated] = useState<boolean>(false);
+  const [isFirstLogin, setIsFirstLogin] = useState<boolean>(false);
+  const [isParticipantLoading, setIsParticipantLoading] = useState<boolean>(true);
+  const [isResearcherLoading, setIsResearcherLoading] = useState<boolean>(true);
   const [dittiId, setDittiId] = useState<string | null>(null);
+  const INITIAL_ACCOUNT_STATE: AuthContextType["accountInfo"] = {
+    msg: "",
+    email: "",
+    firstName: "",
+    lastName: "",
+    accountId: "",
+    phoneNumber: undefined
+  };
+  const [accountInfo, setAccountInfo] = useState<AuthContextType["accountInfo"]>(INITIAL_ACCOUNT_STATE);
   const navigate = useNavigate();
+
+  const resetAccountInfo = useCallback(() => {
+    setAccountInfo(INITIAL_ACCOUNT_STATE);
+  }, []);
 
   useEffect(() => {
     /**
-     * Checks IAM authentication status on component mount.
+     * Checks Participant authentication status on component mount.
      */
-    const checkIamAuthStatus = async () => {
+    const checkParticipantAuthStatus = async () => {
       try {
-        const jwt = localStorage.getItem("jwt");
-        if (jwt) {
-          const res = await makeRequest("/iam/check-login", { method: "GET" });
-          setIsIamAuthenticated(res.msg === "Login successful");
-        } else {
-          setIsIamAuthenticated(false);
+        const res = await makeRequest("/auth/participant/check-login", { method: "GET" });
+        if (res.msg === "Login successful") {
+          setIsParticipantAuthenticated(true);
+          setDittiId(res.dittiId);
         }
       } catch {
-        setIsIamAuthenticated(false);
+        setIsParticipantAuthenticated(false);
       } finally {
-        setIsIamLoading(false);
+        setIsParticipantLoading(false);
       }
     };
 
     /**
-     * Checks Cognito authentication status on component mount.
+     * Checks Researcher Cognito authentication status on component mount.
      */
-    const checkCognitoAuthStatus = async () => {
+    const checkResearcherAuthStatus = async () => {
       try {
-        const res = await makeRequest("/cognito/check-login", { method: "GET" });
+        const res = await makeRequest("/auth/researcher/check-login", { method: "GET" });
         if (res.msg === "Login successful") {
-          setIsCognitoAuthenticated(true);
-          setDittiId(res.dittiId);
+          setIsResearcherAuthenticated(true);
+          setAccountInfo({
+            msg: res.msg,
+            email: res.email,
+            firstName: res.firstName,
+            lastName: res.lastName,
+            accountId: res.accountId,
+            phoneNumber: res.phoneNumber
+          });
+          
+          // Set isFirstLogin state directly from the response
+          setIsFirstLogin(Boolean(res.isFirstLogin));
         }
       } catch {
-        setIsCognitoAuthenticated(false);
+        setIsResearcherAuthenticated(false);
+        resetAccountInfo();
       } finally {
-        setIsCognitoLoading(false);
+        setIsResearcherLoading(false);
       }
     };
 
-    checkIamAuthStatus();
-    checkCognitoAuthStatus();
+    checkParticipantAuthStatus();
+    checkResearcherAuthStatus();
+  }, [resetAccountInfo]);
+
+  /**
+   * Redirects to Participant login page.
+   */
+  const participantLogin = useCallback((): void => {
+    // For elevated mode, make sure to pass it as a url param
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/participant/login`;
   }, []);
 
   /**
-   * Logs in the user by making a request with basic authentication.
-   * @param email - The user's email
-   * @param password - The user's password
+   * Logs out the Participant user by redirecting to the logout endpoint.
    */
-  const iamLogin = useCallback(async (email: string, password: string): Promise<void> => {
-    const auth = Buffer.from(`${email}:${password}`).toString("base64");
-    const headers = { Authorization: `Basic ${auth}` };
-    const opts = { method: "POST", headers };
+  const participantLogout = useCallback((): void => {
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/participant/logout`;
+    setIsParticipantAuthenticated(false);
+    setDittiId(null);
+  }, []);
 
-    try {
-      const res = await makeRequest("/iam/login", opts);
-      if (res.jwt) {
-        localStorage.setItem("jwt", res.jwt);
-        if (res.csrfAccessToken) {
-          setCsrfToken(res.csrfAccessToken);
-          localStorage.setItem("csrfToken", res.csrfAccessToken);
-        }
-        setIsIamAuthenticated(true);
-        if (res.msg === "First login") {
-          setFirstLogin(true);
-        } else {
-          setFirstLogin(false);
-          navigate("/coordinator");
-        }
-      }
-    } catch (error) {
-      setIsIamAuthenticated(false);
-      throw error;
-    }
+  /**
+   * Redirects to Researcher Cognito login page.
+   */
+  const researcherLogin = useCallback((): void => {
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/researcher/login`;
   }, [navigate]);
 
   /**
-   * Logs out the IAM user by clearing stored tokens and redirecting to login.
+   * Logs out the Researcher from Cognito by redirecting to the logout endpoint.
    */
-  const iamLogout = useCallback((): void => {
-    localStorage.removeItem("jwt");
-    setIsIamAuthenticated(false);
-    setDittiId(null);
-
-    // Replace window location to clear any dangling processes (e.g., scheduled querying for data processing tasks)
-    window.location.href = "/coordinator/login";
-  }, [navigate]);
-
-  /**
-   * Redirects to Cognito login page.
-   */
-  const cognitoLogin = useCallback((): void => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/login`;
-  }, []);
-
-  /**
-   * Logs out the Cognito user by redirecting to the logout endpoint.
-   */
-  const cognitoLogout = useCallback((): void => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/cognito/logout`;
-    setIsCognitoAuthenticated(false);
-    setDittiId(null);
-  }, []);
+  const researcherLogout = useCallback((): void => {
+    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/researcher/logout`;
+    setIsResearcherAuthenticated(false);
+    resetAccountInfo();
+  }, [resetAccountInfo]);
 
   return (
     <AuthContext.Provider
       value={{
-        isIamAuthenticated,
-        isCognitoAuthenticated,
-        isIamLoading,
-        isCognitoLoading,
-        firstLogin,
-        csrfToken,
+        isParticipantAuthenticated,
+        isResearcherAuthenticated,
+        isParticipantLoading,
+        isResearcherLoading,
+        isFirstLogin,
         dittiId,
-        iamLogin,
-        iamLogout,
-        cognitoLogin,
-        cognitoLogout,
-        setFirstLogin,
+        accountInfo,
+        participantLogin,
+        participantLogout,
+        researcherLogin,
+        researcherLogout,
+        setIsFirstLogin,
       }}
     >
       {children}

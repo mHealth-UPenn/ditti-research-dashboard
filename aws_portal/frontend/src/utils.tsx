@@ -17,9 +17,6 @@
 
 import { IStudySubjectDetails, ResponseBody } from "./interfaces";
 
-// TODO: Find out what this was meant for
-// const crossorigin = Boolean(process.env.CROSSORIGIN);
-
 /**
  * Makes a request with specified options.
  * @param url - The endpoint URL.
@@ -150,7 +147,7 @@ export const getAccess = async (
   resource: string,
   study?: number
 ): Promise<void> => {
-  let url = `/iam/get-access?app=${app}&action=${action}&resource=${resource}`;
+  let url = `/auth/researcher/get-access?app=${app}&action=${action}&resource=${resource}`;
   if (study) url += `&study=${study}`;
 
   const res: ResponseBody = await makeRequest(url);
@@ -212,3 +209,53 @@ export const formatDateForInput = (date: Date) => {
   // Format the date string
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * Formats a phone number to ensure consistent international format.
+ * - Strips non-digit characters except plus sign
+ * - Ensures number starts with "+" and a valid country code
+ * - Defaults to US country code (+1) when appropriate
+ * 
+ * @param value - The phone number to format
+ * @returns A formatted string in international phone number format
+ */
+export const formatPhoneNumber = (value: string): string => {
+  // Remove everything except digits and plus sign
+  const formattedValue = value.replace(/[^\d+]/g, "");
+  
+  // If empty, return empty string
+  if (!formattedValue) {
+    return "";
+  }
+  
+  // If it's just a plus sign with nothing after it, add "1" as default US country code
+  if (formattedValue === "+") {
+    return "+1";
+  }
+  
+  // If user entered digits without a plus sign, assume US number with +1 prefix
+  if (/^\d+$/.test(formattedValue)) {
+    return "+1" + formattedValue;
+  }
+  
+  // If it already has a plus sign
+  if (formattedValue.startsWith("+")) {
+    // Handle case of +0... which is invalid (country codes cannot start with 0)
+    if (formattedValue.length > 1 && formattedValue.charAt(1) === "0") {
+      // Replace the 0 with US country code 1
+      return "+1" + formattedValue.substring(2);
+    }
+    
+    // Check for valid international format: + followed by at least one digit
+    if (!/^\+\d+$/.test(formattedValue)) {
+      // If it has non-digit after the +, replace with +1
+      return "+1";
+    }
+    
+    // Valid international format, keep as is
+    return formattedValue;
+  }
+  
+  // Any other case, default to +1 prefix
+  return "+1" + formattedValue;
+};

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import click
+import os
 from flask import current_app
 from flask.cli import with_appcontext
 from flask_migrate import upgrade
@@ -52,13 +53,12 @@ def init_admin_group_click(uri):
 @click.command("init-admin")
 @click.option("--uri", default=None, help="Overrides the SQLAlchemy URI.")
 @click.option("--email", default=None)
-@click.option("--password", default=None)
 @with_appcontext
-def init_admin_account_click(uri, email, password):
+def init_admin_account_click(uri, email):
     if uri is not None:
         current_app.config["SQLALCHEMY_DATABASE_URI"] = uri
 
-    admin = init_admin_account(email, password)
+    admin = init_admin_account(email)
     click.echo(repr(admin))
 
 
@@ -124,3 +124,12 @@ def init_lambda_task_click(status):
 @with_appcontext
 def delete_lambda_tasks_click():
     delete_lambda_tasks()
+
+
+@click.command("export-accounts-to-cognito", help="Export accounts to AWS Cognito.")
+@with_appcontext
+def export_accounts_to_cognito_click():
+    """Export accounts to AWS Cognito for researcher authentication."""
+    # This is a stub function to fix the import error
+    # The actual implementation would interact with AWS Cognito
+    click.echo("Export accounts to AWS Cognito functionality would go here.")

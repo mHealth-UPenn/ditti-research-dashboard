@@ -44,11 +44,17 @@ export const AsyncButton = ({
 
   /**
    * Show the loader, call the onClick function, and hide the loader when the
-   * promise is complete
+   * promise is complete, even if it fails
    */
   const handleClick = (): void => {
     setLoading(true);
-    onClick().then(() => setLoading(false));
+    onClick()
+      .then(() => setLoading(false))
+      .catch(() => setLoading(false))
+      .finally(() => {
+        // Ensure loading is reset even if the promise is rejected without being caught
+        setLoading(false);
+      });
   };
 
   const sizeMap = {
