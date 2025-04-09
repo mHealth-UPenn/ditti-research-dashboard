@@ -45,7 +45,7 @@ import { DittiAppDashboard } from "./components/dittiApp/dittiAppDashboard";
 import { StudySummary } from "./components/dittiApp/studySummary";
 import { Subjects } from "./components/dittiApp/subjects";
 import { SubjectsEdit } from "./components/dittiApp/subjectsEdit";
-import { SubjectVisualsV2 } from "./components/dittiApp/subjectVisualsV2";
+import { SubjectVisualsV2 } from "./components/dittiApp/subjectVisuals";
 import { WearableDashboard } from "./components/wearableDashboard/wearableDashboard";
 import { WearableStudies } from "./components/wearableDashboard/wearableStudies";
 import { WearableStudySummary } from "./components/wearableDashboard/wearableStudySummary";
