@@ -28,7 +28,7 @@ import { Title } from "../text/title";
 import { Subtitle } from "../text/subtitle";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
-import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
 

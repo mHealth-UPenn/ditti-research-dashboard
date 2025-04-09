@@ -35,7 +35,7 @@ import { FormSummarySubtext } from "../containers/forms/formSummarySubtext";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { APP_ENV } from "../../environment";
 import sanitize from "sanitize-html";
-import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";

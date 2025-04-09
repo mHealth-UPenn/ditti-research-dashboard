@@ -24,7 +24,7 @@ import { Title } from "../text/title";
 import { ActiveIcon } from "../icons/activeIcon";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { SmallLoader } from "../loader";
-import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
 import { LinkComponent } from "../links/linkComponent";
 import { Link } from "react-router-dom";
 

@@ -22,7 +22,7 @@ import { CardContentRow } from "../cards/cardContentRow";
 import { ActiveIcon } from "../icons/activeIcon";
 import { LinkComponent } from "../links/linkComponent";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
-import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
 import { getEnrollmentInfoForStudy } from "../../utils";
 import { SmallLoader } from "../loader";

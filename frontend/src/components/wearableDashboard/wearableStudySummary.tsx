@@ -27,7 +27,7 @@ import { Button } from "../buttons/button";
 import { CardContentRow } from "../cards/cardContentRow";
 import { APP_ENV } from "../../environment";
 import { WearableStudySubjects } from "./wearableStudySubjects";
-import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
 import { Link, useSearchParams } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 

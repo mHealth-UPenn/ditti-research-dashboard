@@ -36,7 +36,7 @@ import { Button } from "../buttons/button";
 import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 import { Link, useSearchParams } from "react-router-dom";
-import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
 import { useStudiesContext } from "../../contexts/studiesContext";
 
 

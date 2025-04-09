@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { createContext, useState, useEffect, PropsWithChildren, useContext } from "react";
+import { createContext, useState, useEffect, PropsWithChildren } from "react";
 import { makeRequest } from "../utils";
 import { IStudySubject, CoordinatorStudySubjectContextType, UserDetails, IStudySubjectDetails } from "../interfaces";
 import { APP_ENV } from "../environment";
@@ -165,14 +165,4 @@ export function CoordinatorStudySubjectProvider({
           {children}
     </CoordinatorStudySubjectContext.Provider>
   );
-}
-
-
-// Hook for retrieving context data
-export function useCoordinatorStudySubjectContext() {
-  const context = useContext(CoordinatorStudySubjectContext);
-  if (!context) {
-    throw new Error("useCoordinatorStudySubjectContext must be used within a CoordinatorStudySubjectContext provider");
-  }
-  return context;
 }

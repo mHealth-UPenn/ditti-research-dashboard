@@ -21,7 +21,7 @@ import { differenceInDays } from "date-fns";
 import { CardContentRow } from "../cards/cardContentRow";
 import { ActiveIcon } from "../icons/activeIcon";
 import { LinkComponent } from "../links/linkComponent";
-import { useCoordinatorStudySubjectContext } from "../../contexts/coordinatorStudySubjectContext";
+import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
 import { SmallLoader } from "../loader";
 import { getEnrollmentInfoForStudy } from "../../utils";
