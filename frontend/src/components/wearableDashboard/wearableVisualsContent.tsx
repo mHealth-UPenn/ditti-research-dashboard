@@ -25,7 +25,7 @@ import { Title } from "../text/title";
 import { Subtitle } from "../text/subtitle";
 import { Button } from "../buttons/button";
 import { APP_ENV } from "../../environment";
-import { useWearableData } from "../../contexts/wearableDataContext";
+import { useWearableData } from "../../hooks/useWearableData";
 import { WearableVisualization } from "../visualizations/wearableVisualization";
 import SyncIcon from '@mui/icons-material/Sync';
 import { Link } from "react-router-dom";

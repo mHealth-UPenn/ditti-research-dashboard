@@ -17,7 +17,7 @@
 
 import { colors } from "../../colors";
 import { useVisualization } from "../../hooks/useVisualization";
-import { useWearableData } from "../../contexts/wearableDataContext";
+import { useWearableData } from "../../hooks/useWearableData";
 import { ISleepLevelClassic, ISleepLevelStages, IVisualizationProps } from "../../interfaces";
 import { Timeline } from "./timeline";
 import { AxisTop } from "@visx/axis";
