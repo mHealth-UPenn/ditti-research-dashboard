@@ -32,7 +32,6 @@ cors = CORS()
 db = SQLAlchemy()
 jwt = JWTManager()
 migrate = Migrate()
-# scheduler = APScheduler()
 cache = Cache(config={
     "CACHE_TYPE": "SimpleCache",
     "CACHE_DEFAULT_TIMEOUT": 7200

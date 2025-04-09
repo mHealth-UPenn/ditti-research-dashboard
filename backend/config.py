@@ -82,18 +82,6 @@ class Default:
     # Configuration for invoking a lambda function locally
     LOCAL_LAMBDA_ENDPOINT = os.environ.get("LOCAL_LAMBDA_ENDPOINT")
 
-    # APScheduler configuration
-    # SCHEDULER_API_ENABLED = True
-    # JOBS = [
-    #     {
-    #         "id": "ScheduledLambdaTask",
-    #         "func": "backend.utils.lambda_task:schedule_lambda_task",
-    #         "trigger": "cron",
-    #         "hour": 10,
-    #         "minute": 0
-    #     }
-    # ]
-
 
 class Staging(Default):
     ENV = "production"

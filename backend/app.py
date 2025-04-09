@@ -66,8 +66,6 @@ def create_app(testing=False):
     register_commands(app)
     register_extensions(app)
 
-    # @app.before_request
-    # def log_request():
 
     @app.after_request
     def log_response(response: Response):
@@ -119,6 +117,4 @@ def register_extensions(app):
     migrate.init_app(app, db)
     tm.init_app(app)
     oauth.init_app(app)
-    # scheduler.init_app(app)
-    # scheduler.start()
     cache.init_app(app)

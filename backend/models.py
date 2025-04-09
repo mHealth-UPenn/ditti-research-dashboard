@@ -728,15 +728,6 @@ def init_study_subject(ditti_id):
 
     study_subject = StudySubject(ditti_id=ditti_id)
 
-    # Enroll in two studies to test that data is pulled from first `starts_on` to last `expires_on`
-    # JoinStudySubjectStudy(
-    #     study_subject=study_subject,
-    #     study=study_a,
-    #     did_consent=True,
-    #     starts_on=datetime.now(UTC) - timedelta(days=7),
-    #     expires_on=datetime.now(UTC) + timedelta(days=7)  # TODO: bypass expires_on validation
-    # )
-
     JoinStudySubjectStudy(
         study_subject=study_subject,
         study=study_b,
@@ -931,9 +922,6 @@ class Account(db.Model):
         ValueError
             If the account has no permissions that satisfy the request.
         """
-        # print(action, resource)
-        # print(permissions.all())
-
         # build a query using the requested action and resource
         query = Permission.definition == tuple_(action, resource)
 
@@ -1710,7 +1698,6 @@ class StudySubject(db.Model):
             "dittiId": self.ditti_id,
             "studies": [join.meta for join in self.studies],
             "apis": [join.meta for join in self.apis],
-            # "sleepLogs": [join.meta for join in self.sleep_logs]
         }
 
     def __repr__(self):

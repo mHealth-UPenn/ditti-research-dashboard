@@ -174,26 +174,3 @@ def invoke_lambda_task(function_id):
             lambda_task.updated_on = datetime.now(UTC)
             db.session.commit()
         return lambda_task
-
-
-# def schedule_lambda_task():
-#     """
-#     Scheduled task to invoke the lambda function.
-#     """
-#     try:
-#         logger.info("Scheduling Lambda task to retrieve and store sleep data.")
-#         # Create a new LambdaTask with status 'Pending'
-#         lambda_task = LambdaTask(
-#             status="Pending",
-#             created_on=datetime.now(UTC),
-#             updated_on=datetime.now(UTC)
-#         )
-#         db.session.add(lambda_task)
-#         db.session.commit()
-
-#         # Pass the function_id to the Lambda function
-#         invoke_lambda_task(function_id=lambda_task.id)
-#     except Exception as e:
-#         logger.error(f"Error in scheduled Lambda task: {e}")
-#         traceback_str = traceback.format_exc()
-#         logger.error(traceback_str)
