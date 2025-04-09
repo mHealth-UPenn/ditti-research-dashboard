@@ -26,7 +26,7 @@ import { LinkComponent } from "../links/linkComponent";
 import { Link as RouterLink } from "react-router-dom";
 import { ParticipantWearableDataProvider } from "../../contexts/wearableDataContext";
 import { WearableVisualization } from "../visualizations/wearableVisualization";
-import { useStudySubjectContext } from "../../contexts/studySubjectContext";
+import { useStudySubjects } from "../../hooks/useStudySubjects";
 import { SmallLoader } from "../loader";
 import { ConsentModal } from "../containers/consentModal";
 import { makeRequest } from "../../utils";
@@ -41,7 +41,7 @@ export const ParticipantDashboardContent = () => {
   const [unconsentedStudies, setUnconsentedStudies] = useState<IParticipantStudy[]>([]);
 
   const { dittiId } = useAuth();
-  const { studies, apis, studySubjectLoading, refetch } = useStudySubjectContext();
+  const { studies, apis, studySubjectLoading, refetch } = useStudySubjects();
 
   const getStudiesNeedConsent = () => {
     const studiesNeedConsent = studies.filter(s => !s.didConsent);

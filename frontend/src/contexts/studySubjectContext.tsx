@@ -16,7 +16,7 @@
  */
 
 // TODO: Extend implementation to Ditti App Dashboard
-import { createContext, useState, useEffect, PropsWithChildren, useContext } from "react";
+import { createContext, useState, useEffect, PropsWithChildren } from "react";
 import { makeRequest } from "../utils";
 import { StudySubjectContextType, IParticipant, IParticipantApi, IParticipantStudy } from "../interfaces";
 import { APP_ENV } from "../environment";
@@ -87,14 +87,4 @@ export function StudySubjectProvider({
         {children}
     </StudySubjectContext.Provider>
   );
-}
-
-
-// Hook for accessing context data
-export function useStudySubjectContext() {
-  const context = useContext(StudySubjectContext);
-  if (!context) {
-    throw new Error("useStudySubjectContext must be used within a StudySubjectContext provider");
-  }
-  return context;
 }
