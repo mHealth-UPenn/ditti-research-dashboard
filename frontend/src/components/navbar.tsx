@@ -16,11 +16,11 @@
  */
 
 import { Link } from "react-router-dom";
-import { useNavbarContext } from "../contexts/navbarContext";
+import { useNavbar } from "../hooks/useNavbar";
 
 
 export const Navbar = () => {
-  const { breadcrumbs } = useNavbarContext();
+  const { breadcrumbs } = useNavbar();
 
   return (
     <div className="bg-white flex items-center h-16 flex-shrink-0 select-none z-10 shadow">

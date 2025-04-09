@@ -16,7 +16,7 @@
  */
 
 // TODO: Extend implementation to Ditti App Dashboard
-import { createContext, useState, useEffect, PropsWithChildren, useContext } from "react";
+import { createContext, useState, useEffect, PropsWithChildren } from "react";
 import { IBreadcrumb, NavbarContextType } from "../interfaces";
 import { useMatches } from "react-router-dom";
 
@@ -74,14 +74,4 @@ export function NavbarContextProvider({
           {children}
     </NavbarContext.Provider>
   );
-}
-
-
-// Hook for accessing context data
-export function useNavbarContext() {
-  const context = useContext(NavbarContext);
-  if (!context) {
-    throw new Error("useNavbarContext must be used within a NavbarContext provider");
-  }
-  return context;
 }

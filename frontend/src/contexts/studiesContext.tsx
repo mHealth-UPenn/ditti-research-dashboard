@@ -21,7 +21,7 @@ import { makeRequest } from "../utils";
 import { StudiesContextType, Study } from "../interfaces";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
-import { useNavbarContext } from "./navbarContext";
+import { useNavbar } from "../hooks/useNavbar";
 import { useSearchParams } from "react-router-dom";
 
 export const StudiesContext = createContext<StudiesContextType | undefined>(undefined);
@@ -43,7 +43,7 @@ export function StudiesProvider({
   const [studies, setStudies] = useState<Study[]>([]);
   const [study, setStudy] = useState<Study | null>(null);
   const [studiesLoading, setStudiesLoading] = useState(true);
-  const { setStudySlug, setSidParam } = useNavbarContext();
+  const { setStudySlug, setSidParam } = useNavbar();
 
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
