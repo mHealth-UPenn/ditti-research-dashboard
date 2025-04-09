@@ -19,7 +19,7 @@ import React, { useState, useEffect } from "react";
 import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { Table, Column, TableData } from "../table/table";
-import { Navbar } from "./navbar";
+import { AdminNavbar } from "./adminNavbar";
 import { SmallLoader } from "../loader";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
@@ -193,7 +193,7 @@ export const AboutSleepTemplates = () => {
     </Link> :
     <React.Fragment />;
 
-  const navbar = <Navbar activeView="About Sleep Templates" />;
+  const navbar = <AdminNavbar activeView="About Sleep Templates" />;
 
   if (loading) {
     return (

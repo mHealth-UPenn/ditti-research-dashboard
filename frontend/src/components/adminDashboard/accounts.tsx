@@ -18,7 +18,7 @@
 import React, { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table";
 import { Table } from "../table/table";
-import { Navbar } from "./navbar";
+import { AdminNavbar } from "./adminNavbar";
 import { getAccess, makeRequest } from "../../utils";
 import { Account, ResponseBody } from "../../interfaces";
 import { SmallLoader } from "../loader";
@@ -282,7 +282,7 @@ export const Accounts = () => {
     </Link>
   ) : <React.Fragment />;
 
-  const navbar = <Navbar activeView="Accounts" />;
+  const navbar = <AdminNavbar activeView="Accounts" />;
 
   if (loading) {
     return (

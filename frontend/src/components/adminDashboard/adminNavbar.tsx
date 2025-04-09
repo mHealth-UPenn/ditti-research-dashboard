@@ -26,7 +26,7 @@ interface NavbarProps {
   activeView: "Accounts" | "Studies" | "Roles" | "Access Groups" | "About Sleep Templates" | "Data Retrieval Tasks";
 }
 
-export const Navbar = ({ activeView }: NavbarProps) => {
+export const AdminNavbar = ({ activeView }: NavbarProps) => {
   const views = [
     {
       active: false,

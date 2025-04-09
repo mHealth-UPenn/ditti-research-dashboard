@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
 import { DataRetrievalTask } from "../../interfaces";
 import { makeRequest } from "../../utils";
 import { Table, Column, TableData } from "../table/table";
-import { Navbar } from "./navbar";
+import { AdminNavbar } from "./adminNavbar";
 import { SmallLoader } from "../loader";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
@@ -172,7 +172,7 @@ export const DataRetrievalTasks = () => {
   const tableControl = <></>;
 
   const navbar = (
-    <Navbar activeView="Data Retrieval Tasks" />
+    <AdminNavbar activeView="Data Retrieval Tasks" />
   );
 
   if (loading) {

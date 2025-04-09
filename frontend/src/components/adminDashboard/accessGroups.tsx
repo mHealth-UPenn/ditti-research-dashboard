@@ -16,7 +16,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Navbar } from "./navbar";
+import { AdminNavbar } from "./adminNavbar";
 import { Table, Column, TableData } from "../table/table";
 import { AccessGroup, ResponseBody } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
@@ -217,7 +217,7 @@ export const AccessGroups = () => {
     </Link>
   ) : <React.Fragment />;
 
-  const navbar = <Navbar activeView="Access Groups" />
+  const navbar = <AdminNavbar activeView="Access Groups" />
 
   if (loading) {
     return (

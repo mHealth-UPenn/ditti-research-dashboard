@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
 import { ResponseBody, Role } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { Table, Column, TableData } from "../table/table";
-import { Navbar } from "./navbar";
+import { AdminNavbar } from "./adminNavbar";
 import { SmallLoader } from "../loader";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
@@ -219,7 +219,7 @@ export const Roles = () => {
     <></>
   );
 
-  const navbar = <Navbar activeView="Roles" />;
+  const navbar = <AdminNavbar activeView="Roles" />;
 
   if (loading) {
     return (
