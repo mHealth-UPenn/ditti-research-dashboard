@@ -15,9 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { VisualizationController } from "./visualizationController";
 import { WearableVisualizationContent } from "./wearableVisualizationContent";
-
+import { VisualizationContextProvider } from "../../contexts/visualizationContext";
 /**
  * Props to pass to the wearable visualization.
 @ @property showDayControls: `showDayControls` to pass to `WearableVisualizationContent`.
@@ -40,7 +39,7 @@ export const WearableVisualization = ({
   horizontalPadding = false,
 }: IWearableVisualizationProps) => {
   return (
-    <VisualizationController
+    <VisualizationContextProvider
       defaultMargin={{
         top: 8,
         right: horizontalPadding ? 30 : 2,
@@ -52,6 +51,6 @@ export const WearableVisualization = ({
           showTapsData={showTapsData}
           dittiId={dittiId}
           horizontalPadding={horizontalPadding} />
-    </VisualizationController>
+    </VisualizationContextProvider>
   );
 };

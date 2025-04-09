@@ -15,15 +15,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useMemo, useState } from "react";
+import { createContext, PropsWithChildren, useMemo, useState } from "react";
+import { IVisualizationContext } from "../interfaces";
 import { scaleTime } from '@visx/scale';
-import { useParentSize } from '@visx/responsive'
+import { useParentSize } from "@visx/responsive";
 
+export const VisualizationContext = createContext<IVisualizationContext | undefined>(undefined);
 
-// TODO: extend to customize default values when needed in future vizualizations
-export const useVisualizationController = (
-  defaultMargin: { top: number, right: number, bottom: number, left: number }
-) => {
+interface VisualizationContextProviderProps {
+  defaultMargin?: { top: number, right: number, bottom: number, left: number };
+}
+
+export const VisualizationContextProvider = ({
+  defaultMargin = { top: 50, right: 30, bottom: 25, left: 60 },
+  children,
+}: PropsWithChildren<VisualizationContextProviderProps>) => {
   const now = new Date();
   const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
   const previousNoon = new Date(todayNoon);
@@ -134,20 +140,27 @@ export const useVisualizationController = (
     setZoomDomain([newLeft, newRight]);
   };
 
-  return {
-    zoomDomain,
-    minRangeReached,
-    maxRangeReached,
-    parentRef,
-    width,
-    height,
-    xScale,
-    xTicks,
-    onZoomChange,
-    resetZoom,
-    panLeft,
-    panRight,
-    zoomIn,
-    zoomOut,
-  };
+  return (
+    <VisualizationContext.Provider value={{
+      zoomDomain,
+      minRangeReached,
+      maxRangeReached,
+      parentRef,
+      width,
+      height,
+      defaultMargin,
+      xScale,
+      xTicks,
+      onZoomChange,
+      resetZoom,
+      panLeft,
+      panRight,
+      zoomIn,
+      zoomOut,
+    }}>
+      <div ref={parentRef} className="w-full">
+        {children}
+      </div>
+    </VisualizationContext.Provider>
+  )
 };

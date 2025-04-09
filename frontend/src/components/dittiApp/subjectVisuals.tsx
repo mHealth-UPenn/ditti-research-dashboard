@@ -23,7 +23,6 @@ import "./subjectVisuals.css";
 import { getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { SmallLoader } from "../loader";
 import { TimestampHistogram } from "../visualizations/timestampHistogram";
-import { VisualizationController } from "../visualizations/visualizationController";
 import { TapVisualizationButtons } from "../visualizations/tapVisualizationButtons";
 import { BoutsTimeline } from "../visualizations/boutsTimeline";
 import { AudioTapsTimeline } from "../visualizations/audioTapsTimeline";
@@ -38,6 +37,7 @@ import { APP_ENV } from "../../environment";
 import { Link, useSearchParams } from "react-router-dom";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useStudies } from "../../hooks/useStudies";
+import { VisualizationContextProvider } from "../../contexts/visualizationContext";
 
 
 export const SubjectVisualsV2 = () => {
@@ -185,13 +185,13 @@ export const SubjectVisualsV2 = () => {
           </div>
         </CardContentRow>
 
-        <VisualizationController
+        <VisualizationContextProvider
           defaultMargin={{ top: 50, right: 40, bottom: 75, left: 60 }}>
             <TapVisualizationButtons />
             <TimestampHistogram timestamps={timestamps} timezones={timezones} />
             <BoutsTimeline timestamps={timestamps} marginBottom={30} marginTop={30} />
             <AudioTapsTimeline audioTaps={filteredAudioTaps} marginBottom={30} marginTop={30} />
-        </VisualizationController>
+        </VisualizationContextProvider>
       </Card>
     </ViewContainer>
   );

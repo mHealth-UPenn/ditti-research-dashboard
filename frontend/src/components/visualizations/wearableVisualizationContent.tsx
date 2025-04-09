@@ -16,7 +16,7 @@
  */
 
 import { colors } from "../../colors";
-import { useVisualizationContext } from "../../contexts/visualizationContext";
+import { useVisualization } from "../../hooks/useVisualization";
 import { useWearableData } from "../../contexts/wearableDataContext";
 import { ISleepLevelClassic, ISleepLevelStages, IVisualizationProps } from "../../interfaces";
 import { Timeline } from "./timeline";
@@ -106,7 +106,7 @@ export const WearableVisualizationContent = ({
     defaultMargin,
     onZoomChange,
     resetZoom
-  } = useVisualizationContext();
+  } = useVisualization();
 
   const {
     startDate,

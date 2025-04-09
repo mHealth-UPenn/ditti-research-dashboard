@@ -15,8 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { RefObject } from "react";
 import { FlashMessageVariant } from "./components/flashMessage/flashMessage";
 import { QuillOptions } from "quill";
+import { ScaleTime } from "d3";
 
 /**
  * Represents an account with user details and permissions.
@@ -690,4 +692,22 @@ export interface IDittiDataContext {
   audioTaps: AudioTapDetails[]
   audioFiles: AudioFile[]
   refreshAudioFiles: () => Promise<void>;
+}
+
+export interface IVisualizationContext {
+  zoomDomain: [Date, Date] | null;  // Ensure different types can be added in the future by enforcing type checks now
+  minRangeReached: boolean;
+  maxRangeReached: boolean;
+  parentRef: RefObject<HTMLDivElement>;
+  width: number;
+  height: number;
+  defaultMargin: { top: number; right: number; bottom: number; left: number };
+  xScale: ScaleTime<number, number> | null;
+  xTicks: number;
+  onZoomChange: (domain: [number, number]) => void;
+  resetZoom: () => void;
+  panLeft: () => void;
+  panRight: () => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
 }

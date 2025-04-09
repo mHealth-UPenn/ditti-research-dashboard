@@ -19,7 +19,7 @@ import React, { useCallback } from "react";
 import { Line } from "@visx/shape";
 import { AxisBottom, AxisLeft } from "@visx/axis";
 import { scaleLinear } from '@visx/scale';
-import { useVisualizationContext } from "../../contexts/visualizationContext";
+import { useVisualization } from "../../hooks/useVisualization";
 import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 import { colors } from "../../colors";
 import { IVisualizationProps } from "../../interfaces";
@@ -91,7 +91,7 @@ export const Timeline: React.FC<TimelineProps> = ({
     width,
     defaultMargin,
     xScale,
-  } = useVisualizationContext();
+  } = useVisualization();
 
   const margin = {
     top: marginTop !== undefined ? marginTop : defaultMargin.top,

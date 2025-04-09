@@ -22,7 +22,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import ReplayIcon from '@mui/icons-material/Replay';
 
-import { useVisualizationContext } from "../../contexts/visualizationContext";
+import { useVisualization } from "../../hooks/useVisualization";
 import { Button } from "../buttons/button";
 
 
@@ -35,7 +35,7 @@ export const TapVisualizationButtons: React.FC = () => {
     zoomIn,
     zoomOut,
     resetZoom,
-  } = useVisualizationContext();
+  } = useVisualization();
 
   return (
     <div className="flex flex-col items-end">

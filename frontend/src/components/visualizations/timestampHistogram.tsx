@@ -25,7 +25,7 @@ import { Bounds } from '@visx/brush/lib/types';
 import { GridRows, GridColumns } from '@visx/grid';
 import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 
-import { useVisualizationContext } from '../../contexts/visualizationContext';
+import { useVisualization } from '../../hooks/useVisualization';
 import { colors } from '../../colors';
 import { NumberValue } from 'd3';
 import { IVisualizationProps } from '../../interfaces';
@@ -103,7 +103,7 @@ export const TimestampHistogram = ({
     xScale,
     xTicks,
     onZoomChange,
-  } = useVisualizationContext();
+  } = useVisualization();
 
   // Override the default margin if any was passed as props.
   const margin = {
