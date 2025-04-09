@@ -90,8 +90,6 @@ export function WearableVisualsContent({
     year: "numeric",
     month: "short",
     day: "numeric",
-    // hour: "numeric",
-    // minute: "2-digit"
   };
 
   const expTimeFormatted = (new Date(expiresOn)).toLocaleDateString("en-US", dateOpts);

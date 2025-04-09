@@ -38,7 +38,7 @@ interface TextFieldProps {
   type?: string;
   placeholder?: string;
   label?: string;
-  description?: string; // Added description prop
+  description?: string;
   onKeyup?: (text: string) => void;
   onKeyDown?: (e: React.KeyboardEvent) => void;
   feedback?: string;

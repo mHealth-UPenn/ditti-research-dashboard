@@ -430,7 +430,6 @@ const router = createBrowserRouter([
         path: "coordinator/login",
         element: <ResearcherLoginPage />,
       },
-      // Additional routes can be added here
     ],
   },
   {

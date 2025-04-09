@@ -60,8 +60,6 @@ export function StudySubjectProvider({
         .catch(() => {
           console.error("Unable to fetch participant data.")
         });
-    // } else if (dataFactory) {
-    //   studies = dataFactory.studies;
     }
 
     return [studiesData, apisData];

@@ -138,8 +138,6 @@ export const SubjectVisualsV2 = () => {
     year: "numeric",
     month: "short",
     day: "numeric",
-    // hour: "numeric",
-    // minute: "2-digit"
   };
 
   const expTime = (new Date(expiresOn)).toLocaleDateString("en-US", dateOpts);

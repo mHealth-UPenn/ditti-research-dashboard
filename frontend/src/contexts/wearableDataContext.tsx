@@ -20,7 +20,6 @@ import { IDataProcessingTask, ISleepLog,  IWearableDataContextType } from "../in
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
 import { makeRequest } from "../utils";
-// import { useFlashMessageContext } from "./flashMessagesContext";
 
 
 // Context return type for participants
@@ -54,8 +53,6 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
   // For now participants do not have the ability to change the start and end dates
   const startDate = start;  // Start one week ago
   const endDate = new Date();  // End today
-
-  // const { flashMessage } = useFlashMessageContext();
 
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
@@ -144,8 +141,6 @@ export const CoordinatorWearableDataProvider = ({
 
   // The date of the first sleep log entry
   const [firstDateOfSleep, setFirstDateOfSleep] = useState<Date | null>(null);
-
-  // const { flashMessage } = useFlashMessageContext();
 
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {

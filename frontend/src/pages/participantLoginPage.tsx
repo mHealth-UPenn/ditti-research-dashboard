@@ -46,15 +46,6 @@ export const ParticipantLoginPage: React.FC = () => {
     }
   }, [isParticipantAuthenticated, navigate]);
 
-  // Parse URL parameters for elevated mode
-  // useEffect(() => {
-  //   const urlParams = new URLSearchParams(location.search);
-  //   const elevatedParam = urlParams.get("elevated");
-  //   setIsElevated(elevatedParam === "true");
-  //   // Add state [isElevated, setIsElevated]
-  //   // Add switch between participantLogin() and participantLogin({ elevated: true }) based on isElevated
-  // }, [location.search]); // useLocation();
-
   return (
     <>
       <FullLoader

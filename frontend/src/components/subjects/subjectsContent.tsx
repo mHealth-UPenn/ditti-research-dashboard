@@ -131,8 +131,6 @@ export const SubjectsContent = ({ app }: ISubjectsContentProps) => {
     year: "numeric",
     month: "short",
     day: "numeric",
-    // hour: "2-digit",
-    // minute: "2-digit"
   };
 
   const tableData: TableData[][] = filteredStudySubjects.map((studySubject: IStudySubjectDetails) => {
