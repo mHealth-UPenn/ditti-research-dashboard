@@ -36,7 +36,7 @@ import { Button } from "../buttons/button";
 import { useDittiData } from "../../hooks/useDittiData";
 import { APP_ENV } from "../../environment";
 import { Link, useSearchParams } from "react-router-dom";
-import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
+import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useStudiesContext } from "../../contexts/studiesContext";
 
 
@@ -51,7 +51,7 @@ export const SubjectVisualsV2 = () => {
 
   const { dataLoading, taps, audioTaps } = useDittiData();
   const { studiesLoading, study } = useStudiesContext();
-  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjects();
 
   useEffect(() => {
     getAccess(2, "Edit", "Participants", studyId)

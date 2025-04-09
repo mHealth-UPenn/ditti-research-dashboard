@@ -29,7 +29,7 @@ import { useWearableData } from "../../contexts/wearableDataContext";
 import { WearableVisualization } from "../visualizations/wearableVisualization";
 import SyncIcon from '@mui/icons-material/Sync';
 import { Link } from "react-router-dom";
-import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
+import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
@@ -79,7 +79,7 @@ export function WearableVisualsContent({
 
   const { isSyncing, syncData } = useWearableData();
   
-  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjects();
   const { studiesLoading, study } = useStudiesContext();
   const { flashMessage } = useFlashMessageContext();
 

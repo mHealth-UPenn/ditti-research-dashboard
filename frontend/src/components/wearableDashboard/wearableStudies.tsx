@@ -24,7 +24,7 @@ import { Title } from "../text/title";
 import { ActiveIcon } from "../icons/activeIcon";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { SmallLoader } from "../loader";
-import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
+import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { LinkComponent } from "../links/linkComponent";
 import { Link } from "react-router-dom";
 
@@ -48,7 +48,7 @@ export function WearableStudies() {
   const [loading, setLoading] = useState(true);
 
   const { studies, studiesLoading } = useStudiesContext();
-  const { studySubjects, studySubjectLoading } = useCoordinatorStudySubjectContext();
+  const { studySubjects, studySubjectLoading } = useCoordinatorStudySubjects();
 
   // The summary details to show for each study
   const wearableDetails: IWearableDetails = {};

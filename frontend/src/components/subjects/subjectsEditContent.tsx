@@ -35,7 +35,7 @@ import { FormSummarySubtext } from "../containers/forms/formSummarySubtext";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { APP_ENV } from "../../environment";
 import sanitize from "sanitize-html";
-import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
+import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
@@ -82,7 +82,7 @@ export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const dittiIdInputRef = createRef<HTMLInputElement>();
 
   const { studiesLoading, study } = useStudiesContext();
-  const { studySubjectLoading, getStudySubjectByDittiId, fetchStudySubjects } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, getStudySubjectByDittiId, fetchStudySubjects } = useCoordinatorStudySubjects();
 
   const { flashMessage } = useFlashMessageContext();
   const navigate = useNavigate();

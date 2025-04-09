@@ -21,7 +21,7 @@ import { differenceInDays } from "date-fns";
 import { CardContentRow } from "../cards/cardContentRow";
 import { ActiveIcon } from "../icons/activeIcon";
 import { LinkComponent } from "../links/linkComponent";
-import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
+import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { Link } from "react-router-dom";
 import { SmallLoader } from "../loader";
 import { getEnrollmentInfoForStudy } from "../../utils";
@@ -43,7 +43,7 @@ export function WearableStudySubjects({
   studyDetails,
   canViewWearableData,
 }: WearableStudySubjectsProps) {
-  const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjects();
   const { study } = useStudiesContext();
 
   // Get only study subjects with prefixes that equal the current study's prefix

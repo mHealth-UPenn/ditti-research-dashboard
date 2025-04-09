@@ -28,7 +28,7 @@ import { Title } from "../text/title";
 import { Subtitle } from "../text/subtitle";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
-import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
+import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { Link } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
 
@@ -49,7 +49,7 @@ export const SubjectsContent = ({ app }: ISubjectsContentProps) => {
   const [loading, setLoading] = useState<boolean>(true);
   
   const { studiesLoading, study } = useStudiesContext();
-  const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjects();
 
   const appSlug = app === 2 ? "ditti" : "wearable";
 

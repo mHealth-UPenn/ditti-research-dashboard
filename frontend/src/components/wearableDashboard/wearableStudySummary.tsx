@@ -27,7 +27,7 @@ import { Button } from "../buttons/button";
 import { CardContentRow } from "../cards/cardContentRow";
 import { APP_ENV } from "../../environment";
 import { WearableStudySubjects } from "./wearableStudySubjects";
-import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
+import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { Link, useSearchParams } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
 
@@ -101,7 +101,7 @@ export function WearableStudySummary() {
   };
 
   const { dittiId, email, name, acronym } = studyDetails;
-  const { studySubjectLoading } = useCoordinatorStudySubjectContext();
+  const { studySubjectLoading } = useCoordinatorStudySubjects();
 
   if (loading || studySubjectLoading) {
     return (
