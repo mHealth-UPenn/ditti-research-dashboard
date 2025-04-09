@@ -25,7 +25,7 @@ import { useState, useEffect } from "react";
  * callback: a callback function for when an option is selected
  * getDefault: get the default string value given the id that was passed
  */
-interface SelectProps {
+interface SelectFieldProps {
   id: number;
   opts: { value: number; label: string }[];
   placeholder: string;
@@ -35,7 +35,7 @@ interface SelectProps {
   getDefault?: (id: number) => number;
 }
 
-export const Select: React.FC<SelectProps> = ({
+export const SelectField: React.FC<SelectFieldProps> = ({
   id,
   opts,
   placeholder,

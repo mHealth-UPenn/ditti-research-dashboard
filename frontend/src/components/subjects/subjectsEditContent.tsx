@@ -21,7 +21,7 @@ import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { formatDateForInput, getEnrollmentInfoForStudy, makeRequest } from "../../utils";
 import { CheckField } from "../fields/checkField";
 import { SmallLoader } from "../loader";
-import { Select } from "../fields/select";
+import { SelectField } from "../fields/selectField";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
 import { FormSummary } from "../containers/forms/formSummary";
@@ -481,7 +481,7 @@ export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
           <FormField>
             <div className="mb-1">About Sleep Template</div>
             <div className="border-light">
-              <Select
+              <SelectField
                 id={0}
                 opts={aboutSleepTemplates.map(
                   (a: AboutSleepTemplate) => {

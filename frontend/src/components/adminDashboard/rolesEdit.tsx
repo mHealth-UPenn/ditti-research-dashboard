@@ -17,7 +17,7 @@
 
 import React, { useState, useEffect } from "react";
 import { TextField } from "../fields/textField";
-import { Select } from "../fields/select";
+import { SelectField } from "../fields/selectField";
 import {
   ActionResource,
   Permission,
@@ -269,7 +269,7 @@ export const RolesEdit = () => {
   const permissionFields = permissions.map((p: Permission, i) =>
     <FormRow key={i} forceRow={true}>
       <FormField className="mr-4 xl:mr-8">
-        <Select
+        <SelectField
           id={p.id}
           opts={actions.map((a: ActionResource) => ({
             value: a.id,
@@ -280,7 +280,7 @@ export const RolesEdit = () => {
           getDefault={getSelectedAction} />
       </FormField>
       <FormField>
-        <Select
+        <SelectField
           id={p.id}
           opts={resources.map((r: ActionResource) => ({
             value: r.id,

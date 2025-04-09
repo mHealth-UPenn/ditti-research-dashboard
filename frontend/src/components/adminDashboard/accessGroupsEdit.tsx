@@ -17,7 +17,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { TextField } from "../fields/textField";
-import { Select } from "../fields/select";
+import { SelectField } from "../fields/selectField";
 import {
   AccessGroup,
   ActionResource,
@@ -232,7 +232,7 @@ export const AccessGroupsEdit = () => {
   const permissionFields =permissions.map((p: Permission) =>
     <FormRow key={p.id} forceRow={true}>
       <FormField className="mr-4 xl:mr-8">
-        <Select
+        <SelectField
           id={p.id}
           opts={actions.map((a) => ({ value: a.id, label: a.value }))}
           placeholder="Action"
@@ -240,7 +240,7 @@ export const AccessGroupsEdit = () => {
           getDefault={() => getSelectedAction(p.id)} />
       </FormField>
       <FormField>
-        <Select
+        <SelectField
           id={p.id}
           opts={resources.map((r) => ({ value: r.id, label: r.value }))}
           placeholder="Permission"
@@ -367,7 +367,7 @@ export const AccessGroupsEdit = () => {
           <FormField>
             <div className="mb-1">App</div>
             <div className="border-light">
-              <Select
+              <SelectField
                 id={accessGroupId || 0}
                 opts={apps.map((a: App) => ({
                   value: a.id,

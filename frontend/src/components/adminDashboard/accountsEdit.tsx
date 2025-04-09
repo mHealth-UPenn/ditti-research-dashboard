@@ -26,7 +26,7 @@ import {
   Role,
   Study,
 } from "../../interfaces";
-import { Select } from "../fields/select";
+import { SelectField } from "../fields/selectField";
 import { makeRequest, formatPhoneNumber } from "../../utils";
 import { SmallLoader } from "../loader";
 import { FormView } from "../containers/forms/formView";
@@ -625,7 +625,7 @@ export const AccountsEdit = () => {
       },
       {
         contents: (
-          <Select
+          <SelectField
             key={s.id}
             id={s.id}
             opts={roles.map((r: Role) => ({ value: r.id, label: r.name }))}

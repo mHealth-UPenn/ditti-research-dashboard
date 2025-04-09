@@ -18,7 +18,7 @@
 import { useState, ChangeEvent, createRef } from "react";
 import { TextField } from "../fields/textField";
 import { makeRequest } from "../../utils";
-import { Select } from "../fields/select";
+import { SelectField } from "../fields/selectField";
 import { RadioField } from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
 import axios, { AxiosError } from "axios";
@@ -406,7 +406,7 @@ export const AudioFileUpload = () => {
               Add study
             </div>
             <div className="border-light">
-              <Select
+              <SelectField
                 id={0}
                 opts={studies.map(
                   s => {return { value: s.id, label: s.acronym }}
