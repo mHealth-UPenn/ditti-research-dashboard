@@ -39,7 +39,7 @@ import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import CloseIcon from "@mui/icons-material/Close";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 /**
  * The form's prefill
@@ -60,7 +60,7 @@ export const RolesEdit = () => {
   const [name, setName] = useState<string>("");
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
   useEffect(() => {

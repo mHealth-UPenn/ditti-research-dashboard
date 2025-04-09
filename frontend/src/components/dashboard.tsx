@@ -20,11 +20,11 @@ import { Navbar } from "./navbar";
 import "./dashboard.css";
 import { Outlet } from "react-router-dom";
 import { NavbarContextProvider } from "../contexts/navbarContext";
-import { useFlashMessageContext } from "../contexts/flashMessagesContext";
+import { useFlashMessages } from "../hooks/useFlashMessages";
 
 
 export const Dashboard = () => {
-  const { flashMessages } = useFlashMessageContext();
+  const { flashMessages } = useFlashMessages();
 
   return (
     <main className="flex flex-col h-screen">

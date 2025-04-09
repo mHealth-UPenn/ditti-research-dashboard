@@ -33,14 +33,14 @@ import { FormSummaryText } from "../containers/forms/formSummaryText";
 import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 export const StudiesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
   const studyId = id ? parseInt(id) : 0
 
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
   const [name, setName] = useState<string>("");
   const [acronym, setAcronym] = useState<string>("");

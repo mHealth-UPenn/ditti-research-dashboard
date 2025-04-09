@@ -32,7 +32,7 @@ import { FormSummaryText } from "../containers/forms/formSummaryText";
 import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import sanitize from "sanitize-html";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
 
 /**
@@ -53,7 +53,7 @@ export const AboutSleepTemplatesEdit = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const previewRef = createRef<HTMLDivElement>();
 
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
   useEffect(() => {

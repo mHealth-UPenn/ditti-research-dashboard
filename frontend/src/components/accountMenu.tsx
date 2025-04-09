@@ -23,7 +23,7 @@ import { makeRequest, formatPhoneNumber } from "../utils";
 import { AsyncButton } from "./buttons/asyncButton";
 import { Button } from "./buttons/button";
 import { useAuth } from "../hooks/useAuth";
-import { useFlashMessageContext } from "../contexts/flashMessagesContext";
+import { useFlashMessages } from "../hooks/useFlashMessages";
 
 /**
  * Account menu props interface
@@ -69,7 +69,7 @@ export const AccountMenu = ({
 
   // Hooks
   const { researcherLogout } = useAuth();
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
 
   // Handle phone number change with formatting
   const handlePhoneNumberChange = (value: string) => {

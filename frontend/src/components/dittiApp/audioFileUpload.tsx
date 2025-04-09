@@ -38,7 +38,7 @@ import { useDittiData } from "../../hooks/useDittiData";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
 import { useStudiesContext } from "../../contexts/studiesContext";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useNavigate } from "react-router-dom";
 
 
@@ -71,7 +71,7 @@ export const AudioFileUpload = () => {
   const { dataLoading, audioFiles } = useDittiData();
   const { studiesLoading, studies } = useStudiesContext();
 
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
   const existingFiles = new Set();

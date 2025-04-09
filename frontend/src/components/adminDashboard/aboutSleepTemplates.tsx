@@ -25,7 +25,7 @@ import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 export const AboutSleepTemplates = () => {
   const [canCreate, setCanCreate] = useState(false);
@@ -35,7 +35,7 @@ export const AboutSleepTemplates = () => {
     AboutSleepTemplate[]
   >([]);
   const [loading, setLoading] = useState(true);
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
 
   const columns: Column[] = [
     {

@@ -16,7 +16,7 @@
  */
 
 // TODO: Extend implementation to Ditti App Dashboard
-import { createContext, useState, PropsWithChildren, useContext, createRef } from "react";
+import { createContext, useState, PropsWithChildren, createRef } from "react";
 import { FlashMessageContextType, IFlashMessage } from "../interfaces";
 import { FlashMessage, FlashMessageVariant } from "../components/flashMessage/flashMessage";
 
@@ -65,14 +65,4 @@ export function FlashMessageContextProvider({
       {children}
     </FlashMessageContext.Provider>
   );
-}
-
-
-// Hook for accessing context data
-export function useFlashMessageContext() {
-  const context = useContext(FlashMessageContext);
-  if (!context) {
-    throw new Error("useFlashMessageContext must be used within a FlashMessageContext provider");
-  }
-  return context;
 }

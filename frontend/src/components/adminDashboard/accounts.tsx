@@ -26,7 +26,7 @@ import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { Button } from "../buttons/button";
 import { Link } from "react-router-dom";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 /**
  * Functional component representing Accounts.
@@ -75,7 +75,7 @@ export const Accounts = () => {
     }
   ]);
   const [loading, setLoading] = useState(true);
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
 
   useEffect(() => {
     // Check user permissions

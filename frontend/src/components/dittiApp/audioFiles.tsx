@@ -24,7 +24,7 @@ import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useDittiData } from "../../hooks/useDittiData";
 
 export const AudioFiles = () => {
@@ -33,7 +33,7 @@ export const AudioFiles = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const { dataLoading, audioFiles, refreshAudioFiles } = useDittiData();
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
 
   const columns: Column[] = [
     {

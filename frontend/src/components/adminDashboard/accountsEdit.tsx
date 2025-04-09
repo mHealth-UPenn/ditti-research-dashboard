@@ -40,7 +40,7 @@ import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { FormSummaryText } from "../containers/forms/formSummaryText";
 import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 type Action =
   | {
@@ -214,7 +214,7 @@ export const AccountsEdit = () => {
     studiesSelected,
   } = state;
 
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
   useEffect(() => {

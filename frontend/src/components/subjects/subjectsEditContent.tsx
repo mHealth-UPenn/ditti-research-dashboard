@@ -38,7 +38,7 @@ import sanitize from "sanitize-html";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 
 /**
@@ -84,7 +84,7 @@ export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const { studiesLoading, study } = useStudiesContext();
   const { studySubjectLoading, getStudySubjectByDittiId, fetchStudySubjects } = useCoordinatorStudySubjects();
 
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
   const studySubject = dittiId ? getStudySubjectByDittiId(dittiId) : null;

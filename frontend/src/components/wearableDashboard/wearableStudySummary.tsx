@@ -29,7 +29,7 @@ import { APP_ENV } from "../../environment";
 import { WearableStudySubjects } from "./wearableStudySubjects";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { Link, useSearchParams } from "react-router-dom";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 
 /**
@@ -58,7 +58,7 @@ export function WearableStudySummary() {
   const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
   const [loading, setLoading] = useState(true);
 
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
 
   // Get permissions and study information on load
   useEffect(() => {

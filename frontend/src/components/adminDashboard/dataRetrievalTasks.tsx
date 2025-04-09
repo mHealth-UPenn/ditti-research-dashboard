@@ -23,7 +23,7 @@ import { AdminNavbar } from "./adminNavbar";
 import { SmallLoader } from "../loader";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 /**
  * Defines the table columns for displaying data retrieval tasks.
@@ -84,7 +84,7 @@ export const DataRetrievalTasks = () => {
   const [tasks, setTasks] = useState<DataRetrievalTask[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
 
   useEffect(() => {
     const fetchData = async () => {

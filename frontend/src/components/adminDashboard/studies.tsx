@@ -36,7 +36,7 @@ const COLUMNS: Column[] = [
   { name: "", searchable: false, sortable: false, width: 10 },
 ];
 import { Link } from "react-router-dom";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 export const Studies = () => {
   const [canCreate, setCanCreate] = useState(false);
@@ -44,7 +44,7 @@ export const Studies = () => {
   const [canArchive, setCanArchive] = useState(false);
   const [studies, setStudies] = useState<Study[]>([]);
   const [loading, setLoading] = useState(true);
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
 
   useEffect(() => {
     const fetchData = async () => {

@@ -31,7 +31,7 @@ import SyncIcon from '@mui/icons-material/Sync';
 import { Link } from "react-router-dom";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useStudiesContext } from "../../contexts/studiesContext";
-import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 
 /**
@@ -81,7 +81,7 @@ export function WearableVisualsContent({
   
   const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjects();
   const { studiesLoading, study } = useStudiesContext();
-  const { flashMessage } = useFlashMessageContext();
+  const { flashMessage } = useFlashMessages();
 
   const studySubject = getStudySubjectByDittiId(dittiId);
   const { expiresOn } = getEnrollmentInfoForStudy(studySubject, study?.id);
