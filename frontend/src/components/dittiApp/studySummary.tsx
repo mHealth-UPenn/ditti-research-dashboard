@@ -29,7 +29,7 @@ import { Title } from "../text/title";
 import { Subtitle } from "../text/subtitle";
 import { Button } from "../buttons/button";
 import { CardContentRow } from "../cards/cardContentRow";
-import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { useDittiData } from "../../hooks/useDittiData";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
@@ -51,7 +51,7 @@ export const StudySummary = () => {
   const [loading, setLoading] = useState(true);
 
   const { studiesLoading, study } = useStudiesContext();
-  const { dataLoading, taps, audioTaps } = useDittiDataContext();
+  const { dataLoading, taps, audioTaps } = useDittiData();
 
   useEffect(() => {
     if (study) {

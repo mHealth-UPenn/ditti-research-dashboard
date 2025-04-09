@@ -21,7 +21,7 @@ import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import { CardContentRow } from "../cards/cardContentRow";
 import { ActiveIcon } from "../icons/activeIcon";
 import { LinkComponent } from "../links/linkComponent";
-import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { useDittiData } from "../../hooks/useDittiData";
 import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
 import { Link } from "react-router-dom";
 import { getEnrollmentInfoForStudy } from "../../utils";
@@ -42,7 +42,7 @@ export const StudySubjects: React.FC<StudySubjectsProps> = ({
   study,
   canViewTaps,
 }) => {
-  const { dataLoading, taps, audioTaps } = useDittiDataContext();
+  const { dataLoading, taps, audioTaps } = useDittiData();
   const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjectContext();
 
   // Get only study subjects enrolled in the current study

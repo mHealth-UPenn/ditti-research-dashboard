@@ -683,3 +683,11 @@ export interface QuillFieldProps {
   containerClassName?: string;
   readOnly?: boolean;
 }
+
+export interface IDittiDataContext {
+  dataLoading: boolean;
+  taps: TapDetails[]
+  audioTaps: AudioTapDetails[]
+  audioFiles: AudioFile[]
+  refreshAudioFiles: () => Promise<void>;
+}

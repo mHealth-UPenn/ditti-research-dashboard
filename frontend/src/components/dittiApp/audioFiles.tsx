@@ -22,18 +22,17 @@ import { getAccess, makeRequest } from "../../utils";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
-import { useDittiDataContext } from "../../contexts/dittiDataContext";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useFlashMessageContext } from "../../contexts/flashMessagesContext";
-
+import { useDittiData } from "../../hooks/useDittiData";
 
 export const AudioFiles = () => {
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState<boolean>(false);
   const [canDeleteAudioFiles, setCanDeleteAudioFiles] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const { dataLoading, audioFiles, refreshAudioFiles } = useDittiDataContext();
+  const { dataLoading, audioFiles, refreshAudioFiles } = useDittiData();
   const { flashMessage } = useFlashMessageContext();
 
   const columns: Column[] = [

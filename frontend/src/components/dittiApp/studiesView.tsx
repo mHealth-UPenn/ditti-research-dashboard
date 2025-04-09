@@ -26,7 +26,7 @@ import { Button } from "../buttons/button";
 import { Title } from "../text/title";
 import { ActiveIcon } from "../icons/activeIcon";
 import { LinkComponent } from "../links/linkComponent";
-import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { useDittiData } from "../../hooks/useDittiData";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useStudiesContext } from "../../contexts/studiesContext";
@@ -38,7 +38,7 @@ export const StudiesView = () => {
   const [canCreateAudioFiles, setCanCreateAudioFiles] = useState(true);
   const [canViewTaps, setCanViewTaps] = useState<Set<number>>(new Set());
 
-  const { dataLoading, taps, audioFiles } = useDittiDataContext();
+  const { dataLoading, taps, audioFiles } = useDittiData();
   const { studiesLoading, studies } = useStudiesContext();
 
   useEffect(() => {

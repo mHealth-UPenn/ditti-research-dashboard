@@ -34,7 +34,7 @@ import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { FormSummarySubtext } from "../containers/forms/formSummarySubtext";
 import { Button } from "../buttons/button";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
-import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { useDittiData } from "../../hooks/useDittiData";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
 import { useStudiesContext } from "../../contexts/studiesContext";
@@ -68,7 +68,7 @@ export const AudioFileUpload = () => {
 
   const fileInputRef = createRef<HTMLInputElement>();
 
-  const { dataLoading, audioFiles } = useDittiDataContext();
+  const { dataLoading, audioFiles } = useDittiData();
   const { studiesLoading, studies } = useStudiesContext();
 
   const { flashMessage } = useFlashMessageContext();

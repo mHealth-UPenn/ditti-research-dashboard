@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { DittiDataContext } from "../../contexts/dittiDataContext";
+import { DittiDataProvider } from "../../contexts/dittiDataContext";
 import { useDittiData } from "../../hooks/useDittiData";
 import { Card } from "../cards/card";
 import { SmallLoader } from "../loader";
@@ -27,13 +27,7 @@ import { ViewContainer } from "../containers/viewContainer";
 
 // React Router container for the Ditti App Dashboard for wrapping it in context providers
 export function DittiAppDashboard() {
-  const {
-    dataLoading,
-    taps,
-    audioTaps,
-    audioFiles,
-    refreshAudioFiles,
-  } = useDittiData();
+  const { dataLoading } = useDittiData();
 
   if (dataLoading) {
     return (
@@ -48,15 +42,9 @@ export function DittiAppDashboard() {
   return (
     <StudiesProvider app={2}>
       <CoordinatorStudySubjectProvider app={2}>
-        <DittiDataContext.Provider value={{
-          dataLoading,
-          taps,
-          audioTaps,
-          audioFiles,
-          refreshAudioFiles,
-        }}>
+        <DittiDataProvider>
           <Outlet />
-        </DittiDataContext.Provider>
+        </DittiDataProvider>
       </CoordinatorStudySubjectProvider>
     </StudiesProvider>
   );

@@ -33,7 +33,7 @@ import { CardContentRow } from "../cards/cardContentRow";
 import { Title } from "../text/title";
 import { Subtitle } from "../text/subtitle";
 import { Button } from "../buttons/button";
-import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { useDittiData } from "../../hooks/useDittiData";
 import { APP_ENV } from "../../environment";
 import { Link, useSearchParams } from "react-router-dom";
 import { useCoordinatorStudySubjectContext } from "../../hooks/useCoordinatorStudySubjectContext";
@@ -49,7 +49,7 @@ export const SubjectVisualsV2 = () => {
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const { dataLoading, taps, audioTaps } = useDittiDataContext();
+  const { dataLoading, taps, audioTaps } = useDittiData();
   const { studiesLoading, study } = useStudiesContext();
   const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjectContext();
 

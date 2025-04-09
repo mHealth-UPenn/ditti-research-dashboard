@@ -30,7 +30,7 @@ import { differenceInDays } from "date-fns";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { useEffect, useMemo, useState } from "react";
-import { useDittiDataContext } from "../../contexts/dittiDataContext";
+import { useDittiData } from "../../hooks/useDittiData";
 import { BoutsTimeline } from "./boutsTimeline";
 import { SmallLoader } from "../loader";
 
@@ -121,7 +121,7 @@ export const WearableVisualizationContent = ({
     resetStartDate,
   } = useWearableData();
 
-  const { dataLoading, taps, audioTaps } = useDittiDataContext();
+  const { dataLoading, taps, audioTaps } = useDittiData();
 
   // Get only the taps and audio taps that belong to the current participant.
   const timestamps = useMemo(() => taps
