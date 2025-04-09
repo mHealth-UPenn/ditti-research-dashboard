@@ -17,10 +17,10 @@
 import logging
 import traceback
 from flask import Blueprint, jsonify, make_response
-from aws_portal.extensions import db
-from aws_portal.models import LambdaTask
-from aws_portal.auth.decorators import researcher_auth_required
-from aws_portal.utils.lambda_task import create_and_invoke_lambda_task
+from backend.extensions import db
+from backend.models import LambdaTask
+from backend.auth.decorators import researcher_auth_required
+from backend.utils.lambda_task import create_and_invoke_lambda_task
 
 blueprint = Blueprint("data_processing_task", __name__,
                       url_prefix="/data_processing_task")

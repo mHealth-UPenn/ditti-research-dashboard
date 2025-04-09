@@ -2,7 +2,7 @@ import json
 import inspect
 from unittest.mock import MagicMock, patch
 from flask import jsonify, make_response
-from aws_portal.auth.decorators.researcher import researcher_auth_required
+from backend.auth.decorators.researcher import researcher_auth_required
 from .test_auth_common import create_mock_response, test_app
 
 
@@ -25,7 +25,7 @@ class TestResearcherAuthDecorator:
         with test_app.test_request_context("/test-researcher"):
             with test_app.app_context():
                 # Mock token extraction to return None (no token)
-                with patch("aws_portal.auth.decorators.researcher.get_token_from_request") as mock_get_token:
+                with patch("backend.auth.decorators.researcher.get_token_from_request") as mock_get_token:
                     mock_get_token.return_value = None
 
                     @researcher_auth_required
@@ -39,8 +39,8 @@ class TestResearcherAuthDecorator:
                     data = json.loads(response.get_data(as_text=True))
                     assert "msg" in data
 
-    @patch("aws_portal.auth.decorators.researcher.get_token_from_request")
-    @patch("aws_portal.auth.decorators.researcher.ResearcherAuthController")
+    @patch("backend.auth.decorators.researcher.get_token_from_request")
+    @patch("backend.auth.decorators.researcher.ResearcherAuthController")
     def test_successful_auth(self, MockController, mock_get_token, test_app):
         """Test successful authentication flow with valid token."""
         # Configure mocks for successful authentication
@@ -74,8 +74,8 @@ class TestResearcherAuthDecorator:
                 assert data["account_id"] == 123
                 assert data["msg"] == "OK"
 
-    @patch("aws_portal.auth.decorators.researcher.get_token_from_request")
-    @patch("aws_portal.auth.decorators.researcher.ResearcherAuthController")
+    @patch("backend.auth.decorators.researcher.get_token_from_request")
+    @patch("backend.auth.decorators.researcher.ResearcherAuthController")
     def test_auth_failure(self, MockController, mock_get_token, test_app):
         """Test authentication failure handling with invalid token."""
         # Configure mocks for authentication failure
@@ -105,9 +105,9 @@ class TestResearcherAuthDecorator:
                 assert response.status_code == 401
                 assert b'"error": "Invalid token"' in response.get_data()
 
-    @patch("aws_portal.auth.decorators.researcher.get_token_from_request")
-    @patch("aws_portal.auth.decorators.researcher.ResearcherAuthController")
-    @patch("aws_portal.auth.decorators.researcher.check_permissions")
+    @patch("backend.auth.decorators.researcher.get_token_from_request")
+    @patch("backend.auth.decorators.researcher.ResearcherAuthController")
+    @patch("backend.auth.decorators.researcher.check_permissions")
     def test_with_permissions_success(self, mock_check_permissions, MockController, mock_get_token, test_app):
         """Test authentication with permission checking (success case)."""
         # Configure mocks for successful authentication with permissions
@@ -144,9 +144,9 @@ class TestResearcherAuthDecorator:
                 assert data["account_id"] == 123
                 assert data["msg"] == "OK"
 
-    @patch("aws_portal.auth.decorators.researcher.get_token_from_request")
-    @patch("aws_portal.auth.decorators.researcher.ResearcherAuthController")
-    @patch("aws_portal.auth.decorators.researcher.check_permissions")
+    @patch("backend.auth.decorators.researcher.get_token_from_request")
+    @patch("backend.auth.decorators.researcher.ResearcherAuthController")
+    @patch("backend.auth.decorators.researcher.check_permissions")
     def test_with_permissions_failure(self, mock_check_permissions, MockController, mock_get_token, test_app):
         """Test authentication with permission checking (failure case)."""
         # Configure mocks for successful auth but permission failure
@@ -178,10 +178,10 @@ class TestResearcherAuthDecorator:
                 # Verify permission failure response
                 assert response.status_code == 403
 
-    @patch("aws_portal.auth.decorators.researcher.get_token_from_request")
-    @patch("aws_portal.auth.decorators.researcher.ResearcherAuthController")
-    @patch("aws_portal.auth.decorators.researcher.check_permissions")
-    @patch("aws_portal.auth.utils.responses.create_error_response")
+    @patch("backend.auth.decorators.researcher.get_token_from_request")
+    @patch("backend.auth.decorators.researcher.ResearcherAuthController")
+    @patch("backend.auth.decorators.researcher.check_permissions")
+    @patch("backend.auth.utils.responses.create_error_response")
     def test_permission_check_exception(self, mock_create_error, mock_check_permissions, MockController, mock_get_token, test_app):
         """Test exception handling during permission check."""
         # Configure mocks for authentication success but permission check exception
@@ -242,9 +242,9 @@ class TestResearcherAuthDecorator:
         assert list(sig.parameters.keys()) == [
             "param1", "param2", "args", "kwargs"]
 
-    @patch("aws_portal.auth.decorators.researcher.get_token_from_request")
-    @patch("aws_portal.auth.decorators.researcher.ResearcherAuthController")
-    @patch("aws_portal.auth.utils.responses.create_error_response")
+    @patch("backend.auth.decorators.researcher.get_token_from_request")
+    @patch("backend.auth.decorators.researcher.ResearcherAuthController")
+    @patch("backend.auth.utils.responses.create_error_response")
     def test_archived_account(self, mock_create_error, MockController, mock_get_token, test_app):
         """Test that archived accounts cannot authenticate."""
         # Configure mocks
@@ -283,8 +283,8 @@ class TestResearcherAuthDecorator:
                 assert response.status_code == 401
                 assert b"Account archived" in response.get_data() or b"error" in response.get_data()
 
-    @patch("aws_portal.auth.decorators.researcher.get_token_from_request")
-    @patch("aws_portal.auth.decorators.researcher.ResearcherAuthController")
+    @patch("backend.auth.decorators.researcher.get_token_from_request")
+    @patch("backend.auth.decorators.researcher.ResearcherAuthController")
     def test_token_from_cookie(self, MockController, mock_get_token, test_app):
         """Test that the decorator can extract and use tokens from cookies."""
         # Configure mocks for cookie-based authentication
@@ -314,8 +314,8 @@ class TestResearcherAuthDecorator:
                 assert data["account_id"] == 123
                 assert data["msg"] == "OK"
 
-    @patch("aws_portal.auth.decorators.researcher.get_token_from_request")
-    @patch("aws_portal.auth.decorators.researcher.ResearcherAuthController")
+    @patch("backend.auth.decorators.researcher.get_token_from_request")
+    @patch("backend.auth.decorators.researcher.ResearcherAuthController")
     def test_stacked_decorators(self, MockController, mock_get_token, test_app):
         """Test that multiple stacked researcher_auth_required decorators work correctly."""
         # Configure mocks for authentication
@@ -340,7 +340,7 @@ class TestResearcherAuthDecorator:
         with test_app.test_request_context("/test-func"):
             with test_app.app_context():
                 # Mock permissions check for inner decorator
-                with patch("aws_portal.auth.decorators.researcher.check_permissions") as mock_check_permissions:
+                with patch("backend.auth.decorators.researcher.check_permissions") as mock_check_permissions:
                     mock_check_permissions.return_value = (True, None)
 
                     response = test_func()
@@ -357,8 +357,8 @@ class TestResearcherAuthDecorator:
                     # Verify permissions were checked
                     mock_check_permissions.assert_called_once()
 
-    @patch("aws_portal.auth.decorators.researcher.get_token_from_request")
-    @patch("aws_portal.auth.decorators.researcher.ResearcherAuthController")
+    @patch("backend.auth.decorators.researcher.get_token_from_request")
+    @patch("backend.auth.decorators.researcher.ResearcherAuthController")
     def test_existing_account_param(self, MockController, mock_get_token, test_app):
         """Test that the decorator correctly handles when account is already in kwargs."""
         # Configure mocks but they shouldn't be called

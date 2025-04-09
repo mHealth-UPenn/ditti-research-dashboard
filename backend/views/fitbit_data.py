@@ -24,10 +24,10 @@ import pandas as pd
 from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from aws_portal.extensions import cache, db
-from aws_portal.models import Study, StudySubject, SleepLog, SleepLevel
-from aws_portal.auth.decorators import participant_auth_required, researcher_auth_required
-from aws_portal.utils.fitbit_data import (
+from backend.extensions import cache, db
+from backend.models import Study, StudySubject, SleepLog, SleepLevel
+from backend.auth.decorators import participant_auth_required, researcher_auth_required
+from backend.utils.fitbit_data import (
     validate_date_range,
     cache_key_admin,
     cache_key_participant,

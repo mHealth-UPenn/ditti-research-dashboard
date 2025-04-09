@@ -18,7 +18,7 @@ import logging
 from typing import Optional, Tuple
 from flask import Response, make_response, request
 
-from aws_portal.models import Account, App, Study
+from backend.models import Account, App, Study
 
 logger = logging.getLogger(__name__)
 

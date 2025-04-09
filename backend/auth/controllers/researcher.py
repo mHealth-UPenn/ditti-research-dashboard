@@ -16,13 +16,13 @@
 
 import logging
 from flask import current_app, request
-from aws_portal.auth.providers.cognito import ResearcherAuth, init_researcher_oauth_client, AUTH_ERROR_MESSAGES
-from aws_portal.auth.controllers.base import AuthControllerBase
-from aws_portal.auth.utils import (
+from backend.auth.providers.cognito import ResearcherAuth, init_researcher_oauth_client, AUTH_ERROR_MESSAGES
+from backend.auth.controllers.base import AuthControllerBase
+from backend.auth.utils import (
     create_error_response, create_success_response, get_researcher_cognito_client,
     create_researcher, update_researcher
 )
-from aws_portal.extensions import db
+from backend.extensions import db
 
 logger = logging.getLogger(__name__)
 

@@ -18,9 +18,9 @@ from datetime import date, datetime
 from typing import List, Optional, Tuple
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, load_only
-from aws_portal.extensions import db
-from aws_portal.models import SleepLevel, SleepLog, StudySubject
-from aws_portal.utils.serialization import serialize_fitbit_data
+from backend.extensions import db
+from backend.models import SleepLevel, SleepLog, StudySubject
+from backend.utils.serialization import serialize_fitbit_data
 
 MAX_DATE_RANGE_DAYS = 30
 

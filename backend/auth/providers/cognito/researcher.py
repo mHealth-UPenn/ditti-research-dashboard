@@ -15,9 +15,9 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from aws_portal.extensions import oauth
-from aws_portal.models import Account
-from aws_portal.auth.providers.cognito.base import CognitoAuthBase
+from backend.extensions import oauth
+from backend.models import Account
+from backend.auth.providers.cognito.base import CognitoAuthBase
 
 logger = logging.getLogger(__name__)
 

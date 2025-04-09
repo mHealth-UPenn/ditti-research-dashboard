@@ -17,9 +17,9 @@
 import logging
 from urllib.parse import urlencode
 from flask import current_app, make_response, redirect, request, session
-from aws_portal.extensions import db, oauth
-from aws_portal.auth.providers.cognito import AUTH_ERROR_MESSAGES
-from aws_portal.auth.utils import (
+from backend.extensions import db, oauth
+from backend.auth.providers.cognito import AUTH_ERROR_MESSAGES
+from backend.auth.utils import (
     clear_auth_cookies, set_auth_cookies, create_error_response, AuthFlowSession
 )
 

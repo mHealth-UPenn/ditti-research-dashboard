@@ -24,9 +24,9 @@ from flask import (
     redirect, request, session
 )
 from oauthlib.oauth2 import WebApplicationClient
-from aws_portal.extensions import db, tm
-from aws_portal.models import Api, JoinStudySubjectApi, StudySubject
-from aws_portal.auth.decorators import participant_auth_required
+from backend.extensions import db, tm
+from backend.models import Api, JoinStudySubjectApi, StudySubject
+from backend.auth.decorators import participant_auth_required
 from shared.fitbit import (
     generate_code_verifier, create_code_challenge,
     get_fitbit_oauth_session

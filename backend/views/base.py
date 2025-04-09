@@ -19,8 +19,8 @@ import os
 import traceback
 from flask import Blueprint, current_app, jsonify, make_response
 from sqlalchemy import text
-from aws_portal.extensions import db
-from aws_portal.utils.lambda_task import check_and_invoke_lambda_task
+from backend.extensions import db
+from backend.utils.lambda_task import check_and_invoke_lambda_task
 
 blueprint = Blueprint("base", __name__)
 logger = logging.getLogger(__name__)

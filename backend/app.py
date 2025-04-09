@@ -19,19 +19,19 @@ import os
 
 from flask import Flask, Response, request
 
-from aws_portal.commands import (
+from backend.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
     init_db_click, init_api_click, init_integration_testing_db_click, reset_db_click,
     init_study_subject_click, clear_cache_click, init_lambda_task_click,
     delete_lambda_tasks_click
 )
-from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, cache, tm, oauth
-from aws_portal.views import (
+from backend.extensions import bcrypt, cors, db, jwt, migrate, cache, tm, oauth
+from backend.views import (
     admin, aws_requests, base, data_processing_task, db_requests,
     participant, fitbit_data
 )
-from aws_portal.views.auth import participant_auth_blueprint, researcher_auth_blueprint
-from aws_portal.views.api import fitbit
+from backend.views.auth import participant_auth_blueprint, researcher_auth_blueprint
+from backend.views.api import fitbit
 
 
 dictConfig({
@@ -61,7 +61,7 @@ def create_app(testing=False):
         flask_config = os.getenv("FLASK_CONFIG", "Default")
 
     # configure and initialize the app
-    app.config.from_object("aws_portal.config.%s" % flask_config)
+    app.config.from_object("backend.config.%s" % flask_config)
     register_blueprints(app)
     register_commands(app)
     register_extensions(app)

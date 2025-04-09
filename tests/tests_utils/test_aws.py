@@ -1,7 +1,7 @@
 from moto import mock_aws
 import pytest
 import requests
-from aws_portal.utils.aws import (
+from backend.utils.aws import (
     Column, Connection, Loader, MutationClient, Query, Scanner, Updater
 )
 

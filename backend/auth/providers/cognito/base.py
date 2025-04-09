@@ -21,8 +21,8 @@ import requests
 from flask import current_app
 from jwt.algorithms import RSAAlgorithm
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-from aws_portal.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
-from aws_portal.auth.utils.tokens import get_cognito_jwks
+from backend.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
+from backend.auth.utils.tokens import get_cognito_jwks
 
 logger = logging.getLogger(__name__)
 

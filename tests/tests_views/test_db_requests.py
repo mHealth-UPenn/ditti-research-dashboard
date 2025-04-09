@@ -32,7 +32,7 @@ def test_apps_admin(get_admin):
     This test may need to be adjusted if the app names don't match
     what's expected in the actual database.
     """
-    with patch("aws_portal.models.App.query") as mock_query:
+    with patch("backend.models.App.query") as mock_query:
         # Mock the query to return an app with name "Admin Dashboard"
         mock_app = MagicMock()
         mock_app.meta = {"name": "Admin Dashboard"}
@@ -90,7 +90,7 @@ def test_study_contacts_invalid_study(researcher_get):
 
 def test_get_about_sleep_templates(researcher_get):
     """Test the endpoint to get about sleep templates with app parameter"""
-    with patch("aws_portal.models.AboutSleepTemplate.query") as mock_query:
+    with patch("backend.models.AboutSleepTemplate.query") as mock_query:
         # Mock the query to return a template
         mock_template = MagicMock()
         mock_template.meta = {"name": "Test Template",

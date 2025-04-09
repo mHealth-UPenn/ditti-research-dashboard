@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from aws_portal.models import Api, JoinStudySubjectApi, StudySubject
-from aws_portal.extensions import db, tm
+from backend.models import Api, JoinStudySubjectApi, StudySubject
+from backend.extensions import db, tm
 from oauthlib.oauth2 import WebApplicationClient
 import base64
 import uuid
@@ -51,7 +51,7 @@ def participant_auth_client(client, study_subject):
     client.set_cookie('access_token', 'mock_access_token')
 
     # Mock ParticipantAuthController to return our study subject's ditti_id
-    with patch('aws_portal.auth.controllers.ParticipantAuthController.get_user_from_token') as mock_get_user:
+    with patch('backend.auth.controllers.ParticipantAuthController.get_user_from_token') as mock_get_user:
         # When get_user_from_token is called, return the ditti_id and no error
         mock_get_user.return_value = (study_subject.ditti_id, None)
 
@@ -60,9 +60,9 @@ def participant_auth_client(client, study_subject):
 
 def test_fitbit_authorize_success(app, participant_auth_client, study_subject, fitbit_api):
     # Mock generate_code_verifier and create_code_challenge
-    with patch("aws_portal.views.api.fitbit.generate_code_verifier") as mock_gen_verifier, \
-            patch("aws_portal.views.api.fitbit.create_code_challenge") as mock_code_challenge, \
-            patch("aws_portal.views.api.fitbit.os.urandom") as mock_urandom:
+    with patch("backend.views.api.fitbit.generate_code_verifier") as mock_gen_verifier, \
+            patch("backend.views.api.fitbit.create_code_challenge") as mock_code_challenge, \
+            patch("backend.views.api.fitbit.os.urandom") as mock_urandom:
 
         mock_gen_verifier.return_value = "test_code_verifier"
         mock_code_challenge.return_value = "test_code_challenge"
@@ -117,7 +117,7 @@ def test_fitbit_callback_success_new_association(app, participant_auth_client, s
         )
 
         # Mock token endpoint response
-        with patch("aws_portal.views.api.fitbit.requests.post") as mock_post:
+        with patch("backend.views.api.fitbit.requests.post") as mock_post:
             mock_response = MagicMock()
             mock_response.raise_for_status.return_value = None
             mock_response.text = json.dumps({
@@ -216,7 +216,7 @@ def test_fitbit_callback_token_exchange_failure(app, participant_auth_client, st
             "grant_type=authorization_code&code=test_code&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&code_verifier=test_code_verifier"
         )
 
-        with patch("aws_portal.views.api.fitbit.requests.post") as mock_post:
+        with patch("backend.views.api.fitbit.requests.post") as mock_post:
             mock_post.side_effect = Exception("Network error")
 
             response = participant_auth_client.get(
@@ -246,7 +246,7 @@ def test_fitbit_callback_missing_fitbit_api_entry(app, participant_auth_client, 
         )
 
         # Mock a successful token response
-        with patch("aws_portal.views.api.fitbit.requests.post") as mock_post:
+        with patch("backend.views.api.fitbit.requests.post") as mock_post:
             mock_response = MagicMock()
             mock_response.raise_for_status.return_value = None
             mock_response.text = json.dumps({
@@ -259,7 +259,7 @@ def test_fitbit_callback_missing_fitbit_api_entry(app, participant_auth_client, 
             mock_post.return_value = mock_response
 
             # Mock Api.query to return None for Fitbit
-            with patch("aws_portal.models.Api.query") as mock_api_query:
+            with patch("backend.models.Api.query") as mock_api_query:
                 mock_api_query.filter_by.return_value.first.return_value = None
 
                 response = participant_auth_client.get(
@@ -287,7 +287,7 @@ def test_fitbit_callback_error_storing_tokens(app, participant_auth_client, stud
             "grant_type=authorization_code&code=test_code&redirect_uri=https%3A%2F%2Fexample.com%2Fcallback&code_verifier=test_code_verifier"
         )
 
-        with patch("aws_portal.views.api.fitbit.requests.post") as mock_post:
+        with patch("backend.views.api.fitbit.requests.post") as mock_post:
             mock_response = MagicMock()
             mock_response.raise_for_status.return_value = None
             mock_response.text = json.dumps({
@@ -318,9 +318,9 @@ def test_fitbit_authorize_unauthenticated(client):
 
 
 def test_fitbit_authorize_concurrent_requests(app, participant_auth_client):
-    with patch("aws_portal.views.api.fitbit.generate_code_verifier") as mock_gen_verifier, \
-            patch("aws_portal.views.api.fitbit.create_code_challenge") as mock_code_challenge, \
-            patch("aws_portal.views.api.fitbit.os.urandom") as mock_urandom:
+    with patch("backend.views.api.fitbit.generate_code_verifier") as mock_gen_verifier, \
+            patch("backend.views.api.fitbit.create_code_challenge") as mock_code_challenge, \
+            patch("backend.views.api.fitbit.os.urandom") as mock_urandom:
 
         mock_gen_verifier.return_value = "test_code_verifier"
         mock_code_challenge.return_value = "test_code_challenge"
@@ -351,7 +351,7 @@ def test_fitbit_callback_token_scope_validation(app, participant_auth_client, st
     }
 
     with patch.object(WebApplicationClient, "prepare_token_request") as mock_prepare_token_request, \
-            patch("aws_portal.views.api.fitbit.requests.post") as mock_post:
+            patch("backend.views.api.fitbit.requests.post") as mock_post:
 
         mock_prepare_token_request.return_value = (
             "https://api.fitbit.com/oauth2/token",
@@ -404,7 +404,7 @@ def test_fitbit_sleep_list(app, participant_auth_client, study_subject, fitbit_a
         db.session.add(join_entry)
         db.session.commit()
 
-    with patch("aws_portal.views.api.fitbit.get_fitbit_oauth_session") as mock_get_session:
+    with patch("backend.views.api.fitbit.get_fitbit_oauth_session") as mock_get_session:
         mock_session = MagicMock()
         mock_get_session.return_value = mock_session
         mock_session.get.return_value.json.return_value = {"sleep": []}

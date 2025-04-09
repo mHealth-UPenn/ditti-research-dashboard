@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, UTC
 import os
 
-from aws_portal.extensions import db
-from aws_portal.models import (
+from backend.extensions import db
+from backend.models import (
     AccessGroup, Account, App, BlockedToken, JoinAccessGroupPermission,
     JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
     JoinStudyRole, Permission, Role, Study, StudySubject, JoinStudySubjectApi,
@@ -399,7 +399,7 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
         Headers dict with authentication token
     """
     # Create a mock account for the researcher
-    from aws_portal.models import Account
+    from backend.models import Account
     mock_account = Account.query.filter_by(email="foo@email.com").first()
 
     # Generate a mock ID token
@@ -412,7 +412,7 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
 
     # Patch the ResearcherAuthController to return our mock account
     from unittest.mock import patch, MagicMock
-    from aws_portal.auth.controllers.researcher import ResearcherAuthController
+    from backend.auth.controllers.researcher import ResearcherAuthController
 
     # Apply the patch to the client's application context
     patcher1 = patch.object(
@@ -423,9 +423,9 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     patcher1.start()
 
     # Also patch the check_permissions function to always return True
-    from aws_portal.auth.decorators.researcher import check_permissions
+    from backend.auth.decorators.researcher import check_permissions
     patcher2 = patch(
-        'aws_portal.auth.decorators.researcher.check_permissions',
+        'backend.auth.decorators.researcher.check_permissions',
         return_value=(True, None)
     )
     patcher2.start()

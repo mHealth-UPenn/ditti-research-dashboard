@@ -17,7 +17,7 @@
 from datetime import datetime, date
 from typing import Any, List, Optional, Dict
 from pydantic import BaseModel, Field, ValidationError, field_serializer
-from aws_portal.models import (
+from backend.models import (
     SleepCategoryTypeEnum, SleepLevelEnum, SleepLog, SleepLogTypeEnum
 )
 from .serialization_common import common_config

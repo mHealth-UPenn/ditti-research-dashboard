@@ -21,7 +21,7 @@ def test_health_check(client):
 
 def test_health_check_failure(client):
     # Mock the database connection to raise an exception
-    with patch("aws_portal.views.base.db.engine.connect", side_effect=Exception("DB connection error")):
+    with patch("backend.views.base.db.engine.connect", side_effect=Exception("DB connection error")):
         res = client.get("/health")
         data = json.loads(res.data)
         assert res.status_code == 500

@@ -9,10 +9,10 @@ from typing import Optional, TypedDict
 import boto3
 from sqlalchemy import select
 
-from aws_portal.app import create_app
-from aws_portal.extensions import db
-import aws_portal.models as m
-from aws_portal.utils.aws import Query
+from backend.app import create_app
+from backend.extensions import db
+import backend.models as m
+from backend.utils.aws import Query
 
 
 class User(TypedDict):

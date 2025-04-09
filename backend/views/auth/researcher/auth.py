@@ -16,9 +16,9 @@
 
 import logging
 from flask import Blueprint, request, jsonify
-from aws_portal.auth.controllers import ResearcherAuthController
-from aws_portal.auth.decorators import researcher_auth_required
-from aws_portal.auth.utils import create_error_response
+from backend.auth.controllers import ResearcherAuthController
+from backend.auth.decorators import researcher_auth_required
+from backend.auth.utils import create_error_response
 
 blueprint = Blueprint("researcher_auth", __name__,
                       url_prefix="/auth/researcher")

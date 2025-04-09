@@ -20,13 +20,13 @@ import traceback
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy.sql import tuple_
 
-from aws_portal.extensions import db
-from aws_portal.models import (
+from backend.extensions import db
+from backend.models import (
     AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,
     JoinAccountStudy, Study
 )
-from aws_portal.auth.decorators import researcher_auth_required
-from aws_portal.utils.db import populate_model
+from backend.auth.decorators import researcher_auth_required
+from backend.utils.db import populate_model
 
 blueprint = Blueprint("db", __name__, url_prefix="/db")
 logger = logging.getLogger(__name__)
@@ -243,7 +243,7 @@ def edit_account_details(account):
         db.session.commit()
 
         # Synchronize changes with Cognito user pool
-        from aws_portal.auth.controllers.researcher import ResearcherAuthController
+        from backend.auth.controllers.researcher import ResearcherAuthController
         auth_controller = ResearcherAuthController()
         success, message = auth_controller.update_account_in_cognito({
             "email": account.email,

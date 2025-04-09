@@ -15,8 +15,8 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from sqlalchemy.inspection import inspect
-from aws_portal.extensions import db
-from aws_portal.utils.serialization.serialization_common import camel_to_snake
+from backend.extensions import db
+from backend.utils.serialization.serialization_common import camel_to_snake
 
 
 def populate_model(model, data, use_camel_to_snake=False, custom_mapping=None):

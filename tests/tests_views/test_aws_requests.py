@@ -2,7 +2,7 @@ from flask import json
 from moto import mock_aws
 import pytest
 from unittest.mock import patch, MagicMock
-from aws_portal.utils.aws import Connection, Loader, Query
+from backend.utils.aws import Connection, Loader, Query
 from tests.testing_utils import mock_researcher_auth_for_testing
 
 

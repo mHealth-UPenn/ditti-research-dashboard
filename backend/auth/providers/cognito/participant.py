@@ -16,10 +16,10 @@
 
 import logging
 from sqlalchemy import func
-from aws_portal.extensions import oauth
-from aws_portal.models import StudySubject, Study
-from aws_portal.auth.providers.cognito import CognitoAuthBase
-from aws_portal.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
+from backend.extensions import oauth
+from backend.models import StudySubject, Study
+from backend.auth.providers.cognito import CognitoAuthBase
+from backend.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
 
 logger = logging.getLogger(__name__)
 

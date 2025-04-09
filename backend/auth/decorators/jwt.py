@@ -18,7 +18,7 @@ from functools import wraps
 import logging
 from flask import current_app, make_response, request
 from flask_jwt_extended import current_user, verify_jwt_in_request
-from aws_portal.models import App, Study
+from backend.models import App, Study
 
 logger = logging.getLogger(__name__)
 

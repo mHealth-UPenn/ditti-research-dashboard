@@ -26,9 +26,9 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from flask import Blueprint, current_app, jsonify, make_response, request
 import pandas as pd
 
-from aws_portal.models import JoinAccountStudy, Study
-from aws_portal.auth.decorators import researcher_auth_required
-from aws_portal.utils.aws import MutationClient, Query, Updater
+from backend.models import JoinAccountStudy, Study
+from backend.auth.decorators import researcher_auth_required
+from backend.utils.aws import MutationClient, Query, Updater
 
 blueprint = Blueprint("aws", __name__, url_prefix="/aws")
 logger = logging.getLogger(__name__)

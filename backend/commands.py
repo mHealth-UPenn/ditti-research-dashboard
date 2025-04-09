@@ -20,8 +20,8 @@ from flask import current_app
 from flask.cli import with_appcontext
 from flask_migrate import upgrade
 
-from aws_portal.extensions import db, cache
-from aws_portal.models import (
+from backend.extensions import db, cache
+from backend.models import (
     init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
     init_integration_testing_db, init_study_subject, init_lambda_task,
     delete_lambda_tasks

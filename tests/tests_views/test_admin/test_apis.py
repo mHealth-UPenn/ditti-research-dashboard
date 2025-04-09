@@ -1,7 +1,7 @@
 import pytest
 import json
-from aws_portal.models import Api
-from aws_portal.extensions import db
+from backend.models import Api
+from backend.extensions import db
 
 # ===========================
 # Helper Functions

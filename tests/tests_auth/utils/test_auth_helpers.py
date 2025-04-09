@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from flask import Flask
-from aws_portal.auth.utils.auth_helpers import get_token_from_request, check_permissions
+from backend.auth.utils.auth_helpers import get_token_from_request, check_permissions
 
 
 @pytest.fixture

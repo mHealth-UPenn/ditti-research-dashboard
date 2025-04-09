@@ -19,16 +19,16 @@ import logging
 import traceback
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
-from aws_portal.auth.controllers import ResearcherAuthController
-from aws_portal.auth.decorators import researcher_auth_required
-from aws_portal.extensions import db, sanitizer
-from aws_portal.models import (
+from backend.auth.controllers import ResearcherAuthController
+from backend.auth.decorators import researcher_auth_required
+from backend.extensions import db, sanitizer
+from backend.models import (
     AboutSleepTemplate, AccessGroup, Account, Action, Api, App,
     JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
     JoinRolePermission, JoinStudySubjectApi, JoinStudySubjectStudy,
     Permission, Resource, Role, Study, StudySubject
 )
-from aws_portal.utils.db import populate_model
+from backend.utils.db import populate_model
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
 logger = logging.getLogger(__name__)
@@ -258,7 +258,7 @@ def account_edit(account):
     }
     """
     try:
-        from aws_portal.auth.controllers import ResearcherAuthController
+        from backend.auth.controllers import ResearcherAuthController
 
         # Get data from request
         data = request.json["edit"]
@@ -399,7 +399,7 @@ def account_archive(account):
     }
     """
     try:
-        from aws_portal.auth.controllers import ResearcherAuthController
+        from backend.auth.controllers import ResearcherAuthController
 
         # Get account
         account_id = request.json["id"]

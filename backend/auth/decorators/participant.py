@@ -18,7 +18,7 @@ import functools
 import logging
 from flask import make_response, request
 
-from aws_portal.auth.controllers import ParticipantAuthController
+from backend.auth.controllers import ParticipantAuthController
 
 logger = logging.getLogger(__name__)
 

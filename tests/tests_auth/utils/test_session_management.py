@@ -1,9 +1,9 @@
 import pytest
 from datetime import datetime
-from aws_portal.auth.utils.session import (
+from backend.auth.utils.session import (
     AuthFlowSession
 )
-from aws_portal.auth.utils.tokens import (
+from backend.auth.utils.tokens import (
     generate_code_verifier,
     create_code_challenge
 )

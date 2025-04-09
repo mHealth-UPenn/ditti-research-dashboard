@@ -25,8 +25,8 @@ from flask import current_app
 import requests
 from sqlalchemy import or_
 
-from aws_portal.extensions import db
-from aws_portal.models import LambdaTask
+from backend.extensions import db
+from backend.models import LambdaTask
 
 
 logger = logging.getLogger(__name__)

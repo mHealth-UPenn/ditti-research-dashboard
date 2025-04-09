@@ -1,12 +1,12 @@
 """
-Authentication decorators for aws_portal.
+Authentication decorators for backend.
 
 These decorators handle the authentication and authorization of users.
 """
 
-from aws_portal.auth.decorators.jwt import auth_required
-from aws_portal.auth.decorators.participant import participant_auth_required
-from aws_portal.auth.decorators.researcher import researcher_auth_required
+from backend.auth.decorators.jwt import auth_required
+from backend.auth.decorators.participant import participant_auth_required
+from backend.auth.decorators.researcher import researcher_auth_required
 
 __all__ = [
     "auth_required",  # Deprecated, maintained for backward compatibility

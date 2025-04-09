@@ -18,10 +18,10 @@ import logging
 import boto3
 from flask import Blueprint, jsonify, make_response, current_app, request
 from sqlalchemy.exc import SQLAlchemyError
-from aws_portal.extensions import db, tm
-from aws_portal.models import Api, JoinStudySubjectStudy, StudySubject, JoinStudySubjectApi
-from aws_portal.auth.decorators import participant_auth_required, researcher_auth_required
-from aws_portal.utils.serialization import serialize_participant
+from backend.extensions import db, tm
+from backend.models import Api, JoinStudySubjectStudy, StudySubject, JoinStudySubjectApi
+from backend.auth.decorators import participant_auth_required, researcher_auth_required
+from backend.utils.serialization import serialize_participant
 
 blueprint = Blueprint("participant", __name__, url_prefix="/participant")
 logger = logging.getLogger(__name__)

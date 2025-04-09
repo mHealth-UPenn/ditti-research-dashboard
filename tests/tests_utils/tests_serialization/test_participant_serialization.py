@@ -1,10 +1,10 @@
 from unittest.mock import MagicMock, patch
-from aws_portal.utils.serialization.participant_serialization import serialize_participant, ParticipantModel
+from backend.utils.serialization.participant_serialization import serialize_participant, ParticipantModel
 
 
 class TestParticipantSerialization:
 
-    @patch("aws_portal.utils.serialization.participant_serialization.ParticipantModel.model_validate")
+    @patch("backend.utils.serialization.participant_serialization.ParticipantModel.model_validate")
     def test_successful_serialization(self, mock_validate, app_context):
         """Test successful serialization of a study subject with apis and studies.
 
@@ -56,7 +56,7 @@ class TestParticipantSerialization:
             exclude_none=True
         )
 
-    @patch("aws_portal.utils.serialization.participant_serialization.ParticipantModel.model_validate")
+    @patch("backend.utils.serialization.participant_serialization.ParticipantModel.model_validate")
     def test_empty_relationships(self, mock_validate, app_context):
         """Test serialization when there are no apis or studies.
 
@@ -81,7 +81,7 @@ class TestParticipantSerialization:
         assert result == expected_data
         mock_validate.assert_called_once_with(study_subject)
 
-    @patch("aws_portal.utils.serialization.participant_serialization.ParticipantModel.model_validate")
+    @patch("backend.utils.serialization.participant_serialization.ParticipantModel.model_validate")
     def test_null_optional_fields(self, mock_validate, app_context):
         """Test serialization when optional fields are null.
 
@@ -119,7 +119,7 @@ class TestParticipantSerialization:
         assert "dataSummary" not in result["studies"][0]
         mock_validate.assert_called_once_with(study_subject)
 
-    @patch("aws_portal.utils.serialization.participant_serialization.ParticipantModel.model_validate")
+    @patch("backend.utils.serialization.participant_serialization.ParticipantModel.model_validate")
     def test_validation_error(self, mock_validate, app_context):
         """Test handling of validation errors.
 
@@ -146,8 +146,8 @@ class TestParticipantSerialization:
         # Function should return None on validation failure
         assert result is None
 
-    @patch("aws_portal.utils.serialization.participant_serialization.logger")
-    @patch("aws_portal.utils.serialization.participant_serialization.ParticipantModel.model_validate")
+    @patch("backend.utils.serialization.participant_serialization.logger")
+    @patch("backend.utils.serialization.participant_serialization.ParticipantModel.model_validate")
     def test_exception_handling(self, mock_validate, mock_logger, app_context):
         """Test handling of unexpected exceptions.
 

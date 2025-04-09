@@ -19,9 +19,9 @@ import logging
 import inspect
 from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
 from flask import make_response
-from aws_portal.auth.controllers import ResearcherAuthController
-from aws_portal.auth.utils.auth_helpers import get_token_from_request, check_permissions
-from aws_portal.models import Account
+from backend.auth.controllers import ResearcherAuthController
+from backend.auth.utils.auth_helpers import get_token_from_request, check_permissions
+from backend.models import Account
 
 logger = logging.getLogger(__name__)
 

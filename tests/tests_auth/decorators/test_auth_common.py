@@ -2,7 +2,7 @@ import json
 import pytest
 from unittest.mock import MagicMock
 from flask import Flask, Response, jsonify
-from aws_portal.auth.decorators import (
+from backend.auth.decorators import (
     participant_auth_required,
     researcher_auth_required
 )

@@ -3,9 +3,9 @@ import boto3
 from flask import Blueprint
 from moto import mock_aws
 import pytest
-from aws_portal.app import create_app
-from aws_portal.extensions import db
-from aws_portal.models import (
+from backend.app import create_app
+from backend.extensions import db
+from backend.models import (
     init_admin_account, init_admin_app, init_admin_group, init_db, init_api
 )
 from tests.testing_utils import (
@@ -153,7 +153,7 @@ def base_cognito_auth():
     Creates a minimal implementation of CognitoAuthBase for testing purposes
     without requiring any actual AWS configuration.
     """
-    from aws_portal.auth.providers.cognito.base import CognitoAuthBase
+    from backend.auth.providers.cognito.base import CognitoAuthBase
 
     class TestCognitoAuth(CognitoAuthBase):
         """Test implementation of CognitoAuthBase for testing."""
@@ -175,7 +175,7 @@ def participant_auth_fixture():
 
     Creates an actual ParticipantAuth instance for testing.
     """
-    from aws_portal.auth.providers.cognito.participant import ParticipantAuth
+    from backend.auth.providers.cognito.participant import ParticipantAuth
     return ParticipantAuth()
 
 
@@ -186,7 +186,7 @@ def researcher_auth_fixture():
 
     Creates an actual ResearcherAuth instance for testing.
     """
-    from aws_portal.auth.providers.cognito.researcher import ResearcherAuth
+    from backend.auth.providers.cognito.researcher import ResearcherAuth
     return ResearcherAuth()
 
 
@@ -252,9 +252,9 @@ def auth_app():
         db.session.commit()
 
         # Mock the OAuth clients
-        with patch('aws_portal.auth.controllers.base.AuthControllerBase.init_oauth_client'), \
-                patch('aws_portal.auth.controllers.participant.ParticipantAuthController.init_oauth_client'), \
-                patch('aws_portal.auth.controllers.researcher.ResearcherAuthController.init_oauth_client'):
+        with patch('backend.auth.controllers.base.AuthControllerBase.init_oauth_client'), \
+                patch('backend.auth.controllers.participant.ParticipantAuthController.init_oauth_client'), \
+                patch('backend.auth.controllers.researcher.ResearcherAuthController.init_oauth_client'):
             yield app
 
 
@@ -266,9 +266,9 @@ def mock_auth_oauth():
     This fixture prevents real OAuth connections during tests.
     """
     # Mock the OAuth client initialization
-    with patch('aws_portal.auth.controllers.base.AuthControllerBase.init_oauth_client'), \
-            patch('aws_portal.auth.controllers.participant.ParticipantAuthController.init_oauth_client'), \
-            patch('aws_portal.auth.controllers.researcher.ResearcherAuthController.init_oauth_client'):
+    with patch('backend.auth.controllers.base.AuthControllerBase.init_oauth_client'), \
+            patch('backend.auth.controllers.participant.ParticipantAuthController.init_oauth_client'), \
+            patch('backend.auth.controllers.researcher.ResearcherAuthController.init_oauth_client'):
         yield
 
 

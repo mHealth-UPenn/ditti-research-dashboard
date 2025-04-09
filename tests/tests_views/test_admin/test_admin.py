@@ -1,5 +1,5 @@
 import json
-from aws_portal.models import AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study
+from backend.models import AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study
 
 
 def test_account_create(post_admin):

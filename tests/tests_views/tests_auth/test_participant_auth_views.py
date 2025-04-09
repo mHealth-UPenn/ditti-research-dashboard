@@ -25,7 +25,7 @@ def test_participant_login_view(mock_get, client, mock_auth_oauth):
     mock_get.return_value = mock_response
 
     # Mock the OAuth client
-    with patch("aws_portal.auth.controllers.base.AuthControllerBase.login") as mock_login:
+    with patch("backend.auth.controllers.base.AuthControllerBase.login") as mock_login:
         mock_login.return_value = "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/authorize", 302
 
         # Execute
@@ -36,7 +36,7 @@ def test_participant_login_view(mock_get, client, mock_auth_oauth):
         assert response.status_code == 302
 
 
-@patch("aws_portal.auth.controllers.participant.ParticipantAuthController.callback")
+@patch("backend.auth.controllers.participant.ParticipantAuthController.callback")
 def test_participant_callback_success(mock_callback, client):
     """Test successful callback handling."""
     # Set up mock
@@ -54,7 +54,7 @@ def test_participant_callback_success(mock_callback, client):
     assert response.status_code == 302
 
 
-@patch("aws_portal.auth.controllers.participant.ParticipantAuthController.callback")
+@patch("backend.auth.controllers.participant.ParticipantAuthController.callback")
 def test_participant_callback_invalid_state(mock_callback, client):
     """Test callback with invalid state parameter."""
     # Set up mock
@@ -74,7 +74,7 @@ def test_participant_callback_invalid_state(mock_callback, client):
     assert response.status_code == 401
 
 
-@patch("aws_portal.auth.controllers.participant.ParticipantAuthController.callback")
+@patch("backend.auth.controllers.participant.ParticipantAuthController.callback")
 def test_participant_callback_missing_code(mock_callback, client):
     """Test callback with missing code parameter."""
     # Set up mock
@@ -93,7 +93,7 @@ def test_participant_callback_missing_code(mock_callback, client):
     assert response.status_code == 401
 
 
-@patch("aws_portal.auth.controllers.participant.ParticipantAuthController.check_login")
+@patch("backend.auth.controllers.participant.ParticipantAuthController.check_login")
 def test_participant_check_login_authenticated(mock_check_login, client):
     """Test check login when authenticated."""
     # Set up mock
@@ -111,7 +111,7 @@ def test_participant_check_login_authenticated(mock_check_login, client):
     assert data["authenticated"] is True
 
 
-@patch("aws_portal.auth.controllers.participant.ParticipantAuthController.check_login")
+@patch("backend.auth.controllers.participant.ParticipantAuthController.check_login")
 def test_participant_check_login_unauthenticated(mock_check_login, client):
     """Test check login when not authenticated."""
     # Set up mock
@@ -128,7 +128,7 @@ def test_participant_check_login_unauthenticated(mock_check_login, client):
     assert data["authenticated"] is False
 
 
-@patch("aws_portal.auth.controllers.participant.ParticipantAuthController.logout")
+@patch("backend.auth.controllers.participant.ParticipantAuthController.logout")
 def test_participant_logout(mock_logout, client):
     """Test logout."""
     # Set up mock

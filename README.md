@@ -46,7 +46,7 @@ flask run
 Install Node dependencies and run the React frontend.
 
 ```sh
-cd aws_portal/frontend
+cd frontend
 npm install
 npm run start
 ```

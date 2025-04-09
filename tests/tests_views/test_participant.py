@@ -1,8 +1,8 @@
 from datetime import datetime, UTC
 from unittest.mock import MagicMock, patch
 import pytest
-from aws_portal.extensions import db
-from aws_portal.models import Api, JoinStudySubjectApi, StudySubject, JoinStudySubjectStudy
+from backend.extensions import db
+from backend.models import Api, JoinStudySubjectApi, StudySubject, JoinStudySubjectStudy
 from tests.testing_utils import get_unwrapped_view, mock_researcher_auth_for_testing, mock_cognito_tokens, mock_db_query_result, mock_boto3_client
 
 
@@ -142,7 +142,7 @@ def test_get_participant(app, ditti_id):
 
     This approach tests the core logic without authentication constraints.
     """
-    from aws_portal.views import participant as participant_view
+    from backend.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "get_participant")
 
     with app.app_context():
@@ -158,7 +158,7 @@ def test_get_participant_success(app, study_subject, join_api, api_entry):
     Verifies that participant data is correctly serialized and returned with the
     proper API associations.
     """
-    from aws_portal.views import participant as participant_view
+    from backend.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "get_participant")
 
     expected_data = {
@@ -174,7 +174,7 @@ def test_get_participant_success(app, study_subject, join_api, api_entry):
     }
 
     with app.app_context(), \
-            patch("aws_portal.utils.serialization.serialize_participant") as mock_serialize:
+            patch("backend.utils.serialization.serialize_participant") as mock_serialize:
         mock_serialize.return_value = expected_data
         response = view_func(ditti_id=study_subject.ditti_id)
 
@@ -217,7 +217,7 @@ def test_get_participant_user_not_found(app, mock_participant_not_found):
 
     Uses the mock_participant_not_found fixture for consistent behavior across tests.
     """
-    from aws_portal.views import participant as participant_view
+    from backend.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "get_participant")
 
     with app.app_context():
@@ -233,11 +233,11 @@ def test_get_participant_exception_handling(app):
 
     Verifies that database errors are properly caught and return 500 responses.
     """
-    from aws_portal.views import participant as participant_view
+    from backend.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "get_participant")
 
     with app.app_context(), \
-            patch("aws_portal.models.StudySubject.query") as mock_query:
+            patch("backend.models.StudySubject.query") as mock_query:
         mock_query.filter_by.side_effect = Exception("Database error")
         response = view_func(ditti_id="test_ditti_id")
 
@@ -252,13 +252,13 @@ def test_revoke_api_access_direct(app, study_subject, api_entry, join_api):
     Verifies that the API tokens are properly deleted and the database association
     is removed when revoking API access.
     """
-    from aws_portal.views import participant as participant_view
+    from backend.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "revoke_api_access")
 
     with app.app_context(), \
-            patch("aws_portal.extensions.tm.delete_api_tokens") as mock_delete_tokens, \
-            patch("aws_portal.extensions.db.session.delete") as mock_db_delete, \
-            patch("aws_portal.extensions.db.session.commit") as mock_db_commit:
+            patch("backend.extensions.tm.delete_api_tokens") as mock_delete_tokens, \
+            patch("backend.extensions.db.session.delete") as mock_db_delete, \
+            patch("backend.extensions.db.session.commit") as mock_db_commit:
 
         response = view_func(api_entry.name, ditti_id=study_subject.ditti_id)
 
@@ -280,14 +280,14 @@ def test_delete_participant_direct(app, study_subject, api_entry, join_api):
     2. Cognito user deletion
     3. Database record cleanup
     """
-    from aws_portal.views import participant as participant_view
+    from backend.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "delete_participant")
 
     with app.app_context(), \
-            patch("aws_portal.extensions.tm.delete_api_tokens") as mock_delete_tokens, \
+            patch("backend.extensions.tm.delete_api_tokens") as mock_delete_tokens, \
             patch("boto3.client") as mock_boto3_client, \
-            patch("aws_portal.extensions.db.session.delete") as mock_db_delete, \
-            patch("aws_portal.extensions.db.session.commit") as mock_db_commit:
+            patch("backend.extensions.db.session.delete") as mock_db_delete, \
+            patch("backend.extensions.db.session.commit") as mock_db_commit:
 
         mock_cognito_client = MagicMock()
         mock_boto3_client.return_value = mock_cognito_client
@@ -321,14 +321,14 @@ def test_delete_participant_success(app, study_subject, api_entry, join_api, aut
 
     Uses the enhanced auth_headers fixture for consistent authentication behavior.
     """
-    from aws_portal.views import participant as participant_view
+    from backend.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "delete_participant")
 
     with app.app_context(), \
-            patch("aws_portal.extensions.tm.delete_api_tokens") as mock_delete_tokens, \
+            patch("backend.extensions.tm.delete_api_tokens") as mock_delete_tokens, \
             patch("boto3.client") as mock_boto3_client, \
-            patch("aws_portal.extensions.db.session.delete") as mock_db_delete, \
-            patch("aws_portal.extensions.db.session.commit") as mock_db_commit:
+            patch("backend.extensions.db.session.delete") as mock_db_delete, \
+            patch("backend.extensions.db.session.commit") as mock_db_commit:
 
         mock_cognito_client = MagicMock()
         mock_boto3_client.return_value = mock_cognito_client
@@ -372,7 +372,7 @@ def test_delete_participant_user_not_found(app, mock_participant_not_found):
 
     Uses the mock_participant_not_found fixture for consistent behavior across tests.
     """
-    from aws_portal.views import participant as participant_view
+    from backend.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "delete_participant")
 
     with app.app_context():
@@ -397,12 +397,12 @@ def test_delete_participant_cognito_exception(app, study_subject):
     Verifies proper error response when AWS Cognito operations fail during
     participant deletion.
     """
-    from aws_portal.views import participant as participant_view
+    from backend.views import participant as participant_view
     view_func = get_unwrapped_view(participant_view, "delete_participant")
 
     # Use app_context fixture and setup simplified mocking
     with app.app_context(), \
-            patch("aws_portal.models.JoinStudySubjectApi.query") as mock_join_query:
+            patch("backend.models.JoinStudySubjectApi.query") as mock_join_query:
 
         # Mock the join query to return empty list
         mock_filter = MagicMock()
@@ -436,7 +436,7 @@ def test_update_consent_direct(app, study_subject, study_id, join_study):
     Verifies that a participant can successfully update their consent status
     when providing valid data.
     """
-    from aws_portal.views import participant
+    from backend.views import participant
     view_func = get_unwrapped_view(participant, "update_consent")
 
     with app.app_context():
@@ -459,7 +459,7 @@ def test_update_consent_missing_field(app, ditti_id, study_id):
     Verifies that the endpoint returns a 400 Bad Request when the
     required field is missing.
     """
-    from aws_portal.views import participant
+    from backend.views import participant
     view_func = get_unwrapped_view(participant, "update_consent")
 
     with app.app_context():
@@ -476,7 +476,7 @@ def test_update_consent_invalid_type(app, ditti_id, study_id):
     Verifies that the endpoint validates the data type of the
     didConsent field and returns appropriate error.
     """
-    from aws_portal.views import participant
+    from backend.views import participant
     view_func = get_unwrapped_view(participant, "update_consent")
 
     with app.app_context():
@@ -494,7 +494,7 @@ def test_update_consent_user_not_found(app, study_id):
     Verifies that the endpoint returns a 404 Not Found when
     attempting to update consent for a non-existent user.
     """
-    from aws_portal.views import participant
+    from backend.views import participant
     view_func = get_unwrapped_view(participant, "update_consent")
 
     with app.app_context():
@@ -511,7 +511,7 @@ def test_update_consent_study_not_found(app, study_subject, study_id):
     Verifies that the endpoint returns a 404 Not Found when
     attempting to update consent for a study that the user is not enrolled in.
     """
-    from aws_portal.views import participant
+    from backend.views import participant
     view_func = get_unwrapped_view(participant, "update_consent")
 
     # Using a different study_id than the one in the join_study fixture
@@ -524,14 +524,14 @@ def test_update_consent_study_not_found(app, study_subject, study_id):
             assert "enrollment not found" in response.get_json()["msg"].lower()
 
 
-@patch("aws_portal.extensions.db.session.commit")
+@patch("backend.extensions.db.session.commit")
 def test_update_consent_database_error(mock_commit, app, study_subject, study_id, join_study):
     """
     Tests update_consent handling of database errors.
 
     Verifies that the endpoint properly handles and reports database errors.
     """
-    from aws_portal.views import participant
+    from backend.views import participant
     view_func = get_unwrapped_view(participant, "update_consent")
 
     # Simulate database error

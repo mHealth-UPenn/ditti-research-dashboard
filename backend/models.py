@@ -23,7 +23,7 @@ from sqlalchemy import select, func, tuple_, event, Enum
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.sql.schema import UniqueConstraint
-from aws_portal.extensions import db
+from backend.extensions import db
 import re
 
 

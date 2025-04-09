@@ -17,11 +17,11 @@
 from datetime import datetime, timezone
 from flask import request
 import logging
-from aws_portal.extensions import db
-from aws_portal.models import StudySubject
-from aws_portal.auth.providers.cognito import ParticipantAuth, init_participant_oauth_client, AUTH_ERROR_MESSAGES
-from aws_portal.auth.controllers.base import AuthControllerBase
-from aws_portal.auth.utils.responses import create_error_response, create_success_response
+from backend.extensions import db
+from backend.models import StudySubject
+from backend.auth.providers.cognito import ParticipantAuth, init_participant_oauth_client, AUTH_ERROR_MESSAGES
+from backend.auth.controllers.base import AuthControllerBase
+from backend.auth.utils.responses import create_error_response, create_success_response
 
 logger = logging.getLogger(__name__)
 

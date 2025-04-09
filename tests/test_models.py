@@ -4,9 +4,9 @@ import os
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from aws_portal.app import create_app
-from aws_portal.extensions import db
-from aws_portal.models import (
+from backend.app import create_app
+from backend.extensions import db
+from backend.models import (
     AccessGroup, Account, App, JoinAccessGroupPermission,
     JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
     JoinStudyRole, Permission, Role, Study, StudySubject, JoinStudySubjectApi,

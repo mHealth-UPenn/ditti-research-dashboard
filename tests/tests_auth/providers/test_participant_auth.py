@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock, ANY
-from aws_portal.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
+from backend.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
 
 
 # Use the participant_auth_fixture from conftest.py
@@ -10,7 +10,7 @@ def participant_auth(participant_auth_fixture):
     return participant_auth_fixture
 
 
-@patch("aws_portal.auth.providers.cognito.participant.StudySubject")
+@patch("backend.auth.providers.cognito.participant.StudySubject")
 def test_get_study_subject_from_ditti_id(mock_study_subject, participant_auth):
     """Test getting a study subject from a ditti ID."""
     # Setup
@@ -32,7 +32,7 @@ def test_get_study_subject_from_ditti_id(mock_study_subject, participant_auth):
     mock_filter.filter.assert_called_once_with(ANY)
 
 
-@patch("aws_portal.auth.providers.cognito.participant.StudySubject")
+@patch("backend.auth.providers.cognito.participant.StudySubject")
 def test_get_study_subject_from_ditti_id_empty_id(mock_study_subject, participant_auth):
     """
     Test getting a study subject with empty ditti ID.
@@ -49,7 +49,7 @@ def test_get_study_subject_from_ditti_id_empty_id(mock_study_subject, participan
     assert result is None
 
 
-@patch("aws_portal.auth.providers.cognito.participant.StudySubject")
+@patch("backend.auth.providers.cognito.participant.StudySubject")
 def test_get_study_subject_from_ditti_id_include_archived(mock_study_subject, participant_auth):
     """Test getting a study subject from a ditti ID including archived."""
     # Setup
@@ -70,7 +70,7 @@ def test_get_study_subject_from_ditti_id_include_archived(mock_study_subject, pa
     mock_study_subject.query.filter.assert_called_once_with(ANY)
 
 
-@patch("aws_portal.auth.providers.cognito.participant.StudySubject")
+@patch("backend.auth.providers.cognito.participant.StudySubject")
 def test_get_study_subject_not_found(mock_study_subject, participant_auth):
     """Test handling when study subject not found."""
     # Setup
@@ -90,7 +90,7 @@ def test_get_study_subject_not_found(mock_study_subject, participant_auth):
     mock_filter.filter.assert_called_once_with(ANY)
 
 
-@patch("aws_portal.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
+@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
 def test_get_study_subject_from_token(mock_validate, participant_auth, mock_auth_test_data):
     """Test getting a study subject from a token."""
     # Setup
@@ -119,7 +119,7 @@ def test_get_study_subject_from_token(mock_validate, participant_auth, mock_auth
         "ditti_12345", False)
 
 
-@patch("aws_portal.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
+@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
 def test_get_study_subject_from_token_archived(mock_validate, participant_auth, mock_auth_test_data):
     """
     Test getting an archived study subject from a token.
@@ -148,7 +148,7 @@ def test_get_study_subject_from_token_archived(mock_validate, participant_auth, 
         "ditti_12345", False)
 
 
-@patch("aws_portal.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
+@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
 def test_get_study_subject_from_token_missing_username(mock_validate, participant_auth, mock_auth_test_data):
     """
     Test handling token without username claim.
@@ -174,7 +174,7 @@ def test_get_study_subject_from_token_missing_username(mock_validate, participan
         mock_auth_test_data["fake_tokens"]["id_token"])
 
 
-@patch("aws_portal.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
+@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
 def test_get_study_subject_from_token_not_found(mock_validate, participant_auth, mock_auth_test_data):
     """Test token validation returns None when study subject not found."""
     # Setup
@@ -198,7 +198,7 @@ def test_get_study_subject_from_token_not_found(mock_validate, participant_auth,
         "ditti_12345", False)
 
 
-@patch("aws_portal.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
+@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
 def test_get_study_subject_from_token_validation_error(mock_validate, participant_auth, mock_auth_test_data):
     """Test handling token validation errors."""
     # Setup
@@ -215,7 +215,7 @@ def test_get_study_subject_from_token_validation_error(mock_validate, participan
         mock_auth_test_data["fake_tokens"]["id_token"])
 
 
-@patch("aws_portal.auth.providers.cognito.participant.oauth")
+@patch("backend.auth.providers.cognito.participant.oauth")
 def test_init_participant_oauth_client(mock_oauth):
     """
     Test initialization of participant OAuth client.
@@ -223,7 +223,7 @@ def test_init_participant_oauth_client(mock_oauth):
     Uses a test approach that avoids Flask app context dependencies.
     """
     # Import the module but patch the function we want to test
-    from aws_portal.auth.providers.cognito import participant
+    from backend.auth.providers.cognito import participant
 
     # Save the original function to restore it later
     original_init = participant.init_participant_oauth_client
@@ -277,7 +277,7 @@ def test_init_participant_oauth_client(mock_oauth):
         participant.init_participant_oauth_client = original_init
 
 
-@patch("aws_portal.auth.providers.cognito.participant.oauth")
+@patch("backend.auth.providers.cognito.participant.oauth")
 def test_init_participant_oauth_client_already_initialized(mock_oauth):
     """Test OAuth client initialization when it's already initialized."""
     # Setup - client already exists

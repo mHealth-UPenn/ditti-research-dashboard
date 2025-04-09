@@ -87,7 +87,7 @@ class Default:
     # JOBS = [
     #     {
     #         "id": "ScheduledLambdaTask",
-    #         "func": "aws_portal.utils.lambda_task:schedule_lambda_task",
+    #         "func": "backend.utils.lambda_task:schedule_lambda_task",
     #         "trigger": "cron",
     #         "hour": 10,
     #         "minute": 0

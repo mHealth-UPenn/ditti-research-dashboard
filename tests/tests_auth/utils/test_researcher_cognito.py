@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock
 from flask import Flask
-from aws_portal.auth.utils.researcher_cognito import (
+from backend.auth.utils.researcher_cognito import (
     get_researcher_cognito_client,
     create_researcher,
     update_researcher,

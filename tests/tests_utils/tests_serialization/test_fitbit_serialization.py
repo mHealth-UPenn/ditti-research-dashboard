@@ -1,7 +1,7 @@
 from datetime import date
 from pydantic import ValidationError
-from aws_portal.utils.serialization.fitbit_serialization import serialize_fitbit_data, SleepLogModel
-from aws_portal.models import (
+from backend.utils.serialization.fitbit_serialization import serialize_fitbit_data, SleepLogModel
+from backend.models import (
     SleepLogTypeEnum,
     SleepCategoryTypeEnum
 )
@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 
 class TestFitbitSerialization:
 
-    @patch("aws_portal.utils.serialization.fitbit_serialization.SleepLogModel.model_validate")
+    @patch("backend.utils.serialization.fitbit_serialization.SleepLogModel.model_validate")
     def test_sleep_log_serialization(self, mock_validate, app_context):
         """Test successful serialization of sleep logs with levels.
 
@@ -62,7 +62,7 @@ class TestFitbitSerialization:
             exclude_none=True
         )
 
-    @patch("aws_portal.utils.serialization.fitbit_serialization.SleepLogModel.model_validate")
+    @patch("backend.utils.serialization.fitbit_serialization.SleepLogModel.model_validate")
     def test_multiple_sleep_logs(self, mock_validate, app_context):
         """Test serialization of multiple sleep logs.
 
@@ -119,7 +119,7 @@ class TestFitbitSerialization:
         result = serialize_fitbit_data([])
         assert result == []
 
-    @patch("aws_portal.utils.serialization.fitbit_serialization.SleepLogModel.model_validate")
+    @patch("backend.utils.serialization.fitbit_serialization.SleepLogModel.model_validate")
     def test_null_optional_fields(self, mock_validate, app_context):
         """Test serialization when optional fields are null.
 
@@ -159,8 +159,8 @@ class TestFitbitSerialization:
         assert result[0] == expected_data
         assert "isShort" not in result[0]["levels"][0]
 
-    @patch("aws_portal.utils.serialization.fitbit_serialization.SleepLogModel.model_validate")
-    @patch("aws_portal.utils.serialization.fitbit_serialization.logger")
+    @patch("backend.utils.serialization.fitbit_serialization.SleepLogModel.model_validate")
+    @patch("backend.utils.serialization.fitbit_serialization.logger")
     def test_validation_error_handling(self, mock_logger, mock_validate, app_context):
         """Test handling of validation errors during serialization.
 
@@ -188,8 +188,8 @@ class TestFitbitSerialization:
         assert result == []
         mock_logger.error.assert_called_once()
 
-    @patch("aws_portal.utils.serialization.fitbit_serialization.SleepLogModel.model_validate")
-    @patch("aws_portal.utils.serialization.fitbit_serialization.logger")
+    @patch("backend.utils.serialization.fitbit_serialization.SleepLogModel.model_validate")
+    @patch("backend.utils.serialization.fitbit_serialization.logger")
     def test_general_exception_handling(self, mock_logger, mock_validate, app_context):
         """Test handling of unexpected exceptions during serialization.
 
