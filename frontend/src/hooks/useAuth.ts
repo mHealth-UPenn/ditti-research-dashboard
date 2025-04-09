@@ -16,7 +16,7 @@
  */
 
 import { useContext } from "react";
-import { AuthContext } from "../AuthContext";
+import { AuthContext } from "../contexts/authContext";
 import { AuthContextType } from "../interfaces";
 
 /**

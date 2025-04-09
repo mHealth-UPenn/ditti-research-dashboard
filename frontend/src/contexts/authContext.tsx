@@ -17,8 +17,8 @@
 
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { makeRequest } from "./utils";
-import { AuthContextType } from "./interfaces";
+import { makeRequest } from "../utils";
+import { AuthContextType } from "../interfaces";
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

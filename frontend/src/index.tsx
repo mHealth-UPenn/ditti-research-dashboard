@@ -23,7 +23,7 @@ import { ResearcherLoginPage } from "./pages/researcherLoginPage";
 import { Dashboard } from "./components/dashboard";
 import { ParticipantDashboard } from "./components/participantDashboard/participantDashboard";
 import { ProtectedRoute } from "./components/protectedRoute";
-import { AuthProvider } from "./AuthContext";
+import { AuthProvider } from "./contexts/authContext";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import "./index.css";
 import "./output.css";
