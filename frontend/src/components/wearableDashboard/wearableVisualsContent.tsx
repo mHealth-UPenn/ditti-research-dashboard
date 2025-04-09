@@ -30,7 +30,7 @@ import { WearableVisualization } from "../visualizations/wearableVisualization";
 import SyncIcon from '@mui/icons-material/Sync';
 import { Link } from "react-router-dom";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
-import { useStudiesContext } from "../../contexts/studiesContext";
+import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 
@@ -80,7 +80,7 @@ export function WearableVisualsContent({
   const { isSyncing, syncData } = useWearableData();
   
   const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjects();
-  const { studiesLoading, study } = useStudiesContext();
+  const { studiesLoading, study } = useStudies();
   const { flashMessage } = useFlashMessages();
 
   const studySubject = getStudySubjectByDittiId(dittiId);

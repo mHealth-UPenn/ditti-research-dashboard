@@ -37,7 +37,7 @@ import { APP_ENV } from "../../environment";
 import sanitize from "sanitize-html";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useStudiesContext } from "../../contexts/studiesContext";
+import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 
@@ -81,7 +81,7 @@ export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const previewRef = createRef<HTMLDivElement>();
   const dittiIdInputRef = createRef<HTMLInputElement>();
 
-  const { studiesLoading, study } = useStudiesContext();
+  const { studiesLoading, study } = useStudies();
   const { studySubjectLoading, getStudySubjectByDittiId, fetchStudySubjects } = useCoordinatorStudySubjects();
 
   const { flashMessage } = useFlashMessages();

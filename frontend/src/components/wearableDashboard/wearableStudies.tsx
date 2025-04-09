@@ -22,7 +22,7 @@ import { ViewContainer } from "../containers/viewContainer";
 import { CardContentRow } from "../cards/cardContentRow";
 import { Title } from "../text/title";
 import { ActiveIcon } from "../icons/activeIcon";
-import { useStudiesContext } from "../../contexts/studiesContext";
+import { useStudies } from "../../hooks/useStudies";
 import { SmallLoader } from "../loader";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { LinkComponent } from "../links/linkComponent";
@@ -47,7 +47,7 @@ export function WearableStudies() {
   const [canViewWearableData, setCanViewWearableData] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
 
-  const { studies, studiesLoading } = useStudiesContext();
+  const { studies, studiesLoading } = useStudies();
   const { studySubjects, studySubjectLoading } = useCoordinatorStudySubjects();
 
   // The summary details to show for each study

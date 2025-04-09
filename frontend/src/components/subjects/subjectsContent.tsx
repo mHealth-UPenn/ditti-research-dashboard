@@ -30,7 +30,7 @@ import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { Link } from "react-router-dom";
-import { useStudiesContext } from "../../contexts/studiesContext";
+import { useStudies } from "../../hooks/useStudies";
 
 
 /**
@@ -48,7 +48,7 @@ export const SubjectsContent = ({ app }: ISubjectsContentProps) => {
   const [canViewWearableData, setCanViewWearableData] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   
-  const { studiesLoading, study } = useStudiesContext();
+  const { studiesLoading, study } = useStudies();
   const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjects();
 
   const appSlug = app === 2 ? "ditti" : "wearable";

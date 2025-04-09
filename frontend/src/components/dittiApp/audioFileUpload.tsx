@@ -37,7 +37,7 @@ import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useDittiData } from "../../hooks/useDittiData";
 import { SmallLoader } from "../loader";
 import { APP_ENV } from "../../environment";
-import { useStudiesContext } from "../../contexts/studiesContext";
+import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useNavigate } from "react-router-dom";
 
@@ -69,7 +69,7 @@ export const AudioFileUpload = () => {
   const fileInputRef = createRef<HTMLInputElement>();
 
   const { dataLoading, audioFiles } = useDittiData();
-  const { studiesLoading, studies } = useStudiesContext();
+  const { studiesLoading, studies } = useStudies();
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();

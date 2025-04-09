@@ -25,7 +25,7 @@ import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubj
 import { Link } from "react-router-dom";
 import { SmallLoader } from "../loader";
 import { getEnrollmentInfoForStudy } from "../../utils";
-import { useStudiesContext } from "../../contexts/studiesContext";
+import { useStudies } from "../../hooks/useStudies";
 
 
 /**
@@ -44,7 +44,7 @@ export function WearableStudySubjects({
   canViewWearableData,
 }: WearableStudySubjectsProps) {
   const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjects();
-  const { study } = useStudiesContext();
+  const { study } = useStudies();
 
   // Get only study subjects with prefixes that equal the current study's prefix
   const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));

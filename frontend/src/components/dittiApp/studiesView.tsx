@@ -29,7 +29,7 @@ import { LinkComponent } from "../links/linkComponent";
 import { useDittiData } from "../../hooks/useDittiData";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
-import { useStudiesContext } from "../../contexts/studiesContext";
+import { useStudies } from "../../hooks/useStudies";
 
 
 export const StudiesView = () => {
@@ -39,7 +39,7 @@ export const StudiesView = () => {
   const [canViewTaps, setCanViewTaps] = useState<Set<number>>(new Set());
 
   const { dataLoading, taps, audioFiles } = useDittiData();
-  const { studiesLoading, studies } = useStudiesContext();
+  const { studiesLoading, studies } = useStudies();
 
   useEffect(() => {
     const fetchData = async () => {

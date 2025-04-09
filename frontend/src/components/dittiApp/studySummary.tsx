@@ -32,7 +32,7 @@ import { CardContentRow } from "../cards/cardContentRow";
 import { useDittiData } from "../../hooks/useDittiData";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
-import { useStudiesContext } from "../../contexts/studiesContext";
+import { useStudies } from "../../hooks/useStudies";
 
 /**
  * Information for study contacts
@@ -50,7 +50,7 @@ export const StudySummary = () => {
   const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const { studiesLoading, study } = useStudiesContext();
+  const { studiesLoading, study } = useStudies();
   const { dataLoading, taps, audioTaps } = useDittiData();
 
   useEffect(() => {
