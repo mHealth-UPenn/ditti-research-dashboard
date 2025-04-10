@@ -734,7 +734,6 @@ def build_url(
     return url
 
 
-# TODO: billed_ms
 def handler(event, context):
     logger.info("Starting wearable data retrieval job", extra={"function_timestamp": function_timestamp})
     log_file = None

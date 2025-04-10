@@ -236,7 +236,6 @@ def delete_participant(account, ditti_id: str):
         study_subject_id = study_subject.id
 
         # Delete all sleep logs associated with the StudySubject
-        # TODO: Delete this for production, no longer doing this
         try:
             # Fetch all SleepLog entries for the StudySubject
             sleep_logs = study_subject.sleep_logs.all()

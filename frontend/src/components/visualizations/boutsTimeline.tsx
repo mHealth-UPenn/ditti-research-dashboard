@@ -34,7 +34,6 @@ interface Bout {
   color?: string;
 }
 
-// TODO: Extend a new "ITimelineProps"
 /**
  * @property timestamps: Timestamps of all tapping data to display
  * @property audioTimestamps: Timestamps of audio taps to optionally display

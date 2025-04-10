@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 @blueprint.route("/get-taps")
 @researcher_auth_required("View", "Ditti App Dashboard")
-def get_taps(account):  # TODO update unit test
+def get_taps(account):
     """
     Get tap data. If the user has permissions to view all studies, this will
     return all tap data. Otherwise, this will return tap data for only the
@@ -117,7 +117,7 @@ def get_taps(account):  # TODO update unit test
 
 @blueprint.route("/get-audio-taps")
 @researcher_auth_required("View", "Ditti App Dashboard")
-def get_audio_taps(account):  # TODO write unit test
+def get_audio_taps(account):
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
         q = "user_permission_idBEGINS\"%s\"" % right
@@ -185,7 +185,7 @@ def get_audio_taps(account):  # TODO write unit test
 
 @blueprint.route("/get-users")
 @researcher_auth_required("View", "Ditti App Dashboard")
-def get_users(account):  # TODO: create unit test
+def get_users(account):
     """
     Get user data. If the user has permissions to view all studies, this will
     return all user data. Otherwise, this will return user data for only the
@@ -418,7 +418,7 @@ def user_edit(account):
 @blueprint.route("/get-audio-files")
 @researcher_auth_required("View", "Ditti App Dashboard")
 @researcher_auth_required("View", "Audio Files")
-def get_audio_files(account):  # TODO update unit test
+def get_audio_files(account):
     """
     Get all audio files from DynamoDB.
 

@@ -66,7 +66,7 @@ class ParticipantStudyModel(BaseModel):
                 "study_id": obj.study.id,
                 "did_consent": obj.did_consent,
                 "created_on": obj.created_on,
-                "starts_on": obj.created_on,  # TODO: Ensure same format as created_on
+                "starts_on": obj.created_on,
                 "expires_on": getattr(obj, "expires_on", None),
                 "consent_information": getattr(obj.study, "consent_information", None),
                 "data_summary": getattr(obj.study, "data_summary", None)

@@ -515,7 +515,7 @@ class Query:
         self.expression = self.build_query(query)
         self.key = key
 
-    def scan(self, **kwargs):  # TODO update unit test
+    def scan(self, **kwargs):
         """
         Run the query
 

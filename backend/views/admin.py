@@ -1126,8 +1126,8 @@ def role_edit(account):
 
 @blueprint.route("/role/archive", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
-@researcher_auth_required("Archive", "Role")
-def role_archive(account):  # TODO: create unit test
+@researcher_auth_required("Archive", "Roles")
+def role_archive(account):
     """
     Archive a role. This action has the same effect as deleting an entry
     from the database. However, archived items are only filtered from queries
@@ -1226,7 +1226,7 @@ def app_edit(account):
 
 @blueprint.route("/action")
 @researcher_auth_required("View", "Admin Dashboard")
-def action(account):  # TODO: write unit test
+def action(account):
     """
     Get all actions
 
@@ -1260,7 +1260,7 @@ def action(account):  # TODO: write unit test
 
 @blueprint.route("/resource")
 @researcher_auth_required("View", "Admin Dashboard")
-def resource(account):  # TODO: write unit test
+def resource(account):
     """
     Get all resources
 

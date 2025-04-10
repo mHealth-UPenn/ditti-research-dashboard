@@ -77,7 +77,6 @@ def check_and_invoke_lambda_task():
                 LambdaTask.created_on.desc()
             ).first()
         now = datetime.now(UTC)
-        # TODO: Update with finalized retrieval schedule
         if latest_task:
             # Check if the latest task was run today
             if latest_task.created_on.date() == now.date():

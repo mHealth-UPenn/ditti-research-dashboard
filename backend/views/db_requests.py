@@ -46,7 +46,7 @@ def get_apps(account):
 
 @blueprint.route("/get-studies")
 @researcher_auth_required
-def get_studies(account):  # TODO rewrite unit test
+def get_studies(account):
     """
     Get the data of all studies that the user has access to
 

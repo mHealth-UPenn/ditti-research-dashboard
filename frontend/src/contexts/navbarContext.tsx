@@ -15,7 +15,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// TODO: Extend implementation to Ditti App Dashboard
 import { createContext, useState, useEffect, PropsWithChildren } from "react";
 import { IBreadcrumb, NavbarContextType } from "../interfaces";
 import { useMatches } from "react-router-dom";

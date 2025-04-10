@@ -415,7 +415,6 @@ export const AudioFileUpload = () => {
                 callback={selectStudy}
                 disabled={studiesRadio === "All Studies"}/>
             </div>
-            {/* feedback on error TODO: Fix the select field so this does not have to be here */}
             {studiesFeedback !== "" && <span className="text-sm text-[red]">{studiesFeedback}</span>}
           </FormField>
         </FormRow>

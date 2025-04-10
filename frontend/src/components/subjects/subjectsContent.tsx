@@ -54,7 +54,7 @@ export const SubjectsContent = ({ app }: ISubjectsContentProps) => {
   const appSlug = app === 2 ? "ditti" : "wearable";
 
   const filteredStudySubjects = studySubjects.filter(
-    ss => ss.dittiId.startsWith(study?.dittiId || "undefined")  // TODO: use regex instead
+    ss => ss.dittiId.startsWith(study?.dittiId || "undefined")
   );
 
   const columns: Column[] = [
