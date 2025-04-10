@@ -5,7 +5,7 @@ from aws_portal.app import create_app
 
 from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
-    init_db_click, create_researcher_account_click
+    init_db_click, create_researcher_account_click, init_integration_testing_db_click
 )
 
 from aws_portal.models import (
@@ -102,9 +102,11 @@ def test_init_admin_account_duplicate(runner):
 
 
 def test_create_researcher_account(runner):
+    runner.invoke(init_integration_testing_db_click)
     res = runner.invoke(create_researcher_account_click, args=["--email", "test@test.com"])
     assert res.output == "Researcher account successfully created.\n"
 
+    # Check that the account was created
     q1 = Account.email == "test@test.com"
     foo = Account.query.filter(q1).first()
     assert foo is not None
@@ -113,3 +115,22 @@ def test_create_researcher_account(runner):
     assert foo.last_name == "Doe"
     assert foo.phone_number == "+12345678901"
     assert foo.is_confirmed == True
+
+    # Check that the account has access to all groups
+    q2 = AccessGroup.name == "Admin"
+    bar = AccessGroup.query.filter(q2).first()
+    baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
+    assert bar is not None
+    assert baz is not None
+
+    q3 = AccessGroup.name == "Ditti App Admin"
+    bar = AccessGroup.query.filter(q3).first()
+    baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
+    assert bar is not None
+    assert baz is not None
+
+    q4 = AccessGroup.name == "Wearable Dashboard Admin"
+    bar = AccessGroup.query.filter(q4).first()
+    baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
+    assert bar is not None
+    assert baz is not None
