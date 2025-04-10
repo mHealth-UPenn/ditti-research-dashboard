@@ -17,13 +17,13 @@
 
 import { useEffect, useState } from "react";
 import { makeRequest } from "../utils";
-import { ResponseBody } from "../interfaces";
+import { ResponseBody } from "../types/api";
 
 /**
  * Monitor the application's connection status with the database.
- * 
+ *
  * It attempts an initial request to the `/touch` endpoint to check if the database is reachable.
- * 
+ *
  * @returns {boolean} - `true` if the database is still loading or unreachable, `false` if connected.
  */
 export const useDbStatus = () => {
