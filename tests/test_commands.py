@@ -5,7 +5,7 @@ from aws_portal.app import create_app
 
 from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
-    init_db_click
+    init_db_click, create_researcher_account_click
 )
 
 from aws_portal.models import (
@@ -99,3 +99,17 @@ def test_init_admin_account_duplicate(runner):
     runner.invoke(init_admin_account_click)
     res = runner.invoke(init_admin_account_click)
     assert isinstance(res.exception, ValueError)
+
+
+def test_create_researcher_account(runner):
+    res = runner.invoke(create_researcher_account_click, args=["--email", "test@test.com"])
+    assert res.output == "Researcher account successfully created.\n"
+
+    q1 = Account.email == "test@test.com"
+    foo = Account.query.filter(q1).first()
+    assert foo is not None
+    assert foo.email == "test@test.com"
+    assert foo.first_name == "Jane"
+    assert foo.last_name == "Doe"
+    assert foo.phone_number == "+12345678901"
+    assert foo.is_confirmed == True
