@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Column, TableData } from "../table/table";
+import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { SmallLoader } from "../loader/loader";
@@ -31,17 +31,9 @@ import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubj
 import { Link } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
 import { StudySubjectModel } from "../../types/models";
+import { SubjectsContentProps } from "./subjects.types";
 
-
-/**
- * @property {2 | 3} app - The app number (2 for Ditti, 3 for Wearable)
- */
-interface ISubjectsContentProps {
-  app: 2 | 3;
-}
-
-
-export const SubjectsContent = ({ app }: ISubjectsContentProps) => {
+export const SubjectsContent = ({ app }: SubjectsContentProps) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);

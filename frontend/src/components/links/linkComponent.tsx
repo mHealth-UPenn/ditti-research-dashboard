@@ -16,13 +16,7 @@
  */
 
 import { PropsWithChildren } from "react";
-
-
-interface LinkComponentProps {
-  onClick?: () => void;
-  className?: string;
-}
-
+import { LinkComponentProps } from "./linkComponent.types";
 
 export const LinkComponent = ({
   onClick,

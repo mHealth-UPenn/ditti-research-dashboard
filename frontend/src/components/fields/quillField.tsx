@@ -15,13 +15,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useEffect, useRef, useMemo, memo } from "react";
+import { useEffect, useRef, useMemo, memo } from "react";
 import Quill, { QuillOptions } from "quill";
 import { debounce } from "lodash";
 import sanitizeHtml, { AllowedAttribute } from "sanitize-html";
 import "quill/dist/quill.snow.css";
-import { QuillFieldProps } from "./quillField.types";
-const QuillField: React.FC<QuillFieldProps> = ({
+import { QuillFieldProps } from "./fields.types";
+
+const QuillField = ({
   value,
   onChange,
   label,
@@ -32,7 +33,7 @@ const QuillField: React.FC<QuillFieldProps> = ({
   className = "",
   containerClassName = "",
   readOnly = false,
-}) => {
+}: QuillFieldProps) => {
   const editorRef = useRef<HTMLDivElement | null>(null);
   const quillInstanceRef = useRef<Quill | null>(null);
 

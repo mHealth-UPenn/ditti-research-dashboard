@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
 import { Study } from "../../types/api";
 import { downloadExcelFromUrl, getAccess, makeRequest } from "../../utils";
 import { SmallLoader } from "../loader/loader";
-import { ViewContainer } from "../containers/viewContainer";
+import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { Card } from "../cards/card";
 import { Title } from "../text/title";
 import { Subtitle } from "../text/subtitle";
@@ -30,22 +30,7 @@ import { WearableStudySubjects } from "./wearableStudySubjects";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { Link, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
-
-
-/**
- * Information for study contacts.
- * @property fullName: The contact's full name.
- * @property email: The contact's email.
- * @property phoneNumber: The contact's phone number.
- * @property role: The contact's role.
- */
-interface StudyContact {
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  role: string;
-}
-
+import { StudyContactModel } from "../../types/models";
 
 export function WearableStudySummary() {
   const [searchParams] = useSearchParams();
@@ -54,7 +39,7 @@ export function WearableStudySummary() {
 
   const [canCreate, setCanCreate] = useState(false);
   const [canViewWearableData, setCanViewWearableData] = useState(false);
-  const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
+  const [studyContacts, setStudyContacts] = useState<StudyContactModel[]>([]);
   const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
   const [loading, setLoading] = useState(true);
 
@@ -78,7 +63,7 @@ export function WearableStudySummary() {
     promises.push(
       makeRequest(
         "/db/get-study-contacts?app=3&study=" + studyId
-      ).then((contacts: StudyContact[]) => setStudyContacts(contacts))
+      ).then((contacts: StudyContactModel[]) => setStudyContacts(contacts))
     );
 
     promises.push(
@@ -172,7 +157,7 @@ export function WearableStudySummary() {
         <CardContentRow>
           <Title>Study Contacts</Title>
         </CardContentRow>
-        {studyContacts.map((sc: StudyContact, i) => {
+        {studyContacts.map((sc: StudyContactModel, i) => {
           return (
             <CardContentRow key={i}>
               <div>

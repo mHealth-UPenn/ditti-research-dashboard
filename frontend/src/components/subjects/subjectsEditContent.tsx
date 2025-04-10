@@ -39,15 +39,7 @@ import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubj
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
-
-
-/**
- * @property {"ditti" | "wearable"} app - The app (Ditti or Wearable)
- */
-interface ISubjectsEditContentProps {
-  app: "ditti" | "wearable";
-}
-
+import { SubjectsEditContentProps } from "./subjects.types";
 
 /**
  * For validating Cognito password requirements.
@@ -56,8 +48,7 @@ const cognitoPasswordValidation = {
   isMinLen: false,  // At least 8 characters
 };
 
-
-export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
+export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   const [searchParams] = useSearchParams();
   const dittiId = searchParams.get("dittiId") || "";
 

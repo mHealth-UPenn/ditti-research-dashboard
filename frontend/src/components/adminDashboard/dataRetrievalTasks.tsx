@@ -18,7 +18,8 @@
 import { useState, useEffect } from "react";
 import { DataRetrievalTask } from "../../types/api";
 import { makeRequest } from "../../utils";
-import { Table, Column, TableData } from "../table/table";
+import { Column, TableData } from "../table/table.types";
+import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
 import { SmallLoader } from "../loader/loader";
 import { ListView } from "../containers/lists/listView";

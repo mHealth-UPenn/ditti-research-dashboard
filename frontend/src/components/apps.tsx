@@ -21,7 +21,7 @@ import { SmallLoader } from "./loader/loader";
 import { getAccess } from "../utils";
 import { Card } from "./cards/card";
 import { CardContentRow } from "./cards/cardContentRow";
-import { ViewContainer } from "./containers/viewContainer";
+import { ViewContainer } from "./containers/viewContainer/viewContainer";
 import { Link } from "react-router-dom";
 
 /**

@@ -15,21 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as React from "react";
-import { Header } from "./table";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { TableHeaderProps } from "./table.types";
 
-/**
- * headers: the table's headers
- * onSort: callback function when the user sorts
- */
-interface TableHeaderProps {
-  headers: Header[];
-  onSort: (name: string, ascending: 0 | 1) => void;
-}
-
-export const TableHeader: React.FC<TableHeaderProps> = ({ headers, onSort }) => {
+export const TableHeader = ({ headers, onSort }: TableHeaderProps) => {
   return (
     <tr className="h-[3rem]">
       {headers.map((h, i) => (

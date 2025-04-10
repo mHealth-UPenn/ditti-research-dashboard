@@ -16,16 +16,12 @@
  */
 
 import { PropsWithChildren } from "react";
-
-interface IViewContainerProps {
-  navbar?: boolean;
-}
-
+import { ViewContainerProps } from "./viewContainer.types";
 
 export const ViewContainer = ({
   navbar = true,
   children
-}: PropsWithChildren<IViewContainerProps>) => {
+}: PropsWithChildren<ViewContainerProps>) => {
   const height =
     navbar ?
     "min-h-[calc(calc(100vh-8rem)-1px)] h-[calc(calc(100vh-8rem)-1px)]" :

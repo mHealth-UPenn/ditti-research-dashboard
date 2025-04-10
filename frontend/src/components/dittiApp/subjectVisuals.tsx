@@ -26,7 +26,7 @@ import { TimestampHistogram } from "../visualizations/timestampHistogram";
 import { TapVisualizationButtons } from "../visualizations/tapVisualizationButtons";
 import { BoutsTimeline } from "../visualizations/boutsTimeline";
 import { AudioTapsTimeline } from "../visualizations/audioTapsTimeline";
-import { ViewContainer } from "../containers/viewContainer";
+import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { Card } from "../cards/card";
 import { CardContentRow } from "../cards/cardContentRow";
 import { Title } from "../text/title";

@@ -15,8 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { PropsWithChildren, useEffect } from "react";
-import { FlashMessageVariant } from "../../contexts/flashMessagesContext.types";
+import { PropsWithChildren, useEffect } from "react";
+import { FlashMessageProps } from "./flashMessage.types";
 
 const variantsBgMap = {
   success: "bg-success-light",
@@ -29,20 +29,6 @@ const variantsTextMap = {
   info: "text-info-dark",
   danger: "text-danger-dark",
 };
-
-
-
-/**
- * @property {FlashMessageVariant} variant - The variant of the message (success, info, danger).
- * @property {React.RefObject<HTMLDivElement>} containerRef - A refObject pointing to the container div.
- * @property {Callable} onClose - A function to call when the flash message closes.
- */
-interface FlashMessageProps {
-  variant: FlashMessageVariant;
-  containerRef: React.RefObject<HTMLDivElement>;
-  onClose: () => void;
-}
-
 
 export const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
   variant,

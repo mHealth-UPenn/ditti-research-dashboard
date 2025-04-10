@@ -16,7 +16,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { Column, TableData } from "../table/table";
+import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
 import { getAccess, makeRequest } from "../../utils";

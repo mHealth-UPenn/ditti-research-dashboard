@@ -1,7 +1,4 @@
-/**
- * The variant of a flash message.
- */
-export type FlashMessageVariant = "success" | "info" | "danger";
+import { FlashMessageVariant } from "../components/flashMessage/flashMessage.types";
 
 /**
  * Defines the context containing information about the flash messages.

@@ -15,27 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as React from "react";
 import { useState, useEffect } from "react";
+import { SelectFieldProps } from "./fields.types";
 
-/**
- * id: the value of the selected option
- * opts: an array of values and labels for each option
- * placeholder: a placeholder for when no option is selected
- * callback: a callback function for when an option is selected
- * getDefault: get the default string value given the id that was passed
- */
-interface SelectFieldProps {
-  id: number;
-  opts: { value: number; label: string }[];
-  placeholder: string;
-  disabled?: boolean;
-  hideBorder?: boolean;
-  callback: (selected: number, id: number) => void;
-  getDefault?: (id: number) => number;
-}
-
-export const SelectField: React.FC<SelectFieldProps> = ({
+export const SelectField = ({
   id,
   opts,
   placeholder,
@@ -43,7 +26,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   hideBorder = false,
   callback,
   getDefault,
-}) => {
+}: SelectFieldProps) => {
   const [value, setValue] = useState<string>("");
 
   // set the default value

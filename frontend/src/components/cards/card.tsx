@@ -16,12 +16,7 @@
  */
 
 import { PropsWithChildren } from "react";
-
-interface CardProps {
-  width?: "lg" | "md" | "sm";
-  className?: string;
-  onClick?: () => void;
-}
+import { CardProps } from "./cards.types";
 
 const widthMap = {
   lg: "w-full lg:px-6",

@@ -23,7 +23,7 @@ import { StudySubjects } from "./studySubjects";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import { format } from "date-fns";
-import { ViewContainer } from "../containers/viewContainer";
+import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { Card } from "../cards/card";
 import { Title } from "../text/title";
 import { Subtitle } from "../text/subtitle";
@@ -33,21 +33,12 @@ import { useDittiData } from "../../hooks/useDittiData";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
-
-/**
- * Information for study contacts
- */
-interface StudyContact {
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  role: string;
-}
+import { StudyContactModel } from "../../types/models";
 
 export const StudySummary = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);
-  const [studyContacts, setStudyContacts] = useState<StudyContact[]>([]);
+  const [studyContacts, setStudyContacts] = useState<StudyContactModel[]>([]);
   const [loading, setLoading] = useState(true);
 
   const { studiesLoading, study } = useStudies();
@@ -73,7 +64,7 @@ export const StudySummary = () => {
       promises.push(
         makeRequest(
           "/db/get-study-contacts?app=2&study=" + study.id
-        ).then((contacts: StudyContact[]) => setStudyContacts(contacts))
+        ).then((contacts: StudyContactModel[]) => setStudyContacts(contacts))
       );
 
       // when all promises resolve, hide the loader
@@ -204,7 +195,7 @@ export const StudySummary = () => {
         <CardContentRow>
           <Title>Study Contacts</Title>
         </CardContentRow>
-        {studyContacts.map((sc: StudyContact, i) => {
+        {studyContacts.map((sc: StudyContactModel, i) => {
           return (
             <CardContentRow key={i}>
               <div>

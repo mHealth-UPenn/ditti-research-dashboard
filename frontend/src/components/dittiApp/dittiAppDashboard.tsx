@@ -22,7 +22,7 @@ import { SmallLoader } from "../loader/loader";
 import { CoordinatorStudySubjectProvider } from "../../contexts/coordinatorStudySubjectContext";
 import { Outlet } from "react-router-dom";
 import { StudiesProvider } from "../../contexts/studiesContext";
-import { ViewContainer } from "../containers/viewContainer";
+import { ViewContainer } from "../containers/viewContainer/viewContainer";
 
 
 // React Router container for the Ditti App Dashboard for wrapping it in context providers

@@ -15,40 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { PropsWithChildren, RefObject } from "react";
-
-/**
- * id (optional): an optional html id
- * type (optional): text, number, date, etc.
- * placeholder (optional): an optional placeholder
- * prefill (optional): a default value (which cannot be changed)
- * value (optional): the field's value (which can be changed)
- * label (optional): the field's label
- * description (optional): additional information about the field
- * onKeyup (optional): a callback function on keyup
- * feedback (optional): feedback when an error is made
- * disabled (optional): whether to disable the field
- * required (optional): whether the field is required. If required, display a required asterisk.
- * min (optional): minimum value for number inputs
- * max (optional): maximum value for number inputs
- */
-interface TextFieldProps {
-  value: string;
-  id?: string;
-  type?: string;
-  placeholder?: string;
-  label?: string;
-  description?: string;
-  onKeyup?: (text: string) => void;
-  onKeyDown?: (e: React.KeyboardEvent) => void;
-  feedback?: string;
-  disabled?: boolean;
-  required?: boolean;
-  inputRef?: RefObject<HTMLInputElement>;
-  textAreaRef?: RefObject<HTMLTextAreaElement>;
-  min?: number;
-  max?: number;
-}
+import { PropsWithChildren } from "react";
+import { TextFieldProps } from "./fields.types";
 
 /**
  * Functional component version of TextField

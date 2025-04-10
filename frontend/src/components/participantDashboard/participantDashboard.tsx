@@ -18,7 +18,7 @@
 import { StudySubjectProvider } from "../../contexts/studySubjectContext";
 import { useAuth } from "../../hooks/useAuth";
 import { Button } from "../buttons/button";
-import { ViewContainer } from "../containers/viewContainer";
+import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { ParticipantDashboardContent } from "./participantDashboardContent";
 
 

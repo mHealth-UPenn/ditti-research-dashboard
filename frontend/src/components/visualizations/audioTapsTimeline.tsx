@@ -15,14 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { AudioTapModel } from "../../types/models";
 import { Timeline } from "./timeline";
-import { VisualizationProps } from "./visualization.types";
-
-interface AudioTapsTimelineProps extends VisualizationProps {
-  audioTaps: AudioTapModel[];
-}
-
+import { AudioTapsTimelineProps } from "./visualizations.types";
 
 export const AudioTapsTimeline = ({ audioTaps, ...props }: AudioTapsTimelineProps) => {
   const groups = audioTaps.map(at => ({

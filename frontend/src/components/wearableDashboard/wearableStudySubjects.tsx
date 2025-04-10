@@ -27,18 +27,7 @@ import { SmallLoader } from "../loader/loader";
 import { getEnrollmentInfoForStudy } from "../../utils";
 import { useStudies } from "../../hooks/useStudies";
 import { StudySubjectModel } from "../../types/models";
-
-
-/**
- * Props for wearable study subjects.
- * @property studyDetails: The details of study to list subjects for.
- * @property canViewWearableData: Whether the current user can view wearable data for the current study.
- */
-interface WearableStudySubjectsProps {
-  studyDetails: Study;
-  canViewWearableData: boolean;
-}
-
+import { WearableStudySubjectsProps } from "./wearableDashboard.types";
 
 export function WearableStudySubjects({
   studyDetails,

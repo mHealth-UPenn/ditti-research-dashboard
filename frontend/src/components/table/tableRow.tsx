@@ -15,22 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as React from "react";
 import { TableCell } from "./tableCell";
+import { TableRowProps } from "./table.types";
 
-/**
- * data: the row's cells
- */
-interface TableRowProps {
-  cells: {
-    contents: React.ReactElement | string;
-    width: number;
-    paddingX?: number;
-    paddingY?: number;
-  }[];
-}
-
-export const TableRow: React.FC<TableRowProps> = ({ cells }) => {
+export const TableRow = ({ cells }: TableRowProps) => {
   return (
     <tr className="h-[3rem]">
       {cells.map((cell, i) =>

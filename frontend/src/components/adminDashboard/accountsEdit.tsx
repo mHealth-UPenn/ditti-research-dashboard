@@ -16,7 +16,8 @@
  */
 
 import React, { useEffect, useReducer } from "react";
-import { Table, TableData } from "../table/table";
+import { Table } from "../table/table";
+import { TableData } from "../table/table.types";
 import { TextField } from "../fields/textField";
 import { ToggleButton } from "../buttons/toggleButton";
 import {
@@ -41,6 +42,7 @@ import { FormSummaryText } from "../containers/forms/formSummaryText";
 import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { AccountsEditState, AccountFormPrefill, RoleSelected } from "./adminDashboard.types";
 
 type Action =
   | {
@@ -48,7 +50,7 @@ type Action =
     accessGroups: AccessGroup[];
     roles: Role[];
     studies: Study[];
-    prefill: AccountPrefill;
+    prefill: AccountFormPrefill;
     loading: boolean;
   }
   | {
@@ -140,45 +142,7 @@ const reducer = (state: AccountsEditState, action: Action) => {
     default:
       return state;
   }
-};
-
-
-/**
- * study: the database primary key of study the role is selected for
- * role: the role's database primary key
- */
-interface RoleSelected {
-  study: number;
-  role: number;
-}
-
-/**
- * the form's prefill
- */
-interface AccountPrefill {
-  email: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber?: string;
-  accessGroupsSelected: AccessGroup[];
-  rolesSelected: RoleSelected[];
-  studiesSelected: Study[];
-}
-
-/**
- * accessGroups: all available access groups for selection
- * roles: all available roles for selection
- * studies: all available studies for selection
- * columnsAccessGroups: columns for the access groups table
- * columnsStudies: columns for the studies table
- * loading: whether to show the loader
- */
-interface AccountsEditState extends AccountPrefill {
-  accessGroups: AccessGroup[];
-  roles: Role[];
-  studies: Study[];
-  loading: boolean;
-}
+};  
 
 const initialState: AccountsEditState = {
   accessGroups: [],
@@ -241,7 +205,7 @@ export const AccountsEdit = () => {
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<AccountPrefill> => {
+  const getPrefill = async (): Promise<AccountFormPrefill> => {
 
     // if editing an existing entry, return prefill data, else return empty data
     return accountId
@@ -262,7 +226,7 @@ export const AccountsEdit = () => {
    * @param res - the response body
    * @returns - the form prefill data
    */
-  const makePrefill = (res: Account[]): AccountPrefill => {
+  const makePrefill = (res: Account[]): AccountFormPrefill => {
     const account = res[0];
     const roles = account.studies.map((s): RoleSelected => {
       return { study: s.id, role: s.role?.id || 0 };

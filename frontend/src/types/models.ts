@@ -83,3 +83,17 @@ export interface StudySubjectModel {
   teamEmail: string;
   createdAt: string;
 }
+
+/**
+ * Information for study contacts
+ * @property fullName - The full name of the study contact
+ * @property email - The email of the study contact
+ * @property phoneNumber - The phone number of the study contact
+ * @property role - The role of the study contact
+ */
+export interface StudyContactModel {
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  role: string;
+}

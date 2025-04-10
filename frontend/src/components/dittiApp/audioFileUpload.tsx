@@ -40,16 +40,7 @@ import { APP_ENV } from "../../environment";
 import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useNavigate } from "react-router-dom";
-
-
-interface IFile {
-  name: string;
-  title: string;
-  size: string;
-  length: number;
-  exists: boolean;
-}
-
+import { FileMetadata } from "./dittiApp.types";
 
 export const AudioFileUpload = () => {
   const [category, setCategory] = useState("");
@@ -57,7 +48,7 @@ export const AudioFileUpload = () => {
   const [dittiId, setDittiId] = useState("");
   const [studiesRadio, setStudiesRadio] = useState("All Studies");
   const [selectedStudies, setSelectedStudies] = useState<Set<number>>(new Set());
-  const [files, setFiles] = useState<IFile[]>([]);
+  const [files, setFiles] = useState<FileMetadata[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
   const [uploading, setUploading] = useState(false);

@@ -18,7 +18,7 @@
 import { useEffect, useState } from "react";
 import { getAccess } from "../../utils";
 import { Card } from "../cards/card";
-import { ViewContainer } from "../containers/viewContainer";
+import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { CardContentRow } from "../cards/cardContentRow";
 import { Title } from "../text/title";
 import { ActiveIcon } from "../icons/activeIcon";
@@ -27,21 +27,7 @@ import { SmallLoader } from "../loader/loader";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { LinkComponent } from "../links/linkComponent";
 import { Link } from "react-router-dom";
-
-
-/**
- * Interface for details of each study to display.
- * @key number: The study ID.
- * @property numSubjects: The number of subjects enrolled in the study.
- * @property numSubjectsWithApi: The number of subjects who are enrolled in the study and who have connected any API.
- */
-interface IWearableDetails {
-  [key: number]: {
-    numSubjects: number;
-    numSubjectsWithApi: number;
-  }
-}
-
+import { WearableStudyDetails } from "./wearableDashboard.types";
 
 export function WearableStudies() {
   const [canViewWearableData, setCanViewWearableData] = useState<Set<number>>(new Set());
@@ -51,7 +37,7 @@ export function WearableStudies() {
   const { studySubjects, studySubjectLoading } = useCoordinatorStudySubjects();
 
   // The summary details to show for each study
-  const wearableDetails: IWearableDetails = {};
+  const wearableDetails: WearableStudyDetails = {};
   for (const ss of studySubjects) {
     // Count `hasApi` if the current subject has at least 1 API connected and is active in at least one study
     const hasApi = Number(

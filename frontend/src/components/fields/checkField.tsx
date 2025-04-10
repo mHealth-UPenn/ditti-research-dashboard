@@ -15,22 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import * as React from "react";
+import { CheckFieldProps } from "./fields.types";
 
-/**
- * id (optional): an optional html id
- * prefill (optional): whether the field is checked
- * label (optional): the field's label text
- * onChange (optional): a callback function when the field is clicked
- */
-interface CheckFieldProps {
-  id?: string;
-  prefill?: boolean;
-  label?: string;
-  onChange?: (val: boolean) => void;
-}
-
-export const CheckField: React.FC<CheckFieldProps> = ({ id, prefill, label, onChange }) => {
+export const CheckField = ({ id, prefill, label, onChange }: CheckFieldProps) => {
   return (
     <div className="flex flex-col h-full">
       <div className="hidden md:flex mb-1">&nbsp;</div>

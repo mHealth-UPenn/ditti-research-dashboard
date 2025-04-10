@@ -41,16 +41,7 @@ import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
-
-/**
- * The form's prefill
- */
-interface AccessGroupPrefill {
-  name: string;
-  appSelected: App;
-  permissions: Permission[];
-}
-
+import { AccessGroupFormPrefill } from "./adminDashboard.types";
 
 export const AccessGroupsEdit = () => {
   const [searchParams] = useSearchParams();
@@ -103,7 +94,7 @@ export const AccessGroupsEdit = () => {
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<AccessGroupPrefill> => {
+  const getPrefill = async (): Promise<AccessGroupFormPrefill> => {
     const id = accessGroupId;
 
     // if editing an existing entry, return prefill data, else return empty data
@@ -121,7 +112,7 @@ export const AccessGroupsEdit = () => {
    * @param res - the response body
    * @returns - the form prefill data
    */
-  const makePrefill = (res: AccessGroup[]): AccessGroupPrefill => {
+  const makePrefill = (res: AccessGroup[]): AccessGroupFormPrefill => {
     const accessGroup = res[0];
     return {
       name: accessGroup.name,

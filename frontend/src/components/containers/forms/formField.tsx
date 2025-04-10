@@ -16,11 +16,7 @@
  */
 
 import { PropsWithChildren } from "react";
-
-interface FormFieldProps {
-  className?: string;
-}
-
+import { FormFieldProps } from "./forms.types";
 
 export const FormField = ({
   className,

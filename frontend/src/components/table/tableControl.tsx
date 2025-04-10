@@ -15,25 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { TextField } from "../fields/textField";
 import SearchIcon from '@mui/icons-material/Search';
+import { TableControlProps } from "./table.types";
 
-interface TableControlProps {
-  control: React.ReactElement;
-  controlWidth: number;
-  includeControl: boolean;
-  includeSearch: boolean;
-  onSearch: (text: string) => void;
-}
-
-export const TableControl: React.FC<TableControlProps> = ({
+export const TableControl = ({
   control,
   controlWidth,
   includeControl,
   includeSearch,
   onSearch,
-}) => {
+}: TableControlProps) => {
   const [value, setValue] = useState("");
 
   const handleKeyUp = (v: string) => {

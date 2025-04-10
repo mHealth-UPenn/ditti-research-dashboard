@@ -18,47 +18,7 @@
 import { useMemo } from "react";
 import { Timeline } from "./timeline";
 import { colors } from "../../colors";
-import { VisualizationProps } from "./visualization.types";
-/**
- * A period of time when a subject is considered to be actively tapping
- * @property start: the start time
- * @property stop: the stop time
- * @property label: the tapping rate during this bout
- * @property color: an optional color to display on the timeline
- */
-interface Bout {
-  start: number;
-  stop?: number;
-  label?: string;
-  color?: string;
-}
-
-/**
- * @property timestamps: Timestamps of all tapping data to display
- * @property audioTimestamps: Timestamps of audio taps to optionally display
- * @property title: `title` to pass to `Timeline`
- * @property hideAxis: `hideAxis` to pass to `Timeline`
- * @property hideStops: `hideStops` to pass to `Timeline`
- * @property hideTicks: `hideTicks` to pass to `Timeline`
- * @property xScaleOffset: `xScaleOffset` to pass to `Timeline`
- * @property strokeWidth: `strokeWidth` to pass to `Timeline`
- * @property color: `color` to pass to `Timeline`
- * @property axisColor: `axisColor` to pass to `Timeline`
- * @property strokeDashArray: `strokeDashArray` to pass to `Timeline`
- */
-interface BoutsTimelineProps extends VisualizationProps {
-  timestamps: number[];
-  audioTimestamps?: number[];
-  title?: string;
-  hideAxis?: boolean;
-  hideStops?: boolean;
-  hideTicks?: boolean;
-  xScaleOffset?: number;
-  strokeWidth?: number;
-  color?: string;
-  axisColor?: string;
-  strokeDashArray?: string;
-}
+import { Bout, BoutsTimelineProps } from "./visualizations.types";
 
 export const BoutsTimeline = ({
   timestamps,

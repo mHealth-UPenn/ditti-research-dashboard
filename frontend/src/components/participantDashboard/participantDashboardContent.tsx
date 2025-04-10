@@ -28,7 +28,7 @@ import { ParticipantWearableDataProvider } from "../../contexts/wearableDataCont
 import { WearableVisualization } from "../visualizations/wearableVisualization";
 import { useStudySubjects } from "../../hooks/useStudySubjects";
 import { SmallLoader } from "../loader/loader";
-import { ConsentModal } from "../containers/consentModal";
+import { ConsentModal } from "../containers/consentModal/consentModal";
 import { makeRequest } from "../../utils";
 import { ParticipantStudy } from "../../types/api";
 import sanitize from "sanitize-html";
