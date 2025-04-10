@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, PropsWithChildren, useEffect, useMemo, useState } from "react";
 import { IDataProcessingTask, ISleepLog,  IWearableDataContextType } from "../interfaces";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
