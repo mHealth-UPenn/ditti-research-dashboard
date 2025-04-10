@@ -29,7 +29,6 @@ const variantsTextMap = {
   danger: "text-danger-dark",
 };
 
-export type FlashMessageVariant = "success" | "info" | "danger";
 
 
 /**
