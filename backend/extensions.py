@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # from flask_apscheduler import APScheduler
-from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
@@ -27,7 +26,6 @@ from authlib.integrations.flask_client import OAuth
 from shared.tokens_manager import TokensManager
 
 
-bcrypt = Bcrypt()
 cors = CORS()
 db = SQLAlchemy()
 jwt = JWTManager()

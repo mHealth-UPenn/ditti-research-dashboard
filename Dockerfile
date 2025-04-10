@@ -11,7 +11,6 @@ RUN pip3 install boto3 \
     Authlib==1.4.1 \
     Flask==2.3.3 \
     Flask-APScheduler \
-    Flask-Bcrypt \
     Flask-Caching \
     Flask-Cors \
     Flask-JWT-Extended \

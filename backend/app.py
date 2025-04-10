@@ -25,7 +25,7 @@ from backend.commands import (
     init_study_subject_click, clear_cache_click, init_lambda_task_click,
     delete_lambda_tasks_click
 )
-from backend.extensions import bcrypt, cors, db, jwt, migrate, cache, tm, oauth
+from backend.extensions import cors, db, jwt, migrate, cache, tm, oauth
 from backend.views import (
     admin, aws_requests, base, data_processing_task, db_requests,
     participant, fitbit_data
@@ -52,8 +52,7 @@ dictConfig({
 
 
 def create_app(testing=False):
-    # set the static folder as the react frontend
-    app = Flask(__name__, static_url_path="", static_folder="frontend/build")
+    app = Flask(__name__)
 
     if testing:
         flask_config = "Testing"
@@ -65,7 +64,6 @@ def create_app(testing=False):
     register_blueprints(app)
     register_commands(app)
     register_extensions(app)
-
 
     @app.after_request
     def log_response(response: Response):
@@ -105,7 +103,6 @@ def register_commands(app):
 
 
 def register_extensions(app):
-    bcrypt.init_app(app)
     cors.init_app(
         app,
         origins=app.config.get("CORS_ORIGINS", "*"),
