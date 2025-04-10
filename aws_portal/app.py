@@ -23,7 +23,7 @@ from aws_portal.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
     init_db_click, init_api_click, init_integration_testing_db_click, reset_db_click,
     init_study_subject_click, clear_cache_click, init_lambda_task_click,
-    delete_lambda_tasks_click
+    delete_lambda_tasks_click, create_researcher_account_click
 )
 from aws_portal.extensions import bcrypt, cors, db, jwt, migrate, cache, tm, oauth
 from aws_portal.views import (
@@ -104,6 +104,7 @@ def register_commands(app):
     app.cli.add_command(clear_cache_click)
     app.cli.add_command(init_lambda_task_click)
     app.cli.add_command(delete_lambda_tasks_click)
+    app.cli.add_command(create_researcher_account_click)
 
 
 def register_extensions(app):

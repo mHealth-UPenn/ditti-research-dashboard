@@ -56,6 +56,14 @@ class ResearcherAuthController(AuthControllerBase):
         frontend_url = self.get_frontend_url()
         return f"{frontend_url}/coordinator"
 
+    def get_login_url(self):
+        """Get the login URL.
+
+        Returns:
+            str: The login URL
+        """
+        return f"{self.get_frontend_url()}/coordinator/login"
+
     def get_or_create_user(self, token, userinfo):
         """Get researcher account from token.
 

@@ -14,8 +14,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from datetime import datetime
+
 import click
-import os
 from flask import current_app
 from flask.cli import with_appcontext
 from flask_migrate import upgrade
@@ -24,7 +25,7 @@ from aws_portal.extensions import db, cache
 from aws_portal.models import (
     init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
     init_integration_testing_db, init_study_subject, init_lambda_task,
-    delete_lambda_tasks
+    delete_lambda_tasks, Account
 )
 
 
@@ -133,3 +134,22 @@ def export_accounts_to_cognito_click():
     # This is a stub function to fix the import error
     # The actual implementation would interact with AWS Cognito
     click.echo("Export accounts to AWS Cognito functionality would go here.")
+
+
+@click.command("create-researcher-account", help="Create a new researcher account.")
+@click.option("--email", default=None, help="The email of the researcher.")
+@with_appcontext
+def create_researcher_account_click(email):
+    if email is None:
+        raise RuntimeError("Option `email` is required.")
+    db.session.add(Account(
+        created_on=datetime.now(),
+        last_login=datetime.now(),
+        first_name="Jane",
+        last_name="Doe",
+        email=email,
+        phone_number="+12345678901",
+        is_confirmed=True,
+    ))
+    db.session.commit()
+    click.echo("Researcher account successfully created.")
