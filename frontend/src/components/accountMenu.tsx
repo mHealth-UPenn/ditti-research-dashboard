@@ -15,32 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { RefObject } from "react";
 import { useState } from "react";
-import { AccountDetails, ResponseBody } from "../interfaces";
+import { ResponseBody } from "../types/api";
 import { TextField } from "./fields/textField";
 import { makeRequest, formatPhoneNumber } from "../utils";
 import { AsyncButton } from "./buttons/asyncButton";
 import { Button } from "./buttons/button";
 import { useAuth } from "../hooks/useAuth";
 import { useFlashMessages } from "../hooks/useFlashMessages";
-
-/**
- * Account menu props interface
- */
-interface AccountMenuProps {
-  prefill: AccountDetails;
-  accountMenuRef: RefObject<HTMLDivElement>;
-  hideMenu: () => void;
-}
-
-/**
- * Password error type to handle validation
- */
-type PasswordError = 
-  | "PASSWORDS_DONT_MATCH" 
-  | "CURRENT_PASSWORD_REQUIRED" 
-  | null;
+import { AccountMenuProps, PasswordError } from "./accountMenu.types";
 
 /**
  * Account Menu component for managing user account details and password

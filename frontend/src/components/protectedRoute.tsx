@@ -15,15 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
+import { PropsWithChildren } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { FullLoader } from "../components/loader";
-
-interface ProtectedRouteProps {
-  children: React.ReactElement;
-  authMethod: 'participant' | 'researcher';
-}
+import { ProtectedRouteProps } from "./protectedRoute.types";
 
 /**
  * Component for protecting routes, redirecting unauthenticated users to the login page.
@@ -32,7 +28,10 @@ interface ProtectedRouteProps {
  * @param authMethod - The required authentication method ('participant', or 'researcher')
  * @returns The child component if authenticated, or a redirect to the login page otherwise.
  */
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, authMethod }) => {
+export const ProtectedRoute = ({
+  children,
+  authMethod,
+}: PropsWithChildren<ProtectedRouteProps>) => {
   const {
     isParticipantAuthenticated, 
     isResearcherAuthenticated,

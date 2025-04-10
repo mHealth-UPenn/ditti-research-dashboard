@@ -16,26 +16,9 @@
  */
 
 import * as React from "react";
+import { LoaderProps, FullLoaderProps } from "./loader.types";
 
-/**
- * style: the loader's style
- * msg: an optional message to display under the loader
- */
-interface LoaderProps {
-  style: React.CSSProperties;
-  msg?: string;
-}
-
-/**
- * loading: whether the loader is not fading
- * msg: a message to display under the loader
- */
-interface FullLoaderProps {
-  loading: boolean;
-  msg: string;
-}
-
-const Loader: React.FC<LoaderProps> = ({ style, msg }) => {
+const Loader = ({ style, msg }: LoaderProps) => {
   return (
     <div
       id="loader"
@@ -52,7 +35,7 @@ const Loader: React.FC<LoaderProps> = ({ style, msg }) => {
   );
 };
 
-export const SmallLoader: React.FC = () => {
+export const SmallLoader = () => {
   return (
     <div className="loader-container">
       <Loader style={{}} />
@@ -60,7 +43,7 @@ export const SmallLoader: React.FC = () => {
   );
 };
 
-export const FullLoader: React.FC<FullLoaderProps> = ({ loading, msg }) => {
+export const FullLoader = ({ loading, msg }: FullLoaderProps) => {
   const loadingStyle: React.CSSProperties = {
     alignItems: "center",
     backgroundColor: "white",
