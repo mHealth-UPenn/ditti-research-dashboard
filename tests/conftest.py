@@ -1,3 +1,7 @@
+from dotenv import load_dotenv
+
+load_dotenv("flask.env")
+
 import os
 import boto3
 from flask import Blueprint
