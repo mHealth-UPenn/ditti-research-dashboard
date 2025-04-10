@@ -14,3 +14,11 @@ export interface CoordinatorStudySubjectContextValue {
   getStudySubjectByDittiId: (id: string) => StudySubjectModel | undefined;
   fetchStudySubjects: () => void;
 }
+
+/**
+ * Props for the CoordinatorStudySubjectProvider component.
+ * @property app - The app ID of the coordinator.
+ */
+export interface CoordinatorStudySubjectProviderProps {
+  app: 2 | 3;  // Cannot be accessed from admin dashboard (`1`)
+}

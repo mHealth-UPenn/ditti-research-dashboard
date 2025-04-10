@@ -29,3 +29,13 @@ export interface WearableDataContextValue {
   resetStartDate?: () => void;
   canIncrementStartDate?: boolean;
 }
+
+/**
+ * Props for the coordinator wearable data provider.
+ * @property dittiId: The Ditti ID of the participant whose data to fetch.
+ * @property studyId: The ID of the study to fetch data for.
+ */
+export interface CoordinatorWearableDataProviderProps {
+  dittiId: string;
+  studyId: number;
+}

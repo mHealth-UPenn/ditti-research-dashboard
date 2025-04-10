@@ -36,3 +36,11 @@ export interface VisualizationContextValue {
   zoomIn: () => void;
   zoomOut: () => void;
 }
+
+/**
+ * Props for the VisualizationContextProvider component.
+ * @property defaultMargin - The default margin of the visualization.
+ */
+export interface VisualizationContextProviderProps {
+  defaultMargin?: { top: number, right: number, bottom: number, left: number };
+}

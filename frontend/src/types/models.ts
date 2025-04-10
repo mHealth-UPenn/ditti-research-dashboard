@@ -19,22 +19,6 @@ export interface UserModel {
 }
 
 /**
- * Study subject data used for the SubjectsEdit form
- * @property tapPermission - Indicates if the participant has access to taps.
- * @property information - Content from the assigned about sleep template.
- * @property dittiId - The participant's Ditti ID
- * @property startTime - When the participant's enrollment in the study begins
- * @property expTime - When the participant's enrollment in the study begins
- */
-export interface StudySubjectModel {
-  tapPermission: boolean;
-  information: string;
-  dittiId: string;
-  startTime: string;
-  expTime: string;
-}
-
-/**
  * Represents a tap with details specific to frontend use.
  * @property dittiId - The ditti ID of the user who created the tap.
  * @property time - The tap's timestamp.
@@ -98,26 +82,4 @@ export interface StudySubjectModel {
   dittiExpTime: string;
   teamEmail: string;
   createdAt: string;
-}
-
-/**
- * A flash message to be displayed in the frontend.
- * @property id - The database primary key.
- * @property element - The element to display in the flash message.
- * @property containerRef - The reference to the container element.
- */
-export interface FlashMessageModel {
-  id: number;
-  element: React.ReactElement;
-  containerRef: React.RefObject<HTMLDivElement>;
-}
-
-/**
- * Breadcrumbs for display in the Navbar component.
- * @property name - The name of the breadcrumb to display in the navbar.
- * @property link - The link to navigate to when the breadcrumb is clicked.
- */
-export interface BreadcrumbModel {
-  name: string;
-  link: string | null;
 }

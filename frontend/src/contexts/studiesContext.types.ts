@@ -11,3 +11,11 @@ export interface StudiesContextValue {
   studiesLoading: boolean;
   study: Study | null;
 }
+
+/**
+ * Props for the StudiesProvider component.
+ * @property app - The app ID of the studies.
+ */
+export interface StudiesProviderProps {
+  app: 2 | 3;  // Ditti App, Wearable Dashboard
+}

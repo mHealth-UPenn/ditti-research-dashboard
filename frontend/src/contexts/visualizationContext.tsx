@@ -16,15 +16,11 @@
  */
 
 import { createContext, PropsWithChildren, useMemo, useState } from "react";
-import { IVisualizationContext } from "../interfaces";
 import { scaleTime } from '@visx/scale';
 import { useParentSize } from "@visx/responsive";
+import { VisualizationContextProviderProps, VisualizationContextValue } from "./visualizationContext.types";
 
-export const VisualizationContext = createContext<IVisualizationContext | undefined>(undefined);
-
-interface VisualizationContextProviderProps {
-  defaultMargin?: { top: number, right: number, bottom: number, left: number };
-}
+export const VisualizationContext = createContext<VisualizationContextValue | undefined>(undefined);
 
 export const VisualizationContextProvider = ({
   defaultMargin = { top: 50, right: 30, bottom: 25, left: 60 },

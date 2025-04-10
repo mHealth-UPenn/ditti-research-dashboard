@@ -17,22 +17,19 @@
 
 import { createContext, useState, useEffect, PropsWithChildren } from "react";
 import { makeRequest } from "../utils";
-import { IStudySubject, CoordinatorStudySubjectContextType, UserDetails, IStudySubjectDetails } from "../interfaces";
+import { CoordinatorStudySubjectContextValue, CoordinatorStudySubjectProviderProps } from "./coordinatorStudySubjectContext.types";
 import { APP_ENV } from "../environment";
+import { StudySubjectModel, UserModel } from "../types/models";
+import { StudySubject } from "../types/api";
 
-export const CoordinatorStudySubjectContext = createContext<CoordinatorStudySubjectContextType | undefined>(undefined);
-
-interface ICoordinatorStudySubjectProviderProps {
-  app: 2 | 3;  // Cannot be accessed from admin dashboard (`1`)
-}
-
+export const CoordinatorStudySubjectContext = createContext<CoordinatorStudySubjectContextValue | undefined>(undefined);
 
 // CoordinatorStudySubjectProvider component that wraps children with the study subject context.
 export function CoordinatorStudySubjectProvider({
   app,
   children
-}: PropsWithChildren<ICoordinatorStudySubjectProviderProps>) {
-  const [studySubjects, setStudySubjects] = useState<IStudySubjectDetails[]>([]);
+}: PropsWithChildren<CoordinatorStudySubjectProviderProps>) {
+  const [studySubjects, setStudySubjects] = useState<StudySubjectModel[]>([]);
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
 
   /**
@@ -44,10 +41,10 @@ export function CoordinatorStudySubjectProvider({
    * @returns - Merged participant data.
    */
   const joinByDittiIdAndUserPermissionId = (
-    studySubjects: IStudySubject[],
-    userDetails: UserDetails[]
-  ): IStudySubjectDetails[] => {
-    const result: IStudySubjectDetails[] = [];
+    studySubjects: StudySubject[],
+    userDetails: UserModel[]
+  ): StudySubjectModel[] => {
+    const result: StudySubjectModel[] = [];
 
     // Get all unique Ditti IDs in the database and on AWS
     const ids = new Set([
@@ -62,14 +59,14 @@ export function CoordinatorStudySubjectProvider({
     );
 
     // Create empty placeholders for when data is missing in the database or on AWS
-    const emptyStudySubject: IStudySubject = {
+    const emptyStudySubject: StudySubject = {
       id: -1,
       createdOn: "",
       dittiId: "",
       studies: [],
       apis: [],
     }
-    const emptyUser: UserDetails = {
+    const emptyUser: UserModel = {
       tapPermission: false,
       information: "",
       userPermissionId: "",
@@ -107,18 +104,18 @@ export function CoordinatorStudySubjectProvider({
   };
 
   // Fetch data from the database
-  const fetchStudySubjectsDB = async (): Promise<IStudySubject[]> => {
+  const fetchStudySubjectsDB = async (): Promise<StudySubject[]> => {
     if (APP_ENV === "production" || APP_ENV === "development") {
-      const data: IStudySubject[] = await makeRequest(`/admin/study_subject?app=${app}`);
+      const data: StudySubject[] = await makeRequest(`/admin/study_subject?app=${app}`);
       return data;
     }
     return [];
   };
 
   // Fetch data from AWS
-  const fetchStudySubjectsAWS = async (): Promise<UserDetails[]> => {
+  const fetchStudySubjectsAWS = async (): Promise<UserModel[]> => {
     if (APP_ENV === "production" || APP_ENV === "development") {
-      const data: UserDetails[] = await makeRequest(`/aws/get-users?app=${app}`);
+      const data: UserModel[] = await makeRequest(`/aws/get-users?app=${app}`);
       return data;
     }
     return [];
@@ -127,7 +124,7 @@ export function CoordinatorStudySubjectProvider({
   // Fetch and join data from AWS and the database
   const fetchStudySubjects = () => {
     setStudySubjectLoading(true);
-    const promises: [Promise<IStudySubject[]>, Promise<UserDetails[]>] = [
+    const promises: [Promise<StudySubject[]>, Promise<UserModel[]>] = [
       fetchStudySubjectsDB(),
       fetchStudySubjectsAWS(),
     ];
@@ -150,7 +147,7 @@ export function CoordinatorStudySubjectProvider({
    * @param dittiId - The Ditti ID of the study subject to get.
    * @returns - The study subject with the given Ditti ID, or `undefined` if not found.
    */
-  const getStudySubjectByDittiId = (dittiId: string): IStudySubjectDetails | undefined => {
+  const getStudySubjectByDittiId = (dittiId: string): StudySubjectModel | undefined => {
     return studySubjects.find(ss => ss.dittiId === dittiId);
   }
 
