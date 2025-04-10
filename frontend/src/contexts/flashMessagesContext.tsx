@@ -15,8 +15,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import { createContext, useState, PropsWithChildren, createRef } from "react";
-import { FlashMessageContextValue, FlashMessageModel, FlashMessageVariant } from "./flashMessagesContext.types";
+import { FlashMessageContextValue, FlashMessageModel } from "./flashMessagesContext.types";
 import { FlashMessage } from "../components/flashMessage/flashMessage";
+import { FlashMessageVariant } from "../components/flashMessage/flashMessage.types";
 
 export const FlashMessageContext = createContext<FlashMessageContextValue | undefined>(undefined);
 
