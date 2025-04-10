@@ -17,8 +17,8 @@
 
 import { PropsWithChildren } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
-import { FullLoader } from "../components/loader";
+import { useAuth } from "../../hooks/useAuth";
+import { FullLoader } from "../loader/loader";
 import { ProtectedRouteProps } from "./protectedRoute.types";
 
 /**

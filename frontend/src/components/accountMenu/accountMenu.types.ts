@@ -1,5 +1,5 @@
 import { RefObject } from "react";
-import { AccountModel } from "../types/models";
+import { AccountModel } from "../../types/models";
 
 /**
  * Props for the AccountMenu component.

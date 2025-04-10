@@ -16,7 +16,7 @@
  */
 
 import { createRef, useEffect, useState } from "react";
-import { AccountMenu } from "./accountMenu";
+import { AccountMenu } from "./accountMenu/accountMenu";
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from "../hooks/useAuth";

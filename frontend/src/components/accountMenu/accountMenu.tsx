@@ -16,13 +16,13 @@
  */
 
 import { useState } from "react";
-import { ResponseBody } from "../types/api";
-import { TextField } from "./fields/textField";
-import { makeRequest, formatPhoneNumber } from "../utils";
-import { AsyncButton } from "./buttons/asyncButton";
-import { Button } from "./buttons/button";
-import { useAuth } from "../hooks/useAuth";
-import { useFlashMessages } from "../hooks/useFlashMessages";
+import { ResponseBody } from "../../types/api";
+import { TextField } from "../fields/textField";
+import { makeRequest, formatPhoneNumber } from "../../utils";
+import { AsyncButton } from "../buttons/asyncButton";
+import { Button } from "../buttons/button";
+import { useAuth } from "../../hooks/useAuth";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { AccountMenuProps, PasswordError } from "./accountMenu.types";
 
 /**
