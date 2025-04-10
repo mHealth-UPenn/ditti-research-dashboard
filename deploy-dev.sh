@@ -84,7 +84,38 @@ echo "Environment variables exported successfully."
 # Run initialization commands if "init" parameter is provided
 if [[ "$INIT_FLAG" == true ]]; then
     echo "Initializing application..."
-    docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
+    
+    # Check if postgres container is already running
+    if ! docker ps | grep -q aws-pg; then
+        echo "Starting PostgreSQL container..."
+        docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
+        
+        # Wait for PostgreSQL to be ready
+        echo "Waiting for PostgreSQL to initialize (this may take a few seconds)..."
+        sleep 10
+        
+        # Continue waiting until PostgreSQL is accepting connections
+        max_attempts=30
+        attempts=0
+        while ! docker exec aws-pg pg_isready -U postgres -h localhost > /dev/null 2>&1; do
+            attempts=$((attempts+1))
+            if [ $attempts -gt $max_attempts ]; then
+                echo "PostgreSQL failed to start within the allocated time. Please check Docker container logs."
+                exit 1
+            fi
+            echo "Waiting for PostgreSQL to be ready... ($attempts/$max_attempts)"
+            sleep 2
+        done
+        echo "PostgreSQL is ready!"
+    else
+        echo "PostgreSQL container is already running."
+    fi
+    
+    # Run database migrations
+    echo "Running database migrations..."
     flask db upgrade
+    
+    # Initialize the test database
+    echo "Initializing test database..."
     flask init-integration-testing-db
 fi

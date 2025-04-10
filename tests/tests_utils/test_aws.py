@@ -1,7 +1,7 @@
 from moto import mock_aws
 import pytest
 import requests
-from aws_portal.utils.aws import (
+from backend.utils.aws import (
     Column, Connection, Loader, MutationClient, Query, Scanner, Updater
 )
 
@@ -10,13 +10,17 @@ def assert_expression(exp, name, operator, *args):
     switch = True
     exp_operator = exp.expression_operator
 
+    # If the top-level operator is AND (due to the deleted_exp filter), get the first value
+    if exp_operator == "AND":
+        exp = exp.get_expression()["values"][0]
+        exp_operator = exp.expression_operator
+
     while exp.expression_operator == "NOT":
         switch = not switch
         exp = exp.get_expression()["values"][0]
 
     if exp_operator == "NOT":
         values = (switch,)
-
     else:
         values = exp.get_expression()["values"][1:]
 
@@ -281,7 +285,8 @@ class TestQuery:
     @mock_aws
     def test_build_blocks(self):
         query = "(a==\"a\"ORa==\"b\")AND(b==\"a\"AND(b==\"b\"ORb==\"c\"))"
-        blocks = ["a==\"a\"ORa==\"b\"", "b==\"b\"ORb==\"c\"", "b==\"a\"AND$1", "$0AND$2"]
+        blocks = ["a==\"a\"ORa==\"b\"",
+                  "b==\"b\"ORb==\"c\"", "b==\"a\"AND$1", "$0AND$2"]
         assert Query.build_blocks(query) == blocks
 
     @mock_aws

@@ -1,12 +1,12 @@
 import pytest
 from unittest.mock import patch, MagicMock
 from datetime import datetime, timezone, timedelta
-from aws_portal.utils.lambda_task import (
+from backend.utils.lambda_task import (
     create_and_invoke_lambda_task,
     check_and_invoke_lambda_task,
     invoke_lambda_task
 )
-from aws_portal.models import LambdaTask
+from backend.models import LambdaTask
 from flask import Flask
 from freezegun import freeze_time
 
@@ -28,19 +28,19 @@ def app():
 
 @pytest.fixture
 def mock_db_session():
-    with patch('aws_portal.utils.lambda_task.db.session') as mock_session:
+    with patch('backend.utils.lambda_task.db.session') as mock_session:
         yield mock_session
 
 
 @pytest.fixture
 def mock_query():
-    with patch('aws_portal.utils.lambda_task.LambdaTask.query') as mock_query:
+    with patch('backend.utils.lambda_task.LambdaTask.query') as mock_query:
         yield mock_query
 
 
 @pytest.fixture
 def mock_boto3_client():
-    with patch('aws_portal.utils.lambda_task.boto3.client') as mock_client:
+    with patch('backend.utils.lambda_task.boto3.client') as mock_client:
         yield mock_client
 
 
@@ -61,7 +61,7 @@ def test_create_and_invoke_lambda_task_success(
     mock_task_instance.updated_on = fixed_datetime
 
     # Mock the LambdaTask constructor to return the mock_task_instance
-    with patch('aws_portal.utils.lambda_task.LambdaTask', return_value=mock_task_instance) as mock_lambda_task_constructor:
+    with patch('backend.utils.lambda_task.LambdaTask', return_value=mock_task_instance) as mock_lambda_task_constructor:
         # Set LambdaTask.query to mock_query to preserve the query chain
         mock_lambda_task_constructor.query = mock_query
 
@@ -100,7 +100,7 @@ def test_create_and_invoke_lambda_task_success(
 def test_create_and_invoke_lambda_task_exception(
     app, mock_db_session, mock_query, mock_boto3_client, fixed_datetime
 ):
-    with patch('aws_portal.utils.lambda_task.LambdaTask') as mock_lambda_task_constructor:
+    with patch('backend.utils.lambda_task.LambdaTask') as mock_lambda_task_constructor:
         mock_lambda_task_instance = MagicMock(spec=LambdaTask)
         mock_lambda_task_constructor.return_value = mock_lambda_task_instance
 
@@ -161,7 +161,7 @@ def test_check_and_invoke_lambda_task_not_run_today(
     new_task.created_on = fixed_datetime
     new_task.updated_on = fixed_datetime
 
-    with patch('aws_portal.utils.lambda_task.LambdaTask', return_value=new_task) as mock_lambda_task_constructor:
+    with patch('backend.utils.lambda_task.LambdaTask', return_value=new_task) as mock_lambda_task_constructor:
         # Set LambdaTask.query to mock_query to preserve the query chain
         mock_lambda_task_constructor.query = mock_query
 
@@ -217,7 +217,7 @@ def test_check_and_invoke_lambda_task_no_tasks(
     new_task.created_on = fixed_datetime
     new_task.updated_on = fixed_datetime
 
-    with patch('aws_portal.utils.lambda_task.LambdaTask', return_value=new_task) as mock_lambda_task_constructor:
+    with patch('backend.utils.lambda_task.LambdaTask', return_value=new_task) as mock_lambda_task_constructor:
         # Set LambdaTask.query to mock_query to preserve the query chain
         mock_lambda_task_constructor.query = mock_query
 

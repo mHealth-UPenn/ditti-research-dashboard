@@ -6,7 +6,7 @@ from shared.fitbit import (
     create_code_challenge,
     get_fitbit_oauth_session,
 )
-from aws_portal.extensions import tm  # Updated from sm to tm
+from backend.extensions import tm  # Updated from sm to tm
 import base64
 import hashlib
 import time

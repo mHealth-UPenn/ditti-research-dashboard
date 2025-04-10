@@ -1,13 +1,8 @@
-from base64 import b64encode
 from datetime import datetime, timedelta, UTC
 import os
-import uuid
 
-from flask import current_app
-from flask_jwt_extended.utils import decode_token
-
-from aws_portal.extensions import bcrypt, db
-from aws_portal.models import (
+from backend.extensions import db
+from backend.models import (
     AccessGroup, Account, App, BlockedToken, JoinAccessGroupPermission,
     JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
     JoinStudyRole, Permission, Role, Study, StudySubject, JoinStudySubjectApi,
@@ -44,21 +39,17 @@ access_groups = [
 
 accounts = [
     {
-        "public_id": str(uuid.uuid4()),
         "created_on": datetime.now(UTC),
         "first_name": "John",
         "last_name": "Smith",
         "email": "foo@email.com",
-        "is_confirmed": True,
-        "_password": bcrypt.generate_password_hash("foo").decode("utf-8")
+        "is_confirmed": True
     },
     {
-        "public_id": str(uuid.uuid4()),
         "created_on": datetime.now(UTC),
         "first_name": "Jane",
         "last_name": "Doe",
-        "email": "bar@email.com",
-        "_password": bcrypt.generate_password_hash("bar").decode("utf-8")
+        "email": "bar@email.com"
     }
 ]
 
@@ -348,55 +339,226 @@ def create_joins():
     db.session.add(join_study_subject_api_bar)
 
 
-def login_test_account(name, client, password=None):
-    # This function interacts with Account.email and remains unchanged
-    q1 = Account.email == f"{name}@email.com"
-    foo = Account.query.filter(q1).first()
-    if not foo:
-        raise ValueError(f"No account found with email: {name}@email.com")
-    cred = b64encode(f"{foo.email}:{password or name}".encode())
-    headers = {"Authorization": f"Basic {cred.decode()}"}
-    res = client.post("/iam/login", headers=headers)
-
-    return res
+# New helper functions for Cognito authentication
+def mock_cognito_tokens():
+    """Generate mock Cognito tokens for testing."""
+    return {
+        "access_token": "mock_access_token",
+        "id_token": "mock_id_token",
+        "refresh_token": "mock_refresh_token",
+        "expires_in": 3600
+    }
 
 
-def login_admin_account(client):
-    email = os.getenv("FLASK_ADMIN_EMAIL")
-    password = os.getenv("FLASK_ADMIN_PASSWORD")
-    if not email or not password:
-        raise ValueError(
-            "FLASK_ADMIN_EMAIL and FLASK_ADMIN_PASSWORD must be set.")
-    cred = b64encode(f"{email}:{password}".encode())
-    headers = {"Authorization": f"Basic {cred.decode()}"}
-    res = client.post("/iam/login", headers=headers)
+def setup_auth_flow_session(client, user_type="participant"):
+    """Set up a mock authentication flow session."""
+    # Use the simpler session approach that was working in the test files
+    with client.session_transaction() as flask_session:
+        flask_session["cognito_state"] = "mock_state"
+        flask_session["cognito_code_verifier"] = "mock_code_verifier"
+        flask_session["cognito_nonce"] = "mock_nonce"
+        flask_session["cognito_nonce_generated"] = int(
+            datetime.now().timestamp())
+        flask_session["auth_flow_user_type"] = user_type
 
-    return res
+    return "mock_state"
 
 
-def get_auth_headers(res, headers=None):
-    csrf_token = res.json.get("csrfAccessToken")
-    if not csrf_token:
-        raise ValueError("CSRF token not found in response.")
-    headers = headers or {}
-    csrf_header_name = current_app.config["JWT_ACCESS_CSRF_HEADER_NAME"]
-    headers.update({csrf_header_name: csrf_token})
+def get_unwrapped_view(view_module, view_func_name):
+    """
+    Unwrap a view function to access the underlying implementation.
 
-    jwt_token = res.json.get("jwt")
-    if jwt_token:
-        headers.update({"Authorization": f"Bearer {jwt_token}"})
+    This allows testing the core view logic without authentication
+    decorators getting in the way.
+    """
+    import inspect
+    from functools import wraps
+
+    # Get the wrapped view function
+    view_func = getattr(view_module, view_func_name)
+
+    # Recursively unwrap until we get the core function
+    while hasattr(view_func, "__wrapped__"):
+        view_func = view_func.__wrapped__
+
+    return view_func
+
+
+def mock_researcher_auth_for_testing(client, is_admin=True):
+    """
+    Mock researcher authentication for testing admin views.
+
+    Instead of going through the login flow, this directly simulates
+    an authenticated researcher (admin or non-admin).
+
+    Args:
+        client: Flask test client
+        is_admin: Whether to make the mocked researcher an admin
+
+    Returns:
+        Headers dict with authentication token
+    """
+    # Create a mock account for the researcher
+    from backend.models import Account
+    mock_account = Account.query.filter_by(email="foo@email.com").first()
+
+    # Generate a mock ID token
+    mock_token = "mock_id_token_for_researcher"
+
+    # Create headers with the mock token
+    headers = {
+        "Authorization": f"Bearer {mock_token}"
+    }
+
+    # Patch the ResearcherAuthController to return our mock account
+    from unittest.mock import patch, MagicMock
+    from backend.auth.controllers.researcher import ResearcherAuthController
+
+    # Apply the patch to the client's application context
+    patcher1 = patch.object(
+        ResearcherAuthController,
+        'get_user_from_token',
+        return_value=(mock_account, None)
+    )
+    patcher1.start()
+
+    # Also patch the check_permissions function to always return True
+    from backend.auth.decorators.researcher import check_permissions
+    patcher2 = patch(
+        'backend.auth.decorators.researcher.check_permissions',
+        return_value=(True, None)
+    )
+    patcher2.start()
+
+    patchers = [patcher1, patcher2]
+
+    # Patch any Cognito-related functions with the correct method names
+    # For account creation in Cognito
+    try:
+        patcher3 = patch.object(
+            ResearcherAuthController,
+            'create_account_in_cognito',
+            return_value=(True, None)
+        )
+        patcher3.start()
+        patchers.append(patcher3)
+
+        # For updating user attributes in Cognito
+        patcher4 = patch.object(
+            ResearcherAuthController,
+            'update_account_in_cognito',
+            return_value=(True, None)
+        )
+        patcher4.start()
+        patchers.append(patcher4)
+
+        # For deleting/disabling users in Cognito
+        patcher5 = patch.object(
+            ResearcherAuthController,
+            'disable_account_in_cognito',
+            return_value=(True, None)
+        )
+        patcher5.start()
+        patchers.append(patcher5)
+
+    except (ImportError, AttributeError) as e:
+        # If these modules or methods don't exist, just continue
+        print(f"Skipping some patchers due to: {e}")
+        pass
+
+    # Store the patchers in the client for cleanup
+    if not hasattr(client, '_auth_patchers'):
+        client._auth_patchers = []
+    client._auth_patchers.extend(patchers)
 
     return headers
 
 
-def get_account_from_response(res):
-    access_token = res.json.get("jwt")
-    if not access_token:
-        raise ValueError("JWT token not found in response.")
-    payload = decode_token(access_token)
-    public_id = payload.get("sub")
-    if not public_id:
-        raise ValueError("Public ID not found in JWT payload.")
-    account = Account.query.filter(Account.public_id == public_id).first()
+# Additional testing utilities for mock standardization
 
-    return account
+def mock_db_query_result(model_class, result_or_results):
+    """
+    Mock a database query to return specific results.
+
+    This is a more flexible alternative to mock_model_not_found that allows
+    specifying the exact return values.
+
+    Args:
+        model_class: The SQLAlchemy model class to mock
+        result_or_results: Single object or list of objects to return from the query
+
+    Returns:
+        Mock query object
+
+    Example:
+        # Mock User.query to return a specific user
+        user = User(id=1, name="Test User")
+        mock_db_query_result(User, user)
+
+        # Mock User.query to return multiple users
+        users = [User(id=1), User(id=2)]
+        mock_db_query_result(User, users)
+    """
+    from unittest.mock import patch, MagicMock
+
+    patcher = patch.object(model_class, 'query')
+    mock_query = patcher.start()
+
+    # Create mock filter methods
+    mock_filter = MagicMock()
+
+    # Configure return values based on input type
+    if isinstance(result_or_results, list):
+        mock_filter.all.return_value = result_or_results
+        mock_filter.first.return_value = result_or_results[0] if result_or_results else None
+    else:
+        mock_filter.all.return_value = [
+            result_or_results] if result_or_results else []
+        mock_filter.first.return_value = result_or_results
+
+    # Setup common query methods
+    mock_query.filter_by.return_value = mock_filter
+    mock_query.filter.return_value = mock_filter
+    mock_query.get.side_effect = lambda id: result_or_results if result_or_results and getattr(
+        result_or_results, 'id', None) == id else None
+
+    return mock_query
+
+
+def mock_boto3_client(service_name, mock_methods=None):
+    """
+    Create a standardized mock for boto3 clients.
+
+    Args:
+        service_name: Name of the AWS service (e.g., 'cognito-idp')
+        mock_methods: Dict of method names and their return values or side effects
+
+    Returns:
+        Mock boto3 client
+
+    Example:
+        # Mock Cognito client with specific method responses
+        mock_boto3_client('cognito-idp', {
+            'admin_get_user': {'User': {'Username': 'test-user'}},
+            'admin_delete_user': None,  # Returns None
+            'admin_create_user': Exception("User already exists")  # Raises exception
+        })
+    """
+    from unittest.mock import patch, MagicMock
+
+    mock_client = MagicMock()
+
+    # Configure methods if provided
+    if mock_methods:
+        for method_name, return_value in mock_methods.items():
+            method_mock = getattr(mock_client, method_name)
+            if isinstance(return_value, Exception):
+                method_mock.side_effect = return_value
+            else:
+                method_mock.return_value = return_value
+
+    # Patch boto3.client to return our mock
+    patcher = patch('boto3.client', return_value=mock_client)
+    mock_boto3 = patcher.start()
+
+    return mock_client

@@ -1,13 +1,38 @@
 import pytest
 from unittest.mock import patch, MagicMock
+from tests.testing_utils import mock_researcher_auth_for_testing
+
+# Add fixtures for researcher authentication
+
+
+@pytest.fixture
+def researcher_headers(client):
+    """Fixture providing researcher authentication headers"""
+    return mock_researcher_auth_for_testing(client, is_admin=False)
+
+
+@pytest.fixture
+def researcher_get(client, researcher_headers):
+    """Create a test GET request function with researcher authentication"""
+    def _get(url, query_string=None, **kwargs):
+        return client.get(url, query_string=query_string, headers=researcher_headers, **kwargs)
+    return _get
+
+
+@pytest.fixture
+def researcher_post(client, researcher_headers):
+    """Create a test POST request function with researcher authentication"""
+    def _post(url, data=None, json=None, **kwargs):
+        return client.post(url, data=data, json=json, content_type="application/json", headers=researcher_headers, **kwargs)
+    return _post
 
 # ---------------------------
 # Tests for GET /data_processing_task/
 # ---------------------------
 
 
-@patch('aws_portal.views.data_processing_task.LambdaTask')
-def test_get_data_processing_tasks_success(mock_lambda_task_model, client, get_admin):
+@patch('backend.views.data_processing_task.LambdaTask')
+def test_get_data_processing_tasks_success(mock_lambda_task_model, client, researcher_get):
     """
     Test successful retrieval of data processing tasks.
     """
@@ -41,7 +66,8 @@ def test_get_data_processing_tasks_success(mock_lambda_task_model, client, get_a
     mock_lambda_task_model.query.order_by.return_value.all.return_value = [
         mock_task1, mock_task2]
 
-    response = get_admin("/data_processing_task/", query_string={"app": "1"})
+    response = researcher_get("/data_processing_task/",
+                              query_string={"app": "1"})
 
     assert response.status_code == 200
     assert response.is_json
@@ -49,8 +75,8 @@ def test_get_data_processing_tasks_success(mock_lambda_task_model, client, get_a
     mock_lambda_task_model.query.order_by.assert_called_once_with(mock_desc)
 
 
-@patch('aws_portal.views.data_processing_task.LambdaTask')
-def test_get_data_processing_tasks_internal_error(mock_lambda_task_model, client, get_admin):
+@patch('backend.views.data_processing_task.LambdaTask')
+def test_get_data_processing_tasks_internal_error(mock_lambda_task_model, client, researcher_get):
     """
     Test internal server error during retrieval of data processing tasks.
     """
@@ -59,7 +85,8 @@ def test_get_data_processing_tasks_internal_error(mock_lambda_task_model, client
     mock_lambda_task_model.query.order_by.return_value.all.side_effect = Exception(
         "Database error")
 
-    response = get_admin("/data_processing_task/", query_string={"app": "1"})
+    response = researcher_get("/data_processing_task/",
+                              query_string={"app": "1"})
 
     assert response.status_code == 500
     assert response.is_json
@@ -69,8 +96,8 @@ def test_get_data_processing_tasks_internal_error(mock_lambda_task_model, client
     mock_lambda_task_model.query.order_by.return_value.all.assert_called_once()
 
 
-@patch('aws_portal.views.data_processing_task.LambdaTask')
-def test_get_data_processing_tasks_empty_list(mock_lambda_task_model, client, get_admin):
+@patch('backend.views.data_processing_task.LambdaTask')
+def test_get_data_processing_tasks_empty_list(mock_lambda_task_model, client, researcher_get):
     """
     Test retrieval when no data processing tasks exist.
     """
@@ -78,7 +105,8 @@ def test_get_data_processing_tasks_empty_list(mock_lambda_task_model, client, ge
     mock_lambda_task_model.created_on.desc.return_value = mock_desc
     mock_lambda_task_model.query.order_by.return_value.all.return_value = []
 
-    response = get_admin("/data_processing_task/", query_string={"app": "1"})
+    response = researcher_get("/data_processing_task/",
+                              query_string={"app": "1"})
 
     assert response.status_code == 200
     assert response.is_json
@@ -90,8 +118,8 @@ def test_get_data_processing_tasks_empty_list(mock_lambda_task_model, client, ge
 # Tests for POST /data_processing_task/invoke
 # ---------------------------------
 
-@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
-def test_invoke_data_processing_task_success(mock_create_and_invoke, client, post_admin):
+@patch('backend.views.data_processing_task.create_and_invoke_lambda_task')
+def test_invoke_data_processing_task_success(mock_create_and_invoke, client, researcher_post):
     """
     Test successful invocation of a new data processing task.
     """
@@ -108,7 +136,8 @@ def test_invoke_data_processing_task_success(mock_create_and_invoke, client, pos
     }
     mock_create_and_invoke.return_value = mock_task
 
-    response = post_admin("/data_processing_task/invoke", json={"app": "1"})
+    response = researcher_post(
+        "/data_processing_task/invoke", json={"app": "1"})
 
     assert response.status_code == 200
     assert response.is_json
@@ -119,14 +148,15 @@ def test_invoke_data_processing_task_success(mock_create_and_invoke, client, pos
     mock_create_and_invoke.assert_called_once()
 
 
-@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
-def test_invoke_data_processing_task_failure(mock_create_and_invoke, client, post_admin):
+@patch('backend.views.data_processing_task.create_and_invoke_lambda_task')
+def test_invoke_data_processing_task_failure(mock_create_and_invoke, client, researcher_post):
     """
     Test invocation failure when create_and_invoke_lambda_task returns None.
     """
     mock_create_and_invoke.return_value = None
 
-    response = post_admin("/data_processing_task/invoke", json={"app": "1"})
+    response = researcher_post(
+        "/data_processing_task/invoke", json={"app": "1"})
 
     assert response.status_code == 500
     assert response.is_json
@@ -135,14 +165,15 @@ def test_invoke_data_processing_task_failure(mock_create_and_invoke, client, pos
     mock_create_and_invoke.assert_called_once()
 
 
-@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
-def test_invoke_data_processing_task_exception(mock_create_and_invoke, client, post_admin):
+@patch('backend.views.data_processing_task.create_and_invoke_lambda_task')
+def test_invoke_data_processing_task_exception(mock_create_and_invoke, client, researcher_post):
     """
     Test invocation failure when create_and_invoke_lambda_task raises an exception.
     """
     mock_create_and_invoke.side_effect = Exception("Invocation error")
 
-    response = post_admin("/data_processing_task/invoke", json={"app": "1"})
+    response = researcher_post(
+        "/data_processing_task/invoke", json={"app": "1"})
 
     assert response.status_code == 500
     assert response.is_json
@@ -151,8 +182,8 @@ def test_invoke_data_processing_task_exception(mock_create_and_invoke, client, p
     mock_create_and_invoke.assert_called_once()
 
 
-@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
-def test_invoke_data_processing_task_invalid_data(mock_create_and_invoke, client, post_admin):
+@patch('backend.views.data_processing_task.create_and_invoke_lambda_task')
+def test_invoke_data_processing_task_invalid_data(mock_create_and_invoke, client, researcher_post):
     """
     Since the POST /invoke route expects an 'app' field, this test ensures that sending unexpected data does not break the route.
     """
@@ -169,7 +200,7 @@ def test_invoke_data_processing_task_invalid_data(mock_create_and_invoke, client
     }
     mock_create_and_invoke.return_value = mock_task
 
-    response = post_admin("/data_processing_task/invoke", json={
+    response = researcher_post("/data_processing_task/invoke", json={
         "app": "1",
         "unexpected": "data"
     })

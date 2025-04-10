@@ -7,7 +7,7 @@ else
 fi
 
 # build the react app
-cd aws_portal/frontend
+cd frontend
 npm run build
 if [ $? -ne 0 ]; then
     exit 1

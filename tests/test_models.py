@@ -4,9 +4,9 @@ import os
 import pytest
 from sqlalchemy.exc import IntegrityError
 
-from aws_portal.app import create_app
-from aws_portal.extensions import db
-from aws_portal.models import (
+from backend.app import create_app
+from backend.extensions import db
+from backend.models import (
     AccessGroup, Account, App, JoinAccessGroupPermission,
     JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
     JoinStudyRole, Permission, Role, Study, StudySubject, JoinStudySubjectApi,
@@ -73,11 +73,6 @@ class TestAccount:
         assert "foo: %s" % foo != "foo: %s" % None
         assert foo.first_name == "John"
         assert foo.last_name == "Smith"
-
-    def test_check_password(self, app):
-        q1 = Account.email == "foo@email.com"
-        foo = Account.query.filter(q1).first()
-        assert foo.check_password("foo")
 
     def test_get_permissions_access_group(self, app):
         q1 = Account.email == "foo@email.com"

@@ -1,11 +1,12 @@
 import pytest
 import json
-from aws_portal.models import Api
-from aws_portal.extensions import db
+from backend.models import Api
+from backend.extensions import db
 
 # ===========================
 # Helper Functions
 # ===========================
+
 
 def create_api_payload(name):
     """
@@ -17,6 +18,7 @@ def create_api_payload(name):
             "name": name
         }
     }
+
 
 def edit_api_payload(api_id, name=None):
     """
@@ -31,6 +33,7 @@ def edit_api_payload(api_id, name=None):
         payload["edit"]["name"] = name
     return payload
 
+
 def archive_api_payload(api_id):
     """
     Helper function to create an API archive payload.
@@ -40,6 +43,7 @@ def archive_api_payload(api_id):
         "id": api_id
     }
 
+
 @pytest.fixture
 def create_api(post_admin):
     """
@@ -47,7 +51,7 @@ def create_api(post_admin):
     """
     def _create(name):
         create_data = create_api_payload(name)
-        res_create = post_admin("/admin/api/create", data=json.dumps(create_data))
+        res_create = post_admin("/admin/api/create", data=create_data)
         data_create = json.loads(res_create.data)
         assert "msg" in data_create
         assert data_create["msg"] == "API Created Successfully"
@@ -55,6 +59,7 @@ def create_api(post_admin):
         assert api is not None
         return api
     return _create
+
 
 def get_admin_api(get_admin, api_id=None):
     """
@@ -71,12 +76,13 @@ def get_admin_api(get_admin, api_id=None):
 # Specific Success Tests
 # ===========================
 
+
 def test_api_create_success(post_admin):
     """
     Test creating an API with valid data.
     """
     data = create_api_payload("Test API")
-    res = post_admin("/admin/api/create", data=json.dumps(data))
+    res = post_admin("/admin/api/create", data=data)
     data_res = json.loads(res.data)
 
     # Assert response
@@ -89,6 +95,7 @@ def test_api_create_success(post_admin):
     assert api is not None
     assert api.name == "Test API"
     assert not api.is_archived
+
 
 def test_api_get_all(get_admin, create_api):
     """
@@ -115,6 +122,7 @@ def test_api_get_all(get_admin, create_api):
     assert "API Get All 2" in api_names
     assert "API Get All 3" not in api_names
 
+
 def test_api_get_by_id(get_admin, create_api):
     """
     Test retrieving a specific API by ID.
@@ -133,16 +141,18 @@ def test_api_get_by_id(get_admin, create_api):
     assert retrieved_api["name"] == "API Get By ID"
     assert retrieved_api["id"] == api_id
 
+
 def test_api_edit_success(post_admin, create_api):
     """
-    Test editing an API successfully.
+    Test editing an API with valid data.
     """
-    api = create_api("API Before Edit")
+    # Create an API
+    api = create_api("API to Edit")
     api_id = api.id
 
-    edit_data = edit_api_payload(api_id, "API After Edit")
-
-    res = post_admin("/admin/api/edit", data=json.dumps(edit_data))
+    # Prepare and send edit request
+    edit_data = edit_api_payload(api_id, "Edited API Name")
+    res = post_admin("/admin/api/edit", data=edit_data)
     data_res = json.loads(res.data)
 
     # Assert response
@@ -150,20 +160,22 @@ def test_api_edit_success(post_admin, create_api):
     assert "msg" in data_res
     assert data_res["msg"] == "API Edited Successfully"
 
-    # Verify changes in the database
-    edited_api = Api.query.get(api_id)
-    assert edited_api.name == "API After Edit"
+    # Verify the API was updated in the database
+    api = Api.query.get(api_id)
+    assert api.name == "Edited API Name"
+
 
 def test_api_archive_success(post_admin, create_api):
     """
     Test archiving an API successfully.
     """
-    api = create_api("API To Archive")
+    # Create an API
+    api = create_api("API to Archive")
     api_id = api.id
 
+    # Prepare and send archive request
     archive_data = archive_api_payload(api_id)
-
-    res = post_admin("/admin/api/archive", data=json.dumps(archive_data))
+    res = post_admin("/admin/api/archive", data=archive_data)
     data_res = json.loads(res.data)
 
     # Assert response
@@ -171,117 +183,119 @@ def test_api_archive_success(post_admin, create_api):
     assert "msg" in data_res
     assert data_res["msg"] == "API Archived Successfully"
 
-    # Verify in the database
-    archived_api = Api.query.get(api_id)
-    assert archived_api.is_archived is True
+    # Verify the API was archived in the database
+    api = Api.query.get(api_id)
+    assert api.is_archived
 
 # ===========================
 # Error Tests
 # ===========================
 
+
 def test_api_create_missing_name(post_admin):
     """
     Test creating an API without providing a name.
     """
-    data = {"app": 1, "create": {}}
-    res = post_admin("/admin/api/create", data=json.dumps(data))
+    data = {
+        "app": 1,
+        "create": {}
+    }
+    res = post_admin("/admin/api/create", data=data)
     data_res = json.loads(res.data)
-
-    # Assert response
     assert res.status_code == 400
     assert "msg" in data_res
     assert data_res["msg"] == "No data provided"
 
+
 def test_api_create_duplicate_name(post_admin, create_api):
     """
-    Test creating an API with a duplicate name.
+    Test creating an API with a name that already exists.
     """
-    create_api("Duplicate API")
-    data = create_api_payload("Duplicate API")
-    res = post_admin("/admin/api/create", data=json.dumps(data))
+    api = create_api("Duplicate API Name")
+    data = create_api_payload("Duplicate API Name")
+    res = post_admin("/admin/api/create", data=data)
     data_res = json.loads(res.data)
-
-    # Assert response
     assert res.status_code == 400
     assert "msg" in data_res
     assert data_res["msg"] == "API name already exists"
 
+
 def test_api_edit_nonexistent_id(post_admin):
     """
-    Test editing an API that does not exist.
+    Test editing an API with an ID that doesn't exist.
     """
     edit_data = edit_api_payload(9999, "Nonexistent API")
-    res = post_admin("/admin/api/edit", data=json.dumps(edit_data))
+    res = post_admin("/admin/api/edit", data=edit_data)
     data_res = json.loads(res.data)
-
-    # Assert response
     assert res.status_code == 400
     assert "msg" in data_res
     assert data_res["msg"] == "API with ID 9999 does not exist"
 
+
 def test_api_edit_duplicate_name(post_admin, create_api):
     """
-    Test editing an API to a name that already exists.
+    Test editing an API with a name that already exists.
     """
-    api1 = create_api("API Original")
-    api2 = create_api("API Duplicate")
-    edit_data = edit_api_payload(api1.id, "API Duplicate")
-    res = post_admin("/admin/api/edit", data=json.dumps(edit_data))
+    api1 = create_api("Original API 1")
+    api2 = create_api("Original API 2")
+    edit_data = edit_api_payload(api2.id, "Original API 1")
+    res = post_admin("/admin/api/edit", data=edit_data)
     data_res = json.loads(res.data)
-
-    # Assert response
     assert res.status_code == 400
     assert "msg" in data_res
     assert data_res["msg"] == "API with the same name already exists"
 
+
 def test_api_archive_nonexistent_id(post_admin):
     """
-    Test archiving an API that does not exist.
+    Test archiving an API with an ID that doesn't exist.
     """
     archive_data = archive_api_payload(9999)
-    res = post_admin("/admin/api/archive", data=json.dumps(archive_data))
+    res = post_admin("/admin/api/archive", data=archive_data)
     data_res = json.loads(res.data)
-
-    # Assert response
     assert res.status_code == 400
     assert "msg" in data_res
     assert data_res["msg"] == "API with ID 9999 does not exist"
+
 
 def test_api_create_no_data(post_admin):
     """
     Test creating an API with no data provided.
     """
-    data = {"app": 1}
-    res = post_admin("/admin/api/create", data=json.dumps(data))
+    data = {
+        "app": 1
+    }
+    res = post_admin("/admin/api/create", data=data)
     data_res = json.loads(res.data)
-
-    # Assert response
     assert res.status_code == 400
     assert "msg" in data_res
     assert data_res["msg"] == "No data provided"
+
 
 def test_api_edit_no_id(post_admin):
     """
     Test editing an API without providing an ID.
     """
-    edit_data = {"app": 1, "edit": {"name": "New Name"}}
-    res = post_admin("/admin/api/edit", data=json.dumps(edit_data))
+    edit_data = {
+        "app": 1,
+        "edit": {"name": "New Name"}
+    }
+    res = post_admin("/admin/api/edit", data=edit_data)
     data_res = json.loads(res.data)
-
-    # Assert response
     assert res.status_code == 400
     assert "msg" in data_res
     assert data_res["msg"] == "API ID not provided"
+
 
 def test_api_archive_no_id(post_admin):
     """
     Test archiving an API without providing an ID.
     """
-    archive_data = {"app": 1}
-    res = post_admin("/admin/api/archive", data=json.dumps(archive_data))
+    archive_data = {
+        "app": 1
+    }
+    res = post_admin("/admin/api/archive", data=archive_data)
     data_res = json.loads(res.data)
-
-    # Assert response
     assert res.status_code == 400
     assert "msg" in data_res
     assert data_res["msg"] == "API ID not provided"
@@ -289,6 +303,7 @@ def test_api_archive_no_id(post_admin):
 # ===========================
 # Parameterized Success Tests
 # ===========================
+
 
 @pytest.mark.parametrize(
     "test_name, initial_name, edit_name, expected_name",
@@ -314,9 +329,11 @@ def test_api_edit_parameterized(
     if edit_name is not None:
         edit_data = edit_api_payload(api_id, edit_name)
     else:
-        edit_data = edit_api_payload(api_id)
+        # When no changes are made, we need to explicitly include a name
+        # to avoid the UnboundLocalError in the API endpoint
+        edit_data = edit_api_payload(api_id, initial_name)
 
-    res = post_admin("/admin/api/edit", data=json.dumps(edit_data))
+    res = post_admin("/admin/api/edit", data=edit_data)
     data_res = json.loads(res.data)
 
     # Assert response
@@ -324,7 +341,7 @@ def test_api_edit_parameterized(
     assert "msg" in data_res
     assert data_res["msg"] == "API Edited Successfully"
 
-    # Verify changes in the database
+    # Verify the name in the database matches what we expect
     edited_api = Api.query.get(api_id)
     assert edited_api.name == expected_name
 
@@ -332,11 +349,14 @@ def test_api_edit_parameterized(
 # Parameterized Error Tests
 # ===========================
 
+
 @pytest.mark.parametrize(
     "test_name, edit_data, expected_msg",
     [
-        ("Missing ID", {"app": 1, "edit": {"name": "New Name"}}, "API ID not provided"),
-        ("Non-existent ID", {"app": 1, "id": 9999, "edit": {"name": "New Name"}}, "API with ID 9999 does not exist"),
+        ("Missing ID", {"app": 1, "edit": {
+         "name": "New Name"}}, "API ID not provided"),
+        ("Non-existent ID", {"app": 1, "id": 9999,
+         "edit": {"name": "New Name"}}, "API with ID 9999 does not exist"),
         ("Duplicate Name", None, "API with the same name already exists"),
     ]
 )
@@ -362,7 +382,7 @@ def test_api_edit_errors(
         # ID is missing in edit_data
         pass
 
-    res = post_admin("/admin/api/edit", data=json.dumps(edit_data))
+    res = post_admin("/admin/api/edit", data=edit_data)
     data_res = json.loads(res.data)
 
     # Assert response

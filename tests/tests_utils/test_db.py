@@ -1,7 +1,7 @@
 import pytest
-from aws_portal.extensions import db
-from aws_portal.models import AccessGroup, Account, App, Study
-from aws_portal.utils.db import populate_model
+from backend.extensions import db
+from backend.models import AccessGroup, Account, App, Study
+from backend.utils.db import populate_model
 
 
 def test_populate_model(app):
