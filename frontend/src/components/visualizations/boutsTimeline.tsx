@@ -17,9 +17,8 @@
 
 import { useMemo } from "react";
 import { Timeline } from "./timeline";
-import { IVisualizationProps } from "../../interfaces";
 import { colors } from "../../colors";
-
+import { VisualizationProps } from "./visualization.types";
 /**
  * A period of time when a subject is considered to be actively tapping
  * @property start: the start time
@@ -47,7 +46,7 @@ interface Bout {
  * @property axisColor: `axisColor` to pass to `Timeline`
  * @property strokeDashArray: `strokeDashArray` to pass to `Timeline`
  */
-interface BoutsTimelineProps extends IVisualizationProps {
+interface BoutsTimelineProps extends VisualizationProps {
   timestamps: number[];
   audioTimestamps?: number[];
   title?: string;

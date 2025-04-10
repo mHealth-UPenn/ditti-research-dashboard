@@ -16,6 +16,7 @@
  */
 
 import React, { PropsWithChildren, useEffect } from "react";
+import { FlashMessageVariant } from "../../contexts/flashMessagesContext.types";
 
 const variantsBgMap = {
   success: "bg-success-light",

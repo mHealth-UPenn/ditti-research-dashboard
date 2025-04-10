@@ -16,16 +16,16 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
 import { getAccess, makeRequest } from "../../utils";
 import { Table, Column, TableData } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 
 export const AboutSleepTemplates = () => {
   const [canCreate, setCanCreate] = useState(false);

@@ -24,9 +24,9 @@ import {
   App,
   Permission,
   ResponseBody,
-} from "../../interfaces";
+} from "../../types/api";
 import { makeRequest } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
 import { FormTitle } from "../text/formTitle";

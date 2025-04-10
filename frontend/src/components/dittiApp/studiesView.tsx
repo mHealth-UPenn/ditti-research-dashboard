@@ -17,7 +17,7 @@
 
 import { useEffect, useState } from "react";
 import { getAccess } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { sub } from "date-fns";
 import { Card } from "../cards/card";
 import { ViewContainer } from "../containers/viewContainer";

@@ -21,7 +21,7 @@ import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";
 import "./subjectVisuals.css";
 import { getAccess, getEnrollmentInfoForStudy } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { TimestampHistogram } from "../visualizations/timestampHistogram";
 import { TapVisualizationButtons } from "../visualizations/tapVisualizationButtons";
 import { BoutsTimeline } from "../visualizations/boutsTimeline";

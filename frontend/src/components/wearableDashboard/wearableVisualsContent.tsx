@@ -17,7 +17,7 @@
 
 import { useState, useEffect } from "react";
 import { downloadExcelFromUrl, getAccess, getEnrollmentInfoForStudy } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { ViewContainer } from "../containers/viewContainer";
 import { Card } from "../cards/card";
 import { CardContentRow } from "../cards/cardContentRow";

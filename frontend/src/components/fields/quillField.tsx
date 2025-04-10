@@ -19,9 +19,8 @@ import React, { useEffect, useRef, useMemo, memo } from "react";
 import Quill, { QuillOptions } from "quill";
 import { debounce } from "lodash";
 import sanitizeHtml, { AllowedAttribute } from "sanitize-html";
-import { QuillFieldProps } from "../../interfaces";
 import "quill/dist/quill.snow.css";
-
+import { QuillFieldProps } from "./quillField.types";
 const QuillField: React.FC<QuillFieldProps> = ({
   value,
   onChange,

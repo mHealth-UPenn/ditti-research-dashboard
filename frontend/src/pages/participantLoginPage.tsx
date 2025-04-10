@@ -18,7 +18,7 @@
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/buttons/button";
-import { FullLoader } from "../components/loader";
+import { FullLoader } from "../components/loader/loader";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
 import { useEnterKeyLogin } from "../hooks/useKeyboardEvent";

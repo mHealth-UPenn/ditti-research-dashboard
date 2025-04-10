@@ -42,14 +42,14 @@ export const ProtectedRoute = ({
   if (authMethod === "participant") {
     if (isParticipantLoading) return <FullLoader loading={true} msg="Loading..." />;
     if (!isParticipantAuthenticated) return <Navigate to="/login" replace />;
-    return children;
+    return <>{children}</>;
   }
 
   if (authMethod === "researcher") {
     if (isResearcherLoading) return <FullLoader loading={true} msg="Loading..." />;
     if (!isResearcherAuthenticated) return <Navigate to="/coordinator/login" replace />;
-    return children;
+    return <>{children}</>;
   }
 
-  return null;
+  return <></>;
 };

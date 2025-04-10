@@ -35,7 +35,7 @@ import { FormSummarySubtext } from "../containers/forms/formSummarySubtext";
 import { Button } from "../buttons/button";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useDittiData } from "../../hooks/useDittiData";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { APP_ENV } from "../../environment";
 import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";

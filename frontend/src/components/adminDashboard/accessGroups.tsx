@@ -18,9 +18,9 @@
 import React, { useState, useEffect } from "react";
 import { AdminNavbar } from "./adminNavbar";
 import { Table, Column, TableData } from "../table/table";
-import { AccessGroup, ResponseBody } from "../../interfaces";
+import { AccessGroup, ResponseBody } from "../../types/api";
 import { getAccess, makeRequest } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";

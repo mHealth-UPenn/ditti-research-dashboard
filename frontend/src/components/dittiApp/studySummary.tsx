@@ -16,9 +16,9 @@
  */
 
 import { useState, useEffect } from "react";
-import { Study } from "../../interfaces";
+import { Study } from "../../types/api";
 import { getAccess, makeRequest } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { StudySubjects } from "./studySubjects";
 import { Workbook } from "exceljs";
 import { saveAs } from "file-saver";

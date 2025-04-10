@@ -17,10 +17,10 @@
 
 import { useState, useEffect, createRef, useRef } from "react";
 import { TextField } from "../fields/textField";
-import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
+import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 import { formatDateForInput, getEnrollmentInfoForStudy, makeRequest } from "../../utils";
 import { CheckField } from "../fields/checkField";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { SelectField } from "../fields/selectField";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";

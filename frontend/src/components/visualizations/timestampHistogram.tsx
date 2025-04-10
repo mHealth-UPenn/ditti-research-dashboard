@@ -28,14 +28,14 @@ import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 import { useVisualization } from '../../hooks/useVisualization';
 import { colors } from '../../colors';
 import { NumberValue } from 'd3';
-import { IVisualizationProps } from '../../interfaces';
+import { VisualizationProps } from './visualization.types';
 
 /**
  * Props for the timestamp histogram.
  * @property: Timestamps for each tap to visualize.
  * @property: Timezones in the tapping data, where `time` is the first timestamp in the timezone called `name`.
  */
-interface TimestampHistogramProps extends IVisualizationProps {
+interface TimestampHistogramProps extends VisualizationProps {
   timestamps: number[];
   timezones?: { time: number; name: string }[];
 }

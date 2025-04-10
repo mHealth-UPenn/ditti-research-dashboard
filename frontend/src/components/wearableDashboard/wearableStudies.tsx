@@ -23,7 +23,7 @@ import { CardContentRow } from "../cards/cardContentRow";
 import { Title } from "../text/title";
 import { ActiveIcon } from "../icons/activeIcon";
 import { useStudies } from "../../hooks/useStudies";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { LinkComponent } from "../links/linkComponent";
 import { Link } from "react-router-dom";

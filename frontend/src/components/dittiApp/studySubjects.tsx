@@ -16,7 +16,7 @@
  */
 
 import React from "react";
-import { Study } from "../../interfaces";
+import { Study } from "../../types/api";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import { CardContentRow } from "../cards/cardContentRow";
 import { ActiveIcon } from "../icons/activeIcon";
@@ -25,7 +25,7 @@ import { useDittiData } from "../../hooks/useDittiData";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { Link } from "react-router-dom";
 import { getEnrollmentInfoForStudy } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 
 
 /**

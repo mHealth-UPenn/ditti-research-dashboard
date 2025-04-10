@@ -17,11 +17,11 @@
 
 import * as React from "react";
 import { useState, useEffect } from "react";
-import { ResponseBody, Study } from "../../interfaces";
+import { ResponseBody, Study } from "../../types/api";
 import { getAccess, makeRequest } from "../../utils";
 import { Table, Column, TableData } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";

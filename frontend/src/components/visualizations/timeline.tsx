@@ -22,7 +22,7 @@ import { scaleLinear } from '@visx/scale';
 import { useVisualization } from "../../hooks/useVisualization";
 import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 import { colors } from "../../colors";
-import { IVisualizationProps } from "../../interfaces";
+import { VisualizationProps } from "./visualization.types";
 
 
 /**
@@ -57,7 +57,7 @@ type GroupData = {
  * @property strokeDashArray: The default stroke dash array for ranges. This is overridden by any `strokeDashArray`
  *   property passed in `groups`.
  */
-interface TimelineProps extends IVisualizationProps {
+interface TimelineProps extends VisualizationProps {
   groups: GroupData[];
   title?: string;
   hideAxis?: boolean;

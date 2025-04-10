@@ -16,9 +16,9 @@
  */
 
 import { useState, useEffect } from "react";
-import { Study } from "../../interfaces";
+import { Study } from "../../types/api";
 import { downloadExcelFromUrl, getAccess, makeRequest } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { ViewContainer } from "../containers/viewContainer";
 import { Card } from "../cards/card";
 import { Title } from "../text/title";
