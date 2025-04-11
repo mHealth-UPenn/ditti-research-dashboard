@@ -401,7 +401,7 @@ class TestResearcherAuthController:
         """Test getting the login URL."""
         with app.app_context():
             # Override the default values set in the real app
-            with patch("aws_portal.auth.controllers.base.current_app") as mock_current_app:
+            with patch("backend.auth.controllers.base.current_app") as mock_current_app:
                 # In the implementation, it checks CORS_ORIGINS for this value
                 mock_current_app.config = {
                     "CORS_ORIGINS": "http://test-frontend"
