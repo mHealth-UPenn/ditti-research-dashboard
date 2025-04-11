@@ -2,6 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "engines": {
     "node": "22"
   },
@@ -29,11 +30,10 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "lint": "eslint . --ext .tsx",
+    "start": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "tailwind": "npx tailwindcss -i ./src/index.css -o ./src/output.css --watch",
     "prettier-format": "prettier --config .prettierrc 'src/**/*.tsx' --write"
   },
@@ -67,14 +67,8 @@
     "prettier": "^2.6.1",
     "tailwindcss": "^3.4.13",
     "vite": "^6.2.6",
+    "vite-plugin-node-polyfills": "^0.23.0",
+    "vite-plugin-svgr": "^4.3.0",
     "vite-tsconfig-paths": "^5.1.4"
-  },
-  "overrides": {
-    "nth-check": ">=2.0.1",
-    "postcss": ">=8.4.31",
-    "@svgr/plugin-svgo": "^6.5.1",
-    "svgo": "^3.0.2",
-    "css-select": "^4.2.1",
-    "resolve-url-loader": "^5.0.0"
   }
 }
