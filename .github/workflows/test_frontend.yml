@@ -24,6 +24,10 @@ jobs:
         run: npm install
         working-directory: aws_portal/frontend
 
+      - name: Check for vulnerabilities
+        run: npm audit --audit-level=none
+        working-directory: aws_portal/frontend
+
       - name: Build frontend
         run: |
           npx tailwindcss -i ./src/index.css -o ./src/output.css
