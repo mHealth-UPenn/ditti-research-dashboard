@@ -157,7 +157,7 @@ export const TimestampHistogram = ({
     tooltipTop,
     tooltipData,
     tooltipOpen,
-  } = useTooltip();
+  } = useTooltip<string>();
 
   // Show the tooltip when hovering over a bin, if any
   const handleMouseEnter = useCallback(

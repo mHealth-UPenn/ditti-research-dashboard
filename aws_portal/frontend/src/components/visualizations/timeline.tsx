@@ -111,7 +111,7 @@ export const Timeline: React.FC<TimelineProps> = ({
     tooltipTop,
     tooltipData,
     tooltipOpen,
-  } = useTooltip();
+  } = useTooltip<string>();
 
   // Show `label` text on mouse hover.
   const handleMouseEnter = useCallback(
