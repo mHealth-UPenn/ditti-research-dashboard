@@ -25,7 +25,7 @@ jobs:
         working-directory: aws_portal/frontend
 
       - name: Check for vulnerabilities
-        run: npm audit --audit-level=none
+        run: npm audit --audit-level=low
         working-directory: aws_portal/frontend
 
       - name: Build frontend
