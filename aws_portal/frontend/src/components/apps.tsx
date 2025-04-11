@@ -16,7 +16,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { ReactComponent as Right } from "../icons/right.svg";
+import Right from "../icons/right.svg?react";
 import { SmallLoader } from "./loader";
 import { getAccess } from "../utils";
 import { Card } from "./cards/card";

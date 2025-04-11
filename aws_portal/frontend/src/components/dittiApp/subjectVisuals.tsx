@@ -19,10 +19,10 @@ import React, { useState, useEffect, useMemo } from "react";
 import { AudioTapDetails, Study, TapDetails, UserDetails, ViewProps } from "../../interfaces";
 import { TextField } from "../fields/textField";
 import { SubjectsEdit } from "./subjectsEdit";
-import { ReactComponent as Left } from "../../icons/arrowLeft.svg";
-import { ReactComponent as Right } from "../../icons/arrowRight.svg";
-import { ReactComponent as ZoomIn } from "../../icons/zoomIn.svg";
-import { ReactComponent as ZoomOut } from "../../icons/zoomOut.svg";
+import Left from "../../icons/arrowLeft.svg?react";
+import Right from "../../icons/arrowRight.svg?react";
+import ZoomIn from "../../icons/zoomIn.svg?react";
+import ZoomOut from "../../icons/zoomOut.svg?react";
 import {
   add,
   differenceInMinutes,
