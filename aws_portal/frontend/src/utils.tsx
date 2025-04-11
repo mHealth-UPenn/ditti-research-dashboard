@@ -46,7 +46,7 @@ export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<
   }
 
   // Execute the request
-  const response = await fetch(`${process.env.REACT_APP_FLASK_SERVER}${url}`, opts);
+  const response = await fetch(`${import.meta.env.VITE_FLASK_SERVER}${url}`, opts);
   const body: ResponseBody = await response.json();
 
   // Store CSRF token for future requests
@@ -89,7 +89,7 @@ export async function downloadExcelFromUrl(url: string): Promise<string | void> 
       },
     };
 
-    const response = await fetch(`${process.env.REACT_APP_FLASK_SERVER}${url}`, opts);
+    const response = await fetch(`${import.meta.env.VITE_FLASK_SERVER}${url}`, opts);
 
     if (!response.ok) {
       throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
