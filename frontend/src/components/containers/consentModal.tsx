@@ -16,7 +16,6 @@
  */
 
 import { FC, memo } from "react";
-import sanitize, { AllowedAttribute } from "sanitize-html";
 import { Button } from "../buttons/button";
 import { ConsentModalProps } from "../../interfaces";
 
@@ -72,12 +71,8 @@ export const ConsentModal: FC<ConsentModalProps> = memo(
           <div
             className="overflow-auto text-black text-sm ql-modal ql-editor"
             dangerouslySetInnerHTML={{
-              __html: sanitize(
-                contentHtml, {
-                allowedAttributes: {
-                  li: ["data-list", "class"] as AllowedAttribute[],
-                },
-              })
+              // TODO: Sanitize
+              __html: contentHtml
             }}
             style={{ padding: "0 2rem" }}
           />
