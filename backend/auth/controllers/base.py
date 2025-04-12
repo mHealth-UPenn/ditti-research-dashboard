@@ -61,6 +61,14 @@ class AuthControllerBase:
         """
         return current_app.config.get("CORS_ORIGINS", "http://localhost:3000")
 
+    def get_login_url(self):
+        """Get the login URL.
+
+        Returns:
+            str: The login URL
+        """
+        raise NotImplementedError("Subclasses must implement get_login_url")
+
     def login(self):
         """Handle login request.
 
@@ -113,11 +121,8 @@ class AuthControllerBase:
             request_state = request.args.get("state")
             if not AuthFlowSession.validate_state(request_state):
                 logger.warning("Invalid state parameter in callback")
-                return create_error_response(
-                    AUTH_ERROR_MESSAGES["invalid_request"],
-                    status_code=401,
-                    error_code="INVALID_STATE"
-                )
+                redirect_url = self.get_login_url()
+                return make_response(redirect(redirect_url))
 
             # Get code verifier
             code_verifier = AuthFlowSession.get_code_verifier()
