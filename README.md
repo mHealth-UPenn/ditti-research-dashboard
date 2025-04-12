@@ -306,7 +306,7 @@ docker rm test-db
 
 | Name                   | Value                     |
 | ---------------------- | ------------------------- |
-| REACT_APP_FLASK_SERVER | The app's API Gateway URL |
+| VITE_FLASK_SERVER | The app's API Gateway URL |
 
 2. Run the React deploy script.
 

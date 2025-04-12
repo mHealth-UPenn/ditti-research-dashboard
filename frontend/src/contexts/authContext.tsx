@@ -102,14 +102,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    */
   const participantLogin = useCallback((): void => {
     // For elevated mode, make sure to pass it as a url param
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/participant/login`;
+    window.location.href = `${process.env.VITE_FLASK_SERVER}/auth/participant/login`;
   }, []);
 
   /**
    * Logs out the Participant user by redirecting to the logout endpoint.
    */
   const participantLogout = useCallback((): void => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/participant/logout`;
+    window.location.href = `${process.env.VITE_FLASK_SERVER}/auth/participant/logout`;
     setIsParticipantAuthenticated(false);
     setDittiId(null);
   }, []);
@@ -118,14 +118,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Redirects to Researcher Cognito login page.
    */
   const researcherLogin = useCallback((): void => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/researcher/login`;
+    window.location.href = `${process.env.VITE_FLASK_SERVER}/auth/researcher/login`;
   }, [navigate]);
 
   /**
    * Logs out the Researcher from Cognito by redirecting to the logout endpoint.
    */
   const researcherLogout = useCallback((): void => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/auth/researcher/logout`;
+    window.location.href = `${process.env.VITE_FLASK_SERVER}/auth/researcher/logout`;
     setIsResearcherAuthenticated(false);
     resetAccountInfo();
   }, [resetAccountInfo]);
