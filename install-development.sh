@@ -119,8 +119,8 @@ done
 # Prompt the user for fitbit credentials
 echo
 echo -e "${CYAN}[Fitbit Setup]${RESET}"
-read -ep "Enter your Fitbit client ID: " fitbit_client_id
-read -ep "Enter your Fitbit client secret: " fitbit_client_secret
+read -ep "Enter your dev Fitbit client ID: " fitbit_client_id
+read -ep "Enter your dev Fitbit client secret: " fitbit_client_secret
 
 # Prompt the user for an email to login as admin
 echo
@@ -175,8 +175,6 @@ if [ $? -ne 0 ]; then
     echo -e "${RED}Python setup failed${RESET}"
     exit 1
 fi
-
-echo -e "${GREEN}[Python setup complete]${RESET}"
 
 ########################################################
 # Cognito setup                                        #
@@ -373,8 +371,6 @@ fi
 
 echo -e "Created S3 bucket ${BLUE}$audio_bucket_name${RESET}"
 
-echo -e "${GREEN}[S3 setup complete]${RESET}"
-
 ########################################################
 # .env files setup                                     #
 ########################################################
@@ -439,7 +435,6 @@ if [ $? -ne 0 ]; then
 fi
 
 echo -e ".env file created at ${BLUE}$(pwd)/.env${RESET}"
-echo -e "${GREEN}[.env files setup complete]${RESET}"
 
 ########################################################
 # Docker setup                                         #
@@ -492,7 +487,7 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-flask --app run.py create-researcher-account --email $admin_email
+flask --app run.py create-researcher-account --email "$admin_email"
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}researcher account creation failed${RESET}"
@@ -501,7 +496,7 @@ fi
 
 echo -e "Created researcher account ${BLUE}$admin_email${RESET}"
 
-if [ -f shared ]; then
+if [ -d "./shared" ]; then
     cp -r shared functions/wearable_data_retrieval/shared
 else
     echo -e "${RED}shared directory not found${RESET}"
@@ -520,11 +515,11 @@ fi
 
 rm -rf functions/wearable_data_retrieval/shared
 
-docker run --rm \
+docker run \
     --platform linux/amd64 \
     --name $project_name-wearable-data-retrieval \
     --network $project_name-network \
-    -p 9000:8080 \
+    -ditp 9000:8080 \
     --env-file functions/wearable_data_retrieval/.env \
     -e TESTING=true \
     $project_name-wearable-data-retrieval
@@ -536,8 +531,6 @@ fi
 
 echo -e "Created wearable data retrieval container ${BLUE}$project_name-wearable-data-retrieval${RESET}"
 
-echo -e "${GREEN}[Docker setup complete]${RESET}"
-
 ########################################################
 # Secrets Manager setup                                #
 ########################################################
@@ -545,40 +538,38 @@ echo
 echo -e "${CYAN}[Secrets Manager Setup]${RESET}"
 
 # Create an empty development secret on Secrets Manager
-dev_secret_response=$(
-    aws secretsmanager create-secret \
-        --name "$project_name-dev-secret" \
-        --secret-string "{
-            "FITBIT_CLIENT_ID": "$fitbit_client_id",
-            "FITBIT_CLIENT_SECRET": "$fitbit_client_secret"
-        }" \
-        --tags Key=Project,Value=$project_name
-)
+dev_secret_name="$project_name-dev-secret"
+aws secretsmanager create-secret \
+    --name "$dev_secret_name" \
+    --secret-string "{
+        "FITBIT_CLIENT_ID": "$fitbit_client_id",
+        "FITBIT_CLIENT_SECRET": "$fitbit_client_secret"
+    }" \
+    --tags Key=Project,Value=$project_name \
+    &> /dev/null
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}development secret creation failed${RESET}"
     exit 1
 fi
 
-dev_secret_name=$(echo "$dev_secret_response" | jq -r '.Secret.Name')
 echo -e "Created development secret ${BLUE}$dev_secret_name${RESET}"
 
 # Create an empty tokens secret on Secrets Manager
-tokens_secret_response=$(
-    aws secretsmanager create-secret \
-        --name "$project_name-dev-Fitbit-tokens" \
-        --tags Key=Project,Value=$project_name
-)
+tokens_secret_name="$project_name-dev-Fitbit-tokens"
+aws secretsmanager create-secret \
+    --name "$tokens_secret_name" \
+    --tags Key=Project,Value=$project_name \
+    &> /dev/null
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}tokens secret creation failed${RESET}"
     exit 1
 fi
 
-tokens_secret_name=$(echo "$tokens_secret_response" | jq -r '.Secret.Name')
 echo -e "Created tokens secret ${BLUE}$tokens_secret_name${RESET}"
 
 echo
 echo -e "${GREEN}[Installation complete]${RESET}"
+echo -e "Check your email for a temporary password for the researcher admin user"
 echo -e "You can now start the development server with ${BLUE}npm run start${RESET} and ${BLUE}flask run${RESET}"
-echo -e "${YELLOW}IMPORTANT:${RESET} Check your email for a temporary password for the researcher admin user"
