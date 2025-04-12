@@ -18,9 +18,9 @@
 export type Environment = "production" | "demo" | "development" | "test";
 
 export const APP_ENV: Environment = (() => {
-  if (process.env.VITE_DEMO === "1") {
+  if (import.meta.env.VITE_DEMO === "1") {
     return "demo";
   } else {
-    return process.env.NODE_ENV;
+    return import.meta.env.MODE as Environment;
   }
 })();
