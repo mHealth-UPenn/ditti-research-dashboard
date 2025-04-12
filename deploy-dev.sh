@@ -1,121 +1,64 @@
-# Initialize flags
-CONDA_FLAG=false
-INIT_FLAG=false
-NO_AWS=false
+#!/bin/bash
 
-# Check for "conda" and "init" parameters
-for arg in "$@"
-do
-    if [[ "$arg" == "conda" ]]; then
-        CONDA_FLAG=true
-    elif [[ "$arg" == "init" ]]; then
-        INIT_FLAG=true
-    elif [[ "$arg" == "no-aws" ]]; then
-        NO_AWS=true
-    fi
-done
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+RESET='\033[0m'
 
-# Handle Python virtual environment setup if "conda" is not provided
-if [[ "$CONDA_FLAG" == false ]]; then
-    # if no python virtual environment, create one
-    if [ ! -f env/bin/activate ]; then
-        echo "Initializing Python virtual environment..."
-        python3 -m venv env
-    fi
+# Read the project-settings-dev.json file
+if [[ ! -f project-settings-dev.json ]]; then
+    echo -e "${RED}Project settings file not found${RESET}"
+    echo "Did you run install-dev.sh?"
+    exit 1
+fi
 
-    # enter the python virtual environment
-    if [[ "$VIRTUAL_ENV" == "" ]]; then
-        echo "Entering Python virtual environment..."
-        source env/bin/activate
-    fi
+project_settings=$(cat project-settings-dev.json)
+dev_secret_name=$(echo "$project_settings" | jq -r '.aws.secrets_manager.dev_secret_name')
+postgres_container_name=$(echo "$project_settings" | jq -r '.docker.postgres_container_name')
+wearable_data_retrieval_container_name=$(echo "$project_settings" | jq -r '.docker.wearable_data_retrieval_container_name')
+
+# Enter the python virtual environment
+if [[ "$VIRTUAL_ENV" == "" ]]; then
+    echo "Entering Python virtual environment..."
+    source env/bin/activate
+fi
+
+# Retrieve secret value using AWS CLI
+secret_json=$(aws secretsmanager get-secret-value --secret-id "$dev_secret_name" --query 'SecretString' --output text)
+
+if [[ -z "$secret_json" ]]; then
+    echo -e "${RED}Failed to retrieve secret or secret is empty.${RESET}"
 else
-    echo "Skipping Python virtual environment setup."
+    # Parse the JSON and export key-value pairs as environment variables
+    echo "$secret_json" | jq -r 'to_entries | .[] | "export \(.key)=\(.value)"' | while read -r env_var; do
+    eval "$env_var"
+    done
 fi
 
-# install missing python packages
-arr1=$(pip3 freeze)
-arr2=$(cat requirements.txt)
-arr3=(`echo ${arr1[@]} ${arr2[@]} | tr ' ' '\n' | sort | uniq -u`)
-arr4=(`echo ${arr2[@]} ${arr3[@]} | tr ' ' '\n' | sort | uniq -d`)
+echo -e "Loaded environment variables from ${BLUE}$dev_secret_name${RESET}"
 
-if [[ ! -z ${arr4[@]} ]]; then
-    echo "Installing required Python packages..."
-    pip3 install ${arr4[@]}
-else
-    echo "Correct Python packages are installed."
+# Start docker containers
+postgres_container_start_response=$(docker start $postgres_container_name)
+
+if [[ $? -ne 0 ]]; then
+    echo "$postgres_container_start_response"
+    echo -e "${RED}Failed to start postgres container${RESET}"
+    exit 1
 fi
 
-# if aws credentials are available, export them
-if [ -f secret-aws.env ]; then
-    echo "secret-aws.env found. Exporting credentials..."
-    export $(cat secret-aws.env | xargs)
-else
-    echo "secret-aws.env not found. Credentials not exported."
+echo -e "Started ${BLUE}$postgres_container_name${RESET}"
+
+wearable_data_retrieval_container_start_response=$(docker start $wearable_data_retrieval_container_name)
+
+if [[ $? -ne 0 ]]; then
+    echo "$wearable_data_retrieval_container_start_response"
+    echo -e "${RED}Failed to start wearable data retrieval container${RESET}"
+    exit 1
 fi
 
-# export development env variables
-export $(cat flask.env | xargs)
+echo -e "Started ${BLUE}$wearable_data_retrieval_container_name${RESET}"
 
-# export development cognito and fitbit env variables
-export $(cat cognito.env | xargs)
-export $(cat fitbit.env | xargs)
-
-if [[ "$NO_AWS" == false ]]; then
-    # Secret name
-    SECRET_NAME="aws-portal-secret-dev"
-
-    # Retrieve secret value using AWS CLI
-    echo "Fetching secret: $SECRET_NAME"
-    SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --query 'SecretString' --output text)
-
-    if [[ -z "$SECRET_JSON" ]]; then
-    echo "Failed to retrieve secret or secret is empty."
-    else
-        # Parse the JSON and export key-value pairs as environment variables
-        echo "Exporting key-value pairs as environment variables..."
-        echo "$SECRET_JSON" | jq -r 'to_entries | .[] | "export \(.key)=\(.value)"' | while read -r ENV_VAR; do
-        eval "$ENV_VAR"
-        done
-    fi
-fi
-
-echo "Environment variables exported successfully."
-
-# Run initialization commands if "init" parameter is provided
-if [[ "$INIT_FLAG" == true ]]; then
-    echo "Initializing application..."
-    
-    # Check if postgres container is already running
-    if ! docker ps | grep -q aws-pg; then
-        echo "Starting PostgreSQL container..."
-        docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
-        
-        # Wait for PostgreSQL to be ready
-        echo "Waiting for PostgreSQL to initialize (this may take a few seconds)..."
-        sleep 10
-        
-        # Continue waiting until PostgreSQL is accepting connections
-        max_attempts=30
-        attempts=0
-        while ! docker exec aws-pg pg_isready -U postgres -h localhost > /dev/null 2>&1; do
-            attempts=$((attempts+1))
-            if [ $attempts -gt $max_attempts ]; then
-                echo "PostgreSQL failed to start within the allocated time. Please check Docker container logs."
-                exit 1
-            fi
-            echo "Waiting for PostgreSQL to be ready... ($attempts/$max_attempts)"
-            sleep 2
-        done
-        echo "PostgreSQL is ready!"
-    else
-        echo "PostgreSQL container is already running."
-    fi
-    
-    # Run database migrations
-    echo "Running database migrations..."
-    flask db upgrade
-    
-    # Initialize the test database
-    echo "Initializing test database..."
-    flask init-integration-testing-db
-fi
+echo -e "${GREEN}Dev environment deployed${RESET}"
