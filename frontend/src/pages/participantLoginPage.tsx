@@ -53,13 +53,13 @@ export const ParticipantLoginPage: React.FC = () => {
         msg={loadingDb ? "Starting the database... This may take up to 6 minutes" : ""} />
       <div className="flex h-screen w-screen md:w-max mx-auto sm:px-12 xl:px-20 bg-extra-light">
         <div className="hidden sm:flex items-center mr-12 xl:mr-20">
-          <img className="shadow-xl w-[10rem] xl:w-[12rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
+          <img className="shadow-xl w-[10rem] xl:w-[12rem] rounded-xl" src="/logo.png" alt="Logo"></img>
         </div>
         <div className="relative flex flex-col justify-center bg-white mx-[auto] min-w-[24rem]">
           <div className="flex flex-col mx-8 xl:mx-16">
             <div className="flex justify-center mb-8 sm:hidden">
               <div className="p-4 bg-extra-light rounded-xl shadow-lg">
-                <img className="w-[6rem] rounded-xl" src={process.env.PUBLIC_URL + "/logo.png"} alt="Logo"></img>
+                <img className="w-[6rem] rounded-xl" src="/logo.png" alt="Logo"></img>
               </div>
             </div>
             <div className="mb-16">
