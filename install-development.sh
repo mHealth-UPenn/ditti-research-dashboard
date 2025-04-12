@@ -152,6 +152,52 @@ done
 #     exit 1
 # fi
 
+participant_user_pool_name="$project_name-participant-pool-dev"
+participant_user_pool_domain="$project_name-participant-dev"
+researcher_user_pool_name="$project_name-researcher-pool-dev"
+researcher_user_pool_domain="$project_name-researcher-dev"
+logs_bucket_name="$project_name-wearable-data-retrieval-logs"
+audio_bucket_name="$project_name-audio-files"
+dev_secret_name="$project_name-dev-secret"
+tokens_secret_name="$project_name-dev-Fitbit-tokens"
+network_name="$project_name-network"
+postgres_container_name="$project_name-postgres"
+wearable_data_retrieval_container_name="$project_name-wearable-data-retrieval"
+
+cat <<EOF > project-settings-dev.json
+{
+    "project_name": "$project_name",
+    "admin_email": "$admin_email",
+    "aws": {
+        "cognito": {
+            "participant_user_pool_name": "$participant_user_pool_name",
+            "participant_user_pool_domain": "$participant_user_pool_domain",
+            "participant_user_pool_id": "",
+            "participant_client_id": "",
+            "researcher_user_pool_name": "$researcher_user_pool_name",
+            "researcher_user_pool_domain": "$researcher_user_pool_domain",
+            "researcher_user_pool_id": "",
+            "researcher_client_id": ""
+        },
+        "s3": {
+            "logs_bucket_name": "$logs_bucket_name",
+            "audio_bucket_name": "$audio_bucket_name"
+        },
+        "secrets_manager": {
+            "dev_secret_name": "$dev_secret_name",
+            "tokens_secret_name": "$tokens_secret_name"
+        }
+    },
+    "docker": {
+        "network": "$network_name",
+        "postgres_container_name": "$postgres_container_name",
+        "wearable_data_retrieval_container_name": "$wearable_data_retrieval_container_name"
+    }
+}
+EOF
+
+echo -e "Created project settings file ${BLUE}project-settings-dev.json${RESET}"
+
 ########################################################
 # Python setup                                         #
 ########################################################
@@ -211,8 +257,9 @@ if [ $? -ne 0 ]; then
 fi
 
 participant_user_pool_id=$(echo "$participant_user_pool_response" | jq -r '.UserPool.Id')
-participant_user_pool_name=$(echo "$participant_user_pool_response" | jq -r '.UserPool.Name')
-participant_user_pool_domain="$project_name-participant-dev"
+
+# Update project settings with participant user pool ID
+sed -i '' "s/\"participant_user_pool_id\": \"\"/\"participant_user_pool_id\": \"$participant_user_pool_id\"/g" project-settings-dev.json
 
 aws cognito-idp create-user-pool-domain \
     --user-pool-id "$participant_user_pool_id" \
@@ -239,6 +286,9 @@ fi
 
 participant_client_id=$(echo "$participant_client_response" | jq -r '.UserPoolClient.ClientId')
 participant_client_secret=$(echo "$participant_client_response" | jq -r '.UserPoolClient.ClientSecret')
+
+# Update project settings with participant client ID and secret
+sed -i '' "s/\"participant_client_id\": \"\"/\"participant_client_id\": \"$participant_client_id\"/g" project-settings-dev.json
 
 echo -e "Created participant user pool ${BLUE}$participant_user_pool_name${RESET} with ID ${BLUE}$participant_user_pool_id${RESET} at ${BLUE}$participant_user_pool_domain${RESET}"
 
@@ -287,8 +337,9 @@ if [ $? -ne 0 ]; then
 fi
 
 researcher_user_pool_id=$(echo "$researcher_user_pool_response" | jq -r '.UserPool.Id')
-researcher_user_pool_name=$(echo "$researcher_user_pool_response" | jq -r '.UserPool.Name')
-researcher_user_pool_domain="$project_name-researcher-dev"
+
+# Update project settings with researcher user pool ID
+sed -i '' "s/\"researcher_user_pool_id\": \"\"/\"researcher_user_pool_id\": \"$researcher_user_pool_id\"/g" project-settings-dev.json
 
 aws cognito-idp create-user-pool-domain \
     --user-pool-id "$researcher_user_pool_id" \
@@ -315,6 +366,9 @@ fi
 
 researcher_client_id=$(echo "$researcher_client_response" | jq -r '.UserPoolClient.ClientId')
 researcher_client_secret=$(echo "$researcher_client_response" | jq -r '.UserPoolClient.ClientSecret')
+
+# Update project settings with researcher client ID and secret
+sed -i '' "s/\"researcher_client_id\": \"\"/\"researcher_client_id\": \"$researcher_client_id\"/g" project-settings-dev.json
 
 echo -e "Created researcher user pool ${BLUE}$researcher_user_pool_name${RESET} with ID ${BLUE}$researcher_user_pool_id${RESET} at ${BLUE}$researcher_user_pool_domain${RESET}"
 
@@ -345,7 +399,6 @@ echo -e "Created researcher admin user ${BLUE}$researcher_admin_id${RESET}"
 echo
 echo -e "${CYAN}[S3 Setup]${RESET}"
 
-logs_bucket_name="$project_name-wearable-data-retrieval-logs"
 aws s3api create-bucket \
     --bucket "$logs_bucket_name" \
     --region $aws_region \
@@ -358,7 +411,6 @@ fi
 
 echo -e "Created S3 bucket ${BLUE}$logs_bucket_name${RESET}"
 
-audio_bucket_name="$project_name-audio-files"
 aws s3api create-bucket \
     --bucket "$audio_bucket_name" \
     --region $aws_region \
@@ -455,16 +507,16 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo -e "Created docker network ${BLUE}$project_name-network${RESET}"
+echo -e "Created docker network ${BLUE}$network_name${RESET}"
 
 docker run \
     -ditp 5432:5432 \
-    --name $project_name-postgres \
+    --name $postgres_container_name \
     -e POSTGRES_USER=$POSTGRES_USER \
     -e POSTGRES_PASSWORD=$POSTGRES_PASSWORD \
     -e POSTGRES_DB=$POSTGRES_DB \
     -e POSTGRES_PORT=$POSTGRES_PORT \
-    --network $project_name-network \
+    --network $network_name \
     postgres
 
 if [ $? -ne 0 ]; then
@@ -473,11 +525,11 @@ if [ $? -ne 0 ]; then
 fi
 
 # Wait for the postgres container to be ready
-while ! docker exec -t $project_name-postgres pg_isready -U $POSTGRES_USER -d $POSTGRES_DB; do
+while ! docker exec -t $postgres_container_name pg_isready -U $POSTGRES_USER -d $POSTGRES_DB; do
     sleep 1
 done
 
-echo -e "Created postgres container ${BLUE}$project_name-postgres${RESET}"
+echo -e "Created postgres container ${BLUE}$postgres_container_name${RESET}"
 
 flask --app run.py db upgrade
 
@@ -511,7 +563,7 @@ fi
 
 docker build \
     --platform linux/amd64 \
-    -t $project_name-wearable-data-retrieval \
+    -t $wearable_data_retrieval_container_name \
     functions/wearable_data_retrieval
 
 if [ $? -ne 0 ]; then
@@ -523,19 +575,19 @@ rm -rf functions/wearable_data_retrieval/shared
 
 docker run \
     --platform linux/amd64 \
-    --name $project_name-wearable-data-retrieval \
-    --network $project_name-network \
+    --name $wearable_data_retrieval_container_name \
+    --network $network_name \
     -ditp 9000:8080 \
     --env-file functions/wearable_data_retrieval/.env \
     -e TESTING=true \
-    $project_name-wearable-data-retrieval
+    $wearable_data_retrieval_container_name
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}wearable data retrieval container creation failed${RESET}"
     exit 1
 fi
 
-echo -e "Created wearable data retrieval container ${BLUE}$project_name-wearable-data-retrieval${RESET}"
+echo -e "Created wearable data retrieval container ${BLUE}$wearable_data_retrieval_container_name${RESET}"
 
 ########################################################
 # Secrets Manager setup                                #
@@ -544,7 +596,6 @@ echo
 echo -e "${CYAN}[Secrets Manager Setup]${RESET}"
 
 # Create an empty development secret on Secrets Manager
-dev_secret_name="$project_name-dev-secret"
 aws secretsmanager create-secret \
     --name "$dev_secret_name" \
     --secret-string "{
@@ -562,7 +613,6 @@ fi
 echo -e "Created development secret ${BLUE}$dev_secret_name${RESET}"
 
 # Create an empty tokens secret on Secrets Manager
-tokens_secret_name="$project_name-dev-Fitbit-tokens"
 aws secretsmanager create-secret \
     --name "$tokens_secret_name" \
     --tags Key=Project,Value=$project_name \
@@ -600,44 +650,6 @@ if [ $? -ne 0 ]; then
 fi
 
 echo -e "Compiled tailwindcss"
-
-########################################################
-# Output project settings                              #
-########################################################
-cd ..
-cat <<EOF > project-settings-dev.json
-{
-    "project_name": "$project_name",
-    "admin_email": "$admin_email",
-    "aws": {
-        "cognito": {
-            "participant_user_pool_name": "$participant_user_pool_name",
-            "participant_user_pool_domain": "$participant_user_pool_domain",
-            "participant_user_pool_id": "$participant_user_pool_id",
-            "participant_client_id": "$participant_client_id",
-            "researcher_user_pool_name": "$researcher_user_pool_name",
-            "researcher_user_pool_domain": "$researcher_user_pool_domain",
-            "researcher_user_pool_id": "$researcher_user_pool_id",
-            "researcher_client_id": "$researcher_client_id"
-        },
-        "s3": {
-            "logs_bucket_name": "$logs_bucket_name",
-            "audio_bucket_name": "$audio_bucket_name"
-        },
-        "secrets_manager": {
-            "dev_secret_name": "$dev_secret_name",
-            "tokens_secret_name": "$tokens_secret_name"
-        }
-    },
-    "docker": {
-        "network": "$project_name-network",
-        "postgres_container_name": "$project_name-postgres",
-        "wearable_data_retrieval_container_name": "$project_name-wearable-data-retrieval"
-    }
-}
-EOF
-
-echo -e "Created project settings file ${BLUE}project-settings-dev.json${RESET}"
 
 echo
 echo -e "${GREEN}[Installation complete]${RESET}"
