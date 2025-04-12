@@ -407,25 +407,31 @@ FLASK_CONFIG=Default
 FLASK_DEBUG=True
 FLASK_DB=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:$POSTGRES_PORT/$POSTGRES_DB
 FLASK_APP=run.py
-LOCAL_LAMBDA_ENDPOINT=http://localhost:9000/2015-03-31/functions/function/invocations
+
 APP_SYNC_HOST=""
 APPSYNC_ACCESS_KEY=""
 APPSYNC_SECRET_KEY=""
+
 AWS_AUDIO_FILE_BUCKET=$audio_bucket_name
 AWS_TABLENAME_AUDIO_FILE=""
 AWS_TABLENAME_AUDIO_TAP=""
 AWS_TABLENAME_TAP=""
 AWS_TABLENAME_USER=""
+
 COGNITO_PARTICIPANT_CLIENT_ID=$participant_client_id
 COGNITO_PARTICIPANT_CLIENT_SECRET=$participant_client_secret
-COGNITO_PARTICIPANT_DOMAIN="$participant_user_pool_domain.$aws_region.amazoncognito.com"
+COGNITO_PARTICIPANT_DOMAIN="$participant_user_pool_domain.auth.$aws_region.amazoncognito.com"
 COGNITO_PARTICIPANT_REGION=$aws_region
 COGNITO_PARTICIPANT_USER_POOL_ID=$participant_user_pool_id
+
 COGNITO_RESEARCHER_CLIENT_ID=$researcher_client_id
 COGNITO_RESEARCHER_CLIENT_SECRET=$researcher_client_secret
-COGNITO_RESEARCHER_DOMAIN="$researcher_user_pool_domain.$aws_region.amazoncognito.com"
+COGNITO_RESEARCHER_DOMAIN="$researcher_user_pool_domain.auth.$aws_region.amazoncognito.com"
 COGNITO_RESEARCHER_REGION=$aws_region
 COGNITO_RESEARCHER_USER_POOL_ID=$researcher_user_pool_id
+
+LOCAL_LAMBDA_ENDPOINT=http://localhost:9000/2015-03-31/functions/function/invocations
+
 TM_FSTRING=$project_name-dev-tokens
 EOF
 
@@ -568,6 +574,70 @@ if [ $? -ne 0 ]; then
 fi
 
 echo -e "Created tokens secret ${BLUE}$tokens_secret_name${RESET}"
+
+########################################################
+# Frontend setup                                       #
+########################################################
+echo
+echo -e "${CYAN}[Frontend Setup]${RESET}"
+
+cd frontend
+
+npm install &> /dev/null
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}frontend setup failed${RESET}"
+    exit 1
+fi
+
+echo -e "Installed frontend dependencies"
+
+npx tailwindcss -i ./src/index.css -o ./src/output.css &> /dev/null
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}tailwindcss setup failed${RESET}"
+    exit 1
+fi
+
+echo -e "Compiled tailwindcss"
+
+########################################################
+# Output project settings                              #
+########################################################
+cd ..
+cat <<EOF > project-settings-dev.json
+{
+    "project_name": "$project_name",
+    "admin_email": "$admin_email",
+    "aws": {
+        "cognito": {
+            "participant_user_pool_name": "$participant_user_pool_name",
+            "participant_user_pool_domain": "$participant_user_pool_domain",
+            "participant_user_pool_id": "$participant_user_pool_id",
+            "participant_client_id": "$participant_client_id",
+            "researcher_user_pool_name": "$researcher_user_pool_name",
+            "researcher_user_pool_domain": "$researcher_user_pool_domain",
+            "researcher_user_pool_id": "$researcher_user_pool_id",
+            "researcher_client_id": "$researcher_client_id"
+        },
+        "s3": {
+            "logs_bucket_name": "$logs_bucket_name",
+            "audio_bucket_name": "$audio_bucket_name"
+        },
+        "secrets_manager": {
+            "dev_secret_name": "$dev_secret_name",
+            "tokens_secret_name": "$tokens_secret_name"
+        }
+    },
+    "docker": {
+        "network": "$project_name-network",
+        "postgres_container_name": "$project_name-postgres",
+        "wearable_data_retrieval_container_name": "$project_name-wearable-data-retrieval"
+    }
+}
+EOF
+
+echo -e "Created project settings file ${BLUE}project-settings-dev.json${RESET}"
 
 echo
 echo -e "${GREEN}[Installation complete]${RESET}"
