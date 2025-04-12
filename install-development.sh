@@ -399,24 +399,28 @@ echo -e "Created researcher admin user ${BLUE}$researcher_admin_id${RESET}"
 echo
 echo -e "${CYAN}[S3 Setup]${RESET}"
 
-aws s3api create-bucket \
-    --bucket "$logs_bucket_name" \
-    --region $aws_region \
-    &> /dev/null
+logs_bucket_response=$(
+    aws s3api create-bucket \
+        --bucket "$logs_bucket_name" \
+        --region $aws_region
+)
 
 if [ $? -ne 0 ]; then
+    echo "$logs_bucket_response"
     echo -e "${RED}S3 bucket creation failed${RESET}"
     exit 1
 fi
 
 echo -e "Created S3 bucket ${BLUE}$logs_bucket_name${RESET}"
 
-aws s3api create-bucket \
-    --bucket "$audio_bucket_name" \
-    --region $aws_region \
-    &> /dev/null
+audio_bucket_response=$(
+    aws s3api create-bucket \
+        --bucket "$audio_bucket_name" \
+        --region $aws_region
+)
 
 if [ $? -ne 0 ]; then
+    echo "$audio_bucket_response"
     echo -e "${RED}S3 bucket creation failed${RESET}"
     exit 1
 fi
@@ -596,16 +600,18 @@ echo
 echo -e "${CYAN}[Secrets Manager Setup]${RESET}"
 
 # Create an empty development secret on Secrets Manager
-aws secretsmanager create-secret \
-    --name "$dev_secret_name" \
+dev_secret_response=$(
+    aws secretsmanager create-secret \
+        --name "$dev_secret_name" \
     --secret-string "{
         "FITBIT_CLIENT_ID": "$fitbit_client_id",
         "FITBIT_CLIENT_SECRET": "$fitbit_client_secret"
     }" \
-    --tags Key=Project,Value=$project_name \
-    &> /dev/null
+        --tags Key=Project,Value=$project_name
+)
 
 if [ $? -ne 0 ]; then
+    echo "$dev_secret_response"
     echo -e "${RED}development secret creation failed${RESET}"
     exit 1
 fi
@@ -613,12 +619,14 @@ fi
 echo -e "Created development secret ${BLUE}$dev_secret_name${RESET}"
 
 # Create an empty tokens secret on Secrets Manager
-aws secretsmanager create-secret \
-    --name "$tokens_secret_name" \
-    --tags Key=Project,Value=$project_name \
-    &> /dev/null
+tokens_secret_response=$(
+    aws secretsmanager create-secret \
+        --name "$tokens_secret_name" \
+        --tags Key=Project,Value=$project_name
+)
 
 if [ $? -ne 0 ]; then
+    echo "$tokens_secret_response"
     echo -e "${RED}tokens secret creation failed${RESET}"
     exit 1
 fi

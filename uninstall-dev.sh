@@ -53,36 +53,48 @@ wearable_data_retrieval_container_name=$(echo "$project_settings" | jq -r '.dock
 has_errors=false
 
 # Delete aws cognito domain and user pools
-aws cognito-idp delete-user-pool-domain --user-pool-id $participant_user_pool_id --domain $participant_user_pool_domain
+delete_participant_user_pool_domain_response=$(
+    aws cognito-idp delete-user-pool-domain --user-pool-id $participant_user_pool_id --domain $participant_user_pool_domain
+)
 
 if [ $? -ne 0 ]; then
+    echo "$delete_participant_user_pool_domain_response"
     echo -e "${RED}Failed to delete participant user pool domain${RESET}"
     has_errors=true
 else
     echo -e "Deleted participant user pool domain ${BLUE}$participant_user_pool_domain${RESET}"
 fi
 
-aws cognito-idp delete-user-pool-domain --user-pool-id $researcher_user_pool_id --domain $researcher_user_pool_domain
+delete_researcher_user_pool_domain_response=$(
+    aws cognito-idp delete-user-pool-domain --user-pool-id $researcher_user_pool_id --domain $researcher_user_pool_domain
+)
 
 if [ $? -ne 0 ]; then
+    echo "$delete_researcher_user_pool_domain_response"
     echo -e "${RED}Failed to delete researcher user pool domain${RESET}"
     has_errors=true
 else
     echo -e "Deleted researcher user pool domain ${BLUE}$researcher_user_pool_domain${RESET}"
 fi
 
-aws cognito-idp delete-user-pool --user-pool-id $participant_user_pool_id
+delete_participant_user_pool_response=$(
+    aws cognito-idp delete-user-pool --user-pool-id $participant_user_pool_id
+)
 
 if [ $? -ne 0 ]; then
+    echo "$delete_participant_user_pool_response"
     echo -e "${RED}Failed to delete participant user pool${RESET}"
     has_errors=true
 else
     echo -e "Deleted participant user pool ${BLUE}$participant_user_pool_id${RESET}"
 fi
 
-aws cognito-idp delete-user-pool --user-pool-id $researcher_user_pool_id
+delete_researcher_user_pool_response=$(
+    aws cognito-idp delete-user-pool --user-pool-id $researcher_user_pool_id
+)
 
 if [ $? -ne 0 ]; then
+    echo "$delete_researcher_user_pool_response"
     echo -e "${RED}Failed to delete researcher user pool${RESET}"
     has_errors=true
 else
@@ -90,18 +102,24 @@ else
 fi
 
 # Delete aws s3 buckets
-aws s3api delete-bucket --bucket $logs_bucket_name
+delete_logs_bucket_response=$(
+    aws s3api delete-bucket --bucket $logs_bucket_name
+)
 
 if [ $? -ne 0 ]; then
+    echo "$delete_logs_bucket_response"
     echo -e "${RED}Failed to delete logs bucket${RESET}"
     has_errors=true
 else
     echo -e "Deleted logs bucket ${BLUE}$logs_bucket_name${RESET}"
 fi
 
-aws s3api delete-bucket --bucket $audio_bucket_name
+delete_audio_bucket_response=$(
+    aws s3api delete-bucket --bucket $audio_bucket_name
+)
 
 if [ $? -ne 0 ]; then
+    echo "$delete_audio_bucket_response"
     echo -e "${RED}Failed to delete audio bucket${RESET}"
     has_errors=true
 else
@@ -109,18 +127,24 @@ else
 fi
 
 # Delete aws secrets manager secret
-aws secretsmanager delete-secret --secret-id $dev_secret_name &> /dev/null
+delete_dev_secret_response=$(
+    aws secretsmanager delete-secret --secret-id $dev_secret_name --force-delete-without-recovery
+)
 
 if [ $? -ne 0 ]; then
+    echo "$delete_dev_secret_response"
     echo -e "${RED}Failed to delete dev secret${RESET}"
     has_errors=true
 else
     echo -e "Deleted dev secret ${BLUE}$dev_secret_name${RESET}"
 fi
 
-aws secretsmanager delete-secret --secret-id $tokens_secret_name &> /dev/null
+delete_tokens_secret_response=$(
+    aws secretsmanager delete-secret --secret-id $tokens_secret_name --force-delete-without-recovery
+)
 
 if [ $? -ne 0 ]; then
+    echo "$delete_tokens_secret_response"
     echo -e "${RED}Failed to delete tokens secret${RESET}"
     has_errors=true
 else
@@ -128,16 +152,22 @@ else
 fi
 
 # Stop and remove containers
-docker stop $postgres_container_name $wearable_data_retrieval_container_name
+stop_containers_response=$(
+    docker stop $postgres_container_name $wearable_data_retrieval_container_name
+)
 
 if [ $? -ne 0 ]; then
+    echo "$stop_containers_response"
     echo -e "${RED}Failed to stop containers${RESET}"
     has_errors=true
 fi
 
-docker rm $postgres_container_name $wearable_data_retrieval_container_name
+remove_containers_response=$(
+    docker rm $postgres_container_name $wearable_data_retrieval_container_name
+)
 
 if [ $? -ne 0 ]; then
+    echo "$remove_containers_response"
     echo -e "${RED}Failed to remove containers${RESET}"
     has_errors=true
 else
@@ -145,9 +175,12 @@ else
 fi
 
 # Delete docker network
-docker network rm $network_name
+delete_network_response=$(
+    docker network rm $network_name
+)
 
 if [ $? -ne 0 ]; then
+    echo "$delete_network_response"
     echo -e "${RED}Failed to delete network${RESET}"
     has_errors=true
 else
