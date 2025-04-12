@@ -18,7 +18,6 @@
 import { useEffect, useRef, useMemo, memo } from "react";
 import Quill, { QuillOptions } from "quill";
 import { debounce } from "lodash";
-import sanitizeHtml, { AllowedAttribute } from "sanitize-html";
 import "quill/dist/quill.snow.css";
 import { QuillFieldProps } from "./fields.types";
 
@@ -91,12 +90,8 @@ const QuillField = ({
 
       // Set initial content in the editor, sanitizing it for safety
       if (value) {
-        const safeHtml = sanitizeHtml(
-          value, {
-          allowedAttributes: {
-            li: ["data-list", "class"] as AllowedAttribute[],
-          },
-        });
+        // TODO: Sanitize
+        const safeHtml = value;
         quillInstanceRef.current.clipboard.dangerouslyPasteHTML(safeHtml);
       }
     }

@@ -34,7 +34,6 @@ import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { FormSummarySubtext } from "../containers/forms/formSummarySubtext";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { APP_ENV } from "../../environment";
-import sanitize from "sanitize-html";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
@@ -165,7 +164,8 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   // Sanitize the about sleep template and set the preview
   useEffect(() => {
     if (previewRef.current && information !== "") {
-      previewRef.current.innerHTML = sanitize(information);
+      // TODO: Sanitize
+      previewRef.current.innerHTML = information;
     }
   }, [previewRef]);
 
@@ -211,9 +211,11 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   useEffect(() => {
     if (previewRef.current) {
       if (aboutSleepTemplateSelected.text) {
-        previewRef.current.innerHTML = sanitize(aboutSleepTemplateSelected.text);
+        // TODO: Sanitize
+        previewRef.current.innerHTML = aboutSleepTemplateSelected.text
       } else {
-        previewRef.current.innerHTML = sanitize(information);
+        // TODO: Sanitize
+        previewRef.current.innerHTML = information
       }
     }
   }, [aboutSleepTemplateSelected]);
