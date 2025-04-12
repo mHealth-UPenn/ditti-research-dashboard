@@ -13,13 +13,12 @@ POSTGRES_PASSWORD=password
 POSTGRES_PORT=5432
 POSTGRES_DB=database_name
 
-# Names are limited to 128 characters or fewer. Names may only contain alphanumeric characters, spaces, and the following special characters: + = , . @ -
 is_valid_name() {
     local name="$1"
     if [[ -z "$name" ]]; then
         return 1
     fi
-    if [[ "$name" =~ ^[a-zA-Z0-9\s+=\.,@_-]+$ && ${#name} -le 128 ]]; then
+    if [[ "$name" =~ ^[a-zA-Z0-9_-]+$ && ${#name} -le 64 ]]; then
         return 0
     else
         echo -e "${RED}Invalid name${RESET}"
@@ -38,40 +37,6 @@ is_valid_email() {
         echo -e "${RED}Invalid email${RESET}"
         return 1
     fi
-}
-
-is_valid_password() {
-    local password="$1"
-    # Trim whitespace
-    password=$(echo "$password" | xargs)
-    if [[ -z "$password" ]]; then
-        return 1
-    fi
-    has_number=false
-    has_uppercase=false
-    has_lowercase=false
-    has_special=false
-    if [[ "$password" =~ [0-9] ]]; then
-        has_number=true
-    fi
-    if [[ "$password" =~ [A-Z] ]]; then
-        has_uppercase=true
-    fi
-    if [[ "$password" =~ [a-z] ]]; then
-        has_lowercase=true
-    fi
-    if [[ "$password" =~ [^a-zA-Z0-9] ]]; then
-        has_special=true
-    fi
-    if [[ "$has_number" == false || "$has_uppercase" == false || "$has_lowercase" == false || "$has_special" == false ]]; then
-        echo -e "${RED}Password must contain at least one number, one uppercase letter, one lowercase letter, and one special character${RESET}"
-        return 1
-    fi
-    if [[ ${#password} -lt 8 ]]; then
-        echo -e "${RED}Password must be at least 8 characters long${RESET}"
-        return 1
-    fi
-    return 0
 }
 
 echo
@@ -112,6 +77,8 @@ echo
 echo -e "${CYAN}[Project Setup]${RESET}"
 
 project_name=""
+echo
+echo "A valid project name must be 64 characters or fewer and contain only alphanumeric characters and the following special characters: _ -"
 while ! is_valid_name "$project_name"; do
     read -ep "Enter a name for your project: " project_name
 done
@@ -126,38 +93,17 @@ while ! is_valid_email "$admin_email"; do
     read -ep "Enter an email to login as admin: " admin_email
 done
 
-# echo
-# echo "A valid password must be at least 8 characters long and contain at least one number, one uppercase letter, one lowercase letter, and one special character"
-# admin_password=""
-# while ! is_valid_password "$admin_password"; do
-#     echo -n "Enter a temporary password for the admin user: "
-#     read -s admin_password
-#     echo
-# done
-
-# admin_password_confirm=""
-# while ! is_valid_password "$admin_password_confirm"; do
-#     echo -n "Confirm the temporary password for the admin user: "
-#     read -s admin_password_confirm
-#     echo
-# done
-
-# if [ "$admin_password" != "$admin_password_confirm" ]; then
-#     echo -e "${RED}Passwords do not match${RESET}"
-#     exit 1
-# fi
-
-participant_user_pool_name="$project_name-participant-pool-dev"
-participant_user_pool_domain="$project_name-participant-dev"
-researcher_user_pool_name="$project_name-researcher-pool-dev"
-researcher_user_pool_domain="$project_name-researcher-dev"
-logs_bucket_name="$project_name-wearable-data-retrieval-logs"
-audio_bucket_name="$project_name-audio-files"
+participant_user_pool_name="$project_name-dev-participant-pool"
+participant_user_pool_domain="$project_name-dev-participant"
+researcher_user_pool_name="$project_name-dev-researcher-pool"
+researcher_user_pool_domain="$project_name-dev-researcher"
+logs_bucket_name="$project_name-dev-wearable-data-retrieval-logs"
+audio_bucket_name="$project_name-dev-audio-files"
 dev_secret_name="$project_name-dev-secret"
 tokens_secret_name="$project_name-dev-Fitbit-tokens"
-network_name="$project_name-network"
-postgres_container_name="$project_name-postgres"
-wearable_data_retrieval_container_name="$project_name-wearable-data-retrieval"
+network_name="$project_name-dev-network"
+postgres_container_name="$project_name-dev-postgres"
+wearable_data_retrieval_container_name="$project_name-dev-wearable-data-retrieval"
 
 cat <<EOF > project-settings-dev.json
 {
@@ -274,7 +220,7 @@ participant_client_response=$(
         --logout-urls "[\"http://localhost:3000/login\"]" \
         --supported-identity-providers "[\"COGNITO\"]" \
         --allowed-o-auth-flows "[\"code\"]" \
-        --allowed-o-auth-scopes "[\"email\", \"openid\", \"profile\", \"aws.cognito.signin.user.admin\"]" \
+        --allowed-o-auth-scopes "[\"openid\", \"profile\", \"aws.cognito.signin.user.admin\"]" \
         --allowed-o-auth-flows-user-pool-client
 )
 
@@ -376,12 +322,6 @@ sed -i '' "s/\"researcher_client_id\": \"\"/\"researcher_client_id\": \"$researc
 echo -e "Created researcher user pool ${BLUE}$researcher_user_pool_name${RESET} with ID ${BLUE}$researcher_user_pool_id${RESET} at ${BLUE}$researcher_user_pool_domain${RESET}"
 
 # Create a Cognito user in the researcher user pool
-# researcher_admin_response=$(
-#     aws cognito-idp admin-create-user \
-#         --user-pool-id "$researcher_user_pool_id" \
-#         --username "$admin_email" \
-#         --temporary-password "$admin_password"
-# )
 researcher_admin_response=$(
     aws cognito-idp admin-create-user \
         --user-pool-id "$researcher_user_pool_id" \
@@ -478,13 +418,11 @@ AWS_TABLENAME_TAP=""
 AWS_TABLENAME_USER=""
 
 COGNITO_PARTICIPANT_CLIENT_ID=$participant_client_id
-COGNITO_PARTICIPANT_CLIENT_SECRET=$participant_client_secret
 COGNITO_PARTICIPANT_DOMAIN="$participant_user_pool_domain.auth.$aws_region.amazoncognito.com"
 COGNITO_PARTICIPANT_REGION=$aws_region
 COGNITO_PARTICIPANT_USER_POOL_ID=$participant_user_pool_id
 
 COGNITO_RESEARCHER_CLIENT_ID=$researcher_client_id
-COGNITO_RESEARCHER_CLIENT_SECRET=$researcher_client_secret
 COGNITO_RESEARCHER_DOMAIN="$researcher_user_pool_domain.auth.$aws_region.amazoncognito.com"
 COGNITO_RESEARCHER_REGION=$aws_region
 COGNITO_RESEARCHER_USER_POOL_ID=$researcher_user_pool_id
@@ -608,7 +546,9 @@ dev_secret_response=$(
         --name "$dev_secret_name" \
         --secret-string "{
             \"FITBIT_CLIENT_ID\": \""$fitbit_client_id"\",
-            \"FITBIT_CLIENT_SECRET\": \""$fitbit_client_secret"\"
+            \"FITBIT_CLIENT_SECRET\": \""$fitbit_client_secret"\",
+            \"COGNITO_PARTICIPANT_CLIENT_SECRET\": \""$participant_client_secret"\",
+            \"COGNITO_RESEARCHER_CLIENT_SECRET\": \""$researcher_client_secret"\"
         }" \
         --tags Key=Project,Value=$project_name
 )
