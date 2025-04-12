@@ -117,15 +117,10 @@ while ! is_valid_name "$project_name"; do
 done
 
 # Prompt the user for fitbit credentials
-echo
-echo -e "${CYAN}[Fitbit Setup]${RESET}"
 read -ep "Enter your dev Fitbit client ID: " fitbit_client_id
 read -ep "Enter your dev Fitbit client secret: " fitbit_client_secret
 
 # Prompt the user for an email to login as admin
-echo
-echo -e "${CYAN}[Admin Setup]${RESET}"
-
 admin_email=""
 while ! is_valid_email "$admin_email"; do
     read -ep "Enter an email to login as admin: " admin_email
@@ -276,7 +271,11 @@ participant_client_response=$(
         --client-name "$project_name-participant-client-dev" \
         --generate-secret \
         --callback-urls "[\"http://localhost:5000/auth/participant/callback\"]" \
-        --logout-urls "[\"http://localhost:3000/login\"]"
+        --logout-urls "[\"http://localhost:3000/login\"]" \
+        --supported-identity-providers "[\"COGNITO\"]" \
+        --allowed-o-auth-flows "[\"code\"]" \
+        --allowed-o-auth-scopes "[\"email\", \"openid\", \"profile\", \"aws.cognito.signin.user.admin\"]" \
+        --allowed-o-auth-flows-user-pool-client
 )
 
 if [ $? -ne 0 ]; then
@@ -356,7 +355,11 @@ researcher_client_response=$(
         --client-name "$project_name-researcher-client-dev" \
         --generate-secret \
         --callback-urls "[\"http://localhost:5000/auth/researcher/callback\"]" \
-        --logout-urls "[\"http://localhost:3000/coordinator/login\"]"
+        --logout-urls "[\"http://localhost:3000/coordinator/login\"]" \
+        --supported-identity-providers "[\"COGNITO\"]" \
+        --allowed-o-auth-flows "[\"code\"]" \
+        --allowed-o-auth-scopes "[\"email\", \"phone\", \"openid\", \"profile\", \"aws.cognito.signin.user.admin\"]" \
+        --allowed-o-auth-flows-user-pool-client
 )
 
 if [ $? -ne 0 ]; then
@@ -603,10 +606,10 @@ echo -e "${CYAN}[Secrets Manager Setup]${RESET}"
 dev_secret_response=$(
     aws secretsmanager create-secret \
         --name "$dev_secret_name" \
-    --secret-string "{
-        "FITBIT_CLIENT_ID": "$fitbit_client_id",
-        "FITBIT_CLIENT_SECRET": "$fitbit_client_secret"
-    }" \
+        --secret-string "{
+            \"FITBIT_CLIENT_ID\": \""$fitbit_client_id"\",
+            \"FITBIT_CLIENT_SECRET\": \""$fitbit_client_secret"\"
+        }" \
         --tags Key=Project,Value=$project_name
 )
 
