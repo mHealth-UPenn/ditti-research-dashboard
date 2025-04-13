@@ -25,7 +25,7 @@ def test_researcher_login_view(mock_get, client, mock_auth_oauth):
     mock_get.return_value = mock_response
 
     # Mock the OAuth client
-    with patch("aws_portal.auth.controllers.base.AuthControllerBase.login") as mock_login:
+    with patch("backend.auth.controllers.base.AuthControllerBase.login") as mock_login:
         mock_login.return_value = "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/authorize", 302
 
         # Execute
@@ -36,7 +36,7 @@ def test_researcher_login_view(mock_get, client, mock_auth_oauth):
         assert response.status_code == 302
 
 
-@patch("aws_portal.auth.controllers.researcher.ResearcherAuthController.callback")
+@patch("backend.auth.controllers.researcher.ResearcherAuthController.callback")
 def test_researcher_callback_success(mock_callback, client):
     """Test successful callback handling."""
     # Set up mock
@@ -54,7 +54,7 @@ def test_researcher_callback_success(mock_callback, client):
     assert response.status_code == 302
 
 
-@patch("aws_portal.auth.controllers.researcher.ResearcherAuthController.callback")
+@patch("backend.auth.controllers.researcher.ResearcherAuthController.callback")
 def test_researcher_callback_invalid_state(mock_callback, client):
     """Test callback with invalid state parameter."""
     # Set up mock
@@ -74,7 +74,7 @@ def test_researcher_callback_invalid_state(mock_callback, client):
     assert response.status_code == 401
 
 
-@patch("aws_portal.auth.controllers.researcher.ResearcherAuthController.callback")
+@patch("backend.auth.controllers.researcher.ResearcherAuthController.callback")
 def test_researcher_callback_missing_code(mock_callback, client):
     """Test callback with missing code parameter."""
     # Set up mock
@@ -93,7 +93,7 @@ def test_researcher_callback_missing_code(mock_callback, client):
     assert response.status_code == 401
 
 
-@patch("aws_portal.auth.controllers.researcher.ResearcherAuthController.check_login")
+@patch("backend.auth.controllers.researcher.ResearcherAuthController.check_login")
 def test_researcher_check_login_authenticated(mock_check_login, client):
     """Test check login when authenticated."""
     # Set up mock
@@ -111,7 +111,7 @@ def test_researcher_check_login_authenticated(mock_check_login, client):
     assert data["authenticated"] is True
 
 
-@patch("aws_portal.auth.controllers.researcher.ResearcherAuthController.check_login")
+@patch("backend.auth.controllers.researcher.ResearcherAuthController.check_login")
 def test_researcher_check_login_unauthenticated(mock_check_login, client):
     """Test check login when not authenticated."""
     # Set up mock
@@ -128,7 +128,7 @@ def test_researcher_check_login_unauthenticated(mock_check_login, client):
     assert data["authenticated"] is False
 
 
-@patch("aws_portal.auth.controllers.researcher.ResearcherAuthController.logout")
+@patch("backend.auth.controllers.researcher.ResearcherAuthController.logout")
 def test_researcher_logout(mock_logout, client):
     """Test logout."""
     # Set up mock
@@ -145,7 +145,7 @@ def test_researcher_logout(mock_logout, client):
 
 def test_researcher_change_password_success(client):
     """Test the change_password method of ResearcherAuthController directly."""
-    from aws_portal.auth.controllers import ResearcherAuthController
+    from backend.auth.controllers import ResearcherAuthController
 
     # Create a controller instance
     controller = ResearcherAuthController()
@@ -170,7 +170,7 @@ def test_researcher_change_password_success(client):
 
 def test_researcher_change_password_error(client):
     """Test the change_password method of ResearcherAuthController directly with an error."""
-    from aws_portal.auth.controllers import ResearcherAuthController
+    from backend.auth.controllers import ResearcherAuthController
 
     # Create a controller instance
     controller = ResearcherAuthController()
@@ -195,7 +195,7 @@ def test_researcher_change_password_error(client):
 
 def test_researcher_change_password_missing_fields(client):
     """Test the change_password method of ResearcherAuthController directly with missing fields."""
-    from aws_portal.auth.controllers import ResearcherAuthController
+    from backend.auth.controllers import ResearcherAuthController
 
     # Create a controller instance
     controller = ResearcherAuthController()
@@ -226,12 +226,12 @@ def test_get_access_authorized(client):
     mock_account.validate_ask.return_value = True
 
     # Create a mock for the get_access function that bypasses the decorator
-    with patch("aws_portal.views.auth.researcher.auth.get_access", wraps=lambda account: jsonify({"msg": "Authorized"})):
+    with patch("backend.views.auth.researcher.auth.get_access", wraps=lambda account: jsonify({"msg": "Authorized"})):
         # Execute the request with the account directly
         with client.application.test_request_context(
             "/auth/researcher/get-access?app=1&study=1&action=Create&resource=User"
         ):
-            from aws_portal.views.auth.researcher.auth import get_access
+            from backend.views.auth.researcher.auth import get_access
             response = get_access(mock_account)
 
             # Verify
@@ -248,12 +248,12 @@ def test_get_access_unauthorized(client):
     mock_account.validate_ask.side_effect = ValueError("Unauthorized")
 
     # Create a mock for the get_access function that bypasses the decorator
-    with patch("aws_portal.views.auth.researcher.auth.get_access", wraps=lambda account: jsonify({"msg": "Unauthorized"})):
+    with patch("backend.views.auth.researcher.auth.get_access", wraps=lambda account: jsonify({"msg": "Unauthorized"})):
         # Execute the request with the account directly
         with client.application.test_request_context(
             "/auth/researcher/get-access?app=1&study=1&action=Create&resource=User"
         ):
-            from aws_portal.views.auth.researcher.auth import get_access
+            from backend.views.auth.researcher.auth import get_access
             response = get_access(mock_account)
 
             # Verify

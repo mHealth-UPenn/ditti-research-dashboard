@@ -22,14 +22,14 @@ jobs:
 
       - name: Install dependencies
         run: npm install
-        working-directory: aws_portal/frontend
+        working-directory: frontend
 
       - name: Check for vulnerabilities
         run: npm audit --audit-level=low
-        working-directory: aws_portal/frontend
+        working-directory: frontend
 
       - name: Build frontend
         run: |
           npx tailwindcss -i ./src/index.css -o ./src/output.css
           npm run build
-        working-directory: aws_portal/frontend
+        working-directory: frontend

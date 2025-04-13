@@ -1,14 +1,14 @@
 import os
 import pytest
 from sqlalchemy import tuple_
-from aws_portal.app import create_app
+from backend.app import create_app
 
-from aws_portal.commands import (
+from backend.commands import (
     init_admin_app_click, init_admin_group_click, init_admin_account_click,
     init_db_click, create_researcher_account_click, init_integration_testing_db_click
 )
 
-from aws_portal.models import (
+from backend.models import (
     AccessGroup, Account, App, JoinAccessGroupPermission,
     JoinAccountAccessGroup, Permission, init_db
 )

@@ -1,7 +1,7 @@
 import json
 from unittest.mock import MagicMock, patch
 from flask import jsonify
-from aws_portal.auth.decorators.participant import participant_auth_required
+from backend.auth.decorators.participant import participant_auth_required
 from .test_auth_common import create_mock_response, test_app
 
 
@@ -23,7 +23,7 @@ class TestParticipantAuthDecorator:
         """Test that the decorator requires a token and returns 401 when missing."""
         with test_app.test_request_context("/test-participant"):
             # Mock empty request (no token in headers or cookies)
-            with patch("aws_portal.auth.decorators.participant.request") as mock_request:
+            with patch("backend.auth.decorators.participant.request") as mock_request:
                 mock_request.headers = {}
                 mock_request.cookies = {}
 
@@ -43,7 +43,7 @@ class TestParticipantAuthDecorator:
         """Test that the decorator rejects invalid token formats."""
         with test_app.test_request_context("/test-participant"):
             # Mock request with malformed Authorization header
-            with patch("aws_portal.auth.decorators.participant.request") as mock_request:
+            with patch("backend.auth.decorators.participant.request") as mock_request:
                 mock_request.headers = {"Authorization": "InvalidFormat"}
                 mock_request.cookies = {}
 
@@ -59,7 +59,7 @@ class TestParticipantAuthDecorator:
                 assert "msg" in data
                 assert data["msg"] == "Authentication required"
 
-    @patch("aws_portal.auth.decorators.participant.ParticipantAuthController")
+    @patch("backend.auth.decorators.participant.ParticipantAuthController")
     def test_successful_auth(self, MockController, test_app):
         """Test successful authentication flow with valid token."""
         # Configure mock auth controller to return successful authentication
@@ -88,8 +88,8 @@ class TestParticipantAuthDecorator:
                 assert data["ditti_id"] == "test_ditti_id"
                 assert data["msg"] == "OK"
 
-    @patch("aws_portal.auth.decorators.participant.ParticipantAuthController")
-    @patch("aws_portal.auth.utils.responses.create_error_response")
+    @patch("backend.auth.decorators.participant.ParticipantAuthController")
+    @patch("backend.auth.utils.responses.create_error_response")
     def test_auth_with_exception(self, mock_create_error, MockController, test_app):
         """Test exception handling during authentication process."""
         # Configure mocks for error scenario
@@ -118,7 +118,7 @@ class TestParticipantAuthDecorator:
                 assert b"Internal server error" in response.get_data(
                 ) or b"error" in response.get_data()
 
-    @patch("aws_portal.auth.decorators.participant.ParticipantAuthController")
+    @patch("backend.auth.decorators.participant.ParticipantAuthController")
     def test_auth_failure(self, MockController, test_app):
         """Test authentication failure handling with invalid token."""
         # Configure mock controller to return authentication failure
@@ -148,7 +148,7 @@ class TestParticipantAuthDecorator:
                 assert response.status_code == 401
                 assert b'"error": "Invalid token"' in response.get_data()
 
-    @patch("aws_portal.auth.decorators.participant.ParticipantAuthController")
+    @patch("backend.auth.decorators.participant.ParticipantAuthController")
     def test_token_from_cookie(self, MockController, test_app):
         """Test that the decorator can extract and use tokens from cookies."""
         # Configure mock controller for successful authentication
@@ -164,7 +164,7 @@ class TestParticipantAuthDecorator:
         # Test with token in cookie instead of header
         with test_app.test_request_context("/test-func"):
             with test_app.app_context():
-                with patch("aws_portal.auth.decorators.participant.request") as mock_request:
+                with patch("backend.auth.decorators.participant.request") as mock_request:
                     # Set cookie with token but no Authorization header
                     mock_request.headers = {}
                     mock_request.cookies = {"id_token": "cookie-token-value"}

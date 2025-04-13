@@ -1,6 +1,6 @@
 import re
 from unittest.mock import patch, MagicMock
-from aws_portal.auth.utils.tokens import (
+from backend.auth.utils.tokens import (
     generate_code_verifier,
     create_code_challenge,
     get_cognito_jwks

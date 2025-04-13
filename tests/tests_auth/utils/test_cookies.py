@@ -1,6 +1,6 @@
 import pytest
 from flask import Flask, Response
-from aws_portal.auth.utils.cookies import set_auth_cookies, clear_auth_cookies
+from backend.auth.utils.cookies import set_auth_cookies, clear_auth_cookies
 
 
 @pytest.fixture

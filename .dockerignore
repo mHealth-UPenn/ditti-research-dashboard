@@ -1,4 +1,4 @@
-aws_portal/frontend/
+frontend/
 .vscode/
 env/
 tests/

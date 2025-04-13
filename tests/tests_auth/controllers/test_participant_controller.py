@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from aws_portal.auth.controllers.participant import ParticipantAuthController
+from backend.auth.controllers.participant import ParticipantAuthController
 
 
 class TestParticipantAuthController:
@@ -14,7 +14,7 @@ class TestParticipantAuthController:
     @pytest.fixture
     def auth_controller(self):
         """Create a participant auth controller for testing."""
-        with patch('aws_portal.auth.controllers.participant.init_participant_oauth_client'):
+        with patch('backend.auth.controllers.participant.init_participant_oauth_client'):
             controller = ParticipantAuthController()
             return controller
 
@@ -23,7 +23,7 @@ class TestParticipantAuthController:
         assert auth_controller.user_type == "participant"
         assert auth_controller.oauth_client_name == "participant_oidc"
 
-    @patch("aws_portal.auth.controllers.participant.init_participant_oauth_client")
+    @patch("backend.auth.controllers.participant.init_participant_oauth_client")
     def test_init_oauth_client(self, mock_init_oauth, auth_controller):
         """Test initializing the OAuth client."""
         # Create a new controller for this test
@@ -52,8 +52,8 @@ class TestParticipantAuthController:
             assert "openid" in scope
             assert len(scope.split()) > 1
 
-    @patch("aws_portal.auth.controllers.participant.StudySubject")
-    @patch("aws_portal.auth.controllers.participant.db")
+    @patch("backend.auth.controllers.participant.StudySubject")
+    @patch("backend.auth.controllers.participant.db")
     def test_get_or_create_user_existing(self, mock_db, mock_study_subject, app, auth_controller):
         """Test getting an existing user."""
         # Set up mock user and token info
@@ -72,8 +72,8 @@ class TestParticipantAuthController:
         assert user == mock_existing_subject
         assert error is None
 
-    @patch("aws_portal.auth.controllers.participant.StudySubject")
-    @patch("aws_portal.auth.controllers.participant.db")
+    @patch("backend.auth.controllers.participant.StudySubject")
+    @patch("backend.auth.controllers.participant.db")
     def test_get_or_create_user_new(self, mock_db, mock_study_subject, app, auth_controller):
         """Test creating a new user."""
         # Set up mock new user and token info
@@ -91,8 +91,8 @@ class TestParticipantAuthController:
         assert user == mock_new_subject
         assert error is None
 
-    @patch("aws_portal.auth.controllers.participant.StudySubject")
-    @patch("aws_portal.auth.controllers.participant.db")
+    @patch("backend.auth.controllers.participant.StudySubject")
+    @patch("backend.auth.controllers.participant.db")
     def test_create_or_get_study_subject_error(self, mock_db, mock_study_subject, auth_controller):
         """Test error handling when creating a study subject fails."""
         # Set up error scenario
@@ -100,7 +100,7 @@ class TestParticipantAuthController:
         mock_error_response = MagicMock()
 
         # Directly test the internal method with error mocking
-        with patch("aws_portal.auth.controllers.participant.create_error_response") as mock_error:
+        with patch("backend.auth.controllers.participant.create_error_response") as mock_error:
             mock_error.return_value = mock_error_response
             with patch.object(auth_controller, "_create_or_get_study_subject") as mock_create:
                 mock_create.return_value = (None, mock_error_response)
@@ -110,8 +110,8 @@ class TestParticipantAuthController:
         assert subject is None
         assert error == mock_error_response
 
-    @patch("aws_portal.auth.controllers.participant.StudySubject")
-    @patch("aws_portal.auth.controllers.participant.db")
+    @patch("backend.auth.controllers.participant.StudySubject")
+    @patch("backend.auth.controllers.participant.db")
     def test_create_or_get_study_subject_success(self, mock_db, mock_study_subject, app, auth_controller):
         """Test successful creation of a study subject."""
         # Set up mock new subject
@@ -169,7 +169,7 @@ class TestParticipantAuthController:
         """Test getting the login URL."""
         with app.app_context():
             # Override the default values set in the real app
-            with patch("aws_portal.auth.controllers.base.current_app") as mock_current_app:
+            with patch("backend.auth.controllers.base.current_app") as mock_current_app:
                 # In the implementation, it checks CORS_ORIGINS for this value
                 mock_current_app.config = {
                     "CORS_ORIGINS": "http://test-frontend"

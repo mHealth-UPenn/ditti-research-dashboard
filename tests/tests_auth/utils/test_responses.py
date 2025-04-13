@@ -1,7 +1,7 @@
 import json
 import pytest
 from flask import Flask
-from aws_portal.auth.utils.responses import create_error_response, create_success_response
+from backend.auth.utils.responses import create_error_response, create_success_response
 
 
 @pytest.fixture

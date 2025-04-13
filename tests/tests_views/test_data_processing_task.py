@@ -31,7 +31,7 @@ def researcher_post(client, researcher_headers):
 # ---------------------------
 
 
-@patch('aws_portal.views.data_processing_task.LambdaTask')
+@patch('backend.views.data_processing_task.LambdaTask')
 def test_get_data_processing_tasks_success(mock_lambda_task_model, client, researcher_get):
     """
     Test successful retrieval of data processing tasks.
@@ -75,7 +75,7 @@ def test_get_data_processing_tasks_success(mock_lambda_task_model, client, resea
     mock_lambda_task_model.query.order_by.assert_called_once_with(mock_desc)
 
 
-@patch('aws_portal.views.data_processing_task.LambdaTask')
+@patch('backend.views.data_processing_task.LambdaTask')
 def test_get_data_processing_tasks_internal_error(mock_lambda_task_model, client, researcher_get):
     """
     Test internal server error during retrieval of data processing tasks.
@@ -96,7 +96,7 @@ def test_get_data_processing_tasks_internal_error(mock_lambda_task_model, client
     mock_lambda_task_model.query.order_by.return_value.all.assert_called_once()
 
 
-@patch('aws_portal.views.data_processing_task.LambdaTask')
+@patch('backend.views.data_processing_task.LambdaTask')
 def test_get_data_processing_tasks_empty_list(mock_lambda_task_model, client, researcher_get):
     """
     Test retrieval when no data processing tasks exist.
@@ -118,7 +118,7 @@ def test_get_data_processing_tasks_empty_list(mock_lambda_task_model, client, re
 # Tests for POST /data_processing_task/invoke
 # ---------------------------------
 
-@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
+@patch('backend.views.data_processing_task.create_and_invoke_lambda_task')
 def test_invoke_data_processing_task_success(mock_create_and_invoke, client, researcher_post):
     """
     Test successful invocation of a new data processing task.
@@ -148,7 +148,7 @@ def test_invoke_data_processing_task_success(mock_create_and_invoke, client, res
     mock_create_and_invoke.assert_called_once()
 
 
-@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
+@patch('backend.views.data_processing_task.create_and_invoke_lambda_task')
 def test_invoke_data_processing_task_failure(mock_create_and_invoke, client, researcher_post):
     """
     Test invocation failure when create_and_invoke_lambda_task returns None.
@@ -165,7 +165,7 @@ def test_invoke_data_processing_task_failure(mock_create_and_invoke, client, res
     mock_create_and_invoke.assert_called_once()
 
 
-@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
+@patch('backend.views.data_processing_task.create_and_invoke_lambda_task')
 def test_invoke_data_processing_task_exception(mock_create_and_invoke, client, researcher_post):
     """
     Test invocation failure when create_and_invoke_lambda_task raises an exception.
@@ -182,7 +182,7 @@ def test_invoke_data_processing_task_exception(mock_create_and_invoke, client, r
     mock_create_and_invoke.assert_called_once()
 
 
-@patch('aws_portal.views.data_processing_task.create_and_invoke_lambda_task')
+@patch('backend.views.data_processing_task.create_and_invoke_lambda_task')
 def test_invoke_data_processing_task_invalid_data(mock_create_and_invoke, client, researcher_post):
     """
     Since the POST /invoke route expects an 'app' field, this test ensures that sending unexpected data does not break the route.

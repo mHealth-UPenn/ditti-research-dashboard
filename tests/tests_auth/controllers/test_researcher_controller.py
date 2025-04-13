@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from aws_portal.auth.controllers.researcher import ResearcherAuthController
+from backend.auth.controllers.researcher import ResearcherAuthController
 
 
 class TestResearcherAuthController:
@@ -14,7 +14,7 @@ class TestResearcherAuthController:
     @pytest.fixture
     def auth_controller(self):
         """Create a researcher auth controller for testing."""
-        with patch('aws_portal.auth.controllers.researcher.init_researcher_oauth_client'):
+        with patch('backend.auth.controllers.researcher.init_researcher_oauth_client'):
             controller = ResearcherAuthController()
             return controller
 
@@ -24,7 +24,7 @@ class TestResearcherAuthController:
         assert auth_controller.oauth_client_name == "researcher_oidc"
         assert auth_controller.auth_manager is not None
 
-    @patch("aws_portal.auth.controllers.researcher.init_researcher_oauth_client")
+    @patch("backend.auth.controllers.researcher.init_researcher_oauth_client")
     def test_init_oauth_client(self, mock_init_oauth, auth_controller):
         """Test initializing the OAuth client."""
         # Create a new controller for this test
@@ -55,7 +55,7 @@ class TestResearcherAuthController:
                 url = auth_controller.get_redirect_url()
                 assert url == "http://frontend/coordinator"
 
-    @patch("aws_portal.auth.controllers.researcher.db")
+    @patch("backend.auth.controllers.researcher.db")
     def test_get_or_create_user_existing(self, mock_db, app, auth_controller):
         """Test getting an existing user."""
         # Set up mock user data
@@ -73,7 +73,7 @@ class TestResearcherAuthController:
         assert user == existing_account
         assert error is None
 
-    @patch("aws_portal.auth.controllers.researcher.db")
+    @patch("backend.auth.controllers.researcher.db")
     def test_get_or_create_user_new(self, mock_db, app, auth_controller):
         """Test creating a new user."""
         # Set up mock user data
@@ -114,7 +114,7 @@ class TestResearcherAuthController:
 
         assert user is None
 
-    @patch("aws_portal.auth.controllers.researcher.create_success_response")
+    @patch("backend.auth.controllers.researcher.create_success_response")
     def test_create_login_success_response(self, mock_create_response, app, auth_controller):
         """Test creating a success response after login."""
         # Mock the API response
@@ -130,7 +130,7 @@ class TestResearcherAuthController:
         mock_account.is_confirmed = False  # First login flow
 
         with app.app_context():
-            with patch("aws_portal.auth.controllers.researcher.db") as mock_db:
+            with patch("backend.auth.controllers.researcher.db") as mock_db:
                 response = auth_controller.create_login_success_response(
                     mock_account)
 
@@ -147,8 +147,8 @@ class TestResearcherAuthController:
         assert call_args["data"]["email"] == "researcher@example.com"
         assert call_args["data"]["isFirstLogin"] is True
 
-    @patch("aws_portal.auth.controllers.researcher.db")
-    @patch("aws_portal.auth.controllers.researcher.create_success_response")
+    @patch("backend.auth.controllers.researcher.db")
+    @patch("backend.auth.controllers.researcher.create_success_response")
     @patch("datetime.datetime")
     def test_create_login_success_response_updates_last_login(self, mock_datetime, mock_create_success, mock_db, app, auth_controller):
         """Test that last_login is updated when login is successful."""
@@ -195,7 +195,7 @@ class TestResearcherAuthController:
             call_args = mock_create_success.call_args[1]
             assert call_args["data"]["isFirstLogin"] is False
 
-    @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
+    @patch("backend.auth.controllers.researcher.get_researcher_cognito_client")
     def test_create_account_in_cognito_success(self, mock_get_client, app, auth_controller):
         """Test successful account creation in Cognito."""
         # Configure mock response for successful account creation
@@ -220,7 +220,7 @@ class TestResearcherAuthController:
 
         assert response == mock_success_response
 
-    @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
+    @patch("backend.auth.controllers.researcher.get_researcher_cognito_client")
     def test_create_account_in_cognito_error(self, mock_get_client, app, auth_controller):
         """Test error handling during account creation in Cognito."""
         # Configure mock response for error scenario
@@ -246,7 +246,7 @@ class TestResearcherAuthController:
 
         assert response == mock_error_response
 
-    @patch("aws_portal.auth.controllers.researcher.update_researcher")
+    @patch("backend.auth.controllers.researcher.update_researcher")
     def test_update_account_in_cognito_success(self, mock_update_researcher, app, auth_controller):
         """Test successful account update in Cognito."""
         # Configure mock response
@@ -365,7 +365,7 @@ class TestResearcherAuthController:
             _, kwargs = mock_update_researcher.call_args
             assert 'email' not in kwargs['attributes']
 
-    @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
+    @patch("backend.auth.controllers.researcher.get_researcher_cognito_client")
     def test_disable_account_in_cognito_success(self, mock_get_client, app, auth_controller):
         """Test successful account disabling in Cognito."""
         # Configure mock response for account disabling operation
@@ -381,7 +381,7 @@ class TestResearcherAuthController:
 
         assert response == mock_success_response
 
-    @patch("aws_portal.auth.controllers.researcher.get_researcher_cognito_client")
+    @patch("backend.auth.controllers.researcher.get_researcher_cognito_client")
     def test_change_password_success(self, mock_get_client, app, auth_controller):
         """Test successful password change in Cognito."""
         # Configure mock response for password change operation
@@ -401,7 +401,7 @@ class TestResearcherAuthController:
         """Test getting the login URL."""
         with app.app_context():
             # Override the default values set in the real app
-            with patch("aws_portal.auth.controllers.base.current_app") as mock_current_app:
+            with patch("backend.auth.controllers.base.current_app") as mock_current_app:
                 # In the implementation, it checks CORS_ORIGINS for this value
                 mock_current_app.config = {
                     "CORS_ORIGINS": "http://test-frontend"

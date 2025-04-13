@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from aws_portal.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
+from backend.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
 
 
 # Use the base_cognito_auth fixture from conftest.py
@@ -118,7 +118,7 @@ def test_validate_access_token_malformed_claims(mock_jwt_decode, cognito_auth, m
 
 
 @patch("requests.post")
-@patch("aws_portal.auth.providers.cognito.base.CognitoAuthBase.get_config")
+@patch("backend.auth.providers.cognito.base.CognitoAuthBase.get_config")
 @patch("jwt.decode")
 @patch("time.time")
 def test_validate_access_token_with_refresh(mock_time, mock_jwt_decode, mock_get_config, mock_post, cognito_auth, mock_auth_test_data):
@@ -163,7 +163,7 @@ def test_validate_access_token_with_refresh(mock_time, mock_jwt_decode, mock_get
 
 
 @patch("requests.post")
-@patch("aws_portal.auth.providers.cognito.base.CognitoAuthBase.get_config")
+@patch("backend.auth.providers.cognito.base.CognitoAuthBase.get_config")
 @patch("jwt.decode")
 @patch("time.time")
 def test_validate_access_token_refresh_failed(mock_time, mock_jwt_decode, mock_get_config, mock_post, cognito_auth, mock_auth_test_data):
@@ -207,7 +207,7 @@ def test_validate_access_token_refresh_failed(mock_time, mock_jwt_decode, mock_g
 
 @patch("jwt.get_unverified_header")
 @patch("jwt.decode")
-@patch("aws_portal.auth.providers.cognito.base.CognitoAuthBase.get_config")
+@patch("backend.auth.providers.cognito.base.CognitoAuthBase.get_config")
 def test_validate_token_for_authenticated_route_success(mock_get_config, mock_jwt_decode, mock_header, cognito_auth):
     """Test successful validation of token for authenticated route."""
     # This test is complex and would require more detailed knowledge of the implementation
@@ -248,7 +248,7 @@ def test_validate_token_for_authenticated_route_malformed_header(mock_header, co
     assert result == AUTH_ERROR_MESSAGES["auth_failed"]
 
 
-@patch("aws_portal.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
+@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
 def test_validate_token_for_authenticated_route_no_user(mock_validate, cognito_auth):
     """
     Test validation succeeds with a valid token even without user claims.
@@ -280,8 +280,8 @@ def test_validate_token_for_authenticated_route_no_user(mock_validate, cognito_a
 
 @patch("jwt.get_unverified_header")
 @patch("jwt.decode")
-@patch("aws_portal.auth.providers.cognito.base.CognitoAuthBase.get_config")
-@patch("aws_portal.auth.utils.tokens.get_cognito_jwks")
+@patch("backend.auth.providers.cognito.base.CognitoAuthBase.get_config")
+@patch("backend.auth.utils.tokens.get_cognito_jwks")
 @patch("jwt.decode", side_effect=Exception("Invalid signature"))
 def test_validate_token_invalid_signature(mock_validated_decode, mock_get_jwks, mock_get_config, mock_unverified_decode, mock_header, cognito_auth):
     """
