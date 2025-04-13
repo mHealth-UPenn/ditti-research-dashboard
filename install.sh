@@ -42,7 +42,7 @@ while [[ $# -gt 0 ]]; do
             ;;
         -*|--*)
             echo "Unknown option $1"
-            exit 1
+            # exit 1
             ;;
     esac
 done
@@ -50,12 +50,12 @@ done
 # Both rds_instance_identifier and rds_secret_arn are required when either is provided
 if [ -n "$rds_instance_identifier" ] && [ -z "$rds_secret_arn" ]; then
     echo -e "${RED}RDS instance identifier and secret ARN are required when either is provided${RESET}"
-    exit 1
+    # exit 1
 fi
 
 if [ -z "$rds_instance_identifier" ] && [ -n "$rds_secret_arn" ]; then
     echo -e "${RED}RDS instance identifier and secret ARN are required when either is provided${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo
@@ -106,6 +106,15 @@ is_valid_domain() {
     fi
 }
 
+has_subdomain() {
+    local domain="$1"
+    if [[ "$domain" =~ ^[^\.]+\.[^\.]+\.[^\.]+$ ]]; then
+        return 1
+    else
+        return 0
+    fi
+}
+
 echo
 echo "This script will install the a production environment for the project."
 echo -e "${MAGENTA}The following will be configured and installed:${RESET}"
@@ -116,14 +125,13 @@ echo "- Web Application Firewall"
 echo "- AWS CloudFront distribution"
 echo "- AWS Relational Database Service (RDS) instance"
 echo "- AWS Lambda functions"
-echo "- AWS ECR container registry"
 echo "- Production secrets on AWS Secrets Manager"
 echo "- Serverless application with Zappa"
 read -ep "Do you want to continue? (y/n): " continue
 
 if [ "$continue" != "y" ]; then
     echo -e "${RED}Installation cancelled${RESET}"
-    exit 1
+    # exit 1
 fi
 
 ########################################################
@@ -187,16 +195,30 @@ static_bucket_name="$domain_name"
 secret_name="$project_name-secret"
 tokens_secret_name="$project_name-Fitbit-tokens"
 wearable_data_retrieval_function_name="$project_name-wearable-data-retrieval"
-wearable_data_retrieval_container_name="$project_name-wearable-data-retrieval"
-wearable_data_retrieval_ecr_repo_name="$aws_account_id.dkr.ecr.us-east-1.amazonaws.com/$wearable_data_retrieval_container_name:latest"
+wearable_data_retrieval_image_name="$project_name-wearable-data-retrieval"
+wearable_data_retrieval_ecr_repo_name="$aws_account_id.dkr.ecr.us-east-1.amazonaws.com/$wearable_data_retrieval_image_name"
 wearable_data_retrieval_role_name="$project_name-wearable-data-retrieval-role"
 wearable_data_retrieval_policy_name="$project_name-wearable-data-retrieval-policy"
+
+if has_subdomain "$domain_name"; then
+    backend_domain="app-${domain_name}"
+else
+    backend_domain="app.${domain_name}"
+fi
+
+frontend_endpoint="https://${domain_name}"
+backend_endpoint="https://${backend_domain}"
+
+flask_secret_key=$(python -c "import secrets; print(secrets.token_hex())")
 
 cat <<EOF > project-settings$suffix.json
 {
     "project_name": "$project_name",
     "admin_email": "$admin_email",
     "domain": "$domain_name",
+    "backend_domain": "$backend_domain",
+    "frontend_endpoint": "$frontend_endpoint",
+    "backend_endpoint": "$backend_endpoint",
     "aws": {
         "cognito": {
             "participant_user_pool_name": "$participant_user_pool_name",
@@ -270,7 +292,7 @@ participant_user_pool_response=$(
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Participant Cognito user pool creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 participant_user_pool_id=$(echo "$participant_user_pool_response" | jq -r '.UserPool.Id')
@@ -284,7 +306,7 @@ aws cognito-idp create-user-pool-domain \
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Participant Cognito user pool domain creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 participant_client_response=$(
@@ -302,7 +324,7 @@ participant_client_response=$(
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Participant Cognito user pool client update failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 participant_client_id=$(echo "$participant_client_response" | jq -r '.UserPoolClient.ClientId')
@@ -354,7 +376,7 @@ researcher_user_pool_response=$(
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Researcher Cognito user pool creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 researcher_user_pool_id=$(echo "$researcher_user_pool_response" | jq -r '.UserPool.Id')
@@ -368,7 +390,7 @@ aws cognito-idp create-user-pool-domain \
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Researcher Cognito user pool domain creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 researcher_client_response=$(
@@ -386,7 +408,7 @@ researcher_client_response=$(
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Researcher Cognito user pool client creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 researcher_client_id=$(echo "$researcher_client_response" | jq -r '.UserPoolClient.ClientId')
@@ -406,7 +428,7 @@ researcher_admin_response=$(
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}Researcher Cognito user creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 researcher_admin_id=$(echo "$researcher_admin_response" | jq -r '.User.Username')
@@ -427,7 +449,7 @@ logs_bucket_response=$(
 if [ $? -ne 0 ]; then
     echo "$logs_bucket_response"
     echo -e "${RED}S3 bucket creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo -e "Created S3 bucket ${BLUE}$logs_bucket_name${RESET}"
@@ -441,7 +463,7 @@ audio_bucket_response=$(
 if [ $? -ne 0 ]; then
     echo "$audio_bucket_response"
     echo -e "${RED}S3 bucket creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo -e "Created S3 bucket ${BLUE}$audio_bucket_name${RESET}"
@@ -455,7 +477,7 @@ static_bucket_response=$(
 if [ $? -ne 0 ]; then
     echo "$static_bucket_response"
     echo -e "${RED}S3 bucket creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo -e "Created S3 bucket ${BLUE}$static_bucket_name${RESET}"
@@ -489,14 +511,14 @@ else
             --tags Key=Project,Value=$project_name
     )
 
-    rds_secret_arn=$(echo "$rds_instance_response" | jq -r '.DBInstance.MasterUserSecret.SecretArn')
-    sed -i '' "s/\"secret_arn\": \"\"/\"secret_arn\": \"$rds_secret_arn\"/g" project-settings$suffix.json
-
     if [ $? -ne 0 ]; then
         echo "$rds_instance_response"
         echo -e "${RED}RDS instance creation failed${RESET}"
-        exit 1
+        # exit 1
     fi
+
+    rds_secret_arn=$(echo "$rds_instance_response" | jq -r '.DBInstance.MasterUserSecret.SecretArn')
+    sed -i '' "s/\"secret_arn\": \"\"/\"secret_arn\": \"$rds_secret_arn\"/g" project-settings$suffix.json
 
     echo -e "Created RDS instance ${BLUE}$rds_instance_identifier${RESET}"
 fi
@@ -518,7 +540,7 @@ cloudfront_origin_access_identity_response=$(
 if [ $? -ne 0 ]; then
     echo "$cloudfront_origin_access_identity_response"
     echo -e "${RED}Cloudfront origin access identity creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 cloudfront_origin_access_identity_id=$(echo "$cloudfront_origin_access_identity_response" | jq -r '.CloudFrontOriginAccessIdentity.Id')
@@ -547,13 +569,13 @@ static_bucket_put_policy_response=$(
         --policy "$static_bucket_policy"
 )
 
-echo -e "Put OAI policy on static bucket ${BLUE}$static_bucket_name${RESET}"
-
 if [ $? -ne 0 ]; then
     echo "$static_bucket_put_policy_response"
     echo -e "${RED}S3 bucket policy update failed${RESET}"
-    exit 1
+    # exit 1
 fi
+
+echo -e "Put OAI policy on static bucket ${BLUE}$static_bucket_name${RESET}"
 
 if [ "$BYO_WAF" = true ]; then
     echo -e "Using existing Web Application Firewall ${BLUE}$waf_id${RESET}"
@@ -634,56 +656,83 @@ else
     if [ $? -ne 0 ]; then
         echo "$waf_response"
         echo -e "${RED}WAF creation failed${RESET}"
-        exit 1
+        # exit 1
     fi
 
-    waf_id=$(echo "$waf_response" | jq -r '.WebACL.Id')
+    waf_id=$(echo "$waf_response" | jq -r '.Summary.ARN')  # TODO: Change to Arn
     sed -i '' "s/\"waf_id\": \"\"/\"waf_id\": \"$waf_id\"/g" project-settings$suffix.json
 
     echo -e "Created Web Application Firewall ${BLUE}$waf_id${RESET}"
 fi
 
 cloudfront_distribution_response=$(
-    aws cloudfront create-distribution \
+    aws cloudfront create-distribution-with-tags \
         --distribution-config "{
-            \"Origins\": {
-                \"Quantity\": 1,
+            \"DistributionConfig\": {
+                \"Aliases\": {
+                    \"Quantity\": 1,
+                    \"Items\": [
+                        \"$domain_name\"
+                    ]
+                },
+                \"CallerReference\": \"$project_name\",
+                \"Comment\": \"$project_name\",
+                \"DefaultCacheBehavior\": {
+                    \"AllowedMethods\": {
+                        \"Quantity\": 2,
+                        \"Items\": [
+                            \"GET\",
+                            \"HEAD\"
+                        ],
+                        \"CachedMethods\": {
+                            \"Quantity\": 2,
+                            \"Items\": [
+                                \"GET\",
+                                \"HEAD\"
+                            ]
+                        }
+                    },
+                    \"CachePolicyId\": \"658327ea-f89d-4fab-a63d-7e88639e58f6\",
+                    \"TargetOriginId\": \"$static_bucket_name\",
+                    \"ViewerProtocolPolicy\": \"redirect-to-https\"
+                },
+                \"DefaultRootObject\": \"index.html\",
+                \"Enabled\": true,
+                \"Origins\": {
+                    \"Quantity\": 1,
+                    \"Items\": [
+                        {
+                            \"Id\": \"$static_bucket_name\",
+                            \"DomainName\": \"$static_bucket_name.s3.$aws_region.amazonaws.com\",
+                            \"S3OriginConfig\": {
+                                \"OriginAccessIdentity\": \"origin-access-identity/cloudfront/$cloudfront_origin_access_identity_id\"
+                            }
+                        }
+                    ]
+                },
+                \"ViewerCertificate\": {
+                    \"ACMCertificateArn\": \"$certificate_arn\",
+                    \"SSLSupportMethod\": \"sni-only\",
+                    \"MinimumProtocolVersion\": \"TLSv1.2_2021\"
+                },
+                \"WebACLId\": \"$waf_id\"
+            },
+            \"Tags\": {
                 \"Items\": [
                     {
-                        \"Id\": \"$static_bucket_name\",
-                        \"DomainName\": \"$static_bucket_name.s3.$aws_region.amazonaws.com\",
-                        \"S3OriginConfig\": {
-                            \"OriginAccessIdentity\": \"origin-access-identity/cloudfront/$cloudfront_origin_access_identity_id\"
-                        }
+                        \"Key\": \"Project\",
+                        \"Value\": \"$project_name\"
                     }
                 ]
-            },
-            \"DefaultCacheBehavior\": {
-                \"TargetOriginId\": \"$static_bucket_name\",
-                \"ViewerProtocolPolicy\": \"redirect-to-https\"
-            },
-            \"WebACLId\": \"$waf_id\",
-            \"Aliases\": {
-                \"Quantity\": 1,
-                \"Items\": [
-                    \"$domain_name\"
-                ]
-            },
-            \"ViewerCertificate\": {
-                \"ACMCertificateArn\": \"$acm_certificate_arn\",
-                \"SSLSupportMethod\": \"sni-only\",
-                \"MinimumProtocolVersion\": \"TLSv1.2_2021\"
             }
         }" \
-        --origin-domain-name "$static_bucket_name.s3.$aws_region.amazonaws.com" \
-        --default-root-object "index.html" \
         --region $aws_region
 )
 
 if [ $? -ne 0 ]; then
     echo "$cloudfront_distribution_response"
     echo -e "${RED}Cloudfront distribution creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 cloudfront_distribution_id=$(echo "$cloudfront_distribution_response" | jq -r '.Distribution.Id')
@@ -698,55 +747,54 @@ echo
 echo -e "${CYAN}[Secrets Manager Setup]${RESET}"
 
 # Create an empty development secret on Secrets Manager
-dev_secret_response=$(
+secret_response=$(
     aws secretsmanager create-secret \
-        --name "$dev_secret_name" \
+        --name "$secret_name" \
         --secret-string "{
             \"APP_SYNC_HOST\": \"\",
+            \"APPSYNC_ACCESS_KEY\": \"\",
+            \"APPSYNC_SECRET_KEY\": \"\",
+            \"AWS_AUDIO_FILE_BUCKET\": \"$audio_bucket_name\",
+            \"AWS_CLOUDFRONT_DOMAIN_NAME\": \"$frontend_endpoint\",
+            \"AWS_DB_INSTANCE_IDENTIFIER\": \"$rds_instance_identifier\",
+            \"AWS_DB_SECRET_ARN\": \"$rds_secret_arn\",
+            \"AWS_LOG_GROUP_NAME\": \"/aws/lambda/$project_name\",
+            \"AWS_LOG_PATTERN\": \"$backend_domain\",
             \"AWS_TABLENAME_USER\": \"\",
             \"AWS_TABLENAME_TAP\": \"\",
             \"AWS_TABLENAME_AUDIO_FILE\": \"\",
             \"AWS_TABLENAME_AUDIO_TAP\": \"\",
-            \"APPSYNC_ACCESS_KEY\": \"\",
-            \"APPSYNC_SECRET_KEY\": \"\",
-            \"AWS_AUDIO_FILE_BUCKET\": \"\",
-            \"COGNITO_PARTICIPANT_CLIENT_ID\": \"\",
-            \"COGNITO_PARTICIPANT_CLIENT_SECRET\": \"\",
-            \"COGNITO_PARTICIPANT_DOMAIN\": \"\",
-            \"COGNITO_PARTICIPANT_REGION\": \"\",
-            \"COGNITO_PARTICIPANT_USER_POOL_ID\": \"\",
-            \"TM_FSTRING\": \"\",
-            \"AWS_DB_INSTANCE_IDENTIFIER\": \"\",
-            \"FLASK_DB\": \"\",
-            \"COGNITO_PARTICIPANT_REDIRECT_URI\": \"\",
-            \"COGNITO_PARTICIPANT_LOGOUT_URI\": \"\",
-            \"AWS_CLOUDFRONT_DOMAIN_NAME\": \"\",
-            \"FITBIT_CLIENT_ID\": \"\",
-            \"FITBIT_CLIENT_SECRET\": \"\",
-            \"LAMBDA_FUNCTION_NAME\": \"\",
-            \"FITBIT_REDIRECT_URI\": \"\",
-            \"FLASK_SECRET_KEY\": \"\",
-            \"AWS_LOG_GROUP_NAME\": \"\",
-            \"SECRET_KEY\": \"\",
-            \"AWS_LOG_PATTERN\": \"\",
-            \"COGNITO_RESEARCHER_CLIENT_ID\": \"\",
-            \"COGNITO_RESEARCHER_CLIENT_SECRET\": \"\",
-            \"COGNITO_RESEARCHER_DOMAIN\": \"\",
-            \"COGNITO_RESEARCHER_REGION\": \"\",
-            \"COGNITO_RESEARCHER_USER_POOL_ID\": \"\",
-            \"COGNITO_RESEARCHER_REDIRECT_URI\": \"\",
-            \"COGNITO_RESEARCHER_LOGOUT_URI\": \"\"
+            \"COGNITO_PARTICIPANT_CLIENT_ID\": \"$participant_client_id\",
+            \"COGNITO_PARTICIPANT_CLIENT_SECRET\": \"$participant_client_secret\",
+            \"COGNITO_PARTICIPANT_DOMAIN\": \"$participant_user_pool_domain\",
+            \"COGNITO_PARTICIPANT_LOGOUT_URI\": \"$frontend_endpoint/login\",
+            \"COGNITO_PARTICIPANT_REDIRECT_URI\": \"$backend_endpoint/auth/participant/callback\",
+            \"COGNITO_PARTICIPANT_REGION\": \"$aws_region\",
+            \"COGNITO_PARTICIPANT_USER_POOL_ID\": \"$participant_user_pool_id\",
+            \"FITBIT_CLIENT_ID\": \"$fitbit_client_id\",
+            \"FITBIT_CLIENT_SECRET\": \"$fitbit_client_secret\",
+            \"FITBIT_REDIRECT_URI\": \"$backend_endpoint/api/fitbit/callback\",
+            \"FLASK_SECRET_KEY\": \"$flask_secret_key\",
+            \"LAMBDA_FUNCTION_NAME\": \"$wearable_data_retrieval_function_name\",
+            \"TM_FSTRING\": \"$project_name-{api_name}-tokens\",
+            \"COGNITO_RESEARCHER_CLIENT_ID\": \"$researcher_client_id\",
+            \"COGNITO_RESEARCHER_CLIENT_SECRET\": \"$researcher_client_secret\",
+            \"COGNITO_RESEARCHER_DOMAIN\": \"$researcher_user_pool_domain\",
+            \"COGNITO_RESEARCHER_LOGOUT_URI\": \"$frontend_endpoint/coordinator/login\"
+            \"COGNITO_RESEARCHER_REDIRECT_URI\": \"$backend_endpoint/auth/researcher/callback\",
+            \"COGNITO_RESEARCHER_REGION\": \"$aws_region\",
+            \"COGNITO_RESEARCHER_USER_POOL_ID\": \"$researcher_user_pool_id\",
         }" \
         --tags Key=Project,Value=$project_name
 )
 
 if [ $? -ne 0 ]; then
-    echo "$dev_secret_response"
+    echo "$secret_response"
     echo -e "${RED}development secret creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
-echo -e "Created development secret ${BLUE}$dev_secret_name${RESET}"
+echo -e "Created development secret ${BLUE}$secret_name${RESET}"
 
 # Create an empty tokens secret on Secrets Manager
 tokens_secret_response=$(
@@ -758,7 +806,7 @@ tokens_secret_response=$(
 if [ $? -ne 0 ]; then
     echo "$tokens_secret_response"
     echo -e "${RED}tokens secret creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo -e "Created tokens secret ${BLUE}$tokens_secret_name${RESET}"
@@ -773,78 +821,96 @@ aws ecr get-login-password | docker login --username AWS --password-stdin $aws_a
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}ECR login failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo "Logged in to ECR"
 
+cp -r shared functions/wearable_data_retrieval/shared
+
 docker build \
     --platform linux/amd64 \
-    -t $wearable_data_retrieval_ecr_repo_name \
+    -t $wearable_data_retrieval_ecr_repo_name\:latest \
     functions/wearable_data_retrieval
+
+rm -rf functions/wearable_data_retrieval/shared
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}wearable data retrieval container creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
-echo -e "Created wearable data retrieval image ${BLUE}$wearable_data_retrieval_ecr_repo_name${RESET}"
+echo -e "Created wearable data retrieval image ${BLUE}$wearable_data_retrieval_ecr_repo_name\:latest${RESET}"
 
-docker push $wearable_data_retrieval_ecr_repo_name
+wearable_data_retrieval_create_repo_response=$(
+    aws ecr create-repository \
+        --repository-name "$wearable_data_retrieval_image_name" \
+        --image-scanning-configuration scanOnPush=true
+)
+
+if [ $? -ne 0 ]; then
+    echo "$wearable_data_retrieval_create_repo_response"
+    echo -e "${RED}wearable data retrieval repository creation failed${RESET}"
+    # exit 1
+fi
+
+echo -e "Created wearable data retrieval repository ${BLUE}$wearable_data_retrieval_ecr_repo_name${RESET}"
+
+docker push $wearable_data_retrieval_ecr_repo_name\:latest
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}wearable data retrieval container push failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo -e "Pushed wearable data retrieval container to ECR ${BLUE}$wearable_data_retrieval_ecr_repo_name${RESET}"
 
 wearable_data_retrieval_policy="{
-    "Version": "2012-10-17",
-    "Statement": [
+    \"Version\": \"2012-10-17\",
+    \"Statement\": [
         {
-            "Effect": "Allow",
-            "Action": [
-                "secretsmanager:ListSecrets",
-                "secretsmanager:DescribeSecret",
-                "secretsmanager:GetSecretValue",
-                "secretsmanager:PutSecretValue",
-                "secretsmanager:UpdateSecret"
+            \"Effect\": \"Allow\",
+            \"Action\": [
+                \"secretsmanager:ListSecrets\",
+                \"secretsmanager:DescribeSecret\",
+                \"secretsmanager:GetSecretValue\",
+                \"secretsmanager:PutSecretValue\",
+                \"secretsmanager:UpdateSecret\"
             ],
-            "Resource": [
-                "arn:aws:secretsmanager:$aws_region:$aws_account_id:secret:$tokens_secret_name",
-                "arn:aws:secretsmanager:$aws_region:$aws_account_id:secret:$secret_name"
+            \"Resource\": [
+                \"arn:aws:secretsmanager:"$aws_region":"$aws_account_id":secret:"$tokens_secret_name"\",
+                \"arn:aws:secretsmanager:"$aws_region":"$aws_account_id":secret:"$secret_name"\"
             ]
         },
         {
-            "Effect": "Allow",
-            "Action": [
-                "secretsmanager:ListSecrets"
+            \"Effect\": \"Allow\",
+            \"Action\": [
+                \"secretsmanager:ListSecrets\"
             ],
-            "Resource": [
-                "arn:aws:secretsmanager:$aws_region:$aws_account_id:secret:*"
+            \"Resource\": [
+                \"arn:aws:secretsmanager:"$aws_region":"$aws_account_id":secret:*\"
             ]
         },
         {
-            "Effect": "Allow",
-            "Action": [
-                "s3:PutObject"
+            \"Effect\": \"Allow\",
+            \"Action\": [
+                \"s3:PutObject\"
             ],
-            "Resource": "arn:aws:s3:::$logs_bucket_name"
+            \"Resource\": \"arn:aws:s3:::"$logs_bucket_name"\"
         },
         {
-            "Effect": "Allow",
-            "Action": "logs:CreateLogGroup",
-            "Resource": "arn:aws:logs:$aws_region:$aws_account_id:*"
+            \"Effect\": \"Allow\",
+            \"Action\": \"logs:CreateLogGroup\",
+            \"Resource\": \"arn:aws:logs:"$aws_region":"$aws_account_id":*\"
         },
         {
-            "Effect": "Allow",
-            "Action": [
-                "logs:CreateLogStream",
-                "logs:PutLogEvents"
+            \"Effect\": \"Allow\",
+            \"Action\": [
+                \"logs:CreateLogStream\",
+                \"logs:PutLogEvents\"
             ],
-            "Resource": [
-                "arn:aws:logs:$aws_region:$aws_account_id:log-group:/aws/lambda/$wearable_data_retrieval_function_name:*"
+            \"Resource\": [
+                \"arn:aws:logs:"$aws_region":"$aws_account_id":log-group:/aws/lambda/"$wearable_data_retrieval_function_name":*\"
             ]
         }
     ]
@@ -860,43 +926,61 @@ wearable_data_retrieval_policy_response=$(
 if [ $? -ne 0 ]; then
     echo "$wearable_data_retrieval_policy_response"
     echo -e "${RED}wearable data retrieval policy creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
+
+wearable_data_retrieval_policy_arn=$(echo "$wearable_data_retrieval_policy_response" | jq -r '.Policy.Arn')
 
 echo -e "Created wearable data retrieval policy ${BLUE}$wearable_data_retrieval_policy_name${RESET}"
 
+wearable_data_retrieval_role_policy="{
+    \"Version\": \"2012-10-17\",
+    \"Statement\": [
+        {
+            \"Effect\": \"Allow\",
+            \"Principal\": {
+                \"Service\": \"lambda.amazonaws.com\"
+            },
+            \"Action\": \"sts:AssumeRole\"
+        }
+    ]
+}"
+
 wearable_data_retrieval_role_response=$(
-    aws iam create-role --role-name "$wearable_data_retrieval_role_name"
+    aws iam create-role \
+        --role-name "$wearable_data_retrieval_role_name" \
+        --assume-role-policy-document "$wearable_data_retrieval_role_policy" \
+        --tags Key=Project,Value=$project_name
 )
 
 if [ $? -ne 0 ]; then
     echo "$wearable_data_retrieval_role_response"
     echo -e "${RED}wearable data retrieval role creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
-wearable_data_retrieval_put_ecr_role_response=$(
-    aws iam put-role-policy \
+wearable_data_retrieval_attach_ecr_role_response=$(
+    aws iam attach-role-policy \
         --role-name "$wearable_data_retrieval_role_name" \
-        --policy-name AmazonEC2ContainerRegistryPullOnly
+        --policy-arn "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
 )
 
 if [ $? -ne 0 ]; then
-    echo "$wearable_data_retrieval_put_ecr_role_response"
-    echo -e "${RED}wearable data retrieval put ecr role failed${RESET}"
-    exit 1
+    echo "$wearable_data_retrieval_attach_ecr_role_response"
+    echo -e "${RED}wearable data retrieval attach ecr role failed${RESET}"
+    # exit 1
 fi
 
-wearable_data_retrieval_put_execution_role_response=$(
-    aws iam put-role-policy \
+wearable_data_retrieval_attach_execution_role_response=$(
+    aws iam attach-role-policy \
         --role-name "$wearable_data_retrieval_role_name" \
-        --policy-name "$wearable_data_retrieval_policy_name"
+        --policy-arn "$wearable_data_retrieval_policy_arn"
 )
 
 if [ $? -ne 0 ]; then
-    echo "$wearable_data_retrieval_put_execution_role_response"
-    echo -e "${RED}wearable data retrieval put execution role failed${RESET}"
-    exit 1
+    echo "$wearable_data_retrieval_attach_execution_role_response"
+    echo -e "${RED}wearable data retrieval attach execution role failed${RESET}"
+    # exit 1
 fi
 
 wearable_data_retrieval_role_arn=$(
@@ -909,16 +993,16 @@ wearable_data_retrieval_role_arn=$(
 if [ $? -ne 0 ]; then
     echo "$wearable_data_retrieval_role_arn"
     echo -e "${RED}wearable data retrieval role arn retrieval failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo -e "Created wearable data retrieval role ${BLUE}$wearable_data_retrieval_role_name${RESET}"
 
-lambda_function_response=$(
+wearable_data_retrieval_lambda_function_response=$(
     aws lambda create-function \
         --function-name "$wearable_data_retrieval_function_name" \
         --role "$wearable_data_retrieval_role_arn" \
-        --image-uri "$wearable_data_retrieval_ecr_repo_name" \
+        --code ImageUri="$wearable_data_retrieval_ecr_repo_name":latest \
         --package-type Image \
         --timeout 300 \
         --memory-size 1024 \
@@ -933,12 +1017,34 @@ lambda_function_response=$(
 )
 
 if [ $? -ne 0 ]; then
-    echo "$lambda_function_response"
+    echo "$wearable_data_retrieval_lambda_function_response"
     echo -e "${RED}wearable data retrieval lambda function creation failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo -e "Created wearable data retrieval lambda function ${BLUE}$wearable_data_retrieval_function_name${RESET}"
+
+########################################################
+# App Setup                                            #
+########################################################
+echo
+echo -e "${CYAN}[App Setup]${RESET}"
+
+# 1. Build docker image
+# 2. Create ECR repo
+# 3. Push image to ECR
+# 4. Create role
+# 5. Attach policies to role
+# 6. Create function
+# 7. Create API Gateway
+# 8. Create keep warm role
+# 9. Create keep warm event rule
+# 10. Create keep warm event target
+# 11. Create keep warm rule policy
+# 12. Create keep warm role policy
+# 13. Create keep warm role policy attachment
+# 14. Create keep warm event target policy
+# 15. Create keep warm event target policy attachment
 
 ########################################################
 # Frontend setup                                       #
@@ -952,7 +1058,7 @@ npm install &> /dev/null
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}frontend setup failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo -e "Installed frontend dependencies"
@@ -961,7 +1067,7 @@ npx tailwindcss -i ./src/index.css -o ./src/output.css &> /dev/null
 
 if [ $? -ne 0 ]; then
     echo -e "${RED}tailwindcss setup failed${RESET}"
-    exit 1
+    # exit 1
 fi
 
 echo -e "Compiled tailwindcss"
