@@ -43,17 +43,9 @@ export const AboutSleepTemplatesEdit = () => {
   const [name, setName] = useState<string>("");
   const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
-  const previewRef = createRef<HTMLDivElement>();
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (previewRef.current) {
-      // TODO: Sanitize
-      previewRef.current.innerHTML = text;
-    }
-  }, [text]);
 
   useEffect(() => {
     const fetchPrefill = async () => {
