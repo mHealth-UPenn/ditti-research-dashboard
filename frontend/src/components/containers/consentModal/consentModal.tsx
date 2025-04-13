@@ -18,7 +18,7 @@
 import { FC, memo } from "react";
 import { Button } from "../../buttons/button";
 import { ConsentModalProps } from "./consentModal.types";
-import { QuillView } from "../../quill/quillView";
+import { QuillView } from "../quillView";
 
 export const ConsentModal: FC<ConsentModalProps> = memo(
   ({ isOpen, onAccept, onDeny, onClose, contentHtml }) => {

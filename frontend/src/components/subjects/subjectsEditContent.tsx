@@ -38,7 +38,7 @@ import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubj
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
-import { QuillView } from "../quill/quillView";
+import { QuillView } from "../containers/quillView";
 import { SubjectsEditContentProps } from "./subjects.types";
 
 /**
