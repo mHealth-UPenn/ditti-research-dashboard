@@ -68,6 +68,7 @@ aws configure
 aws_access_key_id=$(aws configure get aws_access_key_id)
 aws_secret_access_key=$(aws configure get aws_secret_access_key)
 aws_region=$(aws configure get region)
+aws_account_id=$(aws sts get-caller-identity --query "Account" --output text)
 
 ########################################################
 # Project setup                                       #
@@ -505,6 +506,15 @@ else
     echo -e "${RED}shared directory not found${RESET}"
     exit 1
 fi
+
+aws ecr get-login-password | docker login --username AWS --password-stdin $aws_account_id.dkr.ecr.us-east-1.amazonaws.com
+
+if [ $? -ne 0 ]; then
+    echo -e "${RED}ECR login failed${RESET}"
+    exit 1
+fi
+
+echo "Logged in to ECR"
 
 docker build \
     --platform linux/amd64 \
