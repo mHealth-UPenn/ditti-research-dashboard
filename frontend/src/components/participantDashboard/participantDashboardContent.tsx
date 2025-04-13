@@ -152,10 +152,9 @@ export const ParticipantDashboardContent = () => {
     // Build a combined block of all unconsented study info
     let content = "";
     unconsentedStudies.forEach(study => {
-      // TODO: Sanitize
-      const sanitized = study.consentInformation || ""
-        || defaultConsentContentText;    
-      content += `<h4>${study.studyName}</h4><div>${sanitized}</div>`;
+      // This gets sanitized in QuillView
+      const consentText = study.consentInformation || defaultConsentContentText || "";    
+      content += `<h4>${study.studyName}</h4><div>${consentText}</div>`;
     });
     return content;
   }, [studies, unconsentedStudies]);
