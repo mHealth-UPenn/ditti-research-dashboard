@@ -16,7 +16,6 @@
  */
 
 import React from "react";
-import { Study } from "../../types/api";
 import { differenceInDays } from "date-fns";
 import { CardContentRow } from "../cards/cardContentRow";
 import { ActiveIcon } from "../icons/activeIcon";
