@@ -38,6 +38,7 @@ import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubj
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { QuillView } from "../quill/quillView";
 
 
 /**
@@ -77,7 +78,6 @@ export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
   const [formIsValid, setFormIsValid] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const previewRef = createRef<HTMLDivElement>();
   const dittiIdInputRef = createRef<HTMLInputElement>();
 
   const { studiesLoading, study } = useStudies();
@@ -170,14 +170,6 @@ export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     temporaryPassword,
   ]);
 
-  // Sanitize the about sleep template and set the preview
-  useEffect(() => {
-    if (previewRef.current && information !== "") {
-      // TODO: Sanitize
-      previewRef.current.innerHTML = information;
-    }
-  }, [previewRef]);
-
   // Load any data to prefill the form with, if any
   useEffect(() => {
     if (studySubject) {
@@ -215,19 +207,6 @@ export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
     // when all promises finish, hide the loader
     Promise.all([fetchTemplates]).then(() => setLoading(false));
   }, []);
-
-  // Update the preview when an about sleep template is selected
-  useEffect(() => {
-    if (previewRef.current) {
-      if (aboutSleepTemplateSelected.text) {
-        // TODO: Sanitize
-        previewRef.current.innerHTML = aboutSleepTemplateSelected.text
-      } else {
-        // TODO: Sanitize
-        previewRef.current.innerHTML = information
-      }
-    }
-  }, [aboutSleepTemplateSelected]);
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating a new entry, else make a request to edit
@@ -498,7 +477,10 @@ export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
         </FormRow>
         <FormTitle className="mt-6">About Sleep Template Preview</FormTitle>
         <FormRow>
-          <div ref={previewRef} className="px-4" />
+          <QuillView 
+            className="px-4"
+            content={aboutSleepTemplateSelected.text || information} 
+          />
         </FormRow>
       </Form>
 

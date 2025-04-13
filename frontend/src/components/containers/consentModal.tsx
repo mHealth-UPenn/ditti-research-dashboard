@@ -18,6 +18,7 @@
 import { FC, memo } from "react";
 import { Button } from "../buttons/button";
 import { ConsentModalProps } from "../../interfaces";
+import { QuillView } from "../quill/quillView";
 
 export const ConsentModal: FC<ConsentModalProps> = memo(
   ({ isOpen, onAccept, onDeny, onClose, contentHtml }) => {
@@ -68,12 +69,9 @@ export const ConsentModal: FC<ConsentModalProps> = memo(
           </div>
 
           {/* Modal body */}
-          <div
-            className="overflow-auto text-black text-sm ql-modal ql-editor"
-            dangerouslySetInnerHTML={{
-              // TODO: Sanitize
-              __html: contentHtml
-            }}
+          <QuillView
+            className="overflow-auto text-black text-sm"
+            content={contentHtml}
             style={{ padding: "0 2rem" }}
           />
 

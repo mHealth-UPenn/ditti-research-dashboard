@@ -30,6 +30,7 @@ import { SmallLoader } from "../loader";
 import { ConsentModal } from "../containers/consentModal";
 import { makeRequest } from "../../utils";
 import { IParticipantStudy } from "../../interfaces";
+import { QuillView } from "../quill/quillView";
 
 const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
 
@@ -259,14 +260,12 @@ export const ParticipantDashboardContent = () => {
             <Title>Why are we collecting your data?</Title>
           </CardContentRow>
           <CardContentRow>
-            <span
-              className="ql-editor ql-modal text-sm"
-              dangerouslySetInnerHTML={{
-                // TODO: Sanitize
-                __html: studies.length > 0
-                  ? (studies[0].dataSummary || "No data summary available.")
-                  : "No data summary available."
-              }} />
+            <QuillView
+              className="text-sm"
+              content={studies.length > 0
+                ? (studies[0].dataSummary || "No data summary available.")
+                : "No data summary available."
+              } />
           </CardContentRow>
           <CardContentRow>
             <Title>Manage my data</Title>
