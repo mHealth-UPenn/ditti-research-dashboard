@@ -531,13 +531,17 @@ def study_create(account):
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
-            study.consent_information = sanitizer.sanitize(
-                data["consentInformation"])
+            # TODO: Sanitize
+            # study.consent_information = sanitizer.sanitize(
+            #     data["consentInformation"])
+            study.consent_information = data["consentInformation"]
             del data["consentInformation"]
         except KeyError:
             pass
         try:
-            study.data_summary = sanitizer.sanitize(data["dataSummary"])
+            # TODO: Sanitize
+            # study.data_summary = sanitizer.sanitize(data["dataSummary"])
+            study.data_summary = data["dataSummary"]
             del data["dataSummary"]
         except KeyError:
             pass
@@ -603,13 +607,17 @@ def study_edit(account):
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
-            study.consent_information = sanitizer.sanitize(
-                data["consentInformation"])
+            # TODO: Sanitize
+            # study.consent_information = sanitizer.sanitize(
+            #     data["consentInformation"])
+            study.consent_information = data["consentInformation"]
             del data["consentInformation"]
         except KeyError:
             pass
         try:
-            study.data_summary = sanitizer.sanitize(data["dataSummary"])
+            # TODO: Sanitize
+            # study.data_summary = sanitizer.sanitize(data["dataSummary"])
+            study.data_summary = data["dataSummary"]
             del data["dataSummary"]
         except KeyError:
             pass
@@ -1377,7 +1385,9 @@ def about_sleep_template_create(account):
         data = request.json["create"]
         about_sleep_template = AboutSleepTemplate()
 
-        data["text"] = sanitizer.sanitize(data["text"])
+        # TODO: Sanitize
+        # data["text"] = sanitizer.sanitize(data["text"])
+        data["text"] = data["text"]
         populate_model(about_sleep_template, data)
         db.session.add(about_sleep_template)
         db.session.commit()
@@ -1433,7 +1443,9 @@ def about_sleep_template_edit(account):
         )
 
         try:
-            data["text"] = sanitizer.sanitize(data["text"])
+            # TODO: Sanitize
+            # data["text"] = sanitizer.sanitize(data["text"])
+            data["text"] = data["text"]
         except KeyError:
             pass
 
