@@ -396,3 +396,16 @@ class TestResearcherAuthController:
                     "user@example.com", "NewPassword1!")
 
         assert response == mock_success_response
+
+    def test_get_login_url(self, app, auth_controller):
+        """Test getting the login URL."""
+        with app.app_context():
+            # Override the default values set in the real app
+            with patch("backend.auth.controllers.base.current_app") as mock_current_app:
+                # In the implementation, it checks CORS_ORIGINS for this value
+                mock_current_app.config = {
+                    "CORS_ORIGINS": "http://test-frontend"
+                }
+                login_url = auth_controller.get_login_url()
+
+        assert login_url == "http://test-frontend/coordinator/login"

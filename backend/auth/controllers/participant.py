@@ -48,6 +48,14 @@ class ParticipantAuthController(AuthControllerBase):
         elevated = request.args.get("elevated") == "true"
         return "openid" + (" aws.cognito.signin.user.admin" if elevated else "")
 
+    def get_login_url(self):
+        """Get the login URL.
+
+        Returns:
+            str: The login URL
+        """
+        return f"{self.get_frontend_url()}/login"
+
     def get_or_create_user(self, token, userinfo):
         """Get or create study subject from token.
 
