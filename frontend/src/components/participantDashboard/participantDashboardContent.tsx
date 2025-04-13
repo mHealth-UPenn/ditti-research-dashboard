@@ -30,7 +30,7 @@ import { SmallLoader } from "../loader";
 import { ConsentModal } from "../containers/consentModal";
 import { makeRequest } from "../../utils";
 import { IParticipantStudy } from "../../interfaces";
-import { QuillView } from "../quill/quillView";
+import { QuillView } from "../containers/quillView";
 
 const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
 
