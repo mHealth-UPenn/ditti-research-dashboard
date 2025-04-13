@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, createRef } from "react";
+import { useState, useEffect } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 import { makeRequest } from "../../utils";
