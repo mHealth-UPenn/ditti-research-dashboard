@@ -39,3 +39,6 @@ zappa_settings.py
 .env.production
 
 data.json
+zappa_settings.json
+
+project-settings*.json

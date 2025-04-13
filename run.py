@@ -16,6 +16,10 @@
 
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # if the app is running in a production environment
 if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
     import json
