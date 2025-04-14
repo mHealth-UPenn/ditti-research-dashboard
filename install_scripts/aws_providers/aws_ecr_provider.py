@@ -11,6 +11,7 @@ from install_scripts.utils import Logger
 class AwsEcrProvider:
     __repo_fstring: str = "{account_id}.dkr.ecr.{region}.amazonaws.com"
 
+    # Unit test: self.ecr_client is initialized with expected arguments
     def __init__(
             self, *,
             logger: Logger,
@@ -23,6 +24,10 @@ class AwsEcrProvider:
         self.ecr_client = aws_client_provider.ecr_client
         self.aws_account_provider = aws_account_provider
 
+    # Unit test: self.ecr_client.get_authorization_token is called with expected arguments
+    # Unit test: self.ecr_client.get_authorization_token returns mocked value
+    # Unit test: RuntimeError is raised when no authorization data is found
+    # Unit test: self.logger.red is called once on ClientError
     def get_password(self) -> str:
         """Get the password for the ECR repository."""
         try:
@@ -36,6 +41,8 @@ class AwsEcrProvider:
             self.logger.red("Error getting password for ECR repository")
             sys.exit(1)
 
+    # Unit test: self.__repo_fstring.format is called with expected arguments
+    # Unit test: self.__repo_fstring.format returns mocked value
     def get_repo_uri(self) -> str:
         """Get the URL for the ECR repository."""
         return self.__repo_fstring.format(

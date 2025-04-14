@@ -11,6 +11,7 @@ class AWSClientProvider:
     cloudformation_client: Any
     ecr_client: Any
 
+    # Unit test: boto3.client is initialized with expected arguments
     def __init__(self):
         self.sts_client = boto3.client("sts")
         self.cognito_client = boto3.client("cognito-idp")
