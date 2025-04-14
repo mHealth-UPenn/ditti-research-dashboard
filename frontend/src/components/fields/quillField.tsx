@@ -20,6 +20,7 @@ import Quill, { QuillOptions } from "quill";
 import { debounce } from "lodash";
 import { QuillFieldProps } from "../../interfaces";
 import "quill/dist/quill.snow.css";
+import { sanitize_quill_html } from "../../utils/sanitize";
 
 const QuillField: React.FC<QuillFieldProps> = ({
   value,
@@ -46,7 +47,7 @@ const QuillField: React.FC<QuillFieldProps> = ({
         ["bold", "italic", "underline", "strike"], // Text formatting
         ["link", "blockquote", "code-block"], // Media and block formatting
         [{ list: "ordered" }, { list: "bullet" }], // Lists
-        [{ header: [1, 2, 3, false] }], // Headers
+        [{ header: [1, 2, 3, 4, 5, 6, false] }], // Headers
         ["clean"], // Clear formatting
       ],
     };
@@ -90,8 +91,7 @@ const QuillField: React.FC<QuillFieldProps> = ({
 
       // Set initial content in the editor, sanitizing it for safety
       if (value) {
-        // TODO: Sanitize
-        const safeHtml = value;
+        const safeHtml = sanitize_quill_html(value);
         quillInstanceRef.current.clipboard.dangerouslyPasteHTML(safeHtml);
       }
     }

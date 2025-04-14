@@ -1,5 +1,6 @@
 import "quill/dist/quill.snow.css";
 import { CSSProperties } from "react";
+import { sanitize_quill_html } from "../../utils/sanitize";
 
 interface QuillViewProps {
   content: string;
@@ -15,7 +16,7 @@ interface QuillViewProps {
 export const QuillView = ({ content, className = "", style }: QuillViewProps) => {
 
   // TODO: Sanitize content before using dangerouslySetInnerHTML
-  const htmlContent = { __html: content };
+  const htmlContent = { __html: sanitize_quill_html(content) };
 
   return (
     <div className={`ql-snow ${className}`} style={style}>
