@@ -16,11 +16,7 @@
  */
 
 import { PropsWithChildren } from "react";
-
-interface CardContentRowProps {
-  className?: string;
-}
-
+import { CardContentRowProps } from "./cards.types";
 
 export const CardContentRow = ({
   className = "",

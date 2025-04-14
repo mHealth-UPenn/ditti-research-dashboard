@@ -17,10 +17,10 @@
 
 import { useEffect, useState } from "react";
 import { getAccess } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { sub } from "date-fns";
 import { Card } from "../cards/card";
-import { ViewContainer } from "../containers/viewContainer";
+import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { CardContentRow } from "../cards/cardContentRow";
 import { Button } from "../buttons/button";
 import { Title } from "../text/title";

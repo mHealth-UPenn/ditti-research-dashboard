@@ -17,10 +17,14 @@
 
 import { useContext } from "react";
 import { DittiDataContext } from "../contexts/dittiDataContext";
-import { IDittiDataContext } from "../interfaces";
+import { DittiDataContextValue } from "../contexts/dittiDataContext.types";
 
 
-export const useDittiData = (): IDittiDataContext => {
+/**
+ * Hook for retrieving context data
+ * @returns The current ditti data context.
+ */
+export const useDittiData = (): DittiDataContextValue => {
   const context = useContext(DittiDataContext);
   if (!context) {
     // Do not throw error and return empty data to accommodate call on participant dashboard.

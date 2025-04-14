@@ -16,16 +16,11 @@
  */
 
 import { PropsWithChildren } from "react";
-
-interface FormTitleProps {
-  className?: string;
-}
-
-
+import { TextProps } from "./text.types";
 export const FormTitle = ({
   children,
   className
-}: PropsWithChildren<FormTitleProps>) => {
+}: PropsWithChildren<TextProps>) => {
   return (
     <p className={`text-xl pb-2 mb-8 w-full font-bold border-b border-light ${className}`}>{children}</p>
   );

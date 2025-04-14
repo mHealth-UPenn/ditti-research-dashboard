@@ -16,12 +16,12 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { Column, TableData } from "../table/table";
+import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
 import { getAccess, makeRequest } from "../../utils";
-import { Account, ResponseBody } from "../../interfaces";
-import { SmallLoader } from "../loader";
+import { Account, ResponseBody } from "../../types/api";
+import { SmallLoader } from "../loader/loader";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { Button } from "../buttons/button";

@@ -18,9 +18,9 @@
 import React, { createContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { makeRequest } from "../utils";
-import { AuthContextType } from "../interfaces";
+import { AuthContextValue } from "./authContext.types";
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 /**
  * AuthProvider component that wraps children with authentication context.
@@ -32,7 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [isParticipantLoading, setIsParticipantLoading] = useState<boolean>(true);
   const [isResearcherLoading, setIsResearcherLoading] = useState<boolean>(true);
   const [dittiId, setDittiId] = useState<string | null>(null);
-  const INITIAL_ACCOUNT_STATE: AuthContextType["accountInfo"] = {
+  const INITIAL_ACCOUNT_STATE: AuthContextValue["accountInfo"] = {
     msg: "",
     email: "",
     firstName: "",
@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     accountId: "",
     phoneNumber: undefined
   };
-  const [accountInfo, setAccountInfo] = useState<AuthContextType["accountInfo"]>(INITIAL_ACCOUNT_STATE);
+  const [accountInfo, setAccountInfo] = useState<AuthContextValue["accountInfo"]>(INITIAL_ACCOUNT_STATE);
   const navigate = useNavigate();
 
   const resetAccountInfo = useCallback(() => {

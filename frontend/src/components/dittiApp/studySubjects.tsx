@@ -16,7 +16,6 @@
  */
 
 import React from "react";
-import { Study } from "../../interfaces";
 import { add, differenceInDays, isWithinInterval, sub } from "date-fns";
 import { CardContentRow } from "../cards/cardContentRow";
 import { ActiveIcon } from "../icons/activeIcon";
@@ -25,18 +24,8 @@ import { useDittiData } from "../../hooks/useDittiData";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { Link } from "react-router-dom";
 import { getEnrollmentInfoForStudy } from "../../utils";
-import { SmallLoader } from "../loader";
-
-
-/**
- * @property {Study} study - The study to display subjects for.
- * @property {boolean} canViewTaps - Whether the logged in coordinator can view tapping data.
- */
-interface StudySubjectsProps {
-  study: Study;
-  canViewTaps: boolean;
-}
-
+import { SmallLoader } from "../loader/loader";
+import { StudySubjectsProps } from "./dittiApp.types";
 
 export const StudySubjects: React.FC<StudySubjectsProps> = ({
   study,

@@ -14,28 +14,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+import { ParticipantApi, ParticipantStudy } from "../types/api";
 
-import { PropsWithChildren } from "react";
-
-interface IViewContainerProps {
-  navbar?: boolean;
+/**
+ * Defines the context containing information about a study subject.
+ * @property studies - The studies the study subject is enrolled information and information about their enrollment.
+ * @property apis - The APIs the study subject granted access to and information about the access granted.
+ * @property studySubjectLoading - Whether data is being fetched from the database.
+ */
+export interface StudySubjectContextValue {
+  studies: ParticipantStudy[];
+  apis: ParticipantApi[];
+  studySubjectLoading: boolean;
+  refetch: () => Promise<void>;
 }
-
-
-export const ViewContainer = ({
-  navbar = true,
-  children
-}: PropsWithChildren<IViewContainerProps>) => {
-  const height =
-    navbar ?
-    "min-h-[calc(calc(100vh-8rem)-1px)] h-[calc(calc(100vh-8rem)-1px)]" :
-    "min-h-[calc(calc(100vh-4rem)-1px)] h-[calc(calc(100vh-4rem)-1px)]";
-
-  return (
-    <div className={`bg-extra-light ${height} px-4 py-16 md:px-6 overflow-scroll`}>
-      <div className="flex flex-wrap basis-[content]">
-        {children}
-      </div>
-    </div>
-  );
-};

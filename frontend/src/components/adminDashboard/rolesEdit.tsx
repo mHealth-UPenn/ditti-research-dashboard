@@ -23,9 +23,9 @@ import {
   Permission,
   ResponseBody,
   Role,
-} from "../../interfaces";
+} from "../../types/api";
 import { makeRequest } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
 import { FormSummary } from "../containers/forms/formSummary";
@@ -40,14 +40,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
-
-/**
- * The form's prefill
- */
-interface RolesPrefill {
-  name: string;
-  permissions: Permission[];
-}
+import { RolesFormPrefill } from "./adminDashboard.types";
 
 export const RolesEdit = () => {
   const [searchParams] = useSearchParams();
@@ -76,7 +69,7 @@ export const RolesEdit = () => {
     );
 
     // set any form prefill data
-    const prefill = getPrefill().then((prefill: RolesPrefill) => {
+    const prefill = getPrefill().then((prefill: RolesFormPrefill) => {
       setName(prefill.name);
       setPermissions(prefill.permissions);
     });
@@ -91,7 +84,7 @@ export const RolesEdit = () => {
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<RolesPrefill> => {
+  const getPrefill = async (): Promise<RolesFormPrefill> => {
     const id = roleId;
 
     // if editing an existing entry, return prefill data, else return empty data
@@ -105,7 +98,7 @@ export const RolesEdit = () => {
    * @param res - the response body
    * @returns - the form prefill data
    */
-  const makePrefill = (res: Role[]): RolesPrefill => {
+  const makePrefill = (res: Role[]): RolesFormPrefill => {
     const role = res[0];
 
     return {

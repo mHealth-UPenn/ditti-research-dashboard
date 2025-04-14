@@ -16,17 +16,17 @@
  */
 
 import { createRef, useEffect, useState } from "react";
-import { AccountDetails } from "../interfaces";
-import { AccountMenu } from "./accountMenu";
+import { AccountMenu } from "./accountMenu/accountMenu";
 import SettingsIcon from '@mui/icons-material/Settings';
 import CloseIcon from '@mui/icons-material/Close';
 import { useAuth } from "../hooks/useAuth";
+import { AccountModel } from "../types/models";
 
 /**
  * The Header component now functions as a functional component.
  */
 export const Header = () => {
-  const [accountDetails, setAccountDetails] = useState<AccountDetails>({} as AccountDetails);
+  const [accountDetails, setAccountDetails] = useState<AccountModel>({} as AccountModel);
   const [loading, setLoading] = useState<boolean>(true);
   const [showMenu, setShowMenu] = useState<boolean>(false);
   const accountMenuRef = createRef<HTMLDivElement>();

@@ -15,94 +15,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { TableControl } from "./tableControl";
 import { TableHeader } from "./tableHeader";
 import { TableRow } from "./tableRow";
 import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import { Button } from "../buttons/button";
+import { Header, Cell, TableProps } from "./table.types";
 
-/**
- * name: the name to display in the column header
- * searchable: whether the column is searchable
- * sortable: whether the column is sortable
- * width: the column's display width
- */
-export interface Column {
-  name: string;
-  searchable: boolean;
-  sortable: boolean;
-  width: number;
-}
-
-/**
- * ascending: unsorted, descending, or ascending
- * name: the header's name to display
- * sortable: whether the header's column is sortable
- * width: the column's display width
- */
-export interface Header {
-  ascending: -1 | 0 | 1;
-  name: string;
-  sortable: boolean;
-  width: number;
-}
-
-/**
- * A table cell to be passed to the table
- * contents: the contents of the cell to render
- * sortValue: the value to sort the cell on
- */
-export interface TableData {
-  contents: React.ReactElement | string;
-  sortValue?: string | number;
-  searchValue?: string;
-  paddingX?: number;
-  paddingY?: number;
-}
-
-/**
- * A table cell as it used for rendering purposes
- * contents: the contents of the cell to render
- * searchable: whether the cell is in a searchable column
- * searchValue: the value used for searching
- * sortable: whether the cell is in a searchable column
- * width: the column's display width
- */
-interface Cell {
-  contents: React.ReactElement | string;
-  searchable: boolean;
-  searchValue: string;
-  sortable: boolean;
-  sortValue: string | number;
-  width: number;
-  paddingX?: number;
-  paddingY?: number;
-}
-
-/**
- * columns: the table columns
- * control: a control element (e.g., a create button)
- * controlWidth: the control's display width
- * data: an array of rows that are arrays of table cells
- * includeControl: whether to show the control element
- * includeSearch: whether to show the search bar
- * paginationPer: the number of rows to show per page
- * sortDefault: the name of the default sort column
- */
-interface TableProps {
-  columns: Column[];
-  control: React.ReactElement;
-  controlWidth: number;
-  data: TableData[][];
-  includeControl: boolean;
-  includeSearch: boolean;
-  paginationPer: number;
-  sortDefault: string;
-}
-
-export const Table: React.FC<TableProps> = ({
+export const Table = ({
   columns,
   control,
   controlWidth,
@@ -111,7 +33,7 @@ export const Table: React.FC<TableProps> = ({
   includeSearch,
   paginationPer,
   sortDefault
-}) => {
+}: TableProps) => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState<string | null>(null);
   const [sort, setSort] = useState<{ name: string; ascending: 0 | 1 } | null>(null);

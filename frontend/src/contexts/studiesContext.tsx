@@ -17,24 +17,20 @@
 
 import { createContext, useState, useEffect, PropsWithChildren, useMemo } from "react";
 import { makeRequest } from "../utils";
-import { StudiesContextType, Study } from "../interfaces";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
 import { useNavbar } from "../hooks/useNavbar";
 import { useSearchParams } from "react-router-dom";
+import { StudiesContextValue, StudiesProviderProps } from "./studiesContext.types";
+import { Study } from "../types/api";
 
-export const StudiesContext = createContext<StudiesContextType | undefined>(undefined);
-
-interface IStudiesProviderProps {
-  app: 2 | 3;  // Ditti App, Wearable Dashboard
-}
-
+export const StudiesContext = createContext<StudiesContextValue | undefined>(undefined);
 
 // StudiesProvider component that wraps children with studies context.
 export function StudiesProvider({
   app,
   children
-}: PropsWithChildren<IStudiesProviderProps>) {
+}: PropsWithChildren<StudiesProviderProps>) {
   const [searchParams] = useSearchParams();
   const sid = searchParams.get("sid");
   const studyId = sid ? parseInt(sid) : 0;

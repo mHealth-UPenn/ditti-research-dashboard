@@ -15,17 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import { createContext, useState, PropsWithChildren, createRef } from "react";
-import { FlashMessageContextType, IFlashMessage } from "../interfaces";
-import { FlashMessage, FlashMessageVariant } from "../components/flashMessage/flashMessage";
+import { FlashMessageContextValue, FlashMessageModel } from "./flashMessagesContext.types";
+import { FlashMessage } from "../components/flashMessage/flashMessage";
+import { FlashMessageVariant } from "../components/flashMessage/flashMessage.types";
 
-export const FlashMessageContext = createContext<FlashMessageContextType | undefined>(undefined);
-
+export const FlashMessageContext = createContext<FlashMessageContextValue | undefined>(undefined);
 
 // FlashMessageContextProvider component that wraps children with studies context.
 export function FlashMessageContextProvider({
   children
 }: PropsWithChildren<unknown>) {
-  const [flashMessages, setFlashMessages] = useState<IFlashMessage[]>([]);
+  const [flashMessages, setFlashMessages] = useState<FlashMessageModel[]>([]);
 
   const flashMessage = (msg: React.ReactElement, variant: FlashMessageVariant) => {
     const updatedFlashMessages = [...flashMessages];

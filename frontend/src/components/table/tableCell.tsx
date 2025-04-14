@@ -16,13 +16,7 @@
  */
 
 import { PropsWithChildren } from "react";
-
-interface TableCellProps {
-  width: number;
-  paddingX?: number;
-  paddingY?: number;
-}
-
+import { TableCellProps } from "./table.types";
 
 export const TableCell = ({
   width,

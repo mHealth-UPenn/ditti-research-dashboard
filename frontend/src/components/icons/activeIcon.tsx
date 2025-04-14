@@ -15,11 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-interface ActiveIconProps {
-  active: boolean;
-  className?: string;
-}
-
+import { ActiveIconProps } from "./activeIcon.types";
 
 export const ActiveIcon = ({ active, className = "" }: ActiveIconProps) => {
   return (

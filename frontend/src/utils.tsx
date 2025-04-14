@@ -15,7 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { IStudySubjectDetails, ResponseBody } from "./interfaces";
+import { StudySubjectModel } from "./types/models";
+import { ResponseBody } from "./types/api";
 
 /**
  * Makes a request with specified options.
@@ -157,7 +158,7 @@ export const getAccess = async (
  * @returns { startsOn: Date, expiresOn: Date } - The study subject's enrollment start and end dates for the study.
  */
 export const getEnrollmentInfoForStudy = (
-  studySubject?: IStudySubjectDetails,
+  studySubject?: StudySubjectModel,
   studyId?: number,
 ) => {
   // Return default dates if study subject or study ID is not provided

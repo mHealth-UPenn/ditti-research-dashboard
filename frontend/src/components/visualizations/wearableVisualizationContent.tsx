@@ -18,7 +18,6 @@
 import { colors } from "../../colors";
 import { useVisualization } from "../../hooks/useVisualization";
 import { useWearableData } from "../../hooks/useWearableData";
-import { ISleepLevelClassic, ISleepLevelStages, IVisualizationProps } from "../../interfaces";
 import { Timeline } from "./timeline";
 import { AxisTop } from "@visx/axis";
 import { GridColumns } from '@visx/grid';
@@ -32,7 +31,9 @@ import { KeyboardArrowUp } from "@mui/icons-material";
 import { useEffect, useMemo, useState } from "react";
 import { useDittiData } from "../../hooks/useDittiData";
 import { BoutsTimeline } from "./boutsTimeline";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
+import { WearableVisualizationContentProps, Group, LevelGroupsStages, LevelGroupsClassic } from "./visualizations.types";
+import { SleepLevelClassic, SleepLevelStages } from "../../types/api";
 
 
 /**
@@ -56,32 +57,6 @@ const getTime = (date: Date) => {
   );
 }
 
-// Interface for sleep level ranges to display
-interface IGroup { start: number; stop: number; strokeDashArray: string; }
-
-// Sleep level data for stages data
-type ILevelGroupsStages = Record<ISleepLevelStages, IGroup[]>;
-
-// Sleep level data for classic data
-type ILevelGroupsClassic = Record<ISleepLevelClassic, IGroup[]>;
-
-
-/**
- * Props for the wearable visualization.
- * @property showDayControls: Whether to show buttons for controlling the start date of the visualization.
- * @property showTapsData: Whether to show taps data with wearable data.
- * @property dittiId: The Ditti ID of the participant whose data is being visualized.
- * @property horizontalPadding: Whether horizontal padding is added to the visualization. If it is not, then hide the
- *   first and last x axis ticks and add extra padding on top of each weekday visualization to make space for a label.
- */
-interface IWearableVisualizationContentProps extends IVisualizationProps {
-  showDayControls?: boolean;
-  showTapsData?: boolean;
-  dittiId?: string;
-  horizontalPadding?: boolean;
-}
-
-
 export const WearableVisualizationContent = ({
   marginTop,
   marginRight,
@@ -91,14 +66,14 @@ export const WearableVisualizationContent = ({
   showTapsData = false,
   dittiId,
   horizontalPadding = false,
-}: IWearableVisualizationContentProps) => {
+}: WearableVisualizationContentProps) => {
 
   // Sleep logs may straddle multiple timeline windows, so initialize one array
   // for each sleep stage that will contain data from all sleep logs
-  const [row1, setRow1] = useState<IGroup[]>([]);  // awake
-  const [row2, setRow2] = useState<IGroup[]>([]);  // rem (if available)
-  const [row3, setRow3] = useState<IGroup[]>([]);  // light or restless
-  const [row4, setRow4] = useState<IGroup[]>([]);  // deep or asleep
+  const [row1, setRow1] = useState<Group[]>([]);  // awake
+  const [row2, setRow2] = useState<Group[]>([]);  // rem (if available)
+  const [row3, setRow3] = useState<Group[]>([]);  // light or restless
+  const [row4, setRow4] = useState<Group[]>([]);  // deep or asleep
 
   const {
     width,
@@ -165,7 +140,7 @@ export const WearableVisualizationContent = ({
     filteredSleepLogs.forEach(sl => {
       // Create groups for stages data
       if (sl.type === "stages") {
-        const levelGroups: ILevelGroupsStages = {
+        const levelGroups: LevelGroupsStages = {
           wake: [],
           rem: [],
           light: [],
@@ -175,7 +150,7 @@ export const WearableVisualizationContent = ({
         sl.levels.forEach(l => {
           const dateTime = new Date(l.dateTime);
 
-          levelGroups[l.level as ISleepLevelStages].push({
+          levelGroups[l.level as SleepLevelStages].push({
             start: dateTime.getTime(),
             stop: dateTime.getTime() + l.seconds * 1000,
             strokeDashArray: "",
@@ -191,7 +166,7 @@ export const WearableVisualizationContent = ({
 
       // Else create groups for classic data
       else {
-        const levelGroups: ILevelGroupsClassic = {
+        const levelGroups: LevelGroupsClassic = {
           awake: [],
           restless: [],
           asleep: [],
@@ -200,7 +175,7 @@ export const WearableVisualizationContent = ({
         sl.levels.forEach(l => {
           const dateTime = new Date(l.dateTime);
 
-          levelGroups[l.level as ISleepLevelClassic].push({
+          levelGroups[l.level as SleepLevelClassic].push({
             start: dateTime.getTime(),
             stop: dateTime.getTime() + l.seconds * 1000,
             strokeDashArray: "1,1",

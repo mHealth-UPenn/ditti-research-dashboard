@@ -16,19 +16,7 @@
  */
 
 import { PropsWithChildren } from "react";
-
-export interface ButtonProps {
-  variant?: "primary" | "secondary" | "tertiary" | "danger" | "dangerDark" | "success" | "successDark";
-  size?: "sm" | "md" | "lg";
-  disabled?: boolean;
-  square?: boolean;
-  fullWidth?: boolean;
-  fullHeight?: boolean;
-  className?: string;
-  rounded?: boolean;
-  onClick?: () => void;
-}
-
+import { ButtonProps } from "./buttons.types";
 
 export const Button = ({
   variant = "primary",

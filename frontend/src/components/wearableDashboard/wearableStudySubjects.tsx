@@ -16,28 +16,17 @@
  */
 
 import React from "react";
-import { IStudySubjectDetails, Study } from "../../interfaces";
 import { differenceInDays } from "date-fns";
 import { CardContentRow } from "../cards/cardContentRow";
 import { ActiveIcon } from "../icons/activeIcon";
 import { LinkComponent } from "../links/linkComponent";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { Link } from "react-router-dom";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { getEnrollmentInfoForStudy } from "../../utils";
 import { useStudies } from "../../hooks/useStudies";
-
-
-/**
- * Props for wearable study subjects.
- * @property studyDetails: The details of study to list subjects for.
- * @property canViewWearableData: Whether the current user can view wearable data for the current study.
- */
-interface WearableStudySubjectsProps {
-  studyDetails: Study;
-  canViewWearableData: boolean;
-}
-
+import { StudySubjectModel } from "../../types/models";
+import { WearableStudySubjectsProps } from "./wearableDashboard.types";
 
 export function WearableStudySubjects({
   studyDetails,
@@ -49,7 +38,7 @@ export function WearableStudySubjects({
   // Get only study subjects with prefixes that equal the current study's prefix
   const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));
 
-  const getSubjectSummary = (subject: IStudySubjectDetails): React.ReactElement => {
+  const getSubjectSummary = (subject: StudySubjectModel): React.ReactElement => {
     const { expiresOn } = getEnrollmentInfoForStudy(subject, study?.id);
     const expiresOnDiff = differenceInDays(new Date(expiresOn), new Date());
 

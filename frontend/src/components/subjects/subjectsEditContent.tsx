@@ -17,10 +17,10 @@
 
 import { useState, useEffect, createRef, useRef } from "react";
 import { TextField } from "../fields/textField";
-import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
+import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 import { formatDateForInput, getEnrollmentInfoForStudy, makeRequest } from "../../utils";
 import { CheckField } from "../fields/checkField";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { SelectField } from "../fields/selectField";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -39,15 +39,7 @@ import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubj
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
-
-
-/**
- * @property {"ditti" | "wearable"} app - The app (Ditti or Wearable)
- */
-interface ISubjectsEditContentProps {
-  app: "ditti" | "wearable";
-}
-
+import { SubjectsEditContentProps } from "./subjects.types";
 
 /**
  * For validating Cognito password requirements.
@@ -56,8 +48,7 @@ const cognitoPasswordValidation = {
   isMinLen: false,  // At least 8 characters
 };
 
-
-export const SubjectsEditContent = ({ app }: ISubjectsEditContentProps) => {
+export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   const [searchParams] = useSearchParams();
   const dittiId = searchParams.get("dittiId") || "";
 
