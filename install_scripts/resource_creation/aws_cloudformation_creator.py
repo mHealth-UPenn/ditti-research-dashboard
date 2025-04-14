@@ -6,10 +6,10 @@ from botocore.exceptions import ClientError
 from install_scripts.aws_providers import AWSClientProvider
 from install_scripts.project_config.project_config_provider import ProjectConfigProvider
 from install_scripts.resource_managers.resource_manager_types import CloudFormationParameter
-from install_scripts.resource_managers.base_resource_manager import BaseResourceManager
+from install_scripts.resource_managers.base_resource_manager import BaseCreator
 from install_scripts.utils import Logger
 
-class AwsCloudformationResourceManager(BaseResourceManager):
+class AwsCloudformationCreator(BaseCreator):
     dev_template: str = "cloudformation/dev-environment.yml"
     prod_template: str = "cloudformation/prod-environment.yml"
 
@@ -33,10 +33,11 @@ class AwsCloudformationResourceManager(BaseResourceManager):
 
     def dev(self) -> None:
         """Run the provider in development mode."""
-        self.create_cloudformation_stack(
+        outputs = self.create_cloudformation_stack(
             template=self.dev_template,
             parameters=self.get_dev_parameters()
         )
+        self.set_dev_outputs(outputs)
 
     def staging(self) -> None:
         """Run the provider in staging mode."""
@@ -86,7 +87,7 @@ class AwsCloudformationResourceManager(BaseResourceManager):
             self, *,
             template: str,
             parameters: list[CloudFormationParameter],
-        ) -> None:
+        ) -> dict[str, str]:
         """Set up AWS resources using CloudFormation."""
         # Read CloudFormation template
         with open(template, "r") as f:
@@ -94,7 +95,7 @@ class AwsCloudformationResourceManager(BaseResourceManager):
 
         # Create CloudFormation stack
         try:
-            self.client.create_stack(
+            response = self.client.create_stack(
                 StackName=self.settings.stack_name,
                 TemplateBody=template_body,
                 Parameters=parameters,
@@ -106,7 +107,17 @@ class AwsCloudformationResourceManager(BaseResourceManager):
             waiter = self.client.get_waiter("stack_create_complete")
             waiter.wait(StackName=self.settings.stack_name)
 
-        except ClientError:
+            # Get stack outputs
+            response = self.client \
+                .describe_stacks(StackName=self.settings.stack_name)
+            outputs = {
+                output["OutputKey"]: output["OutputValue"]
+                for output in response["Stacks"][0]["Outputs"]
+            }
+
+            return outputs
+
+        except ClientError as e:
             traceback.print_exc()
             self.logger.red("AWS resource creation failed")
             sys.exit(1)

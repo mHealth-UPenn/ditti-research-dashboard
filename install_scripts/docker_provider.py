@@ -15,14 +15,14 @@ from install_scripts.aws_providers import (
     AwsAccountProvider,
     AwsEcrProvider
 )
-from install_scripts.project_settings_provider import ProjectSettingsProvider
+from install_scripts.project_config.project_config_provider import ProjectConfigProvider
 
 
 class DockerProvider(BaseResourceManager):
     def __init__(
             self, *,
             logger: Logger,
-            settings: ProjectSettingsProvider,
+            settings: ProjectConfigProvider,
             aws_account_handler: AwsAccountProvider,
             aws_ecr_provider: AwsEcrProvider
         ):

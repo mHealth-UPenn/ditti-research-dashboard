@@ -7,10 +7,10 @@ from install_scripts.aws_providers import (
     AwsCloudformationResourceManager,
     AwsEcrProvider,
 )
-from install_scripts.project_settings_provider import ProjectSettingsProvider
-from install_scripts.python_env_provider import PythonEnvProvider
+from install_scripts.project_config.project_config_provider import ProjectConfigProvider
+from install_scripts.local.python_env_initializer import PythonEnvProvider
 from install_scripts.docker_provider import DockerProvider
-from install_scripts.env_provider import EnvProvider
+from install_scripts.local.env_file_initializer import EnvProvider
 from install_scripts.frontend_provider import FrontendProvider
 
 def main(env: Env = "dev"):
@@ -26,7 +26,7 @@ def main(env: Env = "dev"):
 
     logger = Logger()
     aws_account_provider = AwsAccountProvider(logger=logger)
-    project_settings_provider = ProjectSettingsProvider(
+    project_settings_provider = ProjectConfigProvider(
         logger=logger,
         project_suffix=suffix,
     )

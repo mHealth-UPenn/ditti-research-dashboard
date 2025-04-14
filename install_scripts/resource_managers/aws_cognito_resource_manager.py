@@ -1,12 +1,12 @@
 from install_scripts.utils import Logger, BaseResourceManager
-from install_scripts.project_settings_provider import ProjectSettingsProvider
+from install_scripts.project_config.project_config_provider import ProjectConfigProvider
 from install_scripts.aws_providers.aws_client_provider import AWSClientProvider
 
 
 class AwsCognitoResourceManager(BaseResourceManager):
     def __init__(self, *,
             logger: Logger,
-            settings: ProjectSettingsProvider,
+            settings: ProjectConfigProvider,
             aws_client_provider: AWSClientProvider,
         ):
         self.logger = logger

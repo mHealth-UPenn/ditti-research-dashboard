@@ -2,13 +2,13 @@ import os
 import subprocess
 
 from install_scripts.utils import Logger
-from install_scripts.project_settings_provider import ProjectSettingsProvider
+from install_scripts.project_config.project_config_provider import ProjectConfigProvider
 
 
 class FrontendProvider:
     frontend_dir = "frontend"
 
-    def __init__(self, *, logger: Logger, settings: ProjectSettingsProvider):
+    def __init__(self, *, logger: Logger, settings: ProjectConfigProvider):
         self.logger = logger
         self.settings = settings
 

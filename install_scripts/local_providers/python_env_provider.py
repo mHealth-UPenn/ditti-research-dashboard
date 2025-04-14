@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 from install_scripts.utils import Logger
-from install_scripts.project_settings_provider import ProjectSettingsProvider
+from install_scripts.project_config.project_config_provider import ProjectConfigProvider
 
 
 class PythonEnvProvider:
@@ -11,7 +11,7 @@ class PythonEnvProvider:
     python_version: str = "python3.13"
     env_name: str = "env"
 
-    def __init__(self, *, logger: Logger, settings: ProjectSettingsProvider):
+    def __init__(self, *, logger: Logger, settings: ProjectConfigProvider):
         self.logger = logger
         self.settings = settings
 
