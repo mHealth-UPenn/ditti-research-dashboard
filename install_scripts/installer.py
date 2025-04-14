@@ -20,8 +20,9 @@ from install_scripts.resource_managers import (
 from install_scripts.utils import Logger
 from install_scripts.utils.types import Env
 
+
 class Installer:
-    def init(self, env: Env) -> None:
+    def __init__(self, env: Env) -> None:
         self.logger = Logger()
 
         project_suffix = ""
