@@ -2,7 +2,7 @@ from collections import abc
 from install_scripts.utils import Env
 
 
-class BaseCreator:
+class BaseResourceManager:
     def run(self, env: Env = "dev") -> None:
         """Run the provider."""
         self.on_start()
@@ -21,25 +21,25 @@ class BaseCreator:
 
     @abc.abstractmethod
     def on_start(self) -> None:
-        """Run when the script starts."""
+        """Run before resource creation."""
         ...
 
     @abc.abstractmethod
     def on_end(self) -> None:
-        """Run when the script ends."""
+        """Run after resource creation."""
         ...
 
     @abc.abstractmethod
     def dev(self) -> None:
-        """Run the provider in development mode."""
+        """Create resources in development mode."""
         ...
 
     @abc.abstractmethod
     def staging(self) -> None:
-        """Run the provider in staging mode."""
+        """Create resources in staging mode."""
         ...
 
     @abc.abstractmethod
     def prod(self) -> None:
-        """Run the provider in production mode."""
+        """Create resources in production mode."""
         ...

@@ -1,12 +1,12 @@
 import traceback
 import sys
 
+from boto3.exceptions import ClientError
+
 from install_scripts.utils import Logger
 from install_scripts.project_settings_provider import ProjectSettingsProvider
-from install_scripts.aws import (
-    AWSClientProvider,
-    AwsAccountProvider
-)
+from install_scripts.aws_providers.aws_client_provider import AWSClientProvider
+from install_scripts.aws_providers.aws_account_provider import AwsAccountProvider
 
 class AwsEcrProvider:
     __repo_fstring: str = "{account_id}.dkr.ecr.{region}.amazonaws.com"
@@ -27,9 +27,11 @@ class AwsEcrProvider:
         """Get the password for the ECR repository."""
         try:
             # NOTE: This is a workaround to login to ECR. See: https://github.com/docker/docker-py/issues/2256
-            return self.ecr_client.get_authorization_token() \
-                ["authorizationData"][0]["authorizationToken"]
-        except Exception:
+            res = self.ecr_client.get_authorization_token()
+            if len(res["authorizationData"]) == 0:
+                raise RuntimeError("No authorization data found")
+            return res["authorizationData"][0]["authorizationToken"]
+        except ClientError:
             traceback.print_exc()
             self.logger.red("Error getting password for ECR repository")
             sys.exit(1)

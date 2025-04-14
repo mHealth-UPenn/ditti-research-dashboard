@@ -3,12 +3,13 @@ import sys
 
 from botocore.exceptions import ClientError
 
-from install_scripts.utils import Logger, BaseCreator
-from install_scripts.aws.aws_client_provider import AWSClientProvider
+from install_scripts.aws_providers import AWSClientProvider
 from install_scripts.project_settings_provider import ProjectSettingsProvider
-from install_scripts.aws.aws_types import CloudFormationParameter
+from install_scripts.resource_managers.resource_manager_types import CloudFormationParameter
+from install_scripts.resource_managers.base_resource_manager import BaseResourceManager
+from install_scripts.utils import Logger
 
-class AwsCloudformationCreator(BaseCreator):
+class AwsCloudformationResourceManager(BaseResourceManager):
     dev_template: str = "cloudformation/dev-environment.yml"
     prod_template: str = "cloudformation/prod-environment.yml"
 
@@ -16,7 +17,7 @@ class AwsCloudformationCreator(BaseCreator):
             self, *,
             logger: Logger,
             settings: ProjectSettingsProvider,
-            aws_client_provider: AWSClientProvider
+            aws_client_provider: AWSClientProvider,
         ):
         self.logger = logger
         self.settings = settings
@@ -32,11 +33,10 @@ class AwsCloudformationCreator(BaseCreator):
 
     def dev(self) -> None:
         """Run the provider in development mode."""
-        outputs = self.create_cloudformation_stack(
+        self.create_cloudformation_stack(
             template=self.dev_template,
             parameters=self.get_dev_parameters()
         )
-        self.set_dev_outputs(outputs)
 
     def staging(self) -> None:
         """Run the provider in staging mode."""
@@ -86,7 +86,7 @@ class AwsCloudformationCreator(BaseCreator):
             self, *,
             template: str,
             parameters: list[CloudFormationParameter],
-        ) -> dict[str, str]:
+        ) -> None:
         """Set up AWS resources using CloudFormation."""
         # Read CloudFormation template
         with open(template, "r") as f:
@@ -94,7 +94,7 @@ class AwsCloudformationCreator(BaseCreator):
 
         # Create CloudFormation stack
         try:
-            response = self.client.create_stack(
+            self.client.create_stack(
                 StackName=self.settings.stack_name,
                 TemplateBody=template_body,
                 Parameters=parameters,
@@ -106,24 +106,7 @@ class AwsCloudformationCreator(BaseCreator):
             waiter = self.client.get_waiter("stack_create_complete")
             waiter.wait(StackName=self.settings.stack_name)
 
-            # Get stack outputs
-            response = self.client \
-                .describe_stacks(StackName=self.settings.stack_name)
-            outputs = {
-                output["OutputKey"]: output["OutputValue"]
-                for output in response["Stacks"][0]["Outputs"]
-            }
-
-            return outputs
-
-        except ClientError as e:
+        except ClientError:
             traceback.print_exc()
             self.logger.red("AWS resource creation failed")
             sys.exit(1)
-
-    def set_dev_outputs(self, outputs: dict[str, str]) -> None:
-        self.settings.participant_user_pool_id = \
-            outputs["ParticipantUserPoolId"]
-        self.settings.participant_client_id = outputs["ParticipantClientId"]
-        self.settings.researcher_user_pool_id = outputs["ResearcherUserPoolId"]
-        self.settings.researcher_client_id = outputs["ResearcherClientId"]

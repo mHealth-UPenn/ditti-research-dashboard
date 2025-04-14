@@ -1,7 +1,7 @@
 import subprocess
 
 from install_scripts.utils import Logger
-from install_scripts.aws.aws_client_provider import AWSClientProvider
+from install_scripts.aws_providers.aws_client_provider import AWSClientProvider
 
 
 class AwsAccountProvider:
@@ -11,13 +11,11 @@ class AwsAccountProvider:
             aws_client_provider: AWSClientProvider
         ):
         self.logger = logger
-        self.sts_client = aws_client_provider.sts_client
+        self.client = aws_client_provider.sts_client
 
     @property
     def aws_region(self) -> str:
-        return subprocess.check_output(
-            ["aws", "configure", "get", "region"]
-        ).decode("utf-8").strip()
+        return self.client.meta.region_name
 
     @property
     def aws_access_key_id(self) -> str:
@@ -33,9 +31,7 @@ class AwsAccountProvider:
     
     @property
     def aws_account_id(self) -> str:
-        return subprocess.check_output(
-            ["aws", "configure", "get", "aws_account_id"]
-        ).decode("utf-8").strip()
+        return self.client.get_caller_identity()["Account"]
     
     def configure_aws_cli(self) -> None:
         """Configure the AWS CLI."""

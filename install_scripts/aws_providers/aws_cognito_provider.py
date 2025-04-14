@@ -1,6 +1,6 @@
 from install_scripts.utils import Logger
 from install_scripts.project_settings_provider import ProjectSettingsProvider
-from install_scripts.aws.aws_client_provider import AWSClientProvider
+from install_scripts.aws_providers.aws_client_provider import AWSClientProvider
 
 
 class AwsCognitoProvider:

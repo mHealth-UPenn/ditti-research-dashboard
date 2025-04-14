@@ -19,7 +19,7 @@ class S3Settings(TypedDict):
     audio_bucket_name: str
 
 
-class SecretsCreatorSettings(TypedDict):
+class SecretsResourceManagerSettings(TypedDict):
     secret_name: str
     tokens_secret_name: str
 
@@ -33,7 +33,7 @@ class DockerSettings(TypedDict):
 class AwsSettings(TypedDict):
     cognito: CognitoSettings
     s3: S3Settings
-    secrets_manager: SecretsCreatorSettings
+    secrets_manager: SecretsResourceManagerSettings
     stack_name: str
 
 
@@ -83,10 +83,3 @@ class WearableDataRetrievalEnv(TypedDict):
     AWS_ACCESS_KEY_ID: str
     AWS_SECRET_ACCESS_KEY: str
     AWS_DEFAULT_REGION: str
-
-
-class SecretValue(TypedDict):
-    FITBIT_CLIENT_ID: str
-    FITBIT_CLIENT_SECRET: str
-    COGNITO_PARTICIPANT_CLIENT_SECRET: str
-    COGNITO_RESEARCHER_CLIENT_SECRET: str

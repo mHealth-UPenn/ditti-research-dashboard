@@ -2,9 +2,9 @@ import sys
 import traceback
 
 from install_scripts.utils import Logger, Env
-from install_scripts.aws import (
+from install_scripts.aws_providers import (
     AwsAccountProvider,
-    AwsCloudformationCreator,
+    AwsCloudformationResourceManager,
     AwsEcrProvider,
 )
 from install_scripts.project_settings_provider import ProjectSettingsProvider
@@ -35,7 +35,7 @@ def main(env: Env = "dev"):
         settings=project_settings_provider,
         aws_account_provider=aws_account_provider,
     )
-    aws_resources_provider = AwsCloudformationCreator(
+    aws_resources_provider = AwsCloudformationResourceManager(
         logger=logger,
         settings=project_settings_provider,
     )
