@@ -29,9 +29,9 @@ class AwsEcrProvider:
             # NOTE: This is a workaround to login to ECR. See: https://github.com/docker/docker-py/issues/2256
             return self.ecr_client.get_authorization_token() \
                 ["authorizationData"][0]["authorizationToken"]
-        except Exception as e:
+        except Exception:
             traceback.print_exc()
-            self.logger.error(f"Error getting password for ECR repository: {e}")
+            self.logger.red("Error getting password for ECR repository")
             sys.exit(1)
 
     def get_repo_uri(self) -> str:

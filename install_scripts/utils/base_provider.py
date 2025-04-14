@@ -2,7 +2,7 @@ from collections import abc
 from install_scripts.utils import Env
 
 
-class BaseProvider:
+class BaseCreator:
     def run(self, env: Env = "dev") -> None:
         """Run the provider."""
         self.on_start()

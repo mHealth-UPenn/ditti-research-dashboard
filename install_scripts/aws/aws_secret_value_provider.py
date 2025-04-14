@@ -1,20 +1,20 @@
 import json
 from typing import Optional
 
-from install_scripts.utils import Logger, SecretValue, BaseProvider
+from install_scripts.utils import Logger, SecretValue, BaseCreator
 from install_scripts.project_settings_provider import ProjectSettingsProvider
-from install_scripts.aws.aws_resources_provider import AwsResourcesProvider
+from install_scripts.aws.aws_cloudformation_creator import AwsCloudformationCreator
 from install_scripts.aws.aws_client_provider import AWSClientProvider
 
 
-class AwsSecretValueProvider(BaseProvider):
+class AwsSecretValueProvider(BaseCreator):
     secret_value: Optional[SecretValue]
 
     def __init__(
             self, *,
             logger: Logger,
             settings: ProjectSettingsProvider,
-            aws_resources_handler: AwsResourcesProvider,
+            aws_resources_handler: AwsCloudformationCreator,
             aws_client_provider: AWSClientProvider,
         ):
         self.logger = logger

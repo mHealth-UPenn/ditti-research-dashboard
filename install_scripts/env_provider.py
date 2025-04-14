@@ -5,13 +5,13 @@ from install_scripts.utils import (
     Postgres,
     WearableDataRetrievalEnv,
     RootEnv,
-    BaseProvider
+    BaseCreator
 )
 from install_scripts.project_settings_provider import ProjectSettingsProvider
 from install_scripts.aws import AwsAccountProvider
 
 
-class EnvProvider(BaseProvider):
+class EnvProvider(BaseCreator):
     wearable_data_retrieval_env: WearableDataRetrievalEnv
     root_env: RootEnv
 

@@ -9,7 +9,7 @@ import docker
 from install_scripts.utils import (
     Postgres,
     Logger,
-    BaseProvider
+    BaseCreator
 )
 from install_scripts.aws import (
     AwsAccountProvider,
@@ -18,7 +18,7 @@ from install_scripts.aws import (
 from install_scripts.project_settings_provider import ProjectSettingsProvider
 
 
-class DockerProvider(BaseProvider):
+class DockerProvider(BaseCreator):
     def __init__(
             self, *,
             logger: Logger,

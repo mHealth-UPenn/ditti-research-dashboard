@@ -19,7 +19,7 @@ class S3Settings(TypedDict):
     audio_bucket_name: str
 
 
-class SecretsManagerSettings(TypedDict):
+class SecretsCreatorSettings(TypedDict):
     secret_name: str
     tokens_secret_name: str
 
@@ -33,7 +33,7 @@ class DockerSettings(TypedDict):
 class AwsSettings(TypedDict):
     cognito: CognitoSettings
     s3: S3Settings
-    secrets_manager: SecretsManagerSettings
+    secrets_manager: SecretsCreatorSettings
     stack_name: str
 
 

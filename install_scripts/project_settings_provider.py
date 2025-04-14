@@ -9,16 +9,16 @@ from install_scripts.utils import (
     FString,
     CognitoSettings,
     S3Settings,
-    SecretsManagerSettings,
+    SecretsCreatorSettings,
     DockerSettings,
     Logger,
     is_valid_name,
     is_valid_email,
-    BaseProvider
+    BaseCreator
 )
 
 
-class ProjectSettingsProvider(BaseProvider):
+class ProjectSettingsProvider(BaseCreator):
     project_settings_filename: str = "project-settings-{project_name}.json"
     user_input: Optional[UserInput]
     project_settings: Optional[ProjectSettings]
@@ -257,7 +257,7 @@ class ProjectSettingsProvider(BaseProvider):
         self.logger("- Python packages")
         self.logger("- Amazon Cognito user pools and clients")
         self.logger("- Amazon S3 buckets")
-        self.logger("- Development secrets on AWS Secrets Manager")
+        self.logger("- Development secrets on AWS Secrets Creator")
         self.logger("- Local .env files")
         self.logger("- Docker containers for the project")
 
@@ -329,7 +329,7 @@ class ProjectSettingsProvider(BaseProvider):
             "audio_bucket_name": self.format_string(FString.audio_bucket_name)
         }
 
-        secrets_manager_settings: SecretsManagerSettings = {
+        secrets_manager_settings: SecretsCreatorSettings = {
             "secret_name": self.format_string(FString.secret_name),
             "tokens_secret_name": self.format_string(FString.tokens_secret_name)
         }

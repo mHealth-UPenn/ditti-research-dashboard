@@ -2,11 +2,11 @@ import os
 import subprocess
 import sys
 
-from install_scripts.utils import Logger, BaseProvider
+from install_scripts.utils import Logger, BaseCreator
 from install_scripts.project_settings_provider import ProjectSettingsProvider
 
 
-class PythonEnvProvider(BaseProvider):
+class PythonEnvProvider(BaseCreator):
     python_version: str = "python3.13"
     env_name: str = "env"
 

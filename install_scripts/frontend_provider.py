@@ -3,12 +3,12 @@ import subprocess
 
 from install_scripts.utils import (
     Logger,
-    BaseProvider
+    BaseCreator
 )
 from install_scripts.project_settings_provider import ProjectSettingsProvider
 
 
-class FrontendProvider(BaseProvider):
+class FrontendProvider(BaseCreator):
     frontend_dir = "frontend"
 
     def __init__(self, *, logger: Logger, settings: ProjectSettingsProvider):

@@ -10,10 +10,10 @@ from .types import (
     Env,
     CognitoSettings,
     S3Settings,
-    SecretsManagerSettings,
+    SecretsCreatorSettings,
     DockerSettings,
 )
-from .base_provider import BaseProvider
+from .base_provider import BaseCreator
 
 __all__ = [
     "is_valid_name",
@@ -29,7 +29,7 @@ __all__ = [
     "Env",
     "CognitoSettings",
     "S3Settings",
-    "SecretsManagerSettings",
+    "SecretsCreatorSettings",
     "DockerSettings",
-    "BaseProvider",
+    "BaseCreator",
 ]
