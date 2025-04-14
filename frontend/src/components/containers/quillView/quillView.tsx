@@ -26,7 +26,6 @@ import { QuillViewProps } from "./quillView.types";
  */
 export const QuillView = ({ content, className = "", style }: QuillViewProps) => {
 
-  // TODO: Sanitize content before using dangerouslySetInnerHTML
   const htmlContent = { __html: sanitize_quill_html(content) };
 
   return (
@@ -34,4 +33,4 @@ export const QuillView = ({ content, className = "", style }: QuillViewProps) =>
       <div className="ql-editor !p-0" dangerouslySetInnerHTML={htmlContent} />
     </div>
   );
-}; 
+};
