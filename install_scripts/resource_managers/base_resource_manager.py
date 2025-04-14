@@ -37,3 +37,39 @@ class BaseResourceManager:
     def prod(self) -> None:
         """Create resources in production mode."""
         pass
+
+    def uninstall(self, env: Env = "dev") -> None:
+        """Uninstall the resources."""
+        self.on_start_uninstall()
+
+        match env:
+            case "dev":
+                self.dev_uninstall()
+            case "staging":
+                self.staging_uninstall()
+            case "prod":
+                self.prod_uninstall()
+            case _:
+                raise ValueError(f"Invalid environment: {env}")
+
+        self.on_end_uninstall()
+
+    def on_start_uninstall(self) -> None:
+        """Run before resource deletion."""
+        pass
+
+    def on_end_uninstall(self) -> None:
+        """Run after resource deletion."""
+        pass
+
+    def dev_uninstall(self) -> None:
+        """Uninstall the resources in development mode."""
+        pass
+
+    def staging_uninstall(self) -> None:
+        """Uninstall the resources in staging mode."""
+        pass
+
+    def prod_uninstall(self) -> None:
+        """Uninstall the resources in production mode."""
+        pass

@@ -94,3 +94,12 @@ class AwsCloudformationResourceManager(BaseResourceManager):
             traceback.print_exc()
             self.logger.red("AWS resource creation failed")
             sys.exit(1)
+
+    def dev_uninstall(self) -> None:
+        """Uninstall the resources in development mode."""
+        try:
+            self.client.delete_stack(StackName=self.settings.stack_name)
+        except ClientError:
+            traceback.print_exc()
+            self.logger.red("AWS resource deletion failed")
+            sys.exit(1)

@@ -134,3 +134,11 @@ class DockerProvider:
             traceback.print_exc()
             self.logger.red("Wearable data retrieval container creation failed")
             sys.exit(1)
+
+    def uninstall(self) -> None:
+        """Uninstall the Docker containers."""
+        self.docker_client.containers.stop(self.settings.postgres_container_name)
+        self.docker_client.containers.remove(self.settings.postgres_container_name)
+        self.docker_client.containers.stop(self.settings.wearable_data_retrieval_container_name)
+        self.docker_client.containers.remove(self.settings.wearable_data_retrieval_container_name)
+        self.docker_client.networks.remove(self.settings.network_name)

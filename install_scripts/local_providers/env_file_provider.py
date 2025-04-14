@@ -1,3 +1,5 @@
+import os
+
 from install_scripts.aws_providers import AwsAccountProvider
 from install_scripts.local_providers.local_provider_types import (
     WearableDataRetrievalEnv,
@@ -93,3 +95,8 @@ class EnvFileProvider:
         with open(self.root_filename, "w") as f:
             for key, value in root_env.items():
                 f.write(f"{key}={value}\n")
+
+    def uninstall(self) -> None:
+        """Uninstall the .env files."""
+        os.remove(self.wearable_data_retrieval_filename)
+        os.remove(self.root_filename)

@@ -147,3 +147,36 @@ class Installer:
         self.logger.cyan("\n[Frontend Setup]")
         self.frontend_provider.initialize_frontend()
         self.frontend_provider.build_frontend()
+
+    def uninstall(self, project_name: str, env: Env = "dev") -> None:
+        """Uninstall the resources."""
+        self.logger.red("This will delete all resources created by the installer.")
+        self.logger.red("ANY LOST DATA WILL BE PERMANENTLY DELETED.")
+        self.logger.red(f"Please confirm by typing \"{project_name}\".")
+        confirm = input("> ")
+        if confirm != project_name:
+            self.logger.red("Uninstall cancelled.")
+            return
+
+        # Configure AWS CLI
+        self.logger.cyan("\n[AWS CLI Configuration]")
+        self.aws_account_provider.configure_aws_cli()
+
+        # Load project config
+        self.project_config_provider.load_existing_config(project_name)
+
+        if env == "dev":
+            self.logger.cyan("\n[Docker Cleanup]")
+            self.docker_provider.uninstall()
+
+            self.logger.cyan("\n[.env Files Cleanup]")
+            self.env_file_provider.uninstall()
+
+            self.logger.cyan("\n[Frontend Cleanup]")
+            self.frontend_provider.uninstall()
+
+        self.logger.cyan("\n[CloudFormation Stack Cleanup]")
+        self.aws_cloudformation_resource_manager.uninstall(env=env)
+
+        self.logger.cyan("\n[Project Config Cleanup]")
+        self.project_config_provider.uninstall()

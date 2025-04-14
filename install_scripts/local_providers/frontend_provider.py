@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 
 from install_scripts.project_config import ProjectConfigProvider
@@ -27,4 +28,11 @@ class FrontendProvider:
         """Build the frontend"""
         os.chdir(self.frontend_dir)
         subprocess.run(["npm", "run", "build"], check=True)
+        os.chdir("..")
+
+    def uninstall(self) -> None:
+        """Uninstall the frontend."""
+        os.chdir(self.frontend_dir)
+        shutil.rmtree("node_modules")
+        shutil.rmtree("build")
         os.chdir("..")

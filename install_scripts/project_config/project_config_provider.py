@@ -1,5 +1,6 @@
 from getpass import getpass
 import json
+import os
 import sys
 from typing import Optional
 
@@ -27,16 +28,25 @@ class ProjectConfigProvider:
     def __init__(
             self, *,
             logger: Logger,
-            project_suffix: Optional[str] = None
+            project_suffix: Optional[str] = None,
         ):
         self.logger = logger
         self.project_config = None
         self.user_input = None
         self.project_suffix = project_suffix
 
-    @property
-    def project_name(self) -> str:
-        return self.user_input["project_name"]
+    def load_existing_config(self, project_name: str) -> None:
+        """Load project config from a JSON file."""
+        config_filename = self.project_config_filename.format(
+            project_name=project_name
+        )
+
+        if not os.path.exists(config_filename):
+            self.logger.red("Project config file not found")
+            sys.exit(1)
+
+        with open(config_filename, "r") as f:
+            self.project_config = json.load(f)
 
     @property
     def admin_email(self) -> str:
@@ -49,6 +59,15 @@ class ProjectConfigProvider:
     @property
     def fitbit_client_secret(self) -> str:
         return self.user_input["fitbit_client_secret"]
+
+    @property
+    def project_name(self) -> str:
+        return self.project_config["project_name"]
+
+    @project_name.setter
+    def project_name(self, value: str) -> None:
+        self.project_config["project_name"] = value
+        self.write_project_config()
 
     @property
     def participant_user_pool_name(self) -> str:
@@ -351,3 +370,7 @@ class ProjectConfigProvider:
         filename = self.format_string(self.project_config_filename)
         with open(filename, "w") as f:
             json.dump(self.project_config, f, indent=4)
+
+    def uninstall(self) -> None:
+        """Uninstall the project config."""
+        os.remove(self.format_string(self.project_config_filename))
