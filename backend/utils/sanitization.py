@@ -10,16 +10,14 @@ def sanitize_quill_html(html: str) -> str:
     """
 
     # Define the set of HTML tags that are permitted.
-    # These tags cover the common elements used by QuillJS—including text formatting,
-    # embeds, code blocks, lists, and tables.
     allowed_tags = {
         "a", "blockquote", "br", "div", "em", "h1", "h2", "h3", "h4", "h5", "h6",
         "iframe", "img", "li", "ol", "p", "pre", "span", "strong", "sub", "sup",
-        "table", "tbody", "td", "tr", "ul", "select", "option"
+        "table", "tbody", "td", "tr", "ul", "select", "option", "u", "s"
     }
 
     # Map each tag to the set of allowed attributes.
-    # Note: The "rel" attribute on <a> tags is intentionally excluded
+    # Added entries for <u> and <s> so that underlined and strike-through text are preserved.
     attributes = {
         "div": {"class", "style", "spellcheck", "data-language"},
         "td": {"class", "style", "spellcheck", "data-row"},
@@ -48,12 +46,13 @@ def sanitize_quill_html(html: str) -> str:
         "em": {"class", "style", "spellcheck"},
         "sub": {"class", "style", "spellcheck"},
         "sup": {"class", "style", "spellcheck"},
-        "br": {"class", "style", "spellcheck"}
+        "br": {"class", "style", "spellcheck"},
+        "u": {"class", "style", "spellcheck"},
+        "s": {"class", "style", "spellcheck"}
     }
 
     # Define allowed CSS class names for specific tags.
-    # This allowlist helps maintain the intended QuillJS formatting (e.g., code block styling,
-    # text alignment, indentations, and special formatting for embeds).
+    # This allowlist helps maintain the intended QuillJS formatting.
     class_allowlist = {
         "div": {
             "ql-code-block-container", "ql-code-block", "ql-token", "ql-ui",
