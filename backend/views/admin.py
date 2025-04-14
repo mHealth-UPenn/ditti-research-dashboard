@@ -1424,8 +1424,7 @@ def about_sleep_template_edit(account):
     Response syntax (500)
     ---------------------
     {
-        msg: "Internal server error when updating about sleep template.",
-        error: "Detailed error message"
+        msg: "Internal server error when updating about sleep template."
     }
     """
     try:
@@ -1444,12 +1443,12 @@ def about_sleep_template_edit(account):
         db.session.commit()
         msg = "About sleep template Edited Successfully"
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when updating about sleep template.", "error": str(e)}, 500)
+        return make_response({"msg": "Internal server error when updating about sleep template."}, 500)
 
     return jsonify({"msg": msg})
 
