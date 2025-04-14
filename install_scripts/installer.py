@@ -103,7 +103,7 @@ class Installer:
             aws_cognito_provider=self.aws_cognito_provider,
         )
 
-    def install_dev(self) -> None:
+    def run(self) -> None:
         # Configure AWS CLI
         self.logger.cyan("\n[AWS CLI Configuration]")
         self.aws_account_provider.configure_aws_cli()
