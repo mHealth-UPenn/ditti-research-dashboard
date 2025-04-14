@@ -15,12 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useEffect, useRef, useMemo, memo } from "react";
-import Quill, { QuillOptions } from "quill";
 import { debounce } from "lodash";
+import { memo, useEffect, useMemo, useRef } from "react";
+import Quill, { QuillOptions } from "quill";
 import "quill/dist/quill.snow.css";
+import { sanitize_quill_html } from "../../utils";
 import { QuillFieldProps } from "./fields.types";
-import { sanitize_quill_html } from "../../utils/sanitize";
 
 const QuillField = ({
   value,
