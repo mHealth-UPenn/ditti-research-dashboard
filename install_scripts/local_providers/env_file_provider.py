@@ -16,18 +16,11 @@ class EnvFileProvider:
             self, *,
             logger: Logger,
             settings: ProjectConfigProvider,
-            aws_account_handler: AwsAccountProvider
+            aws_account_provider: AwsAccountProvider
         ):
         self.logger = logger
         self.settings = settings
-        self.aws_account_handler = aws_account_handler
-
-    def initialize_env_files(self) -> None:
-        """Initialize .env files."""
-        self.logger.cyan("\n[Local .env Files Setup]")
-        wearable_data_retrieval_env = self.get_wearable_data_retrieval_env()
-        root_env = self.get_root_env()
-        self.write_env_files(wearable_data_retrieval_env, root_env)
+        self.aws_account_provider = aws_account_provider
 
     def get_wearable_data_retrieval_env(self) -> WearableDataRetrievalEnv:
         """Get wearable_data_retrieval/.env."""

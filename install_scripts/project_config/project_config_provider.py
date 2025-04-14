@@ -249,11 +249,6 @@ class ProjectConfigProvider:
             ["wearable_data_retrieval_container_name"] = value
         self.write_project_config()
 
-    def initialize_project_config(self) -> None:
-        self.get_user_input()
-        self.setup_project_config()
-        self.write_project_config()
-
     def get_user_input(self) -> None:
         print("\nThis script will install the development environment for the "
               "project.")

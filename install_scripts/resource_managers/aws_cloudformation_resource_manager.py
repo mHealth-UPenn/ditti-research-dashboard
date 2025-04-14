@@ -23,30 +23,14 @@ class AwsCloudformationResourceManager(BaseResourceManager):
         self.settings = settings
         self.client = aws_client_provider.cloudformation_client
 
-    def on_start(self) -> None:
-        """Run when the script starts."""
-        self.logger.cyan("\n[AWS Resource Setup]")
-
-    def on_end(self) -> None:
-        """Run when the script ends."""
-        pass
-
     def dev(self) -> None:
         """Run the provider in development mode."""
-        self.create_cloudformation_stack(
+        self.__create_cloudformation_stack(
             template=self.dev_template,
-            parameters=self.get_dev_parameters()
+            parameters=self.__get_dev_parameters()
         )
 
-    def staging(self) -> None:
-        """Run the provider in staging mode."""
-        pass
-
-    def prod(self) -> None:
-        """Run the provider in production mode."""
-        pass
-
-    def get_dev_parameters(self) -> list[CloudFormationParameter]:
+    def __get_dev_parameters(self) -> list[CloudFormationParameter]:
         return [
             {
                 "ParameterKey": "ParticipantUserPoolName",
@@ -82,7 +66,7 @@ class AwsCloudformationResourceManager(BaseResourceManager):
             },
         ]
 
-    def create_cloudformation_stack(
+    def __create_cloudformation_stack(
             self, *,
             template: str,
             parameters: list[CloudFormationParameter],

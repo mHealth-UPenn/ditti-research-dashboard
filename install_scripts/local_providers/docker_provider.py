@@ -21,12 +21,6 @@ class DockerProvider:
         self.settings = settings
         self.docker_client = docker.from_env()
 
-    def initialize_local_docker_environment(self) -> None:
-        self.logger.cyan("\n[Docker Setup]")
-        self.run_postgres_container()
-        self.build_wearable_data_retrieval_container()
-        self.run_wearable_data_retrieval_container()
-
     def run_postgres_container(self) -> None:
         """Set up Postgres container."""
         self.logger.cyan("\n[Docker Setup]")

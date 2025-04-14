@@ -23,27 +23,15 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
         self.cognito_provider = aws_cognito_provider
         self.secret_value = None
 
-    def on_start(self) -> None:
-        """Run when the script starts."""
-        self.logger.cyan("\n[AWS Secret Value Setup]")
-
     def on_end(self) -> None:
         """Run when the script ends."""
-        self.write_secret()
+        self.__write_secret()
 
     def dev(self) -> None:
         """Run the provider in development mode."""
-        self.set_dev_secret_value()
+        self.__set_dev_secret_value()
 
-    def staging(self) -> None:
-        """Run the provider in staging mode."""
-        pass
-
-    def prod(self) -> None:
-        """Run the provider in production mode."""
-        pass
-
-    def set_dev_secret_value(self) -> None:
+    def __set_dev_secret_value(self) -> None:
         """Set the secret value."""
         secret_value: DevSecretValue = {
             "FITBIT_CLIENT_ID": self.settings.fitbit_client_id,
@@ -55,7 +43,7 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
         }
         self.secret_value = secret_value
 
-    def write_secret(self) -> None:
+    def __write_secret(self) -> None:
         """Write the secret value to the secret manager."""
         self.client.put_secret_value(
             SecretId=self.settings.secret_name,

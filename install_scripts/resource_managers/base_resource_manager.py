@@ -1,5 +1,3 @@
-from collections import abc
-
 from install_scripts.utils.types import Env
 
 
@@ -20,27 +18,22 @@ class BaseResourceManager:
 
         self.on_end()
 
-    @abc.abstractmethod
     def on_start(self) -> None:
         """Run before resource creation."""
-        ...
+        pass
 
-    @abc.abstractmethod
     def on_end(self) -> None:
         """Run after resource creation."""
-        ...
+        pass
 
-    @abc.abstractmethod
     def dev(self) -> None:
         """Create resources in development mode."""
-        ...
+        pass
 
-    @abc.abstractmethod
     def staging(self) -> None:
         """Create resources in staging mode."""
-        ...
+        pass
 
-    @abc.abstractmethod
     def prod(self) -> None:
         """Create resources in production mode."""
-        ...
+        pass
