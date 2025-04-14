@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from enum import Enum
+from getpass import getpass
 import json
 import os
 import re
@@ -8,10 +9,12 @@ import shutil
 import subprocess
 import sys
 import time
-from typing import TypedDict, Optional, Literal
+import traceback
+from typing import TypedDict, Optional, Literal, Any
 
 import boto3
 from botocore.exceptions import ClientError
+import docker
 
 type Env = Literal["dev", "staging","prod"]
 
@@ -27,8 +30,26 @@ def is_valid_email(email: str) -> bool:
     """Validate email address."""
     if not email:
         return False
-    return bool(re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email))
+    return bool(
+        re.match(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$", email)
+    )
 
+
+class AWSClientProvider:
+    sts_client: Any
+    cognito_client: Any
+    s3_client: Any
+    secrets_manager_client: Any
+    cloudformation_client: Any
+    ecr_client: Any
+
+    def __init__(self):
+        self.sts_client = boto3.client("sts")
+        self.cognito_client = boto3.client("cognito-idp")
+        self.s3_client = boto3.client("s3")
+        self.secrets_manager_client = boto3.client("secretsmanager")
+        self.cloudformation_client = boto3.client("cloudformation")
+        self.ecr_client = boto3.client("ecr")
 
 class Logger:
     def __init__(self):
@@ -75,18 +96,19 @@ class Postgres(Enum):
 
 
 class FString(Enum):
-    participant_user_pool_name="{project_name}-participant-pool"
-    participant_user_pool_domain="{project_name}-participant"
-    researcher_user_pool_name="{project_name}-researcher-pool"
-    researcher_user_pool_domain="{project_name}-researcher"
-    logs_bucket_name="{project_name}-wearable-data-retrieval-logs"
-    audio_bucket_name="{project_name}-audio-files"
-    secret_name="{project_name}-secret"
-    tokens_secret_name="{project_name}-Fitbit-tokens"
-    stack_name="{project_name}-stack"
-    network_name="{project_name}-network"
-    postgres_container_name="{project_name}-postgres"
-    wearable_data_retrieval_container_name="{project_name}-wearable-data-retrieval"
+    participant_user_pool_name = "{project_name}-participant-pool"
+    participant_user_pool_domain = "{project_name}-participant"
+    researcher_user_pool_name = "{project_name}-researcher-pool"
+    researcher_user_pool_domain = "{project_name}-researcher"
+    logs_bucket_name = "{project_name}-wearable-data-retrieval-logs"
+    audio_bucket_name = "{project_name}-audio-files"
+    secret_name = "{project_name}-secret"
+    tokens_secret_name = "{project_name}-Fitbit-tokens"
+    stack_name = "{project_name}-stack"
+    network_name = "{project_name}-network"
+    postgres_container_name = "{project_name}-postgres"
+    wearable_data_retrieval_container_name = \
+        "{project_name}-wearable-data-retrieval"
 
 
 class CognitoSettings(TypedDict):
@@ -172,28 +194,73 @@ class WearableDataRetrievalEnv(TypedDict):
 
 
 class AwsAccountHandler:
-    aws_account_id: str
+    __aws_account_id: Optional[str]
+    __aws_region: Optional[str]
+    __aws_access_key_id: Optional[str]
+    __aws_secret_access_key: Optional[str]
 
-    def __init__(self, *, logger: Logger):
+    def __init__(
+            self, *,
+            logger: Logger,
+            aws_client_provider: AWSClientProvider
+        ):
         self.logger = logger
-        self.aws_account_id = boto3.client("sts").get_caller_identity()["Account"]
+        self.sts_client = aws_client_provider.sts_client
+        self.__aws_account_id = None
+        self.__aws_region = None
+        self.__aws_access_key_id = None
+        self.__aws_secret_access_key = None
+
+    def run(self) -> None:
+        """Run the AWS account handler."""
+        self.logger.cyan("\n[AWS CLI Setup]")
+
+        try:
+            subprocess.run(["aws", "configure"])
+            self.__aws_access_key_id = subprocess.check_output(
+                ["aws", "configure", "get", "aws_access_key_id"]
+            ).decode("utf-8").strip()
+            self.__aws_secret_access_key = subprocess.check_output(
+                ["aws", "configure", "get", "aws_secret_access_key"]
+            ).decode("utf-8").strip()
+            self.__aws_region = subprocess.check_output(
+                ["aws", "configure", "get", "region"]
+            ).decode("utf-8").strip()
+            self.__aws_account_id = self.sts_client \
+                .get_caller_identity()["Account"]
+        except (subprocess.CalledProcessError, ClientError):
+            traceback.print_exc()
+            self.logger.red("AWS configuration failed")
+            sys.exit(1)
 
     @property
     def aws_region(self) -> str:
-        return os.environ.get("AWS_DEFAULT_REGION", "")
+        if self.__aws_region is None:
+            self.run()
+        return self.__aws_region
 
     @property
     def aws_access_key_id(self) -> str:
-        return os.environ.get("AWS_ACCESS_KEY_ID", "")
+        if self.__aws_access_key_id is None:
+            self.run()
+        return self.__aws_access_key_id
 
     @property
     def aws_secret_access_key(self) -> str:
-        return os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+        if self.__aws_secret_access_key is None:
+            self.run()
+        return self.__aws_secret_access_key
+    
+    @property
+    def aws_account_id(self) -> str:
+        if self.__aws_account_id is None:
+            self.run()
+        return self.__aws_account_id
 
 
 class ProjectSettingsHandler:
     project_settings_filename: str = "project-settings-{project_name}.json"
-    user_input: UserInput
+    user_input: Optional[UserInput]
     project_settings: Optional[ProjectSettings]
 
     def __init__(
@@ -203,7 +270,7 @@ class ProjectSettingsHandler:
         ):
         self.logger = logger
         self.project_settings = None
-        self.user_input = {}
+        self.user_input = None
         self.project_suffix = project_suffix
 
     @property
@@ -226,95 +293,112 @@ class ProjectSettingsHandler:
     def participant_user_pool_name(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["cognito"]["participant_user_pool_name"]
+        return self.project_settings["aws"]["cognito"] \
+            ["participant_user_pool_name"]
 
     @participant_user_pool_name.setter
     def participant_user_pool_name(self, value: str) -> None:
-        self.project_settings["aws"]["cognito"]["participant_user_pool_name"] = value
+        self.project_settings["aws"]["cognito"] \
+            ["participant_user_pool_name"] = value
         self.write_project_settings()
 
     @property
     def participant_user_pool_domain(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["cognito"]["participant_user_pool_domain"]
+        return self.project_settings["aws"]["cognito"] \
+            ["participant_user_pool_domain"]
 
     @participant_user_pool_domain.setter
     def participant_user_pool_domain(self, value: str) -> None:
-        self.project_settings["aws"]["cognito"]["participant_user_pool_domain"] = value
+        self.project_settings["aws"]["cognito"] \
+            ["participant_user_pool_domain"] = value
         self.write_project_settings()
 
     @property
     def participant_user_pool_id(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["cognito"]["participant_user_pool_id"]
+        return self.project_settings["aws"]["cognito"] \
+            ["participant_user_pool_id"]
 
     @participant_user_pool_id.setter
     def participant_user_pool_id(self, value: str) -> None:
-        self.project_settings["aws"]["cognito"]["participant_user_pool_id"] = value
+        self.project_settings["aws"]["cognito"] \
+            ["participant_user_pool_id"] = value
         self.write_project_settings()
 
     @property
     def participant_client_id(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["cognito"]["participant_client_id"]
+        return self.project_settings["aws"]["cognito"] \
+            ["participant_client_id"]
 
     @participant_client_id.setter
     def participant_client_id(self, value: str) -> None:
-        self.project_settings["aws"]["cognito"]["participant_client_id"] = value
+        self.project_settings["aws"]["cognito"] \
+            ["participant_client_id"] = value
         self.write_project_settings()
 
     @property
     def researcher_user_pool_name(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["cognito"]["researcher_user_pool_name"]
+        return self.project_settings["aws"]["cognito"] \
+            ["researcher_user_pool_name"]
 
     @researcher_user_pool_name.setter
     def researcher_user_pool_name(self, value: str) -> None:
-        self.project_settings["aws"]["cognito"]["researcher_user_pool_name"] = value
+        self.project_settings["aws"]["cognito"] \
+            ["researcher_user_pool_name"] = value
         self.write_project_settings()
 
     @property
     def researcher_user_pool_domain(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["cognito"]["researcher_user_pool_domain"]
+        return self.project_settings["aws"]["cognito"] \
+            ["researcher_user_pool_domain"]
 
     @researcher_user_pool_domain.setter
     def researcher_user_pool_domain(self, value: str) -> None:
-        self.project_settings["aws"]["cognito"]["researcher_user_pool_domain"] = value
+        self.project_settings["aws"]["cognito"] \
+            ["researcher_user_pool_domain"] = value
         self.write_project_settings()
 
     @property
     def researcher_user_pool_id(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["cognito"]["researcher_user_pool_id"]
+        return self.project_settings["aws"]["cognito"] \
+            ["researcher_user_pool_id"]
 
     @researcher_user_pool_id.setter
     def researcher_user_pool_id(self, value: str) -> None:
-        self.project_settings["aws"]["cognito"]["researcher_user_pool_id"] = value
+        self.project_settings["aws"]["cognito"] \
+            ["researcher_user_pool_id"] = value
         self.write_project_settings()
 
     @property
     def researcher_client_id(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["cognito"]["researcher_client_id"]
+        return self.project_settings["aws"]["cognito"] \
+            ["researcher_client_id"]
 
     @researcher_client_id.setter
     def researcher_client_id(self, value: str) -> None:
-        self.project_settings["aws"]["cognito"]["researcher_client_id"] = value
+        self.project_settings["aws"]["cognito"] \
+            ["researcher_client_id"] = value
         self.write_project_settings()
 
     @property
     def logs_bucket_name(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["s3"]["logs_bucket_name"]
+        return self.project_settings["aws"]["s3"] \
+            ["logs_bucket_name"]
 
     @logs_bucket_name.setter
     def logs_bucket_name(self, value: str) -> None:
@@ -325,7 +409,8 @@ class ProjectSettingsHandler:
     def audio_bucket_name(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["s3"]["audio_bucket_name"]
+        return self.project_settings["aws"]["s3"] \
+            ["audio_bucket_name"]
 
     @audio_bucket_name.setter
     def audio_bucket_name(self, value: str) -> None:
@@ -336,7 +421,8 @@ class ProjectSettingsHandler:
     def secret_name(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["secrets_manager"]["secret_name"]
+        return self.project_settings["aws"]["secrets_manager"] \
+            ["secret_name"]
 
     @secret_name.setter
     def secret_name(self, value: str) -> None:
@@ -347,11 +433,13 @@ class ProjectSettingsHandler:
     def tokens_secret_name(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["aws"]["secrets_manager"]["tokens_secret_name"]
+        return self.project_settings["aws"]["secrets_manager"] \
+            ["tokens_secret_name"]
 
     @tokens_secret_name.setter
     def tokens_secret_name(self, value: str) -> None:
-        self.project_settings["aws"]["secrets_manager"]["tokens_secret_name"] = value
+        self.project_settings["aws"]["secrets_manager"] \
+            ["tokens_secret_name"] = value
         self.write_project_settings()
 
     @property
@@ -391,11 +479,13 @@ class ProjectSettingsHandler:
     def wearable_data_retrieval_container_name(self) -> str:
         if self.project_settings is None:
             return ""
-        return self.project_settings["docker"]["wearable_data_retrieval_container_name"]
+        return self.project_settings["docker"] \
+            ["wearable_data_retrieval_container_name"]
 
     @wearable_data_retrieval_container_name.setter
     def wearable_data_retrieval_container_name(self, value: str) -> None:
-        self.project_settings["docker"]["wearable_data_retrieval_container_name"] = value
+        self.project_settings["docker"] \
+            ["wearable_data_retrieval_container_name"] = value
         self.write_project_settings()
 
     def run(self) -> None:
@@ -406,7 +496,8 @@ class ProjectSettingsHandler:
 
     def get_user_input(self) -> None:
         """Get user input for project setup."""
-        print("\nThis script will install the development environment for the project.")
+        print("\nThis script will install the development environment for the "
+              "project.")
         self.logger.magenta("The following will be configured and installed:")
         self.logger("- AWS CLI")
         self.logger("- Python 3.13")
@@ -431,8 +522,8 @@ class ProjectSettingsHandler:
                 project_name = f"{project_name}-{self.project_suffix}"
 
         # Get Fitbit credentials
-        fitbit_client_id = input("Enter your dev Fitbit client ID: ")
-        fitbit_client_secret = input("Enter your dev Fitbit client secret: ")
+        fitbit_client_id = getpass("Enter your dev Fitbit client ID: ")
+        fitbit_client_secret = getpass("Enter your dev Fitbit client secret: ")
 
         # Get admin email
         admin_email = ""
@@ -451,63 +542,82 @@ class ProjectSettingsHandler:
     def setup_project_settings(self) -> None:
         """Set up project settings."""
         cognito_settings: CognitoSettings = {
-            "participant_user_pool_name": FString.participant_user_pool_name.value.format(project_name=self.user_input["project_name"]),
-            "participant_user_pool_domain": FString.participant_user_pool_domain.value.format(project_name=self.user_input["project_name"]),
+            "participant_user_pool_name": \
+                self.format_string(FString.participant_user_pool_name),
+            "participant_user_pool_domain": \
+                self.format_string(FString.participant_user_pool_domain),
             "participant_user_pool_id": "",
             "participant_client_id": "",
-            "researcher_user_pool_name": FString.researcher_user_pool_name.value.format(project_name=self.user_input["project_name"]),
-            "researcher_user_pool_domain": FString.researcher_user_pool_domain.value.format(project_name=self.user_input["project_name"]),
+            "researcher_user_pool_name": \
+                self.format_string(FString.researcher_user_pool_name),
+            "researcher_user_pool_domain": \
+                self.format_string(FString.researcher_user_pool_domain),
             "researcher_user_pool_id": "",
             "researcher_client_id": ""
         }
 
         s3_settings: S3Settings = {
-            "logs_bucket_name": FString.logs_bucket_name.value.format(project_name=self.user_input["project_name"]),
-            "audio_bucket_name": FString.audio_bucket_name.value.format(project_name=self.user_input["project_name"])
+            "logs_bucket_name": self.format_string(FString.logs_bucket_name),
+            "audio_bucket_name": self.format_string(FString.audio_bucket_name)
         }
 
         secrets_manager_settings: SecretsManagerSettings = {
-            "secret_name": FString.secret_name.value.format(project_name=self.user_input["project_name"]),
-            "tokens_secret_name": FString.tokens_secret_name.value.format(project_name=self.user_input["project_name"])
+            "secret_name": self.format_string(FString.secret_name),
+            "tokens_secret_name": self.format_string(FString.tokens_secret_name)
         }
 
         docker_settings: DockerSettings = {
-            "network_name": FString.network_name.value.format(project_name=self.user_input["project_name"]),
-            "postgres_container_name": FString.postgres_container_name.value.format(project_name=self.user_input["project_name"]),
-            "wearable_data_retrieval_container_name": FString.wearable_data_retrieval_container_name.value.format(project_name=self.user_input["project_name"])
+            "network_name": self.format_string(FString.network_name),
+            "postgres_container_name": \
+                self.format_string(FString.postgres_container_name),
+            "wearable_data_retrieval_container_name": \
+                self.format_string(
+                    FString.wearable_data_retrieval_container_name
+                )
         }
 
         self.project_settings = {
-            "project_name": self.user_input["project_name"],
-            "admin_email": self.user_input["admin_email"],
+            "project_name": self.project_name,
+            "admin_email": self.admin_email,
             "aws": {
                 "cognito": cognito_settings,
                 "s3": s3_settings,
                 "secrets_manager": secrets_manager_settings,
-                "stack_name": FString.stack_name.value.format(project_name=self.user_input["project_name"])
+                "stack_name": self.format_string(FString.stack_name)
             },
             "docker": docker_settings
         }
 
+    def format_string(self, fstr: str) -> str:
+        return fstr.format(project_name=self.project_name)
+
     def write_project_settings(self) -> None:
         """Write project settings to a JSON file."""
-        with open(self.project_settings_filename.format(project_name=self.user_input["project_name"]), "w") as f:
+        filename = self.format_string(self.project_settings_filename)
+        with open(filename, "w") as f:
             json.dump(self.project_settings, f, indent=4)
 
 
 class AwsResourcesHandler:
-    outputs_filename: str = "{project_name}-outputs.json"
     cloudformation_template_filename: str = "cloudformation/dev-environment.yml"
 
-    def __init__(self, *, logger: Logger, settings: ProjectSettingsHandler):
+    def __init__(
+            self, *,
+            logger: Logger,
+            settings: ProjectSettingsHandler,
+            aws_client_provider: AWSClientProvider
+        ):
         self.logger = logger
         self.settings = settings
-        self.client = boto3.client("cloudformation")
-        self.outputs = {}
+        self.client = aws_client_provider.cloudformation_client
+        self.cognito_client = aws_client_provider.cognito_client
+        self.secrets_client = aws_client_provider.secrets_manager_client
 
     def run(self) -> None:
         """Run the AWS resources handler."""
+        self.logger.cyan("\n[AWS Resource Setup]")
         self.setup_aws_resources()
+        self.create_admin_user()
 
     def setup_aws_resources(self):
         """Set up AWS resources using CloudFormation."""
@@ -523,10 +633,42 @@ class AwsResourcesHandler:
                 StackName=self.settings.stack_name,
                 TemplateBody=template_body,
                 Parameters=[
-                    {"ParameterKey": "ProjectName", "ParameterValue": self.settings.project_name},
-                    {"ParameterKey": "AdminEmail", "ParameterValue": self.settings.admin_email},
-                    {"ParameterKey": "FitbitClientId", "ParameterValue": self.settings.fitbit_client_id},
-                    {"ParameterKey": "FitbitClientSecret", "ParameterValue": self.settings.fitbit_client_secret}
+                    {
+                        "ParameterKey": "ParticipantUserPoolName",
+                        "ParameterValue": \
+                            self.settings.participant_user_pool_name
+                    },
+                    {
+                        "ParameterKey": "ParticipantUserPoolDomainName",
+                        "ParameterValue": \
+                            self.settings.participant_user_pool_domain
+                    },
+                    {
+                        "ParameterKey": "ResearcherUserPoolName",
+                        "ParameterValue": \
+                            self.settings.researcher_user_pool_name
+                    },
+                    {
+                        "ParameterKey": "ResearcherUserPoolDomainName",
+                        "ParameterValue": \
+                            self.settings.researcher_user_pool_domain
+                    },
+                    {
+                        "ParameterKey": "LogsBucketName",
+                        "ParameterValue": self.settings.logs_bucket_name
+                    },
+                    {
+                        "ParameterKey": "AudioBucketName",
+                        "ParameterValue": self.settings.audio_bucket_name
+                    },
+                    {
+                        "ParameterKey": "SecretName",
+                        "ParameterValue": self.settings.secret_name
+                    },
+                    {
+                        "ParameterKey": "TokensSecretName",
+                        "ParameterValue": self.settings.tokens_secret_name
+                    },
                 ],
                 Capabilities=["CAPABILITY_IAM"]
             )
@@ -537,23 +679,104 @@ class AwsResourcesHandler:
             waiter.wait(StackName=self.settings.stack_name)
 
             # Get stack outputs
-            response = self.client.describe_stacks(StackName=self.settings.stack_name)
-            self.outputs = {
+            response = self.client \
+                .describe_stacks(StackName=self.settings.stack_name)
+            outputs = {
                 output["OutputKey"]: output["OutputValue"]
                 for output in response["Stacks"][0]["Outputs"]
             }
 
+            self.settings.participant_user_pool_id = \
+                outputs["ParticipantUserPoolId"]
+            self.settings.participant_client_id = outputs["ParticipantClientId"]
+            self.settings.researcher_user_pool_id = \
+                outputs["ResearcherUserPoolId"]
+            self.settings.researcher_client_id = outputs["ResearcherClientId"]
+
             self.logger.green("AWS resources created successfully")
 
         except ClientError as e:
-            self.logger.red(f"AWS resource creation failed: {str(e)}")
+            traceback.print_exc()
+            self.logger.red("AWS resource creation failed")
             sys.exit(1)
 
-    def write_outputs(self) -> None:
-        """Write outputs to a JSON file."""
-        with open(self.outputs_filename.format(project_name=self.settings.project_name), "w") as f:
-            json.dump(self.outputs, f, indent=4)
+    def create_admin_user(self) -> None:
+        """Create an admin user in the Cognito user pool."""
+        self.cognito_client.admin_create_user(
+            UserPoolId=self.settings.participant_user_pool_id,
+            Username=self.settings.admin_email,
+        )
 
+    def get_participant_client_secret(self) -> str:
+        return self.cognito_client.describe_user_pool_client(
+            UserPoolId=self.settings.participant_user_pool_id,
+            ClientId=self.settings.participant_client_id
+        )["UserPoolClient"]["ClientSecret"]
+
+    def get_researcher_client_secret(self) -> str:
+        return self.cognito_client.describe_user_pool_client(
+            UserPoolId=self.settings.researcher_user_pool_id,
+            ClientId=self.settings.researcher_client_id
+        )["UserPoolClient"]["ClientSecret"]
+
+    # def wait_for_stack_creation(self) -> None:
+    #     """Wait for the stack creation to complete."""
+    #     waiter = self.client.get_waiter("stack_create_complete")
+    #     waiter.wait(StackName=self.settings.stack_name)
+
+    #     while True:
+    #         try:
+    #             response = self.client.describe_stacks(StackName=self.settings.stack_name)
+    #             if response["Stacks"][0]["StackStatus"] == "CREATE_COMPLETE":
+    #                 break
+    #             time.sleep(1)
+
+class SecretValue(TypedDict):
+    FITBIT_CLIENT_ID: str
+    FITBIT_CLIENT_SECRET: str
+    COGNITO_PARTICIPANT_CLIENT_SECRET: str
+    COGNITO_RESEARCHER_CLIENT_SECRET: str
+
+
+class SecretValueHandler:
+    secret_value: Optional[SecretValue]
+
+    def __init__(
+            self, *,
+            logger: Logger,
+            settings: ProjectSettingsHandler,
+            aws_resources_handler: AwsResourcesHandler,
+            aws_client_provider: AWSClientProvider
+        ):
+        self.logger = logger
+        self.settings = settings
+        self.aws_resources_handler = aws_resources_handler
+        self.secrets_client = aws_client_provider.secrets_manager_client
+        self.secret_value = None
+
+    def run(self) -> None:
+        """Run the secret value handler."""
+        self.logger.cyan("\n[Secret Value Setup]")
+        self.set_secret_value()
+        self.write_secret()
+
+    def set_secret_value(self) -> None:
+        """Set the secret value."""
+        self.secret_value = {
+            "FITBIT_CLIENT_ID": self.settings.fitbit_client_id,
+            "FITBIT_CLIENT_SECRET": self.settings.fitbit_client_secret,
+            "COGNITO_PARTICIPANT_CLIENT_SECRET": self.aws_resources_handler \
+                .get_participant_client_secret(),
+            "COGNITO_RESEARCHER_CLIENT_SECRET": self.aws_resources_handler \
+                .get_researcher_client_secret()
+        }
+
+    def write_secret(self) -> None:
+        """Write the secret value to the secret manager."""
+        self.secrets_client.put_secret_value(
+            SecretId=self.settings.secret_name,
+            SecretString=json.dumps(self.secret_value)
+        )
 
 class PythonEnvHandler:
     python_version: str = "python3.13"
@@ -574,7 +797,10 @@ class PythonEnvHandler:
 
         if not os.path.exists("env/bin/activate"):
             self.logger.cyan("Initializing Python virtual environment...")
-            subprocess.run([self.python_version, "-m", "venv", self.env_name], check=True)
+            subprocess.run(
+                [self.python_version, "-m", "venv", self.env_name],
+                check=True
+            )
 
         # Activate virtual environment and install packages
         if sys.platform == "win32":
@@ -583,7 +809,8 @@ class PythonEnvHandler:
             activate_script = f"source {self.env_name}/bin/activate"
 
         subprocess.run(
-            f"{activate_script} && pip install -qr {self.requirements_filename}",
+            f"{activate_script} && pip install -qr "
+            f"{self.requirements_filename}",
             shell=True,
             check=True
         )
@@ -592,12 +819,37 @@ class PythonEnvHandler:
 
 
 class DockerHandler:
-    def __init__(self, *, logger: Logger, settings: ProjectSettingsHandler):
+    def __init__(
+            self, *,
+            logger: Logger,
+            settings: ProjectSettingsHandler,
+            aws_account_handler: AwsAccountHandler,
+            aws_client_provider: AWSClientProvider
+        ):
         self.logger = logger
         self.settings = settings
+        self.aws_account_handler = aws_account_handler
+        self.docker_client = docker.from_env()
+        self.ecr_client = aws_client_provider.ecr_client
 
     def run(self) -> None:
         """Run the Docker handler."""
+        try:
+            # NOTE: This is a workaround to login to ECR. See: https://github.com/docker/docker-py/issues/2256
+            password = self.ecr_client.get_authorization_token() \
+                ["authorizationData"][0]["authorizationToken"]
+            subprocess.run([
+                "docker", "login",
+                "--username", "AWS",
+                "--password-stdin",
+                f"{self.aws_account_handler.aws_account_id}.dkr.ecr."
+                f"{self.aws_account_handler.aws_region}.amazonaws.com"
+            ], input=password.encode("utf-8"), check=True)
+        except subprocess.CalledProcessError:
+            traceback.print_exc()
+            self.logger.red("ECR login failed")
+            sys.exit(1)
+
         self.setup_postgres_container()
         self.setup_wearable_data_retrieval_container()
 
@@ -606,109 +858,138 @@ class DockerHandler:
         self.logger.cyan("\n[Docker Setup]")
 
         # Create Docker network
-        subprocess.run(["docker", "network", "create", self.settings.network_name], check=True)
+        self.docker_client.networks.create(self.settings.network_name)
         self.logger.blue(f"Created docker network {self.settings.network_name}")
 
         # Create Postgres container
-        subprocess.run([
-            "docker", "run",
-            "-ditp", f"{Postgres.PORT}:{Postgres.PORT}",
-            "--name", self.settings.postgres_container_name,
-            "-e", f"POSTGRES_USER={Postgres.USER}",
-            "-e", f"POSTGRES_PASSWORD={Postgres.PASSWORD}",
-            "-e", f"POSTGRES_DB={Postgres.DB}",
-            "-e", f"POSTGRES_PORT={Postgres.PORT}",
-            "--network", self.settings.network_name,
-            "postgres",
-        ], check=True)
+        self.docker_client.containers.run(
+            image="postgres",
+            name=self.settings.postgres_container_name,
+            environment={
+                "POSTGRES_USER": Postgres.USER,
+                "POSTGRES_PASSWORD": Postgres.PASSWORD,
+                "POSTGRES_DB": Postgres.DB,
+            },
+            ports={Postgres.PORT: Postgres.PORT},
+            network=self.settings.network_name,
+        )
 
         # Wait for Postgres to be ready
         while True:
             try:
-                subprocess.run([
-                    "docker", "exec",
-                    "-t", self.settings.postgres_container_name,
-                    "pg_isready",
-                    "-U", Postgres.USER,
-                    "-d", Postgres.DB,
-                ], check=True)
-                break
-            except subprocess.CalledProcessError:
+                response = self.docker_client.containers \
+                    .get(self.settings.postgres_container_name) \
+                    .exec_run([
+                        "pg_isready",
+                        "-U", Postgres.USER,
+                        "-d", Postgres.DB
+                    ])
+                if (
+                    response.exit_code == 0
+                    and "accepting connections"
+                    in response.output.decode("utf-8").strip()
+                ):
+                    break
+                else:
+                    time.sleep(1)
+            except docker.errors.NotFoundError:
                 time.sleep(1)
 
-        self.logger.blue(f"Created postgres container {self.settings.postgres_container_name}")
+        self.logger.blue(
+            f"Created postgres container "
+            f"{self.settings.postgres_container_name}"
+        )
 
         try:
-            subprocess.run(["flask", "--app", "run.py", "db", "upgrade"], check=True)
+            subprocess.run(
+                ["flask", "--app", "run.py", "db", "upgrade"],
+                check=True
+            )
         except subprocess.CalledProcessError:
+            traceback.print_exc()
             self.logger.red("Database upgrade failed")
             sys.exit(1)
 
         try:
-            subprocess.run(["flask", "--app", "run.py", "init-integration-testing-db"], check=True)
+            subprocess.run(
+                ["flask", "--app", "run.py", "init-integration-testing-db"],
+                check=True
+            )
         except subprocess.CalledProcessError:
-            self.logger.red("Integration testing database initialization failed")
+            traceback.print_exc()
+            self.logger \
+                .red("Integration testing database initialization failed")
             sys.exit(1)
 
         try:
-            subprocess.run(["flask", "--app", "run.py", "create-researcher-account", "--email", self.settings.admin_email], check=True)
+            subprocess.run([
+                "flask",
+                "--app", "run.py",
+                "create-researcher-account",
+                "--email", self.settings.admin_email
+            ], check=True)
         except subprocess.CalledProcessError:
+            traceback.print_exc()
             self.logger.red("Researcher account creation failed")
             sys.exit(1)
 
-        self.logger.blue(f"Created researcher account {self.settings.admin_email}")
+        self.logger.blue(
+            f"Created researcher account "
+            f"{self.settings.admin_email}"
+        )
 
     def setup_wearable_data_retrieval_container(self) -> None:
         """Set up wearable data retrieval container."""
         self.logger.cyan("\n[Wearable Data Retrieval Container Setup]")
-
-        try:
-            subprocess.run([
-                "aws", "ecr", "get-login-password",
-                "|", "docker", "login",
-                "--username", "AWS",
-                "--password-stdin", self.settings.aws_account_id
-            ], check=True)
-        except subprocess.CalledProcessError:
-            self.logger.red("ECR login failed")
-            sys.exit(1)
 
         self.logger.blue("Logged in to ECR")
 
         shutil.copytree("shared", "functions/wearable_data_retrieval/shared")
 
         try:
-            subprocess.run([
-                "docker", "build",
-                "--platform", "linux/amd64",
-                "-t", self.settings.wearable_data_retrieval_container_name,
-                "functions/wearable_data_retrieval"
-            ], check=True)
-        except subprocess.CalledProcessError:
+            self.docker_client.images.build(
+                path="functions/wearable_data_retrieval",
+                tag=self.settings.wearable_data_retrieval_container_name,
+                platform="linux/amd64"
+            )
+        except docker.errors.BuildError:
+            traceback.print_exc()
             self.logger.red("Wearable data retrieval container creation failed")
             sys.exit(1)
 
         shutil.rmtree("functions/wearable_data_retrieval/shared")
 
-        subprocess.run([
-            "docker", "run",
-            "--platform", "linux/amd64",
-            "--name", self.settings.wearable_data_retrieval_container_name,
-            "--network", self.settings.network_name,
-            "-ditp", "9000:8080",
-            "--env-file", "functions/wearable_data_retrieval/.env",
-            "-e", "TESTING=true",
-            self.settings.wearable_data_retrieval_container_name
-        ], check=True)
+        try:
+            self.docker_client.containers.run(
+                image=self.settings.wearable_data_retrieval_container_name,
+                name=self.settings.wearable_data_retrieval_container_name,
+                platform="linux/amd64",
+                network=self.settings.network_name,
+                ports={"9000": 8080},
+                environment={"TESTING": "true"},
+                detach=True
+            )
+        except docker.errors.ContainerError:
+            traceback.print_exc()
+            self.logger.red("Wearable data retrieval container creation failed")
+            sys.exit(1)
 
-        self.logger.blue(f"Created wearable data retrieval container {self.settings.wearable_data_retrieval_container_name}")
+        self.logger.blue(
+            f"Created wearable data retrieval container "
+            f"{self.settings.wearable_data_retrieval_container_name}"
+        )
 
 
 class EnvHandler:
     wearable_data_retrieval_env: WearableDataRetrievalEnv
     root_env: RootEnv
 
-    def __init__(self, *, logger: Logger, settings: ProjectSettingsHandler, aws_account_handler: AwsAccountHandler):
+    def __init__(
+            self, *,
+            logger: Logger,
+            settings: ProjectSettingsHandler,
+            aws_account_handler: AwsAccountHandler
+        ):
         self.logger = logger
         self.settings = settings
         self.aws_account_handler = aws_account_handler
@@ -722,11 +1003,16 @@ class EnvHandler:
     def create_wearable_data_retrieval_env(self) -> None:
         """Create wearable_data_retrieval/.env."""
         self.wearable_data_retrieval_env = {
-            "DB_URI": f"postgresql://{Postgres.USER}:{Postgres.PASSWORD}@{self.settings.project_name}-postgres:{Postgres.PORT}/{Postgres.DB}",
+            "DB_URI": (
+                f"postgresql://{Postgres.USER}:{Postgres.PASSWORD}@"
+                f"{self.settings.project_name}-postgres:{Postgres.PORT}/"
+                f"{Postgres.DB}"
+            ),
             "S3_BUCKET": self.settings.logs_bucket_name,
             "AWS_CONFIG_SECRET_NAME": self.settings.secret_name,
             "AWS_ACCESS_KEY_ID": self.aws_account_handler.aws_access_key_id,
-            "AWS_SECRET_ACCESS_KEY": self.aws_account_handler.aws_secret_access_key,
+            "AWS_SECRET_ACCESS_KEY": \
+                self.aws_account_handler.aws_secret_access_key,
             "AWS_DEFAULT_REGION": self.aws_account_handler.aws_region,
         }
 
@@ -735,7 +1021,10 @@ class EnvHandler:
         self.root_env = {
             "FLASK_CONFIG": "Default",
             "FLASK_DEBUG": "True",
-            "FLASK_DB": f"postgresql://{Postgres.USER}:{Postgres.PASSWORD}@localhost:{Postgres.PORT}/{Postgres.DB}",
+            "FLASK_DB": (
+                f"postgresql://{Postgres.USER}:{Postgres.PASSWORD}@"
+                f"localhost:{Postgres.PORT}/{Postgres.DB}"
+            ),
             "FLASK_APP": "run.py",
             "APP_SYNC_HOST": "",
             "APPSYNC_ACCESS_KEY": "",
@@ -745,15 +1034,27 @@ class EnvHandler:
             "AWS_TABLENAME_AUDIO_TAP": "",
             "AWS_TABLENAME_TAP": "",
             "AWS_TABLENAME_USER": "",
-            "COGNITO_PARTICIPANT_CLIENT_ID": self.settings.participant_client_id,
-            "COGNITO_PARTICIPANT_DOMAIN": f"{self.settings.participant_user_pool_domain}.auth.{self.aws_account_handler.aws_region}.amazoncognito.com",
+            "COGNITO_PARTICIPANT_CLIENT_ID": \
+                self.settings.participant_client_id,
+            "COGNITO_PARTICIPANT_DOMAIN": (
+                f"{self.settings.participant_user_pool_domain}.auth."
+                f"{self.aws_account_handler.aws_region}.amazoncognito.com"
+            ),
             "COGNITO_PARTICIPANT_REGION": self.aws_account_handler.aws_region,
-            "COGNITO_PARTICIPANT_USER_POOL_ID": self.settings.participant_user_pool_id,
+            "COGNITO_PARTICIPANT_USER_POOL_ID": \
+                self.settings.participant_user_pool_id,
             "COGNITO_RESEARCHER_CLIENT_ID": self.settings.researcher_client_id,
-            "COGNITO_RESEARCHER_DOMAIN": f"{self.settings.researcher_user_pool_domain}.auth.{self.aws_account_handler.aws_region}.amazoncognito.com",
+            "COGNITO_RESEARCHER_DOMAIN": (
+                f"{self.settings.researcher_user_pool_domain}.auth."
+                f"{self.aws_account_handler.aws_region}.amazoncognito.com"
+            ),
             "COGNITO_RESEARCHER_REGION": self.aws_account_handler.aws_region,
-            "COGNITO_RESEARCHER_USER_POOL_ID": self.settings.researcher_user_pool_id,
-            "LOCAL_LAMBDA_ENDPOINT": "http://localhost:9000/2015-03-31/functions/function/invocations",
+            "COGNITO_RESEARCHER_USER_POOL_ID": \
+                self.settings.researcher_user_pool_id,
+            "LOCAL_LAMBDA_ENDPOINT": (
+                "http://localhost:9000/2015-03-31/functions/function/"
+                "invocations"
+            ),
             "TM_FSTRING": f"{self.settings.project_name}-tokens",
         }
 
@@ -811,27 +1112,55 @@ def main(env: Env = "dev"):
 
     logger = Logger()
     aws_account_handler = AwsAccountHandler(logger=logger)
-    project_settings_handler = ProjectSettingsHandler(logger=logger, project_suffix=suffix)
-    aws_resources_handler = AwsResourcesHandler(logger=logger, settings=project_settings_handler)
-    python_env_handler = PythonEnvHandler(logger=logger, settings=project_settings_handler)
-    docker_handler = DockerHandler(logger=logger, settings=project_settings_handler)
-    env_handler = EnvHandler(logger=logger, settings=project_settings_handler, aws_account_handler=aws_account_handler)
-    frontend_handler = FrontendHandler(logger=logger, settings=project_settings_handler)
+    project_settings_handler = ProjectSettingsHandler(
+        logger=logger,
+        project_suffix=suffix,
+    )
+    aws_resources_handler = AwsResourcesHandler(
+        logger=logger,
+        settings=project_settings_handler,
+    )
+    python_env_handler = PythonEnvHandler(
+        logger=logger,
+        settings=project_settings_handler,
+    )
+    docker_handler = DockerHandler(
+        logger=logger,
+        settings=project_settings_handler,
+        aws_account_handler=aws_account_handler,
+    )
+    env_handler = EnvHandler(
+        logger=logger,
+        settings=project_settings_handler,
+        aws_account_handler=aws_account_handler,
+    )
+    frontend_handler = FrontendHandler(
+        logger=logger,
+        settings=project_settings_handler,
+    )
 
     try:
+        aws_account_handler.run()
         project_settings_handler.run()
-        aws_resources_handler.run()
+        # aws_resources_handler.run()
         python_env_handler.run()
         docker_handler.run()
         env_handler.run()
         frontend_handler.run()
 
         logger.green("\n[Installation complete]")
-        logger.cyan("Check your email for a temporary password for the researcher admin user")
-        logger.blue("You can now start the development server with npm run start and flask run")
+        logger.cyan(
+            "Check your email for a temporary password for the researcher "
+            "admin user"
+        )
+        logger.blue(
+            "You can now start the development server with npm run start and "
+            "flask run"
+        )
 
-    except Exception as e:
-        logger.red(f"Installation failed: {str(e)}")
+    except Exception:
+        traceback.print_exc()
+        logger.red("Installation failed")
         sys.exit(1)
 
 

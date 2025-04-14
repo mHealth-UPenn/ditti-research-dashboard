@@ -2,33 +2,47 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: "Development environment resources for the Direct Research Dashboard"
 
 Parameters:
-  ProjectName:
+  ParticipantUserPoolName:
     Type: String
-    Description: Name of the project
-    AllowedPattern: "[a-zA-Z0-9_-]+"
-    MaxLength: 64
+    Description: Name of the participant user pool
 
-  AdminEmail:
+  ParticipantUserPoolDomainName:
     Type: String
-    Description: Email address for the admin user
-    AllowedPattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+    Description: Domain name of the participant user pool
 
-  FitbitClientId:
+  ResearcherUserPoolName:
     Type: String
-    Description: Fitbit client ID for development
+    Description: Name of the researcher user pool
 
-  FitbitClientSecret:
+  ResearcherUserPoolDomainName:
     Type: String
-    Description: Fitbit client secret for development
-    NoEcho: true
+    Description: Domain name of the researcher user pool
+
+  LogsBucketName:
+    Type: String
+    Description: Name of the logs bucket
+
+  AudioBucketName:
+    Type: String
+    Description: Name of the audio bucket
+
+  TokensSecretName:
+    Type: String
+    Description: Name of the tokens secret
+
+  SecretName:
+    Type: String
+    Description: Name of the secret
 
 Resources:
   ParticipantUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: !Sub ${ProjectName}-participant-pool-dev
+      UserPoolName: !Ref ParticipantUserPoolName
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: true
+      UsernameConfiguration:
+        CaseSensitive: false
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -38,26 +52,21 @@ Resources:
           RequireSymbols: false
       AliasAttributes:
         - preferred_username
-      MfaConfiguration: OFF
       AccountRecoverySetting:
         RecoveryMechanisms:
           - Name: admin_only
             Priority: 1
-      Tags:
-        - Key: Project
-          Value: !Ref ProjectName
 
   ParticipantUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      Domain: !Sub ${ProjectName}-dev-participant
+      Domain: !Ref ParticipantUserPoolDomainName
       UserPoolId: !Ref ParticipantUserPool
 
   ParticipantUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       UserPoolId: !Ref ParticipantUserPool
-      ClientName: !Sub ${ProjectName}-participant-client-dev
       GenerateSecret: true
       CallbackURLs:
         - http://localhost:5000/auth/participant/callback
@@ -76,7 +85,7 @@ Resources:
   ResearcherUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: !Sub ${ProjectName}-researcher-pool-dev
+      UserPoolName: !Ref ResearcherUserPoolName
       Policies:
         PasswordPolicy:
           MinimumLength: 8
@@ -97,7 +106,6 @@ Resources:
       UsernameAttributes:
         - phone_number
         - email
-      MfaConfiguration: OFF
       EmailConfiguration:
         EmailSendingAccount: COGNITO_DEFAULT
       UsernameConfiguration:
@@ -106,21 +114,17 @@ Resources:
         RecoveryMechanisms:
           - Name: verified_email
             Priority: 1
-      Tags:
-        - Key: Project
-          Value: !Ref ProjectName
 
   ResearcherUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      Domain: !Sub ${ProjectName}-dev-researcher
+      Domain: !Ref ResearcherUserPoolDomainName
       UserPoolId: !Ref ResearcherUserPool
 
   ResearcherUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       UserPoolId: !Ref ResearcherUserPool
-      ClientName: !Sub ${ProjectName}-researcher-client-dev
       GenerateSecret: true
       CallbackURLs:
         - http://localhost:5000/auth/researcher/callback
@@ -141,48 +145,32 @@ Resources:
   LogsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${ProjectName}-dev-wearable-data-retrieval-logs
+      BucketName: !Ref LogsBucketName
       VersioningConfiguration:
         Status: Enabled
 
   AudioBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub ${ProjectName}-dev-audio-files
+      BucketName: !Ref AudioBucketName
       VersioningConfiguration:
         Status: Enabled
 
   DevSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub ${ProjectName}-dev-secret
-      SecretString: !Sub |
-        {
-          "FITBIT_CLIENT_ID": "${FitbitClientId}",
-          "FITBIT_CLIENT_SECRET": "${FitbitClientSecret}",
-          "COGNITO_PARTICIPANT_CLIENT_SECRET": "${ParticipantUserPoolClient.Secret}",
-          "COGNITO_RESEARCHER_CLIENT_SECRET": "${ResearcherUserPoolClient.Secret}"
-        }
-      Tags:
-        - Key: Project
-          Value: !Ref ProjectName
+      Name: !Ref SecretName
 
   TokensSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub ${ProjectName}-dev-Fitbit-tokens
-      Tags:
-        - Key: Project
-          Value: !Ref ProjectName
+      Name: !Ref TokensSecretName
+      SecretString: "{}"
 
 Outputs:
   ParticipantUserPoolId:
     Description: ID of the participant user pool
     Value: !Ref ParticipantUserPool
-
-  ParticipantUserPoolDomain:
-    Description: Domain of the participant user pool
-    Value: !GetAtt ParticipantUserPoolDomain.Domain
 
   ParticipantClientId:
     Description: Client ID of the participant user pool client
@@ -192,26 +180,6 @@ Outputs:
     Description: ID of the researcher user pool
     Value: !Ref ResearcherUserPool
 
-  ResearcherUserPoolDomain:
-    Description: Domain of the researcher user pool
-    Value: !GetAtt ResearcherUserPoolDomain.Domain
-
   ResearcherClientId:
     Description: Client ID of the researcher user pool client
     Value: !Ref ResearcherUserPoolClient
-
-  LogsBucketName:
-    Description: Name of the logs bucket
-    Value: !Ref LogsBucket
-
-  AudioBucketName:
-    Description: Name of the audio bucket
-    Value: !Ref AudioBucket
-
-  DevSecretName:
-    Description: Name of the development secret
-    Value: !Ref DevSecret
-
-  TokensSecretName:
-    Description: Name of the tokens secret
-    Value: !Ref TokensSecret
