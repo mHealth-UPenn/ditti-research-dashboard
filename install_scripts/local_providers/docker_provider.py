@@ -6,9 +6,9 @@ import traceback
 
 import docker
 
+from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.utils import Logger
 from install_scripts.utils.enums import Postgres
-from install_scripts.project_config.project_config_provider import ProjectConfigProvider
 
 
 class DockerProvider:

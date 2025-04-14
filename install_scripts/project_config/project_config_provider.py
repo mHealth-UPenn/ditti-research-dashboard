@@ -8,7 +8,6 @@ from install_scripts.utils import (
     is_valid_name,
     is_valid_email,
 )
-from install_scripts.utils.enums import FString
 from install_scripts.project_config.project_config_types import (
     ProjectConfig,
     CognitoConfig,
@@ -17,6 +16,7 @@ from install_scripts.project_config.project_config_types import (
     DockerConfig,
     UserInput,
 )
+from install_scripts.utils.enums import FString
 
 
 class ProjectConfigProvider:

@@ -4,7 +4,7 @@ import sys
 from botocore.exceptions import ClientError
 
 from install_scripts.aws_providers import AWSClientProvider
-from install_scripts.project_config.project_config_provider import ProjectConfigProvider
+from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.resource_managers.resource_manager_types import CloudFormationParameter
 from install_scripts.resource_managers.base_resource_manager import BaseResourceManager
 from install_scripts.utils import Logger

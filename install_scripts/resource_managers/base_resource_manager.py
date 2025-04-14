@@ -1,5 +1,6 @@
 from collections import abc
-from install_scripts.utils import Env
+
+from install_scripts.utils.types import Env
 
 
 class BaseResourceManager:

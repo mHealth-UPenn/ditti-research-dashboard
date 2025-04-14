@@ -1,11 +1,11 @@
-from install_scripts.utils import Logger
-from install_scripts.utils.enums import Postgres
+from install_scripts.aws_providers import AwsAccountProvider
 from install_scripts.local_providers.local_provider_types import (
     WearableDataRetrievalEnv,
     RootEnv,
 )
-from install_scripts.project_config.project_config_provider import ProjectConfigProvider
-from install_scripts.aws_providers import AwsAccountProvider
+from install_scripts.project_config import ProjectConfigProvider
+from install_scripts.utils import Logger
+from install_scripts.utils.enums import Postgres
 
 
 class EnvFileProvider:
