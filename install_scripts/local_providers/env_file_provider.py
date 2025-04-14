@@ -1,19 +1,16 @@
-import os
-
-from install_scripts.utils import (
-    Logger,
-    Postgres,
+from install_scripts.utils import Logger
+from install_scripts.utils.enums import Postgres
+from install_scripts.local_providers.local_provider_types import (
     WearableDataRetrievalEnv,
     RootEnv,
-    BaseResourceManager
 )
 from install_scripts.project_settings_provider import ProjectSettingsProvider
 from install_scripts.aws_providers import AwsAccountProvider
 
 
-class EnvProvider(BaseResourceManager):
-    wearable_data_retrieval_env: WearableDataRetrievalEnv
-    root_env: RootEnv
+class EnvFileProvider:
+    wearable_data_retrieval_filename: str = "functions/wearable_data_retrieval/.env"
+    root_filename: str = ".env"
 
     def __init__(
             self, *,
@@ -25,31 +22,16 @@ class EnvProvider(BaseResourceManager):
         self.settings = settings
         self.aws_account_handler = aws_account_handler
 
-    def on_start(self) -> None:
-        """Run when the script starts."""
-        self.logger.cyan("\n[Environment Setup]")
+    def initialize_env_files(self) -> None:
+        """Initialize .env files."""
+        self.logger.cyan("\n[Local .env Files Setup]")
+        wearable_data_retrieval_env = self.get_wearable_data_retrieval_env()
+        root_env = self.get_root_env()
+        self.write_env_files(wearable_data_retrieval_env, root_env)
 
-    def on_end(self) -> None:
-        """Run when the script ends."""
-        pass
-
-    def dev(self) -> None:
-        """Run the environment handler in development mode."""
-        self.create_wearable_data_retrieval_env()
-        self.create_root_env()
-        self.write_env_files()
-
-    def prod(self) -> None:
-        """Run the environment handler in production mode."""
-        pass
-
-    def staging(self) -> None:
-        """Run the environment handler in staging mode."""
-        pass
-
-    def create_wearable_data_retrieval_env(self) -> None:
-        """Create wearable_data_retrieval/.env."""
-        self.wearable_data_retrieval_env = {
+    def get_wearable_data_retrieval_env(self) -> WearableDataRetrievalEnv:
+        """Get wearable_data_retrieval/.env."""
+        return {
             "DB_URI": (
                 f"postgresql://{Postgres.USER}:{Postgres.PASSWORD}@"
                 f"{self.settings.project_name}-postgres:{Postgres.PORT}/"
@@ -63,9 +45,9 @@ class EnvProvider(BaseResourceManager):
             "AWS_DEFAULT_REGION": self.aws_account_handler.aws_region,
         }
 
-    def create_root_env(self) -> None:
-        """Create .env."""
-        self.root_env = {
+    def get_root_env(self) -> RootEnv:
+        """Get .env."""
+        return {
             "FLASK_CONFIG": "Default",
             "FLASK_DEBUG": "True",
             "FLASK_DB": (
@@ -105,17 +87,16 @@ class EnvProvider(BaseResourceManager):
             "TM_FSTRING": f"{self.settings.project_name}-tokens",
         }
 
-    def write_env_files(self) -> None:
+    def write_env_files(
+            self,
+            wearable_data_retrieval_env: WearableDataRetrievalEnv,
+            root_env: RootEnv
+        ) -> None:
         """Create .env files."""
-        self.logger.cyan("\n[Local .env Files Setup]")
-
-        os.makedirs("functions/wearable_data_retrieval", exist_ok=True)
-        with open("functions/wearable_data_retrieval/.env", "w") as f:
-            for key, value in self.wearable_data_retrieval_env.items():
+        with open(self.wearable_data_retrieval_filename, "w") as f:
+            for key, value in wearable_data_retrieval_env.items():
                 f.write(f"{key}={value}\n")
 
-        with open(".env", "w") as f:
-            for key, value in self.root_env.items():
+        with open(self.root_filename, "w") as f:
+            for key, value in root_env.items():
                 f.write(f"{key}={value}\n")
-
-        self.logger.green(".env files created successfully")
