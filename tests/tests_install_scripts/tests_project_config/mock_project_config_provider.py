@@ -1,5 +1,3 @@
-import pytest
-
 from install_scripts.project_config.project_config_types import (
     AwsConfig,
     UserInput,
@@ -10,83 +8,76 @@ from install_scripts.project_config.project_config_types import (
     DockerConfig,
 )
 from install_scripts.project_config.project_config_provider import ProjectConfigProvider
+from tests.tests_install_scripts.tests_utils.mock_logger import logger
 
 
-@pytest.fixture(scope="session")
-def user_input_mock() -> UserInput:
+def user_input() -> UserInput:
     return {
         "admin_email": "test-admin-email",
-        "project_name": "test-project-name",
+        "project_name": "test-project",
         "fitbit_client_id": "test-fitbit-client-id",
         "fitbit_client_secret": "test-fitbit-client-secret",
     }
 
 
-@pytest.fixture(scope="session")
-def cognito_config_mock() -> CognitoConfig:
+def cognito_config() -> CognitoConfig:
     return {
-        "participant_user_pool_name": "test-participant-user-pool-name",
-        "participant_user_pool_domain": "test-participant-user-pool-domain",
-        "participant_user_pool_id": "test-participant-user-pool-id",
-        "participant_client_id": "test-participant-client-id",
-        "researcher_user_pool_name": "test-researcher-user-pool-name",
-        "researcher_user_pool_domain": "test-researcher-user-pool-domain",
-        "researcher_user_pool_id": "test-researcher-user-pool-id",
-        "researcher_client_id": "test-researcher-client-id",
+        "participant_user_pool_name": "test-project-participant-pool",
+        "participant_user_pool_domain": "test-project-participant",
+        "participant_user_pool_id": "",
+        "participant_client_id": "",
+        "researcher_user_pool_name": "test-project-researcher-pool",
+        "researcher_user_pool_domain": "test-project-researcher",
+        "researcher_user_pool_id": "",
+        "researcher_client_id": "",
     }
 
 
-@pytest.fixture(scope="session")
-def s3_config_mock() -> S3Config:
+def s3_config() -> S3Config:
     return {
-        "logs_bucket_name": "test-logs-bucket-name",
-        "audio_bucket_name": "test-audio-bucket-name",
+        "logs_bucket_name": "test-project-wearable-data-retrieval-logs",
+        "audio_bucket_name": "test-project-audio-files",
     }
 
 
-@pytest.fixture(scope="session")
-def secrets_resource_manager_config_mock() -> SecretsResourceManagerConfig:
+def secrets_resource_manager_config() -> SecretsResourceManagerConfig:
     return {
-        "secret_name": "test-secret-name",
-        "tokens_secret_name": "test-tokens-secret-name",
+        "secret_name": "test-project-secret",
+        "tokens_secret_name": "test-project-Fitbit-tokens",
     }
 
 
-@pytest.fixture(scope="session")
-def aws_config_mock(cognito_config_mock, s3_config_mock, secrets_resource_manager_config_mock) -> AwsConfig:
+def aws_config() -> AwsConfig:
     return {
-        "cognito": cognito_config_mock,
-        "s3": s3_config_mock,
-        "secrets_manager": secrets_resource_manager_config_mock,
-        "stack_name": "test-stack-name",
+        "cognito": cognito_config(),
+        "s3": s3_config(),
+        "secrets_manager": secrets_resource_manager_config(),
+        "stack_name": "test-project-stack",
     }
 
 
-@pytest.fixture(scope="session")
-def docker_config_mock() -> DockerConfig:
+def docker_config() -> DockerConfig:
     return {
-        "network_name": "test-network-name",
-        "postgres_container_name": "test-postgres-container-name",
-        "wearable_data_retrieval_container_name": "test-wearable-data-retrieval-container-name",
+        "network_name": "test-project-network",
+        "postgres_container_name": "test-project-postgres",
+        "wearable_data_retrieval_container_name": "test-project-wearable-data-retrieval",
     }
 
 
-@pytest.fixture(scope="session")
-def project_config_mock(aws_config_mock, docker_config_mock) -> ProjectConfig:
+def project_config() -> ProjectConfig:
     return {
         "admin_email": "test-admin-email",
-        "project_name": "test-project-name",
-        "aws": aws_config_mock,
-        "docker": docker_config_mock,
+        "project_name": "test-project",
+        "aws": aws_config(),
+        "docker": docker_config(),
     }
 
 
-@pytest.fixture(scope="session")
-def project_config_provider_mock(user_input_mock, project_config_mock, logger_mock) -> ProjectConfigProvider:
+def project_config_provider() -> ProjectConfigProvider:
     provider = ProjectConfigProvider(
-        logger=logger_mock,
+        logger=logger(),
         project_suffix="test-project-suffix",
     )
-    provider.user_input = user_input_mock
-    provider.project_config = project_config_mock
+    provider.user_input = user_input()
+    provider.project_config = project_config()
     return provider

@@ -1,10 +1,7 @@
-import pytest
-
 from unittest.mock import MagicMock
 
 
-@pytest.fixture(scope="session")
-def logger_mock() -> MagicMock:
+def logger() -> MagicMock:
     """Create a mock logger."""
     logger = MagicMock()
     logger.red = MagicMock()

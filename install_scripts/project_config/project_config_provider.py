@@ -68,6 +68,8 @@ class ProjectConfigProvider:
 
     @property
     def project_name(self) -> str:
+        if self.user_input is not None:
+            return self.user_input["project_name"]
         return self.project_config["project_name"]
 
     @project_name.setter
@@ -291,27 +293,26 @@ class ProjectConfigProvider:
         self.logger("- Local .env files")
         self.logger("- Docker containers for the project")
 
-        if input("\nDo you want to continue? (y/n): ").lower() != "y":
+        if not self.get_continue_input() == "y":
             self.logger.red("Installation cancelled")
             raise CancelInstallation()
 
         # Get project name
         project_name = ""
         while not is_valid_name(project_name):
-            project_name = input("\nEnter a name for your project: ")
+            project_name = self.get_project_name_input()
             if not is_valid_name(project_name):
                 self.logger.red("Invalid name")
             elif self.project_suffix:
                 project_name = f"{project_name}-{self.project_suffix}"
 
         # Get Fitbit credentials
-        fitbit_client_id = getpass("Enter your dev Fitbit client ID: ")
-        fitbit_client_secret = getpass("Enter your dev Fitbit client secret: ")
+        fitbit_client_id, fitbit_client_secret = self.get_fitbit_credentials_input()
 
         # Get admin email
         admin_email = ""
         while not is_valid_email(admin_email):
-            admin_email = input("Enter an email to login as admin: ")
+            admin_email = self.get_admin_email_input()
             if not is_valid_email(admin_email):
                 self.logger.red("Invalid email")
 
@@ -322,41 +323,57 @@ class ProjectConfigProvider:
             "admin_email": admin_email
         }
 
+    @staticmethod
+    def get_continue_input() -> str:
+        return input("\nDo you want to continue? (y/n): ").lower()
+
+    @staticmethod
+    def get_project_name_input() -> str:
+        return input("\nEnter a name for your project: ")
+
+    @staticmethod
+    def get_fitbit_credentials_input() -> tuple[str, str]:
+        return getpass("Enter your dev Fitbit client ID: "), getpass("Enter your dev Fitbit client secret: ")
+
+    @staticmethod
+    def get_admin_email_input() -> str:
+        return input("Enter an email to login as admin: ")
+
     # Unit test: project_config is set to expected result
     def setup_project_config(self) -> None:
         """Set up project config."""
         cognito_config: CognitoConfig = {
             "participant_user_pool_name": \
-                self.format_string(FString.participant_user_pool_name),
+                self.format_string(FString.participant_user_pool_name.value),
             "participant_user_pool_domain": \
-                self.format_string(FString.participant_user_pool_domain),
+                self.format_string(FString.participant_user_pool_domain.value),
             "participant_user_pool_id": "",
             "participant_client_id": "",
             "researcher_user_pool_name": \
-                self.format_string(FString.researcher_user_pool_name),
+                self.format_string(FString.researcher_user_pool_name.value),
             "researcher_user_pool_domain": \
-                self.format_string(FString.researcher_user_pool_domain),
+                self.format_string(FString.researcher_user_pool_domain.value),
             "researcher_user_pool_id": "",
             "researcher_client_id": ""
         }
 
         s3_config: S3Config = {
-            "logs_bucket_name": self.format_string(FString.logs_bucket_name),
-            "audio_bucket_name": self.format_string(FString.audio_bucket_name)
+            "logs_bucket_name": self.format_string(FString.logs_bucket_name.value),
+            "audio_bucket_name": self.format_string(FString.audio_bucket_name.value)
         }
 
         secrets_manager_config: SecretsResourceManagerConfig = {
-            "secret_name": self.format_string(FString.secret_name),
-            "tokens_secret_name": self.format_string(FString.tokens_secret_name)
+            "secret_name": self.format_string(FString.secret_name.value),
+            "tokens_secret_name": self.format_string(FString.tokens_secret_name.value)
         }
 
         docker_config: DockerConfig = {
-            "network_name": self.format_string(FString.network_name),
+            "network_name": self.format_string(FString.network_name.value),
             "postgres_container_name": \
-                self.format_string(FString.postgres_container_name),
+                self.format_string(FString.postgres_container_name.value),
             "wearable_data_retrieval_container_name": \
                 self.format_string(
-                    FString.wearable_data_retrieval_container_name
+                    FString.wearable_data_retrieval_container_name.value
                 )
         }
 
@@ -367,7 +384,7 @@ class ProjectConfigProvider:
                 "cognito": cognito_config,
                 "s3": s3_config,
                 "secrets_manager": secrets_manager_config,
-                "stack_name": self.format_string(FString.stack_name)
+                "stack_name": self.format_string(FString.stack_name.value)
             },
             "docker": docker_config
         }
