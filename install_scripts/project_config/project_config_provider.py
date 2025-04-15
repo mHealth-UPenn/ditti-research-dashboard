@@ -18,6 +18,10 @@ from install_scripts.project_config.project_config_types import (
     UserInput,
 )
 from install_scripts.utils.enums import FString
+from install_scripts.utils.exceptions import (
+    CancelInstallation,
+    ProjectConfigError,
+)
 
 
 class ProjectConfigProvider:
@@ -44,8 +48,8 @@ class ProjectConfigProvider:
         )
 
         if not os.path.exists(config_filename):
-            self.logger.red("Project config file not found")
-            sys.exit(1)
+            self.logger.red(f"Project config file {config_filename} not found")
+            raise ProjectConfigError(f"Project config file {config_filename} not found")
 
         with open(config_filename, "r") as f:
             self.project_config = json.load(f)
@@ -289,7 +293,7 @@ class ProjectConfigProvider:
 
         if input("\nDo you want to continue? (y/n): ").lower() != "y":
             self.logger.red("Installation cancelled")
-            sys.exit(1)
+            raise CancelInstallation()
 
         # Get project name
         project_name = ""
@@ -381,6 +385,11 @@ class ProjectConfigProvider:
             json.dump(self.project_config, f, indent=4)
 
     # Unit test: os.remove called with correct filename
+    # Unit test: FileNotFoundError is raised when file is not found
     def uninstall(self) -> None:
         """Uninstall the project config."""
-        os.remove(self.format_string(self.project_config_filename))
+        filename = self.format_string(self.project_config_filename)
+        try:
+            os.remove(filename)
+        except FileNotFoundError:
+            self.logger.yellow(f"Project config file {filename} not found")

@@ -98,5 +98,12 @@ class EnvFileProvider:
 
     def uninstall(self) -> None:
         """Uninstall the .env files."""
-        os.remove(self.wearable_data_retrieval_filename)
-        os.remove(self.root_filename)
+        try:
+            os.remove(self.wearable_data_retrieval_filename)
+        except FileNotFoundError:
+            self.logger.yellow(f"Env file {self.wearable_data_retrieval_filename} not found")
+
+        try:
+            os.remove(self.root_filename)
+        except FileNotFoundError:
+            self.logger.yellow(f"Env file {self.root_filename} not found")

@@ -8,6 +8,8 @@ from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.resource_managers.resource_manager_types import CloudFormationParameter
 from install_scripts.resource_managers.base_resource_manager import BaseResourceManager
 from install_scripts.utils import Logger
+from install_scripts.utils.exceptions import ResourceManagerError, UninstallError
+
 
 class AwsCloudformationResourceManager(BaseResourceManager):
     dev_template: str = "cloudformation/dev-environment.yml"
@@ -25,10 +27,17 @@ class AwsCloudformationResourceManager(BaseResourceManager):
 
     def dev(self) -> None:
         """Run the provider in development mode."""
-        self.__create_cloudformation_stack(
-            template=self.dev_template,
-            parameters=self.__get_dev_parameters()
-        )
+        try:
+            self.__create_cloudformation_stack(
+                template=self.dev_template,
+                parameters=self.__get_dev_parameters()
+            )
+        except ResourceManagerError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            self.logger.red("AWS resource creation failed due to unexpected error")
+            raise ResourceManagerError(e)
 
     def __get_dev_parameters(self) -> list[CloudFormationParameter]:
         return [
@@ -90,16 +99,24 @@ class AwsCloudformationResourceManager(BaseResourceManager):
             waiter = self.client.get_waiter("stack_create_complete")
             waiter.wait(StackName=self.settings.stack_name)
 
-        except ClientError:
+        except ClientError as e:
             traceback.print_exc()
-            self.logger.red("AWS resource creation failed")
-            sys.exit(1)
+            self.logger.red(f"AWS resource creation failed due to ClientError: {e}")
+            raise ResourceManagerError(e)
+        except Exception as e:
+            traceback.print_exc()
+            self.logger.red(f"AWS resource creation failed due to unexpected error: {e}")
+            raise ResourceManagerError(e)
 
     def dev_uninstall(self) -> None:
         """Uninstall the resources in development mode."""
         try:
             self.client.delete_stack(StackName=self.settings.stack_name)
-        except ClientError:
+        except ClientError as e:
             traceback.print_exc()
-            self.logger.red("AWS resource deletion failed")
-            sys.exit(1)
+            self.logger.red(f"AWS resource deletion failed due to ClientError: {e}")
+            raise UninstallError(e)
+        except Exception as e:
+            traceback.print_exc()
+            self.logger.red(f"AWS resource deletion failed due to unexpected error: {e}")
+            raise UninstallError(e)

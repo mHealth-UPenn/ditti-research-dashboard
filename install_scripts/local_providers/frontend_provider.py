@@ -1,9 +1,11 @@
 import os
 import shutil
 import subprocess
+import traceback
 
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.utils import Logger
+from install_scripts.utils.exceptions import SubprocessError
 
 
 class FrontendProvider:
@@ -15,24 +17,37 @@ class FrontendProvider:
 
     def initialize_frontend(self) -> None:
         """Set up frontend dependencies and Tailwind CSS."""
-        os.chdir(self.frontend_dir)
-        subprocess.run(["npm", "install"], check=True)
-        subprocess.run([
-            "npx", "tailwindcss",
-            "-i", "./src/index.css",
-            "-o", "./src/output.css"
-        ], check=True)
-        os.chdir("..")
+        try:
+            os.chdir(self.frontend_dir)
+            subprocess.run(["npm", "install"], check=True)
+            subprocess.run([
+                "npx", "tailwindcss",
+                "-i", "./src/index.css",
+                "-o", "./src/output.css"
+            ], check=True)
+            os.chdir("..")
+        except subprocess.CalledProcessError as e:
+            traceback.print_exc()
+            self.logger.red(f"Frontend initialization failed due to subprocess error: {e}")
+            raise SubprocessError(e)
 
     def build_frontend(self) -> None:
         """Build the frontend"""
-        os.chdir(self.frontend_dir)
-        subprocess.run(["npm", "run", "build"], check=True)
-        os.chdir("..")
+        try:
+            os.chdir(self.frontend_dir)
+            subprocess.run(["npm", "run", "build"], check=True)
+            os.chdir("..")
+        except subprocess.CalledProcessError as e:
+            traceback.print_exc()
+            self.logger.red(f"Frontend build failed due to subprocess error: {e}")
+            raise SubprocessError(e)
 
     def uninstall(self) -> None:
         """Uninstall the frontend."""
-        os.chdir(self.frontend_dir)
-        shutil.rmtree("node_modules")
-        shutil.rmtree("build")
-        os.chdir("..")
+        try:
+            os.chdir(self.frontend_dir)
+            shutil.rmtree("node_modules")
+            shutil.rmtree("build")
+            os.chdir("..")
+        except FileNotFoundError:
+            self.logger.yellow("Frontend directory not found")

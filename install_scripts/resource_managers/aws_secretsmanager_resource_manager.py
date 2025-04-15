@@ -1,11 +1,16 @@
 import json
+import traceback
 from typing import Optional
+
+from boto3.exceptions import ClientError
 
 from install_scripts.aws_providers import AWSClientProvider, AwsCognitoProvider
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.resource_managers.base_resource_manager import BaseResourceManager
 from install_scripts.resource_managers.resource_manager_types import DevSecretValue
 from install_scripts.utils import Logger
+from install_scripts.utils.exceptions import ResourceManagerError
+
 
 class AwsSecretsmanagerResourceManager(BaseResourceManager):
     secret_value: Optional[dict[str, str]]
@@ -25,11 +30,23 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
 
     def on_end(self) -> None:
         """Run when the script ends."""
-        self.__write_secret()
+        try:
+            self.__write_secret()
+        except ResourceManagerError:
+            raise
+        except Exception as e:
+            traceback.print_exc()
+            self.logger.red(f"Secret write failed due to unexpected error: {e}")
+            raise ResourceManagerError(e)
 
     def dev(self) -> None:
         """Run the provider in development mode."""
-        self.__set_dev_secret_value()
+        try:
+            self.__set_dev_secret_value()
+        except Exception as e:
+            traceback.print_exc()
+            self.logger.red(f"Secret value setting failed due to unexpected error: {e}")
+            raise ResourceManagerError(e)
 
     def __set_dev_secret_value(self) -> None:
         """Set the secret value."""
@@ -45,7 +62,16 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
 
     def __write_secret(self) -> None:
         """Write the secret value to the secret manager."""
-        self.client.put_secret_value(
-            SecretId=self.settings.secret_name,
-            SecretString=json.dumps(self.secret_value)
-        )
+        try:
+            self.client.put_secret_value(
+                SecretId=self.settings.secret_name,
+                SecretString=json.dumps(self.secret_value)
+            )
+        except ClientError as e:
+            traceback.print_exc()
+            self.logger.red(f"Secret write failed due to ClientError: {e}")
+            raise ResourceManagerError(e)
+        except Exception as e:
+            traceback.print_exc()
+            self.logger.red(f"Secret write failed due to unexpected error: {e}")
+            raise ResourceManagerError(e)

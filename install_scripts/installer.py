@@ -1,3 +1,6 @@
+import sys
+import traceback
+
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.aws_providers import (
     AwsAccountProvider,
@@ -19,7 +22,7 @@ from install_scripts.resource_managers import (
 )
 from install_scripts.utils import Logger
 from install_scripts.utils.types import Env
-
+from install_scripts.utils.exceptions import CancelInstallation
 
 class Installer:
     def __init__(self, env: Env) -> None:
@@ -104,79 +107,94 @@ class Installer:
         )
 
     def run(self) -> None:
-        # Configure AWS CLI
-        self.logger.cyan("\n[AWS CLI Configuration]")
-        self.aws_account_provider.configure_aws_cli()
+        try:
+            # Configure AWS CLI
+            self.logger.cyan("\n[AWS CLI Configuration]")
+            self.aws_account_provider.configure_aws_cli()
 
-        # Get project settings
-        self.logger.cyan("\n[Project Settings]")
-        self.project_config_provider.get_user_input()
-        self.project_config_provider.setup_project_config()
-        self.project_config_provider.write_project_config()
+            # Get project settings
+            self.logger.cyan("\n[Project Settings]")
+            self.project_config_provider.get_user_input()
+            self.project_config_provider.setup_project_config()
+            self.project_config_provider.write_project_config()
 
-        # Setup Python environment
-        self.logger.cyan("\n[Python Environment Setup]")
-        self.python_env_provider.initialize_python_env()
-        self.python_env_provider.install_requirements()
+            # Setup Python environment
+            self.logger.cyan("\n[Python Environment Setup]")
+            self.python_env_provider.initialize_python_env()
+            self.python_env_provider.install_requirements()
 
-        # Setup Docker containers
-        self.logger.cyan("\n[Docker Setup]")
-        self.docker_provider.run_postgres_container()
-        self.docker_provider.build_wearable_data_retrieval_container()
-        self.docker_provider.run_wearable_data_retrieval_container()
+            # Setup Docker containers
+            self.logger.cyan("\n[Docker Setup]")
+            self.docker_provider.run_postgres_container()
+            self.docker_provider.build_wearable_data_retrieval_container()
+            self.docker_provider.run_wearable_data_retrieval_container()
 
-        # Setup CloudFormation stack
-        self.logger.cyan("\n[CloudFormation Stack Setup]")
-        self.aws_cloudformation_resource_manager.run(env="dev")
+            # Setup CloudFormation stack
+            self.logger.cyan("\n[CloudFormation Stack Setup]")
+            self.aws_cloudformation_resource_manager.run(env="dev")
 
-        # Setup Secrets Manager
-        self.logger.cyan("\n[Secrets Manager Setup]")
-        self.aws_secretsmanager_resource_manager.run(env="dev")
+            # Setup Secrets Manager
+            self.logger.cyan("\n[Secrets Manager Setup]")
+            self.aws_secretsmanager_resource_manager.run(env="dev")
 
-        # Setup Cognito
-        self.logger.cyan("\n[Cognito Setup]")
-        self.aws_cognito_resource_manager.run(env="dev")
+            # Setup Cognito
+            self.logger.cyan("\n[Cognito Setup]")
+            self.aws_cognito_resource_manager.run(env="dev")
 
-        # Setup .env files
-        self.logger.cyan("\n[Environment Files Setup]")
-        wearable_data_retrieval_env = self.env_file_provider.get_wearable_data_retrieval_env()
-        root_env = self.env_file_provider.get_root_env()
-        self.env_file_provider.write_env_files(wearable_data_retrieval_env, root_env)
+            # Setup .env files
+            self.logger.cyan("\n[Environment Files Setup]")
+            wearable_data_retrieval_env = self.env_file_provider.get_wearable_data_retrieval_env()
+            root_env = self.env_file_provider.get_root_env()
+            self.env_file_provider.write_env_files(wearable_data_retrieval_env, root_env)
 
-        # Setup frontend
-        self.logger.cyan("\n[Frontend Setup]")
-        self.frontend_provider.initialize_frontend()
-        self.frontend_provider.build_frontend()
+            # Setup frontend
+            self.logger.cyan("\n[Frontend Setup]")
+            self.frontend_provider.initialize_frontend()
+            self.frontend_provider.build_frontend()
+
+        except CancelInstallation:
+            sys.exit(0)
+        except Exception:
+            traceback.print_exc()
+            self.logger.red(f"Installation failed.")
+            sys.exit(1)
 
     def uninstall(self, project_name: str, env: Env = "dev") -> None:
         """Uninstall the resources."""
-        self.logger.red("This will delete all resources created by the installer.")
-        self.logger.red("ANY LOST DATA WILL BE PERMANENTLY DELETED.")
-        self.logger.red(f"Please confirm by typing \"{project_name}\".")
-        confirm = input("> ")
-        if confirm != project_name:
-            self.logger.red("Uninstall cancelled.")
-            return
+        try:
+            self.logger.red("This will delete all resources created by the installer.")
+            self.logger.red("ANY LOST DATA WILL BE PERMANENTLY DELETED.")
+            self.logger.red(f"Please confirm by typing \"{project_name}\".")
+            confirm = input("> ")
 
-        # Configure AWS CLI
-        self.logger.cyan("\n[AWS CLI Configuration]")
-        self.aws_account_provider.configure_aws_cli()
+            if confirm != project_name:
+                self.logger.red("Uninstall cancelled.")
+                sys.exit(0)
 
-        # Load project config
-        self.project_config_provider.load_existing_config(project_name)
+            # Configure AWS CLI
+            self.logger.cyan("\n[AWS CLI Configuration]")
+            self.aws_account_provider.configure_aws_cli()
 
-        if env == "dev":
-            self.logger.cyan("\n[Docker Cleanup]")
-            self.docker_provider.uninstall()
+            # Load project config
+            self.project_config_provider.load_existing_config(project_name)
 
-            self.logger.cyan("\n[.env Files Cleanup]")
-            self.env_file_provider.uninstall()
+            if env == "dev":
+                self.logger.cyan("\n[Docker Cleanup]")
+                self.docker_provider.uninstall()
 
-            self.logger.cyan("\n[Frontend Cleanup]")
-            self.frontend_provider.uninstall()
+                self.logger.cyan("\n[.env Files Cleanup]")
+                self.env_file_provider.uninstall()
 
-        self.logger.cyan("\n[CloudFormation Stack Cleanup]")
-        self.aws_cloudformation_resource_manager.uninstall(env=env)
+                self.logger.cyan("\n[Frontend Cleanup]")
+                self.frontend_provider.uninstall()
 
-        self.logger.cyan("\n[Project Config Cleanup]")
-        self.project_config_provider.uninstall()
+            self.logger.cyan("\n[CloudFormation Stack Cleanup]")
+            self.aws_cloudformation_resource_manager.uninstall(env=env)
+
+            self.logger.cyan("\n[Project Config Cleanup]")
+            self.project_config_provider.uninstall()
+
+        except Exception:
+            traceback.print_exc()
+            self.logger.red(f"Uninstall failed.")
+            sys.exit(1)
