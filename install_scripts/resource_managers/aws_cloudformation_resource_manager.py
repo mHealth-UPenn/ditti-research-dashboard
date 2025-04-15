@@ -91,11 +91,13 @@ class AwsCloudformationResourceManager(BaseResourceManager):
                 Parameters=parameters,
                 Capabilities=["CAPABILITY_IAM"]
             )
+            self.logger.blue(f"Creation of CloudFormation stack {self.settings.stack_name} started")
 
             # Wait for stack creation to complete
             self.logger("Waiting for AWS resources to be created...")
             waiter = self.client.get_waiter("stack_create_complete")
             waiter.wait(StackName=self.settings.stack_name)
+            self.logger.blue(f"Creation of CloudFormation stack {self.settings.stack_name} completed")
 
             return res
 
@@ -112,6 +114,13 @@ class AwsCloudformationResourceManager(BaseResourceManager):
         """Uninstall the resources in development mode."""
         try:
             self.client.delete_stack(StackName=self.settings.stack_name)
+            self.logger.blue(f"Deletion of CloudFormation stack {self.settings.stack_name} started")
+
+            # Wait for stack deletion to complete
+            waiter = self.client.get_waiter("stack_delete_complete")
+            waiter.wait(StackName=self.settings.stack_name)
+            self.logger.blue(f"Deletion of CloudFormation stack {self.settings.stack_name} completed")
+
         except ClientError as e:
             traceback.print_exc()
             self.logger.red(f"AWS resource deletion failed due to ClientError: {e}")

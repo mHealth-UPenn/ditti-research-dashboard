@@ -20,11 +20,13 @@ class FrontendProvider:
         try:
             os.chdir(self.frontend_dir)
             subprocess.run(["npm", "install"], check=True)
+            self.logger.blue(f"Frontend dependencies installed")
             subprocess.run([
                 "npx", "tailwindcss",
                 "-i", "./src/index.css",
                 "-o", "./src/output.css"
             ], check=True)
+            self.logger.blue(f"Tailwind CSS compiled")
             os.chdir("..")
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
@@ -37,6 +39,7 @@ class FrontendProvider:
             os.chdir(self.frontend_dir)
             subprocess.run(["npm", "run", "build"], check=True)
             os.chdir("..")
+            self.logger.blue(f"Frontend built")
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.red(f"Frontend build failed due to subprocess error: {e}")
@@ -48,6 +51,8 @@ class FrontendProvider:
             os.chdir(self.frontend_dir)
             shutil.rmtree("node_modules")
             shutil.rmtree("build")
-            os.chdir("..")
+            self.logger.blue(f"Frontend uninstalled")
         except FileNotFoundError:
             self.logger.yellow("Frontend directory not found")
+        finally:
+            os.chdir("..")

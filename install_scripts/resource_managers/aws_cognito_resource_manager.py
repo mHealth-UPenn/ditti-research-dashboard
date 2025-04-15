@@ -37,6 +37,7 @@ class AwsCognitoResourceManager(BaseResourceManager):
                 UserPoolId=self.settings.researcher_user_pool_id,
                 Username=self.settings.admin_email,
             )
+            self.logger.blue(f"Admin user {self.settings.admin_email} created in Cognito user pool {self.settings.researcher_user_pool_id}")
 
             return res
         except ClientError as e:

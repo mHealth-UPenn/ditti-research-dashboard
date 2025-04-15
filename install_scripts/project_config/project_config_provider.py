@@ -279,8 +279,6 @@ class ProjectConfigProvider:
                     " the project.")
         self.logger.magenta("The following will be configured and installed:")
         self.logger("- AWS CLI")
-        self.logger("- Python 3.13")
-        self.logger("- Python packages")
         self.logger("- Amazon Cognito user pools and clients")
         self.logger("- Amazon S3 buckets")
         self.logger("- Development secrets on AWS Secrets ResourceManager")
@@ -394,10 +392,12 @@ class ProjectConfigProvider:
         with open(filename, "w") as f:
             json.dump(self.project_config, f, indent=4)
 
-    def uninstall(self) -> None:
+    def uninstall(self, project_name: str) -> None:
         """Uninstall the project config."""
-        filename = self.format_string(self.project_config_filename)
+        filename = self.project_config_filename \
+            .format(project_name=project_name)
         try:
             os.remove(filename)
+            self.logger.blue(f"Project config file {filename} removed")
         except FileNotFoundError:
             self.logger.yellow(f"Project config file {filename} not found")

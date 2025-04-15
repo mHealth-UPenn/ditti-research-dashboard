@@ -19,27 +19,19 @@ from install_scripts.resource_managers import (
     AwsCognitoResourceManager,
     AwsSecretsmanagerResourceManager,
 )
-from install_scripts.utils import Logger
+from install_scripts.utils import Logger, get_project_suffix
 from install_scripts.utils.types import Env
 from install_scripts.utils.exceptions import CancelInstallation
 
 class Installer:
     def __init__(self, env: Env) -> None:
         self.logger = Logger()
-
-        project_suffix = ""
-        match env:
-            case "dev":
-                project_suffix = "dev"
-            case "staging":
-                project_suffix = "staging"
-            case _:
-                pass
+        self.env = env
 
         # Initialize project config provider
         self.project_config_provider = ProjectConfigProvider(
             logger=self.logger,
-            project_suffix=project_suffix,
+            project_suffix=get_project_suffix(env),
         )
 
         # Initialize AWS providers
@@ -100,15 +92,15 @@ class Installer:
 
     def run(self) -> None:
         try:
-            # Configure AWS CLI
-            self.logger.cyan("\n[AWS CLI Configuration]")
-            self.aws_account_provider.configure_aws_cli()
-
             # Get project settings
-            self.logger.cyan("\n[Project Settings]")
+            self.logger.cyan("\n[Project Setup]")
             self.project_config_provider.get_user_input()
             self.project_config_provider.setup_project_config()
             self.project_config_provider.write_project_config()
+
+            # Configure AWS CLI
+            self.logger.cyan("\n[AWS CLI Configuration]")
+            self.aws_account_provider.configure_aws_cli()
 
             # Setup Docker containers
             self.logger.cyan("\n[Docker Setup]")
@@ -117,12 +109,7 @@ class Installer:
             # Setup CloudFormation stack
             self.logger.cyan("\n[CloudFormation Stack Setup]")
             self.aws_cloudformation_resource_manager.run(env="dev")
-
-            outputs = self.aws_cloudformation_provider.get_outputs()
-            self.project_config_provider.participant_user_pool_id = outputs["ParticipantUserPoolId"]
-            self.project_config_provider.participant_client_id = outputs["ParticipantClientId"]
-            self.project_config_provider.researcher_user_pool_id = outputs["ResearcherUserPoolId"]
-            self.project_config_provider.researcher_client_id = outputs["ResearcherClientId"]
+            self.aws_cloudformation_provider.update_dev_project_config()
 
             # Setup Secrets Manager
             self.logger.cyan("\n[Secrets Manager Setup]")
@@ -141,7 +128,6 @@ class Installer:
             # Setup frontend
             self.logger.cyan("\n[Frontend Setup]")
             self.frontend_provider.initialize_frontend()
-            self.frontend_provider.build_frontend()
 
         except CancelInstallation:
             sys.exit(0)
@@ -150,8 +136,12 @@ class Installer:
             self.logger.red(f"Installation failed.")
             sys.exit(1)
 
-    def uninstall(self, project_name: str, env: Env = "dev") -> None:
+    def uninstall(self, project_name: str) -> None:
         """Uninstall the resources."""
+        suffix = get_project_suffix(self.env)
+        if suffix:
+            project_name = f"{project_name}-{suffix}"
+
         try:
             self.logger.red("This will delete all resources created by the installer.")
             self.logger.red("ANY LOST DATA WILL BE PERMANENTLY DELETED.")
@@ -169,7 +159,7 @@ class Installer:
             # Load project config
             self.project_config_provider.load_existing_config(project_name)
 
-            if env == "dev":
+            if self.env == "dev":
                 self.logger.cyan("\n[Docker Cleanup]")
                 self.docker_provider.uninstall()
 
@@ -180,10 +170,10 @@ class Installer:
                 self.frontend_provider.uninstall()
 
             self.logger.cyan("\n[CloudFormation Stack Cleanup]")
-            self.aws_cloudformation_resource_manager.uninstall(env=env)
+            self.aws_cloudformation_resource_manager.uninstall(env=self.env)
 
             self.logger.cyan("\n[Project Config Cleanup]")
-            self.project_config_provider.uninstall()
+            self.project_config_provider.uninstall(project_name)
 
         except Exception:
             traceback.print_exc()

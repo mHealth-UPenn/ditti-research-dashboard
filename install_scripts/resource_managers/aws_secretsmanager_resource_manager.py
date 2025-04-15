@@ -67,6 +67,7 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
                 SecretId=self.settings.secret_name,
                 SecretString=json.dumps(self.secret_value)
             )
+            self.logger.blue(f"Secret {self.settings.secret_name} written")
 
             return res
         except ClientError as e:

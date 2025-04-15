@@ -37,3 +37,10 @@ class AwsCloudformationProvider:
             traceback.print_exc()
             self.logger.red(f"Error getting outputs for stack due to unexpected error: {e}")
             raise AwsProviderError(e)
+
+    def update_dev_project_config(self) -> None:
+        outputs = self.get_outputs()
+        self.settings.participant_user_pool_id = outputs["ParticipantUserPoolId"]
+        self.settings.participant_client_id = outputs["ParticipantClientId"]
+        self.settings.researcher_user_pool_id = outputs["ResearcherUserPoolId"]
+        self.settings.researcher_client_id = outputs["ResearcherClientId"]

@@ -48,8 +48,6 @@ class DockerProvider:
 
     def run_postgres_container(self) -> None:
         """Set up Postgres container."""
-        self.logger.cyan("\n[Docker Setup]")
-
         # Create Postgres container
         try:
             self.docker_client.containers.run(
@@ -109,6 +107,7 @@ class DockerProvider:
                 ["flask", "--app", "run.py", "db", "upgrade"],
                 check=True
             )
+            self.logger.blue(f"Database upgraded")
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.red(f"Database upgrade failed due to subprocess error: {e}")
@@ -123,6 +122,7 @@ class DockerProvider:
                 ["flask", "--app", "run.py", "init-integration-testing-db"],
                 check=True
             )
+            self.logger.blue(f"Integration testing database initialized")
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger \
@@ -140,6 +140,7 @@ class DockerProvider:
                 "create-researcher-account",
                 "--email", self.settings.admin_email
             ], check=True)
+            self.logger.blue(f"Researcher account created")
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.red(f"Researcher account creation failed due to subprocess error: {e}")
@@ -180,6 +181,11 @@ class DockerProvider:
             self.logger.red(f"Error removing shared files due to unexpected error: {e}")
             raise LocalProviderError(e)
 
+        self.logger.blue(
+            f"Wearable data retrieval image "
+            f"{self.settings.wearable_data_retrieval_container_name} created"
+        )
+
     def run_wearable_data_retrieval_container(self) -> None:
         """Run wearable data retrieval container."""
         try:
@@ -200,6 +206,11 @@ class DockerProvider:
             traceback.print_exc()
             self.logger.red(f"Wearable data retrieval container creation failed due to unexpected error: {e}")
             raise DockerSDKError(e)
+
+        self.logger.blue(
+            f"Wearable data retrieval container "
+            f"{self.settings.wearable_data_retrieval_container_name} created"
+        )
 
     def get_container(self, container_name: str) -> Container:
         """Get a container by name."""
@@ -223,6 +234,7 @@ class DockerProvider:
             container = self.get_container(self.settings.postgres_container_name)
             container.stop()
             container.remove()
+            self.logger.blue(f"Postgres container {self.settings.postgres_container_name} removed")
         except DockerSDKError:
             self.logger.yellow(f"Unable to stop and remove postgres container {self.settings.postgres_container_name}")
 
@@ -230,11 +242,13 @@ class DockerProvider:
             container = self.get_container(self.settings.wearable_data_retrieval_container_name)
             container.stop()
             container.remove()
+            self.logger.blue(f"Wearable data retrieval container {self.settings.wearable_data_retrieval_container_name} removed")
         except DockerSDKError:
             self.logger.yellow(f"Unable to stop and remove wearable data retrieval container {self.settings.wearable_data_retrieval_container_name}")
 
         try:
             network = self.get_network()
             network.remove()
+            self.logger.blue(f"Docker network {self.settings.network_name} removed")
         except DockerSDKError:
             self.logger.yellow(f"Unable to remove docker network {self.settings.network_name}")

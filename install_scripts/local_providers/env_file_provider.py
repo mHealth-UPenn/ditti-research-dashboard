@@ -92,18 +92,24 @@ class EnvFileProvider:
             for key, value in wearable_data_retrieval_env.items():
                 f.write(f"{key}={value}\n")
 
+        self.logger.blue(f"Wearable data retrieval .env file created")
+
         with open(self.root_filename, "w") as f:
             for key, value in root_env.items():
                 f.write(f"{key}={value}\n")
+
+        self.logger.blue(f".env file created")
 
     def uninstall(self) -> None:
         """Uninstall the .env files."""
         try:
             os.remove(self.wearable_data_retrieval_filename)
+            self.logger.blue(f"Wearable data retrieval .env file removed")
         except FileNotFoundError:
             self.logger.yellow(f"Env file {self.wearable_data_retrieval_filename} not found")
 
         try:
             os.remove(self.root_filename)
+            self.logger.blue(f".env file removed")
         except FileNotFoundError:
             self.logger.yellow(f"Env file {self.root_filename} not found")
