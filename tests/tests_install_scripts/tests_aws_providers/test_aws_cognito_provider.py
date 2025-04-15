@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import MagicMock
 
 from botocore.exceptions import ClientError
+from moto import mock_aws
 
 from install_scripts.aws_providers.aws_cognito_provider import AwsCognitoProvider
 from install_scripts.utils.exceptions import AwsProviderError
@@ -11,12 +12,14 @@ from tests.tests_install_scripts.tests_aws_providers.mock_aws_cognito_provider i
 
 @pytest.fixture
 def participant_user_pool_mock():
-    return participant_user_pool()
+    with mock_aws():
+        yield participant_user_pool()
 
 
 @pytest.fixture
 def researcher_user_pool_mock():
-    return researcher_user_pool()
+    with mock_aws():
+        yield researcher_user_pool()
 
 
 @pytest.fixture

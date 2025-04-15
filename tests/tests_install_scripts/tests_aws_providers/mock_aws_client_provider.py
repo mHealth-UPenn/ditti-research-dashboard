@@ -2,7 +2,6 @@ from unittest.mock import MagicMock
 
 from install_scripts.aws_providers.aws_client_provider import AwsClientProvider
 
-
 def get_authorization_token_response():
     return {"authorizationData": [{"authorizationToken": "test-token"}]}
 

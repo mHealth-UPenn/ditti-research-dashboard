@@ -1,6 +1,7 @@
 import pytest
 
 from botocore.exceptions import ClientError
+from moto import mock_aws
 
 from install_scripts.aws_providers.aws_ecr_provider import AwsEcrProvider
 from install_scripts.utils.exceptions import AwsProviderError
@@ -15,8 +16,8 @@ def get_authorization_token_response_mock():
 
 @pytest.fixture
 def aws_ecr_provider_mock():
-    provider = aws_ecr_provider()
-    return provider
+    with mock_aws():
+        yield aws_ecr_provider()
 
 
 class TestAwsEcrProvider:

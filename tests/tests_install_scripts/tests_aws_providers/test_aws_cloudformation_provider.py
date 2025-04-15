@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import MagicMock
 
 from botocore.exceptions import ClientError
+from moto import mock_aws
 
 from install_scripts.aws_providers.aws_cloudformation_provider import AwsCloudformationProvider, AwsClientProvider
 from install_scripts.utils.exceptions import AwsProviderError
@@ -11,7 +12,8 @@ from tests.tests_install_scripts.tests_resource_managers.mock_aws_cloudformation
 
 @pytest.fixture
 def aws_cloudformation_provider_mock():
-    return aws_cloudformation_provider()
+    with mock_aws():
+        yield aws_cloudformation_provider()
 
 
 @pytest.fixture

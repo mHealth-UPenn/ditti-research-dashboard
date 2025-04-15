@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from botocore.exceptions import ClientError
+from moto import mock_aws
 
 from install_scripts.resource_managers.aws_cloudformation_resource_manager import AwsCloudformationResourceManager
 from install_scripts.utils.exceptions import ResourceManagerError, UninstallError
@@ -19,7 +20,8 @@ def template_mock():
 
 @pytest.fixture
 def aws_cloudformation_resource_manager_mock():
-    return aws_cloudformation_resource_manager()
+    with mock_aws():
+        yield aws_cloudformation_resource_manager()
 
 
 class TestAwsCloudformationResourceManager:

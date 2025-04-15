@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock
+import os
 
 from install_scripts.resource_managers.aws_cloudformation_resource_manager import AwsCloudformationResourceManager
 from tests.tests_install_scripts.tests_utils.mock_logger import logger
@@ -7,7 +8,11 @@ from tests.tests_install_scripts.tests_aws_providers.mock_aws_client_provider im
 
 
 def template():
-    with open("tests/data/cloudformation/template.yml", "r") as f:
+    # Get the absolute path to the project root directory
+    project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
+    template_path = os.path.join(project_root, "tests/data/cloudformation/template.yml")
+    
+    with open(template_path, "r") as f:
         return f.read()
 
 

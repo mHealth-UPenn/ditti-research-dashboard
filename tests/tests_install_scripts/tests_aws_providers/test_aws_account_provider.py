@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 
 from botocore.exceptions import ClientError
+from moto import mock_aws
 import subprocess
 
 from install_scripts.aws_providers import AwsAccountProvider, AwsClientProvider
@@ -17,7 +18,8 @@ def logger_mock():
 
 @pytest.fixture
 def aws_account_provider_mock():
-    return aws_account_provider()
+    with mock_aws():
+        yield aws_account_provider()
 
 
 @pytest.fixture
