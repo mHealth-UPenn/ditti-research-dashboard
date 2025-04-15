@@ -46,4 +46,4 @@ class AwsCognitoResourceManager(BaseResourceManager):
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Admin user creation failed due to unexpected error: {e}")
-            raise
+            raise ResourceManagerError(e)

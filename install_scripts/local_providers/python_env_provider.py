@@ -1,11 +1,10 @@
 import os
 from pathlib import Path
 import subprocess
-import sys
 
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.utils import Logger
-
+from install_scripts.utils.exceptions import SubprocessError
 
 class PythonEnvProvider:
     requirements_filename: str = "requirements.txt"
@@ -17,14 +16,8 @@ class PythonEnvProvider:
     def __init__(self, *, logger: Logger, settings: ProjectConfigProvider):
         self.logger = logger
         self.settings = settings
-
-        # Activate virtual environment and install packages
-        if sys.platform == "win32":
-            self.activate_script = Path(self.env_name) / "Scripts" / "activate"
-            self.bin_path = Path(self.env_name) / "Scripts" / "bin"
-        else:
-            self.activate_script = Path(self.env_name) / "bin" / "activate"
-            self.bin_path = Path(self.env_name) / "bin"
+        self.activate_script = Path(self.env_name) / "bin" / "activate"
+        self.bin_path = Path(self.env_name) / "bin"
 
     def initialize_python_env(self) -> None:
         """Set up Python virtual environment and install packages."""
@@ -40,8 +33,16 @@ class PythonEnvProvider:
 
     def install_requirements(self) -> None:
         """Install requirements."""
-        subprocess.run(
-            f"{self.bin_path / "pip"} install -qr {self.requirements_filename}",
-            shell=True,
-            check=True
-        )
+        try:
+            subprocess.run(
+                f"{self.bin_path / "pip"} install -qr {self.requirements_filename}",
+                shell=True,
+                check=True
+            )
+        except subprocess.CalledProcessError as e:
+            self.logger.red(f"Error installing requirements due to subprocess error: {e}")
+            raise SubprocessError(e)
+        except Exception as e:
+            self.logger.red(f"Error installing requirements due to unexpected error: {e}")
+            raise SubprocessError(e)
+

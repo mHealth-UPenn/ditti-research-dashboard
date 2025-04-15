@@ -48,35 +48,39 @@ def describe_user_pool_client_mock(aws_cognito_provider_mock: AwsCognitoProvider
     return aws_cognito_provider_mock.cognito_client.describe_user_pool_client
 
 
-class TestAwsCognitoProvider:
-    def test_get_participant_client_secret(self, participant_user_pool_client_mock: dict, aws_cognito_provider_mock: AwsCognitoProvider):
-        assert aws_cognito_provider_mock.get_participant_client_secret() == participant_user_pool_client_mock["UserPoolClient"]["ClientSecret"]
+def test_get_participant_client_secret(participant_user_pool_client_mock: dict, aws_cognito_provider_mock: AwsCognitoProvider):
+    assert aws_cognito_provider_mock.get_participant_client_secret() == participant_user_pool_client_mock["UserPoolClient"]["ClientSecret"]
 
-    def test_get_participant_client_secret_client_error(self, describe_user_pool_client_mock: MagicMock, aws_cognito_provider_mock: AwsCognitoProvider):
-        describe_user_pool_client_mock.side_effect = ClientError(
-            {"Error": {"Code": "ValidationError", "Message": "Stack with id dev-environment does not exist"}},
-            "DescribeUserPoolClient"
-        )
-        with pytest.raises(AwsProviderError):
-            aws_cognito_provider_mock.get_participant_client_secret()
 
-    def test_get_participant_client_secret_unexpected_error(self, describe_user_pool_client_mock: MagicMock, aws_cognito_provider_mock: AwsCognitoProvider):
-        describe_user_pool_client_mock.side_effect = Exception("Unexpected error")
-        with pytest.raises(Exception):
-            aws_cognito_provider_mock.get_participant_client_secret()
+def test_get_participant_client_secret_client_error(describe_user_pool_client_mock: MagicMock, aws_cognito_provider_mock: AwsCognitoProvider):
+    describe_user_pool_client_mock.side_effect = ClientError(
+        {"Error": {"Code": "ValidationError", "Message": "Stack with id dev-environment does not exist"}},
+        "DescribeUserPoolClient"
+    )
+    with pytest.raises(AwsProviderError, match="ValidationError"):
+        aws_cognito_provider_mock.get_participant_client_secret()
 
-    def test_get_researcher_client_secret(self, researcher_user_pool_client_mock: dict, aws_cognito_provider_mock: AwsCognitoProvider):
-        assert aws_cognito_provider_mock.get_researcher_client_secret() == researcher_user_pool_client_mock["UserPoolClient"]["ClientSecret"]
 
-    def test_get_researcher_client_secret_client_error(self, describe_user_pool_client_mock: MagicMock, aws_cognito_provider_mock: AwsCognitoProvider):
-        describe_user_pool_client_mock.side_effect = ClientError(
-            {"Error": {"Code": "ValidationError", "Message": "Stack with id dev-environment does not exist"}},
-            "DescribeUserPoolClient"
-        )
-        with pytest.raises(AwsProviderError):
-            aws_cognito_provider_mock.get_researcher_client_secret()
+def test_get_participant_client_secret_unexpected_error(describe_user_pool_client_mock: MagicMock, aws_cognito_provider_mock: AwsCognitoProvider):
+    describe_user_pool_client_mock.side_effect = Exception("Unexpected error")
+    with pytest.raises(AwsProviderError, match="Unexpected error"):
+        aws_cognito_provider_mock.get_participant_client_secret()
 
-    def test_get_researcher_client_secret_unexpected_error(self, describe_user_pool_client_mock: MagicMock, aws_cognito_provider_mock: AwsCognitoProvider):
-        describe_user_pool_client_mock.side_effect = Exception("Unexpected error")
-        with pytest.raises(Exception):
-            aws_cognito_provider_mock.get_researcher_client_secret()
+
+def test_get_researcher_client_secret(researcher_user_pool_client_mock: dict, aws_cognito_provider_mock: AwsCognitoProvider):
+    assert aws_cognito_provider_mock.get_researcher_client_secret() == researcher_user_pool_client_mock["UserPoolClient"]["ClientSecret"]
+
+
+def test_get_researcher_client_secret_client_error(describe_user_pool_client_mock: MagicMock, aws_cognito_provider_mock: AwsCognitoProvider):
+    describe_user_pool_client_mock.side_effect = ClientError(
+        {"Error": {"Code": "ValidationError", "Message": "Stack with id dev-environment does not exist"}},
+        "DescribeUserPoolClient"
+    )
+    with pytest.raises(AwsProviderError, match="ValidationError"):
+        aws_cognito_provider_mock.get_researcher_client_secret()
+
+
+def test_get_researcher_client_secret_unexpected_error(describe_user_pool_client_mock: MagicMock, aws_cognito_provider_mock: AwsCognitoProvider):
+    describe_user_pool_client_mock.side_effect = Exception("Unexpected error")
+    with pytest.raises(AwsProviderError, match="Unexpected error"):
+        aws_cognito_provider_mock.get_researcher_client_secret()

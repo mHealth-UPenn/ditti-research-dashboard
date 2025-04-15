@@ -10,7 +10,8 @@ from docker.models.networks import Network
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.utils import Logger
 from install_scripts.utils.enums import Postgres
-from install_scripts.utils.exceptions import DockerSDKError, SubprocessError
+from install_scripts.utils.exceptions import DockerSDKError, SubprocessError, LocalProviderError
+
 
 class DockerProvider:
     def __init__(
@@ -43,7 +44,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error creating docker network due to unexpected error: {e}")
-            raise
+            raise DockerSDKError(e)
 
     def run_postgres_container(self) -> None:
         """Set up Postgres container."""
@@ -69,7 +70,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error creating postgres container due to unexpected error: {e}")
-            raise
+            raise DockerSDKError(e)
 
         # Wait for Postgres to be ready
         while True:
@@ -93,7 +94,7 @@ class DockerProvider:
             except Exception as e:
                 traceback.print_exc()
                 self.logger.red(f"Error waiting for postgres container due to unexpected error: {e}")
-                raise
+                raise DockerSDKError(e)
 
         self.logger.blue(
             f"Created postgres container "
@@ -114,7 +115,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Database upgrade failed due to unexpected error: {e}")
-            raise
+            raise SubprocessError(e)
 
         try:
             subprocess.run(
@@ -129,7 +130,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Integration testing database initialization failed due to unexpected error: {e}")
-            raise
+            raise SubprocessError(e)
 
         try:
             subprocess.run([
@@ -145,7 +146,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Researcher account creation failed due to unexpected error: {e}")
-            raise
+            raise SubprocessError(e)
 
     def build_wearable_data_retrieval_container(self) -> None:
         """Build wearable data retrieval container."""
@@ -154,7 +155,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error copying shared files due to unexpected error: {e}")
-            raise
+            raise LocalProviderError(e)
 
         try:
             self.docker_client.images.build(
@@ -169,14 +170,14 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Wearable data retrieval container creation failed due to unexpected error: {e}")
-            raise
+            raise DockerSDKError(e)
 
         try:
             shutil.rmtree("functions/wearable_data_retrieval/shared")
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error removing shared files due to unexpected error: {e}")
-            raise
+            raise LocalProviderError(e)
 
     def run_wearable_data_retrieval_container(self) -> None:
         """Run wearable data retrieval container."""
@@ -197,7 +198,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Wearable data retrieval container creation failed due to unexpected error: {e}")
-            raise
+            raise DockerSDKError(e)
 
     def get_container(self, container_name: str) -> Container:
         """Get a container by name."""

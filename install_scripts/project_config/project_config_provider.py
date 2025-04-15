@@ -39,8 +39,6 @@ class ProjectConfigProvider:
         self.user_input = None
         self.project_suffix = project_suffix
 
-    # Unit test: open called with correct filename
-    # Unit test: sys.exit called with correct error code when file not found
     def load_existing_config(self, project_name: str) -> None:
         """Load project config from a JSON file."""
         config_filename = self.project_config_filename.format(
@@ -276,10 +274,6 @@ class ProjectConfigProvider:
             ["wearable_data_retrieval_container_name"] = value
         self.write_project_config()
 
-    # Unit test: sys.exit called with correct error code when input is not "y"
-    # Unit test: logger.red called with "Invalid name" when project name is not valid
-    # Unit test: logger.red called with "Invalid email" when admin email is not valid
-    # Unit test: user_input is set to expected result
     def get_user_input(self) -> None:
         self.logger("\nThis script will install the development environment for"
                     " the project.")
@@ -337,7 +331,6 @@ class ProjectConfigProvider:
     def get_admin_email_input() -> str:
         return input("Enter an email to login as admin: ")
 
-    # Unit test: project_config is set to expected result
     def setup_project_config(self) -> None:
         """Set up project config."""
         cognito_config: CognitoConfig = {
@@ -390,22 +383,17 @@ class ProjectConfigProvider:
             "docker": docker_config
         }
 
-    # Unit test: returns expected result
     def format_string(self, fstr: str) -> str:
         if self.project_suffix:
             return fstr.format(project_name=f"{self.project_name}-{self.project_suffix}")
         return fstr.format(project_name=self.project_name)
 
-    # Unit test: open called with correct filename
-    # Unit test: json.dump called with correct arguments
     def write_project_config(self) -> None:
         """Write project config to a JSON file."""
         filename = self.format_string(self.project_config_filename)
         with open(filename, "w") as f:
             json.dump(self.project_config, f, indent=4)
 
-    # Unit test: os.remove called with correct filename
-    # Unit test: FileNotFoundError is raised when file is not found
     def uninstall(self) -> None:
         """Uninstall the project config."""
         filename = self.format_string(self.project_config_filename)

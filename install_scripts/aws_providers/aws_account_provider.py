@@ -21,7 +21,6 @@ class AwsAccountProvider:
     def aws_region(self) -> str:
         return self.client.meta.region_name
 
-
     @property
     def aws_access_key_id(self) -> str:
         try:

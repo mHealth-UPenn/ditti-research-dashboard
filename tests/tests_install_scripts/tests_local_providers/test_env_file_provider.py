@@ -54,6 +54,7 @@ def test_uninstall(env_file_provider_mock: EnvFileProvider, remove_mock: MagicMo
     remove_mock.assert_any_call(env_file_provider_mock.root_filename)
     assert remove_mock.call_count == 2
 
+
 def test_uninstall_not_found(env_file_provider_mock: EnvFileProvider, remove_mock: MagicMock):
     remove_mock.side_effect = FileNotFoundError
     env_file_provider_mock.uninstall()

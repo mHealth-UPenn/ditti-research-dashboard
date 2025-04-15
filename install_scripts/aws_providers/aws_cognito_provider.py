@@ -30,7 +30,7 @@ class AwsCognitoProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error getting participant client secret due to unexpected error: {e}")
-            raise
+            raise AwsProviderError(e)
 
     def get_researcher_client_secret(self) -> str:
         try:
@@ -45,4 +45,4 @@ class AwsCognitoProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error getting researcher client secret due to unexpected error: {e}")
-            raise
+            raise AwsProviderError(e)

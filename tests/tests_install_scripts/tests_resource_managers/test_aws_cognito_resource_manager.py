@@ -15,35 +15,39 @@ def aws_cognito_resource_manager_mock():
         yield aws_cognito_resource_manager()
 
 
-class TestAwsCognitoResourceManager:
-    def test_create_admin_user(self, aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
-        res = aws_cognito_resource_manager_mock.create_admin_user()
-        assert res is not None
+def test_create_admin_user(aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
+    res = aws_cognito_resource_manager_mock.create_admin_user()
+    assert res is not None
 
-    def test_create_admin_user_client_error(self, aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
-        aws_cognito_resource_manager_mock.client.admin_create_user = MagicMock(side_effect=ClientError(
-            error_response={"Error": {"Code": "ClientError"}},
-            operation_name="AdminCreateUser"
-        ))
-        with pytest.raises(ResourceManagerError):
-            aws_cognito_resource_manager_mock.create_admin_user()
 
-    def test_create_admin_user_unexpected_error(self, aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
-        aws_cognito_resource_manager_mock.client.admin_create_user = MagicMock(side_effect=Exception("Unexpected error"))
-        with pytest.raises(Exception):
-            aws_cognito_resource_manager_mock.create_admin_user()
+def test_create_admin_user_client_error(aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
+    aws_cognito_resource_manager_mock.client.admin_create_user = MagicMock(side_effect=ClientError(
+        error_response={"Error": {"Code": "ClientError"}},
+        operation_name="AdminCreateUser"
+    ))
+    with pytest.raises(ResourceManagerError, match="ClientError"):
+        aws_cognito_resource_manager_mock.create_admin_user()
 
-    def test_on_end(self, aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
-        aws_cognito_resource_manager_mock.create_admin_user = MagicMock(return_value={"User": {"Username": "test-user"}})
+
+def test_create_admin_user_unexpected_error(aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
+    aws_cognito_resource_manager_mock.client.admin_create_user = MagicMock(side_effect=Exception("Unexpected error"))
+    with pytest.raises(ResourceManagerError, match="Unexpected error"):
+        aws_cognito_resource_manager_mock.create_admin_user()
+
+
+def test_on_end(aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
+    aws_cognito_resource_manager_mock.create_admin_user = MagicMock(return_value={"User": {"Username": "test-user"}})
+    aws_cognito_resource_manager_mock.on_end()
+    aws_cognito_resource_manager_mock.create_admin_user.assert_called_once()
+
+
+def test_on_end_unexpected_error(aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
+    aws_cognito_resource_manager_mock.create_admin_user = MagicMock(side_effect=Exception("Unexpected error"))
+    with pytest.raises(ResourceManagerError, match="Unexpected error"):
         aws_cognito_resource_manager_mock.on_end()
-        aws_cognito_resource_manager_mock.create_admin_user.assert_called_once()
 
-    def test_on_end_unexpected_error(self, aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
-        aws_cognito_resource_manager_mock.create_admin_user = MagicMock(side_effect=Exception("Unexpected error"))
-        with pytest.raises(Exception):
-            aws_cognito_resource_manager_mock.on_end()
 
-    def test_on_end_resource_manager_error(self, aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
-        aws_cognito_resource_manager_mock.create_admin_user = MagicMock(side_effect=ResourceManagerError("Resource manager error"))
-        with pytest.raises(ResourceManagerError):
-            aws_cognito_resource_manager_mock.on_end()
+def test_on_end_resource_manager_error(aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
+    aws_cognito_resource_manager_mock.create_admin_user = MagicMock(side_effect=ResourceManagerError("Resource manager error"))
+    with pytest.raises(ResourceManagerError, match="Resource manager error"):
+        aws_cognito_resource_manager_mock.on_end()

@@ -40,7 +40,7 @@ class AwsEcrProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error getting password for ECR repository due to unexpected error: {e}")
-            raise
+            raise AwsProviderError(e)
 
     def get_repo_uri(self) -> str:
         """Get the URL for the ECR repository."""

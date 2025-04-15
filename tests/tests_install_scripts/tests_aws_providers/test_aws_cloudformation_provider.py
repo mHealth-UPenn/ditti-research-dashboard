@@ -37,33 +37,35 @@ def describe_stacks_mock(aws_cloudformation_provider_mock: AwsCloudformationProv
     return aws_cloudformation_provider_mock.client.describe_stacks
 
 
-class TestAwsCloudformationProvider:
-    def test_get_outputs_success(self, template_mock: str, parameters_mock: list[dict[str, str]], outputs_mock: list[dict[str, str]], aws_cloudformation_provider_mock: AwsCloudformationProvider):
-        AwsClientProvider().cloudformation_client.create_stack(
-            StackName=aws_cloudformation_provider_mock.settings.stack_name,
-            TemplateBody=template_mock,
-            Parameters=parameters_mock,
-            Capabilities=["CAPABILITY_IAM"]
-        )
-        outputs = aws_cloudformation_provider_mock.get_outputs()
-        assert outputs == outputs_mock
+def test_get_outputs_success(template_mock: str, parameters_mock: list[dict[str, str]], outputs_mock: list[dict[str, str]], aws_cloudformation_provider_mock: AwsCloudformationProvider):
+    AwsClientProvider().cloudformation_client.create_stack(
+        StackName=aws_cloudformation_provider_mock.settings.stack_name,
+        TemplateBody=template_mock,
+        Parameters=parameters_mock,
+        Capabilities=["CAPABILITY_IAM"]
+    )
+    outputs = aws_cloudformation_provider_mock.get_outputs()
+    assert outputs == outputs_mock
 
-    def test_get_outputs_stack_not_found(self, describe_stacks_mock: MagicMock, aws_cloudformation_provider_mock: AwsCloudformationProvider):
-        describe_stacks_mock.return_value = {
-            "Stacks": []
-        }
-        with pytest.raises(AwsProviderError):
-            aws_cloudformation_provider_mock.get_outputs()
 
-    def test_get_outputs_client_error(self, describe_stacks_mock: MagicMock, aws_cloudformation_provider_mock: AwsCloudformationProvider):
-        describe_stacks_mock.side_effect = ClientError(
-            {"Error": {"Code": "ValidationError", "Message": "Stack with id dev-environment does not exist"}},
-            "DescribeStacks"
-        )
-        with pytest.raises(AwsProviderError):
-            aws_cloudformation_provider_mock.get_outputs()
+def test_get_outputs_stack_not_found(describe_stacks_mock: MagicMock, aws_cloudformation_provider_mock: AwsCloudformationProvider):
+    describe_stacks_mock.return_value = {
+        "Stacks": []
+    }
+    with pytest.raises(AwsProviderError, match=f"Stack {aws_cloudformation_provider_mock.settings.stack_name} not found"):
+        aws_cloudformation_provider_mock.get_outputs()
 
-    def test_get_outputs_unexpected_error(self, describe_stacks_mock: MagicMock, aws_cloudformation_provider_mock: AwsCloudformationProvider):
-        describe_stacks_mock.side_effect = Exception("Unexpected error")
-        with pytest.raises(AwsProviderError):
-            aws_cloudformation_provider_mock.get_outputs()
+
+def test_get_outputs_client_error(describe_stacks_mock: MagicMock, aws_cloudformation_provider_mock: AwsCloudformationProvider):
+    describe_stacks_mock.side_effect = ClientError(
+        {"Error": {"Code": "ValidationError", "Message": "Stack with id dev-environment does not exist"}},
+        "DescribeStacks"
+    )
+    with pytest.raises(AwsProviderError, match="ValidationError"):
+        aws_cloudformation_provider_mock.get_outputs()
+
+
+def test_get_outputs_unexpected_error(describe_stacks_mock: MagicMock, aws_cloudformation_provider_mock: AwsCloudformationProvider):
+    describe_stacks_mock.side_effect = Exception("Unexpected error")
+    with pytest.raises(AwsProviderError, match="Unexpected error"):
+        aws_cloudformation_provider_mock.get_outputs()
