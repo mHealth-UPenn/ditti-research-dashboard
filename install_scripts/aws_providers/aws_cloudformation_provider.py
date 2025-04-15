@@ -7,6 +7,7 @@ from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.utils import Logger
 from install_scripts.utils.exceptions import AwsProviderError
 
+
 class AwsCloudformationProvider:
     def __init__(self, *,
             logger: Logger,
@@ -19,10 +20,13 @@ class AwsCloudformationProvider:
 
     def get_outputs(self) -> dict[str, str]:
         try:
-            res = self.client.describe_stacks(StackName=self.settings.stack_name)  # Mocked by moto
+            res = self.client.describe_stacks(StackName=self.settings.stack_name)
             if len(res["Stacks"]) == 0:
                 raise AwsProviderError(f"Stack {self.settings.stack_name} not found")
-            return res["Stacks"][0]["Outputs"]
+            return {
+                output["OutputKey"]: output["OutputValue"]
+                for output in res["Stacks"][0]["Outputs"]
+            }
         except AwsProviderError:
             raise
         except ClientError as e:

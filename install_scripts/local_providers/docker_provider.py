@@ -56,12 +56,13 @@ class DockerProvider:
                 image="postgres",
                 name=self.settings.postgres_container_name,
                 environment={
-                "POSTGRES_USER": Postgres.USER,
-                "POSTGRES_PASSWORD": Postgres.PASSWORD,
-                "POSTGRES_DB": Postgres.DB,
-            },
-                ports={Postgres.PORT: Postgres.PORT},
+                    "POSTGRES_USER": Postgres.USER.value,
+                    "POSTGRES_PASSWORD": Postgres.PASSWORD.value,
+                    "POSTGRES_DB": Postgres.DB.value,
+                },
+                ports={Postgres.PORT.value: Postgres.PORT.value},
                 network=self.settings.network_name,
+                detach=True,
             )
         except docker.errors.ContainerError as e:
             traceback.print_exc()
@@ -78,8 +79,8 @@ class DockerProvider:
                 response = self.get_container(self.settings.postgres_container_name) \
                     .exec_run([
                         "pg_isready",
-                        "-U", Postgres.USER,
-                        "-d", Postgres.DB
+                        "-U", Postgres.USER.value,
+                        "-d", Postgres.DB.value
                     ])
                 if (
                     response.exit_code == 0
@@ -189,7 +190,7 @@ class DockerProvider:
                 network=self.settings.network_name,
                 ports={"9000": 8080},
                 environment={"TESTING": "true"},
-                detach=True
+                detach=True,
             )
         except docker.errors.ContainerError as e:
             traceback.print_exc()

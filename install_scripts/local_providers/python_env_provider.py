@@ -29,7 +29,7 @@ class PythonEnvProvider:
                 check=True
             )
 
-        subprocess.run(self.activate_script, check=True)
+        subprocess.run(["source", self.activate_script], check=True)
 
     def install_requirements(self) -> None:
         """Install requirements."""

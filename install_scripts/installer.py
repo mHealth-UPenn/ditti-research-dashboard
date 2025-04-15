@@ -31,9 +31,9 @@ class Installer:
         project_suffix = ""
         match env:
             case "dev":
-                project_suffix = "-dev"
+                project_suffix = "dev"
             case "staging":
-                project_suffix = "-staging"
+                project_suffix = "staging"
             case _:
                 pass
 
@@ -44,10 +44,7 @@ class Installer:
         )
 
         # Initialize AWS providers
-        self.aws_client_provider = AwsClientProvider(
-            logger=self.logger,
-            project_config_provider=self.project_config_provider,
-        )
+        self.aws_client_provider = AwsClientProvider()
         self.aws_account_provider = AwsAccountProvider(
             logger=self.logger,
             aws_client_provider=self.aws_client_provider,
@@ -119,19 +116,23 @@ class Installer:
             self.project_config_provider.write_project_config()
 
             # Setup Python environment
-            self.logger.cyan("\n[Python Environment Setup]")
-            self.python_env_provider.initialize_python_env()
-            self.python_env_provider.install_requirements()
+            # self.logger.cyan("\n[Python Environment Setup]")
+            # self.python_env_provider.initialize_python_env()
+            # self.python_env_provider.install_requirements()
 
             # Setup Docker containers
             self.logger.cyan("\n[Docker Setup]")
-            self.docker_provider.run_postgres_container()
-            self.docker_provider.build_wearable_data_retrieval_container()
-            self.docker_provider.run_wearable_data_retrieval_container()
+            self.docker_provider.setup()
 
             # Setup CloudFormation stack
             self.logger.cyan("\n[CloudFormation Stack Setup]")
             self.aws_cloudformation_resource_manager.run(env="dev")
+
+            outputs = self.aws_cloudformation_provider.get_outputs()
+            self.project_config_provider.participant_user_pool_id = outputs["ParticipantUserPoolId"]
+            self.project_config_provider.participant_client_id = outputs["ParticipantClientId"]
+            self.project_config_provider.researcher_user_pool_id = outputs["ResearcherUserPoolId"]
+            self.project_config_provider.researcher_client_id = outputs["ResearcherClientId"]
 
             # Setup Secrets Manager
             self.logger.cyan("\n[Secrets Manager Setup]")

@@ -31,7 +31,12 @@ if ! command -v npm &> /dev/null; then
 fi
 
 # Install required Python packages
-pip install boto3
+if [[ -z "$(pip freeze | grep boto3==1.34.144)" ]]; then
+    pip install boto3==1.34.144
+fi
+if [[ -z "$(pip freeze | grep docker==7.1.0)" ]]; then
+    pip install docker==7.1.0
+fi
 
 # Run the Python installation script
-python3.13 install_dev.py
+python3.13 -c "from install_scripts.installer import Installer; Installer('dev').run()"
