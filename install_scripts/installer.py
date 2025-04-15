@@ -12,7 +12,6 @@ from install_scripts.aws_providers import (
 from install_scripts.local_providers import (
     DockerProvider,
     EnvFileProvider,
-    PythonEnvProvider,
     FrontendProvider,
 )
 from install_scripts.resource_managers import (
@@ -76,10 +75,6 @@ class Installer:
             settings=self.project_config_provider,
             aws_account_provider=self.aws_account_provider,
         )
-        self.python_env_provider = PythonEnvProvider(
-            logger=self.logger,
-            settings=self.project_config_provider,
-        )
         self.frontend_provider = FrontendProvider(
             logger=self.logger,
             settings=self.project_config_provider,
@@ -114,11 +109,6 @@ class Installer:
             self.project_config_provider.get_user_input()
             self.project_config_provider.setup_project_config()
             self.project_config_provider.write_project_config()
-
-            # Setup Python environment
-            # self.logger.cyan("\n[Python Environment Setup]")
-            # self.python_env_provider.initialize_python_env()
-            # self.python_env_provider.install_requirements()
 
             # Setup Docker containers
             self.logger.cyan("\n[Docker Setup]")
