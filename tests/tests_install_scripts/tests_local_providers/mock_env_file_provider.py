@@ -1,0 +1,76 @@
+from install_scripts.local_providers.local_provider_types import WearableDataRetrievalEnv, RootEnv
+from install_scripts.local_providers.env_file_provider import EnvFileProvider
+from install_scripts.utils.enums import Postgres
+from tests.tests_install_scripts.tests_project_config.mock_project_config_provider import project_config_provider
+from tests.tests_install_scripts.tests_aws_providers.mock_aws_account_provider import aws_account_provider
+from tests.tests_install_scripts.tests_utils.mock_logger import logger
+
+
+def wearable_data_retrieval_env() -> WearableDataRetrievalEnv:
+    settings = project_config_provider()
+    provider = aws_account_provider()
+
+    return {
+        "DB_URI": (
+            f"postgresql://{Postgres.USER}:{Postgres.PASSWORD}@"
+            f"{settings.project_name}-postgres:{Postgres.PORT}/"
+            f"{Postgres.DB}"
+        ),
+        "S3_BUCKET": settings.logs_bucket_name,
+        "AWS_CONFIG_SECRET_NAME": settings.secret_name,
+        "AWS_ACCESS_KEY_ID": provider.aws_access_key_id,
+        "AWS_SECRET_ACCESS_KEY": provider.aws_secret_access_key,
+        "AWS_DEFAULT_REGION": provider.aws_region,
+    }
+
+
+def root_env() -> RootEnv:
+    settings = project_config_provider()
+    provider = aws_account_provider()
+
+    """Get .env."""
+    return {
+        "FLASK_CONFIG": "Default",
+        "FLASK_DEBUG": "True",
+        "FLASK_DB": (
+            f"postgresql://{Postgres.USER}:{Postgres.PASSWORD}@"
+            f"localhost:{Postgres.PORT}/{Postgres.DB}"
+        ),
+        "FLASK_APP": "run.py",
+        "APP_SYNC_HOST": "",
+        "APPSYNC_ACCESS_KEY": "",
+        "APPSYNC_SECRET_KEY": "",
+        "AWS_AUDIO_FILE_BUCKET": settings.audio_bucket_name,
+        "AWS_TABLENAME_AUDIO_FILE": "",
+        "AWS_TABLENAME_AUDIO_TAP": "",
+        "AWS_TABLENAME_TAP": "",
+        "AWS_TABLENAME_USER": "",
+        "COGNITO_PARTICIPANT_CLIENT_ID": settings.participant_client_id,
+        "COGNITO_PARTICIPANT_DOMAIN": (
+            f"{settings.participant_user_pool_domain}.auth."
+            f"{provider.aws_region}.amazoncognito.com"
+        ),
+        "COGNITO_PARTICIPANT_REGION": provider.aws_region,
+        "COGNITO_PARTICIPANT_USER_POOL_ID": settings.participant_user_pool_id,
+        "COGNITO_RESEARCHER_CLIENT_ID": settings.researcher_client_id,
+        "COGNITO_RESEARCHER_DOMAIN": (
+            f"{settings.researcher_user_pool_domain}.auth."
+            f"{provider.aws_region}.amazoncognito.com"
+        ),
+        "COGNITO_RESEARCHER_REGION": provider.aws_region,
+        "COGNITO_RESEARCHER_USER_POOL_ID": settings.researcher_user_pool_id,
+        "LOCAL_LAMBDA_ENDPOINT": (
+            "http://localhost:9000/2015-03-31/functions/function/"
+            "invocations"
+        ),
+        "TM_FSTRING": f"{settings.project_name}-tokens",
+    }
+
+
+def env_file_provider() -> EnvFileProvider:
+    provider = EnvFileProvider(
+        logger=logger(),
+        settings=project_config_provider(),
+        aws_account_provider=aws_account_provider()
+    )
+    return provider

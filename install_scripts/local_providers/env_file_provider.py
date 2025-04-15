@@ -34,10 +34,10 @@ class EnvFileProvider:
             ),
             "S3_BUCKET": self.settings.logs_bucket_name,
             "AWS_CONFIG_SECRET_NAME": self.settings.secret_name,
-            "AWS_ACCESS_KEY_ID": self.aws_account_handler.aws_access_key_id,
+            "AWS_ACCESS_KEY_ID": self.aws_account_provider.aws_access_key_id,
             "AWS_SECRET_ACCESS_KEY": \
-                self.aws_account_handler.aws_secret_access_key,
-            "AWS_DEFAULT_REGION": self.aws_account_handler.aws_region,
+                self.aws_account_provider.aws_secret_access_key,
+            "AWS_DEFAULT_REGION": self.aws_account_provider.aws_region,
         }
 
     def get_root_env(self) -> RootEnv:
@@ -62,17 +62,17 @@ class EnvFileProvider:
                 self.settings.participant_client_id,
             "COGNITO_PARTICIPANT_DOMAIN": (
                 f"{self.settings.participant_user_pool_domain}.auth."
-                f"{self.aws_account_handler.aws_region}.amazoncognito.com"
+                f"{self.aws_account_provider.aws_region}.amazoncognito.com"
             ),
-            "COGNITO_PARTICIPANT_REGION": self.aws_account_handler.aws_region,
+            "COGNITO_PARTICIPANT_REGION": self.aws_account_provider.aws_region,
             "COGNITO_PARTICIPANT_USER_POOL_ID": \
                 self.settings.participant_user_pool_id,
             "COGNITO_RESEARCHER_CLIENT_ID": self.settings.researcher_client_id,
             "COGNITO_RESEARCHER_DOMAIN": (
                 f"{self.settings.researcher_user_pool_domain}.auth."
-                f"{self.aws_account_handler.aws_region}.amazoncognito.com"
+                f"{self.aws_account_provider.aws_region}.amazoncognito.com"
             ),
-            "COGNITO_RESEARCHER_REGION": self.aws_account_handler.aws_region,
+            "COGNITO_RESEARCHER_REGION": self.aws_account_provider.aws_region,
             "COGNITO_RESEARCHER_USER_POOL_ID": \
                 self.settings.researcher_user_pool_id,
             "LOCAL_LAMBDA_ENDPOINT": (
