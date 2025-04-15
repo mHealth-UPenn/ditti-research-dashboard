@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import subprocess
 import sys
 
@@ -10,10 +11,20 @@ class PythonEnvProvider:
     requirements_filename: str = "requirements.txt"
     python_version: str = "python3.13"
     env_name: str = "env"
+    bin_path: Path
+    activate_script: Path
 
     def __init__(self, *, logger: Logger, settings: ProjectConfigProvider):
         self.logger = logger
         self.settings = settings
+
+        # Activate virtual environment and install packages
+        if sys.platform == "win32":
+            self.activate_script = Path(self.env_name) / "Scripts" / "activate"
+            self.bin_path = Path(self.env_name) / "Scripts" / "bin"
+        else:
+            self.activate_script = Path(self.env_name) / "bin" / "activate"
+            self.bin_path = Path(self.env_name) / "bin"
 
     def initialize_python_env(self) -> None:
         """Set up Python virtual environment and install packages."""
@@ -25,18 +36,12 @@ class PythonEnvProvider:
                 check=True
             )
 
-        # Activate virtual environment and install packages
-        if sys.platform == "win32":
-            activate_script = f"{self.env_name}\\Scripts\\activate"
-        else:
-            activate_script = f"source {self.env_name}/bin/activate"
-
-        subprocess.run(activate_script, check=True)
+        subprocess.run(self.activate_script, check=True)
 
     def install_requirements(self) -> None:
         """Install requirements."""
         subprocess.run(
-            f"{self.env_name}/bin/pip install -qr {self.requirements_filename}",
+            f"{self.bin_path / "pip"} install -qr {self.requirements_filename}",
             shell=True,
             check=True
         )
