@@ -31,7 +31,7 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
     def on_end(self) -> None:
         """Run when the script ends."""
         try:
-            self.__write_secret()
+            self.write_secret()
         except ResourceManagerError:
             raise
         except Exception as e:
@@ -42,13 +42,13 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
     def dev(self) -> None:
         """Run the provider in development mode."""
         try:
-            self.__set_dev_secret_value()
+            self.set_dev_secret_value()
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Secret value setting failed due to unexpected error: {e}")
             raise ResourceManagerError(e)
 
-    def __set_dev_secret_value(self) -> None:
+    def set_dev_secret_value(self) -> None:
         """Set the secret value."""
         secret_value: DevSecretValue = {
             "FITBIT_CLIENT_ID": self.settings.fitbit_client_id,
@@ -60,13 +60,15 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
         }
         self.secret_value = secret_value
 
-    def __write_secret(self) -> None:
+    def write_secret(self) -> None:
         """Write the secret value to the secret manager."""
         try:
-            self.client.put_secret_value(
+            res = self.client.put_secret_value(
                 SecretId=self.settings.secret_name,
                 SecretString=json.dumps(self.secret_value)
             )
+
+            return res
         except ClientError as e:
             traceback.print_exc()
             self.logger.red(f"Secret write failed due to ClientError: {e}")
