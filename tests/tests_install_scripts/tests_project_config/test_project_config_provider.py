@@ -6,6 +6,7 @@ import pytest
 from install_scripts.project_config.project_config_provider import ProjectConfigProvider
 from install_scripts.project_config.project_config_types import UserInput, ProjectConfig
 from install_scripts.utils.exceptions import ProjectConfigError, CancelInstallation
+from install_scripts.utils import Logger
 from tests.tests_install_scripts.tests_utils.mock_logger import logger
 from tests.tests_install_scripts.tests_project_config.mock_project_config_provider import project_config_provider, user_input, project_config
 
@@ -112,20 +113,26 @@ class TestProjectConfigProvider:
         result = project_config_provider_mock.format_string("prefix-{project_name}")
         assert result == f"prefix-{project_config_provider_mock.project_name}-suffix"
 
-    def test_write_project_config(self, project_config_provider_mock: ProjectConfigProvider):
+    def test_write_project_config(self, logger_mock: Logger, project_config_mock: ProjectConfig):
         """Test write_project_config method"""
+        provider = ProjectConfigProvider(
+            logger=logger_mock,
+            project_suffix="suffix",
+        )
+        provider.project_config = project_config_mock
+
         with (
             patch("builtins.open", mock_open()) as mock_file,
             patch("json.dump") as mock_json_dump
         ):
-            project_config_provider_mock.write_project_config()
+            provider.write_project_config()
 
             mock_file.assert_called_once_with(
-                f"project-config-{project_config_provider_mock.project_name}-suffix.json",
+                f"project-config-{provider.project_name}-suffix.json",
                 "w"
             )
             mock_json_dump.assert_called_once_with(
-                project_config_provider_mock.project_config,
+                provider.project_config,
                 mock_file.return_value.__enter__.return_value,
                 indent=4
             )

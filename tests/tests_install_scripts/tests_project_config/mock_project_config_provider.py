@@ -86,4 +86,5 @@ def project_config_provider() -> ProjectConfigProvider:
     provider.get_project_name_input = MagicMock(return_value=provider.user_input["project_name"])
     provider.get_fitbit_credentials_input = MagicMock(return_value=(provider.user_input["fitbit_client_id"], provider.user_input["fitbit_client_secret"]))
     provider.get_admin_email_input = MagicMock(return_value=provider.user_input["admin_email"])
+    provider.write_project_config = MagicMock()  # Suppresses writing to file
     return provider

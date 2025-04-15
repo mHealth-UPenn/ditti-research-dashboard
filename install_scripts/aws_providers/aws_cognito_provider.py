@@ -8,7 +8,6 @@ from install_scripts.utils import Logger
 from install_scripts.utils.exceptions import AwsProviderError
 
 class AwsCognitoProvider:
-    # Unit test: self.cognito_client is initialized with expected arguments
     def __init__(self, *,
             logger: Logger,
             settings: ProjectConfigProvider,
@@ -18,10 +17,6 @@ class AwsCognitoProvider:
         self.settings = settings
         self.cognito_client = aws_client_provider.cognito_client
 
-    # Unit test: self.cognito_client.describe_user_pool_client is called with expected arguments
-    # Unit test: self.cognito_client.describe_user_pool_client returns mocked value
-    # Unit test: ClientError is raised when user pool client is not found
-    # Unit test: self.logger.red is called once on ClientError
     def get_participant_client_secret(self) -> str:
         try:
             return self.cognito_client.describe_user_pool_client(
@@ -35,12 +30,8 @@ class AwsCognitoProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error getting participant client secret due to unexpected error: {e}")
-            raise AwsProviderError(e)
+            raise
 
-    # Unit test: self.cognito_client.describe_user_pool_client is called with expected arguments
-    # Unit test: self.cognito_client.describe_user_pool_client returns mocked value
-    # Unit test: ClientError is raised when user pool client is not found
-    # Unit test: self.logger.red is called once on ClientError
     def get_researcher_client_secret(self) -> str:
         try:
             return self.cognito_client.describe_user_pool_client(
@@ -54,4 +45,4 @@ class AwsCognitoProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error getting researcher client secret due to unexpected error: {e}")
-            raise AwsProviderError(e)
+            raise
