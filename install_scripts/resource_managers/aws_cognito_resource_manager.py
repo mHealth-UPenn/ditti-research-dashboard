@@ -22,7 +22,7 @@ class AwsCognitoResourceManager(BaseResourceManager):
     def on_end(self) -> None:
         """Run when the script ends."""
         try:
-            self.__create_admin_user()
+            self.create_admin_user()
         except ResourceManagerError:
             raise
         except Exception as e:
@@ -30,13 +30,15 @@ class AwsCognitoResourceManager(BaseResourceManager):
             self.logger.red(f"Admin user creation failed due to unexpected error: {e}")
             raise ResourceManagerError(e)
 
-    def __create_admin_user(self) -> None:
+    def create_admin_user(self) -> dict:
         """Create an admin user in the Cognito user pool."""
         try:
-            self.client.admin_create_user(
+            res = self.client.admin_create_user(
                 UserPoolId=self.settings.researcher_user_pool_id,
                 Username=self.settings.admin_email,
             )
+
+            return res
         except ClientError as e:
             traceback.print_exc()
             self.logger.red(f"Admin user creation failed due to ClientError: {e}")
@@ -44,4 +46,4 @@ class AwsCognitoResourceManager(BaseResourceManager):
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Admin user creation failed due to unexpected error: {e}")
-            raise ResourceManagerError(e)
+            raise
