@@ -94,8 +94,8 @@ def test_run_postgres_container_success(docker_provider_mock: DockerProvider):
     # Verify that exec_run was called with the correct arguments
     mock_container.exec_run.assert_called_with([
         "pg_isready",
-        "-U", Postgres.USER,
-        "-d", Postgres.DB
+        "-U", Postgres.USER.value,
+        "-d", Postgres.DB.value,
     ])
 
 

@@ -5,18 +5,10 @@ from tests.tests_install_scripts.tests_aws_providers.mock_aws_client_provider im
 
 
 def outputs():
-    return [
-        {
-            "Description": "ID of the test resource 1",
-            "OutputKey": "TestResource1Id",
-            "OutputValue": "test-parameter-1-value",
-        },
-        {
-            "Description": "ID of the test resource 2",
-            "OutputKey": "TestResource2Id",
-            "OutputValue": "test-parameter-2-value",
-        },
-    ]
+    return {
+        "TestResource1Id": "test-parameter-1-value",
+        "TestResource2Id": "test-parameter-2-value",
+    }
 
 
 def aws_cloudformation_provider():
