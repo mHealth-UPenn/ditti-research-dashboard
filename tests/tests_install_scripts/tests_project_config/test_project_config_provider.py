@@ -63,61 +63,42 @@ class TestProjectConfigProvider:
         ):
             project_config_provider_mock.load_existing_config("test-project")
 
-    def test_get_user_input_continue(self, project_config_provider_mock: ProjectConfigProvider):
+    def test_get_user_input_continue(self, project_config_provider_mock: ProjectConfigProvider, user_input_mock: UserInput):
         """Test get_user_input when user continues"""
-        with (
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_continue_input", return_value="y"),
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_project_name_input", return_value="valid-project"),
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_fitbit_credentials_input", return_value=("client-id", "client-secret")),
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_admin_email_input", return_value="test@example.com")
-        ):
-            project_config_provider_mock.get_user_input()
+        project_config_provider_mock.get_user_input()
 
         assert project_config_provider_mock.user_input is not None
-        assert project_config_provider_mock.user_input["project_name"] == "valid-project-test-project-suffix"
-        assert project_config_provider_mock.user_input["fitbit_client_id"] == "client-id"
-        assert project_config_provider_mock.user_input["fitbit_client_secret"] == "client-secret"
-        assert project_config_provider_mock.user_input["admin_email"] == "test@example.com"
+        assert project_config_provider_mock.user_input["project_name"] == user_input_mock["project_name"]
+        assert project_config_provider_mock.user_input["fitbit_client_id"] == user_input_mock["fitbit_client_id"]
+        assert project_config_provider_mock.user_input["fitbit_client_secret"] == user_input_mock["fitbit_client_secret"]
+        assert project_config_provider_mock.user_input["admin_email"] == user_input_mock["admin_email"]
 
     def test_get_user_input_cancel(self, project_config_provider_mock: ProjectConfigProvider):
         """Test get_user_input when user cancels"""
-        with (
-            patch("builtins.input", return_value="n"),
-            pytest.raises(CancelInstallation)
-        ):
+        project_config_provider_mock.get_continue_input.return_value = "n"
+        with pytest.raises(CancelInstallation):
             project_config_provider_mock.get_user_input()
-
 
     def test_get_user_input_invalid_project_name(self, project_config_provider_mock: ProjectConfigProvider):
         """Test get_user_input with invalid project name"""
-        with (
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_continue_input", return_value="y"),
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_project_name_input", side_effect=["", "valid-project"]),
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_fitbit_credentials_input", return_value=("client-id", "client-secret")),
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_admin_email_input", return_value="test@example.com")
-        ):
-            project_config_provider_mock.get_user_input()
-
-        assert project_config_provider_mock.user_input["project_name"] == "valid-project-test-project-suffix"
+        project_config_provider_mock.get_project_name_input = MagicMock(side_effect=["!@#$%^", "valid"])
+        project_config_provider_mock.get_user_input()
+        assert project_config_provider_mock.get_project_name_input.call_count == 2
+        assert project_config_provider_mock.user_input["project_name"] == "valid"
 
     def test_get_user_input_invalid_email(self, project_config_provider_mock: ProjectConfigProvider):
         """Test get_user_input with invalid email"""
-        with (
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_continue_input", return_value="y"),
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_project_name_input", return_value="valid-project"),
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_fitbit_credentials_input", return_value=("client-id", "client-secret")),
-            patch("install_scripts.project_config.project_config_provider.ProjectConfigProvider.get_admin_email_input", side_effect=["", "test@example.com"])
-        ):
-            project_config_provider_mock.get_user_input()
-
-        assert project_config_provider_mock.user_input["admin_email"] == "test@example.com"
+        project_config_provider_mock.get_admin_email_input = MagicMock(side_effect=["!@#$%^", "valid@example.com"])
+        project_config_provider_mock.get_user_input()
+        assert project_config_provider_mock.get_admin_email_input.call_count == 2
+        assert project_config_provider_mock.user_input["admin_email"] == "valid@example.com"
 
     def test_setup_project_config(self, user_input_mock: UserInput, project_config_mock: ProjectConfig):
         """Test setup_project_config"""
         # Create a mock project config provider
         project_config_provider_mock = ProjectConfigProvider(
             logger=MagicMock(),
-            project_suffix="test-project-suffix",
+            project_suffix="suffix",
         )
 
         project_config_provider_mock.user_input = user_input_mock
@@ -128,7 +109,7 @@ class TestProjectConfigProvider:
 
     def test_format_string(self, project_config_provider_mock: ProjectConfigProvider):
         """Test format_string method"""
-        result = project_config_provider_mock.format_string("prefix-{project_name}-suffix")
+        result = project_config_provider_mock.format_string("prefix-{project_name}")
         assert result == f"prefix-{project_config_provider_mock.project_name}-suffix"
 
     def test_write_project_config(self, project_config_provider_mock: ProjectConfigProvider):
@@ -140,7 +121,7 @@ class TestProjectConfigProvider:
             project_config_provider_mock.write_project_config()
 
             mock_file.assert_called_once_with(
-                f"project-config-{project_config_provider_mock.project_name}.json",
+                f"project-config-{project_config_provider_mock.project_name}-suffix.json",
                 "w"
             )
             mock_json_dump.assert_called_once_with(
@@ -158,7 +139,7 @@ class TestProjectConfigProvider:
             project_config_provider_mock.uninstall()
 
             mock_remove.assert_called_once_with(
-                f"project-config-{project_config_provider_mock.project_name}.json"
+                f"project-config-{project_config_provider_mock.project_name}-suffix.json"
             )
 
     def test_property_getters_and_setters(self, project_config_provider_mock: ProjectConfigProvider, project_config_mock: ProjectConfig, user_input_mock: UserInput):
@@ -193,11 +174,81 @@ class TestProjectConfigProvider:
             mock_write.assert_called_once()
 
             mock_write.reset_mock()
-            project_config_provider_mock.participant_user_pool_name = "new-pool"
-            assert project_config_provider_mock.project_config["aws"]["cognito"]["participant_user_pool_name"] == "new-pool"
+            project_config_provider_mock.participant_user_pool_name = "new-participant-pool"
+            assert project_config_provider_mock.project_config["aws"]["cognito"]["participant_user_pool_name"] == "new-participant-pool"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.participant_user_pool_domain = "new-participant-domain"
+            assert project_config_provider_mock.project_config["aws"]["cognito"]["participant_user_pool_domain"] == "new-participant-domain"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.participant_user_pool_id = "new-participant-user-pool-id"
+            assert project_config_provider_mock.project_config["aws"]["cognito"]["participant_user_pool_id"] == "new-participant-user-pool-id"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.participant_client_id = "new-participant-client-id"
+            assert project_config_provider_mock.project_config["aws"]["cognito"]["participant_client_id"] == "new-participant-client-id"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.researcher_user_pool_name = "new-researcher-pool"
+            assert project_config_provider_mock.project_config["aws"]["cognito"]["researcher_user_pool_name"] == "new-researcher-pool"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.researcher_user_pool_domain = "new-researcher-domain"
+            assert project_config_provider_mock.project_config["aws"]["cognito"]["researcher_user_pool_domain"] == "new-researcher-domain"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.researcher_user_pool_id = "new-researcher-user-pool-id"
+            assert project_config_provider_mock.project_config["aws"]["cognito"]["researcher_user_pool_id"] == "new-researcher-user-pool-id"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.researcher_client_id = "new-researcher-client-id"
+            assert project_config_provider_mock.project_config["aws"]["cognito"]["researcher_client_id"] == "new-researcher-client-id"
             mock_write.assert_called_once()
 
             mock_write.reset_mock()
             project_config_provider_mock.logs_bucket_name = "new-bucket"
             assert project_config_provider_mock.project_config["aws"]["s3"]["logs_bucket_name"] == "new-bucket"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.audio_bucket_name = "new-bucket"
+            assert project_config_provider_mock.project_config["aws"]["s3"]["audio_bucket_name"] == "new-bucket"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.secret_name = "new-secret"
+            assert project_config_provider_mock.project_config["aws"]["secrets_manager"]["secret_name"] == "new-secret"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.tokens_secret_name = "new-tokens-secret"
+            assert project_config_provider_mock.project_config["aws"]["secrets_manager"]["tokens_secret_name"] == "new-tokens-secret"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.stack_name = "new-stack"
+            assert project_config_provider_mock.project_config["aws"]["stack_name"] == "new-stack"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.network_name = "new-network"
+            assert project_config_provider_mock.project_config["docker"]["network_name"] == "new-network"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.postgres_container_name = "new-postgres"
+            assert project_config_provider_mock.project_config["docker"]["postgres_container_name"] == "new-postgres"
+            mock_write.assert_called_once()
+
+            mock_write.reset_mock()
+            project_config_provider_mock.wearable_data_retrieval_container_name = "new-wearable-data-retrieval"
+            assert project_config_provider_mock.project_config["docker"]["wearable_data_retrieval_container_name"] == "new-wearable-data-retrieval"
             mock_write.assert_called_once()

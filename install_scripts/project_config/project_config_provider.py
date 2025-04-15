@@ -303,8 +303,6 @@ class ProjectConfigProvider:
             project_name = self.get_project_name_input()
             if not is_valid_name(project_name):
                 self.logger.red("Invalid name")
-            elif self.project_suffix:
-                project_name = f"{project_name}-{self.project_suffix}"
 
         # Get Fitbit credentials
         fitbit_client_id, fitbit_client_secret = self.get_fitbit_credentials_input()
@@ -377,8 +375,11 @@ class ProjectConfigProvider:
                 )
         }
 
+        if self.project_suffix:
+            project_name = f"{self.project_name}-{self.project_suffix}"
+
         self.project_config = {
-            "project_name": self.project_name,
+            "project_name": project_name,
             "admin_email": self.admin_email,
             "aws": {
                 "cognito": cognito_config,
@@ -391,6 +392,8 @@ class ProjectConfigProvider:
 
     # Unit test: returns expected result
     def format_string(self, fstr: str) -> str:
+        if self.project_suffix:
+            return fstr.format(project_name=f"{self.project_name}-{self.project_suffix}")
         return fstr.format(project_name=self.project_name)
 
     # Unit test: open called with correct filename
