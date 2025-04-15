@@ -41,4 +41,4 @@ zappa_settings.py
 data.json
 zappa_settings.json
 
-project-settings*.json
+project-config*.json
