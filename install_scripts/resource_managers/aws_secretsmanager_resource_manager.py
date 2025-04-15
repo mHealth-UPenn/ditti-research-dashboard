@@ -2,9 +2,9 @@ import json
 import traceback
 from typing import Optional
 
-from boto3.exceptions import ClientError
+from botocore.exceptions import ClientError
 
-from install_scripts.aws_providers import AWSClientProvider, AwsCognitoProvider
+from install_scripts.aws_providers import AwsClientProvider, AwsCognitoProvider
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.resource_managers.base_resource_manager import BaseResourceManager
 from install_scripts.resource_managers.resource_manager_types import DevSecretValue
@@ -19,7 +19,7 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
             self, *,
             logger: Logger,
             settings: ProjectConfigProvider,
-            aws_client_provider: AWSClientProvider,
+            aws_client_provider: AwsClientProvider,
             aws_cognito_provider: AwsCognitoProvider,
         ):
         self.logger = logger

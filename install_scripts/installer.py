@@ -4,7 +4,7 @@ import traceback
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.aws_providers import (
     AwsAccountProvider,
-    AWSClientProvider,
+    AwsClientProvider,
     AwsCloudformationProvider,
     AwsCognitoProvider,
     AwsEcrProvider,
@@ -44,7 +44,7 @@ class Installer:
         )
 
         # Initialize AWS providers
-        self.aws_client_provider = AWSClientProvider(
+        self.aws_client_provider = AwsClientProvider(
             logger=self.logger,
             project_config_provider=self.project_config_provider,
         )

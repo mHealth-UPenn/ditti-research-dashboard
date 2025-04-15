@@ -1,8 +1,8 @@
 import traceback
 
-from boto3.exceptions import ClientError
+from botocore.exceptions import ClientError
 
-from install_scripts.aws_providers.aws_client_provider import AWSClientProvider
+from install_scripts.aws_providers.aws_client_provider import AwsClientProvider
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.resource_managers.base_resource_manager import BaseResourceManager
 from install_scripts.utils import Logger
@@ -13,7 +13,7 @@ class AwsCognitoResourceManager(BaseResourceManager):
     def __init__(self, *,
             logger: Logger,
             settings: ProjectConfigProvider,
-            aws_client_provider: AWSClientProvider,
+            aws_client_provider: AwsClientProvider,
         ):
         self.logger = logger
         self.settings = settings

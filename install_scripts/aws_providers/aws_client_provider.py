@@ -3,7 +3,7 @@ from typing import Any
 import boto3
 
 
-class AWSClientProvider:
+class AwsClientProvider:
     sts_client: Any
     cognito_client: Any
     s3_client: Any
