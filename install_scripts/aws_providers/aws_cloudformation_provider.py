@@ -8,7 +8,6 @@ from install_scripts.utils import Logger
 from install_scripts.utils.exceptions import AwsProviderError
 
 class AwsCloudformationProvider:
-    # Unit test: self.client is initialized with expected arguments
     def __init__(self, *,
             logger: Logger,
             settings: ProjectConfigProvider,
@@ -18,12 +17,9 @@ class AwsCloudformationProvider:
         self.settings = settings
         self.client = aws_client_provider.cloudformation_client
 
-    # Unit test: self.client.describe_stacks is called with expected arguments
-    # Unit test: self.client.describe_stacks returns mocked value
-    # Unit test: self.logger.red is called once on ClientError
     def get_outputs(self) -> dict[str, str]:
         try:
-            res = self.client.describe_stacks(StackName=self.settings.stack_name)
+            res = self.client.describe_stacks(StackName=self.settings.stack_name)  # Mocked by moto
             if len(res["Stacks"]) == 0:
                 raise AwsProviderError(f"Stack {self.settings.stack_name} not found")
             return res["Stacks"][0]["Outputs"]
