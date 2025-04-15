@@ -1,5 +1,4 @@
 import traceback
-import sys
 
 from botocore.exceptions import ClientError
 
@@ -28,9 +27,9 @@ class AwsCloudformationResourceManager(BaseResourceManager):
     def dev(self) -> None:
         """Run the provider in development mode."""
         try:
-            self.__create_cloudformation_stack(
-                template=self.dev_template,
-                parameters=self.__get_dev_parameters()
+            self.create_cloudformation_stack(
+                template_body=self.get_dev_template_body(),
+                parameters=self.get_dev_parameters()
             )
         except ResourceManagerError:
             raise
@@ -39,7 +38,7 @@ class AwsCloudformationResourceManager(BaseResourceManager):
             self.logger.red("AWS resource creation failed due to unexpected error")
             raise ResourceManagerError(e)
 
-    def __get_dev_parameters(self) -> list[CloudFormationParameter]:
+    def get_dev_parameters(self) -> list[CloudFormationParameter]:
         return [
             {
                 "ParameterKey": "ParticipantUserPoolName",
@@ -75,19 +74,18 @@ class AwsCloudformationResourceManager(BaseResourceManager):
             },
         ]
 
-    def __create_cloudformation_stack(
-            self, *,
-            template: str,
-            parameters: list[CloudFormationParameter],
-        ) -> None:
-        """Set up AWS resources using CloudFormation."""
-        # Read CloudFormation template
-        with open(template, "r") as f:
-            template_body = f.read()
+    def get_dev_template_body(self) -> str:
+        with open(self.dev_template, "r") as f:
+            return f.read()
 
-        # Create CloudFormation stack
+    def create_cloudformation_stack(
+            self, *,
+            template_body: str,
+            parameters: list[CloudFormationParameter],
+        ) -> dict:
+        """Set up AWS resources using CloudFormation."""
         try:
-            self.client.create_stack(
+            res = self.client.create_stack(
                 StackName=self.settings.stack_name,
                 TemplateBody=template_body,
                 Parameters=parameters,
@@ -98,6 +96,8 @@ class AwsCloudformationResourceManager(BaseResourceManager):
             self.logger("Waiting for AWS resources to be created...")
             waiter = self.client.get_waiter("stack_create_complete")
             waiter.wait(StackName=self.settings.stack_name)
+
+            return res
 
         except ClientError as e:
             traceback.print_exc()

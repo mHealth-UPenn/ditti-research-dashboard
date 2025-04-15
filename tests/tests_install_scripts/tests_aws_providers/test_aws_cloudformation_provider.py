@@ -5,8 +5,8 @@ from botocore.exceptions import ClientError
 
 from install_scripts.aws_providers.aws_cloudformation_provider import AwsCloudformationProvider, AwsClientProvider
 from install_scripts.utils.exceptions import AwsProviderError
-from tests.tests_install_scripts.tests_aws_providers.mock_aws_cloudformation_provider import aws_cloudformation_provider
-from tests.tests_install_scripts.tests_resource_managers.mock_aws_cloudformation_resource_manager import template, parameters, outputs
+from tests.tests_install_scripts.tests_aws_providers.mock_aws_cloudformation_provider import aws_cloudformation_provider, outputs
+from tests.tests_install_scripts.tests_resource_managers.mock_aws_cloudformation_resource_manager import template, parameters
 
 
 @pytest.fixture
