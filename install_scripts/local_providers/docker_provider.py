@@ -4,6 +4,8 @@ import time
 import traceback
 
 import docker
+from docker.models.containers import Container
+from docker.models.networks import Network
 
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.utils import Logger
@@ -20,10 +22,16 @@ class DockerProvider:
         self.settings = settings
         self.docker_client = docker.from_env()
 
-    def run_postgres_container(self) -> None:
-        """Set up Postgres container."""
-        self.logger.cyan("\n[Docker Setup]")
+    def setup(self) -> None:
+        """Set up Docker containers."""
+        self.create_network()
+        self.run_postgres_container()
+        self.initialize_database()
+        self.build_wearable_data_retrieval_container()
+        self.run_wearable_data_retrieval_container()
 
+    def create_network(self) -> None:
+        """Create Docker network."""
         # Create Docker network
         try:
             self.docker_client.networks.create(self.settings.network_name)
@@ -35,7 +43,11 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error creating docker network due to unexpected error: {e}")
-            raise DockerSDKError(e)
+            raise
+
+    def run_postgres_container(self) -> None:
+        """Set up Postgres container."""
+        self.logger.cyan("\n[Docker Setup]")
 
         # Create Postgres container
         try:
@@ -57,13 +69,12 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error creating postgres container due to unexpected error: {e}")
-            raise DockerSDKError(e)
+            raise
 
         # Wait for Postgres to be ready
         while True:
             try:
-                response = self.docker_client.containers \
-                    .get(self.settings.postgres_container_name) \
+                response = self.get_container(self.settings.postgres_container_name) \
                     .exec_run([
                         "pg_isready",
                         "-U", Postgres.USER,
@@ -82,13 +93,15 @@ class DockerProvider:
             except Exception as e:
                 traceback.print_exc()
                 self.logger.red(f"Error waiting for postgres container due to unexpected error: {e}")
-                raise DockerSDKError(e)
+                raise
 
         self.logger.blue(
             f"Created postgres container "
             f"{self.settings.postgres_container_name}"
         )
 
+    def initialize_database(self) -> None:
+        """Initialize the database."""
         try:
             subprocess.run(
                 ["flask", "--app", "run.py", "db", "upgrade"],
@@ -101,7 +114,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Database upgrade failed due to unexpected error: {e}")
-            raise SubprocessError(e)
+            raise
 
         try:
             subprocess.run(
@@ -116,7 +129,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Integration testing database initialization failed due to unexpected error: {e}")
-            raise SubprocessError(e)
+            raise
 
         try:
             subprocess.run([
@@ -132,7 +145,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Researcher account creation failed due to unexpected error: {e}")
-            raise SubprocessError(e)
+            raise
 
     def build_wearable_data_retrieval_container(self) -> None:
         """Build wearable data retrieval container."""
@@ -141,7 +154,7 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error copying shared files due to unexpected error: {e}")
-            raise SubprocessError(e)
+            raise
 
         try:
             self.docker_client.images.build(
@@ -156,14 +169,14 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Wearable data retrieval container creation failed due to unexpected error: {e}")
-            raise DockerSDKError(e)
+            raise
 
         try:
             shutil.rmtree("functions/wearable_data_retrieval/shared")
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Error removing shared files due to unexpected error: {e}")
-            raise SubprocessError(e)
+            raise
 
     def run_wearable_data_retrieval_container(self) -> None:
         """Run wearable data retrieval container."""
@@ -184,23 +197,42 @@ class DockerProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.red(f"Wearable data retrieval container creation failed due to unexpected error: {e}")
-            raise DockerSDKError(e)
+            raise
+
+    def get_container(self, container_name: str) -> Container:
+        """Get a container by name."""
+        try:
+            return self.docker_client.containers.get(container_name)
+        except docker.errors.NotFound:
+            self.logger.yellow(f"Docker container {container_name} not found")
+            raise DockerSDKError(f"Container {container_name} not found")
+
+    def get_network(self) -> Network:
+        """Get a network by name."""
+        try:
+            return self.docker_client.networks.get(self.settings.network_name)
+        except docker.errors.NotFound:
+            self.logger.yellow(f"Docker network {self.settings.network_name} not found")
+            raise DockerSDKError(f"Network {self.settings.network_name} not found")
 
     def uninstall(self) -> None:
         """Uninstall the Docker containers."""
         try:
-            self.docker_client.containers.stop(self.settings.postgres_container_name)
-            self.docker_client.containers.remove(self.settings.postgres_container_name)
-        except docker.errors.NotFoundError:
-            self.logger.yellow(f"Docker container {self.settings.postgres_container_name} not found")
+            container = self.get_container(self.settings.postgres_container_name)
+            container.stop()
+            container.remove()
+        except DockerSDKError:
+            self.logger.yellow(f"Unable to stop and remove postgres container {self.settings.postgres_container_name}")
 
         try:
-            self.docker_client.containers.stop(self.settings.wearable_data_retrieval_container_name)
-            self.docker_client.containers.remove(self.settings.wearable_data_retrieval_container_name)
-        except docker.errors.NotFoundError:
-            self.logger.yellow(f"Docker container {self.settings.wearable_data_retrieval_container_name} not found")
+            container = self.get_container(self.settings.wearable_data_retrieval_container_name)
+            container.stop()
+            container.remove()
+        except DockerSDKError:
+            self.logger.yellow(f"Unable to stop and remove wearable data retrieval container {self.settings.wearable_data_retrieval_container_name}")
 
         try:
-            self.docker_client.networks.remove(self.settings.network_name)
-        except docker.errors.NotFoundError:
-            self.logger.yellow(f"Docker network {self.settings.network_name} not found")
+            network = self.get_network()
+            network.remove()
+        except DockerSDKError:
+            self.logger.yellow(f"Unable to remove docker network {self.settings.network_name}")
