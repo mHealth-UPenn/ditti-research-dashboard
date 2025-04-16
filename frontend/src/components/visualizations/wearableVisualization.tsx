@@ -17,27 +17,14 @@
 
 import { WearableVisualizationContent } from "./wearableVisualizationContent";
 import { VisualizationContextProvider } from "../../contexts/visualizationContext";
-/**
- * Props to pass to the wearable visualization.
-@ @property showDayControls: `showDayControls` to pass to `WearableVisualizationContent`.
-@ @property showTapsData: `showTapsData` to pass to `WearableVisualizationContent`.
-@ @property dittiId: `dittiId` to pass to `WearableVisualizationContent`.
-@ @property horizontalPadding: Whether to add horizontal padding to the visualization.
- */
-interface IWearableVisualizationProps {
-  showDayControls?: boolean;
-  showTapsData?: boolean;
-  dittiId?: string;
-  horizontalPadding?: boolean;
-}
-
+import { WearableVisualizationProps } from "./visualizations.types";
 
 export const WearableVisualization = ({
   showDayControls = false,
   showTapsData = false,
   dittiId,
   horizontalPadding = false,
-}: IWearableVisualizationProps) => {
+}: WearableVisualizationProps) => {
   return (
     <VisualizationContextProvider
       defaultMargin={{

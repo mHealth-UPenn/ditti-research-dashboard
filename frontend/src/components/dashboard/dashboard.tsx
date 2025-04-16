@@ -15,12 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { Header } from "./header";
-import { Navbar } from "./navbar";
+import { Header } from "../header";
+import { Navbar } from "../navbar";
 import "./dashboard.css";
 import { Outlet } from "react-router-dom";
-import { NavbarContextProvider } from "../contexts/navbarContext";
-import { useFlashMessages } from "../hooks/useFlashMessages";
+import { NavbarContextProvider } from "../../contexts/navbarContext";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 
 export const Dashboard = () => {

@@ -16,20 +16,14 @@
  */
 
 import { createContext, useState, useEffect, PropsWithChildren } from "react";
-import { IBreadcrumb, NavbarContextType } from "../interfaces";
 import { useMatches } from "react-router-dom";
+import { NavbarContextValue, Breadcrumb, Handle } from "./navbarContext.types";
 
-export const NavbarContext = createContext<NavbarContextType | undefined>(undefined);
-
-interface IHandle {
-  breadcrumbs: IBreadcrumb[];
-}
-
+export const NavbarContext = createContext<NavbarContextValue | undefined>(undefined);
 
 const formatString = (template: string, values: Record<string, string>): string => {
   return template.replace(/\{(\w+)\}/g, (_, key) => values[key] || "");
 }
-
 
 // NavbarContextProvider component that wraps children with studies context.
 export function NavbarContextProvider({
@@ -37,7 +31,7 @@ export function NavbarContextProvider({
 }: PropsWithChildren<unknown>) {
   const matches = useMatches();
 
-  const [breadcrumbs, setBreadcrumbs] = useState<IBreadcrumb[]>([]);
+  const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
   const [studySlug, setStudySlug] = useState("");
   const [sidParam, setSidParam] = useState("");
   const [dittiIdParam, setDittiIdParam] = useState("");
@@ -45,8 +39,8 @@ export function NavbarContextProvider({
   // Format any breadcrumbs with `studySlug`, `sidParam`, and `dittiIdParam`
   useEffect(() => {
     let updatedBreadcrumbs = matches
-      .filter(match => match.handle ? (match.handle as IHandle).breadcrumbs : false)
-      .flatMap(match => (match.handle as IHandle).breadcrumbs);
+      .filter(match => match.handle ? (match.handle as Handle).breadcrumbs : false)
+      .flatMap(match => (match.handle as Handle).breadcrumbs);
 
     const formatValues = {
       study: studySlug,

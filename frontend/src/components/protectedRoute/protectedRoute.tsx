@@ -15,15 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
+import { PropsWithChildren } from "react";
 import { Navigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
-import { FullLoader } from "../components/loader";
-
-interface ProtectedRouteProps {
-  children: React.ReactElement;
-  authMethod: 'participant' | 'researcher';
-}
+import { useAuth } from "../../hooks/useAuth";
+import { FullLoader } from "../loader/loader";
+import { ProtectedRouteProps } from "./protectedRoute.types";
 
 /**
  * Component for protecting routes, redirecting unauthenticated users to the login page.
@@ -32,7 +28,10 @@ interface ProtectedRouteProps {
  * @param authMethod - The required authentication method ('participant', or 'researcher')
  * @returns The child component if authenticated, or a redirect to the login page otherwise.
  */
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, authMethod }) => {
+export const ProtectedRoute = ({
+  children,
+  authMethod,
+}: PropsWithChildren<ProtectedRouteProps>) => {
   const {
     isParticipantAuthenticated, 
     isResearcherAuthenticated,
@@ -43,14 +42,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, authMe
   if (authMethod === "participant") {
     if (isParticipantLoading) return <FullLoader loading={true} msg="Loading..." />;
     if (!isParticipantAuthenticated) return <Navigate to="/login" replace />;
-    return children;
+    return <>{children}</>;
   }
 
   if (authMethod === "researcher") {
     if (isResearcherLoading) return <FullLoader loading={true} msg="Loading..." />;
     if (!isResearcherAuthenticated) return <Navigate to="/coordinator/login" replace />;
-    return children;
+    return <>{children}</>;
   }
 
-  return null;
+  return <></>;
 };

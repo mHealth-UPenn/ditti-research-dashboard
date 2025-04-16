@@ -22,56 +22,9 @@ import { scaleLinear } from '@visx/scale';
 import { useVisualization } from "../../hooks/useVisualization";
 import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 import { colors } from "../../colors";
-import { IVisualizationProps } from "../../interfaces";
+import { TimelineProps } from "./visualizations.types";
 
-
-/**
- * Either a single point or range on the timeline.
- * @property start: A timestamp representing a single point or the start of a range.
- * @property stop: An optional timestamp representing the end of a range.
- * @property label: An optional label to display on hover.
- * @property strokeDashArray: An optional stroke dash array to pas to `Line`.
- * @property color: An optional color to display the point or range as.
- */
-type GroupData = {
-  start: number;
-  stop?: number;
-  label?: string;
-  strokeDashArray?: string;
-  color?: string;
-};
-
-
-/**
- * Props for the `Timeline` visualization.
- * @property groups: An array of `GroupData` representing points or ranges to display on the timeline.
- * @property title: A title. Titles are displayed to the left of the timeline and rotated 90 degrees.
- * @property hideAxis: Whether to hide the axis.
- * @property hideStops: Whether to hide start and stop points on ranges.
- * @property hideTicks: Whether to hide ticks on the timeline.
- * @property xScaleOffset: The number of milliseconds to offset data by.
- * @property strokeWidth: The stroke height of ranges.
- * @property color: The default color for points and ranges. This is overridden by any `color` property passed in
- *   `groups`.
- * @property axisColor: The axis color.
- * @property strokeDashArray: The default stroke dash array for ranges. This is overridden by any `strokeDashArray`
- *   property passed in `groups`.
- */
-interface TimelineProps extends IVisualizationProps {
-  groups: GroupData[];
-  title?: string;
-  hideAxis?: boolean;
-  hideStops?: boolean;
-  hideTicks?: boolean;
-  xScaleOffset?: number;
-  strokeWidth?: number;
-  color?: string;
-  axisColor?: string;
-  strokeDashArray?: string;
-}
-
-
-export const Timeline: React.FC<TimelineProps> = ({
+export const Timeline = ({
   groups,
   title,
   hideAxis,
@@ -86,7 +39,7 @@ export const Timeline: React.FC<TimelineProps> = ({
   marginRight,
   marginBottom,
   marginLeft,
-}) => {
+}: TimelineProps) => {
   const {
     width,
     defaultMargin,

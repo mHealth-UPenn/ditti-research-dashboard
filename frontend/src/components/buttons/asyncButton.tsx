@@ -16,17 +16,8 @@
  */
 
 import { PropsWithChildren, useState } from "react";
-import { Button, ButtonProps } from "./button";
-
-/**
- * onClick: the function to handle clicks
- * text: the text to display in the button
- * type: the button's type (primary, secondary, etc.)
- */
-interface AsyncButtonProps extends ButtonProps {
-  onClick: () => Promise<void>;
-}
-
+import { Button } from "./button";
+import { AsyncButtonProps } from "./buttons.types";
 
 export const AsyncButton = ({
   variant = "primary",

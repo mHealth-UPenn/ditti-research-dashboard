@@ -19,14 +19,16 @@ import { makeRequest } from "../utils";
 import { DataFactory } from "../dataFactory";
 import { differenceInMilliseconds } from "date-fns";
 import { createContext, PropsWithChildren, useState, useMemo, useEffect } from "react";
-import { AudioFile, AudioTap, AudioTapDetails, IDittiDataContext, Tap, TapDetails } from "../interfaces";
+import { DittiDataContextValue } from "./dittiDataContext.types";
+import { AudioFile, AudioTap, Tap } from "../types/api";
+import { TapModel, AudioTapModel } from "../types/models";
 
-export const DittiDataContext = createContext<IDittiDataContext | undefined>(undefined);
+export const DittiDataContext = createContext<DittiDataContextValue | undefined>(undefined);
 
 export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
   const [dataLoading, setDataLoading] = useState(true);
-  const [taps, setTaps] = useState<TapDetails[]>([]);
-  const [audioTaps, setAudioTaps] = useState<AudioTapDetails[]>([]);
+  const [taps, setTaps] = useState<TapModel[]>([]);
+  const [audioTaps, setAudioTaps] = useState<AudioTapModel[]>([]);
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
 
   const dataFactory: DataFactory | null = useMemo(() => {
@@ -56,8 +58,8 @@ export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
     Promise.all(promises).then(() => setDataLoading(false));
   }, []);
 
-  const getTapsAsync = async (): Promise<TapDetails[]> => {
-    let taps: TapDetails[] = [];
+  const getTapsAsync = async (): Promise<TapModel[]> => {
+    let taps: TapModel[] = [];
 
     if (APP_ENV === "production") {
       taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
@@ -80,8 +82,8 @@ export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
     return taps;
   };
 
-  const getAudioTapsAsync = async (): Promise<AudioTapDetails[]> => {
-    let audioTaps: AudioTapDetails[] = [];
+  const getAudioTapsAsync = async (): Promise<AudioTapModel[]> => {
+    let audioTaps: AudioTapModel[] = [];
 
     if (APP_ENV == "production") {
       audioTaps = await makeRequest("/aws/get-audio-taps?app=2")

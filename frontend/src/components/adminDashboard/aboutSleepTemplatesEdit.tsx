@@ -17,9 +17,9 @@
 
 import { useState, useEffect, createRef } from "react";
 import { TextField } from "../fields/textField";
-import { AboutSleepTemplate, ResponseBody } from "../../interfaces";
+import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 import { makeRequest } from "../../utils";
-import { SmallLoader } from "../loader";
+import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
 import { FormTitle } from "../text/formTitle";
@@ -34,14 +34,7 @@ import sanitize from "sanitize-html";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
-
-/**
- * The form's prefill
- */
-interface AboutSleepTemplatePrefill {
-  name: string;
-  text: string;
-}
+import { AboutSleepTemplateFormPrefill } from "./adminDashboard.types";
 
 export const AboutSleepTemplatesEdit = () => {
   const [searchParams] = useSearchParams();
@@ -77,7 +70,7 @@ export const AboutSleepTemplatesEdit = () => {
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<AboutSleepTemplatePrefill> => {
+  const getPrefill = async (): Promise<AboutSleepTemplateFormPrefill> => {
     const id = aboutSleepTemplateId;
 
     // if editing an existing entry, return prefill data, else return empty data
@@ -96,7 +89,7 @@ export const AboutSleepTemplatesEdit = () => {
    * @param res - the response body
    * @returns - the form prefill data
    */
-  const makePrefill = (res: AboutSleepTemplate[]): AboutSleepTemplatePrefill => {
+  const makePrefill = (res: AboutSleepTemplate[]): AboutSleepTemplateFormPrefill => {
     const aboutSleepTemplate = res[0];
 
     return {

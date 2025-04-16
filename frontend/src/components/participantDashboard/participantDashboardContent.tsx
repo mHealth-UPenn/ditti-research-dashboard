@@ -27,10 +27,10 @@ import { Link as RouterLink } from "react-router-dom";
 import { ParticipantWearableDataProvider } from "../../contexts/wearableDataContext";
 import { WearableVisualization } from "../visualizations/wearableVisualization";
 import { useStudySubjects } from "../../hooks/useStudySubjects";
-import { SmallLoader } from "../loader";
-import { ConsentModal } from "../containers/consentModal";
+import { SmallLoader } from "../loader/loader";
+import { ConsentModal } from "../containers/consentModal/consentModal";
 import { makeRequest } from "../../utils";
-import { IParticipantStudy } from "../../interfaces";
+import { ParticipantStudy } from "../../types/api";
 import sanitize from "sanitize-html";
 
 const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
@@ -38,7 +38,7 @@ const defaultConsentContentText = "By accepting, you agree that your data will b
 export const ParticipantDashboardContent = () => {
   const [isConsentOpen, setIsConsentOpen] = useState<boolean>(false);
   const [consentError, setConsentError] = useState<string>("");
-  const [unconsentedStudies, setUnconsentedStudies] = useState<IParticipantStudy[]>([]);
+  const [unconsentedStudies, setUnconsentedStudies] = useState<ParticipantStudy[]>([]);
 
   const { dittiId } = useAuth();
   const { studies, apis, studySubjectLoading, refetch } = useStudySubjects();

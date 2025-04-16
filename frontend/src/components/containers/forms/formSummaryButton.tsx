@@ -17,12 +17,7 @@
 
 import { PropsWithChildren } from "react";
 import { AsyncButton } from "../../buttons/asyncButton";
-
-interface FormSummaryButtonProps {
-  disabled?: boolean;
-  onClick: () => Promise<void>;
-}
-
+import { FormSummaryButtonProps } from "./forms.types";
 
 export const FormSummaryButton = ({
   disabled,

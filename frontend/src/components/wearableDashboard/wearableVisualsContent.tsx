@@ -17,8 +17,8 @@
 
 import { useState, useEffect } from "react";
 import { downloadExcelFromUrl, getAccess, getEnrollmentInfoForStudy } from "../../utils";
-import { SmallLoader } from "../loader";
-import { ViewContainer } from "../containers/viewContainer";
+import { SmallLoader } from "../loader/loader";
+import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { Card } from "../cards/card";
 import { CardContentRow } from "../cards/cardContentRow";
 import { Title } from "../text/title";
@@ -32,7 +32,7 @@ import { Link } from "react-router-dom";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
-
+import { WearableVisualsContentProps } from "./wearableDashboard.types";
 
 /**
  * Fetch the width and height of the current window.
@@ -42,7 +42,6 @@ function getWindowDimensions(): { width: number; height: number; } {
   const { innerWidth: width, innerHeight: height } = window;
   return { width, height };
 }
-
 
 /**
  * Hook for fetching the current window size.
@@ -63,15 +62,9 @@ function useWindowDimensions() {
   return windowDimensions;
 }
 
-
-interface IWearableVisualsContentProps {
-  dittiId: string;
-}
-
-
 export function WearableVisualsContent({
   dittiId,
-}: IWearableVisualsContentProps) {
+}: WearableVisualsContentProps) {
   const [canEdit, setCanEdit] = useState(false);
   const [canInvoke, setCanInvoke] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);

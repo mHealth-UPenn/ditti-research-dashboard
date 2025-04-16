@@ -17,16 +17,9 @@
 
 import { LinkComponent } from "../links/linkComponent";
 import { Link } from "react-router-dom";
+import { AdminNavbarProps } from "./adminDashboard.types";
 
-
-/**
- * @property {string} activeView - The name of the active view
- */
-interface NavbarProps {
-  activeView: "Accounts" | "Studies" | "Roles" | "Access Groups" | "About Sleep Templates" | "Data Retrieval Tasks";
-}
-
-export const AdminNavbar = ({ activeView }: NavbarProps) => {
+export const AdminNavbar = ({ activeView }: AdminNavbarProps) => {
   const views = [
     {
       active: false,

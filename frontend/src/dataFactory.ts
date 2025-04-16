@@ -16,9 +16,9 @@
  */
 
 import { APP_ENV } from "./environment";
-import { AudioFile, AudioTapDetails, ISleepLevel, ISleepLevelClassic, ISleepLevelStages, ISleepLog, Study, TapDetails, UserDetails } from "./interfaces";
 import { makeRequest } from "./utils";
-
+import { AudioFile, SleepLevel, SleepLevelClassic, SleepLevelStages, SleepLog, Study } from "./types/api";
+import { UserModel, TapModel, AudioTapModel } from "./types/models";
 const aboutSleepTemplate = `<div>
   <h1>About Sleep</h1>
   <p>This is an about sleep template</p>
@@ -48,8 +48,8 @@ const generateAudioFiles = (): AudioFile[] => {
 }
 
 
-const generateUsers = (studyIds: string[]): UserDetails[] => {
-  const users: UserDetails[] = [];
+const generateUsers = (studyIds: string[]): UserModel[] => {
+  const users: UserModel[] = [];
 
   studyIds.forEach(studyId => {
     for (let i = 1; i <= 10; i++) {
@@ -73,9 +73,9 @@ const generateUsers = (studyIds: string[]): UserDetails[] => {
 const generateTaps = (
   dittiIds: string[],
   audioFileNames: string[]
-): [TapDetails[], AudioTapDetails[]] => {
-  const taps: TapDetails[] = [];
-  const audioTaps: AudioTapDetails[] = [];
+): [TapModel[], AudioTapModel[]] => {
+  const taps: TapModel[] = [];
+  const audioTaps: AudioTapModel[] = [];
   const timezones = [
     "",
     "GMT Universal Coordinated Time",
@@ -163,26 +163,26 @@ const generateRandomTimeBetween = (startHour: number, endHour: number) => {
 }
 
 
-const getRandomLevelStages = (prev: ISleepLevelStages): ISleepLevelStages => {
-  const levels: ISleepLevelStages[] = ["deep", "light", "rem", "wake"];
+const getRandomLevelStages = (prev: SleepLevelStages): SleepLevelStages => {
+  const levels: SleepLevelStages[] = ["deep", "light", "rem", "wake"];
   const levelsFiltered = levels.filter(l => l !== prev);
   const randomIndex = Math.floor(Math.random() * levelsFiltered.length);
   return levelsFiltered[randomIndex];
 }
 
 
-const getRandomLevelClassic = (prev: ISleepLevelClassic): ISleepLevelClassic => {
-  const levels: ISleepLevelClassic[] = ["asleep", "awake", "restless"];
+const getRandomLevelClassic = (prev: SleepLevelClassic): SleepLevelClassic => {
+  const levels: SleepLevelClassic[] = ["asleep", "awake", "restless"];
   const levelsFiltered = levels.filter(l => l !== prev);
   const randomIndex = Math.floor(Math.random() * levelsFiltered.length);
   return levelsFiltered[randomIndex];
 }
 
 
-const generateSleepLogs = (): ISleepLog[] => {
-  const sleepLogs: ISleepLog[] = [];
-  const levelsStages: ISleepLevelStages[] = ["deep", "light", "rem", "wake"];
-  const levelsClassic: ISleepLevelClassic[] = ["asleep", "awake", "restless"];
+const generateSleepLogs = (): SleepLog[] => {
+  const sleepLogs: SleepLog[] = [];
+  const levelsStages: SleepLevelStages[] = ["deep", "light", "rem", "wake"];
+  const levelsClassic: SleepLevelClassic[] = ["asleep", "awake", "restless"];
   const classicDay = Math.ceil(Math.random() * 7);
 
   for (let i = 7; i >= 1; i--) {
@@ -193,14 +193,14 @@ const generateSleepLogs = (): ISleepLog[] => {
     const startTime = generateRandomTimeBetween(22, 24); // Random time between 10pm and 12am
     startTime.setDate(dateOffset)
 
-    const sleepLog: ISleepLog = {
+    const sleepLog: SleepLog = {
       dateOfSleep: dateOfSleep.toISOString(),
       logType: "auto_detected",
       type: i === classicDay ? "classic" : "stages",
       levels: [],
     };
 
-    let previousLevel: ISleepLevel | null = null;
+    let previousLevel: SleepLevel | null = null;
     let totalDurationMinutes = 0;
     // Simulate between six to eight hours
     const maxDurationMinutes = 360 + Math.random() * 120;
@@ -212,18 +212,18 @@ const generateSleepLogs = (): ISleepLog[] => {
         ? new Date(new Date(previousLevel.dateTime).getTime() + previousLevel.seconds * 1000)
         : startTime;
 
-      const level: ISleepLevel = {
+      const level: SleepLevel = {
         dateTime: dateTime.toISOString(),
         seconds,
         isShort: null,
         level: i === classicDay
           // Use classic
           ? previousLevel
-          ? getRandomLevelClassic(previousLevel.level as ISleepLevelClassic)
+          ? getRandomLevelClassic(previousLevel.level as SleepLevelClassic)
           : levelsClassic[Math.floor(Math.random() * levelsClassic.length)]
           // Use stages
           : previousLevel
-          ? getRandomLevelStages(previousLevel.level as ISleepLevelStages)
+          ? getRandomLevelStages(previousLevel.level as SleepLevelStages)
           : levelsStages[Math.floor(Math.random() * levelsStages.length)]
       };
 
@@ -242,11 +242,11 @@ const generateSleepLogs = (): ISleepLog[] => {
 export class DataFactory {
   private initialized: boolean;
   public studies: Study[];
-  public taps: TapDetails[];
-  public audioTaps: AudioTapDetails[];
+  public taps: TapModel[];
+  public audioTaps: AudioTapModel[];
   public audioFiles: AudioFile[];
-  public users: UserDetails[];
-  public sleepLogs: ISleepLog[];
+  public users: UserModel[];
+  public sleepLogs: SleepLog[];
 
   constructor() {
     this.initialized = false;

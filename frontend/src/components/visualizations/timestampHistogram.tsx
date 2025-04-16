@@ -28,18 +28,7 @@ import { defaultStyles, Tooltip, useTooltip } from "@visx/tooltip"
 import { useVisualization } from '../../hooks/useVisualization';
 import { colors } from '../../colors';
 import { NumberValue } from 'd3';
-import { IVisualizationProps } from '../../interfaces';
-
-/**
- * Props for the timestamp histogram.
- * @property: Timestamps for each tap to visualize.
- * @property: Timezones in the tapping data, where `time` is the first timestamp in the timezone called `name`.
- */
-interface TimestampHistogramProps extends IVisualizationProps {
-  timestamps: number[];
-  timezones?: { time: number; name: string }[];
-}
-
+import { TimestampHistogramProps } from './visualizations.types';
 
 /**
  * Formats ticks for the visualization in `H:MM AM/PM` format. The first tick of the visualization will show the day
@@ -59,7 +48,6 @@ const formatTick = (v: Date | NumberValue, i: number): string => {
   );
   return time;
 };
-
 
 /**
  * Get the timezone of a tick on the visualization. Given the tick `v` and a list of `timezones`, return the name of the
@@ -86,7 +74,6 @@ const formatTimeZoneTick = (
   }
   return timezones[index]?.name || "";
 };
-
 
 export const TimestampHistogram = ({
   timestamps,

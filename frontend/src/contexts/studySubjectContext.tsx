@@ -16,18 +16,18 @@
  */
 import { createContext, useState, useEffect, PropsWithChildren } from "react";
 import { makeRequest } from "../utils";
-import { StudySubjectContextType, IParticipant, IParticipantApi, IParticipantStudy } from "../interfaces";
 import { APP_ENV } from "../environment";
+import { StudySubjectContextValue } from "./studySubjectContext.types";
+import { Participant, ParticipantApi, ParticipantStudy } from "../types/api";
 
-export const StudySubjectContext = createContext<StudySubjectContextType | undefined>(undefined);
-
+export const StudySubjectContext = createContext<StudySubjectContextValue | undefined>(undefined);
 
 // StudySubjectProvider component that wraps children with the study subject context.
 export function StudySubjectProvider({
   children
 }: PropsWithChildren<unknown>) {
-  const [studies, setStudies] = useState<IParticipantStudy[]>([]);
-  const [apis, setApis] = useState<IParticipantApi[]>([])
+  const [studies, setStudies] = useState<ParticipantStudy[]>([]);
+  const [apis, setApis] = useState<ParticipantApi[]>([])
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
 
   // Fetch the participant's enrolled studies and connected APIs
@@ -45,13 +45,13 @@ export function StudySubjectProvider({
   }, []);
 
   // Async fetch the participant's enrolled studies and connected APIs
-  const getStudySubject = async (): Promise<[IParticipantStudy[], IParticipantApi[]]> => {
-    let studiesData: IParticipantStudy[] = [];
-    let apisData: IParticipantApi[] = [];
+  const getStudySubject = async (): Promise<[ParticipantStudy[], ParticipantApi[]]> => {
+    let studiesData: ParticipantStudy[] = [];
+    let apisData: ParticipantApi[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
       await makeRequest(`/participant`)
-        .then((res: IParticipant) => {
+        .then((res: Participant) => {
           studiesData = res.studies;
           apisData = res.apis;
         })

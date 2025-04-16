@@ -26,7 +26,7 @@ import { useVisualization } from "../../hooks/useVisualization";
 import { Button } from "../buttons/button";
 
 
-export const TapVisualizationButtons: React.FC = () => {
+export const TapVisualizationButtons = () => {
   const {
     minRangeReached,
     maxRangeReached,

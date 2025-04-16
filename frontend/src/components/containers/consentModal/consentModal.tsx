@@ -17,8 +17,8 @@
 
 import { FC, memo } from "react";
 import sanitize, { AllowedAttribute } from "sanitize-html";
-import { Button } from "../buttons/button";
-import { ConsentModalProps } from "../../interfaces";
+import { Button } from "../../buttons/button";
+import { ConsentModalProps } from "./consentModal.types";
 
 export const ConsentModal: FC<ConsentModalProps> = memo(
   ({ isOpen, onAccept, onDeny, onClose, contentHtml }) => {

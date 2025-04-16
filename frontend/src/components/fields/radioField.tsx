@@ -15,29 +15,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { ChangeEvent, createRef } from "react";
+import { createRef } from "react";
+import { RadioFieldProps } from "./fields.types";
 
-/**
- * id (optional): an optional html id
- * prefill (optional): whether the field is checked
- * label (optional): the field's label text
- * onChange (optional): a callback function when the field is clicked
- */
-interface RadioFieldProps {
-  id?: string;
-  label?: string;
-  checked?: string;
-  values: string[];
-  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
-}
-
-export const RadioField: React.FC<RadioFieldProps> = ({
-    id,
-    label,
-    checked,
-    values,
-    onChange
-}) => {
+export const RadioField = ({
+  id,
+  label,
+  checked,
+  values,
+  onChange,
+}: RadioFieldProps) => {
   const radioButtons = values.map((v, i) => {
     const ref = createRef<HTMLInputElement>();
     return (

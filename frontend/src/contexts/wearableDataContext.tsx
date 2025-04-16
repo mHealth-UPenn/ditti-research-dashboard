@@ -16,18 +16,17 @@
  */
 
 import { createContext, PropsWithChildren, useEffect, useMemo, useState } from "react";
-import { IDataProcessingTask, ISleepLog,  IWearableDataContextType } from "../interfaces";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
 import { makeRequest } from "../utils";
-
+import { WearableDataContextValue, CoordinatorWearableDataProviderProps } from "./wearableDataContext.types";
+import { SleepLog, DataProcessingTask } from "../types/api";
 
 // Context return type for participants
-export const ParticipantWearableDataContext = createContext<IWearableDataContextType | undefined>(undefined);
+export const ParticipantWearableDataContext = createContext<WearableDataContextValue | undefined>(undefined);
 
 // Context return type for coordinators
-export const CoordinatorWearableDataContext = createContext<IWearableDataContextType | undefined>(undefined);
-
+export const CoordinatorWearableDataContext = createContext<WearableDataContextValue | undefined>(undefined);
 
 /**
  * Format a date in YYYY-MM-DD format.
@@ -41,13 +40,12 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 }
 
-
 // ParticipantWearableDataProvider component that wraps children with the study subject context.
 export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<unknown>) => {
   const start = new Date();
   start.setDate(start.getDate() - 6);
 
-  const [sleepLogs, setSleepLogs] = useState<ISleepLog[]>([]);
+  const [sleepLogs, setSleepLogs] = useState<SleepLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // For now participants do not have the ability to change the start and end dates
@@ -75,7 +73,7 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
           params.append("start_date", formatDate(startDate));
           params.append("end_date", formatDate(endDate));
           const url = `/participant/fitbit_data?${params.toString()}`
-          let data: ISleepLog[] = await makeRequest(url);
+          let data: SleepLog[] = await makeRequest(url);
 
           data = data.sort((a, b) => {
             if (a.dateOfSleep > b.dateOfSleep) return 1;
@@ -110,29 +108,17 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
   );
 };
 
-
-/**
- * Props for the coordinator wearable data provider.
- * @property dittiId: The Ditti ID of the participant whose data to fetch.
- * @property studyId: The ID of the study to fetch data for.
- */
-export interface ICoordinatorWearableDataProvider {
-  dittiId: string;
-  studyId: number;
-}
-
-
 export const CoordinatorWearableDataProvider = ({
   children,
   dittiId,
   studyId,
-}: PropsWithChildren<ICoordinatorWearableDataProvider>) => {
+}: PropsWithChildren<CoordinatorWearableDataProviderProps>) => {
   const start = new Date();
   start.setDate(start.getDate() - 7);
 
   const [startDate, setStartDate] = useState<Date>(start);  // Start one week ago
   const [endDate, setEndDate] = useState<Date>(new Date());  // End today
-  const [sleepLogs, setSleepLogs] = useState<ISleepLog[]>([]);
+  const [sleepLogs, setSleepLogs] = useState<SleepLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
@@ -167,7 +153,7 @@ export const CoordinatorWearableDataProvider = ({
     params.append("study", studyId.toString());
     const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`
 
-    let data: ISleepLog[] = await makeRequest(url);
+    let data: SleepLog[] = await makeRequest(url);
     data = data.sort((a, b) => {
       if (a.dateOfSleep > b.dateOfSleep) return 1;
       else if (a.dateOfSleep < b.dateOfSleep) return -1;
@@ -204,7 +190,7 @@ export const CoordinatorWearableDataProvider = ({
           params.append("app", "3");  // Assume Wearable Dashboard is app 3
           params.append("study", studyId.toString());
           const url = `/data_processing_task/?${params.toString()}`;
-          const tasks: IDataProcessingTask[] = await makeRequest(url);
+          const tasks: DataProcessingTask[] = await makeRequest(url);
 
           // Check if any tasks are syncing
           const syncingTask = tasks.find(task => task.status == "Pending" || task.status == "InProgress");
@@ -234,7 +220,7 @@ export const CoordinatorWearableDataProvider = ({
       params.append("app", "3");  // Assume Wearable Dashboard is app 3
       params.append("study", studyId.toString());
       const url = `/data_processing_task/${taskId}?${params.toString()}`;
-      const tasks: IDataProcessingTask[] = await makeRequest(url);
+      const tasks: DataProcessingTask[] = await makeRequest(url);
 
       // Assume one task is returned
       if (!(tasks[0].status == "Pending" || tasks[0].status == "InProgress")) {
@@ -278,7 +264,7 @@ export const CoordinatorWearableDataProvider = ({
       }
 
       // Fetch the data processing task ID for checking status
-      type ResponseBody = { msg: string; task: IDataProcessingTask; };
+      type ResponseBody = { msg: string; task: DataProcessingTask; };
       const res: ResponseBody  = await makeRequest(url, opts);
 
       setIsSyncing(true);

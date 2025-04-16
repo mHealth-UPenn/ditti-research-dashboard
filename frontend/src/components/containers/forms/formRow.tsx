@@ -16,11 +16,7 @@
  */
 
 import { PropsWithChildren } from "react";
-
-interface FormRowProps {
-  forceRow?: boolean;
-  className?: string;
-}
+import { FormRowProps } from "./forms.types";
 
 export const FormRow = ({
   forceRow = false,
