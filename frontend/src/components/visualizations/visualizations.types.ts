@@ -88,13 +88,13 @@ export interface TimestampHistogramProps extends VisualizationProps {
  * @property strokeDashArray: An optional stroke dash array to pas to `Line`.
  * @property color: An optional color to display the point or range as.
  */
-export type TimelineGroup = {
+export interface TimelineGroup {
   start: number;
   stop?: number;
   label?: string;
   strokeDashArray?: string;
   color?: string;
-};
+}
 
 /**
  * Props for the `Timeline` visualization.
