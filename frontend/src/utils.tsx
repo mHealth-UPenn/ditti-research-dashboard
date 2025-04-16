@@ -200,7 +200,7 @@ export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<
  * @param url - The URL of the file to download.
  * @returns A promise that resolves to the filename or an error message.
  */
-export async function downloadExcelFromUrl(url: string): Promise<string | undefined> {
+export async function downloadExcelFromUrl(url: string): Promise<string | void> {
   // Fetch the file from the server
   try {
     const jwt = localStorage.getItem("jwt");
@@ -250,8 +250,6 @@ export async function downloadExcelFromUrl(url: string): Promise<string | undefi
     // Clean up by removing the link element and revoking the object URL
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
-    
-    return undefined;
   } catch (error) {
     console.error("Error downloading participant data:", error);
     return "Error downloading participant data.";

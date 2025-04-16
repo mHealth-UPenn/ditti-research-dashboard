@@ -70,7 +70,7 @@ export const StudiesView = () => {
 
   useEffect(() => {
     const updateCanViewTaps = async () => {
-      const updatedCanViewTaps = new Set<number>();
+      const updatedCanViewTaps: Set<number> = new Set();
       const promises = studies.map(s => {
         return getAccess(2, "View", "Taps", s.id)
           .then(() => updatedCanViewTaps.add(s.id))
