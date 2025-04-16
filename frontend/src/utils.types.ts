@@ -15,6 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export type AttributesByTag = Record<string, string[]>;
+export type AttributesByTag = {
+  [key: string]: string[];
+};
   
-export type ClassAllowlist = Record<string, string[]>;
+export type ClassAllowlist = {
+  [key: string]: string[];
+};
