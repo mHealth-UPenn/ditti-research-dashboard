@@ -21,6 +21,9 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "src"
+    "src",
+    "eslint.config.js",
+    "vite.config.js",
+    "tailwind.config.js"
   ]
 }
