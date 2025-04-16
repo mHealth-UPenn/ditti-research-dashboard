@@ -264,7 +264,7 @@ export const CoordinatorWearableDataProvider = ({
       }
 
       // Fetch the data processing task ID for checking status
-      type ResponseBody = { msg: string; task: DataProcessingTask; };
+      interface ResponseBody { msg: string; task: DataProcessingTask; }
       const res: ResponseBody  = await makeRequest(url, opts);
 
       setIsSyncing(true);
