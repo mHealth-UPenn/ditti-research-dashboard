@@ -30,23 +30,6 @@ def subprocess_mock():
         yield mock_run
 
 
-def test_setup(docker_provider_mock: DockerProvider):
-    """Test the setup method calls all required methods."""
-    docker_provider_mock.create_network = MagicMock()
-    docker_provider_mock.run_postgres_container = MagicMock()
-    docker_provider_mock.initialize_database = MagicMock()
-    docker_provider_mock.build_wearable_data_retrieval_container = MagicMock()
-    docker_provider_mock.run_wearable_data_retrieval_container = MagicMock()
-
-    docker_provider_mock.setup()
-
-    docker_provider_mock.create_network.assert_called_once()
-    docker_provider_mock.run_postgres_container.assert_called_once()
-    docker_provider_mock.initialize_database.assert_called_once()
-    docker_provider_mock.build_wearable_data_retrieval_container.assert_called_once()
-    docker_provider_mock.run_wearable_data_retrieval_container.assert_called_once()
-
-
 def test_create_network_success(docker_provider_mock: DockerProvider):
     """Test successful creation of Docker network."""
     docker_provider_mock.create_network()
@@ -105,47 +88,6 @@ def test_run_postgres_container_error(docker_provider_mock: DockerProvider):
 
     with pytest.raises(DockerSDKError, match="stderr"):
         docker_provider_mock.run_postgres_container()
-
-
-def test_initialize_database_success(docker_provider_mock: DockerProvider, subprocess_mock: MagicMock):
-    """Test successful database initialization."""
-    subprocess_mock.return_value = MagicMock(returncode=0)
-
-    docker_provider_mock.initialize_database()
-
-    # Verify that subprocess.run was called three times with the correct arguments
-    assert subprocess_mock.call_count == 3
-
-    # Check first call (db upgrade)
-    first_call = subprocess_mock.call_args_list[0]
-    assert first_call[0][0] == ["flask", "--app", "run.py", "db", "upgrade"]
-    assert first_call[1]["check"] is True
-
-    # Check second call (init-integration-testing-db)
-    second_call = subprocess_mock.call_args_list[1]
-    assert second_call[0][0] == ["flask", "--app", "run.py", "init-integration-testing-db"]
-    assert second_call[1]["check"] is True
-
-    # Check third call (create-researcher-account)
-    third_call = subprocess_mock.call_args_list[2]
-    assert third_call[0][0] == ["flask", "--app", "run.py", "create-researcher-account", "--email", docker_provider_mock.settings.admin_email]
-    assert third_call[1]["check"] is True
-
-
-def test_initialize_database_subprocess_error(docker_provider_mock: DockerProvider, subprocess_mock: MagicMock):
-    """Test handling of subprocess error during database initialization."""
-    subprocess_mock.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["flask", "--app", "run.py", "db", "upgrade"], output=b"Subprocess Error")
-
-    with pytest.raises(SubprocessError, match="returned non-zero exit status 1"):
-        docker_provider_mock.initialize_database()
-
-
-def test_initialize_database_unexpected_error(docker_provider_mock: DockerProvider, subprocess_mock: MagicMock):
-    """Test handling of unexpected error during database initialization."""
-    subprocess_mock.side_effect = Exception("Unexpected Error")
-
-    with pytest.raises(SubprocessError, match="Unexpected Error"):
-        docker_provider_mock.initialize_database()
 
 
 def test_build_wearable_data_retrieval_container_success(docker_provider_mock: DockerProvider, shutil_mock: MagicMock):

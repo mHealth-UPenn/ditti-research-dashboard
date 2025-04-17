@@ -104,7 +104,10 @@ class Installer:
 
             # Setup Docker containers
             self.logger.cyan("\n[Docker Setup]")
-            self.docker_provider.setup()
+            self.docker_provider.create_network()
+            self.docker_provider.run_postgres_container()
+            self.docker_provider.build_wearable_data_retrieval_container()
+            self.docker_provider.run_wearable_data_retrieval_container()
 
             # Setup CloudFormation stack
             self.logger.cyan("\n[CloudFormation Stack Setup]")

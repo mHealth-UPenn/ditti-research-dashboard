@@ -23,14 +23,6 @@ class DockerProvider:
         self.settings = settings
         self.docker_client = docker.from_env()
 
-    def setup(self) -> None:
-        """Set up Docker containers."""
-        self.create_network()
-        self.run_postgres_container()
-        self.initialize_database()
-        self.build_wearable_data_retrieval_container()
-        self.run_wearable_data_retrieval_container()
-
     def create_network(self) -> None:
         """Create Docker network."""
         # Create Docker network
@@ -99,56 +91,6 @@ class DockerProvider:
             f"Created postgres container "
             f"{self.settings.postgres_container_name}"
         )
-
-    def initialize_database(self) -> None:
-        """Initialize the database."""
-        try:
-            subprocess.run(
-                ["flask", "--app", "run.py", "db", "upgrade"],
-                check=True
-            )
-            self.logger.blue(f"Database upgraded")
-        except subprocess.CalledProcessError as e:
-            traceback.print_exc()
-            self.logger.red(f"Database upgrade failed due to subprocess error: {e}")
-            raise SubprocessError(e)
-        except Exception as e:
-            traceback.print_exc()
-            self.logger.red(f"Database upgrade failed due to unexpected error: {e}")
-            raise SubprocessError(e)
-
-        try:
-            subprocess.run(
-                ["flask", "--app", "run.py", "init-integration-testing-db"],
-                check=True
-            )
-            self.logger.blue(f"Integration testing database initialized")
-        except subprocess.CalledProcessError as e:
-            traceback.print_exc()
-            self.logger \
-                .red(f"Integration testing database initialization failed due to subprocess error: {e}")
-            raise SubprocessError(e)
-        except Exception as e:
-            traceback.print_exc()
-            self.logger.red(f"Integration testing database initialization failed due to unexpected error: {e}")
-            raise SubprocessError(e)
-
-        try:
-            subprocess.run([
-                "flask",
-                "--app", "run.py",
-                "create-researcher-account",
-                "--email", self.settings.admin_email
-            ], check=True)
-            self.logger.blue(f"Researcher account created")
-        except subprocess.CalledProcessError as e:
-            traceback.print_exc()
-            self.logger.red(f"Researcher account creation failed due to subprocess error: {e}")
-            raise SubprocessError(e)
-        except Exception as e:
-            traceback.print_exc()
-            self.logger.red(f"Researcher account creation failed due to unexpected error: {e}")
-            raise SubprocessError(e)
 
     def build_wearable_data_retrieval_container(self) -> None:
         """Build wearable data retrieval container."""
