@@ -41,4 +41,4 @@ if [[ -z "$(pip freeze | grep docker==7.1.0)" ]]; then
 fi
 
 # Run the Python installation script
-python3.13 -c "from install_scripts.installer import Installer; Installer('dev').uninstall('$project_name')"
+python3.13 -c "from install_scripts.installer import Installer; Installer('dev').uninstall()"
