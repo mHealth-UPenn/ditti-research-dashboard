@@ -389,7 +389,9 @@ class ProjectConfigProvider:
                 "cognito": cognito_config,
                 "s3": s3_config,
                 "secrets_manager": secrets_manager_config,
-                "stack_name": self.format_string(FString.stack_name.value)
+                "stack_name": self.format_string(
+                    FString.stack_name.value, add_hashstr=True
+                )
             },
             "docker": docker_config
         }

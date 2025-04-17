@@ -22,11 +22,6 @@ def user_input_mock():
 
 
 @pytest.fixture
-def project_config_mock():
-    return project_config()
-
-
-@pytest.fixture
 def project_config_provider_mock():
     return project_config_provider()
 
@@ -52,7 +47,7 @@ def test_load_existing_config_success(project_config_provider_mock: ProjectConfi
         patch("os.path.exists", return_value=True),
         patch("builtins.open", mock_open(read_data=json.dumps(mock_config)))
     ):
-        project_config_provider_mock.load_existing_config("test-project")
+        project_config_provider_mock.load_existing_config()
 
     assert project_config_provider_mock.project_config == mock_config
 
@@ -63,7 +58,7 @@ def test_load_existing_config_file_not_found(project_config_provider_mock: Proje
         patch("os.path.exists", return_value=False),
         pytest.raises(ProjectConfigError)
     ):
-        project_config_provider_mock.load_existing_config("test-project")
+        project_config_provider_mock.load_existing_config()
 
 
 def test_get_user_input_continue(project_config_provider_mock: ProjectConfigProvider, user_input_mock: UserInput):
@@ -100,13 +95,14 @@ def test_get_user_input_invalid_email(project_config_provider_mock: ProjectConfi
     assert project_config_provider_mock.user_input["admin_email"] == "valid@example.com"
 
 
-def test_setup_project_config(user_input_mock: UserInput, project_config_mock: ProjectConfig):
+def test_setup_project_config(user_input_mock: UserInput):
     """Test setup_project_config"""
     # Create a mock project config provider
     project_config_provider_mock = ProjectConfigProvider(
         logger=MagicMock(),
         project_suffix="suffix",
     )
+    project_config_mock = project_config(project_config_provider_mock.hashstr)
 
     project_config_provider_mock.user_input = user_input_mock
     project_config_provider_mock.setup_project_config()
@@ -121,12 +117,13 @@ def test_format_string(project_config_provider_mock: ProjectConfigProvider):
     assert result == f"prefix-{project_config_provider_mock.project_name}-suffix"
 
 
-def test_write_project_config(logger_mock: Logger, project_config_mock: ProjectConfig):
+def test_write_project_config(logger_mock: Logger):
     """Test write_project_config method"""
     provider = ProjectConfigProvider(
         logger=logger_mock,
         project_suffix="suffix",
     )
+    project_config_mock = project_config(provider.hashstr)
     provider.project_config = project_config_mock
 
     with (
@@ -135,10 +132,7 @@ def test_write_project_config(logger_mock: Logger, project_config_mock: ProjectC
     ):
         provider.write_project_config()
 
-        mock_file.assert_called_once_with(
-            f"project-config-{provider.project_name}-suffix.json",
-            "w"
-        )
+        mock_file.assert_called_once_with("project-config.json", "w")
         mock_json_dump.assert_called_once_with(
             provider.project_config,
             mock_file.return_value.__enter__.return_value,
@@ -154,13 +148,12 @@ def test_uninstall(project_config_provider_mock: ProjectConfigProvider):
     ):
         project_config_provider_mock.uninstall()
 
-        mock_remove.assert_called_once_with(
-            f"project-config-{project_config_provider_mock.project_name}-suffix.json"
-        )
+        mock_remove.assert_called_once_with("project-config.json")
 
 
-def test_property_getters_and_setters(project_config_provider_mock: ProjectConfigProvider, project_config_mock: ProjectConfig, user_input_mock: UserInput):
+def test_property_getters_and_setters(project_config_provider_mock: ProjectConfigProvider, user_input_mock: UserInput):
     """Test property getters and setters"""
+    project_config_mock = project_config(project_config_provider_mock.hashstr)
 
     # Test getters
     assert project_config_provider_mock.admin_email == user_input_mock["admin_email"]

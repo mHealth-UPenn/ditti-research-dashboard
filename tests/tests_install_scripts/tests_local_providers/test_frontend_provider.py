@@ -63,11 +63,8 @@ def test_build_frontend_subprocess_error(frontend_provider_mock: FrontendProvide
 def test_uninstall(frontend_provider_mock: FrontendProvider, shutil_rmtree_mock: MagicMock, os_chdir_mock: MagicMock):
     frontend_provider_mock.uninstall()
     os_chdir_mock.assert_any_call(frontend_provider_mock.frontend_dir)
-    shutil_rmtree_mock.assert_any_call("node_modules")
-    shutil_rmtree_mock.assert_any_call("build")
+    shutil_rmtree_mock.assert_called_once_with("node_modules")
     os_chdir_mock.assert_any_call("..")
-    assert shutil_rmtree_mock.call_count == 2
-    assert os_chdir_mock.call_count == 2
 
 
 def test_uninstall_not_found(frontend_provider_mock: FrontendProvider, shutil_rmtree_mock: MagicMock):

@@ -178,7 +178,7 @@ def test_get_container_not_found(docker_provider_mock: DockerProvider):
     """Test handling of NotFoundError when getting a container."""
     docker_provider_mock.docker_client.containers.get.side_effect = docker.errors.NotFound("Container not found")
 
-    with pytest.raises(DockerSDKError, match=f"Container test-container not found"):
+    with pytest.raises(DockerSDKError, match=f"Container .+ not found"):
         docker_provider_mock.get_container("test-container")
 
 
@@ -196,7 +196,7 @@ def test_get_network_not_found(docker_provider_mock: DockerProvider):
     """Test handling of NotFoundError when getting a network."""
     docker_provider_mock.docker_client.networks.get.side_effect = docker.errors.NotFound("Network not found")
 
-    with pytest.raises(DockerSDKError, match=f"Network {docker_provider_mock.settings.network_name} not found"):
+    with pytest.raises(DockerSDKError, match=f"Network .+ not found"):
         docker_provider_mock.get_network()
 
 

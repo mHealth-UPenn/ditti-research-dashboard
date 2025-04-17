@@ -7,8 +7,7 @@ from install_scripts.utils.utils import is_valid_name, is_valid_email
     "my-project",
     "my_project",
     "project123",
-    "Project-123",
-    "a" * 64,  # Maximum length
+    "a" * 64,
 ])
 def test_valid_names(name):
     """Test various valid project names."""
@@ -16,14 +15,15 @@ def test_valid_names(name):
 
 
 @pytest.mark.parametrize("name", [
-    "",  # Empty string
-    None,  # None value
-    "my/project",  # Contains forward slash
-    "my.project",  # Contains dot
-    "my project",  # Contains space
-    "my@project",  # Contains special character
-    "a" * 65,  # Too long
-    "My Project!",  # Contains space and special character
+    "",
+    None,
+    "my/project",
+    "my.project",
+    "my project",
+    "my@project",
+    "a" * 65,
+    "My Project!",
+    "Project-123",
 ])
 def test_invalid_names(name):
     """Test various invalid project names."""

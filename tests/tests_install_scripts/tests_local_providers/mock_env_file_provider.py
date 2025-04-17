@@ -12,9 +12,9 @@ def wearable_data_retrieval_env() -> WearableDataRetrievalEnv:
 
     return {
         "DB_URI": (
-            f"postgresql://{Postgres.USER}:{Postgres.PASSWORD}@"
-            f"{settings.project_name}-postgres:{Postgres.PORT}/"
-            f"{Postgres.DB}"
+            f"postgresql://{Postgres.USER.value}:{Postgres.PASSWORD.value}@"
+            f"{settings.project_name}-postgres:{Postgres.PORT.value}/"
+            f"{Postgres.DB.value}"
         ),
         "S3_BUCKET": settings.logs_bucket_name,
         "AWS_CONFIG_SECRET_NAME": settings.secret_name,
@@ -33,8 +33,8 @@ def root_env() -> RootEnv:
         "FLASK_CONFIG": "Default",
         "FLASK_DEBUG": "True",
         "FLASK_DB": (
-            f"postgresql://{Postgres.USER}:{Postgres.PASSWORD}@"
-            f"localhost:{Postgres.PORT}/{Postgres.DB}"
+            f"postgresql://{Postgres.USER.value}:{Postgres.PASSWORD.value}@"
+            f"localhost:{Postgres.PORT.value}/{Postgres.DB.value}"
         ),
         "FLASK_APP": "run.py",
         "APP_SYNC_HOST": "",

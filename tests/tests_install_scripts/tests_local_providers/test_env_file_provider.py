@@ -61,4 +61,4 @@ def test_uninstall_not_found(env_file_provider_mock: EnvFileProvider, remove_moc
     remove_mock.assert_any_call(env_file_provider_mock.wearable_data_retrieval_filename)
     remove_mock.assert_any_call(env_file_provider_mock.root_filename)
     assert remove_mock.call_count == 2
-    assert env_file_provider_mock.logger.yellow.call_count == 2
+    assert env_file_provider_mock.logger.warning.call_count == 2

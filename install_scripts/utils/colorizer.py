@@ -1,3 +1,5 @@
+from typing import Any
+
 from install_scripts.utils.types import Color
 
 
@@ -14,35 +16,35 @@ class Colorizer:
     }
 
     @classmethod
-    def colorize(cls, text: str, color: Color) -> str:
+    def colorize(cls, text: Any, color: Color) -> str:
         # Replace any existing reset codes for nested colors
-        text = text.replace(cls.color_codes["reset"], cls.color_codes[color])
+        text = str(text).replace(cls.color_codes["reset"], cls.color_codes[color])
         return f"{cls.color_codes[color]}{text}{cls.color_codes["reset"]}"
 
     @classmethod
-    def red(cls, text: str) -> str:
+    def red(cls, text: Any) -> str:
         return cls.colorize(text, "red")
 
     @classmethod
-    def green(cls, text: str) -> str:
+    def green(cls, text: Any) -> str:
         return cls.colorize(text, "green")
 
     @classmethod
-    def yellow(cls, text: str) -> str:
+    def yellow(cls, text: Any) -> str:
         return cls.colorize(text, "yellow")
 
     @classmethod
-    def blue(cls, text: str) -> str:
+    def blue(cls, text: Any) -> str:
         return cls.colorize(text, "blue")
 
     @classmethod
-    def magenta(cls, text: str) -> str:
+    def magenta(cls, text: Any) -> str:
         return cls.colorize(text, "magenta")
 
     @classmethod
-    def cyan(cls, text: str) -> str:
+    def cyan(cls, text: Any) -> str:
         return cls.colorize(text, "cyan")
 
     @classmethod
-    def white(cls, text: str) -> str:
+    def white(cls, text: Any) -> str:
         return cls.colorize(text, "white")
