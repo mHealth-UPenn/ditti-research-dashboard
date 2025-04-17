@@ -18,11 +18,16 @@ from install_scripts.local_providers import (
 from install_scripts.resource_managers import (
     AwsCloudformationResourceManager,
     AwsCognitoResourceManager,
+    AwsS3ResourceManager,
     AwsSecretsmanagerResourceManager,
 )
 from install_scripts.utils import Logger, get_project_suffix
 from install_scripts.utils.types import Env
-from install_scripts.utils.exceptions import CancelInstallation
+from install_scripts.utils.exceptions import (
+    CancelInstallation,
+    ProjectConfigError,
+)
+
 
 class Installer:
     def __init__(self, env: Env) -> None:
@@ -39,6 +44,11 @@ class Installer:
         self.aws_client_provider = AwsClientProvider()
         self.aws_account_provider = AwsAccountProvider(
             logger=self.logger,
+            aws_client_provider=self.aws_client_provider,
+        )
+        self.aws_s3_resource_manager = AwsS3ResourceManager(
+            logger=self.logger,
+            settings=self.project_config_provider,
             aws_client_provider=self.aws_client_provider,
         )
         self.aws_cloudformation_provider = AwsCloudformationProvider(
@@ -162,12 +172,19 @@ class Installer:
                 self.logger.red("Uninstall cancelled.")
                 sys.exit(0)
 
+            # Load project config
+            try:
+                self.project_config_provider.load_existing_config()
+            except ProjectConfigError:
+                self.logger.red("Uninstall failed.")
+                sys.exit(1)
+
             # Configure AWS CLI
             self.logger.cyan("\n[AWS CLI Configuration]")
             self.aws_account_provider.configure_aws_cli()
 
-            # Load project config
-            self.project_config_provider.load_existing_config()
+            self.logger.cyan("\n[S3 Buckets Cleanup]")
+            self.aws_s3_resource_manager.uninstall(env=self.env)
 
             self.logger.cyan("\n[CloudFormation Stack Cleanup]")
             self.aws_cloudformation_resource_manager.uninstall(env=self.env)
