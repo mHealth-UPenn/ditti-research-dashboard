@@ -50,9 +50,8 @@ class FrontendProvider:
         try:
             os.chdir(self.frontend_dir)
             shutil.rmtree("node_modules")
-            shutil.rmtree("build")
             self.logger.blue(f"Frontend uninstalled")
         except FileNotFoundError:
-            self.logger.yellow("Frontend directory not found")
+            self.logger.yellow("Frontend node_modules directory not found")
         finally:
             os.chdir("..")
