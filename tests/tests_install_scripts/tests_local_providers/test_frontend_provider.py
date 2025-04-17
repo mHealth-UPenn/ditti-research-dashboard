@@ -73,4 +73,4 @@ def test_uninstall(frontend_provider_mock: FrontendProvider, shutil_rmtree_mock:
 def test_uninstall_not_found(frontend_provider_mock: FrontendProvider, shutil_rmtree_mock: MagicMock):
     shutil_rmtree_mock.side_effect = FileNotFoundError
     frontend_provider_mock.uninstall()
-    frontend_provider_mock.logger.yellow.assert_called_once()
+    frontend_provider_mock.logger.warning.assert_called_once()

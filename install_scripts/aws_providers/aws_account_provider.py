@@ -4,7 +4,7 @@ import traceback
 from botocore.exceptions import ClientError
 
 from install_scripts.aws_providers.aws_client_provider import AwsClientProvider
-from install_scripts.utils import Logger
+from install_scripts.utils import Colorizer, Logger
 from install_scripts.utils.exceptions import AwsProviderError, SubprocessError
 
 
@@ -29,11 +29,11 @@ class AwsAccountProvider:
             ).decode("utf-8").strip()
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
-            self.logger.red(f"AWS access key ID retrieval failed due to subprocess error: {e}")
+            self.logger.error(f"AWS access key ID retrieval failed due to subprocess error: {Colorizer.white(e)}")
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"AWS access key ID retrieval failed due to unexpected error: {e}")
+            self.logger.error(f"AWS access key ID retrieval failed due to unexpected error: {Colorizer.white(e)}")
             raise SubprocessError(e)
 
     @property
@@ -44,11 +44,11 @@ class AwsAccountProvider:
             ).decode("utf-8").strip()
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
-            self.logger.red(f"AWS secret access key retrieval failed due to subprocess error: {e}")
+            self.logger.error(f"AWS secret access key retrieval failed due to subprocess error: {Colorizer.white(e)}")
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"AWS secret access key retrieval failed due to unexpected error: {e}")
+            self.logger.error(f"AWS secret access key retrieval failed due to unexpected error: {Colorizer.white(e)}")
             raise SubprocessError(e)
 
     @property
@@ -57,11 +57,11 @@ class AwsAccountProvider:
             return self.client.get_caller_identity()["Account"]
         except ClientError as e:
             traceback.print_exc()
-            self.logger.red(f"AWS account ID retrieval failed due to ClientError: {e}")
+            self.logger.error(f"AWS account ID retrieval failed due to ClientError: {Colorizer.white(e)}")
             raise AwsProviderError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"AWS account ID retrieval failed due to unexpected error: {e}")
+            self.logger.error(f"AWS account ID retrieval failed due to unexpected error: {Colorizer.white(e)}")
             raise AwsProviderError(e)
 
     def configure_aws_cli(self) -> None:
@@ -70,9 +70,9 @@ class AwsAccountProvider:
             subprocess.run(["aws", "configure"])
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
-            self.logger.red("AWS CLI configuration failed")
+            self.logger.error("AWS CLI configuration failed")
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"AWS CLI configuration failed due to unexpected error: {e}")
+            self.logger.error(f"AWS CLI configuration failed due to unexpected error: {Colorizer.white(e)}")
             raise SubprocessError(e)

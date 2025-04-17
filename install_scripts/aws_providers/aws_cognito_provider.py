@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 
 from install_scripts.aws_providers.aws_client_provider import AwsClientProvider
 from install_scripts.project_config import ProjectConfigProvider
-from install_scripts.utils import Logger
+from install_scripts.utils import Colorizer, Logger
 from install_scripts.utils.exceptions import AwsProviderError
 
 class AwsCognitoProvider:
@@ -25,11 +25,11 @@ class AwsCognitoProvider:
             )["UserPoolClient"]["ClientSecret"]
         except ClientError as e:
             traceback.print_exc()
-            self.logger.red(f"Error getting participant client secret due to ClientError: {e}")
+            self.logger.error(f"Error getting participant client secret due to ClientError: {Colorizer.white(e)}")
             raise AwsProviderError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"Error getting participant client secret due to unexpected error: {e}")
+            self.logger.error(f"Error getting participant client secret due to unexpected error: {Colorizer.white(e)}")
             raise AwsProviderError(e)
 
     def get_researcher_client_secret(self) -> str:
@@ -40,9 +40,9 @@ class AwsCognitoProvider:
             )["UserPoolClient"]["ClientSecret"]
         except ClientError as e:
             traceback.print_exc()
-            self.logger.red(f"Error getting researcher client secret due to ClientError: {e}")
+            self.logger.error(f"Error getting researcher client secret due to ClientError: {Colorizer.white(e)}")
             raise AwsProviderError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"Error getting researcher client secret due to unexpected error: {e}")
+            self.logger.error(f"Error getting researcher client secret due to unexpected error: {Colorizer.white(e)}")
             raise AwsProviderError(e)

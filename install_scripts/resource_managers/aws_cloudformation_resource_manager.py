@@ -6,7 +6,7 @@ from install_scripts.aws_providers import AwsClientProvider
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.resource_managers.resource_manager_types import CloudFormationParameter
 from install_scripts.resource_managers.base_resource_manager import BaseResourceManager
-from install_scripts.utils import Logger
+from install_scripts.utils import Logger, Colorizer
 from install_scripts.utils.exceptions import ResourceManagerError, UninstallError
 
 
@@ -35,7 +35,7 @@ class AwsCloudformationResourceManager(BaseResourceManager):
             raise
         except Exception as e:
             traceback.print_exc()
-            self.logger.red("AWS resource creation failed due to unexpected error")
+            self.logger.error(f"AWS resource creation failed due to unexpected error: {Colorizer.white(e)}")
             raise ResourceManagerError(e)
 
     def get_dev_parameters(self) -> list[CloudFormationParameter]:
@@ -91,41 +91,41 @@ class AwsCloudformationResourceManager(BaseResourceManager):
                 Parameters=parameters,
                 Capabilities=["CAPABILITY_IAM"]
             )
-            self.logger.blue(f"Creation of CloudFormation stack {self.settings.stack_name} started")
+            self.logger(f"Creation of CloudFormation stack {Colorizer.blue(self.settings.stack_name)} started")
 
             # Wait for stack creation to complete
             self.logger("Waiting for AWS resources to be created...")
             waiter = self.client.get_waiter("stack_create_complete")
             waiter.wait(StackName=self.settings.stack_name)
-            self.logger.blue(f"Creation of CloudFormation stack {self.settings.stack_name} completed")
+            self.logger(f"Creation of CloudFormation stack {Colorizer.blue(self.settings.stack_name)} completed")
 
             return res
 
         except ClientError as e:
             traceback.print_exc()
-            self.logger.red(f"AWS resource creation failed due to ClientError: {e}")
+            self.logger.error(f"AWS resource creation failed due to ClientError: {Colorizer.white(e)}")
             raise ResourceManagerError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"AWS resource creation failed due to unexpected error: {e}")
+            self.logger.error(f"AWS resource creation failed due to unexpected error: {Colorizer.white(e)}")
             raise ResourceManagerError(e)
 
     def dev_uninstall(self) -> None:
         """Uninstall the resources in development mode."""
         try:
             self.client.delete_stack(StackName=self.settings.stack_name)
-            self.logger.blue(f"Deletion of CloudFormation stack {self.settings.stack_name} started")
+            self.logger(f"Deletion of CloudFormation stack {Colorizer.blue(self.settings.stack_name)} started")
 
             # Wait for stack deletion to complete
             waiter = self.client.get_waiter("stack_delete_complete")
             waiter.wait(StackName=self.settings.stack_name)
-            self.logger.blue(f"Deletion of CloudFormation stack {self.settings.stack_name} completed")
+            self.logger(f"Deletion of CloudFormation stack {Colorizer.blue(self.settings.stack_name)} completed")
 
         except ClientError as e:
             traceback.print_exc()
-            self.logger.red(f"AWS resource deletion failed due to ClientError: {e}")
+            self.logger.error(f"AWS resource deletion failed due to ClientError: {Colorizer.white(e)}")
             raise UninstallError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"AWS resource deletion failed due to unexpected error: {e}")
+            self.logger.error(f"AWS resource deletion failed due to unexpected error: {Colorizer.white(e)}")
             raise UninstallError(e)

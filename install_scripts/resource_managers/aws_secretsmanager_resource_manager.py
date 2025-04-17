@@ -8,7 +8,7 @@ from install_scripts.aws_providers import AwsClientProvider, AwsCognitoProvider
 from install_scripts.project_config import ProjectConfigProvider
 from install_scripts.resource_managers.base_resource_manager import BaseResourceManager
 from install_scripts.resource_managers.resource_manager_types import DevSecretValue
-from install_scripts.utils import Logger
+from install_scripts.utils import Logger, Colorizer
 from install_scripts.utils.exceptions import ResourceManagerError
 
 
@@ -36,7 +36,7 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
             raise
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"Secret write failed due to unexpected error: {e}")
+            self.logger.error(f"Secret write failed due to unexpected error: {Colorizer.white(e)}")
             raise ResourceManagerError(e)
 
     def dev(self) -> None:
@@ -45,7 +45,7 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
             self.set_dev_secret_value()
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"Secret value setting failed due to unexpected error: {e}")
+            self.logger.error(f"Secret value setting failed due to unexpected error: {Colorizer.white(e)}")
             raise ResourceManagerError(e)
 
     def set_dev_secret_value(self) -> None:
@@ -67,14 +67,14 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
                 SecretId=self.settings.secret_name,
                 SecretString=json.dumps(self.secret_value)
             )
-            self.logger.blue(f"Secret {self.settings.secret_name} written")
+            self.logger(f"Secret {Colorizer.blue(self.settings.secret_name)} written")
 
             return res
         except ClientError as e:
             traceback.print_exc()
-            self.logger.red(f"Secret write failed due to ClientError: {e}")
+            self.logger.error(f"Secret write failed due to ClientError: {Colorizer.white(e)}")
             raise ResourceManagerError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"Secret write failed due to unexpected error: {e}")
+            self.logger.error(f"Secret write failed due to unexpected error: {Colorizer.white(e)}")
             raise ResourceManagerError(e)

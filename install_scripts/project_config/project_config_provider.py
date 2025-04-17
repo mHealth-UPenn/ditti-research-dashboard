@@ -7,6 +7,7 @@ from typing import Optional
 
 from install_scripts.utils import (
     Logger,
+    Colorizer,
     is_valid_name,
     is_valid_email,
 )
@@ -46,8 +47,8 @@ class ProjectConfigProvider:
     def load_existing_config(self) -> None:
         """Load project config from a JSON file."""
         if not os.path.exists(self.project_config_filename):
-            self.logger.red(f"Project config file {self.project_config_filename} not found")
-            raise ProjectConfigError(f"Project config file {self.project_config_filename} not found")
+            self.logger.error(f"Project config file {Colorizer.blue(self.project_config_filename)} not found")
+            raise ProjectConfigError(f"Project config file {Colorizer.blue(self.project_config_filename)} not found")
 
         with open(self.project_config_filename, "r") as f:
             self.project_config = json.load(f)
@@ -277,7 +278,7 @@ class ProjectConfigProvider:
     def get_user_input(self) -> None:
         self.logger("\nThis script will install the development environment for"
                     " the project.")
-        self.logger.magenta("The following will be configured and installed:")
+        self.logger(Colorizer.magenta("The following will be configured and installed:"))
         self.logger("- AWS CLI")
         self.logger("- Amazon Cognito user pools and clients")
         self.logger("- Amazon S3 buckets")
@@ -286,7 +287,7 @@ class ProjectConfigProvider:
         self.logger("- Docker containers for the project")
 
         if not self.get_continue_input() == "y":
-            self.logger.red("Installation cancelled")
+            self.logger.warning("Installation cancelled")
             raise CancelInstallation()
 
         # Get project name
@@ -294,7 +295,7 @@ class ProjectConfigProvider:
         while not is_valid_name(project_name):
             project_name = self.get_project_name_input()
             if not is_valid_name(project_name):
-                self.logger.red("Invalid name")
+                self.logger.warning("Invalid name")
 
         # Get Fitbit credentials
         fitbit_client_id, fitbit_client_secret = self.get_fitbit_credentials_input()
@@ -304,7 +305,7 @@ class ProjectConfigProvider:
         while not is_valid_email(admin_email):
             admin_email = self.get_admin_email_input()
             if not is_valid_email(admin_email):
-                self.logger.red("Invalid email")
+                self.logger.warning("Invalid email")
 
         self.user_input = {
             "project_name": project_name,
@@ -410,6 +411,6 @@ class ProjectConfigProvider:
         """Uninstall the project config."""
         try:
             os.remove(self.project_config_filename)
-            self.logger.blue(f"Project config file {self.project_config_filename} removed")
+            self.logger(f"Project config file {Colorizer.blue(self.project_config_filename)} removed")
         except FileNotFoundError:
-            self.logger.yellow(f"Project config file {self.project_config_filename} not found")
+            self.logger.warning(f"Project config file {Colorizer.blue(self.project_config_filename)} not found")

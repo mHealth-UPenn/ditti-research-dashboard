@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 
 from install_scripts.aws_providers.aws_client_provider import AwsClientProvider
 from install_scripts.project_config import ProjectConfigProvider
-from install_scripts.utils import Logger
+from install_scripts.utils import Colorizer, Logger
 from install_scripts.utils.exceptions import AwsProviderError
 
 
@@ -31,11 +31,11 @@ class AwsCloudformationProvider:
             raise
         except ClientError as e:
             traceback.print_exc()
-            self.logger.red(f"Error getting outputs for stack due to ClientError: {e}")
+            self.logger.error(f"Error getting outputs for stack due to ClientError: {Colorizer.white(e)}")
             raise AwsProviderError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.red(f"Error getting outputs for stack due to unexpected error: {e}")
+            self.logger.error(f"Error getting outputs for stack due to unexpected error: {Colorizer.white(e)}")
             raise AwsProviderError(e)
 
     def update_dev_project_config(self) -> None:

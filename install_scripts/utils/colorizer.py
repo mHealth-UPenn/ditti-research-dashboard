@@ -9,6 +9,7 @@ class Colorizer:
         "blue": "\033[0;34m",
         "magenta": "\033[0;35m",
         "cyan": "\033[0;36m",
+        "white": "\033[0;37m",
         "reset": "\033[0m",
     }
 
@@ -41,3 +42,7 @@ class Colorizer:
     @classmethod
     def cyan(cls, text: str) -> str:
         return cls.colorize(text, "cyan")
+
+    @classmethod
+    def white(cls, text: str) -> str:
+        return cls.colorize(text, "white")

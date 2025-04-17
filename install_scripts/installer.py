@@ -21,7 +21,7 @@ from install_scripts.resource_managers import (
     AwsS3ResourceManager,
     AwsSecretsmanagerResourceManager,
 )
-from install_scripts.utils import Logger, get_project_suffix
+from install_scripts.utils import Colorizer, Logger, get_project_suffix
 from install_scripts.utils.types import Env
 from install_scripts.utils.exceptions import (
     CancelInstallation,
@@ -108,101 +108,101 @@ class Installer:
     def run(self) -> None:
         try:
             # Get project settings
-            self.logger.cyan("\n[Project Setup]")
+            self.logger(Colorizer.cyan("\n[Project Setup]"))
             self.project_config_provider.get_user_input()
             self.project_config_provider.setup_project_config()
             self.project_config_provider.write_project_config()
 
             # Configure AWS CLI
-            self.logger.cyan("\n[AWS CLI Configuration]")
+            self.logger(Colorizer.cyan("\n[AWS CLI Configuration]"))
             self.aws_account_provider.configure_aws_cli()
 
             # Setup Docker containers
-            self.logger.cyan("\n[Docker Setup]")
+            self.logger(Colorizer.cyan("\n[Docker Setup]"))
             self.docker_provider.create_network()
             self.docker_provider.run_postgres_container()
             self.docker_provider.build_wearable_data_retrieval_container()
             self.docker_provider.run_wearable_data_retrieval_container()
 
             # Setup CloudFormation stack
-            self.logger.cyan("\n[CloudFormation Stack Setup]")
+            self.logger(Colorizer.cyan("\n[CloudFormation Stack Setup]"))
             self.aws_cloudformation_resource_manager.run(env="dev")
             self.aws_cloudformation_provider.update_dev_project_config()
 
             # Setup Secrets Manager
-            self.logger.cyan("\n[Secrets Manager Setup]")
+            self.logger(Colorizer.cyan("\n[Secrets Manager Setup]"))
             self.aws_secretsmanager_resource_manager.run(env="dev")
 
             # Setup Cognito
-            self.logger.cyan("\n[Cognito Setup]")
+            self.logger(Colorizer.cyan("\n[Cognito Setup]"))
             self.aws_cognito_resource_manager.run(env="dev")
 
             # Setup .env files
-            self.logger.cyan("\n[Environment Files Setup]")
+            self.logger(Colorizer.cyan("\n[Environment Files Setup]"))
             wearable_data_retrieval_env = self.env_file_provider.get_wearable_data_retrieval_env()
             root_env = self.env_file_provider.get_root_env()
             self.env_file_provider.write_env_files(wearable_data_retrieval_env, root_env)
 
             # Setup database
-            self.logger.cyan("\n[Database Setup]")
+            self.logger(Colorizer.cyan("\n[Database Setup]"))
             self.database_provider.upgrade_database()
             self.database_provider.initialize_database()
             self.database_provider.create_researcher_account()
 
             # Setup frontend
-            self.logger.cyan("\n[Frontend Setup]")
+            self.logger(Colorizer.cyan("\n[Frontend Setup]"))
             self.frontend_provider.initialize_frontend()
 
         except CancelInstallation:
             sys.exit(0)
         except Exception:
             traceback.print_exc()
-            self.logger.red(f"Installation failed.")
+            self.logger(Colorizer.red("Installation failed."))
             sys.exit(1)
 
     def uninstall(self) -> None:
         """Uninstall the resources."""
         try:
             self.logger("This will delete all resources created by the installer.")
-            self.logger.red("ANY LOST DATA WILL BE PERMANENTLY DELETED.")
+            self.logger(Colorizer.red("ANY LOST DATA WILL BE PERMANENTLY DELETED."))
             self.logger("Please confirm by typing \"uninstall\".")
             confirm = input("> ")
 
             if confirm != "uninstall":
-                self.logger.red("Uninstall cancelled.")
+                self.logger(Colorizer.cyan("Uninstall cancelled."))
                 sys.exit(0)
 
             # Load project config
             try:
                 self.project_config_provider.load_existing_config()
             except ProjectConfigError:
-                self.logger.red("Uninstall failed.")
+                self.logger(Colorizer.red("Uninstall failed."))
                 sys.exit(1)
 
             # Configure AWS CLI
-            self.logger.cyan("\n[AWS CLI Configuration]")
+            self.logger(Colorizer.cyan("\n[AWS CLI Configuration]"))
             self.aws_account_provider.configure_aws_cli()
 
-            self.logger.cyan("\n[S3 Buckets Cleanup]")
+            self.logger(Colorizer.cyan("\n[S3 Buckets Cleanup]"))
             self.aws_s3_resource_manager.uninstall(env=self.env)
 
-            self.logger.cyan("\n[CloudFormation Stack Cleanup]")
+            self.logger(Colorizer.cyan("\n[CloudFormation Stack Cleanup]"))
             self.aws_cloudformation_resource_manager.uninstall(env=self.env)
 
-            self.logger.cyan("\n[Project Config Cleanup]")
+            self.logger(Colorizer.cyan("\n[Project Config Cleanup]"))
             self.project_config_provider.uninstall()
 
             if self.env == "dev":
-                self.logger.cyan("\n[Docker Cleanup]")
+                self.logger(Colorizer.cyan("\n[Docker Cleanup]"))
                 self.docker_provider.uninstall()
 
-                self.logger.cyan("\n[.env Files Cleanup]")
+                self.logger(Colorizer.cyan("\n[.env Files Cleanup]"))
                 self.env_file_provider.uninstall()
 
-                self.logger.cyan("\n[Frontend Cleanup]")
+                self.logger(Colorizer.cyan("\n[Frontend Cleanup]"))
                 self.frontend_provider.uninstall()
 
         except Exception:
             traceback.print_exc()
-            self.logger.red(f"Uninstall failed.")
+            self.logger.error(f"Uninstall failed.")
             sys.exit(1)
