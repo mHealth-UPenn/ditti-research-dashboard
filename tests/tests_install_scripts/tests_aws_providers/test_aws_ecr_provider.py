@@ -46,4 +46,4 @@ def test_get_password_unexpected_error(aws_ecr_provider_mock: AwsEcrProvider):
 
 
 def test_get_repo_uri(aws_ecr_provider_mock: AwsEcrProvider):
-    assert aws_ecr_provider_mock.get_repo_uri() == "123456789012.dkr.ecr.us-east-1.amazonaws.com"
+    assert aws_ecr_provider_mock.get_repo_uri() == f"{aws_ecr_provider_mock.aws_account_provider.aws_account_id}.dkr.ecr.{aws_ecr_provider_mock.aws_account_provider.aws_region}.amazonaws.com"

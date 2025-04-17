@@ -1,24 +1,27 @@
 import pytest
 from unittest.mock import patch, MagicMock, mock_open
 
+from moto import mock_aws
+
 from install_scripts.local_providers.local_provider_types import WearableDataRetrievalEnv, RootEnv
 from install_scripts.local_providers.env_file_provider import EnvFileProvider
 from tests.tests_install_scripts.tests_local_providers.mock_env_file_provider import wearable_data_retrieval_env, root_env, env_file_provider
 
 
 @pytest.fixture
-def wearable_data_retrieval_mock():
-    return wearable_data_retrieval_env()
-
-
-@pytest.fixture
-def root_mock():
-    return root_env()
-
-
-@pytest.fixture
 def env_file_provider_mock():
-    return env_file_provider()
+    with mock_aws():
+        yield env_file_provider()
+
+
+@pytest.fixture
+def wearable_data_retrieval_mock(env_file_provider_mock: EnvFileProvider):
+    return wearable_data_retrieval_env(env_file_provider_mock.settings)
+
+
+@pytest.fixture
+def root_mock(env_file_provider_mock: EnvFileProvider):
+    return root_env(env_file_provider_mock.settings)
 
 
 @pytest.fixture

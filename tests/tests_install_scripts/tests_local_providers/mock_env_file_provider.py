@@ -1,13 +1,13 @@
 from install_scripts.local_providers.local_provider_types import WearableDataRetrievalEnv, RootEnv
 from install_scripts.local_providers.env_file_provider import EnvFileProvider
 from install_scripts.utils.enums import Postgres
+from install_scripts.project_config import ProjectConfigProvider
 from tests.tests_install_scripts.tests_project_config.mock_project_config_provider import project_config_provider
 from tests.tests_install_scripts.tests_aws_providers.mock_aws_account_provider import aws_account_provider
 from tests.tests_install_scripts.tests_utils.mock_logger import logger
 
 
-def wearable_data_retrieval_env() -> WearableDataRetrievalEnv:
-    settings = project_config_provider()
+def wearable_data_retrieval_env(settings: ProjectConfigProvider) -> WearableDataRetrievalEnv:
     provider = aws_account_provider()
 
     return {
@@ -24,8 +24,7 @@ def wearable_data_retrieval_env() -> WearableDataRetrievalEnv:
     }
 
 
-def root_env() -> RootEnv:
-    settings = project_config_provider()
+def root_env(settings: ProjectConfigProvider) -> RootEnv:
     provider = aws_account_provider()
 
     """Get .env."""
