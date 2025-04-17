@@ -1,7 +1,8 @@
 from getpass import getpass
 import json
 import os
-import sys
+import random
+import string
 from typing import Optional
 
 from install_scripts.utils import (
@@ -25,7 +26,7 @@ from install_scripts.utils.exceptions import (
 
 
 class ProjectConfigProvider:
-    project_config_filename: str = "project-config-{project_name}.json"
+    project_config_filename: str = "project-config.json"
     user_input: Optional[UserInput]
     project_config: Optional[ProjectConfig]
 
@@ -38,18 +39,17 @@ class ProjectConfigProvider:
         self.project_config = None
         self.user_input = None
         self.project_suffix = project_suffix
+        self.hashstr = "".join(random.choices(
+            string.ascii_letters + string.digits, k=8
+        )).lower()
 
-    def load_existing_config(self, project_name: str) -> None:
+    def load_existing_config(self) -> None:
         """Load project config from a JSON file."""
-        config_filename = self.project_config_filename.format(
-            project_name=project_name
-        )
+        if not os.path.exists(self.project_config_filename):
+            self.logger.red(f"Project config file {self.project_config_filename} not found")
+            raise ProjectConfigError(f"Project config file {self.project_config_filename} not found")
 
-        if not os.path.exists(config_filename):
-            self.logger.red(f"Project config file {config_filename} not found")
-            raise ProjectConfigError(f"Project config file {config_filename} not found")
-
-        with open(config_filename, "r") as f:
+        with open(self.project_config_filename, "r") as f:
             self.project_config = json.load(f)
 
     @property
@@ -332,38 +332,50 @@ class ProjectConfigProvider:
     def setup_project_config(self) -> None:
         """Set up project config."""
         cognito_config: CognitoConfig = {
-            "participant_user_pool_name": \
-                self.format_string(FString.participant_user_pool_name.value),
-            "participant_user_pool_domain": \
-                self.format_string(FString.participant_user_pool_domain.value),
+            "participant_user_pool_name": self.format_string(
+                FString.participant_user_pool_name.value, add_hashstr=True
+            ),
+            "participant_user_pool_domain": self.format_string(
+                FString.participant_user_pool_domain.value, add_hashstr=True
+            ),
             "participant_user_pool_id": "",
             "participant_client_id": "",
-            "researcher_user_pool_name": \
-                self.format_string(FString.researcher_user_pool_name.value),
-            "researcher_user_pool_domain": \
-                self.format_string(FString.researcher_user_pool_domain.value),
+            "researcher_user_pool_name": self.format_string(
+                FString.researcher_user_pool_name.value, add_hashstr=True
+            ),
+            "researcher_user_pool_domain": self.format_string(
+                FString.researcher_user_pool_domain.value, add_hashstr=True
+            ),
             "researcher_user_pool_id": "",
             "researcher_client_id": ""
         }
 
         s3_config: S3Config = {
-            "logs_bucket_name": self.format_string(FString.logs_bucket_name.value),
-            "audio_bucket_name": self.format_string(FString.audio_bucket_name.value)
+            "logs_bucket_name": self.format_string(
+                FString.logs_bucket_name.value, add_hashstr=True
+            ),
+            "audio_bucket_name": self.format_string(
+                FString.audio_bucket_name.value, add_hashstr=True
+            ),
         }
 
         secrets_manager_config: SecretsResourceManagerConfig = {
-            "secret_name": self.format_string(FString.secret_name.value),
-            "tokens_secret_name": self.format_string(FString.tokens_secret_name.value)
+            "secret_name": self.format_string(
+                FString.secret_name.value, add_hashstr=True
+            ),
+            "tokens_secret_name": self.format_string(
+                FString.tokens_secret_name.value, add_hashstr=True
+            ),
         }
 
         docker_config: DockerConfig = {
             "network_name": self.format_string(FString.network_name.value),
-            "postgres_container_name": \
-                self.format_string(FString.postgres_container_name.value),
-            "wearable_data_retrieval_container_name": \
-                self.format_string(
-                    FString.wearable_data_retrieval_container_name.value
-                )
+            "postgres_container_name": self.format_string(
+                FString.postgres_container_name.value
+            ),
+            "wearable_data_retrieval_container_name": self.format_string(
+                FString.wearable_data_retrieval_container_name.value
+            )
         }
 
         if self.project_suffix:
@@ -381,23 +393,23 @@ class ProjectConfigProvider:
             "docker": docker_config
         }
 
-    def format_string(self, fstr: str) -> str:
+    def format_string(self, fstr: str, add_hashstr: bool = False) -> str:
+        project_name = self.project_name
         if self.project_suffix:
-            return fstr.format(project_name=f"{self.project_name}-{self.project_suffix}")
-        return fstr.format(project_name=self.project_name)
+            project_name = f"{project_name}-{self.project_suffix}"
+        if add_hashstr:
+            project_name += f"-{self.hashstr}"
+        return fstr.format(project_name=project_name)
 
     def write_project_config(self) -> None:
         """Write project config to a JSON file."""
-        filename = self.format_string(self.project_config_filename)
-        with open(filename, "w") as f:
+        with open(self.project_config_filename, "w") as f:
             json.dump(self.project_config, f, indent=4)
 
-    def uninstall(self, project_name: str) -> None:
+    def uninstall(self) -> None:
         """Uninstall the project config."""
-        filename = self.project_config_filename \
-            .format(project_name=project_name)
         try:
-            os.remove(filename)
-            self.logger.blue(f"Project config file {filename} removed")
+            os.remove(self.project_config_filename)
+            self.logger.blue(f"Project config file {self.project_config_filename} removed")
         except FileNotFoundError:
-            self.logger.yellow(f"Project config file {filename} not found")
+            self.logger.yellow(f"Project config file {self.project_config_filename} not found")
