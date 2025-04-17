@@ -24,7 +24,7 @@ def test_upgrade_database_success(database_provider_mock: DatabaseProvider, subp
 
     database_provider_mock.upgrade_database()
 
-    assert subprocess_mock.called_once_with(["flask", "--app", "run.py", "db", "upgrade"], check=True)
+    subprocess_mock.assert_called_once_with(["flask", "--app", "run.py", "db", "upgrade"], check=True)
 
 
 def test_initialize_database_subprocess_error(database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock):
@@ -48,7 +48,7 @@ def test_initialize_database_success(database_provider_mock: DatabaseProvider, s
 
     database_provider_mock.initialize_database()
 
-    assert subprocess_mock.called_once_with(["flask", "--app", "run.py", "init-integration-testing-db"], check=True)
+    subprocess_mock.assert_called_once_with(["flask", "--app", "run.py", "init-integration-testing-db"], check=True)
 
 
 def test_initialize_database_subprocess_error(database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock):
@@ -72,7 +72,7 @@ def test_create_researcher_account_success(database_provider_mock: DatabaseProvi
 
     database_provider_mock.create_researcher_account()
 
-    assert subprocess_mock.called_once_with(["flask", "--app", "run.py", "create-researcher-account", "--email", database_provider_mock.settings.admin_email], check=True)
+    subprocess_mock.assert_called_once_with(["flask", "--app", "run.py", "create-researcher-account", "--email", database_provider_mock.settings.admin_email], check=True)
 
 
 def test_create_researcher_account_subprocess_error(database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock):
