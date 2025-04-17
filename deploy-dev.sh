@@ -43,24 +43,45 @@ fi
 echo -e "Loaded environment variables from ${BLUE}$dev_secret_name${RESET}"
 
 # Start docker containers
-postgres_container_start_response=$(docker start $postgres_container_name)
+
+postgres_container_status=$(docker inspect $postgres_container_name | jq -r '.[0].State.Status')
 
 if [[ $? -ne 0 ]]; then
-    echo "$postgres_container_start_response"
-    echo -e "${RED}Failed to start postgres container${RESET}"
+    echo -e "${RED}Failed to get postgres container status${RESET}"
+    echo "Did you run install-dev.sh?"
     exit 1
+fi
+
+if [[ "$postgres_container_status" == "exited" ]]; then
+    postgres_container_start_response=$(docker start $postgres_container_name)
+    if [[ $? -ne 0 ]]; then
+        echo "$postgres_container_start_response"
+        echo -e "${RED}Failed to start postgres container${RESET}"
+        exit 1
+    fi
 fi
 
 echo -e "Started ${BLUE}$postgres_container_name${RESET}"
 
-wearable_data_retrieval_container_start_response=$(docker start $wearable_data_retrieval_container_name)
+wearable_data_retrieval_container_status=$(docker inspect $wearable_data_retrieval_container_name | jq -r '.[0].State.Status')
 
 if [[ $? -ne 0 ]]; then
-    echo "$wearable_data_retrieval_container_start_response"
-    echo -e "${RED}Failed to start wearable data retrieval container${RESET}"
+    echo -e "${RED}Failed to get wearable data retrieval container status${RESET}"
+    echo "Did you run install-dev.sh?"
     exit 1
+fi
+
+if [[ "$wearable_data_retrieval_container_status" == "exited" ]]; then
+    wearable_data_retrieval_container_start_response=$(docker start $wearable_data_retrieval_container_name)
+    if [[ $? -ne 0 ]]; then
+        echo "$wearable_data_retrieval_container_start_response"
+        echo -e "${RED}Failed to start wearable data retrieval container${RESET}"
+        exit 1
+    fi
 fi
 
 echo -e "Started ${BLUE}$wearable_data_retrieval_container_name${RESET}"
 
 echo -e "${GREEN}Dev environment deployed${RESET}"
+
+flask run
