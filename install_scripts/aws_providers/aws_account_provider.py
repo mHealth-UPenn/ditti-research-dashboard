@@ -24,9 +24,7 @@ class AwsAccountProvider:
     @property
     def aws_access_key_id(self) -> str:
         try:
-            return subprocess.check_output(
-                ["aws", "configure", "get", "aws_access_key_id"]
-            ).decode("utf-8").strip()
+            return self.get_aws_access_key_id()
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error(f"AWS access key ID retrieval failed due to subprocess error: {Colorizer.white(e)}")
@@ -39,9 +37,7 @@ class AwsAccountProvider:
     @property
     def aws_secret_access_key(self) -> str:
         try:
-            return subprocess.check_output(
-                ["aws", "configure", "get", "aws_secret_access_key"]
-            ).decode("utf-8").strip()
+            return self.get_aws_secret_access_key()
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error(f"AWS secret access key retrieval failed due to subprocess error: {Colorizer.white(e)}")
@@ -63,6 +59,18 @@ class AwsAccountProvider:
             traceback.print_exc()
             self.logger.error(f"AWS account ID retrieval failed due to unexpected error: {Colorizer.white(e)}")
             raise AwsProviderError(e)
+        
+    @staticmethod
+    def get_aws_access_key_id() -> str:
+        return subprocess.check_output(
+            ["aws", "configure", "get", "aws_access_key_id"]
+        ).decode("utf-8").strip()
+    
+    @staticmethod
+    def get_aws_secret_access_key() -> str:
+        return subprocess.check_output(
+            ["aws", "configure", "get", "aws_secret_access_key"]
+        ).decode("utf-8").strip()
 
     def configure_aws_cli(self) -> None:
         """Configure the AWS CLI."""
