@@ -17,11 +17,11 @@ class AwsCloudformationResourceManager(BaseResourceManager):
     def __init__(
             self, *,
             logger: Logger,
-            settings: ProjectConfigProvider,
+            config: ProjectConfigProvider,
             aws_client_provider: AwsClientProvider,
         ):
         self.logger = logger
-        self.settings = settings
+        self.config = config
         self.client = aws_client_provider.cloudformation_client
 
     def dev(self) -> None:
@@ -42,35 +42,35 @@ class AwsCloudformationResourceManager(BaseResourceManager):
         return [
             {
                 "ParameterKey": "ParticipantUserPoolName",
-                "ParameterValue": self.settings.participant_user_pool_name,
+                "ParameterValue": self.config.participant_user_pool_name,
             },
             {
                 "ParameterKey": "ParticipantUserPoolDomainName",
-                "ParameterValue": self.settings.participant_user_pool_domain,
+                "ParameterValue": self.config.participant_user_pool_domain,
             },
             {
                 "ParameterKey": "ResearcherUserPoolName",
-                "ParameterValue": self.settings.researcher_user_pool_name,
+                "ParameterValue": self.config.researcher_user_pool_name,
             },
             {
                 "ParameterKey": "ResearcherUserPoolDomainName",
-                "ParameterValue": self.settings.researcher_user_pool_domain,
+                "ParameterValue": self.config.researcher_user_pool_domain,
             },
             {
                 "ParameterKey": "LogsBucketName",
-                "ParameterValue": self.settings.logs_bucket_name,
+                "ParameterValue": self.config.logs_bucket_name,
             },
             {
                 "ParameterKey": "AudioBucketName",
-                "ParameterValue": self.settings.audio_bucket_name,
+                "ParameterValue": self.config.audio_bucket_name,
             },
             {
                 "ParameterKey": "SecretName",
-                "ParameterValue": self.settings.secret_name,
+                "ParameterValue": self.config.secret_name,
             },
             {
                 "ParameterKey": "TokensSecretName",
-                "ParameterValue": self.settings.tokens_secret_name,
+                "ParameterValue": self.config.tokens_secret_name,
             },
         ]
 
@@ -86,18 +86,18 @@ class AwsCloudformationResourceManager(BaseResourceManager):
         """Set up AWS resources using CloudFormation."""
         try:
             res = self.client.create_stack(
-                StackName=self.settings.stack_name,
+                StackName=self.config.stack_name,
                 TemplateBody=template_body,
                 Parameters=parameters,
                 Capabilities=["CAPABILITY_IAM"]
             )
-            self.logger(f"Creation of CloudFormation stack {Colorizer.blue(self.settings.stack_name)} started")
+            self.logger(f"Creation of CloudFormation stack {Colorizer.blue(self.config.stack_name)} started")
 
             # Wait for stack creation to complete
             self.logger("Waiting for AWS resources to be created...")
             waiter = self.client.get_waiter("stack_create_complete")
-            waiter.wait(StackName=self.settings.stack_name)
-            self.logger(f"Creation of CloudFormation stack {Colorizer.blue(self.settings.stack_name)} completed")
+            waiter.wait(StackName=self.config.stack_name)
+            self.logger(f"Creation of CloudFormation stack {Colorizer.blue(self.config.stack_name)} completed")
 
             return res
 
@@ -113,13 +113,13 @@ class AwsCloudformationResourceManager(BaseResourceManager):
     def dev_uninstall(self) -> None:
         """Uninstall the resources in development mode."""
         try:
-            self.client.delete_stack(StackName=self.settings.stack_name)
-            self.logger(f"Deletion of CloudFormation stack {Colorizer.blue(self.settings.stack_name)} started")
+            self.client.delete_stack(StackName=self.config.stack_name)
+            self.logger(f"Deletion of CloudFormation stack {Colorizer.blue(self.config.stack_name)} started")
 
             # Wait for stack deletion to complete
             waiter = self.client.get_waiter("stack_delete_complete")
-            waiter.wait(StackName=self.settings.stack_name)
-            self.logger(f"Deletion of CloudFormation stack {Colorizer.blue(self.settings.stack_name)} completed")
+            waiter.wait(StackName=self.config.stack_name)
+            self.logger(f"Deletion of CloudFormation stack {Colorizer.blue(self.config.stack_name)} completed")
 
         except ClientError as e:
             traceback.print_exc()

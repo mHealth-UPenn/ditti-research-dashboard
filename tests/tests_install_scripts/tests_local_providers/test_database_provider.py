@@ -72,11 +72,11 @@ def test_create_researcher_account_success(database_provider_mock: DatabaseProvi
 
     database_provider_mock.create_researcher_account()
 
-    subprocess_mock.assert_called_once_with(["flask", "--app", "run.py", "create-researcher-account", "--email", database_provider_mock.settings.admin_email], check=True)
+    subprocess_mock.assert_called_once_with(["flask", "--app", "run.py", "create-researcher-account", "--email", database_provider_mock.config.admin_email], check=True)
 
 
 def test_create_researcher_account_subprocess_error(database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock):
-    subprocess_mock.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["flask", "--app", "run.py", "create-researcher-account", "--email", database_provider_mock.settings.admin_email], output=b"Subprocess Error")
+    subprocess_mock.side_effect = subprocess.CalledProcessError(returncode=1, cmd=["flask", "--app", "run.py", "create-researcher-account", "--email", database_provider_mock.config.admin_email], output=b"Subprocess Error")
 
     with pytest.raises(SubprocessError, match="returned non-zero exit status 1"):
         database_provider_mock.create_researcher_account()

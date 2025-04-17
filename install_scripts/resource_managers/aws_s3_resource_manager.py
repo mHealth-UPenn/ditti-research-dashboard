@@ -13,11 +13,11 @@ from install_scripts.resource_managers.resource_manager_types import S3Object
 class AwsS3ResourceManager(BaseResourceManager):
     def __init__(self, *,
             logger: Logger,
-            settings: ProjectConfigProvider,
+            config: ProjectConfigProvider,
             aws_client_provider: AwsClientProvider,
         ):
         self.logger = logger
-        self.settings = settings
+        self.config = config
         self.client = aws_client_provider.s3_client
 
     @staticmethod
@@ -115,27 +115,27 @@ class AwsS3ResourceManager(BaseResourceManager):
 
     def dev_uninstall(self) -> None:
         try:
-            if self.bucket_exists(self.settings.audio_bucket_name):
-                self.empty_bucket(self.settings.audio_bucket_name)
-                self.delete_bucket(self.settings.audio_bucket_name)
-                self.logger(f"S3 bucket {Colorizer.blue(self.settings.audio_bucket_name)} deleted")
+            if self.bucket_exists(self.config.audio_bucket_name):
+                self.empty_bucket(self.config.audio_bucket_name)
+                self.delete_bucket(self.config.audio_bucket_name)
+                self.logger(f"S3 bucket {Colorizer.blue(self.config.audio_bucket_name)} deleted")
         except ResourceManagerError:
             raise
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(f"Error uninstalling S3 bucket {Colorizer.blue(self.settings.audio_bucket_name)} due to unexpected error: {Colorizer.white(e)}")
+            self.logger.error(f"Error uninstalling S3 bucket {Colorizer.blue(self.config.audio_bucket_name)} due to unexpected error: {Colorizer.white(e)}")
             raise ResourceManagerError(e)
 
         try:
-            if self.bucket_exists(self.settings.logs_bucket_name):
-                self.empty_bucket(self.settings.logs_bucket_name)
-                self.delete_bucket(self.settings.logs_bucket_name)
-                self.logger(f"S3 bucket {Colorizer.blue(self.settings.logs_bucket_name)} deleted")
+            if self.bucket_exists(self.config.logs_bucket_name):
+                self.empty_bucket(self.config.logs_bucket_name)
+                self.delete_bucket(self.config.logs_bucket_name)
+                self.logger(f"S3 bucket {Colorizer.blue(self.config.logs_bucket_name)} deleted")
         except ResourceManagerError:
             raise
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(f"Error uninstalling S3 bucket {Colorizer.blue(self.settings.logs_bucket_name)} due to unexpected error: {Colorizer.white(e)}")
+            self.logger.error(f"Error uninstalling S3 bucket {Colorizer.blue(self.config.logs_bucket_name)} due to unexpected error: {Colorizer.white(e)}")
             raise ResourceManagerError(e)
 
 

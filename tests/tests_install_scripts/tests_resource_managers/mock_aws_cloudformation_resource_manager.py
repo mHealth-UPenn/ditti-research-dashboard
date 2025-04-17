@@ -32,7 +32,7 @@ def parameters():
 def aws_cloudformation_resource_manager():
     provider = AwsCloudformationResourceManager(
         logger=logger(),
-        settings=project_config_provider(),
+        config=project_config_provider(),
         aws_client_provider=aws_client_provider()
     )
     provider.get_dev_parameters = MagicMock(return_value=parameters())

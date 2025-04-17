@@ -7,6 +7,6 @@ from tests.tests_install_scripts.tests_utils.mock_logger import logger
 def aws_s3_resource_manager():
     return AwsS3ResourceManager(
         logger=logger(),
-        settings=project_config_provider(),
+        config=project_config_provider(),
         aws_client_provider=aws_client_provider(),
     )

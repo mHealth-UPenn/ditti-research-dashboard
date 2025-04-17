@@ -92,7 +92,7 @@ def test_dev_uninstall_success(aws_cloudformation_resource_manager_mock: AwsClou
 
     aws_cloudformation_resource_manager_mock.dev_uninstall()
 
-    aws_cloudformation_resource_manager_mock.client.delete_stack.assert_called_once_with(StackName=aws_cloudformation_resource_manager_mock.settings.stack_name)
+    aws_cloudformation_resource_manager_mock.client.delete_stack.assert_called_once_with(StackName=aws_cloudformation_resource_manager_mock.config.stack_name)
 
 
 def test_dev_uninstall_client_error(aws_cloudformation_resource_manager_mock: AwsCloudformationResourceManager):

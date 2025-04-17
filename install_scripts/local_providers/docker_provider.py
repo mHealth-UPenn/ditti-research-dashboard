@@ -17,18 +17,18 @@ class DockerProvider:
     def __init__(
             self, *,
             logger: Logger,
-            settings: ProjectConfigProvider,
+            config: ProjectConfigProvider,
         ):
         self.logger = logger
-        self.settings = settings
+        self.config = config
         self.docker_client = docker.from_env()
 
     def create_network(self) -> None:
         """Create Docker network."""
         # Create Docker network
         try:
-            self.docker_client.networks.create(self.settings.network_name)
-            self.logger(f"Created docker network {Colorizer.blue(self.settings.network_name)}")
+            self.docker_client.networks.create(self.config.network_name)
+            self.logger(f"Created docker network {Colorizer.blue(self.config.network_name)}")
         except docker.errors.APIError as e:
             traceback.print_exc()
             self.logger.error(f"Error creating docker network due to APIError: {Colorizer.white(e)}")
@@ -44,14 +44,14 @@ class DockerProvider:
         try:
             self.docker_client.containers.run(
                 image="postgres",
-                name=self.settings.postgres_container_name,
+                name=self.config.postgres_container_name,
                 environment={
                     "POSTGRES_USER": Postgres.USER.value,
                     "POSTGRES_PASSWORD": Postgres.PASSWORD.value,
                     "POSTGRES_DB": Postgres.DB.value,
                 },
                 ports={Postgres.PORT.value: Postgres.PORT.value},
-                network=self.settings.network_name,
+                network=self.config.network_name,
                 detach=True,
             )
         except docker.errors.ContainerError as e:
@@ -66,7 +66,7 @@ class DockerProvider:
         # Wait for Postgres to be ready
         while True:
             try:
-                response = self.get_container(self.settings.postgres_container_name) \
+                response = self.get_container(self.config.postgres_container_name) \
                     .exec_run([
                         "pg_isready",
                         "-U", Postgres.USER.value,
@@ -89,7 +89,7 @@ class DockerProvider:
 
         self.logger(
             f"Created postgres container "
-            f"{Colorizer.blue(self.settings.postgres_container_name)}"
+            f"{Colorizer.blue(self.config.postgres_container_name)}"
         )
 
     def build_wearable_data_retrieval_container(self) -> None:
@@ -104,7 +104,7 @@ class DockerProvider:
         try:
             self.docker_client.images.build(
                 path="functions/wearable_data_retrieval",
-                tag=self.settings.wearable_data_retrieval_container_name,
+                tag=self.config.wearable_data_retrieval_container_name,
                 platform="linux/amd64"
             )
         except docker.errors.BuildError as e:
@@ -125,17 +125,17 @@ class DockerProvider:
 
         self.logger(
             f"Wearable data retrieval image "
-            f"{Colorizer.blue(self.settings.wearable_data_retrieval_container_name)} created"
+            f"{Colorizer.blue(self.config.wearable_data_retrieval_container_name)} created"
         )
 
     def run_wearable_data_retrieval_container(self) -> None:
         """Run wearable data retrieval container."""
         try:
             self.docker_client.containers.run(
-                image=self.settings.wearable_data_retrieval_container_name,
-                name=self.settings.wearable_data_retrieval_container_name,
+                image=self.config.wearable_data_retrieval_container_name,
+                name=self.config.wearable_data_retrieval_container_name,
                 platform="linux/amd64",
-                network=self.settings.network_name,
+                network=self.config.network_name,
                 ports={"9000": 8080},
                 environment={"TESTING": "true"},
                 detach=True,
@@ -151,7 +151,7 @@ class DockerProvider:
 
         self.logger(
             f"Wearable data retrieval container "
-            f"{Colorizer.blue(self.settings.wearable_data_retrieval_container_name)} created"
+            f"{Colorizer.blue(self.config.wearable_data_retrieval_container_name)} created"
         )
 
     def get_container(self, container_name: str) -> Container:
@@ -165,32 +165,32 @@ class DockerProvider:
     def get_network(self) -> Network:
         """Get a network by name."""
         try:
-            return self.docker_client.networks.get(self.settings.network_name)
+            return self.docker_client.networks.get(self.config.network_name)
         except docker.errors.NotFound:
-            self.logger.warning(f"Docker network {Colorizer.blue(self.settings.network_name)} not found")
-            raise DockerSDKError(f"Network {Colorizer.blue(self.settings.network_name)} not found")
+            self.logger.warning(f"Docker network {Colorizer.blue(self.config.network_name)} not found")
+            raise DockerSDKError(f"Network {Colorizer.blue(self.config.network_name)} not found")
 
     def uninstall(self) -> None:
         """Uninstall the Docker containers."""
         try:
-            container = self.get_container(self.settings.postgres_container_name)
+            container = self.get_container(self.config.postgres_container_name)
             container.stop()
             container.remove()
-            self.logger(f"Postgres container {Colorizer.blue(self.settings.postgres_container_name)} removed")
+            self.logger(f"Postgres container {Colorizer.blue(self.config.postgres_container_name)} removed")
         except DockerSDKError:
-            self.logger.warning(f"Unable to stop and remove postgres container {Colorizer.blue(self.settings.postgres_container_name)}")
+            self.logger.warning(f"Unable to stop and remove postgres container {Colorizer.blue(self.config.postgres_container_name)}")
 
         try:
-            container = self.get_container(self.settings.wearable_data_retrieval_container_name)
+            container = self.get_container(self.config.wearable_data_retrieval_container_name)
             container.stop()
             container.remove()
-            self.logger(f"Wearable data retrieval container {Colorizer.blue(self.settings.wearable_data_retrieval_container_name)} removed")
+            self.logger(f"Wearable data retrieval container {Colorizer.blue(self.config.wearable_data_retrieval_container_name)} removed")
         except DockerSDKError:
-            self.logger.warning(f"Unable to stop and remove wearable data retrieval container {Colorizer.blue(self.settings.wearable_data_retrieval_container_name)}")
+            self.logger.warning(f"Unable to stop and remove wearable data retrieval container {Colorizer.blue(self.config.wearable_data_retrieval_container_name)}")
 
         try:
             network = self.get_network()
             network.remove()
-            self.logger(f"Docker network {Colorizer.blue(self.settings.network_name)} removed")
+            self.logger(f"Docker network {Colorizer.blue(self.config.network_name)} removed")
         except DockerSDKError:
-            self.logger.warning(f"Unable to remove docker network {Colorizer.blue(self.settings.network_name)}")
+            self.logger.warning(f"Unable to remove docker network {Colorizer.blue(self.config.network_name)}")

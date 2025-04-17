@@ -7,9 +7,9 @@ from install_scripts.utils.exceptions import SubprocessError
 
 
 class DatabaseProvider:
-    def __init__(self, logger: Logger, settings: ProjectConfigProvider):
+    def __init__(self, logger: Logger, config: ProjectConfigProvider):
         self.logger = logger
-        self.settings = settings
+        self.config = config
 
     def upgrade_database(self) -> None:
         """Initialize the database."""
@@ -50,7 +50,7 @@ class DatabaseProvider:
                 "flask",
                 "--app", "run.py",
                 "create-researcher-account",
-                "--email", self.settings.admin_email
+                "--email", self.config.admin_email
             ], check=True)
             self.logger(Colorizer.blue("Researcher account created"))
         except subprocess.CalledProcessError as e:

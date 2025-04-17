@@ -35,10 +35,10 @@ def researcher_user_pool_client_mock(researcher_user_pool_mock: dict):
 @pytest.fixture
 def aws_cognito_provider_mock(participant_user_pool_mock: dict, researcher_user_pool_mock: dict, participant_user_pool_client_mock: dict, researcher_user_pool_client_mock: dict):
     provider = aws_cognito_provider()
-    provider.settings.participant_user_pool_id = participant_user_pool_mock["UserPool"]["Id"]
-    provider.settings.participant_client_id = participant_user_pool_client_mock["UserPoolClient"]["ClientId"]
-    provider.settings.researcher_user_pool_id = researcher_user_pool_mock["UserPool"]["Id"]
-    provider.settings.researcher_client_id = researcher_user_pool_client_mock["UserPoolClient"]["ClientId"]
+    provider.config.participant_user_pool_id = participant_user_pool_mock["UserPool"]["Id"]
+    provider.config.participant_client_id = participant_user_pool_client_mock["UserPoolClient"]["ClientId"]
+    provider.config.researcher_user_pool_id = researcher_user_pool_mock["UserPool"]["Id"]
+    provider.config.researcher_client_id = researcher_user_pool_client_mock["UserPoolClient"]["ClientId"]
     return provider
 
 

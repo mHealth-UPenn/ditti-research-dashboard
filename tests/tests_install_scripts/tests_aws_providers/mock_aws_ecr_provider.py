@@ -8,7 +8,7 @@ from install_scripts.aws_providers.aws_ecr_provider import AwsEcrProvider
 def aws_ecr_provider():
     provider = AwsEcrProvider(
         logger=logger(),
-        settings=project_config_provider(),
+        config=project_config_provider(),
         aws_client_provider=aws_client_provider(),
         aws_account_provider=aws_account_provider(),
     )

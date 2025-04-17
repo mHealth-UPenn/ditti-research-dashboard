@@ -6,5 +6,5 @@ from tests.tests_install_scripts.tests_project_config.mock_project_config_provid
 def frontend_provider() -> FrontendProvider:
     return FrontendProvider(
         logger=logger(),
-        settings=project_config_provider()
+        config=project_config_provider()
     )

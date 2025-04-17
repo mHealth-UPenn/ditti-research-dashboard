@@ -20,14 +20,14 @@ def dev_secret_value() -> DevSecretValue:
 
 def aws_secretsmanager_resource_manager():
     client_provider = aws_client_provider()
-    settings = project_config_provider()
+    config = project_config_provider()
 
     # The resource manager expects the secret to be created by cloudformation
-    client_provider.secrets_manager_client.create_secret(Name=settings.secret_name)
+    client_provider.secrets_manager_client.create_secret(Name=config.secret_name)
 
     return AwsSecretsmanagerResourceManager(
         logger=logger(),
-        settings=settings,
+        config=config,
         aws_client_provider=client_provider,
         aws_cognito_provider=aws_cognito_provider(),
     )

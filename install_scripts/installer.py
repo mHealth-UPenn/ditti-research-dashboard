@@ -48,22 +48,22 @@ class Installer:
         )
         self.aws_s3_resource_manager = AwsS3ResourceManager(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
             aws_client_provider=self.aws_client_provider,
         )
         self.aws_cloudformation_provider = AwsCloudformationProvider(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
             aws_client_provider=self.aws_client_provider,
         )
         self.aws_cognito_provider = AwsCognitoProvider(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
             aws_client_provider=self.aws_client_provider,
         )
         self.aws_ecr_provider = AwsEcrProvider(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
             aws_client_provider=self.aws_client_provider,
             aws_account_provider=self.aws_account_provider,
         )
@@ -71,43 +71,43 @@ class Installer:
         # Initialize local providers
         self.docker_provider = DockerProvider(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
         )
         self.env_file_provider = EnvFileProvider(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
             aws_account_provider=self.aws_account_provider,
         )
         self.database_provider = DatabaseProvider(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
         )
         self.frontend_provider = FrontendProvider(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
         )
 
         # Initialize resource managers
         self.aws_cloudformation_resource_manager = AwsCloudformationResourceManager(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
             aws_client_provider=self.aws_client_provider,
         )
         self.aws_cognito_resource_manager = AwsCognitoResourceManager(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
             aws_client_provider=self.aws_client_provider,
         )
         self.aws_secretsmanager_resource_manager = AwsSecretsmanagerResourceManager(
             logger=self.logger,
-            settings=self.project_config_provider,
+            config=self.project_config_provider,
             aws_client_provider=self.aws_client_provider,
             aws_cognito_provider=self.aws_cognito_provider,
         )
 
     def run(self) -> None:
         try:
-            # Get project settings
+            # Get project config
             self.logger(Colorizer.cyan("\n[Project Setup]"))
             self.project_config_provider.get_user_input()
             self.project_config_provider.setup_project_config()

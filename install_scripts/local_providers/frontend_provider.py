@@ -11,9 +11,9 @@ from install_scripts.utils.exceptions import SubprocessError
 class FrontendProvider:
     frontend_dir = "frontend"
 
-    def __init__(self, *, logger: Logger, settings: ProjectConfigProvider):
+    def __init__(self, *, logger: Logger, config: ProjectConfigProvider):
         self.logger = logger
-        self.settings = settings
+        self.config = config
 
     def initialize_frontend(self) -> None:
         """Set up frontend dependencies and Tailwind CSS."""

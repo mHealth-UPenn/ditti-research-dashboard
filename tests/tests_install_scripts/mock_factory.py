@@ -6,30 +6,30 @@ class MockFactory:
     """Factory class to create consistent mocks for testing."""
 
     @staticmethod
-    def create_mock_settings_provider() -> MagicMock:
-        """Create a mock settings object with common attributes."""
-        settings = MagicMock()
-        settings.admin_email = "test-admin-email"
-        settings.fitbit_client_id = "test-fitbit-client-id"
-        settings.fitbit_client_secret = "test-fitbit-client-secret"
-        settings.project_name = "test-project-name"
-        settings.participant_user_pool_name = "test-participant-user-pool-name"
-        settings.participant_user_pool_domain = "test-participant-user-pool-domain"
-        settings.participant_user_pool_id = "test-participant-user-pool-id"
-        settings.participant_client_id = "test-participant-client-id"
-        settings.researcher_user_pool_name = "test-researcher-user-pool-name"
-        settings.researcher_user_pool_domain = "test-researcher-user-pool-domain"
-        settings.researcher_user_pool_id = "test-researcher-user-pool-id"
-        settings.researcher_client_id = "test-researcher-client-id"
-        settings.logs_bucket_name = "test-logs-bucket-name"
-        settings.audio_bucket_name = "test-audio-bucket-name"
-        settings.secret_name = "test-secret-name"
-        settings.tokens_secret_name = "test-tokens-secret-name"
-        settings.stack_name = "test-stack-name"
-        settings.network_name = "test-network-name"
-        settings.postgres_container_name = "test-postgres-container-name"
-        settings.wearable_data_retrieval_container_name = "test-wearable-data-retrieval-container-name"
-        return settings
+    def create_mock_config_provider() -> MagicMock:
+        """Create a mock config object with common attributes."""
+        config = MagicMock()
+        config.admin_email = "test-admin-email"
+        config.fitbit_client_id = "test-fitbit-client-id"
+        config.fitbit_client_secret = "test-fitbit-client-secret"
+        config.project_name = "test-project-name"
+        config.participant_user_pool_name = "test-participant-user-pool-name"
+        config.participant_user_pool_domain = "test-participant-user-pool-domain"
+        config.participant_user_pool_id = "test-participant-user-pool-id"
+        config.participant_client_id = "test-participant-client-id"
+        config.researcher_user_pool_name = "test-researcher-user-pool-name"
+        config.researcher_user_pool_domain = "test-researcher-user-pool-domain"
+        config.researcher_user_pool_id = "test-researcher-user-pool-id"
+        config.researcher_client_id = "test-researcher-client-id"
+        config.logs_bucket_name = "test-logs-bucket-name"
+        config.audio_bucket_name = "test-audio-bucket-name"
+        config.secret_name = "test-secret-name"
+        config.tokens_secret_name = "test-tokens-secret-name"
+        config.stack_name = "test-stack-name"
+        config.network_name = "test-network-name"
+        config.postgres_container_name = "test-postgres-container-name"
+        config.wearable_data_retrieval_container_name = "test-wearable-data-retrieval-container-name"
+        return config
 
     @staticmethod
     def create_mock_sts_client(

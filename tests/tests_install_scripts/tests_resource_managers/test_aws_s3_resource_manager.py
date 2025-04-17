@@ -187,10 +187,10 @@ def test_dev_uninstall(aws_s3_resource_manager_mock: AwsS3ResourceManager):
     aws_s3_resource_manager_mock.empty_bucket = MagicMock()
     aws_s3_resource_manager_mock.delete_bucket = MagicMock()
     aws_s3_resource_manager_mock.dev_uninstall()
-    aws_s3_resource_manager_mock.empty_bucket.assert_any_call(aws_s3_resource_manager_mock.settings.audio_bucket_name)
-    aws_s3_resource_manager_mock.delete_bucket.assert_any_call(aws_s3_resource_manager_mock.settings.audio_bucket_name)
-    aws_s3_resource_manager_mock.empty_bucket.assert_any_call(aws_s3_resource_manager_mock.settings.logs_bucket_name)
-    aws_s3_resource_manager_mock.delete_bucket.assert_any_call(aws_s3_resource_manager_mock.settings.logs_bucket_name)
+    aws_s3_resource_manager_mock.empty_bucket.assert_any_call(aws_s3_resource_manager_mock.config.audio_bucket_name)
+    aws_s3_resource_manager_mock.delete_bucket.assert_any_call(aws_s3_resource_manager_mock.config.audio_bucket_name)
+    aws_s3_resource_manager_mock.empty_bucket.assert_any_call(aws_s3_resource_manager_mock.config.logs_bucket_name)
+    aws_s3_resource_manager_mock.delete_bucket.assert_any_call(aws_s3_resource_manager_mock.config.logs_bucket_name)
 
 
 def test_dev_uninstall_bucket_not_exists(aws_s3_resource_manager_mock: AwsS3ResourceManager):

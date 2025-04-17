@@ -18,12 +18,12 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
     def __init__(
             self, *,
             logger: Logger,
-            settings: ProjectConfigProvider,
+            config: ProjectConfigProvider,
             aws_client_provider: AwsClientProvider,
             aws_cognito_provider: AwsCognitoProvider,
         ):
         self.logger = logger
-        self.settings = settings
+        self.config = config
         self.client = aws_client_provider.secrets_manager_client
         self.cognito_provider = aws_cognito_provider
         self.secret_value = None
@@ -51,8 +51,8 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
     def set_dev_secret_value(self) -> None:
         """Set the secret value."""
         secret_value: DevSecretValue = {
-            "FITBIT_CLIENT_ID": self.settings.fitbit_client_id,
-            "FITBIT_CLIENT_SECRET": self.settings.fitbit_client_secret,
+            "FITBIT_CLIENT_ID": self.config.fitbit_client_id,
+            "FITBIT_CLIENT_SECRET": self.config.fitbit_client_secret,
             "COGNITO_PARTICIPANT_CLIENT_SECRET": self.cognito_provider \
                 .get_participant_client_secret(),
             "COGNITO_RESEARCHER_CLIENT_SECRET": self.cognito_provider \
@@ -64,10 +64,10 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
         """Write the secret value to the secret manager."""
         try:
             res = self.client.put_secret_value(
-                SecretId=self.settings.secret_name,
+                SecretId=self.config.secret_name,
                 SecretString=json.dumps(self.secret_value)
             )
-            self.logger(f"Secret {Colorizer.blue(self.settings.secret_name)} written")
+            self.logger(f"Secret {Colorizer.blue(self.config.secret_name)} written")
 
             return res
         except ClientError as e:

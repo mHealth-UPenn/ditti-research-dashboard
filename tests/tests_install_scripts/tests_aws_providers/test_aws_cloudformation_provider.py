@@ -39,7 +39,7 @@ def describe_stacks_mock(aws_cloudformation_provider_mock: AwsCloudformationProv
 
 def test_get_outputs_success(template_mock: str, parameters_mock: list[dict[str, str]], outputs_mock: list[dict[str, str]], aws_cloudformation_provider_mock: AwsCloudformationProvider):
     AwsClientProvider().cloudformation_client.create_stack(
-        StackName=aws_cloudformation_provider_mock.settings.stack_name,
+        StackName=aws_cloudformation_provider_mock.config.stack_name,
         TemplateBody=template_mock,
         Parameters=parameters_mock,
         Capabilities=["CAPABILITY_IAM"]
@@ -52,7 +52,7 @@ def test_get_outputs_stack_not_found(describe_stacks_mock: MagicMock, aws_cloudf
     describe_stacks_mock.return_value = {
         "Stacks": []
     }
-    with pytest.raises(AwsProviderError, match=f"Stack {aws_cloudformation_provider_mock.settings.stack_name} not found"):
+    with pytest.raises(AwsProviderError, match=f"Stack {aws_cloudformation_provider_mock.config.stack_name} not found"):
         aws_cloudformation_provider_mock.get_outputs()
 
 

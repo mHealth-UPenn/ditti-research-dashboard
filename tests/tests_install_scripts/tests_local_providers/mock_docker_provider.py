@@ -34,7 +34,7 @@ def docker_client():
 def docker_provider():
     provider = DockerProvider(
         logger=logger(),
-        settings=project_config_provider(),
+        config=project_config_provider(),
     )
     provider.docker_client = docker_client()
     return provider

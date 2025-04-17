@@ -35,15 +35,15 @@ def researcher_user_pool_client(researcher_user_pool: dict):
 def aws_cognito_resource_manager():
     provider = AwsCognitoResourceManager(
         logger=logger(),
-        settings=project_config_provider(),
+        config=project_config_provider(),
         aws_client_provider=aws_client_provider(),
     )
     participant = participant_user_pool()
     researcher = researcher_user_pool()
     participant_client = participant_user_pool_client(participant)
     researcher_client = researcher_user_pool_client(researcher)
-    provider.settings.participant_user_pool_id = participant["UserPool"]["Id"]
-    provider.settings.participant_client_id = participant_client["UserPoolClient"]["ClientId"]
-    provider.settings.researcher_user_pool_id = researcher["UserPool"]["Id"]
-    provider.settings.researcher_client_id = researcher_client["UserPoolClient"]["ClientId"]
+    provider.config.participant_user_pool_id = participant["UserPool"]["Id"]
+    provider.config.participant_client_id = participant_client["UserPoolClient"]["ClientId"]
+    provider.config.researcher_user_pool_id = researcher["UserPool"]["Id"]
+    provider.config.researcher_client_id = researcher_client["UserPoolClient"]["ClientId"]
     return provider

@@ -12,11 +12,11 @@ from install_scripts.utils.exceptions import ResourceManagerError
 class AwsCognitoResourceManager(BaseResourceManager):
     def __init__(self, *,
             logger: Logger,
-            settings: ProjectConfigProvider,
+            config: ProjectConfigProvider,
             aws_client_provider: AwsClientProvider,
         ):
         self.logger = logger
-        self.settings = settings
+        self.config = config
         self.client = aws_client_provider.cognito_client
 
     def on_end(self) -> None:
@@ -34,10 +34,10 @@ class AwsCognitoResourceManager(BaseResourceManager):
         """Create an admin user in the Cognito user pool."""
         try:
             res = self.client.admin_create_user(
-                UserPoolId=self.settings.researcher_user_pool_id,
-                Username=self.settings.admin_email,
+                UserPoolId=self.config.researcher_user_pool_id,
+                Username=self.config.admin_email,
             )
-            self.logger(f"Admin user {Colorizer.blue(self.settings.admin_email)} created in Cognito user pool {Colorizer.blue(self.settings.researcher_user_pool_id)}")
+            self.logger(f"Admin user {Colorizer.blue(self.config.admin_email)} created in Cognito user pool {Colorizer.blue(self.config.researcher_user_pool_id)}")
 
             return res
         except ClientError as e:

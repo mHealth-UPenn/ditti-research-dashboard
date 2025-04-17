@@ -10,18 +10,18 @@ from install_scripts.utils.exceptions import AwsProviderError
 class AwsCognitoProvider:
     def __init__(self, *,
             logger: Logger,
-            settings: ProjectConfigProvider,
+            config: ProjectConfigProvider,
             aws_client_provider: AwsClientProvider,
         ):
         self.logger = logger
-        self.settings = settings
+        self.config = config
         self.cognito_client = aws_client_provider.cognito_client
 
     def get_participant_client_secret(self) -> str:
         try:
             return self.cognito_client.describe_user_pool_client(
-                UserPoolId=self.settings.participant_user_pool_id,
-                ClientId=self.settings.participant_client_id
+                UserPoolId=self.config.participant_user_pool_id,
+                ClientId=self.config.participant_client_id
             )["UserPoolClient"]["ClientSecret"]
         except ClientError as e:
             traceback.print_exc()
@@ -35,8 +35,8 @@ class AwsCognitoProvider:
     def get_researcher_client_secret(self) -> str:
         try:
             return self.cognito_client.describe_user_pool_client(
-                UserPoolId=self.settings.researcher_user_pool_id,
-                ClientId=self.settings.researcher_client_id
+                UserPoolId=self.config.researcher_user_pool_id,
+                ClientId=self.config.researcher_client_id
             )["UserPoolClient"]["ClientSecret"]
         except ClientError as e:
             traceback.print_exc()

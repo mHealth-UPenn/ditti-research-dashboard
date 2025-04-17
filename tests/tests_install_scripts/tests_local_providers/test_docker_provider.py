@@ -34,7 +34,7 @@ def test_create_network_success(docker_provider_mock: DockerProvider):
     """Test successful creation of Docker network."""
     docker_provider_mock.create_network()
     docker_provider_mock.docker_client.networks.create.assert_called_once_with(
-        docker_provider_mock.settings.network_name
+        docker_provider_mock.config.network_name
     )
 
 
@@ -63,15 +63,15 @@ def test_run_postgres_container_success(docker_provider_mock: DockerProvider):
     # Verify the container is created with the correct parameters
     call_args = docker_provider_mock.docker_client.containers.run.call_args[1]
     assert call_args["image"] == "postgres"
-    assert call_args["name"] == docker_provider_mock.settings.postgres_container_name
+    assert call_args["name"] == docker_provider_mock.config.postgres_container_name
     assert "POSTGRES_USER" in call_args["environment"]
     assert "POSTGRES_PASSWORD" in call_args["environment"]
     assert "POSTGRES_DB" in call_args["environment"]
-    assert call_args["network"] == docker_provider_mock.settings.network_name
+    assert call_args["network"] == docker_provider_mock.config.network_name
 
     # Verify that get_container was called
     docker_provider_mock.get_container.assert_called_with(
-        docker_provider_mock.settings.postgres_container_name
+        docker_provider_mock.config.postgres_container_name
     )
 
     # Verify that exec_run was called with the correct arguments
@@ -103,7 +103,7 @@ def test_build_wearable_data_retrieval_container_success(docker_provider_mock: D
     docker_provider_mock.docker_client.images.build.assert_called_once()
     call_args = docker_provider_mock.docker_client.images.build.call_args[1]
     assert call_args["path"] == "functions/wearable_data_retrieval"
-    assert call_args["tag"] == docker_provider_mock.settings.wearable_data_retrieval_container_name
+    assert call_args["tag"] == docker_provider_mock.config.wearable_data_retrieval_container_name
     assert call_args["platform"] == "linux/amd64"
 
     # Verify that rmtree was called with the correct arguments
@@ -141,10 +141,10 @@ def test_run_wearable_data_retrieval_container_success(docker_provider_mock: Doc
 
     docker_provider_mock.docker_client.containers.run.assert_called_once()
     call_args = docker_provider_mock.docker_client.containers.run.call_args[1]
-    assert call_args["image"] == docker_provider_mock.settings.wearable_data_retrieval_container_name
-    assert call_args["name"] == docker_provider_mock.settings.wearable_data_retrieval_container_name
+    assert call_args["image"] == docker_provider_mock.config.wearable_data_retrieval_container_name
+    assert call_args["name"] == docker_provider_mock.config.wearable_data_retrieval_container_name
     assert call_args["platform"] == "linux/amd64"
-    assert call_args["network"] == docker_provider_mock.settings.network_name
+    assert call_args["network"] == docker_provider_mock.config.network_name
     assert call_args["ports"] == {"9000": 8080}
     assert call_args["environment"] == {"TESTING": "true"}
     assert call_args["detach"] is True
@@ -188,7 +188,7 @@ def test_get_network_success(docker_provider_mock: DockerProvider):
 
     assert result == docker_provider_mock.docker_client.networks.get.return_value
     docker_provider_mock.docker_client.networks.get.assert_called_once_with(
-        docker_provider_mock.settings.network_name
+        docker_provider_mock.config.network_name
     )
 
 
@@ -213,8 +213,8 @@ def test_uninstall_success(docker_provider_mock: DockerProvider):
     docker_provider_mock.uninstall()
 
     # Verify that get_container was called for both containers
-    docker_provider_mock.get_container.assert_any_call(docker_provider_mock.settings.postgres_container_name)
-    docker_provider_mock.get_container.assert_any_call(docker_provider_mock.settings.wearable_data_retrieval_container_name)
+    docker_provider_mock.get_container.assert_any_call(docker_provider_mock.config.postgres_container_name)
+    docker_provider_mock.get_container.assert_any_call(docker_provider_mock.config.wearable_data_retrieval_container_name)
 
     # Verify that containers were stopped and removed
     mock_postgres_container.stop.assert_called_once()
@@ -237,6 +237,6 @@ def test_uninstall_not_found(docker_provider_mock: DockerProvider):
     docker_provider_mock.uninstall()
 
     # Verify that all containers and network were attempted to be removed
-    docker_provider_mock.get_container.assert_any_call(docker_provider_mock.settings.postgres_container_name)
-    docker_provider_mock.get_container.assert_any_call(docker_provider_mock.settings.wearable_data_retrieval_container_name)
+    docker_provider_mock.get_container.assert_any_call(docker_provider_mock.config.postgres_container_name)
+    docker_provider_mock.get_container.assert_any_call(docker_provider_mock.config.wearable_data_retrieval_container_name)
     docker_provider_mock.get_network.assert_called_once()

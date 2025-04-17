@@ -16,12 +16,12 @@ def env_file_provider_mock():
 
 @pytest.fixture
 def wearable_data_retrieval_mock(env_file_provider_mock: EnvFileProvider):
-    return wearable_data_retrieval_env(env_file_provider_mock.settings)
+    return wearable_data_retrieval_env(env_file_provider_mock.config)
 
 
 @pytest.fixture
 def root_mock(env_file_provider_mock: EnvFileProvider):
-    return root_env(env_file_provider_mock.settings)
+    return root_env(env_file_provider_mock.config)
 
 
 @pytest.fixture

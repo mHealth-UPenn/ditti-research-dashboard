@@ -6,6 +6,6 @@ from tests.tests_install_scripts.tests_project_config.mock_project_config_provid
 def database_provider():
     database_provider = DatabaseProvider(
         logger=logger(),
-        settings=project_config_provider(),
+        config=project_config_provider(),
     )
     return database_provider

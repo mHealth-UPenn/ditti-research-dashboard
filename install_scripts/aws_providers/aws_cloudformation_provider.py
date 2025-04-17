@@ -11,18 +11,18 @@ from install_scripts.utils.exceptions import AwsProviderError
 class AwsCloudformationProvider:
     def __init__(self, *,
             logger: Logger,
-            settings: ProjectConfigProvider,
+            config: ProjectConfigProvider,
             aws_client_provider: AwsClientProvider,
         ):
         self.logger = logger
-        self.settings = settings
+        self.config = config
         self.client = aws_client_provider.cloudformation_client
 
     def get_outputs(self) -> dict[str, str]:
         try:
-            res = self.client.describe_stacks(StackName=self.settings.stack_name)
+            res = self.client.describe_stacks(StackName=self.config.stack_name)
             if len(res["Stacks"]) == 0:
-                raise AwsProviderError(f"Stack {self.settings.stack_name} not found")
+                raise AwsProviderError(f"Stack {self.config.stack_name} not found")
             return {
                 output["OutputKey"]: output["OutputValue"]
                 for output in res["Stacks"][0]["Outputs"]
@@ -40,7 +40,7 @@ class AwsCloudformationProvider:
 
     def update_dev_project_config(self) -> None:
         outputs = self.get_outputs()
-        self.settings.participant_user_pool_id = outputs["ParticipantUserPoolId"]
-        self.settings.participant_client_id = outputs["ParticipantClientId"]
-        self.settings.researcher_user_pool_id = outputs["ResearcherUserPoolId"]
-        self.settings.researcher_client_id = outputs["ResearcherClientId"]
+        self.config.participant_user_pool_id = outputs["ParticipantUserPoolId"]
+        self.config.participant_client_id = outputs["ParticipantClientId"]
+        self.config.researcher_user_pool_id = outputs["ResearcherUserPoolId"]
+        self.config.researcher_client_id = outputs["ResearcherClientId"]

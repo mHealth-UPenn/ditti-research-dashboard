@@ -14,12 +14,12 @@ class AwsEcrProvider:
     def __init__(
             self, *,
             logger: Logger,
-            settings: ProjectConfigProvider,
+            config: ProjectConfigProvider,
             aws_client_provider: AwsClientProvider,
             aws_account_provider: AwsAccountProvider
         ):
         self.logger = logger
-        self.settings = settings
+        self.config = config
         self.ecr_client = aws_client_provider.ecr_client
         self.aws_account_provider = aws_account_provider
 

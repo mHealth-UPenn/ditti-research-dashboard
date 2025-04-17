@@ -6,7 +6,7 @@ from tests.tests_install_scripts.tests_aws_providers.mock_aws_client_provider im
 
 def aws_cognito_provider():
     return AwsCognitoProvider(
-        settings=project_config_provider(),
+        config=project_config_provider(),
         logger=logger(),
         aws_client_provider=aws_client_provider()
     )

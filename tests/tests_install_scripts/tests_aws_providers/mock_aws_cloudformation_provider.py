@@ -14,6 +14,6 @@ def outputs():
 def aws_cloudformation_provider():
     return AwsCloudformationProvider(
         logger=logger(),
-        settings=project_config_provider(),
+        config=project_config_provider(),
         aws_client_provider=aws_client_provider()
     )
