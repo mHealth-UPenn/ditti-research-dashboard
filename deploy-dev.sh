@@ -8,16 +8,14 @@ MAGENTA='\033[0;35m'
 CYAN='\033[0;36m'
 RESET='\033[0m'
 
-PROJECT_NAME=$1
-
 # Read the project-settings-dev.json file
-if [[ ! -f "project-config-${PROJECT_NAME}-dev.json" ]]; then
+if [[ ! -f "project-config.json" ]]; then
     echo -e "${RED}Project settings file not found${RESET}"
     echo "Did you run install-dev.sh?"
     exit 1
 fi
 
-project_settings=$(cat "project-config-${PROJECT_NAME}-dev.json")
+project_settings=$(cat "project-config.json")
 dev_secret_name=$(echo "$project_settings" | jq -r '.aws.secrets_manager.secret_name')
 postgres_container_name=$(echo "$project_settings" | jq -r '.docker.postgres_container_name')
 wearable_data_retrieval_container_name=$(echo "$project_settings" | jq -r '.docker.wearable_data_retrieval_container_name')
