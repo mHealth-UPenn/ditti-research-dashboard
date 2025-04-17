@@ -5,13 +5,14 @@ import importPlugin from "eslint-plugin-import";
 import reactPlugin from "eslint-plugin-react";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
 import prettierRecommended from "eslint-plugin-prettier/recommended";
+import tailwind from "eslint-plugin-tailwindcss";
 
 export default tseslint.config(
   { ignores: ["**/node_modules/**", "dist/**", "build/**", ".env.*"] },
 
-  // JS/JSX config
+  // JS config
   {
-    files: ["**/*.{js,jsx}"],
+    files: ["**/*.js"],
     ignores: ["dist/**", "build/**"],
     languageOptions: {
       parserOptions: {
@@ -31,9 +32,6 @@ export default tseslint.config(
     extends: [
       js.configs.recommended, // ESLint core
       importPlugin.flatConfigs["recommended"], // import checks
-      reactPlugin.configs.flat["recommended"], // React best practices
-      reactPlugin.configs.flat["jsx-runtime"], // JSX transform
-      reactHooksPlugin.configs["recommended-latest"], // Hooks rules
       prettierRecommended, // Prettier formatting
     ],
     rules: {
@@ -71,10 +69,12 @@ export default tseslint.config(
       reactPlugin.configs.flat.recommended,
       reactPlugin.configs.flat["jsx-runtime"],
       reactHooksPlugin.configs["recommended-latest"],
+      tailwind.configs["flat/recommended"],
       prettierRecommended,
     ],
     rules: {
       // TS-specific rule overrides
+      "tailwindcss/no-custom-classname": "off",
     },
   }
 );
