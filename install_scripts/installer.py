@@ -10,6 +10,7 @@ from install_scripts.aws_providers import (
     AwsEcrProvider,
 )
 from install_scripts.local_providers import (
+    DatabaseProvider,
     DockerProvider,
     EnvFileProvider,
     FrontendProvider,
@@ -66,6 +67,10 @@ class Installer:
             logger=self.logger,
             settings=self.project_config_provider,
             aws_account_provider=self.aws_account_provider,
+        )
+        self.database_provider = DatabaseProvider(
+            logger=self.logger,
+            settings=self.project_config_provider,
         )
         self.frontend_provider = FrontendProvider(
             logger=self.logger,
@@ -128,6 +133,12 @@ class Installer:
             root_env = self.env_file_provider.get_root_env()
             self.env_file_provider.write_env_files(wearable_data_retrieval_env, root_env)
 
+            # Setup database
+            self.logger.cyan("\n[Database Setup]")
+            self.database_provider.upgrade_database()
+            self.database_provider.initialize_database()
+            self.database_provider.create_researcher_account()
+
             # Setup frontend
             self.logger.cyan("\n[Frontend Setup]")
             self.frontend_provider.initialize_frontend()
@@ -139,19 +150,15 @@ class Installer:
             self.logger.red(f"Installation failed.")
             sys.exit(1)
 
-    def uninstall(self, project_name: str) -> None:
+    def uninstall(self) -> None:
         """Uninstall the resources."""
-        suffix = get_project_suffix(self.env)
-        if suffix:
-            project_name = f"{project_name}-{suffix}"
-
         try:
-            self.logger.red("This will delete all resources created by the installer.")
+            self.logger("This will delete all resources created by the installer.")
             self.logger.red("ANY LOST DATA WILL BE PERMANENTLY DELETED.")
-            self.logger.red(f"Please confirm by typing \"{project_name}\".")
+            self.logger("Please confirm by typing \"uninstall\".")
             confirm = input("> ")
 
-            if confirm != project_name:
+            if confirm != "uninstall":
                 self.logger.red("Uninstall cancelled.")
                 sys.exit(0)
 
@@ -160,7 +167,13 @@ class Installer:
             self.aws_account_provider.configure_aws_cli()
 
             # Load project config
-            self.project_config_provider.load_existing_config(project_name)
+            self.project_config_provider.load_existing_config()
+
+            self.logger.cyan("\n[CloudFormation Stack Cleanup]")
+            self.aws_cloudformation_resource_manager.uninstall(env=self.env)
+
+            self.logger.cyan("\n[Project Config Cleanup]")
+            self.project_config_provider.uninstall()
 
             if self.env == "dev":
                 self.logger.cyan("\n[Docker Cleanup]")
@@ -171,12 +184,6 @@ class Installer:
 
                 self.logger.cyan("\n[Frontend Cleanup]")
                 self.frontend_provider.uninstall()
-
-            self.logger.cyan("\n[CloudFormation Stack Cleanup]")
-            self.aws_cloudformation_resource_manager.uninstall(env=self.env)
-
-            self.logger.cyan("\n[Project Config Cleanup]")
-            self.project_config_provider.uninstall(project_name)
 
         except Exception:
             traceback.print_exc()
