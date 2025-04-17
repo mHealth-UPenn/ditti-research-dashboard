@@ -1,35 +1,28 @@
+import logging
+
+from install_scripts.utils.colorizer import Colorizer
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+
 class Logger:
     def __init__(self):
-        self.color_codes = {
-            "red": "\033[0;31m",
-            "green": "\033[0;32m",
-            "yellow": "\033[0;33m",
-            "blue": "\033[0;34m",
-            "magenta": "\033[0;35m",
-            "cyan": "\033[0;36m",
-            "reset": "\033[0m",
-        }
+        self.logger = logging.getLogger(__name__)
 
     def __call__(self, text: str) -> None:
-        print(text)
+        self.info(text)
 
-    def print_colored(self, text: str, color: str) -> None:
-        print(f"{self.color_codes[color]}{text}{self.color_codes['reset']}")
+    def debug(self, text: str) -> None:
+        self.logger.debug(Colorizer.colorize(text, "blue"))
 
-    def red(self, text: str) -> None:
-        self.print_colored(text, "red")
+    def info(self, text: str) -> None:
+        self.logger.info(text)
 
-    def green(self, text: str) -> None:
-        self.print_colored(text, "green")
+    def warning(self, text: str) -> None:
+        self.logger.warning(Colorizer.colorize(text, "yellow"))
 
-    def yellow(self, text: str) -> None:
-        self.print_colored(text, "yellow")
+    def error(self, text: str) -> None:
+        self.logger.error(Colorizer.colorize(text, "red"))
 
-    def blue(self, text: str) -> None:
-        self.print_colored(text, "blue")
-
-    def magenta(self, text: str) -> None:
-        self.print_colored(text, "magenta")
-
-    def cyan(self, text: str) -> None:
-        self.print_colored(text, "cyan")
+    def critical(self, text: str) -> None:
+        self.logger.critical(Colorizer.colorize(text, "red"))

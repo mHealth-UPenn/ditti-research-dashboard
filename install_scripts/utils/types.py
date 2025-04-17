@@ -1,3 +1,5 @@
 from typing import Literal
 
-Env = Literal["dev", "staging", "prod"]
+type Env = Literal["dev", "staging", "prod"]
+type Color = Literal["red", "green", "yellow", "blue", "magenta", "cyan",
+                     "reset"]
