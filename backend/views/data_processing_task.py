@@ -16,7 +16,8 @@
 
 import logging
 import traceback
-from flask import Blueprint, jsonify, make_response
+from datetime import datetime, UTC
+from flask import Blueprint, jsonify, make_response, request
 from backend.extensions import db
 from backend.models import LambdaTask
 from backend.auth.decorators import researcher_auth_required
@@ -147,3 +148,59 @@ def invoke_data_processing_task(account):
         logger.warning(f"Error invoking data processing task: {exc}")
         db.session.rollback()
         return make_response({"msg": "Internal server error when invoking data processing task."}, 500)
+    
+
+@blueprint.route("/force-stop", methods=["POST"])
+@researcher_auth_required("Invoke", "Data Retrieval Task")
+def force_stop_data_processing_task(account):
+    """
+    Manually stop a data processing task.
+
+    Request:
+    --------
+    POST /data_processing_task/force-stop
+
+    Body (JSON):
+    ------------
+    {
+        "app": 1,                   # Required
+        "function_id": 1,               # Required
+    }
+
+    Response (200 OK):
+    ------------------
+    {
+        "msg": "Data processing task stopped successfully"
+    }
+
+    Response (400 Bad Request):
+    --------------------------
+    {
+        "msg": "function_id is required"
+    }
+
+    Response (500 Internal Server Error):
+    -------------------------------------
+    {
+        "msg": "Internal server error when stopping data processing task."
+    }
+    """
+    try:
+        function_id = request.json.get("function_id")
+        if function_id is None:
+            raise make_response({"msg": "function_id is required"}, 400)
+
+        lambda_task = LambdaTask.query.filter(LambdaTask.id == function_id).first()
+        if lambda_task is None:
+            raise Exception(f"Data processing task with id {function_id} not found.")
+        
+        lambda_task.status = "Failed"
+        lambda_task.completed_on = datetime.now(UTC)
+        lambda_task.error_code = "ForceStopped"
+        db.session.commit()
+        return jsonify({"msg": "Data processing task stopped successfully"}), 200
+    except Exception:
+        exc = traceback.format_exc()
+        logger.warning(f"Error stopping data processing task: {exc}")
+        db.session.rollback()
+        return make_response({"msg": "Internal server error when stopping data processing task."}, 500)
