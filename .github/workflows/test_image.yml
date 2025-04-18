@@ -26,6 +26,9 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+    env:
+      FLASK_DB: postgresql://user:pass@localhost:5432/postgres
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -36,14 +39,14 @@ jobs:
       - name: Run Flask container
         run: |
           docker run \
-            -d \
             --name flask-container \
             --network host \
             --env-file flask.env \
-            -e FLASK_DB=postgresql://user:pass@localhost:5432/postgres \
-            -e AWS_DEFAULT_REGION=${{ secrets.AWS_DEFAULT_REGION }} \
-            -e AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
-            -e AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            -e FLASK_DB=${{ env.FLASK_DB }} \
+            -e FLASK_APP=run.py \
+            -e AWS_DEFAULT_REGION=testing \
+            -e AWS_ACCESS_KEY_ID=testing \
+            -e AWS_SECRET_ACCESS_KEY=testing \
             --entrypoint flask \
             flask-app \
             run
