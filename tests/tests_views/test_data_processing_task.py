@@ -212,3 +212,63 @@ def test_invoke_data_processing_task_invalid_data(mock_create_and_invoke, client
         "task": mock_task.meta
     }
     mock_create_and_invoke.assert_called_once()
+
+
+@patch("backend.views.data_processing_task.LambdaTask")
+@patch("backend.views.data_processing_task.db")
+def test_force_stop_data_processing_task_success(mock_db, mock_lambda_task_model, client, researcher_post):
+    """
+    Test successful force stopping of a data processing task.
+    """
+    mock_task = MagicMock()
+
+    mock_lambda_task_model.query.filter.return_value.first.return_value = mock_task
+    mock_db.session.commit.return_value = None
+
+    response = researcher_post("/data_processing_task/force-stop", json={"function_id": 1})
+
+    assert mock_task.status == "Failed"
+    assert mock_task.completed_on is not None
+    assert mock_task.error_code == "ForceStopped"
+
+    assert response.status_code == 200
+    assert response.is_json
+    assert response.get_json() == {
+        "msg": "Data processing task stopped successfully"
+    }
+
+
+def test_force_stop_data_processing_task_no_function_id(client, researcher_post):
+    """
+    Test force stopping of a data processing task with no function_id.
+    """
+    response = researcher_post("/data_processing_task/force-stop", json={})
+    assert response.status_code == 400
+    assert response.is_json
+    assert response.get_json() == {"msg": "function_id is required"}
+
+
+@patch("backend.views.data_processing_task.LambdaTask")
+def test_force_stop_data_processing_task_nonexistent_function_id(mock_lambda_task_model, client, researcher_post):
+    """
+    Test force stopping of a data processing task with a nonexistent function_id.
+    """
+    mock_lambda_task_model.query.filter.return_value.first.return_value = None
+
+    response = researcher_post("/data_processing_task/force-stop", json={"function_id": 1})
+    assert response.status_code == 404
+    assert response.is_json
+    assert response.get_json() == {"msg": "Data processing task with id 1 not found."}
+
+
+@patch('backend.views.data_processing_task.LambdaTask')
+def test_force_stop_data_processing_task_internal_error(mock_lambda_task_model, client, researcher_post):
+    """
+    Test internal server error when force stopping a data processing task.
+    """
+    mock_lambda_task_model.query.filter.return_value.first.side_effect = Exception("Internal server error")
+
+    response = researcher_post("/data_processing_task/force-stop", json={"function_id": 1})
+    assert response.status_code == 500
+    assert response.is_json
+    assert response.get_json() == {"msg": "Internal server error when stopping data processing task."}
