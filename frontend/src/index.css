@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
- @tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -35,7 +35,12 @@ body {
 }
 
 /* Headings */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 600;
   line-height: 1.2;
   color: #222;
@@ -265,22 +270,15 @@ p {
   position: relative;
 }
 
-.ql-editor.ql-modal h1,
-.ql-editor.ql-modal h2,
-.ql-editor.ql-modal h3,
-.ql-editor.ql-modal h4,
-.ql-editor.ql-modal h5,
-.ql-editor.ql-modal h6,
-.ql-editor.ql-modal p {
-  margin: 1rem 0;
-}
-
-.ql-editor.ql-modal li[data-list="bullet"] {
-  list-style: disc;
-  list-style-position: inside;
-}
-
-.ql-editor.ql-modal li[data-list="ordered"] {
-  list-style: disc;
-  list-style-position: inside;
+.ql-snow .ql-editor h1,
+.ql-snow .ql-editor h2,
+.ql-snow .ql-editor h3,
+.ql-snow .ql-editor h4,
+.ql-snow .ql-editor h5,
+.ql-snow .ql-editor h6,
+.ql-snow .ql-editor p,
+.ql-snow .ql-editor blockquote,
+.ql-snow .ql-editor .ql-code-block-container {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
