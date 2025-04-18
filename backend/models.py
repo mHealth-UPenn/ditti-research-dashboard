@@ -487,19 +487,6 @@ real-time data essential for understanding the physiological effects of mindfuln
     db.session.add(study_a)
     db.session.add(study_b)
 
-    # Create an admin account
-    account = Account(
-        created_on=datetime.now(UTC),
-        first_name="Jane",
-        last_name="Doe",
-        email=os.getenv("FLASK_ADMIN_EMAIL"),
-        is_confirmed=True,
-    )
-    JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
-    JoinAccountAccessGroup(account=account, access_group=admin_group)
-    JoinAccountAccessGroup(account=account, access_group=wear_admin_group)
-    db.session.add(account)
-
     # Create a Ditti admin account to test whether permissions are scoped to the Ditti Dashboard only
     account = Account(
         created_on=datetime.now(UTC),
