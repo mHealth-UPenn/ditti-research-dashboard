@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Test cloudformation template"
+
+Parameters:
+  TestParameter1:
+    Type: String
+    Description: Test parameter 1
+
+  TestParameter2:
+    Type: String
+    Description: Test parameter 2
+
+Resources:
+  TestResource1:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref TestParameter1
+      VersioningConfiguration:
+        Status: Enabled
+
+  TestResource2:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref TestParameter2
+      VersioningConfiguration:
+        Status: Enabled
+
+Outputs:
+  TestResource1Id:
+    Description: ID of the test resource 1
+    Value: !Ref TestResource1
+
+  TestResource2Id:
+    Description: ID of the test resource 2
+    Value: !Ref TestResource2

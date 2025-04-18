@@ -1,11 +1,22 @@
+import os
+
 from dotenv import load_dotenv
+from moto import mock_aws
 
 load_dotenv("flask.env")
 
-import os
+# Environment variables
+os.environ["AWS_ACCESS_KEY_ID"] = "testing"
+os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+os.environ["AWS_REGION"] = "us-east-1"
+os.environ["APP_SYNC_HOST"] = "https://testing"
+os.environ["AWS_TABLENAME_USER"] = "testing_table_user"
+os.environ["AWS_TABLENAME_TAP"] = "testing_table_tap"
+os.environ["APPSYNC_ACCESS_KEY"] = "testing"
+os.environ["APPSYNC_SECRET_KEY"] = "testing"
+
 import boto3
 from flask import Blueprint
-from moto import mock_aws
 import pytest
 from backend.app import create_app
 from backend.extensions import db
@@ -18,13 +29,6 @@ from tests.testing_utils import (
 from unittest.mock import patch
 import json
 from unittest.mock import MagicMock
-
-# Environment variables
-os.environ["APP_SYNC_HOST"] = "https://testing"
-os.environ["AWS_TABLENAME_USER"] = "testing_table_user"
-os.environ["AWS_TABLENAME_TAP"] = "testing_table_tap"
-os.environ["APPSYNC_ACCESS_KEY"] = "testing"
-os.environ["APPSYNC_SECRET_KEY"] = "testing"
 
 # Test blueprint and routes
 blueprint = Blueprint("test", __name__, url_prefix="/test")
