@@ -138,7 +138,7 @@ def test_run_wearable_data_retrieval_container_success(docker_provider_mock: Doc
     assert call_args["name"] == docker_provider_mock.config.wearable_data_retrieval_container_name
     assert call_args["platform"] == "linux/amd64"
     assert call_args["network"] == docker_provider_mock.config.network_name
-    assert call_args["ports"] == {"9000": 8080}
+    assert call_args["ports"] == {"8080": 9000}
     assert call_args["environment"] == docker_provider_mock.env_file_provider.get_wearable_data_retrieval_env()
     assert call_args["detach"] is True
 
