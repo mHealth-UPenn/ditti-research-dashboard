@@ -17,7 +17,7 @@
 
 import { useState, useEffect } from "react";
 import { DataRetrievalTask } from "../../types/api";
-import { makeRequest } from "../../utils";
+import { getAccess, makeRequest } from "../../utils";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -25,17 +25,19 @@ import { SmallLoader } from "../loader/loader";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { AsyncButton } from "../buttons/asyncButton";
 
 /**
  * Defines the table columns for displaying data retrieval tasks.
  */
 const COLUMNS: Column[] = [
   { name: "ID", searchable: false, sortable: true, width: 5 },
-  { name: "Status", searchable: false, sortable: true, width: 15 },
+  { name: "Status", searchable: false, sortable: true, width: 10 },
   { name: "Created On", searchable: false, sortable: true, width: 15 },
   { name: "Completed On", searchable: false, sortable: true, width: 15 },
-  { name: "Log File", searchable: true, sortable: false, width: 20 },
-  { name: "Error Code", searchable: true, sortable: false, width: 5 },
+  { name: "Log File", searchable: true, sortable: false, width: 15 },
+  { name: "Error Code", searchable: true, sortable: false, width: 10 },
+  { name: "", searchable: false, sortable: false, width: 5 },
 ];
 
 /**
@@ -80,34 +82,50 @@ function formatDate(isoDate: string | null): { display: string; sortValue: strin
  * @param handleClick - Function to handle navigation link clicks.
  */
 export const DataRetrievalTasks = () => {
+  const [canInvoke, setCanInvoke] = useState<boolean>(false);
   const [tasks, setTasks] = useState<DataRetrievalTask[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const { flashMessage } = useFlashMessages();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch data retrieval tasks (View permission is handled by the server)
-        const data: DataRetrievalTask[] = await makeRequest("/data_processing_task/?app=1");
-        setTasks(data);
-      } catch (error) {
-        console.error("Error fetching tasks:", error);
-        flashMessage(
-          <span>
-            <b>An error occurred loading data retrieval tasks.</b>
-            <br />
-            {error instanceof Error ? error.message : "Unknown error"}
-          </span>,
-          "danger"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchData = async () => {
+    try {
+      // Fetch data retrieval tasks (View permission is handled by the server)
+      const data: DataRetrievalTask[] = await makeRequest("/data_processing_task/?app=1");
+      setTasks(data);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      flashMessage(
+        <span>
+          <b>An error occurred loading data retrieval tasks.</b>
+          <br />
+          {error instanceof Error ? error.message : "Unknown error"}
+        </span>,
+        "danger"
+      );
+    }
+  };
 
-    fetchData();
+  useEffect(() => {
+    const invoke = getAccess(1, "Invoke", "Data Retrieval Task")
+      .then(() => setCanInvoke(true))
+      .catch(() => setCanInvoke(false));
+
+    Promise.all([invoke, fetchData()]).finally(() => setLoading(false));
   }, [flashMessage]);
+
+  const handleForceStop = async (id: number) => {
+    await makeRequest(`/data_processing_task/force-stop`, {
+      method: "POST",
+      body: JSON.stringify({
+        app: 1,
+        function_id: id,
+      }),
+    }).finally(() => {
+      setLoading(true);
+      fetchData().finally(() => setLoading(false));
+    });
+  };
 
   /**
    * Transforms tasks into table data format.
@@ -153,6 +171,25 @@ export const DataRetrievalTasks = () => {
           contents: <span>{task.errorCode || "N/A"}</span>,
           searchValue: task.errorCode || "",
           sortValue: task.errorCode || "",
+        },
+        {
+          contents: (
+            <div className="flex w-full h-full">
+              {task.status === "InProgress" && canInvoke &&
+                <AsyncButton
+                  variant="danger"
+                  size="sm"
+                  className="h-full flex-grow"
+                  onClick={() => handleForceStop(task.id)}>
+                    Force Stop
+                </AsyncButton>
+              }
+            </div>
+          ),
+          searchValue: "",
+          sortValue: "",
+          paddingX: 0,
+          paddingY: 0,
         },
       ];
     });
