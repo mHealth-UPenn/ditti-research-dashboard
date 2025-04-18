@@ -21,6 +21,7 @@ RUN pip3 install boto3 \
     pandas \
     psycopg2-binary \
     pydantic \
+    python-dotenv==1.0.1 \
     requests-aws4auth \
     SQLAlchemy==1.4.52 \
     zappa
