@@ -95,16 +95,25 @@ Resources:
           RequireSymbols: true
           TemporaryPasswordValidityDays: 7
       Schema:
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: phone_number
+          AttributeDataType: String
+          Mutable: true
+          Required: false
         - Name: given_name
           AttributeDataType: String
           Mutable: true
+          Required: true
         - Name: family_name
           AttributeDataType: String
           Mutable: true
+          Required: true
       AutoVerifiedAttributes:
         - email
       UsernameAttributes:
-        - phone_number
         - email
       EmailConfiguration:
         EmailSendingAccount: COGNITO_DEFAULT
@@ -132,6 +141,9 @@ Resources:
         - http://localhost:3000/coordinator/login
       SupportedIdentityProviders:
         - COGNITO
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
       AllowedOAuthFlows:
         - code
       AllowedOAuthScopes:
