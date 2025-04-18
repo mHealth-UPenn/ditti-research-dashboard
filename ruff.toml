@@ -1,0 +1,72 @@
+# adoption numbers https://github.com/astral-sh/ruff/discussions/9772
+
+line-length = 80
+indent-width = 4
+target-version = "py312"
+show-fixes = true        # surfaces exact auto‑fix patches in CI logs
+respect-gitignore = true # skip files ignored by Git, like Black does
+
+exclude = ["frontend"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+skip-magic-trailing-comma = false # respect trailing commas on short lines
+line-ending = "auto"              # preserve existing EOL across platforms
+
+[lint]
+select = [
+  # Core correctness & style
+  "F", # Pyflakes: catch undefined names & unused variables (5 065 projects)
+  "E", # Pycodestyle errors: enforce PEP 8 (5 010 projects)
+  "W", # Pycodestyle warnings: trailing whitespace, etc. (3 618 projects)
+  "I", # isort: import ordering (3 554 projects)
+
+  # Bug, security & modernization
+  "B",   # Bugbear: likely bugs & design issues (3 005 projects)
+  "S",   # Bandit: security checks (1 423 projects)
+  "UP",  # Pyupgrade: automatic syntax modernisation (2 587 projects)
+  "RUF", # Ruff‑native extras (1 945 projects)
+
+  # Style & readability
+  "D",   # pydocstyle: check docstrings
+  "N",   # pep8‑naming: enforce naming conventions (1 646 projects)
+  "C4",  # flake8‑comprehensions: suggest comprehensions (1 615 projects)
+  "Q",   # flake8‑quotes: quote consistency (1 522 projects)
+  "A",   # flake8‑builtins: warn on shadowing built‑ins (1 503 projects)
+  "SIM", # flake8‑simplify: suggest simpler constructs (1 384 projects)
+  "ARG", # flake8‑unused‑arguments: warn on unused args (1 080 projects)
+  "PIE", # flake8‑pie: best‑practice idioms (982 projects)
+  "ISC", # implicit‑str‑concat: prevent accidental string joins (1 351 projects)
+
+  # Debug & testing
+  "T",  # flake8‑debugger: forbid pdb.set_trace()/breakpoint() (609 projects)
+  "PT", # flake8‑pytest‑style: pytest best practices (845 projects)
+]
+
+ignore = [
+  # Delegated or globally noisy rules
+  "E501", # line‑length: handled by formatter (2 192 projects ignore)
+
+  # Team‑specific allowances
+  "G004", # f‑strings in logging are acceptable (571 projects ignore)
+  "D1",   # Not everything needs a docstring (63 projects ignore)
+
+  # Postponed
+  "ANN",    # missing type annotations (430 projects ignore)
+  "TRY003", # no robust exception classes yet (349 projects ignore)
+]
+
+fixable = ["ALL"]            # try to fix everything
+unfixable = ["T201", "T203"] # except deliberate print()/assert statements
+
+# Treat _ or _unused variables as intentionally unused
+dummy-variable-rgx = "^(_+|(_+[A-Za-z0-9_]*[A-Za-z0-9]+?))$"
+
+[lint.pydocstyle]
+convention = "numpy"
+
+[lint.per-file-ignores]
+"**/__init__.py" = ["F401"] # allow unused imports in package inits
+"tests/**/*.py" = ["S101"]  # bare `assert` in pytest tests is idiomatic
