@@ -11,7 +11,7 @@ def wearable_data_retrieval_env(config: ProjectConfigProvider) -> WearableDataRe
     provider = aws_account_provider()
 
     return {
-        "DB_URI": (
+        "FLASK_DB": (
             f"postgresql://{Postgres.USER.value}:{Postgres.PASSWORD.value}@"
             f"{config.project_name}-postgres:{Postgres.PORT.value}/"
             f"{Postgres.DB.value}"
@@ -21,6 +21,7 @@ def wearable_data_retrieval_env(config: ProjectConfigProvider) -> WearableDataRe
         "AWS_ACCESS_KEY_ID": provider.aws_access_key_id,
         "AWS_SECRET_ACCESS_KEY": provider.aws_secret_access_key,
         "AWS_DEFAULT_REGION": provider.aws_region,
+        "TESTING": "true",
     }
 
 

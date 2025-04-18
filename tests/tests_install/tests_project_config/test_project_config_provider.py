@@ -28,13 +28,9 @@ def project_config_provider_mock():
 
 def test_init(logger_mock):
     """Test initialization of ProjectConfigProvider"""
-    project_config_provider = ProjectConfigProvider(
-        logger=logger_mock,
-        project_suffix="test-project-suffix",
-    )
+    project_config_provider = ProjectConfigProvider(logger=logger_mock)
 
     assert project_config_provider.logger == logger_mock
-    assert project_config_provider.project_suffix == "test-project-suffix"
     assert project_config_provider.project_config is None
     assert project_config_provider.user_input is None
 
@@ -98,10 +94,7 @@ def test_get_user_input_invalid_email(project_config_provider_mock: ProjectConfi
 def test_setup_project_config(user_input_mock: UserInput):
     """Test setup_project_config"""
     # Create a mock project config provider
-    project_config_provider_mock = ProjectConfigProvider(
-        logger=MagicMock(),
-        project_suffix="suffix",
-    )
+    project_config_provider_mock = ProjectConfigProvider(logger=MagicMock())
     project_config_mock = project_config(project_config_provider_mock.hashstr)
 
     project_config_provider_mock.user_input = user_input_mock
@@ -114,15 +107,12 @@ def test_setup_project_config(user_input_mock: UserInput):
 def test_format_string(project_config_provider_mock: ProjectConfigProvider):
     """Test format_string method"""
     result = project_config_provider_mock.format_string("prefix-{project_name}")
-    assert result == f"prefix-{project_config_provider_mock.project_name}-suffix"
+    assert result == f"prefix-{project_config_provider_mock.project_name}"
 
 
 def test_write_project_config(logger_mock: Logger):
     """Test write_project_config method"""
-    provider = ProjectConfigProvider(
-        logger=logger_mock,
-        project_suffix="suffix",
-    )
+    provider = ProjectConfigProvider(logger=logger_mock)
     project_config_mock = project_config(provider.hashstr)
     provider.project_config = project_config_mock
 

@@ -1,11 +1,10 @@
-import subprocess
 from unittest.mock import patch, MagicMock
 
 import docker
 import pytest
 
 from tests.tests_install.tests_local_providers.mock_docker_provider import docker_provider
-from install.utils.exceptions import DockerSDKError, SubprocessError, LocalProviderError
+from install.utils.exceptions import DockerSDKError, LocalProviderError
 from install.local_providers.docker_provider import DockerProvider
 from install.utils.enums import Postgres
 
@@ -22,12 +21,6 @@ def shutil_mock():
         patch("shutil.rmtree") as mock_rmtree,
     ):
         yield mock_copytree, mock_rmtree
-
-
-@pytest.fixture
-def subprocess_mock():
-    with patch("subprocess.run") as mock_run:
-        yield mock_run
 
 
 def test_create_network_success(docker_provider_mock: DockerProvider):
@@ -119,7 +112,7 @@ def test_build_wearable_data_retrieval_copy_error(docker_provider_mock: DockerPr
         docker_provider_mock.build_wearable_data_retrieval_container()
 
 
-def test_build_wearable_data_retrieval_build_error(docker_provider_mock: DockerProvider, shutil_mock: MagicMock):
+def test_build_wearable_data_retrieval_build_error(docker_provider_mock: DockerProvider, shutil_mock: MagicMock):  # Mock shutil to avoid copying shared files
     """Test handling of unexpected error when building wearable data retrieval container."""
     docker_provider_mock.docker_client.images.build.side_effect = docker.errors.BuildError("Build Error", "stderr")
 
@@ -127,7 +120,7 @@ def test_build_wearable_data_retrieval_build_error(docker_provider_mock: DockerP
         docker_provider_mock.build_wearable_data_retrieval_container()
 
 
-def test_build_wearable_data_retrieval_unexpected_error(docker_provider_mock: DockerProvider, shutil_mock: MagicMock):
+def test_build_wearable_data_retrieval_unexpected_error(docker_provider_mock: DockerProvider, shutil_mock: MagicMock):  # Mock shutil to avoid copying shared files
     """Test handling of unexpected error when building wearable data retrieval container."""
     docker_provider_mock.docker_client.images.build.side_effect = Exception("Unexpected Error")
 
@@ -146,7 +139,7 @@ def test_run_wearable_data_retrieval_container_success(docker_provider_mock: Doc
     assert call_args["platform"] == "linux/amd64"
     assert call_args["network"] == docker_provider_mock.config.network_name
     assert call_args["ports"] == {"9000": 8080}
-    assert call_args["environment"] == {"TESTING": "true"}
+    assert call_args["environment"] == docker_provider_mock.env_file_provider.get_wearable_data_retrieval_env()
     assert call_args["detach"] is True
 
 

@@ -5,7 +5,7 @@ class Postgres(Enum):
     USER = "username"
     PASSWORD = "password"
     PORT = 5432
-    DB = "database_name"
+    DB = "postgres"
 
 
 class FString(Enum):

@@ -34,12 +34,10 @@ class ProjectConfigProvider:
     def __init__(
             self, *,
             logger: Logger,
-            project_suffix: Optional[str] = None,
         ):
         self.logger = logger
         self.project_config = None
         self.user_input = None
-        self.project_suffix = project_suffix
         self.hashstr = "".join(random.choices(
             string.ascii_letters + string.digits, k=8
         )).lower()
@@ -379,11 +377,8 @@ class ProjectConfigProvider:
             )
         }
 
-        if self.project_suffix:
-            project_name = f"{self.project_name}-{self.project_suffix}"
-
         self.project_config = {
-            "project_name": project_name,
+            "project_name": self.project_name,
             "admin_email": self.admin_email,
             "aws": {
                 "cognito": cognito_config,
@@ -398,8 +393,6 @@ class ProjectConfigProvider:
 
     def format_string(self, fstr: str, add_hashstr: bool = False) -> str:
         project_name = self.project_name
-        if self.project_suffix:
-            project_name = f"{project_name}-{self.project_suffix}"
         if add_hashstr:
             project_name += f"-{self.hashstr}"
         return fstr.format(project_name=project_name)

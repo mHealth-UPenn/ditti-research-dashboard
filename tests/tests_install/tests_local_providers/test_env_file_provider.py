@@ -44,24 +44,18 @@ def test_get_root_env(root_mock: RootEnv, env_file_provider_mock: EnvFileProvide
     assert root_mock == env_file_provider_mock.get_root_env()
 
 
-def test_write_env_files(env_file_provider_mock: EnvFileProvider, open_mock: MagicMock):
-    env_file_provider_mock.write_env_files({}, {})
-    open_mock.assert_any_call(env_file_provider_mock.wearable_data_retrieval_filename, "w")
-    open_mock.assert_any_call(env_file_provider_mock.root_filename, "w")
-    assert open_mock.call_count == 2
+def test_write_root_env(env_file_provider_mock: EnvFileProvider, open_mock: MagicMock):
+    env_file_provider_mock.write_root_env()
+    open_mock.assert_called_once_with(env_file_provider_mock.root_filename, "w")
 
 
 def test_uninstall(env_file_provider_mock: EnvFileProvider, remove_mock: MagicMock):
     env_file_provider_mock.uninstall()
-    remove_mock.assert_any_call(env_file_provider_mock.wearable_data_retrieval_filename)
-    remove_mock.assert_any_call(env_file_provider_mock.root_filename)
-    assert remove_mock.call_count == 2
+    remove_mock.assert_called_once_with(env_file_provider_mock.root_filename)
 
 
 def test_uninstall_not_found(env_file_provider_mock: EnvFileProvider, remove_mock: MagicMock):
     remove_mock.side_effect = FileNotFoundError
     env_file_provider_mock.uninstall()
-    remove_mock.assert_any_call(env_file_provider_mock.wearable_data_retrieval_filename)
-    remove_mock.assert_any_call(env_file_provider_mock.root_filename)
-    assert remove_mock.call_count == 2
-    assert env_file_provider_mock.logger.warning.call_count == 2
+    remove_mock.assert_called_once_with(env_file_provider_mock.root_filename)
+    assert env_file_provider_mock.logger.warning.call_count == 1

@@ -21,7 +21,7 @@ from install.resource_managers import (
     AwsS3ResourceManager,
     AwsSecretsmanagerResourceManager,
 )
-from install.utils import Colorizer, Logger, get_project_suffix
+from install.utils import Colorizer, Logger
 from install.utils.types import Env
 from install.utils.exceptions import (
     CancelInstallation,
@@ -35,10 +35,7 @@ class Installer:
         self.env = env
 
         # Initialize project config provider
-        self.project_config_provider = ProjectConfigProvider(
-            logger=self.logger,
-            project_suffix=get_project_suffix(env),
-        )
+        self.project_config_provider = ProjectConfigProvider(logger=self.logger)
 
         # Initialize AWS providers
         self.aws_client_provider = AwsClientProvider()
@@ -69,14 +66,15 @@ class Installer:
         )
 
         # Initialize local providers
-        self.docker_provider = DockerProvider(
-            logger=self.logger,
-            config=self.project_config_provider,
-        )
         self.env_file_provider = EnvFileProvider(
             logger=self.logger,
             config=self.project_config_provider,
             aws_account_provider=self.aws_account_provider,
+        )
+        self.docker_provider = DockerProvider(
+            logger=self.logger,
+            config=self.project_config_provider,
+            env_file_provider=self.env_file_provider,
         )
         self.database_provider = DatabaseProvider(
             logger=self.logger,
@@ -139,9 +137,7 @@ class Installer:
 
             # Setup .env files
             self.logger(Colorizer.cyan("\n[Environment Files Setup]"))
-            wearable_data_retrieval_env = self.env_file_provider.get_wearable_data_retrieval_env()
-            root_env = self.env_file_provider.get_root_env()
-            self.env_file_provider.write_env_files(wearable_data_retrieval_env, root_env)
+            self.env_file_provider.write_root_env()
 
             # Setup database
             self.logger(Colorizer.cyan("\n[Database Setup]"))

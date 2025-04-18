@@ -7,21 +7,23 @@ import docker
 from docker.models.containers import Container
 from docker.models.networks import Network
 
+from install.local_providers.env_file_provider import EnvFileProvider
 from install.project_config import ProjectConfigProvider
 from install.utils import Colorizer, Logger
 from install.utils.enums import Postgres
-from install.utils.exceptions import DockerSDKError, SubprocessError, LocalProviderError
-
+from install.utils.exceptions import DockerSDKError, LocalProviderError
 
 class DockerProvider:
     def __init__(
             self, *,
             logger: Logger,
             config: ProjectConfigProvider,
+            env_file_provider: EnvFileProvider,
         ):
         self.logger = logger
         self.config = config
         self.docker_client = docker.from_env()
+        self.env_file_provider = env_file_provider
 
     def create_network(self) -> None:
         """Create Docker network."""
@@ -136,8 +138,8 @@ class DockerProvider:
                 name=self.config.wearable_data_retrieval_container_name,
                 platform="linux/amd64",
                 network=self.config.network_name,
-                ports={"9000": 8080},
-                environment={"TESTING": "true"},
+                ports={"8080": 9000},
+                environment=self.env_file_provider.get_wearable_data_retrieval_env(),
                 detach=True,
             )
         except docker.errors.ContainerError as e:

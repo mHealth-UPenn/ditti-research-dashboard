@@ -51,7 +51,7 @@ class FrontendProvider:
             os.chdir(self.frontend_dir)
             shutil.rmtree("node_modules")
             self.logger(Colorizer.blue("Frontend uninstalled"))
-        except FileNotFoundError:
+        except (FileNotFoundError, OSError):
             self.logger.warning(f"Frontend node_modules directory {Colorizer.blue('node_modules')} not found")
         finally:
             os.chdir("..")
