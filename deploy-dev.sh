@@ -32,10 +32,19 @@ secret_json=$(aws secretsmanager get-secret-value --secret-id "$dev_secret_name"
 if [[ -z "$secret_json" ]]; then
     echo -e "${RED}Failed to retrieve secret or secret is empty.${RESET}"
 else
-    # Parse the JSON and export key-value pairs as environment variables
-    echo "$secret_json" | jq -r 'to_entries | .[] | "export \(.key)=\(.value)"' | while read -r env_var; do
-    eval "$env_var"
-    done
+    # Create a temporary file to store the environment variables
+    temp_env_file=$(mktemp)
+    
+    # Parse the JSON and write environment variable assignments to the temporary file
+    echo "$secret_json" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > "$temp_env_file"
+    
+    # Source the temporary file to set environment variables in the current shell
+    set -a
+    source "$temp_env_file"
+    set +a
+    
+    # Clean up the temporary file
+    rm "$temp_env_file"
 fi
 
 echo -e "Loaded environment variables from ${BLUE}$dev_secret_name${RESET}"
