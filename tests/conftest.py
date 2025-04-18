@@ -8,7 +8,7 @@ load_dotenv("flask.env")
 # Environment variables
 os.environ["AWS_ACCESS_KEY_ID"] = "testing"
 os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
-os.environ["AWS_REGION"] = "us-east-1"
+os.environ["AWS_DEFAULT_REGION"] = "testing"
 os.environ["APP_SYNC_HOST"] = "https://testing"
 os.environ["AWS_TABLENAME_USER"] = "testing_table_user"
 os.environ["AWS_TABLENAME_TAP"] = "testing_table_tap"
