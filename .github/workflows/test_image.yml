@@ -45,7 +45,7 @@ jobs:
             --env-file flask.env \
             -e FLASK_DB=${{ env.FLASK_DB }} \
             -e FLASK_APP=run.py \
-            -e AWS_DEFAULT_REGION=testing \
+            -e AWS_DEFAULT_REGION=us-east-1 \
             --entrypoint flask \
             flask-app \
             run
