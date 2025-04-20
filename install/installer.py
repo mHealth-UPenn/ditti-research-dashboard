@@ -216,5 +216,5 @@ class Installer:
 
         except Exception:
             traceback.print_exc()
-            self.logger.error(f"Uninstall failed.")
+            self.logger.error("Uninstall failed.")
             sys.exit(1)
