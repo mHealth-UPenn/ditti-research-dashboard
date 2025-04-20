@@ -16,8 +16,6 @@
 
 import re
 
-from install.utils.types import Env
-
 
 def is_valid_name(name: str) -> bool:
     """Validate project name."""
