@@ -79,6 +79,7 @@ def project_config_provider() -> ProjectConfigProvider:
     provider = ProjectConfigProvider(logger=logger())
     provider.user_input = user_input()
     provider.project_config = project_config(provider.hashstr)
+    provider.project_settings_exists = MagicMock(return_value=False)
     provider.get_continue_input = MagicMock(return_value="y")
     provider.get_project_name_input = MagicMock(return_value=provider.user_input["project_name"])
     provider.get_fitbit_credentials_input = MagicMock(return_value=(provider.user_input["fitbit_client_id"], provider.user_input["fitbit_client_secret"]))

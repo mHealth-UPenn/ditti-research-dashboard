@@ -289,7 +289,13 @@ class ProjectConfigProvider:
             ["wearable_data_retrieval_container_name"] = value
         self.write_project_config()
 
+    def project_settings_exists(self) -> bool:
+        return os.path.exists(self.project_config_filename)
+
     def get_user_input(self) -> None:
+        if self.project_settings_exists():
+            raise ProjectConfigError("Project settings already exist. Please uninstall the project first.")
+
         self.logger("\nThis script will install the development environment for"
                     " the project.")
         self.logger(Colorizer.magenta("The following will be configured and installed:"))

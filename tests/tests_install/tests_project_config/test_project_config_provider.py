@@ -91,6 +91,13 @@ def test_get_user_input_invalid_email(project_config_provider_mock: ProjectConfi
     assert project_config_provider_mock.user_input["admin_email"] == "valid@example.com"
 
 
+def test_get_user_input_project_settings_exists(project_config_provider_mock: ProjectConfigProvider):
+    """Test get_user_input when project settings already exist"""
+    project_config_provider_mock.project_settings_exists = MagicMock(return_value=True)
+    with pytest.raises(ProjectConfigError):
+        project_config_provider_mock.get_user_input()
+
+
 def test_setup_project_config(user_input_mock: UserInput):
     """Test setup_project_config"""
     # Create a mock project config provider
