@@ -34,7 +34,7 @@ def shutil_rmtree_mock():
 def test_initialize_frontend(frontend_provider_mock: FrontendProvider, subprocess_mock: MagicMock, os_chdir_mock: MagicMock):
     frontend_provider_mock.initialize_frontend()
     subprocess_mock.assert_any_call(["npm", "install"], check=True)
-    subprocess_mock.assert_any_call(["npx", "tailwindcss", "-i", "./src/index.css", "-o", "./src/output.css"], check=True)
+    subprocess_mock.assert_any_call(["npm", "run", "tailwind"], check=True)
     os_chdir_mock.assert_any_call(frontend_provider_mock.frontend_dir)
     os_chdir_mock.assert_any_call("..")
     assert os_chdir_mock.call_count == 2

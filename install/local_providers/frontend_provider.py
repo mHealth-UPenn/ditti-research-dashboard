@@ -37,11 +37,7 @@ class FrontendProvider:
             os.chdir(self.frontend_dir)
             subprocess.run(["npm", "install"], check=True)
             self.logger(Colorizer.blue("Frontend dependencies installed"))
-            subprocess.run([
-                "npx", "tailwindcss",
-                "-i", "./src/index.css",
-                "-o", "./src/output.css"
-            ], check=True)
+            subprocess.run(["npm", "run", "tailwind"], check=True)
             self.logger(Colorizer.blue("Tailwind CSS compiled"))
             os.chdir("..")
         except subprocess.CalledProcessError as e:
