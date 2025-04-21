@@ -73,7 +73,7 @@ class StreamFormatter(JsonFormatter):
 
 class JsonFileHandler(logging.Handler):
     def __init__(self, log_filename):
-        super(JsonFileHandler, self).__init__()
+        super().__init__()
         self.log_filename = log_filename
         self.log_entries = []  # Keep track of all log entries in memory
 

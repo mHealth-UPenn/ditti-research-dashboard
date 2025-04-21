@@ -99,7 +99,7 @@ def researcher_auth_required(
             # Simplify the parameter passing logic
             if "account" not in sig.parameters and "account" in kwargs:
                 # If function doesn't expect 'account', remove it from kwargs
-                account = kwargs.pop("account")
+                kwargs.pop("account")
 
             return func(*args, **kwargs)
 

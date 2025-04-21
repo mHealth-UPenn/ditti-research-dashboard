@@ -79,7 +79,7 @@ def test_get_fitbit_oauth_session_success(app):
             # Mock tm.add_or_update_api_token if needed
             with patch.object(
                 tm, "add_or_update_api_token"
-            ) as mock_add_update_api_token:
+            ):
                 # Mock WebApplicationClient
                 with patch(
                     "shared.fitbit.WebApplicationClient"
@@ -178,7 +178,7 @@ def test_get_fitbit_oauth_session_refresh_failure(app):
             # Mock tm.add_or_update_api_token (should not be called due to refresh failure)
             with patch.object(
                 tm, "add_or_update_api_token"
-            ) as mock_add_update_api_token:
+            ):
                 # Mock WebApplicationClient
                 with patch(
                     "shared.fitbit.WebApplicationClient"
@@ -251,7 +251,7 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_failure(app):
                 tm,
                 "add_or_update_api_token",
                 side_effect=Exception("TM add_or_update_api_token failed"),
-            ) as mock_add_update_api_token:
+            ):
                 # Mock WebApplicationClient
                 with patch(
                     "shared.fitbit.WebApplicationClient"

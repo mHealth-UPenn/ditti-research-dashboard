@@ -880,10 +880,10 @@ def test_study_subject_get_all(get_admin, post_admin, create_study_subject):
     existing_len = len(data_res)
 
     # Create multiple StudySubjects
-    subject1 = create_study_subject(
+    create_study_subject(
         ditti_id="get_all_subject1_ditti_id", studies=[], apis=[]
     )
-    subject2 = create_study_subject(
+    create_study_subject(
         ditti_id="get_all_subject2_ditti_id", studies=[], apis=[]
     )
     subject3 = create_study_subject(
@@ -989,7 +989,7 @@ def test_study_subject_get_archived_not_returned(get_admin, create_study_subject
     existing_len = len(data_res)
 
     # Create StudySubjects
-    subject1 = create_study_subject(
+    create_study_subject(
         ditti_id="archived_not_returned1_ditti_id", studies=[], apis=[]
     )
     subject2 = create_study_subject(

@@ -71,7 +71,7 @@ class LambdaCredentialsManager:
             secret_data = json.loads(secret_string)
             access_key = secret_data.get("LAMBDA_ACCESS_KEY_ID")
             secret_key = secret_data.get("LAMBDA_SECRET_ACCESS_KEY")
-            region = secret_data.get("LAMBDA_AWS_REGION", self.region_name)
+            secret_data.get("LAMBDA_AWS_REGION", self.region_name)
 
             if not access_key or not secret_key:
                 logger.error(

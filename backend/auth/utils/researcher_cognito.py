@@ -71,7 +71,7 @@ def create_researcher(email, temp_password=None, attributes=None):
         # Create user in Cognito
         if temp_password:
             # Create user with specified temporary password
-            response = client.admin_create_user(
+            client.admin_create_user(
                 UserPoolId=user_pool_id,
                 Username=email,
                 UserAttributes=user_attributes,
@@ -80,7 +80,7 @@ def create_researcher(email, temp_password=None, attributes=None):
             )
         else:
             # Let Cognito generate a temporary password and send invitation
-            response = client.admin_create_user(
+            client.admin_create_user(
                 UserPoolId=user_pool_id,
                 Username=email,
                 UserAttributes=user_attributes,

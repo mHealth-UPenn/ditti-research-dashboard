@@ -46,7 +46,7 @@ def stop():
         )
         events.extend(res["events"])
 
-    logger.info("Current time: %s" % datetime.now())
+    logger.info(f"Current time: {datetime.now()}")
 
     # if there was a request in the last two hours
     if events:
@@ -55,7 +55,7 @@ def stop():
         last = sorted(list(timestamps))[-1]
         last = datetime.fromtimestamp(last // 1000)
 
-        logger.info("Last request timestamp: %s" % last)
+        logger.info(f"Last request timestamp: {last}")
 
     else:
         logger.info("No requests in the last two hours")
@@ -66,11 +66,11 @@ def stop():
         res = rds.describe_db_instances(DBInstanceIdentifier=instance)
         status = res["DBInstances"][0]["DBInstanceStatus"]
 
-        logger.info("Current DB status: %s" % status)
+        logger.info(f"Current DB status: {status}")
 
         # if the database is running
         if status == "available":
-            logger.info("Stopping DB instance: %s" % instance)
+            logger.info(f"Stopping DB instance: {instance}")
 
             # stop the database
             rds.stop_db_instance(DBInstanceIdentifier=instance)

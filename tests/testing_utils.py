@@ -511,6 +511,6 @@ def mock_boto3_client(service_name, mock_methods=None):
 
     # Patch boto3.client to return our mock
     patcher = patch("boto3.client", return_value=mock_client)
-    mock_boto3 = patcher.start()
+    patcher.start()
 
     return mock_client

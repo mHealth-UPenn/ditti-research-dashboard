@@ -51,7 +51,7 @@ class ParticipantAuth(CognitoAuthBase):
         )
 
         if not include_archived:
-            query = query.filter(StudySubject.is_archived == False)
+            query = query.filter(StudySubject.is_archived is False)
 
         return query.first()
 

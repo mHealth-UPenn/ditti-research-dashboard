@@ -65,7 +65,7 @@ def get_taps(account):
 
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
-        q = 'user_permission_idBEGINS"%s"' % right
+        q = f'user_permission_idBEGINS"{right}"'
         return left + ("OR" if left else "") + q
 
     try:
@@ -124,7 +124,7 @@ def get_taps(account):
 def get_audio_taps(account):
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
-        q = 'user_permission_idBEGINS"%s"' % right
+        q = f'user_permission_idBEGINS"{right}"'
         return left + ("OR" if left else "") + q
 
     try:
@@ -231,7 +231,7 @@ def get_users(account):
 
     # add expressions to the query to return all users for multiple studies
     def f(left, right):
-        q = 'user_permission_idBEGINS"%s"' % right
+        q = f'user_permission_idBEGINS"{right}"'
         return left + ("OR" if left else "") + q
 
     # gets only useful user data
@@ -400,8 +400,7 @@ def user_edit(account):
     if re.search(r"[^\dA-Za-z]", user_permission_id) is not None:
         return jsonify(
             {
-                "msg": "Invalid study or study subject Ditti ID: %s"
-                % user_permission_id
+                "msg": f"Invalid study or study subject Ditti ID: {user_permission_id}"
             }
         )
 
@@ -411,14 +410,14 @@ def user_edit(account):
 
     # check that the ditti id is valid
     if study_ditti_id != study.ditti_id:
-        return jsonify({"msg": "Invalid study Ditti ID: %s" % study_ditti_id})
+        return jsonify({"msg": f"Invalid study Ditti ID: {study_ditti_id}"})
 
-    query = 'user_permission_id=="%s"' % user_permission_id
+    query = f'user_permission_id=="{user_permission_id}"'
     res = Query("User", query).scan()
 
     # if the ditti id does not exist
     if not res["Items"]:
-        return jsonify({"msg": "Ditti ID not found: %s" % user_permission_id})
+        return jsonify({"msg": f"Ditti ID not found: {user_permission_id}"})
 
     try:
         updater = Updater("User")

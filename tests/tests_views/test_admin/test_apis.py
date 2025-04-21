@@ -95,8 +95,8 @@ def test_api_get_all(get_admin, create_api):
     Test retrieving all non-archived APIs.
     """
     # Create APIs
-    api1 = create_api("API Get All 1")
-    api2 = create_api("API Get All 2")
+    create_api("API Get All 1")
+    create_api("API Get All 2")
     api3 = create_api("API Get All 3")
 
     # Archive one API
@@ -202,7 +202,7 @@ def test_api_create_duplicate_name(post_admin, create_api):
     """
     Test creating an API with a name that already exists.
     """
-    api = create_api("Duplicate API Name")
+    create_api("Duplicate API Name")
     data = create_api_payload("Duplicate API Name")
     res = post_admin("/admin/api/create", data=data)
     data_res = json.loads(res.data)
@@ -227,7 +227,7 @@ def test_api_edit_duplicate_name(post_admin, create_api):
     """
     Test editing an API with a name that already exists.
     """
-    api1 = create_api("Original API 1")
+    create_api("Original API 1")
     api2 = create_api("Original API 2")
     edit_data = edit_api_payload(api2.id, "Original API 1")
     res = post_admin("/admin/api/edit", data=edit_data)
@@ -356,7 +356,7 @@ def test_api_edit_errors(
     if test_name == "Duplicate Name":
         # Create APIs
         api1 = create_api("API Original")
-        api2 = create_api("API Duplicate")
+        create_api("API Duplicate")
         edit_data = edit_api_payload(api1.id, "API Duplicate")
     elif test_name == "Non-existent ID":
         # Use non-existent ID

@@ -89,7 +89,7 @@ class MutationClient:
         query = self.f_string % fmt
         self.__body = {
             "query": query,
-            "variables": '{"in": %s}' % json.dumps(var),
+            "variables": f'{{"in": {json.dumps(var)}}}',
         }
 
     def set_mutation_v2(self, items):
@@ -125,19 +125,19 @@ class MutationClient:
         # Build the operations inside the mutation block
         for i in range(len(items)):
             index = i + 1
-            query += """
-                CreateAudioFileOperation%(index)s: createAudioFile(input: {
-                    availability: $availability%(index)s, 
-                    bucket: $bucket%(index)s, 
-                    category: $category%(index)s, 
-                    fileName: $fileName%(index)s, 
-                    studies: $studies%(index)s, 
-                    length: $length%(index)s, 
-                    title: $title%(index)s
-                }) {
+            query += f"""
+                CreateAudioFileOperation{index}: createAudioFile(input: {{
+                    availability: $availability{index},
+                    bucket: $bucket{index},
+                    category: $category{index},
+                    fileName: $fileName{index},
+                    studies: $studies{index},
+                    length: $length{index},
+                    title: $title{index}
+                }}) {{
                     id
-                }
-            """ % {"index": index}
+                }}
+            """
 
         # Close the mutation block
         query += "\n}"
@@ -305,7 +305,7 @@ class Updater:
             with. Any number of key, value pairs can be passed to this function
         """
         e = reduce(lambda l, r: l + f" {r}=:{r[0] + r[1]},", exp.keys(), "SET")
-        a = {":%s" % k[0] + k[1]: v for k, v in exp.items()}
+        a = {f":{k[0]}" + k[1]: v for k, v in exp.items()}
         self.__update_expression = e[:-1]
         self.__expression_attribute_values = a
 
@@ -582,7 +582,7 @@ class Query:
             pos = match.start(0)
 
             raise ValueError(
-                "Query contains invalid string at position %s: %s" % (pos, string)
+                f"Query contains invalid string at position {pos}: {string}"
             )
 
         return True
@@ -650,7 +650,7 @@ class Query:
         # replace nested subqueries with "$X"
         for i, block in enumerate(match):
             _i = i + len(blocks)
-            query = query.replace(f"({block})", "$%s" % _i)
+            query = query.replace(f"({block})", f"${_i}")
 
         blocks.extend(match)
         return cls.build_blocks(query, blocks=blocks)

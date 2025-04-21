@@ -227,7 +227,7 @@ class LambdaTaskService(DBService):
         Raises:
             RuntimeError: If the table reflection fails or the database schema is inconsistent.
         """
-        super(LambdaTaskService, self).__init__(db)
+        super().__init__(db)
         m = self.db.metadata
         e = self.db.engine
 
@@ -381,7 +381,7 @@ class StudySubjectService(DBService):
             *args: Positional arguments to be passed to the base `DBService` class.
         """
 
-        super(StudySubjectService, self).__init__(*args)
+        super().__init__(*args)
         m = self.db.metadata
         e = self.db.engine
 
@@ -456,16 +456,14 @@ class StudySubjectService(DBService):
                 and_(
                     self.study.c.did_consent,  # Get only studies that have been consented
                     or_(
-                        self.api.c.last_sync_date
-                        == None,  # Get any entries without a `last_sync_date`
+                        self.api.c.last_sync_date is None,  # Get any entries without a `last_sync_date`
                         and_(  # Get any entries with a `last_sync_date` before today and before the `expires_on` date
                             self.api.c.last_sync_date < date.today(),
                             self.study.c.expires_on > self.api.c.last_sync_date,
                         ),
                         self.study.c.starts_on
                         < earliest_sleep_log_subquery,  # Get any entries with past data that was not pulled
-                        earliest_sleep_log_subquery
-                        == None,  # Get any entries where no sleep logs exist
+                        earliest_sleep_log_subquery is None,  # Get any entries where no sleep logs exist
                     ),
                 )
             )

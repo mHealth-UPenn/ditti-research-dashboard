@@ -100,7 +100,7 @@ def touch():
                 res["msg"] = "STARTING"
 
             else:
-                res["msg"] = "STATUS: %s" % status
+                res["msg"] = f"STATUS: {status}"
 
     if available:
         # check that the database is healthy

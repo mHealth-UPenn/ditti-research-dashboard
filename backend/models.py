@@ -72,7 +72,7 @@ def init_admin_app():
     app = App.query.filter(query).first()
 
     if app is not None:
-        raise ValueError("This app already exists: %s" % app)
+        raise ValueError(f"This app already exists: {app}")
 
     app = App(name="Admin Dashboard")
     db.session.add(app)
@@ -99,7 +99,7 @@ def init_admin_group():
     access_group = AccessGroup.query.filter(query).first()
 
     if access_group is not None:
-        raise ValueError("This access group already exists: %s" % access_group)
+        raise ValueError(f"This access group already exists: {access_group}")
 
     query = App.name == "Admin Dashboard"
     app = App.query.filter(query).first()
@@ -148,7 +148,7 @@ def init_admin_account(email=None):
     admin = Account.query.filter(Account.email == email).first()
 
     if admin is not None:
-        raise ValueError("An admin account already exists: %s" % admin)
+        raise ValueError(f"An admin account already exists: {admin}")
 
     query = AccessGroup.name == "Admin"
     admin_group = AccessGroup.query.filter(query).first()
@@ -951,7 +951,7 @@ class Account(db.Model):
         }
 
     def __repr__(self):
-        return "<Account %s>" % self.email
+        return f"<Account {self.email}>"
 
 
 class JoinAccountAccessGroup(db.Model):
@@ -993,7 +993,7 @@ class JoinAccountAccessGroup(db.Model):
         return tuple_(cls.account_id, cls.access_group_id)
 
     def __repr__(self):
-        return "<JoinAccountAccessGroup %s-%s>" % self.primary_key
+        return "<JoinAccountAccessGroup {}-{}>".format(*self.primary_key)
 
 
 class JoinAccountStudy(db.Model):
@@ -1051,7 +1051,7 @@ class JoinAccountStudy(db.Model):
         return {**self.study.meta, "role": self.role.meta}
 
     def __repr__(self):
-        return "<JoinAccountStudy %s-%s>" % self.primary_key
+        return "<JoinAccountStudy {}-{}>".format(*self.primary_key)
 
 
 class AccessGroup(db.Model):
@@ -1112,7 +1112,7 @@ class AccessGroup(db.Model):
         }
 
     def __repr__(self):
-        return "<AccessGroup %s>" % self.name
+        return f"<AccessGroup {self.name}>"
 
 
 class JoinAccessGroupPermission(db.Model):
@@ -1163,7 +1163,7 @@ class JoinAccessGroupPermission(db.Model):
         return self.permission.meta
 
     def __repr__(self):
-        return "<JoinAccessGroupPermission %s-%s>" % self.primary_key
+        return "<JoinAccessGroupPermission {}-{}>".format(*self.primary_key)
 
 
 class Role(db.Model):
@@ -1201,7 +1201,7 @@ class Role(db.Model):
         }
 
     def __repr__(self):
-        return "<Role %s>" % self.name
+        return f"<Role {self.name}>"
 
 
 class JoinRolePermission(db.Model):
@@ -1252,7 +1252,7 @@ class JoinRolePermission(db.Model):
         return self.permission.meta
 
     def __repr__(self):
-        return "<JoinRolePermission %s-%s>" % self.primary_key
+        return "<JoinRolePermission {}-{}>".format(*self.primary_key)
 
 
 class Action(db.Model):
@@ -1277,7 +1277,7 @@ class Action(db.Model):
         return {"id": self.id, "value": self.value}
 
     def __repr__(self):
-        return "<Action %s>" % self.value
+        return f"<Action {self.value}>"
 
 
 class Resource(db.Model):
@@ -1302,7 +1302,7 @@ class Resource(db.Model):
         return {"id": self.id, "value": self.value}
 
     def __repr__(self):
-        return "<Resource %s>" % self.value
+        return f"<Resource {self.value}>"
 
 
 class Permission(db.Model):
@@ -1425,7 +1425,7 @@ class Permission(db.Model):
         return {"id": self.id, "action": self.action, "resource": self.resource}
 
     def __repr__(self):
-        return "<Permission %s %s>" % self.definition
+        return "<Permission {} {}>".format(*self.definition)
 
 
 class App(db.Model):
@@ -1450,7 +1450,7 @@ class App(db.Model):
         return {"id": self.id, "name": self.name}
 
     def __repr__(self):
-        return "<App %s>" % self.name
+        return f"<App {self.name}>"
 
 
 class Study(db.Model):
@@ -1511,7 +1511,7 @@ class Study(db.Model):
         }
 
     def __repr__(self):
-        return "<Study %s>" % self.acronym
+        return f"<Study {self.acronym}>"
 
 
 class JoinStudyRole(db.Model):
@@ -1580,7 +1580,7 @@ class BlockedToken(db.Model):
     created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     def __repr__(self):
-        return "<BlockedToken %s>" % self.id
+        return f"<BlockedToken {self.id}>"
 
 
 class AboutSleepTemplate(db.Model):
@@ -1609,7 +1609,7 @@ class AboutSleepTemplate(db.Model):
         return {"id": self.id, "name": self.name, "text": self.text}
 
     def __repr__(self):
-        return "<AboutSleepTemplate %s>" % self.name
+        return f"<AboutSleepTemplate {self.name}>"
 
 
 class StudySubject(db.Model):
@@ -1878,7 +1878,7 @@ class JoinStudySubjectApi(db.Model):
         return f"<JoinStudySubjectApi StudySubject {self.study_subject_id} - Api {self.api_id}>"
 
     def __repr__(self):
-        return "<JoinStudySubjectApi %s-%s>" % self.primary_key
+        return "<JoinStudySubjectApi {}-{}>".format(*self.primary_key)
 
 
 class Api(db.Model):
@@ -1905,7 +1905,7 @@ class Api(db.Model):
         return {"id": self.id, "name": self.name}
 
     def __repr__(self):
-        return "<Api %s>" % self.name
+        return f"<Api {self.name}>"
 
 
 class SleepLog(db.Model):

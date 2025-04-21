@@ -194,9 +194,9 @@ class TestSanitizeQuillHTML:
     def test_iframe_sanitization(self):
         """Test iframe sanitization with allowed attributes."""
         html = """
-        <iframe src="https://www.youtube.com/embed/12345" 
-                allowfullscreen="true" 
-                frameborder="0" 
+        <iframe src="https://www.youtube.com/embed/12345"
+                allowfullscreen="true"
+                frameborder="0"
                 class="ql-video">
         </iframe>
         """

@@ -301,8 +301,8 @@ def test_delete_participant_direct(app, study_subject, api_entry, join_api):
         app.app_context(),
         patch("backend.extensions.tm.delete_api_tokens") as mock_delete_tokens,
         patch("boto3.client") as mock_boto3_client,
-        patch("backend.extensions.db.session.delete") as mock_db_delete,
-        patch("backend.extensions.db.session.commit") as mock_db_commit,
+        patch("backend.extensions.db.session.delete"),
+        patch("backend.extensions.db.session.commit"),
     ):
         mock_cognito_client = MagicMock()
         mock_boto3_client.return_value = mock_cognito_client
@@ -351,8 +351,8 @@ def test_delete_participant_success(
         app.app_context(),
         patch("backend.extensions.tm.delete_api_tokens") as mock_delete_tokens,
         patch("boto3.client") as mock_boto3_client,
-        patch("backend.extensions.db.session.delete") as mock_db_delete,
-        patch("backend.extensions.db.session.commit") as mock_db_commit,
+        patch("backend.extensions.db.session.delete"),
+        patch("backend.extensions.db.session.commit"),
     ):
         mock_cognito_client = MagicMock()
         mock_boto3_client.return_value = mock_cognito_client
@@ -447,7 +447,7 @@ def test_delete_participant_cognito_exception(app, study_subject):
         mock_join_query.filter_by.return_value = mock_filter
 
         # Use our new mock_boto3_client utility to create a mock with an exception
-        mock_client = mock_boto3_client(
+        mock_boto3_client(
             "cognito-idp", {"admin_delete_user": Exception("Cognito error")}
         )
 
