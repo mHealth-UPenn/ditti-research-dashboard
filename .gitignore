@@ -41,3 +41,8 @@ zappa_settings.py
 .env.production
 
 data.json
+zappa_settings.json
+
+project-config*.json
+
+scripts/add_license.py

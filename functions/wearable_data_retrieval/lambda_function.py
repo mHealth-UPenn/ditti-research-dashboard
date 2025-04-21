@@ -851,11 +851,18 @@ def handler(event, context):
                     if entry.earliest_sleep_log is not None:
                         end_date = str(entry.earliest_sleep_log - timedelta(days=1))
 
-                    urls.append(build_url(
-                        entry,
-                        start_date=str(entry.starts_on.date()),
-                        end_date=end_date,
-                    ))
+                    try:
+                        urls.append(build_url(
+                            entry,
+                            start_date=str(entry.starts_on.date()),
+                            end_date=end_date,
+                        ))
+                    except ValueError:
+                        logger.warning(
+                            "Error building URL for retroactive data. Continuing to next study subject.",
+                            extra={"error": traceback.format_exc()}
+                        )
+                        continue
 
                 # Try querying the fitbit API for this study subject
                 data = []
