@@ -1,4 +1,3 @@
-
 import pytest
 from flask import json
 from moto import mock_aws

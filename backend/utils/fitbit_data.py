@@ -60,9 +60,7 @@ def validate_date_range(
         raise ValueError("end_date cannot be earlier than start_date.")
 
     if (end_date - start_date).days > MAX_DATE_RANGE_DAYS:
-        raise ValueError(
-            f"Date range cannot exceed {MAX_DATE_RANGE_DAYS} days."
-        )
+        raise ValueError(f"Date range cannot exceed {MAX_DATE_RANGE_DAYS} days.")
 
     return start_date, end_date
 
@@ -82,9 +80,7 @@ def cache_key_admin(ditti_id: str, start_date: date, end_date: date) -> str:
     return f"admin_fitbit_data:{ditti_id}:{start_date}:{end_date}"
 
 
-def cache_key_participant(
-    ditti_id: str, start_date: date, end_date: date
-) -> str:
+def cache_key_participant(ditti_id: str, start_date: date, end_date: date) -> str:
     """
     Generates a cache key for participant Fitbit data requests.
 

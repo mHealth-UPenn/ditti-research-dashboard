@@ -197,8 +197,7 @@ def test_property_getters_and_setters(
 
     # Test getters
     assert (
-        project_config_provider_mock.admin_email
-        == user_input_mock["admin_email"]
+        project_config_provider_mock.admin_email == user_input_mock["admin_email"]
     )
     assert (
         project_config_provider_mock.fitbit_client_id
@@ -274,9 +273,7 @@ def test_property_getters_and_setters(
     )
     assert (
         project_config_provider_mock.wearable_data_retrieval_container_name
-        == project_config_mock["docker"][
-            "wearable_data_retrieval_container_name"
-        ]
+        == project_config_mock["docker"]["wearable_data_retrieval_container_name"]
     )
 
     # Test setters with write_project_config mocked
@@ -409,9 +406,9 @@ def test_property_getters_and_setters(
         mock_write.reset_mock()
         project_config_provider_mock.secret_name = "new-secret"
         assert (
-            project_config_provider_mock.project_config["aws"][
-                "secrets_manager"
-            ]["secret_name"]
+            project_config_provider_mock.project_config["aws"]["secrets_manager"][
+                "secret_name"
+            ]
             == "new-secret"
         )
         mock_write.assert_called_once()
@@ -419,9 +416,9 @@ def test_property_getters_and_setters(
         mock_write.reset_mock()
         project_config_provider_mock.tokens_secret_name = "new-tokens-secret"
         assert (
-            project_config_provider_mock.project_config["aws"][
-                "secrets_manager"
-            ]["tokens_secret_name"]
+            project_config_provider_mock.project_config["aws"]["secrets_manager"][
+                "tokens_secret_name"
+            ]
             == "new-tokens-secret"
         )
         mock_write.assert_called_once()
@@ -437,9 +434,7 @@ def test_property_getters_and_setters(
         mock_write.reset_mock()
         project_config_provider_mock.network_name = "new-network"
         assert (
-            project_config_provider_mock.project_config["docker"][
-                "network_name"
-            ]
+            project_config_provider_mock.project_config["docker"]["network_name"]
             == "new-network"
         )
         mock_write.assert_called_once()

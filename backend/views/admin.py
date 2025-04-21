@@ -188,9 +188,7 @@ def account_create(account):
         # Add access groups
         for entry in data["access_groups"]:
             access_group = AccessGroup.query.get(entry["id"])
-            JoinAccountAccessGroup(
-                access_group=access_group, account=new_account
-            )
+            JoinAccountAccessGroup(access_group=access_group, account=new_account)
 
         # Add studies
         for entry in data["studies"]:
@@ -1475,9 +1473,7 @@ def about_sleep_template_create(account):
         db.session.rollback()
 
         return make_response(
-            {
-                "msg": "Internal server error when creating about sleep template."
-            },
+            {"msg": "Internal server error when creating about sleep template."},
             500,
         )
 
@@ -1538,9 +1534,7 @@ def about_sleep_template_edit(account):
         db.session.rollback()
 
         return make_response(
-            {
-                "msg": "Internal server error when updating about sleep template."
-            },
+            {"msg": "Internal server error when updating about sleep template."},
             500,
         )
 
@@ -1590,9 +1584,7 @@ def about_sleep_template_archive(account):
         db.session.rollback()
 
         return make_response(
-            {
-                "msg": "Internal server error when archiving about sleep template."
-            },
+            {"msg": "Internal server error when archiving about sleep template."},
             500,
         )
 
@@ -1641,8 +1633,7 @@ def study_subject(account):
 
             # Query for the specific StudySubject, excluding archived entries
             query = StudySubject.query.filter(
-                ~StudySubject.is_archived
-                & (StudySubject.id == study_subject_id)
+                ~StudySubject.is_archived & (StudySubject.id == study_subject_id)
             )
         else:
             # Query for all non-archived StudySubjects
@@ -1977,9 +1968,7 @@ def study_subject_edit(account):
                     StudySubject.ditti_id == new_ditti_id,
                     StudySubject.id != study_subject_id,
                 ).first():
-                    return make_response(
-                        {"msg": "ditti_id already exists"}, 400
-                    )
+                    return make_response({"msg": "ditti_id already exists"}, 400)
                 study_subject.ditti_id = new_ditti_id
 
         # Update other non-relationship fields using populate_model

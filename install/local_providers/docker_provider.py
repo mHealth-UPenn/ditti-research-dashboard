@@ -131,9 +131,7 @@ class DockerProvider:
     def build_wearable_data_retrieval_container(self) -> None:
         """Build wearable data retrieval container."""
         try:
-            shutil.copytree(
-                "shared", "functions/wearable_data_retrieval/shared"
-            )
+            shutil.copytree("shared", "functions/wearable_data_retrieval/shared")
         except Exception as e:
             traceback.print_exc()
             self.logger.error(

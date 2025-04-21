@@ -40,9 +40,7 @@ def aws_secretsmanager_resource_manager():
     config = project_config_provider()
 
     # The resource manager expects the secret to be created by cloudformation
-    client_provider.secrets_manager_client.create_secret(
-        Name=config.secret_name
-    )
+    client_provider.secrets_manager_client.create_secret(Name=config.secret_name)
 
     return AwsSecretsmanagerResourceManager(
         logger=logger(),

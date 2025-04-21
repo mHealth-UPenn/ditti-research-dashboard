@@ -133,9 +133,7 @@ def get_study_details(account):
         # Limited access path: verify study association through join table
         study = (
             Study.query.join(JoinAccountStudy)
-            .filter(
-                JoinAccountStudy.primary_key == tuple_(account.id, study_id)
-            )
+            .filter(JoinAccountStudy.primary_key == tuple_(account.id, study_id))
             .first()
         )
 
@@ -182,9 +180,7 @@ def get_study_contacts(account):
         # For role-based access, verify association through join table
         study = (
             Study.query.join(JoinAccountStudy)
-            .filter(
-                JoinAccountStudy.primary_key == tuple_(account.id, study_id)
-            )
+            .filter(JoinAccountStudy.primary_key == tuple_(account.id, study_id))
             .first()
         )
 

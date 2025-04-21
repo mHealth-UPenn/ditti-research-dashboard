@@ -72,9 +72,7 @@ def fitbit_authorize(ditti_id: str):
 
         # Generate a random state string for CSRF protection
         state = (
-            base64.urlsafe_b64encode(os.urandom(32))
-            .rstrip(b"=")
-            .decode("utf-8")
+            base64.urlsafe_b64encode(os.urandom(32)).rstrip(b"=").decode("utf-8")
         )
 
         # Save code_verifier and state in session for later verification
@@ -152,9 +150,7 @@ def fitbit_callback(ditti_id: str):
         )
 
         # Fitbit requires HTTP Basic Authentication for the token request
-        auth = requests.auth.HTTPBasicAuth(
-            fitbit_client_id, fitbit_client_secret
-        )
+        auth = requests.auth.HTTPBasicAuth(fitbit_client_id, fitbit_client_secret)
 
         # Send the token request to Fitbit
         try:
@@ -310,9 +306,7 @@ def fitbit_sleep_list(ditti_id: str):
                 ).json()
             except Exception as e:
                 logger.error(
-                    f"Fitbit Data Request Error for ditti_id {ditti_id}: {
-                        str(e)
-                    }"
+                    f"Fitbit Data Request Error for ditti_id {ditti_id}: {str(e)}"
                 )
                 return make_response(
                     {"msg": "Failed to retrieve sleep data."}, 401

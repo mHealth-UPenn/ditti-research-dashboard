@@ -182,9 +182,7 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
                         Username=email,
                         UserAttributeNames=[attr_name],
                     )
-                    logger.info(
-                        f"Deleted attribute {attr_name} for user {email}"
-                    )
+                    logger.info(f"Deleted attribute {attr_name} for user {email}")
                 except ClientError as attr_error:
                     # Log the error but continue processing other attributes
                     # This prevents a single attribute failure from blocking other operations
@@ -271,9 +269,7 @@ def get_researcher(email):
         user_pool_id = current_app.config["COGNITO_RESEARCHER_USER_POOL_ID"]
 
         # Get user from Cognito
-        response = client.admin_get_user(
-            UserPoolId=user_pool_id, Username=email
-        )
+        response = client.admin_get_user(UserPoolId=user_pool_id, Username=email)
 
         # Extract user attributes
         user_info = {

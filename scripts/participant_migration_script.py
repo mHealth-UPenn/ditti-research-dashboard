@@ -39,9 +39,7 @@ if __name__ == "__main__":
     with app.app_context():
         for user in users:
             try:
-                match = re.match(
-                    r"^[A-Za-z]+(?=\d)", user["user_permission_id"]
-                )
+                match = re.match(r"^[A-Za-z]+(?=\d)", user["user_permission_id"])
 
                 if not match:
                     continue
@@ -55,9 +53,7 @@ if __name__ == "__main__":
                 if not study:
                     continue
 
-                participant = m.StudySubject(
-                    ditti_id=user["user_permission_id"]
-                )
+                participant = m.StudySubject(ditti_id=user["user_permission_id"])
                 m.JoinStudySubjectStudy(
                     study_subject=participant,
                     study=study,

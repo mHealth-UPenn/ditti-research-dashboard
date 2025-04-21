@@ -52,17 +52,13 @@ def populate_model(model, data, use_camel_to_snake=False, custom_mapping=None):
 
         # Check if the snake_case key is a valid model attribute
         if use_camel_to_snake and k not in model_columns:
-            raise ValueError(
-                f"Invalid attribute: {original_key} (mapped to {k})"
-            )
+            raise ValueError(f"Invalid attribute: {original_key} (mapped to {k})")
 
         # Ensure the attribute exists on the model
         try:
             attr = getattr(model, k)
         except AttributeError:
-            raise ValueError(
-                f"Invalid attribute: {original_key} (mapped to {k})"
-            )
+            raise ValueError(f"Invalid attribute: {original_key} (mapped to {k})")
 
         # Skip lists and relationships
         if isinstance(v, list):

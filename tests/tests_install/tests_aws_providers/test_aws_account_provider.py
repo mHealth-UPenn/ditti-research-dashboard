@@ -129,8 +129,8 @@ def test_aws_account_id_unexpected_error(
     aws_account_provider_mock: AwsAccountProvider,
 ):
     aws_account_provider_mock.client.get_caller_identity = MagicMock()
-    aws_account_provider_mock.client.get_caller_identity.side_effect = (
-        Exception("Unexpected error")
+    aws_account_provider_mock.client.get_caller_identity.side_effect = Exception(
+        "Unexpected error"
     )
 
     with pytest.raises(AwsProviderError, match="Unexpected error"):

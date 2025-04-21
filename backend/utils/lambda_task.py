@@ -38,9 +38,7 @@ def create_and_invoke_lambda_task():
     try:
         now = datetime.now(UTC)
         # Create a new LambdaTask with status "Pending"
-        lambda_task = LambdaTask(
-            status="Pending", created_on=now, updated_on=now
-        )
+        lambda_task = LambdaTask(status="Pending", created_on=now, updated_on=now)
         db.session.add(lambda_task)
         db.session.commit()
 

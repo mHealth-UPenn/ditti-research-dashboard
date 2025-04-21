@@ -582,8 +582,7 @@ class Query:
             pos = match.start(0)
 
             raise ValueError(
-                "Query contains invalid string at position %s: %s"
-                % (pos, string)
+                "Query contains invalid string at position %s: %s" % (pos, string)
             )
 
         return True

@@ -110,9 +110,7 @@ def downgrade():
     with op.batch_alter_table("account", schema=None) as batch_op:
         batch_op.alter_column("public_id", nullable=False)
         batch_op.alter_column("_password", nullable=False)
-        batch_op.create_unique_constraint(
-            "account_public_id_key", ["public_id"]
-        )
+        batch_op.create_unique_constraint("account_public_id_key", ["public_id"])
 
     # Get phone numbers and process them individually
     result = conn.execute(

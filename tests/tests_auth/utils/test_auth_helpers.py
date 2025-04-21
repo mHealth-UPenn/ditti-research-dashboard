@@ -74,9 +74,7 @@ def test_check_permissions_denied(mock_app):
         # Mock an account with insufficient permissions
         account = MagicMock()
         account.get_permissions.return_value = ["some_permissions"]
-        account.validate_ask.side_effect = ValueError(
-            "Insufficient permissions"
-        )
+        account.validate_ask.side_effect = ValueError("Insufficient permissions")
         account.__str__.return_value = "user@example.com"
 
         has_permission, response = check_permissions(

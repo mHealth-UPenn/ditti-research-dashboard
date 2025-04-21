@@ -66,9 +66,7 @@ class TokensManager:
             response = self.client.get_secret_value(SecretId=secret_name)
             secret_string = response.get("SecretString")
             if secret_string is None:
-                logger.error(
-                    f"SecretString not found for secret: {secret_name}"
-                )
+                logger.error(f"SecretString not found for secret: {secret_name}")
                 raise KeyError(
                     f"Secret '{secret_name}' does not contain a SecretString."
                 )

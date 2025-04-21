@@ -208,9 +208,7 @@ class AuthControllerBase:
                 user: The user object if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
         """
-        raise NotImplementedError(
-            "Subclasses must implement get_or_create_user"
-        )
+        raise NotImplementedError("Subclasses must implement get_or_create_user")
 
     def get_redirect_url(self):
         """Get the URL to redirect to after login.
@@ -295,9 +293,7 @@ class AuthControllerBase:
                 user: The user object if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
         """
-        raise NotImplementedError(
-            "Subclasses must implement get_user_from_token"
-        )
+        raise NotImplementedError("Subclasses must implement get_user_from_token")
 
     def create_login_success_response(self, user):
         """Create success response for check-login.

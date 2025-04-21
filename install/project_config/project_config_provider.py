@@ -98,9 +98,7 @@ class ProjectConfigProvider:
     def participant_user_pool_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"][
-            "participant_user_pool_name"
-        ]
+        return self.project_config["aws"]["cognito"]["participant_user_pool_name"]
 
     @participant_user_pool_name.setter
     def participant_user_pool_name(self, value: str) -> None:
@@ -119,9 +117,9 @@ class ProjectConfigProvider:
 
     @participant_user_pool_domain.setter
     def participant_user_pool_domain(self, value: str) -> None:
-        self.project_config["aws"]["cognito"][
-            "participant_user_pool_domain"
-        ] = value
+        self.project_config["aws"]["cognito"]["participant_user_pool_domain"] = (
+            value
+        )
         self.write_project_config()
 
     @property
@@ -132,9 +130,7 @@ class ProjectConfigProvider:
 
     @participant_user_pool_id.setter
     def participant_user_pool_id(self, value: str) -> None:
-        self.project_config["aws"]["cognito"]["participant_user_pool_id"] = (
-            value
-        )
+        self.project_config["aws"]["cognito"]["participant_user_pool_id"] = value
         self.write_project_config()
 
     @property
@@ -152,15 +148,11 @@ class ProjectConfigProvider:
     def researcher_user_pool_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"][
-            "researcher_user_pool_name"
-        ]
+        return self.project_config["aws"]["cognito"]["researcher_user_pool_name"]
 
     @researcher_user_pool_name.setter
     def researcher_user_pool_name(self, value: str) -> None:
-        self.project_config["aws"]["cognito"]["researcher_user_pool_name"] = (
-            value
-        )
+        self.project_config["aws"]["cognito"]["researcher_user_pool_name"] = value
         self.write_project_config()
 
     @property
@@ -237,9 +229,7 @@ class ProjectConfigProvider:
     def tokens_secret_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["secrets_manager"][
-            "tokens_secret_name"
-        ]
+        return self.project_config["aws"]["secrets_manager"]["tokens_secret_name"]
 
     @tokens_secret_name.setter
     def tokens_secret_name(self, value: str) -> None:

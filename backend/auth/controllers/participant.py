@@ -150,8 +150,8 @@ class ParticipantAuthController(AuthControllerBase):
                 ditti_id: The ditti_id if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
         """
-        study_subject, error_msg = (
-            self.auth_manager.get_study_subject_from_token(id_token)
+        study_subject, error_msg = self.auth_manager.get_study_subject_from_token(
+            id_token
         )
 
         if not study_subject:
@@ -163,9 +163,7 @@ class ParticipantAuthController(AuthControllerBase):
                         status_code=404,
                         error_code="USER_NOT_FOUND",
                     )
-                elif (
-                    error_msg == "Account unavailable. Please contact support."
-                ):
+                elif error_msg == "Account unavailable. Please contact support.":
                     return None, create_error_response(
                         AUTH_ERROR_MESSAGES["account_archived"],
                         status_code=403,

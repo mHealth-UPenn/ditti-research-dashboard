@@ -307,9 +307,7 @@ class TestDeletions:
         baz = JoinStudySubjectStudy.query.filter(q3).first()
         bar = JoinStudySubjectApi.query.filter(q2).first()
         assert bar is not None, "JoinStudySubjectApi association should exist."
-        assert baz is not None, (
-            "JoinStudySubjectStudy association should exist."
-        )
+        assert baz is not None, "JoinStudySubjectStudy association should exist."
 
         # Delete the StudySubject
         db.session.delete(foo)
@@ -321,9 +319,7 @@ class TestDeletions:
         bar = JoinStudySubjectApi.query.filter(q2).first()
         assert foo is None, "StudySubject should be deleted."
         assert bar is None, "JoinStudySubjectApi association should be deleted."
-        assert baz is None, (
-            "JoinStudySubjectStudy association should be deleted."
-        )
+        assert baz is None, "JoinStudySubjectStudy association should be deleted."
 
     def test_delete_api_with_enrolled_subject(self, app):
         with pytest.raises(IntegrityError):

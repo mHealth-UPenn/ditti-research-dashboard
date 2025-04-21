@@ -34,9 +34,7 @@ class Colorizer:
     @classmethod
     def colorize(cls, text: Any, color: Color) -> str:
         # Replace any existing reset codes for nested colors
-        text = str(text).replace(
-            cls.color_codes["reset"], cls.color_codes[color]
-        )
+        text = str(text).replace(cls.color_codes["reset"], cls.color_codes[color])
         return f"{cls.color_codes[color]}{text}{cls.color_codes['reset']}"
 
     @classmethod

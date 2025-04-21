@@ -170,9 +170,9 @@ def test_fitbit_callback_success_new_association(
                 # Verify that tokens are stored
                 mock_add_update_api_token.assert_called_once()
                 args, kwargs = mock_add_update_api_token.call_args
-                assert (
-                    kwargs["api_name"] == "Fitbit"
-                ), f"Expected api_name 'Fitbit', got {kwargs['api_name']}"
+                assert kwargs["api_name"] == "Fitbit", (
+                    f"Expected api_name 'Fitbit', got {kwargs['api_name']}"
+                )
                 assert (
                     kwargs["ditti_id"] == study_subject.ditti_id
                 ), f"Expected ditti_id {study_subject.ditti_id}, got {

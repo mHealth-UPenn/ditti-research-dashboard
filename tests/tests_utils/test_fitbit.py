@@ -191,9 +191,7 @@ def test_get_fitbit_oauth_session_refresh_failure(app):
                         mock_response = MagicMock()
                         mock_response.status_code = 400
                         mock_response.raise_for_status.side_effect = (
-                            requests.exceptions.HTTPError(
-                                "Token refresh failed"
-                            )
+                            requests.exceptions.HTTPError("Token refresh failed")
                         )
                         mock_post.return_value = mock_response
 
@@ -322,9 +320,7 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(
                     if tokens.get("access_token"):
                         expired_tokens["access_token"] = tokens["access_token"]
                     if tokens.get("refresh_token"):
-                        expired_tokens["refresh_token"] = tokens[
-                            "refresh_token"
-                        ]
+                        expired_tokens["refresh_token"] = tokens["refresh_token"]
                     if tokens.get("expires_at"):
                         expired_tokens["expires_at"] = tokens["expires_at"]
 

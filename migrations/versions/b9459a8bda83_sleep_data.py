@@ -155,9 +155,7 @@ def upgrade():
     # 4. Modify 'study' Table
     with op.batch_alter_table("study", schema=None) as batch_op:
         # Make 'default_expiry_delta' non-nullable
-        batch_op.alter_column(
-            "default_expiry_delta", existing_type=sa.INTEGER()
-        )
+        batch_op.alter_column("default_expiry_delta", existing_type=sa.INTEGER())
         # Add 'data_summary' and 'is_qi' columns
         batch_op.add_column(sa.Column("data_summary", sa.Text(), nullable=True))
         batch_op.add_column(sa.Column("is_qi", sa.Boolean()))
@@ -181,13 +179,9 @@ def upgrade():
         )
 
     # 6. Modify 'join_study_subject_api' Table
-    with op.batch_alter_table(
-        "join_study_subject_api", schema=None
-    ) as batch_op:
+    with op.batch_alter_table("join_study_subject_api", schema=None) as batch_op:
         # Add 'last_sync_date' column
-        batch_op.add_column(
-            sa.Column("last_sync_date", sa.Date(), nullable=True)
-        )
+        batch_op.add_column(sa.Column("last_sync_date", sa.Date(), nullable=True))
         # Add 'created_on' column
         batch_op.add_column(
             sa.Column(
@@ -297,9 +291,7 @@ def downgrade():
     with op.batch_alter_table("study_subject", schema=None) as batch_op:
         # Add 'email' and 'is_confirmed' columns
         batch_op.add_column(
-            sa.Column(
-                "email", sa.VARCHAR(), autoincrement=False, nullable=False
-            )
+            sa.Column("email", sa.VARCHAR(), autoincrement=False, nullable=False)
         )
         batch_op.add_column(
             sa.Column(
@@ -328,9 +320,7 @@ def downgrade():
         batch_op.drop_column("created_on")
 
     # 6. Modify 'join_study_subject_api' Table
-    with op.batch_alter_table(
-        "join_study_subject_api", schema=None
-    ) as batch_op:
+    with op.batch_alter_table("join_study_subject_api", schema=None) as batch_op:
         # Drop 'last_sync_date' and 'created_on' columns
         batch_op.drop_column("created_on")
         batch_op.drop_column("last_sync_date")

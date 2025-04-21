@@ -46,9 +46,7 @@ def generate_code_verifier(length: int = 128) -> str:
     if not 43 <= length <= 128:
         raise ValueError("length must be between 43 and 128 characters")
     code_verifier = (
-        base64.urlsafe_b64encode(os.urandom(length))
-        .rstrip(b"=")
-        .decode("utf-8")
+        base64.urlsafe_b64encode(os.urandom(length)).rstrip(b"=").decode("utf-8")
     )
     return code_verifier[:length]
 
@@ -154,9 +152,7 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
             Exception: If the token refresh fails.
         """
         token_issuer_endpoint = "https://api.fitbit.com/oauth2/token"
-        auth = requests.auth.HTTPBasicAuth(
-            fitbit_client_id, fitbit_client_secret
-        )
+        auth = requests.auth.HTTPBasicAuth(fitbit_client_id, fitbit_client_secret)
         refresh_params = {
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,

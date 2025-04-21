@@ -69,9 +69,7 @@ def researcher_auth_required(
 
                 if not id_token:
                     logger.warning("No token found in request")
-                    return make_response(
-                        {"msg": "Authentication required"}, 401
-                    )
+                    return make_response({"msg": "Authentication required"}, 401)
 
                 # Create auth controller and validate token
                 auth_controller = ResearcherAuthController()

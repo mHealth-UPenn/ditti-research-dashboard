@@ -40,9 +40,7 @@ class LambdaCredentialsManager:
         """
         self.secret_name = secret_name
         self.region_name = region_name
-        self.client = boto3.client(
-            "secretsmanager", region_name=self.region_name
-        )
+        self.client = boto3.client("secretsmanager", region_name=self.region_name)
         self.credentials = None  # Cache credentials after retrieval
 
     def get_credentials(self) -> Credentials:

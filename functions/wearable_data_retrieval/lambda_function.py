@@ -530,9 +530,7 @@ class StudySubjectService(DBService):
             )
 
         if self.__entries is None:
-            raise RuntimeError(
-                "No entries to iterate. Call `get_entries` first."
-            )
+            raise RuntimeError("No entries to iterate. Call `get_entries` first.")
 
         for i in range(len(self.__entries)):
             self.__index = i
@@ -607,9 +605,7 @@ class StudySubjectService(DBService):
                     is_short=False,
                 )
                 self.connection.execute(insert_level_stmt)
-            for level_data in sleep_record.get("levels", {}).get(
-                "shortData", []
-            ):
+            for level_data in sleep_record.get("levels", {}).get("shortData", []):
                 insert_level_stmt = insert(self.sleep_level_table).values(
                     sleep_log_id=sleep_log_id,
                     date_time=datetime.strptime(
@@ -769,9 +765,7 @@ def build_url(
             start_date = entry.starts_on.strftime("%Y-%m-%d")
 
     if end_date is None:
-        timestamp = datetime.strptime(
-            function_timestamp, "%Y-%m-%dT%H:%M:%S.%f"
-        )
+        timestamp = datetime.strptime(function_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
         end_date = min(entry.expires_on, timestamp).strftime("%Y-%m-%d")
 
     if start_date >= end_date:

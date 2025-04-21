@@ -375,9 +375,7 @@ def test_invoke_lambda_task_lambda_invoke_exception(
     # Mock boto3 Lambda client to raise an exception on invoke
     mock_lambda_client = MagicMock()
     mock_boto3_client.return_value = mock_lambda_client
-    mock_lambda_client.invoke.side_effect = Exception(
-        "Lambda invocation failed"
-    )
+    mock_lambda_client.invoke.side_effect = Exception("Lambda invocation failed")
 
     result = invoke_lambda_task(function_id)
 

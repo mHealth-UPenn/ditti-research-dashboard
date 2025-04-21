@@ -106,9 +106,7 @@ def test_researcher_callback_missing_code(mock_callback, client):
     assert response.status_code == 401
 
 
-@patch(
-    "backend.auth.controllers.researcher.ResearcherAuthController.check_login"
-)
+@patch("backend.auth.controllers.researcher.ResearcherAuthController.check_login")
 def test_researcher_check_login_authenticated(mock_check_login, client):
     """Test check login when authenticated."""
     # Set up mock
@@ -128,9 +126,7 @@ def test_researcher_check_login_authenticated(mock_check_login, client):
     assert data["authenticated"] is True
 
 
-@patch(
-    "backend.auth.controllers.researcher.ResearcherAuthController.check_login"
-)
+@patch("backend.auth.controllers.researcher.ResearcherAuthController.check_login")
 def test_researcher_check_login_unauthenticated(mock_check_login, client):
     """Test check login when not authenticated."""
     # Set up mock

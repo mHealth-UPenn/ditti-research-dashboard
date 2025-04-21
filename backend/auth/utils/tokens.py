@@ -64,9 +64,7 @@ def generate_code_verifier(length: int = 128) -> str:
     if not 43 <= length <= 128:
         raise ValueError("length must be between 43 and 128 characters")
     code_verifier = (
-        base64.urlsafe_b64encode(os.urandom(length))
-        .rstrip(b"=")
-        .decode("utf-8")
+        base64.urlsafe_b64encode(os.urandom(length)).rstrip(b"=").decode("utf-8")
     )
     return code_verifier[:length]
 

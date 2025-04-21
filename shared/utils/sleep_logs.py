@@ -119,9 +119,9 @@ def generate_sleep_logs():
             sleep_log["levels"]["data"].append(level_data)
             sleep_log["levels"]["summary"][level]["count"] += 1
             sleep_log["levels"]["summary"][level]["minutes"] += seconds // 60
-            sleep_log["levels"]["summary"][level][
-                "thirtyDayAverageMinutes"
-            ] += seconds // 60
+            sleep_log["levels"]["summary"][level]["thirtyDayAverageMinutes"] += (
+                seconds // 60
+            )
 
             if seconds < 210:
                 sleep_log["levels"]["shortData"].append(level_data)

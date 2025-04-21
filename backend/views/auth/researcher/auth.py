@@ -22,9 +22,7 @@ from backend.auth.controllers import ResearcherAuthController
 from backend.auth.decorators import researcher_auth_required
 from backend.auth.utils import create_error_response
 
-blueprint = Blueprint(
-    "researcher_auth", __name__, url_prefix="/auth/researcher"
-)
+blueprint = Blueprint("researcher_auth", __name__, url_prefix="/auth/researcher")
 logger = logging.getLogger(__name__)
 
 # Create auth controller instance

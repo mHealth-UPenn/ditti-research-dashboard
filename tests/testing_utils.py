@@ -155,15 +155,11 @@ def create_tables():
 
 def create_joins():
     # Associate AccessGroups with Apps
-    foo_access_group = AccessGroup.query.filter(
-        AccessGroup.name == "foo"
-    ).first()
+    foo_access_group = AccessGroup.query.filter(AccessGroup.name == "foo").first()
     foo_app = App.query.filter(App.name == "foo").first()
     foo_access_group.app = foo_app
 
-    bar_access_group = AccessGroup.query.filter(
-        AccessGroup.name == "bar"
-    ).first()
+    bar_access_group = AccessGroup.query.filter(AccessGroup.name == "bar").first()
     bar_app = App.query.filter(App.name == "bar").first()
     bar_access_group.app = bar_app
 
@@ -309,9 +305,7 @@ def setup_auth_flow_session(client, user_type="participant"):
         flask_session["cognito_state"] = "mock_state"
         flask_session["cognito_code_verifier"] = "mock_code_verifier"
         flask_session["cognito_nonce"] = "mock_nonce"
-        flask_session["cognito_nonce_generated"] = int(
-            datetime.now().timestamp()
-        )
+        flask_session["cognito_nonce_generated"] = int(datetime.now().timestamp())
         flask_session["auth_flow_user_type"] = user_type
 
     return "mock_state"

@@ -94,6 +94,4 @@ def test_clear_auth_cookies(mock_app):
 
         # Verify all cookies have been expired by checking for Expires attribute
         for cookie_name in ["id_token", "access_token", "refresh_token"]:
-            assert any(
-                cookie_name in h[1] and "Expires" in h[1] for h in cookies
-            )
+            assert any(cookie_name in h[1] and "Expires" in h[1] for h in cookies)

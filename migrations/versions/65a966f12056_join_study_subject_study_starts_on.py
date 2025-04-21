@@ -37,9 +37,7 @@ def upgrade():
     with op.batch_alter_table(
         "join_study_subject_study", schema=None
     ) as batch_op:
-        batch_op.add_column(
-            sa.Column("starts_on", sa.DateTime(), nullable=False)
-        )
+        batch_op.add_column(sa.Column("starts_on", sa.DateTime(), nullable=False))
 
     # ### end Alembic commands ###
 

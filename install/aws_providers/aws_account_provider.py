@@ -25,9 +25,7 @@ from install.utils.exceptions import AwsProviderError, SubprocessError
 
 
 class AwsAccountProvider:
-    def __init__(
-        self, *, logger: Logger, aws_client_provider: AwsClientProvider
-    ):
+    def __init__(self, *, logger: Logger, aws_client_provider: AwsClientProvider):
         self.logger = logger
         self.client = aws_client_provider.sts_client
 

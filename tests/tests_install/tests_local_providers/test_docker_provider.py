@@ -238,9 +238,7 @@ def test_get_network_success(docker_provider_mock: DockerProvider):
     """Test successful retrieval of a network."""
     result = docker_provider_mock.get_network()
 
-    assert (
-        result == docker_provider_mock.docker_client.networks.get.return_value
-    )
+    assert result == docker_provider_mock.docker_client.networks.get.return_value
     docker_provider_mock.docker_client.networks.get.assert_called_once_with(
         docker_provider_mock.config.network_name
     )

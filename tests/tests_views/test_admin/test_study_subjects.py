@@ -315,9 +315,7 @@ def test_study_subject_edit_remove_apis(post_admin, create_study_subject):
     assert len(edited_subject.apis) == 0
 
 
-def test_study_subject_edit_invalid_scope_type(
-    post_admin, create_study_subject
-):
+def test_study_subject_edit_invalid_scope_type(post_admin, create_study_subject):
     """
     Test providing a string instead of a list for an API's scope.
     The API actually handles this by converting the string to a list.
@@ -363,9 +361,7 @@ def test_study_subject_edit_associate_existing_api(
     Test associating an existing API with a study subject.
     """
     # Create subject with no APIs
-    subject = create_study_subject(
-        "associate_api_ditti_id", studies=[], apis=[]
-    )
+    subject = create_study_subject("associate_api_ditti_id", studies=[], apis=[])
 
     subject_id = subject.id
 
@@ -375,9 +371,7 @@ def test_study_subject_edit_associate_existing_api(
 
     # Prepare edit data to add an API
     edit_data = {
-        "apis": [
-            get_api_entry(1, "new-api-association-uuid", ["read", "write"])
-        ]
+        "apis": [get_api_entry(1, "new-api-association-uuid", ["read", "write"])]
     }
 
     # Send edit request
@@ -396,9 +390,7 @@ def test_study_subject_edit_associate_existing_api(
     assert edited_subject.apis[0].scope == ["read", "write"]
 
 
-def test_study_subject_edit_add_existing_study(
-    post_admin, create_study_subject
-):
+def test_study_subject_edit_add_existing_study(post_admin, create_study_subject):
     """
     Test adding an existing study to a study subject.
 
@@ -492,9 +484,7 @@ def test_study_subject_edit_add_existing_study(
                 {
                     "study_id": 1,
                     "did_consent": False,
-                    "expires_on": datetime(
-                        next_year, 1, 1, 0, 0, 0, tzinfo=UTC
-                    ),
+                    "expires_on": datetime(next_year, 1, 1, 0, 0, 0, tzinfo=UTC),
                 },
                 {
                     "study_id": 2,
@@ -597,9 +587,7 @@ def test_study_subject_edit_success(
     print(f"\nTest: {test_name}")
     print(f"Edit payload: {edit_payload}")
 
-    res_edit, data_edit = edit_study_subject(
-        post_admin, subject_id, edit_payload
-    )
+    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_payload)
 
     # Add error details if test fails
     if res_edit.status_code != 200:
@@ -798,9 +786,7 @@ def test_study_subject_edit_errors(
         # Update edit_payload with the archived API ID
         edit_payload = {
             "apis": [
-                get_api_entry(
-                    archived_api.id, "archived-api-user-uuid", ["read"]
-                )
+                get_api_entry(archived_api.id, "archived-api-user-uuid", ["read"])
             ]
         }
 
@@ -990,9 +976,7 @@ def test_study_subject_get_non_existent_id(get_admin):
     assert len(data_res) == 0
 
 
-def test_study_subject_get_archived_not_returned(
-    get_admin, create_study_subject
-):
+def test_study_subject_get_archived_not_returned(get_admin, create_study_subject):
     """
     Test that archived StudySubjects are not returned in the list.
     """

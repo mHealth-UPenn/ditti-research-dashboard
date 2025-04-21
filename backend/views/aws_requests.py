@@ -113,9 +113,7 @@ def get_taps(account):
 
     # merge on only the users that were returned earlier
     res = (
-        pd.merge(df_users, df_taps, on="id")
-        .drop("id", axis=1)
-        .to_dict("records")
+        pd.merge(df_users, df_taps, on="id").drop("id", axis=1).to_dict("records")
     )
 
     return jsonify(res)
@@ -631,18 +629,16 @@ def audio_file_delete(account):
         # Get the audio file
         audio_file_id = request.json["id"]
         version = request.json["_version"]
-        audio_file = Query("AudioFile", f'id=="{audio_file_id}"').scan()[
-            "Items"
-        ][0]
+        audio_file = Query("AudioFile", f'id=="{audio_file_id}"').scan()["Items"][
+            0
+        ]
 
         # Try deleting the audio file from S3
         try:
             key = audio_file["fileName"]
             bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
             client = boto3.client("s3")
-            deleted = client.delete_object(Bucket=bucket, Key=key)[
-                "DeleteMarker"
-            ]
+            deleted = client.delete_object(Bucket=bucket, Key=key)["DeleteMarker"]
 
             # Return an error if the audio file was not deleted
             if not deleted:

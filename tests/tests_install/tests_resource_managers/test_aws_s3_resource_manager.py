@@ -156,9 +156,7 @@ def test_get_objects_client_error(
     aws_s3_resource_manager_mock: AwsS3ResourceManager,
 ):
     aws_s3_resource_manager_mock.client.list_object_versions = MagicMock(
-        side_effect=ClientError(
-            {"Error": {"Code": "404"}}, "ListObjectVersions"
-        )
+        side_effect=ClientError({"Error": {"Code": "404"}}, "ListObjectVersions")
     )
     with pytest.raises(ResourceManagerError, match="ListObjectVersions"):
         aws_s3_resource_manager_mock.get_objects("test_bucket")

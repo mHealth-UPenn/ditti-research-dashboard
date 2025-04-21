@@ -41,9 +41,7 @@ class AuthFlowSession:
         # Generate and store nonce for ID token validation
         nonce = secrets.token_urlsafe(32)
         session["cognito_nonce"] = nonce
-        session["cognito_nonce_generated"] = int(
-            datetime.now(UTC).timestamp()
-        )
+        session["cognito_nonce_generated"] = int(datetime.now(UTC).timestamp())
 
         # Generate and store state for CSRF protection
         state = secrets.token_urlsafe(32)
@@ -97,9 +95,7 @@ class AuthFlowSession:
         nonce_generated = session.pop("cognito_nonce_generated", 0)
 
         # Check if nonce is valid
-        nonce_age = (
-            int(datetime.now(UTC).timestamp()) - nonce_generated
-        )
+        nonce_age = int(datetime.now(UTC).timestamp()) - nonce_generated
         if not nonce or nonce_age > 300:  # 5 minutes expiration
             logger.warning(f"Invalid or expired nonce. Age: {nonce_age}s")
             return False, None

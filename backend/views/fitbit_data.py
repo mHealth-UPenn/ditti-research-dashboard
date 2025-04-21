@@ -180,9 +180,7 @@ def participant_get_fitbit_data(ditti_id: str):
             {"msg": "Database error retrieving Fitbit data."}, 500
         )
     except Exception as e:
-        logger.error(
-            f"Unhandled error in participant_get_fitbit_data: {str(e)}"
-        )
+        logger.error(f"Unhandled error in participant_get_fitbit_data: {str(e)}")
         return make_response({"msg": "Unexpected server error."}, 500)
 
 

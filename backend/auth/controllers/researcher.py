@@ -346,9 +346,7 @@ class ResearcherAuthController(AuthControllerBase):
 
         return self.update_account_in_cognito(account_data)
 
-    def change_password(
-        self, previous_password, new_password, access_token=None
-    ):
+    def change_password(self, previous_password, new_password, access_token=None):
         """
         Change a researcher's password in Cognito.
 

@@ -291,9 +291,7 @@ def init_integration_testing_db():
     # Create the Ditti Admin access group
     ditti_app = App(name="Ditti App Dashboard")
     ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
-    JoinAccessGroupPermission(
-        access_group=ditti_admin_group, permission=wildcard
-    )
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=wildcard)
     query = Permission.definition == tuple_("View", "Ditti App Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
@@ -336,12 +334,8 @@ def init_integration_testing_db():
 
     # Create the Wearable Admin access group
     wear_app = App(name="Wearable Dashboard")
-    wear_admin_group = AccessGroup(
-        name="Wearable Dashboard Admin", app=wear_app
-    )
-    JoinAccessGroupPermission(
-        access_group=wear_admin_group, permission=wildcard
-    )
+    wear_admin_group = AccessGroup(name="Wearable Dashboard Admin", app=wear_app)
+    JoinAccessGroupPermission(access_group=wear_admin_group, permission=wildcard)
     query = Permission.definition == tuple_("View", "Wearable Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
@@ -528,9 +522,7 @@ real-time data essential for understanding the physiological effects of mindfuln
     )
     role = Role.query.filter(Role.name == "Admin").first()
     JoinAccountStudy(account=account, study=study_a, role=role)
-    JoinAccountAccessGroup(
-        account=account, access_group=ditti_coordinator_group
-    )
+    JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
     JoinAccountAccessGroup(account=account, access_group=wear_coordinator_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
     db.session.add(account)
@@ -898,9 +890,7 @@ class Account(db.Model):
                 Permission.query.join(JoinRolePermission)
                 .join(Role)
                 .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)
-                .filter(
-                    JoinAccountStudy.primary_key == tuple_(self.id, study_id)
-                )
+                .filter(JoinAccountStudy.primary_key == tuple_(self.id, study_id))
             )
 
             # return the union of all permission for the app and study
@@ -1538,9 +1528,7 @@ class JoinStudyRole(db.Model):
 
     __tablename__ = "join_study_role"
 
-    study_id = db.Column(
-        db.Integer, db.ForeignKey("study.id"), primary_key=True
-    )
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), primary_key=True)
 
     role_id = db.Column(
         db.Integer,
@@ -1778,17 +1766,13 @@ class JoinStudySubjectStudy(db.Model):
             "didConsent": self.did_consent,
             "createdOn": self.created_on.isoformat(),
             "startsOn": self.starts_on.isoformat(),
-            "expiresOn": self.expires_on.isoformat()
-            if self.expires_on
-            else None,
+            "expiresOn": self.expires_on.isoformat() if self.expires_on else None,
             "dataSummary": self.study.data_summary,
             "study": self.study.meta,
         }
 
     def __repr__(self):
-        return (
-            f"<JoinStudySubjectStudy {self.study_subject_id}-{self.study_id}>"
-        )
+        return f"<JoinStudySubjectStudy {self.study_subject_id}-{self.study_id}>"
 
 
 @event.listens_for(JoinStudySubjectStudy, "before_insert")
@@ -1861,9 +1845,7 @@ class JoinStudySubjectApi(db.Model):
         Make the created_on column read-only.
         """
         if self.created_on:
-            raise ValueError(
-                "JoinStudySubjectApi.created_on cannot be modified."
-            )
+            raise ValueError("JoinStudySubjectApi.created_on cannot be modified.")
         return val
 
     @hybrid_property
@@ -2031,9 +2013,7 @@ class SleepLog(db.Model):
             "minutesAwake": self.minutes_awake,
             "minutesToFallAsleep": self.minutes_to_fall_asleep,
             "logType": self.log_type.value,
-            "startTime": self.start_time.isoformat()
-            if self.start_time
-            else None,
+            "startTime": self.start_time.isoformat() if self.start_time else None,
             "timeInBed": self.time_in_bed,
             "type": self.type.value,
             "totalMinutesAsleep": self.minutes_asleep,
@@ -2155,7 +2135,9 @@ class SleepSummary(db.Model):
         }
 
     def __repr__(self):
-        return f"<SleepSummary {self.level.value} for SleepLog {self.sleep_log_id}>"
+        return (
+            f"<SleepSummary {self.level.value} for SleepLog {self.sleep_log_id}>"
+        )
 
 
 class LambdaTask(db.Model):

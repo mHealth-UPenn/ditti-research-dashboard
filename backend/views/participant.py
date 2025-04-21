@@ -56,9 +56,7 @@ def get_participant(ditti_id: str):
         ).first()
         if not study_subject:
             logger.info(
-                f"StudySubject with ditti_id {
-                    ditti_id
-                } not found or is archived."
+                f"StudySubject with ditti_id {ditti_id} not found or is archived."
             )
             return make_response({"msg": "User not found or is archived."}, 404)
 
@@ -122,9 +120,7 @@ def update_consent(study_id: int, ditti_id: str):
                     ditti_id
                 }, study_id {study_id}."
             )
-            return make_response(
-                {"msg": "Field 'didConsent' is required."}, 400
-            )
+            return make_response({"msg": "Field 'didConsent' is required."}, 400)
 
         did_consent = data["didConsent"]
         if not isinstance(did_consent, bool):
@@ -133,9 +129,7 @@ def update_consent(study_id: int, ditti_id: str):
                     study_id
                 }. Expected boolean."
             )
-            return make_response(
-                {"msg": "'didConsent' must be a boolean."}, 400
-            )
+            return make_response({"msg": "'didConsent' must be a boolean."}, 400)
 
         # Retrieve the StudySubject by ditti_id
         study_subject = StudySubject.query.filter_by(
@@ -143,9 +137,7 @@ def update_consent(study_id: int, ditti_id: str):
         ).first()
         if not study_subject:
             logger.info(
-                f"StudySubject with ditti_id {
-                    ditti_id
-                } not found or is archived."
+                f"StudySubject with ditti_id {ditti_id} not found or is archived."
             )
             return make_response({"msg": "User not found or is archived."}, 404)
 
@@ -175,9 +167,9 @@ def update_consent(study_id: int, ditti_id: str):
 
     except SQLAlchemyError as db_err:
         logger.error(
-            f"Database error updating consent for ditti_id {
-                ditti_id
-            }, study_id {study_id}: {str(db_err)}"
+            f"Database error updating consent for ditti_id {ditti_id}, study_id {
+                study_id
+            }: {str(db_err)}"
         )
         db.session.rollback()
         return make_response(
@@ -185,9 +177,9 @@ def update_consent(study_id: int, ditti_id: str):
         )
     except Exception as e:
         logger.error(
-            f"Unhandled error updating consent for ditti_id {
-                ditti_id
-            }, study_id {study_id}: {str(e)}"
+            f"Unhandled error updating consent for ditti_id {ditti_id}, study_id {
+                study_id
+            }: {str(e)}"
         )
         db.session.rollback()
         return make_response({"msg": "Unexpected server error."}, 500)
@@ -215,9 +207,7 @@ def revoke_api_access(api_name: str, ditti_id: str):
         ).first()
         if not study_subject:
             logger.info(
-                f"StudySubject with ditti_id {
-                    ditti_id
-                } not found or is archived."
+                f"StudySubject with ditti_id {ditti_id} not found or is archived."
             )
             return make_response({"msg": "User not found."}, 404)
 
@@ -249,9 +239,7 @@ def revoke_api_access(api_name: str, ditti_id: str):
                 } not found."
             )
         except Exception as e:
-            logger.error(
-                f"Error deleting tokens for API '{api_name}': {str(e)}"
-            )
+            logger.error(f"Error deleting tokens for API '{api_name}': {str(e)}")
             return make_response({"msg": "Error deleting API tokens."}, 500)
 
         # Remove API access
@@ -267,9 +255,7 @@ def revoke_api_access(api_name: str, ditti_id: str):
             }"
         )
         db.session.rollback()
-        return make_response(
-            {"msg": "Database error revoking API access."}, 500
-        )
+        return make_response({"msg": "Database error revoking API access."}, 500)
     except Exception as e:
         logger.error(
             f"Error revoking API access for ditti_id {ditti_id}: {str(e)}"
@@ -301,9 +287,7 @@ def delete_participant(account, ditti_id: str):
         ).first()
         if not study_subject:
             logger.info(
-                f"StudySubject with ditti_id {
-                    ditti_id
-                } not found or is archived."
+                f"StudySubject with ditti_id {ditti_id} not found or is archived."
             )
             return make_response(
                 {"msg": "User not found or already archived."}, 404
@@ -373,9 +357,7 @@ def delete_participant(account, ditti_id: str):
         try:
             # Requires aws.cognito.signin.user.admin OpenID Connect scope
             client.admin_delete_user(
-                UserPoolId=current_app.config[
-                    "COGNITO_PARTICIPANT_USER_POOL_ID"
-                ],
+                UserPoolId=current_app.config["COGNITO_PARTICIPANT_USER_POOL_ID"],
                 Username=ditti_id,
             )
         except client.exceptions.NotAuthorizedException:
@@ -404,8 +386,6 @@ def delete_participant(account, ditti_id: str):
         db.session.rollback()
         return make_response({"msg": "Database error deleting account."}, 500)
     except Exception as e:
-        logger.error(
-            f"Unhandled error deleting participant {ditti_id}: {str(e)}"
-        )
+        logger.error(f"Unhandled error deleting participant {ditti_id}: {str(e)}")
         db.session.rollback()
         return make_response({"msg": "Error deleting account."}, 500)

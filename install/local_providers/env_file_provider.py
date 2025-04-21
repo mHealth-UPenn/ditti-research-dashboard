@@ -92,8 +92,7 @@ class EnvFileProvider:
             "COGNITO_RESEARCHER_REGION": self.aws_account_provider.aws_region,
             "COGNITO_RESEARCHER_USER_POOL_ID": self.config.researcher_user_pool_id,
             "LOCAL_LAMBDA_ENDPOINT": (
-                "http://localhost:9000/2015-03-31/functions/function/"
-                "invocations"
+                "http://localhost:9000/2015-03-31/functions/function/invocations"
             ),
             "TM_FSTRING": f"{self.config.project_name}-tokens",
         }
@@ -110,9 +109,7 @@ class EnvFileProvider:
         """Uninstall the .env files."""
         try:
             os.remove(self.root_filename)
-            self.logger(
-                f".env file {Colorizer.blue(self.root_filename)} removed"
-            )
+            self.logger(f".env file {Colorizer.blue(self.root_filename)} removed")
         except FileNotFoundError:
             self.logger.warning(
                 f"Env file {Colorizer.blue(self.root_filename)} not found"

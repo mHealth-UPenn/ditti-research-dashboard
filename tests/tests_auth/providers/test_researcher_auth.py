@@ -16,9 +16,7 @@ def researcher_auth(researcher_auth_fixture):
 def test_get_account_from_email(mock_account, researcher_auth):
     """Test getting an account from an email."""
     # Setup
-    mock_acc = MagicMock(
-        id=1, email="researcher@example.com", is_archived=False
-    )
+    mock_acc = MagicMock(id=1, email="researcher@example.com", is_archived=False)
     mock_filter = MagicMock()
     mock_filter.filter_by.return_value.first.return_value = mock_acc
     mock_account.query.filter_by.return_value = mock_filter
@@ -113,9 +111,7 @@ def test_get_account_from_token(
     )
 
     # Mock account lookup
-    mock_acc = MagicMock(
-        id=1, email="researcher@example.com", is_archived=False
-    )
+    mock_acc = MagicMock(id=1, email="researcher@example.com", is_archived=False)
 
     # Setup mock to use the implementation's way of calling
     researcher_auth.get_account_from_email = MagicMock()

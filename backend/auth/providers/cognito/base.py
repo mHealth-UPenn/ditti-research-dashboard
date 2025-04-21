@@ -69,9 +69,7 @@ class CognitoAuthBase:
         """
         try:
             # Check token expiration
-            claims = jwt.decode(
-                access_token, options={"verify_signature": False}
-            )
+            claims = jwt.decode(access_token, options={"verify_signature": False})
             exp = claims.get("exp", 0)
             now = int(time.time())
 
@@ -112,9 +110,7 @@ class CognitoAuthBase:
                         status_code == 400
                         and error_body.get("error") == "invalid_grant"
                     ):
-                        logger.error(
-                            "Refresh token has expired or been revoked"
-                        )
+                        logger.error("Refresh token has expired or been revoked")
                         return False, AUTH_ERROR_MESSAGES["session_expired"]
 
                     logger.error(
@@ -180,9 +176,7 @@ class CognitoAuthBase:
             # Check audience
             expected_audience = self.get_config("CLIENT_ID")
             if unverified_claims.get("aud") != expected_audience:
-                logger.error(
-                    f"Invalid audience: {unverified_claims.get('aud')}"
-                )
+                logger.error(f"Invalid audience: {unverified_claims.get('aud')}")
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
             # Check expiration
@@ -242,9 +236,7 @@ class CognitoAuthBase:
                 logger.error(f"Invalid token during verification: {str(e)}")
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
             except Exception as e:
-                logger.error(
-                    f"Error during manual token verification: {str(e)}"
-                )
+                logger.error(f"Error during manual token verification: {str(e)}")
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
         except ExpiredSignatureError:
