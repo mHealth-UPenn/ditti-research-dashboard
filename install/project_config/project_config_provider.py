@@ -344,7 +344,10 @@ class ProjectConfigProvider:
 
     @staticmethod
     def get_fitbit_credentials_input() -> tuple[str, str]:
-        return getpass("Enter your dev Fitbit client ID: "), getpass("Enter your dev Fitbit client secret: ")
+        return (
+            input("Enter your dev Fitbit OAuth 2.0 Client ID: "),
+            getpass("Enter your dev Fitbit Client Secret: ")
+        )
 
     @staticmethod
     def get_admin_email_input() -> str:
