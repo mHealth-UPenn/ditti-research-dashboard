@@ -1,6 +1,6 @@
 # adoption numbers https://github.com/astral-sh/ruff/discussions/9772
 
-line-length = 80
+line-length = 82
 indent-width = 4
 target-version = "py312"
 show-fixes = true        # surfaces exact auto‑fix patches in CI logs
