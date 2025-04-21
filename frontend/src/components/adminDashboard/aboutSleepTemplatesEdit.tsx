@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, createRef } from "react";
+import { useState, useEffect } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 import { makeRequest } from "../../utils";
@@ -30,7 +30,6 @@ import { FormSummaryTitle } from "../text/formSummaryTitle";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { FormSummaryText } from "../containers/forms/formSummaryText";
 import { FormSummaryButton } from "../containers/forms/formSummaryButton";
-import sanitize from "sanitize-html";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
@@ -44,16 +43,9 @@ export const AboutSleepTemplatesEdit = () => {
   const [name, setName] = useState<string>("");
   const [text, setText] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
-  const previewRef = createRef<HTMLDivElement>();
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (previewRef.current) {
-      previewRef.current.innerHTML = sanitize(text);
-    }
-  }, [text]);
 
   useEffect(() => {
     const fetchPrefill = async () => {

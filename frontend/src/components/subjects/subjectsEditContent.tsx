@@ -34,11 +34,11 @@ import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { FormSummarySubtext } from "../containers/forms/formSummarySubtext";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { APP_ENV } from "../../environment";
-import sanitize from "sanitize-html";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { QuillView } from "../containers/quillView/quillView";
 import { SubjectsEditContentProps } from "./subjects.types";
 
 /**
@@ -69,7 +69,6 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   const [formIsValid, setFormIsValid] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const previewRef = createRef<HTMLDivElement>();
   const dittiIdInputRef = createRef<HTMLInputElement>();
 
   const { studiesLoading, study } = useStudies();
@@ -162,13 +161,6 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     temporaryPassword,
   ]);
 
-  // Sanitize the about sleep template and set the preview
-  useEffect(() => {
-    if (previewRef.current && information !== "") {
-      previewRef.current.innerHTML = sanitize(information);
-    }
-  }, [previewRef]);
-
   // Load any data to prefill the form with, if any
   useEffect(() => {
     if (studySubject) {
@@ -206,17 +198,6 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     // when all promises finish, hide the loader
     Promise.all([fetchTemplates]).then(() => setLoading(false));
   }, []);
-
-  // Update the preview when an about sleep template is selected
-  useEffect(() => {
-    if (previewRef.current) {
-      if (aboutSleepTemplateSelected.text) {
-        previewRef.current.innerHTML = sanitize(aboutSleepTemplateSelected.text);
-      } else {
-        previewRef.current.innerHTML = sanitize(information);
-      }
-    }
-  }, [aboutSleepTemplateSelected]);
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating a new entry, else make a request to edit
@@ -487,7 +468,10 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
         </FormRow>
         <FormTitle className="mt-6">About Sleep Template Preview</FormTitle>
         <FormRow>
-          <div ref={previewRef} className="px-4" />
+          <QuillView 
+            className="px-4"
+            content={aboutSleepTemplateSelected.text || information} 
+          />
         </FormRow>
       </Form>
 

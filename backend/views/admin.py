@@ -19,9 +19,10 @@ import logging
 import traceback
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
+import nh3
 from backend.auth.controllers import ResearcherAuthController
 from backend.auth.decorators import researcher_auth_required
-from backend.extensions import db, sanitizer
+from backend.extensions import db
 from backend.models import (
     AboutSleepTemplate, AccessGroup, Account, Action, Api, App,
     JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
@@ -29,6 +30,7 @@ from backend.models import (
     Permission, Resource, Role, Study, StudySubject
 )
 from backend.utils.db import populate_model
+from backend.utils.sanitization import sanitize_quill_html
 
 blueprint = Blueprint("admin", __name__, url_prefix="/admin")
 logger = logging.getLogger(__name__)
@@ -531,13 +533,13 @@ def study_create(account):
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
-            study.consent_information = sanitizer.sanitize(
+            study.consent_information = sanitize_quill_html(
                 data["consentInformation"])
             del data["consentInformation"]
         except KeyError:
             pass
         try:
-            study.data_summary = sanitizer.sanitize(data["dataSummary"])
+            study.data_summary = sanitize_quill_html(data["dataSummary"])
             del data["dataSummary"]
         except KeyError:
             pass
@@ -603,13 +605,13 @@ def study_edit(account):
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
-            study.consent_information = sanitizer.sanitize(
+            study.consent_information = sanitize_quill_html(
                 data["consentInformation"])
             del data["consentInformation"]
         except KeyError:
             pass
         try:
-            study.data_summary = sanitizer.sanitize(data["dataSummary"])
+            study.data_summary = sanitize_quill_html(data["dataSummary"])
             del data["dataSummary"]
         except KeyError:
             pass
@@ -1377,7 +1379,7 @@ def about_sleep_template_create(account):
         data = request.json["create"]
         about_sleep_template = AboutSleepTemplate()
 
-        data["text"] = sanitizer.sanitize(data["text"])
+        data["text"] = sanitize_quill_html(data["text"])
         populate_model(about_sleep_template, data)
         db.session.add(about_sleep_template)
         db.session.commit()
@@ -1433,7 +1435,7 @@ def about_sleep_template_edit(account):
         )
 
         try:
-            data["text"] = sanitizer.sanitize(data["text"])
+            data["text"] = sanitize_quill_html(data["text"])
         except KeyError:
             pass
 
