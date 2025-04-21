@@ -31,16 +31,18 @@ logger = logging.getLogger(__name__)
 
 def generate_code_verifier(length: int = 128) -> str:
     """
-    Generates a high-entropy cryptographic random string for PKCE (Proof Key for Code Exchange).
+    Generate a high-entropy cryptographic random string for PKCE.
 
     Args:
-        length (int, optional): Length of the code verifier. Must be between 43 and 128 characters.
-                                Defaults to 128.
+        length (int, optional): Length of the code verifier.
+            Must be between 43 and 128 characters. Defaults to 128.
 
-    Returns:
+    Returns
+    -------
         str: A securely generated code verifier string.
 
-    Raises:
+    Raises
+    ------
         ValueError: If the specified length is not within the allowed range.
     """
     if not 43 <= length <= 128:
@@ -53,12 +55,13 @@ def generate_code_verifier(length: int = 128) -> str:
 
 def create_code_challenge(code_verifier: str) -> str:
     """
-    Creates a S256 code challenge from the provided code verifier.
+    Create a S256 code challenge from the provided code verifier.
 
     Args:
         code_verifier (str): The code verifier string.
 
-    Returns:
+    Returns
+    -------
         str: The generated code challenge string.
     """
     code_challenge = hashlib.sha256(code_verifier.encode("utf-8")).digest()
@@ -70,15 +73,19 @@ def create_code_challenge(code_verifier: str) -> str:
 
 def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
     """
-    Creates an OAuth2Session for Fitbit API, using stored tokens.
+    Create an OAuth2Session for Fitbit API, using stored tokens.
 
     Args:
-        ditti_id (str): The Ditti ID fo the subject that the OAuth session will be used to retrieve data for.
+        ditti_id (str): The Ditti ID fo the subject that the OAuth session
+            will be used to retrieve data for.
 
-    Returns:
-        OAuth2SessionWithRefresh: An OAuth2Session instance ready to make requests to Fitbit API.
+    Returns
+    -------
+        OAuth2SessionWithRefresh: An OAuth2Session instance ready
+            to make requests to Fitbit API.
 
-    Raises:
+    Raises
+    ------
         Exception: If there is an error retrieving or refreshing tokens.
     """
     fitbit_client_secret = config["FITBIT_CLIENT_SECRET"]
@@ -115,13 +122,15 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
 
     def token_updater(new_token: dict[str, Any]) -> None:
         """
-        Updates the tokens in Secrets Manager.
+        Update the tokens in Secrets Manager.
 
         Args:
             new_token (Dict[str, Any]): The new token data obtained from Fitbit.
 
-        Raises:
-            Exception: If there is an error updating the tokens in Secrets Manager.
+        Raises
+        ------
+            Exception: If there is an error updating the tokens
+                in Secrets Manager.
         """
         try:
             expires_in = new_token.get("expires_in")
@@ -146,9 +155,10 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
 
     def refresh_token_func() -> None:
         """
-        Refreshes the access token using the refresh token.
+        Refresh the access token using the refresh token.
 
-        Raises:
+        Raises
+        ------
             Exception: If the token refresh fails.
         """
         token_issuer_endpoint = "https://api.fitbit.com/oauth2/token"
@@ -172,23 +182,24 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
 
     # Wrapper around requests to handle token expiration
     class OAuth2SessionWithRefresh:
-        """
-        A wrapper around the OAuth2 WebApplicationClient to handle automatic token refresh.
-        """
+        """OAuth2 WebApplicationClient wrapper to handle token refresh."""
 
         def __init__(self, client: WebApplicationClient):
             self.client = client
 
         def request(self, method: str, url: str, **kwargs) -> requests.Response:
             """
-            Makes an HTTP request using the OAuth2 session, handling token refresh on 401 responses.
+            Make an HTTP request using the OAuth2 session.
+
+            Handles token refresh on 401 responses.
 
             Args:
                 method (str): HTTP method (e.g., 'GET', 'POST').
                 url (str): The URL to make the request to.
                 **kwargs: Additional arguments for the requests.request method.
 
-            Returns:
+            Returns
+            -------
                 requests.Response: The HTTP response received.
             """
             headers = kwargs.pop("headers", {})
@@ -210,26 +221,32 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
 
         def get(self, url: str, **kwargs) -> requests.Response:
             """
-            Convenience method for making GET requests.
+            Make GET requests.
+
+            Convenience method.
 
             Args:
                 url (str): The URL to make the GET request to.
                 **kwargs: Additional arguments for the requests.get method.
 
-            Returns:
+            Returns
+            -------
                 requests.Response: The HTTP response received.
             """
             return self.request("GET", url, **kwargs)
 
         def post(self, url: str, **kwargs) -> requests.Response:
             """
-            Convenience method for making POST requests.
+            Make POST requests.
+
+            Convenience method.
 
             Args:
                 url (str): The URL to make the POST request to.
                 **kwargs: Additional arguments for the requests.post method.
 
-            Returns:
+            Returns
+            -------
                 requests.Response: The HTTP response received.
             """
             return self.request("POST", url, **kwargs)

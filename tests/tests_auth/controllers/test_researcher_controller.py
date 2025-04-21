@@ -368,7 +368,7 @@ class TestResearcherAuthController:
         account_data = {
             "email": "original@example.com",
             "first_name": "Updated",
-            "email": "newemail@example.com",  # Attempt to override original email
+            "email": "newemail@example.com",  # noqa: F601 # Attempt to override original email
         }
 
         with app.app_context():

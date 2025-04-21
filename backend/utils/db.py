@@ -27,16 +27,19 @@ def populate_model(model, data, use_camel_to_snake=False, custom_mapping=None):
     Args:
         model (sqlalchemy.orm.Mapper): The SQLAlchemy model instance to populate.
         data (dict): A dictionary of key-value pairs.
-        use_camel_to_snake (bool): If True, convert camelCase keys to snake_case before mapping.
-        custom_mapping (dict): Optional custom mapping of camelCase keys to snake_case attributes.
+        use_camel_to_snake (bool): If True, convert camelCase keys
+            to snake_case before mapping.
+        custom_mapping (dict): Optional custom mapping of camelCase keys
+            to snake_case attributes.
 
-    Raises:
+    Raises
+    ------
         ValueError: If an invalid key is encountered.
     """
     # Prepare a custom mapping or default to an empty dictionary
     custom_mapping = custom_mapping or {}
 
-    # Retrieve all valid column attributes from the model if camel_to_snake is used
+    # If camel_to_snake, retrieve all valid column attributes from the model
     model_columns = None
     if use_camel_to_snake:
         model_columns = {col.key for col in inspect(model).mapper.column_attrs}

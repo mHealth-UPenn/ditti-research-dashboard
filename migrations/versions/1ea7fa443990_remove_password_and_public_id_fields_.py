@@ -1,4 +1,5 @@
-"""remove password and public_id fields, update phone number format
+"""
+Remove password and public_id fields, update phone number format.
 
 Revision ID: 1ea7fa443990
 Revises: 65a966f12056
@@ -93,7 +94,8 @@ def downgrade():
     result = conn.execute(sa.select([account_table.c.id]))
     account_ids = [row[0] for row in result]
 
-    # Set a dummy password hash (this is a placeholder, real passwords can't be restored)
+    # Set a dummy password hash
+    # (this is a placeholder, real passwords can't be restored)
     dummy_password = (
         "$2b$12$c6AqbeZ4OLQVbzL.DF9dleOxDf6Y3QDrVJPdCZ3m0U8xdWtxRHAuW"
     )

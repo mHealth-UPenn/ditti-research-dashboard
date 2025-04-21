@@ -48,14 +48,15 @@ logger = logging.getLogger(__name__)
 @participant_auth_required
 def fitbit_authorize(ditti_id: str):
     """
-    Initiates the OAuth2 authorization flow with Fitbit.
+    Initiate the OAuth2 authorization flow with Fitbit.
 
     Generates a code verifier and code challenge for PKCE,
     saves them along with a state parameter in the session,
     constructs the Fitbit authorization URL,
     and redirects the user to Fitbit's login page.
 
-    Returns:
+    Returns
+    -------
         Any: A redirect response to Fitbit's authorization URL.
     """
     try:
@@ -91,7 +92,7 @@ def fitbit_authorize(ditti_id: str):
 
         return redirect(authorization_url)
     except Exception as e:
-        logger.error(f"Error initiating Fitbit authorization: {str(e)}")
+        logger.error(f"Error initiating Fitbit authorization: {e!s}")
         return make_response(
             {"msg": "Failed to initiate Fitbit authorization."}, 500
         )
@@ -101,17 +102,21 @@ def fitbit_authorize(ditti_id: str):
 @participant_auth_required
 def fitbit_callback(ditti_id: str):
     """
-    Handles the OAuth2 callback from Fitbit after user authorization.
+    Handle the OAuth2 callback from Fitbit after user authorization.
 
-    Exchanges the authorization code for access and refresh tokens, verifies the ID token,
-    associates the tokens with the user's study subject record, stores the tokens securely,
+    Exchanges the authorization code for access and refresh tokens,
+    verifies the ID token, associates the tokens with the user's
+    study subject record, stores the tokens securely,
     and redirects the user to a success page.
 
     Args:
-        ditti_id (str): The username of the study subject, provided by the decorator.
+        ditti_id (str): The username of the study subject,
+            provided by the decorator.
 
-    Returns:
-        Any: A redirect response to the Fitbit authorization success page or an error response.
+    Returns
+    -------
+        Any: A redirect response to the Fitbit authorization success page
+            or an error response.
     """
     try:
         fitbit_client_id = current_app.config["FITBIT_CLIENT_ID"]
@@ -160,7 +165,7 @@ def fitbit_callback(ditti_id: str):
             response.raise_for_status()
             token = client.parse_request_body_response(response.text)
         except Exception as e:
-            logger.error(f"Failed to fetch Fitbit tokens: {str(e)}")
+            logger.error(f"Failed to fetch Fitbit tokens: {e!s}")
             return make_response(
                 {"msg": "Failed to retrieve Fitbit tokens."}, 400
             )
@@ -233,7 +238,7 @@ def fitbit_callback(ditti_id: str):
                 tokens=token_data,
             )
         except Exception as e:
-            logger.error(f"Error storing Fitbit tokens: {str(e)}")
+            logger.error(f"Error storing Fitbit tokens: {e!s}")
             return make_response({"msg": "Failed to store Fitbit tokens."}, 500)
 
         # Clear OAuth session variables
@@ -244,7 +249,7 @@ def fitbit_callback(ditti_id: str):
         return redirect(current_app.config.get("API_AUTHORIZE_REDIRECT"))
 
     except Exception as e:
-        logger.error(f"Unhandled error in fitbit_callback: {str(e)}")
+        logger.error(f"Unhandled error in fitbit_callback: {e!s}")
         return make_response({"msg": "An unexpected error occurred."}, 500)
 
 
@@ -254,13 +259,15 @@ def fitbit_sleep_list(ditti_id: str):
     """
     Test: Retrieves the user's sleep data from Fitbit.
 
-    Fetches the study subject's Fitbit API session, makes a request to the Fitbit API for sleep data,
-    and returns the data as a JSON response.
+    Fetches the study subject's Fitbit API session, makes a request
+    to the Fitbit API for sleep data, and returns the data as a JSON response.
 
     Args:
-        ditti_id (str): The unique ID of the study subject, provided by the decorator.
+        ditti_id (str): The unique ID of the study subject,
+            provided by the decorator.
 
-    Returns:
+    Returns
+    -------
         Any: A JSON response containing the sleep data or an error response.
     """
     try:
@@ -288,7 +295,7 @@ def fitbit_sleep_list(ditti_id: str):
                 )
             except Exception as e:
                 logger.error(
-                    f"OAuth Session Error for ditti_id {ditti_id}: {str(e)}"
+                    f"OAuth Session Error for ditti_id {ditti_id}: {e!s}"
                 )
                 return make_response(
                     {"msg": "Failed to create Fitbit session."}, 401
@@ -306,7 +313,7 @@ def fitbit_sleep_list(ditti_id: str):
                 ).json()
             except Exception as e:
                 logger.error(
-                    f"Fitbit Data Request Error for ditti_id {ditti_id}: {str(e)}"
+                    f"Fitbit Data Request Error for ditti_id {ditti_id}: {e!s}"
                 )
                 return make_response(
                     {"msg": "Failed to retrieve sleep data."}, 401
@@ -321,8 +328,6 @@ def fitbit_sleep_list(ditti_id: str):
 
     except Exception as e:
         logger.error(
-            f"Unhandled error in fitbit_sleep_list for ditti_id {ditti_id}: {
-                str(e)
-            }"
+            f"Unhandled error in fitbit_sleep_list for ditti_id {ditti_id}: {e!s}"
         )
         return make_response({"msg": "An unexpected error occurred."}, 500)

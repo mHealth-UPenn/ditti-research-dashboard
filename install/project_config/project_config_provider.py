@@ -28,17 +28,9 @@ from install.project_config.project_config_types import (
     SecretsResourceManagerConfig,
     UserInput,
 )
-from install.utils import (
-    Colorizer,
-    Logger,
-    is_valid_email,
-    is_valid_name,
-)
+from install.utils import Colorizer, Logger, is_valid_email, is_valid_name
 from install.utils.enums import FString
-from install.utils.exceptions import (
-    CancelInstallation,
-    ProjectConfigError,
-)
+from install.utils.exceptions import CancelInstallation, ProjectConfigError
 
 
 class ProjectConfigProvider:
@@ -61,12 +53,13 @@ class ProjectConfigProvider:
     def load_existing_config(self) -> None:
         """Load project config from a JSON file."""
         if not os.path.exists(self.project_config_filename):
-            self.logger.error(
-                f"Project config file {Colorizer.blue(self.project_config_filename)} not found"
+            msg = (
+                "Project config file "
+                f"{Colorizer.blue(self.project_config_filename)}"
+                " not found"
             )
-            raise ProjectConfigError(
-                f"Project config file {Colorizer.blue(self.project_config_filename)} not found"
-            )
+            self.logger.error(msg)
+            raise ProjectConfigError(msg)
 
         with open(self.project_config_filename) as f:
             self.project_config = json.load(f)
@@ -291,9 +284,11 @@ class ProjectConfigProvider:
 
     def get_user_input(self) -> None:
         if self.project_settings_exists():
-            raise ProjectConfigError(
-                "Project settings already exist. Please uninstall the project first."
+            msg = (
+                "Project settings already exist. Please uninstall the project "
+                "first."
             )
+            raise ProjectConfigError(msg)
 
         self.logger(
             "\nThis script will install the development environment for"
@@ -436,10 +431,16 @@ class ProjectConfigProvider:
         """Uninstall the project config."""
         try:
             os.remove(self.project_config_filename)
-            self.logger(
-                f"Project config file {Colorizer.blue(self.project_config_filename)} removed"
+            msg = (
+                "Project config file "
+                f"{Colorizer.blue(self.project_config_filename)}"
+                " removed"
             )
+            self.logger(msg)
         except FileNotFoundError:
-            self.logger.warning(
-                f"Project config file {Colorizer.blue(self.project_config_filename)} not found"
+            msg = (
+                "Project config file "
+                f"{Colorizer.blue(self.project_config_filename)}"
+                " not found"
             )
+            self.logger.warning(msg)

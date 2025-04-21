@@ -37,13 +37,15 @@ class DatabaseProvider:
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error(
-                f"Database upgrade failed due to subprocess error: {Colorizer.white(e)}"
+                "Database upgrade failed due to subprocess error: "
+                f"{Colorizer.white(e)}"
             )
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Database upgrade failed due to unexpected error: {Colorizer.white(e)}"
+                "Database upgrade failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise SubprocessError(e)
 
@@ -59,13 +61,15 @@ class DatabaseProvider:
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error(
-                f"Integration testing database initialization failed due to subprocess error: {Colorizer.white(e)}"
+                "Integration testing database initialization failed due to "
+                f"subprocess error: {Colorizer.white(e)}"
             )
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Integration testing database initialization failed due to unexpected error: {Colorizer.white(e)}"
+                "Integration testing database initialization failed due to "
+                f"unexpected error: {Colorizer.white(e)}"
             )
             raise SubprocessError(e)
 
@@ -86,12 +90,14 @@ class DatabaseProvider:
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error(
-                f"Researcher account creation failed due to subprocess error: {Colorizer.white(e)}"
+                "Researcher account creation failed due to subprocess error: "
+                f"{Colorizer.white(e)}"
             )
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Researcher account creation failed due to unexpected error: {Colorizer.white(e)}"
+                "Researcher account creation failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise SubprocessError(e)

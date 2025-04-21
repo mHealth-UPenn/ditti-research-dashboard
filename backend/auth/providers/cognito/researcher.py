@@ -35,9 +35,10 @@ class ResearcherAuth(CognitoAuthBase):
 
         Args:
             email (str): The email address to search for
-            include_archived (bool, optional): Whether to include archived accounts
+            include_archived (bool, optional): Include archived accounts?
 
-        Returns:
+        Returns
+        -------
             Account or None: The matching account or None if not found
         """
         if not email:
@@ -56,9 +57,10 @@ class ResearcherAuth(CognitoAuthBase):
 
         Args:
             id_token (str): The ID token
-            include_archived (bool, optional): Whether to include archived accounts
+            include_archived (bool, optional): Include archived accounts?
 
-        Returns:
+        Returns
+        -------
             tuple: (account, error_message)
                 account: The Account object if successful, None otherwise
                 error_message: Error message if account is None, None otherwise

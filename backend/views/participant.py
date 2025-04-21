@@ -44,9 +44,11 @@ def get_participant(ditti_id: str):
     Endpoint to retrieve a participant's data.
 
     Args:
-        ditti_id (str): The unique ID of the study subject, provided by the decorator.
+        ditti_id (str): The unique ID of the study subject,
+            provided by the decorator.
 
-    Returns:
+    Returns
+    -------
         JSON response containing serialized participant data or an error message.
     """
     try:
@@ -66,7 +68,7 @@ def get_participant(ditti_id: str):
         except Exception as serialize_err:
             logger.error(
                 f"Error serializing participant data for ditti_id {ditti_id}: {
-                    str(serialize_err)
+                    serialize_err!s
                 }"
             )
             return make_response(
@@ -79,7 +81,7 @@ def get_participant(ditti_id: str):
         logger.error(
             f"Database error retrieving participant data for ditti_id {
                 ditti_id
-            }: {str(db_err)}"
+            }: {db_err!s}"
         )
         return make_response(
             {"msg": "Database error retrieving participant data."}, 500
@@ -88,7 +90,7 @@ def get_participant(ditti_id: str):
         logger.error(
             f"Unhandled error retrieving participant data for ditti_id {
                 ditti_id
-            }: {str(e)}"
+            }: {e!s}"
         )
         return make_response({"msg": "Unexpected server error."}, 500)
 
@@ -101,14 +103,16 @@ def update_consent(study_id: int, ditti_id: str):
 
     Args:
         study_id (int): The ID of the study.
-        ditti_id (str): The unique ID of the study subject, provided by the decorator.
+        ditti_id (str): The unique ID of the study subject,
+            provided by the decorator.
 
     Request Body:
         {
             "didConsent": true  // or false
         }
 
-    Returns:
+    Returns
+    -------
         JSON response indicating success or failure of the consent update.
     """
     try:
@@ -169,7 +173,7 @@ def update_consent(study_id: int, ditti_id: str):
         logger.error(
             f"Database error updating consent for ditti_id {ditti_id}, study_id {
                 study_id
-            }: {str(db_err)}"
+            }: {db_err!s}"
         )
         db.session.rollback()
         return make_response(
@@ -179,7 +183,7 @@ def update_consent(study_id: int, ditti_id: str):
         logger.error(
             f"Unhandled error updating consent for ditti_id {ditti_id}, study_id {
                 study_id
-            }: {str(e)}"
+            }: {e!s}"
         )
         db.session.rollback()
         return make_response({"msg": "Unexpected server error."}, 500)
@@ -190,14 +194,17 @@ def update_consent(study_id: int, ditti_id: str):
 def revoke_api_access(api_name: str, ditti_id: str):
     """
     Endpoint to revoke a participant's access to a specified API.
+
     Deletes tokens associated with the API from Secrets Manager,
     removes API access, and commits changes to the database.
 
     Args:
         api_name (str): Name of the API to revoke access for.
-        ditti_id (str): The unique ID of the study subject, provided by the decorator.
+        ditti_id (str): The unique ID of the study subject,
+            provided by the decorator.
 
-    Returns:
+    Returns
+    -------
         JSON response indicating success or failure of API access revocation.
     """
     try:
@@ -239,7 +246,7 @@ def revoke_api_access(api_name: str, ditti_id: str):
                 } not found."
             )
         except Exception as e:
-            logger.error(f"Error deleting tokens for API '{api_name}': {str(e)}")
+            logger.error(f"Error deleting tokens for API '{api_name}': {e!s}")
             return make_response({"msg": "Error deleting API tokens."}, 500)
 
         # Remove API access
@@ -251,15 +258,13 @@ def revoke_api_access(api_name: str, ditti_id: str):
     except SQLAlchemyError as db_err:
         logger.error(
             f"Database error revoking API access for ditti_id {ditti_id}: {
-                str(db_err)
+                db_err!s
             }"
         )
         db.session.rollback()
         return make_response({"msg": "Database error revoking API access."}, 500)
     except Exception as e:
-        logger.error(
-            f"Error revoking API access for ditti_id {ditti_id}: {str(e)}"
-        )
+        logger.error(f"Error revoking API access for ditti_id {ditti_id}: {e!s}")
         db.session.rollback()
         return make_response({"msg": "Error revoking API access."}, 500)
 
@@ -271,13 +276,15 @@ def revoke_api_access(api_name: str, ditti_id: str):
 def delete_participant(account, ditti_id: str):
     """
     Endpoint to delete a participant's account and all associated API data.
+
     Deletes API tokens and data, archives the StudySubject in the database,
     and removes the user from AWS Cognito.
 
     Args:
         ditti_id (str): ditti_id of the StudySubject to delete.
 
-    Returns:
+    Returns
+    -------
         JSON response confirming account deletion or an error message.
     """
     try:
@@ -311,14 +318,14 @@ def delete_participant(account, ditti_id: str):
             logger.error(
                 f"Database error deleting sleep logs for StudySubject ID {
                     study_subject_id
-                }: {str(db_err)}"
+                }: {db_err!s}"
             )
             return make_response({"msg": "Error deleting sleep data."}, 500)
         except Exception as e:
             logger.error(
                 f"Error deleting sleep logs for StudySubject ID {
                     study_subject_id
-                }: {str(e)}"
+                }: {e!s}"
             )
             return make_response({"msg": "Error deleting sleep data."}, 500)
 
@@ -338,9 +345,7 @@ def delete_participant(account, ditti_id: str):
                     } not found."
                 )
             except Exception as e:
-                logger.error(
-                    f"Error deleting tokens for API '{api_name}': {str(e)}"
-                )
+                logger.error(f"Error deleting tokens for API '{api_name}': {e!s}")
                 return make_response({"msg": "Error deleting API tokens."}, 500)
 
             # Remove API access
@@ -365,9 +370,8 @@ def delete_participant(account, ditti_id: str):
             return make_response({"msg": "Not authorized to delete user."}, 403)
         except client.exceptions.UserNotFoundException:
             logger.warning(f"User '{ditti_id}' not found in Cognito.")
-            pass
         except Exception as e:
-            logger.error(f"Error deleting user from Cognito: {str(e)}")
+            logger.error(f"Error deleting user from Cognito: {e!s}")
             return make_response(
                 {"msg": "Error deleting user from Cognito."}, 500
             )
@@ -381,11 +385,11 @@ def delete_participant(account, ditti_id: str):
 
     except SQLAlchemyError as db_err:
         logger.error(
-            f"Database error deleting participant {ditti_id}: {str(db_err)}"
+            f"Database error deleting participant {ditti_id}: {db_err!s}"
         )
         db.session.rollback()
         return make_response({"msg": "Database error deleting account."}, 500)
     except Exception as e:
-        logger.error(f"Unhandled error deleting participant {ditti_id}: {str(e)}")
+        logger.error(f"Unhandled error deleting participant {ditti_id}: {e!s}")
         db.session.rollback()
         return make_response({"msg": "Error deleting account."}, 500)

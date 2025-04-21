@@ -17,8 +17,8 @@
 import functools
 import inspect
 import logging
-from typing import Any, TypeVar, cast
 from collections.abc import Callable
+from typing import Any, TypeVar, cast
 
 from flask import make_response
 
@@ -39,7 +39,7 @@ def researcher_auth_required(
     resource: str | None = None,
 ) -> Callable:
     """
-    Decorator that authenticates researchers using tokens and optionally checks permissions.
+    Authenticate researchers using tokens and optionally checks permissions.
 
     This decorator:
     1. Validates the token using the auth controller
@@ -51,7 +51,8 @@ def researcher_auth_required(
         action: The action to check permissions for or the function to decorate
         resource: The resource to check permissions for
 
-    Returns:
+    Returns
+    -------
         The decorated function with authentication and authorization added
     """
 
@@ -59,7 +60,7 @@ def researcher_auth_required(
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: dict[str, Any]) -> Any:
             # Check if we've already authenticated in a previous decorator
-            # and added account to kwargs - only add once to avoid parameter conflict
+            # and added account to kwargs - only add once to avoid param conflict
             if "account" in kwargs:
                 # Account already authenticated and added by a previous decorator
                 auth_account = cast(Account, kwargs["account"])

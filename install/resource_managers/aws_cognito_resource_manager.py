@@ -46,7 +46,8 @@ class AwsCognitoResourceManager(BaseResourceManager):
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Admin user creation failed due to unexpected error: {Colorizer.white(e)}"
+                f"Admin user creation failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)
 
@@ -58,19 +59,23 @@ class AwsCognitoResourceManager(BaseResourceManager):
                 Username=self.config.admin_email,
             )
             self.logger(
-                f"Admin user {Colorizer.blue(self.config.admin_email)} created in Cognito user pool {Colorizer.blue(self.config.researcher_user_pool_id)}"
+                f"Admin user {Colorizer.blue(self.config.admin_email)} "
+                "created in Cognito user pool "
+                f"{Colorizer.blue(self.config.researcher_user_pool_id)}"
             )
 
             return res
         except ClientError as e:
             traceback.print_exc()
             self.logger.error(
-                f"Admin user creation failed due to ClientError: {Colorizer.white(e)}"
+                f"Admin user creation failed due to ClientError: "
+                f"{Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Admin user creation failed due to unexpected error: {Colorizer.white(e)}"
+                f"Admin user creation failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)

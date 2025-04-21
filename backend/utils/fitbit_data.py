@@ -30,18 +30,23 @@ def validate_date_range(
     start_date_str: str, end_date_str: str | None = None
 ) -> tuple[date, date]:
     """
-    Validates the provided date range.
+    Validate the provided date range.
 
-    Parameters:
+    Parameters
+    ----------
         start_date_str (str): The start date in 'YYYY-MM-DD' format.
-        end_date_str (str, optional): The end date in 'YYYY-MM-DD' format. Defaults to None.
+        end_date_str (str, optional): The end date in 'YYYY-MM-DD' format.
+            Defaults to None.
 
-    Returns:
-        tuple: A tuple containing the validated start_date and end_date as `datetime.date` objects.
+    Returns
+    -------
+        tuple: A tuple containing the validated start_date and end_date
+            as `datetime.date` objects.
 
-    Raises:
-        ValueError: If the dates are invalid, the end date is earlier than the start date,
-                    or the date range exceeds the allowed maximum.
+    Raises
+    ------
+        ValueError: If the dates are invalid, the end date is earlier than
+            the start date, or the date range exceeds the allowed maximum.
     """
     try:
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
@@ -69,12 +74,14 @@ def cache_key_admin(ditti_id: str, start_date: date, end_date: date) -> str:
     """
     Generates a cache key for admin Fitbit data requests.
 
-    Parameters:
+    Parameters
+    ----------
         ditti_id (str): The unique ID of the study subject.
         start_date (datetime.date): The start date of the data request.
         end_date (datetime.date): The end date of the data request.
 
-    Returns:
+    Returns
+    -------
         str: The generated cache key string.
     """
     return f"admin_fitbit_data:{ditti_id}:{start_date}:{end_date}"
@@ -84,12 +91,14 @@ def cache_key_participant(ditti_id: str, start_date: date, end_date: date) -> st
     """
     Generates a cache key for participant Fitbit data requests.
 
-    Parameters:
+    Parameters
+    ----------
         ditti_id (str): The unique ID of the participant.
         start_date (datetime.date): The start date of the data request.
         end_date (datetime.date): The end date of the data request.
 
-    Returns:
+    Returns
+    -------
         str: The generated cache key string.
     """
     return f"participant_fitbit_data:{ditti_id}:{start_date}:{end_date}"
@@ -99,14 +108,16 @@ def get_fitbit_data_for_subject(
     ditti_id: str, start_date: date, end_date: date
 ) -> list[dict] | None:
     """
-    Retrieves and serializes Fitbit data for a specific study subject within a given date range.
+    Retrieve and serialize a study subject's Fitbit data within a date range.
 
-    Parameters:
+    Parameters
+    ----------
         ditti_id (str): The unique ID of the study subject.
         start_date (datetime.date): The start date for the query.
         end_date (datetime.date): The end date for the query.
 
-    Returns:
+    Returns
+    -------
         list: A list of serialized sleep log data dictionaries if found.
         None: If the study subject is not found or is archived.
     """

@@ -56,13 +56,15 @@ class CognitoAuthBase:
 
     def validate_access_token(self, access_token, refresh_token=None):
         """
-        Validates the access token and refreshes it if expired.
+        Validate the access token and refreshes it if expired.
 
         Args:
             access_token (str): The access token to validate
-            refresh_token (str, optional): The refresh token to use if access_token is expired
+            refresh_token (str, optional): The refresh token to use
+                if access_token is expired
 
-        Returns:
+        Returns
+        -------
             tuple: (success, result)
                 - If success is True, result is None or dict with new_token
                 - If success is False, result contains an error message
@@ -114,7 +116,8 @@ class CognitoAuthBase:
                         return False, AUTH_ERROR_MESSAGES["session_expired"]
 
                     logger.error(
-                        f"Failed to refresh token: HTTP {status_code} - {error_body}"
+                        "Failed to refresh token: "
+                        f"HTTP {status_code} - {error_body}"
                     )
                     return False, AUTH_ERROR_MESSAGES["session_expired"]
 
@@ -125,30 +128,32 @@ class CognitoAuthBase:
                 return True, {"new_token": new_access_token}
 
             except Exception as e:
-                logger.error(f"Error refreshing token: {str(e)}")
+                logger.error(f"Error refreshing token: {e!s}")
                 return False, AUTH_ERROR_MESSAGES["session_expired"]
 
         except Exception as e:
-            logger.error(f"Token validation error: {str(e)}")
+            logger.error(f"Token validation error: {e!s}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
     def validate_token_for_authenticated_route(self, id_token):
         """
         Validate ID token for authenticated routes (without nonce validation).
 
-        This is a secure alternative to parse_and_validate_id_token when validating
-        existing tokens in authenticated routes where nonce isn't available.
+        This is a secure alternative to parse_and_validate_id_token when
+        validating existing tokens in authenticated routes where nonce isn't
+        available.
 
         Args:
             id_token (str): The ID token to validate
 
-        Returns:
+        Returns
+        -------
             tuple: (success, result)
                 - If success is True, result contains the parsed user info
                 - If success is False, result contains an error message
         """
         try:
-            # First, decode the token without verification to get the header and basic claims
+            # Decode the token without verification to get the header and claims
             unverified_header = jwt.get_unverified_header(id_token)
 
             unverified_claims = jwt.decode(
@@ -233,18 +238,18 @@ class CognitoAuthBase:
                 logger.warning("Token has expired during verification")
                 return False, AUTH_ERROR_MESSAGES["session_expired"]
             except jwt.InvalidTokenError as e:
-                logger.error(f"Invalid token during verification: {str(e)}")
+                logger.error(f"Invalid token during verification: {e!s}")
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
             except Exception as e:
-                logger.error(f"Error during manual token verification: {str(e)}")
+                logger.error(f"Error during manual token verification: {e!s}")
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
         except ExpiredSignatureError:
             logger.warning("ID token has expired")
             return False, AUTH_ERROR_MESSAGES["session_expired"]
         except InvalidTokenError as e:
-            logger.error(f"Invalid ID token: {str(e)}")
+            logger.error(f"Invalid ID token: {e!s}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]
         except Exception as e:
-            logger.error(f"Error validating ID token: {str(e)}")
+            logger.error(f"Error validating ID token: {e!s}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]

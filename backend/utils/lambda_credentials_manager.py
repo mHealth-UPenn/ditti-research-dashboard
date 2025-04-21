@@ -26,13 +26,15 @@ logger = logging.getLogger(__name__)
 
 class LambdaCredentialsManager:
     """
-    Manages AWS credentials for the Lambda execution user using AWS Secrets Manager.
-    Retrieves shared Lambda credentials for SigV4 authentication.
+    Manage AWS credentials for the Lambda execution user.
+
+    Retrieves shared Lambda credentials for SigV4 authentication
+    using AWS Secrets Manager.
     """
 
     def __init__(self, secret_name: str, region_name: str = "us-east-1"):
         """
-        Initializes the Secrets Manager client and sets the secret name and region.
+        Initialize the Secrets Manager client and sets the secret name and region.
 
         Args:
             secret_name (str): The name of the secret to retrieve.
@@ -45,13 +47,17 @@ class LambdaCredentialsManager:
 
     def get_credentials(self) -> Credentials:
         """
-        Retrieves AWS credentials from Secrets Manager.
+        Retrieve AWS credentials from Secrets Manager.
+
         Caches credentials after the first retrieval.
 
-        Returns:
-            Credentials: botocore.credentials.Credentials object containing access key and secret key.
+        Returns
+        -------
+            Credentials: botocore.credentials.Credentials object
+                containing access key and secret key.
 
-        Raises:
+        Raises
+        ------
             Exception: If unable to retrieve or parse the secret.
         """
         if self.credentials:
@@ -62,12 +68,12 @@ class LambdaCredentialsManager:
             response = self.client.get_secret_value(SecretId=self.secret_name)
             secret_string = response.get("SecretString")
             if not secret_string:
-                logger.error(
-                    f"Secret '{self.secret_name}' does not contain 'SecretString'."
+                msg = (
+                    f"Secret '{self.secret_name}' "
+                    "does not contain 'SecretString'."
                 )
-                raise ValueError(
-                    f"Secret '{self.secret_name}' does not contain 'SecretString'."
-                )
+                logger.error(msg)
+                raise ValueError(msg)
             secret_data = json.loads(secret_string)
             access_key = secret_data.get("LAMBDA_ACCESS_KEY_ID")
             secret_key = secret_data.get("LAMBDA_SECRET_ACCESS_KEY")
@@ -83,7 +89,8 @@ class LambdaCredentialsManager:
 
             self.credentials = Credentials(access_key, secret_key)
             logger.info(
-                "Successfully retrieved and cached Lambda execution credentials from Secrets Manager."
+                "Successfully retrieved and cached Lambda execution "
+                "credentials from Secrets Manager."
             )
             return self.credentials
 

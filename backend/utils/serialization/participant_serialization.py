@@ -103,13 +103,15 @@ def serialize_participant(
     study_subject: StudySubject,
 ) -> dict[str, Any] | None:
     """
-    Serializes a StudySubject ORM instance into a dictionary suitable for JSON responses.
+    Serialize a StudySubject ORM instance into a suitable dictionary.
 
     Args:
         study_subject (StudySubject): The study subject to serialize.
 
-    Returns:
-        Optional[Dict[str, Any]]: The serialized participant data if successful, otherwise None.
+    Returns
+    -------
+        Optional[Dict[str, Any]]: The serialized participant data if successful,
+            otherwise None.
     """
     try:
         participant_model = ParticipantModel.model_validate(study_subject)

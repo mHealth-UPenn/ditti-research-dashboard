@@ -26,7 +26,8 @@ def create_error_response(message, status_code=401, error_code=None):
         status_code (int): The HTTP status code (default: 401)
         error_code (str, optional): An optional error code for the client
 
-    Returns:
+    Returns
+    -------
         Response: A Flask response with standardized error format
     """
     response = {"msg": message}
@@ -48,8 +49,10 @@ def create_success_response(
         message (str): The success message (default: "Operation successful")
         status_code (int): The HTTP status code (default: 200)
 
-    Returns:
-        tuple: (response_dict, status_code) for Flask to convert to a JSON response
+    Returns
+    -------
+        tuple: (response_dict, status_code) for Flask to convert to
+            a JSON response
     """
     response = {}
 

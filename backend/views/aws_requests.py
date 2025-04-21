@@ -38,7 +38,9 @@ logger = logging.getLogger(__name__)
 @researcher_auth_required("View", "Ditti App Dashboard")
 def get_taps(account):
     """
-    Get tap data. If the user has permissions to view all studies, this will
+    Get tap data.
+
+    If the user has permissions to view all studies, this will
     return all tap data. Otherwise, this will return tap data for only the
     studies the user has access to
 
@@ -200,7 +202,9 @@ def get_audio_taps(account):
 @researcher_auth_required("View", "Ditti App Dashboard")
 def get_users(account):
     """
-    Get user data. If the user has permissions to view all studies, this will
+    Get user data.
+
+    If the user has permissions to view all studies, this will
     return all user data. Otherwise, this will return user data for only the
     studies the user has access to
 
@@ -295,7 +299,7 @@ def get_users(account):
 @researcher_auth_required("Create", "Participants")
 def user_create(account):
     """
-    Create a new user
+    Create a new user.
 
     Request Syntax
     --------------
@@ -352,7 +356,7 @@ def user_create(account):
 @researcher_auth_required("Edit", "Participants")
 def user_edit(account):
     """
-    Edit an exisitng user
+    Edit an exisitng user.
 
     Request Syntax
     --------------
@@ -400,7 +404,8 @@ def user_edit(account):
     if re.search(r"[^\dA-Za-z]", user_permission_id) is not None:
         return jsonify(
             {
-                "msg": f"Invalid study or study subject Ditti ID: {user_permission_id}"
+                "msg": "Invalid study or study subject Ditti ID: "
+                f"{user_permission_id}"
             }
         )
 
@@ -585,7 +590,8 @@ def audio_file_create(account):
         logger.warning(exc)
         return make_response(
             {
-                "msg": "Creation of audio file failed due to internal server error."
+                "msg": "Creation of audio file failed "
+                "due to internal server error."
             },
             500,
         )
@@ -598,7 +604,9 @@ def audio_file_create(account):
 @researcher_auth_required("Delete", "Audio File")
 def audio_file_delete(account):
     """
-    Permanently deletes an audio file. This endpoint first deletes the audio
+    Permanently deletes an audio file.
+
+    This endpoint first deletes the audio
     file from S3 then deletes the audio file from DynamoDB. If the deletion from
     S3 fails, the audio file is not deleted from DynamoDB.
 
@@ -664,7 +672,8 @@ def audio_file_delete(account):
         logger.warning(exc)
         return make_response(
             {
-                "msg": "Deletion of audio file failed due to internal server error."
+                "msg": "Deletion of audio file failed "
+                "due to internal server error."
             },
             500,
         )
@@ -677,8 +686,9 @@ def audio_file_delete(account):
 @researcher_auth_required("Create", "Audio File")
 def audio_file_generate_presigned_urls(account):
     """
-    Generates a list of presigned URLs for a given set of files. The request
-    body must include a key for uploading to S3 and its MIME type.
+    Generate a list of presigned URLs for a given set of files.
+
+    The request body must include a key for uploading to S3 and its MIME type.
 
     Request syntax
     --------------

@@ -39,8 +39,8 @@ def get_data_processing_tasks(account, task_id: int | None):
     """
     Retrieve all data processing tasks sorted by creation date.
 
-    Optionally, retrieve a specific data processing task by ID. If task_id is provided, the response will contain a
-    single task.
+    Optionally, retrieve a specific data processing task by ID.
+    If task_id is provided, the response will contain a single task.
 
     Request:
     --------
@@ -56,7 +56,8 @@ def get_data_processing_tasks(account, task_id: int | None):
     [
         {
             "id": int,
-            "status": str,          # "Pending", "InProgress", "Success", "Failed", or "CompletedWithErrors"
+            "status": str,          # "Pending", "InProgress", "Success",
+                                    # "Failed", or "CompletedWithErrors"
             "billedMs": int,
             "createdOn": str,       # ISO 8601 format
             "updatedOn": str,       # ISO 8601 format
@@ -77,7 +78,7 @@ def get_data_processing_tasks(account, task_id: int | None):
         if task_id is not None:
             tasks = LambdaTask.query.filter(LambdaTask.id == task_id).all()
         else:
-            # Retrieve all tasks sorted by created_on in descending order (most recent first)
+            # Retrieve all tasks sorted by created_on in descending order
             tasks = LambdaTask.query.order_by(LambdaTask.created_on.desc()).all()
         res = [task.meta for task in tasks]
         return jsonify(res), 200
@@ -88,7 +89,8 @@ def get_data_processing_tasks(account, task_id: int | None):
         db.session.rollback()
         return make_response(
             {
-                "msg": "Internal server error when retrieving data processing tasks."
+                "msg": "Internal server error when "
+                "retrieving data processing tasks."
             },
             500,
         )
@@ -116,7 +118,8 @@ def invoke_data_processing_task(account):
         "msg": "Data processing task invoked successfully",
         "task": {
             "id": int,
-            "status": str,          # "Pending", "InProgress", "Success", "Failed", or "CompletedWithErrors"
+            "status": str,          # "Pending", "InProgress", "Success",
+                                    # "Failed", or "CompletedWithErrors"
             "billedMs": int,
             "createdOn": str,       # ISO 8601 format
             "updatedOn": str,       # ISO 8601 format

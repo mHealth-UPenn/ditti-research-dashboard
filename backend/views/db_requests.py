@@ -54,7 +54,7 @@ def get_apps(account):
 @researcher_auth_required
 def get_studies(account):
     """
-    Get the data of all studies that the user has access to
+    Get the data of all studies that the user has access to.
 
     Options
     -------
@@ -107,7 +107,7 @@ def get_studies(account):
 @researcher_auth_required
 def get_study_details(account):
     """
-    Get the details of a given study
+    Get the details of a given study.
 
     Options
     -------
@@ -145,7 +145,9 @@ def get_study_details(account):
 @researcher_auth_required
 def get_study_contacts(account):
     """
-    Get the contacts of a given study. This will return the contact information
+    Get the contacts of a given study.
+
+    This will return the contact information
     of only accounts that are explictly given access to a study. Accounts that
     can access a study through permission to view all studies only will not be
     included
@@ -214,7 +216,7 @@ def get_study_contacts(account):
 @researcher_auth_required
 def edit_account_details(account):
     """
-    Edit the current user"s account details
+    Edit the current user"s account details.
 
     Request Syntax
     --------------
@@ -241,8 +243,7 @@ def edit_account_details(account):
     try:
         # Extract account data from request, removing the app identifier
         account_data = dict(request.json)
-        if "app" in account_data:
-            del account_data["app"]
+        account_data.pop("app", None)
 
         # Update the account in the database
         populate_model(account, account_data)
@@ -264,7 +265,8 @@ def edit_account_details(account):
         if not success:
             return make_response(
                 {
-                    "msg": f"Account updated in database but failed to update in Cognito: {message}"
+                    "msg": "Account updated in database but "
+                    f"failed to update in Cognito: {message}"
                 },
                 400,
             )
@@ -287,7 +289,7 @@ def edit_account_details(account):
 @researcher_auth_required
 def get_about_sleep_templates(account):
     """
-    Get all about sleep templates
+    Get all about sleep templates.
 
     Options
     -------
@@ -309,7 +311,6 @@ def get_about_sleep_templates(account):
     }
     """
     try:
-        # Retrieve all active sleep templates - no additional access control required
         about_sleep_templates = AboutSleepTemplate.query.filter(
             ~AboutSleepTemplate.is_archived
         ).all()
@@ -319,7 +320,8 @@ def get_about_sleep_templates(account):
         logger.warning(exc)
         return make_response(
             {
-                "msg": "Internal server error when retrieving about sleep templates."
+                "msg": "Internal server error when "
+                "retrieving about sleep templates."
             },
             500,
         )

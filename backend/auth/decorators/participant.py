@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def participant_auth_required(decorated_func=None):
     """
-    Decorator that authenticates participants using tokens.
+    Authenticate participants using tokens.
 
     This decorator:
     1. Validates the token using the auth controller
@@ -35,9 +35,11 @@ def participant_auth_required(decorated_func=None):
     4. Ensures archived study subjects cannot authenticate
 
     Args:
-        decorated_func (function, optional): The function to decorate. If None, returns a decorator.
+        decorated_func (function, optional): The function to decorate.
+            If None, returns a decorator.
 
-    Returns:
+    Returns
+    -------
         The decorated function with authentication added
     """
     # Return a decorator if called without arguments

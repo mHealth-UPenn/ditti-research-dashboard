@@ -40,13 +40,15 @@ class AwsAccountProvider:
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error(
-                f"AWS access key ID retrieval failed due to subprocess error: {Colorizer.white(e)}"
+                "AWS access key ID retrieval failed due to subprocess error: "
+                f"{Colorizer.white(e)}"
             )
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"AWS access key ID retrieval failed due to unexpected error: {Colorizer.white(e)}"
+                "AWS access key ID retrieval failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise SubprocessError(e)
 
@@ -57,13 +59,15 @@ class AwsAccountProvider:
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error(
-                f"AWS secret access key retrieval failed due to subprocess error: {Colorizer.white(e)}"
+                "AWS secret access key retrieval failed due to subprocess error: "
+                f"{Colorizer.white(e)}"
             )
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"AWS secret access key retrieval failed due to unexpected error: {Colorizer.white(e)}"
+                "AWS secret access key retrieval failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise SubprocessError(e)
 
@@ -74,13 +78,15 @@ class AwsAccountProvider:
         except ClientError as e:
             traceback.print_exc()
             self.logger.error(
-                f"AWS account ID retrieval failed due to ClientError: {Colorizer.white(e)}"
+                "AWS account ID retrieval failed due to ClientError: "
+                f"{Colorizer.white(e)}"
             )
             raise AwsProviderError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"AWS account ID retrieval failed due to unexpected error: {Colorizer.white(e)}"
+                "AWS account ID retrieval failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise AwsProviderError(e)
 
@@ -115,6 +121,7 @@ class AwsAccountProvider:
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"AWS CLI configuration failed due to unexpected error: {Colorizer.white(e)}"
+                "AWS CLI configuration failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise SubprocessError(e)

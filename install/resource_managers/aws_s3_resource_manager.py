@@ -80,7 +80,8 @@ class AwsS3ResourceManager(BaseResourceManager):
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error emptying bucket due to unexpected error: {Colorizer.white(e)}"
+                f"Error emptying bucket due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)
 
@@ -101,13 +102,15 @@ class AwsS3ResourceManager(BaseResourceManager):
         except ClientError as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error getting object keys due to ClientError: {Colorizer.white(e)}"
+                f"Error getting object keys due to ClientError: "
+                f"{Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error getting object keys due to unexpected error: {Colorizer.white(e)}"
+                f"Error getting object keys due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)
 
@@ -122,13 +125,15 @@ class AwsS3ResourceManager(BaseResourceManager):
                 )
                 return False
             self.logger.error(
-                f"Error checking if bucket {Colorizer.blue(bucket_name)} exists due to ClientError: {Colorizer.white(e)}"
+                f"Error checking if bucket {Colorizer.blue(bucket_name)} exists"
+                f" due to ClientError: {Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error checking if bucket {Colorizer.blue(bucket_name)} exists due to unexpected error: {Colorizer.white(e)}"
+                f"Error checking if bucket {Colorizer.blue(bucket_name)} exists"
+                f" due to unexpected error: {Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)
 
@@ -145,7 +150,8 @@ class AwsS3ResourceManager(BaseResourceManager):
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error deleting bucket due to unexpected error: {Colorizer.white(e)}"
+                f"Error deleting bucket due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)
 
@@ -155,14 +161,17 @@ class AwsS3ResourceManager(BaseResourceManager):
                 self.empty_bucket(self.config.audio_bucket_name)
                 self.delete_bucket(self.config.audio_bucket_name)
                 self.logger(
-                    f"S3 bucket {Colorizer.blue(self.config.audio_bucket_name)} deleted"
+                    "S3 bucket "
+                    f"{Colorizer.blue(self.config.audio_bucket_name)} deleted"
                 )
         except ResourceManagerError:
             raise
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error uninstalling S3 bucket {Colorizer.blue(self.config.audio_bucket_name)} due to unexpected error: {Colorizer.white(e)}"
+                f"Error uninstalling S3 bucket "
+                f"{Colorizer.blue(self.config.audio_bucket_name)} due "
+                f"to unexpected error: {Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)
 
@@ -171,14 +180,17 @@ class AwsS3ResourceManager(BaseResourceManager):
                 self.empty_bucket(self.config.logs_bucket_name)
                 self.delete_bucket(self.config.logs_bucket_name)
                 self.logger(
-                    f"S3 bucket {Colorizer.blue(self.config.logs_bucket_name)} deleted"
+                    f"S3 bucket {Colorizer.blue(self.config.logs_bucket_name)}"
+                    " deleted"
                 )
         except ResourceManagerError:
             raise
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error uninstalling S3 bucket {Colorizer.blue(self.config.logs_bucket_name)} due to unexpected error: {Colorizer.white(e)}"
+                f"Error uninstalling S3 bucket "
+                f"{Colorizer.blue(self.config.logs_bucket_name)} due "
+                f"to unexpected error: {Colorizer.white(e)}"
             )
             raise ResourceManagerError(e)
 

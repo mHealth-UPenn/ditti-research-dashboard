@@ -456,12 +456,18 @@ def init_integration_testing_db():
             )
         db.session.add(access_group)
 
-    data_summary = """The clinical trial collects sleep data from participants' wearable devices over four weeks to evaluate the
-impact of mindfulness exercises on treating insomnia. By monitoring sleep patterns, duration, and quality,
-researchers can gain objective insights into participants' sleep behavior before, during, and after engaging in
-mindfulness interventions. This data enables the study to measure the effectiveness of these exercises in
-improving sleep outcomes. Wearable devices provide a convenient, non-invasive method for gathering accurate,
-real-time data essential for understanding the physiological effects of mindfulness on sleep."""
+    data_summary = """The clinical trial collects sleep data from participants' \
+wearable devices over four weeks to evaluate the
+impact of mindfulness exercises on treating insomnia. By monitoring sleep \
+patterns, duration, and quality,
+researchers can gain objective insights into participants' sleep behavior \
+before, during, and after engaging in
+mindfulness interventions. This data enables the study to measure the \
+effectiveness of these exercises in
+improving sleep outcomes. Wearable devices provide a convenient, non-invasive \
+method for gathering accurate,
+real-time data essential for understanding the physiological effects of \
+mindfulness on sleep."""
 
     studies = [
         {
@@ -470,7 +476,9 @@ real-time data essential for understanding the physiological effects of mindfuln
             "ditti_id": "TA",
             "email": "test.study.A@studyAemail.com",
             "default_expiry_delta": 14,
-            "consent_information": "By accepting, you agree that your data will be used. You can withdraw consent at any time.",
+            "consent_information": "By accepting, you agree that your data "
+            "will be used. You can withdraw consent "
+            "at any time.",
             "data_summary": data_summary,
         },
         {
@@ -479,7 +487,8 @@ real-time data essential for understanding the physiological effects of mindfuln
             "ditti_id": "TB",
             "email": "test.study.B@studyBemail.com",
             "default_expiry_delta": 14,
-            "consent_information": "By accepting, you agree that your data will be used. You cannot withdraw consent.",
+            "consent_information": "By accepting, you agree that your data "
+            "will be used. You cannot withdraw consent.",
             "data_summary": data_summary,
         },
     ]
@@ -490,7 +499,8 @@ real-time data essential for understanding the physiological effects of mindfuln
     db.session.add(study_a)
     db.session.add(study_b)
 
-    # Create a Ditti admin account to test whether permissions are scoped to the Ditti Dashboard only
+    # Create a Ditti admin account to test whether permissions are scoped to the
+    # Ditti Dashboard only
     account = Account(
         created_on=datetime.now(UTC),
         first_name="Jane",
@@ -501,7 +511,8 @@ real-time data essential for understanding the physiological effects of mindfuln
     JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     db.session.add(account)
 
-    # Create a Wearable admin account to test whether permissions are scoped to the Wearable Dashboard only
+    # Create a Wearable admin account to test whether permissions are scoped
+    # to the Wearable Dashboard only
     account = Account(
         created_on=datetime.now(UTC),
         first_name="Jane",
@@ -512,7 +523,8 @@ real-time data essential for understanding the physiological effects of mindfuln
     JoinAccountAccessGroup(account=account, access_group=wear_admin_group)
     db.session.add(account)
 
-    # Create a Study A Admin account to test whether permissions are scoped to Study A only
+    # Create a Study A Admin account to test whether permissions are scoped to the
+    # Study A only
     account = Account(
         created_on=datetime.now(UTC),
         first_name="Jane",
@@ -528,9 +540,10 @@ real-time data essential for understanding the physiological effects of mindfuln
     db.session.add(account)
 
     # Create an account for each role
-    # Assign each role to Study A to test whether permissions are scoped to Study A only
+    # Assign each role to Study A to test whether permissions are scoped
+    # to Study A only
     other_role = Role.query.filter(Role.name == "Can View Participants").first()
-    for role_name in roles.keys():
+    for role_name in roles:
         account = Account(
             created_on=datetime.now(UTC),
             first_name="Jane",
@@ -550,7 +563,8 @@ real-time data essential for understanding the physiological effects of mindfuln
         JoinAccountAccessGroup(account=account, access_group=admin_group)
         db.session.add(account)
 
-    # Create an account for each access group to test whether permissions are scoped properly on the Admin Dashboard
+    # Create an account for each access group to test whether permissions are
+    # scoped properly on the Admin Dashboard
     access_group_names = list(admin_access_groups.keys()) + list(
         ditti_access_groups.keys()
     )
@@ -868,7 +882,6 @@ class Account(db.Model):
         Returns
         -------
         """
-
         # query all permissions that are granted to the account by access
         # groups that grant access to the app
         q1 = (
@@ -984,7 +997,7 @@ class JoinAccountAccessGroup(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.account_id, self.access_group_id
 
@@ -1035,7 +1048,7 @@ class JoinAccountStudy(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.account_id, self.study_id
 
@@ -1147,7 +1160,7 @@ class JoinAccessGroupPermission(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key
+        Tuple of int: an entry's primary key
         """
         return self.access_group_id, self.permission_id
 
@@ -1236,7 +1249,7 @@ class JoinRolePermission(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.role_id, self.permission_id
 
@@ -1402,7 +1415,7 @@ class Permission(db.Model):
     @hybrid_property
     def definition(self):
         """
-        tuple of str: an entry's (action, resource) definition
+        Tuple of str: an entry's (action, resource) definition
         """
         return self.action, self.resource
 
@@ -1466,8 +1479,8 @@ class Study(db.Model):
     email: sqlalchemy.Column
     default_expiry_delta: sqlalchemy.Column
         The default amount of time in number of days that a subject is enrolled
-        in the study. A JoinStudySubjectStudy's expires_on column will be automatically set
-        according to this value.
+        in the study. A JoinStudySubjectStudy's expires_on column will be
+        automatically set according to this value.
     consent_information: sqlalchemy.Column
         The consent text to show to a study subject.
     is_archived: sqlalchemy.Column
@@ -1542,7 +1555,7 @@ class JoinStudyRole(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.study_id, self.role_id
 
@@ -1749,7 +1762,7 @@ class JoinStudySubjectStudy(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.study_subject_id, self.study_id
 
@@ -1778,8 +1791,8 @@ class JoinStudySubjectStudy(db.Model):
 @event.listens_for(JoinStudySubjectStudy, "before_insert")
 def set_expires_on(mapper, connection, target):
     """
-    Automatically set the expires_on field based on the Study's default_expiry_delta
-    if expires_on is not provided.
+    Automatically set the expires_on field based on the Study's
+    default_expiry_delta if expires_on is not provided.
     """
     if not target.expires_on:
         if target.study_id:
@@ -1851,7 +1864,7 @@ class JoinStudySubjectApi(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.study_subject_id, self.api_id
 
@@ -1875,10 +1888,10 @@ class JoinStudySubjectApi(db.Model):
         }
 
     def __repr__(self):
-        return f"<JoinStudySubjectApi StudySubject {self.study_subject_id} - Api {self.api_id}>"
-
-    def __repr__(self):
-        return "<JoinStudySubjectApi {}-{}>".format(*self.primary_key)
+        return (
+            f"<JoinStudySubjectApi StudySubject {self.study_subject_id} - "
+            f"Api {self.api_id}>"
+        )
 
 
 class Api(db.Model):
@@ -2083,7 +2096,10 @@ class SleepLevel(db.Model):
         }
 
     def __repr__(self):
-        return f"<SleepLevel {self.level.value} at {self.date_time} for SleepLog {self.sleep_log_id}>"
+        return (
+            f"<SleepLevel {self.level.value} at {self.date_time} for "
+            f"SleepLog {self.sleep_log_id}>"
+        )
 
 
 class SleepSummary(db.Model):
@@ -2148,7 +2164,8 @@ class LambdaTask(db.Model):
     ----
     id: sqlalchemy.Column
     status: sqlalchemy.Column
-        The status of the task ("Pending", "InProgress", "Success", "Failed", "CompletedWithErrors").
+        The status of the task ("Pending", "InProgress", "Success", "Failed",
+        "CompletedWithErrors").
     billed_ms: sqlalchemy.Column
         The billed duration of the Lambda function in milliseconds.
     created_on: sqlalchemy.Column

@@ -45,13 +45,15 @@ class AwsCognitoProvider:
         except ClientError as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error getting participant client secret due to ClientError: {Colorizer.white(e)}"
+                "Error getting participant client secret due to ClientError: "
+                f"{Colorizer.white(e)}"
             )
             raise AwsProviderError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error getting participant client secret due to unexpected error: {Colorizer.white(e)}"
+                "Error getting participant client secret due to unexpected "
+                f"error: {Colorizer.white(e)}"
             )
             raise AwsProviderError(e)
 
@@ -64,12 +66,14 @@ class AwsCognitoProvider:
         except ClientError as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error getting researcher client secret due to ClientError: {Colorizer.white(e)}"
+                "Error getting researcher client secret due to ClientError: "
+                f"{Colorizer.white(e)}"
             )
             raise AwsProviderError(e)
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error getting researcher client secret due to unexpected error: {Colorizer.white(e)}"
+                "Error getting researcher client secret due to unexpected "
+                f"error: {Colorizer.white(e)}"
             )
             raise AwsProviderError(e)

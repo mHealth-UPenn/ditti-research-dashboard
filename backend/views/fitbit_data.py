@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 @researcher_auth_required("View", "Wearable Data")
 def admin_get_fitbit_data(account, ditti_id: str):
     """
-    Retrieves Fitbit data for a specific study subject as an admin.
+    Retrieve Fitbit data for a specific study subject as an admin.
 
     URL Parameters:
         ditti_id (str): The unique ID of the study subject.
@@ -62,7 +62,8 @@ def admin_get_fitbit_data(account, ditti_id: str):
         start_date (str): The start date in 'YYYY-MM-DD' format (required).
         end_date (str, optional): The end date in 'YYYY-MM-DD' format.
 
-    Returns:
+    Returns
+    -------
         JSON Response: Serialized Fitbit data if found and valid.
         HTTP 400: If input validation fails.
         HTTP 404: If the study subject is not found or archived.
@@ -106,13 +107,13 @@ def admin_get_fitbit_data(account, ditti_id: str):
     except SQLAlchemyError as db_err:
         logger.error(
             f"Database error retrieving Fitbit data for ditti_id {ditti_id}: "
-            f"{str(db_err)}"
+            f"{db_err!s}"
         )
         return make_response(
             {"msg": "Database error retrieving Fitbit data."}, 500
         )
     except Exception as e:
-        logger.error(f"Unhandled error in admin_get_fitbit_data: {str(e)}")
+        logger.error(f"Unhandled error in admin_get_fitbit_data: {e!s}")
         return make_response({"msg": "Unexpected server error."}, 500)
 
 
@@ -120,16 +121,18 @@ def admin_get_fitbit_data(account, ditti_id: str):
 @participant_auth_required
 def participant_get_fitbit_data(ditti_id: str):
     """
-    Retrieves Fitbit data for the authenticated participant.
+    Retrieve Fitbit data for the authenticated participant.
 
     Query Parameters:
         start_date (str): The start date in 'YYYY-MM-DD' format (required).
         end_date (str, optional): The end date in 'YYYY-MM-DD' format.
 
     Args:
-        ditti_id (str): The study subject's username, passed from participant_auth_required.
+        ditti_id (str): The study subject's username,
+            passed from participant_auth_required.
 
-    Returns:
+    Returns
+    -------
         JSON Response: Serialized Fitbit data if found and valid.
         HTTP 400: If input validation or token decoding fails.
         HTTP 401: If the ID token is missing or expired.
@@ -174,13 +177,13 @@ def participant_get_fitbit_data(ditti_id: str):
     except SQLAlchemyError as db_err:
         logger.error(
             f"Database error retrieving Fitbit data for ditti_id {ditti_id}: "
-            f"{str(db_err)}"
+            f"{db_err!s}"
         )
         return make_response(
             {"msg": "Database error retrieving Fitbit data."}, 500
         )
     except Exception as e:
-        logger.error(f"Unhandled error in participant_get_fitbit_data: {str(e)}")
+        logger.error(f"Unhandled error in participant_get_fitbit_data: {e!s}")
         return make_response({"msg": "Unexpected server error."}, 500)
 
 
@@ -191,19 +194,21 @@ def participant_get_fitbit_data(ditti_id: str):
 @researcher_auth_required("View", "Wearable Data")
 def download_fitbit_participant(account, ditti_id: str):
     """
-    Fetch and download Fitbit API data for a single study participant as an Excel file.
+    Download Fitbit API data for a single study participant as an Excel file.
 
-    This endpoint retrieves all Fitbit-related data for a participant identified by their
-    Ditti ID (`ditti_id`). The data includes details such as sleep logs and sleep levels,
-    formatted for analysis in an Excel file. The Excel file is generated with a timestamped
-    filename and returned to the client as a downloadable file.
+    This endpoint retrieves all Fitbit-related data for a participant identified
+    by their Ditti ID (`ditti_id`). The data includes details such as sleep logs
+    and sleep levels, formatted for analysis in an Excel file. The Excel file is
+    generated with a timestamped filename and returned to the client
+    as a downloadable file.
 
     Args:
         ditti_id (str): The unique identifier for the participant.
 
-    Returns:
-        Response: A downloadable Excel file containing the participant's data or an error
-        response in case of failure.
+    Returns
+    -------
+        Response: A downloadable Excel file containing
+            the participant's data or an error response in case of failure.
     """
     try:
         stmt = (
@@ -269,20 +274,22 @@ def download_fitbit_participant(account, ditti_id: str):
 @researcher_auth_required("View", "Wearable Data")
 def download_fitbit_study(account, study_id: int):
     """
-    Fetch and download Fitbit API data for all participants in a specific study as an Excel file.
+    Download all participant Fitbit API data for a study as an Excel file.
 
-    This endpoint retrieves all Fitbit-related data for participants within a study identified
-    by its unique `study_id`. The data includes details such as sleep logs and sleep levels for
-    all participants with Ditti IDs that match the study's prefix. The results are formatted
-    for analysis in an Excel file. The file is generated with a timestamped filename and
-    returned to the client as a downloadable file.
+    This endpoint retrieves all Fitbit-related data for participants within a
+    study identified by its unique `study_id`. The data includes details such as
+    sleep logs and sleep levels for all participants with Ditti IDs that match
+    the study's prefix. The results are formatted for analysis in an Excel file.
+    The file is generated with a timestamped filename and returned to the client
+    as a downloadable file.
 
     Args:
         study_id (int): The unique identifier for the study.
 
-    Returns:
-        Response: A downloadable Excel file containing the study's participants' data or an
-        error response in case of failure.
+    Returns
+    -------
+        Response: A downloadable Excel file containing the study's
+        participants' data or an error response in case of failure.
     """
     try:
         stmt = select(Study.ditti_id, Study.acronym).where(Study.id == study_id)

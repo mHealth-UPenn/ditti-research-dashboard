@@ -37,10 +37,13 @@ def login():
     This endpoint:
     1. Generates a secure nonce for ID token validation
     2. Generates a secure state parameter for CSRF protection
-    3. Generates PKCE code_verifier and code_challenge for authorization code security
-    4. Redirects to the Cognito authorization endpoint with all security parameters
+    3. Generates PKCE code_verifier and code_challenge
+        for authorization code security
+    4. Redirects to the Cognito authorization endpoint
+        with all security parameters
 
-    Returns:
+    Returns
+    -------
         Redirect to Cognito login page
     """
     return auth_controller.login()
@@ -60,7 +63,8 @@ def cognito_callback():
     6. Sets secure cookies with the tokens
     7. Redirects to the frontend application
 
-    Returns:
+    Returns
+    -------
         Redirect to frontend with tokens set in cookies, or
         400 Bad Request on authentication errors
         403 Forbidden if account is archived
@@ -79,7 +83,8 @@ def logout():
     3. Clears authentication cookies
     4. Redirects to Cognito logout
 
-    Returns:
+    Returns
+    -------
         Redirect to Cognito logout URL with cookies cleared
     """
     return auth_controller.logout()
@@ -95,9 +100,11 @@ def check_login():
     2. Validates the token and extracts the account
     3. Returns the account info on success
 
-    Returns:
+    Returns
+    -------
         200 OK with account info on success
-        401 Unauthorized if not authenticated or token invalid or account not found
+        401 Unauthorized if not authenticated or token invalid
+            or account not found
         403 Forbidden if account is archived
     """
     return auth_controller.check_login()
@@ -118,7 +125,8 @@ def change_password(account):
             "newPassword": str        # Required for changing password
         }
 
-    Returns:
+    Returns
+    -------
         Response: JSON response indicating success or error
     """
     # Get request data
@@ -150,8 +158,7 @@ def change_password(account):
 @researcher_auth_required
 def get_access(account):
     """
-    Check whether the user has permissions for an action and resource for a
-    given app and study.
+    Check if user has permissions for an action/resource for a given app/study.
 
     Query Parameters:
         app (str): The app ID (1, 2, or 3)
@@ -159,7 +166,8 @@ def get_access(account):
         action (str): The action to check permissions for
         resource (str): The resource to check permissions for
 
-    Returns:
+    Returns
+    -------
         Response: JSON response indicating whether the request is authorized
             200 OK with message "Authorized" if permitted
             200 OK with message "Unauthorized" if not permitted
