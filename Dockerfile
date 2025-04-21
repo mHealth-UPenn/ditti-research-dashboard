@@ -16,7 +16,7 @@ RUN pip3 install boto3 \
     Flask-JWT-Extended \
     Flask-Migrate \
     Flask-SQLAlchemy==2.5.1 \
-    html-sanitizer \
+    nh3 \
     oauthlib \
     pandas \
     psycopg2-binary \

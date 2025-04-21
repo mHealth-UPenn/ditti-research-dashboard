@@ -16,7 +16,6 @@
  */
 
 import { useState, useMemo, useEffect } from "react";
-import sanitizeHtml, { AllowedAttribute } from "sanitize-html";
 import { useAuth } from "../../hooks/useAuth";
 import { Card } from "../cards/card";
 import { CardContentRow } from "../cards/cardContentRow";
@@ -31,7 +30,7 @@ import { SmallLoader } from "../loader/loader";
 import { ConsentModal } from "../containers/consentModal/consentModal";
 import { makeRequest } from "../../utils";
 import { ParticipantStudy } from "../../types/api";
-import sanitize from "sanitize-html";
+import { QuillView } from "../containers/quillView/quillView";
 
 const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
 
@@ -82,7 +81,7 @@ export const ParticipantDashboardContent = () => {
 
   // Redirect after authenticating with Fitbit
   const handleRedirect = () => {
-    window.location.href = `${process.env.REACT_APP_FLASK_SERVER}/api/fitbit/authorize`;
+    window.location.href = `${import.meta.env.VITE_FLASK_SERVER}/api/fitbit/authorize`;
   };
 
   // Redirect to form for requesting deletion of account
@@ -153,14 +152,9 @@ export const ParticipantDashboardContent = () => {
     // Build a combined block of all unconsented study info
     let content = "";
     unconsentedStudies.forEach(study => {
-      const sanitized = sanitizeHtml(
-          study.consentInformation || "", {
-          allowedAttributes: {
-            li: ["data-list", "class"] as AllowedAttribute[],
-          },
-        })
-        || defaultConsentContentText;    
-      content += `<h4>${study.studyName}</h4><div>${sanitized}</div>`;
+      // This gets sanitized in QuillView
+      const consentText = study.consentInformation || defaultConsentContentText || "";    
+      content += `<h4>${study.studyName}</h4><div>${consentText}</div>`;
     });
     return content;
   }, [studies, unconsentedStudies]);
@@ -265,19 +259,12 @@ export const ParticipantDashboardContent = () => {
             <Title>Why are we collecting your data?</Title>
           </CardContentRow>
           <CardContentRow>
-            <span
-              className="ql-editor ql-modal text-sm"
-              dangerouslySetInnerHTML={{
-                __html: sanitize(
-                  studies.length > 0
-                    ? (studies[0].dataSummary || "No data summary available.")
-                    : "No data summary available.",
-                  {
-                    allowedAttributes: {
-                      li: ["data-list", "class"] as AllowedAttribute[],
-                    },
-                  })
-              }} />
+            <QuillView
+              className="text-sm"
+              content={studies.length > 0
+                ? (studies[0].dataSummary || "No data summary available.")
+                : "No data summary available."
+              } />
           </CardContentRow>
           <CardContentRow>
             <Title>Manage my data</Title>

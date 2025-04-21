@@ -1,3 +1,6 @@
+/// <reference types="vite/client" />
+/// <reference types="vite-plugin-svgr/client" />
+
 /* Ditti Research Dashboard
  * Copyright (C) 2025 the Trustees of the University of Pennsylvania
  *
@@ -15,12 +18,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export type Environment = "production" | "demo" | "development" | "test";
-
-export const APP_ENV: Environment = (() => {
-  if (import.meta.env.VITE_DEMO === "1") {
-    return "demo";
-  } else {
-    return import.meta.env.MODE as Environment;
+interface ImportMeta {
+    readonly env: {
+      readonly VITE_FLASK_SERVER: string;
+      readonly VITE_DEMO: string;
+      // https://vite.dev/guide/env-and-mode#built-in-constants
+      readonly MODE: string;
+      readonly BASE_URL: string;
+      readonly PROD: boolean;
+      readonly DEV: boolean;
+      readonly SSR: boolean;
+    }
   }
-})();

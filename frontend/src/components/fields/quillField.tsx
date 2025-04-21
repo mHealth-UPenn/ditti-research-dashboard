@@ -15,11 +15,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useEffect, useRef, useMemo, memo } from "react";
-import Quill, { QuillOptions } from "quill";
 import { debounce } from "lodash";
-import sanitizeHtml, { AllowedAttribute } from "sanitize-html";
+import { memo, useEffect, useMemo, useRef } from "react";
+import Quill, { QuillOptions } from "quill";
 import "quill/dist/quill.snow.css";
+import { sanitize_quill_html } from "../../utils";
 import { QuillFieldProps } from "./fields.types";
 
 const QuillField = ({
@@ -47,7 +47,7 @@ const QuillField = ({
         ["bold", "italic", "underline", "strike"], // Text formatting
         ["link", "blockquote", "code-block"], // Media and block formatting
         [{ list: "ordered" }, { list: "bullet" }], // Lists
-        [{ header: [1, 2, 3, false] }], // Headers
+        [{ header: [1, 2, 3, 4, 5, 6, false] }], // Headers
         ["clean"], // Clear formatting
       ],
     };
@@ -91,12 +91,7 @@ const QuillField = ({
 
       // Set initial content in the editor, sanitizing it for safety
       if (value) {
-        const safeHtml = sanitizeHtml(
-          value, {
-          allowedAttributes: {
-            li: ["data-list", "class"] as AllowedAttribute[],
-          },
-        });
+        const safeHtml = sanitize_quill_html(value);
         quillInstanceRef.current.clipboard.dangerouslyPasteHTML(safeHtml);
       }
     }
