@@ -38,7 +38,7 @@ def get_cognito_jwks(jwks_url):
         dict: The JWKS response or None if request failed
     """
     try:
-        response = requests.get(jwks_url)
+        response = requests.get(jwks_url, timeout=30)
         if response.ok:
             return response.json()
         logger.error(f"Failed to fetch JWKS: {response.status_code}")

@@ -140,7 +140,7 @@ def invoke_lambda_task(function_id):
             # send an async invocation to the local lambda endpoint
             def send_request(url, data):
                 try:
-                    requests.post(url, json=data)
+                    requests.post(url, json=data, timeout=30)
                 except requests.RequestException as e:
                     logger.error(f"Lambda invocation failed: {e}")
 

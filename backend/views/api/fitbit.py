@@ -160,7 +160,7 @@ def fitbit_callback(ditti_id: str):
         # Send the token request to Fitbit
         try:
             response = requests.post(
-                token_url, headers=headers, data=body, auth=auth
+                token_url, headers=headers, data=body, auth=auth, timeout=30
             )
             response.raise_for_status()
             token = client.parse_request_body_response(response.text)

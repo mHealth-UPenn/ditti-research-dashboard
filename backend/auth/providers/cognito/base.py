@@ -101,7 +101,9 @@ class CognitoAuthBase:
                 }
                 headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
-                response = requests.post(token_url, data=data, headers=headers)
+                response = requests.post(
+                    token_url, data=data, headers=headers, timeout=30
+                )
 
                 if not response.ok:
                     status_code = response.status_code

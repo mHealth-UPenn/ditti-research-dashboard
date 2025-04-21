@@ -169,7 +169,7 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
         }
         try:
             response = requests.post(
-                token_issuer_endpoint, data=refresh_params, auth=auth
+                token_issuer_endpoint, data=refresh_params, auth=auth, timeout=30
             )
             response.raise_for_status()
             new_token = response.json()
@@ -207,7 +207,7 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
                 f"Bearer {self.client.token['access_token']}"
             )
             kwargs["headers"] = headers
-            response = requests.request(method, url, **kwargs)
+            response = requests.request(method, url, timeout=30, **kwargs)
             if response.status_code == 401:
                 # Token expired, refresh it
                 refresh_token_func()
@@ -216,7 +216,7 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
                     f"Bearer {self.client.token['access_token']}"
                 )
                 kwargs["headers"] = headers
-                response = requests.request(method, url, **kwargs)
+                response = requests.request(method, url, timeout=30, **kwargs)
             return response
 
         def get(self, url: str, **kwargs) -> requests.Response:

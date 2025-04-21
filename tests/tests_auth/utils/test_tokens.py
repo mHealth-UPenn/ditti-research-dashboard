@@ -64,7 +64,9 @@ def test_get_cognito_jwks(mock_get):
     jwks = get_cognito_jwks("https://example.com/.well-known/jwks.json")
 
     assert jwks == mock_response.json.return_value
-    mock_get.assert_called_once_with("https://example.com/.well-known/jwks.json")
+    mock_get.assert_called_once_with(
+        "https://example.com/.well-known/jwks.json", timeout=30
+    )
 
 
 @patch("requests.get")
@@ -80,7 +82,9 @@ def test_get_cognito_jwks_error(mock_get):
     result = get_cognito_jwks("https://example.com/.well-known/jwks.json")
     assert result is None
 
-    mock_get.assert_called_once_with("https://example.com/.well-known/jwks.json")
+    mock_get.assert_called_once_with(
+        "https://example.com/.well-known/jwks.json", timeout=30
+    )
 
 
 @patch("requests.get")
@@ -108,5 +112,7 @@ def test_get_cognito_jwks_caching(mock_get):
     jwks1 = get_cognito_jwks("https://example.com/.well-known/jwks.json")
     jwks2 = get_cognito_jwks("https://example.com/.well-known/jwks.json")
 
-    mock_get.assert_called_once_with("https://example.com/.well-known/jwks.json")
+    mock_get.assert_called_once_with(
+        "https://example.com/.well-known/jwks.json", timeout=30
+    )
     assert jwks1 == jwks2
