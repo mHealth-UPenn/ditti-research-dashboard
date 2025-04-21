@@ -62,9 +62,9 @@ def aws_config(hashstr: str) -> AwsConfig:
 
 def docker_config(hashstr: str) -> DockerConfig:
     return {
-        "network_name": f"test-project-network",
-        "postgres_container_name": f"test-project-postgres",
-        "wearable_data_retrieval_container_name": f"test-project-wearable-data-retrieval",
+        "network_name": "test-project-network",
+        "postgres_container_name": "test-project-postgres",
+        "wearable_data_retrieval_container_name": "test-project-wearable-data-retrieval",
     }
 
 

@@ -324,8 +324,6 @@ def get_unwrapped_view(view_module, view_func_name):
     This allows testing the core view logic without authentication
     decorators getting in the way.
     """
-    import inspect
-    from functools import wraps
 
     # Get the wrapped view function
     view_func = getattr(view_module, view_func_name)
@@ -363,7 +361,7 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     headers = {"Authorization": f"Bearer {mock_token}"}
 
     # Patch the ResearcherAuthController to return our mock account
-    from unittest.mock import MagicMock, patch
+    from unittest.mock import patch
 
     from backend.auth.controllers.researcher import ResearcherAuthController
 
@@ -376,7 +374,6 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     patcher1.start()
 
     # Also patch the check_permissions function to always return True
-    from backend.auth.decorators.researcher import check_permissions
 
     patcher2 = patch(
         "backend.auth.decorators.researcher.check_permissions",

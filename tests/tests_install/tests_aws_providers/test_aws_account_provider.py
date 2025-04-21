@@ -5,7 +5,7 @@ import pytest
 from botocore.exceptions import ClientError
 from moto import mock_aws
 
-from install.aws_providers import AwsAccountProvider, AwsClientProvider
+from install.aws_providers import AwsAccountProvider
 from install.utils.exceptions import AwsProviderError, SubprocessError
 from tests.tests_install.tests_aws_providers.mock_aws_account_provider import (
     aws_account_provider,

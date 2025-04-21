@@ -22,7 +22,7 @@ def template():
         project_root, "tests/data/cloudformation/template.yml"
     )
 
-    with open(template_path, "r") as f:
+    with open(template_path) as f:
         return f.read()
 
 

@@ -825,7 +825,7 @@ def handler(event, context):
                 tokens_config = get_secret(tokens_secret_name)
             except Exception:
                 logger.error(
-                    f"Error retrieving secret",
+                    "Error retrieving secret",
                     extra={"error": traceback.format_exc()},
                 )
                 raise ConfigFetchError
@@ -838,7 +838,7 @@ def handler(event, context):
 
         except Exception:
             logger.error(
-                f"Error initializing database services",
+                "Error initializing database services",
                 extra={"error": traceback.format_exc()},
             )
             raise DBInitializationError

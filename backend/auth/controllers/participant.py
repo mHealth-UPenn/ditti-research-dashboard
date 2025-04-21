@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from flask import request
 
@@ -121,7 +121,7 @@ class ParticipantAuthController(AuthControllerBase):
 
             # Create new study subject
             study_subject = StudySubject(
-                created_on=datetime.now(timezone.utc),
+                created_on=datetime.now(UTC),
                 ditti_id=ditti_id,
                 is_archived=False,
             )

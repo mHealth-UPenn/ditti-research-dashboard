@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, mock_open, patch
 import pytest
 
 from install.project_config.project_config_provider import ProjectConfigProvider
-from install.project_config.project_config_types import ProjectConfig, UserInput
+from install.project_config.project_config_types import UserInput
 from install.utils import Logger
 from install.utils.exceptions import CancelInstallation, ProjectConfigError
 from tests.tests_install.tests_project_config.mock_project_config_provider import (

@@ -230,7 +230,7 @@ def test_get_container_not_found(docker_provider_mock: DockerProvider):
         docker.errors.NotFound("Container not found")
     )
 
-    with pytest.raises(DockerSDKError, match=f"Container .+ not found"):
+    with pytest.raises(DockerSDKError, match="Container .+ not found"):
         docker_provider_mock.get_container("test-container")
 
 
@@ -252,7 +252,7 @@ def test_get_network_not_found(docker_provider_mock: DockerProvider):
         docker.errors.NotFound("Network not found")
     )
 
-    with pytest.raises(DockerSDKError, match=f"Network .+ not found"):
+    with pytest.raises(DockerSDKError, match="Network .+ not found"):
         docker_provider_mock.get_network()
 
 

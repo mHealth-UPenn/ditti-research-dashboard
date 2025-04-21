@@ -19,7 +19,7 @@ import hashlib
 import logging
 import os
 import time
-from typing import Any, Dict
+from typing import Any
 
 import requests
 from oauthlib.oauth2 import WebApplicationClient
@@ -115,7 +115,7 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
     # Initialize the OAuth2 WebApplicationClient
     client = WebApplicationClient(client_id=fitbit_client_id, token=token)
 
-    def token_updater(new_token: Dict[str, Any]) -> None:
+    def token_updater(new_token: dict[str, Any]) -> None:
         """
         Updates the tokens in Secrets Manager.
 

@@ -19,7 +19,6 @@ import os
 import random
 import string
 from getpass import getpass
-from typing import Optional
 
 from install.project_config.project_config_types import (
     CognitoConfig,
@@ -44,8 +43,8 @@ from install.utils.exceptions import (
 
 class ProjectConfigProvider:
     project_config_filename: str = "project-config.json"
-    user_input: Optional[UserInput]
-    project_config: Optional[ProjectConfig]
+    user_input: UserInput | None
+    project_config: ProjectConfig | None
 
     def __init__(
         self,
@@ -69,7 +68,7 @@ class ProjectConfigProvider:
                 f"Project config file {Colorizer.blue(self.project_config_filename)} not found"
             )
 
-        with open(self.project_config_filename, "r") as f:
+        with open(self.project_config_filename) as f:
             self.project_config = json.load(f)
 
     @property

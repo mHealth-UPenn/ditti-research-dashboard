@@ -17,7 +17,8 @@
 import functools
 import inspect
 import logging
-from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
+from typing import Any, TypeVar, cast
+from collections.abc import Callable
 
 from flask import make_response
 
@@ -34,8 +35,8 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 def researcher_auth_required(
-    action: Optional[Union[str, Callable]] = None,
-    resource: Optional[str] = None,
+    action: str | Callable | None = None,
+    resource: str | None = None,
 ) -> Callable:
     """
     Decorator that authenticates researchers using tokens and optionally checks permissions.
@@ -56,7 +57,7 @@ def researcher_auth_required(
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Dict[str, Any]) -> Any:
+        def wrapper(*args: Any, **kwargs: dict[str, Any]) -> Any:
             # Check if we've already authenticated in a previous decorator
             # and added account to kwargs - only add once to avoid parameter conflict
             if "account" in kwargs:

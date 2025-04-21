@@ -16,7 +16,7 @@
 
 import json
 import logging
-from typing import Any, Dict
+from typing import Any
 
 import boto3
 from botocore.exceptions import ClientError
@@ -49,7 +49,7 @@ class TokensManager:
         """
         return self.fstr.format(api_name=api_name)
 
-    def _retrieve_secret(self, secret_name: str) -> Dict[str, Any]:
+    def _retrieve_secret(self, secret_name: str) -> dict[str, Any]:
         """
         Retrieves the secret JSON object from AWS Secrets Manager.
 
@@ -85,7 +85,7 @@ class TokensManager:
             raise
 
     def _store_secret(
-        self, secret_name: str, secret_data: Dict[str, Any]
+        self, secret_name: str, secret_data: dict[str, Any]
     ) -> None:
         """
         Stores the secret JSON object to AWS Secrets Manager.
@@ -115,7 +115,7 @@ class TokensManager:
             raise
 
     def add_or_update_api_token(
-        self, api_name: str, ditti_id: str, tokens: Dict[str, Any]
+        self, api_name: str, ditti_id: str, tokens: dict[str, Any]
     ) -> None:
         """
         Adds or updates the tokens for a specific study subject within an API's secret.
@@ -153,7 +153,7 @@ class TokensManager:
             )
             raise
 
-    def get_api_tokens(self, api_name: str, ditti_id: str) -> Dict[str, Any]:
+    def get_api_tokens(self, api_name: str, ditti_id: str) -> dict[str, Any]:
         """
         Retrieves the tokens for a specific study subject within an API's secret.
 

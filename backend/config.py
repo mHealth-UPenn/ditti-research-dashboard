@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from datetime import timedelta
 
 
 class Default:

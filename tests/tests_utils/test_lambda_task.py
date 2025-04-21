@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -50,7 +50,7 @@ def mock_boto3_client():
 
 @pytest.fixture
 def fixed_datetime():
-    fixed_time = datetime(2024, 12, 1, 12, 0, 0, tzinfo=timezone.utc)
+    fixed_time = datetime(2024, 12, 1, 12, 0, 0, tzinfo=UTC)
     with freeze_time(fixed_time):
         yield fixed_time
 

@@ -84,7 +84,7 @@ def get_data_processing_tasks(account, task_id: int | None):
         res = [task.meta for task in tasks]
         return jsonify(res), 200
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(f"Error retrieving data processing tasks: {exc}")
         db.session.rollback()

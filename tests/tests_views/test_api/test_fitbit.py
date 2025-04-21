@@ -9,7 +9,6 @@ from oauthlib.oauth2 import WebApplicationClient
 
 from backend.extensions import db, tm
 from backend.models import Api, JoinStudySubjectApi, StudySubject
-from tests.testing_utils import mock_db_query_result
 
 
 @pytest.fixture

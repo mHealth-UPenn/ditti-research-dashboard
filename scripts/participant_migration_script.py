@@ -3,11 +3,9 @@ import random
 import re
 import string
 from datetime import datetime
-from pprint import pprint
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 import boto3
-from sqlalchemy import select
 
 import backend.models as m
 from backend.app import create_app
@@ -20,12 +18,12 @@ class User(TypedDict):
     _lastChangedAt: int
     _version: int
     createdAt: str
-    exp_time: Optional[str]
+    exp_time: str | None
     id: str
-    tap_permission: Optional[bool]
-    team_email: Optional[str]
+    tap_permission: bool | None
+    team_email: str | None
     updatedAt: str
-    user_permission_id: Optional[str]
+    user_permission_id: str | None
 
 
 def generate_temp_password(length=20):

@@ -18,7 +18,6 @@ import logging
 import traceback
 from datetime import UTC, datetime
 
-import nh3
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
 
@@ -222,7 +221,7 @@ def account_create(account):
 
         msg = "Account Created Successfully. An email with temporary login credentials has been sent to the user."
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
@@ -1827,7 +1826,7 @@ def study_subject_create(account):
 
         return jsonify({"msg": "Study Subject Created Successfully"}), 200
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()

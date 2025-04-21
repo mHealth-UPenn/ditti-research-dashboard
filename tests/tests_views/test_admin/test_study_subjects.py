@@ -1,7 +1,6 @@
 import json
 import pprint
-import traceback
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, UTC
 
 import pytest
 
@@ -208,8 +207,8 @@ def test_study_subject_create(post_admin, create_studies, create_apis):
     join_study = subject.studies[0]
     assert join_study.study_id == 1
     assert join_study.did_consent is True
-    assert join_study.expires_on.replace(tzinfo=timezone.utc) == datetime(
-        year, 12, 31, 23, 59, 59, tzinfo=timezone.utc
+    assert join_study.expires_on.replace(tzinfo=UTC) == datetime(
+        year, 12, 31, 23, 59, 59, tzinfo=UTC
     )
     assert len(subject.apis) == 1
     join_api = subject.apis[0]
@@ -494,14 +493,14 @@ def test_study_subject_edit_add_existing_study(
                     "study_id": 1,
                     "did_consent": False,
                     "expires_on": datetime(
-                        next_year, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                        next_year, 1, 1, 0, 0, 0, tzinfo=UTC
                     ),
                 },
                 {
                     "study_id": 2,
                     "did_consent": True,
                     "expires_on": datetime(
-                        next_next_year, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                        next_next_year, 1, 1, 0, 0, 0, tzinfo=UTC
                     ),
                 },
             ],

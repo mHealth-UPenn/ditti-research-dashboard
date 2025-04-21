@@ -21,7 +21,7 @@ from sqlalchemy import func
 from backend.auth.providers.cognito import CognitoAuthBase
 from backend.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
 from backend.extensions import oauth
-from backend.models import Study, StudySubject
+from backend.models import StudySubject
 
 logger = logging.getLogger(__name__)
 

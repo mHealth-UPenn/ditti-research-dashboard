@@ -13,8 +13,6 @@ from backend.models import (
 from tests.testing_utils import (
     get_unwrapped_view,
     mock_boto3_client,
-    mock_cognito_tokens,
-    mock_db_query_result,
     mock_researcher_auth_for_testing,
 )
 

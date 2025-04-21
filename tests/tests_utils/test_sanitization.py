@@ -77,7 +77,7 @@ class TestSanitizeQuillHTML:
         for tag in regular_tags:
             if tag == "a":
                 # Special case for anchor tags which get rel attribute added
-                assert f'<a rel="noopener noreferrer">Test</a>' in result
+                assert '<a rel="noopener noreferrer">Test</a>' in result
             else:
                 assert f"<{tag}>Test</{tag}>" in result
 

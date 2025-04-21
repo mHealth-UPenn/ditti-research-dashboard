@@ -16,7 +16,7 @@
 
 import logging
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 
 from flask import session
 
@@ -42,7 +42,7 @@ class AuthFlowSession:
         nonce = secrets.token_urlsafe(32)
         session["cognito_nonce"] = nonce
         session["cognito_nonce_generated"] = int(
-            datetime.now(timezone.utc).timestamp()
+            datetime.now(UTC).timestamp()
         )
 
         # Generate and store state for CSRF protection
@@ -98,7 +98,7 @@ class AuthFlowSession:
 
         # Check if nonce is valid
         nonce_age = (
-            int(datetime.now(timezone.utc).timestamp()) - nonce_generated
+            int(datetime.now(UTC).timestamp()) - nonce_generated
         )
         if not nonce or nonce_age > 300:  # 5 minutes expiration
             logger.warning(f"Invalid or expired nonce. Age: {nonce_age}s")

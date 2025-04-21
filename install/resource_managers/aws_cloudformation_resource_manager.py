@@ -96,7 +96,7 @@ class AwsCloudformationResourceManager(BaseResourceManager):
         ]
 
     def get_dev_template_body(self) -> str:
-        with open(self.dev_template, "r") as f:
+        with open(self.dev_template) as f:
             return f.read()
 
     def create_cloudformation_stack(

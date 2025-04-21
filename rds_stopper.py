@@ -16,7 +16,7 @@
 
 import logging
 import os
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
 import boto3
 

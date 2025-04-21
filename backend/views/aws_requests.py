@@ -87,7 +87,7 @@ def get_taps(account):
         query = reduce(f, prefixes, "")
         users = Query("User", query).scan()["Items"]
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
 
@@ -148,7 +148,7 @@ def get_audio_taps(account):
         query = reduce(f, prefixes, "")
         users = Query("User", query).scan()["Items"]
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
 
@@ -270,7 +270,7 @@ def get_users(account):
             .all()
         )
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
 
@@ -338,7 +338,7 @@ def user_create(account):
 
         client.post_mutation()
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
 
@@ -428,7 +428,7 @@ def user_edit(account):
         updater.set_expression(request_data.get("edit"))
         updater.update()
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
 
@@ -519,7 +519,7 @@ def get_audio_files(account):
                 pass
             res.append(audio_file)
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
         return make_response(
@@ -583,7 +583,7 @@ def audio_file_create(account):
         if "data" not in data or not data["data"]:
             raise Exception(data["errors"][0]["message"])
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
         return make_response(

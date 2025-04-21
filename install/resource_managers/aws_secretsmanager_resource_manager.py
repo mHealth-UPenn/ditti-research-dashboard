@@ -16,7 +16,6 @@
 
 import json
 import traceback
-from typing import Optional
 
 from botocore.exceptions import ClientError
 
@@ -29,7 +28,7 @@ from install.utils.exceptions import ResourceManagerError
 
 
 class AwsSecretsmanagerResourceManager(BaseResourceManager):
-    secret_value: Optional[dict[str, str]]
+    secret_value: dict[str, str] | None
 
     def __init__(
         self,

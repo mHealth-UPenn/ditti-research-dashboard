@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import date, datetime
-from typing import List, Optional, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.orm import load_only, selectinload
@@ -28,8 +27,8 @@ MAX_DATE_RANGE_DAYS = 30
 
 
 def validate_date_range(
-    start_date_str: str, end_date_str: Optional[str] = None
-) -> Tuple[date, date]:
+    start_date_str: str, end_date_str: str | None = None
+) -> tuple[date, date]:
     """
     Validates the provided date range.
 
@@ -102,7 +101,7 @@ def cache_key_participant(
 
 def get_fitbit_data_for_subject(
     ditti_id: str, start_date: date, end_date: date
-) -> Optional[List[dict]]:
+) -> list[dict] | None:
     """
     Retrieves and serializes Fitbit data for a specific study subject within a given date range.
 

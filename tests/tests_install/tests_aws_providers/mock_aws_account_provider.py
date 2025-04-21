@@ -1,5 +1,4 @@
-import subprocess
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from install.aws_providers import AwsAccountProvider
 from tests.tests_install.tests_aws_providers.mock_aws_client_provider import (
