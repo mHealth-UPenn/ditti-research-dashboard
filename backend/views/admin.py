@@ -14,20 +14,35 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime, UTC
 import logging
 import traceback
+from datetime import UTC, datetime
+
+import nh3
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
-import nh3
+
 from backend.auth.controllers import ResearcherAuthController
 from backend.auth.decorators import researcher_auth_required
 from backend.extensions import db
 from backend.models import (
-    AboutSleepTemplate, AccessGroup, Account, Action, Api, App,
-    JoinAccessGroupPermission, JoinAccountAccessGroup, JoinAccountStudy,
-    JoinRolePermission, JoinStudySubjectApi, JoinStudySubjectStudy,
-    Permission, Resource, Role, Study, StudySubject
+    AboutSleepTemplate,
+    AccessGroup,
+    Account,
+    Action,
+    Api,
+    App,
+    JoinAccessGroupPermission,
+    JoinAccountAccessGroup,
+    JoinAccountStudy,
+    JoinRolePermission,
+    JoinStudySubjectApi,
+    JoinStudySubjectStudy,
+    Permission,
+    Resource,
+    Role,
+    Study,
+    StudySubject,
 )
 from backend.utils.db import populate_model
 from backend.utils.sanitization import sanitize_quill_html
@@ -82,7 +97,9 @@ def account(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when retriving accounts"}, 500)
+        return make_response(
+            {"msg": "Internal server error when retriving accounts"}, 500
+        )
 
 
 @blueprint.route("/account/create", methods=["POST"])
@@ -151,9 +168,15 @@ def account_create(account):
                 # Validate phone number format - must be in E.164 format
                 # International format: +[country code][number]
                 import re
+
                 # Check for + followed by digits not starting with 0 (country codes don't start with 0)
                 if not re.match(r"^\+[1-9]\d*$", phone):
-                    return make_response({"msg": "Phone number must start with + followed by country code and digits"}, 400)
+                    return make_response(
+                        {
+                            "msg": "Phone number must start with + followed by country code and digits"
+                        },
+                        400,
+                    )
 
                 data["phone_number"] = phone
 
@@ -167,7 +190,8 @@ def account_create(account):
         for entry in data["access_groups"]:
             access_group = AccessGroup.query.get(entry["id"])
             JoinAccountAccessGroup(
-                access_group=access_group, account=new_account)
+                access_group=access_group, account=new_account
+            )
 
         # Add studies
         for entry in data["studies"]:
@@ -181,12 +205,14 @@ def account_create(account):
 
         # Create Cognito user
         auth_controller = ResearcherAuthController()
-        success, message = auth_controller.create_account_in_cognito({
-            "email": new_account.email,
-            "first_name": new_account.first_name,
-            "last_name": new_account.last_name,
-            "phone_number": new_account.phone_number
-        })
+        success, message = auth_controller.create_account_in_cognito(
+            {
+                "email": new_account.email,
+                "first_name": new_account.first_name,
+                "last_name": new_account.last_name,
+                "phone_number": new_account.phone_number,
+            }
+        )
 
         if not success:
             # If Cognito account creation fails, rollback database changes
@@ -201,7 +227,9 @@ def account_create(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when creating account."}, 500)
+        return make_response(
+            {"msg": "Internal server error when creating account."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -275,9 +303,15 @@ def account_edit(account):
 
                 # Validate phone number format
                 import re
+
                 # Check for + followed by digits not starting with 0
                 if not re.match(r"^\+[1-9]\d*$", phone):
-                    return make_response({"msg": "Phone number must start with + followed by country code and digits"}, 400)
+                    return make_response(
+                        {
+                            "msg": "Phone number must start with + followed by country code and digits"
+                        },
+                        400,
+                    )
 
                 data["phone_number"] = phone
 
@@ -289,7 +323,8 @@ def account_edit(account):
             # Log any attempt to change email
             if data["email"] != edited_account.email:
                 logger.warning(
-                    f"Attempt to change email from {edited_account.email} to {data['email']} was blocked")
+                    f"Attempt to change email from {edited_account.email} to {data['email']} was blocked"
+                )
             # Remove email from data to prevent it from being updated
             del data["email"]
 
@@ -298,7 +333,6 @@ def account_edit(account):
 
         # if a list of access groups were provided
         if "access_groups" in data:
-
             # remove access groups that are not in the new list
             for join in edited_account.access_groups:
                 a_ids = [a["id"] for a in data["access_groups"]]
@@ -307,18 +341,18 @@ def account_edit(account):
                     db.session.delete(join)
 
             # add new access groups
-            a_ids = [join.access_group_id for join in edited_account.access_groups]
+            a_ids = [
+                join.access_group_id for join in edited_account.access_groups
+            ]
             for entry in data["access_groups"]:
                 if entry["id"] not in a_ids:
                     access_group = AccessGroup.query.get(entry["id"])
                     JoinAccountAccessGroup(
-                        access_group=access_group,
-                        account=edited_account
+                        access_group=access_group, account=edited_account
                     )
 
         # if a list of studies were provided
         if "studies" in data:
-
             # remove studies that are not in the new list
             for join in edited_account.studies:
                 s_ids = [s["id"] for s in data["studies"]]
@@ -333,7 +367,8 @@ def account_edit(account):
                 # if the study is not new
                 if entry["id"] in s_ids:
                     join = JoinAccountStudy.query.get(
-                        (edited_account.id, study.id))
+                        (edited_account.id, study.id)
+                    )
 
                     # update the role
                     if join.role.id != int(entry["role"]["id"]):
@@ -342,23 +377,31 @@ def account_edit(account):
                 # add the study
                 else:
                     role = Role.query.get(entry["role"]["id"])
-                    JoinAccountStudy(account=edited_account,
-                                     role=role, study=study)
+                    JoinAccountStudy(
+                        account=edited_account, role=role, study=study
+                    )
 
         # Commit database changes
         db.session.commit()
 
         # Update Cognito user
         auth_controller = ResearcherAuthController()
-        success, message = auth_controller.update_account_in_cognito({
-            "email": edited_account.email,
-            "first_name": edited_account.first_name,
-            "last_name": edited_account.last_name,
-            "phone_number": edited_account.phone_number
-        })
+        success, message = auth_controller.update_account_in_cognito(
+            {
+                "email": edited_account.email,
+                "first_name": edited_account.first_name,
+                "last_name": edited_account.last_name,
+                "phone_number": edited_account.phone_number,
+            }
+        )
 
         if not success:
-            return make_response({"msg": f"Account updated in database but failed to update in Cognito: {message}"}, 400)
+            return make_response(
+                {
+                    "msg": f"Account updated in database but failed to update in Cognito: {message}"
+                },
+                400,
+            )
 
         msg = "Account Edited Successfully"
 
@@ -367,7 +410,9 @@ def account_edit(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when updating account."}, 500)
+        return make_response(
+            {"msg": "Internal server error when updating account."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -414,11 +459,13 @@ def account_archive(account):
         # Disable account in Cognito
         auth_controller = ResearcherAuthController()
         success, message = auth_controller.disable_account_in_cognito(
-            archived_account.email)
+            archived_account.email
+        )
 
         if not success:
             logger.warning(
-                f"Failed to disable Cognito account for {archived_account.email}: {message}")
+                f"Failed to disable Cognito account for {archived_account.email}: {message}"
+            )
             # We don't return an error here because the account was successfully archived in the database
 
         msg = "Account Archived Successfully"
@@ -428,7 +475,9 @@ def account_archive(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when archiving account."}, 500)
+        return make_response(
+            {"msg": "Internal server error when archiving account."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -477,7 +526,9 @@ def study(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when retrieving studies."}, 500)
+        return make_response(
+            {"msg": "Internal server error when retrieving studies."}, 500
+        )
 
 
 @blueprint.route("/study/create", methods=["POST"])
@@ -527,14 +578,17 @@ def study_create(account):
             return make_response({"msg": "No data provided"}, 400)
 
         if "defaultExpiryDelta" not in data:
-            return make_response({"msg": "defaultExpiryDelta was not provided"}, 400)
+            return make_response(
+                {"msg": "defaultExpiryDelta was not provided"}, 400
+            )
 
         study = Study()
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
             study.consent_information = sanitize_quill_html(
-                data["consentInformation"])
+                data["consentInformation"]
+            )
             del data["consentInformation"]
         except KeyError:
             pass
@@ -554,7 +608,9 @@ def study_create(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when creating study."}, 500)
+        return make_response(
+            {"msg": "Internal server error when creating study."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -606,7 +662,8 @@ def study_edit(account):
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
             study.consent_information = sanitize_quill_html(
-                data["consentInformation"])
+                data["consentInformation"]
+            )
             del data["consentInformation"]
         except KeyError:
             pass
@@ -625,7 +682,9 @@ def study_edit(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when updating study."}, 500)
+        return make_response(
+            {"msg": "Internal server error when updating study."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -670,7 +729,9 @@ def study_archive(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when archiving study."}, 500)
+        return make_response(
+            {"msg": "Internal server error when archiving study."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -721,7 +782,9 @@ def access_group(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when retrieving access groups."}, 500)
+        return make_response(
+            {"msg": "Internal server error when retrieving access groups."}, 500
+        )
 
 
 @blueprint.route("/access-group/create", methods=["POST"])
@@ -781,8 +844,7 @@ def access_group_create(account):
                 permission.resource = entry["resource"]
 
             JoinAccessGroupPermission(
-                access_group=access_group,
-                permission=permission
+                access_group=access_group, permission=permission
             )
 
         db.session.add(access_group)
@@ -794,7 +856,9 @@ def access_group_create(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when creating access group."}, 500)
+        return make_response(
+            {"msg": "Internal server error when creating access group."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -852,7 +916,6 @@ def access_group_edit(account):
 
         # if new permissions are provided
         if "permissions" in data:
-
             # remove all existing permissions without deleting them
             access_group.permissions = []
 
@@ -869,8 +932,7 @@ def access_group_edit(account):
                     permission.resource = entry["resource"]
 
                 JoinAccessGroupPermission(
-                    access_group=access_group,
-                    permission=permission
+                    access_group=access_group, permission=permission
                 )
 
         db.session.commit()
@@ -881,7 +943,9 @@ def access_group_edit(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when updating access group."}, 500)
+        return make_response(
+            {"msg": "Internal server error when updating access group."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -926,7 +990,9 @@ def access_group_archive(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when archiving access group."}, 500)
+        return make_response(
+            {"msg": "Internal server error when archiving access group."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -975,7 +1041,9 @@ def role(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when retrieving roles."}, 500)
+        return make_response(
+            {"msg": "Internal server error when retrieving roles."}, 500
+        )
 
 
 @blueprint.route("/role/create", methods=["POST"])
@@ -1043,7 +1111,9 @@ def role_create(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when creating role."}, 500)
+        return make_response(
+            {"msg": "Internal server error when creating role."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -1121,7 +1191,9 @@ def role_edit(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when updating role."}, 500)
+        return make_response(
+            {"msg": "Internal server error when updating role."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -1166,7 +1238,9 @@ def role_archive(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when archiving role."}, 500)
+        return make_response(
+            {"msg": "Internal server error when archiving role."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -1197,7 +1271,9 @@ def app_create(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when creating app."}, 500)
+        return make_response(
+            {"msg": "Internal server error when creating app."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -1221,7 +1297,9 @@ def app_edit(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when updating app."}, 500)
+        return make_response(
+            {"msg": "Internal server error when updating app."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -1257,7 +1335,9 @@ def action(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server when retrieving actions."}, 500)
+        return make_response(
+            {"msg": "Internal server when retrieving actions."}, 500
+        )
 
 
 @blueprint.route("/resource")
@@ -1291,7 +1371,9 @@ def resource(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when retrieving resources."}, 500)
+        return make_response(
+            {"msg": "Internal server error when retrieving resources."}, 500
+        )
 
 
 @blueprint.route("/about-sleep-template")
@@ -1327,14 +1409,12 @@ def about_sleep_template(account):
 
         if i:
             q = AboutSleepTemplate.query.filter(
-                ~AboutSleepTemplate.is_archived &
-                (AboutSleepTemplate.id == int(i))
+                ~AboutSleepTemplate.is_archived
+                & (AboutSleepTemplate.id == int(i))
             )
 
         else:
-            q = AboutSleepTemplate.query.filter(
-                ~AboutSleepTemplate.is_archived
-            )
+            q = AboutSleepTemplate.query.filter(~AboutSleepTemplate.is_archived)
 
         res = [s.meta for s in q.all()]
         return jsonify(res)
@@ -1344,7 +1424,12 @@ def about_sleep_template(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when retrieving about sleep templates."}, 500)
+        return make_response(
+            {
+                "msg": "Internal server error when retrieving about sleep templates."
+            },
+            500,
+        )
 
 
 @blueprint.route("/about-sleep-template/create", methods=["POST"])
@@ -1390,7 +1475,12 @@ def about_sleep_template_create(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when creating about sleep template."}, 500)
+        return make_response(
+            {
+                "msg": "Internal server error when creating about sleep template."
+            },
+            500,
+        )
 
     return jsonify({"msg": msg})
 
@@ -1448,7 +1538,12 @@ def about_sleep_template_edit(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when updating about sleep template."}, 500)
+        return make_response(
+            {
+                "msg": "Internal server error when updating about sleep template."
+            },
+            500,
+        )
 
     return jsonify({"msg": msg})
 
@@ -1495,7 +1590,12 @@ def about_sleep_template_archive(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when archiving about sleep template."}, 500)
+        return make_response(
+            {
+                "msg": "Internal server error when archiving about sleep template."
+            },
+            500,
+        )
 
     return jsonify({"msg": msg})
 
@@ -1536,12 +1636,14 @@ def study_subject(account):
             try:
                 study_subject_id = int(study_subject_id)
             except ValueError:
-                return make_response({"msg": "Invalid ID format. ID must be an integer."}, 400)
+                return make_response(
+                    {"msg": "Invalid ID format. ID must be an integer."}, 400
+                )
 
             # Query for the specific StudySubject, excluding archived entries
             query = StudySubject.query.filter(
-                ~StudySubject.is_archived & (
-                    StudySubject.id == study_subject_id)
+                ~StudySubject.is_archived
+                & (StudySubject.id == study_subject_id)
             )
         else:
             # Query for all non-archived StudySubjects
@@ -1557,7 +1659,9 @@ def study_subject(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when retrieving study subjects"}, 500)
+        return make_response(
+            {"msg": "Internal server error when retrieving study subjects"}, 500
+        )
 
 
 @blueprint.route("/study_subject/create", methods=["POST"])
@@ -1641,21 +1745,36 @@ def study_subject_create(account):
         for study_entry in studies_data:
             study_id = study_entry.get("id")
             if not study_id:
-                return make_response({"msg": "Study ID is required in studies"}, 400)
+                return make_response(
+                    {"msg": "Study ID is required in studies"}, 400
+                )
             study = Study.query.get(study_id)
             if study is None:
-                return make_response({"msg": f"Invalid study ID: {study_id}"}, 400)
+                return make_response(
+                    {"msg": f"Invalid study ID: {study_id}"}, 400
+                )
             if study.is_archived:
-                return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
+                return make_response(
+                    {
+                        "msg": f"Cannot associate with archived study ID: {study_id}"
+                    },
+                    400,
+                )
 
             did_consent = study_entry.get("did_consent", False)
             expires_on_str = study_entry.get("expires_on")
             if expires_on_str:
                 try:
                     expires_on = datetime.fromisoformat(
-                        expires_on_str.replace("Z", "+00:00"))
+                        expires_on_str.replace("Z", "+00:00")
+                    )
                 except ValueError:
-                    return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+                    return make_response(
+                        {
+                            "msg": f"Invalid date format for expires_on: {expires_on_str}"
+                        },
+                        400,
+                    )
             else:
                 expires_on = None  # Let the event listener set it
 
@@ -1664,7 +1783,7 @@ def study_subject_create(account):
                 study=study,
                 did_consent=did_consent,
                 starts_on=study_entry.get("starts_on"),
-                expires_on=expires_on
+                expires_on=expires_on,
             )
             db.session.add(join_study)
 
@@ -1678,11 +1797,17 @@ def study_subject_create(account):
             if api is None:
                 return make_response({"msg": f"Invalid API ID: {api_id}"}, 400)
             if api.is_archived:
-                return make_response({"msg": f"Cannot associate with archived API ID: {api_id}"}, 400)
+                return make_response(
+                    {"msg": f"Cannot associate with archived API ID: {api_id}"},
+                    400,
+                )
 
             api_user_uuid = api_entry.get("api_user_uuid")
             if not api_user_uuid:
-                return make_response({"msg": f"'api_user_uuid' is required for API ID {api_id}"}, 400)
+                return make_response(
+                    {"msg": f"'api_user_uuid' is required for API ID {api_id}"},
+                    400,
+                )
             scope = api_entry.get("scope", [])
             if isinstance(scope, str):
                 scope = [scope]
@@ -1693,7 +1818,7 @@ def study_subject_create(account):
                 study_subject=study_subject,
                 api=api,
                 api_user_uuid=api_user_uuid,
-                scope=scope
+                scope=scope,
             )
             db.session.add(join_api)
 
@@ -1706,7 +1831,9 @@ def study_subject_create(account):
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": "Internal server error when creating study subject"}, 500)
+        return make_response(
+            {"msg": "Internal server error when creating study subject"}, 500
+        )
 
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
@@ -1748,7 +1875,12 @@ def study_subject_archive(account):
 
         study_subject = StudySubject.query.get(study_subject_id)
         if study_subject is None:
-            return make_response({"msg": f"Study Subject with ID {study_subject_id} does not exist"}, 400)
+            return make_response(
+                {
+                    "msg": f"Study Subject with ID {study_subject_id} does not exist"
+                },
+                400,
+            )
 
         study_subject.is_archived = True
         db.session.commit()
@@ -1758,7 +1890,9 @@ def study_subject_archive(account):
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": "Internal server error when archiving study subject"}, 500)
+        return make_response(
+            {"msg": "Internal server error when archiving study subject"}, 500
+        )
 
     return jsonify({"msg": msg}), 200
 
@@ -1829,14 +1963,24 @@ def study_subject_edit(account):
 
         study_subject = StudySubject.query.get(study_subject_id)
         if not study_subject:
-            return make_response({"msg": f"Study Subject with ID {study_subject_id} does not exist"}, 400)
+            return make_response(
+                {
+                    "msg": f"Study Subject with ID {study_subject_id} does not exist"
+                },
+                400,
+            )
 
         # Update ditti_id if provided
         if data and "ditti_id" in data:
             new_ditti_id = data["ditti_id"]
             if new_ditti_id != study_subject.ditti_id:
-                if StudySubject.query.filter(StudySubject.ditti_id == new_ditti_id, StudySubject.id != study_subject_id).first():
-                    return make_response({"msg": "ditti_id already exists"}, 400)
+                if StudySubject.query.filter(
+                    StudySubject.ditti_id == new_ditti_id,
+                    StudySubject.id != study_subject_id,
+                ).first():
+                    return make_response(
+                        {"msg": "ditti_id already exists"}, 400
+                    )
                 study_subject.ditti_id = new_ditti_id
 
         # Update other non-relationship fields using populate_model
@@ -1849,7 +1993,9 @@ def study_subject_edit(account):
             try:
                 new_study_ids = [s["id"] for s in data["studies"]]
             except KeyError:
-                return make_response({"msg": "Study ID is required in studies"}, 400)
+                return make_response(
+                    {"msg": "Study ID is required in studies"}, 400
+                )
             for join in list(study_subject.studies):
                 if join.study_id not in new_study_ids:
                     db.session.delete(join)
@@ -1858,12 +2004,21 @@ def study_subject_edit(account):
             for study_entry in data["studies"]:
                 study_id = study_entry.get("id")
                 if not study_id:
-                    return make_response({"msg": "Study ID is required in studies"}, 400)
+                    return make_response(
+                        {"msg": "Study ID is required in studies"}, 400
+                    )
                 study = Study.query.get(study_id)
                 if study is None:
-                    return make_response({"msg": f"Invalid study ID: {study_id}"}, 400)
+                    return make_response(
+                        {"msg": f"Invalid study ID: {study_id}"}, 400
+                    )
                 if study.is_archived:
-                    return make_response({"msg": f"Cannot associate with archived study ID: {study_id}"}, 400)
+                    return make_response(
+                        {
+                            "msg": f"Cannot associate with archived study ID: {study_id}"
+                        },
+                        400,
+                    )
 
                 did_consent = study_entry.get("did_consent", False)
                 expires_on = None
@@ -1871,9 +2026,15 @@ def study_subject_edit(account):
                 if expires_on_str:
                     try:
                         expires_on = datetime.fromisoformat(
-                            expires_on_str.replace("Z", "+00:00"))
+                            expires_on_str.replace("Z", "+00:00")
+                        )
                     except ValueError:
-                        return make_response({"msg": f"Invalid date format for expires_on: {expires_on_str}"}, 400)
+                        return make_response(
+                            {
+                                "msg": f"Invalid date format for expires_on: {expires_on_str}"
+                            },
+                            400,
+                        )
                 else:
                     expires_on = None  # Let the event listener set it
 
@@ -1882,12 +2043,19 @@ def study_subject_edit(account):
                 if starts_on_str:
                     try:
                         starts_on = datetime.fromisoformat(
-                            starts_on_str.replace("Z", "+00:00"))
+                            starts_on_str.replace("Z", "+00:00")
+                        )
                     except ValueError:
-                        return make_response({"msg": f"Invalid date format for starts_on: {starts_on_str}"}, 400)
+                        return make_response(
+                            {
+                                "msg": f"Invalid date format for starts_on: {starts_on_str}"
+                            },
+                            400,
+                        )
 
                 join = JoinStudySubjectStudy.query.get(
-                    (study_subject_id, study_id))
+                    (study_subject_id, study_id)
+                )
                 if join:
                     # Update existing association
                     join.did_consent = did_consent
@@ -1923,16 +2091,30 @@ def study_subject_edit(account):
             for api_entry in data["apis"]:
                 api_id = api_entry.get("id")
                 if not api_id:
-                    return make_response({"msg": "API ID is required in apis"}, 400)
+                    return make_response(
+                        {"msg": "API ID is required in apis"}, 400
+                    )
                 api = Api.query.get(api_id)
                 if api is None:
-                    return make_response({"msg": f"Invalid API ID: {api_id}"}, 400)
+                    return make_response(
+                        {"msg": f"Invalid API ID: {api_id}"}, 400
+                    )
                 if api.is_archived:
-                    return make_response({"msg": f"Cannot associate with archived API ID: {api_id}"}, 400)
+                    return make_response(
+                        {
+                            "msg": f"Cannot associate with archived API ID: {api_id}"
+                        },
+                        400,
+                    )
 
                 api_user_uuid = api_entry.get("api_user_uuid")
                 if not api_user_uuid:
-                    return make_response({"msg": f"'api_user_uuid' is required for API ID {api_id}"}, 400)
+                    return make_response(
+                        {
+                            "msg": f"'api_user_uuid' is required for API ID {api_id}"
+                        },
+                        400,
+                    )
                 scope = api_entry.get("scope", [])
                 if isinstance(scope, str):
                     scope = [scope]
@@ -1940,7 +2122,8 @@ def study_subject_edit(account):
                     scope = []
 
                 join_api = JoinStudySubjectApi.query.get(
-                    (study_subject_id, api_id))
+                    (study_subject_id, api_id)
+                )
                 if join_api:
                     # Update existing association
                     join_api.api_user_uuid = api_user_uuid
@@ -1951,7 +2134,7 @@ def study_subject_edit(account):
                         study_subject=study_subject,
                         api=api,
                         api_user_uuid=api_user_uuid,
-                        scope=scope
+                        scope=scope,
                     )
                     db.session.add(new_join_api)
 
@@ -1962,7 +2145,9 @@ def study_subject_edit(account):
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": "Internal server error when editing study subject"}, 500)
+        return make_response(
+            {"msg": "Internal server error when editing study subject"}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -1999,9 +2184,7 @@ def api(account):
         api_id = request.args.get("id")
 
         if api_id:
-            query = Api.query.filter(
-                ~Api.is_archived & (Api.id == int(api_id))
-            )
+            query = Api.query.filter(~Api.is_archived & (Api.id == int(api_id)))
         else:
             query = Api.query.filter(~Api.is_archived)
 
@@ -2013,7 +2196,9 @@ def api(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when retrieving APIs"}, 500)
+        return make_response(
+            {"msg": "Internal server error when retrieving APIs"}, 500
+        )
 
 
 @blueprint.route("/api/create", methods=["POST"])
@@ -2074,7 +2259,9 @@ def api_create(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when creating API"}, 500)
+        return make_response(
+            {"msg": "Internal server error when creating API"}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -2125,7 +2312,9 @@ def api_edit(account):
 
         api = Api.query.get(api_id)
         if not api:
-            return make_response({"msg": f"API with ID {api_id} does not exist"}, 400)
+            return make_response(
+                {"msg": f"API with ID {api_id} does not exist"}, 400
+            )
 
         # Initialize msg for the case when no changes are made
         msg = "API Edited Successfully"
@@ -2138,7 +2327,9 @@ def api_edit(account):
                     Api.name == new_name, Api.id != api_id
                 ).first()
                 if existing_api:
-                    return make_response({"msg": "API with the same name already exists"}, 400)
+                    return make_response(
+                        {"msg": "API with the same name already exists"}, 400
+                    )
 
                 populate_model(api, data)
                 db.session.commit()
@@ -2147,7 +2338,9 @@ def api_edit(account):
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": "Internal server error when editing API"}, 500)
+        return make_response(
+            {"msg": "Internal server error when editing API"}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -2193,7 +2386,9 @@ def api_archive(account):
 
         api = Api.query.get(api_id)
         if not api:
-            return make_response({"msg": f"API with ID {api_id} does not exist"}, 400)
+            return make_response(
+                {"msg": f"API with ID {api_id} does not exist"}, 400
+            )
 
         api.is_archived = True
         db.session.commit()
@@ -2203,6 +2398,8 @@ def api_archive(account):
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
-        return make_response({"msg": "Internal server error when archiving API"}, 500)
+        return make_response(
+            {"msg": "Internal server error when archiving API"}, 500
+        )
 
     return jsonify({"msg": msg})

@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from sqlalchemy.inspection import inspect
+
 from backend.extensions import db
 from backend.utils.serialization.serialization_common import camel_to_snake
 
@@ -45,20 +46,23 @@ def populate_model(model, data, use_camel_to_snake=False, custom_mapping=None):
 
         # Convert camelCase to snake_case and apply custom mapping if enabled
         if use_camel_to_snake or custom_mapping:
-            k = custom_mapping.get(k, camel_to_snake(
-                k) if use_camel_to_snake else k)
+            k = custom_mapping.get(
+                k, camel_to_snake(k) if use_camel_to_snake else k
+            )
 
         # Check if the snake_case key is a valid model attribute
         if use_camel_to_snake and k not in model_columns:
-            raise ValueError(f"Invalid attribute: {original_key} "
-                             f"(mapped to {k})")
+            raise ValueError(
+                f"Invalid attribute: {original_key} (mapped to {k})"
+            )
 
         # Ensure the attribute exists on the model
         try:
             attr = getattr(model, k)
         except AttributeError:
-            raise ValueError(f"Invalid attribute: {original_key} "
-                             f"(mapped to {k})")
+            raise ValueError(
+                f"Invalid attribute: {original_key} (mapped to {k})"
+            )
 
         # Skip lists and relationships
         if isinstance(v, list):

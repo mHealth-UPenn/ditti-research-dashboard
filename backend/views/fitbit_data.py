@@ -14,36 +14,35 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime
 import io
 import logging
 import traceback
+from datetime import datetime
 
-from flask import Blueprint, jsonify, make_response, request, send_file
 import pandas as pd
+from flask import Blueprint, jsonify, make_response, request, send_file
 from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
 
+from backend.auth.decorators import (
+    participant_auth_required,
+    researcher_auth_required,
+)
 from backend.extensions import cache, db
-from backend.models import Study, StudySubject, SleepLog, SleepLevel
-from backend.auth.decorators import participant_auth_required, researcher_auth_required
+from backend.models import SleepLevel, SleepLog, Study, StudySubject
 from backend.utils.fitbit_data import (
-    validate_date_range,
     cache_key_admin,
     cache_key_participant,
-    get_fitbit_data_for_subject
+    get_fitbit_data_for_subject,
+    validate_date_range,
 )
 
 admin_fitbit_blueprint = Blueprint(
-    "admin_fitbit_data",
-    __name__,
-    url_prefix="/admin/fitbit_data"
+    "admin_fitbit_data", __name__, url_prefix="/admin/fitbit_data"
 )
 
 participant_fitbit_blueprint = Blueprint(
-    "participant_fitbit_data",
-    __name__,
-    url_prefix="/participant/fitbit_data"
+    "participant_fitbit_data", __name__, url_prefix="/participant/fitbit_data"
 )
 
 logger = logging.getLogger(__name__)
@@ -187,23 +186,25 @@ def participant_get_fitbit_data(ditti_id: str):
         return make_response({"msg": "Unexpected server error."}, 500)
 
 
-@admin_fitbit_blueprint.route("/download/participant/<string:ditti_id>", methods=["GET"])
+@admin_fitbit_blueprint.route(
+    "/download/participant/<string:ditti_id>", methods=["GET"]
+)
 @researcher_auth_required("View", "Wearable Dashboard")
 @researcher_auth_required("View", "Wearable Data")
 def download_fitbit_participant(account, ditti_id: str):
     """
     Fetch and download Fitbit API data for a single study participant as an Excel file.
 
-    This endpoint retrieves all Fitbit-related data for a participant identified by their 
-    Ditti ID (`ditti_id`). The data includes details such as sleep logs and sleep levels, 
-    formatted for analysis in an Excel file. The Excel file is generated with a timestamped 
+    This endpoint retrieves all Fitbit-related data for a participant identified by their
+    Ditti ID (`ditti_id`). The data includes details such as sleep logs and sleep levels,
+    formatted for analysis in an Excel file. The Excel file is generated with a timestamped
     filename and returned to the client as a downloadable file.
 
     Args:
         ditti_id (str): The unique identifier for the participant.
 
     Returns:
-        Response: A downloadable Excel file containing the participant's data or an error 
+        Response: A downloadable Excel file containing the participant's data or an error
         response in case of failure.
     """
     try:
@@ -225,19 +226,20 @@ def download_fitbit_participant(account, ditti_id: str):
         results = db.session.execute(stmt).all()
 
         if len(results) == 0:
-            return make_response({"msg": f"Participant with Ditti ID {ditti_id} not found."}, 200)
+            return make_response(
+                {"msg": f"Participant with Ditti ID {ditti_id} not found."}, 200
+            )
 
     except Exception:
         logger.error(traceback.format_exc())
-        return make_response({"msg": "Internal server error when querying database."}, 500)
+        return make_response(
+            {"msg": "Internal server error when querying database."}, 500
+        )
 
     try:
         # Convert the results to a Pandas DataFrame
         data = [
-            {
-                **dict(row),
-                "Sleep Level Level": row["Sleep Level Level"].value
-            }
+            {**dict(row), "Sleep Level Level": row["Sleep Level Level"].value}
             for row in results
         ]
         df = pd.DataFrame(data)
@@ -256,7 +258,7 @@ def download_fitbit_participant(account, ditti_id: str):
             output,
             as_attachment=True,
             download_name=f"{ditti_id}_Fitbit_{timestamp}.xlsx",
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
     except Exception:
@@ -271,29 +273,28 @@ def download_fitbit_study(account, study_id: int):
     """
     Fetch and download Fitbit API data for all participants in a specific study as an Excel file.
 
-    This endpoint retrieves all Fitbit-related data for participants within a study identified 
-    by its unique `study_id`. The data includes details such as sleep logs and sleep levels for 
-    all participants with Ditti IDs that match the study's prefix. The results are formatted 
-    for analysis in an Excel file. The file is generated with a timestamped filename and 
+    This endpoint retrieves all Fitbit-related data for participants within a study identified
+    by its unique `study_id`. The data includes details such as sleep logs and sleep levels for
+    all participants with Ditti IDs that match the study's prefix. The results are formatted
+    for analysis in an Excel file. The file is generated with a timestamped filename and
     returned to the client as a downloadable file.
 
     Args:
         study_id (int): The unique identifier for the study.
 
     Returns:
-        Response: A downloadable Excel file containing the study's participants' data or an 
+        Response: A downloadable Excel file containing the study's participants' data or an
         error response in case of failure.
     """
     try:
-        stmt = (
-            select(Study.ditti_id, Study.acronym)
-            .where(Study.id == study_id)
-        )
+        stmt = select(Study.ditti_id, Study.acronym).where(Study.id == study_id)
 
         result = db.session.execute(stmt).first()
 
         if result is None:
-            return make_response({"msg": f"Study with ID {study_id} not found."}, 200)
+            return make_response(
+                {"msg": f"Study with ID {study_id} not found."}, 200
+            )
 
         ditti_prefix = result.ditti_id
         acronym = result.acronym
@@ -317,15 +318,14 @@ def download_fitbit_study(account, study_id: int):
 
     except Exception:
         logger.error(traceback.format_exc())
-        return make_response({"msg": "Internal server error when querying database."}, 500)
+        return make_response(
+            {"msg": "Internal server error when querying database."}, 500
+        )
 
     try:
         # Convert the results to a Pandas DataFrame
         data = [
-            {
-                **dict(row),
-                "Sleep Level Level": row["Sleep Level Level"].value
-            }
+            {**dict(row), "Sleep Level Level": row["Sleep Level Level"].value}
             for row in results
         ]
         df = pd.DataFrame(data)
@@ -344,7 +344,7 @@ def download_fitbit_study(account, study_id: int):
             output,
             as_attachment=True,
             download_name=f"{acronym}_Fitbit_{timestamp}.xlsx",
-            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
 
     except Exception:

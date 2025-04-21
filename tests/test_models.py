@@ -1,5 +1,5 @@
-from datetime import datetime, UTC
 import os
+from datetime import UTC, datetime
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -7,11 +7,25 @@ from sqlalchemy.exc import IntegrityError
 from backend.app import create_app
 from backend.extensions import db
 from backend.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission,
-    JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
-    JoinStudyRole, Permission, Role, Study, StudySubject, JoinStudySubjectApi,
-    JoinStudySubjectStudy, Api, init_admin_account, init_admin_app,
-    init_admin_group, init_db
+    AccessGroup,
+    Account,
+    Api,
+    App,
+    JoinAccessGroupPermission,
+    JoinAccountAccessGroup,
+    JoinAccountStudy,
+    JoinRolePermission,
+    JoinStudyRole,
+    JoinStudySubjectApi,
+    JoinStudySubjectStudy,
+    Permission,
+    Role,
+    Study,
+    StudySubject,
+    init_admin_account,
+    init_admin_app,
+    init_admin_group,
+    init_db,
 )
 from tests.testing_utils import create_joins, create_tables
 
@@ -282,7 +296,9 @@ class TestDeletions:
         # Query the StudySubject using ditti_id
         q1 = StudySubject.ditti_id == "ditti_foo_123"
         foo = StudySubject.query.filter(q1).first()
-        assert foo is not None, "StudySubject with ditti_id 'ditti_foo_123' should exist."
+        assert foo is not None, (
+            "StudySubject with ditti_id 'ditti_foo_123' should exist."
+        )
 
         # Get the IDs for JoinStudySubjectStudy and JoinStudySubjectApi associations
         foo_id = foo.id
@@ -291,7 +307,9 @@ class TestDeletions:
         baz = JoinStudySubjectStudy.query.filter(q3).first()
         bar = JoinStudySubjectApi.query.filter(q2).first()
         assert bar is not None, "JoinStudySubjectApi association should exist."
-        assert baz is not None, "JoinStudySubjectStudy association should exist."
+        assert baz is not None, (
+            "JoinStudySubjectStudy association should exist."
+        )
 
         # Delete the StudySubject
         db.session.delete(foo)
@@ -303,7 +321,9 @@ class TestDeletions:
         bar = JoinStudySubjectApi.query.filter(q2).first()
         assert foo is None, "StudySubject should be deleted."
         assert bar is None, "JoinStudySubjectApi association should be deleted."
-        assert baz is None, "JoinStudySubjectStudy association should be deleted."
+        assert baz is None, (
+            "JoinStudySubjectStudy association should be deleted."
+        )
 
     def test_delete_api_with_enrolled_subject(self, app):
         with pytest.raises(IntegrityError):
@@ -399,16 +419,20 @@ class TestArchives:
         q2 = Account.email == "bar@email.com"
         bar = Account.query.filter(q2).first()
         assert bar is not None, "Account 'bar@email.com' should exist."
-        assert len(
-            bar.studies) == 1, "Account should be associated with one study."
+        assert len(bar.studies) == 1, (
+            "Account should be associated with one study."
+        )
         assert bar.studies[0].study is foo, "Associated study should be 'bar'."
 
         # Retrieve the StudySubject using ditti_id
         q2 = StudySubject.ditti_id == "ditti_bar_456"
         baz = StudySubject.query.filter(q2).first()
-        assert baz is not None, "StudySubject with ditti_id 'ditti_bar_456' should exist."
-        assert len(
-            baz.studies) == 1, "StudySubject should be associated with one study."
+        assert baz is not None, (
+            "StudySubject with ditti_id 'ditti_bar_456' should exist."
+        )
+        assert len(baz.studies) == 1, (
+            "StudySubject should be associated with one study."
+        )
         assert baz.studies[0].study is foo, "Associated study should be 'bar'."
 
         # Archive the Study
@@ -417,10 +441,12 @@ class TestArchives:
 
         # Validate archiving
         assert foo.is_archived, "Study should be marked as archived."
-        assert len(
-            bar.studies) == 0, "Account should no longer be associated with the archived study."
-        assert len(
-            baz.studies) == 0, "StudySubject should no longer be associated with the archived study."
+        assert len(bar.studies) == 0, (
+            "Account should no longer be associated with the archived study."
+        )
+        assert len(baz.studies) == 0, (
+            "StudySubject should no longer be associated with the archived study."
+        )
 
     def test_archive_api(self, app):
         q1 = Api.name == "bar"
@@ -430,7 +456,10 @@ class TestArchives:
         # Updated to use ditti_id instead of email
         q2 = StudySubject.ditti_id == "ditti_bar_456"
         baz = StudySubject.query.filter(q2).first()
-        assert baz is not None, "StudySubject with ditti_id 'ditti_bar_456' should exist."
-        assert len(
-            baz.apis) == 1, "StudySubject should be associated with one API."
+        assert baz is not None, (
+            "StudySubject with ditti_id 'ditti_bar_456' should exist."
+        )
+        assert len(baz.apis) == 1, (
+            "StudySubject should be associated with one API."
+        )
         assert baz.apis[0].api is foo, "Associated API should be 'bar'."

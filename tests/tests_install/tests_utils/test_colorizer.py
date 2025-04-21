@@ -1,4 +1,5 @@
 import pytest
+
 from install.utils.colorizer import Colorizer
 from install.utils.types import Color
 
@@ -18,7 +19,7 @@ def test_colorize_all_colors():
 def test_individual_color_methods():
     """Test that individual color methods work correctly."""
     text = "test text"
-    
+
     # Test each color method
     assert Colorizer.red(text).startswith(Colorizer.color_codes["red"])
     assert Colorizer.green(text).startswith(Colorizer.color_codes["green"])
@@ -26,7 +27,7 @@ def test_individual_color_methods():
     assert Colorizer.blue(text).startswith(Colorizer.color_codes["blue"])
     assert Colorizer.magenta(text).startswith(Colorizer.color_codes["magenta"])
     assert Colorizer.cyan(text).startswith(Colorizer.color_codes["cyan"])
-    
+
     # Verify reset code is added
     for colored_text in [
         Colorizer.red(text),
@@ -34,7 +35,7 @@ def test_individual_color_methods():
         Colorizer.yellow(text),
         Colorizer.blue(text),
         Colorizer.magenta(text),
-        Colorizer.cyan(text)
+        Colorizer.cyan(text),
     ]:
         assert colored_text.endswith(Colorizer.color_codes["reset"])
 
@@ -44,7 +45,7 @@ def test_nested_colors():
     # Create text with nested colors
     inner_text = Colorizer.red("inner")
     outer_text = Colorizer.blue(f"outer {inner_text} outer")
-    
+
     # Verify the structure
     assert outer_text.startswith(Colorizer.color_codes["blue"])
     assert "outer" in outer_text
@@ -67,4 +68,6 @@ def test_empty_text():
         colored_text = Colorizer.colorize("", color)
         assert colored_text.startswith(Colorizer.color_codes[color])
         assert colored_text.endswith(Colorizer.color_codes["reset"])
-        assert len(colored_text) == len(Colorizer.color_codes[color]) + len(Colorizer.color_codes["reset"])
+        assert len(colored_text) == len(Colorizer.color_codes[color]) + len(
+            Colorizer.color_codes["reset"]
+        )

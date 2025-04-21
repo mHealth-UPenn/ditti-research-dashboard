@@ -14,14 +14,23 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime, timezone
-from flask import request
 import logging
+from datetime import datetime, timezone
+
+from flask import request
+
+from backend.auth.controllers.base import AuthControllerBase
+from backend.auth.providers.cognito import (
+    AUTH_ERROR_MESSAGES,
+    ParticipantAuth,
+    init_participant_oauth_client,
+)
+from backend.auth.utils.responses import (
+    create_error_response,
+    create_success_response,
+)
 from backend.extensions import db
 from backend.models import StudySubject
-from backend.auth.providers.cognito import ParticipantAuth, init_participant_oauth_client, AUTH_ERROR_MESSAGES
-from backend.auth.controllers.base import AuthControllerBase
-from backend.auth.utils.responses import create_error_response, create_success_response
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +84,7 @@ class ParticipantAuthController(AuthControllerBase):
             return None, create_error_response(
                 AUTH_ERROR_MESSAGES["auth_failed"],
                 status_code=401,
-                error_code="MISSING_USERNAME"
+                error_code="MISSING_USERNAME",
             )
 
         return self._create_or_get_study_subject(ditti_id)
@@ -95,16 +104,18 @@ class ParticipantAuthController(AuthControllerBase):
         try:
             # Check for existing study subject
             study_subject = StudySubject.query.filter_by(
-                ditti_id=ditti_id).first()
+                ditti_id=ditti_id
+            ).first()
 
             if study_subject:
                 if study_subject.is_archived:
                     logger.warning(
-                        f"Attempt to login with archived account: {ditti_id}")
+                        f"Attempt to login with archived account: {ditti_id}"
+                    )
                     return None, create_error_response(
                         AUTH_ERROR_MESSAGES["account_archived"],
                         status_code=403,
-                        error_code="ACCOUNT_ARCHIVED"
+                        error_code="ACCOUNT_ARCHIVED",
                     )
                 return study_subject, None
 
@@ -112,7 +123,7 @@ class ParticipantAuthController(AuthControllerBase):
             study_subject = StudySubject(
                 created_on=datetime.now(timezone.utc),
                 ditti_id=ditti_id,
-                is_archived=False
+                is_archived=False,
             )
             db.session.add(study_subject)
             db.session.commit()
@@ -125,7 +136,7 @@ class ParticipantAuthController(AuthControllerBase):
             return None, create_error_response(
                 AUTH_ERROR_MESSAGES["system_error"],
                 status_code=500,
-                error_code="DATABASE_ERROR"
+                error_code="DATABASE_ERROR",
             )
 
     def get_user_from_token(self, id_token):
@@ -139,8 +150,9 @@ class ParticipantAuthController(AuthControllerBase):
                 ditti_id: The ditti_id if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
         """
-        study_subject, error_msg = self.auth_manager.get_study_subject_from_token(
-            id_token)
+        study_subject, error_msg = (
+            self.auth_manager.get_study_subject_from_token(id_token)
+        )
 
         if not study_subject:
             # Convert string error messages to proper error responses
@@ -149,19 +161,21 @@ class ParticipantAuthController(AuthControllerBase):
                     return None, create_error_response(
                         AUTH_ERROR_MESSAGES["not_found"],
                         status_code=404,
-                        error_code="USER_NOT_FOUND"
+                        error_code="USER_NOT_FOUND",
                     )
-                elif error_msg == "Account unavailable. Please contact support.":
+                elif (
+                    error_msg == "Account unavailable. Please contact support."
+                ):
                     return None, create_error_response(
                         AUTH_ERROR_MESSAGES["account_archived"],
                         status_code=403,
-                        error_code="ACCOUNT_ARCHIVED"
+                        error_code="ACCOUNT_ARCHIVED",
                     )
                 else:
                     return None, create_error_response(
                         AUTH_ERROR_MESSAGES["auth_failed"],
                         status_code=401,
-                        error_code="AUTH_FAILED"
+                        error_code="AUTH_FAILED",
                     )
             # If error_msg is already a response, return it
             return None, error_msg
@@ -179,5 +193,5 @@ class ParticipantAuthController(AuthControllerBase):
         """
         return create_success_response(
             data={"dittiId": ditti_id},
-            message=AUTH_ERROR_MESSAGES["login_successful"]
+            message=AUTH_ERROR_MESSAGES["login_successful"],
         )

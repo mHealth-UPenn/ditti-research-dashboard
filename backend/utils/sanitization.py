@@ -25,9 +25,36 @@ def sanitize_quill_html(html: str) -> str:
     """
 
     allowed_tags = {
-        "a", "blockquote", "br", "div", "em", "h1", "h2", "h3", "h4", "h5", "h6",
-        "iframe", "img", "li", "ol", "p", "pre", "span", "strong", "sub", "sup",
-        "table", "tbody", "td", "tr", "ul", "select", "option", "u", "s"
+        "a",
+        "blockquote",
+        "br",
+        "div",
+        "em",
+        "h1",
+        "h2",
+        "h3",
+        "h4",
+        "h5",
+        "h6",
+        "iframe",
+        "img",
+        "li",
+        "ol",
+        "p",
+        "pre",
+        "span",
+        "strong",
+        "sub",
+        "sup",
+        "table",
+        "tbody",
+        "td",
+        "tr",
+        "ul",
+        "select",
+        "option",
+        "u",
+        "s",
     }
 
     attributes = {
@@ -60,42 +87,83 @@ def sanitize_quill_html(html: str) -> str:
         "sup": {"class", "style"},
         "br": {"class", "style"},
         "u": {"class", "style"},
-        "s": {"class", "style"}
+        "s": {"class", "style"},
     }
 
     class_allowlist = {
         "div": {
-            "ql-code-block-container", "ql-code-block", "ql-token", "ql-ui",
-            "ql-align-center", "ql-align-right", "ql-align-justify",
-            "ql-indent-1", "ql-indent-2", "ql-indent-3", "ql-indent-4", "ql-indent-5",
-            "ql-indent-6", "ql-indent-7", "ql-indent-8", "ql-indent-9",
-            "ql-size-small", "ql-size-large", "ql-size-huge", "ql-video"
+            "ql-code-block-container",
+            "ql-code-block",
+            "ql-token",
+            "ql-ui",
+            "ql-align-center",
+            "ql-align-right",
+            "ql-align-justify",
+            "ql-indent-1",
+            "ql-indent-2",
+            "ql-indent-3",
+            "ql-indent-4",
+            "ql-indent-5",
+            "ql-indent-6",
+            "ql-indent-7",
+            "ql-indent-8",
+            "ql-indent-9",
+            "ql-size-small",
+            "ql-size-large",
+            "ql-size-huge",
+            "ql-video",
         },
         "span": {
-            "ql-token", "hljs-keyword", "hljs-number", "hljs-string", "hljs-comment",
-            "hljs-function", "hljs-title", "hljs-params", "hljs-variable",
-            "hljs-operator", "hljs-builtin", "ql-ui"  # "ql-ui" added here
+            "ql-token",
+            "hljs-keyword",
+            "hljs-number",
+            "hljs-string",
+            "hljs-comment",
+            "hljs-function",
+            "hljs-title",
+            "hljs-params",
+            "hljs-variable",
+            "hljs-operator",
+            "hljs-builtin",
+            "ql-ui",  # "ql-ui" added here
         },
         "p": {
-            "ql-align-center", "ql-align-right", "ql-align-justify",
-            "ql-indent-1", "ql-indent-2", "ql-indent-3", "ql-indent-4", "ql-indent-5",
-            "ql-indent-6", "ql-indent-7", "ql-indent-8", "ql-indent-9"
+            "ql-align-center",
+            "ql-align-right",
+            "ql-align-justify",
+            "ql-indent-1",
+            "ql-indent-2",
+            "ql-indent-3",
+            "ql-indent-4",
+            "ql-indent-5",
+            "ql-indent-6",
+            "ql-indent-7",
+            "ql-indent-8",
+            "ql-indent-9",
         },
         "li": {
-            "ql-align-center", "ql-align-right", "ql-align-justify",
-            "ql-indent-1", "ql-indent-2", "ql-indent-3", "ql-indent-4", "ql-indent-5",
-            "ql-indent-6", "ql-indent-7", "ql-indent-8", "ql-indent-9"
+            "ql-align-center",
+            "ql-align-right",
+            "ql-align-justify",
+            "ql-indent-1",
+            "ql-indent-2",
+            "ql-indent-3",
+            "ql-indent-4",
+            "ql-indent-5",
+            "ql-indent-6",
+            "ql-indent-7",
+            "ql-indent-8",
+            "ql-indent-9",
         },
         "iframe": {"ql-video"},
         "td": {"ql-align-center", "ql-align-right", "ql-align-justify"},
         "select": {"ql-ui"},
-        "tr": {"ql-align-center", "ql-align-right", "ql-align-justify"}
+        "tr": {"ql-align-center", "ql-align-right", "ql-align-justify"},
     }
 
     # Transform the class allowlist into the structure expected by nh3.
     tag_attribute_values = {
-        tag: {"class": classes}
-        for tag, classes in class_allowlist.items()
+        tag: {"class": classes} for tag, classes in class_allowlist.items()
     }
 
     url_schemes = {"http", "https", "mailto", "tel"}
@@ -110,5 +178,5 @@ def sanitize_quill_html(html: str) -> str:
         url_schemes=url_schemes,
         link_rel=link_rel,
         tag_attribute_values=tag_attribute_values,
-        clean_content_tags=set()
+        clean_content_tags=set(),
     )

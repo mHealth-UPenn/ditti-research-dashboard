@@ -32,8 +32,12 @@ def clear_auth_cookies(response):
     # Clear all auth cookies
     for cookie_name in ["id_token", "access_token", "refresh_token"]:
         response.set_cookie(
-            cookie_name, "", expires=0,
-            httponly=True, secure=True, samesite="None"
+            cookie_name,
+            "",
+            expires=0,
+            httponly=True,
+            secure=True,
+            samesite="None",
         )
 
     return response
@@ -52,21 +56,33 @@ def set_auth_cookies(response, token):
     """
     # Set ID token cookie
     response.set_cookie(
-        "id_token", token["id_token"],
-        httponly=True, secure=True, samesite="None", max_age=3600
+        "id_token",
+        token["id_token"],
+        httponly=True,
+        secure=True,
+        samesite="None",
+        max_age=3600,
     )
 
     # Set access token cookie
     response.set_cookie(
-        "access_token", token["access_token"],
-        httponly=True, secure=True, samesite="None", max_age=3600
+        "access_token",
+        token["access_token"],
+        httponly=True,
+        secure=True,
+        samesite="None",
+        max_age=3600,
     )
 
     # Set refresh token cookie if present
     if "refresh_token" in token:
         response.set_cookie(
-            "refresh_token", token["refresh_token"],
-            httponly=True, secure=True, samesite="None", max_age=86400
+            "refresh_token",
+            token["refresh_token"],
+            httponly=True,
+            secure=True,
+            samesite="None",
+            max_age=86400,
         )
 
     return response

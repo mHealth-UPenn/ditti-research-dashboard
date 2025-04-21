@@ -15,20 +15,27 @@ os.environ["AWS_TABLENAME_TAP"] = "testing_table_tap"
 os.environ["APPSYNC_ACCESS_KEY"] = "testing"
 os.environ["APPSYNC_SECRET_KEY"] = "testing"
 
+import json
+from unittest.mock import MagicMock, patch
+
 import boto3
-from flask import Blueprint
 import pytest
+from flask import Blueprint
+
 from backend.app import create_app
 from backend.extensions import db
 from backend.models import (
-    init_admin_account, init_admin_app, init_admin_group, init_db, init_api
+    init_admin_account,
+    init_admin_app,
+    init_admin_group,
+    init_api,
+    init_db,
 )
 from tests.testing_utils import (
-    create_joins, create_tables, mock_researcher_auth_for_testing
+    create_joins,
+    create_tables,
+    mock_researcher_auth_for_testing,
 )
-from unittest.mock import patch
-import json
-from unittest.mock import MagicMock
 
 # Test blueprint and routes
 blueprint = Blueprint("test", __name__, url_prefix="/test")
@@ -52,7 +59,7 @@ def with_mocked_tables():
             AttributeDefinitions=[
                 {"AttributeName": "id", "AttributeType": "S"},
             ],
-            BillingMode="PAY_PER_REQUEST"
+            BillingMode="PAY_PER_REQUEST",
         )
 
         client.put_item(
@@ -60,8 +67,8 @@ def with_mocked_tables():
             Item={
                 "id": {"S": "1"},
                 "user_permission_id": {"S": "abc123"},
-                "information": {"S": ""}
-            }
+                "information": {"S": ""},
+            },
         )
 
         yield client
@@ -117,7 +124,9 @@ def get_admin(client):
     headers = mock_researcher_auth_for_testing(client, is_admin=True)
 
     def _get(url, query_string=None, **kwargs):
-        return client.get(url, query_string=query_string, headers=headers, **kwargs)
+        return client.get(
+            url, query_string=query_string, headers=headers, **kwargs
+        )
 
     return _get
 
@@ -132,7 +141,13 @@ def post_admin(client):
     headers = mock_researcher_auth_for_testing(client, is_admin=True)
 
     def _post(url, data=None, **kwargs):
-        return client.post(url, data=json.dumps(data), content_type="application/json", headers=headers, **kwargs)
+        return client.post(
+            url,
+            data=json.dumps(data),
+            content_type="application/json",
+            headers=headers,
+            **kwargs,
+        )
 
     return _post
 
@@ -147,7 +162,13 @@ def delete_admin(client):
     headers = mock_researcher_auth_for_testing(client, is_admin=True)
 
     def _delete(url, data=None, **kwargs):
-        return client.delete(url, data=json.dumps(data) if data else None, content_type="application/json", headers=headers, **kwargs)
+        return client.delete(
+            url,
+            data=json.dumps(data) if data else None,
+            content_type="application/json",
+            headers=headers,
+            **kwargs,
+        )
 
     return _delete
 
@@ -184,6 +205,7 @@ def participant_auth_fixture():
     Creates an actual ParticipantAuth instance for testing.
     """
     from backend.auth.providers.cognito.participant import ParticipantAuth
+
     return ParticipantAuth()
 
 
@@ -195,6 +217,7 @@ def researcher_auth_fixture():
     Creates an actual ResearcherAuth instance for testing.
     """
     from backend.auth.providers.cognito.researcher import ResearcherAuth
+
     return ResearcherAuth()
 
 
@@ -212,26 +235,26 @@ def mock_auth_test_data():
             "email": "researcher@example.com",
             "cognito:username": "researcher@example.com",
             "name": "Test Researcher",
-            "token_use": "id"
+            "token_use": "id",
         },
         "participant_claims": {
             "sub": "test-user-id",
             "email": "test@example.com",
             "cognito:username": "ditti_12345",
             "name": "Test User",
-            "token_use": "id"
+            "token_use": "id",
         },
         "access_token_claims": {
             "sub": "test-user-id",
             "email": "test@example.com",
             "token_use": "access",
-            "exp": 1700000000  # Future time
+            "exp": 1700000000,  # Future time
         },
         "fake_tokens": {
             "id_token": "fake-id-token",
             "access_token": "fake-access-token",
-            "refresh_token": "fake-refresh-token"
-        }
+            "refresh_token": "fake-refresh-token",
+        },
     }
 
 
@@ -260,9 +283,17 @@ def auth_app():
         db.session.commit()
 
         # Mock the OAuth clients
-        with patch('backend.auth.controllers.base.AuthControllerBase.init_oauth_client'), \
-                patch('backend.auth.controllers.participant.ParticipantAuthController.init_oauth_client'), \
-                patch('backend.auth.controllers.researcher.ResearcherAuthController.init_oauth_client'):
+        with (
+            patch(
+                "backend.auth.controllers.base.AuthControllerBase.init_oauth_client"
+            ),
+            patch(
+                "backend.auth.controllers.participant.ParticipantAuthController.init_oauth_client"
+            ),
+            patch(
+                "backend.auth.controllers.researcher.ResearcherAuthController.init_oauth_client"
+            ),
+        ):
             yield app
 
 
@@ -274,9 +305,17 @@ def mock_auth_oauth():
     This fixture prevents real OAuth connections during tests.
     """
     # Mock the OAuth client initialization
-    with patch('backend.auth.controllers.base.AuthControllerBase.init_oauth_client'), \
-            patch('backend.auth.controllers.participant.ParticipantAuthController.init_oauth_client'), \
-            patch('backend.auth.controllers.researcher.ResearcherAuthController.init_oauth_client'):
+    with (
+        patch(
+            "backend.auth.controllers.base.AuthControllerBase.init_oauth_client"
+        ),
+        patch(
+            "backend.auth.controllers.participant.ParticipantAuthController.init_oauth_client"
+        ),
+        patch(
+            "backend.auth.controllers.researcher.ResearcherAuthController.init_oauth_client"
+        ),
+    ):
         yield
 
 
@@ -301,7 +340,7 @@ def mock_model_not_found():
 
     def _mock_model_not_found(model_class):
         """Inner function to create the mock for a specific model class."""
-        patcher = patch.object(model_class, 'query')
+        patcher = patch.object(model_class, "query")
         mock_query = patcher.start()
         patchers.append(patcher)
 

@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging
-import os
 import base64
 import hashlib
-import requests
+import logging
+import os
 from functools import lru_cache
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +63,11 @@ def generate_code_verifier(length: int = 128) -> str:
     """
     if not 43 <= length <= 128:
         raise ValueError("length must be between 43 and 128 characters")
-    code_verifier = base64.urlsafe_b64encode(os.urandom(length))\
-        .rstrip(b"=")\
+    code_verifier = (
+        base64.urlsafe_b64encode(os.urandom(length))
+        .rstrip(b"=")
         .decode("utf-8")
+    )
     return code_verifier[:length]
 
 
@@ -79,7 +82,7 @@ def create_code_challenge(code_verifier: str) -> str:
         str: The generated code challenge string.
     """
     code_challenge = hashlib.sha256(code_verifier.encode("utf-8")).digest()
-    code_challenge = base64.urlsafe_b64encode(code_challenge)\
-        .rstrip(b"=")\
-        .decode("utf-8")
+    code_challenge = (
+        base64.urlsafe_b64encode(code_challenge).rstrip(b"=").decode("utf-8")
+    )
     return code_challenge

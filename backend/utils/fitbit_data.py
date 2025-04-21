@@ -16,8 +16,10 @@
 
 from datetime import date, datetime
 from typing import List, Optional, Tuple
+
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload, load_only
+from sqlalchemy.orm import load_only, selectinload
+
 from backend.extensions import db
 from backend.models import SleepLevel, SleepLog, StudySubject
 from backend.utils.serialization import serialize_fitbit_data
@@ -25,7 +27,9 @@ from backend.utils.serialization import serialize_fitbit_data
 MAX_DATE_RANGE_DAYS = 30
 
 
-def validate_date_range(start_date_str: str, end_date_str: Optional[str] = None) -> Tuple[date, date]:
+def validate_date_range(
+    start_date_str: str, end_date_str: Optional[str] = None
+) -> Tuple[date, date]:
     """
     Validates the provided date range.
 
@@ -37,7 +41,7 @@ def validate_date_range(start_date_str: str, end_date_str: Optional[str] = None)
         tuple: A tuple containing the validated start_date and end_date as `datetime.date` objects.
 
     Raises:
-        ValueError: If the dates are invalid, the end date is earlier than the start date, 
+        ValueError: If the dates are invalid, the end date is earlier than the start date,
                     or the date range exceeds the allowed maximum.
     """
     try:
@@ -79,7 +83,9 @@ def cache_key_admin(ditti_id: str, start_date: date, end_date: date) -> str:
     return f"admin_fitbit_data:{ditti_id}:{start_date}:{end_date}"
 
 
-def cache_key_participant(ditti_id: str, start_date: date, end_date: date) -> str:
+def cache_key_participant(
+    ditti_id: str, start_date: date, end_date: date
+) -> str:
     """
     Generates a cache key for participant Fitbit data requests.
 
@@ -94,7 +100,9 @@ def cache_key_participant(ditti_id: str, start_date: date, end_date: date) -> st
     return f"participant_fitbit_data:{ditti_id}:{start_date}:{end_date}"
 
 
-def get_fitbit_data_for_subject(ditti_id: str, start_date: date, end_date: date) -> Optional[List[dict]]:
+def get_fitbit_data_for_subject(
+    ditti_id: str, start_date: date, end_date: date
+) -> Optional[List[dict]]:
     """
     Retrieves and serializes Fitbit data for a specific study subject within a given date range.
 
@@ -116,24 +124,20 @@ def get_fitbit_data_for_subject(ditti_id: str, start_date: date, end_date: date)
     stmt = (
         select(SleepLog)
         .options(
-            load_only(
-                SleepLog.date_of_sleep,
-                SleepLog.log_type,
-                SleepLog.type
-            ),
+            load_only(SleepLog.date_of_sleep, SleepLog.log_type, SleepLog.type),
             selectinload(SleepLog.levels).options(
                 load_only(
                     SleepLevel.date_time,
                     SleepLevel.level,
                     SleepLevel.seconds,
-                    SleepLevel.is_short
+                    SleepLevel.is_short,
                 )
-            )
+            ),
         )
         .where(
             SleepLog.study_subject_id == study_subject.id,
             SleepLog.date_of_sleep >= start_date,
-            SleepLog.date_of_sleep <= end_date
+            SleepLog.date_of_sleep <= end_date,
         )
         .order_by(SleepLog.id)
     )

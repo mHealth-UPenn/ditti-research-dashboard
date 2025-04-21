@@ -25,9 +25,29 @@ class TestSanitizeQuillHTML:
 
         # Test regular tags first
         regular_tags = [
-            "a", "blockquote", "div", "em", "h1", "h2", "h3", "h4", "h5", "h6",
-            "li", "ol", "p", "pre", "span", "strong", "sub", "sup",
-            "ul", "select", "option", "u", "s"
+            "a",
+            "blockquote",
+            "div",
+            "em",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "li",
+            "ol",
+            "p",
+            "pre",
+            "span",
+            "strong",
+            "sub",
+            "sup",
+            "ul",
+            "select",
+            "option",
+            "u",
+            "s",
         ]
 
         html_parts = [f"<{tag}>Test</{tag}>" for tag in regular_tags]
@@ -139,7 +159,7 @@ class TestSanitizeQuillHTML:
         assert "<p" in result
 
         # Check that the allowed class is still present
-        assert 'ql-align-center' in result
+        assert "ql-align-center" in result
 
     def test_url_schemes(self):
         """Test allowed URL schemes are preserved and disallowed ones are removed."""

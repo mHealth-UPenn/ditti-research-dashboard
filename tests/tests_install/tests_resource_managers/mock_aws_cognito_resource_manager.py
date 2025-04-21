@@ -1,7 +1,13 @@
-from install.resource_managers.aws_cognito_resource_manager import AwsCognitoResourceManager
-from tests.tests_install.tests_aws_providers.mock_aws_client_provider import aws_client_provider
+from install.resource_managers.aws_cognito_resource_manager import (
+    AwsCognitoResourceManager,
+)
+from tests.tests_install.tests_aws_providers.mock_aws_client_provider import (
+    aws_client_provider,
+)
+from tests.tests_install.tests_project_config.mock_project_config_provider import (
+    project_config_provider,
+)
 from tests.tests_install.tests_utils.mock_logger import logger
-from tests.tests_install.tests_project_config.mock_project_config_provider import project_config_provider
 
 
 def participant_user_pool():
@@ -43,7 +49,11 @@ def aws_cognito_resource_manager():
     participant_client = participant_user_pool_client(participant)
     researcher_client = researcher_user_pool_client(researcher)
     provider.config.participant_user_pool_id = participant["UserPool"]["Id"]
-    provider.config.participant_client_id = participant_client["UserPoolClient"]["ClientId"]
+    provider.config.participant_client_id = participant_client[
+        "UserPoolClient"
+    ]["ClientId"]
     provider.config.researcher_user_pool_id = researcher["UserPool"]["Id"]
-    provider.config.researcher_client_id = researcher_client["UserPoolClient"]["ClientId"]
+    provider.config.researcher_client_id = researcher_client["UserPoolClient"][
+        "ClientId"
+    ]
     return provider

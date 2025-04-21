@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from functools import wraps
 import logging
+from functools import wraps
+
 from flask import current_app, make_response, request
 from flask_jwt_extended import current_user, verify_jwt_in_request
+
 from backend.models import App, Study
 
 logger = logging.getLogger(__name__)
@@ -38,6 +40,7 @@ def auth_required(action, _resource=None):
     _resource: str (optional)
         The resource to check permissions for
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -66,7 +69,6 @@ def auth_required(action, _resource=None):
 
             # when the user does not have permission
             except ValueError:
-
                 # log an error
                 app = App.query.get(app_id) if study_id else None
                 study = Study.query.get(study_id) if study_id else None

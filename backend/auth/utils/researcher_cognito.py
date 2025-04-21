@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+
 import boto3
 from botocore.exceptions import ClientError
 from flask import current_app
@@ -57,22 +58,15 @@ def create_researcher(email, temp_password=None, attributes=None):
             for key, value in attributes.items():
                 # Only include attributes with non-empty values
                 if value is not None and value.strip() != "":
-                    user_attributes.append({
-                        "Name": key,
-                        "Value": str(value)
-                    })
+                    user_attributes.append({"Name": key, "Value": str(value)})
 
         # Always include email and email_verified attributes
-        user_attributes.extend([
-            {
-                "Name": "email",
-                "Value": email
-            },
-            {
-                "Name": "email_verified",
-                "Value": "true"
-            }
-        ])
+        user_attributes.extend(
+            [
+                {"Name": "email", "Value": email},
+                {"Name": "email_verified", "Value": "true"},
+            ]
+        )
 
         # Create user in Cognito
         if temp_password:
@@ -82,14 +76,14 @@ def create_researcher(email, temp_password=None, attributes=None):
                 Username=email,
                 UserAttributes=user_attributes,
                 TemporaryPassword=temp_password,
-                MessageAction="SUPPRESS"  # Don't send automatic email
+                MessageAction="SUPPRESS",  # Don't send automatic email
             )
         else:
             # Let Cognito generate a temporary password and send invitation
             response = client.admin_create_user(
                 UserPoolId=user_pool_id,
                 Username=email,
-                UserAttributes=user_attributes
+                UserAttributes=user_attributes,
             )
 
         logger.info(f"Created Cognito user: {email}")
@@ -153,15 +147,13 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
                 # Never allow updating the email attribute
                 if key == "email":
                     logger.warning(
-                        f"Attempt to update email attribute for user {email} was blocked")
+                        f"Attempt to update email attribute for user {email} was blocked"
+                    )
                     continue
 
                 # Only include attributes with non-empty values
                 if value is not None and value.strip() != "":
-                    user_attributes.append({
-                        "Name": key,
-                        "Value": str(value)
-                    })
+                    user_attributes.append({"Name": key, "Value": str(value)})
 
             # If we have valid attributes to update, update them
             if user_attributes:
@@ -169,7 +161,7 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
                 client.admin_update_user_attributes(
                     UserPoolId=user_pool_id,
                     Username=email,
-                    UserAttributes=user_attributes
+                    UserAttributes=user_attributes,
                 )
                 logger.info(f"Updated Cognito user attributes for {email}")
 
@@ -179,7 +171,8 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
                 # Never allow deleting the email attribute (critical security measure)
                 if attr_name == "email":
                     logger.warning(
-                        f"Attempt to delete email attribute for user {email} was blocked")
+                        f"Attempt to delete email attribute for user {email} was blocked"
+                    )
                     continue
 
                 try:
@@ -187,15 +180,17 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
                     client.admin_delete_user_attributes(
                         UserPoolId=user_pool_id,
                         Username=email,
-                        UserAttributeNames=[attr_name]
+                        UserAttributeNames=[attr_name],
                     )
                     logger.info(
-                        f"Deleted attribute {attr_name} for user {email}")
+                        f"Deleted attribute {attr_name} for user {email}"
+                    )
                 except ClientError as attr_error:
                     # Log the error but continue processing other attributes
                     # This prevents a single attribute failure from blocking other operations
                     logger.warning(
-                        f"Failed to delete attribute {attr_name} for user {email}: {str(attr_error)}")
+                        f"Failed to delete attribute {attr_name} for user {email}: {str(attr_error)}"
+                    )
 
         return True, "User attributes updated successfully"
 
@@ -234,10 +229,7 @@ def delete_researcher(email):
         user_pool_id = current_app.config["COGNITO_RESEARCHER_USER_POOL_ID"]
 
         # Delete user from Cognito
-        client.admin_delete_user(
-            UserPoolId=user_pool_id,
-            Username=email
-        )
+        client.admin_delete_user(UserPoolId=user_pool_id, Username=email)
 
         logger.info(f"Deleted Cognito user: {email}")
         return True, "User deleted successfully"
@@ -280,8 +272,7 @@ def get_researcher(email):
 
         # Get user from Cognito
         response = client.admin_get_user(
-            UserPoolId=user_pool_id,
-            Username=email
+            UserPoolId=user_pool_id, Username=email
         )
 
         # Extract user attributes
@@ -289,7 +280,7 @@ def get_researcher(email):
             "username": response.get("Username"),
             "user_status": response.get("UserStatus"),
             "enabled": response.get("Enabled", False),
-            "attributes": {}
+            "attributes": {},
         }
 
         # Convert list of attributes to dictionary

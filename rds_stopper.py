@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime, timedelta, UTC
 import logging
 import os
+from datetime import UTC, datetime, timedelta
+
 import boto3
 
 logger = logging.getLogger()
@@ -31,9 +32,7 @@ def stop():
     pattern = os.getenv("AWS_LOG_PATTERN")
     start = int((datetime.now() - timedelta(hours=2)).timestamp() * 1000)
     res = logs.filter_log_events(
-        logGroupName=name,
-        filterPattern=pattern,
-        startTime=start
+        logGroupName=name, filterPattern=pattern, startTime=start
     )
     events = res["events"]
 
@@ -43,7 +42,7 @@ def stop():
             logGroupName=name,
             filterPattern=pattern,
             nextToken=res["nextToken"],
-            startTime=start
+            startTime=start,
         )
         events.extend(res["events"])
 
@@ -51,7 +50,6 @@ def stop():
 
     # if there was a request in the last two hours
     if events:
-
         # log the timestamp of the last event
         timestamps = map(lambda x: x["timestamp"], events)
         last = sorted(list(timestamps))[-1]

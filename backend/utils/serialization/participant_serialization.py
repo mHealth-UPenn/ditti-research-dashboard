@@ -14,13 +14,24 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pydantic import ValidationError
-from typing import Any, Dict, Optional
 import logging
 from datetime import datetime
-from typing import Any, List, Optional
-from pydantic import BaseModel, Field, field_serializer, model_validator
-from backend.models import JoinStudySubjectApi, JoinStudySubjectStudy, StudySubject
+from typing import Any, Dict, List, Optional
+
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationError,
+    field_serializer,
+    model_validator,
+)
+
+from backend.models import (
+    JoinStudySubjectApi,
+    JoinStudySubjectStudy,
+    StudySubject,
+)
+
 from .serialization_common import common_config
 
 logger = logging.getLogger(__name__)
@@ -41,7 +52,7 @@ class ParticipantApiModel(BaseModel):
         if isinstance(obj, JoinStudySubjectApi):
             return {
                 "scope": obj.scope,
-                "api_name": obj.api.name if obj.api else None
+                "api_name": obj.api.name if obj.api else None,
             }
         return obj
 
@@ -68,8 +79,10 @@ class ParticipantStudyModel(BaseModel):
                 "created_on": obj.created_on,
                 "starts_on": obj.created_on,
                 "expires_on": getattr(obj, "expires_on", None),
-                "consent_information": getattr(obj.study, "consent_information", None),
-                "data_summary": getattr(obj.study, "data_summary", None)
+                "consent_information": getattr(
+                    obj.study, "consent_information", None
+                ),
+                "data_summary": getattr(obj.study, "data_summary", None),
             }
         return obj
 
@@ -86,7 +99,9 @@ class ParticipantModel(BaseModel):
     model_config = common_config
 
 
-def serialize_participant(study_subject: StudySubject) -> Optional[Dict[str, Any]]:
+def serialize_participant(
+    study_subject: StudySubject,
+) -> Optional[Dict[str, Any]]:
     """
     Serializes a StudySubject ORM instance into a dictionary suitable for JSON responses.
 
@@ -99,9 +114,7 @@ def serialize_participant(study_subject: StudySubject) -> Optional[Dict[str, Any
     try:
         participant_model = ParticipantModel.model_validate(study_subject)
         serialized_data = participant_model.model_dump(
-            by_alias=True,
-            exclude_unset=True,
-            exclude_none=True
+            by_alias=True, exclude_unset=True, exclude_none=True
         )
 
         return serialized_data
@@ -109,13 +122,15 @@ def serialize_participant(study_subject: StudySubject) -> Optional[Dict[str, Any
     except ValidationError as ve:
         logger.error(
             f"Validation error in ParticipantModel for StudySubject {
-                study_subject.ditti_id}: {ve}"
+                study_subject.ditti_id
+            }: {ve}"
         )
         return None
 
     except Exception as e:
         logger.error(
             f"Unexpected error during serialization of StudySubject {
-                study_subject.ditti_id}: {e}"
+                study_subject.ditti_id
+            }: {e}"
         )
         return None

@@ -16,12 +16,17 @@
 
 import logging
 from urllib.parse import urlencode
+
 from flask import current_app, make_response, redirect, request, session
-from backend.extensions import db, oauth
+
 from backend.auth.providers.cognito import AUTH_ERROR_MESSAGES
 from backend.auth.utils import (
-    clear_auth_cookies, set_auth_cookies, create_error_response, AuthFlowSession
+    AuthFlowSession,
+    clear_auth_cookies,
+    create_error_response,
+    set_auth_cookies,
 )
+from backend.extensions import db, oauth
 
 logger = logging.getLogger(__name__)
 
@@ -36,13 +41,16 @@ class AuthControllerBase:
             user_type (str): Either "participant" or "researcher"
         """
         self.user_type = user_type
-        self.oauth_client_name = "participant_oidc" if user_type == "participant" else "researcher_oidc"
+        self.oauth_client_name = (
+            "participant_oidc"
+            if user_type == "participant"
+            else "researcher_oidc"
+        )
         self.auth_manager = None  # To be set by subclasses
 
     def init_oauth_client(self):
         """Initialize the OAuth client."""
-        raise NotImplementedError(
-            "Subclasses must implement init_oauth_client")
+        raise NotImplementedError("Subclasses must implement init_oauth_client")
 
     def get_redirect_uri(self):
         """Get the redirect URI from config.
@@ -97,7 +105,7 @@ class AuthControllerBase:
             nonce=security_params["nonce"],
             state=security_params["state"],
             code_challenge=security_params["code_challenge"],
-            code_challenge_method="S256"
+            code_challenge_method="S256",
         )
 
     def get_scope(self):
@@ -131,7 +139,7 @@ class AuthControllerBase:
                 return create_error_response(
                     AUTH_ERROR_MESSAGES["invalid_request"],
                     status_code=401,
-                    error_code="MISSING_CODE_VERIFIER"
+                    error_code="MISSING_CODE_VERIFIER",
                 )
 
             # Validate nonce
@@ -140,13 +148,14 @@ class AuthControllerBase:
                 return create_error_response(
                     AUTH_ERROR_MESSAGES["session_expired"],
                     status_code=401,
-                    error_code="EXPIRED_NONCE"
+                    error_code="EXPIRED_NONCE",
                 )
 
             # Exchange code for tokens
             oauth_client = getattr(oauth, self.oauth_client_name)
             token = oauth_client.authorize_access_token(
-                code_verifier=code_verifier)
+                code_verifier=code_verifier
+            )
 
             # Parse ID token with nonce validation
             try:
@@ -156,7 +165,7 @@ class AuthControllerBase:
                 return create_error_response(
                     AUTH_ERROR_MESSAGES["auth_failed"],
                     status_code=401,
-                    error_code="TOKEN_VALIDATION_FAILED"
+                    error_code="TOKEN_VALIDATION_FAILED",
                 )
 
             # Get or create user (to be implemented by subclasses)
@@ -168,7 +177,7 @@ class AuthControllerBase:
             AuthFlowSession.set_user_data(
                 self.user_type,
                 user.id if hasattr(user, "id") else None,
-                userinfo
+                userinfo,
             )
 
             # Create redirect response
@@ -184,7 +193,7 @@ class AuthControllerBase:
             return create_error_response(
                 AUTH_ERROR_MESSAGES["auth_failed"],
                 status_code=400,
-                error_code="AUTHENTICATION_ERROR"
+                error_code="AUTHENTICATION_ERROR",
             )
 
     def get_or_create_user(self, token, userinfo):
@@ -200,7 +209,8 @@ class AuthControllerBase:
                 error_response: Error response if error occurred, None otherwise
         """
         raise NotImplementedError(
-            "Subclasses must implement get_or_create_user")
+            "Subclasses must implement get_or_create_user"
+        )
 
     def get_redirect_url(self):
         """Get the URL to redirect to after login.
@@ -226,7 +236,7 @@ class AuthControllerBase:
         params = {
             "client_id": client_id,
             "logout_uri": logout_uri,
-            "response_type": "code"
+            "response_type": "code",
         }
 
         # Return the full logout URL
@@ -263,7 +273,7 @@ class AuthControllerBase:
             return create_error_response(
                 AUTH_ERROR_MESSAGES["auth_required"],
                 status_code=401,
-                error_code="NO_TOKEN"
+                error_code="NO_TOKEN",
             )
 
         # Get user from token
@@ -286,7 +296,8 @@ class AuthControllerBase:
                 error_response: Error response if error occurred, None otherwise
         """
         raise NotImplementedError(
-            "Subclasses must implement get_user_from_token")
+            "Subclasses must implement get_user_from_token"
+        )
 
     def create_login_success_response(self, user):
         """Create success response for check-login.
@@ -298,4 +309,5 @@ class AuthControllerBase:
             Response: JSON response with user info
         """
         raise NotImplementedError(
-            "Subclasses must implement create_login_success_response")
+            "Subclasses must implement create_login_success_response"
+        )

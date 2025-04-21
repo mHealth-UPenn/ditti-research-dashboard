@@ -1,14 +1,16 @@
+from datetime import datetime, timedelta, timezone
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from datetime import datetime, timezone, timedelta
-from backend.utils.lambda_task import (
-    create_and_invoke_lambda_task,
-    check_and_invoke_lambda_task,
-    invoke_lambda_task
-)
-from backend.models import LambdaTask
 from flask import Flask
 from freezegun import freeze_time
+
+from backend.models import LambdaTask
+from backend.utils.lambda_task import (
+    check_and_invoke_lambda_task,
+    create_and_invoke_lambda_task,
+    invoke_lambda_task,
+)
 
 
 @pytest.fixture
@@ -17,10 +19,12 @@ def app():
     Creates a Flask app instance for testing and pushes an application context.
     """
     app = Flask(__name__)
-    app.config['TESTING'] = True
-    app.config['ENV'] = 'testing'
-    app.config['LAMBDA_FUNCTION_NAME'] = 'test_lambda_function'
-    app.config['LOCAL_LAMBDA_ENDPOINT'] = 'http://localhost:9000/2015-03-31/functions/function/invocations'
+    app.config["TESTING"] = True
+    app.config["ENV"] = "testing"
+    app.config["LAMBDA_FUNCTION_NAME"] = "test_lambda_function"
+    app.config["LOCAL_LAMBDA_ENDPOINT"] = (
+        "http://localhost:9000/2015-03-31/functions/function/invocations"
+    )
 
     with app.app_context():
         yield app
@@ -28,19 +32,19 @@ def app():
 
 @pytest.fixture
 def mock_db_session():
-    with patch('backend.utils.lambda_task.db.session') as mock_session:
+    with patch("backend.utils.lambda_task.db.session") as mock_session:
         yield mock_session
 
 
 @pytest.fixture
 def mock_query():
-    with patch('backend.utils.lambda_task.LambdaTask.query') as mock_query:
+    with patch("backend.utils.lambda_task.LambdaTask.query") as mock_query:
         yield mock_query
 
 
 @pytest.fixture
 def mock_boto3_client():
-    with patch('backend.utils.lambda_task.boto3.client') as mock_client:
+    with patch("backend.utils.lambda_task.boto3.client") as mock_client:
         yield mock_client
 
 
@@ -61,7 +65,9 @@ def test_create_and_invoke_lambda_task_success(
     mock_task_instance.updated_on = fixed_datetime
 
     # Mock the LambdaTask constructor to return the mock_task_instance
-    with patch('backend.utils.lambda_task.LambdaTask', return_value=mock_task_instance) as mock_lambda_task_constructor:
+    with patch(
+        "backend.utils.lambda_task.LambdaTask", return_value=mock_task_instance
+    ) as mock_lambda_task_constructor:
         # Set LambdaTask.query to mock_query to preserve the query chain
         mock_lambda_task_constructor.query = mock_query
 
@@ -79,16 +85,16 @@ def test_create_and_invoke_lambda_task_success(
         mock_lambda_task_constructor.assert_called_once_with(
             status="Pending",
             created_on=fixed_datetime,
-            updated_on=fixed_datetime
+            updated_on=fixed_datetime,
         )
         mock_db_session.add.assert_called_once_with(mock_task_instance)
         assert mock_db_session.commit.call_count == 2  # Called twice
 
         mock_boto3_client.assert_called_once_with("lambda")
         mock_lambda_client.invoke.assert_called_once_with(
-            FunctionName=app.config['LAMBDA_FUNCTION_NAME'],
+            FunctionName=app.config["LAMBDA_FUNCTION_NAME"],
             InvocationType="Event",
-            Payload=b'{"function_id": 123}'
+            Payload=b'{"function_id": 123}',
         )
 
         # Verify that the task status was updated to 'InProgress'
@@ -100,7 +106,9 @@ def test_create_and_invoke_lambda_task_success(
 def test_create_and_invoke_lambda_task_exception(
     app, mock_db_session, mock_query, mock_boto3_client, fixed_datetime
 ):
-    with patch('backend.utils.lambda_task.LambdaTask') as mock_lambda_task_constructor:
+    with patch(
+        "backend.utils.lambda_task.LambdaTask"
+    ) as mock_lambda_task_constructor:
         mock_lambda_task_instance = MagicMock(spec=LambdaTask)
         mock_lambda_task_constructor.return_value = mock_lambda_task_instance
 
@@ -148,7 +156,8 @@ def test_check_and_invoke_lambda_task_not_run_today(
     # Create a mock latest_task that was created yesterday
     mock_latest_task = MagicMock(spec=LambdaTask)
     mock_latest_task.created_on.date.return_value = (
-        fixed_datetime - timedelta(days=1)).date()
+        fixed_datetime - timedelta(days=1)
+    ).date()
 
     # Set up the query chain to return the mock_latest_task
     mock_filter = mock_query.filter.return_value
@@ -161,7 +170,9 @@ def test_check_and_invoke_lambda_task_not_run_today(
     new_task.created_on = fixed_datetime
     new_task.updated_on = fixed_datetime
 
-    with patch('backend.utils.lambda_task.LambdaTask', return_value=new_task) as mock_lambda_task_constructor:
+    with patch(
+        "backend.utils.lambda_task.LambdaTask", return_value=new_task
+    ) as mock_lambda_task_constructor:
         # Set LambdaTask.query to mock_query to preserve the query chain
         mock_lambda_task_constructor.query = mock_query
 
@@ -184,7 +195,7 @@ def test_check_and_invoke_lambda_task_not_run_today(
         mock_lambda_task_constructor.assert_called_once_with(
             status="Pending",
             created_on=fixed_datetime,
-            updated_on=fixed_datetime
+            updated_on=fixed_datetime,
         )
         mock_db_session.add.assert_called_once_with(new_task)
         # One for adding, one for updating status
@@ -192,9 +203,9 @@ def test_check_and_invoke_lambda_task_not_run_today(
 
         mock_boto3_client.assert_called_once_with("lambda")
         mock_lambda_client.invoke.assert_called_once_with(
-            FunctionName=app.config['LAMBDA_FUNCTION_NAME'],
+            FunctionName=app.config["LAMBDA_FUNCTION_NAME"],
             InvocationType="Event",
-            Payload=b'{"function_id": 456}'
+            Payload=b'{"function_id": 456}',
         )
 
         # Verify that the task status was updated to 'InProgress'
@@ -217,7 +228,9 @@ def test_check_and_invoke_lambda_task_no_tasks(
     new_task.created_on = fixed_datetime
     new_task.updated_on = fixed_datetime
 
-    with patch('backend.utils.lambda_task.LambdaTask', return_value=new_task) as mock_lambda_task_constructor:
+    with patch(
+        "backend.utils.lambda_task.LambdaTask", return_value=new_task
+    ) as mock_lambda_task_constructor:
         # Set LambdaTask.query to mock_query to preserve the query chain
         mock_lambda_task_constructor.query = mock_query
 
@@ -240,7 +253,7 @@ def test_check_and_invoke_lambda_task_no_tasks(
         mock_lambda_task_constructor.assert_called_once_with(
             status="Pending",
             created_on=fixed_datetime,
-            updated_on=fixed_datetime
+            updated_on=fixed_datetime,
         )
         mock_db_session.add.assert_called_once_with(new_task)
         # One for adding, one for updating status
@@ -248,9 +261,9 @@ def test_check_and_invoke_lambda_task_no_tasks(
 
         mock_boto3_client.assert_called_once_with("lambda")
         mock_lambda_client.invoke.assert_called_once_with(
-            FunctionName=app.config['LAMBDA_FUNCTION_NAME'],
+            FunctionName=app.config["LAMBDA_FUNCTION_NAME"],
             InvocationType="Event",
-            Payload=b'{"function_id": 789}'
+            Payload=b'{"function_id": 789}',
         )
 
         # Verify that the task status was updated to 'InProgress'
@@ -305,9 +318,9 @@ def test_invoke_lambda_task_success(
 
     mock_boto3_client.assert_called_once_with("lambda")
     mock_lambda_client.invoke.assert_called_once_with(
-        FunctionName=app.config['LAMBDA_FUNCTION_NAME'],
+        FunctionName=app.config["LAMBDA_FUNCTION_NAME"],
         InvocationType="Event",
-        Payload=b'{"function_id": 101}'
+        Payload=b'{"function_id": 101}',
     )
 
     # Verify that the task status was updated to 'InProgress'
@@ -363,7 +376,8 @@ def test_invoke_lambda_task_lambda_invoke_exception(
     mock_lambda_client = MagicMock()
     mock_boto3_client.return_value = mock_lambda_client
     mock_lambda_client.invoke.side_effect = Exception(
-        "Lambda invocation failed")
+        "Lambda invocation failed"
+    )
 
     result = invoke_lambda_task(function_id)
 
@@ -372,9 +386,9 @@ def test_invoke_lambda_task_lambda_invoke_exception(
 
     mock_boto3_client.assert_called_once_with("lambda")
     mock_lambda_client.invoke.assert_called_once_with(
-        FunctionName=app.config['LAMBDA_FUNCTION_NAME'],
+        FunctionName=app.config["LAMBDA_FUNCTION_NAME"],
         InvocationType="Event",
-        Payload=b'{"function_id": 303}'
+        Payload=b'{"function_id": 303}',
     )
 
     # Verify that the task status was updated to 'Failed' with the error code

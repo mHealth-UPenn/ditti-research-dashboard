@@ -1,16 +1,25 @@
 import os
+
 import pytest
 from sqlalchemy import tuple_
+
 from backend.app import create_app
-
 from backend.commands import (
-    init_admin_app_click, init_admin_group_click, init_admin_account_click,
-    init_db_click, create_researcher_account_click, init_integration_testing_db_click
+    create_researcher_account_click,
+    init_admin_account_click,
+    init_admin_app_click,
+    init_admin_group_click,
+    init_db_click,
+    init_integration_testing_db_click,
 )
-
 from backend.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission,
-    JoinAccountAccessGroup, Permission, init_db
+    AccessGroup,
+    Account,
+    App,
+    JoinAccessGroupPermission,
+    JoinAccountAccessGroup,
+    Permission,
+    init_db,
 )
 
 
@@ -103,7 +112,9 @@ def test_init_admin_account_duplicate(runner):
 
 def test_create_researcher_account(runner):
     runner.invoke(init_integration_testing_db_click)
-    res = runner.invoke(create_researcher_account_click, args=["--email", "test@test.com"])
+    res = runner.invoke(
+        create_researcher_account_click, args=["--email", "test@test.com"]
+    )
     assert res.output == "Researcher account successfully created.\n"
 
     # Check that the account was created

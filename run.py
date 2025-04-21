@@ -23,6 +23,7 @@ load_dotenv(override=True)
 # if the app is running in a production environment
 if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
     import json
+
     import boto3
 
     # get the secret"s values

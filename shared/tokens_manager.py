@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import boto3
-import logging
 import json
-from botocore.exceptions import ClientError
+import logging
 from typing import Any, Dict
+
+import boto3
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class TokensManager:
     Manages API tokens using AWS Secrets Manager.
     Each API has a single secret storing tokens for all study subjects.
     """
+
     def __init__(self, /, *, fstr="{api_name}-tokens"):
         """
         Initializes the AWS Secrets Manager client.
@@ -65,21 +67,26 @@ class TokensManager:
             secret_string = response.get("SecretString")
             if secret_string is None:
                 logger.error(
-                    f"SecretString not found for secret: {secret_name}")
+                    f"SecretString not found for secret: {secret_name}"
+                )
                 raise KeyError(
-                    f"Secret '{secret_name}' does not contain a SecretString.")
+                    f"Secret '{secret_name}' does not contain a SecretString."
+                )
             secret_data = json.loads(secret_string)
             logger.info(f"Retrieved secret for API: {secret_name}")
             return secret_data
         except self.client.exceptions.ResourceNotFoundException:
             logger.warning(
-                f"Secret '{secret_name}' not found. It will be created.")
+                f"Secret '{secret_name}' not found. It will be created."
+            )
             return {}
         except ClientError as e:
             logger.error(f"Error retrieving secret '{secret_name}': {e}")
             raise
 
-    def _store_secret(self, secret_name: str, secret_data: Dict[str, Any]) -> None:
+    def _store_secret(
+        self, secret_name: str, secret_data: Dict[str, Any]
+    ) -> None:
         """
         Stores the secret JSON object to AWS Secrets Manager.
 
@@ -94,22 +101,22 @@ class TokensManager:
         try:
             # Try updating the secret if it exists
             self.client.put_secret_value(
-                SecretId=secret_name,
-                SecretString=secret_string
+                SecretId=secret_name, SecretString=secret_string
             )
             logger.info(f"Updated secret for API: {secret_name}")
         except self.client.exceptions.ResourceNotFoundException:
             # If the secret does not exist, create it
             self.client.create_secret(
-                Name=secret_name,
-                SecretString=secret_string
+                Name=secret_name, SecretString=secret_string
             )
             logger.info(f"Created secret for API: {secret_name}")
         except ClientError as e:
             logger.error(f"Error storing secret '{secret_name}': {e}")
             raise
 
-    def add_or_update_api_token(self, api_name: str, ditti_id: str, tokens: Dict[str, Any]) -> None:
+    def add_or_update_api_token(
+        self, api_name: str, ditti_id: str, tokens: Dict[str, Any]
+    ) -> None:
         """
         Adds or updates the tokens for a specific study subject within an API's secret.
 
@@ -138,9 +145,12 @@ class TokensManager:
 
             self._store_secret(secret_name, secret_data)
             logger.info(
-                f"Added/Updated tokens for Study Subject {ditti_id} in API '{api_name}'.")
+                f"Added/Updated tokens for Study Subject {ditti_id} in API '{api_name}'."
+            )
         except Exception as e:
-            logger.error(f"Failed to add/update tokens for Study Subject {ditti_id} in API '{api_name}': {e}")
+            logger.error(
+                f"Failed to add/update tokens for Study Subject {ditti_id} in API '{api_name}': {e}"
+            )
             raise
 
     def get_api_tokens(self, api_name: str, ditti_id: str) -> Dict[str, Any]:
@@ -163,14 +173,20 @@ class TokensManager:
             secret_data = self._retrieve_secret(secret_name)
             tokens = secret_data.get(ditti_id)
             if not tokens:
-                logger.error(f"Tokens for Study Subject {ditti_id} not found in API '{api_name}'.")
-                raise KeyError(f"Tokens for Study Subject {ditti_id} not found in API '{api_name}'.")
+                logger.error(
+                    f"Tokens for Study Subject {ditti_id} not found in API '{api_name}'."
+                )
+                raise KeyError(
+                    f"Tokens for Study Subject {ditti_id} not found in API '{api_name}'."
+                )
             return tokens
         except KeyError as e:
             logger.error(e)
             raise
         except Exception as e:
-            logger.error(f"Failed to retrieve tokens for Study Subject {ditti_id} in API '{api_name}': {e}")
+            logger.error(
+                f"Failed to retrieve tokens for Study Subject {ditti_id} in API '{api_name}': {e}"
+            )
             raise
 
     def delete_api_tokens(self, api_name: str, ditti_id: str) -> None:
@@ -189,16 +205,24 @@ class TokensManager:
         try:
             secret_data = self._retrieve_secret(secret_name)
             if ditti_id not in secret_data:
-                logger.error(f"Tokens for Study Subject {ditti_id} not found in API '{api_name}'.")
-                raise KeyError(f"Tokens for Study Subject {ditti_id} not found in API '{api_name}'.")
+                logger.error(
+                    f"Tokens for Study Subject {ditti_id} not found in API '{api_name}'."
+                )
+                raise KeyError(
+                    f"Tokens for Study Subject {ditti_id} not found in API '{api_name}'."
+                )
             del secret_data[ditti_id]
             self._store_secret(secret_name, secret_data)
-            logger.info(f"Deleted tokens for Study Subject {ditti_id} from API '{api_name}'.")
+            logger.info(
+                f"Deleted tokens for Study Subject {ditti_id} from API '{api_name}'."
+            )
         except KeyError as e:
             logger.error(e)
             raise
         except Exception as e:
-            logger.error(f"Failed to delete tokens for Study Subject {ditti_id} in API '{api_name}': {e}")
+            logger.error(
+                f"Failed to delete tokens for Study Subject {ditti_id} in API '{api_name}': {e}"
+            )
             raise
 
     def init_app(self, app):

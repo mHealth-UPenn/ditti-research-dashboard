@@ -15,11 +15,13 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+
 from sqlalchemy import func
-from backend.extensions import oauth
-from backend.models import StudySubject, Study
+
 from backend.auth.providers.cognito import CognitoAuthBase
 from backend.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
+from backend.extensions import oauth
+from backend.models import Study, StudySubject
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +79,8 @@ class ParticipantAuth(CognitoAuthBase):
             return None, "Invalid token"
 
         study_subject = self.get_study_subject_from_ditti_id(
-            ditti_id, include_archived)
+            ditti_id, include_archived
+        )
 
         if not study_subject:
             logger.warning(f"No study subject found for ID: {ditti_id}")
@@ -85,7 +88,8 @@ class ParticipantAuth(CognitoAuthBase):
 
         if study_subject.is_archived:
             logger.warning(
-                f"Attempt to access with archived study subject: {ditti_id}")
+                f"Attempt to access with archived study subject: {ditti_id}"
+            )
             return None, AUTH_ERROR_MESSAGES["account_archived"]
 
         return study_subject, None
@@ -116,5 +120,5 @@ def init_participant_oauth_client():
             authorize_url=f"https://{domain}/oauth2/authorize",
             access_token_url=f"https://{domain}/oauth2/token",
             userinfo_endpoint=f"https://{domain}/oauth2/userInfo",
-            jwks_uri=f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/jwks.json"
+            jwks_uri=f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/jwks.json",
         )
