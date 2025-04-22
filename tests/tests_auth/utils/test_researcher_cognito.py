@@ -61,7 +61,7 @@ def test_create_researcher(mock_cognito_client, app_context):
     # Execute
     success, message = create_researcher(
         email="researcher@example.com",
-        temp_password="initial-password",
+        temp_password="initial-password",  # noqa: S106
         attributes={"first_name": "Test", "last_name": "Researcher"},
     )
 
