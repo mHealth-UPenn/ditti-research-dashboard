@@ -42,7 +42,6 @@ jobs:
             -d \
             --name flask-container \
             --network host \
-            --env-file flask.env \
             -e FLASK_DB=${{ env.FLASK_DB }} \
             -e FLASK_APP=run.py \
             -e AWS_DEFAULT_REGION=us-east-1 \
