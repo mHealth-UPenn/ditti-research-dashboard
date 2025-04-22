@@ -35,7 +35,8 @@ class AuthFlowSession:
     def generate_and_store_security_params():
         """Generate and store security parameters for OAuth flow.
 
-        Returns:
+        Returns
+        -------
             dict: Dictionary containing the generated security parameters
         """
         # Generate and store nonce for ID token validation
@@ -67,7 +68,8 @@ class AuthFlowSession:
         Args:
             request_state (str): The state parameter from the request
 
-        Returns:
+        Returns
+        -------
             bool: True if state is valid, False otherwise
         """
         state = session.pop("cognito_state", None)
@@ -77,7 +79,8 @@ class AuthFlowSession:
     def get_code_verifier():
         """Get and remove the code verifier from the session.
 
-        Returns:
+        Returns
+        -------
             str: The code verifier or None if not found
         """
         return session.pop("cognito_code_verifier", None)
@@ -86,7 +89,8 @@ class AuthFlowSession:
     def validate_nonce():
         """Validate the stored nonce.
 
-        Returns:
+        Returns
+        -------
             tuple: (is_valid, nonce)
                 is_valid (bool): Whether the nonce is valid
                 nonce (str): The nonce value if valid, None otherwise
