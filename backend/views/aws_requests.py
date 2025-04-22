@@ -19,6 +19,7 @@ import logging
 import os
 import re
 import traceback
+from contextlib import suppress
 from functools import reduce
 
 import boto3
@@ -480,45 +481,28 @@ def get_audio_files(_account):
         result = Query("AudioFile").scan()["Items"]
         for item in result:
             # Skip deleted audio files
-            try:
+            with suppress(KeyError):
                 if item["_deleted"]:
                     continue
-            except KeyError:
-                pass
 
-            audio_file = dict()
-            try:
+            audio_file = {}
+            with suppress(KeyError):
                 audio_file["id"] = item["id"]
-            except KeyError:
-                pass
-            try:
+            with suppress(KeyError):
                 audio_file["_version"] = item["_version"]
-            except KeyError:
-                pass
-            try:
+            with suppress(KeyError):
                 audio_file["fileName"] = item["fileName"]
-            except KeyError:
-                pass
-            try:
+            with suppress(KeyError):
                 audio_file["title"] = item["title"]
-            except KeyError:
-                pass
-            try:
+            with suppress(KeyError):
                 audio_file["category"] = item["category"]
-            except KeyError:
-                pass
-            try:
+            with suppress(KeyError):
                 audio_file["availability"] = item["availability"]
-            except KeyError:
-                pass
-            try:
+            with suppress(KeyError):
                 audio_file["studies"] = item["studies"]
-            except KeyError:
-                pass
-            try:
+            with suppress(KeyError):
                 audio_file["length"] = int(item["length"])
-            except KeyError:
-                pass
+
             res.append(audio_file)
 
     except Exception:

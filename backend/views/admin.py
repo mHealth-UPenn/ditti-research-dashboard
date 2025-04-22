@@ -16,6 +16,7 @@
 
 import logging
 import traceback
+from contextlib import suppress
 from datetime import UTC, datetime
 
 from flask import Blueprint, jsonify, make_response, request
@@ -1544,10 +1545,8 @@ def about_sleep_template_edit(_account):
             about_sleep_template_id
         )
 
-        try:
+        with suppress(KeyError):
             data["text"] = sanitize_quill_html(data["text"])
-        except KeyError:
-            pass
 
         populate_model(about_sleep_template, data)
         db.session.commit()
