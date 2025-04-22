@@ -58,10 +58,11 @@ def health_check():
 @blueprint.route("/touch")
 def touch():
     """
-    Send an empty request to the server to see the status of the database. If
-    the database was stopped, this will start the database. This returns OK if
-    the database is running, STARTING if it was stopped or is current starting,
-    or STATUS: ... if a different status arises
+    Send an empty request to the server to see the status of the database.
+
+    If the database was stopped, this will start the database. This returns OK
+    if the database is running, STARTING if it was stopped or is current
+    starting, or STATUS: ... if a different status arises.
 
     Response Syntax (200)
     ---------------------
