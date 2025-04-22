@@ -31,7 +31,7 @@ def project_config_provider_mock():
 
 
 def test_init(logger_mock):
-    """Test initialization of ProjectConfigProvider"""
+    """Test initialization of ProjectConfigProvider."""
     project_config_provider = ProjectConfigProvider(logger=logger_mock)
 
     assert project_config_provider.logger == logger_mock
@@ -42,7 +42,7 @@ def test_init(logger_mock):
 def test_load_existing_config_success(
     project_config_provider_mock: ProjectConfigProvider,
 ):
-    """Test loading existing config file successfully"""
+    """Test loading existing config file successfully."""
     mock_config = {"project_name": "test-project"}
 
     with (
@@ -57,7 +57,7 @@ def test_load_existing_config_success(
 def test_load_existing_config_file_not_found(
     project_config_provider_mock: ProjectConfigProvider,
 ):
-    """Test loading config when file doesn't exist"""
+    """Test loading config when file doesn't exist."""
     with (
         patch("os.path.exists", return_value=False),
         pytest.raises(ProjectConfigError),
@@ -69,7 +69,7 @@ def test_get_user_input_continue(
     project_config_provider_mock: ProjectConfigProvider,
     user_input_mock: UserInput,
 ):
-    """Test get_user_input when user continues"""
+    """Test get_user_input when user continues."""
     project_config_provider_mock.get_user_input()
 
     assert project_config_provider_mock.user_input is not None
@@ -94,7 +94,7 @@ def test_get_user_input_continue(
 def test_get_user_input_cancel(
     project_config_provider_mock: ProjectConfigProvider,
 ):
-    """Test get_user_input when user cancels"""
+    """Test get_user_input when user cancels."""
     project_config_provider_mock.get_continue_input.return_value = "n"
     with pytest.raises(CancelInstallation):
         project_config_provider_mock.get_user_input()
@@ -103,7 +103,7 @@ def test_get_user_input_cancel(
 def test_get_user_input_invalid_project_name(
     project_config_provider_mock: ProjectConfigProvider,
 ):
-    """Test get_user_input with invalid project name"""
+    """Test get_user_input with invalid project name."""
     project_config_provider_mock.get_project_name_input = MagicMock(
         side_effect=["!@#$%^", "valid"]
     )
@@ -115,7 +115,7 @@ def test_get_user_input_invalid_project_name(
 def test_get_user_input_invalid_email(
     project_config_provider_mock: ProjectConfigProvider,
 ):
-    """Test get_user_input with invalid email"""
+    """Test get_user_input with invalid email."""
     project_config_provider_mock.get_admin_email_input = MagicMock(
         side_effect=["!@#$%^", "valid@example.com"]
     )
@@ -130,7 +130,7 @@ def test_get_user_input_invalid_email(
 def test_get_user_input_project_settings_exists(
     project_config_provider_mock: ProjectConfigProvider,
 ):
-    """Test get_user_input when project settings already exist"""
+    """Test get_user_input when project settings already exist."""
     project_config_provider_mock.project_settings_exists = MagicMock(
         return_value=True
     )
@@ -139,7 +139,7 @@ def test_get_user_input_project_settings_exists(
 
 
 def test_setup_project_config(user_input_mock: UserInput):
-    """Test setup_project_config"""
+    """Test setup_project_config."""
     # Create a mock project config provider
     project_config_provider_mock = ProjectConfigProvider(logger=MagicMock())
     project_config_mock = project_config(project_config_provider_mock.hashstr)
@@ -152,13 +152,13 @@ def test_setup_project_config(user_input_mock: UserInput):
 
 
 def test_format_string(project_config_provider_mock: ProjectConfigProvider):
-    """Test format_string method"""
+    """Test format_string method."""
     result = project_config_provider_mock.format_string("prefix-{project_name}")
     assert result == f"prefix-{project_config_provider_mock.project_name}"
 
 
 def test_write_project_config(logger_mock: Logger):
-    """Test write_project_config method"""
+    """Test write_project_config method."""
     provider = ProjectConfigProvider(logger=logger_mock)
     project_config_mock = project_config(provider.hashstr)
     provider.project_config = project_config_mock
@@ -178,7 +178,7 @@ def test_write_project_config(logger_mock: Logger):
 
 
 def test_uninstall(project_config_provider_mock: ProjectConfigProvider):
-    """Test uninstall method"""
+    """Test uninstall method."""
     with (
         patch("os.remove") as mock_remove,
         patch("os.path.exists", return_value=True),
@@ -192,7 +192,7 @@ def test_property_getters_and_setters(
     project_config_provider_mock: ProjectConfigProvider,
     user_input_mock: UserInput,
 ):
-    """Test property getters and setters"""
+    """Test property getters and setters."""
     project_config_mock = project_config(project_config_provider_mock.hashstr)
 
     # Test getters
@@ -404,22 +404,22 @@ def test_property_getters_and_setters(
         mock_write.assert_called_once()
 
         mock_write.reset_mock()
-        project_config_provider_mock.secret_name = "new-secret"
+        project_config_provider_mock.secret_name = "new-secret"  # noqa: S105
         assert (
             project_config_provider_mock.project_config["aws"]["secrets_manager"][
                 "secret_name"
             ]
-            == "new-secret"
+            == "new-secret"  # noqa: S105
         )
         mock_write.assert_called_once()
 
         mock_write.reset_mock()
-        project_config_provider_mock.tokens_secret_name = "new-tokens-secret"
+        project_config_provider_mock.tokens_secret_name = "new-tokens-secret"  # noqa: S105
         assert (
             project_config_provider_mock.project_config["aws"]["secrets_manager"][
                 "tokens_secret_name"
             ]
-            == "new-tokens-secret"
+            == "new-tokens-secret"  # noqa: S105
         )
         mock_write.assert_called_once()
 

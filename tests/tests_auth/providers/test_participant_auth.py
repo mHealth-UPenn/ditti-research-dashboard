@@ -319,7 +319,7 @@ def test_init_participant_oauth_client(mock_oauth):
         args, kwargs = mock_oauth.register.call_args
         assert kwargs["name"] == "participant_oidc"
         assert kwargs["client_id"] == "test-client-id"
-        assert kwargs["client_secret"] == "test-client-secret"
+        assert kwargs["client_secret"] == "test-client-secret"  # noqa: S105
         assert "authorize_url" in kwargs
         assert "access_token_url" in kwargs
         assert "jwks_uri" in kwargs

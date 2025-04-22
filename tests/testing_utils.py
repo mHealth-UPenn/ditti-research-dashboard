@@ -318,7 +318,6 @@ def get_unwrapped_view(view_module, view_func_name):
     This allows testing the core view logic without authentication
     decorators getting in the way.
     """
-
     # Get the wrapped view function
     view_func = getattr(view_module, view_func_name)
 
@@ -340,7 +339,8 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
         client: Flask test client
         is_admin: Whether to make the mocked researcher an admin
 
-    Returns:
+    Returns
+    -------
         Headers dict with authentication token
     """
     # Create a mock account for the researcher
@@ -349,7 +349,7 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     mock_account = Account.query.filter_by(email="foo@email.com").first()
 
     # Generate a mock ID token
-    mock_token = "mock_id_token_for_researcher"
+    mock_token = "mock_id_token_for_researcher"  # noqa: S105
 
     # Create headers with the mock token
     headers = {"Authorization": f"Bearer {mock_token}"}
@@ -409,7 +409,6 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     except (ImportError, AttributeError) as e:
         # If these modules or methods don't exist, just continue
         print(f"Skipping some patchers due to: {e}")
-        pass
 
     # Store the patchers in the client for cleanup
     if not hasattr(client, "_auth_patchers"):
@@ -433,7 +432,8 @@ def mock_db_query_result(model_class, result_or_results):
         model_class: The SQLAlchemy model class to mock
         result_or_results: Single object or list of objects to return from the query
 
-    Returns:
+    Returns
+    -------
         Mock query object
 
     Example:
@@ -485,7 +485,8 @@ def mock_boto3_client(service_name, mock_methods=None):
         service_name: Name of the AWS service (e.g., 'cognito-idp')
         mock_methods: Dict of method names and their return values or side effects
 
-    Returns:
+    Returns
+    -------
         Mock boto3 client
 
     Example:

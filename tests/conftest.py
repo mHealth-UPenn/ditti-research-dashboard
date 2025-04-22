@@ -7,13 +7,13 @@ load_dotenv("flask.env")
 
 # Environment variables
 os.environ["AWS_ACCESS_KEY_ID"] = "testing"
-os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
+os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"  # noqa: S105
 os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
 os.environ["APP_SYNC_HOST"] = "https://testing"
 os.environ["AWS_TABLENAME_USER"] = "testing_table_user"
 os.environ["AWS_TABLENAME_TAP"] = "testing_table_tap"
 os.environ["APPSYNC_ACCESS_KEY"] = "testing"
-os.environ["APPSYNC_SECRET_KEY"] = "testing"
+os.environ["APPSYNC_SECRET_KEY"] = "testing"  # noqa: S105
 
 import json
 from unittest.mock import MagicMock, patch
@@ -332,7 +332,8 @@ def mock_model_not_found():
     Args:
         model_class: The SQLAlchemy model class to mock
 
-    Returns:
+    Returns
+    -------
         A function that takes a model class and returns a mock query that will
         return None for first() and empty list for all()
     """

@@ -76,7 +76,7 @@ def sigv4_required(func):
             )
 
             # Initialize LambdaCredentialsManager
-            secret_name = "lambda-execution-user-credentials"
+            secret_name = "lambda-execution-user-credentials"  # noqa: S105
             region = current_app.config.get("LAMBDA_AWS_REGION", "us-east-1")
             credentials_manager = LambdaCredentialsManager(
                 secret_name=secret_name, region_name=region

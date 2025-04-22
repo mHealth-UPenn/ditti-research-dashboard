@@ -161,7 +161,7 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
         ------
             Exception: If the token refresh fails.
         """
-        token_issuer_endpoint = "https://api.fitbit.com/oauth2/token"
+        token_issuer_endpoint = "https://api.fitbit.com/oauth2/token"  # noqa: S105
         auth = requests.auth.HTTPBasicAuth(fitbit_client_id, fitbit_client_secret)
         refresh_params = {
             "grant_type": "refresh_token",

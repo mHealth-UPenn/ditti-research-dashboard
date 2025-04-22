@@ -97,7 +97,7 @@ def downgrade():
     # Set a dummy password hash
     # (this is a placeholder, real passwords can't be restored)
     dummy_password = (
-        "$2b$12$c6AqbeZ4OLQVbzL.DF9dleOxDf6Y3QDrVJPdCZ3m0U8xdWtxRHAuW"
+        "$2b$12$c6AqbeZ4OLQVbzL.DF9dleOxDf6Y3QDrVJPdCZ3m0U8xdWtxRHAuW"  # noqa: S105
     )
 
     # Update each account individually with a unique UUID

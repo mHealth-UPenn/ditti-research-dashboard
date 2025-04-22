@@ -20,7 +20,7 @@ def app():
     app = Flask(__name__)
     app.config["TESTING"] = True
     app.config["FITBIT_CLIENT_ID"] = "fake_fitbit_client_id"
-    app.config["FITBIT_CLIENT_SECRET"] = "fake_fitbit_client_secret"
+    app.config["FITBIT_CLIENT_SECRET"] = "fake_fitbit_client_secret"  # noqa: S105
     return app
 
 
@@ -77,9 +77,7 @@ def test_get_fitbit_oauth_session_success(app):
             mock_get_api_tokens.return_value = fake_tokens
 
             # Mock tm.add_or_update_api_token if needed
-            with patch.object(
-                tm, "add_or_update_api_token"
-            ):
+            with patch.object(tm, "add_or_update_api_token"):
                 # Mock WebApplicationClient
                 with patch(
                     "shared.fitbit.WebApplicationClient"
@@ -176,9 +174,7 @@ def test_get_fitbit_oauth_session_refresh_failure(app):
             mock_get_api_tokens.return_value = expired_tokens
 
             # Mock tm.add_or_update_api_token (should not be called due to refresh failure)
-            with patch.object(
-                tm, "add_or_update_api_token"
-            ):
+            with patch.object(tm, "add_or_update_api_token"):
                 # Mock WebApplicationClient
                 with patch(
                     "shared.fitbit.WebApplicationClient"
@@ -377,5 +373,5 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(
                             # Verify that the refresh_token remains unchanged
                             assert (
                                 expired_tokens["refresh_token"]
-                                == "existing_refresh_token"
+                                == "existing_refresh_token"  # noqa: S105
                             )
