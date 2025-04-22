@@ -27,7 +27,8 @@ def get_token_from_request() -> str | None:
     """
     Extract authentication token from request headers or cookies.
 
-    Returns:
+    Returns
+    -------
         str or None: The extracted token or None if not found
     """
     # Check for token in Authorization header
@@ -50,7 +51,8 @@ def check_permissions(
         action: The action to check permissions for
         resource_param: The resource to check permissions for
 
-    Returns:
+    Returns
+    -------
         tuple: (success, error_response)
             success: True if permission check passed, False otherwise
             error_response: Error response if check failed, None otherwise
