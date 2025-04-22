@@ -35,9 +35,9 @@ class FrontendProvider:
         """Set up frontend dependencies and Tailwind CSS."""
         try:
             os.chdir(self.frontend_dir)
-            subprocess.run(["npm", "install"], check=True)
+            subprocess.run(["npm", "install"], check=True)  # noqa: S603
             self.logger(Colorizer.blue("Frontend dependencies installed"))
-            subprocess.run(["npm", "run", "tailwind"], check=True)
+            subprocess.run(["npm", "run", "tailwind"], check=True)  # noqa: S603
             self.logger(Colorizer.blue("Tailwind CSS compiled"))
             os.chdir("..")
         except subprocess.CalledProcessError as e:
@@ -52,7 +52,7 @@ class FrontendProvider:
         """Build the frontend."""
         try:
             os.chdir(self.frontend_dir)
-            subprocess.run(["npm", "run", "build"], check=True)
+            subprocess.run(["npm", "run", "build"], check=True)  # noqa: S603
             os.chdir("..")
             self.logger(Colorizer.blue("Frontend built"))
         except subprocess.CalledProcessError as e:
