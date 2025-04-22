@@ -1789,7 +1789,7 @@ class JoinStudySubjectStudy(db.Model):
 
 
 @event.listens_for(JoinStudySubjectStudy, "before_insert")
-def set_expires_on(mapper, connection, target):
+def set_expires_on(_mapper, connection, target):
     """
     Automatically set the expires_on field based on the Study's
     default_expiry_delta if expires_on is not provided.

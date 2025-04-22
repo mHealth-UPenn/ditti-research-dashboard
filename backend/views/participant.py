@@ -273,7 +273,7 @@ def revoke_api_access(api_name: str, ditti_id: str):
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Archive", "Participants")
 @researcher_auth_required("Delete", "Wearable Data")
-def delete_participant(account, ditti_id: str):
+def delete_participant(_account, ditti_id: str):
     """
     Endpoint to delete a participant's account and all associated API data.
 

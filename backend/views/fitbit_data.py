@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 @admin_fitbit_blueprint.route("/<string:ditti_id>", methods=["GET"])
 @researcher_auth_required("View", "Wearable Dashboard")
 @researcher_auth_required("View", "Wearable Data")
-def admin_get_fitbit_data(account, ditti_id: str):
+def admin_get_fitbit_data(_account, ditti_id: str):
     """
     Retrieve Fitbit data for a specific study subject as an admin.
 
@@ -192,7 +192,7 @@ def participant_get_fitbit_data(ditti_id: str):
 )
 @researcher_auth_required("View", "Wearable Dashboard")
 @researcher_auth_required("View", "Wearable Data")
-def download_fitbit_participant(account, ditti_id: str):
+def download_fitbit_participant(_account, ditti_id: str):
     """
     Download Fitbit API data for a single study participant as an Excel file.
 
@@ -272,7 +272,7 @@ def download_fitbit_participant(account, ditti_id: str):
 @admin_fitbit_blueprint.route("/download/study/<int:study_id>", methods=["GET"])
 @researcher_auth_required("View", "Wearable Dashboard")
 @researcher_auth_required("View", "Wearable Data")
-def download_fitbit_study(account, study_id: int):
+def download_fitbit_study(_account, study_id: int):
     """
     Download all participant Fitbit API data for a study as an Excel file.
 

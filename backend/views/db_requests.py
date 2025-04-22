@@ -287,7 +287,7 @@ def edit_account_details(account):
 
 @blueprint.route("/get-about-sleep-templates")
 @researcher_auth_required
-def get_about_sleep_templates(account):
+def get_about_sleep_templates(_account):
     """
     Get all about sleep templates.
 
