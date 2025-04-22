@@ -30,6 +30,13 @@ from install.utils.exceptions import DockerSDKError, LocalProviderError
 
 
 class DockerProvider:
+    """
+    Provider for Docker container operations.
+
+    Manages Docker image building, tagging, and container orchestration
+    for the application services.
+    """
+
     def __init__(
         self,
         *,

@@ -1,5 +1,5 @@
 from install.resource_managers.aws_secretsmanager_resource_manager import (
-    AwsSecretsmanagerResourceManager,
+    AwsSecretsManagerResourceManager,
 )
 from install.resource_managers.resource_manager_types import DevSecretValue
 from tests.tests_install.tests_aws_providers.mock_aws_client_provider import (
@@ -42,7 +42,7 @@ def aws_secretsmanager_resource_manager():
     # The resource manager expects the secret to be created by cloudformation
     client_provider.secrets_manager_client.create_secret(Name=config.secret_name)
 
-    return AwsSecretsmanagerResourceManager(
+    return AwsSecretsManagerResourceManager(
         logger=logger(),
         config=config,
         aws_client_provider=client_provider,

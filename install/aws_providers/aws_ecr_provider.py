@@ -26,6 +26,13 @@ from install.utils.exceptions import AwsProviderError
 
 
 class AwsEcrProvider:
+    """
+    Provider for AWS Elastic Container Registry operations.
+
+    Manages ECR repository interactions for Docker images used
+    in the application.
+    """
+
     __repo_fstring: str = "{account_id}.dkr.ecr.{region}.amazonaws.com"
 
     def __init__(

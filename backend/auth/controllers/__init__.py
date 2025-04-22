@@ -1,5 +1,6 @@
 """
 Authentication controllers for backend.
+
 These controllers handle the business logic for authentication, independent
 of the specific authentication provider implementation.
 """
