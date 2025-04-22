@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import secrets
@@ -32,6 +33,14 @@ def generate_temp_password(length=20):
 
 
 if __name__ == "__main__":
+    # Set up logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        filename="participant_migration.log",
+    )
+    logger = logging.getLogger(__name__)
+
     app = create_app()
     users: list[User] = Query("User").scan()["Items"]
     client = boto3.client("cognito-idp")
@@ -73,5 +82,9 @@ if __name__ == "__main__":
                     MessageAction="SUPPRESS",
                 )
 
-            except Exception:
+            except Exception as e:
+                logger.error(
+                    f"Error processing user {user.get('user_permission_id')}: {e!s}",
+                    exc_info=True,
+                )
                 continue
