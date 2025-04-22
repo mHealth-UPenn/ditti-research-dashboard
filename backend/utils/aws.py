@@ -45,17 +45,23 @@ class MutationClient:
 
     def get_body(self):
         """
+        Get the formatted mutation request body.
+
         Returns
         -------
-        str: the formatted mutation request body
+        str
+            The formatted mutation request body.
         """
         return self.__body
 
     def get_connection(self):
         """
+        Get the connection to AppSync.
+
         Returns
         -------
-        http.client.HTTPSConnection: the connection to AppSync
+        http.client.HTTPSConnection
+            The connection to AppSync.
         """
         return self.__conn
 
@@ -93,6 +99,14 @@ class MutationClient:
         }
 
     def set_mutation_v2(self, items):
+        """
+        Set a mutation with the specified items using V2 format.
+
+        Parameters
+        ----------
+        items : dict
+            Dictionary of items to include in the mutation.
+        """
         # Declare variables in the query
         query = "mutation (\n"
         variables = {}
@@ -285,6 +299,14 @@ class Updater:
         self.__key = {pk: key}
 
     def get_key(self):
+        """
+        Get the primary key for DynamoDB operations.
+
+        Returns
+        -------
+        dict
+            The primary key dictionary.
+        """
         return self.__key
 
     def set_expression(self, exp):
@@ -309,9 +331,25 @@ class Updater:
         self.__expression_attribute_values = a
 
     def get_update_expression(self):
+        """
+        Get the update expression for DynamoDB update operations.
+
+        Returns
+        -------
+        str
+            The update expression.
+        """
         return self.__update_expression
 
     def get_expression_attribute_values(self):
+        """
+        Get the expression attribute values for DynamoDB operations.
+
+        Returns
+        -------
+        dict
+            The expression attribute values.
+        """
         return self.__expression_attribute_values
 
     def update(self):
@@ -361,34 +399,131 @@ class Column:
         self.__switch = False
 
     def __eq__(self, other):
+        """
+        Equality comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Equals condition.
+        """
         return Attr(self.__col).eq(other)
 
     def __ne__(self, other):
+        """
+        Not equal comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Not equals condition.
+        """
         return Attr(self.__col).ne(other)
 
     def __lt__(self, other):
+        """
+        Less than comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Less than condition.
+        """
         return Attr(self.__col).lt(other)
 
     def __le__(self, other):
+        """
+        Less than or equal comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Less than or equal condition.
+        """
         return Attr(self.__col).lte(other)
 
     def __gt__(self, other):
+        """
+        Greater than comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Greater than condition.
+        """
         return Attr(self.__col).gt(other)
 
     def __ge__(self, other):
+        """
+        Greater than or equal comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Greater than or equal condition.
+        """
         return Attr(self.__col).gte(other)
 
     def __invert__(self):
+        """
+        Invert the condition.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Not
+            Inverted condition.
+        """
         self.__switch = not self.__switch
         return ~Attr(self.__col).eq(self.__switch)
 
     def between(self, start, stop):
+        """
+        Check if value is between start and stop (inclusive).
+
+        Parameters
+        ----------
+        start : Any
+            The lower bound.
+        stop : Any
+            The upper bound.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Between
+            Between condition.
+        """
         return Attr(self.__col).between(start, stop)
 
     def begins_with(self, other):
+        """
+        Check if value begins with the specified prefix.
+
+        Parameters
+        ----------
+        other : Any
+            The prefix to check.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.BeginsWith
+            Begins with condition.
+        """
         return Attr(self.__col).begins_with(other)
 
     def contains(self, other):
+        """
+        Check if value contains the specified value.
+
+        Parameters
+        ----------
+        other : Any
+            The value to check for.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Contains
+            Contains condition.
+        """
         return Attr(self.__col).contains(other)
 
 

@@ -27,6 +27,13 @@ from install.utils.exceptions import ResourceManagerError
 
 
 class AwsS3ResourceManager(BaseResourceManager):
+    """
+    Resource manager for AWS S3 operations.
+
+    Manages S3 bucket creation, deletion, and object operations
+    for application storage needs.
+    """
+
     def __init__(
         self,
         *,
@@ -40,6 +47,19 @@ class AwsS3ResourceManager(BaseResourceManager):
 
     @staticmethod
     def get_versions_from_response(response: dict) -> list[S3Object]:
+        """
+        Extract version information from S3 list_object_versions response.
+
+        Parameters
+        ----------
+        response : dict
+            The response from S3 list_object_versions API call.
+
+        Returns
+        -------
+        list[S3Object]
+            List of S3 object versions.
+        """
         try:
             return [
                 {"Key": obj["Key"], "VersionId": obj["VersionId"]}
@@ -50,6 +70,19 @@ class AwsS3ResourceManager(BaseResourceManager):
 
     @staticmethod
     def get_delete_markers_from_response(response: dict) -> list[S3Object]:
+        """
+        Extract delete markers from S3 list_object_versions response.
+
+        Parameters
+        ----------
+        response : dict
+            The response from S3 list_object_versions API call.
+
+        Returns
+        -------
+        list[S3Object]
+            List of S3 delete markers.
+        """
         try:
             return [
                 {"Key": obj["Key"], "VersionId": obj["VersionId"]}
@@ -59,6 +92,18 @@ class AwsS3ResourceManager(BaseResourceManager):
             return []
 
     def empty_bucket(self, bucket_name: str) -> None:
+        """
+        Remove all objects from an S3 bucket.
+
+        Parameters
+        ----------
+        bucket_name : str
+            The name of the bucket to empty.
+
+        Returns
+        -------
+        None
+        """
         try:
             objects = self.get_objects(bucket_name)
             if objects:
@@ -86,6 +131,19 @@ class AwsS3ResourceManager(BaseResourceManager):
             raise ResourceManagerError(e) from e
 
     def get_objects(self, bucket_name: str) -> list[S3Object]:
+        """
+        Get all objects in an S3 bucket.
+
+        Parameters
+        ----------
+        bucket_name : str
+            The name of the bucket to get objects from.
+
+        Returns
+        -------
+        list[S3Object]
+            List of objects in the bucket.
+        """
         try:
             response = self.client.list_object_versions(Bucket=bucket_name)
             objects = []
@@ -115,6 +173,19 @@ class AwsS3ResourceManager(BaseResourceManager):
             raise ResourceManagerError(e) from e
 
     def bucket_exists(self, bucket_name: str) -> bool:
+        """
+        Check if an S3 bucket exists.
+
+        Parameters
+        ----------
+        bucket_name : str
+            The name of the bucket to check.
+
+        Returns
+        -------
+        bool
+            True if the bucket exists, False otherwise.
+        """
         try:
             self.client.head_bucket(Bucket=bucket_name)
             return True
@@ -138,6 +209,18 @@ class AwsS3ResourceManager(BaseResourceManager):
             raise ResourceManagerError(e) from e
 
     def delete_bucket(self, bucket_name: str) -> None:
+        """
+        Delete an S3 bucket.
+
+        Parameters
+        ----------
+        bucket_name : str
+            The name of the bucket to delete.
+
+        Returns
+        -------
+        None
+        """
         try:
             response = self.client.delete_bucket(Bucket=bucket_name)
             return response
@@ -156,6 +239,15 @@ class AwsS3ResourceManager(BaseResourceManager):
             raise ResourceManagerError(e) from e
 
     def dev_uninstall(self) -> None:
+        """
+        Clean up S3 resources for development environment.
+
+        Removes buckets created for the development environment.
+
+        Returns
+        -------
+        None
+        """
         try:
             if self.bucket_exists(self.config.audio_bucket_name):
                 self.empty_bucket(self.config.audio_bucket_name)

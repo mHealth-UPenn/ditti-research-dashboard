@@ -40,6 +40,22 @@ logger = logging.getLogger(__name__)
 @blueprint.route("/get-apps")
 @researcher_auth_required
 def get_apps(account):
+    """
+    Get applications accessible to the current user.
+
+    Retrieves all applications that the authenticated account has access to
+    through their assigned access groups.
+
+    Parameters
+    ----------
+    account : Account
+        The authenticated account.
+
+    Returns
+    -------
+    flask.Response
+        JSON response containing list of accessible applications.
+    """
     apps = (
         App.query.join(AccessGroup, AccessGroup.app_id == App.id)
         .join(JoinAccountAccessGroup)

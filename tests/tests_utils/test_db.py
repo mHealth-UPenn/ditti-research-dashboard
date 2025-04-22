@@ -21,10 +21,10 @@ def test_populate_model_invalid_attribute(app):
     study = Study.query.get(1)
     data = {"foo": "bar"}
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(
+        ValueError, match="Invalid attribute: foo \\(mapped to foo\\)"
+    ):
         populate_model(study, data)
-
-    assert str(e.value) == "Invalid attribute: foo (mapped to foo)"
 
 
 def test_populate_model_skip_lists(app):

@@ -23,6 +23,13 @@ from install.utils.exceptions import SubprocessError
 
 
 class DatabaseProvider:
+    """
+    Provider for database operations during installation.
+
+    Manages database initialization, migrations, and account setup
+    for the application.
+    """
+
     def __init__(self, logger: Logger, config: ProjectConfigProvider):
         self.logger = logger
         self.config = config
@@ -50,6 +57,21 @@ class DatabaseProvider:
             raise SubprocessError(e) from e
 
     def initialize_database(self) -> None:
+        """
+        Initialize the database with required tables and seed data.
+
+        Runs database migrations and initial setup commands to prepare
+        the database for application use.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        SubprocessError
+            If database initialization fails.
+        """
         try:
             subprocess.run(
                 ["flask", "--app", "run.py", "init-integration-testing-db"],
@@ -74,6 +96,21 @@ class DatabaseProvider:
             raise SubprocessError(e) from e
 
     def create_researcher_account(self) -> None:
+        """
+        Create an initial researcher account in the database.
+
+        Creates a researcher account with administrative privileges
+        for initial application access.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        SubprocessError
+            If account creation fails.
+        """
         try:
             subprocess.run(
                 [
