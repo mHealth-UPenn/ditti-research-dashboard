@@ -26,7 +26,7 @@ uri = os.getenv("FLASK_DB")
 if "localhost" not in uri:
     raise Exception(
         "The SQLAlchemy URI does not point to localhost. Run `source deploy-"
-        + "dev.sh` before running pytest. Current URI:",
+        "dev.sh` before running pytest. Current URI:",
         uri,
     )
 
