@@ -22,7 +22,8 @@ def create_mock_response(data, status_code=200):
         data: The response data to be JSON-serialized
         status_code: HTTP status code for the response
 
-    Returns:
+    Returns
+    -------
         A mock Response object with appropriate methods
     """
     response = MagicMock(spec=Response)
@@ -42,7 +43,8 @@ def test_app():
     decorators, allowing tests to verify the decorators' behavior in a
     realistic Flask context.
 
-    Returns:
+    Returns
+    -------
         A configured Flask app for testing
     """
     app = Flask(__name__)
