@@ -109,7 +109,7 @@ def init_admin_group():
     if app is None:
         raise ValueError(
             "The admin dashboard app has not been created. It can be created u"
-            + "sing `flask init-admin-app`"
+            "sing `flask init-admin-app`"
         )
 
     access_group = AccessGroup(name="Admin", app=app)
@@ -158,7 +158,7 @@ def init_admin_account(email=None):
     if admin_group is None:
         raise ValueError(
             "The admin access group has not been created. It can be created us"
-            + "ing `flask init-access-group`"
+            "ing `flask init-access-group`"
         )
 
     query = AccessGroup.name == "Ditti Admin"
@@ -838,10 +838,10 @@ class Account(db.Model):
         cascade="all, delete-orphan",
         primaryjoin=(
             "and_("
-            + "   Account.id == JoinAccountAccessGroup.account_id,"
-            + "   JoinAccountAccessGroup.access_group_id == AccessGroup.id,"
-            + "   AccessGroup.is_archived == False"
-            + ")"
+            "   Account.id == JoinAccountAccessGroup.account_id,"
+            "   JoinAccountAccessGroup.access_group_id == AccessGroup.id,"
+            "   AccessGroup.is_archived == False"
+            ")"
         ),
     )
 
@@ -852,10 +852,10 @@ class Account(db.Model):
         cascade="all, delete-orphan",
         primaryjoin=(
             "and_("
-            + "   Account.id == JoinAccountStudy.account_id,"
-            + "   JoinAccountStudy.study_id == Study.id,"
-            + "   Study.is_archived == False"
-            + ")"
+            "   Account.id == JoinAccountStudy.account_id,"
+            "   JoinAccountStudy.study_id == Study.id,"
+            "   Study.is_archived == False"
+            ")"
         ),
     )
 
@@ -1152,10 +1152,10 @@ class AccessGroup(db.Model):
         cascade="all, delete-orphan",
         primaryjoin=(
             "and_("
-            + "   AccessGroup.id == JoinAccountAccessGroup.access_group_id,"
-            + "   JoinAccountAccessGroup.account_id == Account.id,"
-            + "   Account.is_archived == False"
-            + ")"
+            "   AccessGroup.id == JoinAccountAccessGroup.access_group_id,"
+            "   JoinAccountAccessGroup.account_id == Account.id,"
+            "   Account.is_archived == False"
+            ")"
         ),
     )
 
