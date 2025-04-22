@@ -93,7 +93,7 @@ class AwsAccountProvider:
     @staticmethod
     def get_aws_access_key_id() -> str:
         return (
-            subprocess.check_output(  # noqa: S603
+            subprocess.check_output(
                 ["aws", "configure", "get", "aws_access_key_id"]
             )
             .decode("utf-8")
@@ -103,7 +103,7 @@ class AwsAccountProvider:
     @staticmethod
     def get_aws_secret_access_key() -> str:
         return (
-            subprocess.check_output(  # noqa: S603
+            subprocess.check_output(
                 ["aws", "configure", "get", "aws_secret_access_key"]
             )
             .decode("utf-8")
@@ -113,7 +113,7 @@ class AwsAccountProvider:
     def configure_aws_cli(self) -> None:
         """Configure the AWS CLI."""
         try:
-            subprocess.run(["aws", "configure"])  # noqa: S603
+            subprocess.run(["aws", "configure"])
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error("AWS CLI configuration failed")

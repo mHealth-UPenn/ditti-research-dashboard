@@ -30,7 +30,7 @@ class DatabaseProvider:
     def upgrade_database(self) -> None:
         """Initialize the database."""
         try:
-            subprocess.run(  # noqa: S603
+            subprocess.run(
                 ["flask", "--app", "run.py", "db", "upgrade"], check=True
             )
             self.logger(Colorizer.blue("Database upgraded"))
@@ -51,7 +51,7 @@ class DatabaseProvider:
 
     def initialize_database(self) -> None:
         try:
-            subprocess.run(  # noqa: S603
+            subprocess.run(
                 ["flask", "--app", "run.py", "init-integration-testing-db"],
                 check=True,
             )
@@ -75,7 +75,7 @@ class DatabaseProvider:
 
     def create_researcher_account(self) -> None:
         try:
-            subprocess.run(  # noqa: S603
+            subprocess.run(
                 [
                     "flask",
                     "--app",
