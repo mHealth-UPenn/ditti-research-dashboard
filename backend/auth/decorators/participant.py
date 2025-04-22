@@ -69,6 +69,6 @@ def participant_auth_required(decorated_func=None):
             return error_response
 
         # Call the decorated function with ditti_id
-        return decorated_func(ditti_id=ditti_id, *args, **kwargs)
+        return decorated_func(*args, ditti_id=ditti_id, **kwargs)
 
     return wrapper
