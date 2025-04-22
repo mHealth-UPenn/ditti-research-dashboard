@@ -55,6 +55,7 @@ ignore = [
   "S104", # Binding to 0.0.0.0 is acceptable
   "S603", # subprocess.run is acceptable
   "S607", # starting of a process with a partial executable path is acceptable
+  "D100",
   "D105",
   "D107",
   "N818",
@@ -75,7 +76,7 @@ convention = "numpy"
 
 [lint.per-file-ignores]
 "migrations/**/*.py" = ["D", "N"]
-"backend/models.py" = ["N805"]
+"backend/models.py" = ["D102", "D105", "N805"]
 "backend/auth/providers/cognito/constants.py" = ["E501"]
 "**/__init__.py" = ["F401", "D104"]
 "tests/**/*.py" = [
@@ -85,7 +86,6 @@ convention = "numpy"
   "F811",
   "ARG001",
   "ARG002",
-  "D100",
   "D101",
   "D102",
   "D103",
