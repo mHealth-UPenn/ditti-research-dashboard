@@ -25,6 +25,17 @@ logger.setLevel(logging.INFO)
 
 
 def stop():
+    """
+    Check for recent activity and stop RDS instance if inactive.
+
+    Retrieves HTTP request logs from CloudWatch and checks for activity
+    in the past two hours. If no activity is detected, checks the status
+    of the RDS instance and stops it if it's running.
+
+    Returns
+    -------
+    None
+    """
     logs = boto3.client("logs")
 
     # get all HTTP requests from the last two hours

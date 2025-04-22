@@ -26,6 +26,12 @@ from install.utils.exceptions import ResourceManagerError
 
 
 class AwsCognitoResourceManager(BaseResourceManager):
+    """
+    Resource manager for AWS Cognito operations.
+
+    Manages user pools, clients, and other Cognito resources for user authentication.
+    """
+
     def __init__(
         self,
         *,

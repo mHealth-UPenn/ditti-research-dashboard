@@ -25,6 +25,13 @@ from install.utils.exceptions import AwsProviderError
 
 
 class AwsCloudformationProvider:
+    """
+    Provider for AWS CloudFormation operations.
+
+    Manages CloudFormation stack interactions and retrieval of stack outputs
+    for configuration.
+    """
+
     def __init__(
         self,
         *,
@@ -37,6 +44,21 @@ class AwsCloudformationProvider:
         self.client = aws_client_provider.cloudformation_client
 
     def get_outputs(self) -> dict[str, str]:
+        """
+        Get outputs from the CloudFormation stack.
+
+        Retrieves all output values from the deployed CloudFormation stack.
+
+        Returns
+        -------
+        dict[str, str]
+            Dictionary of stack output key-value pairs.
+
+        Raises
+        ------
+        AwsProviderError
+            If there is an error retrieving the stack outputs.
+        """
         try:
             res = self.client.describe_stacks(StackName=self.config.stack_name)
             if len(res["Stacks"]) == 0:
@@ -65,6 +87,16 @@ class AwsCloudformationProvider:
             raise AwsProviderError(e) from e
 
     def update_dev_project_config(self) -> None:
+        """
+        Update the development project configuration with CloudFormation outputs.
+
+        Retrieves outputs from the CloudFormation stack and updates the
+        project configuration values accordingly.
+
+        Returns
+        -------
+        None
+        """
         outputs = self.get_outputs()
         self.config.participant_user_pool_id = outputs["ParticipantUserPoolId"]
         self.config.participant_client_id = outputs["ParticipantClientId"]

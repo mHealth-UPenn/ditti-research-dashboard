@@ -62,11 +62,11 @@ class TestMutationClient:
         foo.open_connection()
         assert foo.get_body() is None
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(
+            ValueError,
+            match="Mutation is not set. Call set_mutation\\(\\) first.",
+        ):
             foo.post_mutation()
-
-        bar = str(e.value)
-        assert bar == "Mutation is not set. Call set_mutation() first."
 
     @pytest.mark.skip(reason="Must implement mock for graphql endpoint.")
     def test_post_mutation(self):
@@ -169,10 +169,8 @@ class TestUpdater:
     def test_update_exception(self):
         foo = Updater()
 
-        with pytest.raises(ValueError) as e:
+        with pytest.raises(ValueError, match="tablekey and key must be set"):
             foo.update()
-
-        assert str(e.value) == "tablekey and key must be set"
 
     def test_update(self, with_mocked_tables):
         query = 'user_permission_id=="abc123"'
@@ -270,7 +268,9 @@ class TestQuery:
     def test_check_query(self):
         invalid = '#user_permission_id=="abc123"'
 
-        with pytest.raises(ValueError):
+        with pytest.raises(
+            ValueError, match="Query contains invalid string at position 0: #"
+        ):
             Query.check_query(invalid)
 
         valid = 'aA1="-:.<>()~!'
