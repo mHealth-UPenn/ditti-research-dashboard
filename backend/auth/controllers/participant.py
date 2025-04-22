@@ -67,7 +67,7 @@ class ParticipantAuthController(AuthControllerBase):
         """
         return f"{self.get_frontend_url()}/login"
 
-    def get_or_create_user(self, token, userinfo):
+    def get_or_create_user(self, _token, userinfo):
         """Get or create study subject from token.
 
         Args:

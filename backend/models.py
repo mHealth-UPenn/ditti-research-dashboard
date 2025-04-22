@@ -829,7 +829,7 @@ class Account(db.Model):
     )
 
     @validates("created_on")
-    def validate_created_on(self, key, val):
+    def validate_created_on(self, _key, val):
         """
         Make the created_on column read-only.
         """
@@ -839,7 +839,7 @@ class Account(db.Model):
         return val
 
     @validates("phone_number")
-    def validate_phone_number(self, key, value):
+    def validate_phone_number(self, _key, value):
         """
         Validate phone number format. Must be in E.164 format.
         For US numbers: +1 followed by 10 digits.
@@ -1393,7 +1393,7 @@ class Permission(db.Model):
         )
 
     @validates("_action_id")
-    def validate_action(self, key, val):
+    def validate_action(self, _key, val):
         """
         Ensure an entry's action cannot be modified.
         """
@@ -1403,7 +1403,7 @@ class Permission(db.Model):
         return val
 
     @validates("_resource_id")
-    def validate_resource(self, key, val):
+    def validate_resource(self, _key, val):
         """
         Ensure an entry's resource cannot be modified.
         """
@@ -1743,7 +1743,7 @@ class JoinStudySubjectStudy(db.Model):
     study = db.relationship("Study")
 
     @validates("created_on")
-    def validate_created_on(self, key, val):
+    def validate_created_on(self, _key, val):
         """
         Make the created_on column read-only.
         """
@@ -1754,7 +1754,7 @@ class JoinStudySubjectStudy(db.Model):
         return val
 
     @validates("expires_on")
-    def validate_expires_on(self, key, value):
+    def validate_expires_on(self, _key, value):
         if value and value <= datetime.now(UTC):
             raise ValueError("expires_on must be a future date.")
         return value
@@ -1853,7 +1853,7 @@ class JoinStudySubjectApi(db.Model):
     api = db.relationship("Api")
 
     @validates("created_on")
-    def validate_created_on(self, key, val):
+    def validate_created_on(self, _key, val):
         """
         Make the created_on column read-only.
         """
@@ -2001,7 +2001,7 @@ class SleepLog(db.Model):
     )
 
     @validates("efficiency")
-    def validate_efficiency(self, key, value):
+    def validate_efficiency(self, _key, value):
         if value is not None and not (0 <= value <= 100):
             raise ValueError("Efficiency must be between 0 and 100.")
         return value
