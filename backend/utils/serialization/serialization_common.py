@@ -20,17 +20,13 @@ from pydantic import ConfigDict
 
 
 def snake_to_camel(string: str) -> str:
-    """
-    Converts a snake_case string to camelCase.
-    """
+    """Convert a snake_case string to camelCase."""
     parts = string.split("_")
     return parts[0] + "".join(word.capitalize() for word in parts[1:])
 
 
 def camel_to_snake(name: str) -> str:
-    """
-    Converts a camelCase string to snake_case.
-    """
+    """Convert a camelCase string to snake_case."""
     return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 

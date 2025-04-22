@@ -13,9 +13,7 @@ from backend.models import Api, JoinStudySubjectApi, StudySubject
 
 @pytest.fixture
 def study_subject():
-    """
-    Fixture to provide a new unique study subject.
-    """
+    """Fixture to provide a new unique study subject."""
     unique_ditti_id = f"ditti_{uuid.uuid4()}"
     subject = StudySubject(
         created_on=datetime.utcnow(),
@@ -29,9 +27,7 @@ def study_subject():
 
 @pytest.fixture
 def fitbit_api():
-    """
-    Fixture to provide the Fitbit API.
-    """
+    """Fixture to provide the Fitbit API."""
     fitbit_api = Api.query.filter_by(name="Fitbit").first()
     # If it doesn't exist, create one
     if not fitbit_api:
@@ -44,7 +40,8 @@ def fitbit_api():
 @pytest.fixture
 def participant_auth_client(client, study_subject):
     """
-    Fixture to provide an authenticated client for participant.
+    Provide an authenticated client for participant.
+
     Uses Cognito authentication instead of JWT.
     """
     # Set cookies for auth

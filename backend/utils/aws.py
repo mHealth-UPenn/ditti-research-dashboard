@@ -60,9 +60,7 @@ class MutationClient:
         return self.__conn
 
     def open_connection(self):
-        """
-        Initialize an HTTP connection to AppSync
-        """
+        """Initialize an HTTP connection to AppSync."""
         self.__conn = requests.Session()
         self.__conn.auth = AWS4Auth(
             os.getenv("APPSYNC_ACCESS_KEY"),
@@ -73,8 +71,10 @@ class MutationClient:
 
     def set_mutation(self, inp, fun, var):
         """
-        Set the mutation request body. See AWS AppSync documentation for more
-        details on how the mutation request is formatted
+        Set the mutation request body.
+
+        See AWS AppSync documentation for more details
+        on how the mutation request is formatted.
 
         Args
         ----
@@ -155,7 +155,7 @@ class MutationClient:
 
     def post_mutation(self):
         """
-        POST the mutation request
+        POST the mutation request.
 
         Returns
         -------
@@ -180,16 +180,14 @@ class MutationClient:
 
 
 class Connection:
-    """
-    A connection with an AWS resource
-    """
+    """A connection with an AWS resource."""
 
     def __init__(self):
         self.__session = None
 
     def open_connection(self, resource):
         """
-        Open a connection with a given resource
+        Open a connection with a given resource.
 
         Args
         ----
@@ -200,15 +198,13 @@ class Connection:
 
     @property
     def session(self):
-        """
-        boto3.resource: an AWS resource session
-        """
+        """boto3.resource: an AWS resource session."""
         return self.__session
 
 
 class Loader:
     """
-    Loads a dynamodb table
+    Loads a dynamodb table.
 
     Args
     ----
@@ -227,7 +223,7 @@ class Loader:
 
     def get_tablename(self, tablekey):
         """
-        Get the full name of a table as it appears on dynamodb
+        Get the full name of a table as it appears on dynamodb.
 
         Args
         ----
@@ -241,29 +237,23 @@ class Loader:
         return self.config[tablekey]
 
     def connect(self, connection):
-        """
-        Connect to an AWS session
-        """
+        """Connect to an AWS session."""
         self.__session = connection.session
 
     def load_table(self):
-        """
-        Load the table
-        """
+        """Load the table."""
         tablename = self.get_tablename(self.__tablekey)
         self.__table = self.__session.Table(tablename)
 
     @property
     def table(self):
-        """
-        DynamoDB.Table
-        """
+        """DynamoDB.Table."""
         return self.__table
 
 
 class Updater:
     """
-    Updates an item"s value on a dynamodb table
+    Updates an item"s value on a dynamodb table.
 
     Args
     ----
@@ -278,9 +268,10 @@ class Updater:
 
     def set_key_from_query(self, q, pk="id"):
         """
-        Set the primary key of the item to update using the primary key of the
-        first result from a query. This function assumes the query is against a
-        column of unique values
+        Set the primary key of the item to update.
+
+        Uses the primary key of the first result from a query. This function
+        assumes the query is against a column of unique values.
 
         Args
         ----
@@ -294,17 +285,14 @@ class Updater:
         self.__key = {pk: key}
 
     def get_key(self):
-        """
-        Returns
-        -------
-        str
-        """
         return self.__key
 
     def set_expression(self, exp):
         """
-        Set the update expression. See boto3 documentation for more information
-        about how dynamodb update expressions are formatted
+        Set the update expression.
+
+        See boto3 documentation for more information about how
+        dynamodb update expressions are formatted.
 
         Args
         ----
@@ -321,24 +309,14 @@ class Updater:
         self.__expression_attribute_values = a
 
     def get_update_expression(self):
-        """
-        Returns
-        -------
-        str
-        """
         return self.__update_expression
 
     def get_expression_attribute_values(self):
-        """
-        Returns
-        -------
-        dict
-        """
         return self.__expression_attribute_values
 
     def update(self):
         """
-        Update the table
+        Update the table.
 
         Raises
         ------
@@ -370,7 +348,7 @@ class Updater:
 
 class Column:
     """
-    A helper class for dynamodb columns that handles comparison operations
+    A helper class for dynamodb columns that handles comparison operations.
 
     Args
     ----
@@ -416,7 +394,7 @@ class Column:
 
 class Scanner:
     """
-    Scans a dynamodb table
+    Scans a dynamodb table.
 
     Args
     ----
@@ -430,7 +408,7 @@ class Scanner:
 
     def query(self, expression):
         """
-        Sets the query to scan with
+        Set the query to scan with.
 
         Args
         ----
@@ -445,7 +423,7 @@ class Scanner:
 
     def scan(self, connection=None, **kwargs):
         """
-        Scan the table
+        Scan the table.
 
         Args
         ----
@@ -478,7 +456,7 @@ class Scanner:
 
 class Query:
     """
-    Handles queries against a dynamodb table
+    Handle queries against a dynamodb table.
 
     Args
     ----
@@ -535,7 +513,7 @@ class Query:
 
     def scan(self, **kwargs):
         """
-        Run the query
+        Run the query.
 
         Args
         ----
@@ -571,7 +549,7 @@ class Query:
     @classmethod
     def check_query(cls, query):
         """
-        Validates whether a query is valid
+        Validate whether a query is valid.
 
         Args
         ----
@@ -672,8 +650,7 @@ class Query:
     @classmethod
     def build_expression(cls, blocks, expressions=None):
         """
-        Build the expression to be passed to DynamoDB.Table.scan given a set
-        of blocks
+        Build expression to pass to DynamoDB.Table.scan given a set of blocks.
 
         Args
         ----
@@ -737,7 +714,7 @@ class Query:
     @classmethod
     def get_expression_from_string(cls, string):
         """
-        Parse a subexpression
+        Parse a subexpression.
 
         Args
         ----
