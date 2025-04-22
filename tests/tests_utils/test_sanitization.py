@@ -19,7 +19,6 @@ class TestSanitizeQuillHTML:
 
     def test_allowed_tags(self):
         """Test all allowed tags are preserved."""
-
         # Define table-related tags that need special handling
         table_tags = {"table", "tbody", "tr", "td"}
 
