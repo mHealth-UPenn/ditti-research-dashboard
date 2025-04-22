@@ -44,11 +44,8 @@ class ParticipantApiModel(BaseModel):
     model_config = common_config
 
     @model_validator(mode="before")
-    def extract_api_name(cls, obj):
-        """
-        Transforms a JoinStudySubjectApi ORM instance into a dict
-        with the required fields for ParticipantApiModel.
-        """
+    def extract_api_name(self, obj):
+        """Transform ORM instance into dict with ParticipantApiModel fields."""
         if isinstance(obj, JoinStudySubjectApi):
             return {
                 "scope": obj.scope,
@@ -70,7 +67,7 @@ class ParticipantStudyModel(BaseModel):
     model_config = common_config
 
     @model_validator(mode="before")
-    def extract_study_fields(cls, obj):
+    def extract_study_fields(self, obj):
         if isinstance(obj, JoinStudySubjectStudy):
             return {
                 "study_name": obj.study.name,
@@ -87,8 +84,8 @@ class ParticipantStudyModel(BaseModel):
         return obj
 
     @field_serializer("created_on", "expires_on", mode="plain")
-    def serialize_datetimes(value: datetime | None) -> str | None:
-        return value.isoformat() if value else None
+    def serialize_datetimes(self: datetime | None) -> str | None:
+        return self.isoformat() if self else None
 
 
 class ParticipantModel(BaseModel):
