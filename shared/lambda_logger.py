@@ -57,7 +57,7 @@ class JsonFormatter(logging.Formatter):
         for k, v in record.__dict__.items():
             if k in self.exclude:
                 continue
-            if isinstance(v, datetime) or isinstance(v, date):
+            if isinstance(v, (datetime, date)):
                 log_entry[k] = v.isoformat()
             else:
                 log_entry[k] = v
