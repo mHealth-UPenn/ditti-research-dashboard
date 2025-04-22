@@ -52,6 +52,7 @@ ignore = [
   # Team‑specific allowances
   "G004", # f‑strings in logging are acceptable (571 projects ignore)
   "D1",   # Not everything needs a docstring (63 projects ignore)
+  "S104", # Binding to 0.0.0.0 is acceptable
   "S603", # subprocess.run is acceptable
   "S607", # starting of a process with a partial executable path is acceptable
 
