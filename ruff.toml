@@ -55,6 +55,9 @@ ignore = [
   "S104", # Binding to 0.0.0.0 is acceptable
   "S603", # subprocess.run is acceptable
   "S607", # starting of a process with a partial executable path is acceptable
+  "D105",
+  "D107",
+  "N818",
 
   # Postponed
   "ANN",    # missing type annotations (430 projects ignore)
@@ -71,6 +74,21 @@ dummy-variable-rgx = "^(_+|(_+[A-Za-z0-9_]*[A-Za-z0-9]+?))$"
 convention = "numpy"
 
 [lint.per-file-ignores]
+"migrations/**/*.py" = ["D", "N"]
+"backend/models.py" = ["N805"]
 "backend/auth/providers/cognito/constants.py" = ["E501"]
-"**/__init__.py" = ["F401"]
-"tests/**/*.py" = ["S101", "E501", "E402", "F811", "ARG001", "ARG002"]
+"**/__init__.py" = ["F401", "D104"]
+"tests/**/*.py" = [
+  "S101",
+  "E501",
+  "E402",
+  "F811",
+  "ARG001",
+  "ARG002",
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D104",
+  "N803",
+]
