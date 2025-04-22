@@ -242,7 +242,7 @@ def get_users(account):
     # gets only useful user data
     def map_users(user):
         # if information is empty, use an empty string instead of None
-        information = user["information"] if "information" in user else ""
+        information = user.get("information", "")
 
         return {
             "tapPermission": user["tap_permission"],
