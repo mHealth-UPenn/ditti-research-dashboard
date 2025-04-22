@@ -91,7 +91,7 @@ class JsonFileHandler(logging.Handler):
 class LambdaLogger(logging.Logger):
     def __init__(self, job_timestamp: str, /, *, level=logging.INFO):
         self.job_timestamp = job_timestamp
-        self.log_filename = f"/tmp/log_{self.job_timestamp}.json"
+        self.log_filename = f"/tmp/log_{self.job_timestamp}.json"  # noqa: S108
 
         # Set up logger
         self.__logger = logging.getLogger(__name__)
