@@ -18,6 +18,12 @@ import os
 
 
 class Default:
+    """
+    Default configuration for development environment.
+
+    Contains base configuration settings used across all environments.
+    """
+
     ENV = "development"
     DEBUG = True
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "secret")
@@ -87,6 +93,13 @@ class Default:
 
 
 class Staging(Default):
+    """
+    Staging environment configuration.
+
+    Configuration for the staging environment with production-like settings
+    but separate from the actual production environment.
+    """
+
     ENV = "production"
     DEBUG = False
 
@@ -101,6 +114,12 @@ class Staging(Default):
 
 
 class Production(Default):
+    """
+    Production environment configuration.
+
+    Configuration for the live production environment with secure settings.
+    """
+
     ENV = "production"
     DEBUG = False
 
@@ -148,6 +167,12 @@ class Production(Default):
 
 
 class Testing(Default):
+    """
+    Testing environment configuration.
+
+    Configuration specifically designed for running automated tests.
+    """
+
     ENV = "testing"
     TESTING = True
 

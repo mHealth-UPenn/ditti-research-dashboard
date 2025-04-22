@@ -5,7 +5,7 @@ from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from install.resource_managers.aws_secretsmanager_resource_manager import (
-    AwsSecretsmanagerResourceManager,
+    AwsSecretsManagerResourceManager,
     DevSecretValue,
 )
 from install.utils.exceptions import ResourceManagerError
@@ -28,7 +28,7 @@ def aws_secretsmanager_resource_manager_mock():
 
 
 def test_dev(
-    aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
+    aws_secretsmanager_resource_manager_mock: AwsSecretsManagerResourceManager,
 ):
     aws_secretsmanager_resource_manager_mock.set_dev_secret_value = MagicMock()
     aws_secretsmanager_resource_manager_mock.dev()
@@ -36,7 +36,7 @@ def test_dev(
 
 
 def test_dev_unexpected_error(
-    aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
+    aws_secretsmanager_resource_manager_mock: AwsSecretsManagerResourceManager,
 ):
     aws_secretsmanager_resource_manager_mock.set_dev_secret_value = MagicMock(
         side_effect=Exception("Unexpected error")
@@ -46,7 +46,7 @@ def test_dev_unexpected_error(
 
 
 def test_on_end(
-    aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
+    aws_secretsmanager_resource_manager_mock: AwsSecretsManagerResourceManager,
 ):
     aws_secretsmanager_resource_manager_mock.write_secret = MagicMock()
     aws_secretsmanager_resource_manager_mock.on_end()
@@ -54,7 +54,7 @@ def test_on_end(
 
 
 def test_on_end_unexpected_error(
-    aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
+    aws_secretsmanager_resource_manager_mock: AwsSecretsManagerResourceManager,
 ):
     aws_secretsmanager_resource_manager_mock.write_secret = MagicMock(
         side_effect=Exception("Unexpected error")
@@ -64,7 +64,7 @@ def test_on_end_unexpected_error(
 
 
 def test_on_end_resource_manager_error(
-    aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
+    aws_secretsmanager_resource_manager_mock: AwsSecretsManagerResourceManager,
 ):
     aws_secretsmanager_resource_manager_mock.write_secret = MagicMock(
         side_effect=ResourceManagerError("Resource manager error")
@@ -74,7 +74,7 @@ def test_on_end_resource_manager_error(
 
 
 def test_write_secret(
-    aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
+    aws_secretsmanager_resource_manager_mock: AwsSecretsManagerResourceManager,
     dev_secret_value_mock: DevSecretValue,
 ):
     aws_secretsmanager_resource_manager_mock.secret_value = dev_secret_value_mock
@@ -83,7 +83,7 @@ def test_write_secret(
 
 
 def test_write_secret_unexpected_error(
-    aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
+    aws_secretsmanager_resource_manager_mock: AwsSecretsManagerResourceManager,
 ):
     aws_secretsmanager_resource_manager_mock.client.put_secret_value = MagicMock(
         side_effect=Exception("Unexpected error")
@@ -93,7 +93,7 @@ def test_write_secret_unexpected_error(
 
 
 def test_write_secret_client_error(
-    aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
+    aws_secretsmanager_resource_manager_mock: AwsSecretsManagerResourceManager,
 ):
     aws_secretsmanager_resource_manager_mock.client.put_secret_value = MagicMock(
         side_effect=ClientError(

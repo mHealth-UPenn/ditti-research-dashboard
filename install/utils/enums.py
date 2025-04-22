@@ -18,6 +18,13 @@ from enum import Enum
 
 
 class Postgres(Enum):
+    """
+    Enumeration of PostgreSQL configuration values.
+
+    Contains standard configuration values for PostgreSQL database
+    connection and authentication.
+    """
+
     USER = "username"
     PASSWORD = "password"  # noqa: S105
     PORT = 5432
@@ -25,6 +32,13 @@ class Postgres(Enum):
 
 
 class FString(Enum):
+    """
+    Enumeration of format strings for resource naming.
+
+    Contains format string templates for naming various resources
+    in the installation process.
+    """
+
     participant_user_pool_name = "{project_name}-participant-pool"
     participant_user_pool_domain = "{project_name}-participant"
     researcher_user_pool_name = "{project_name}-researcher-pool"

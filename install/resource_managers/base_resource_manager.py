@@ -18,6 +18,13 @@ from install.utils.types import Env
 
 
 class BaseResourceManager:
+    """
+    Base class for resource managers in the installation system.
+
+    Provides common functionality and interface for managing different
+    types of resources during installation and uninstallation.
+    """
+
     def run(self, env: Env = "dev") -> None:
         """Run the provider."""
         self.on_start()

@@ -29,6 +29,13 @@ from install.utils.exceptions import ResourceManagerError, UninstallError
 
 
 class AwsCloudformationResourceManager(BaseResourceManager):
+    """
+    Resource manager for AWS CloudFormation operations.
+
+    Manages CloudFormation stack deployment, updates, and deletions
+    for the application infrastructure.
+    """
+
     dev_template: str = "cloudformation/dev-environment.yml"
     prod_template: str = "cloudformation/prod-environment.yml"
 
@@ -61,6 +68,14 @@ class AwsCloudformationResourceManager(BaseResourceManager):
             raise ResourceManagerError(e) from e
 
     def get_dev_parameters(self) -> list[CloudFormationParameter]:
+        """
+        Get parameters for the development CloudFormation template.
+
+        Returns
+        -------
+        list[CloudFormationParameter]
+            List of parameter key-value pairs for the CloudFormation template.
+        """
         return [
             {
                 "ParameterKey": "ParticipantUserPoolName",
@@ -97,6 +112,14 @@ class AwsCloudformationResourceManager(BaseResourceManager):
         ]
 
     def get_dev_template_body(self) -> str:
+        """
+        Get the development CloudFormation template body.
+
+        Returns
+        -------
+        str
+            The CloudFormation template as a string.
+        """
         with open(self.dev_template) as f:
             return f.read()
 

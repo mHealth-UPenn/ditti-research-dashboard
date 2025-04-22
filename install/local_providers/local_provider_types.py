@@ -18,6 +18,12 @@ from typing import TypedDict
 
 
 class RootEnv(TypedDict):
+    """
+    Type definition for root environment variables.
+
+    Contains environment variables required for the main application.
+    """
+
     FLASK_CONFIG: str
     FLASK_DEBUG: str
     FLASK_DB: str
@@ -43,6 +49,13 @@ class RootEnv(TypedDict):
 
 
 class WearableDataRetrievalEnv(TypedDict):
+    """
+    Type definition for wearable data retrieval environment variables.
+
+    Contains environment variables required for the wearable data
+    retrieval Lambda function.
+    """
+
     DB_URI: str
     S3_BUCKET: str
     AWS_CONFIG_SECRET_NAME: str
