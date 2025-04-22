@@ -47,7 +47,7 @@ class ProjectConfigProvider:
         self.project_config = None
         self.user_input = None
         self.hashstr = "".join(
-            random.choices(string.ascii_letters + string.digits, k=8)
+            random.choices(string.ascii_letters + string.digits, k=8)  # noqa: S311
         ).lower()
 
     def load_existing_config(self) -> None:

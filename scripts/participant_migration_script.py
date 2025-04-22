@@ -1,6 +1,6 @@
 import os
-import random
 import re
+import secrets
 import string
 from datetime import datetime
 from typing import TypedDict
@@ -28,7 +28,7 @@ class User(TypedDict):
 
 def generate_temp_password(length=20):
     characters = string.ascii_letters + string.digits
-    return "".join(random.choice(characters) for i in range(length))
+    return "".join(secrets.choice(characters) for i in range(length))
 
 
 if __name__ == "__main__":
