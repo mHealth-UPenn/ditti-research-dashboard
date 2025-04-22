@@ -245,4 +245,4 @@ class TestSanitizeQuillHTML:
         # Malformed HTML
         malformed = "<p>Unclosed paragraph <strong>Bold text</p>"
         result = sanitize_quill_html(malformed)
-        assert "<p>Unclosed paragraph <strong>Bold text</strong></p>" == result
+        assert result == "<p>Unclosed paragraph <strong>Bold text</strong></p>"
