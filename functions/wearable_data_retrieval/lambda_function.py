@@ -127,10 +127,9 @@ class DBService:
         - The connection is properly closed and cleaned up after use.
         """
         try:
-            with self.db.engine.connect() as connection:
-                with connection.begin():
-                    self.connection = connection
-                    yield connection
+            with self.db.engine.connect() as connection, connection.begin():
+                self.connection = connection
+                yield connection
         finally:
             self.connection = None
 

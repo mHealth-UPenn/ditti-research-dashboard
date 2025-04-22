@@ -250,22 +250,23 @@ def test_get_access_authorized(client):
     mock_account.validate_ask.return_value = True
 
     # Create a mock for the get_access function that bypasses the decorator
-    with patch(
-        "backend.views.auth.researcher.auth.get_access",
-        wraps=lambda account: jsonify({"msg": "Authorized"}),
-    ):
-        # Execute the request with the account directly
-        with client.application.test_request_context(
+    with (
+        patch(
+            "backend.views.auth.researcher.auth.get_access",
+            wraps=lambda _: jsonify({"msg": "Authorized"}),
+        ),
+        client.application.test_request_context(
             "/auth/researcher/get-access?app=1&study=1&action=Create&resource=User"
-        ):
-            from backend.views.auth.researcher.auth import get_access
+        ),
+    ):
+        from backend.views.auth.researcher.auth import get_access
 
-            response = get_access(mock_account)
+        response = get_access(mock_account)
 
-            # Verify
-            assert response.status_code == 200
-            data = json.loads(response.data)
-            assert data["msg"] == "Authorized"
+        # Verify
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["msg"] == "Authorized"
 
 
 def test_get_access_unauthorized(client):
@@ -276,19 +277,20 @@ def test_get_access_unauthorized(client):
     mock_account.validate_ask.side_effect = ValueError("Unauthorized")
 
     # Create a mock for the get_access function that bypasses the decorator
-    with patch(
-        "backend.views.auth.researcher.auth.get_access",
-        wraps=lambda account: jsonify({"msg": "Unauthorized"}),
-    ):
-        # Execute the request with the account directly
-        with client.application.test_request_context(
+    with (
+        patch(
+            "backend.views.auth.researcher.auth.get_access",
+            wraps=lambda _: jsonify({"msg": "Unauthorized"}),
+        ),
+        client.application.test_request_context(
             "/auth/researcher/get-access?app=1&study=1&action=Create&resource=User"
-        ):
-            from backend.views.auth.researcher.auth import get_access
+        ),
+    ):
+        from backend.views.auth.researcher.auth import get_access
 
-            response = get_access(mock_account)
+        response = get_access(mock_account)
 
-            # Verify
-            assert response.status_code == 200
-            data = json.loads(response.data)
-            assert data["msg"] == "Unauthorized"
+        # Verify
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["msg"] == "Unauthorized"

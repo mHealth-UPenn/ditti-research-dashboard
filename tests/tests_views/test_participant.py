@@ -20,7 +20,8 @@ from tests.testing_utils import (
 @pytest.fixture
 def ditti_id():
     """
-    Fixture to provide a consistent ditti_id for participant identification across tests.
+    Provide a consistent ditti_id for participant identification across tests.
+
     Must match the ID used in mock_participant_auth_required for proper test integration.
     """
     return "test-ditti-123"
@@ -29,7 +30,8 @@ def ditti_id():
 @pytest.fixture
 def view_func():
     """
-    Fixture providing a minimal mock view function that returns a success status.
+    Provide a minimal mock view function that returns a success status.
+
     Useful for testing the Flask routing and middleware without actual view logic.
     """
 
@@ -51,9 +53,7 @@ def mock_participant_not_found(mock_model_not_found):
 
 @pytest.fixture
 def study_subject():
-    """
-    Fixture to create a StudySubject model instance for testing.
-    """
+    """Create a StudySubject model instance for testing."""
     with db.session.no_autoflush:
         subject = StudySubject(ditti_id="test-ditti-123", is_archived=False)
         db.session.add(subject)
@@ -63,9 +63,7 @@ def study_subject():
 
 @pytest.fixture
 def api_entry():
-    """
-    Fixture to create an API model instance for testing.
-    """
+    """Create an API model instance for testing."""
     with db.session.no_autoflush:
         api = Api(name="TestAPI", is_archived=False)
         db.session.add(api)
@@ -75,9 +73,7 @@ def api_entry():
 
 @pytest.fixture
 def join_api(study_subject, api_entry):
-    """
-    Fixture to create a JoinStudySubjectApi relation for testing API access.
-    """
+    """Create a JoinStudySubjectApi relation for testing API access."""
     with db.session.no_autoflush:
         join_entry = JoinStudySubjectApi(
             study_subject_id=study_subject.id,
@@ -93,8 +89,7 @@ def join_api(study_subject, api_entry):
 @pytest.fixture
 def auth_headers(client):
     """
-    Fixture providing standardized authentication headers using the enhanced
-    mock_researcher_auth_for_testing utility.
+    Provide authentication headers with mock_researcher_auth_for_testing.
 
     This provides more consistent authentication behavior across tests.
     """
@@ -103,9 +98,7 @@ def auth_headers(client):
 
 @pytest.fixture
 def study_id():
-    """
-    Fixture to provide a study ID for testing consent-related endpoints.
-    """
+    """Provide a study ID for testing consent-related endpoints."""
     return 1
 
 
@@ -483,9 +476,8 @@ def test_update_consent_direct(app, study_subject, study_id, join_study):
 
     view_func = get_unwrapped_view(participant, "update_consent")
 
-    with app.app_context():
-        with app.test_request_context(json={"didConsent": True}):
-            response = view_func(study_id, study_subject.ditti_id)
+    with app.app_context(), app.test_request_context(json={"didConsent": True}):
+        response = view_func(study_id, study_subject.ditti_id)
         assert response.status_code == 200
 
         # Verify database update - keep inside app context
@@ -506,11 +498,10 @@ def test_update_consent_missing_field(app, ditti_id, study_id):
 
     view_func = get_unwrapped_view(participant, "update_consent")
 
-    with app.app_context():
-        with app.test_request_context(json={}):
-            response = view_func(study_id, ditti_id)
-            assert response.status_code == 400
-            assert "didConsent" in response.get_json()["msg"]
+    with app.app_context(), app.test_request_context(json={}):
+        response = view_func(study_id, ditti_id)
+        assert response.status_code == 400
+        assert "didConsent" in response.get_json()["msg"]
 
 
 def test_update_consent_invalid_type(app, ditti_id, study_id):
@@ -524,12 +515,10 @@ def test_update_consent_invalid_type(app, ditti_id, study_id):
 
     view_func = get_unwrapped_view(participant, "update_consent")
 
-    with app.app_context():
-        # String instead of boolean
-        with app.test_request_context(json={"didConsent": "yes"}):
-            response = view_func(study_id, ditti_id)
-            assert response.status_code == 400
-            assert "boolean" in response.get_json()["msg"].lower()
+    with app.app_context(), app.test_request_context(json={"didConsent": "yes"}):
+        response = view_func(study_id, ditti_id)
+        assert response.status_code == 400
+        assert "boolean" in response.get_json()["msg"].lower()
 
 
 def test_update_consent_user_not_found(app, study_id):
@@ -543,11 +532,10 @@ def test_update_consent_user_not_found(app, study_id):
 
     view_func = get_unwrapped_view(participant, "update_consent")
 
-    with app.app_context():
-        with app.test_request_context(json={"didConsent": True}):
-            response = view_func(study_id, "non-existent-ditti")
-            assert response.status_code == 404
-            assert "not found" in response.get_json()["msg"].lower()
+    with app.app_context(), app.test_request_context(json={"didConsent": True}):
+        response = view_func(study_id, "non-existent-ditti")
+        assert response.status_code == 404
+        assert "not found" in response.get_json()["msg"].lower()
 
 
 def test_update_consent_study_not_found(app, study_subject, study_id):
@@ -564,11 +552,10 @@ def test_update_consent_study_not_found(app, study_subject, study_id):
     # Using a different study_id than the one in the join_study fixture
     non_existent_study_id = study_id + 100
 
-    with app.app_context():
-        with app.test_request_context(json={"didConsent": True}):
-            response = view_func(non_existent_study_id, study_subject.ditti_id)
-            assert response.status_code == 404
-            assert "enrollment not found" in response.get_json()["msg"].lower()
+    with app.app_context(), app.test_request_context(json={"didConsent": True}):
+        response = view_func(non_existent_study_id, study_subject.ditti_id)
+        assert response.status_code == 404
+        assert "enrollment not found" in response.get_json()["msg"].lower()
 
 
 @patch("backend.extensions.db.session.commit")
@@ -587,11 +574,10 @@ def test_update_consent_database_error(
     # Simulate database error
     mock_commit.side_effect = Exception("Database error")
 
-    with app.app_context():
-        with app.test_request_context(json={"didConsent": True}):
-            response = view_func(study_id, study_subject.ditti_id)
-            assert response.status_code == 500
-            assert "error" in response.get_json()["msg"].lower()
+    with app.app_context(), app.test_request_context(json={"didConsent": True}):
+        response = view_func(study_id, study_subject.ditti_id)
+        assert response.status_code == 500
+        assert "error" in response.get_json()["msg"].lower()
 
 
 def test_flask_app_routes(app):
