@@ -8,13 +8,13 @@ from tests.testing_utils import mock_researcher_auth_for_testing
 
 @pytest.fixture
 def researcher_headers(client):
-    """Fixture providing researcher authentication headers"""
+    """Fixture providing researcher authentication headers."""
     return mock_researcher_auth_for_testing(client, is_admin=False)
 
 
 @pytest.fixture
 def researcher_get(client, researcher_headers):
-    """Create a test GET request function with researcher authentication"""
+    """Create a test GET request function with researcher authentication."""
 
     def _get(url, query_string=None, **kwargs):
         return client.get(
@@ -96,7 +96,7 @@ def test_study_contacts_invalid_study(researcher_get):
 
 
 def test_get_about_sleep_templates(researcher_get):
-    """Test the endpoint to get about sleep templates with app parameter"""
+    """Test the endpoint to get about sleep templates with app parameter."""
     with patch("backend.models.AboutSleepTemplate.query") as mock_query:
         # Mock the query to return a template
         mock_template = MagicMock()

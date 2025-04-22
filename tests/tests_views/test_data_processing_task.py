@@ -9,13 +9,13 @@ from tests.testing_utils import mock_researcher_auth_for_testing
 
 @pytest.fixture
 def researcher_headers(client):
-    """Fixture providing researcher authentication headers"""
+    """Fixture providing researcher authentication headers."""
     return mock_researcher_auth_for_testing(client, is_admin=False)
 
 
 @pytest.fixture
 def researcher_get(client, researcher_headers):
-    """Create a test GET request function with researcher authentication"""
+    """Create a test GET request function with researcher authentication."""
 
     def _get(url, query_string=None, **kwargs):
         return client.get(
@@ -27,7 +27,7 @@ def researcher_get(client, researcher_headers):
 
 @pytest.fixture
 def researcher_post(client, researcher_headers):
-    """Create a test POST request function with researcher authentication"""
+    """Create a test POST request function with researcher authentication."""
 
     def _post(url, data=None, json=None, **kwargs):
         return client.post(
@@ -51,9 +51,7 @@ def researcher_post(client, researcher_headers):
 def test_get_data_processing_tasks_success(
     mock_lambda_task_model, client, researcher_get
 ):
-    """
-    Test successful retrieval of data processing tasks.
-    """
+    """Test successful retrieval of data processing tasks."""
     mock_desc = MagicMock()
     mock_lambda_task_model.created_on.desc.return_value = mock_desc
 
@@ -98,9 +96,7 @@ def test_get_data_processing_tasks_success(
 def test_get_data_processing_tasks_internal_error(
     mock_lambda_task_model, client, researcher_get
 ):
-    """
-    Test internal server error during retrieval of data processing tasks.
-    """
+    """Test internal server error during retrieval of data processing tasks."""
     mock_desc = MagicMock()
     mock_lambda_task_model.created_on.desc.return_value = mock_desc
     mock_lambda_task_model.query.order_by.return_value.all.side_effect = (
@@ -122,9 +118,7 @@ def test_get_data_processing_tasks_internal_error(
 def test_get_data_processing_tasks_empty_list(
     mock_lambda_task_model, client, researcher_get
 ):
-    """
-    Test retrieval when no data processing tasks exist.
-    """
+    """Test retrieval when no data processing tasks exist."""
     mock_desc = MagicMock()
     mock_lambda_task_model.created_on.desc.return_value = mock_desc
     mock_lambda_task_model.query.order_by.return_value.all.return_value = []
@@ -146,9 +140,7 @@ def test_get_data_processing_tasks_empty_list(
 def test_invoke_data_processing_task_success(
     mock_create_and_invoke, client, researcher_post
 ):
-    """
-    Test successful invocation of a new data processing task.
-    """
+    """Test successful invocation of a new data processing task."""
     mock_task = MagicMock()
     mock_task.meta = {
         "id": 3,
@@ -177,9 +169,7 @@ def test_invoke_data_processing_task_success(
 def test_invoke_data_processing_task_failure(
     mock_create_and_invoke, client, researcher_post
 ):
-    """
-    Test invocation failure when create_and_invoke_lambda_task returns None.
-    """
+    """Test invocation failure when create_and_invoke_lambda_task returns None."""
     mock_create_and_invoke.return_value = None
 
     response = researcher_post("/data_processing_task/invoke", json={"app": "1"})
@@ -196,9 +186,7 @@ def test_invoke_data_processing_task_failure(
 def test_invoke_data_processing_task_exception(
     mock_create_and_invoke, client, researcher_post
 ):
-    """
-    Test invocation failure when create_and_invoke_lambda_task raises an exception.
-    """
+    """Test raising exception when create_and_invoke_lambda_task."""
     mock_create_and_invoke.side_effect = Exception("Invocation error")
 
     response = researcher_post("/data_processing_task/invoke", json={"app": "1"})
@@ -216,7 +204,9 @@ def test_invoke_data_processing_task_invalid_data(
     mock_create_and_invoke, client, researcher_post
 ):
     """
-    Since the POST /invoke route expects an 'app' field, this test ensures that sending unexpected data does not break the route.
+    Ensure that sending unexpected data does not break the route.
+
+    Because the POST /invoke route expects an 'app' field
     """
     mock_task = MagicMock()
     mock_task.meta = {
@@ -249,9 +239,7 @@ def test_invoke_data_processing_task_invalid_data(
 def test_force_stop_data_processing_task_success(
     mock_db, mock_lambda_task_model, client, researcher_post
 ):
-    """
-    Test successful force stopping of a data processing task.
-    """
+    """Test successful force stopping of a data processing task."""
     mock_task = MagicMock()
 
     mock_lambda_task_model.query.filter.return_value.first.return_value = (
@@ -275,9 +263,7 @@ def test_force_stop_data_processing_task_success(
 
 
 def test_force_stop_data_processing_task_no_function_id(client, researcher_post):
-    """
-    Test force stopping of a data processing task with no function_id.
-    """
+    """Test force stopping of a data processing task with no function_id."""
     response = researcher_post("/data_processing_task/force-stop", json={})
     assert response.status_code == 400
     assert response.is_json
@@ -288,9 +274,7 @@ def test_force_stop_data_processing_task_no_function_id(client, researcher_post)
 def test_force_stop_data_processing_task_nonexistent_function_id(
     mock_lambda_task_model, client, researcher_post
 ):
-    """
-    Test force stopping of a data processing task with a nonexistent function_id.
-    """
+    """Test force stopping data processing task with nonexistent function_id."""
     mock_lambda_task_model.query.filter.return_value.first.return_value = None
 
     response = researcher_post(
@@ -307,9 +291,7 @@ def test_force_stop_data_processing_task_nonexistent_function_id(
 def test_force_stop_data_processing_task_internal_error(
     mock_lambda_task_model, client, researcher_post
 ):
-    """
-    Test internal server error when force stopping a data processing task.
-    """
+    """Test internal server error when force stopping a data processing task."""
     mock_lambda_task_model.query.filter.return_value.first.side_effect = (
         Exception("Internal server error")
     )
