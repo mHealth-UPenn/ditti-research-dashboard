@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from logging.config import dictConfig
 import os
 
 from flask import Flask, Response, request
@@ -32,23 +31,6 @@ from backend.views import (
 )
 from backend.views.auth import participant_auth_blueprint, researcher_auth_blueprint
 from backend.views.api import fitbit
-
-
-dictConfig({
-    "version": 1,
-    "formatters": {"default": {
-        "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
-    }},
-    "handlers": {"wsgi": {
-        "class": "logging.StreamHandler",
-        "stream": "ext://flask.logging.wsgi_errors_stream",
-        "formatter": "default"
-    }},
-    "root": {
-        "level": "INFO",
-        "handlers": ["wsgi"]
-    }
-})
 
 
 def create_app(testing=False):
