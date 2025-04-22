@@ -144,7 +144,7 @@ def init_admin_account(email=None):
         If an entry for the admin account already exists or if an entry for the
         admin access group does not exist.
     """
-    email = email or os.getenv("FLASK_ADMIN_EMAIL")
+    email = email or "testing"
     admin = Account.query.filter(Account.email == email).first()
 
     if admin is not None:
