@@ -33,8 +33,10 @@ logger = logging.getLogger(__name__)
 
 def init_db():
     """
-    Create all database tables. This can only be run in a testing environment
-    or if the database is hosted locally.
+    Create all database tables.
+
+    This can only be run in a testing environment or
+    if the database is hosted locally.
 
     Raises
     ------
@@ -128,7 +130,7 @@ def init_admin_group():
 
 def init_admin_account(email=None):
     """
-    Initialize the admin account
+    Initialize the admin account.
 
     Args
     ----
@@ -189,9 +191,7 @@ def init_admin_account(email=None):
 
 
 def init_api(click=None):
-    """
-    Insert Fitbit API entry.
-    """
+    """Insert Fitbit API entry."""
     api_name = "Fitbit"
     existing_api = Api.query.filter_by(name=api_name).first()
 
@@ -830,9 +830,7 @@ class Account(db.Model):
 
     @validates("created_on")
     def validate_created_on(self, _key, val):
-        """
-        Make the created_on column read-only.
-        """
+        """Make the created_on column read-only."""
         if self.created_on:
             raise ValueError("Account.created_on cannot be modified.")
 
@@ -858,9 +856,7 @@ class Account(db.Model):
 
     @hybrid_property
     def full_name(self):
-        """
-        str: The full name of the account holder
-        """
+        """str: The full name of the account holder."""
         return f"{self.first_name} {self.last_name}"
 
     @full_name.expression
@@ -917,7 +913,7 @@ class Account(db.Model):
 
     def validate_ask(self, action, resource, permissions):
         """
-        Validate a request using a set of permissions
+        Validate a request using a set of permissions.
 
         Args
         ----
@@ -947,9 +943,7 @@ class Account(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {
             "id": self.id,
             "createdOn": self.created_on,
@@ -996,9 +990,7 @@ class JoinAccountAccessGroup(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.account_id, self.access_group_id
 
     @primary_key.expression
@@ -1047,9 +1039,7 @@ class JoinAccountStudy(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.account_id, self.study_id
 
     @primary_key.expression
@@ -1058,9 +1048,7 @@ class JoinAccountStudy(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {**self.study.meta, "role": self.role.meta}
 
     def __repr__(self):
@@ -1114,9 +1102,7 @@ class AccessGroup(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {
             "id": self.id,
             "name": self.name,
@@ -1159,9 +1145,7 @@ class JoinAccessGroupPermission(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key
-        """
+        """Tuple of int: an entry's primary key."""
         return self.access_group_id, self.permission_id
 
     @primary_key.expression
@@ -1170,9 +1154,7 @@ class JoinAccessGroupPermission(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return self.permission.meta
 
     def __repr__(self):
@@ -1204,9 +1186,7 @@ class Role(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {
             "id": self.id,
             "name": self.name,
@@ -1248,9 +1228,7 @@ class JoinRolePermission(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.role_id, self.permission_id
 
     @primary_key.expression
@@ -1259,9 +1237,7 @@ class JoinRolePermission(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return self.permission.meta
 
     def __repr__(self):
@@ -1284,9 +1260,7 @@ class Action(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "value": self.value}
 
     def __repr__(self):
@@ -1309,9 +1283,7 @@ class Resource(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "value": self.value}
 
     def __repr__(self):
@@ -1346,9 +1318,7 @@ class Permission(db.Model):
 
     @hybrid_property
     def action(self):
-        """
-        str: an entry's action
-        """
+        """str: an entry's action."""
         return self._action.value
 
     @action.setter
@@ -1370,9 +1340,7 @@ class Permission(db.Model):
 
     @hybrid_property
     def resource(self):
-        """
-        str: an entry's resource
-        """
+        """str: an entry's resource."""
         return self._resource.value
 
     @resource.setter
@@ -1394,9 +1362,7 @@ class Permission(db.Model):
 
     @validates("_action_id")
     def validate_action(self, _key, val):
-        """
-        Ensure an entry's action cannot be modified.
-        """
+        """Ensure an entry's action cannot be modified."""
         if self._action_id is not None:
             raise ValueError("permission.action cannot be modified.")
 
@@ -1404,9 +1370,7 @@ class Permission(db.Model):
 
     @validates("_resource_id")
     def validate_resource(self, _key, val):
-        """
-        Ensure an entry's resource cannot be modified.
-        """
+        """Ensure an entry's resource cannot be modified."""
         if self._resource_id is not None:
             raise ValueError("permission.resource cannot be modified.")
 
@@ -1414,9 +1378,7 @@ class Permission(db.Model):
 
     @hybrid_property
     def definition(self):
-        """
-        Tuple of str: an entry's (action, resource) definition
-        """
+        """Tuple of str: an entry's (action, resource) definition."""
         return self.action, self.resource
 
     @definition.expression
@@ -1432,9 +1394,7 @@ class Permission(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "action": self.action, "resource": self.resource}
 
     def __repr__(self):
@@ -1457,9 +1417,7 @@ class App(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "name": self.name}
 
     def __repr__(self):
@@ -1507,9 +1465,7 @@ class Study(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {
             "id": self.id,
             "name": self.name,
@@ -1554,9 +1510,7 @@ class JoinStudyRole(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.study_id, self.role_id
 
     @primary_key.expression
@@ -1565,9 +1519,7 @@ class JoinStudyRole(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return self.role.meta
 
     def __repr__(self):
@@ -1576,8 +1528,9 @@ class JoinStudyRole(db.Model):
 
 class BlockedToken(db.Model):
     """
-    The blocked_token table mapping class. This is used to log users out using
-    JWT tokens.
+    Log users out using JWT tokens.
+
+    The blocked_token table mapping class.
 
     Vars
     ----
@@ -1616,9 +1569,7 @@ class AboutSleepTemplate(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "name": self.name, "text": self.text}
 
     def __repr__(self):
@@ -1744,9 +1695,7 @@ class JoinStudySubjectStudy(db.Model):
 
     @validates("created_on")
     def validate_created_on(self, _key, val):
-        """
-        Make the created_on column read-only.
-        """
+        """Make the created_on column read-only."""
         if self.created_on:
             raise ValueError(
                 "JoinStudySubjectStudy.created_on cannot be modified."
@@ -1761,9 +1710,7 @@ class JoinStudySubjectStudy(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.study_subject_id, self.study_id
 
     @primary_key.expression
@@ -1772,9 +1719,7 @@ class JoinStudySubjectStudy(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {
             "didConsent": self.did_consent,
             "createdOn": self.created_on.isoformat(),
@@ -1791,8 +1736,10 @@ class JoinStudySubjectStudy(db.Model):
 @event.listens_for(JoinStudySubjectStudy, "before_insert")
 def set_expires_on(_mapper, connection, target):
     """
-    Automatically set the expires_on field based on the Study's
-    default_expiry_delta if expires_on is not provided.
+    Set the expires_on field.
+
+    Automatically set based on the Study's default_expiry_delta
+    if expires_on is not provided.
     """
     if not target.expires_on:
         if target.study_id:
@@ -1854,18 +1801,14 @@ class JoinStudySubjectApi(db.Model):
 
     @validates("created_on")
     def validate_created_on(self, _key, val):
-        """
-        Make the created_on column read-only.
-        """
+        """Make the created_on column read-only."""
         if self.created_on:
             raise ValueError("JoinStudySubjectApi.created_on cannot be modified.")
         return val
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.study_subject_id, self.api_id
 
     @primary_key.expression
@@ -1874,9 +1817,7 @@ class JoinStudySubjectApi(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: An entry's metadata.
-        """
+        """dict: An entry's metadata."""
         return {
             "apiUserUuid": self.api_user_uuid,
             "scope": self.scope,
@@ -1912,9 +1853,7 @@ class Api(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "name": self.name}
 
     def __repr__(self):
@@ -2008,9 +1947,7 @@ class SleepLog(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: An entry's metadata.
-        """
+        """dict: An entry's metadata."""
         return {
             "id": self.id,
             "studySubjectId": self.study_subject_id,
@@ -2085,9 +2022,7 @@ class SleepLevel(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: An entry's metadata.
-        """
+        """dict: An entry's metadata."""
         return {
             "dateTime": self.date_time.isoformat(),
             "level": self.level.value,
@@ -2140,9 +2075,7 @@ class SleepSummary(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: An entry's metadata.
-        """
+        """dict: An entry's metadata."""
         return {
             "level": self.level.value,
             "count": self.count,

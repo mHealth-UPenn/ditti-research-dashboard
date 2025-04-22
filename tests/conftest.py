@@ -42,7 +42,7 @@ blueprint = Blueprint("test", __name__, url_prefix="/test")
 
 
 # Infrastructure fixtures
-@pytest.fixture(scope="function")
+@pytest.fixture
 def with_mocked_tables():
     """
     Set up mocked DynamoDB tables for testing.
@@ -322,7 +322,7 @@ def mock_auth_oauth():
 @pytest.fixture
 def mock_model_not_found():
     """
-    Generic fixture to mock a model query that returns no results.
+    Mock a model query that returns no results.
 
     Example usage:
         def test_user_not_found(mock_model_not_found):

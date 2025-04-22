@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -15,9 +15,7 @@ from backend.utils.lambda_task import (
 
 @pytest.fixture
 def app():
-    """
-    Creates a Flask app instance for testing and pushes an application context.
-    """
+    """Create a Flask app instance and pushes an application context."""
     app = Flask(__name__)
     app.config["TESTING"] = True
     app.config["ENV"] = "testing"
@@ -76,7 +74,8 @@ def test_create_and_invoke_lambda_task_success(
         mock_boto3_client.return_value = mock_lambda_client
         mock_lambda_client.invoke.return_value = {"StatusCode": 202}
 
-        # Mock LambdaTask.query.get to return the mock_task_instance when invoked with id=123
+        # Mock LambdaTask.query.get to return the mock_task_instance
+        # when invoked with id=123
         mock_query.get.return_value = mock_task_instance
 
         result = create_and_invoke_lambda_task()
@@ -181,7 +180,8 @@ def test_check_and_invoke_lambda_task_not_run_today(
         mock_boto3_client.return_value = mock_lambda_client
         mock_lambda_client.invoke.return_value = {"StatusCode": 202}
 
-        # Mock LambdaTask.query.get to return the new_task when invoked with id=456
+        # Mock LambdaTask.query.get to return the new_task
+        # when invoked with id=456
         mock_query.get.return_value = new_task
 
         result = check_and_invoke_lambda_task()
@@ -239,7 +239,8 @@ def test_check_and_invoke_lambda_task_no_tasks(
         mock_boto3_client.return_value = mock_lambda_client
         mock_lambda_client.invoke.return_value = {"StatusCode": 202}
 
-        # Mock LambdaTask.query.get to return the new_task when invoked with id=789
+        # Mock LambdaTask.query.get to return the new_task
+        # when invoked with id=789
         mock_query.get.return_value = new_task
 
         result = check_and_invoke_lambda_task()
@@ -348,7 +349,8 @@ def test_invoke_lambda_task_missing_function_name(
     assert result == mock_task
     mock_query.get.assert_called_once_with(function_id)
 
-    # Since LAMBDA_FUNCTION_NAME is not configured, boto3 client should not be called
+    # Since LAMBDA_FUNCTION_NAME is not configured,
+    # boto3 client should not be called
     mock_boto3_client.assert_called_once_with("lambda")
     mock_boto3_client.return_value.invoke.assert_not_called()
 

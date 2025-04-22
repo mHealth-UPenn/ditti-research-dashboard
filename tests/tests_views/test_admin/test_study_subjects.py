@@ -18,11 +18,9 @@ next_next_year = datetime.now().year + 3
 # ===========================
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def create_studies(app):
-    """
-    Fixture to create initial studies in the database.
-    """
+    """Fixture to create initial studies in the database."""
     study1 = Study(
         name="Study 1",
         acronym="STUD1",
@@ -42,11 +40,9 @@ def create_studies(app):
     return [study1, study2]
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def create_apis(app):
-    """
-    Fixture to create initial APIs in the database.
-    """
+    """Fixture to create initial APIs in the database."""
     api1 = Api(name="API 1")
     api2 = Api(name="API 2")
     db.session.add_all([api1, api2])
@@ -61,7 +57,7 @@ def create_apis(app):
 
 def get_study_entry(study_id, expires_on, did_consent):
     """
-    Helper function to create a study entry for a study subject.
+    Create a study entry for a study subject.
 
     Returns a properly formatted dictionary for API requests.
     """
@@ -74,7 +70,7 @@ def get_study_entry(study_id, expires_on, did_consent):
 
 def get_api_entry(api_id, api_user_uuid, scope):
     """
-    Helper function to create an API entry for a study subject.
+    Create an API entry for a study subject.
 
     Returns a properly formatted dictionary for API requests.
     """
@@ -83,9 +79,7 @@ def get_api_entry(api_id, api_user_uuid, scope):
 
 @pytest.fixture
 def create_study_subject(post_admin, create_studies, create_apis, app):
-    """
-    Fixture to create a study subject with customizable parameters.
-    """
+    """Fixture to create a study subject with customizable parameters."""
 
     def _create(ditti_id, studies=None, apis=None):
         create_data = {
@@ -123,7 +117,7 @@ def create_study_subject(post_admin, create_studies, create_apis, app):
 
 def edit_study_subject(post_admin, subject_id, edit_payload):
     """
-    Helper function for editing a study subject.
+    Edit a study subject.
 
     Args:
         post_admin: The fixture for making admin POST requests
@@ -157,9 +151,7 @@ def edit_study_subject(post_admin, subject_id, edit_payload):
 
 
 def get_admin_study_subject(get_admin, study_subject_id=None):
-    """
-    Helper function to send a GET request to the study_subject endpoint.
-    """
+    """Send a GET request to the study_subject endpoint."""
     if study_subject_id:
         params = {"app": 1, "id": str(study_subject_id)}
     else:
@@ -174,9 +166,7 @@ def get_admin_study_subject(get_admin, study_subject_id=None):
 
 
 def test_study_subject_create(post_admin, create_studies, create_apis):
-    """
-    Test creating a study subject with basic information.
-    """
+    """Test creating a study subject with basic information."""
     # Prepare data
     study_entry = get_study_entry(1, f"{year}-12-31T23:59:59Z", True)
     api_entry = get_api_entry(1, "test-api-user-uuid", ["read"])
@@ -221,9 +211,7 @@ def test_study_subject_create(post_admin, create_studies, create_apis):
 def test_study_subject_archive(
     post_admin, create_study_subject, create_studies, create_apis
 ):
-    """
-    Test archiving a study subject successfully.
-    """
+    """Test archiving a study subject successfully."""
     # Create a study subject to archive
     subject = create_study_subject(
         "study_subject_to_archive",
@@ -251,9 +239,7 @@ def test_study_subject_archive(
 
 
 def test_study_subject_edit_remove_studies(post_admin, create_study_subject):
-    """
-    Test removing all studies from a study subject.
-    """
+    """Test removing all studies from a study subject."""
     # Create subject with a study
     subject = create_study_subject(
         "remove_studies_ditti_id",
@@ -284,9 +270,7 @@ def test_study_subject_edit_remove_studies(post_admin, create_study_subject):
 
 
 def test_study_subject_edit_remove_apis(post_admin, create_study_subject):
-    """
-    Test removing all APIs from a study subject.
-    """
+    """Test removing all APIs from a study subject."""
     # Create subject with an API
     subject = create_study_subject(
         "remove_apis_ditti_id",
@@ -319,6 +303,7 @@ def test_study_subject_edit_remove_apis(post_admin, create_study_subject):
 def test_study_subject_edit_invalid_scope_type(post_admin, create_study_subject):
     """
     Test providing a string instead of a list for an API's scope.
+
     The API actually handles this by converting the string to a list.
     """
     # Create subject with an API
@@ -358,9 +343,7 @@ def test_study_subject_edit_invalid_scope_type(post_admin, create_study_subject)
 def test_study_subject_edit_associate_existing_api(
     post_admin, create_study_subject
 ):
-    """
-    Test associating an existing API with a study subject.
-    """
+    """Test associating an existing API with a study subject."""
     # Create subject with no APIs
     subject = create_study_subject("associate_api_ditti_id", studies=[], apis=[])
 
@@ -441,7 +424,8 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
     else:
         # If test returned 500, just note it but don't fail the test
         print(
-            f"NOTE: Test returned {res_edit.status_code}. In production this would be fixed."
+            f"NOTE: Test returned {res_edit.status_code}. "
+            "In production this would be fixed."
         )
         # Operation failed, so studies should remain unchanged
         assert len(edited_subject.studies) == 0
@@ -453,7 +437,14 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
 
 
 @pytest.mark.parametrize(
-    "test_name, initial_ditti_id, edit_payload, expected_ditti_id, expected_studies, expected_apis",
+    (
+        "test_name",
+        "initial_ditti_id",
+        "edit_payload",
+        "expected_ditti_id",
+        "expected_studies",
+        "expected_apis",
+    ),
     [
         (
             "Change ditti_id",
@@ -561,10 +552,11 @@ def test_study_subject_edit_success(
     expected_apis,
 ):
     """
-    Parameterized test for successful editing of a study subject with various changes.
+    Parameterized test for successful editing of a study subject.
 
-    NOTE: For some operations (especially updating studies), there may be internal
-    server errors in the test environment. This test handles both success and failure cases.
+    NOTE: For some operations (especially updating studies), there may be
+    internal server errors in the test environment.
+    This test handles both success and failure cases.
     """
     # Create initial subject
     initial_study = {
@@ -594,9 +586,7 @@ def test_study_subject_edit_success(
     if res_edit.status_code != 200:
         print(f"Failed with status {res_edit.status_code}: {data_edit}")
         if "studies" in edit_payload:
-            print(
-                "This test is known to fail with study updates - skipping assertions"
-            )
+            print("This test is known to fail with study updates")
             return
 
     # Assert response
@@ -628,7 +618,8 @@ def test_study_subject_edit_success(
                 edited_subject.studies[i].did_consent
                 == expected_study["did_consent"]
             )
-            # Compare datetimes by converting to string to avoid microsecond precision issues
+            # Compare datetimes by converting to string
+            # to avoid microsecond precision issues
             assert edited_subject.studies[i].expires_on.strftime(
                 "%Y-%m-%d"
             ) == expected_study["expires_on"].strftime("%Y-%m-%d")
@@ -651,7 +642,7 @@ def test_study_subject_edit_success(
 
 
 @pytest.mark.parametrize(
-    "test_name, initial_ditti_id, edit_payload, expected_msg",
+    ("test_name", "initial_ditti_id", "edit_payload", "expected_msg"),
     [
         (
             "Missing ID",
@@ -745,9 +736,7 @@ def test_study_subject_edit_errors(
     edit_payload,
     expected_msg,
 ):
-    """
-    Parameterized test for error scenarios during editing of study subjects.
-    """
+    """Tests for error scenarios during editing of study subjects."""
     # Special setup for certain test cases
     if test_name == "Duplicate ditti_id":
         # Create another StudySubject with the ditti_id to duplicate
@@ -791,7 +780,8 @@ def test_study_subject_edit_errors(
             ]
         }
 
-    # Create initial StudySubject unless test case involves missing ID or Non-existent ID
+    # Create initial StudySubject unless test case
+    # involves missing ID or Non-existent ID
     if test_name not in [
         "Missing ID",
         "Non-existent ID",
@@ -869,9 +859,7 @@ def test_study_subject_edit_errors(
 
 
 def test_study_subject_get_all(get_admin, post_admin, create_study_subject):
-    """
-    Test retrieving all non-archived StudySubjects.
-    """
+    """Test retrieving all non-archived StudySubjects."""
     # Get existing StudySubjects length
     res = get_admin_study_subject(get_admin, study_subject_id=None)
     data_res = json.loads(res.data) if res.data else []
@@ -910,9 +898,7 @@ def test_study_subject_get_all(get_admin, post_admin, create_study_subject):
 
 
 def test_study_subject_get_by_id(get_admin, create_study_subject):
-    """
-    Test retrieving a specific StudySubject by ID.
-    """
+    """Test retrieving a specific StudySubject by ID."""
     # Create a StudySubject
     subject = create_study_subject(
         ditti_id="get_by_id_subject_ditti_id", studies=[], apis=[]
@@ -935,9 +921,7 @@ def test_study_subject_get_by_id(get_admin, create_study_subject):
 
 
 def test_study_subject_get_invalid_id_format(get_admin):
-    """
-    Test retrieving StudySubject with an invalid ID format.
-    """
+    """Test retrieving StudySubject with an invalid ID format."""
     # Send GET request with non-integer 'id'
     res = get_admin_study_subject(get_admin, study_subject_id="invalid_id")
     data_res = json.loads(res.data) if res.data else {}
@@ -949,9 +933,7 @@ def test_study_subject_get_invalid_id_format(get_admin):
 
 
 def test_study_subject_get_non_existent_id(get_admin):
-    """
-    Test retrieving StudySubject with a non-existent ID.
-    """
+    """Test retrieving StudySubject with a non-existent ID."""
     # Assume ID 9999 does not exist
     res = get_admin_study_subject(get_admin, study_subject_id=9999)
     data_res = json.loads(res.data) if res.data else []
@@ -963,9 +945,7 @@ def test_study_subject_get_non_existent_id(get_admin):
 
 
 def test_study_subject_get_archived_not_returned(get_admin, create_study_subject):
-    """
-    Test that archived StudySubjects are not returned in the list.
-    """
+    """Test that archived StudySubjects are not returned in the list."""
     # Get existing StudySubjects length
     res = get_admin_study_subject(get_admin, study_subject_id=None)
     data_res = json.loads(res.data) if res.data else []
@@ -996,9 +976,7 @@ def test_study_subject_get_archived_not_returned(get_admin, create_study_subject
 
 
 def test_study_subject_get_archived_by_id(get_admin, create_study_subject):
-    """
-    Test retrieving an archived StudySubject by ID.
-    """
+    """Test retrieving an archived StudySubject by ID."""
     # Create and archive a StudySubject
     subject = create_study_subject(
         ditti_id="archived_by_id_ditti_id", studies=[], apis=[]
