@@ -7,11 +7,9 @@ from moto import mock_aws
 from shared.tokens_manager import TokensManager
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def tokens_manager():
-    """
-    Pytest fixture to initialize TokensManager within a mocked AWS Secrets Manager context.
-    """
+    """Initialize TokensManager within a mocked AWS Secrets Manager context."""
     with mock_aws():
         # Instantiate TokensManager within the mocked context
         tm = TokensManager(fstr="{api_name}-tokens-testing")
@@ -19,9 +17,7 @@ def tokens_manager():
 
 
 def test_add_and_get_api_token(tokens_manager):
-    """
-    Test adding a new API token and retrieving it.
-    """
+    """Test adding a new API token and retrieving it."""
     api_name = "Fitbit"
     ditti_id = "123"
     tokens = {
@@ -40,9 +36,7 @@ def test_add_and_get_api_token(tokens_manager):
 
 
 def test_update_api_token(tokens_manager):
-    """
-    Test updating an existing API token for a study subject.
-    """
+    """Test updating an existing API token for a study subject."""
     api_name = "Fitbit"
     ditti_id = "456"
     initial_tokens = {
@@ -69,9 +63,7 @@ def test_update_api_token(tokens_manager):
 
 
 def test_get_nonexistent_api_token(tokens_manager):
-    """
-    Test retrieving tokens for a non-existent study subject.
-    """
+    """Test retrieving tokens for a non-existent study subject."""
     api_name = "Fitbit"
     ditti_id = "789"
 
@@ -85,9 +77,7 @@ def test_get_nonexistent_api_token(tokens_manager):
 
 
 def test_delete_api_token(tokens_manager):
-    """
-    Test deleting an existing API token for a study subject.
-    """
+    """Test deleting an existing API token for a study subject."""
     api_name = "Fitbit"
     ditti_id = "321"
     tokens = {
@@ -117,9 +107,7 @@ def test_delete_api_token(tokens_manager):
 
 
 def test_delete_nonexistent_api_token(tokens_manager):
-    """
-    Test deleting tokens for a non-existent study subject.
-    """
+    """Test deleting tokens for a non-existent study subject."""
     api_name = "Fitbit"
     ditti_id = "654"
 
@@ -133,9 +121,7 @@ def test_delete_nonexistent_api_token(tokens_manager):
 
 
 def test_add_api_token_creates_new_secret(tokens_manager):
-    """
-    Test that adding a token for a new API creates a new secret in Secrets Manager.
-    """
+    """A a token for a new API creates a new secret in Secrets Manager."""
     api_name = "Garmin"
     ditti_id = "111"
     tokens = {
@@ -159,9 +145,7 @@ def test_add_api_token_creates_new_secret(tokens_manager):
 
 
 def test_get_api_tokens_with_no_secret_string(tokens_manager):
-    """
-    Test retrieving tokens when the secret exists but contains no SecretString.
-    """
+    """Retrieving tokens when the secret exists but contains no SecretString."""
     api_name = "Fitbit"
     ditti_id = "999"
     secret_name = f"{api_name}-tokens-testing"
@@ -180,9 +164,7 @@ def test_get_api_tokens_with_no_secret_string(tokens_manager):
 
 
 def test_add_api_token_client_error(monkeypatch, tokens_manager):
-    """
-    Test handling of ClientError when adding/updating an API token.
-    """
+    """Test handling of ClientError when adding/updating an API token."""
     api_name = "Fitbit"
     ditti_id = "222"
     tokens = {
@@ -214,9 +196,7 @@ def test_add_api_token_client_error(monkeypatch, tokens_manager):
 
 
 def test_get_api_tokens_client_error(monkeypatch, tokens_manager):
-    """
-    Test handling of ClientError when retrieving an API token.
-    """
+    """Test handling of ClientError when retrieving an API token."""
     api_name = "Fitbit"
     ditti_id = "333"
 
@@ -243,9 +223,7 @@ def test_get_api_tokens_client_error(monkeypatch, tokens_manager):
 
 
 def test_delete_api_tokens_client_error(monkeypatch, tokens_manager):
-    """
-    Test handling of ClientError when deleting an API token.
-    """
+    """Test handling of ClientError when deleting an API token."""
     api_name = "Fitbit"
     ditti_id = "444"
 
@@ -268,7 +246,8 @@ def test_delete_api_tokens_client_error(monkeypatch, tokens_manager):
     }
     tokens_manager.add_or_update_api_token(api_name, ditti_id, tokens)
 
-    # Monkeypatch the put_secret_value method to raise ClientError during deletion
+    # Monkeypatch the put_secret_value method
+    # to raise ClientError during deletion
     monkeypatch.setattr(
         tokens_manager.client, "put_secret_value", mock_put_secret_value
     )
@@ -280,9 +259,7 @@ def test_delete_api_tokens_client_error(monkeypatch, tokens_manager):
 
 
 def test_add_multiple_tokens_for_different_study_subjects(tokens_manager):
-    """
-    Test adding tokens for multiple study subjects within the same API.
-    """
+    """Test adding tokens for multiple study subjects within the same API."""
     api_name = "Fitbit"
     study_subjects_tokens = {
         "101": {
@@ -313,9 +290,7 @@ def test_add_multiple_tokens_for_different_study_subjects(tokens_manager):
 
 
 def test_overwrite_tokens_with_partial_data(tokens_manager):
-    """
-    Test updating tokens with partial data (e.g., missing refresh_token).
-    """
+    """Test updating tokens with partial data (e.g., missing refresh_token)."""
     api_name = "Fitbit"
     ditti_id = "555"
     initial_tokens = {
@@ -347,9 +322,7 @@ def test_overwrite_tokens_with_partial_data(tokens_manager):
 
 
 def test_add_api_token_with_invalid_api_name(tokens_manager):
-    """
-    Test adding an API token with an invalid API name (e.g., empty string).
-    """
+    """Test adding an API token with an invalid API name."""
     api_name = ""
     ditti_id = "777"
     tokens = {
@@ -365,9 +338,7 @@ def test_add_api_token_with_invalid_api_name(tokens_manager):
 
 
 def test_get_api_tokens_with_invalid_api_name(tokens_manager):
-    """
-    Test retrieving tokens with an invalid API name (e.g., None).
-    """
+    """Test retrieving tokens with an invalid API name (e.g., None)."""
     api_name = None
     ditti_id = "888"
 

@@ -41,8 +41,8 @@ class SleepLevelModel(BaseModel):
     model_config = common_config
 
     @field_serializer("date_time", mode="plain")
-    def serialize_date_time(value: datetime) -> str:
-        return value.isoformat()
+    def serialize_date_time(self: datetime) -> str:
+        return self.isoformat()
 
 
 class SleepLogModel(BaseModel):
@@ -54,8 +54,8 @@ class SleepLogModel(BaseModel):
     model_config = common_config
 
     @field_serializer("date_of_sleep", mode="plain")
-    def serialize_date_of_sleep(value: date) -> str:
-        return value.isoformat()
+    def serialize_date_of_sleep(self: date) -> str:
+        return self.isoformat()
 
 
 def serialize_fitbit_data(sleep_logs: list[SleepLog]) -> list[dict[str, Any]]:

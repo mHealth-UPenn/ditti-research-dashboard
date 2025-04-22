@@ -8,13 +8,13 @@ from tests.testing_utils import mock_researcher_auth_for_testing
 
 @pytest.fixture
 def researcher_headers(client):
-    """Fixture providing researcher authentication headers"""
+    """Fixture providing researcher authentication headers."""
     return mock_researcher_auth_for_testing(client, is_admin=False)
 
 
 @pytest.fixture
 def researcher_post(client, researcher_headers):
-    """Create a test POST request function with researcher authentication"""
+    """Create a test POST request function with researcher authentication."""
 
     def _post(url, data=None, **kwargs):
         return client.post(
