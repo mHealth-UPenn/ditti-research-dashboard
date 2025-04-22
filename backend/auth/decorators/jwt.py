@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 def auth_required(action, _resource=None):
     """
-    Wraps a view that requires permissions for a given action and resource.
+    Wrap a view that requires permissions for a given action and resource.
 
     DEPRECATED: This decorator is maintained for backward compatibility.
     Consider using more specific decorators like participant_auth_required or

@@ -41,6 +41,17 @@ def get_random_level_classic(previous_level):
 
 
 def generate_sleep_logs():
+    """
+    Generate random sleep log data for testing.
+
+    Creates a set of synthetic sleep logs with realistic patterns
+    for testing data visualization and analysis features.
+
+    Returns
+    -------
+    list
+        List of dictionaries containing sleep log data
+    """
     sleep_logs = []
     levels_stages = ["deep", "light", "rem", "wake"]
     levels_classic = ["asleep", "awake", "restless"]

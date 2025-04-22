@@ -172,14 +172,20 @@ def test_get_participant_success(app, study_subject, join_api, api_entry):
     with (
         app.app_context(),
         patch(
-            "backend.utils.serialization.serialize_participant"
+            "backend.views.participant.serialize_participant"
         ) as mock_serialize,
     ):
         mock_serialize.return_value = expected_data
         response = view_func(ditti_id=study_subject.ditti_id)
 
+        assert response is not None
         assert response.status_code == 200
+
         response_data = response.get_json()
+        assert response_data is not None, (
+            f"Response has no JSON data. Response: {response}"
+        )
+
         assert response_data["dittiId"] == expected_data["dittiId"]
         assert "apis" in response_data
         assert len(response_data["apis"]) == 1

@@ -1269,6 +1269,16 @@ def role_archive():
 @blueprint.route("/app")
 @researcher_auth_required("View", "Admin Dashboard")
 def app():
+    """
+    Get all applications in the system.
+
+    Returns a list of all applications with their metadata.
+
+    Returns
+    -------
+    flask.Response
+        JSON response containing list of applications.
+    """
     apps = App.query.all()
     res = [a.meta for a in apps]
     return jsonify(res)
@@ -1278,6 +1288,16 @@ def app():
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Create", "Apps")
 def app_create():
+    """
+    Create a new application.
+
+    Creates a new App entry in the database with data from the request.
+
+    Returns
+    -------
+    flask.Response
+        JSON response with success message or error.
+    """
     data = request.json["create"]
     app = App()
 
@@ -1303,6 +1323,16 @@ def app_create():
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Edit", "Apps")
 def app_edit():
+    """
+    Edit an existing application.
+
+    Updates an App entry in the database with data from the request.
+
+    Returns
+    -------
+    flask.Response
+        JSON response with success message or error.
+    """
     data = request.json["edit"]
     app_id = request.json["id"]
     app = App.query.get(app_id)

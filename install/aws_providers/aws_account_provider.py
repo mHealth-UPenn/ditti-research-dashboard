@@ -25,16 +25,39 @@ from install.utils.exceptions import AwsProviderError, SubprocessError
 
 
 class AwsAccountProvider:
+    """
+    Provider for AWS account operations and credential management.
+
+    Responsible for retrieving AWS account information and credentials
+    required for AWS service interactions.
+    """
+
     def __init__(self, *, logger: Logger, aws_client_provider: AwsClientProvider):
         self.logger = logger
         self.client = aws_client_provider.sts_client
 
     @property
     def aws_region(self) -> str:
+        """
+        Get the AWS region for the current session.
+
+        Returns
+        -------
+        str
+            The AWS region name.
+        """
         return self.client.meta.region_name
 
     @property
     def aws_access_key_id(self) -> str:
+        """
+        Get the AWS access key ID for the current session.
+
+        Returns
+        -------
+        str
+            The AWS access key ID.
+        """
         try:
             return self.get_aws_access_key_id()
         except subprocess.CalledProcessError as e:
@@ -54,6 +77,14 @@ class AwsAccountProvider:
 
     @property
     def aws_secret_access_key(self) -> str:
+        """
+        Get the AWS secret access key for the current session.
+
+        Returns
+        -------
+        str
+            The AWS secret access key.
+        """
         try:
             return self.get_aws_secret_access_key()
         except subprocess.CalledProcessError as e:
@@ -73,6 +104,14 @@ class AwsAccountProvider:
 
     @property
     def aws_account_id(self) -> str:
+        """
+        Get the AWS account ID for the current session.
+
+        Returns
+        -------
+        str
+            The AWS account ID.
+        """
         try:
             return self.client.get_caller_identity()["Account"]
         except ClientError as e:
@@ -92,6 +131,14 @@ class AwsAccountProvider:
 
     @staticmethod
     def get_aws_access_key_id() -> str:
+        """
+        Get the AWS access key ID from the AWS CLI configuration.
+
+        Returns
+        -------
+        str
+            The AWS access key ID.
+        """
         return (
             subprocess.check_output(
                 ["aws", "configure", "get", "aws_access_key_id"]
@@ -102,6 +149,14 @@ class AwsAccountProvider:
 
     @staticmethod
     def get_aws_secret_access_key() -> str:
+        """
+        Get the AWS secret access key from the AWS CLI configuration.
+
+        Returns
+        -------
+        str
+            The AWS secret access key.
+        """
         return (
             subprocess.check_output(
                 ["aws", "configure", "get", "aws_secret_access_key"]
