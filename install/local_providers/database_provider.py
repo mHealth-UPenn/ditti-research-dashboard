@@ -40,14 +40,14 @@ class DatabaseProvider:
                 "Database upgrade failed due to subprocess error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "Database upgrade failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
 
     def initialize_database(self) -> None:
         try:
@@ -64,14 +64,14 @@ class DatabaseProvider:
                 "Integration testing database initialization failed due to "
                 f"subprocess error: {Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "Integration testing database initialization failed due to "
                 f"unexpected error: {Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
 
     def create_researcher_account(self) -> None:
         try:
@@ -93,11 +93,11 @@ class DatabaseProvider:
                 "Researcher account creation failed due to subprocess error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "Researcher account creation failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e

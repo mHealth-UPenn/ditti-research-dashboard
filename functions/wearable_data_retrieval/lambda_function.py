@@ -836,12 +836,12 @@ def handler(event, context):
                 tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
                 config.update(get_secret(config_secret_name))
                 tokens_config = get_secret(tokens_secret_name)
-            except Exception:
+            except Exception as err:
                 logger.error(
                     "Error retrieving secret",
                     extra={"error": traceback.format_exc()},
                 )
-                raise ConfigFetchError
+                raise ConfigFetchError from err
 
         # Database connection setup
         try:
@@ -849,12 +849,12 @@ def handler(event, context):
             lambda_task_service = LambdaTaskService(db)
             study_subject_service = StudySubjectService(db)
 
-        except Exception:
+        except Exception as err:
             logger.error(
                 "Error initializing database services",
                 extra={"error": traceback.format_exc()},
             )
-            raise DBInitializationError
+            raise DBInitializationError from err
 
         # Get and update the `lambda_task` database entry
         with lambda_task_service.connect() as connection:
@@ -862,23 +862,23 @@ def handler(event, context):
                 lambda_task_service.get_entry(function_id)
 
             # On error raise exception and exit
-            except Exception:
+            except Exception as err:
                 logger.error(
                     "Error fetching lambda function from database",
                     extra={"error": traceback.format_exc()},
                 )
-                raise DBFetchError
+                raise DBFetchError from err
 
             try:
                 lambda_task_service.update_status("InProgress")
 
             # On error raise exception and exit
-            except Exception:
+            except Exception as err:
                 logger.error(
                     "Error updating lambda function status from database",
                     extra={"error": traceback.format_exc()},
                 )
-                raise DBUpdateError
+                raise DBUpdateError from err
 
         # Get and update participant data
         with study_subject_service.connect() as connection:
@@ -887,12 +887,12 @@ def handler(event, context):
                 study_subject_service.get_entries()
 
             # On error raise exception and exit
-            except Exception:
+            except Exception as err:
                 logger.error(
                     "Error fetching participant API data from database",
                     extra={"error": traceback.format_exc()},
                 )
-                raise DBFetchError
+                raise DBFetchError from err
 
             # Iterate over each result to query the Fitbit API
             for entry in study_subject_service.iter_entries():
@@ -1009,7 +1009,7 @@ def handler(event, context):
                             study_subject_service.insert_data(data)
 
                         # On error continue to next study subject
-                        except Exception:
+                        except Exception as err:
                             logger.error(
                                 "Error inserting Fitbit data to database",
                                 extra={
@@ -1017,7 +1017,7 @@ def handler(event, context):
                                     "error": traceback.format_exc(),
                                 },
                             )
-                            raise NestedError
+                            raise NestedError from err
 
                         # Try updating `api.last_sync_date` to the
                         # latest `dateOfSleep` in `data`
@@ -1059,7 +1059,7 @@ def handler(event, context):
                             )
 
                         # On error continue to next study subject
-                        except Exception:
+                        except Exception as err:
                             logger.error(
                                 "Error updating `last_sync_date`",
                                 extra={
@@ -1068,7 +1068,7 @@ def handler(event, context):
                                     "error": traceback.format_exc(),
                                 },
                             )
-                            raise NestedError
+                            raise NestedError from err
 
                 # Continue to next study subject in case of handled error
                 except NestedError:
@@ -1080,7 +1080,7 @@ def handler(event, context):
                     continue
 
                 # Log error and exit in case of unhandled error
-                except Exception:
+                except Exception as err:
                     logger.error(
                         "Unhandled error when updating study subject. Exiting.",
                         extra={
@@ -1088,7 +1088,7 @@ def handler(event, context):
                             "error": traceback.format_exc(),
                         },
                     )
-                    raise DBUpdateError
+                    raise DBUpdateError from err
 
         # Upload log file to S3
         try:
@@ -1109,7 +1109,7 @@ def handler(event, context):
                 "Error uploading log file to S3", extra={"error": str(s3_error)}
             )
 
-            raise S3UploadError
+            raise S3UploadError from s3_error
 
     except ConfigFetchError:
         error_code = "ConfigFetchError"

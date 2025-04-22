@@ -57,14 +57,14 @@ class DockerProvider:
                 "Error creating docker network due to APIError: "
                 f"{Colorizer.white(e)}"
             )
-            raise DockerSDKError(e)
+            raise DockerSDKError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "Error creating docker network due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise DockerSDKError(e)
+            raise DockerSDKError(e) from e
 
     def run_postgres_container(self) -> None:
         """Set up Postgres container."""
@@ -88,14 +88,14 @@ class DockerProvider:
                 "Error creating postgres container due to ContainerError: "
                 f"{Colorizer.white(e)}"
             )
-            raise DockerSDKError(e)
+            raise DockerSDKError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "Error creating postgres container due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise DockerSDKError(e)
+            raise DockerSDKError(e) from e
 
         # Wait for Postgres to be ready
         while True:
@@ -127,7 +127,7 @@ class DockerProvider:
                     "Error waiting for postgres container due to unexpected "
                     f"error: {Colorizer.white(e)}"
                 )
-                raise DockerSDKError(e)
+                raise DockerSDKError(e) from e
 
         self.logger(
             f"Created postgres container "
@@ -144,7 +144,7 @@ class DockerProvider:
                 "Error copying shared files due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise LocalProviderError(e)
+            raise LocalProviderError(e) from e
 
         try:
             self.docker_client.images.build(
@@ -158,14 +158,14 @@ class DockerProvider:
                 "Wearable data retrieval container creation failed due to "
                 f"BuildError: {Colorizer.white(e)}"
             )
-            raise DockerSDKError(e)
+            raise DockerSDKError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "Wearable data retrieval container creation failed due to "
                 f"unexpected error: {Colorizer.white(e)}"
             )
-            raise DockerSDKError(e)
+            raise DockerSDKError(e) from e
 
         try:
             shutil.rmtree("functions/wearable_data_retrieval/shared")
@@ -175,7 +175,7 @@ class DockerProvider:
                 "Error removing shared files due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise LocalProviderError(e)
+            raise LocalProviderError(e) from e
 
         self.logger(
             f"Wearable data retrieval image "
@@ -201,14 +201,14 @@ class DockerProvider:
                 "Wearable data retrieval container creation failed due to "
                 f"ContainerError: {Colorizer.white(e)}"
             )
-            raise DockerSDKError(e)
+            raise DockerSDKError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "Wearable data retrieval container creation failed due to "
                 f"unexpected error: {Colorizer.white(e)}"
             )
-            raise DockerSDKError(e)
+            raise DockerSDKError(e) from e
 
         self.logger(
             f"Wearable data retrieval container "
@@ -226,7 +226,7 @@ class DockerProvider:
             )
             raise DockerSDKError(
                 f"Container {Colorizer.blue(container_name)} not found"
-            )
+            ) from None
 
     def get_network(self) -> Network:
         """Get a network by name."""
@@ -239,7 +239,7 @@ class DockerProvider:
             )
             raise DockerSDKError(
                 f"Network {Colorizer.blue(self.config.network_name)} not found"
-            )
+            ) from None
 
     def uninstall(self) -> None:
         """Uninstall the Docker containers."""

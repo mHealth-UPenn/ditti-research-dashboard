@@ -43,14 +43,14 @@ class AwsAccountProvider:
                 "AWS access key ID retrieval failed due to subprocess error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "AWS access key ID retrieval failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
 
     @property
     def aws_secret_access_key(self) -> str:
@@ -62,14 +62,14 @@ class AwsAccountProvider:
                 "AWS secret access key retrieval failed due to subprocess error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "AWS secret access key retrieval failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
 
     @property
     def aws_account_id(self) -> str:
@@ -81,14 +81,14 @@ class AwsAccountProvider:
                 "AWS account ID retrieval failed due to ClientError: "
                 f"{Colorizer.white(e)}"
             )
-            raise AwsProviderError(e)
+            raise AwsProviderError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "AWS account ID retrieval failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise AwsProviderError(e)
+            raise AwsProviderError(e) from e
 
     @staticmethod
     def get_aws_access_key_id() -> str:
@@ -117,11 +117,11 @@ class AwsAccountProvider:
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error("AWS CLI configuration failed")
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "AWS CLI configuration failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e

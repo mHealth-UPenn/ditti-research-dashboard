@@ -58,7 +58,7 @@ class AwsCloudformationResourceManager(BaseResourceManager):
                 f"AWS resource creation failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def get_dev_parameters(self) -> list[CloudFormationParameter]:
         return [
@@ -136,14 +136,14 @@ class AwsCloudformationResourceManager(BaseResourceManager):
                 f"AWS resource creation failed due to ClientError: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 f"AWS resource creation failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def dev_uninstall(self) -> None:
         """Uninstall the resources in development mode."""
@@ -168,11 +168,11 @@ class AwsCloudformationResourceManager(BaseResourceManager):
                 f"AWS resource deletion failed due to ClientError: "
                 f"{Colorizer.white(e)}"
             )
-            raise UninstallError(e)
+            raise UninstallError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 f"AWS resource deletion failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise UninstallError(e)
+            raise UninstallError(e) from e

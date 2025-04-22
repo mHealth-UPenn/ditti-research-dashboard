@@ -49,7 +49,7 @@ class AwsCognitoResourceManager(BaseResourceManager):
                 f"Admin user creation failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def create_admin_user(self) -> dict:
         """Create an admin user in the Cognito user pool."""
@@ -71,11 +71,11 @@ class AwsCognitoResourceManager(BaseResourceManager):
                 f"Admin user creation failed due to ClientError: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 f"Admin user creation failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e

@@ -56,7 +56,7 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
                 f"Secret write failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def dev(self) -> None:
         """Run the provider in development mode."""
@@ -68,7 +68,7 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
                 f"Secret value setting failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def set_dev_secret_value(self) -> None:
         """Set the secret value."""
@@ -101,11 +101,11 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
             self.logger.error(
                 f"Secret write failed due to ClientError: {Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 f"Secret write failed due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e

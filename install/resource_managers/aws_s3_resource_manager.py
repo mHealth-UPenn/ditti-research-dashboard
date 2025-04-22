@@ -76,14 +76,14 @@ class AwsS3ResourceManager(BaseResourceManager):
             self.logger.error(
                 f"Error emptying bucket due to ClientError: {Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 f"Error emptying bucket due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def get_objects(self, bucket_name: str) -> list[S3Object]:
         try:
@@ -105,14 +105,14 @@ class AwsS3ResourceManager(BaseResourceManager):
                 f"Error getting object keys due to ClientError: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 f"Error getting object keys due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def bucket_exists(self, bucket_name: str) -> bool:
         try:
@@ -128,14 +128,14 @@ class AwsS3ResourceManager(BaseResourceManager):
                 f"Error checking if bucket {Colorizer.blue(bucket_name)} exists"
                 f" due to ClientError: {Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 f"Error checking if bucket {Colorizer.blue(bucket_name)} exists"
                 f" due to unexpected error: {Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def delete_bucket(self, bucket_name: str) -> None:
         try:
@@ -146,14 +146,14 @@ class AwsS3ResourceManager(BaseResourceManager):
             self.logger.error(
                 f"Error deleting bucket due to ClientError: {Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 f"Error deleting bucket due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def dev_uninstall(self) -> None:
         try:
@@ -173,7 +173,7 @@ class AwsS3ResourceManager(BaseResourceManager):
                 f"{Colorizer.blue(self.config.audio_bucket_name)} due "
                 f"to unexpected error: {Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
         try:
             if self.bucket_exists(self.config.logs_bucket_name):
@@ -192,7 +192,7 @@ class AwsS3ResourceManager(BaseResourceManager):
                 f"{Colorizer.blue(self.config.logs_bucket_name)} due "
                 f"to unexpected error: {Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
 
 if __name__ == "__main__":

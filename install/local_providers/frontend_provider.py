@@ -46,7 +46,7 @@ class FrontendProvider:
                 "Frontend initialization failed due to subprocess error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
 
     def build_frontend(self) -> None:
         """Build the frontend."""
@@ -61,7 +61,7 @@ class FrontendProvider:
                 "Frontend build failed due to subprocess error: "
                 f"{Colorizer.white(e)}"
             )
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
 
     def uninstall(self) -> None:
         """Uninstall the frontend."""

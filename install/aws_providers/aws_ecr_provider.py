@@ -58,14 +58,14 @@ class AwsEcrProvider:
                 "Error getting password for ECR repository due to ClientError: "
                 f"{Colorizer.white(e)}"
             )
-            raise AwsProviderError(e)
+            raise AwsProviderError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "Error getting password for ECR repository due to unexpected "
                 f"error: {Colorizer.white(e)}"
             )
-            raise AwsProviderError(e)
+            raise AwsProviderError(e) from e
 
     def get_repo_uri(self) -> str:
         """Get the URL for the ECR repository."""

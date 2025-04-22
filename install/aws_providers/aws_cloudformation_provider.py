@@ -55,14 +55,14 @@ class AwsCloudformationProvider:
                 "Error getting outputs for stack due to ClientError: "
                 f"{Colorizer.white(e)}"
             )
-            raise AwsProviderError(e)
+            raise AwsProviderError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
                 "Error getting outputs for stack due to unexpected error: "
                 f"{Colorizer.white(e)}"
             )
-            raise AwsProviderError(e)
+            raise AwsProviderError(e) from e
 
     def update_dev_project_config(self) -> None:
         outputs = self.get_outputs()

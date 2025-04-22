@@ -60,8 +60,10 @@ def populate_model(model, data, use_camel_to_snake=False, custom_mapping=None):
         # Ensure the attribute exists on the model
         try:
             attr = getattr(model, k)
-        except AttributeError:
-            raise ValueError(f"Invalid attribute: {original_key} (mapped to {k})")
+        except AttributeError as err:
+            raise ValueError(
+                f"Invalid attribute: {original_key} (mapped to {k})"
+            ) from err
 
         # Skip lists and relationships
         if isinstance(v, list):

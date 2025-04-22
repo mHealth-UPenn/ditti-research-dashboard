@@ -50,14 +50,18 @@ def validate_date_range(
     """
     try:
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-    except ValueError:
-        raise ValueError("Invalid start_date format. Expected YYYY-MM-DD.")
+    except ValueError as err:
+        raise ValueError(
+            "Invalid start_date format. Expected YYYY-MM-DD."
+        ) from err
 
     if end_date_str:
         try:
             end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-        except ValueError:
-            raise ValueError("Invalid end_date format. Expected YYYY-MM-DD.")
+        except ValueError as err:
+            raise ValueError(
+                "Invalid end_date format. Expected YYYY-MM-DD."
+            ) from err
     else:
         end_date = start_date
 
@@ -72,7 +76,7 @@ def validate_date_range(
 
 def cache_key_admin(ditti_id: str, start_date: date, end_date: date) -> str:
     """
-    Generates a cache key for admin Fitbit data requests.
+    Generate a cache key for admin Fitbit data requests.
 
     Parameters
     ----------
@@ -89,7 +93,7 @@ def cache_key_admin(ditti_id: str, start_date: date, end_date: date) -> str:
 
 def cache_key_participant(ditti_id: str, start_date: date, end_date: date) -> str:
     """
-    Generates a cache key for participant Fitbit data requests.
+    Generate a cache key for participant Fitbit data requests.
 
     Parameters
     ----------
