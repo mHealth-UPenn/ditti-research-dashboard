@@ -27,6 +27,13 @@ from install.utils.enums import Postgres
 
 
 class EnvFileProvider:
+    """
+    Provider for environment file management.
+
+    Generates and updates environment files for different components
+    of the application with appropriate configuration values.
+    """
+
     wearable_data_retrieval_filename: str = (
         "functions/wearable_data_retrieval/.env"
     )

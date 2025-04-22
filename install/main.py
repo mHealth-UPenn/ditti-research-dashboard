@@ -18,6 +18,16 @@ from install.installer import Installer
 
 
 def main() -> None:
+    """
+    Run the Ditti Research Dashboard installation process.
+
+    Creates and initializes the installation process for the development
+    environment. Currently only supports the 'dev' environment.
+
+    Returns
+    -------
+    None
+    """
     installer = Installer(env="dev")  # NOTE: Only dev is supported for now
     installer.run()
 

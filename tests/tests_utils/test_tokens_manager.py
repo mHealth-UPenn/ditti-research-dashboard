@@ -331,10 +331,8 @@ def test_add_api_token_with_invalid_api_name(tokens_manager):
         "expires_at": 1700043600,
     }
 
-    with pytest.raises(Exception) as excinfo:
+    with pytest.raises(ValueError, match="api_name must be a non-empty string"):
         tokens_manager.add_or_update_api_token(api_name, ditti_id, tokens)
-
-    assert "api_name must be a non-empty string." in str(excinfo.value)
 
 
 def test_get_api_tokens_with_invalid_api_name(tokens_manager):

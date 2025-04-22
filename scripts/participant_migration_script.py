@@ -15,6 +15,13 @@ from backend.utils.aws import Query
 
 
 class User(TypedDict):
+    """
+    Type definition for user data from AppSync API.
+
+    Contains fields representing a user record as returned
+    by the AppSync GraphQL API.
+    """
+
     __typename: str
     _lastChangedAt: int
     _version: int
@@ -28,6 +35,22 @@ class User(TypedDict):
 
 
 def generate_temp_password(length=20):
+    """
+    Generate a secure temporary password.
+
+    Creates a random password using letters and digits
+    for temporary user authentication.
+
+    Parameters
+    ----------
+    length : int, optional
+        The length of the password to generate, by default 20
+
+    Returns
+    -------
+    str
+        A randomly generated password
+    """
     characters = string.ascii_letters + string.digits
     return "".join(secrets.choice(characters) for i in range(length))
 

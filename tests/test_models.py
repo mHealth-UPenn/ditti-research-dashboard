@@ -44,25 +44,29 @@ def app():
 
 class TestPermission:
     def test_duplicate(self, app):
-        with pytest.raises(IntegrityError):
-            foo = Permission()
-            foo.action = "foo"
-            foo.resource = "baz"
-            db.session.add(foo)
+        foo = Permission()
+        foo.action = "foo"
+        foo.resource = "baz"
+        db.session.add(foo)
+        with pytest.raises(IntegrityError, match="duplicate key value"):
             db.session.commit()
 
     def test_validate_action(self, app):
-        with pytest.raises(ValueError):
-            q1 = Permission.definition == ("foo", "baz")
-            foo = Permission.query.filter(q1).first()
-            foo.action = "bar"
+        q1 = Permission.definition == ("foo", "baz")
+        foo = Permission.query.filter(q1).first()
+        foo.action = "bar"
+        with pytest.raises(
+            ValueError, match="permission.action cannot be modified"
+        ):
             db.session.commit()
 
     def test_validate_resource(self, app):
-        with pytest.raises(ValueError):
-            q1 = Permission.definition == ("bar", "qux")
-            foo = Permission.query.filter(q1).first()
-            foo.resource = "baz"
+        q1 = Permission.definition == ("bar", "qux")
+        foo = Permission.query.filter(q1).first()
+        foo.resource = "baz"
+        with pytest.raises(
+            ValueError, match="permission.resource cannot be modified"
+        ):
             db.session.commit()
 
     def test_definition(self, app):
@@ -75,11 +79,12 @@ class TestPermission:
 
 class TestAccount:
     def test_validate_created_on(self, app):
-        with pytest.raises(ValueError):
-            q1 = Account.email == "foo@email.com"
-            foo = Account.query.filter(q1).first()
+        q1 = Account.email == "foo@email.com"
+        foo = Account.query.filter(q1).first()
+        with pytest.raises(
+            ValueError, match="Account.created_on cannot be modified"
+        ):
             foo.created_on = datetime.now(UTC)
-            db.session.commit()
 
     def test_full_name(self, app):
         q1 = Account.full_name == "John Smith"
@@ -113,14 +118,14 @@ class TestAccount:
         assert qux == [("bar", "baz"), ("bar", "qux")]
 
     def test_validate_ask_invalid(self, app):
-        with pytest.raises(ValueError):
-            q1 = Account.email == "foo@email.com"
-            q2 = AccessGroup.name == "bar"
-            q3 = Study.name == "bar"
-            foo = Account.query.filter(q1).first()
-            bar = AccessGroup.query.filter(q2).first()
-            baz = Study.query.filter(q3).first()
-            qux = foo.get_permissions(bar.id, baz.id)
+        q1 = Account.email == "foo@email.com"
+        q2 = AccessGroup.name == "bar"
+        q3 = Study.name == "bar"
+        foo = Account.query.filter(q1).first()
+        bar = AccessGroup.query.filter(q2).first()
+        baz = Study.query.filter(q3).first()
+        qux = foo.get_permissions(bar.id, baz.id)
+        with pytest.raises(ValueError, match="Unauthorized Ask"):
             foo.validate_ask("bar", "baz", qux)
 
     def test_validate_ask(self, app):
@@ -245,17 +250,19 @@ class TestDeletions:
         assert f"baz: {baz}" == f"baz: {None}"
 
     def test_delete_study_with_enrolled_subject(self, app):
-        with pytest.raises(IntegrityError):
-            q1 = Study.name == "foo"
-            foo = Study.query.filter(q1).first()
-            assert f"foo: {foo}" != f"foo: {None}"
+        q1 = Study.name == "foo"
+        foo = Study.query.filter(q1).first()
+        assert f"foo: {foo}" != f"foo: {None}"
 
-            foo_id = foo.id
-            q2 = JoinStudySubjectStudy.study_id == foo_id
-            bar = JoinStudySubjectStudy.query.filter(q2).first()
-            assert f"bar: {bar}" != f"bar: {None}"
+        foo_id = foo.id
+        q2 = JoinStudySubjectStudy.study_id == foo_id
+        bar = JoinStudySubjectStudy.query.filter(q2).first()
+        assert f"bar: {bar}" != f"bar: {None}"
 
-            db.session.delete(foo)
+        db.session.delete(foo)
+        with pytest.raises(
+            IntegrityError, match="violates foreign key constraint"
+        ):
             db.session.commit()
 
     def test_delete_study(self, app):
@@ -322,17 +329,19 @@ class TestDeletions:
         assert baz is None, "JoinStudySubjectStudy association should be deleted."
 
     def test_delete_api_with_enrolled_subject(self, app):
-        with pytest.raises(IntegrityError):
-            q1 = Api.name == "foo"
-            foo = Api.query.filter(q1).first()
-            assert f"foo: {foo}" != f"foo: {None}"
+        q1 = Api.name == "foo"
+        foo = Api.query.filter(q1).first()
+        assert f"foo: {foo}" != f"foo: {None}"
 
-            foo_id = foo.id
-            q2 = JoinStudySubjectApi.api_id == foo_id
-            bar = JoinStudySubjectApi.query.filter(q2).first()
-            assert f"bar: {bar}" != f"bar: {None}"
+        foo_id = foo.id
+        q2 = JoinStudySubjectApi.api_id == foo_id
+        bar = JoinStudySubjectApi.query.filter(q2).first()
+        assert f"bar: {bar}" != f"bar: {None}"
 
-            db.session.delete(foo)
+        db.session.delete(foo)
+        with pytest.raises(
+            IntegrityError, match="violates foreign key constraint"
+        ):
             db.session.commit()
 
     def test_delete_api(self, app):

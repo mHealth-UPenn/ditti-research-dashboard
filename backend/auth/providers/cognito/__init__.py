@@ -1,5 +1,6 @@
 """
 Cognito-specific authentication implementation.
+
 This package contains all the code needed to interact with AWS Cognito
 for authentication purposes.
 """
@@ -16,10 +17,10 @@ from backend.auth.providers.cognito.researcher import (
 )
 
 __all__ = [
+    "AUTH_ERROR_MESSAGES",
     "CognitoAuthBase",
     "ParticipantAuth",
-    "init_participant_oauth_client",
     "ResearcherAuth",
-    "AUTH_ERROR_MESSAGES",
+    "init_participant_oauth_client",
     "init_researcher_oauth_client",
 ]

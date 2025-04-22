@@ -125,6 +125,22 @@ def get_taps(account):
 @blueprint.route("/get-audio-taps")
 @researcher_auth_required("View", "Ditti App Dashboard")
 def get_audio_taps(account):
+    """
+    Get audio taps data from the database.
+
+    Retrieves audio tap data for studies the researcher has access to.
+
+    Parameters
+    ----------
+    account : Account
+        The authenticated researcher account.
+
+    Returns
+    -------
+    flask.Response
+        JSON response containing audio taps data.
+    """
+
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
         q = f'user_permission_idBEGINS"{right}"'

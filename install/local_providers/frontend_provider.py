@@ -25,6 +25,13 @@ from install.utils.exceptions import SubprocessError
 
 
 class FrontendProvider:
+    """
+    Provider for frontend application setup and configuration.
+
+    Manages frontend environment configuration, dependency installation,
+    and build processes for the application user interface.
+    """
+
     frontend_dir = "frontend"
 
     def __init__(self, *, logger: Logger, config: ProjectConfigProvider):
