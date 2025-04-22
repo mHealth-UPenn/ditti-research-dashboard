@@ -74,10 +74,7 @@ dictConfig(
 def create_app(testing=False):
     app = Flask(__name__)
 
-    if testing:
-        flask_config = "Testing"
-    else:
-        flask_config = os.getenv("FLASK_CONFIG", "Default")
+    flask_config = "Testing" if testing else os.getenv("FLASK_CONFIG", "Default")
 
     # configure and initialize the app
     app.config.from_object(f"backend.config.{flask_config}")

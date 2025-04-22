@@ -1,6 +1,6 @@
 import json
 import pprint
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
 import pytest
 
@@ -130,7 +130,8 @@ def edit_study_subject(post_admin, subject_id, edit_payload):
         subject_id: The ID of the subject to edit
         edit_payload: The data to update (without app or id wrapper)
 
-    Returns:
+    Returns
+    -------
         Tuple of (response, response_data)
     """
     # Format the request data correctly
@@ -873,10 +874,7 @@ def test_study_subject_get_all(get_admin, post_admin, create_study_subject):
     """
     # Get existing StudySubjects length
     res = get_admin_study_subject(get_admin, study_subject_id=None)
-    if res.data:
-        data_res = json.loads(res.data)
-    else:
-        data_res = []
+    data_res = json.loads(res.data) if res.data else []
     existing_len = len(data_res)
 
     # Create multiple StudySubjects
@@ -898,10 +896,7 @@ def test_study_subject_get_all(get_admin, post_admin, create_study_subject):
     res = get_admin_study_subject(get_admin, study_subject_id=None)
 
     # Check if response is empty
-    if res.data:
-        data_res = json.loads(res.data)
-    else:
-        data_res = []
+    data_res = json.loads(res.data) if res.data else []
 
     # Assert response
     assert res.status_code == 200
@@ -928,10 +923,7 @@ def test_study_subject_get_by_id(get_admin, create_study_subject):
     res = get_admin_study_subject(get_admin, study_subject_id=subject_id)
 
     # Check if response is empty
-    if res.data:
-        data_res = json.loads(res.data)
-    else:
-        data_res = []
+    data_res = json.loads(res.data) if res.data else []
 
     # Assert response
     assert res.status_code == 200
@@ -948,10 +940,7 @@ def test_study_subject_get_invalid_id_format(get_admin):
     """
     # Send GET request with non-integer 'id'
     res = get_admin_study_subject(get_admin, study_subject_id="invalid_id")
-    if res.data:
-        data_res = json.loads(res.data)
-    else:
-        data_res = {}
+    data_res = json.loads(res.data) if res.data else {}
 
     # Assert response
     assert res.status_code == 400
@@ -965,10 +954,7 @@ def test_study_subject_get_non_existent_id(get_admin):
     """
     # Assume ID 9999 does not exist
     res = get_admin_study_subject(get_admin, study_subject_id=9999)
-    if res.data:
-        data_res = json.loads(res.data)
-    else:
-        data_res = []
+    data_res = json.loads(res.data) if res.data else []
 
     # Assert response
     assert res.status_code == 200
@@ -982,10 +968,7 @@ def test_study_subject_get_archived_not_returned(get_admin, create_study_subject
     """
     # Get existing StudySubjects length
     res = get_admin_study_subject(get_admin, study_subject_id=None)
-    if res.data:
-        data_res = json.loads(res.data)
-    else:
-        data_res = []
+    data_res = json.loads(res.data) if res.data else []
     existing_len = len(data_res)
 
     # Create StudySubjects
@@ -1002,10 +985,7 @@ def test_study_subject_get_archived_not_returned(get_admin, create_study_subject
 
     # Send GET request without 'id' to retrieve all StudySubjects
     res = get_admin_study_subject(get_admin, study_subject_id=None)
-    if res.data:
-        data_res = json.loads(res.data)
-    else:
-        data_res = []
+    data_res = json.loads(res.data) if res.data else []
 
     # Assert response
     assert res.status_code == 200
@@ -1029,10 +1009,7 @@ def test_study_subject_get_archived_by_id(get_admin, create_study_subject):
 
     # Send GET request with 'id' to retrieve the archived StudySubject
     res = get_admin_study_subject(get_admin, study_subject_id=subject_id)
-    if res.data:
-        data_res = json.loads(res.data)
-    else:
-        data_res = []
+    data_res = json.loads(res.data) if res.data else []
 
     # Assert response
     assert res.status_code == 200

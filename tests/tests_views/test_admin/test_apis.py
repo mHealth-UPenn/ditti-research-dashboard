@@ -57,10 +57,7 @@ def get_admin_api(get_admin, api_id=None):
     """
     Helper function to send a GET request to the API endpoint.
     """
-    if api_id:
-        params = {"app": 1, "id": str(api_id)}
-    else:
-        params = {"app": 1}
+    params = {"app": 1, "id": str(api_id)} if api_id else {"app": 1}
     res = get_admin("/admin/api", query_string=params)
     return res
 
