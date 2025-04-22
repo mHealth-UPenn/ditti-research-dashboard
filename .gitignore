@@ -43,4 +43,4 @@ zappa_settings.json
 
 project-config*.json
 
-scripts/add_license.py
+scripts/
