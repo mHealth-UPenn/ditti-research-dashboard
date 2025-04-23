@@ -18,6 +18,7 @@ import json
 import logging
 import sys
 from datetime import date, datetime
+from typing import ClassVar
 
 
 # Custom JSON formatter
@@ -29,7 +30,7 @@ class JsonFormatter(logging.Formatter):
     and adding custom fields as needed.
     """
 
-    exclude = {
+    exclude: ClassVar[set[str]] = {
         "name",
         "msg",
         "args",
@@ -77,7 +78,7 @@ class JsonFormatter(logging.Formatter):
         for k, v in record.__dict__.items():
             if k in self.exclude:
                 continue
-            if isinstance(v, (datetime, date)):
+            if isinstance(v, datetime | date):
                 log_entry[k] = v.isoformat()
             else:
                 log_entry[k] = v
