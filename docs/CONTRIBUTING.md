@@ -63,3 +63,7 @@ You can **Issues** in the repository navigation bar at the top of the page:
 If you want to contribute to an existing discussion, select one from the list of issues. If you want to create a new discussion, you can do so with the **New Issue** button:
 
 ![Create New Issue](../images/repo-new-issue.png)
+
+## Setting Up the Development Environment
+
+See our [Dev Setup Guide](./INSTALL-dev.md) for details on getting started with a local development environment.
