@@ -1,10 +1,14 @@
 # Contribution Guide
 
+We ask that all contributors first review our [Code of Conduct](./CODE-OF-CONDUCT.md) before making any contributions.
+
 ## Submitting Issues
 
 We highly encourage users and contributors of the Ditti Dashboard to use GitHub Issues for reporting any bugs, making feature requests, or posting any other topics of discussion. New topics do not have to be technical in nature, and can be created as discussions open to other users or contributors.
 
 To make posting issues as accessible as possible, we have provided forms for different types of issues. Following are brief instructions for using these forms and templates.
+
+For contributors who are new to GitHub, screenshots are provided below.
 
 ### 1. Submitting a Bug Report
 
@@ -52,4 +56,10 @@ For any issues that do not fit in bug reports or feature requests. Use this temp
 
 ### Screenshots
 
-_Add screenshots after renaming the repo._
+You can **Issues** in the repository navigation bar at the top of the page:
+
+![Issues](../images/repo-issues.png)
+
+If you want to contribute to an existing discussion, select one from the list of issues. If you want to create a new discussion, you can do so with the **New Issue** button:
+
+![Create New Issue](../images/repo-new-issue.png)
