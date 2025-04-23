@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import shutil
 import subprocess
 import traceback
 
@@ -139,9 +140,13 @@ class AwsAccountProvider:
         str
             The AWS access key ID.
         """
+        aws_executable = shutil.which("aws")
+        if aws_executable is None:
+            raise FileNotFoundError("AWS CLI executable not found")
+
         return (
             subprocess.check_output(
-                ["aws", "configure", "get", "aws_access_key_id"]
+                [aws_executable, "configure", "get", "aws_access_key_id"]
             )
             .decode("utf-8")
             .strip()
@@ -157,9 +162,13 @@ class AwsAccountProvider:
         str
             The AWS secret access key.
         """
+        aws_executable = shutil.which("aws")
+        if aws_executable is None:
+            raise FileNotFoundError("AWS CLI executable not found")
+
         return (
             subprocess.check_output(
-                ["aws", "configure", "get", "aws_secret_access_key"]
+                [aws_executable, "configure", "get", "aws_secret_access_key"]
             )
             .decode("utf-8")
             .strip()
@@ -168,7 +177,11 @@ class AwsAccountProvider:
     def configure_aws_cli(self) -> None:
         """Configure the AWS CLI."""
         try:
-            subprocess.run(["aws", "configure"])
+            aws_executable = shutil.which("aws")
+            if aws_executable is None:
+                raise FileNotFoundError("AWS CLI executable not found")
+
+            subprocess.run([aws_executable, "configure"])
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error("AWS CLI configuration failed")
