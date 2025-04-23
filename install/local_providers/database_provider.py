@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import shutil
 import subprocess
 import traceback
 
@@ -37,8 +38,12 @@ class DatabaseProvider:
     def upgrade_database(self) -> None:
         """Initialize the database."""
         try:
+            flask_executable = shutil.which("flask")
+            if flask_executable is None:
+                raise FileNotFoundError("Flask CLI executable not found")
+
             subprocess.run(
-                ["flask", "--app", "run.py", "db", "upgrade"], check=True
+                [flask_executable, "--app", "run.py", "db", "upgrade"], check=True
             )
             self.logger(Colorizer.blue("Database upgraded"))
         except subprocess.CalledProcessError as e:
@@ -73,8 +78,17 @@ class DatabaseProvider:
             If database initialization fails.
         """
         try:
+            flask_executable = shutil.which("flask")
+            if flask_executable is None:
+                raise FileNotFoundError("Flask CLI executable not found")
+
             subprocess.run(
-                ["flask", "--app", "run.py", "init-integration-testing-db"],
+                [
+                    flask_executable,
+                    "--app",
+                    "run.py",
+                    "init-integration-testing-db",
+                ],
                 check=True,
             )
             self.logger(
@@ -112,9 +126,13 @@ class DatabaseProvider:
             If account creation fails.
         """
         try:
+            flask_executable = shutil.which("flask")
+            if flask_executable is None:
+                raise FileNotFoundError("Flask CLI executable not found")
+
             subprocess.run(
                 [
-                    "flask",
+                    flask_executable,
                     "--app",
                     "run.py",
                     "create-researcher-account",
