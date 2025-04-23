@@ -40,6 +40,14 @@ def mock_run():
         yield mock_run
 
 
+@pytest.fixture
+def mock_which():
+    with patch("shutil.which") as mock_which:
+        # Return the input command name to simulate simple path
+        mock_which.side_effect = lambda x: x
+        yield mock_which
+
+
 def test_aws_region_success(aws_account_provider_mock: AwsAccountProvider):
     assert aws_account_provider_mock.aws_region == mock_aws_region
 
@@ -138,7 +146,9 @@ def test_aws_account_id_unexpected_error(
 
 
 def test_configure_aws_cli_success(
-    mock_run: MagicMock, aws_account_provider_mock: AwsAccountProvider
+    mock_run: MagicMock,
+    aws_account_provider_mock: AwsAccountProvider,
+    mock_which: MagicMock,
 ):
     aws_account_provider_mock.configure_aws_cli()
 

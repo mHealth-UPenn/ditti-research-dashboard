@@ -21,8 +21,18 @@ def subprocess_mock():
         yield mock_run
 
 
+@pytest.fixture
+def shutil_which_mock():
+    with patch("shutil.which") as mock_which:
+        # Return the input command name to simulate simple path
+        mock_which.side_effect = lambda x: x
+        yield mock_which
+
+
 def test_upgrade_database_success(
-    database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock
+    database_provider_mock: DatabaseProvider,
+    subprocess_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     subprocess_mock.return_value = MagicMock(returncode=0)
 
@@ -34,7 +44,9 @@ def test_upgrade_database_success(
 
 
 def test_initialize_database_subprocess_error(
-    database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock
+    database_provider_mock: DatabaseProvider,
+    subprocess_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     """Test handling of subprocess error during database initialization."""
     subprocess_mock.side_effect = subprocess.CalledProcessError(
@@ -48,7 +60,9 @@ def test_initialize_database_subprocess_error(
 
 
 def test_initialize_database_unexpected_error(
-    database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock
+    database_provider_mock: DatabaseProvider,
+    subprocess_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     """Test handling of unexpected error during database initialization."""
     subprocess_mock.side_effect = Exception("Unexpected Error")
@@ -58,7 +72,9 @@ def test_initialize_database_unexpected_error(
 
 
 def test_initialize_database_success(
-    database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock
+    database_provider_mock: DatabaseProvider,
+    subprocess_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     subprocess_mock.return_value = MagicMock(returncode=0)
 
@@ -70,7 +86,9 @@ def test_initialize_database_success(
 
 
 def test_initialize_database_subprocess_error(
-    database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock
+    database_provider_mock: DatabaseProvider,
+    subprocess_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     """Test handling of subprocess error during database initialization."""
     subprocess_mock.side_effect = subprocess.CalledProcessError(
@@ -84,7 +102,9 @@ def test_initialize_database_subprocess_error(
 
 
 def test_initialize_database_unexpected_error(
-    database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock
+    database_provider_mock: DatabaseProvider,
+    subprocess_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     """Test handling of unexpected error during database initialization."""
     subprocess_mock.side_effect = Exception("Unexpected Error")
@@ -94,7 +114,9 @@ def test_initialize_database_unexpected_error(
 
 
 def test_create_researcher_account_success(
-    database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock
+    database_provider_mock: DatabaseProvider,
+    subprocess_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     subprocess_mock.return_value = MagicMock(returncode=0)
 
@@ -114,7 +136,9 @@ def test_create_researcher_account_success(
 
 
 def test_create_researcher_account_subprocess_error(
-    database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock
+    database_provider_mock: DatabaseProvider,
+    subprocess_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     subprocess_mock.side_effect = subprocess.CalledProcessError(
         returncode=1,
@@ -134,7 +158,9 @@ def test_create_researcher_account_subprocess_error(
 
 
 def test_researcher_account_unexpected_error(
-    database_provider_mock: DatabaseProvider, subprocess_mock: MagicMock
+    database_provider_mock: DatabaseProvider,
+    subprocess_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     subprocess_mock.side_effect = Exception("Unexpected Error")
 
