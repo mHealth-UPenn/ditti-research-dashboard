@@ -33,10 +33,19 @@ def shutil_rmtree_mock():
         yield mock
 
 
+@pytest.fixture
+def shutil_which_mock():
+    with patch("shutil.which") as mock_which:
+        # Return the input command name to simulate simple path
+        mock_which.side_effect = lambda x: x
+        yield mock_which
+
+
 def test_initialize_frontend(
     frontend_provider_mock: FrontendProvider,
     subprocess_mock: MagicMock,
     os_chdir_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     frontend_provider_mock.initialize_frontend()
     subprocess_mock.assert_any_call(["npm", "install"], check=True)
@@ -47,7 +56,9 @@ def test_initialize_frontend(
 
 
 def test_initialize_frontend_subprocess_error(
-    frontend_provider_mock: FrontendProvider, subprocess_mock: MagicMock
+    frontend_provider_mock: FrontendProvider,
+    subprocess_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     subprocess_mock.side_effect = subprocess.CalledProcessError(
         returncode=1, cmd=["npm", "install"]
@@ -60,6 +71,7 @@ def test_build_frontend(
     frontend_provider_mock: FrontendProvider,
     subprocess_mock: MagicMock,
     os_chdir_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     frontend_provider_mock.build_frontend()
     subprocess_mock.assert_any_call(["npm", "run", "build"], check=True)
@@ -71,6 +83,7 @@ def test_build_frontend_subprocess_error(
     frontend_provider_mock: FrontendProvider,
     subprocess_mock: MagicMock,
     os_chdir_mock: MagicMock,
+    shutil_which_mock: MagicMock,
 ):
     subprocess_mock.side_effect = subprocess.CalledProcessError(
         returncode=1, cmd=["npm", "run", "build"]

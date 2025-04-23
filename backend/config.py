@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
+from typing import ClassVar
 
 
 class Default:
@@ -28,10 +29,17 @@ class Default:
     DEBUG = True
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "secret")
 
-    CORS_ALLOW_HEADERS = ["Authorization", "Content-Type", "X-CSRF-TOKEN"]
+    CORS_ALLOW_HEADERS: ClassVar[list[str]] = [
+        "Authorization",
+        "Content-Type",
+        "X-CSRF-TOKEN",
+    ]
 
     # Headers for the client to access when downloading Excel files
-    CORS_EXPOSE_HEADERS = ["Content-Type", "Content-Disposition"]
+    CORS_EXPOSE_HEADERS: ClassVar[list[str]] = [
+        "Content-Type",
+        "Content-Disposition",
+    ]
     CORS_SUPPORTS_CREDENTIALS = True
 
     SQLALCHEMY_DATABASE_URI = os.getenv("FLASK_DB")
@@ -103,7 +111,7 @@ class Staging(Default):
     ENV = "production"
     DEBUG = False
 
-    CORS_ALLOW_HEADERS = [
+    CORS_ALLOW_HEADERS: ClassVar[list[str]] = [
         "Content-Type",
         "X-Amz-Date",
         "Authorization",
@@ -123,7 +131,7 @@ class Production(Default):
     ENV = "production"
     DEBUG = False
 
-    CORS_ALLOW_HEADERS = [
+    CORS_ALLOW_HEADERS: ClassVar[list[str]] = [
         "Content-Type",
         "X-Amz-Date",
         "Authorization",

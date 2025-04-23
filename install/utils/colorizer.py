@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any
+from typing import Any, ClassVar
 
 from install.utils.types import Color
 
@@ -27,7 +27,7 @@ class Colorizer:
     improved readability in command-line interfaces.
     """
 
-    color_codes = {
+    color_codes: ClassVar[dict[str, str]] = {
         "red": "\033[0;31m",
         "green": "\033[0;32m",
         "yellow": "\033[0;33m",

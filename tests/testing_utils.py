@@ -469,8 +469,8 @@ def mock_db_query_result(model_class, result_or_results):
     mock_query.filter_by.return_value = mock_filter
     mock_query.filter.return_value = mock_filter
     mock_query.get.side_effect = (
-        lambda id: result_or_results
-        if result_or_results and getattr(result_or_results, "id", None) == id
+        lambda item_id: result_or_results
+        if result_or_results and getattr(result_or_results, "id", None) == item_id
         else None
     )
 
