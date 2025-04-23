@@ -23,9 +23,9 @@ The Ditti Research Dashboard is a centralized platform for managing and visualiz
 
 The Ditti Research Dashboard is **100% free** and **open source**. We encourage any users to contribute through open discussions, feature requests, bug reports, and contributions.
 
-Looking to get involved? Our Contribution Guide outlines how to get started with opening discussions.
+Looking to get involved? Our [Contribution Guide](docs/CONTRIBUTING.md) outlines how to get started with opening discussions.
 
-If you want to contribute, see our Development Setup Guide to get started with development.
+If you want to contribute, see our [Development Setup Guide](docs/INSTALL-dev.md) to get started with development.
 
 ## Installation
 
@@ -35,9 +35,10 @@ We are working hard at creating a straightforward process for installing and hos
 
 ## Built With
 
-- **[Flask:](https://flask.palletsprojects.com/en/stable/)** Our backend is a Python Flask app that responds RESTfully in JSON.
-- **[React.js:](https://react.dev/)** Our frontend is a React.js app built with TypeScript that communicates with the Flask API.
-- **[PostgreSQL:](https://www.postgresql.org/)** Our database leverages PostgreSQL for secure data storage.
-- **[Amazon Web Services:](https://aws.amazon.com/)** Our stack is deployed on AWS and uses managed services like [Cognito](https://aws.amazon.com/cognito/) to lock-in scalability and security.
+- **[Flask](https://flask.palletsprojects.com/en/stable/)**: Our backend is a Python Flask app that responds RESTfully in JSON.
+- **[React.js](https://react.dev/)**: Our frontend is a React.js app built with TypeScript that communicates with the Flask API.
+- **[Tailwind CSS](https://tailwindcss.com/)**: Our frontend is styled using Tailwind CSS.
+- **[PostgreSQL](https://www.postgresql.org/)**: Our database leverages PostgreSQL for secure data storage.
+- **[Amazon Web Services](https://aws.amazon.com/)**: Our stack is deployed on AWS and uses managed services like [Cognito](https://aws.amazon.com/cognito/) to lock-in scalability and security.
 
 ## Copyright/License
