@@ -107,7 +107,8 @@ if __name__ == "__main__":
 
             except Exception as e:
                 logger.error(
-                    f"Error processing user {user.get('user_permission_id')}: {e!s}",
+                    f"Error processing user {user.get('user_permission_id')}: "
+                    f"{e!s}",
                     exc_info=True,
                 )
                 continue

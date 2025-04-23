@@ -35,7 +35,7 @@ from install.resource_managers import (
     AwsCloudformationResourceManager,
     AwsCognitoResourceManager,
     AwsS3ResourceManager,
-    AwsSecretsmanagerResourceManager,
+    AwsSecretsManagerResourceManager,
 )
 from install.utils import Colorizer, Logger
 from install.utils.exceptions import CancelInstallation, ProjectConfigError
@@ -119,7 +119,7 @@ class Installer:
             aws_client_provider=self.aws_client_provider,
         )
         self.aws_secretsmanager_resource_manager = (
-            AwsSecretsmanagerResourceManager(
+            AwsSecretsManagerResourceManager(
                 logger=self.logger,
                 config=self.project_config_provider,
                 aws_client_provider=self.aws_client_provider,
