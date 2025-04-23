@@ -47,7 +47,8 @@ class AwsCognitoProvider:
         """
         Get the client secret for the participant app client.
 
-        Retrieves the client secret for the Cognito participant user pool app client.
+        Retrieves the client secret for the Cognito participant user pool
+        app client.
 
         Returns
         -------
@@ -83,7 +84,8 @@ class AwsCognitoProvider:
         """
         Get the client secret for the researcher app client.
 
-        Retrieves the client secret for the Cognito researcher user pool app client.
+        Retrieves the client secret for the Cognito researcher user pool
+        app client.
 
         Returns
         -------
