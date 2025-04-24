@@ -15,21 +15,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { createContext, useState, useEffect, ReactNode, useCallback } from "react";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { makeRequest } from "../utils";
 import { AuthContextValue } from "./authContext.types";
 
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined
+);
 
 /**
  * AuthProvider component that wraps children with authentication context.
  */
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isParticipantAuthenticated, setIsParticipantAuthenticated] = useState<boolean>(false);
-  const [isResearcherAuthenticated, setIsResearcherAuthenticated] = useState<boolean>(false);
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const [isParticipantAuthenticated, setIsParticipantAuthenticated] =
+    useState<boolean>(false);
+  const [isResearcherAuthenticated, setIsResearcherAuthenticated] =
+    useState<boolean>(false);
   const [isFirstLogin, setIsFirstLogin] = useState<boolean>(false);
-  const [isParticipantLoading, setIsParticipantLoading] = useState<boolean>(true);
+  const [isParticipantLoading, setIsParticipantLoading] =
+    useState<boolean>(true);
   const [isResearcherLoading, setIsResearcherLoading] = useState<boolean>(true);
   const [dittiId, setDittiId] = useState<string | null>(null);
   const INITIAL_ACCOUNT_STATE: AuthContextValue["accountInfo"] = {
@@ -38,9 +51,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     firstName: "",
     lastName: "",
     accountId: "",
-    phoneNumber: undefined
+    phoneNumber: undefined,
   };
-  const [accountInfo, setAccountInfo] = useState<AuthContextValue["accountInfo"]>(INITIAL_ACCOUNT_STATE);
+  const [accountInfo, setAccountInfo] = useState<
+    AuthContextValue["accountInfo"]
+  >(INITIAL_ACCOUNT_STATE);
   const navigate = useNavigate();
 
   const resetAccountInfo = useCallback(() => {
@@ -53,7 +68,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
      */
     const checkParticipantAuthStatus = async () => {
       try {
-        const res = await makeRequest("/auth/participant/check-login", { method: "GET" });
+        const res = await makeRequest("/auth/participant/check-login", {
+          method: "GET",
+        });
         if (res.msg === "Login successful") {
           setIsParticipantAuthenticated(true);
           setDittiId(res.dittiId);
@@ -70,7 +87,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
      */
     const checkResearcherAuthStatus = async () => {
       try {
-        const res = await makeRequest("/auth/researcher/check-login", { method: "GET" });
+        const res = await makeRequest("/auth/researcher/check-login", {
+          method: "GET",
+        });
         if (res.msg === "Login successful") {
           setIsResearcherAuthenticated(true);
           setAccountInfo({
@@ -79,9 +98,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             firstName: res.firstName,
             lastName: res.lastName,
             accountId: res.accountId,
-            phoneNumber: res.phoneNumber
+            phoneNumber: res.phoneNumber,
           });
-          
+
           // Set isFirstLogin state directly from the response
           setIsFirstLogin(Boolean(res.isFirstLogin));
         }

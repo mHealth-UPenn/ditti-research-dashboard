@@ -15,18 +15,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { createContext, PropsWithChildren, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  PropsWithChildren,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
 import { makeRequest } from "../utils";
-import { WearableDataContextValue, CoordinatorWearableDataProviderProps } from "./wearableDataContext.types";
+import {
+  WearableDataContextValue,
+  CoordinatorWearableDataProviderProps,
+} from "./wearableDataContext.types";
 import { SleepLog, DataProcessingTask } from "../types/api";
 
 // Context return type for participants
-export const ParticipantWearableDataContext = createContext<WearableDataContextValue | undefined>(undefined);
+export const ParticipantWearableDataContext = createContext<
+  WearableDataContextValue | undefined
+>(undefined);
 
 // Context return type for coordinators
-export const CoordinatorWearableDataContext = createContext<WearableDataContextValue | undefined>(undefined);
+export const CoordinatorWearableDataContext = createContext<
+  WearableDataContextValue | undefined
+>(undefined);
 
 /**
  * Format a date in YYYY-MM-DD format.
@@ -38,10 +51,12 @@ const formatDate = (date: Date) => {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
-}
+};
 
 // ParticipantWearableDataProvider component that wraps children with the study subject context.
-export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<unknown>) => {
+export const ParticipantWearableDataProvider = ({
+  children,
+}: PropsWithChildren<unknown>) => {
   const start = new Date();
   start.setDate(start.getDate() - 6);
 
@@ -49,8 +64,8 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // For now participants do not have the ability to change the start and end dates
-  const startDate = start;  // Start one week ago
-  const endDate = new Date();  // End today
+  const startDate = start; // Start one week ago
+  const endDate = new Date(); // End today
 
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
@@ -61,10 +76,9 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
 
   const handleFailure = (error: unknown) => {
     console.error(error);
-  }
+  };
 
   useEffect(() => {
-
     // Async fetch sleep data
     const fetchSleepData = async () => {
       try {
@@ -72,7 +86,7 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
           const params = new URLSearchParams();
           params.append("start_date", formatDate(startDate));
           params.append("end_date", formatDate(endDate));
-          const url = `/participant/fitbit_data?${params.toString()}`
+          const url = `/participant/fitbit_data?${params.toString()}`;
           let data: SleepLog[] = await makeRequest(url);
 
           data = data.sort((a, b) => {
@@ -93,17 +107,19 @@ export const ParticipantWearableDataProvider = ({ children }: PropsWithChildren<
 
     const promises: Promise<void>[] = [];
     promises.push(fetchSleepData());
-    Promise.all(promises).finally(() => setIsLoading(false))
+    Promise.all(promises).finally(() => setIsLoading(false));
   }, []);
 
   return (
-    <ParticipantWearableDataContext.Provider value={{
+    <ParticipantWearableDataContext.Provider
+      value={{
         startDate,
         endDate,
         sleepLogs,
         isLoading,
-      }}>
-        {children}
+      }}
+    >
+      {children}
     </ParticipantWearableDataContext.Provider>
   );
 };
@@ -116,8 +132,8 @@ export const CoordinatorWearableDataProvider = ({
   const start = new Date();
   start.setDate(start.getDate() - 7);
 
-  const [startDate, setStartDate] = useState<Date>(start);  // Start one week ago
-  const [endDate, setEndDate] = useState<Date>(new Date());  // End today
+  const [startDate, setStartDate] = useState<Date>(start); // Start one week ago
+  const [endDate, setEndDate] = useState<Date>(new Date()); // End today
   const [sleepLogs, setSleepLogs] = useState<SleepLog[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -137,7 +153,7 @@ export const CoordinatorWearableDataProvider = ({
 
   const handleFailure = (error: unknown) => {
     console.error(error);
-  }
+  };
 
   /**
    * Fetch sleep log data asynchronously from a start date to an end date.
@@ -149,9 +165,9 @@ export const CoordinatorWearableDataProvider = ({
     const params = new URLSearchParams();
     params.append("start_date", formatDate(start));
     params.append("end_date", formatDate(end));
-    params.append("app", "3");  // Assume Wearable Dashboard is app 3
+    params.append("app", "3"); // Assume Wearable Dashboard is app 3
     params.append("study", studyId.toString());
-    const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`
+    const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`;
 
     let data: SleepLog[] = await makeRequest(url);
     data = data.sort((a, b) => {
@@ -187,13 +203,15 @@ export const CoordinatorWearableDataProvider = ({
       try {
         if (APP_ENV === "production" || APP_ENV === "development") {
           const params = new URLSearchParams();
-          params.append("app", "3");  // Assume Wearable Dashboard is app 3
+          params.append("app", "3"); // Assume Wearable Dashboard is app 3
           params.append("study", studyId.toString());
           const url = `/data_processing_task/?${params.toString()}`;
           const tasks: DataProcessingTask[] = await makeRequest(url);
 
           // Check if any tasks are syncing
-          const syncingTask = tasks.find(task => task.status == "Pending" || task.status == "InProgress");
+          const syncingTask = tasks.find(
+            (task) => task.status == "Pending" || task.status == "InProgress"
+          );
           if (syncingTask) {
             setIsSyncing(true);
             scheduleSyncCheck(syncingTask.id);
@@ -207,7 +225,7 @@ export const CoordinatorWearableDataProvider = ({
     const promises: Promise<void>[] = [];
     promises.push(fetchSleepData());
     promises.push(fetchDataProcessingTasks());
-    Promise.all(promises).finally(() => setIsLoading(false))
+    Promise.all(promises).finally(() => setIsLoading(false));
   }, []);
 
   /**
@@ -217,7 +235,7 @@ export const CoordinatorWearableDataProvider = ({
   const scheduleSyncCheck = (taskId: number) => {
     const id = setInterval(async () => {
       const params = new URLSearchParams();
-      params.append("app", "3");  // Assume Wearable Dashboard is app 3
+      params.append("app", "3"); // Assume Wearable Dashboard is app 3
       params.append("study", studyId.toString());
       const url = `/data_processing_task/${taskId}?${params.toString()}`;
       const tasks: DataProcessingTask[] = await makeRequest(url);
@@ -237,14 +255,16 @@ export const CoordinatorWearableDataProvider = ({
 
         // Fetch new data
         fetchSleepDataAsync(updatedStartDate, updatedEndDate)
-          .then(data => {
+          .then((data) => {
             setSleepLogs(data);
             if (data.length) {
               setFirstDateOfSleep(new Date(data[0].dateOfSleep));
             }
             setDataIsUpdated(false);
           })
-          .catch(error => console.error(`Error updating sleep log data: ${error}`));
+          .catch((error) =>
+            console.error(`Error updating sleep log data: ${error}`)
+          );
       }
     }, 1000);
   };
@@ -261,11 +281,11 @@ export const CoordinatorWearableDataProvider = ({
       const opts: RequestInit = {
         method: "POST",
         body: JSON.stringify({ app: 3 }),
-      }
+      };
 
       // Fetch the data processing task ID for checking status
-      type ResponseBody = { msg: string; task: DataProcessingTask; };
-      const res: ResponseBody  = await makeRequest(url, opts);
+      type ResponseBody = { msg: string; task: DataProcessingTask };
+      const res: ResponseBody = await makeRequest(url, opts);
 
       setIsSyncing(true);
       scheduleSyncCheck(res.task.id);
@@ -275,8 +295,16 @@ export const CoordinatorWearableDataProvider = ({
   // The start date can be incremented if the end date is less than today
   const canIncrementStartDate = useMemo(() => {
     const today = new Date();
-    const todayWithoutTime = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endWithoutTime = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+    const todayWithoutTime = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const endWithoutTime = new Date(
+      endDate.getFullYear(),
+      endDate.getMonth(),
+      endDate.getDate()
+    );
 
     // Only increment if the end date is less than today
     return endWithoutTime < todayWithoutTime;
@@ -295,7 +323,7 @@ export const CoordinatorWearableDataProvider = ({
     // Fetch new data if the start date is before the first date of sleep
     if (firstDateOfSleep && updatedStartDate < firstDateOfSleep) {
       fetchSleepDataAsync(updatedStartDate, updatedStartDate)
-        .then(data => {
+        .then((data) => {
           const updatedSleepLogs = [...data, ...sleepLogs];
           setSleepLogs(updatedSleepLogs);
           if (data.length) {
@@ -303,7 +331,9 @@ export const CoordinatorWearableDataProvider = ({
           }
           setDataIsUpdated(true);
         })
-        .catch(error => console.error(`Error updating sleep log data: ${error}`));
+        .catch((error) =>
+          console.error(`Error updating sleep log data: ${error}`)
+        );
     }
   };
 
@@ -329,7 +359,8 @@ export const CoordinatorWearableDataProvider = ({
   };
 
   return (
-    <CoordinatorWearableDataContext.Provider value={{
+    <CoordinatorWearableDataContext.Provider
+      value={{
         startDate,
         endDate,
         sleepLogs,
@@ -342,8 +373,9 @@ export const CoordinatorWearableDataProvider = ({
         incrementStartDate,
         resetStartDate,
         syncData,
-      }}>
-        {children}
+      }}
+    >
+      {children}
     </CoordinatorWearableDataContext.Provider>
   );
 };

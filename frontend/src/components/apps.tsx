@@ -51,17 +51,23 @@ export const Apps = () => {
   useEffect(() => {
     // check whether the user can view the admin dashboard
     const admin = getAccess(1, "View", "Admin Dashboard").catch(() => {
-      setApps((prevApps) => prevApps.filter((app) => app.name !== "Admin Dashboard"));
+      setApps((prevApps) =>
+        prevApps.filter((app) => app.name !== "Admin Dashboard")
+      );
     });
 
     // check whether the user can view the ditti app dashboard
     const ditti = getAccess(2, "View", "Ditti App Dashboard").catch(() => {
-      setApps((prevApps) => prevApps.filter((app) => app.name !== "Ditti App Dashboard"));
+      setApps((prevApps) =>
+        prevApps.filter((app) => app.name !== "Ditti App Dashboard")
+      );
     });
 
     // check whether the user can view the ditti app dashboard
     const wear = getAccess(3, "View", "Wearable Dashboard").catch(() => {
-      setApps((prevApps) => prevApps.filter((app) => app.name !== "Wearable Dashboard"));
+      setApps((prevApps) =>
+        prevApps.filter((app) => app.name !== "Wearable Dashboard")
+      );
     });
 
     // when all promises resolve, hide the loader
@@ -84,15 +90,16 @@ export const Apps = () => {
         <Card
           key={i}
           width="sm"
-          className="cursor-pointer hover:ring hover:ring-inse hover:ring-light">
-            <Link to={app.link}>
-              <CardContentRow>
-                <p className="text-xl">{app.name}</p>
-              </CardContentRow>
-              <div className="flex justify-end w-full mt-24">
-                <Right />
-              </div>
-            </Link>
+          className="hover:ring-inse cursor-pointer hover:ring hover:ring-light"
+        >
+          <Link to={app.link}>
+            <CardContentRow>
+              <p className="text-xl">{app.name}</p>
+            </CardContentRow>
+            <div className="mt-24 flex w-full justify-end">
+              <Right />
+            </div>
+          </Link>
         </Card>
       ))}
     </ViewContainer>

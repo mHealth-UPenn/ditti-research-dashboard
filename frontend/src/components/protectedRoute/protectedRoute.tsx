@@ -33,21 +33,24 @@ export const ProtectedRoute = ({
   authMethod,
 }: PropsWithChildren<ProtectedRouteProps>) => {
   const {
-    isParticipantAuthenticated, 
+    isParticipantAuthenticated,
     isResearcherAuthenticated,
-    isParticipantLoading, 
-    isResearcherLoading 
+    isParticipantLoading,
+    isResearcherLoading,
   } = useAuth();
 
   if (authMethod === "participant") {
-    if (isParticipantLoading) return <FullLoader loading={true} msg="Loading..." />;
+    if (isParticipantLoading)
+      return <FullLoader loading={true} msg="Loading..." />;
     if (!isParticipantAuthenticated) return <Navigate to="/login" replace />;
     return <>{children}</>;
   }
 
   if (authMethod === "researcher") {
-    if (isResearcherLoading) return <FullLoader loading={true} msg="Loading..." />;
-    if (!isResearcherAuthenticated) return <Navigate to="/coordinator/login" replace />;
+    if (isResearcherLoading)
+      return <FullLoader loading={true} msg="Loading..." />;
+    if (!isResearcherAuthenticated)
+      return <Navigate to="/coordinator/login" replace />;
     return <>{children}</>;
   }
 

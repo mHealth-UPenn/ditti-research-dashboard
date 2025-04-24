@@ -91,38 +91,39 @@ export const AboutSleepTemplates = () => {
       // map each row to a set of cells for each table column
       return [
         {
-          contents: (
-            <span>{name}</span>
-          ),
+          contents: <span>{name}</span>,
           searchValue: name,
           sortValue: name,
         },
         {
           contents: (
-            <div className="flex w-full h-full">
-              {canEdit &&
+            <div className="flex h-full w-full">
+              {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
                   className="h-full flex-grow"
                   fullWidth={true}
-                  fullHeight={true}>
-                    <Link
-                      className="w-full h-full flex items-center justify-center"
-                      to={`/coordinator/admin/about-sleep-templates/edit?id=${id}`}>
-                        Edit
-                    </Link>
+                  fullHeight={true}
+                >
+                  <Link
+                    className="flex h-full w-full items-center justify-center"
+                    to={`/coordinator/admin/about-sleep-templates/edit?id=${id}`}
+                  >
+                    Edit
+                  </Link>
                 </Button>
-              }
-              {canArchive &&
+              )}
+              {canArchive && (
                 <Button
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteTemplate(id)}>
-                    Archive
+                  onClick={() => deleteTemplate(id)}
+                >
+                  Archive
                 </Button>
-              }
+              )}
             </div>
           ),
           searchValue: "",
@@ -162,12 +163,10 @@ export const AboutSleepTemplates = () => {
     flashMessage(<span>{res.msg}</span>, "success");
 
     // refresh the table's data
-    makeRequest("/admin/about-sleep-template?app=1").then(
-      (templates) => {
-        setAboutSleepTemplates(templates);
-        setLoading(false);
-      }
-    );
+    makeRequest("/admin/about-sleep-template?app=1").then((templates) => {
+      setAboutSleepTemplates(templates);
+      setLoading(false);
+    });
   };
 
   /**
@@ -188,11 +187,13 @@ export const AboutSleepTemplates = () => {
   };
 
   // if the user has permission to create, show the create button
-  const tableControl = canCreate ?
+  const tableControl = canCreate ? (
     <Link to={`/coordinator/admin/about-sleep-templates/create`}>
       <Button variant="primary">Create +</Button>
-    </Link> :
-    <React.Fragment />;
+    </Link>
+  ) : (
+    <React.Fragment />
+  );
 
   const navbar = <AdminNavbar activeView="About Sleep Templates" />;
 
@@ -219,7 +220,8 @@ export const AboutSleepTemplates = () => {
           includeControl={true}
           includeSearch={true}
           paginationPer={10}
-          sortDefault="" />
+          sortDefault=""
+        />
       </ListContent>
     </ListView>
   );

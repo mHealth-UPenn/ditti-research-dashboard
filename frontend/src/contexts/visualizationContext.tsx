@@ -16,22 +16,35 @@
  */
 
 import { createContext, PropsWithChildren, useMemo, useState } from "react";
-import { scaleTime } from '@visx/scale';
+import { scaleTime } from "@visx/scale";
 import { useParentSize } from "@visx/responsive";
-import { VisualizationContextProviderProps, VisualizationContextValue } from "./visualizationContext.types";
+import {
+  VisualizationContextProviderProps,
+  VisualizationContextValue,
+} from "./visualizationContext.types";
 
-export const VisualizationContext = createContext<VisualizationContextValue | undefined>(undefined);
+export const VisualizationContext = createContext<
+  VisualizationContextValue | undefined
+>(undefined);
 
 export const VisualizationContextProvider = ({
   defaultMargin = { top: 50, right: 30, bottom: 25, left: 60 },
   children,
 }: PropsWithChildren<VisualizationContextProviderProps>) => {
   const now = new Date();
-  const todayNoon = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12);
+  const todayNoon = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    12
+  );
   const previousNoon = new Date(todayNoon);
   previousNoon.setDate(previousNoon.getDate() - 1);
 
-  const [zoomDomain, setZoomDomain] = useState<[Date, Date]>([previousNoon, todayNoon]);
+  const [zoomDomain, setZoomDomain] = useState<[Date, Date]>([
+    previousNoon,
+    todayNoon,
+  ]);
   const [minRangeReached, setMinRangeReached] = useState(false);
   const [maxRangeReached, setMaxRangeReached] = useState(false);
 
@@ -52,7 +65,7 @@ export const VisualizationContextProvider = ({
       return 60;
     }
     return 40;
-  }, [width])
+  }, [width]);
 
   const onZoomChange = (domain: [number, number]) => {
     const [left, right] = domain;
@@ -73,7 +86,7 @@ export const VisualizationContextProvider = ({
   const resetZoom = () => {
     setMinRangeReached(false);
     setMaxRangeReached(false);
-    setZoomDomain([previousNoon, todayNoon])
+    setZoomDomain([previousNoon, todayNoon]);
   };
 
   const panLeft = () => {
@@ -137,26 +150,28 @@ export const VisualizationContextProvider = ({
   };
 
   return (
-    <VisualizationContext.Provider value={{
-      zoomDomain,
-      minRangeReached,
-      maxRangeReached,
-      parentRef,
-      width,
-      height,
-      defaultMargin,
-      xScale,
-      xTicks,
-      onZoomChange,
-      resetZoom,
-      panLeft,
-      panRight,
-      zoomIn,
-      zoomOut,
-    }}>
+    <VisualizationContext.Provider
+      value={{
+        zoomDomain,
+        minRangeReached,
+        maxRangeReached,
+        parentRef,
+        width,
+        height,
+        defaultMargin,
+        xScale,
+        xTicks,
+        onZoomChange,
+        resetZoom,
+        panLeft,
+        panRight,
+        zoomIn,
+        zoomOut,
+      }}
+    >
       <div ref={parentRef} className="w-full">
         {children}
       </div>
     </VisualizationContext.Provider>
-  )
+  );
 };

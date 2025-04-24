@@ -27,8 +27,8 @@ import { AudioTapModel, TapModel } from "../types/models";
  */
 export interface DittiDataContextValue {
   dataLoading: boolean;
-  taps: TapModel[]
-  audioTaps: AudioTapModel[]
-  audioFiles: AudioFile[]
+  taps: TapModel[];
+  audioTaps: AudioTapModel[];
+  audioFiles: AudioFile[];
   refreshAudioFiles: () => Promise<void>;
 }

@@ -59,4 +59,4 @@ export const useEnterKeyLogin = (
   loginFunction: () => void
 ): void => {
   useKeyboardEvent("Enter", loginFunction, isEnabled, { preventDefault: true });
-}; 
+};

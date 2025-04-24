@@ -17,10 +17,12 @@
 
 import { PropsWithChildren } from "react";
 
-
 export const FormView = ({ children }: PropsWithChildren<unknown>) => {
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] overflow-x-scroll overflow-y-scroll bg-white lg:flex-row">
+    <div
+      className="flex h-[calc(100vh-8rem)] flex-col overflow-x-scroll
+        overflow-y-scroll bg-white lg:flex-row"
+    >
       {children}
     </div>
   );

@@ -17,7 +17,7 @@
 
 import * as React from "react";
 import { Button } from "./button";
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { ToggleButtonProps } from "./buttons.types";
 
 export const ToggleButton: React.FC<ToggleButtonProps> = ({
@@ -34,8 +34,9 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
         variant="success"
         onClick={() => remove(id)}
         fullWidth={fullWidth}
-        fullHeight={fullHeight}>
-          <CheckCircleOutlineIcon />
+        fullHeight={fullHeight}
+      >
+        <CheckCircleOutlineIcon />
       </Button>
     );
   }
@@ -45,8 +46,9 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
       variant="secondary"
       onClick={() => add(id)}
       fullWidth={fullWidth}
-      fullHeight={fullHeight}>
-        Add +
+      fullHeight={fullHeight}
+    >
+      Add +
     </Button>
   );
 };

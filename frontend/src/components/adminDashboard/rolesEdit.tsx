@@ -45,7 +45,7 @@ import { RolesFormPrefill } from "./adminDashboard.types";
 export const RolesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
-  const roleId = id ? parseInt(id) : 0
+  const roleId = id ? parseInt(id) : 0;
 
   const [actions, setActions] = useState<ActionResource[]>([]);
   const [resources, setResources] = useState<ActionResource[]>([]);
@@ -57,7 +57,6 @@ export const RolesEdit = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-
     // get all available actions
     const fetchActions = makeRequest("/admin/action?app=1").then(
       (actions: ActionResource[]) => setActions(actions)
@@ -103,7 +102,7 @@ export const RolesEdit = () => {
 
     return {
       name: role.name,
-      permissions: role.permissions
+      permissions: role.permissions,
     };
   };
 
@@ -111,7 +110,9 @@ export const RolesEdit = () => {
    * Add a new permission and pair of action and resource dropdown menus
    */
   const addPermission = (): void => {
-    const id = permissions.length ? permissions[permissions.length - 1].id + 1 : 0;
+    const id = permissions.length
+      ? permissions[permissions.length - 1].id + 1
+      : 0;
     setPermissions([...permissions, { id: id, action: "", resource: "" }]);
   };
 
@@ -147,7 +148,9 @@ export const RolesEdit = () => {
    */
   const getSelectedAction = (id: number): number => {
     const permission = permissions.find((p: Permission) => p.id === id);
-    const action = actions.find((a: ActionResource) => a.value === permission?.action);
+    const action = actions.find(
+      (a: ActionResource) => a.value === permission?.action
+    );
     return action ? action.id : 0;
   };
 
@@ -175,7 +178,9 @@ export const RolesEdit = () => {
    */
   const getSelectedResource = (id: number): number => {
     const permission = permissions.find((p: Permission) => p.id === id);
-    const resource = resources.find((r: ActionResource) => r.value === permission?.resource);
+    const resource = resources.find(
+      (r: ActionResource) => r.value === permission?.resource
+    );
     return resource ? resource.id : 0;
   };
 
@@ -186,22 +191,20 @@ export const RolesEdit = () => {
   const post = async (): Promise<void> => {
     const ps = permissions.map((p: Permission) => ({
       action: p.action,
-      resource: p.resource
+      resource: p.resource,
     }));
 
     const data = { name, permissions: ps };
     const id = roleId;
     const body = {
-      app: 1,  // Admin Dashboard = 1
-      ...(id ? { id: id, edit: data } : { create: data })
+      app: 1, // Admin Dashboard = 1
+      ...(id ? { id: id, edit: data } : { create: data }),
     };
 
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/role/edit" : "/admin/role/create";
 
-    await makeRequest(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    await makeRequest(url, opts).then(handleSuccess).catch(handleFailure);
   };
 
   /**
@@ -239,7 +242,6 @@ export const RolesEdit = () => {
     return (
       <React.Fragment>
         {permissions.map((p: Permission) => {
-
           // handle wildcard permissions
           const action = p.action === "*" ? "All Actions" : p.action;
           const resource = p.resource === "*" ? "All Resources" : p.resource;
@@ -259,38 +261,41 @@ export const RolesEdit = () => {
     );
   };
 
-  const permissionFields = permissions.map((p: Permission, i) =>
+  const permissionFields = permissions.map((p: Permission, i) => (
     <FormRow key={i} forceRow={true}>
       <FormField className="mr-4 xl:mr-8">
         <SelectField
           id={p.id}
           opts={actions.map((a: ActionResource) => ({
             value: a.id,
-            label: a.value
+            label: a.value,
           }))}
           placeholder="Action"
           callback={selectAction}
-          getDefault={getSelectedAction} />
+          getDefault={getSelectedAction}
+        />
       </FormField>
       <FormField>
         <SelectField
           id={p.id}
           opts={resources.map((r: ActionResource) => ({
             value: r.id,
-            label: r.value
+            label: r.value,
           }))}
           placeholder="Permission"
           callback={selectResource}
-          getDefault={getSelectedResource} />
+          getDefault={getSelectedResource}
+        />
       </FormField>
-      <div className="flex items-center mb-8 px-2 cursor-pointer lg:pr-4">
+      <div className="mb-8 flex cursor-pointer items-center px-2 lg:pr-4">
         <CloseIcon
           color="warning"
           fontSize="large"
-          onClick={() => removePermission(p.id)} />
+          onClick={() => removePermission(p.id)}
+        />
       </div>
     </FormRow>
-  );
+  ));
 
   const buttonText = roleId ? "Update" : "Create";
 
@@ -317,7 +322,8 @@ export const RolesEdit = () => {
               value={name}
               label="Name"
               onKeyup={(text: string) => setName(text)}
-              feedback="" />
+              feedback=""
+            />
           </FormField>
         </FormRow>
         <FormRow>
@@ -330,8 +336,9 @@ export const RolesEdit = () => {
               variant="tertiary"
               onClick={addPermission}
               className="w-max"
-              size="sm">
-                Add Permission
+              size="sm"
+            >
+              Add Permission
             </Button>
           </FormField>
         </FormRow>
@@ -349,9 +356,7 @@ export const RolesEdit = () => {
             <br />
             {getPermissionsSummary()}
           </FormSummaryText>
-          <FormSummaryButton onClick={post}>
-            {buttonText}
-          </FormSummaryButton>
+          <FormSummaryButton onClick={post}>{buttonText}</FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>
     </FormView>

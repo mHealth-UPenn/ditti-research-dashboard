@@ -17,7 +17,7 @@
 
 import { useState } from "react";
 import { TextField } from "../fields/textField";
-import SearchIcon from '@mui/icons-material/Search';
+import SearchIcon from "@mui/icons-material/Search";
 import { TableControlProps } from "./table.types";
 
 export const TableControl = ({
@@ -32,29 +32,28 @@ export const TableControl = ({
   const handleKeyUp = (v: string) => {
     setValue(v);
     onSearch(v);
-  }
+  };
 
   return (
-    <div className="flex items-center justify-between mb-4">
-      {includeControl &&
-        <div style={{ width: controlWidth + "%" }}>
-          {control}
-        </div>
-      }
+    <div className="mb-4 flex items-center justify-between">
+      {includeControl && (
+        <div style={{ width: controlWidth + "%" }}>{control}</div>
+      )}
       <div>
-        {includeSearch &&
+        {includeSearch && (
           <TextField
             type="text"
             placeholder="Search..."
             label=""
             onKeyup={handleKeyUp}
             feedback=""
-            value={value}>
-              <div className="pl-2 text-light">
-                <SearchIcon />
-              </div>
+            value={value}
+          >
+            <div className="pl-2 text-light">
+              <SearchIcon />
+            </div>
           </TextField>
-        }
+        )}
       </div>
     </div>
   );

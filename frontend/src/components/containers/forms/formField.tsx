@@ -20,10 +20,10 @@ import { FormFieldProps } from "./forms.types";
 
 export const FormField = ({
   className,
-  children
+  children,
 }: PropsWithChildren<FormFieldProps>) => {
   return (
-    <div className={`flex w-full flex-col mb-8 px-4 ${className}`}>
+    <div className={`mb-8 flex w-full flex-col px-4 ${className}`}>
       {children}
     </div>
   );

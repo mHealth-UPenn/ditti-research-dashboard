@@ -19,7 +19,6 @@ import { useContext } from "react";
 import { DittiDataContext } from "../contexts/dittiDataContext";
 import { DittiDataContextValue } from "../contexts/dittiDataContext.types";
 
-
 /**
  * Hook for retrieving context data
  * @returns The current ditti data context.
@@ -33,8 +32,10 @@ export const useDittiData = (): DittiDataContextValue => {
       taps: [],
       audioTaps: [],
       audioFiles: [],
-      refreshAudioFiles: async () => { return; },
-    }
+      refreshAudioFiles: async () => {
+        return;
+      },
+    };
   }
   return context;
 };

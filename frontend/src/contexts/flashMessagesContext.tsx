@@ -15,19 +15,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import { createContext, useState, PropsWithChildren, createRef } from "react";
-import { FlashMessageContextValue, FlashMessageModel } from "./flashMessagesContext.types";
+import {
+  FlashMessageContextValue,
+  FlashMessageModel,
+} from "./flashMessagesContext.types";
 import { FlashMessage } from "../components/flashMessage/flashMessage";
 import { FlashMessageVariant } from "../components/flashMessage/flashMessage.types";
 
-export const FlashMessageContext = createContext<FlashMessageContextValue | undefined>(undefined);
+export const FlashMessageContext = createContext<
+  FlashMessageContextValue | undefined
+>(undefined);
 
 // FlashMessageContextProvider component that wraps children with studies context.
 export function FlashMessageContextProvider({
-  children
+  children,
 }: PropsWithChildren<unknown>) {
   const [flashMessages, setFlashMessages] = useState<FlashMessageModel[]>([]);
 
-  const flashMessage = (msg: React.ReactElement, variant: FlashMessageVariant) => {
+  const flashMessage = (
+    msg: React.ReactElement,
+    variant: FlashMessageVariant
+  ) => {
     const updatedFlashMessages = [...flashMessages];
     const containerRef = createRef<HTMLDivElement>();
 
@@ -36,27 +44,29 @@ export function FlashMessageContextProvider({
       ? updatedFlashMessages[updatedFlashMessages.length - 1].id + 1
       : 0;
 
-    const element =
+    const element = (
       <FlashMessage
         key={id}
         variant={variant}
         containerRef={containerRef}
-        onClose={() => closeMessage(id)}>
-          {msg}
-      </FlashMessage>;
+        onClose={() => closeMessage(id)}
+      >
+        {msg}
+      </FlashMessage>
+    );
 
     // Add the message to the page
     updatedFlashMessages.push({ id, element, containerRef });
     setFlashMessages(updatedFlashMessages);
-  }
+  };
 
   const closeMessage = (id: number) => {
-    setFlashMessages(prevFlashMessages => {
+    setFlashMessages((prevFlashMessages) => {
       let updatedFlashMessages = [...prevFlashMessages];
       updatedFlashMessages = updatedFlashMessages.filter((fm) => fm.id != id);
       return updatedFlashMessages;
     });
-  }
+  };
 
   return (
     <FlashMessageContext.Provider value={{ flashMessages, flashMessage }}>

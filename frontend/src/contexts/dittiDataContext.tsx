@@ -18,12 +18,20 @@ import { APP_ENV } from "../environment";
 import { makeRequest } from "../utils";
 import { DataFactory } from "../dataFactory";
 import { differenceInMilliseconds } from "date-fns";
-import { createContext, PropsWithChildren, useState, useMemo, useEffect } from "react";
+import {
+  createContext,
+  PropsWithChildren,
+  useState,
+  useMemo,
+  useEffect,
+} from "react";
 import { DittiDataContextValue } from "./dittiDataContext.types";
 import { AudioFile, AudioTap, Tap } from "../types/api";
 import { TapModel, AudioTapModel } from "../types/models";
 
-export const DittiDataContext = createContext<DittiDataContextValue | undefined>(undefined);
+export const DittiDataContext = createContext<
+  DittiDataContextValue | undefined
+>(undefined);
 
 export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
   const [dataLoading, setDataLoading] = useState(true);
@@ -45,14 +53,19 @@ export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
       promises.push(getTapsAsync().then(setTaps));
       promises.push(getAudioTapsAsync().then(setAudioTaps));
       promises.push(getAudioFilesAsync().then(setAudioFiles));
-    } else if ((APP_ENV === "development" || APP_ENV === "demo") && dataFactory) {
-      promises.push(dataFactory.init().then(() => {
-        if (dataFactory) {
-          setTaps(dataFactory.taps);
-          setAudioTaps(dataFactory.audioTaps);
-          setAudioFiles(dataFactory.audioFiles);
-        }
-      }));
+    } else if (
+      (APP_ENV === "development" || APP_ENV === "demo") &&
+      dataFactory
+    ) {
+      promises.push(
+        dataFactory.init().then(() => {
+          if (dataFactory) {
+            setTaps(dataFactory.taps);
+            setAudioTaps(dataFactory.audioTaps);
+            setAudioFiles(dataFactory.audioFiles);
+          }
+        })
+      );
     }
 
     Promise.all(promises).then(() => setDataLoading(false));
@@ -62,14 +75,22 @@ export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
     let taps: TapModel[] = [];
 
     if (APP_ENV === "production") {
-      taps = await makeRequest("/aws/get-taps?app=2").then((res: Tap[]) => {
-        return res.map((tap) => {
-          return { dittiId: tap.dittiId, time: new Date(tap.time), timezone: tap.timezone };
+      taps = await makeRequest("/aws/get-taps?app=2")
+        .then((res: Tap[]) => {
+          return res.map((tap) => {
+            return {
+              dittiId: tap.dittiId,
+              time: new Date(tap.time),
+              timezone: tap.timezone,
+            };
+          });
+        })
+        .catch(() => {
+          console.error(
+            "Unable to fetch taps data. Check account permissions."
+          );
+          return [];
         });
-      }).catch(() => {
-        console.error("Unable to fetch taps data. Check account permissions.")
-        return [];
-      });
     } else if (dataFactory) {
       taps = dataFactory.taps;
     }
@@ -97,8 +118,11 @@ export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
               action: at.action,
             };
           });
-        }).catch(() => {
-          console.error("Unable to fetch audio taps data. Check account permissions.")
+        })
+        .catch(() => {
+          console.error(
+            "Unable to fetch audio taps data. Check account permissions."
+          );
           return [];
         });
     } else if (dataFactory) {
@@ -117,11 +141,12 @@ export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
     let audioFiles: AudioFile[] = [];
 
     if (APP_ENV === "production") {
-      audioFiles = await makeRequest("/aws/get-audio-files?app=2")
-        .catch(() => {
-          console.error("Unable to fetch audio files. Check account permissions.")
-          return [];
-        });
+      audioFiles = await makeRequest("/aws/get-audio-files?app=2").catch(() => {
+        console.error(
+          "Unable to fetch audio files. Check account permissions."
+        );
+        return [];
+      });
     } else if (dataFactory) {
       audioFiles = dataFactory.audioFiles;
     }
@@ -131,17 +156,19 @@ export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
 
   const refreshAudioFiles = async () => {
     setAudioFiles(await getAudioFilesAsync());
-  }
+  };
 
   return (
-    <DittiDataContext.Provider value={{ 
-      dataLoading,
-      taps,
-      audioTaps,
-      audioFiles,
-      refreshAudioFiles,
-    }}>
+    <DittiDataContext.Provider
+      value={{
+        dataLoading,
+        taps,
+        audioTaps,
+        audioFiles,
+        refreshAudioFiles,
+      }}
+    >
       {children}
     </DittiDataContext.Provider>
   );
-}
+};
