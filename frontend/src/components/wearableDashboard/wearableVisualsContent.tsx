@@ -131,7 +131,7 @@ export function WearableVisualsContent({
 
   // Download the current participant's data in Excel format.
   const downloadExcel = async (): Promise<void> => {
-    const url = `/admin/fitbit_data/download/participant/${studySubject?.dittiId}?app=3`;
+    const url = `/admin/fitbit_data/download/participant/${studySubject?.dittiId ?? ""}?app=3`;
     const res = await downloadExcelFromUrl(url);
     if (res) {
       flashMessage(<span>{res}</span>, "danger");
@@ -172,14 +172,14 @@ export function WearableVisualsContent({
                 <Button
                   variant="secondary"
                   className="mr-2"
-                  onClick={downloadExcel}
+                  onClick={() => void downloadExcel()}
                   rounded={true}
                 >
                   Download Excel
                 </Button>
                 {/* if the user can edit, show the edit button */}
                 <Link
-                  to={`/coordinator/wearable/participants/edit?dittiId=${studySubject?.dittiId}&sid=${study?.id}`}
+                  to={`/coordinator/wearable/participants/edit?dittiId=${studySubject?.dittiId ?? ""}&sid=${study?.id !== undefined ? String(study.id) : "0"}`}
                 >
                   <Button
                     variant="secondary"
@@ -197,7 +197,7 @@ export function WearableVisualsContent({
                   variant="secondary"
                   onClick={syncData}
                   rounded={true}
-                  disabled={isSyncing || !canInvoke}
+                  disabled={isSyncing === true || !canInvoke}
                 >
                   <span className="mr-2">
                     {isSyncing && canInvoke ? "Data Syncing..." : "Sync Data"}
@@ -218,7 +218,7 @@ export function WearableVisualsContent({
           <WearableVisualization
             showDayControls={true}
             showTapsData={canViewTaps}
-            dittiId={studySubject?.dittiId}
+            dittiId={studySubject?.dittiId ?? ""}
             horizontalPadding={md}
           />
         </CardContentRow>
