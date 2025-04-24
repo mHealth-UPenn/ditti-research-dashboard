@@ -67,7 +67,7 @@ export const Studies = () => {
             setCanArchive(true);
           }),
           makeRequest("/admin/study?app=1").then((data) => {
-            setStudies(data);
+            setStudies(data as unknown as Study[]);
           }),
         ]);
       } catch (error) {
@@ -77,7 +77,7 @@ export const Studies = () => {
       }
     };
 
-    fetchData();
+    void fetchData();
   }, []);
 
   /**
@@ -131,7 +131,7 @@ export const Studies = () => {
                 >
                   <Link
                     className="flex h-full w-full items-center justify-center"
-                    to={`/coordinator/admin/studies/edit?id=${id}`}
+                    to={`/coordinator/admin/studies/edit?id=${String(id)}`}
                   >
                     Edit
                   </Link>
@@ -142,7 +142,7 @@ export const Studies = () => {
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteStudy(id)}
+                  onClick={() => void deleteStudy(id)}
                 >
                   Archive
                 </Button>
@@ -181,15 +181,15 @@ export const Studies = () => {
    * Handle a successful response
    * @param id - the archived study id
    */
-  const handleSuccess = async () => {
+  const handleSuccess = () => {
     flashMessage(<span>Study archived successfully.</span>, "success");
 
     // show the loading screen
     setLoading(true);
 
     // refresh the table's data
-    makeRequest("/admin/study?app=1").then((studies) => {
-      setStudies(studies);
+    void makeRequest("/admin/study?app=1").then((studies) => {
+      setStudies(studies as unknown as Study[]);
       setLoading(false);
     });
   };
