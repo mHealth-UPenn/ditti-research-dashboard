@@ -28,8 +28,10 @@ import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useDittiData } from "../../hooks/useDittiData";
 
 export const AudioFiles = () => {
-  const [canCreateAudioFiles, setCanCreateAudioFiles] = useState<boolean>(false);
-  const [canDeleteAudioFiles, setCanDeleteAudioFiles] = useState<boolean>(false);
+  const [canCreateAudioFiles, setCanCreateAudioFiles] =
+    useState<boolean>(false);
+  const [canDeleteAudioFiles, setCanDeleteAudioFiles] =
+    useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
   const { dataLoading, audioFiles, refreshAudioFiles } = useDittiData();
@@ -40,38 +42,38 @@ export const AudioFiles = () => {
       name: "Title",
       searchable: true,
       sortable: true,
-      width: 20
+      width: 20,
     },
     {
       name: "Category",
       searchable: true,
       sortable: true,
-      width: 20
+      width: 20,
     },
     {
       name: "Availability",
       searchable: false,
       sortable: true,
-      width: 20
+      width: 20,
     },
     {
       name: "Studies",
       searchable: true,
       sortable: true,
-      width: 20
+      width: 20,
     },
     {
       name: "Length",
       searchable: false,
       sortable: false,
-      width: 10
+      width: 10,
     },
     {
       name: "",
       searchable: false,
       sortable: false,
-      width: 10
-    }
+      width: 10,
+    },
   ];
 
   useEffect(() => {
@@ -88,22 +90,23 @@ export const AudioFiles = () => {
       getAccess(2, "Delete", "Audio Files")
         .then(() => setCanDeleteAudioFiles(true))
         .catch(() => setCanDeleteAudioFiles(false))
-      );
+    );
 
     // when all promises complete, hide the loader
     Promise.all(promises).then(() => setLoading(false));
   }, []);
 
   const handleDelete = async (id: string, _version: number, name: string) => {
-    if (confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) {
+    if (
+      confirm(
+        `Are you sure you want to delete ${name}? This action cannot be undone.`
+      )
+    ) {
       try {
-        await makeRequest(
-          "/aws/audio-file/delete",
-          {
-            method: "POST",
-            body: JSON.stringify({ app: 2, id, _version })
-          }
-        );
+        await makeRequest("/aws/audio-file/delete", {
+          method: "POST",
+          body: JSON.stringify({ app: 2, id, _version }),
+        });
         flashMessage(<span>Audio file deleted successfully</span>, "success");
         setLoading(true);
 
@@ -121,10 +124,13 @@ export const AudioFiles = () => {
       } catch (error) {
         console.error(error);
         const e = error as { msg: string };
-        flashMessage(<span>An unexpected error occurred: {e.msg}</span>, "danger");
+        flashMessage(
+          <span>An unexpected error occurred: {e.msg}</span>,
+          "danger"
+        );
       }
     }
-  }
+  };
 
   /**
    * Get the data for the audio file table
@@ -140,23 +146,19 @@ export const AudioFiles = () => {
         category,
         availability,
         studies,
-        length
+        length,
       } = audioFile;
 
       return [
         {
-          contents: (
-            <span>{title}</span>
-          ),
+          contents: <span>{title}</span>,
           searchValue: title,
-          sortValue: title ? title : ""
+          sortValue: title ? title : "",
         },
         {
-          contents: (
-            <span>{category}</span>
-          ),
+          contents: <span>{category}</span>,
           searchValue: category,
-          sortValue: category ? category : ""
+          sortValue: category ? category : "",
         },
         {
           contents: (
@@ -165,14 +167,21 @@ export const AudioFiles = () => {
             </span>
           ),
           searchValue: "",
-          sortValue: availability === "all" ? "All users" : "Individual user"
+          sortValue: availability === "all" ? "All users" : "Individual user",
         },
         {
           contents: (
-            <span>{(studies?.length && studies[0] !== "all") ? studies.join(", ") : "All studies"}</span>
+            <span>
+              {studies?.length && studies[0] !== "all"
+                ? studies.join(", ")
+                : "All studies"}
+            </span>
           ),
           searchValue: studies?.join(),
-          sortValue: (studies?.length && studies[0] !== "all") ? studies.join(", ") : "All studies"
+          sortValue:
+            studies?.length && studies[0] !== "all"
+              ? studies.join(", ")
+              : "All studies",
         },
         {
           contents: (
@@ -187,15 +196,18 @@ export const AudioFiles = () => {
         },
         {
           contents: (
-            <div className="flex w-full h-full">
+            <div className="flex h-full w-full">
               {/* if the user can edit, link to the edit subject page */}
               <Button
                 variant="danger"
                 size="sm"
                 className="h-full flex-grow"
-                onClick={() => handleDelete(id || "", _version || 0, fileName || "")}
-                disabled={!canDeleteAudioFiles}>
-                  Delete
+                onClick={() =>
+                  handleDelete(id || "", _version || 0, fileName || "")
+                }
+                disabled={!canDeleteAudioFiles}
+              >
+                Delete
               </Button>
             </div>
           ),
@@ -203,7 +215,7 @@ export const AudioFiles = () => {
           sortValue: "",
           paddingX: 0,
           paddingY: 0,
-        }
+        },
       ];
     });
 
@@ -211,15 +223,17 @@ export const AudioFiles = () => {
   };
 
   // if the user can enroll subjects, include an enroll button
-  const tableControl =
+  const tableControl = (
     <Link to="/coordinator/ditti/audio/upload">
       <Button
         variant="primary"
         disabled={!(canCreateAudioFiles || APP_ENV === "demo")}
-        rounded={true}>
-          Upload +
+        rounded={true}
+      >
+        Upload +
       </Button>
     </Link>
+  );
 
   if (loading || dataLoading) {
     return (
@@ -240,7 +254,8 @@ export const AudioFiles = () => {
           includeControl={true}
           includeSearch={true}
           paginationPer={10}
-          sortDefault="" />
+          sortDefault=""
+        />
       </ListContent>
     </ListView>
   );

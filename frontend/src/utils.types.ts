@@ -18,7 +18,7 @@
 export type AttributesByTag = {
   [key: string]: string[];
 };
-  
+
 export type ClassAllowlist = {
   [key: string]: string[];
 };

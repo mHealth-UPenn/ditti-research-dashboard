@@ -37,16 +37,17 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
   const [canEdit, setCanEdit] = useState<boolean>(false);
   const [canViewTaps, setCanViewTaps] = useState<boolean>(false);
-  const [canViewWearableData, setCanViewWearableData] = useState<boolean>(false);
+  const [canViewWearableData, setCanViewWearableData] =
+    useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  
+
   const { studiesLoading, study } = useStudies();
   const { studySubjectLoading, studySubjects } = useCoordinatorStudySubjects();
 
   const appSlug = app === 2 ? "ditti" : "wearable";
 
-  const filteredStudySubjects = studySubjects.filter(
-    ss => ss.dittiId.startsWith(study?.dittiId || "undefined")
+  const filteredStudySubjects = studySubjects.filter((ss) =>
+    ss.dittiId.startsWith(study?.dittiId || "undefined")
   );
 
   const columns: Column[] = [
@@ -54,38 +55,38 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
       name: "Ditti ID",
       searchable: true,
       sortable: true,
-      width: 15
+      width: 15,
     },
     {
       name: "Ditti ID Expiry Date",
       searchable: false,
       sortable: true,
-      width: 20
+      width: 20,
     },
     {
       name: "Enrollment Start Date",
       searchable: false,
       sortable: true,
-      width: 20
+      width: 20,
     },
     {
       name: "Enrollment End Date",
       searchable: false,
       sortable: true,
-      width: 20
+      width: 20,
     },
     {
       name: "Tapping",
       searchable: false,
       sortable: true,
-      width: 15
+      width: 15,
     },
     {
       name: "",
       searchable: false,
       sortable: false,
-      width: 10
-    }
+      width: 10,
+    },
   ];
 
   useEffect(() => {
@@ -125,117 +126,121 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
     day: "numeric",
   };
 
-  const tableData: TableData[][] = filteredStudySubjects.map((studySubject: StudySubjectModel) => {
-    const { startsOn, expiresOn } = getEnrollmentInfoForStudy(studySubject, study?.id);
+  const tableData: TableData[][] = filteredStudySubjects.map(
+    (studySubject: StudySubjectModel) => {
+      const { startsOn, expiresOn } = getEnrollmentInfoForStudy(
+        studySubject,
+        study?.id
+      );
 
-    return [
-      {
-        contents: (
-          <>
-            {(app === 2 && studySubject.tapPermission && canViewTaps)
-              ? <Link to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
-                  <LinkComponent>
-                    {studySubject.dittiId}
-                  </LinkComponent>
-                </Link>
-              : (studySubject.apis.length && canViewWearableData)
-                ? <Link to={`/coordinator/wearable/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
-                    <LinkComponent>
-                      {studySubject.dittiId}
-                    </LinkComponent>
-                  </Link>
-                : studySubject.dittiId
-            }
-          </>
-        ),
-        searchValue: studySubject.dittiId,
-        sortValue: studySubject.dittiId
-      },
-      {
-        contents: (
-          <span>
-            {new Date(studySubject.dittiExpTime).toLocaleDateString("en-US", dateOptions)}
-          </span>
-        ),
-        searchValue: "",
-        sortValue: studySubject.dittiExpTime
-      },
-      {
-        contents: (
-          <span>
-            {startsOn.toLocaleDateString("en-US", dateOptions)}
-          </span>
-        ),
-        searchValue: "",
-        sortValue: startsOn.toLocaleDateString("en-US", dateOptions)
-      },
-      {
-        contents: (
-          <span>
-            {expiresOn.toLocaleDateString("en-US", dateOptions)}
-          </span>
-        ),
-        searchValue: "",
-        sortValue: expiresOn.toLocaleDateString("en-US", dateOptions)
-      },
-      {
-        contents: (
-          <span>{studySubject.tapPermission ? "Yes" : "No"}</span>
-        ),
-        searchValue: "",
-        sortValue: studySubject.tapPermission ? "1" : "0"
-      },
-      {
-        contents: (
-          <div className="flex w-full h-full">
-            {/* if the user can edit, link to the edit subject page */}
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-full flex-grow"
-              disabled={!(canEdit || APP_ENV === "demo")}
-              fullWidth={true}
-              fullHeight={true}>
+      return [
+        {
+          contents: (
+            <>
+              {app === 2 && studySubject.tapPermission && canViewTaps ? (
                 <Link
-                  className="w-full h-full flex items-center justify-center"
-                  to={`/coordinator/${appSlug}/participants/edit?dittiId=${studySubject.dittiId}&sid=${study?.id}`}>
-                    Edit
+                  to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}
+                >
+                  <LinkComponent>{studySubject.dittiId}</LinkComponent>
                 </Link>
-            </Button>
-          </div>
-        ),
-        searchValue: "",
-        sortValue: "",
-        paddingX: 0,
-        paddingY: 0,
-      }
-    ];
-  });
+              ) : studySubject.apis.length && canViewWearableData ? (
+                <Link
+                  to={`/coordinator/wearable/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}
+                >
+                  <LinkComponent>{studySubject.dittiId}</LinkComponent>
+                </Link>
+              ) : (
+                studySubject.dittiId
+              )}
+            </>
+          ),
+          searchValue: studySubject.dittiId,
+          sortValue: studySubject.dittiId,
+        },
+        {
+          contents: (
+            <span>
+              {new Date(studySubject.dittiExpTime).toLocaleDateString(
+                "en-US",
+                dateOptions
+              )}
+            </span>
+          ),
+          searchValue: "",
+          sortValue: studySubject.dittiExpTime,
+        },
+        {
+          contents: (
+            <span>{startsOn.toLocaleDateString("en-US", dateOptions)}</span>
+          ),
+          searchValue: "",
+          sortValue: startsOn.toLocaleDateString("en-US", dateOptions),
+        },
+        {
+          contents: (
+            <span>{expiresOn.toLocaleDateString("en-US", dateOptions)}</span>
+          ),
+          searchValue: "",
+          sortValue: expiresOn.toLocaleDateString("en-US", dateOptions),
+        },
+        {
+          contents: <span>{studySubject.tapPermission ? "Yes" : "No"}</span>,
+          searchValue: "",
+          sortValue: studySubject.tapPermission ? "1" : "0",
+        },
+        {
+          contents: (
+            <div className="flex h-full w-full">
+              {/* if the user can edit, link to the edit subject page */}
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-full flex-grow"
+                disabled={!(canEdit || APP_ENV === "demo")}
+                fullWidth={true}
+                fullHeight={true}
+              >
+                <Link
+                  className="flex h-full w-full items-center justify-center"
+                  to={`/coordinator/${appSlug}/participants/edit?dittiId=${studySubject.dittiId}&sid=${study?.id}`}
+                >
+                  Edit
+                </Link>
+              </Button>
+            </div>
+          ),
+          searchValue: "",
+          sortValue: "",
+          paddingX: 0,
+          paddingY: 0,
+        },
+      ];
+    }
+  );
 
   // if the user can enroll subjects, include an enroll button
-  const tableControl =
+  const tableControl = (
     <Link to={`/coordinator/${appSlug}/participants/enroll?sid=${study?.id}`}>
-      <Button
-        disabled={!(canCreate || APP_ENV === "demo")}
-        rounded={true}>
-          Enroll +
+      <Button disabled={!(canCreate || APP_ENV === "demo")} rounded={true}>
+        Enroll +
       </Button>
     </Link>
-
-if (loading || studiesLoading || studySubjectLoading) {
-  return (
-    <ListView>
-      <ListContent>
-        <SmallLoader />
-      </ListContent>
-    </ListView>
   );
-}
+
+  if (loading || studiesLoading || studySubjectLoading) {
+    return (
+      <ListView>
+        <ListContent>
+          <SmallLoader />
+        </ListContent>
+      </ListView>
+    );
+  }
 
   return (
     <ListView>
       <ListContent>
-        <div className="flex flex-col mb-8">
+        <div className="mb-8 flex flex-col">
           <Title>{study?.name}</Title>
           <Subtitle>All subjects</Subtitle>
         </div>
@@ -247,7 +252,8 @@ if (loading || studiesLoading || studySubjectLoading) {
           includeControl={true}
           includeSearch={true}
           paginationPer={10}
-          sortDefault="" />
+          sortDefault=""
+        />
       </ListContent>
     </ListView>
   );

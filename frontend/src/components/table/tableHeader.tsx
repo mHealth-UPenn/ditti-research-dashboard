@@ -25,21 +25,28 @@ export const TableHeader = ({ headers, onSort }: TableHeaderProps) => {
       {headers.map((h, i) => (
         <th
           key={i}
-          className={`bg-extra-light border-r border-light select-none ${h.sortable && "cursor-pointer"}`}
+          className={`select-none border-r border-light bg-extra-light
+          ${h.sortable && "cursor-pointer"}`}
           style={{ width: h.width + "%" }}
-          onClick={() => h.sortable && onSort(h.name, h.ascending ? 0 : 1)}>
-            <div className="flex items-begin justify-between mx-1 relative lg:mx-2">
-              <span className="text-base font-regular whitespace-nowrap">{h.name}</span>
+          onClick={() => h.sortable && onSort(h.name, h.ascending ? 0 : 1)}
+        >
+          <div
+            className="items-begin relative mx-1 flex justify-between lg:mx-2"
+          >
+            <span className="font-regular whitespace-nowrap text-base">
+              {h.name}
+            </span>
 
-              {/* sort buttons */}
-              {h.sortable && (
-                h.ascending === -1 ?
-                <KeyboardArrowUpIcon className="text-light" /> :
-                h.ascending === 0 ?
-                <KeyboardArrowDownIcon /> :
+            {/* sort buttons */}
+            {h.sortable &&
+              (h.ascending === -1 ? (
+                <KeyboardArrowUpIcon className="text-light" />
+              ) : h.ascending === 0 ? (
+                <KeyboardArrowDownIcon />
+              ) : (
                 <KeyboardArrowUpIcon />
-              )}
-            </div>
+              ))}
+          </div>
         </th>
       ))}
     </tr>

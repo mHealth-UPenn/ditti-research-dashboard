@@ -17,10 +17,12 @@
 
 import { PropsWithChildren } from "react";
 
-
 export const FormSummaryText = ({ children }: PropsWithChildren<unknown>) => {
   return (
-    <div className="flex-grow flex-shrink-0 mb-8 md:w-1/2 lg:w-full lg:overflow-y-scroll lg:max-h-[calc(100%-6rem)] truncate">
+    <div
+      className="mb-8 flex-shrink-0 flex-grow truncate md:w-1/2
+        lg:max-h-[calc(100%-6rem)] lg:w-full lg:overflow-y-scroll"
+    >
       {children}
     </div>
   );

@@ -41,38 +41,38 @@ export const Accounts = () => {
       name: "Name",
       searchable: true,
       sortable: true,
-      width: 20
+      width: 20,
     },
     {
       name: "Email",
       searchable: true,
       sortable: true,
-      width: 25
+      width: 25,
     },
     {
       name: "Phone Number",
       searchable: true,
       sortable: true,
-      width: 15
+      width: 15,
     },
     {
       name: "Created On",
       searchable: false,
       sortable: true,
-      width: 15
+      width: 15,
     },
     {
       name: "Last Login",
       searchable: false,
       sortable: true,
-      width: 15
+      width: 15,
     },
     {
       name: "",
       searchable: false,
       sortable: false,
-      width: 10
-    }
+      width: 10,
+    },
   ]);
   const [loading, setLoading] = useState(true);
   const { flashMessage } = useFlashMessages();
@@ -125,7 +125,7 @@ export const Accounts = () => {
     const dateOptions: Intl.DateTimeFormatOptions = {
       year: "numeric",
       month: "short",
-      day: "numeric"
+      day: "numeric",
     };
 
     return accounts.map((a: Account) => {
@@ -136,7 +136,7 @@ export const Accounts = () => {
         id,
         lastLogin,
         lastName,
-        phoneNumber
+        phoneNumber,
       } = a;
       const name = firstName + " " + lastName;
 
@@ -147,25 +147,19 @@ export const Accounts = () => {
 
       return [
         {
-          contents: (
-            <span>{name}</span>
-          ),
+          contents: <span>{name}</span>,
           searchValue: name,
-          sortValue: name
+          sortValue: name,
         },
         {
-          contents: (
-            <span>{email}</span>
-          ),
+          contents: <span>{email}</span>,
           searchValue: email,
-          sortValue: email
+          sortValue: email,
         },
         {
-          contents: (
-            <span>{phoneNumber}</span>
-          ),
+          contents: <span>{phoneNumber}</span>,
           searchValue: phoneNumber,
-          sortValue: phoneNumber
+          sortValue: phoneNumber,
         },
         {
           contents: (
@@ -174,7 +168,7 @@ export const Accounts = () => {
             </span>
           ),
           searchValue: "",
-          sortValue: createdOn
+          sortValue: createdOn,
         },
         {
           contents: (
@@ -187,41 +181,44 @@ export const Accounts = () => {
             </span>
           ),
           searchValue: "",
-          sortValue: ""
+          sortValue: "",
         },
         {
           contents: (
-            <div className="flex w-full h-full">
-              {canEdit &&
+            <div className="flex h-full w-full">
+              {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
                   className="h-full flex-grow"
                   fullWidth={true}
-                  fullHeight={true}>
-                    <Link
-                      className="w-full h-full flex items-center justify-center"
-                      to={`/coordinator/admin/accounts/edit?id=${id}`}>
-                        Edit
-                    </Link>
+                  fullHeight={true}
+                >
+                  <Link
+                    className="flex h-full w-full items-center justify-center"
+                    to={`/coordinator/admin/accounts/edit?id=${id}`}
+                  >
+                    Edit
+                  </Link>
                 </Button>
-              }
-              {canArchive &&
+              )}
+              {canArchive && (
                 <Button
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteAccount(id)}>
-                    Archive
+                  onClick={() => deleteAccount(id)}
+                >
+                  Archive
                 </Button>
-              }
+              )}
             </div>
           ),
           searchValue: "",
           sortValue: "",
           paddingX: 0,
           paddingY: 0,
-        }
+        },
       ];
     });
   };
@@ -231,7 +228,7 @@ export const Accounts = () => {
    * @param id - the entry's database primary key
    */
   const deleteAccount = (id: number): void => {
-    const body = { app: 1, id };  // Admin Dashboard = 1
+    const body = { app: 1, id }; // Admin Dashboard = 1
     const opts = { method: "POST", body: JSON.stringify(body) };
 
     const msg = "Are you sure you want to archive this account?";
@@ -252,9 +249,9 @@ export const Accounts = () => {
     setLoading(true);
 
     // Refresh the table's data
-    makeRequest("/admin/account?app=1").then((accounts) =>
-      setAccounts(accounts)
-    ).finally(() => setLoading(false));
+    makeRequest("/admin/account?app=1")
+      .then((accounts) => setAccounts(accounts))
+      .finally(() => setLoading(false));
   };
 
   /**
@@ -276,11 +273,11 @@ export const Accounts = () => {
   // If the user has permission to create, show the create button
   const tableControl = canCreate ? (
     <Link to={`/coordinator/admin/accounts/create`}>
-      <Button variant="primary">
-          Create +
-      </Button>
+      <Button variant="primary">Create +</Button>
     </Link>
-  ) : <React.Fragment />;
+  ) : (
+    <React.Fragment />
+  );
 
   const navbar = <AdminNavbar activeView="Accounts" />;
 
@@ -307,7 +304,8 @@ export const Accounts = () => {
           includeControl={true}
           includeSearch={true}
           paginationPer={10}
-          sortDefault="" />
+          sortDefault=""
+        />
       </ListContent>
     </ListView>
   );

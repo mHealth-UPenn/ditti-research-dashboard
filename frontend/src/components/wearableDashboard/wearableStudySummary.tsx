@@ -61,20 +61,19 @@ export function WearableStudySummary() {
     );
 
     promises.push(
-      makeRequest(
-        "/db/get-study-contacts?app=3&study=" + studyId
-      ).then((contacts: StudyContactModel[]) => setStudyContacts(contacts))
+      makeRequest("/db/get-study-contacts?app=3&study=" + studyId).then(
+        (contacts: StudyContactModel[]) => setStudyContacts(contacts)
+      )
     );
 
     promises.push(
-      makeRequest(
-        "/db/get-study-details?app=3&study=" + studyId
-      ).then((details: Study) => setStudyDetails(details))
+      makeRequest("/db/get-study-details?app=3&study=" + studyId).then(
+        (details: Study) => setStudyDetails(details)
+      )
     );
 
     Promise.all(promises).then(() => setLoading(false));
   }, [studyId]);
-
 
   // Download all of the study's data in excel format.
   const downloadExcel = async (): Promise<void> => {
@@ -104,7 +103,6 @@ export function WearableStudySummary() {
   return (
     <ViewContainer>
       <Card width="md">
-
         {/* Study information and Excel download button */}
         <CardContentRow>
           <div className="flex flex-col">
@@ -113,33 +111,29 @@ export function WearableStudySummary() {
             <Subtitle>Study email: {email}</Subtitle>
             <Subtitle>Ditti acronym: {dittiId}</Subtitle>
           </div>
-          {canViewWearableData &&
-            <Button
-              onClick={downloadExcel}
-              variant="secondary"
-              rounded={true}>
-                Download Excel
-            </Button>}
+          {canViewWearableData && (
+            <Button onClick={downloadExcel} variant="secondary" rounded={true}>
+              Download Excel
+            </Button>
+          )}
         </CardContentRow>
 
         {/* Buttons for enrolling and viewing participants */}
         <CardContentRow>
           <Title>Active Subjects</Title>
           <div className="flex">
-            {(canCreate || APP_ENV === "demo") &&
-              <Link to={`/coordinator/wearable/participants/enroll?sid=${studyId}`}>
-                <Button
-                  className="mr-2"
-                  rounded={true}>
-                    Enroll subject +
+            {(canCreate || APP_ENV === "demo") && (
+              <Link
+                to={`/coordinator/wearable/participants/enroll?sid=${studyId}`}
+              >
+                <Button className="mr-2" rounded={true}>
+                  Enroll subject +
                 </Button>
               </Link>
-            }
+            )}
             <Link to={`/coordinator/wearable/participants?sid=${studyId}`}>
-              <Button
-                variant="secondary"
-                rounded={true}>
-                  View all subjects
+              <Button variant="secondary" rounded={true}>
+                View all subjects
               </Button>
             </Link>
           </div>
@@ -148,7 +142,8 @@ export function WearableStudySummary() {
         {/* The list of participants in this study */}
         <WearableStudySubjects
           studyDetails={studyDetails}
-          canViewWearableData={canViewWearableData} />
+          canViewWearableData={canViewWearableData}
+        />
       </Card>
 
       {/* The list of study contacts */}
@@ -161,9 +156,13 @@ export function WearableStudySummary() {
           return (
             <CardContentRow key={i}>
               <div>
-                <p className="mb-0"><b>{sc.fullName}: {sc.role}</b></p>
-                <p className="ml-4 mb-0">{sc.email}</p>
-                <p className="ml-4 mb-0">{sc.phoneNumber}</p>
+                <p className="mb-0">
+                  <b>
+                    {sc.fullName}: {sc.role}
+                  </b>
+                </p>
+                <p className="mb-0 ml-4">{sc.email}</p>
+                <p className="mb-0 ml-4">{sc.phoneNumber}</p>
               </div>
             </CardContentRow>
           );
