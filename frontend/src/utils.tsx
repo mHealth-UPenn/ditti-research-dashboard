@@ -28,83 +28,163 @@ import { AttributesByTag, ClassAllowlist } from "./utils.types";
  */
 export function sanitize_quill_html(html: string): string {
   const allowed_tags = [
-    "a", "blockquote", "br", "div", "em", "h1", "h2", "h3", "h4", "h5", "h6",
-    "iframe", "img", "li", "ol", "p", "pre", "span", "strong", "sub", "sup",
-    "table", "tbody", "td", "tr", "ul", "select", "option", "u", "s"
+    "a",
+    "blockquote",
+    "br",
+    "div",
+    "em",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "iframe",
+    "img",
+    "li",
+    "ol",
+    "p",
+    "pre",
+    "span",
+    "strong",
+    "sub",
+    "sup",
+    "table",
+    "tbody",
+    "td",
+    "tr",
+    "ul",
+    "select",
+    "option",
+    "u",
+    "s",
   ];
 
   const all_attributes = [
-    "class", "style", "data-language", "data-row", "data-list",
-    "allowfullscreen", "frameborder", "src", "href", "target", "value", "alt"
+    "class",
+    "style",
+    "data-language",
+    "data-row",
+    "data-list",
+    "allowfullscreen",
+    "frameborder",
+    "src",
+    "href",
+    "target",
+    "value",
+    "alt",
   ];
 
   const attributes_by_tag: AttributesByTag = {
-    "div": ["class", "style", "data-language"],
-    "td": ["class", "style", "data-row"],
-    "li": ["class", "style", "data-list"],
-    "iframe": ["class", "style", "allowfullscreen", "frameborder", "src"],
-    "a": ["class", "style", "href", "target"],
-    "select": ["class", "style"],
-    "option": ["class", "style", "value"],
-    "img": ["class", "style", "src", "alt"],
-    "p": ["class", "style"],
-    "span": ["class", "style"],
-    "h1": ["class", "style"],
-    "h2": ["class", "style"],
-    "h3": ["class", "style"],
-    "h4": ["class", "style"],
-    "h5": ["class", "style"],
-    "h6": ["class", "style"],
-    "blockquote": ["class", "style"],
-    "pre": ["class", "style"],
-    "ol": ["class", "style"],
-    "ul": ["class", "style"],
-    "table": ["class", "style"],
-    "tbody": ["class", "style"],
-    "tr": ["class", "style"],
-    "strong": ["class", "style"],
-    "em": ["class", "style"],
-    "sub": ["class", "style"],
-    "sup": ["class", "style"],
-    "br": ["class", "style"],
-    "u": ["class", "style"],
-    "s": ["class", "style"]
+    div: ["class", "style", "data-language"],
+    td: ["class", "style", "data-row"],
+    li: ["class", "style", "data-list"],
+    iframe: ["class", "style", "allowfullscreen", "frameborder", "src"],
+    a: ["class", "style", "href", "target"],
+    select: ["class", "style"],
+    option: ["class", "style", "value"],
+    img: ["class", "style", "src", "alt"],
+    p: ["class", "style"],
+    span: ["class", "style"],
+    h1: ["class", "style"],
+    h2: ["class", "style"],
+    h3: ["class", "style"],
+    h4: ["class", "style"],
+    h5: ["class", "style"],
+    h6: ["class", "style"],
+    blockquote: ["class", "style"],
+    pre: ["class", "style"],
+    ol: ["class", "style"],
+    ul: ["class", "style"],
+    table: ["class", "style"],
+    tbody: ["class", "style"],
+    tr: ["class", "style"],
+    strong: ["class", "style"],
+    em: ["class", "style"],
+    sub: ["class", "style"],
+    sup: ["class", "style"],
+    br: ["class", "style"],
+    u: ["class", "style"],
+    s: ["class", "style"],
   };
 
   const class_allowlist: ClassAllowlist = {
-    "div": [
-      "ql-code-block-container", "ql-code-block", "ql-token", "ql-ui",
-      "ql-align-center", "ql-align-right", "ql-align-justify",
-      "ql-indent-1", "ql-indent-2", "ql-indent-3", "ql-indent-4", "ql-indent-5",
-      "ql-indent-6", "ql-indent-7", "ql-indent-8", "ql-indent-9",
-      "ql-size-small", "ql-size-large", "ql-size-huge", "ql-video"
+    div: [
+      "ql-code-block-container",
+      "ql-code-block",
+      "ql-token",
+      "ql-ui",
+      "ql-align-center",
+      "ql-align-right",
+      "ql-align-justify",
+      "ql-indent-1",
+      "ql-indent-2",
+      "ql-indent-3",
+      "ql-indent-4",
+      "ql-indent-5",
+      "ql-indent-6",
+      "ql-indent-7",
+      "ql-indent-8",
+      "ql-indent-9",
+      "ql-size-small",
+      "ql-size-large",
+      "ql-size-huge",
+      "ql-video",
     ],
-    "span": [
-      "ql-token", "hljs-keyword", "hljs-number", "hljs-string", "hljs-comment",
-      "hljs-function", "hljs-title", "hljs-params", "hljs-variable",
-      "hljs-operator", "hljs-builtin", "ql-ui"  // "ql-ui" is explicitly allowed
+    span: [
+      "ql-token",
+      "hljs-keyword",
+      "hljs-number",
+      "hljs-string",
+      "hljs-comment",
+      "hljs-function",
+      "hljs-title",
+      "hljs-params",
+      "hljs-variable",
+      "hljs-operator",
+      "hljs-builtin",
+      "ql-ui", // "ql-ui" is explicitly allowed
     ],
-    "p": [
-      "ql-align-center", "ql-align-right", "ql-align-justify",
-      "ql-indent-1", "ql-indent-2", "ql-indent-3", "ql-indent-4", "ql-indent-5",
-      "ql-indent-6", "ql-indent-7", "ql-indent-8", "ql-indent-9"
+    p: [
+      "ql-align-center",
+      "ql-align-right",
+      "ql-align-justify",
+      "ql-indent-1",
+      "ql-indent-2",
+      "ql-indent-3",
+      "ql-indent-4",
+      "ql-indent-5",
+      "ql-indent-6",
+      "ql-indent-7",
+      "ql-indent-8",
+      "ql-indent-9",
     ],
-    "li": [
-      "ql-align-center", "ql-align-right", "ql-align-justify",
-      "ql-indent-1", "ql-indent-2", "ql-indent-3", "ql-indent-4", "ql-indent-5",
-      "ql-indent-6", "ql-indent-7", "ql-indent-8", "ql-indent-9"
+    li: [
+      "ql-align-center",
+      "ql-align-right",
+      "ql-align-justify",
+      "ql-indent-1",
+      "ql-indent-2",
+      "ql-indent-3",
+      "ql-indent-4",
+      "ql-indent-5",
+      "ql-indent-6",
+      "ql-indent-7",
+      "ql-indent-8",
+      "ql-indent-9",
     ],
-    "iframe": ["ql-video"],
-    "td": ["ql-align-center", "ql-align-right", "ql-align-justify"],
-    "select": ["ql-ui"],
-    "tr": ["ql-align-center", "ql-align-right", "ql-align-justify"]
+    iframe: ["ql-video"],
+    td: ["ql-align-center", "ql-align-right", "ql-align-justify"],
+    select: ["ql-ui"],
+    tr: ["ql-align-center", "ql-align-right", "ql-align-justify"],
   };
 
   const config = {
     ALLOWED_TAGS: allowed_tags,
     ALLOWED_ATTR: all_attributes,
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+-]+(?:[^a-z+-:]|$))/i,
-    FORBID_CONTENTS: [] as string[]
+    ALLOWED_URI_REGEXP:
+      /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+-]+(?:[^a-z+-:]|$))/i,
+    FORBID_CONTENTS: [] as string[],
   };
 
   // Add a hook to filter out unauthorized attributes and classes.
@@ -155,16 +235,22 @@ export function sanitize_quill_html(html: string): string {
  * @returns A promise that resolves to the response body.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<any> => {
+export const makeRequest = async (
+  url: string,
+  opts: RequestInit = {}
+): Promise<any> => {
   const jwt = localStorage.getItem("jwt");
 
   // Set credentials to include to send cookies
-  opts.credentials = 'include';
+  opts.credentials = "include";
 
   // Set headers
   opts.headers = {
     ...opts.headers,
-    ...((jwt && !(opts.headers && "Authorization" in opts.headers)) && { Authorization: `Bearer ${jwt}` }),
+    ...(jwt &&
+      !(opts.headers && "Authorization" in opts.headers) && {
+        Authorization: `Bearer ${jwt}`,
+      }),
   };
 
   // Add additional headers for specific request methods
@@ -177,12 +263,16 @@ export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<
   }
 
   // Execute the request
-  const response = await fetch(`${import.meta.env.VITE_FLASK_SERVER}${url}`, opts);
+  const response = await fetch(
+    `${import.meta.env.VITE_FLASK_SERVER}${url}`,
+    opts
+  );
   const body: ResponseBody = await response.json();
 
   // Store CSRF token for future requests
   if (response.status === 200) {
-    if (body.csrfAccessToken) localStorage.setItem("csrfToken", body.csrfAccessToken);
+    if (body.csrfAccessToken)
+      localStorage.setItem("csrfToken", body.csrfAccessToken);
     if (body.jwt) localStorage.setItem("jwt", body.jwt);
   }
 
@@ -194,13 +284,14 @@ export const makeRequest = async (url: string, opts: RequestInit = {}): Promise<
   return body;
 };
 
-
 /**
  * Downloads a file from a specified URL.
  * @param url - The URL of the file to download.
  * @returns A promise that resolves to the filename or an error message.
  */
-export async function downloadExcelFromUrl(url: string): Promise<string | void> {
+export async function downloadExcelFromUrl(
+  url: string
+): Promise<string | void> {
   // Fetch the file from the server
   try {
     const jwt = localStorage.getItem("jwt");
@@ -209,14 +300,20 @@ export async function downloadExcelFromUrl(url: string): Promise<string | void> 
       credentials: "include",
       headers: {
         Authorization: `Bearer ${jwt}`,
-        Accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        Accept:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       },
     };
 
-    const response = await fetch(`${import.meta.env.VITE_FLASK_SERVER}${url}`, opts);
+    const response = await fetch(
+      `${import.meta.env.VITE_FLASK_SERVER}${url}`,
+      opts
+    );
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch data: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch data: ${response.status} ${response.statusText}`
+      );
     }
 
     // Handle case where no data is found
@@ -232,7 +329,10 @@ export async function downloadExcelFromUrl(url: string): Promise<string | void> 
     const contentDisposition = response.headers.get("Content-Disposition");
     let filename = "download.xlsx"; // Default filename
     if (contentDisposition && contentDisposition.includes("filename=")) {
-      filename = contentDisposition.split("filename=")[1].split(";")[0].replace(/"/g, "");
+      filename = contentDisposition
+        .split("filename=")[1]
+        .split(";")[0]
+        .replace(/"/g, "");
     }
 
     // Read the response as a Blob
@@ -256,7 +356,6 @@ export async function downloadExcelFromUrl(url: string): Promise<string | void> 
   }
 }
 
-
 /**
  * Checks if the user has permission to perform a specified action on a resource.
  * @param app - Application ID.
@@ -278,7 +377,6 @@ export const getAccess = async (
   if (res.msg !== "Authorized") throw new Error("Unauthorized");
 };
 
-
 /**
  * Given a study subject and study, fetch the study from the study subject's list of studies and return the study
  * subject's enrollment start and end dates for that study. If the study is not found or if `studySubject` is `null`,
@@ -289,7 +387,7 @@ export const getAccess = async (
  */
 export const getEnrollmentInfoForStudy = (
   studySubject?: StudySubjectModel,
-  studyId?: number,
+  studyId?: number
 ) => {
   // Return default dates if study subject or study ID is not provided
   if (!studySubject || !studyId) {
@@ -299,14 +397,16 @@ export const getEnrollmentInfoForStudy = (
     return { startsOn, expiresOn };
   }
 
-  const currStudy = studySubject.studies.find(s => s.study.id == studyId || -1);
+  const currStudy = studySubject.studies.find(
+    (s) => s.study.id == studyId || -1
+  );
 
   if (currStudy) {
     const { startsOn, expiresOn, didConsent } = currStudy;
     return {
       startsOn: new Date(startsOn),
       expiresOn: new Date(expiresOn),
-      didConsent
+      didConsent,
     };
   }
 
@@ -316,8 +416,7 @@ export const getEnrollmentInfoForStudy = (
   expiresOn.setDate(expiresOn.getDate() + 14);
 
   return { startsOn, expiresOn, didConsent: false };
-}
-
+};
 
 /**
  * Format a date specifically for an input element.
@@ -327,41 +426,41 @@ export const getEnrollmentInfoForStudy = (
 export const formatDateForInput = (date: Date) => {
   // Get the year, month, and day
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+  const day = String(date.getDate()).padStart(2, "0");
 
   // Format the date string
   return `${year}-${month}-${day}`;
-}
+};
 
 /**
  * Formats a phone number to ensure consistent international format.
  * - Strips non-digit characters except plus sign
  * - Ensures number starts with "+" and a valid country code
  * - Defaults to US country code (+1) when appropriate
- * 
+ *
  * @param value - The phone number to format
  * @returns A formatted string in international phone number format
  */
 export const formatPhoneNumber = (value: string): string => {
   // Remove everything except digits and plus sign
   const formattedValue = value.replace(/[^\d+]/g, "");
-  
+
   // If empty, return empty string
   if (!formattedValue) {
     return "";
   }
-  
+
   // If it's just a plus sign with nothing after it, add "1" as default US country code
   if (formattedValue === "+") {
     return "+1";
   }
-  
+
   // If user entered digits without a plus sign, assume US number with +1 prefix
   if (/^\d+$/.test(formattedValue)) {
     return "+1" + formattedValue;
   }
-  
+
   // If it already has a plus sign
   if (formattedValue.startsWith("+")) {
     // Handle case of +0... which is invalid (country codes cannot start with 0)
@@ -369,17 +468,17 @@ export const formatPhoneNumber = (value: string): string => {
       // Replace the 0 with US country code 1
       return "+1" + formattedValue.substring(2);
     }
-    
+
     // Check for valid international format: + followed by at least one digit
     if (!/^\+\d+$/.test(formattedValue)) {
       // If it has non-digit after the +, replace with +1
       return "+1";
     }
-    
+
     // Valid international format, keep as is
     return formattedValue;
   }
-  
+
   // Any other case, default to +1 prefix
   return "+1" + formattedValue;
 };

@@ -54,11 +54,14 @@ export const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
 
   return (
     <div
-      className={`flex justify-between shadow-lg rounded-lg opacity-100 transition-all duration-[2s] z-50 select-none ${variantsBgMap[variant]} ${variantsTextMap[variant]}`}
-      ref={containerRef}>
-        <div className="p-4">
-          <span>{children}</span>
-        </div>
+      className={`z-50 flex select-none justify-between rounded-lg opacity-100
+        shadow-lg transition-all duration-[2s] ${variantsBgMap[variant]}
+        ${variantsTextMap[variant]}`}
+      ref={containerRef}
+    >
+      <div className="p-4">
+        <span>{children}</span>
+      </div>
     </div>
   );
-}
+};

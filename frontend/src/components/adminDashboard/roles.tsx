@@ -38,20 +38,20 @@ export const Roles = () => {
       name: "Name",
       searchable: true,
       sortable: true,
-      width: 15
+      width: 15,
     },
     {
       name: "Permissions",
       searchable: false,
       sortable: false,
-      width: 75
+      width: 75,
     },
     {
       name: "",
       searchable: false,
       sortable: false,
-      width: 10
-    }
+      width: 10,
+    },
   ]);
   const [loading, setLoading] = useState<boolean>(true);
   const { flashMessage } = useFlashMessages();
@@ -98,11 +98,9 @@ export const Roles = () => {
       // map each row to a set of cells for each table column
       return [
         {
-          contents: (
-            <span>{name}</span>
-          ),
+          contents: <span>{name}</span>,
           searchValue: name,
-          sortValue: name
+          sortValue: name,
         },
         {
           contents: (
@@ -118,41 +116,44 @@ export const Roles = () => {
             </span>
           ),
           searchValue: "",
-          sortValue: ""
+          sortValue: "",
         },
         {
           contents: (
-            <div className="flex w-full h-full">
-              {canEdit &&
+            <div className="flex h-full w-full">
+              {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
                   className="h-full flex-grow"
                   fullWidth={true}
-                  fullHeight={true}>
-                    <Link
-                      className="w-full h-full flex items-center justify-center"
-                      to={`/coordinator/admin/roles/edit?id=${id}`}>
-                        Edit
-                    </Link>
+                  fullHeight={true}
+                >
+                  <Link
+                    className="flex h-full w-full items-center justify-center"
+                    to={`/coordinator/admin/roles/edit?id=${id}`}
+                  >
+                    Edit
+                  </Link>
                 </Button>
-              }
-              {canArchive &&
+              )}
+              {canArchive && (
                 <Button
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteRole(id)}>
-                    Archive
+                  onClick={() => deleteRole(id)}
+                >
+                  Archive
                 </Button>
-              }
+              )}
             </div>
           ),
           searchValue: "",
           sortValue: "",
           paddingX: 0,
           paddingY: 0,
-        }
+        },
       ];
     });
   };
@@ -212,9 +213,7 @@ export const Roles = () => {
   // if the user has permission to create, show the create button
   const tableControl = canCreate ? (
     <Link to={`/coordinator/admin/roles/create`}>
-      <Button variant="primary">
-          Create +
-      </Button>
+      <Button variant="primary">Create +</Button>
     </Link>
   ) : (
     <></>
@@ -245,7 +244,8 @@ export const Roles = () => {
           includeControl={true}
           includeSearch={true}
           paginationPer={10}
-          sortDefault="" />
+          sortDefault=""
+        />
       </ListContent>
     </ListView>
   );

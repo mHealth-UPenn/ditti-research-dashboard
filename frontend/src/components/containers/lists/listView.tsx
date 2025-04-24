@@ -17,10 +17,13 @@
 
 import { PropsWithChildren } from "react";
 
-
 export const ListView = ({ children }: PropsWithChildren<unknown>) => {
   return (
-    <div className="flex flex-col bg-white w-full h-[calc(calc(100vh-8rem)-1px)] overflow-x-hidden lg:bg-[transparent] lg:px-12 overflow-y-scroll overflow-x-scroll">
+    <div
+      className="flex h-[calc(calc(100vh-8rem)-1px)] w-full flex-col
+        overflow-x-hidden overflow-x-scroll overflow-y-scroll bg-white
+        lg:bg-[transparent] lg:px-12"
+    >
       {children}
     </div>
   );

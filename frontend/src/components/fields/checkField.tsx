@@ -17,17 +17,22 @@
 
 import { CheckFieldProps } from "./fields.types";
 
-export const CheckField = ({ id, prefill, label, onChange }: CheckFieldProps) => {
+export const CheckField = ({
+  id,
+  prefill,
+  label,
+  onChange,
+}: CheckFieldProps) => {
   return (
-    <div className="flex flex-col h-full">
-      <div className="hidden md:flex mb-1">&nbsp;</div>
+    <div className="flex h-full flex-col">
+      <div className="mb-1 hidden md:flex">&nbsp;</div>
       <div className="flex flex-grow items-center">
         <div>
-          {label &&
+          {label && (
             <label className="mr-4" htmlFor={id}>
               {label}
             </label>
-          }
+          )}
           <input
             type="checkbox"
             checked={prefill}
@@ -35,7 +40,8 @@ export const CheckField = ({ id, prefill, label, onChange }: CheckFieldProps) =>
               onChange
                 ? (e) => onChange((e.target as HTMLInputElement).checked)
                 : () => null
-            } />
+            }
+          />
         </div>
       </div>
     </div>

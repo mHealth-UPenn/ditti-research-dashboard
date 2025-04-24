@@ -17,17 +17,22 @@
 
 import { createContext, useState, useEffect, PropsWithChildren } from "react";
 import { makeRequest } from "../utils";
-import { CoordinatorStudySubjectContextValue, CoordinatorStudySubjectProviderProps } from "./coordinatorStudySubjectContext.types";
+import {
+  CoordinatorStudySubjectContextValue,
+  CoordinatorStudySubjectProviderProps,
+} from "./coordinatorStudySubjectContext.types";
 import { APP_ENV } from "../environment";
 import { StudySubjectModel, UserModel } from "../types/models";
 import { StudySubject } from "../types/api";
 
-export const CoordinatorStudySubjectContext = createContext<CoordinatorStudySubjectContextValue | undefined>(undefined);
+export const CoordinatorStudySubjectContext = createContext<
+  CoordinatorStudySubjectContextValue | undefined
+>(undefined);
 
 // CoordinatorStudySubjectProvider component that wraps children with the study subject context.
 export function CoordinatorStudySubjectProvider({
   app,
-  children
+  children,
 }: PropsWithChildren<CoordinatorStudySubjectProviderProps>) {
   const [studySubjects, setStudySubjects] = useState<StudySubjectModel[]>([]);
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
@@ -48,14 +53,16 @@ export function CoordinatorStudySubjectProvider({
 
     // Get all unique Ditti IDs in the database and on AWS
     const ids = new Set([
-      ...studySubjects.map(ss => ss.dittiId),
-      ...userDetails.map(u => u.userPermissionId)
+      ...studySubjects.map((ss) => ss.dittiId),
+      ...userDetails.map((u) => u.userPermissionId),
     ]);
 
     // Map each data entry with its Ditti ID
-    const studySubjectMap = new Map(studySubjects.map(ss => [ss.dittiId, ss]));
+    const studySubjectMap = new Map(
+      studySubjects.map((ss) => [ss.dittiId, ss])
+    );
     const userDetailsMap = new Map(
-      userDetails.map(user => [user.userPermissionId, user])
+      userDetails.map((user) => [user.userPermissionId, user])
     );
 
     // Create empty placeholders for when data is missing in the database or on AWS
@@ -65,7 +72,7 @@ export function CoordinatorStudySubjectProvider({
       dittiId: "",
       studies: [],
       apis: [],
-    }
+    };
     const emptyUser: UserModel = {
       tapPermission: false,
       information: "",
@@ -73,7 +80,7 @@ export function CoordinatorStudySubjectProvider({
       expTime: "",
       teamEmail: "",
       createdAt: "",
-    }
+    };
 
     // Join data on Ditti IDs
     for (const id of ids) {
@@ -81,9 +88,10 @@ export function CoordinatorStudySubjectProvider({
       const matchedUserDetail = userDetailsMap.get(id) || emptyUser;
 
       // Build the result minus `userPermissionId`
-      const dittiId = matchedStudySubject.dittiId === ""
-        ? matchedUserDetail.userPermissionId
-        : matchedStudySubject.dittiId;
+      const dittiId =
+        matchedStudySubject.dittiId === ""
+          ? matchedUserDetail.userPermissionId
+          : matchedStudySubject.dittiId;
 
       const res = {
         id: matchedStudySubject.id,
@@ -106,7 +114,9 @@ export function CoordinatorStudySubjectProvider({
   // Fetch data from the database
   const fetchStudySubjectsDB = async (): Promise<StudySubject[]> => {
     if (APP_ENV === "production" || APP_ENV === "development") {
-      const data: StudySubject[] = await makeRequest(`/admin/study_subject?app=${app}`);
+      const data: StudySubject[] = await makeRequest(
+        `/admin/study_subject?app=${app}`
+      );
       return data;
     }
     return [];
@@ -129,15 +139,20 @@ export function CoordinatorStudySubjectProvider({
       fetchStudySubjectsAWS(),
     ];
 
-    Promise.all(promises).then(([studySubjects, studySubjectsAWS]) => {
-      setStudySubjects(joinByDittiIdAndUserPermissionId(studySubjects, studySubjectsAWS));
-      setStudySubjectLoading(false);
-    })
-    .catch(error => {
-      console.error(`Failed to fetch participants: ${error}. Check coordinator permissions.`)
-      setStudySubjectLoading(false);
-    });
-  }
+    Promise.all(promises)
+      .then(([studySubjects, studySubjectsAWS]) => {
+        setStudySubjects(
+          joinByDittiIdAndUserPermissionId(studySubjects, studySubjectsAWS)
+        );
+        setStudySubjectLoading(false);
+      })
+      .catch((error) => {
+        console.error(
+          `Failed to fetch participants: ${error}. Check coordinator permissions.`
+        );
+        setStudySubjectLoading(false);
+      });
+  };
 
   // Fetch study subjects on load
   useEffect(fetchStudySubjects, []);
@@ -147,19 +162,22 @@ export function CoordinatorStudySubjectProvider({
    * @param dittiId - The Ditti ID of the study subject to get.
    * @returns - The study subject with the given Ditti ID, or `undefined` if not found.
    */
-  const getStudySubjectByDittiId = (dittiId: string): StudySubjectModel | undefined => {
-    return studySubjects.find(ss => ss.dittiId === dittiId);
-  }
+  const getStudySubjectByDittiId = (
+    dittiId: string
+  ): StudySubjectModel | undefined => {
+    return studySubjects.find((ss) => ss.dittiId === dittiId);
+  };
 
   return (
     <CoordinatorStudySubjectContext.Provider
       value={{
-          studySubjects,
-          studySubjectLoading,
-          getStudySubjectByDittiId,
-          fetchStudySubjects
-        }}>
-          {children}
+        studySubjects,
+        studySubjectLoading,
+        getStudySubjectByDittiId,
+        fetchStudySubjects,
+      }}
+    >
+      {children}
     </CoordinatorStudySubjectContext.Provider>
   );
 }

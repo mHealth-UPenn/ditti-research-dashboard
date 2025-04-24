@@ -36,5 +36,5 @@ export interface CoordinatorStudySubjectContextValue {
  * @property app - The app ID of the coordinator.
  */
 export interface CoordinatorStudySubjectProviderProps {
-  app: 2 | 3;  // Cannot be accessed from admin dashboard (`1`)
+  app: 2 | 3; // Cannot be accessed from admin dashboard (`1`)
 }

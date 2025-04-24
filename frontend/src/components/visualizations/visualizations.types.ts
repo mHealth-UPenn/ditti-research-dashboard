@@ -33,7 +33,11 @@ export interface VisualizationProps {
 }
 
 // Interface for sleep level ranges to display
-export interface Group { start: number; stop: number; strokeDashArray: string; }
+export interface Group {
+  start: number;
+  stop: number;
+  strokeDashArray: string;
+}
 
 // Sleep level data for stages data
 export type LevelGroupsStages = Record<SleepLevelStages, Group[]>;
