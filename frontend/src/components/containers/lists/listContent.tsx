@@ -17,7 +17,7 @@
 
 import { PropsWithChildren } from "react";
 
-export const ListContent = ({ children }: PropsWithChildren<unknown>) => {
+export const ListContent = ({ children }: PropsWithChildren) => {
   return (
     <div className="flex-grow bg-white px-6 py-12 lg:px-12">{children}</div>
   );

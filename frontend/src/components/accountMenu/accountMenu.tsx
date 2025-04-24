@@ -359,7 +359,9 @@ export const AccountMenu = ({
             <Button
               variant="tertiary"
               size="sm"
-              onClick={() => setEdit(true)}
+              onClick={() => {
+                setEdit(true);
+              }}
               rounded={true}
             >
               Edit
@@ -442,7 +444,9 @@ export const AccountMenu = ({
             <Button
               variant="tertiary"
               size="sm"
-              onClick={() => setEditPassword(true)}
+              onClick={() => {
+                setEditPassword(true);
+              }}
               rounded={true}
             >
               Change

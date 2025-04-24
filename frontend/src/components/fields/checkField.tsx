@@ -38,7 +38,9 @@ export const CheckField = ({
             checked={prefill}
             onChange={
               onChange
-                ? (e) => onChange((e.target as HTMLInputElement).checked)
+                ? (e) => {
+                    onChange((e.target as HTMLInputElement).checked);
+                  }
                 : () => null
             }
           />

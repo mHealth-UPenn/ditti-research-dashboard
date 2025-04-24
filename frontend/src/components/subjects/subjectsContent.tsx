@@ -94,29 +94,47 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
       const promises: Promise<void>[] = [];
       promises.push(
         getAccess(app, "Create", "Participants", study.id)
-          .then(() => setCanCreate(true))
-          .catch(() => setCanCreate(false))
+          .then(() => {
+            setCanCreate(true);
+          })
+          .catch(() => {
+            setCanCreate(false);
+          })
       );
 
       promises.push(
         getAccess(app, "Edit", "Participants", study.id)
-          .then(() => setCanEdit(true))
-          .catch(() => setCanEdit(false))
+          .then(() => {
+            setCanEdit(true);
+          })
+          .catch(() => {
+            setCanEdit(false);
+          })
       );
 
       promises.push(
         getAccess(app, "View", "Taps", study.id)
-          .then(() => setCanViewTaps(true))
-          .catch(() => setCanViewTaps(false))
+          .then(() => {
+            setCanViewTaps(true);
+          })
+          .catch(() => {
+            setCanViewTaps(false);
+          })
       );
 
       promises.push(
         getAccess(app, "View", "Wearable Data", study.id)
-          .then(() => setCanViewWearableData(true))
-          .catch(() => setCanViewWearableData(false))
+          .then(() => {
+            setCanViewWearableData(true);
+          })
+          .catch(() => {
+            setCanViewWearableData(false);
+          })
       );
 
-      Promise.all(promises).then(() => setLoading(false));
+      Promise.all(promises).then(() => {
+        setLoading(false);
+      });
     }
   }, [study]);
 

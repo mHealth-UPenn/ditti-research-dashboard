@@ -345,7 +345,7 @@ export const AccountsEdit = () => {
     }
 
     // Validate phone number format if provided
-    if (phoneNumber && phoneNumber.trim()) {
+    if (phoneNumber?.trim()) {
       // International phone numbers should start with + followed by at least 1 digit for country code
       // Country codes typically don't start with 0
       const phoneRegex = /^\+[1-9]\d*$/;
@@ -687,7 +687,9 @@ export const AccountsEdit = () => {
               onKeyup={
                 accountId
                   ? undefined
-                  : (email) => dispatch({ type: "EDIT_FIELD", email })
+                  : (email) => {
+                      dispatch({ type: "EDIT_FIELD", email });
+                    }
               }
               feedback=""
               disabled={accountId ? true : false}
@@ -702,9 +704,7 @@ export const AccountsEdit = () => {
               label="Phone Number"
               onKeyup={handlePhoneNumberChange}
               feedback={
-                phoneNumber &&
-                phoneNumber.trim() &&
-                !/^\+[1-9]\d*$/.test(phoneNumber)
+                phoneNumber?.trim() && !/^\+[1-9]\d*$/.test(phoneNumber)
                   ? "Phone number must start with + followed by country code and digits"
                   : ""
               }

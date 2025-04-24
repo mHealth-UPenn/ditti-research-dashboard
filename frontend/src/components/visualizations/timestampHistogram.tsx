@@ -234,9 +234,9 @@ export const TimestampHistogram = ({
               height={yScale(0) - yScale(bin.length)}
               width={width}
               fill={colors.secondary}
-              onMouseEnter={(e) =>
-                handleMouseEnter(e.target as SVGRectElement, bin.length, width)
-              }
+              onMouseEnter={(e) => {
+                handleMouseEnter(e.target as SVGRectElement, bin.length, width);
+              }}
               onMouseLeave={handleMouseLeave}
             />
           );

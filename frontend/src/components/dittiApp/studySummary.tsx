@@ -50,25 +50,37 @@ export const StudySummary = () => {
       const promises: Promise<void>[] = [];
       promises.push(
         getAccess(2, "Create", "Participants", study.id)
-          .then(() => setCanCreate(true))
-          .catch(() => setCanCreate(false))
+          .then(() => {
+            setCanCreate(true);
+          })
+          .catch(() => {
+            setCanCreate(false);
+          })
       );
 
       promises.push(
         getAccess(2, "View", "Taps", study.id)
-          .then(() => setCanViewTaps(true))
-          .catch(() => setCanViewTaps(false))
+          .then(() => {
+            setCanViewTaps(true);
+          })
+          .catch(() => {
+            setCanViewTaps(false);
+          })
       );
 
       // get other accounts that have access to this study
       promises.push(
         makeRequest("/db/get-study-contacts?app=2&study=" + study.id).then(
-          (contacts: StudyContactModel[]) => setStudyContacts(contacts)
+          (contacts: StudyContactModel[]) => {
+            setStudyContacts(contacts);
+          }
         )
       );
 
       // when all promises resolve, hide the loader
-      Promise.all(promises).then(() => setLoading(false));
+      Promise.all(promises).then(() => {
+        setLoading(false);
+      });
     }
   }, [study]);
 

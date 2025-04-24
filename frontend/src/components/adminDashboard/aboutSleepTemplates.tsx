@@ -56,28 +56,42 @@ export const AboutSleepTemplates = () => {
   useEffect(() => {
     // check whether the user has permission to create
     const create = getAccess(1, "Create", "About Sleep Templates")
-      .then(() => setCanCreate(true))
-      .catch(() => setCanCreate(false));
+      .then(() => {
+        setCanCreate(true);
+      })
+      .catch(() => {
+        setCanCreate(false);
+      });
 
     // check whether the user has permissions to edit
     const edit = getAccess(1, "Edit", "About Sleep Templates")
-      .then(() => setCanEdit(true))
-      .catch(() => setCanEdit(false));
+      .then(() => {
+        setCanEdit(true);
+      })
+      .catch(() => {
+        setCanEdit(false);
+      });
 
     // check whether the user has permissions to archive
     const archive = getAccess(1, "Archive", "About Sleep Templates")
-      .then(() => setCanArchive(true))
-      .catch(() => setCanArchive(false));
+      .then(() => {
+        setCanArchive(true);
+      })
+      .catch(() => {
+        setCanArchive(false);
+      });
 
     // get the table's data
     const fetchTemplates = makeRequest(
       "/admin/about-sleep-template?app=1"
-    ).then((templates) => setAboutSleepTemplates(templates));
+    ).then((templates) => {
+      setAboutSleepTemplates(templates);
+    });
 
     // when all requests are complete, hide the loading screen
-    Promise.all([create, edit, archive, fetchTemplates]).then(() =>
-      setLoading(false)
-    );
+    Promise.all([create, edit, archive, fetchTemplates]).then(() => {
+      setLoading(false);
+    });
   }, []);
 
   /**
@@ -119,7 +133,9 @@ export const AboutSleepTemplates = () => {
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteTemplate(id)}
+                  onClick={() => {
+                    deleteTemplate(id);
+                  }}
                 >
                   Archive
                 </Button>

@@ -113,10 +113,16 @@ export const DataRetrievalTasks = () => {
 
   useEffect(() => {
     const invoke = getAccess(1, "Invoke", "Data Retrieval Task")
-      .then(() => setCanInvoke(true))
-      .catch(() => setCanInvoke(false));
+      .then(() => {
+        setCanInvoke(true);
+      })
+      .catch(() => {
+        setCanInvoke(false);
+      });
 
-    Promise.all([invoke, fetchData()]).finally(() => setLoading(false));
+    Promise.all([invoke, fetchData()]).finally(() => {
+      setLoading(false);
+    });
   }, [flashMessage]);
 
   const handleForceStop = async (id: number) => {
@@ -128,7 +134,9 @@ export const DataRetrievalTasks = () => {
       }),
     }).finally(() => {
       setLoading(true);
-      fetchData().finally(() => setLoading(false));
+      fetchData().finally(() => {
+        setLoading(false);
+      });
     });
   };
 

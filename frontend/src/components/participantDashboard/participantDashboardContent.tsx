@@ -70,7 +70,7 @@ export const ParticipantDashboardContent = () => {
     if (studies.length === 0) return null;
     const validTimestamps = studies
       .map((s) => (s.expiresOn ? new Date(s.expiresOn).getTime() : null))
-      .filter((timestamp) => timestamp !== null) as number[];
+      .filter((timestamp) => timestamp !== null);
 
     if (validTimestamps.length === 0) {
       return null; // No valid dates

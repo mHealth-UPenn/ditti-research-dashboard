@@ -424,7 +424,9 @@ export const AudioFileUpload = () => {
                     <span className="truncate">{`${s.acronym}: ${s.name}`}</span>
                     <div
                       className="cursor-pointer p-2"
-                      onClick={() => removeStudy(s.id)}
+                      onClick={() => {
+                        removeStudy(s.id);
+                      }}
                     >
                       <CloseIcon color="warning" />
                     </div>
@@ -486,7 +488,9 @@ export const AudioFileUpload = () => {
                         id={`file-${file.name}`}
                         type="text"
                         value={file.title}
-                        onKeyup={(text: string) => handleTitleKeyup(text, i)}
+                        onKeyup={(text: string) => {
+                          handleTitleKeyup(text, i);
+                        }}
                       >
                         <span
                           className="flex h-full items-center bg-extra-light

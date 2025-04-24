@@ -17,9 +17,7 @@
 
 import { PropsWithChildren } from "react";
 
-export const FormSummaryContent = ({
-  children,
-}: PropsWithChildren<unknown>) => {
+export const FormSummaryContent = ({ children }: PropsWithChildren) => {
   return (
     <div
       className="flex flex-col md:flex-row lg:h-full

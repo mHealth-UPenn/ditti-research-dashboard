@@ -17,7 +17,7 @@
 
 import { PropsWithChildren } from "react";
 
-export const FormSummaryText = ({ children }: PropsWithChildren<unknown>) => {
+export const FormSummaryText = ({ children }: PropsWithChildren) => {
   return (
     <div
       className="mb-8 flex-shrink-0 flex-grow truncate md:w-1/2

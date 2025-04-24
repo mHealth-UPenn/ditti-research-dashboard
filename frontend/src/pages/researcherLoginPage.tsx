@@ -16,13 +16,12 @@
  */
 
 import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useDbStatus } from "../hooks/useDbStatus";
 import { FullLoader } from "../components/loader/loader";
 import { useEnterKeyLogin } from "../hooks/useKeyboardEvent";
 import { Button } from "../components/buttons/button";
-import { Link } from "react-router-dom";
 import "./loginPage.css";
 
 /**

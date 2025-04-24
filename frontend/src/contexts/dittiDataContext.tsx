@@ -33,7 +33,7 @@ export const DittiDataContext = createContext<
   DittiDataContextValue | undefined
 >(undefined);
 
-export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
+export const DittiDataProvider = ({ children }: PropsWithChildren) => {
   const [dataLoading, setDataLoading] = useState(true);
   const [taps, setTaps] = useState<TapModel[]>([]);
   const [audioTaps, setAudioTaps] = useState<AudioTapModel[]>([]);
@@ -68,7 +68,9 @@ export const DittiDataProvider = ({ children }: PropsWithChildren<unknown>) => {
       );
     }
 
-    Promise.all(promises).then(() => setDataLoading(false));
+    Promise.all(promises).then(() => {
+      setDataLoading(false);
+    });
   }, []);
 
   const getTapsAsync = async (): Promise<TapModel[]> => {

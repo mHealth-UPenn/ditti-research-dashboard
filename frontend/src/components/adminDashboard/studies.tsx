@@ -57,10 +57,18 @@ export const Studies = () => {
       try {
         // Check create, edit, and archive permissions
         await Promise.all([
-          getAccess(1, "Create", "Studies").then(() => setCanCreate(true)),
-          getAccess(1, "Edit", "Studies").then(() => setCanEdit(true)),
-          getAccess(1, "Archive", "Studies").then(() => setCanArchive(true)),
-          makeRequest("/admin/study?app=1").then((data) => setStudies(data)),
+          getAccess(1, "Create", "Studies").then(() => {
+            setCanCreate(true);
+          }),
+          getAccess(1, "Edit", "Studies").then(() => {
+            setCanEdit(true);
+          }),
+          getAccess(1, "Archive", "Studies").then(() => {
+            setCanArchive(true);
+          }),
+          makeRequest("/admin/study?app=1").then((data) => {
+            setStudies(data);
+          }),
         ]);
       } catch (error) {
         console.error("Error fetching permissions or data", error);

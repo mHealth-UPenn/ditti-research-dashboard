@@ -81,19 +81,29 @@ export const AudioFiles = () => {
     // Get whether user can upload audio files
     promises.push(
       getAccess(2, "Create", "Participants")
-        .then(() => setCanCreateAudioFiles(true))
-        .catch(() => setCanCreateAudioFiles(false))
+        .then(() => {
+          setCanCreateAudioFiles(true);
+        })
+        .catch(() => {
+          setCanCreateAudioFiles(false);
+        })
     );
 
     // get whether the user can edit subjects
     promises.push(
       getAccess(2, "Delete", "Audio Files")
-        .then(() => setCanDeleteAudioFiles(true))
-        .catch(() => setCanDeleteAudioFiles(false))
+        .then(() => {
+          setCanDeleteAudioFiles(true);
+        })
+        .catch(() => {
+          setCanDeleteAudioFiles(false);
+        })
     );
 
     // when all promises complete, hide the loader
-    Promise.all(promises).then(() => setLoading(false));
+    Promise.all(promises).then(() => {
+      setLoading(false);
+    });
   }, []);
 
   const handleDelete = async (id: string, _version: number, name: string) => {
@@ -111,16 +121,18 @@ export const AudioFiles = () => {
         setLoading(true);
 
         refreshAudioFiles()
-          .then(() => setLoading(false))
-          .catch(() =>
+          .then(() => {
+            setLoading(false);
+          })
+          .catch(() => {
             flashMessage(
               <span>
                 And error occurred while reloading the page. Please refresh and
                 try again.
               </span>,
               "danger"
-            )
-          );
+            );
+          });
       } catch (error) {
         console.error(error);
         const e = error as { msg: string };

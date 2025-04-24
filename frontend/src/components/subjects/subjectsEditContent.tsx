@@ -218,11 +218,13 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     // get all about sleep templates
     const fetchTemplates = makeRequest(
       `/db/get-about-sleep-templates?app=${app === "ditti" ? 2 : 3}`
-    ).then((templates: AboutSleepTemplate[]) =>
-      setAboutSleepTemplates(templates)
-    );
+    ).then((templates: AboutSleepTemplate[]) => {
+      setAboutSleepTemplates(templates);
+    });
     // when all promises finish, hide the loader
-    Promise.all([fetchTemplates]).then(() => setLoading(false));
+    Promise.all([fetchTemplates]).then(() => {
+      setLoading(false);
+    });
   }, []);
 
   /**
@@ -303,8 +305,12 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     }
 
     await Promise.all(promises)
-      .then((res) => handleSuccess(res[0]))
-      .catch((error) => handleFailure(error));
+      .then((res) => {
+        handleSuccess(res[0]);
+      })
+      .catch((error) => {
+        handleFailure(error);
+      });
   };
 
   /**
@@ -395,7 +401,9 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
               placeholder=""
               value={userPermissionId}
               label="Ditti ID"
-              onKeyup={(text) => setUserPermissionId(text)}
+              onKeyup={(text) => {
+                setUserPermissionId(text);
+              }}
               feedback={userPermissionIdFeedback}
               required={true}
               inputRef={dittiIdInputRef}
