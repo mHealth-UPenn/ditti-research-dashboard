@@ -63,8 +63,8 @@ export const StudiesEdit = () => {
         setDittiId(prefillData.dittiId);
         setEmail(prefillData.email);
         setDefaultExpiryDelta(prefillData.defaultExpiryDelta);
-        setConsentInformation(prefillData.consentInformation || "");
-        setDataSummary(prefillData.dataSummary || "");
+        setConsentInformation(prefillData.consentInformation ?? "");
+        setDataSummary(prefillData.dataSummary ?? "");
         setIsQi(prefillData.isQi);
       } catch (error) {
         console.error("Error fetching study data:", error);
@@ -81,7 +81,7 @@ export const StudiesEdit = () => {
       }
     };
 
-    fetchPrefill();
+    void fetchPrefill();
   }, [studyId]);
 
   /**
@@ -125,8 +125,10 @@ export const StudiesEdit = () => {
     }
 
     // Fetch existing study data from the backend
-    const data: Study[] = await makeRequest(`/admin/study?app=1&id=${studyId}`);
-    if (!data || data.length === 0) {
+    const data = (await makeRequest(
+      `/admin/study?app=1&id=${String(studyId)}`
+    )) as unknown as Study[];
+    if (data.length === 0) {
       throw new Error("Study not found.");
     }
 
