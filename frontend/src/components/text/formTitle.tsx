@@ -19,7 +19,7 @@ import { PropsWithChildren } from "react";
 import { TextProps } from "./text.types";
 export const FormTitle = ({
   children,
-  className,
+  className = "",
 }: PropsWithChildren<TextProps>) => {
   return (
     <p
