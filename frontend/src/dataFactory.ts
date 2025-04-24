@@ -37,10 +37,10 @@ const generateAudioFiles = (): AudioFile[] => {
 
   for (let i = 0; i < 20; i++) {
     const audioFile = {
-      id: `audio_${i + 1}`,
+      id: `audio_${String(i + 1)}`,
       _version: 1,
-      fileName: `file_${i + 1}.mp3`,
-      title: `Audio File ${i + 1}`,
+      fileName: `file_${String(i + 1)}.mp3`,
+      title: `Audio File ${String(i + 1)}`,
       category: categories[Math.floor(Math.random() * categories.length)],
       availability: "",
       studies: [],
@@ -288,7 +288,10 @@ export class DataFactory {
 
       if (APP_ENV !== "demo") {
         try {
-          this.studies = await makeRequest("/db/get-studies?app=2");
+          const response = await makeRequest("/db/get-studies?app=2");
+          // Use type assertion for the response
+          const typedResponse = response as unknown as { studies?: Study[] };
+          this.studies = typedResponse.studies ?? [];
         } catch (error) {
           console.error(error);
         }
