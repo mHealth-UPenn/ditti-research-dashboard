@@ -23,7 +23,7 @@ export const FormField = ({
   children,
 }: PropsWithChildren<FormFieldProps>) => {
   return (
-    <div className={`mb-8 flex w-full flex-col px-4 ${className}`}>
+    <div className={`mb-8 flex w-full flex-col px-4 ${className ?? ""}`}>
       {children}
     </div>
   );
