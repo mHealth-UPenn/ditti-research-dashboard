@@ -94,9 +94,9 @@ export const DataRetrievalTasks = () => {
   const fetchData = async () => {
     try {
       // Fetch data retrieval tasks (View permission is handled by the server)
-      const data: DataRetrievalTask[] = await makeRequest(
-        "/data_processing_task/?app=1"
-      );
+      const response = await makeRequest("/data_processing_task/?app=1");
+      // Cast to DataRetrievalTask[] using unknown as intermediate type
+      const data = response as unknown as DataRetrievalTask[];
       setTasks(data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -120,7 +120,7 @@ export const DataRetrievalTasks = () => {
         setCanInvoke(false);
       });
 
-    Promise.all([invoke, fetchData()]).finally(() => {
+    void Promise.all([invoke, fetchData()]).finally(() => {
       setLoading(false);
     });
   }, [flashMessage]);
@@ -134,7 +134,7 @@ export const DataRetrievalTasks = () => {
       }),
     }).finally(() => {
       setLoading(true);
-      fetchData().finally(() => {
+      void fetchData().finally(() => {
         setLoading(false);
       });
     });
@@ -177,13 +177,13 @@ export const DataRetrievalTasks = () => {
           ) : (
             <span>N/A</span>
           ),
-          searchValue: task.logFile || "",
-          sortValue: task.logFile || "",
+          searchValue: task.logFile ?? "",
+          sortValue: task.logFile ?? "",
         },
         {
-          contents: <span>{task.errorCode || "N/A"}</span>,
-          searchValue: task.errorCode || "",
-          sortValue: task.errorCode || "",
+          contents: <span>{task.errorCode ?? "N/A"}</span>,
+          searchValue: task.errorCode ?? "",
+          sortValue: task.errorCode ?? "",
         },
         {
           contents: (
