@@ -55,7 +55,7 @@ export const AboutSleepTemplatesEdit = () => {
       setLoading(false);
     };
 
-    fetchPrefill();
+    void fetchPrefill();
   }, []);
 
   /**
@@ -67,8 +67,9 @@ export const AboutSleepTemplatesEdit = () => {
 
     // if editing an existing entry, return prefill data, else return empty data
     return id
-      ? makeRequest("/admin/about-sleep-template?app=1&id=" + id).then(
-          makePrefill
+      ? makeRequest(`/admin/about-sleep-template?app=1&id=${String(id)}`).then(
+          (res: ResponseBody) =>
+            makePrefill(res as unknown as AboutSleepTemplate[])
         )
       : {
           name: "",
