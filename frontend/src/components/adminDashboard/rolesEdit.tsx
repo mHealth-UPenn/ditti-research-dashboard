@@ -58,16 +58,14 @@ export const RolesEdit = () => {
 
   useEffect(() => {
     // get all available actions
-    const fetchActions = makeRequest("/admin/action?app=1").then(
-      (actions: ActionResource[]) => {
-        setActions(actions);
-      }
-    );
+    const fetchActions = makeRequest("/admin/action?app=1").then((response) => {
+      setActions(response as unknown as ActionResource[]);
+    });
 
     // get all available resources
     const fetchResources = makeRequest("/admin/resource?app=1").then(
-      (resources: ActionResource[]) => {
-        setResources(resources);
+      (response) => {
+        setResources(response as unknown as ActionResource[]);
       }
     );
 
@@ -78,9 +76,14 @@ export const RolesEdit = () => {
     });
 
     // when all promises are complete, hide the loader
-    Promise.all([fetchActions, fetchResources, prefill]).then(() => {
-      setLoading(false);
-    });
+    Promise.all([fetchActions, fetchResources, prefill])
+      .then(() => {
+        setLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error loading form data:", error);
+        setLoading(false);
+      });
   }, []);
 
   /**
@@ -92,7 +95,9 @@ export const RolesEdit = () => {
 
     // if editing an existing entry, return prefill data, else return empty data
     return id
-      ? makeRequest("/admin/role?app=1&id=" + id).then(makePrefill)
+      ? makeRequest(`/admin/role?app=1&id=${String(id)}`).then((response) =>
+          makePrefill(response as unknown as Role[])
+        )
       : { name: "", permissions: [] };
   };
 
