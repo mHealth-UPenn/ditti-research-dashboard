@@ -61,11 +61,8 @@ export const Button = ({
       className={`flex items-center justify-center ${variantMap[variant]}
         ${sizeMap[size]} ${rounded ? roundedMap[size] : ""}
         ${fullWidth ? "w-full" : ""} ${fullHeight ? "h-full" : ""} ${
-        disabled
-            ? "cursor-not-allowed opacity-50"
-            : ""
-        } whitespace-nowrap ${className} select-none transition-colors
-        duration-200`}
+        disabled ? "cursor-not-allowed opacity-50" : "" } whitespace-nowrap
+        ${className} select-none transition-colors duration-200`}
       onClick={onClick}
     >
       {children}

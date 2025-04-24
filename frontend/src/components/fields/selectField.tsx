@@ -53,11 +53,8 @@ export const SelectField = ({
   return (
     <div
       className={`relative flex flex-grow items-center ${
-        hideBorder
-            ? ""
-            : "border border-light"
-       
-        } ${disabled ? "bg-extra-light" : ""}`}
+        hideBorder ? "" : "border border-light" }
+        ${disabled ? "bg-extra-light" : ""}`}
     >
       {/* if the blank option is selected, show the placeholder */}
       {value === "0" && (
