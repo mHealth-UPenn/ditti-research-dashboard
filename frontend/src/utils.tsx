@@ -205,7 +205,7 @@ export function sanitize_quill_html(html: string): string {
     // Filter class names: only allow those in the defined class allowlist.
     if (node.hasAttribute("class") && tagName in class_allowlist) {
       const allowedClasses = new Set(class_allowlist[tagName]);
-      const classNames = node.getAttribute("class")?.split(/\s+/) || [];
+      const classNames = node.getAttribute("class")?.split(/\s+/) ?? [];
       const filteredClasses = classNames.filter((cls: string) =>
         allowedClasses.has(cls)
       );
@@ -245,29 +245,33 @@ export const makeRequest = async (
   opts.credentials = "include";
 
   // Set headers
-  opts.headers = {
-    ...opts.headers,
+  const headers = {
+    ...Object.fromEntries(Object.entries(opts.headers ?? {})),
     ...(jwt &&
       !(opts.headers && "Authorization" in opts.headers) && {
-        Authorization: `Bearer ${jwt}`,
+        Authorization: `Bearer ${String(jwt)}`,
       }),
   };
 
+  opts.headers = headers;
+
   // Add additional headers for specific request methods
-  if (["POST", "PUT", "DELETE"].includes(opts.method || "")) {
-    opts.headers = {
-      ...opts.headers,
+  if (["POST", "PUT", "DELETE"].includes(opts.method ?? "")) {
+    const updatedHeaders = {
+      ...Object.fromEntries(Object.entries(opts.headers ?? {})),
       "Content-Type": "application/json",
-      "X-CSRF-TOKEN": localStorage.getItem("csrfToken") || "",
+      "X-CSRF-TOKEN": localStorage.getItem("csrfToken") ?? "",
     };
+
+    opts.headers = updatedHeaders;
   }
 
   // Execute the request
   const response = await fetch(
-    `${import.meta.env.VITE_FLASK_SERVER}${url}`,
+    `${String(import.meta.env.VITE_FLASK_SERVER)}${url}`,
     opts
   );
-  const body: ResponseBody = await response.json();
+  const body = (await response.json()) as ResponseBody;
 
   // Store CSRF token for future requests
   if (response.status === 200) {
@@ -278,7 +282,10 @@ export const makeRequest = async (
 
   // Throw an error if the response is not successful
   if (response.status !== 200) {
-    throw body;
+    // Return the original body to maintain compatibility with existing error handling
+    const errorMessage =
+      body.msg || `Request failed with status: ${String(response.status)}`;
+    throw new Error(errorMessage);
   }
 
   return body;
@@ -291,7 +298,7 @@ export const makeRequest = async (
  */
 export async function downloadExcelFromUrl(
   url: string
-): Promise<string | void> {
+): Promise<string | null> {
   // Fetch the file from the server
   try {
     const jwt = localStorage.getItem("jwt");
@@ -299,28 +306,28 @@ export async function downloadExcelFromUrl(
       method: "GET",
       credentials: "include",
       headers: {
-        Authorization: `Bearer ${jwt}`,
+        Authorization: `Bearer ${String(jwt)}`,
         Accept:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       },
     };
 
     const response = await fetch(
-      `${import.meta.env.VITE_FLASK_SERVER}${url}`,
+      `${String(import.meta.env.VITE_FLASK_SERVER)}${String(url)}`,
       opts
     );
 
     if (!response.ok) {
       throw new Error(
-        `Failed to fetch data: ${response.status} ${response.statusText}`
+        `Failed to fetch data: ${String(response.status)} ${response.statusText}`
       );
     }
 
     // Handle case where no data is found
     const contentType = response.headers.get("Content-Type");
-    if (contentType && contentType.includes("application/json")) {
-      const jsonResponse: ResponseBody = await response.json();
-      if (jsonResponse.msg && jsonResponse.msg.includes("not found")) {
+    if (contentType?.includes("application/json")) {
+      const jsonResponse = (await response.json()) as ResponseBody;
+      if (jsonResponse.msg.includes("not found")) {
         return jsonResponse.msg;
       }
     }
@@ -328,7 +335,7 @@ export async function downloadExcelFromUrl(
     // Extract the filename from the "Content-Disposition" header
     const contentDisposition = response.headers.get("Content-Disposition");
     let filename = "download.xlsx"; // Default filename
-    if (contentDisposition && contentDisposition.includes("filename=")) {
+    if (contentDisposition?.includes("filename=")) {
       filename = contentDisposition
         .split("filename=")[1]
         .split(";")[0]
@@ -354,6 +361,7 @@ export async function downloadExcelFromUrl(
     console.error("Error downloading participant data:", error);
     return "Error downloading participant data.";
   }
+  return null;
 }
 
 /**
@@ -370,8 +378,8 @@ export const getAccess = async (
   resource: string,
   study?: number
 ): Promise<void> => {
-  let url = `/auth/researcher/get-access?app=${app}&action=${action}&resource=${resource}`;
-  if (study) url += `&study=${study}`;
+  let url = `/auth/researcher/get-access?app=${String(app)}&action=${action}&resource=${resource}`;
+  if (study) url += `&study=${String(study)}`;
 
   const res: ResponseBody = await makeRequest(url);
   if (res.msg !== "Authorized") throw new Error("Unauthorized");
@@ -397,9 +405,7 @@ export const getEnrollmentInfoForStudy = (
     return { startsOn, expiresOn };
   }
 
-  const currStudy = studySubject.studies.find(
-    (s) => s.study.id == studyId || -1
-  );
+  const currStudy = studySubject.studies.find((s) => s.study.id === studyId);
 
   if (currStudy) {
     const { startsOn, expiresOn, didConsent } = currStudy;
@@ -430,7 +436,7 @@ export const formatDateForInput = (date: Date) => {
   const day = String(date.getDate()).padStart(2, "0");
 
   // Format the date string
-  return `${year}-${month}-${day}`;
+  return `${String(year)}-${month}-${day}`;
 };
 
 /**
