@@ -32,8 +32,8 @@ export const useDittiData = (): DittiDataContextValue => {
       taps: [],
       audioTaps: [],
       audioFiles: [],
-      refreshAudioFiles: async () => {
-        return;
+      refreshAudioFiles: () => {
+        return Promise.resolve();
       },
     };
   }
