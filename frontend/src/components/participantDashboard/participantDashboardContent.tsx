@@ -89,7 +89,7 @@ export const ParticipantDashboardContent = () => {
 
   // Redirect after authenticating with Fitbit
   const handleRedirect = () => {
-    window.location.href = `${import.meta.env.VITE_FLASK_SERVER}/api/fitbit/authorize`;
+    window.location.href = `${String(import.meta.env.VITE_FLASK_SERVER)}/api/fitbit/authorize`;
   };
 
   // Redirect to form for requesting deletion of account
@@ -107,13 +107,16 @@ export const ParticipantDashboardContent = () => {
     try {
       await Promise.all(
         unconsentedStudies.map((study) => {
-          return makeRequest(`/participant/study/${study.studyId}/consent`, {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ didConsent: true }),
-          });
+          return makeRequest(
+            `/participant/study/${String(study.studyId)}/consent`,
+            {
+              method: "PATCH",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ didConsent: true }),
+            }
+          );
         })
       );
 
@@ -165,8 +168,7 @@ export const ParticipantDashboardContent = () => {
     let content = "";
     unconsentedStudies.forEach((study) => {
       // This gets sanitized in QuillView
-      const consentText =
-        study.consentInformation || defaultConsentContentText || "";
+      const consentText = study.consentInformation ?? defaultConsentContentText;
       content += `<h4>${study.studyName}</h4><div>${consentText}</div>`;
     });
     return content;
@@ -278,7 +280,7 @@ export const ParticipantDashboardContent = () => {
               className="text-sm"
               content={
                 studies.length > 0
-                  ? studies[0].dataSummary || "No data summary available."
+                  ? (studies[0].dataSummary ?? "No data summary available.")
                   : "No data summary available."
               }
             />
@@ -287,7 +289,11 @@ export const ParticipantDashboardContent = () => {
             <Title>Manage my data</Title>
           </CardContentRow>
           <CardContentRow>
-            <LinkComponent onClick={handleClickManageData}>
+            <LinkComponent
+              onClick={() => {
+                handleClickManageData();
+              }}
+            >
               Request deletion of my account or data.
             </LinkComponent>
           </CardContentRow>
@@ -310,7 +316,7 @@ export const ParticipantDashboardContent = () => {
       {/* Consent Modal */}
       <ConsentModal
         isOpen={isConsentOpen}
-        onAccept={handleConsentAccept}
+        onAccept={() => void handleConsentAccept()}
         onDeny={handleConsentClose}
         onClose={handleConsentClose}
         contentHtml={consentContentHtml}
