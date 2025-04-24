@@ -101,7 +101,7 @@ const reducer = (state: AccountsEditState, action: Action) => {
       const { accessGroups, accessGroupsSelected } = state;
 
       // get the access group
-      const accessGroup = accessGroups.filter((ag) => ag.id == id)[0];
+      const accessGroup = accessGroups.find((ag) => ag.id == id);
       if (
         accessGroup &&
         !accessGroupsSelected.some((ag) => ag.id === accessGroup.id)
@@ -126,10 +126,10 @@ const reducer = (state: AccountsEditState, action: Action) => {
       // get the study
       const study = Object.assign(
         {},
-        studies.filter((s: Study) => s.id == id)[0]
+        studies.find((s: Study) => s.id == id)
       );
 
-      if (study && !studiesSelected.some((s) => s.id === study.id)) {
+      if (!studiesSelected.some((s) => s.id === study.id)) {
         // add it to the selected studies
         studiesSelected.push(study);
         return { ...state, studiesSelected };
@@ -185,21 +185,32 @@ export const AccountsEdit = () => {
 
   useEffect(() => {
     // when all requests are complete, initialize the state
-    Promise.all([
-      makeRequest("/admin/access-group?app=1") as Promise<AccessGroup[]>,
-      makeRequest("/admin/role?app=1") as Promise<Role[]>,
-      makeRequest("/admin/study?app=1") as Promise<Study[]>,
-      getPrefill(),
-    ]).then(([accessGroups, roles, studies, prefill]) => {
-      dispatch({
-        type: "INIT",
-        accessGroups,
-        roles,
-        studies,
-        prefill,
-        loading: false,
-      });
-    });
+    const fetchData = async () => {
+      try {
+        const [accessGroups, roles, studies, prefill] = await Promise.all([
+          makeRequest("/admin/access-group?app=1") as unknown as Promise<
+            AccessGroup[]
+          >,
+          makeRequest("/admin/role?app=1") as unknown as Promise<Role[]>,
+          makeRequest("/admin/study?app=1") as unknown as Promise<Study[]>,
+          getPrefill(),
+        ]);
+
+        dispatch({
+          type: "INIT",
+          accessGroups,
+          roles,
+          studies,
+          prefill,
+          loading: false,
+        });
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        // Handle error as needed
+      }
+    };
+
+    void fetchData();
   }, []);
 
   /**
@@ -209,7 +220,9 @@ export const AccountsEdit = () => {
   const getPrefill = async (): Promise<AccountFormPrefill> => {
     // if editing an existing entry, return prefill data, else return empty data
     return accountId
-      ? makeRequest("/admin/account?app=1&id=" + accountId).then(makePrefill)
+      ? makeRequest(`/admin/account?app=1&id=${String(accountId)}`).then(
+          (res: ResponseBody) => makePrefill(res as unknown as Account[])
+        )
       : {
           firstName: "",
           lastName: "",
@@ -229,7 +242,7 @@ export const AccountsEdit = () => {
   const makePrefill = (res: Account[]): AccountFormPrefill => {
     const account = res[0];
     const roles = account.studies.map((s): RoleSelected => {
-      return { study: s.id, role: s.role?.id || 0 };
+      return { study: s.id, role: s.role?.id ?? 0 };
     });
 
     return {
@@ -260,8 +273,8 @@ export const AccountsEdit = () => {
   const getSelectedRole = (id: number) => {
     if (rolesSelected.some((x) => x.study == id)) {
       // get the role selected for this study
-      const roleSelected = rolesSelected.filter((x) => x.study == id)[0];
-      return roleSelected.role;
+      const roleSelected = rolesSelected.find((x) => x.study == id);
+      return roleSelected?.role ?? 0;
     }
     return 0;
   };
@@ -363,7 +376,7 @@ export const AccountsEdit = () => {
 
     // Construct studies data structure with role assignments
     const studies = studiesSelected.map((s) => {
-      const role = rolesSelected.filter((r) => r.study == s.id)[0];
+      const role = rolesSelected.find((r) => r.study == s.id);
       return { id: s.id, role: role ? { id: role.role } : {} };
     });
 
@@ -373,7 +386,7 @@ export const AccountsEdit = () => {
       email: email,
       first_name: firstName,
       last_name: lastName,
-      phone_number: phoneNumber || "", // Always send phone_number, empty string signals deletion
+      phone_number: phoneNumber ?? "", // Always send phone_number, empty string signals deletion
       studies: studies,
     };
 
@@ -455,7 +468,7 @@ export const AccountsEdit = () => {
    * @returns - the user's study summary
    */
   const getStudiesSummary = () => {
-    let role: Role;
+    let role: Role | undefined;
     let permissions: React.ReactElement[];
 
     return studiesSelected.map((s, i) => {
@@ -463,15 +476,15 @@ export const AccountsEdit = () => {
       permissions = [<React.Fragment key={0} />];
 
       // get the selected role for each study
-      const selectedRole: RoleSelected = rolesSelected.filter(
+      const selectedRole: RoleSelected | undefined = rolesSelected.find(
         (sr: RoleSelected) => sr.study == s.id
-      )[0];
+      );
 
       if (selectedRole) {
         // get the selected role's data
-        role = roles.filter((r) => r.id == selectedRole.role)[0];
+        role = roles.find((r) => r.id == selectedRole.role);
 
-        if (role) {
+        if (role?.permissions) {
           // list the permissions for each selected role
           permissions = role.permissions.map((p, j) => {
             const action = p.action == "*" ? "All Actions" : p.action;
@@ -495,14 +508,14 @@ export const AccountsEdit = () => {
           &nbsp;&nbsp;&nbsp;&nbsp;
           {s.name}
           <br />
-          {role ? (
+          {role && (
             <span>
               &nbsp;&nbsp;&nbsp;&nbsp;Role:
               {role.name ? " " + role.name : " " + "unassigned"}
               <br />
               {permissions}
             </span>
-          ) : null}
+          )}
         </span>
       );
     });
@@ -700,7 +713,7 @@ export const AccountsEdit = () => {
               id="phoneNumber"
               type="text"
               placeholder=""
-              value={phoneNumber || ""}
+              value={phoneNumber ?? ""}
               label="Phone Number"
               onKeyup={handlePhoneNumberChange}
               feedback={
