@@ -234,11 +234,11 @@ export function sanitize_quill_html(html: string): string {
  * @param opts - Request options including method, headers, and body.
  * @returns A promise that resolves to the response body.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export const makeRequest = async (
   url: string,
   opts: RequestInit = {}
-): Promise<any> => {
+): Promise<ResponseBody> => {
   const jwt = localStorage.getItem("jwt");
 
   // Set credentials to include to send cookies
