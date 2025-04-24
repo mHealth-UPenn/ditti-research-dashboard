@@ -88,14 +88,14 @@ export const AccessGroups = () => {
       }
 
       try {
-        const accessGroups = await makeRequest("/admin/access-group?app=1");
-        setAccessGroups(accessGroups);
+        const response = await makeRequest("/admin/access-group?app=1");
+        setAccessGroups(response as unknown as AccessGroup[]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    void fetchData();
   }, []);
 
   const getData = (): TableData[][] => {
@@ -144,7 +144,7 @@ export const AccessGroups = () => {
                 >
                   <Link
                     className="flex h-full w-full items-center justify-center"
-                    to={`/coordinator/admin/access-groups/edit?id=${id}`}
+                    to={`/coordinator/admin/access-groups/edit?id=${String(id)}`}
                   >
                     Edit
                   </Link>
@@ -192,10 +192,12 @@ export const AccessGroups = () => {
     setLoading(true);
 
     // Refresh the table's data
-    makeRequest("/admin/access-group?app=1").then((accessGroups) => {
-      setAccessGroups(accessGroups);
-      setLoading(false);
-    });
+    void makeRequest("/admin/access-group?app=1")
+      .then((response) => {
+        setAccessGroups(response as unknown as AccessGroup[]);
+        setLoading(false);
+      })
+      .catch(handleFailure);
   };
 
   const handleFailure = (res: ResponseBody) => {
