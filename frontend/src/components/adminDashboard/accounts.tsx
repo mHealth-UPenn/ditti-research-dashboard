@@ -106,13 +106,13 @@ export const Accounts = () => {
     const fetchAccounts = async () => {
       try {
         const accounts = await makeRequest("/admin/account?app=1");
-        setAccounts(accounts);
+        setAccounts(accounts as unknown as Account[]);
       } catch (error) {
         console.error("Error fetching accounts:", error);
       }
     };
 
-    Promise.all([fetchPermissions(), fetchAccounts()]).then(() => {
+    void Promise.all([fetchPermissions(), fetchAccounts()]).then(() => {
       setLoading(false);
     });
   }, []);
@@ -175,7 +175,7 @@ export const Accounts = () => {
             <span>
               {lastLogin
                 ? ago
-                  ? `${ago} day${ago === 1 ? "" : "s"} ago`
+                  ? `${String(ago)} day${ago === 1 ? "" : "s"} ago`
                   : "Today"
                 : "Never"}
             </span>
@@ -196,7 +196,7 @@ export const Accounts = () => {
                 >
                   <Link
                     className="flex h-full w-full items-center justify-center"
-                    to={`/coordinator/admin/accounts/edit?id=${id}`}
+                    to={`/coordinator/admin/accounts/edit?id=${String(id)}`}
                   >
                     Edit
                   </Link>
@@ -251,9 +251,9 @@ export const Accounts = () => {
     setLoading(true);
 
     // Refresh the table's data
-    makeRequest("/admin/account?app=1")
+    void makeRequest("/admin/account?app=1")
       .then((accounts) => {
-        setAccounts(accounts);
+        setAccounts(accounts as unknown as Account[]);
       })
       .finally(() => {
         setLoading(false);
