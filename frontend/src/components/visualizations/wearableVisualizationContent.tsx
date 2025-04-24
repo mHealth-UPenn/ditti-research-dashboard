@@ -115,10 +115,10 @@ export const WearableVisualizationContent = ({
 
   // Optionally override the default margins if passed as props
   const margin = {
-    top: marginTop !== undefined ? marginTop : defaultMargin.top,
-    right: marginRight !== undefined ? marginRight : defaultMargin.right,
-    bottom: marginBottom !== undefined ? marginBottom : defaultMargin.bottom,
-    left: marginLeft !== undefined ? marginLeft : defaultMargin.left,
+    top: marginTop ?? defaultMargin.top,
+    right: marginRight ?? defaultMargin.right,
+    bottom: marginBottom ?? defaultMargin.bottom,
+    left: marginLeft ?? defaultMargin.left,
   };
 
   // Generate the row visualizations on load and when data changes.
