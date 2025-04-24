@@ -38,7 +38,7 @@
     "lint:fix": "eslint . --fix",
     "tailwind": "npx tailwindcss -i ./src/index.css -o ./src/output.css",
     "tailwind:watch": "npx tailwindcss -i ./src/index.css -o ./src/output.css --watch",
-    "prettier-format": "prettier --config .prettierrc 'src/**/*.tsx' --write"
+    "format": "prettier --config prettier.config.js 'src/**/*.{js,ts,tsx}' --write"
   },
   "browserslist": {
     "production": [
