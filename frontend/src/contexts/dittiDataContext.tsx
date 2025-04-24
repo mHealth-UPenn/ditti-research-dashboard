@@ -59,27 +59,31 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
     ) {
       promises.push(
         dataFactory.init().then(() => {
-          if (dataFactory) {
-            setTaps(dataFactory.taps);
-            setAudioTaps(dataFactory.audioTaps);
-            setAudioFiles(dataFactory.audioFiles);
-          }
+          setTaps(dataFactory.taps);
+          setAudioTaps(dataFactory.audioTaps);
+          setAudioFiles(dataFactory.audioFiles);
         })
       );
     }
 
-    Promise.all(promises).then(() => {
-      setDataLoading(false);
-    });
-  }, []);
+    Promise.all(promises)
+      .then(() => {
+        setDataLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error during initial data fetch:", error);
+        setDataLoading(false);
+      });
+  }, [dataFactory]);
 
   const getTapsAsync = async (): Promise<TapModel[]> => {
     let taps: TapModel[] = [];
 
     if (APP_ENV === "production") {
       taps = await makeRequest("/aws/get-taps?app=2")
-        .then((res: Tap[]) => {
-          return res.map((tap) => {
+        .then((res) => {
+          const tapsData = res as unknown as Tap[];
+          return tapsData.map((tap) => {
             return {
               dittiId: tap.dittiId,
               time: new Date(tap.time),
@@ -110,8 +114,9 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
 
     if (APP_ENV == "production") {
       audioTaps = await makeRequest("/aws/get-audio-taps?app=2")
-        .then((res: AudioTap[]) => {
-          return res.map((at) => {
+        .then((res) => {
+          const audioTapsData = res as unknown as AudioTap[];
+          return audioTapsData.map((at) => {
             return {
               dittiId: at.dittiId,
               audioFileTitle: at.audioFileTitle,
@@ -143,12 +148,14 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
     let audioFiles: AudioFile[] = [];
 
     if (APP_ENV === "production") {
-      audioFiles = await makeRequest("/aws/get-audio-files?app=2").catch(() => {
-        console.error(
-          "Unable to fetch audio files. Check account permissions."
-        );
-        return [];
-      });
+      audioFiles = (await makeRequest("/aws/get-audio-files?app=2").catch(
+        () => {
+          console.error(
+            "Unable to fetch audio files. Check account permissions."
+          );
+          return [];
+        }
+      )) as unknown as AudioFile[];
     } else if (dataFactory) {
       audioFiles = dataFactory.audioFiles;
     }
