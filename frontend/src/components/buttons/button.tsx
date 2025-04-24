@@ -55,6 +55,13 @@ export const Button = ({
     lg: "rounded-xl",
   };
 
+  // Create a handler that doesn't return the Promise
+  const handleClick = onClick
+    ? () => {
+        void onClick();
+      }
+    : undefined;
+
   return (
     <button
       disabled={disabled}
@@ -63,7 +70,7 @@ export const Button = ({
         ${fullWidth ? "w-full" : ""} ${fullHeight ? "h-full" : ""} ${
         disabled ? "cursor-not-allowed opacity-50" : "" } whitespace-nowrap
         ${className} select-none transition-colors duration-200`}
-      onClick={onClick}
+      onClick={handleClick}
     >
       {children}
     </button>
