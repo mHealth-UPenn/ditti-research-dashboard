@@ -61,7 +61,7 @@ export interface ButtonProps {
   fullHeight?: boolean;
   className?: string;
   rounded?: boolean;
-  onClick?: () => void;
+  onClick?: () => void | Promise<void>;
 }
 
 /**
