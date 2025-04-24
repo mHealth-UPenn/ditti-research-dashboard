@@ -37,7 +37,7 @@ export const TableControl = ({
   return (
     <div className="mb-4 flex items-center justify-between">
       {includeControl && (
-        <div style={{ width: controlWidth + "%" }}>{control}</div>
+        <div style={{ width: `${String(controlWidth)}%` }}>{control}</div>
       )}
       <div>
         {includeSearch && (
