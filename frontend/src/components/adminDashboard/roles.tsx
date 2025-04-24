@@ -57,7 +57,7 @@ export const Roles = () => {
   const { flashMessage } = useFlashMessages();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = () => {
       // check whether the user has permission to create
       const create = getAccess(1, "Create", "Roles")
         .then(() => {
@@ -86,15 +86,23 @@ export const Roles = () => {
         });
 
       // get the table's data
-      const rolesData = makeRequest("/admin/role?app=1").then((roles) => {
-        setRoles(roles);
-      });
+      const rolesData = makeRequest("/admin/role?app=1").then(
+        (response: ResponseBody) => {
+          setRoles(response as unknown as Role[]);
+        }
+      );
 
       // when all requests are complete, hide the loading screen
-      Promise.all([create, edit, archive, rolesData]).then(() => {
-        setLoading(false);
-      });
+      Promise.all([create, edit, archive, rolesData])
+        .then(() => {
+          setLoading(false);
+        })
+        .catch((error: unknown) => {
+          console.error("Error fetching data:", error);
+          setLoading(false);
+        });
     };
+
     fetchData();
   }, []);
 
@@ -143,7 +151,7 @@ export const Roles = () => {
                 >
                   <Link
                     className="flex h-full w-full items-center justify-center"
-                    to={`/coordinator/admin/roles/edit?id=${id}`}
+                    to={`/coordinator/admin/roles/edit?id=${String(id)}`}
                   >
                     Edit
                   </Link>
@@ -201,10 +209,15 @@ export const Roles = () => {
     setLoading(true);
 
     // refresh the table's data
-    makeRequest("/admin/role?app=1").then((roles) => {
-      setRoles(roles);
-      setLoading(false);
-    });
+    makeRequest("/admin/role?app=1")
+      .then((response: ResponseBody) => {
+        setRoles(response as unknown as Role[]);
+        setLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error refreshing roles:", error);
+        setLoading(false);
+      });
   };
 
   /**
