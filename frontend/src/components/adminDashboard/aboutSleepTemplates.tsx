@@ -85,13 +85,18 @@ export const AboutSleepTemplates = () => {
     const fetchTemplates = makeRequest(
       "/admin/about-sleep-template?app=1"
     ).then((templates) => {
-      setAboutSleepTemplates(templates);
+      setAboutSleepTemplates(templates as unknown as AboutSleepTemplate[]);
     });
 
     // when all requests are complete, hide the loading screen
-    Promise.all([create, edit, archive, fetchTemplates]).then(() => {
-      setLoading(false);
-    });
+    Promise.all([create, edit, archive, fetchTemplates])
+      .then(() => {
+        setLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error loading templates:", error);
+        setLoading(false);
+      });
   }, []);
 
   /**
@@ -122,7 +127,7 @@ export const AboutSleepTemplates = () => {
                 >
                   <Link
                     className="flex h-full w-full items-center justify-center"
-                    to={`/coordinator/admin/about-sleep-templates/edit?id=${id}`}
+                    to={`/coordinator/admin/about-sleep-templates/edit?id=${String(id)}`}
                   >
                     Edit
                   </Link>
@@ -179,10 +184,15 @@ export const AboutSleepTemplates = () => {
     flashMessage(<span>{res.msg}</span>, "success");
 
     // refresh the table's data
-    makeRequest("/admin/about-sleep-template?app=1").then((templates) => {
-      setAboutSleepTemplates(templates);
-      setLoading(false);
-    });
+    makeRequest("/admin/about-sleep-template?app=1")
+      .then((templates) => {
+        setAboutSleepTemplates(templates as unknown as AboutSleepTemplate[]);
+        setLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error refreshing templates:", error);
+        setLoading(false);
+      });
   };
 
   /**
