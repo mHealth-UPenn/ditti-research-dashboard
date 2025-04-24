@@ -15,20 +15,70 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import React from "react";
+
 /**
- * Defines the authentication context structure.
- * @property isParticipantAuthenticated - Indicates if the user is authenticated as a participant.
- * @property isResearcherAuthenticated - Indicates if the user is authenticated as a researcher.
- * @property isParticipantLoading - Indicates if the participant authentication status is being checked.
- * @property isResearcherLoading - Indicates if the researcher authentication status is being checked.
- * @property isFirstLogin - Indicates if this is the user's first login session.
- * @property dittiId - The Ditti ID of the authenticated participant.
- * @property accountInfo - Information about the authenticated researcher.
- * @property participantLogin - Function to log in with participant authentication.
- * @property participantLogout - Function to log out from participant authentication.
- * @property researcherLogin - Function to log in with researcher authentication.
- * @property researcherLogout - Function to log out from researcher authentication.
- * @property setIsFirstLogin - Sets whether this is the user's first login session.
+ * Represents the response structure from the participant authentication check endpoint.
+ * @property msg - A message indicating the status of the login check (e.g., "Login successful").
+ * @property dittiId - The Ditti ID of the participant if logged in, otherwise null.
+ */
+export interface ParticipantAuthResponse {
+  msg: string;
+  dittiId: string | null;
+}
+
+/**
+ * Represents the response structure from the researcher authentication check endpoint.
+ * @property msg - A message indicating the status of the login check (e.g., "Login successful").
+ * @property email - The email address of the researcher.
+ * @property firstName - The first name of the researcher.
+ * @property lastName - The last name of the researcher.
+ * @property accountId - The unique identifier for the researcher's account.
+ * @property phoneNumber - The phone number associated with the researcher's account (optional).
+ * @property isFirstLogin - Flag indicating if this is the researcher's first login (optional).
+ */
+export interface ResearcherAuthResponse {
+  msg: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  accountId: string;
+  phoneNumber?: string;
+  isFirstLogin?: boolean;
+}
+
+/**
+ * Represents the information stored about the currently logged-in researcher account.
+ * @property msg - Status message related to the account info retrieval (can be empty if not logged in).
+ * @property email - The email address of the researcher.
+ * @property firstName - The first name of the researcher.
+ * @property lastName - The last name of the researcher.
+ * @property accountId - The unique identifier for the researcher's account.
+ * @property phoneNumber - The phone number associated with the researcher's account (optional).
+ */
+export interface ResearcherAccountInfo {
+  msg: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  accountId: string;
+  phoneNumber?: string;
+}
+
+/**
+ * Defines the shape of the value provided by the AuthContext.
+ * @property isParticipantAuthenticated - True if a participant is currently authenticated, false otherwise.
+ * @property isResearcherAuthenticated - True if a researcher is currently authenticated, false otherwise.
+ * @property isParticipantLoading - True if the participant authentication status is currently being checked, false otherwise.
+ * @property isResearcherLoading - True if the researcher authentication status is currently being checked, false otherwise.
+ * @property isFirstLogin - True if the current session is the researcher's first login, false otherwise.
+ * @property dittiId - The Ditti ID of the authenticated participant, or null if no participant is authenticated.
+ * @property accountInfo - An object containing details about the authenticated researcher's account.
+ * @property participantLogin - Function to initiate the participant login flow. Takes optional 'elevated' parameter.
+ * @property participantLogout - Function to log out the currently authenticated participant.
+ * @property researcherLogin - Function to initiate the researcher login flow. Takes optional 'elevated' parameter.
+ * @property researcherLogout - Function to log out the currently authenticated researcher.
+ * @property setIsFirstLogin - Function to update the 'isFirstLogin' state, typically used after the first login flow is completed.
  */
 export interface AuthContextValue {
   isParticipantAuthenticated: boolean;
@@ -37,14 +87,7 @@ export interface AuthContextValue {
   isResearcherLoading: boolean;
   isFirstLogin: boolean;
   dittiId: string | null;
-  accountInfo: {
-    msg: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    accountId: string;
-    phoneNumber?: string;
-  };
+  accountInfo: ResearcherAccountInfo;
   participantLogin: (options?: { elevated: boolean }) => void;
   participantLogout: () => void;
   researcherLogin: (options?: { elevated: boolean }) => void;
