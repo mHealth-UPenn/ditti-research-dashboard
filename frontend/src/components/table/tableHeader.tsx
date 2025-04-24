@@ -26,9 +26,13 @@ export const TableHeader = ({ headers, onSort }: TableHeaderProps) => {
         <th
           key={i}
           className={`select-none border-r border-light bg-extra-light
-          ${h.sortable && "cursor-pointer"}`}
-          style={{ width: h.width + "%" }}
-          onClick={() => h.sortable && onSort(h.name, h.ascending ? 0 : 1)}
+          ${h.sortable ? "cursor-pointer" : ""}`}
+          style={{ width: `${String(h.width)}%` }}
+          onClick={() => {
+            if (h.sortable) {
+              onSort(h.name, h.ascending ? 0 : 1);
+            }
+          }}
         >
           <div
             className="items-begin relative mx-1 flex justify-between lg:mx-2"
