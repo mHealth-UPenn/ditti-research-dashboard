@@ -24,7 +24,7 @@ export function WearableVisuals() {
   const [searchParams] = useSearchParams();
   const sid = searchParams.get("sid");
   const studyId = sid ? parseInt(sid) : 0;
-  const dittiId = searchParams.get("dittiId") || "";
+  const dittiId = searchParams.get("dittiId") ?? "";
 
   return (
     // Wrap the visualization in wearable and ditti data providers

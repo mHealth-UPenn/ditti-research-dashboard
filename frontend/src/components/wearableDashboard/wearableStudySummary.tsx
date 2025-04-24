@@ -69,29 +69,31 @@ export function WearableStudySummary() {
     );
 
     promises.push(
-      makeRequest("/db/get-study-contacts?app=3&study=" + studyId).then(
-        (contacts: StudyContactModel[]) => {
-          setStudyContacts(contacts);
+      makeRequest("/db/get-study-contacts?app=3&study=" + String(studyId)).then(
+        (contacts: unknown) => {
+          setStudyContacts(contacts as StudyContactModel[]);
         }
       )
     );
 
     promises.push(
-      makeRequest("/db/get-study-details?app=3&study=" + studyId).then(
-        (details: Study) => {
-          setStudyDetails(details);
+      makeRequest("/db/get-study-details?app=3&study=" + String(studyId)).then(
+        (details: unknown) => {
+          setStudyDetails(details as Study);
         }
       )
     );
 
-    Promise.all(promises).then(() => {
-      setLoading(false);
-    });
+    Promise.all(promises)
+      .then(() => {
+        setLoading(false);
+      })
+      .catch(console.error);
   }, [studyId]);
 
   // Download all of the study's data in excel format.
   const downloadExcel = async (): Promise<void> => {
-    const url = `/admin/fitbit_data/download/study/${studyId}?app=3`;
+    const url = `/admin/fitbit_data/download/study/${String(studyId)}?app=3`;
     const res = await downloadExcelFromUrl(url);
     if (res) {
       flashMessage(<span>{res}</span>, "danger");
@@ -126,7 +128,11 @@ export function WearableStudySummary() {
             <Subtitle>Ditti acronym: {dittiId}</Subtitle>
           </div>
           {canViewWearableData && (
-            <Button onClick={downloadExcel} variant="secondary" rounded={true}>
+            <Button
+              onClick={() => void downloadExcel()}
+              variant="secondary"
+              rounded={true}
+            >
               Download Excel
             </Button>
           )}
@@ -138,14 +144,16 @@ export function WearableStudySummary() {
           <div className="flex">
             {(canCreate || APP_ENV === "demo") && (
               <Link
-                to={`/coordinator/wearable/participants/enroll?sid=${studyId}`}
+                to={`/coordinator/wearable/participants/enroll?sid=${String(studyId)}`}
               >
                 <Button className="mr-2" rounded={true}>
                   Enroll subject +
                 </Button>
               </Link>
             )}
-            <Link to={`/coordinator/wearable/participants?sid=${studyId}`}>
+            <Link
+              to={`/coordinator/wearable/participants?sid=${String(studyId)}`}
+            >
               <Button variant="secondary" rounded={true}>
                 View all subjects
               </Button>
