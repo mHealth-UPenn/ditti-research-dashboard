@@ -54,7 +54,7 @@ const cognitoPasswordValidation = {
 
 export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   const [searchParams] = useSearchParams();
-  const dittiId = searchParams.get("dittiId") || "";
+  const dittiId = searchParams.get("dittiId") ?? "";
 
   const [tapPermission, setTapPermission] = useState(false);
   const [information, setInformation] = useState("");
@@ -186,16 +186,16 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
         study?.id
       );
 
-      const selectedTemplate = aboutSleepTemplates.filter(
+      const selectedTemplate = aboutSleepTemplates.find(
         (ast: AboutSleepTemplate) => ast.text === studySubject.information
-      )[0];
+      );
 
       if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
 
       setTapPermission(studySubject.tapPermission);
       setInformation(studySubject.information);
       setUserPermissionId(
-        studySubject.dittiId.replace(study?.dittiId || "", "")
+        studySubject.dittiId.replace(study?.dittiId ?? "", "")
       );
       setDittiExpTime(
         formatDateForInput(new Date(studySubject.dittiExpTime.replace("Z", "")))
@@ -205,7 +205,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     } else {
       const startsOn = new Date();
       const expiresOn = new Date();
-      const expiryDelta = study?.defaultExpiryDelta || 14;
+      const expiryDelta = study?.defaultExpiryDelta ?? 14;
       expiresOn.setDate(expiresOn.getDate() + expiryDelta);
       setEnrollmentStart(formatDateForInput(startsOn));
       setEnrollmentEnd(formatDateForInput(expiresOn));
@@ -216,15 +216,20 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   // Fetch about sleep templates from the database
   useEffect(() => {
     // get all about sleep templates
-    const fetchTemplates = makeRequest(
-      `/db/get-about-sleep-templates?app=${app === "ditti" ? 2 : 3}`
-    ).then((templates: AboutSleepTemplate[]) => {
-      setAboutSleepTemplates(templates);
-    });
-    // when all promises finish, hide the loader
-    Promise.all([fetchTemplates]).then(() => {
-      setLoading(false);
-    });
+    const fetchTemplates = async () => {
+      try {
+        const response = await makeRequest(
+          `/db/get-about-sleep-templates?app=${String(app === "ditti" ? 2 : 3)}`
+        );
+        setAboutSleepTemplates(response as unknown as AboutSleepTemplate[]);
+      } catch (error) {
+        console.error("Error fetching templates:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchTemplates();
   }, []);
 
   /**
@@ -237,14 +242,14 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     const dataAWS = {
       tap_permission: tapPermission,
       information: aboutSleepTemplateSelected.text,
-      user_permission_id: study?.dittiId + userPermissionId,
+      user_permission_id: study?.dittiId ?? "" + userPermissionId,
       exp_time: dittiExpTime + "T00:00:00.000Z",
       team_email: study?.email,
     };
 
     const bodyAWS = {
       app: app === "ditti" ? 2 : 3,
-      study: study?.id || 0,
+      study: study?.id ?? 0,
       ...(dittiId
         ? { user_permission_id: dittiId, edit: dataAWS }
         : { create: dataAWS }),
@@ -260,10 +265,10 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
       : { didConsent: false };
 
     const dataDB = {
-      ditti_id: study?.dittiId + userPermissionId,
+      ditti_id: (study?.dittiId ?? "") + userPermissionId,
       studies: [
         {
-          id: study?.id || 0,
+          id: study?.id ?? 0,
           starts_on: enrollmentStart + "T00:00:00.000Z",
           expires_on: enrollmentEnd + "T00:00:00.000Z",
           did_consent: didConsent,
@@ -273,7 +278,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
 
     const bodyDB = {
       app: app === "ditti" ? 2 : 3,
-      study: study?.id || 0,
+      study: study?.id ?? 0,
       ...(studySubject
         ? { id: studySubject.id, edit: dataDB }
         : { create: dataDB }),
@@ -291,9 +296,9 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     if (!studySubject) {
       const bodyCognito = {
         app: app === "ditti" ? 2 : 3,
-        study: study?.id || 0,
+        study: study?.id ?? 0,
         data: {
-          cognitoUsername: study?.dittiId + userPermissionId,
+          cognitoUsername: (study?.dittiId ?? "") + userPermissionId,
           temporaryPassword: temporaryPassword,
         },
       };
@@ -304,13 +309,12 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
       promises.push(postCognito);
     }
 
-    await Promise.all(promises)
-      .then((res) => {
-        handleSuccess(res[0]);
-      })
-      .catch((error) => {
-        handleFailure(error);
-      });
+    try {
+      const results = await Promise.all(promises);
+      handleSuccess(results[0]);
+    } catch (error: unknown) {
+      handleFailure(error as ResponseBody);
+    }
   };
 
   /**
@@ -345,9 +349,9 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
    * @param id - the template's database primary key
    */
   const selectAboutSleepTemplate = (id: number): void => {
-    const selectedTemplate = aboutSleepTemplates.filter(
+    const selectedTemplate = aboutSleepTemplates.find(
       (a: AboutSleepTemplate) => a.id === id
-    )[0];
+    );
 
     if (selectedTemplate) {
       setAboutSleepTemplateSelected(selectedTemplate);
@@ -361,7 +365,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
    * @returns - the template's database primary key
    */
   const getSelectedAboutSleepTemplate = (): number => {
-    return aboutSleepTemplateSelected ? aboutSleepTemplateSelected.id : 0;
+    return aboutSleepTemplateSelected.id || 0;
   };
 
   const dateOptions: Intl.DateTimeFormatOptions = {
@@ -423,7 +427,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
           <FormField>
             <TextField
               label="Team Email"
-              value={study?.email || ""}
+              value={study?.email ?? ""}
               disabled={true}
             />
           </FormField>
@@ -535,7 +539,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
           <FormSummaryText>
             Ditti ID:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{study?.dittiId + userPermissionId}
+            &nbsp;&nbsp;&nbsp;&nbsp;{(study?.dittiId ?? "") + userPermissionId}
             <br />
             <br />
             Team email:
