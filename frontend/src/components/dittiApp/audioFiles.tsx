@@ -101,7 +101,7 @@ export const AudioFiles = () => {
     );
 
     // when all promises complete, hide the loader
-    Promise.all(promises).then(() => {
+    void Promise.all(promises).then(() => {
       setLoading(false);
     });
   }, []);
@@ -165,12 +165,12 @@ export const AudioFiles = () => {
         {
           contents: <span>{title}</span>,
           searchValue: title,
-          sortValue: title ? title : "",
+          sortValue: title ?? "",
         },
         {
           contents: <span>{category}</span>,
           searchValue: category,
-          sortValue: category ? category : "",
+          sortValue: category ?? "",
         },
         {
           contents: (
@@ -199,7 +199,7 @@ export const AudioFiles = () => {
           contents: (
             <span>
               {length
-                ? `${parseInt((length / 60).toString())}:${(length % 60).toString().padStart(2, "0")}`
+                ? `${parseInt((length / 60).toString()).toString()}:${(length % 60).toString().padStart(2, "0")}`
                 : ""}
             </span>
           ),
@@ -215,7 +215,7 @@ export const AudioFiles = () => {
                 size="sm"
                 className="h-full flex-grow"
                 onClick={() =>
-                  handleDelete(id || "", _version || 0, fileName || "")
+                  void handleDelete(id ?? "", _version ?? 0, fileName ?? "")
                 }
                 disabled={!canDeleteAudioFiles}
               >
