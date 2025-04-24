@@ -59,16 +59,15 @@ export const StudiesView = () => {
         );
 
         // when all promises resolve, hide the loader
-        Promise.all(promises).then(() => {
-          setLoading(false);
-        });
+        await Promise.all(promises);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching data: ", error);
         setLoading(false);
       }
     };
 
-    fetchData();
+    void fetchData();
   }, []);
 
   useEffect(() => {
@@ -82,7 +81,8 @@ export const StudiesView = () => {
       await Promise.all(promises);
       setCanViewTaps(updatedCanViewTaps);
     };
-    updateCanViewTaps();
+
+    void updateCanViewTaps();
   }, [studies]);
 
   if (loading || studiesLoading || dataLoading) {
@@ -139,7 +139,7 @@ export const StudiesView = () => {
                   )}
                   {/* link to study summary */}
                   <div className="flex flex-col">
-                    <Link to={`/coordinator/ditti/study?sid=${s.id}`}>
+                    <Link to={`/coordinator/ditti/study?sid=${String(s.id)}`}>
                       <LinkComponent>{s.acronym}</LinkComponent>
                     </Link>
                     <span className="text-sm">{s.name}</span>
