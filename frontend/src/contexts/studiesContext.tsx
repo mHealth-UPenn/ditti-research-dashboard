@@ -63,12 +63,15 @@ export function StudiesProvider({
     let studies: Study[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
-      studies = await makeRequest(`/db/get-studies?app=${app}`).catch(() => {
-        console.error(
-          "Unable to fetch studies data. Check account permissions."
-        );
-        return [];
-      });
+      // Explicitly cast the response type and convert app to string
+      studies = (await makeRequest(`/db/get-studies?app=${String(app)}`).catch(
+        () => {
+          console.error(
+            "Unable to fetch studies data. Check account permissions."
+          );
+          return [];
+        }
+      )) as unknown as Study[];
     } else if (dataFactory) {
       studies = dataFactory.studies;
     }
@@ -79,16 +82,21 @@ export function StudiesProvider({
   // Fetch studies on load
   useEffect(() => {
     if (APP_ENV === "production" || APP_ENV === "development") {
-      getStudiesAsync().then((studies) => {
-        setStudies(studies);
-        const study = studies.find((s) => s.id === studyId);
-        if (study) {
-          setStudy(study);
-          setStudySlug(study.acronym);
-          setSidParam(study.id.toString());
-        }
-        setStudiesLoading(false);
-      });
+      getStudiesAsync()
+        .then((studies) => {
+          setStudies(studies);
+          const study = studies.find((s) => s.id === studyId);
+          if (study) {
+            setStudy(study);
+            setStudySlug(study.acronym);
+            setSidParam(study.id.toString());
+          }
+          setStudiesLoading(false);
+        })
+        .catch((error: unknown) => {
+          console.error("Error fetching studies:", error);
+          setStudiesLoading(false); // Ensure loading is false on error
+        });
     } else if (APP_ENV === "demo" && dataFactory) {
       setStudies(dataFactory.studies);
       setStudiesLoading(false);

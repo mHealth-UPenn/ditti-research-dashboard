@@ -84,8 +84,8 @@ export function CoordinatorStudySubjectProvider({
 
     // Join data on Ditti IDs
     for (const id of ids) {
-      const matchedStudySubject = studySubjectMap.get(id) || emptyStudySubject;
-      const matchedUserDetail = userDetailsMap.get(id) || emptyUser;
+      const matchedStudySubject = studySubjectMap.get(id) ?? emptyStudySubject;
+      const matchedUserDetail = userDetailsMap.get(id) ?? emptyUser;
 
       // Build the result minus `userPermissionId`
       const dittiId =
@@ -114,9 +114,9 @@ export function CoordinatorStudySubjectProvider({
   // Fetch data from the database
   const fetchStudySubjectsDB = async (): Promise<StudySubject[]> => {
     if (APP_ENV === "production" || APP_ENV === "development") {
-      const data: StudySubject[] = await makeRequest(
-        `/admin/study_subject?app=${app}`
-      );
+      const data = (await makeRequest(
+        `/admin/study_subject?app=${String(app)}`
+      )) as unknown as StudySubject[];
       return data;
     }
     return [];
@@ -125,7 +125,9 @@ export function CoordinatorStudySubjectProvider({
   // Fetch data from AWS
   const fetchStudySubjectsAWS = async (): Promise<UserModel[]> => {
     if (APP_ENV === "production" || APP_ENV === "development") {
-      const data: UserModel[] = await makeRequest(`/aws/get-users?app=${app}`);
+      const data = (await makeRequest(
+        `/aws/get-users?app=${String(app)}`
+      )) as unknown as UserModel[];
       return data;
     }
     return [];
@@ -146,9 +148,11 @@ export function CoordinatorStudySubjectProvider({
         );
         setStudySubjectLoading(false);
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         console.error(
-          `Failed to fetch participants: ${error}. Check coordinator permissions.`
+          `Failed to fetch participants: ${String(
+            error
+          )}. Check coordinator permissions.`
         );
         setStudySubjectLoading(false);
       });

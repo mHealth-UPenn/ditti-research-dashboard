@@ -27,7 +27,7 @@ const formatString = (
   template: string,
   values: Record<string, string>
 ): string => {
-  return template.replace(/\{(\w+)\}/g, (_, key) => values[key] || "");
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => values[key] || "");
 };
 
 // NavbarContextProvider component that wraps children with studies context.

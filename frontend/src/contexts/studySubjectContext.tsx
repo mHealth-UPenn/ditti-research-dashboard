@@ -43,9 +43,14 @@ export function StudySubjectProvider({ children }: PropsWithChildren) {
       );
     }
 
-    Promise.all(promises).then(() => {
-      setStudySubjectLoading(false);
-    });
+    Promise.all(promises)
+      .then(() => {
+        setStudySubjectLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error fetching initial study subject data:", error);
+        setStudySubjectLoading(false);
+      });
   }, []);
 
   // Async fetch the participant's enrolled studies and connected APIs
@@ -57,9 +62,11 @@ export function StudySubjectProvider({ children }: PropsWithChildren) {
 
     if (APP_ENV === "production" || APP_ENV === "development") {
       await makeRequest(`/participant`)
-        .then((res: Participant) => {
-          studiesData = res.studies;
-          apisData = res.apis;
+        .then((res) => {
+          // Explicitly cast the response type
+          const participantData = res as unknown as Participant;
+          studiesData = participantData.studies;
+          apisData = participantData.apis;
         })
         .catch(() => {
           console.error("Unable to fetch participant data.");
@@ -76,7 +83,7 @@ export function StudySubjectProvider({ children }: PropsWithChildren) {
       const [studiesData, apisData] = await getStudySubject();
       setStudies(studiesData);
       setApis(apisData);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to refetch participant data:", error);
     } finally {
       setStudySubjectLoading(false);
