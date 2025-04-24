@@ -36,12 +36,12 @@ export const Header = () => {
 
   useEffect(() => {
     // If using researcher auth, use account info from Cognito
-    if (isResearcherAuthenticated && accountInfo) {
+    if (isResearcherAuthenticated) {
       setAccountDetails({
         firstName: accountInfo.firstName,
         lastName: accountInfo.lastName,
         email: accountInfo.email,
-        phoneNumber: accountInfo.phoneNumber || "",
+        phoneNumber: accountInfo.phoneNumber ?? "",
       });
       setLoading(false);
     }
