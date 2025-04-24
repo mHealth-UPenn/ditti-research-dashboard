@@ -90,10 +90,10 @@ export const TimestampHistogram = ({
 
   // Override the default margin if any was passed as props.
   const margin = {
-    top: marginTop !== undefined ? marginTop : defaultMargin.top,
-    right: marginRight !== undefined ? marginRight : defaultMargin.right,
-    bottom: marginBottom !== undefined ? marginBottom : defaultMargin.bottom,
-    left: marginLeft !== undefined ? marginLeft : defaultMargin.left,
+    top: marginTop ?? defaultMargin.top,
+    right: marginRight ?? defaultMargin.right,
+    bottom: marginBottom ?? defaultMargin.bottom,
+    left: marginLeft ?? defaultMargin.left,
   };
 
   // Bin the histogram data using `xScale`
@@ -145,7 +145,7 @@ export const TimestampHistogram = ({
       showTooltip({
         tooltipLeft: target.x.baseVal.value + width / 2 + 1,
         tooltipTop: target.y.baseVal.value - margin.top / 2,
-        tooltipData: `${numTaps} taps`,
+        tooltipData: `${numTaps.toString()} taps`,
       });
     },
     [showTooltip]
@@ -224,12 +224,12 @@ export const TimestampHistogram = ({
         {histogramData.map((bin, index) => {
           const width = Math.max(
             0,
-            xScale(bin.x1 ? bin.x1 : 0) - xScale(bin.x0 ? bin.x0 : 0) - 1
+            xScale(bin.x1 ?? 0) - xScale(bin.x0 ?? 0) - 1
           );
           return (
             <Bar
-              key={`bar-${index}`}
-              x={xScale(bin.x0 ? bin.x0 : 0) ?? 0}
+              key={`bar-${index.toString()}`}
+              x={xScale(bin.x0 ?? 0)}
               y={yScale(bin.length)}
               height={yScale(0) - yScale(bin.length)}
               width={width}
@@ -277,8 +277,8 @@ export const TimestampHistogram = ({
       {tooltipOpen && (
         <Tooltip
           key={Math.random()}
-          left={(tooltipLeft || 0) - 1}
-          top={(tooltipTop || 0) + 15}
+          left={(tooltipLeft ?? 0) - 1}
+          top={(tooltipTop ?? 0) + 15}
           style={{
             ...defaultStyles,
             ...{

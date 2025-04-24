@@ -43,10 +43,10 @@ export const Timeline = ({
   const { width, defaultMargin, xScale } = useVisualization();
 
   const margin = {
-    top: marginTop !== undefined ? marginTop : defaultMargin.top,
-    right: marginRight !== undefined ? marginRight : defaultMargin.right,
-    bottom: marginBottom !== undefined ? marginBottom : defaultMargin.bottom,
-    left: marginLeft !== undefined ? marginLeft : defaultMargin.left,
+    top: marginTop ?? defaultMargin.top,
+    right: marginRight ?? defaultMargin.right,
+    bottom: marginBottom ?? defaultMargin.bottom,
+    left: marginLeft ?? defaultMargin.left,
   };
 
   const height = margin.top + margin.bottom;
@@ -74,18 +74,22 @@ export const Timeline = ({
     [showTooltip]
   );
 
-  const handleMouseLeave = useCallback(hideTooltip, [hideTooltip]);
+  const handleMouseLeave = useCallback(() => {
+    hideTooltip();
+  }, [hideTooltip]);
 
   const visualizations = !xScale
     ? []
     : // Get only groups that either start or stop within the timeline range
       groups
-        .filter(
-          (group) =>
-            (start <= group.start && group.start <= stop) ||
-            (group.stop && start <= group.stop && group.stop <= stop) ||
-            (group.stop && group.start <= start && stop <= group.stop)
-        )
+        .filter((group) => {
+          const startInRange = start <= group.start && group.start <= stop;
+          const stopInRange =
+            group.stop != null && start <= group.stop && group.stop <= stop;
+          const spansRange =
+            group.stop != null && group.start <= start && stop <= group.stop;
+          return startInRange || stopInRange || spansRange;
+        })
         .map((group, i) => {
           // The group's position
           const startX = Math.max(
@@ -105,10 +109,11 @@ export const Timeline = ({
               width={stopX - startX + 20}
               height={30}
               fill="transparent"
-              onMouseEnter={(e) =>
-                group.label &&
-                handleMouseEnter(e.target as SVGRectElement, group.label)
-              }
+              onMouseEnter={(e) => {
+                if (group.label) {
+                  handleMouseEnter(e.target as SVGRectElement, group.label);
+                }
+              }}
               onMouseLeave={handleMouseLeave}
             />
           ) : (
@@ -124,18 +129,18 @@ export const Timeline = ({
                     cx={startX}
                     cy={y}
                     r={5}
-                    fill={group.color || color}
+                    fill={group.color ?? color}
                   />
                 )}
                 <Line
                   from={{ x: startX, y }}
                   to={{ x: stopX, y }}
-                  stroke={group.color || color}
+                  stroke={group.color ?? color}
                   strokeWidth={strokeWidth}
-                  strokeDasharray={group.strokeDashArray || strokeDashArray}
+                  strokeDasharray={group.strokeDashArray ?? strokeDashArray}
                 />
                 {!hideStops && stop >= group.stop && (
-                  <circle cx={stopX} cy={y} r={5} fill={group.color || color} />
+                  <circle cx={stopX} cy={y} r={5} fill={group.color ?? color} />
                 )}
                 {tooltipRect}
               </React.Fragment>
@@ -146,7 +151,7 @@ export const Timeline = ({
           return (
             <React.Fragment key={i}>
               {!hideStops && (
-                <circle cx={startX} cy={y} r={5} fill={group.color || color} />
+                <circle cx={startX} cy={y} r={5} fill={group.color ?? color} />
               )}
               {tooltipRect}
             </React.Fragment>
@@ -191,8 +196,8 @@ export const Timeline = ({
       {tooltipOpen && (
         <Tooltip
           key={Math.random()}
-          left={tooltipLeft || 0}
-          top={tooltipTop || 0}
+          left={tooltipLeft ?? 0}
+          top={tooltipTop ?? 0}
           style={{
             ...defaultStyles,
             ...{
