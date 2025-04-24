@@ -32,18 +32,21 @@ import { makeRequest } from "../../utils";
 import { ParticipantStudy } from "../../types/api";
 import { QuillView } from "../containers/quillView/quillView";
 
-const defaultConsentContentText = "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
+const defaultConsentContentText =
+  "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
 
 export const ParticipantDashboardContent = () => {
   const [isConsentOpen, setIsConsentOpen] = useState<boolean>(false);
   const [consentError, setConsentError] = useState<string>("");
-  const [unconsentedStudies, setUnconsentedStudies] = useState<ParticipantStudy[]>([]);
+  const [unconsentedStudies, setUnconsentedStudies] = useState<
+    ParticipantStudy[]
+  >([]);
 
   const { dittiId } = useAuth();
   const { studies, apis, studySubjectLoading, refetch } = useStudySubjects();
 
   const getStudiesNeedConsent = () => {
-    const studiesNeedConsent = studies.filter(s => !s.didConsent);
+    const studiesNeedConsent = studies.filter((s) => !s.didConsent);
     if (studiesNeedConsent.length > 0) {
       setUnconsentedStudies(studiesNeedConsent);
     } else {
@@ -57,15 +60,17 @@ export const ParticipantDashboardContent = () => {
   // Use the earliest startsOn date as the beginning of data collection
   const startDate = useMemo(() => {
     if (studies.length === 0) return null;
-    return new Date(Math.min(...studies.map(s => new Date(s.startsOn).getTime())));
+    return new Date(
+      Math.min(...studies.map((s) => new Date(s.startsOn).getTime()))
+    );
   }, [studies]);
 
   // Use the latest expiresOn date as the end of data collection
   const endDate = useMemo(() => {
     if (studies.length === 0) return null;
     const validTimestamps = studies
-      .map(s => (s.expiresOn ? new Date(s.expiresOn).getTime() : null))
-      .filter(timestamp => timestamp !== null) as number[];
+      .map((s) => (s.expiresOn ? new Date(s.expiresOn).getTime() : null))
+      .filter((timestamp) => timestamp !== null) as number[];
 
     if (validTimestamps.length === 0) {
       return null; // No valid dates
@@ -74,7 +79,10 @@ export const ParticipantDashboardContent = () => {
     return new Date(Math.max(...validTimestamps)); // Get the latest date
   }, [studies]);
 
-  const scope = useMemo(() => [...new Set(apis.map(api => api.scope).flat())], [apis]);
+  const scope = useMemo(
+    () => [...new Set(apis.map((api) => api.scope).flat())],
+    [apis]
+  );
 
   // For now assume we are only connecting Fitbit API
   const fitbitConnected = apis.length > 0;
@@ -86,7 +94,8 @@ export const ParticipantDashboardContent = () => {
 
   // Redirect to form for requesting deletion of account
   const handleClickManageData = () => {
-    window.location.href = "https://hosting.med.upenn.edu/forms/DittiApp/view.php?id=10677";
+    window.location.href =
+      "https://hosting.med.upenn.edu/forms/DittiApp/view.php?id=10677";
   };
 
   const handleConsentAccept = async () => {
@@ -97,7 +106,7 @@ export const ParticipantDashboardContent = () => {
 
     try {
       await Promise.all(
-        unconsentedStudies.map(study => {
+        unconsentedStudies.map((study) => {
           return makeRequest(`/participant/study/${study.studyId}/consent`, {
             method: "PATCH",
             headers: {
@@ -120,14 +129,17 @@ export const ParticipantDashboardContent = () => {
       handleRedirect();
     } catch (err) {
       console.error(err);
-      const errorMsg = "There was a problem updating your consent. Please try again.";
+      const errorMsg =
+        "There was a problem updating your consent. Please try again.";
       setConsentError(errorMsg);
     }
   };
 
   const handleConsentClose = () => {
     setIsConsentOpen(false);
-    setConsentError("You must accept the consent terms to connect your Fitbit API, please try again.");
+    setConsentError(
+      "You must accept the consent terms to connect your Fitbit API, please try again."
+    );
   };
 
   // If there are no unconsented studies, proceed to Fitbit flow
@@ -151,9 +163,10 @@ export const ParticipantDashboardContent = () => {
 
     // Build a combined block of all unconsented study info
     let content = "";
-    unconsentedStudies.forEach(study => {
+    unconsentedStudies.forEach((study) => {
       // This gets sanitized in QuillView
-      const consentText = study.consentInformation || defaultConsentContentText || "";    
+      const consentText =
+        study.consentInformation || defaultConsentContentText || "";
       content += `<h4>${study.studyName}</h4><div>${consentText}</div>`;
     });
     return content;
@@ -175,18 +188,19 @@ export const ParticipantDashboardContent = () => {
   return (
     <>
       <Card width="md">
-
         {/* Title */}
         <CardContentRow className="justify-between">
           <Title>Your User ID: {dittiId}</Title>
           {!fitbitConnected && (
-            <div className="flex flex-col items-end relative">
+            <div className="relative flex flex-col items-end">
               <Button onClick={handleConnectFitBitClick} rounded={true}>
                 Connect FitBit
               </Button>
               {/* Error message without reserving space */}
               {consentError && (
-                <span className="absolute top-full mt-2 text-danger text-xs right-0">
+                <span
+                  className="absolute right-0 top-full mt-2 text-xs text-danger"
+                >
                   {consentError}
                 </span>
               )}
@@ -237,7 +251,7 @@ export const ParticipantDashboardContent = () => {
           </CardContentRow>
           <CardContentRow>
             <div className="flex flex-col">
-              <div className="flex flex-col mb-4">
+              <div className="mb-4 flex flex-col">
                 <span>Data being collected:</span>
                 {scope.map((s, i) => (
                   <span key={i} className="font-bold capitalize">
@@ -248,7 +262,8 @@ export const ParticipantDashboardContent = () => {
               <div className="flex flex-col">
                 <span>Between these dates:</span>
                 <span className="font-bold">
-                  &nbsp;&nbsp;&nbsp;&nbsp;{startDate ? startDate.toLocaleDateString() : "N/A"}
+                  &nbsp;&nbsp;&nbsp;&nbsp;
+                  {startDate ? startDate.toLocaleDateString() : "N/A"}
                   {" - "}
                   {endDate ? endDate.toLocaleDateString() : "N/A"}
                 </span>
@@ -261,10 +276,12 @@ export const ParticipantDashboardContent = () => {
           <CardContentRow>
             <QuillView
               className="text-sm"
-              content={studies.length > 0
-                ? (studies[0].dataSummary || "No data summary available.")
-                : "No data summary available."
-              } />
+              content={
+                studies.length > 0
+                  ? studies[0].dataSummary || "No data summary available."
+                  : "No data summary available."
+              }
+            />
           </CardContentRow>
           <CardContentRow>
             <Title>Manage my data</Title>
@@ -279,8 +296,12 @@ export const ParticipantDashboardContent = () => {
           </CardContentRow>
           <CardContentRow>
             <div className="flex flex-col">
-              <RouterLink className="link" to="/terms-of-use">Terms of Use</RouterLink>
-              <RouterLink className="link" to="/privacy-policy">Privacy Policy</RouterLink>
+              <RouterLink className="link" to="/terms-of-use">
+                Terms of Use
+              </RouterLink>
+              <RouterLink className="link" to="/privacy-policy">
+                Privacy Policy
+              </RouterLink>
             </div>
           </CardContentRow>
         </Card>

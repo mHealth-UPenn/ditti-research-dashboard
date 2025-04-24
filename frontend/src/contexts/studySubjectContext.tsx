@@ -20,14 +20,14 @@ import { APP_ENV } from "../environment";
 import { StudySubjectContextValue } from "./studySubjectContext.types";
 import { Participant, ParticipantApi, ParticipantStudy } from "../types/api";
 
-export const StudySubjectContext = createContext<StudySubjectContextValue | undefined>(undefined);
+export const StudySubjectContext = createContext<
+  StudySubjectContextValue | undefined
+>(undefined);
 
 // StudySubjectProvider component that wraps children with the study subject context.
-export function StudySubjectProvider({
-  children
-}: PropsWithChildren<unknown>) {
+export function StudySubjectProvider({ children }: PropsWithChildren<unknown>) {
   const [studies, setStudies] = useState<ParticipantStudy[]>([]);
-  const [apis, setApis] = useState<ParticipantApi[]>([])
+  const [apis, setApis] = useState<ParticipantApi[]>([]);
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
 
   // Fetch the participant's enrolled studies and connected APIs
@@ -35,17 +35,21 @@ export function StudySubjectProvider({
     const promises: Promise<void>[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
-      promises.push(getStudySubject().then(([studiesData, apisData]) => {
-        setStudies(studiesData);
-        setApis(apisData);
-      }));
+      promises.push(
+        getStudySubject().then(([studiesData, apisData]) => {
+          setStudies(studiesData);
+          setApis(apisData);
+        })
+      );
     }
 
     Promise.all(promises).then(() => setStudySubjectLoading(false));
   }, []);
 
   // Async fetch the participant's enrolled studies and connected APIs
-  const getStudySubject = async (): Promise<[ParticipantStudy[], ParticipantApi[]]> => {
+  const getStudySubject = async (): Promise<
+    [ParticipantStudy[], ParticipantApi[]]
+  > => {
     let studiesData: ParticipantStudy[] = [];
     let apisData: ParticipantApi[] = [];
 
@@ -56,7 +60,7 @@ export function StudySubjectProvider({
           apisData = res.apis;
         })
         .catch(() => {
-          console.error("Unable to fetch participant data.")
+          console.error("Unable to fetch participant data.");
         });
     }
 
@@ -79,8 +83,9 @@ export function StudySubjectProvider({
 
   return (
     <StudySubjectContext.Provider
-      value={{ studies, apis, studySubjectLoading, refetch }}>
-        {children}
+      value={{ studies, apis, studySubjectLoading, refetch }}
+    >
+      {children}
     </StudySubjectContext.Provider>
   );
 }

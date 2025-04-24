@@ -39,13 +39,13 @@ export const AccountMenu = ({
   const [lastName, setLastName] = useState(prefill.lastName);
   const [phoneNumber, setPhoneNumber] = useState(prefill.phoneNumber || "");
   const [phoneNumberError, setPhoneNumberError] = useState<string>("");
-  
+
   // Password state
   const [currentPassword, setCurrentPassword] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
   const [confirmPasswordValue, setConfirmPasswordValue] = useState("");
   const [passwordError, setPasswordError] = useState<PasswordError>(null);
-  
+
   // UI state
   const [edit, setEdit] = useState(false);
   const [editPassword, setEditPassword] = useState(false);
@@ -58,10 +58,12 @@ export const AccountMenu = ({
   const handlePhoneNumberChange = (value: string) => {
     const formattedNumber = formatPhoneNumber(value);
     setPhoneNumber(formattedNumber);
-    
+
     // Validate the phone number format
     if (formattedNumber && !/^\+[1-9]\d*$/.test(formattedNumber)) {
-      setPhoneNumberError("Phone number must start with + followed by country code and digits");
+      setPhoneNumberError(
+        "Phone number must start with + followed by country code and digits"
+      );
     } else {
       setPhoneNumberError("");
     }
@@ -73,20 +75,35 @@ export const AccountMenu = ({
   const post = async () => {
     // Validate required fields
     if (!firstName.trim()) {
-      flashMessage(<span><b>First name is required</b></span>, "danger");
+      flashMessage(
+        <span>
+          <b>First name is required</b>
+        </span>,
+        "danger"
+      );
       return;
     }
-    
+
     if (!lastName.trim()) {
-      flashMessage(<span><b>Last name is required</b></span>, "danger");
+      flashMessage(
+        <span>
+          <b>Last name is required</b>
+        </span>,
+        "danger"
+      );
       return;
     }
-    
+
     if (!email.trim()) {
-      flashMessage(<span><b>Email is required</b></span>, "danger");
+      flashMessage(
+        <span>
+          <b>Email is required</b>
+        </span>,
+        "danger"
+      );
       return;
     }
-    
+
     // Validate phone number format if provided
     if (phoneNumber && phoneNumber.trim()) {
       // International phone numbers should start with + followed by at least 1 digit for country code
@@ -94,14 +111,15 @@ export const AccountMenu = ({
       if (!phoneRegex.test(phoneNumber)) {
         flashMessage(
           <span>
-            <b>Invalid phone number format</b> - Phone number must start with + followed by country code and digits
-          </span>, 
+            <b>Invalid phone number format</b> - Phone number must start with +
+            followed by country code and digits
+          </span>,
           "danger"
         );
         return;
       }
     }
-    
+
     const body = {
       app: 2,
       email,
@@ -110,18 +128,18 @@ export const AccountMenu = ({
       phone_number: phoneNumber, // Will be properly formatted or empty string
     };
 
-    const opts = { 
-      method: "POST", 
+    const opts = {
+      method: "POST",
       body: JSON.stringify(body),
       headers: {
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
     };
-    
+
     await makeRequest("/db/edit-account-details", opts)
       .then(handleSuccess)
       .catch(handleFailure);
-  }
+  };
 
   /**
    * Validate password requirements
@@ -132,13 +150,13 @@ export const AccountMenu = ({
     if (passwordValue !== confirmPasswordValue) {
       return "PASSWORDS_DONT_MATCH";
     }
-    
+
     // Always require current password for any password change
     // Cognito will validate this credential
     if (!currentPassword) {
       return "CURRENT_PASSWORD_REQUIRED";
     }
-    
+
     return null;
   };
 
@@ -149,40 +167,37 @@ export const AccountMenu = ({
   const setPassword = async () => {
     // Clear any previous errors
     setPasswordError(null);
-    
+
     // Validate password
     const error = validatePassword();
     if (error) {
       setPasswordError(error);
       // Display the validation error directly through the flash message
       // instead of throwing an error
-      flashMessage(
-        <span>{getErrorMessage(error)}</span>,
-        "danger"
-      );
+      flashMessage(<span>{getErrorMessage(error)}</span>, "danger");
       // Return null to indicate validation failed without throwing an error
       return null;
     }
-    
+
     // Prepare request body - both passwords are always required
     // Cognito requires the previous password for all password changes
     const body: Record<string, string> = {
       newPassword: passwordValue,
-      previousPassword: currentPassword
+      previousPassword: currentPassword,
     };
-    
+
     // Set up request options
-    const opts: RequestInit = { 
-      method: "POST", 
+    const opts: RequestInit = {
+      method: "POST",
       body: JSON.stringify(body),
       credentials: "include", // Ensure cookies are sent with the request
       headers: {
-        "Content-Type": "application/json"
-      }
+        "Content-Type": "application/json",
+      },
     };
-    
+
     return makeRequest("/auth/researcher/change-password", opts);
-  }
+  };
 
   /**
    * Get readable error message from password error code
@@ -223,7 +238,7 @@ export const AccountMenu = ({
     flashMessage(<span>{res.msg}</span>, "success");
     resetForm();
     hideMenu();
-  }
+  };
 
   /**
    * Handle a failed response from the server API (not local validation)
@@ -232,20 +247,25 @@ export const AccountMenu = ({
   const handleFailure = (res: ResponseBody | Error) => {
     try {
       // Format error message
-      const errorMessage = res instanceof Error 
-        ? res.message 
-        : (res.msg || "Internal server error");
-      
+      const errorMessage =
+        res instanceof Error ? res.message : res.msg || "Internal server error";
+
       // Check for specific error codes to provide better feedback
       let msgElement: React.ReactElement;
-      
-      if (!(res instanceof Error) && 'error_code' in res && typeof res.error_code === 'string') {
+
+      if (
+        !(res instanceof Error) &&
+        "error_code" in res &&
+        typeof res.error_code === "string"
+      ) {
         const errorCode = res.error_code;
-        
+
         // For authentication errors, show with special heading
-        if (errorCode.includes('AUTH_') || 
-            errorCode === 'SESSION_EXPIRED' || 
-            errorCode === 'FORBIDDEN') {
+        if (
+          errorCode.includes("AUTH_") ||
+          errorCode === "SESSION_EXPIRED" ||
+          errorCode === "FORBIDDEN"
+        ) {
           msgElement = (
             <span>
               <b>Authentication Error</b>
@@ -296,161 +316,199 @@ export const AccountMenu = ({
     setEmail(prefill.email);
     setPhoneNumber(prefill.phoneNumber || "");
     setPhoneNumberError("");
-    
+
     // Reset password fields
     setCurrentPassword("");
     setPasswordValue("");
     setConfirmPasswordValue("");
     setPasswordError(null);
-    
+
     // Exit edit modes
 
     setEdit(false);
     setEditPassword(false);
-  }
+  };
 
   /**
    * Get error feedback message for password fields
    */
   const getPasswordErrorFeedback = (errorType: PasswordError): string => {
     return errorType ? getErrorMessage(errorType) : "";
-
-  }
+  };
 
   return (
     <div
       ref={accountMenuRef}
-      className="absolute right-0 top-16 w-0 max-w-[100vw] h-[calc(100vh-4rem)] overflow-scroll z-20 bg-white border-light border-l overflow-x-hidden [@media(min-width:383px)]:bg-red [@media(min-width:383px)]:transition-[width] [@media(min-width:383px)]:duration-500">
-        <div className="p-8 w-[24rem]">
-          <div className="flex items-center justify-between pb-6 mb-6 border-b border-light">
-            <span>Account Details</span>
-            {edit ? (
-              <AsyncButton size="sm" onClick={post} rounded={true}>Save</AsyncButton>
-            ) : (
-              <Button
-                variant="tertiary"
-                size="sm"
-                onClick={() => setEdit(true)}
-                rounded={true}>
-                  Edit
-              </Button>
-            )}
-          </div>
-          <div className="mb-4">
-            {edit ? (
-              <div>
-                <TextField
-                  id="email"
-                  label="Email"
-                  value={email}
-                  disabled={true} />
-                  
-                <TextField
-                  id="first-name"
-                  label="First Name"
-                  value={firstName}
-                  onKeyup={setFirstName} />
-                  
-                <TextField
-                  id="last-name"
-                  label="Last Name"
-                  value={lastName}
-                  onKeyup={setLastName} />
-                  
-                <TextField
-                  id="phone-number"
-                  label="Phone Number"
-                  value={phoneNumber}
-                  onKeyup={handlePhoneNumberChange}
-                  feedback={phoneNumberError} />
-              </div>
-            ) : (
-              <div>
-                <div className="mb-4">
-                  <span>
-                    <b>First Name</b>
-                    <br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;{firstName}
-                  </span>
-                </div>
-                <div className="mb-4">
-                  <span>
-                    <b>Last Name</b>
-                    <br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;{lastName}
-                  </span>
-                </div>
-                <div className="mb-4">
-                  <span>
-                    <b>Email</b>
-                    <br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;{email}
-                  </span>
-                </div>
-                <div className="mb-4">
-                  <span>
-                    <b>Phone Number</b>
-                    <br />
-                    &nbsp;&nbsp;&nbsp;&nbsp;{phoneNumber || 'Not provided'}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="border-b border-light mb-6" />
-          <div className="flex items-center justify-between mb-6">
-            <span>Change password</span>
-            {editPassword ?
-              <AsyncButton size="sm" onClick={trySetPassword} rounded={true}>Save</AsyncButton> :
-              <Button
-                variant="tertiary"
-                size="sm"
-                onClick={() => setEditPassword(true)}
-                rounded={true}>
-                  Change
-              </Button>
-            }
-          </div>
-          {editPassword &&
-            <>
-              <div className="mb-4">
-                <TextField
-                  id="currentPassword"
-                  label="Current password"
-                  type="password"
-                  onKeyup={setCurrentPassword}
-                  value={currentPassword}
-                  feedback={passwordError === "CURRENT_PASSWORD_REQUIRED" ? getPasswordErrorFeedback(passwordError) : ""} />
-              </div>
-              <div className="mb-4">
-                <TextField
-                  id="newPassword"
-                  label="Enter a new password"
-                  type="password"
-                  onKeyup={setPasswordValue}
-                  value={passwordValue}
-                  description=""
-                  feedback={passwordError === "PASSWORDS_DONT_MATCH" ? getPasswordErrorFeedback(passwordError) : ""} />
-              </div>
-              <div className="mb-6">
-                <TextField
-                  id="confirmPassword"
-                  label="Confirm your password"
-                  type="password"
-                  onKeyup={setConfirmPasswordValue}
-                  value={confirmPasswordValue}
-                  feedback={passwordError === "PASSWORDS_DONT_MATCH" ? getPasswordErrorFeedback(passwordError) : ""} />
-              </div>
-            </>
-          }
-          <div className="border-light border-b mb-6" />
-          <div className="flex items-center justify-between">
-            <span>Logout</span>
-            <Button variant="danger" size="sm" onClick={researcherLogout} rounded={true}>
-              Logout
+      className="[@media(min-width:383px)]:bg-red absolute right-0 top-16 z-20
+        h-[calc(100vh-4rem)] w-0 max-w-[100vw] overflow-scroll overflow-x-hidden
+        border-l border-light bg-white
+        [@media(min-width:383px)]:transition-[width]
+        [@media(min-width:383px)]:duration-500"
+    >
+      <div className="w-[24rem] p-8">
+        <div
+          className="mb-6 flex items-center justify-between border-b
+            border-light pb-6"
+        >
+          <span>Account Details</span>
+          {edit ? (
+            <AsyncButton size="sm" onClick={post} rounded={true}>
+              Save
+            </AsyncButton>
+          ) : (
+            <Button
+              variant="tertiary"
+              size="sm"
+              onClick={() => setEdit(true)}
+              rounded={true}
+            >
+              Edit
             </Button>
-          </div>
+          )}
         </div>
+        <div className="mb-4">
+          {edit ? (
+            <div>
+              <TextField
+                id="email"
+                label="Email"
+                value={email}
+                disabled={true}
+              />
+
+              <TextField
+                id="first-name"
+                label="First Name"
+                value={firstName}
+                onKeyup={setFirstName}
+              />
+
+              <TextField
+                id="last-name"
+                label="Last Name"
+                value={lastName}
+                onKeyup={setLastName}
+              />
+
+              <TextField
+                id="phone-number"
+                label="Phone Number"
+                value={phoneNumber}
+                onKeyup={handlePhoneNumberChange}
+                feedback={phoneNumberError}
+              />
+            </div>
+          ) : (
+            <div>
+              <div className="mb-4">
+                <span>
+                  <b>First Name</b>
+                  <br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;{firstName}
+                </span>
+              </div>
+              <div className="mb-4">
+                <span>
+                  <b>Last Name</b>
+                  <br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;{lastName}
+                </span>
+              </div>
+              <div className="mb-4">
+                <span>
+                  <b>Email</b>
+                  <br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;{email}
+                </span>
+              </div>
+              <div className="mb-4">
+                <span>
+                  <b>Phone Number</b>
+                  <br />
+                  &nbsp;&nbsp;&nbsp;&nbsp;{phoneNumber || "Not provided"}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="mb-6 border-b border-light" />
+        <div className="mb-6 flex items-center justify-between">
+          <span>Change password</span>
+          {editPassword ? (
+            <AsyncButton size="sm" onClick={trySetPassword} rounded={true}>
+              Save
+            </AsyncButton>
+          ) : (
+            <Button
+              variant="tertiary"
+              size="sm"
+              onClick={() => setEditPassword(true)}
+              rounded={true}
+            >
+              Change
+            </Button>
+          )}
+        </div>
+        {editPassword && (
+          <>
+            <div className="mb-4">
+              <TextField
+                id="currentPassword"
+                label="Current password"
+                type="password"
+                onKeyup={setCurrentPassword}
+                value={currentPassword}
+                feedback={
+                  passwordError === "CURRENT_PASSWORD_REQUIRED"
+                    ? getPasswordErrorFeedback(passwordError)
+                    : ""
+                }
+              />
+            </div>
+            <div className="mb-4">
+              <TextField
+                id="newPassword"
+                label="Enter a new password"
+                type="password"
+                onKeyup={setPasswordValue}
+                value={passwordValue}
+                description=""
+                feedback={
+                  passwordError === "PASSWORDS_DONT_MATCH"
+                    ? getPasswordErrorFeedback(passwordError)
+                    : ""
+                }
+              />
+            </div>
+            <div className="mb-6">
+              <TextField
+                id="confirmPassword"
+                label="Confirm your password"
+                type="password"
+                onKeyup={setConfirmPasswordValue}
+                value={confirmPasswordValue}
+                feedback={
+                  passwordError === "PASSWORDS_DONT_MATCH"
+                    ? getPasswordErrorFeedback(passwordError)
+                    : ""
+                }
+              />
+            </div>
+          </>
+        )}
+        <div className="mb-6 border-b border-light" />
+        <div className="flex items-center justify-between">
+          <span>Logout</span>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={researcherLogout}
+            rounded={true}
+          >
+            Logout
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

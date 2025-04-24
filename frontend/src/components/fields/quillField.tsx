@@ -115,17 +115,14 @@ const QuillField = ({
     <div className={`mb-4 w-full ${className}`}>
       {/* Display the optional label, if provided */}
       {label && (
-        <label
-          htmlFor={id}
-          className="mb-2 block font-semibold text-gray-700"
-        >
+        <label htmlFor={id} className="text-gray-700 mb-2 block font-semibold">
           {label}
         </label>
       )}
 
       {/* Display the optional description, if provided */}
       {description && (
-        <p className="text-sm text-gray-500 mb-2">{description}</p>
+        <p className="text-gray-500 mb-2 text-sm">{description}</p>
       )}
 
       {/* The container where the Quill editor is mounted */}
@@ -133,9 +130,8 @@ const QuillField = ({
         <div
           ref={editorRef}
           id={id}
-          className="border border-gray-300 rounded-b p-2 w-full
-                    min-h-[10rem] focus:outline-none focus:ring-2
-                    focus:ring-blue-500"
+          className="border-gray-300 focus:ring-blue-500 min-h-[10rem] w-full
+            rounded-b border p-2 focus:outline-none focus:ring-2"
         />
       </div>
     </div>

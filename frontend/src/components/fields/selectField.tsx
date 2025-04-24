@@ -51,21 +51,34 @@ export const SelectField = ({
   const updatedOpts = [{ value: 0, label: "" }].concat(opts);
 
   return (
-    <div className={`flex items-center flex-grow relative ${hideBorder ? "" : "border border-light"} ${disabled ? "bg-extra-light" : ""}`}>
+    <div
+      className={`relative flex flex-grow items-center ${
+        hideBorder
+            ? ""
+            : "border border-light"
+       
+        } ${disabled ? "bg-extra-light" : ""}`}
+    >
       {/* if the blank option is selected, show the placeholder */}
       {value === "0" && (
-        <span className="ml-4 text-light pointer-events-none select-none absolute">{placeholder}</span>
+        <span
+          className="pointer-events-none absolute ml-4 select-none text-light"
+        >
+          {placeholder}
+        </span>
       )}
       <select
-        className="flex-grow pl-2 bg-[transparent] min-h-[calc(3rem-2px)] focus:outline-none focus:shadow-none cursor-pointer"
+        className="min-h-[calc(3rem-2px)] flex-grow cursor-pointer
+          bg-[transparent] pl-2 focus:shadow-none focus:outline-none"
         onChange={changeValue}
         value={value}
-        disabled={disabled}>
-          {updatedOpts.map((opt, i) => (
-            <option key={i} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
+        disabled={disabled}
+      >
+        {updatedOpts.map((opt, i) => (
+          <option key={i} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
       </select>
     </div>
   );

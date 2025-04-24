@@ -24,8 +24,11 @@ import { QuillViewProps } from "./quillView.types";
  * Note: This component does not sanitize the input `content`. Ensure the content
  * is sanitized before passing it to this component to prevent XSS vulnerabilities.
  */
-export const QuillView = ({ content, className = "", style }: QuillViewProps) => {
-
+export const QuillView = ({
+  content,
+  className = "",
+  style,
+}: QuillViewProps) => {
   const htmlContent = { __html: sanitize_quill_html(content) };
 
   return (
