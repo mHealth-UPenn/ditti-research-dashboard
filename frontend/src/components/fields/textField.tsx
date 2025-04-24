@@ -72,7 +72,7 @@ export const TextField = ({
           border-light ${disabled ? "bg-extra-light" : ""}`}
       >
         {/* place children here as prefix icons (e.g., a password icon) */}
-        {children || null}
+        {children ?? null}
 
         {/* the input */}
         <div className="flex h-full flex-grow items-center p-2">
@@ -80,7 +80,7 @@ export const TextField = ({
           {type === "textarea" ? (
             <textarea
               className={`h-full w-full resize-none focus:outline-none ${
-                disabled && "italic text-link" }`}
+                disabled ? "italic text-link" : "" }`}
               onChange={handleKeyUp}
               onKeyDown={onKeyDown}
               disabled={disabled}
@@ -89,10 +89,10 @@ export const TextField = ({
             />
           ) : (
             <input
-              className={`w-full focus:outline-none ${ disabled &&
-                "italic text-link" }`}
-              type={type || "text"}
-              placeholder={placeholder || ""}
+              className={`w-full focus:outline-none ${
+                disabled ? "italic text-link" : "" }`}
+              type={type ?? "text"}
+              placeholder={placeholder ?? ""}
               onChange={handleKeyUp}
               onKeyDown={onKeyDown}
               disabled={disabled}

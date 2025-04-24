@@ -17,7 +17,8 @@
 
 import { debounce } from "lodash";
 import { memo, useEffect, useMemo, useRef } from "react";
-import Quill, { QuillOptions } from "quill";
+import Quill from "quill";
+import type { QuillOptions } from "quill";
 import "quill/dist/quill.snow.css";
 import { sanitize_quill_html } from "../../utils";
 import { QuillFieldProps } from "./fields.types";
@@ -53,7 +54,7 @@ const QuillField = ({
     };
     return {
       ...defaultModules,
-      ...(config.modules || {}),
+      ...(config.modules ?? {}),
     };
   }, [config.modules]);
 
@@ -85,7 +86,7 @@ const QuillField = ({
 
       // Listen for editor content changes and call the debounced `onChange`
       quillInstanceRef.current.on("text-change", () => {
-        const html = quillInstanceRef.current?.root.innerHTML || "";
+        const html = quillInstanceRef.current?.root.innerHTML ?? "";
         debouncedOnChange(html);
       });
 

@@ -29,12 +29,12 @@ export const RadioField = ({
     const ref = createRef<HTMLInputElement>();
     return (
       <div key={i} className="flex items-center">
-        <label htmlFor={`${id}-${v}`} className="cursor-pointer p-2">
+        <label htmlFor={`${id ?? ""}-${v}`} className="cursor-pointer p-2">
           {v}
         </label>
         <input
           ref={ref}
-          id={`${id}-${v}`}
+          id={`${id ?? ""}-${v}`}
           className="cursor-pointer"
           type="radio"
           checked={v === checked}
