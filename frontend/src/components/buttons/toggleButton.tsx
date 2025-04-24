@@ -32,7 +32,9 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
     return (
       <Button
         variant="success"
-        onClick={() => remove(id)}
+        onClick={() => {
+          remove(id);
+        }}
         fullWidth={fullWidth}
         fullHeight={fullHeight}
       >
@@ -44,7 +46,9 @@ export const ToggleButton: React.FC<ToggleButtonProps> = ({
   return (
     <Button
       variant="secondary"
-      onClick={() => add(id)}
+      onClick={() => {
+        add(id);
+      }}
       fullWidth={fullWidth}
       fullHeight={fullHeight}
     >

@@ -258,7 +258,9 @@ export const AccessGroupsEdit = () => {
         <CloseIcon
           color="warning"
           fontSize="large"
-          onClick={() => removePermission(p.id)}
+          onClick={() => {
+            removePermission(p.id);
+          }}
         />
       </div>
     </FormRow>
@@ -367,7 +369,9 @@ export const AccessGroupsEdit = () => {
               placeholder=""
               value={name}
               label="Name"
-              onKeyup={(text: string) => setName(text)}
+              onKeyup={(text: string) => {
+                setName(text);
+              }}
               feedback=""
             />
           </FormField>

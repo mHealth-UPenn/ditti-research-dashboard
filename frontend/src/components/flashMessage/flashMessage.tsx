@@ -44,7 +44,9 @@ export const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
       }
     }, 3000);
 
-    const closeTimeout = setTimeout(() => onClose(), 5000);
+    const closeTimeout = setTimeout(() => {
+      onClose();
+    }, 5000);
 
     return () => {
       clearTimeout(opacityTimeout);

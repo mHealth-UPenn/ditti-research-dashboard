@@ -40,8 +40,12 @@ export const AsyncButton = ({
   const handleClick = (): void => {
     setLoading(true);
     onClick()
-      .then(() => setLoading(false))
-      .catch(() => setLoading(false))
+      .then(() => {
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      })
       .finally(() => {
         // Ensure loading is reset even if the promise is rejected without being caught
         setLoading(false);

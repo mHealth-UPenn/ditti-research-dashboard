@@ -59,12 +59,16 @@ export const RolesEdit = () => {
   useEffect(() => {
     // get all available actions
     const fetchActions = makeRequest("/admin/action?app=1").then(
-      (actions: ActionResource[]) => setActions(actions)
+      (actions: ActionResource[]) => {
+        setActions(actions);
+      }
     );
 
     // get all available resources
     const fetchResources = makeRequest("/admin/resource?app=1").then(
-      (resources: ActionResource[]) => setResources(resources)
+      (resources: ActionResource[]) => {
+        setResources(resources);
+      }
     );
 
     // set any form prefill data
@@ -291,7 +295,9 @@ export const RolesEdit = () => {
         <CloseIcon
           color="warning"
           fontSize="large"
-          onClick={() => removePermission(p.id)}
+          onClick={() => {
+            removePermission(p.id);
+          }}
         />
       </div>
     </FormRow>
@@ -321,7 +327,9 @@ export const RolesEdit = () => {
               placeholder=""
               value={name}
               label="Name"
-              onKeyup={(text: string) => setName(text)}
+              onKeyup={(text: string) => {
+                setName(text);
+              }}
               feedback=""
             />
           </FormField>

@@ -56,7 +56,7 @@ const formatDate = (date: Date) => {
 // ParticipantWearableDataProvider component that wraps children with the study subject context.
 export const ParticipantWearableDataProvider = ({
   children,
-}: PropsWithChildren<unknown>) => {
+}: PropsWithChildren) => {
   const start = new Date();
   start.setDate(start.getDate() - 6);
 
@@ -107,7 +107,9 @@ export const ParticipantWearableDataProvider = ({
 
     const promises: Promise<void>[] = [];
     promises.push(fetchSleepData());
-    Promise.all(promises).finally(() => setIsLoading(false));
+    Promise.all(promises).finally(() => {
+      setIsLoading(false);
+    });
   }, []);
 
   return (
@@ -225,7 +227,9 @@ export const CoordinatorWearableDataProvider = ({
     const promises: Promise<void>[] = [];
     promises.push(fetchSleepData());
     promises.push(fetchDataProcessingTasks());
-    Promise.all(promises).finally(() => setIsLoading(false));
+    Promise.all(promises).finally(() => {
+      setIsLoading(false);
+    });
   }, []);
 
   /**
@@ -262,9 +266,9 @@ export const CoordinatorWearableDataProvider = ({
             }
             setDataIsUpdated(false);
           })
-          .catch((error) =>
-            console.error(`Error updating sleep log data: ${error}`)
-          );
+          .catch((error) => {
+            console.error(`Error updating sleep log data: ${error}`);
+          });
       }
     }, 1000);
   };
@@ -284,7 +288,10 @@ export const CoordinatorWearableDataProvider = ({
       };
 
       // Fetch the data processing task ID for checking status
-      type ResponseBody = { msg: string; task: DataProcessingTask };
+      interface ResponseBody {
+        msg: string;
+        task: DataProcessingTask;
+      }
       const res: ResponseBody = await makeRequest(url, opts);
 
       setIsSyncing(true);
@@ -331,9 +338,9 @@ export const CoordinatorWearableDataProvider = ({
           }
           setDataIsUpdated(true);
         })
-        .catch((error) =>
-          console.error(`Error updating sleep log data: ${error}`)
-        );
+        .catch((error) => {
+          console.error(`Error updating sleep log data: ${error}`);
+        });
     }
   };
 

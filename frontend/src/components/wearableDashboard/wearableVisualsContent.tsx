@@ -62,7 +62,9 @@ function useWindowDimensions() {
     }
 
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   return windowDimensions;
@@ -102,22 +104,28 @@ export function WearableVisualsContent({
     if (study) {
       const promises: Promise<unknown>[] = [];
       promises.push(
-        getAccess(3, "Edit", "Participants", study.id).then(() =>
-          setCanEdit(true)
-        )
+        getAccess(3, "Edit", "Participants", study.id).then(() => {
+          setCanEdit(true);
+        })
       );
       promises.push(
-        getAccess(3, "Invoke", "Data Retrieval Task", study.id).then(() =>
-          setCanInvoke(true)
-        )
+        getAccess(3, "Invoke", "Data Retrieval Task", study.id).then(() => {
+          setCanInvoke(true);
+        })
       );
       promises.push(
-        getAccess(3, "View", "Taps", study.id).then(() => setCanViewTaps(true))
+        getAccess(3, "View", "Taps", study.id).then(() => {
+          setCanViewTaps(true);
+        })
       );
 
       Promise.all(promises)
-        .then(() => setLoading(false))
-        .catch(() => setLoading(false));
+        .then(() => {
+          setLoading(false);
+        })
+        .catch(() => {
+          setLoading(false);
+        });
     }
   }, [study]);
 

@@ -60,18 +60,30 @@ export const Roles = () => {
     const fetchData = async () => {
       // check whether the user has permission to create
       const create = getAccess(1, "Create", "Roles")
-        .then(() => setCanCreate(true))
-        .catch(() => setCanCreate(false));
+        .then(() => {
+          setCanCreate(true);
+        })
+        .catch(() => {
+          setCanCreate(false);
+        });
 
       // check whether the user has permissions to edit
       const edit = getAccess(1, "Edit", "Roles")
-        .then(() => setCanEdit(true))
-        .catch(() => setCanEdit(false));
+        .then(() => {
+          setCanEdit(true);
+        })
+        .catch(() => {
+          setCanEdit(false);
+        });
 
       // check whether the user has permissions to archive
       const archive = getAccess(1, "Archive", "Roles")
-        .then(() => setCanArchive(true))
-        .catch(() => setCanArchive(false));
+        .then(() => {
+          setCanArchive(true);
+        })
+        .catch(() => {
+          setCanArchive(false);
+        });
 
       // get the table's data
       const rolesData = makeRequest("/admin/role?app=1").then((roles) => {
@@ -142,7 +154,9 @@ export const Roles = () => {
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteRole(id)}
+                  onClick={() => {
+                    deleteRole(id);
+                  }}
                 >
                   Archive
                 </Button>

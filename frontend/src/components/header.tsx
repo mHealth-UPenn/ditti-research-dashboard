@@ -116,7 +116,9 @@ export const Header = () => {
           <AccountMenu
             prefill={accountDetails}
             accountMenuRef={accountMenuRef}
-            hideMenu={() => handleCloseMenu()}
+            hideMenu={() => {
+              handleCloseMenu();
+            }}
           />
         </>
       )}

@@ -62,7 +62,7 @@ export function WearableStudies() {
 
   // Get which studies the current user can view wearable data for on load
   useEffect(() => {
-    const updatedCanViewWearableData: Set<number> = new Set();
+    const updatedCanViewWearableData = new Set<number>();
     const promises: Promise<unknown>[] = [];
 
     studies.forEach((s) =>
@@ -78,7 +78,9 @@ export function WearableStudies() {
         setCanViewWearableData(updatedCanViewWearableData);
       })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+      });
   }, [studies]);
 
   if (loading || studiesLoading || studySubjectLoading) {

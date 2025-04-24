@@ -50,29 +50,43 @@ export function WearableStudySummary() {
     const promises: Promise<void>[] = [];
     promises.push(
       getAccess(3, "Create", "Participants", studyId)
-        .then(() => setCanCreate(true))
-        .catch(() => setCanCreate(false))
+        .then(() => {
+          setCanCreate(true);
+        })
+        .catch(() => {
+          setCanCreate(false);
+        })
     );
 
     promises.push(
       getAccess(3, "View", "Wearable Data", studyId)
-        .then(() => setCanViewWearableData(true))
-        .catch(() => setCanViewWearableData(false))
+        .then(() => {
+          setCanViewWearableData(true);
+        })
+        .catch(() => {
+          setCanViewWearableData(false);
+        })
     );
 
     promises.push(
       makeRequest("/db/get-study-contacts?app=3&study=" + studyId).then(
-        (contacts: StudyContactModel[]) => setStudyContacts(contacts)
+        (contacts: StudyContactModel[]) => {
+          setStudyContacts(contacts);
+        }
       )
     );
 
     promises.push(
       makeRequest("/db/get-study-details?app=3&study=" + studyId).then(
-        (details: Study) => setStudyDetails(details)
+        (details: Study) => {
+          setStudyDetails(details);
+        }
       )
     );
 
-    Promise.all(promises).then(() => setLoading(false));
+    Promise.all(promises).then(() => {
+      setLoading(false);
+    });
   }, [studyId]);
 
   // Download all of the study's data in excel format.

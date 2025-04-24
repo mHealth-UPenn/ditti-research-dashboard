@@ -48,18 +48,20 @@ export const StudiesView = () => {
 
         // get all tap and audio file data
         promises.push(
-          getAccess(2, "View", "Audio Files").catch(() =>
-            setCanViewAudioFiles(false)
-          )
+          getAccess(2, "View", "Audio Files").catch(() => {
+            setCanViewAudioFiles(false);
+          })
         );
         promises.push(
-          getAccess(2, "Create", "Audio Files").catch(() =>
-            setCanCreateAudioFiles(false)
-          )
+          getAccess(2, "Create", "Audio Files").catch(() => {
+            setCanCreateAudioFiles(false);
+          })
         );
 
         // when all promises resolve, hide the loader
-        Promise.all(promises).then(() => setLoading(false));
+        Promise.all(promises).then(() => {
+          setLoading(false);
+        });
       } catch (error) {
         console.error("Error fetching data: ", error);
         setLoading(false);
@@ -71,7 +73,7 @@ export const StudiesView = () => {
 
   useEffect(() => {
     const updateCanViewTaps = async () => {
-      const updatedCanViewTaps: Set<number> = new Set();
+      const updatedCanViewTaps = new Set<number>();
       const promises = studies.map((s) => {
         return getAccess(2, "View", "Taps", s.id)
           .then(() => updatedCanViewTaps.add(s.id))

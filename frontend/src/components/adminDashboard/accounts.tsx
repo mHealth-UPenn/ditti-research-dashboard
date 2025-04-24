@@ -207,7 +207,9 @@ export const Accounts = () => {
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteAccount(id)}
+                  onClick={() => {
+                    deleteAccount(id);
+                  }}
                 >
                   Archive
                 </Button>
@@ -250,8 +252,12 @@ export const Accounts = () => {
 
     // Refresh the table's data
     makeRequest("/admin/account?app=1")
-      .then((accounts) => setAccounts(accounts))
-      .finally(() => setLoading(false));
+      .then((accounts) => {
+        setAccounts(accounts);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   /**

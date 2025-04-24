@@ -25,7 +25,7 @@ export const StudySubjectContext = createContext<
 >(undefined);
 
 // StudySubjectProvider component that wraps children with the study subject context.
-export function StudySubjectProvider({ children }: PropsWithChildren<unknown>) {
+export function StudySubjectProvider({ children }: PropsWithChildren) {
   const [studies, setStudies] = useState<ParticipantStudy[]>([]);
   const [apis, setApis] = useState<ParticipantApi[]>([]);
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
@@ -43,7 +43,9 @@ export function StudySubjectProvider({ children }: PropsWithChildren<unknown>) {
       );
     }
 
-    Promise.all(promises).then(() => setStudySubjectLoading(false));
+    Promise.all(promises).then(() => {
+      setStudySubjectLoading(false);
+    });
   }, []);
 
   // Async fetch the participant's enrolled studies and connected APIs

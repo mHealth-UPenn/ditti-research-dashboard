@@ -226,7 +226,9 @@ export const StudiesEdit = () => {
               placeholder=""
               value={name}
               label="Name"
-              onKeyup={(text: string) => setName(text)}
+              onKeyup={(text: string) => {
+                setName(text);
+              }}
               feedback=""
             />
           </FormField>
@@ -237,7 +239,9 @@ export const StudiesEdit = () => {
               placeholder=""
               value={email}
               label="Team Email"
-              onKeyup={(text: string) => setEmail(text)}
+              onKeyup={(text: string) => {
+                setEmail(text);
+              }}
               feedback=""
             />
           </FormField>
@@ -250,7 +254,9 @@ export const StudiesEdit = () => {
               placeholder=""
               value={acronym}
               label="Acronym"
-              onKeyup={(text: string) => setAcronym(text)}
+              onKeyup={(text: string) => {
+                setAcronym(text);
+              }}
               feedback=""
             />
           </FormField>
@@ -261,7 +267,9 @@ export const StudiesEdit = () => {
               placeholder=""
               value={dittiId}
               label="Ditti ID"
-              onKeyup={(text: string) => setDittiId(text)}
+              onKeyup={(text: string) => {
+                setDittiId(text);
+              }}
               feedback=""
             />
           </FormField>

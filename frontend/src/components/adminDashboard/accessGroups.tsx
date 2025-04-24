@@ -155,7 +155,9 @@ export const AccessGroups = () => {
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteAccessGroup(id)}
+                  onClick={() => {
+                    deleteAccessGroup(id);
+                  }}
                 >
                   Archive
                 </Button>

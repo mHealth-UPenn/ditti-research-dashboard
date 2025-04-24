@@ -31,9 +31,7 @@ const formatString = (
 };
 
 // NavbarContextProvider component that wraps children with studies context.
-export function NavbarContextProvider({
-  children,
-}: PropsWithChildren<unknown>) {
+export function NavbarContextProvider({ children }: PropsWithChildren) {
   const matches = useMatches();
 
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);
