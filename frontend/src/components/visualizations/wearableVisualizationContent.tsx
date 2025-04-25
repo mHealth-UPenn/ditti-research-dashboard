@@ -102,7 +102,7 @@ export const WearableVisualizationContent = ({
       taps
         .filter((tap) => tap.dittiId === dittiId)
         .map((tap) => tap.time.getTime()),
-    [taps]
+    [taps, dittiId]
   );
 
   const audioTimestamps = useMemo(
@@ -110,7 +110,7 @@ export const WearableVisualizationContent = ({
       audioTaps
         .filter((tap) => tap.dittiId === dittiId)
         .map((tap) => tap.time.getTime()),
-    [taps]
+    [audioTaps, dittiId]
   );
 
   // Optionally override the default margins if passed as props
@@ -203,7 +203,16 @@ export const WearableVisualizationContent = ({
     setRow2(updatedRow2);
     setRow3(updatedRow3);
     setRow4(updatedRow4);
-  }, [dataIsUpdated, firstDateOfSleep, isLoading]);
+  }, [
+    dataIsUpdated,
+    firstDateOfSleep,
+    isLoading,
+    row1,
+    row2,
+    row3,
+    row4,
+    sleepLogs,
+  ]);
 
   // Reset the zoom and start date
   const resetVisualization = () => {

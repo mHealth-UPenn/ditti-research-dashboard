@@ -155,7 +155,7 @@ export const BoutsTimeline = ({
     });
 
     return _bouts;
-  }, [timestamps]);
+  }, [timestamps, audioTimestamps]);
 
   return (
     <Timeline groups={bouts} title={title} hideAxis={hideAxis} {...props} />

@@ -106,7 +106,7 @@ export const TimestampHistogram = ({
       .domain([domain[0].getTime(), domain[1].getTime()])
       .thresholds(thresholds)(timestamps);
     return bins;
-  }, [timestamps, xScale, width]);
+  }, [timestamps, xScale, xTicks]);
 
   // Get the largest bin the the histogram
   const maxBinSize = Math.max(...histogramData.map((bin) => bin.length));
@@ -128,7 +128,7 @@ export const TimestampHistogram = ({
       domain: [0, numYVals],
       range: [height - margin.bottom, margin.top],
     });
-  }, [histogramData]);
+  }, [height, margin.bottom, margin.top, numYVals]);
 
   const {
     showTooltip,
@@ -148,7 +148,7 @@ export const TimestampHistogram = ({
         tooltipData: `${numTaps.toString()} taps`,
       });
     },
-    [showTooltip]
+    [showTooltip, margin.top]
   );
 
   // Hide the tooltip when not hovering over a bin
