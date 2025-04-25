@@ -21,6 +21,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useCallback,
 } from "react";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
@@ -66,7 +67,7 @@ export const ParticipantWearableDataProvider = ({
 
   // For now participants do not have the ability to change the start and end dates
   const startDate = start; // Start one week ago
-  const endDate = new Date(); // End today
+  const endDate = useMemo(() => new Date(), []); // End today
 
   const dataFactory: DataFactory | null = useMemo(() => {
     if (APP_ENV === "development" || APP_ENV === "demo") {
@@ -171,23 +172,89 @@ export const CoordinatorWearableDataProvider = ({
    * @param end: The end date to fetch data to.
    * @returns ISleepLog[]: The fetched sleep log data.
    */
-  const fetchSleepDataAsync = async (start: Date, end: Date) => {
-    const params = new URLSearchParams();
-    params.append("start_date", formatDate(start));
-    params.append("end_date", formatDate(end));
-    params.append("app", "3"); // Assume Wearable Dashboard is app 3
-    params.append("study", String(studyId));
-    const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`;
+  const fetchSleepDataAsync = useCallback(
+    async (start: Date, end: Date) => {
+      const params = new URLSearchParams();
+      params.append("start_date", formatDate(start));
+      params.append("end_date", formatDate(end));
+      params.append("app", "3"); // Assume Wearable Dashboard is app 3
+      params.append("study", String(studyId));
+      const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`;
 
-    let data = (await makeRequest(url)) as unknown as SleepLog[];
-    data = data.sort((a, b) => {
-      if (a.dateOfSleep > b.dateOfSleep) return 1;
-      else if (a.dateOfSleep < b.dateOfSleep) return -1;
-      else return 0;
-    });
+      let data = (await makeRequest(url)) as unknown as SleepLog[];
+      data = data.sort((a, b) => {
+        if (a.dateOfSleep > b.dateOfSleep) return 1;
+        else if (a.dateOfSleep < b.dateOfSleep) return -1;
+        else return 0;
+      });
 
-    return data;
-  };
+      return data;
+    },
+    [dittiId, studyId]
+  );
+
+  /**
+   * Schedule an interval to repeatedly check the status of a data processing task.
+   * @param taskId: The ID of the data processing task to check.
+   */
+  const scheduleSyncCheck = useCallback(
+    (taskId: number) => {
+      // Define the async work inside a separate function
+      const checkStatus = async () => {
+        try {
+          const params = new URLSearchParams();
+          params.append("app", "3"); // Assume Wearable Dashboard is app 3
+          params.append("study", String(studyId)); // Convert studyId to string
+          // Convert taskId to string for the template literal
+          const url = `/data_processing_task/${String(taskId)}?${params.toString()}`;
+          const tasks = (await makeRequest(
+            url
+          )) as unknown as DataProcessingTask[];
+
+          // Assume one task is returned
+          if (
+            !(tasks[0].status == "Pending" || tasks[0].status == "InProgress")
+          ) {
+            // When the task is no longer running, clear the interval
+            clearInterval(id);
+            setIsSyncing(false);
+
+            // Reset the start and end dates to fetch new data
+            const updatedStartDate = new Date();
+            updatedStartDate.setDate(updatedStartDate.getDate() - 7);
+            setStartDate(updatedStartDate);
+            const updatedEndDate = new Date();
+            setEndDate(updatedEndDate);
+
+            // Fetch new data
+            fetchSleepDataAsync(updatedStartDate, updatedEndDate)
+              .then((data) => {
+                setSleepLogs(data);
+                if (data.length) {
+                  setFirstDateOfSleep(new Date(data[0].dateOfSleep));
+                }
+                setDataIsUpdated(false);
+              })
+              .catch((error: unknown) => {
+                console.error(
+                  `Error updating sleep log data: ${String(error)}`
+                );
+              });
+          }
+        } catch (error: unknown) {
+          console.error(`Error checking sync status: ${String(error)}`);
+          clearInterval(id); // Stop interval on error
+          setIsSyncing(false);
+        }
+      };
+
+      // Use void operator to explicitly ignore the promise returned by checkStatus
+      const id = setInterval(() => {
+        void checkStatus();
+      }, 1000);
+    },
+    [fetchSleepDataAsync, studyId]
+  );
 
   // Fetch sleep data and data processing tasks on component mount
   useEffect(() => {
@@ -247,65 +314,15 @@ export const CoordinatorWearableDataProvider = ({
       .finally(() => {
         setIsLoading(false);
       });
-  }, [dittiId, studyId, startDate, endDate, dataFactory]);
-
-  /**
-   * Schedule an interval to repeatedly check the status of a data processing task.
-   * @param taskId: The ID of the data processing task to check.
-   */
-  const scheduleSyncCheck = (taskId: number) => {
-    // Define the async work inside a separate function
-    const checkStatus = async () => {
-      try {
-        const params = new URLSearchParams();
-        params.append("app", "3"); // Assume Wearable Dashboard is app 3
-        params.append("study", String(studyId)); // Convert studyId to string
-        // Convert taskId to string for the template literal
-        const url = `/data_processing_task/${String(taskId)}?${params.toString()}`;
-        const tasks = (await makeRequest(
-          url
-        )) as unknown as DataProcessingTask[];
-
-        // Assume one task is returned
-        if (
-          !(tasks[0].status == "Pending" || tasks[0].status == "InProgress")
-        ) {
-          // When the task is no longer running, clear the interval
-          clearInterval(id);
-          setIsSyncing(false);
-
-          // Reset the start and end dates to fetch new data
-          const updatedStartDate = new Date();
-          updatedStartDate.setDate(updatedStartDate.getDate() - 7);
-          setStartDate(updatedStartDate);
-          const updatedEndDate = new Date();
-          setEndDate(updatedEndDate);
-
-          // Fetch new data
-          fetchSleepDataAsync(updatedStartDate, updatedEndDate)
-            .then((data) => {
-              setSleepLogs(data);
-              if (data.length) {
-                setFirstDateOfSleep(new Date(data[0].dateOfSleep));
-              }
-              setDataIsUpdated(false);
-            })
-            .catch((error: unknown) => {
-              console.error(`Error updating sleep log data: ${String(error)}`);
-            });
-        }
-      } catch (error: unknown) {
-        console.error(`Error checking sync status: ${String(error)}`);
-        clearInterval(id); // Stop interval on error
-        setIsSyncing(false);
-      }
-    };
-
-    // Use void operator to explicitly ignore the promise returned by checkStatus
-    const id = setInterval(() => {
-      void checkStatus();
-    }, 1000);
-  };
+  }, [
+    dittiId,
+    studyId,
+    startDate,
+    endDate,
+    dataFactory,
+    fetchSleepDataAsync,
+    scheduleSyncCheck,
+  ]);
 
   // Handle the user clicking Sync Data
   const syncData = async () => {
@@ -354,7 +371,7 @@ export const CoordinatorWearableDataProvider = ({
 
     // Only increment if the end date is less than today
     return endWithoutTime < todayWithoutTime;
-  }, [startDate, endDate]);
+  }, [endDate]);
 
   // Decrement the start and end dates by one day
   const decrementStartDate = () => {

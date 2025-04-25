@@ -21,8 +21,8 @@ import React, {
   useEffect,
   ReactNode,
   useCallback,
+  useMemo,
 } from "react";
-import { useNavigate } from "react-router-dom";
 import { makeRequest } from "../utils";
 import {
   AuthContextValue,
@@ -50,22 +50,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     useState<boolean>(true);
   const [isResearcherLoading, setIsResearcherLoading] = useState<boolean>(true);
   const [dittiId, setDittiId] = useState<string | null>(null);
-  const INITIAL_ACCOUNT_STATE: ResearcherAccountInfo = {
-    msg: "",
-    email: "",
-    firstName: "",
-    lastName: "",
-    accountId: "",
-    phoneNumber: undefined,
-  };
+  const INITIAL_ACCOUNT_STATE = useMemo(
+    () => ({
+      msg: "",
+      email: "",
+      firstName: "",
+      lastName: "",
+      accountId: "",
+      phoneNumber: undefined,
+    }),
+    []
+  );
   const [accountInfo, setAccountInfo] = useState<ResearcherAccountInfo>(
     INITIAL_ACCOUNT_STATE
   );
-  const navigate = useNavigate();
 
   const resetAccountInfo = useCallback(() => {
     setAccountInfo(INITIAL_ACCOUNT_STATE);
-  }, []);
+  }, [INITIAL_ACCOUNT_STATE]);
 
   useEffect(() => {
     /**
@@ -156,7 +158,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
       const url = options?.elevated ? `${baseUrl}?elevated=true` : baseUrl;
       window.location.href = url;
     },
-    [navigate]
+    []
   );
 
   /**

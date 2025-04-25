@@ -15,7 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { createContext, useState, useEffect, PropsWithChildren } from "react";
+import {
+  createContext,
+  useState,
+  useEffect,
+  PropsWithChildren,
+  useCallback,
+} from "react";
 import { makeRequest } from "../utils";
 import {
   CoordinatorStudySubjectContextValue,
@@ -112,7 +118,9 @@ export function CoordinatorStudySubjectProvider({
   };
 
   // Fetch data from the database
-  const fetchStudySubjectsDB = async (): Promise<StudySubject[]> => {
+  const fetchStudySubjectsDB = useCallback(async (): Promise<
+    StudySubject[]
+  > => {
     if (APP_ENV === "production" || APP_ENV === "development") {
       const data = (await makeRequest(
         `/admin/study_subject?app=${String(app)}`
@@ -120,10 +128,10 @@ export function CoordinatorStudySubjectProvider({
       return data;
     }
     return [];
-  };
+  }, [app]);
 
   // Fetch data from AWS
-  const fetchStudySubjectsAWS = async (): Promise<UserModel[]> => {
+  const fetchStudySubjectsAWS = useCallback(async (): Promise<UserModel[]> => {
     if (APP_ENV === "production" || APP_ENV === "development") {
       const data = (await makeRequest(
         `/aws/get-users?app=${String(app)}`
@@ -131,7 +139,7 @@ export function CoordinatorStudySubjectProvider({
       return data;
     }
     return [];
-  };
+  }, [app]);
 
   // Fetch and join data from AWS and the database
   const fetchStudySubjects = () => {
@@ -159,7 +167,7 @@ export function CoordinatorStudySubjectProvider({
   };
 
   // Fetch study subjects on load
-  useEffect(fetchStudySubjects, []);
+  useEffect(fetchStudySubjects, [fetchStudySubjectsAWS, fetchStudySubjectsDB]);
 
   /**
    * Get a study subject by Ditti ID from fetched data.
