@@ -100,7 +100,8 @@ const QuillField = ({
     return () => {
       debouncedOnChange.cancel();
     };
-    // Removed 'value' from dependencies to prevent re-running on every value change
+    // Intentionally omitting 'value' to prevent re-initializing the editor when value changes externally
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quillConfig, containerClassName, debouncedOnChange]);
 
   /**

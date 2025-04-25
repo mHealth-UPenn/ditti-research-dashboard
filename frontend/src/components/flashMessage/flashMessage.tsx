@@ -35,7 +35,7 @@ export const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
   containerRef,
   onClose,
   children,
-}) => {
+}: PropsWithChildren<FlashMessageProps>) => {
   // Set a timeout to fade out the message after 3 seconds
   useEffect(() => {
     const opacityTimeout = setTimeout(() => {
@@ -52,7 +52,7 @@ export const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
       clearTimeout(opacityTimeout);
       clearTimeout(closeTimeout);
     };
-  }, []);
+  }, [containerRef, onClose]);
 
   return (
     <div
@@ -67,3 +67,5 @@ export const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
     </div>
   );
 };
+
+FlashMessage.displayName = "FlashMessage";
