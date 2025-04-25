@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, createRef, useRef } from "react";
+import { useState, useEffect, createRef, useRef, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 import {
@@ -94,7 +94,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     userPermissionIdRef.current = userPermissionId;
   }, [userPermissionId]);
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     let isValid = true;
     const today = formatDateForInput(new Date());
 
@@ -158,16 +158,32 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     }
 
     setFormIsValid(isValid);
-  };
+  }, [
+    temporaryPassword,
+    userPermissionId,
+    userPermissionIdRef,
+    dittiExpTime,
+    enrollmentEnd,
+    enrollmentStart,
+    studySubject,
+    setTemporaryPasswordValidation,
+    setUserPermissionIdFeedback,
+    setDittiExpTimeFeedback,
+    setEnrollmentStartFeedback,
+    setEnrollmentEndFeedback,
+    setFormIsValid,
+  ]);
 
   // Add event listeners for validating Ditti ID field
   useEffect(() => {
-    if (dittiIdInputRef.current) {
-      dittiIdInputRef.current.addEventListener("blur", validateForm);
-      return () =>
-        dittiIdInputRef.current?.removeEventListener("blur", validateForm);
+    const currentRef = dittiIdInputRef.current;
+    if (currentRef) {
+      currentRef.addEventListener("blur", validateForm);
+      return () => {
+        currentRef.removeEventListener("blur", validateForm);
+      };
     }
-  }, [dittiIdInputRef]);
+  }, [dittiIdInputRef, validateForm]);
 
   // Validate the form and set any error messages
   useEffect(validateForm, [
@@ -176,6 +192,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     dittiExpTime,
     userPermissionId,
     temporaryPassword,
+    validateForm,
   ]);
 
   // Load any data to prefill the form with, if any
@@ -211,7 +228,13 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
       setEnrollmentEnd(formatDateForInput(expiresOn));
       setDittiExpTime(formatDateForInput(expiresOn));
     }
-  }, [studySubject]);
+  }, [
+    studySubject,
+    study?.id,
+    study?.dittiId,
+    study?.defaultExpiryDelta,
+    aboutSleepTemplates,
+  ]);
 
   // Fetch about sleep templates from the database
   useEffect(() => {
@@ -230,7 +253,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     };
 
     void fetchTemplates();
-  }, []);
+  }, [app]);
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating a new entry, else make a request to edit

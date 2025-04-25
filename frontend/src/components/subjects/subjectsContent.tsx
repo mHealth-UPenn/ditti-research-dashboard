@@ -141,7 +141,7 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
           setLoading(false);
         });
     }
-  }, [study]);
+  }, [study, app]);
 
   const dateOptions: Intl.DateTimeFormatOptions = {
     year: "numeric",
