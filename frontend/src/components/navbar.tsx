@@ -23,7 +23,7 @@ export const Navbar = () => {
 
   return (
     <div
-      className="z-10 flex h-16 flex-shrink-0 select-none items-center bg-white
+      className="z-10 flex h-16 shrink-0 select-none items-center bg-white
         shadow"
     >
       <div className="flex h-12 items-center pl-12">

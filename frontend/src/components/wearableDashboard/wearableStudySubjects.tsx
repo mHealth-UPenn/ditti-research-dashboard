@@ -75,7 +75,7 @@ export function WearableStudySubjects({
 
         {/* A list of connected APIs for the current study subject */}
         {canViewWearableData && (
-          <div className="flex flex-grow-0 overflow-x-hidden">
+          <div className="flex grow-0 overflow-x-hidden">
             <div className="hidden items-center md:flex">
               {subject.apis.length ? (
                 subject.apis.map((api, i) => (

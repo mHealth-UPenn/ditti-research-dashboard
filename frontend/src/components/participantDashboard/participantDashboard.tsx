@@ -28,7 +28,7 @@ export function ParticipantDashboard() {
     <main className="flex h-screen flex-col">
       {/* the header */}
       <div
-        className="z-10 flex h-16 flex-shrink-0 items-center justify-between
+        className="z-10 flex h-16 shrink-0 items-center justify-between
           bg-secondary text-white shadow-xl"
       >
         <div className="ml-8 flex flex-col text-2xl">

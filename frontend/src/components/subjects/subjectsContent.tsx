@@ -213,18 +213,18 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
         },
         {
           contents: (
-            <div className="flex h-full w-full">
+            <div className="flex size-full">
               {/* if the user can edit, link to the edit subject page */}
               <Button
                 variant="secondary"
                 size="sm"
-                className="h-full flex-grow"
+                className="h-full grow"
                 disabled={!(canEdit || APP_ENV === "demo")}
                 fullWidth={true}
                 fullHeight={true}
               >
                 <Link
-                  className="flex h-full w-full items-center justify-center"
+                  className="flex size-full items-center justify-center"
                   to={`/coordinator/${appSlug}/participants/edit?dittiId=${studySubject.dittiId}&sid=${String(study?.id)}`}
                 >
                   Edit

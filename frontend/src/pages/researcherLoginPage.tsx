@@ -68,20 +68,20 @@ export const ResearcherLoginPage: React.FC = () => {
       >
         <div className="mr-12 hidden items-center sm:flex xl:mr-20">
           <img
-            className="w-[10rem] rounded-xl shadow-xl xl:w-[12rem]"
+            className="w-40 rounded-xl shadow-xl xl:w-48"
             src="/logo.png"
             alt="Logo"
           ></img>
         </div>
         <div
-          className="relative mx-[auto] flex min-w-[24rem] flex-col items-center
+          className="relative mx-auto flex min-w-96 flex-col items-center
             justify-center bg-white"
         >
           <div className="mx-8 flex flex-col justify-center xl:mx-16">
             <div className="mb-8 flex justify-center sm:hidden">
               <div className="rounded-xl bg-extra-light p-4 shadow-lg">
                 <img
-                  className="w-[6rem] rounded-xl"
+                  className="w-24 rounded-xl"
                   src="/logo.png"
                   alt="Logo"
                 ></img>

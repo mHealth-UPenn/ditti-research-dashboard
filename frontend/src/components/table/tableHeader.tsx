@@ -21,7 +21,7 @@ import { TableHeaderProps } from "./table.types";
 
 export const TableHeader = ({ headers, onSort }: TableHeaderProps) => {
   return (
-    <tr className="h-[3rem]">
+    <tr className="h-12">
       {headers.map((h, i) => (
         <th
           key={i}

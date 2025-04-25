@@ -187,12 +187,12 @@ export const DataRetrievalTasks = () => {
         },
         {
           contents: (
-            <div className="flex h-full w-full">
+            <div className="flex size-full">
               {task.status === "InProgress" && canInvoke && (
                 <AsyncButton
                   variant="danger"
                   size="sm"
-                  className="h-full flex-grow"
+                  className="h-full grow"
                   onClick={() => handleForceStop(task.id)}
                 >
                   Force Stop

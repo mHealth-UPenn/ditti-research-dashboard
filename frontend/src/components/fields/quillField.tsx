@@ -131,7 +131,7 @@ const QuillField = ({
         <div
           ref={editorRef}
           id={id}
-          className="border-gray-300 focus:ring-blue-500 min-h-[10rem] w-full
+          className="border-gray-300 focus:ring-blue-500 min-h-40 w-full
             rounded-b border p-2 focus:outline-none focus:ring-2"
         />
       </div>

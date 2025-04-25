@@ -41,7 +41,7 @@ export const TableCell = ({
       className="h-[inherit] border-r border-t border-light p-0"
       style={{ width: `${String(width)}%` }}
     >
-      <div className={`flex h-full w-full items-center ${padding}`}>
+      <div className={`flex size-full items-center ${padding}`}>
         <div
           className={`max-w-[500px] truncate
             ${paddingY !== undefined ? "h-full" : ""}

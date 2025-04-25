@@ -484,7 +484,7 @@ export const AudioFileUpload = () => {
                 <div key={i} className="w-full">
                   <div className="mb-1 flex w-full justify-between">
                     <span className="truncate">{file.name}</span>
-                    <span className="w-max flex-shrink-0">
+                    <span className="w-max shrink-0">
                       {file.size} - {formatDuration(file.length)}
                     </span>
                   </div>

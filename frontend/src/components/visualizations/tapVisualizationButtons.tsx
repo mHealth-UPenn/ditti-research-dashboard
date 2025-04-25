@@ -43,7 +43,7 @@ export const TapVisualizationButtons = () => {
           square={true}
           size="sm"
           variant="tertiary"
-          className="rounded-l-[0.25rem]"
+          className="rounded-l"
           onClick={panLeft}
         >
           <KeyboardArrowLeftIcon />
@@ -52,7 +52,7 @@ export const TapVisualizationButtons = () => {
           square={true}
           size="sm"
           variant="tertiary"
-          className="mr-2 rounded-r-[0.25rem] border-l-0"
+          className="mr-2 rounded-r border-l-0"
           onClick={panRight}
         >
           <KeyboardArrowRightIcon />
@@ -61,7 +61,7 @@ export const TapVisualizationButtons = () => {
           square={true}
           size="sm"
           variant="tertiary"
-          className="rounded-l-[0.25rem]"
+          className="rounded-l"
           onClick={zoomIn}
           disabled={minRangeReached}
         >
@@ -71,7 +71,7 @@ export const TapVisualizationButtons = () => {
           square={true}
           size="sm"
           variant="tertiary"
-          className="mr-2 rounded-r-[0.25rem] border-l-0"
+          className="mr-2 rounded-r border-l-0"
           onClick={zoomOut}
           disabled={maxRangeReached}
         >

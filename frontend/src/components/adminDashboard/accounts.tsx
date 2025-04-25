@@ -185,17 +185,17 @@ export const Accounts = () => {
         },
         {
           contents: (
-            <div className="flex h-full w-full">
+            <div className="flex size-full">
               {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="h-full flex-grow"
+                  className="h-full grow"
                   fullWidth={true}
                   fullHeight={true}
                 >
                   <Link
-                    className="flex h-full w-full items-center justify-center"
+                    className="flex size-full items-center justify-center"
                     to={`/coordinator/admin/accounts/edit?id=${String(id)}`}
                   >
                     Edit
@@ -206,7 +206,7 @@ export const Accounts = () => {
                 <Button
                   variant="danger"
                   size="sm"
-                  className="h-full flex-grow"
+                  className="h-full grow"
                   onClick={() => {
                     deleteAccount(id);
                   }}

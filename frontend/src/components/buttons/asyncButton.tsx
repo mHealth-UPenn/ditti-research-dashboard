@@ -85,7 +85,7 @@ export const AsyncButton = ({
       rounded={rounded}
       onClick={handleClick}
     >
-      <div className="relative h-full w-full">
+      <div className="relative size-full">
         <div className={`absolute top-0 ${sizeContainerMap[size]}`}>
           {loading && loader}
         </div>

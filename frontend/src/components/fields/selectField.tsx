@@ -52,7 +52,7 @@ export const SelectField = ({
 
   return (
     <div
-      className={`relative flex flex-grow items-center ${
+      className={`relative flex grow items-center ${
         hideBorder ? "" : "border border-light" }
         ${disabled ? "bg-extra-light" : ""}`}
     >
@@ -65,8 +65,8 @@ export const SelectField = ({
         </span>
       )}
       <select
-        className="min-h-[calc(3rem-2px)] flex-grow cursor-pointer
-          bg-[transparent] pl-2 focus:shadow-none focus:outline-none"
+        className="min-h-[calc(3rem-2px)] grow cursor-pointer bg-[transparent]
+          pl-2 focus:shadow-none focus:outline-none"
         onChange={changeValue}
         value={value}
         disabled={disabled}
