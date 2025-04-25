@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useCallback } from "react";
 import { Table } from "../table/table";
 import { TableData } from "../table/table.types";
 import { TextField } from "../fields/textField";
@@ -183,6 +183,27 @@ export const AccountsEdit = () => {
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
+  const getPrefill = useCallback(async (): Promise<AccountFormPrefill> => {
+    // if editing an existing entry, return prefill data, else return empty data
+    return accountId
+      ? makeRequest(`/admin/account?app=1&id=${String(accountId)}`).then(
+          (res: ResponseBody) => makePrefill(res as unknown as Account[])
+        )
+      : {
+          firstName: "",
+          lastName: "",
+          email: "",
+          phoneNumber: "",
+          accessGroupsSelected: [],
+          rolesSelected: [],
+          studiesSelected: [],
+        };
+  }, [accountId]);
+
   useEffect(() => {
     // when all requests are complete, initialize the state
     const fetchData = async () => {
@@ -211,28 +232,7 @@ export const AccountsEdit = () => {
     };
 
     void fetchData();
-  }, []);
-
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = async (): Promise<AccountFormPrefill> => {
-    // if editing an existing entry, return prefill data, else return empty data
-    return accountId
-      ? makeRequest(`/admin/account?app=1&id=${String(accountId)}`).then(
-          (res: ResponseBody) => makePrefill(res as unknown as Account[])
-        )
-      : {
-          firstName: "",
-          lastName: "",
-          email: "",
-          phoneNumber: "",
-          accessGroupsSelected: [],
-          rolesSelected: [],
-          studiesSelected: [],
-        };
-  };
+  }, [getPrefill]);
 
   /**
    * Map the data returned from the backend to form prefill data

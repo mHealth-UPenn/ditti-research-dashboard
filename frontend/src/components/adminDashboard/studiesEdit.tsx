@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { CheckField } from "../fields/checkField";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
@@ -53,54 +53,11 @@ export const StudiesEdit = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [expiryError, setExpiryError] = useState<string>("");
 
-  useEffect(() => {
-    // Fetch prefill data if editing an existing study
-    const fetchPrefill = async () => {
-      try {
-        const prefillData = await getPrefill();
-        setName(prefillData.name);
-        setAcronym(prefillData.acronym);
-        setDittiId(prefillData.dittiId);
-        setEmail(prefillData.email);
-        setDefaultExpiryDelta(prefillData.defaultExpiryDelta);
-        setConsentInformation(prefillData.consentInformation ?? "");
-        setDataSummary(prefillData.dataSummary ?? "");
-        setIsQi(prefillData.isQi);
-      } catch (error) {
-        console.error("Error fetching study data:", error);
-        flashMessage(
-          <span>
-            <b>Failed to load study data.</b>
-            <br />
-            {error instanceof Error ? error.message : "Unknown error"}
-          </span>,
-          "danger"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchPrefill();
-  }, [studyId]);
-
-  /**
-   * Ensure that defaultExpiryDelta is non-negative
-   */
-  useEffect(() => {
-    if (defaultExpiryDelta < 0) {
-      setDefaultExpiryDelta(0);
-      setExpiryError("Default Enrollment Period must be nonnegative.");
-    } else {
-      setExpiryError("");
-    }
-  }, [defaultExpiryDelta]);
-
   /**
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<{
+  const getPrefill = useCallback(async (): Promise<{
     name: string;
     acronym: string;
     dittiId: string;
@@ -143,7 +100,50 @@ export const StudiesEdit = () => {
       dataSummary: study.dataSummary,
       isQi: study.isQi,
     };
-  };
+  }, [studyId]);
+
+  useEffect(() => {
+    // Fetch prefill data if editing an existing study
+    const fetchPrefill = async () => {
+      try {
+        const prefillData = await getPrefill();
+        setName(prefillData.name);
+        setAcronym(prefillData.acronym);
+        setDittiId(prefillData.dittiId);
+        setEmail(prefillData.email);
+        setDefaultExpiryDelta(prefillData.defaultExpiryDelta);
+        setConsentInformation(prefillData.consentInformation ?? "");
+        setDataSummary(prefillData.dataSummary ?? "");
+        setIsQi(prefillData.isQi);
+      } catch (error) {
+        console.error("Error fetching study data:", error);
+        flashMessage(
+          <span>
+            <b>Failed to load study data.</b>
+            <br />
+            {error instanceof Error ? error.message : "Unknown error"}
+          </span>,
+          "danger"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchPrefill();
+  }, [getPrefill, flashMessage]);
+
+  /**
+   * Ensure that defaultExpiryDelta is non-negative
+   */
+  useEffect(() => {
+    if (defaultExpiryDelta < 0) {
+      setDefaultExpiryDelta(0);
+      setExpiryError("Default Enrollment Period must be nonnegative.");
+    } else {
+      setExpiryError("");
+    }
+  }, [defaultExpiryDelta]);
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataRetrievalTask } from "../../types/api";
 import { getAccess, makeRequest } from "../../utils";
 import { Column, TableData } from "../table/table.types";
@@ -91,7 +91,7 @@ export const DataRetrievalTasks = () => {
 
   const { flashMessage } = useFlashMessages();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       // Fetch data retrieval tasks (View permission is handled by the server)
       const response = await makeRequest("/data_processing_task/?app=1");
@@ -109,7 +109,7 @@ export const DataRetrievalTasks = () => {
         "danger"
       );
     }
-  };
+  }, [flashMessage]);
 
   useEffect(() => {
     const invoke = getAccess(1, "Invoke", "Data Retrieval Task")
@@ -123,7 +123,7 @@ export const DataRetrievalTasks = () => {
     void Promise.all([invoke, fetchData()]).finally(() => {
       setLoading(false);
     });
-  }, [flashMessage]);
+  }, [fetchData]);
 
   const handleForceStop = async (id: number) => {
     await makeRequest(`/data_processing_task/force-stop`, {

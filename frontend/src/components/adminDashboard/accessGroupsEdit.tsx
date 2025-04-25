@@ -59,6 +59,51 @@ export const AccessGroupsEdit = () => {
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
+  /**
+   * Map the data returned from the backend to form prefill data
+   * @param res - the response body
+   * @returns - the form prefill data
+   */
+  const makePrefill = (res: AccessGroup[]): AccessGroupFormPrefill => {
+    const accessGroup = res[0];
+    return {
+      name: accessGroup.name,
+      appSelected: accessGroup.app,
+      permissions: accessGroup.permissions,
+    };
+  };
+
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
+  const getPrefill = useCallback(async (): Promise<AccessGroupFormPrefill> => {
+    const id = accessGroupId;
+
+    // if editing an existing entry, return prefill data, else return empty data
+    return id
+      ? makeRequest(`/admin/access-group?app=1&id=${String(id)}`).then((res) =>
+          makePrefill(res as unknown as AccessGroup[])
+        )
+      : {
+          name: "",
+          appSelected: {} as App,
+          permissions: [],
+        };
+  }, [accessGroupId]);
+
+  /**
+   * Add a new permission and pair of action and resource dropdown menus
+   */
+  const addPermission = useCallback((): void => {
+    setPermissions((prevPermissions) => {
+      const id = prevPermissions.length
+        ? prevPermissions[prevPermissions.length - 1].id + 1
+        : 0;
+      return [...prevPermissions, { id: id, action: "", resource: "" }];
+    });
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -88,40 +133,7 @@ export const AccessGroupsEdit = () => {
     };
 
     void fetchData();
-  }, [accessGroupId]);
-
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = async (): Promise<AccessGroupFormPrefill> => {
-    const id = accessGroupId;
-
-    // if editing an existing entry, return prefill data, else return empty data
-    return id
-      ? makeRequest(`/admin/access-group?app=1&id=${String(id)}`).then((res) =>
-          makePrefill(res as unknown as AccessGroup[])
-        )
-      : {
-          name: "",
-          appSelected: {} as App,
-          permissions: [],
-        };
-  };
-
-  /**
-   * Map the data returned from the backend to form prefill data
-   * @param res - the response body
-   * @returns - the form prefill data
-   */
-  const makePrefill = (res: AccessGroup[]): AccessGroupFormPrefill => {
-    const accessGroup = res[0];
-    return {
-      name: accessGroup.name,
-      appSelected: accessGroup.app,
-      permissions: accessGroup.permissions,
-    };
-  };
+  }, [getPrefill, addPermission]);
 
   /**
    * Change the selected app when one is chosen from the dropdown menu
@@ -137,18 +149,6 @@ export const AccessGroupsEdit = () => {
    * @returns - the database primary key
    */
   const getSelectedApp = (): number => appSelected.id || 0;
-
-  /**
-   * Add a new permission and pair of action and resource dropdown menus
-   */
-  const addPermission = useCallback((): void => {
-    setPermissions((prevPermissions) => {
-      const id = prevPermissions.length
-        ? prevPermissions[prevPermissions.length - 1].id + 1
-        : 0;
-      return [...prevPermissions, { id: id, action: "", resource: "" }];
-    });
-  }, []);
 
   /**
    * Remove a permission and pair of action and resource dropdown menus
