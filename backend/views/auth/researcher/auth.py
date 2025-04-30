@@ -112,7 +112,7 @@ def check_login():
 
 @blueprint.route("/change-password", methods=["POST"])
 @researcher_auth_required
-def change_password(_account):
+def change_password(account):
     """
     Change a researcher's password.
 

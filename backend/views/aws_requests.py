@@ -298,7 +298,7 @@ def get_users(account):
 @blueprint.route("/user/create", methods=["POST"])
 @researcher_auth_required("View", "Ditti App Dashboard")
 @researcher_auth_required("Create", "Participants")
-def user_create(_account):
+def user_create(account):
     """
     Create a new user.
 
@@ -355,7 +355,7 @@ def user_create(_account):
 @blueprint.route("/user/edit", methods=["POST"])
 @researcher_auth_required("View", "Ditti App Dashboard")
 @researcher_auth_required("Edit", "Participants")
-def user_edit(_account):
+def user_edit(account):
     """
     Edit an exisitng user.
 
@@ -445,7 +445,7 @@ def user_edit(_account):
 @blueprint.route("/get-audio-files")
 @researcher_auth_required("View", "Ditti App Dashboard")
 @researcher_auth_required("View", "Audio Files")
-def get_audio_files(_account):
+def get_audio_files(account):
     """
     Get all audio files from DynamoDB.
 
@@ -518,7 +518,7 @@ def get_audio_files(_account):
 @blueprint.route("/audio-file/create", methods=["POST"])
 @researcher_auth_required("View", "Ditti App Dashboard")
 @researcher_auth_required("Create", "Audio File")
-def audio_file_create(_account):
+def audio_file_create(account):
     """
     Insert new audio files into DynamoDB.
 
@@ -586,7 +586,7 @@ def audio_file_create(_account):
 @blueprint.route("/audio-file/delete", methods=["POST"])
 @researcher_auth_required("View", "Ditti App Dashboard")
 @researcher_auth_required("Delete", "Audio File")
-def audio_file_delete(_account):
+def audio_file_delete(account):
     """
     Permanently deletes an audio file.
 
@@ -668,7 +668,7 @@ def audio_file_delete(_account):
 @blueprint.route("/audio-file/get-presigned-urls", methods=["POST"])
 @researcher_auth_required("View", "Ditti App Dashboard")
 @researcher_auth_required("Create", "Audio File")
-def audio_file_generate_presigned_urls(_account):
+def audio_file_generate_presigned_urls(account):
     """
     Generate a list of presigned URLs for a given set of files.
 

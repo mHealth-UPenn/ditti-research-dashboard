@@ -125,7 +125,7 @@ def check_login():
 
 @blueprint.route("/register/participant", methods=["POST"])
 @researcher_auth_required("Create", "Participants")
-def register_participant(_account):
+def register_participant(account):
     """
     Register a study participant in AWS Cognito with a temporary password.
 

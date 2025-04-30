@@ -805,7 +805,7 @@ def build_url(
     return url
 
 
-def handler(event, _context):
+def handler(event, context):
     logger.info(
         "Starting wearable data retrieval job",
         extra={"function_timestamp": function_timestamp},

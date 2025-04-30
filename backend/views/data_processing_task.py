@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 @blueprint.route("/<int:task_id>", methods=["GET"])
 # Allow actions from any dashboard
 @researcher_auth_required("View", "Data Retrieval Task")
-def get_data_processing_tasks(_account, task_id: int | None):
+def get_data_processing_tasks(account, task_id: int | None):
     """
     Retrieve all data processing tasks sorted by creation date.
 
@@ -98,7 +98,7 @@ def get_data_processing_tasks(_account, task_id: int | None):
 
 @blueprint.route("/invoke", methods=["POST"])
 @researcher_auth_required("Invoke", "Data Retrieval Task")
-def invoke_data_processing_task(_account):
+def invoke_data_processing_task(account):
     """
     Manually invoke a data processing task.
 
@@ -166,7 +166,7 @@ def invoke_data_processing_task(_account):
 
 @blueprint.route("/force-stop", methods=["POST"])
 @researcher_auth_required("Invoke", "Data Retrieval Task")
-def force_stop_data_processing_task(_account):
+def force_stop_data_processing_task(account):
     """
     Manually stop a data processing task.
 
