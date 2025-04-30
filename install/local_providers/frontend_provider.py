@@ -20,7 +20,7 @@ import subprocess
 import traceback
 
 from install.project_config import ProjectConfigProvider
-from install.utils import Logger, Colorizer
+from install.utils import Colorizer, Logger
 from install.utils.exceptions import SubprocessError
 
 
@@ -42,11 +42,14 @@ class FrontendProvider:
             os.chdir("..")
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
-            self.logger.error(f"Frontend initialization failed due to subprocess error: {Colorizer.white(e)}")
+            self.logger.error(
+                "Frontend initialization failed due to subprocess error: "
+                f"{Colorizer.white(e)}"
+            )
             raise SubprocessError(e)
 
     def build_frontend(self) -> None:
-        """Build the frontend"""
+        """Build the frontend."""
         try:
             os.chdir(self.frontend_dir)
             subprocess.run(["npm", "run", "build"], check=True)
@@ -54,7 +57,10 @@ class FrontendProvider:
             self.logger(Colorizer.blue("Frontend built"))
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
-            self.logger.error(f"Frontend build failed due to subprocess error: {Colorizer.white(e)}")
+            self.logger.error(
+                "Frontend build failed due to subprocess error: "
+                f"{Colorizer.white(e)}"
+            )
             raise SubprocessError(e)
 
     def uninstall(self) -> None:
@@ -64,6 +70,9 @@ class FrontendProvider:
             shutil.rmtree("node_modules")
             self.logger(Colorizer.blue("Frontend uninstalled"))
         except (FileNotFoundError, OSError):
-            self.logger.warning(f"Frontend node_modules directory {Colorizer.blue('node_modules')} not found")
+            self.logger.warning(
+                "Frontend node_modules directory "
+                f"{Colorizer.blue('node_modules')} not found"
+            )
         finally:
             os.chdir("..")

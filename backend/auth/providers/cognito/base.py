@@ -16,11 +16,13 @@
 
 import logging
 import time
+
 import jwt
 import requests
 from flask import current_app
 from jwt.algorithms import RSAAlgorithm
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
+
 from backend.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
 from backend.auth.utils.tokens import get_cognito_jwks
 
@@ -38,7 +40,11 @@ class CognitoAuthBase:
             user_type (str): Either "participant" or "researcher"
         """
         self.user_type = user_type
-        self.oauth_client_name = "participant_oidc" if user_type == "participant" else "researcher_oidc"
+        self.oauth_client_name = (
+            "participant_oidc"
+            if user_type == "participant"
+            else "researcher_oidc"
+        )
 
     def get_config_prefix(self):
         """Get the configuration prefix for this user type."""
@@ -50,21 +56,22 @@ class CognitoAuthBase:
 
     def validate_access_token(self, access_token, refresh_token=None):
         """
-        Validates the access token and refreshes it if expired.
+        Validate the access token and refreshes it if expired.
 
         Args:
             access_token (str): The access token to validate
-            refresh_token (str, optional): The refresh token to use if access_token is expired
+            refresh_token (str, optional): The refresh token to use
+                if access_token is expired
 
-        Returns:
+        Returns
+        -------
             tuple: (success, result)
                 - If success is True, result is None or dict with new_token
                 - If success is False, result contains an error message
         """
         try:
             # Check token expiration
-            claims = jwt.decode(access_token, options={
-                                "verify_signature": False})
+            claims = jwt.decode(access_token, options={"verify_signature": False})
             exp = claims.get("exp", 0)
             now = int(time.time())
 
@@ -75,7 +82,8 @@ class CognitoAuthBase:
             # Token expired, try to refresh
             if not refresh_token:
                 logger.warning(
-                    "Access token expired but no refresh token available")
+                    "Access token expired but no refresh token available"
+                )
                 return False, AUTH_ERROR_MESSAGES["session_expired"]
 
             # Attempt token refresh
@@ -89,7 +97,7 @@ class CognitoAuthBase:
                     "grant_type": "refresh_token",
                     "client_id": client_id,
                     "client_secret": client_secret,
-                    "refresh_token": refresh_token
+                    "refresh_token": refresh_token,
                 }
                 headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -100,13 +108,17 @@ class CognitoAuthBase:
                     error_body = response.json() if response.content else {}
 
                     # Check for expired refresh token
-                    if status_code == 400 and error_body.get("error") == "invalid_grant":
-                        logger.error(
-                            "Refresh token has expired or been revoked")
+                    if (
+                        status_code == 400
+                        and error_body.get("error") == "invalid_grant"
+                    ):
+                        logger.error("Refresh token has expired or been revoked")
                         return False, AUTH_ERROR_MESSAGES["session_expired"]
 
                     logger.error(
-                        f"Failed to refresh token: HTTP {status_code} - {error_body}")
+                        "Failed to refresh token: "
+                        f"HTTP {status_code} - {error_body}"
+                    )
                     return False, AUTH_ERROR_MESSAGES["session_expired"]
 
                 # Success - return new token
@@ -116,48 +128,52 @@ class CognitoAuthBase:
                 return True, {"new_token": new_access_token}
 
             except Exception as e:
-                logger.error(f"Error refreshing token: {str(e)}")
+                logger.error(f"Error refreshing token: {e!s}")
                 return False, AUTH_ERROR_MESSAGES["session_expired"]
 
         except Exception as e:
-            logger.error(f"Token validation error: {str(e)}")
+            logger.error(f"Token validation error: {e!s}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
     def validate_token_for_authenticated_route(self, id_token):
         """
         Validate ID token for authenticated routes (without nonce validation).
 
-        This is a secure alternative to parse_and_validate_id_token when validating
-        existing tokens in authenticated routes where nonce isn't available.
+        This is a secure alternative to parse_and_validate_id_token when
+        validating existing tokens in authenticated routes where nonce isn't
+        available.
 
         Args:
             id_token (str): The ID token to validate
 
-        Returns:
+        Returns
+        -------
             tuple: (success, result)
                 - If success is True, result contains the parsed user info
                 - If success is False, result contains an error message
         """
         try:
-            # First, decode the token without verification to get the header and basic claims
+            # Decode the token without verification to get the header and claims
             unverified_header = jwt.get_unverified_header(id_token)
 
             unverified_claims = jwt.decode(
-                id_token,
-                options={"verify_signature": False}
+                id_token, options={"verify_signature": False}
             )
 
             # Check basic claims before fetching keys
             # Check token_use
             if unverified_claims.get("token_use") != "id":
                 logger.error(
-                    f"Invalid token use: {unverified_claims.get('token_use')}")
+                    f"Invalid token use: {unverified_claims.get('token_use')}"
+                )
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
             # Check issuer
             region = self.get_config("REGION")
             user_pool_id = self.get_config("USER_POOL_ID")
-            expected_issuer = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
+            expected_issuer = (
+                f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
+            )
             if unverified_claims.get("iss") != expected_issuer:
                 logger.error(f"Invalid issuer: {unverified_claims.get('iss')}")
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
@@ -165,8 +181,7 @@ class CognitoAuthBase:
             # Check audience
             expected_audience = self.get_config("CLIENT_ID")
             if unverified_claims.get("aud") != expected_audience:
-                logger.error(
-                    f"Invalid audience: {unverified_claims.get('aud')}")
+                logger.error(f"Invalid audience: {unverified_claims.get('aud')}")
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
             # Check expiration
@@ -182,8 +197,7 @@ class CognitoAuthBase:
                 jwks = get_cognito_jwks(jwks_url)
 
                 if not jwks:
-                    logger.error(
-                        f"Failed to fetch JWKS: {jwks_url}")
+                    logger.error(f"Failed to fetch JWKS: {jwks_url}")
                     return False, AUTH_ERROR_MESSAGES["system_error"]
 
                 # Find the key that matches our token's key ID
@@ -213,8 +227,8 @@ class CognitoAuthBase:
                         "verify_exp": True,
                         "verify_iat": True,
                         "verify_aud": True,
-                        "verify_iss": True
-                    }
+                        "verify_iss": True,
+                    },
                 )
 
                 # Validation successful
@@ -224,19 +238,18 @@ class CognitoAuthBase:
                 logger.warning("Token has expired during verification")
                 return False, AUTH_ERROR_MESSAGES["session_expired"]
             except jwt.InvalidTokenError as e:
-                logger.error(f"Invalid token during verification: {str(e)}")
+                logger.error(f"Invalid token during verification: {e!s}")
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
             except Exception as e:
-                logger.error(
-                    f"Error during manual token verification: {str(e)}")
+                logger.error(f"Error during manual token verification: {e!s}")
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
         except ExpiredSignatureError:
             logger.warning("ID token has expired")
             return False, AUTH_ERROR_MESSAGES["session_expired"]
         except InvalidTokenError as e:
-            logger.error(f"Invalid ID token: {str(e)}")
+            logger.error(f"Invalid ID token: {e!s}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]
         except Exception as e:
-            logger.error(f"Error validating ID token: {str(e)}")
+            logger.error(f"Error validating ID token: {e!s}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]

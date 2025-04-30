@@ -36,5 +36,6 @@ class FString(Enum):
     stack_name = "{project_name}-stack"
     network_name = "{project_name}-network"
     postgres_container_name = "{project_name}-postgres"
-    wearable_data_retrieval_container_name = \
+    wearable_data_retrieval_container_name = (
         "{project_name}-wearable-data-retrieval"
+    )

@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime, date
 import json
 import logging
 import sys
+from datetime import date, datetime
 
 
 # Custom JSON formatter
@@ -73,7 +73,7 @@ class StreamFormatter(JsonFormatter):
 
 class JsonFileHandler(logging.Handler):
     def __init__(self, log_filename):
-        super(JsonFileHandler, self).__init__()
+        super().__init__()
         self.log_filename = log_filename
         self.log_entries = []  # Keep track of all log entries in memory
 

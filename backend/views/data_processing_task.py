@@ -16,15 +16,18 @@
 
 import logging
 import traceback
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+
 from flask import Blueprint, jsonify, make_response, request
+
+from backend.auth.decorators import researcher_auth_required
 from backend.extensions import db
 from backend.models import LambdaTask
-from backend.auth.decorators import researcher_auth_required
 from backend.utils.lambda_task import create_and_invoke_lambda_task
 
-blueprint = Blueprint("data_processing_task", __name__,
-                      url_prefix="/data_processing_task")
+blueprint = Blueprint(
+    "data_processing_task", __name__, url_prefix="/data_processing_task"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -36,8 +39,8 @@ def get_data_processing_tasks(account, task_id: int | None):
     """
     Retrieve all data processing tasks sorted by creation date.
 
-    Optionally, retrieve a specific data processing task by ID. If task_id is provided, the response will contain a
-    single task.
+    Optionally, retrieve a specific data processing task by ID.
+    If task_id is provided, the response will contain a single task.
 
     Request:
     --------
@@ -53,7 +56,8 @@ def get_data_processing_tasks(account, task_id: int | None):
     [
         {
             "id": int,
-            "status": str,          # "Pending", "InProgress", "Success", "Failed", or "CompletedWithErrors"
+            "status": str,          # "Pending", "InProgress", "Success",
+                                    # "Failed", or "CompletedWithErrors"
             "billedMs": int,
             "createdOn": str,       # ISO 8601 format
             "updatedOn": str,       # ISO 8601 format
@@ -74,17 +78,22 @@ def get_data_processing_tasks(account, task_id: int | None):
         if task_id is not None:
             tasks = LambdaTask.query.filter(LambdaTask.id == task_id).all()
         else:
-            # Retrieve all tasks sorted by created_on in descending order (most recent first)
-            tasks = LambdaTask.query.order_by(
-                LambdaTask.created_on.desc()).all()
+            # Retrieve all tasks sorted by created_on in descending order
+            tasks = LambdaTask.query.order_by(LambdaTask.created_on.desc()).all()
         res = [task.meta for task in tasks]
         return jsonify(res), 200
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(f"Error retrieving data processing tasks: {exc}")
         db.session.rollback()
-        return make_response({"msg": "Internal server error when retrieving data processing tasks."}, 500)
+        return make_response(
+            {
+                "msg": "Internal server error when "
+                "retrieving data processing tasks."
+            },
+            500,
+        )
 
 
 @blueprint.route("/invoke", methods=["POST"])
@@ -109,7 +118,8 @@ def invoke_data_processing_task(account):
         "msg": "Data processing task invoked successfully",
         "task": {
             "id": int,
-            "status": str,          # "Pending", "InProgress", "Success", "Failed", or "CompletedWithErrors"
+            "status": str,          # "Pending", "InProgress", "Success",
+                                    # "Failed", or "CompletedWithErrors"
             "billedMs": int,
             "createdOn": str,       # ISO 8601 format
             "updatedOn": str,       # ISO 8601 format
@@ -135,19 +145,23 @@ def invoke_data_processing_task(account):
         # Create and invoke a new LambdaTask
         lambda_task = create_and_invoke_lambda_task()
         if lambda_task is None:
-            raise Exception(
-                "Failed to create and invoke data processing task.")
+            raise Exception("Failed to create and invoke data processing task.")
 
-        return jsonify({
-            "msg": "Data processing task invoked successfully",
-            "task": lambda_task.meta
-        }), 200
+        return jsonify(
+            {
+                "msg": "Data processing task invoked successfully",
+                "task": lambda_task.meta,
+            }
+        ), 200
 
     except Exception:
         exc = traceback.format_exc()
         logger.warning(f"Error invoking data processing task: {exc}")
         db.session.rollback()
-        return make_response({"msg": "Internal server error when invoking data processing task."}, 500)
+        return make_response(
+            {"msg": "Internal server error when invoking data processing task."},
+            500,
+        )
 
 
 @blueprint.route("/force-stop", methods=["POST"])
@@ -190,9 +204,14 @@ def force_stop_data_processing_task(account):
         if function_id is None:
             return make_response({"msg": "function_id is required"}, 400)
 
-        lambda_task = LambdaTask.query.filter(LambdaTask.id == function_id).first()
+        lambda_task = LambdaTask.query.filter(
+            LambdaTask.id == function_id
+        ).first()
         if lambda_task is None:
-            return make_response({"msg": f"Data processing task with id {function_id} not found."}, 404)
+            return make_response(
+                {"msg": f"Data processing task with id {function_id} not found."},
+                404,
+            )
 
         lambda_task.status = "Failed"
         lambda_task.completed_on = datetime.now(UTC)
@@ -204,4 +223,7 @@ def force_stop_data_processing_task(account):
         exc = traceback.format_exc()
         logger.warning(f"Error stopping data processing task: {exc}")
         db.session.rollback()
-        return make_response({"msg": "Internal server error when stopping data processing task."}, 500)
+        return make_response(
+            {"msg": "Internal server error when stopping data processing task."},
+            500,
+        )

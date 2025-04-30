@@ -14,20 +14,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, UTC
 import json
 import logging
 import traceback
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
 
 import boto3
-from flask import current_app
 import requests
+from flask import current_app
 from sqlalchemy import or_
 
 from backend.extensions import db
 from backend.models import LambdaTask
-
 
 logger = logging.getLogger(__name__)
 
@@ -39,11 +38,7 @@ def create_and_invoke_lambda_task():
     try:
         now = datetime.now(UTC)
         # Create a new LambdaTask with status "Pending"
-        lambda_task = LambdaTask(
-            status="Pending",
-            created_on=now,
-            updated_on=now
-        )
+        lambda_task = LambdaTask(status="Pending", created_on=now, updated_on=now)
         db.session.add(lambda_task)
         db.session.commit()
 
@@ -65,17 +60,17 @@ def check_and_invoke_lambda_task():
     """
     try:
         # Get the latest completed or in progress lambda function
-        latest_task = LambdaTask.query\
-            .filter(
+        latest_task = (
+            LambdaTask.query.filter(
                 or_(
                     LambdaTask.status == "InProgress",
                     LambdaTask.status == "Success",
-                    LambdaTask.status == "CompletedWithErrors"
+                    LambdaTask.status == "CompletedWithErrors",
                 )
-            )\
-            .order_by(
-                LambdaTask.created_on.desc()
-            ).first()
+            )
+            .order_by(LambdaTask.created_on.desc())
+            .first()
+        )
         now = datetime.now(UTC)
         if latest_task:
             # Check if the latest task was run today
@@ -85,7 +80,8 @@ def check_and_invoke_lambda_task():
                 return latest_task
             else:
                 logger.info(
-                    "No Lambda task has been run today. Invoking new Lambda task.")
+                    "No Lambda task has been run today. Invoking new Lambda task."
+                )
                 # Create and invoke a new LambdaTask
                 lambda_task = create_and_invoke_lambda_task()
                 return lambda_task
@@ -105,12 +101,13 @@ def check_and_invoke_lambda_task():
 
 def invoke_lambda_task(function_id):
     """
-    Invokes an AWS Lambda function asynchronously and stores the task in the database.
+    Invoke an AWS Lambda function asynchronously and store the task in the db.
 
     Args:
         function_id: The database ID of the LambdaTask to update.
 
-    Returns:
+    Returns
+    -------
         LambdaTask: The LambdaTask object stored in the database.
     """
     try:
@@ -123,15 +120,14 @@ def invoke_lambda_task(function_id):
                 raise ValueError("LAMBDA_FUNCTION_NAME is not configured.")
 
             # Payload contains only the function_id
-            payload = {
-                "function_id": function_id
-            }
+            payload = {"function_id": function_id}
 
             response = client.invoke(
                 FunctionName=function_name,
                 InvocationType="Event",  # Asynchronous invocation
                 Payload=json.dumps(payload).encode(
-                    'utf-8')  # Ensure payload is bytes
+                    "utf-8"
+                ),  # Ensure payload is bytes
             )
 
             logger.info(
@@ -140,7 +136,8 @@ def invoke_lambda_task(function_id):
             )
 
         else:
-            # In development and testing environments send an async invocation to the local lambda endpoint
+            # In development and testing environments,
+            # send an async invocation to the local lambda endpoint
             def send_request(url, data):
                 try:
                     requests.post(url, json=data)

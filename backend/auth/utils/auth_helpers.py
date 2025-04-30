@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from typing import Optional, Tuple
+
 from flask import Response, make_response, request
 
 from backend.models import Account, App, Study
@@ -23,7 +23,7 @@ from backend.models import Account, App, Study
 logger = logging.getLogger(__name__)
 
 
-def get_token_from_request() -> Optional[str]:
+def get_token_from_request() -> str | None:
     """
     Extract authentication token from request headers or cookies.
 
@@ -39,7 +39,9 @@ def get_token_from_request() -> Optional[str]:
     return request.cookies.get("id_token")
 
 
-def check_permissions(auth_account: Account, action: str, resource_param: Optional[str] = None) -> Tuple[bool, Optional[Response]]:
+def check_permissions(
+    auth_account: Account, action: str, resource_param: str | None = None
+) -> tuple[bool, Response | None]:
     """
     Check if the authenticated account has the required permissions.
 

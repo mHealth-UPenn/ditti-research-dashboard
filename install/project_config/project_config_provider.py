@@ -14,57 +14,54 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from getpass import getpass
 import json
 import os
 import random
 import string
-from typing import Optional
+from getpass import getpass
 
-from install.utils import (
-    Logger,
-    Colorizer,
-    is_valid_name,
-    is_valid_email,
-)
 from install.project_config.project_config_types import (
-    ProjectConfig,
     CognitoConfig,
+    DockerConfig,
+    ProjectConfig,
     S3Config,
     SecretsResourceManagerConfig,
-    DockerConfig,
     UserInput,
 )
+from install.utils import Colorizer, Logger, is_valid_email, is_valid_name
 from install.utils.enums import FString
-from install.utils.exceptions import (
-    CancelInstallation,
-    ProjectConfigError,
-)
+from install.utils.exceptions import CancelInstallation, ProjectConfigError
 
 
 class ProjectConfigProvider:
     project_config_filename: str = "project-config.json"
-    user_input: Optional[UserInput]
-    project_config: Optional[ProjectConfig]
+    user_input: UserInput | None
+    project_config: ProjectConfig | None
 
     def __init__(
-            self, *,
-            logger: Logger,
-        ):
+        self,
+        *,
+        logger: Logger,
+    ):
         self.logger = logger
         self.project_config = None
         self.user_input = None
-        self.hashstr = "".join(random.choices(
-            string.ascii_letters + string.digits, k=8
-        )).lower()
+        self.hashstr = "".join(
+            random.choices(string.ascii_letters + string.digits, k=8)
+        ).lower()
 
     def load_existing_config(self) -> None:
         """Load project config from a JSON file."""
         if not os.path.exists(self.project_config_filename):
-            self.logger.error(f"Project config file {Colorizer.blue(self.project_config_filename)} not found")
-            raise ProjectConfigError(f"Project config file {Colorizer.blue(self.project_config_filename)} not found")
+            msg = (
+                "Project config file "
+                f"{Colorizer.blue(self.project_config_filename)}"
+                " not found"
+            )
+            self.logger.error(msg)
+            raise ProjectConfigError(msg)
 
-        with open(self.project_config_filename, "r") as f:
+        with open(self.project_config_filename) as f:
             self.project_config = json.load(f)
 
     @property
@@ -94,112 +91,105 @@ class ProjectConfigProvider:
     def participant_user_pool_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"] \
-            ["participant_user_pool_name"]
+        return self.project_config["aws"]["cognito"]["participant_user_pool_name"]
 
     @participant_user_pool_name.setter
     def participant_user_pool_name(self, value: str) -> None:
-        self.project_config["aws"]["cognito"] \
-            ["participant_user_pool_name"] = value
+        self.project_config["aws"]["cognito"]["participant_user_pool_name"] = (
+            value
+        )
         self.write_project_config()
 
     @property
     def participant_user_pool_domain(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"] \
-            ["participant_user_pool_domain"]
+        return self.project_config["aws"]["cognito"][
+            "participant_user_pool_domain"
+        ]
 
     @participant_user_pool_domain.setter
     def participant_user_pool_domain(self, value: str) -> None:
-        self.project_config["aws"]["cognito"] \
-            ["participant_user_pool_domain"] = value
+        self.project_config["aws"]["cognito"]["participant_user_pool_domain"] = (
+            value
+        )
         self.write_project_config()
 
     @property
     def participant_user_pool_id(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"] \
-            ["participant_user_pool_id"]
+        return self.project_config["aws"]["cognito"]["participant_user_pool_id"]
 
     @participant_user_pool_id.setter
     def participant_user_pool_id(self, value: str) -> None:
-        self.project_config["aws"]["cognito"] \
-            ["participant_user_pool_id"] = value
+        self.project_config["aws"]["cognito"]["participant_user_pool_id"] = value
         self.write_project_config()
 
     @property
     def participant_client_id(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"] \
-            ["participant_client_id"]
+        return self.project_config["aws"]["cognito"]["participant_client_id"]
 
     @participant_client_id.setter
     def participant_client_id(self, value: str) -> None:
-        self.project_config["aws"]["cognito"] \
-            ["participant_client_id"] = value
+        self.project_config["aws"]["cognito"]["participant_client_id"] = value
         self.write_project_config()
 
     @property
     def researcher_user_pool_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"] \
-            ["researcher_user_pool_name"]
+        return self.project_config["aws"]["cognito"]["researcher_user_pool_name"]
 
     @researcher_user_pool_name.setter
     def researcher_user_pool_name(self, value: str) -> None:
-        self.project_config["aws"]["cognito"] \
-            ["researcher_user_pool_name"] = value
+        self.project_config["aws"]["cognito"]["researcher_user_pool_name"] = value
         self.write_project_config()
 
     @property
     def researcher_user_pool_domain(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"] \
-            ["researcher_user_pool_domain"]
+        return self.project_config["aws"]["cognito"][
+            "researcher_user_pool_domain"
+        ]
 
     @researcher_user_pool_domain.setter
     def researcher_user_pool_domain(self, value: str) -> None:
-        self.project_config["aws"]["cognito"] \
-            ["researcher_user_pool_domain"] = value
+        self.project_config["aws"]["cognito"]["researcher_user_pool_domain"] = (
+            value
+        )
         self.write_project_config()
 
     @property
     def researcher_user_pool_id(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"] \
-            ["researcher_user_pool_id"]
+        return self.project_config["aws"]["cognito"]["researcher_user_pool_id"]
 
     @researcher_user_pool_id.setter
     def researcher_user_pool_id(self, value: str) -> None:
-        self.project_config["aws"]["cognito"] \
-            ["researcher_user_pool_id"] = value
+        self.project_config["aws"]["cognito"]["researcher_user_pool_id"] = value
         self.write_project_config()
 
     @property
     def researcher_client_id(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"] \
-            ["researcher_client_id"]
+        return self.project_config["aws"]["cognito"]["researcher_client_id"]
 
     @researcher_client_id.setter
     def researcher_client_id(self, value: str) -> None:
-        self.project_config["aws"]["cognito"] \
-            ["researcher_client_id"] = value
+        self.project_config["aws"]["cognito"]["researcher_client_id"] = value
         self.write_project_config()
 
     @property
     def logs_bucket_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["s3"] \
-            ["logs_bucket_name"]
+        return self.project_config["aws"]["s3"]["logs_bucket_name"]
 
     @logs_bucket_name.setter
     def logs_bucket_name(self, value: str) -> None:
@@ -210,8 +200,7 @@ class ProjectConfigProvider:
     def audio_bucket_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["s3"] \
-            ["audio_bucket_name"]
+        return self.project_config["aws"]["s3"]["audio_bucket_name"]
 
     @audio_bucket_name.setter
     def audio_bucket_name(self, value: str) -> None:
@@ -222,8 +211,7 @@ class ProjectConfigProvider:
     def secret_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["secrets_manager"] \
-            ["secret_name"]
+        return self.project_config["aws"]["secrets_manager"]["secret_name"]
 
     @secret_name.setter
     def secret_name(self, value: str) -> None:
@@ -234,13 +222,13 @@ class ProjectConfigProvider:
     def tokens_secret_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["secrets_manager"] \
-            ["tokens_secret_name"]
+        return self.project_config["aws"]["secrets_manager"]["tokens_secret_name"]
 
     @tokens_secret_name.setter
     def tokens_secret_name(self, value: str) -> None:
-        self.project_config["aws"]["secrets_manager"] \
-            ["tokens_secret_name"] = value
+        self.project_config["aws"]["secrets_manager"]["tokens_secret_name"] = (
+            value
+        )
         self.write_project_config()
 
     @property
@@ -280,13 +268,15 @@ class ProjectConfigProvider:
     def wearable_data_retrieval_container_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["docker"] \
-            ["wearable_data_retrieval_container_name"]
+        return self.project_config["docker"][
+            "wearable_data_retrieval_container_name"
+        ]
 
     @wearable_data_retrieval_container_name.setter
     def wearable_data_retrieval_container_name(self, value: str) -> None:
-        self.project_config["docker"] \
-            ["wearable_data_retrieval_container_name"] = value
+        self.project_config["docker"][
+            "wearable_data_retrieval_container_name"
+        ] = value
         self.write_project_config()
 
     def project_settings_exists(self) -> bool:
@@ -294,11 +284,19 @@ class ProjectConfigProvider:
 
     def get_user_input(self) -> None:
         if self.project_settings_exists():
-            raise ProjectConfigError("Project settings already exist. Please uninstall the project first.")
+            msg = (
+                "Project settings already exist. Please uninstall the project "
+                "first."
+            )
+            raise ProjectConfigError(msg)
 
-        self.logger("\nThis script will install the development environment for"
-                    " the project.")
-        self.logger(Colorizer.magenta("The following will be configured and installed:"))
+        self.logger(
+            "\nThis script will install the development environment for"
+            " the project."
+        )
+        self.logger(
+            Colorizer.magenta("The following will be configured and installed:")
+        )
         self.logger("- AWS CLI")
         self.logger("- Amazon Cognito user pools and clients")
         self.logger("- Amazon S3 buckets")
@@ -318,7 +316,9 @@ class ProjectConfigProvider:
                 self.logger.warning("Invalid name")
 
         # Get Fitbit credentials
-        fitbit_client_id, fitbit_client_secret = self.get_fitbit_credentials_input()
+        fitbit_client_id, fitbit_client_secret = (
+            self.get_fitbit_credentials_input()
+        )
 
         # Get admin email
         admin_email = ""
@@ -331,7 +331,7 @@ class ProjectConfigProvider:
             "project_name": project_name,
             "fitbit_client_id": fitbit_client_id,
             "fitbit_client_secret": fitbit_client_secret,
-            "admin_email": admin_email
+            "admin_email": admin_email,
         }
 
     @staticmethod
@@ -346,7 +346,7 @@ class ProjectConfigProvider:
     def get_fitbit_credentials_input() -> tuple[str, str]:
         return (
             input("Enter your dev Fitbit OAuth 2.0 Client ID: "),
-            getpass("Enter your dev Fitbit Client Secret: ")
+            getpass("Enter your dev Fitbit Client Secret: "),
         )
 
     @staticmethod
@@ -371,7 +371,7 @@ class ProjectConfigProvider:
                 FString.researcher_user_pool_domain.value, add_hashstr=True
             ),
             "researcher_user_pool_id": "",
-            "researcher_client_id": ""
+            "researcher_client_id": "",
         }
 
         s3_config: S3Config = {
@@ -399,7 +399,7 @@ class ProjectConfigProvider:
             ),
             "wearable_data_retrieval_container_name": self.format_string(
                 FString.wearable_data_retrieval_container_name.value
-            )
+            ),
         }
 
         self.project_config = {
@@ -411,9 +411,9 @@ class ProjectConfigProvider:
                 "secrets_manager": secrets_manager_config,
                 "stack_name": self.format_string(
                     FString.stack_name.value, add_hashstr=True
-                )
+                ),
             },
-            "docker": docker_config
+            "docker": docker_config,
         }
 
     def format_string(self, fstr: str, add_hashstr: bool = False) -> str:
@@ -431,6 +431,16 @@ class ProjectConfigProvider:
         """Uninstall the project config."""
         try:
             os.remove(self.project_config_filename)
-            self.logger(f"Project config file {Colorizer.blue(self.project_config_filename)} removed")
+            msg = (
+                "Project config file "
+                f"{Colorizer.blue(self.project_config_filename)}"
+                " removed"
+            )
+            self.logger(msg)
         except FileNotFoundError:
-            self.logger.warning(f"Project config file {Colorizer.blue(self.project_config_filename)} not found")
+            msg = (
+                "Project config file "
+                f"{Colorizer.blue(self.project_config_filename)}"
+                " not found"
+            )
+            self.logger.warning(msg)

@@ -14,18 +14,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime, UTC, timedelta
 import enum
 import logging
 import os
+import re
+from datetime import UTC, datetime, timedelta
+
 from flask import current_app
-from sqlalchemy import select, func, tuple_, event, Enum
+from sqlalchemy import Enum, event, func, select, tuple_
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import validates
 from sqlalchemy.sql.schema import UniqueConstraint
-from backend.extensions import db
-import re
 
+from backend.extensions import db
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +72,7 @@ def init_admin_app():
     app = App.query.filter(query).first()
 
     if app is not None:
-        raise ValueError("This app already exists: %s" % app)
+        raise ValueError(f"This app already exists: {app}")
 
     app = App(name="Admin Dashboard")
     db.session.add(app)
@@ -98,7 +99,7 @@ def init_admin_group():
     access_group = AccessGroup.query.filter(query).first()
 
     if access_group is not None:
-        raise ValueError("This access group already exists: %s" % access_group)
+        raise ValueError(f"This access group already exists: {access_group}")
 
     query = App.name == "Admin Dashboard"
     app = App.query.filter(query).first()
@@ -114,8 +115,7 @@ def init_admin_group():
     permission.action = "*"
     permission.resource = "*"
     join = JoinAccessGroupPermission(
-        access_group=access_group,
-        permission=permission
+        access_group=access_group, permission=permission
     )
 
     db.session.add(permission)
@@ -148,7 +148,7 @@ def init_admin_account(email=None):
     admin = Account.query.filter(Account.email == email).first()
 
     if admin is not None:
-        raise ValueError("An admin account already exists: %s" % admin)
+        raise ValueError(f"An admin account already exists: {admin}")
 
     query = AccessGroup.name == "Admin"
     admin_group = AccessGroup.query.filter(query).first()
@@ -167,18 +167,15 @@ def init_admin_account(email=None):
         first_name="AWS",
         last_name="Admin",
         email=email,
-        is_confirmed=True
+        is_confirmed=True,
     )
 
     db.session.commit()
-    admin_join = JoinAccountAccessGroup(
-        account=admin, access_group=admin_group
-    )
+    admin_join = JoinAccountAccessGroup(account=admin, access_group=admin_group)
     db.session.add(admin_join)
 
     # if an entry for the Ditti Admin group exists
     if ditti_group is not None:
-
         # add the admin account to it
         ditti_join = JoinAccountAccessGroup(
             account=admin, access_group=ditti_group
@@ -215,13 +212,28 @@ def init_integration_testing_db():
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
     if "localhost" not in db_uri:
         raise RuntimeError(
-            "Dev data initialization attempted on non-localhost database")
+            "Dev data initialization attempted on non-localhost database"
+        )
 
     # Create all possible `(action, resource)` permission combinations
     actions = ["*", "Create", "View", "Edit", "Archive", "Delete", "Invoke"]
-    resources = ["*", "Admin Dashboard", "Ditti App Dashboard", "Wearable Dashboard", "Accounts", "Access Groups",
-                 "Roles", "Studies", "All Studies", "About Sleep Templates", "Audio Files", "Participants", "Taps",
-                 "Wearable Data", "Data Retrieval Task"]
+    resources = [
+        "*",
+        "Admin Dashboard",
+        "Ditti App Dashboard",
+        "Wearable Dashboard",
+        "Accounts",
+        "Access Groups",
+        "Roles",
+        "Studies",
+        "All Studies",
+        "About Sleep Templates",
+        "Audio Files",
+        "Participants",
+        "Taps",
+        "Wearable Data",
+        "Data Retrieval Task",
+    ]
 
     for action in actions:
         for resource in resources:
@@ -242,30 +254,20 @@ def init_integration_testing_db():
         "Analyst": [
             ("View", "*"),
         ],
-        "Can View Participants": [
-            ("View", "Participants")
-        ],
-        "Can Create Participants": [
-            ("Create", "Participants")
-        ],
-        "Can Edit Participants": [
-            ("Edit", "Participants")
-        ],
-        "Can View Taps": [
-            ("View", "Taps")
-        ],
-        "Can View Wearable Data": [
-            ("View", "Wearable Data")
-        ],
+        "Can View Participants": [("View", "Participants")],
+        "Can Create Participants": [("Create", "Participants")],
+        "Can Edit Participants": [("Edit", "Participants")],
+        "Can View Taps": [("View", "Taps")],
+        "Can View Wearable Data": [("View", "Wearable Data")],
         "Can View Taps & Wearable Data": [
             ("View", "Taps"),
-            ("View", "Wearable Data")
+            ("View", "Wearable Data"),
         ],
         "Can Invoke Data Retrieval Task": [
             ("View", "Wearable Data"),
             ("View", "Data Retrieval Task"),
-            ("Invoke", "Data Retrieval Task")
-        ]
+            ("Invoke", "Data Retrieval Task"),
+        ],
     }
 
     # Create all study-level roles
@@ -289,127 +291,126 @@ def init_integration_testing_db():
     # Create the Ditti Admin access group
     ditti_app = App(name="Ditti App Dashboard")
     ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
-    JoinAccessGroupPermission(
-        access_group=ditti_admin_group, permission=wildcard)
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=wildcard)
     query = Permission.definition == tuple_("View", "Ditti App Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
-        access_group=ditti_admin_group, permission=permission)
+        access_group=ditti_admin_group, permission=permission
+    )
     db.session.add(ditti_app)
     db.session.add(ditti_admin_group)
 
     # Create the Ditti Coordinator access group
     ditti_coordinator_group = AccessGroup(
-        name="Ditti App Coordinator", app=ditti_app)
+        name="Ditti App Coordinator", app=ditti_app
+    )
     query = Permission.definition == tuple_("View", "Ditti App Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
-        access_group=ditti_coordinator_group, permission=permission)
+        access_group=ditti_coordinator_group, permission=permission
+    )
     query = Permission.definition == tuple_("View", "Audio Files")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
-        access_group=ditti_coordinator_group, permission=permission)
+        access_group=ditti_coordinator_group, permission=permission
+    )
     query = Permission.definition == tuple_("Create", "Audio Files")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
-        access_group=ditti_coordinator_group, permission=permission)
+        access_group=ditti_coordinator_group, permission=permission
+    )
     query = Permission.definition == tuple_("Delete", "Audio Files")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
-        access_group=ditti_coordinator_group, permission=permission)
+        access_group=ditti_coordinator_group, permission=permission
+    )
     query = Permission.definition == tuple_("View", "Participants")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
-        access_group=ditti_coordinator_group, permission=permission)
+        access_group=ditti_coordinator_group, permission=permission
+    )
     db.session.add(ditti_app)
     db.session.add(ditti_coordinator_group)
 
     # Create the Wearable Admin access group
     wear_app = App(name="Wearable Dashboard")
-    wear_admin_group = AccessGroup(
-        name="Wearable Dashboard Admin", app=wear_app)
-    JoinAccessGroupPermission(
-        access_group=wear_admin_group, permission=wildcard)
+    wear_admin_group = AccessGroup(name="Wearable Dashboard Admin", app=wear_app)
+    JoinAccessGroupPermission(access_group=wear_admin_group, permission=wildcard)
     query = Permission.definition == tuple_("View", "Wearable Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
-        access_group=wear_admin_group, permission=permission)
+        access_group=wear_admin_group, permission=permission
+    )
     db.session.add(wear_app)
     db.session.add(wear_admin_group)
 
     # Create the Wearable Dashboard Coordinator access group
     wear_coordinator_group = AccessGroup(
-        name="Wearable Dashboard Coordinator", app=wear_app)
+        name="Wearable Dashboard Coordinator", app=wear_app
+    )
     query = Permission.definition == tuple_("View", "Wearable Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
-        access_group=wear_coordinator_group, permission=permission)
+        access_group=wear_coordinator_group, permission=permission
+    )
     query = Permission.definition == tuple_("View", "Participants")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
-        access_group=wear_coordinator_group, permission=permission)
+        access_group=wear_coordinator_group, permission=permission
+    )
     db.session.add(wear_coordinator_group)
 
     admin_access_groups = {
         "Can Create Accounts": [
             ("View", "Admin Dashboard"),
-            ("Create", "Accounts")
+            ("Create", "Accounts"),
         ],
         "Can Edit Accounts": [
             ("View", "Admin Dashboard"),
-            ("Edit", "Accounts")
+            ("Edit", "Accounts"),
         ],
         "Can Archive Accounts": [
             ("View", "Admin Dashboard"),
-            ("Archive", "Accounts")
+            ("Archive", "Accounts"),
         ],
         "Can Create Access Groups": [
             ("View", "Admin Dashboard"),
-            ("Create", "Access Groups")
+            ("Create", "Access Groups"),
         ],
         "Can Edit Access Groups": [
             ("View", "Admin Dashboard"),
-            ("Edit", "Access Groups")
+            ("Edit", "Access Groups"),
         ],
         "Can Archive Access Groups": [
             ("View", "Admin Dashboard"),
-            ("Archive", "Access Groups")
+            ("Archive", "Access Groups"),
         ],
-        "Can Create Roles": [
-            ("View", "Admin Dashboard"),
-            ("Create", "Roles")
-        ],
-        "Can Edit Roles": [
-            ("View", "Admin Dashboard"),
-            ("Edit", "Roles")
-        ],
+        "Can Create Roles": [("View", "Admin Dashboard"), ("Create", "Roles")],
+        "Can Edit Roles": [("View", "Admin Dashboard"), ("Edit", "Roles")],
         "Can Archive Roles": [
             ("View", "Admin Dashboard"),
-            ("Archive", "Roles")
+            ("Archive", "Roles"),
         ],
         "Can Create Studies": [
             ("View", "Admin Dashboard"),
-            ("Create", "Studies")
+            ("Create", "Studies"),
         ],
-        "Can Edit Studies": [
-            ("View", "Admin Dashboard"),
-            ("Edit", "Studies")
-        ],
+        "Can Edit Studies": [("View", "Admin Dashboard"), ("Edit", "Studies")],
         "Can Archive Studies": [
             ("View", "Admin Dashboard"),
-            ("Archive", "Studies")
+            ("Archive", "Studies"),
         ],
         "Can Create About Sleep Templates": [
             ("View", "Admin Dashboard"),
-            ("Create", "About Sleep Templates")
+            ("Create", "About Sleep Templates"),
         ],
         "Can Edit About Sleep Templates": [
             ("View", "Admin Dashboard"),
-            ("Edit", "About Sleep Templates")
+            ("Edit", "About Sleep Templates"),
         ],
         "Can Archive About Sleep Templates": [
             ("View", "Admin Dashboard"),
-            ("Archive", "About Sleep Templates")
+            ("Archive", "About Sleep Templates"),
         ],
     }
 
@@ -420,26 +421,27 @@ def init_integration_testing_db():
             query = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(query).first()
             JoinAccessGroupPermission(
-                access_group=access_group, permission=permission)
+                access_group=access_group, permission=permission
+            )
         db.session.add(access_group)
 
     ditti_access_groups = {
         "Can View Audio Files": [
             ("View", "Participants"),
             ("View", "Ditti App Dashboard"),
-            ("View", "Audio Files")
+            ("View", "Audio Files"),
         ],
         "Can Create Audio Files": [
             ("View", "Participants"),
             ("View", "Ditti App Dashboard"),
             ("View", "Audio Files"),
-            ("Create", "Audio Files")
+            ("Create", "Audio Files"),
         ],
         "Can Delete Audio Files": [
             ("View", "Participants"),
             ("View", "Ditti App Dashboard"),
             ("View", "Audio Files"),
-            ("Delete", "Audio Files")
+            ("Delete", "Audio Files"),
         ],
     }
 
@@ -450,15 +452,22 @@ def init_integration_testing_db():
             query = Permission.definition == tuple_(action, resource)
             permission = Permission.query.filter(query).first()
             JoinAccessGroupPermission(
-                access_group=access_group, permission=permission)
+                access_group=access_group, permission=permission
+            )
         db.session.add(access_group)
 
-    data_summary = """The clinical trial collects sleep data from participants' wearable devices over four weeks to evaluate the
-impact of mindfulness exercises on treating insomnia. By monitoring sleep patterns, duration, and quality,
-researchers can gain objective insights into participants' sleep behavior before, during, and after engaging in
-mindfulness interventions. This data enables the study to measure the effectiveness of these exercises in
-improving sleep outcomes. Wearable devices provide a convenient, non-invasive method for gathering accurate,
-real-time data essential for understanding the physiological effects of mindfulness on sleep."""
+    data_summary = """The clinical trial collects sleep data from participants' \
+wearable devices over four weeks to evaluate the
+impact of mindfulness exercises on treating insomnia. By monitoring sleep \
+patterns, duration, and quality,
+researchers can gain objective insights into participants' sleep behavior \
+before, during, and after engaging in
+mindfulness interventions. This data enables the study to measure the \
+effectiveness of these exercises in
+improving sleep outcomes. Wearable devices provide a convenient, non-invasive \
+method for gathering accurate,
+real-time data essential for understanding the physiological effects of \
+mindfulness on sleep."""
 
     studies = [
         {
@@ -467,7 +476,9 @@ real-time data essential for understanding the physiological effects of mindfuln
             "ditti_id": "TA",
             "email": "test.study.A@studyAemail.com",
             "default_expiry_delta": 14,
-            "consent_information": "By accepting, you agree that your data will be used. You can withdraw consent at any time.",
+            "consent_information": "By accepting, you agree that your data "
+            "will be used. You can withdraw consent "
+            "at any time.",
             "data_summary": data_summary,
         },
         {
@@ -476,9 +487,10 @@ real-time data essential for understanding the physiological effects of mindfuln
             "ditti_id": "TB",
             "email": "test.study.B@studyBemail.com",
             "default_expiry_delta": 14,
-            "consent_information": "By accepting, you agree that your data will be used. You cannot withdraw consent.",
+            "consent_information": "By accepting, you agree that your data "
+            "will be used. You cannot withdraw consent.",
             "data_summary": data_summary,
-        }
+        },
     ]
 
     # Create two test studies
@@ -487,7 +499,8 @@ real-time data essential for understanding the physiological effects of mindfuln
     db.session.add(study_a)
     db.session.add(study_b)
 
-    # Create a Ditti admin account to test whether permissions are scoped to the Ditti Dashboard only
+    # Create a Ditti admin account to test whether permissions are scoped to the
+    # Ditti Dashboard only
     account = Account(
         created_on=datetime.now(UTC),
         first_name="Jane",
@@ -498,7 +511,8 @@ real-time data essential for understanding the physiological effects of mindfuln
     JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     db.session.add(account)
 
-    # Create a Wearable admin account to test whether permissions are scoped to the Wearable Dashboard only
+    # Create a Wearable admin account to test whether permissions are scoped
+    # to the Wearable Dashboard only
     account = Account(
         created_on=datetime.now(UTC),
         first_name="Jane",
@@ -509,7 +523,8 @@ real-time data essential for understanding the physiological effects of mindfuln
     JoinAccountAccessGroup(account=account, access_group=wear_admin_group)
     db.session.add(account)
 
-    # Create a Study A Admin account to test whether permissions are scoped to Study A only
+    # Create a Study A Admin account to test whether permissions are scoped to the
+    # Study A only
     account = Account(
         created_on=datetime.now(UTC),
         first_name="Jane",
@@ -519,18 +534,16 @@ real-time data essential for understanding the physiological effects of mindfuln
     )
     role = Role.query.filter(Role.name == "Admin").first()
     JoinAccountStudy(account=account, study=study_a, role=role)
-    JoinAccountAccessGroup(
-        account=account, access_group=ditti_coordinator_group)
-    JoinAccountAccessGroup(
-        account=account, access_group=wear_coordinator_group)
+    JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
+    JoinAccountAccessGroup(account=account, access_group=wear_coordinator_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
     db.session.add(account)
 
     # Create an account for each role
-    # Assign each role to Study A to test whether permissions are scoped to Study A only
-    other_role = Role.query.filter(
-        Role.name == "Can View Participants").first()
-    for role_name in roles.keys():
+    # Assign each role to Study A to test whether permissions are scoped
+    # to Study A only
+    other_role = Role.query.filter(Role.name == "Can View Participants").first()
+    for role_name in roles:
         account = Account(
             created_on=datetime.now(UTC),
             first_name="Jane",
@@ -542,15 +555,18 @@ real-time data essential for understanding the physiological effects of mindfuln
         JoinAccountStudy(account=account, study=study_a, role=role)
         JoinAccountStudy(account=account, study=study_b, role=other_role)
         JoinAccountAccessGroup(
-            account=account, access_group=ditti_coordinator_group)
+            account=account, access_group=ditti_coordinator_group
+        )
         JoinAccountAccessGroup(
-            account=account, access_group=wear_coordinator_group)
+            account=account, access_group=wear_coordinator_group
+        )
         JoinAccountAccessGroup(account=account, access_group=admin_group)
         db.session.add(account)
 
-    # Create an account for each access group to test whether permissions are scoped properly on the Admin Dashboard
-    access_group_names = (
-        list(admin_access_groups.keys()) + list(ditti_access_groups.keys())
+    # Create an account for each access group to test whether permissions are
+    # scoped properly on the Admin Dashboard
+    access_group_names = list(admin_access_groups.keys()) + list(
+        ditti_access_groups.keys()
     )
     for access_group_name in access_group_names:
         account = Account(
@@ -578,8 +594,9 @@ real-time data essential for understanding the physiological effects of mindfuln
     <p unallowed>Unallowed attribute.</p>
 </div>"""
 
-    db.session.add(AboutSleepTemplate(
-        name="About Sleep Template", text=template_html))
+    db.session.add(
+        AboutSleepTemplate(name="About Sleep Template", text=template_html)
+    )
 
     # Add Fitbit API
     api = Api(name="Fitbit")
@@ -632,14 +649,14 @@ real-time data essential for understanding the physiological effects of mindfuln
             "study_subject": ta001,
             "study": study_a,
             "did_consent": True,
-            "starts_on": datetime.now(UTC)
+            "starts_on": datetime.now(UTC),
         },
         {
             "study_subject": tb001,
             "study": study_b,
             "did_consent": True,
-            "starts_on": datetime.now(UTC)
-        }
+            "starts_on": datetime.now(UTC),
+        },
     ]
 
     for join in study_subject_studies:
@@ -676,7 +693,7 @@ real-time data essential for understanding the physiological effects of mindfuln
             "api": api,
             "api_user_uuid": "test",
             "scope": ["sleep"],
-        }
+        },
     ]
 
     for join in study_subject_apis:
@@ -700,7 +717,8 @@ def init_study_subject(ditti_id):
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
     if "localhost" not in db_uri:
         raise RuntimeError(
-            "init_study_subject requires a localhost database URI.")
+            "init_study_subject requires a localhost database URI."
+        )
 
     study_a = Study.query.get(1)
     study_b = Study.query.get(2)
@@ -708,10 +726,12 @@ def init_study_subject(ditti_id):
         raise RuntimeError("Could not retrieve studies from the database.")
 
     existing = StudySubject.query.filter(
-        StudySubject.ditti_id == ditti_id).first()
+        StudySubject.ditti_id == ditti_id
+    ).first()
     if existing is not None:
-        raise RuntimeError(f"Study subject with ditti_id {
-                           ditti_id} already exists.")
+        raise RuntimeError(
+            f"Study subject with ditti_id {ditti_id} already exists."
+        )
 
     study_subject = StudySubject(ditti_id=ditti_id)
 
@@ -768,6 +788,7 @@ class Account(db.Model):
     access_groups: sqlalchemy.orm.relationship
     studies: sqlalchemy.orm.relationship
     """
+
     __tablename__ = "account"
     id = db.Column(db.Integer, primary_key=True)
     created_on = db.Column(db.DateTime, nullable=False)
@@ -785,12 +806,12 @@ class Account(db.Model):
         back_populates="account",
         cascade="all, delete-orphan",
         primaryjoin=(
-            "and_(" +
-            "   Account.id == JoinAccountAccessGroup.account_id," +
-            "   JoinAccountAccessGroup.access_group_id == AccessGroup.id," +
-            "   AccessGroup.is_archived == False" +
-            ")"
-        )
+            "and_("
+            + "   Account.id == JoinAccountAccessGroup.account_id,"
+            + "   JoinAccountAccessGroup.access_group_id == AccessGroup.id,"
+            + "   AccessGroup.is_archived == False"
+            + ")"
+        ),
     )
 
     # ignore archived studies
@@ -799,12 +820,12 @@ class Account(db.Model):
         back_populates="account",
         cascade="all, delete-orphan",
         primaryjoin=(
-            "and_(" +
-            "   Account.id == JoinAccountStudy.account_id," +
-            "   JoinAccountStudy.study_id == Study.id," +
-            "   Study.is_archived == False" +
-            ")"
-        )
+            "and_("
+            + "   Account.id == JoinAccountStudy.account_id,"
+            + "   JoinAccountStudy.study_id == Study.id,"
+            + "   Study.is_archived == False"
+            + ")"
+        ),
     )
 
     @validates("created_on")
@@ -827,12 +848,13 @@ class Account(db.Model):
             return None
 
         # If it's already in valid E.164 format, return as is
-        if value and re.match(r'^\+[1-9]\d{1,14}$', value):
+        if value and re.match(r"^\+[1-9]\d{1,14}$", value):
             return value
 
         # Invalid format
         raise ValueError(
-            "Phone number must be in E.164 format (e.g., +12345678901)")
+            "Phone number must be in E.164 format (e.g., +12345678901)"
+        )
 
     @hybrid_property
     def full_name(self):
@@ -860,35 +882,34 @@ class Account(db.Model):
         Returns
         -------
         """
-
         # query all permissions that are granted to the account by access
         # groups that grant access to the app
-        q1 = Permission.query.join(JoinAccessGroupPermission)\
-            .join(AccessGroup)\
-            .filter(AccessGroup.app_id == app_id)\
-            .join(JoinAccountAccessGroup)\
+        q1 = (
+            Permission.query.join(JoinAccessGroupPermission)
+            .join(AccessGroup)
+            .filter(AccessGroup.app_id == app_id)
+            .join(JoinAccountAccessGroup)
             .filter(
-                (~AccessGroup.is_archived) &
-                (JoinAccountAccessGroup.account_id == self.id)
+                (~AccessGroup.is_archived)
+                & (JoinAccountAccessGroup.account_id == self.id)
+            )
         )
 
         # if a study id was passed and the study is not archived
         if study_id and not Study.query.get(study_id).is_archived:
-
             # query all permissions that are granted to the account by the
             # study
-            q2 = Permission.query.join(JoinRolePermission)\
-                .join(Role)\
-                .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)\
-                .filter(
-                    JoinAccountStudy.primary_key == tuple_(self.id, study_id)
+            q2 = (
+                Permission.query.join(JoinRolePermission)
+                .join(Role)
+                .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)
+                .filter(JoinAccountStudy.primary_key == tuple_(self.id, study_id))
             )
 
             # return the union of all permission for the app and study
             permissions = q1.union(q2)
 
         else:
-
             # return all permissions for the app
             permissions = q1
 
@@ -939,11 +960,11 @@ class Account(db.Model):
             "phoneNumber": self.phone_number,
             "isConfirmed": self.is_confirmed,
             "accessGroups": [j.access_group.meta for j in self.access_groups],
-            "studies": [s.meta for s in self.studies]
+            "studies": [s.meta for s in self.studies],
         }
 
     def __repr__(self):
-        return "<Account %s>" % self.email
+        return f"<Account {self.email}>"
 
 
 class JoinAccountAccessGroup(db.Model):
@@ -957,18 +978,17 @@ class JoinAccountAccessGroup(db.Model):
     account: sqlalchemy.orm.relationship
     access_group: sqlalchemy.orm.relationship
     """
+
     __tablename__ = "join_account_access_group"
 
     account_id = db.Column(
-        db.Integer,
-        db.ForeignKey("account.id"),
-        primary_key=True
+        db.Integer, db.ForeignKey("account.id"), primary_key=True
     )
 
     access_group_id = db.Column(
         db.Integer,
         db.ForeignKey("access_group.id", ondelete="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     account = db.relationship("Account", back_populates="access_groups")
@@ -977,7 +997,7 @@ class JoinAccountAccessGroup(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.account_id, self.access_group_id
 
@@ -986,7 +1006,7 @@ class JoinAccountAccessGroup(db.Model):
         return tuple_(cls.account_id, cls.access_group_id)
 
     def __repr__(self):
-        return "<JoinAccountAccessGroup %s-%s>" % self.primary_key
+        return "<JoinAccountAccessGroup {}-{}>".format(*self.primary_key)
 
 
 class JoinAccountStudy(db.Model):
@@ -1003,27 +1023,24 @@ class JoinAccountStudy(db.Model):
         The primary key of the role that an account is assigned for a study.
     role: sqlalchemy.orm.relationship
     """
+
     __tablename__ = "join_account_study"
 
     account_id = db.Column(
-        db.Integer,
-        db.ForeignKey("account.id"),
-        primary_key=True
+        db.Integer, db.ForeignKey("account.id"), primary_key=True
     )
 
     study_id = db.Column(
         db.Integer,
         db.ForeignKey("study.id", ondelete="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     account = db.relationship("Account", back_populates="studies")
     study = db.relationship("Study")
 
     role_id = db.Column(
-        db.Integer,
-        db.ForeignKey("role.id", ondelete="CASCADE"),
-        nullable=False
+        db.Integer, db.ForeignKey("role.id", ondelete="CASCADE"), nullable=False
     )
 
     role = db.relationship("Role")
@@ -1031,7 +1048,7 @@ class JoinAccountStudy(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.account_id, self.study_id
 
@@ -1044,13 +1061,10 @@ class JoinAccountStudy(db.Model):
         """
         dict: an entry's metadata.
         """
-        return {
-            **self.study.meta,
-            "role": self.role.meta
-        }
+        return {**self.study.meta, "role": self.role.meta}
 
     def __repr__(self):
-        return "<JoinAccountStudy %s-%s>" % self.primary_key
+        return "<JoinAccountStudy {}-{}>".format(*self.primary_key)
 
 
 class AccessGroup(db.Model):
@@ -1069,6 +1083,7 @@ class AccessGroup(db.Model):
     permissions: sqlalchemy.orm.relationship
         The permissions that an access group grants for an app.
     """
+
     __tablename__ = "access_group"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
@@ -1083,18 +1098,18 @@ class AccessGroup(db.Model):
         back_populates="access_group",
         cascade="all, delete-orphan",
         primaryjoin=(
-            "and_(" +
-            "   AccessGroup.id == JoinAccountAccessGroup.access_group_id," +
-            "   JoinAccountAccessGroup.account_id == Account.id," +
-            "   Account.is_archived == False" +
-            ")"
-        )
+            "and_("
+            + "   AccessGroup.id == JoinAccountAccessGroup.access_group_id,"
+            + "   JoinAccountAccessGroup.account_id == Account.id,"
+            + "   Account.is_archived == False"
+            + ")"
+        ),
     )
 
     permissions = db.relationship(
         "JoinAccessGroupPermission",
         back_populates="access_group",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     @property
@@ -1106,11 +1121,11 @@ class AccessGroup(db.Model):
             "id": self.id,
             "name": self.name,
             "app": self.app.meta,
-            "permissions": [p.meta for p in self.permissions]
+            "permissions": [p.meta for p in self.permissions],
         }
 
     def __repr__(self):
-        return "<AccessGroup %s>" % self.name
+        return f"<AccessGroup {self.name}>"
 
 
 class JoinAccessGroupPermission(db.Model):
@@ -1124,18 +1139,19 @@ class JoinAccessGroupPermission(db.Model):
     access_group: sqlalchemy.orm.relationship
     permission: sqlalchemy.orm.relationship
     """
+
     __tablename__ = "join_access_group_permission"
 
     access_group_id = db.Column(
         db.Integer,
         db.ForeignKey("access_group.id", ondelete="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     permission_id = db.Column(
         db.Integer,
         db.ForeignKey("permission.id", ondelete="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     access_group = db.relationship("AccessGroup", back_populates="permissions")
@@ -1144,7 +1160,7 @@ class JoinAccessGroupPermission(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key
+        Tuple of int: an entry's primary key
         """
         return self.access_group_id, self.permission_id
 
@@ -1160,7 +1176,7 @@ class JoinAccessGroupPermission(db.Model):
         return self.permission.meta
 
     def __repr__(self):
-        return "<JoinAccessGroupPermission %s-%s>" % self.primary_key
+        return "<JoinAccessGroupPermission {}-{}>".format(*self.primary_key)
 
 
 class Role(db.Model):
@@ -1174,6 +1190,7 @@ class Role(db.Model):
     is_archived: sqlalchemy.Column
     permissions: sqlalchemy.orm.relationship
     """
+
     __tablename__ = "role"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
@@ -1182,7 +1199,7 @@ class Role(db.Model):
     permissions = db.relationship(
         "JoinRolePermission",
         back_populates="role",
-        cascade="all, delete-orphan"
+        cascade="all, delete-orphan",
     )
 
     @property
@@ -1193,11 +1210,11 @@ class Role(db.Model):
         return {
             "id": self.id,
             "name": self.name,
-            "permissions": [p.meta for p in self.permissions]
+            "permissions": [p.meta for p in self.permissions],
         }
 
     def __repr__(self):
-        return "<Role %s>" % self.name
+        return f"<Role {self.name}>"
 
 
 class JoinRolePermission(db.Model):
@@ -1211,18 +1228,19 @@ class JoinRolePermission(db.Model):
     role: sqlalchemy.orm.relationship
     permission: sqlalchemy.orm.relationship
     """
+
     __tablename__ = "join_role_permission"
 
     role_id = db.Column(
         db.Integer,
         db.ForeignKey("role.id", ondelete="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     permission_id = db.Column(
         db.Integer,
         db.ForeignKey("permission.id", ondelete="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     role = db.relationship("Role", back_populates="permissions")
@@ -1231,7 +1249,7 @@ class JoinRolePermission(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.role_id, self.permission_id
 
@@ -1247,7 +1265,7 @@ class JoinRolePermission(db.Model):
         return self.permission.meta
 
     def __repr__(self):
-        return "<JoinRolePermission %s-%s>" % self.primary_key
+        return "<JoinRolePermission {}-{}>".format(*self.primary_key)
 
 
 class Action(db.Model):
@@ -1259,6 +1277,7 @@ class Action(db.Model):
     id: sqlalchemy.Column
     value: sqlalchemy.Column
     """
+
     __tablename__ = "action"
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.String, nullable=False, unique=True)
@@ -1268,13 +1287,10 @@ class Action(db.Model):
         """
         dict: an entry's metadata.
         """
-        return {
-            "id": self.id,
-            "value": self.value
-        }
+        return {"id": self.id, "value": self.value}
 
     def __repr__(self):
-        return "<Action %s>" % self.value
+        return f"<Action {self.value}>"
 
 
 class Resource(db.Model):
@@ -1286,6 +1302,7 @@ class Resource(db.Model):
     id: sqlalchemy.Column
     value: sqlalchemy.Column
     """
+
     __tablename__ = "resource"
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.String, nullable=False, unique=True)
@@ -1295,13 +1312,10 @@ class Resource(db.Model):
         """
         dict: an entry's metadata.
         """
-        return {
-            "id": self.id,
-            "value": self.value
-        }
+        return {"id": self.id, "value": self.value}
 
     def __repr__(self):
-        return "<Resource %s>" % self.value
+        return f"<Resource {self.value}>"
 
 
 class Permission(db.Model):
@@ -1312,6 +1326,7 @@ class Permission(db.Model):
     ----
     id: sqlalchemy.Column
     """
+
     __tablename__ = "permission"
 
     # ensure the action-resource combination is unique.
@@ -1319,13 +1334,11 @@ class Permission(db.Model):
     id = db.Column(db.Integer, primary_key=True)
 
     _action_id = db.Column(
-        db.Integer,
-        db.ForeignKey("action.id", ondelete="CASCADE")
+        db.Integer, db.ForeignKey("action.id", ondelete="CASCADE")
     )
 
     _resource_id = db.Column(
-        db.Integer,
-        db.ForeignKey("resource.id", ondelete="CASCADE")
+        db.Integer, db.ForeignKey("resource.id", ondelete="CASCADE")
     )
 
     _action = db.relationship("Action")
@@ -1349,9 +1362,11 @@ class Permission(db.Model):
 
     @action.expression
     def action(cls):
-        return select(Action.value)\
-            .where(Action.id == cls._action_id)\
+        return (
+            select(Action.value)
+            .where(Action.id == cls._action_id)
             .scalar_subquery()
+        )
 
     @hybrid_property
     def resource(self):
@@ -1371,9 +1386,11 @@ class Permission(db.Model):
 
     @resource.expression
     def resource(cls):
-        return select(Resource.value)\
-            .where(Resource.id == cls._resource_id)\
+        return (
+            select(Resource.value)
+            .where(Resource.id == cls._resource_id)
             .scalar_subquery()
+        )
 
     @validates("_action_id")
     def validate_action(self, key, val):
@@ -1398,7 +1415,7 @@ class Permission(db.Model):
     @hybrid_property
     def definition(self):
         """
-        tuple of str: an entry's (action, resource) definition
+        Tuple of str: an entry's (action, resource) definition
         """
         return self.action, self.resource
 
@@ -1410,7 +1427,7 @@ class Permission(db.Model):
             .scalar_subquery(),
             select(Resource.value)
             .where(Resource.id == cls._resource_id)
-            .scalar_subquery()
+            .scalar_subquery(),
         )
 
     @property
@@ -1418,14 +1435,10 @@ class Permission(db.Model):
         """
         dict: an entry's metadata.
         """
-        return {
-            "id": self.id,
-            "action": self.action,
-            "resource": self.resource
-        }
+        return {"id": self.id, "action": self.action, "resource": self.resource}
 
     def __repr__(self):
-        return "<Permission %s %s>" % self.definition
+        return "<Permission {} {}>".format(*self.definition)
 
 
 class App(db.Model):
@@ -1437,6 +1450,7 @@ class App(db.Model):
     id: sqlalchemy.Column
     name: sqlalchemy.Column
     """
+
     __tablename__ = "app"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
@@ -1446,13 +1460,10 @@ class App(db.Model):
         """
         dict: an entry's metadata.
         """
-        return {
-            "id": self.id,
-            "name": self.name
-        }
+        return {"id": self.id, "name": self.name}
 
     def __repr__(self):
-        return "<App %s>" % self.name
+        return f"<App {self.name}>"
 
 
 class Study(db.Model):
@@ -1468,8 +1479,8 @@ class Study(db.Model):
     email: sqlalchemy.Column
     default_expiry_delta: sqlalchemy.Column
         The default amount of time in number of days that a subject is enrolled
-        in the study. A JoinStudySubjectStudy's expires_on column will be automatically set
-        according to this value.
+        in the study. A JoinStudySubjectStudy's expires_on column will be
+        automatically set according to this value.
     consent_information: sqlalchemy.Column
         The consent text to show to a study subject.
     is_archived: sqlalchemy.Column
@@ -1479,6 +1490,7 @@ class Study(db.Model):
         Indicates if the study is QI (Quality Improvement), defaults to False.
     roles: sqlalchemy.orm.relationship
     """
+
     __tablename__ = "study"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
@@ -1508,11 +1520,11 @@ class Study(db.Model):
             "defaultExpiryDelta": self.default_expiry_delta,
             "consentInformation": self.consent_information,
             "dataSummary": self.data_summary,
-            "isQi": self.is_qi
+            "isQi": self.is_qi,
         }
 
     def __repr__(self):
-        return "<Study %s>" % self.acronym
+        return f"<Study {self.acronym}>"
 
 
 class JoinStudyRole(db.Model):
@@ -1526,18 +1538,15 @@ class JoinStudyRole(db.Model):
     study: sqlalchemy.orm.relationship
     role: sqlalchemy.orm.relationship
     """
+
     __tablename__ = "join_study_role"
 
-    study_id = db.Column(
-        db.Integer,
-        db.ForeignKey("study.id"),
-        primary_key=True
-    )
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), primary_key=True)
 
     role_id = db.Column(
         db.Integer,
         db.ForeignKey("role.id", ondelete="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
     study = db.relationship("Study", back_populates="roles")
@@ -1546,7 +1555,7 @@ class JoinStudyRole(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.study_id, self.role_id
 
@@ -1577,13 +1586,14 @@ class BlockedToken(db.Model):
         The token to block.
     created_on: sqlalchemy.Column
     """
+
     __tablename__ = "blocked_token"
     id = db.Column(db.Integer, primary_key=True)
     jti = db.Column(db.String, nullable=False)
     created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     def __repr__(self):
-        return "<BlockedToken %s>" % self.id
+        return f"<BlockedToken {self.id}>"
 
 
 class AboutSleepTemplate(db.Model):
@@ -1597,6 +1607,7 @@ class AboutSleepTemplate(db.Model):
     text: sqlalchemy.Column
     is_archived: sqlalchemy.Column
     """
+
     __tablename__ = "about_sleep_template"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
@@ -1608,14 +1619,10 @@ class AboutSleepTemplate(db.Model):
         """
         dict: an entry's metadata.
         """
-        return {
-            "id": self.id,
-            "name": self.name,
-            "text": self.text
-        }
+        return {"id": self.id, "name": self.name, "text": self.text}
 
     def __repr__(self):
-        return "<AboutSleepTemplate %s>" % self.name
+        return f"<AboutSleepTemplate {self.name}>"
 
 
 class StudySubject(db.Model):
@@ -1636,6 +1643,7 @@ class StudySubject(db.Model):
     sleep_logs: sqlalchemy.orm.relationship
         Sleep logs associated with the study subject.
     """
+
     __tablename__ = "study_subject"
     id = db.Column(db.Integer, primary_key=True)
     created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
@@ -1653,7 +1661,7 @@ class StudySubject(db.Model):
             "   JoinStudySubjectStudy.study_id == Study.id,"
             "   Study.is_archived == False"
             ")"
-        )
+        ),
     )
 
     # Ignore archived apis
@@ -1667,14 +1675,14 @@ class StudySubject(db.Model):
             "   JoinStudySubjectApi.api_id == Api.id,"
             "   Api.is_archived == False"
             ")"
-        )
+        ),
     )
 
     sleep_logs = db.relationship(
         "SleepLog",
         back_populates="study_subject",
         cascade="all, delete-orphan",
-        lazy="dynamic"  # Use dynamic loading for large datasets
+        lazy="dynamic",  # Use dynamic loading for large datasets
     )
 
     @property
@@ -1713,17 +1721,18 @@ class JoinStudySubjectStudy(db.Model):
     study_subject: sqlalchemy.orm.relationship
     study: sqlalchemy.orm.relationship
     """
+
     __tablename__ = "join_study_subject_study"
 
     study_subject_id = db.Column(
         db.Integer,
         db.ForeignKey("study_subject.id", ondelete="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
     study_id = db.Column(
         db.Integer,
         db.ForeignKey("study.id"),  # Do not allow deletions on study table
-        primary_key=True
+        primary_key=True,
     )
     did_consent = db.Column(db.Boolean, default=False, nullable=False)
     created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
@@ -1740,7 +1749,8 @@ class JoinStudySubjectStudy(db.Model):
         """
         if self.created_on:
             raise ValueError(
-                "JoinStudySubjectStudy.created_on cannot be modified.")
+                "JoinStudySubjectStudy.created_on cannot be modified."
+            )
         return val
 
     @validates("expires_on")
@@ -1752,7 +1762,7 @@ class JoinStudySubjectStudy(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.study_subject_id, self.study_id
 
@@ -1781,8 +1791,8 @@ class JoinStudySubjectStudy(db.Model):
 @event.listens_for(JoinStudySubjectStudy, "before_insert")
 def set_expires_on(mapper, connection, target):
     """
-    Automatically set the expires_on field based on the Study's default_expiry_delta
-    if expires_on is not provided.
+    Automatically set the expires_on field based on the Study's
+    default_expiry_delta if expires_on is not provided.
     """
     if not target.expires_on:
         if target.study_id:
@@ -1796,7 +1806,8 @@ def set_expires_on(mapper, connection, target):
             else:
                 raise ValueError(
                     f"Cannot set expires_on: Study with id {
-                        target.study_id} not found or default_expiry_delta is missing."
+                        target.study_id
+                    } not found or default_expiry_delta is missing."
                 )
         else:
             raise ValueError("Cannot set expires_on: study_id is missing.")
@@ -1822,19 +1833,16 @@ class JoinStudySubjectApi(db.Model):
     study_subject: sqlalchemy.orm.relationship
     api: sqlalchemy.orm.relationship
     """
+
     __tablename__ = "join_study_subject_api"
 
     study_subject_id = db.Column(
         db.Integer,
         db.ForeignKey("study_subject.id", ondelete="CASCADE"),
-        primary_key=True
+        primary_key=True,
     )
 
-    api_id = db.Column(
-        db.Integer,
-        db.ForeignKey("api.id"),
-        primary_key=True
-    )
+    api_id = db.Column(db.Integer, db.ForeignKey("api.id"), primary_key=True)
 
     api_user_uuid = db.Column(db.String, nullable=False)
     scope = db.Column(db.ARRAY(db.String))
@@ -1850,14 +1858,13 @@ class JoinStudySubjectApi(db.Model):
         Make the created_on column read-only.
         """
         if self.created_on:
-            raise ValueError(
-                "JoinStudySubjectApi.created_on cannot be modified.")
+            raise ValueError("JoinStudySubjectApi.created_on cannot be modified.")
         return val
 
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.study_subject_id, self.api_id
 
@@ -1874,15 +1881,17 @@ class JoinStudySubjectApi(db.Model):
             "apiUserUuid": self.api_user_uuid,
             "scope": self.scope,
             "api": self.api.meta,
-            "lastSyncDate": self.last_sync_date.isoformat() if self.last_sync_date else None,
-            "createdOn": self.created_on.isoformat()
+            "lastSyncDate": self.last_sync_date.isoformat()
+            if self.last_sync_date
+            else None,
+            "createdOn": self.created_on.isoformat(),
         }
 
     def __repr__(self):
-        return f"<JoinStudySubjectApi StudySubject {self.study_subject_id} - Api {self.api_id}>"
-
-    def __repr__(self):
-        return "<JoinStudySubjectApi %s-%s>" % self.primary_key
+        return (
+            f"<JoinStudySubjectApi StudySubject {self.study_subject_id} - "
+            f"Api {self.api_id}>"
+        )
 
 
 class Api(db.Model):
@@ -1895,6 +1904,7 @@ class Api(db.Model):
     name: sqlalchemy.Column
     is_archived: sqlalchemy.Column
     """
+
     __tablename__ = "api"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False, unique=True)
@@ -1905,13 +1915,10 @@ class Api(db.Model):
         """
         dict: an entry's metadata.
         """
-        return {
-            "id": self.id,
-            "name": self.name
-        }
+        return {"id": self.id, "name": self.name}
 
     def __repr__(self):
-        return "<Api %s>" % self.name
+        return f"<Api {self.name}>"
 
 
 class SleepLog(db.Model):
@@ -1952,6 +1959,7 @@ class SleepLog(db.Model):
     type: sqlalchemy.Column
         Type of sleep log ("stages" or "classic").
     """
+
     __tablename__ = "sleep_log"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -1959,7 +1967,7 @@ class SleepLog(db.Model):
         db.Integer,
         db.ForeignKey("study_subject.id"),
         nullable=False,
-        index=True
+        index=True,
     )
 
     log_id = db.Column(db.BigInteger, nullable=False, unique=True, index=True)
@@ -1978,21 +1986,18 @@ class SleepLog(db.Model):
     time_in_bed = db.Column(db.Integer)
     type = db.Column(Enum(SleepCategoryTypeEnum), nullable=False)
 
-    study_subject = db.relationship(
-        "StudySubject",
-        back_populates="sleep_logs"
-    )
+    study_subject = db.relationship("StudySubject", back_populates="sleep_logs")
     levels = db.relationship(
         "SleepLevel",
         back_populates="sleep_log",
         cascade="all, delete-orphan",
-        lazy="selectin"  # Efficient loading of related objects
+        lazy="selectin",  # Efficient loading of related objects
     )
     summaries = db.relationship(
         "SleepSummary",
         back_populates="sleep_log",
         cascade="all, delete-orphan",
-        lazy="joined"  # Eagerly load summaries
+        lazy="joined",  # Eagerly load summaries
     )
 
     @validates("efficiency")
@@ -2027,11 +2032,13 @@ class SleepLog(db.Model):
             "totalMinutesAsleep": self.minutes_asleep,
             "sleepEfficiencyPercentage": self.efficiency,
             "levels": [level.meta for level in self.levels],
-            "summaries": [summary.meta for summary in self.summaries]
+            "summaries": [summary.meta for summary in self.summaries],
         }
 
     def __repr__(self):
-        return f"<SleepLog {self.log_id} for StudySubject {self.study_subject_id}>"
+        return (
+            f"<SleepLog {self.log_id} for StudySubject {self.study_subject_id}>"
+        )
 
 
 class SleepLevel(db.Model):
@@ -2055,17 +2062,19 @@ class SleepLevel(db.Model):
         Indicates if the wake period is short (<= 3 minutes).
         Only applicable for stages sleep logs (nullable).
     """
+
     __tablename__ = "sleep_level"
     __table_args__ = (
-        db.Index("idx_sleep_level_sleep_log_id_date_time",
-                 "sleep_log_id", "date_time"),
+        db.Index(
+            "idx_sleep_level_sleep_log_id_date_time",
+            "sleep_log_id",
+            "date_time",
+        ),
     )
 
     id = db.Column(db.Integer, primary_key=True)
     sleep_log_id = db.Column(
-        db.Integer,
-        db.ForeignKey("sleep_log.id"),
-        nullable=False
+        db.Integer, db.ForeignKey("sleep_log.id"), nullable=False
     )
     date_time = db.Column(db.DateTime, nullable=False, index=True)
     level = db.Column(Enum(SleepLevelEnum), nullable=False)
@@ -2083,11 +2092,14 @@ class SleepLevel(db.Model):
             "dateTime": self.date_time.isoformat(),
             "level": self.level.value,
             "seconds": self.seconds,
-            "isShort": self.is_short
+            "isShort": self.is_short,
         }
 
     def __repr__(self):
-        return f"<SleepLevel {self.level.value} at {self.date_time} for SleepLog {self.sleep_log_id}>"
+        return (
+            f"<SleepLevel {self.level.value} at {self.date_time} for "
+            f"SleepLog {self.sleep_log_id}>"
+        )
 
 
 class SleepSummary(db.Model):
@@ -2112,13 +2124,12 @@ class SleepSummary(db.Model):
         Average sleep stage time over the past 30 days.
         Only applicable for stages sleep logs (nullable).
     """
+
     __tablename__ = "sleep_summary"
 
     id = db.Column(db.Integer, primary_key=True)
     sleep_log_id = db.Column(
-        db.Integer,
-        db.ForeignKey("sleep_log.id"),
-        nullable=False
+        db.Integer, db.ForeignKey("sleep_log.id"), nullable=False
     )
     level = db.Column(Enum(SleepLevelEnum), nullable=False)
     count = db.Column(db.Integer)
@@ -2140,7 +2151,9 @@ class SleepSummary(db.Model):
         }
 
     def __repr__(self):
-        return f"<SleepSummary {self.level.value} for SleepLog {self.sleep_log_id}>"
+        return (
+            f"<SleepSummary {self.level.value} for SleepLog {self.sleep_log_id}>"
+        )
 
 
 class LambdaTask(db.Model):
@@ -2151,7 +2164,8 @@ class LambdaTask(db.Model):
     ----
     id: sqlalchemy.Column
     status: sqlalchemy.Column
-        The status of the task ("Pending", "InProgress", "Success", "Failed", "CompletedWithErrors").
+        The status of the task ("Pending", "InProgress", "Success", "Failed",
+        "CompletedWithErrors").
     billed_ms: sqlalchemy.Column
         The billed duration of the Lambda function in milliseconds.
     created_on: sqlalchemy.Column
@@ -2163,26 +2177,26 @@ class LambdaTask(db.Model):
     error_code: sqlalchemy.Column
         Error code if any.
     """
+
     __tablename__ = "lambda_task"
     id = db.Column(db.Integer, primary_key=True)
     status = db.Column(
         db.Enum(
-            "Pending", "InProgress", "Success", "Failed", "CompletedWithErrors",
-            name="taskstatustypeenum"
-        ), nullable=False
+            "Pending",
+            "InProgress",
+            "Success",
+            "Failed",
+            "CompletedWithErrors",
+            name="taskstatustypeenum",
+        ),
+        nullable=False,
     )
     billed_ms = db.Column(db.Integer, nullable=True)
     created_on = db.Column(
-        db.DateTime,
-        default=func.now(),
-        nullable=False,
-        index=True
+        db.DateTime, default=func.now(), nullable=False, index=True
     )
     updated_on = db.Column(
-        db.DateTime,
-        default=func.now(),
-        onupdate=func.now(),
-        nullable=False
+        db.DateTime, default=func.now(), onupdate=func.now(), nullable=False
     )
     completed_on = db.Column(db.DateTime, nullable=True)
     log_file = db.Column(db.String, nullable=True)
@@ -2196,9 +2210,11 @@ class LambdaTask(db.Model):
             "billedMs": self.billed_ms,
             "createdOn": self.created_on.isoformat(),
             "updatedOn": self.updated_on.isoformat(),
-            "completedOn": self.completed_on.isoformat() if self.completed_on else None,
+            "completedOn": self.completed_on.isoformat()
+            if self.completed_on
+            else None,
             "logFile": self.log_file,
-            "errorCode": self.error_code
+            "errorCode": self.error_code,
         }
 
     def __repr__(self):

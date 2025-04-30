@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 
 class CognitoConfig(TypedDict):
@@ -59,7 +59,7 @@ class ProjectConfig(TypedDict):
 
 
 class UserInput(TypedDict):
-    project_name: Optional[str]
-    fitbit_client_id: Optional[str]
-    fitbit_client_secret: Optional[str]
-    admin_email: Optional[str]
+    project_name: str | None
+    fitbit_client_id: str | None
+    fitbit_client_secret: str | None
+    admin_email: str | None

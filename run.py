@@ -23,6 +23,7 @@ load_dotenv(override=True)
 # if the app is running in a production environment
 if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
     import json
+
     import boto3
 
     # get the secret"s values
@@ -36,7 +37,7 @@ if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
         os.environ[k] = v
 
 # import the app after the environment variables are exported
-from backend.app import create_app
+from backend.app import create_app  # noqa: E402
 
 # NOTE: Zappa wraps the app object in production-ready WSGI middleware
 app = create_app()
