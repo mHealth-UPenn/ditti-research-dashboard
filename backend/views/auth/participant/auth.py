@@ -15,16 +15,22 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+
 import boto3
 from botocore.exceptions import ClientError
 from flask import Blueprint, current_app, request
-from backend.auth.decorators import researcher_auth_required
-from backend.auth.controllers import ParticipantAuthController
-from backend.auth.providers.cognito import AUTH_ERROR_MESSAGES
-from backend.auth.utils.responses import create_error_response, create_success_response
 
-blueprint = Blueprint("participant_auth", __name__,
-                      url_prefix="/auth/participant")
+from backend.auth.controllers import ParticipantAuthController
+from backend.auth.decorators import researcher_auth_required
+from backend.auth.providers.cognito import AUTH_ERROR_MESSAGES
+from backend.auth.utils.responses import (
+    create_error_response,
+    create_success_response,
+)
+
+blueprint = Blueprint(
+    "participant_auth", __name__, url_prefix="/auth/participant"
+)
 logger = logging.getLogger(__name__)
 
 # Create auth controller instance
@@ -149,7 +155,7 @@ def register_participant(account):
             return create_error_response(
                 "Missing required information",
                 status_code=400,
-                error_code="MISSING_FIELDS"
+                error_code="MISSING_FIELDS",
             )
 
         # Create user in Cognito
@@ -158,12 +164,12 @@ def register_participant(account):
             UserPoolId=user_pool_id,
             Username=cognito_username,
             TemporaryPassword=temporary_password,
-            MessageAction="SUPPRESS"
+            MessageAction="SUPPRESS",
         )
 
         return create_success_response(
             data={"username": cognito_username},
-            message=AUTH_ERROR_MESSAGES["registration_successful"]
+            message=AUTH_ERROR_MESSAGES["registration_successful"],
         )
 
     except ClientError as e:
@@ -172,12 +178,12 @@ def register_participant(account):
         return create_error_response(
             "Registration failed. Please try again.",
             status_code=500,
-            error_code=f"COGNITO_ERROR_{error_code}"
+            error_code=f"COGNITO_ERROR_{error_code}",
         )
     except Exception as e:
         logger.error(f"Registration error: {str(e)}")
         return create_error_response(
             "Registration failed. Please try again.",
             status_code=500,
-            error_code="REGISTRATION_ERROR"
+            error_code="REGISTRATION_ERROR",
         )

@@ -20,12 +20,17 @@ import traceback
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy.sql import tuple_
 
+from backend.auth.decorators import researcher_auth_required
 from backend.extensions import db
 from backend.models import (
-    AboutSleepTemplate, AccessGroup, Account, App, JoinAccountAccessGroup,
-    JoinAccountStudy, Study
+    AboutSleepTemplate,
+    AccessGroup,
+    Account,
+    App,
+    JoinAccountAccessGroup,
+    JoinAccountStudy,
+    Study,
 )
-from backend.auth.decorators import researcher_auth_required
 from backend.utils.db import populate_model
 
 blueprint = Blueprint("db", __name__, url_prefix="/db")
@@ -35,11 +40,12 @@ logger = logging.getLogger(__name__)
 @blueprint.route("/get-apps")
 @researcher_auth_required
 def get_apps(account):
-    apps = App.query\
-        .join(AccessGroup, AccessGroup.app_id == App.id)\
-        .join(JoinAccountAccessGroup)\
-        .filter(JoinAccountAccessGroup.account_id == account.id)\
+    apps = (
+        App.query.join(AccessGroup, AccessGroup.app_id == App.id)
+        .join(JoinAccountAccessGroup)
+        .filter(JoinAccountAccessGroup.account_id == account.id)
         .all()
+    )
 
     return jsonify([a.meta for a in apps])
 
@@ -80,15 +86,18 @@ def get_studies(account):
             q = Study.query.filter(~Study.is_archived)
         except ValueError:
             # User has only direct study associations
-            q = Study.query\
-                .filter(~Study.is_archived)\
-                .join(JoinAccountStudy)\
+            q = (
+                Study.query.filter(~Study.is_archived)
+                .join(JoinAccountStudy)
                 .filter(JoinAccountStudy.account_id == account.id)
+            )
 
     except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
-        return make_response({"msg": "Internal server error when retrieving studies."}, 500)
+        return make_response(
+            {"msg": "Internal server error when retrieving studies."}, 500
+        )
 
     res = [s.meta for s in q.all()]
     return jsonify(res)
@@ -122,13 +131,13 @@ def get_study_details(account):
         study = Study.query.get(study_id)
     except ValueError:
         # Limited access path: verify study association through join table
-        study = Study.query\
-            .join(JoinAccountStudy)\
+        study = (
+            Study.query.join(JoinAccountStudy)
             .filter(
-                JoinAccountStudy.primary_key == tuple_(
-                    account.id, study_id
-                )
-            ).first()
+                JoinAccountStudy.primary_key == tuple_(account.id, study_id)
+            )
+            .first()
+        )
 
     res = study.meta if study is not None else {}
     return jsonify(res)
@@ -171,13 +180,13 @@ def get_study_contacts(account):
         study = Study.query.get(study_id)
     except ValueError:
         # For role-based access, verify association through join table
-        study = Study.query\
-            .join(JoinAccountStudy)\
+        study = (
+            Study.query.join(JoinAccountStudy)
             .filter(
-                JoinAccountStudy.primary_key == tuple_(
-                    account.id, study_id
-                )
-            ).first()
+                JoinAccountStudy.primary_key == tuple_(account.id, study_id)
+            )
+            .first()
+        )
 
     # Return empty list if study not found or not accessible
     res = []
@@ -185,18 +194,19 @@ def get_study_contacts(account):
         return jsonify(res)
 
     # Retrieve contact information for all study participants
-    joins = JoinAccountStudy.query\
-        .filter(JoinAccountStudy.study_id == study_id)\
-        .join(Account)\
-        .filter(~Account.is_archived)\
+    joins = (
+        JoinAccountStudy.query.filter(JoinAccountStudy.study_id == study_id)
+        .join(Account)
+        .filter(~Account.is_archived)
         .all()
+    )
 
     for join in joins:
         account = {
             "fullName": join.account.full_name,
             "email": join.account.email,
             "phoneNumber": join.account.phone_number,
-            "role": join.role.name
+            "role": join.role.name,
         }
 
         res.append(account)
@@ -244,16 +254,24 @@ def edit_account_details(account):
 
         # Synchronize changes with Cognito user pool
         from backend.auth.controllers.researcher import ResearcherAuthController
+
         auth_controller = ResearcherAuthController()
-        success, message = auth_controller.update_account_in_cognito({
-            "email": account.email,
-            "first_name": account.first_name,
-            "last_name": account.last_name,
-            "phone_number": account.phone_number
-        })
+        success, message = auth_controller.update_account_in_cognito(
+            {
+                "email": account.email,
+                "first_name": account.first_name,
+                "last_name": account.last_name,
+                "phone_number": account.phone_number,
+            }
+        )
 
         if not success:
-            return make_response({"msg": f"Account updated in database but failed to update in Cognito: {message}"}, 400)
+            return make_response(
+                {
+                    "msg": f"Account updated in database but failed to update in Cognito: {message}"
+                },
+                400,
+            )
 
         msg = "Account details updated successfully"
 
@@ -262,7 +280,9 @@ def edit_account_details(account):
         logger.warning(exc)
         db.session.rollback()
 
-        return make_response({"msg": "Internal server error when editing account details."}, 500)
+        return make_response(
+            {"msg": "Internal server error when editing account details."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -301,7 +321,12 @@ def get_about_sleep_templates(account):
     except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
-        return make_response({"msg": "Internal server error when retrieving about sleep templates."}, 500)
+        return make_response(
+            {
+                "msg": "Internal server error when retrieving about sleep templates."
+            },
+            500,
+        )
 
     res = [a.meta for a in about_sleep_templates]
     return jsonify(res)

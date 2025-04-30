@@ -17,8 +17,10 @@
 import logging
 import os
 import traceback
+
 from flask import Blueprint, current_app, jsonify, make_response
 from sqlalchemy import text
+
 from backend.extensions import db
 from backend.utils.lambda_task import check_and_invoke_lambda_task
 
@@ -101,7 +103,6 @@ def touch():
                 res["msg"] = "STATUS: %s" % status
 
     if available:
-
         # check that the database is healthy
         try:
             with db.engine.connect() as conn:
@@ -114,6 +115,9 @@ def touch():
             exc = traceback.format_exc()
             logger.warning(exc)
 
-            return make_response({"msg": "Internal server error when getting database status."}, 500)
+            return make_response(
+                {"msg": "Internal server error when getting database status."},
+                500,
+            )
 
     return jsonify(res)

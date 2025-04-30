@@ -1,16 +1,18 @@
-import pytest
-from unittest.mock import patch, MagicMock
-from flask import Flask
-from shared.fitbit import (
-    generate_code_verifier,
-    create_code_challenge,
-    get_fitbit_oauth_session,
-)
-from backend.extensions import tm  # Updated from sm to tm
 import base64
 import hashlib
 import time
+from unittest.mock import MagicMock, patch
+
+import pytest
 import requests
+from flask import Flask
+
+from backend.extensions import tm  # Updated from sm to tm
+from shared.fitbit import (
+    create_code_challenge,
+    generate_code_verifier,
+    get_fitbit_oauth_session,
+)
 
 
 @pytest.fixture
@@ -37,17 +39,25 @@ def test_generate_code_verifier_valid_length():
 
 
 def test_generate_code_verifier_invalid_length():
-    with pytest.raises(ValueError, match="length must be between 43 and 128 characters"):
+    with pytest.raises(
+        ValueError, match="length must be between 43 and 128 characters"
+    ):
         generate_code_verifier(42)
-    with pytest.raises(ValueError, match="length must be between 43 and 128 characters"):
+    with pytest.raises(
+        ValueError, match="length must be between 43 and 128 characters"
+    ):
         generate_code_verifier(129)
 
 
 def test_create_code_challenge_correctness():
     code_verifier = "test_code_verifier"
-    expected_challenge = base64.urlsafe_b64encode(
-        hashlib.sha256(code_verifier.encode('utf-8')).digest()
-    ).rstrip(b'=').decode('utf-8')
+    expected_challenge = (
+        base64.urlsafe_b64encode(
+            hashlib.sha256(code_verifier.encode("utf-8")).digest()
+        )
+        .rstrip(b"=")
+        .decode("utf-8")
+    )
 
     code_challenge = create_code_challenge(code_verifier)
     assert code_challenge == expected_challenge
@@ -63,21 +73,27 @@ def test_get_fitbit_oauth_session_success(app):
         }
 
         # Mock tm.get_api_tokens to return fake tokens
-        with patch.object(tm, 'get_api_tokens') as mock_get_api_tokens:
+        with patch.object(tm, "get_api_tokens") as mock_get_api_tokens:
             mock_get_api_tokens.return_value = fake_tokens
 
             # Mock tm.add_or_update_api_token if needed
-            with patch.object(tm, 'add_or_update_api_token') as mock_add_update_api_token:
+            with patch.object(
+                tm, "add_or_update_api_token"
+            ) as mock_add_update_api_token:
                 # Mock WebApplicationClient
-                with patch("shared.fitbit.WebApplicationClient") as mock_client_class:
+                with patch(
+                    "shared.fitbit.WebApplicationClient"
+                ) as mock_client_class:
                     mock_client = MagicMock()
                     mock_client_class.return_value = mock_client
 
-                    session = get_fitbit_oauth_session("123", config=app.config, tokens=fake_tokens, tm=tm)
+                    session = get_fitbit_oauth_session(
+                        "123", config=app.config, tokens=fake_tokens, tm=tm
+                    )
                     assert session is not None
-                    assert hasattr(session, 'request')
-                    assert hasattr(session, 'get')
-                    assert hasattr(session, 'post')
+                    assert hasattr(session, "request")
+                    assert hasattr(session, "get")
+                    assert hasattr(session, "post")
 
 
 def test_get_fitbit_oauth_session_token_refresh(app):
@@ -90,14 +106,17 @@ def test_get_fitbit_oauth_session_token_refresh(app):
         }
 
         # Mock tm.get_api_tokens to return expired tokens
-        with patch.object(tm, 'get_api_tokens') as mock_get_api_tokens:
+        with patch.object(tm, "get_api_tokens") as mock_get_api_tokens:
             mock_get_api_tokens.return_value = expired_tokens
 
             # Mock tm.add_or_update_api_token for updating tokens after refresh
-            with patch.object(tm, 'add_or_update_api_token') as mock_add_update_api_token:
-
+            with patch.object(
+                tm, "add_or_update_api_token"
+            ) as mock_add_update_api_token:
                 # Mock WebApplicationClient
-                with patch("shared.fitbit.WebApplicationClient") as mock_client_class:
+                with patch(
+                    "shared.fitbit.WebApplicationClient"
+                ) as mock_client_class:
                     mock_client = MagicMock()
                     mock_client_class.return_value = mock_client
 
@@ -113,10 +132,17 @@ def test_get_fitbit_oauth_session_token_refresh(app):
                         mock_post.return_value = mock_response
 
                         # Initialize the OAuth2 session
-                        session = get_fitbit_oauth_session("123", config=app.config, tokens=expired_tokens, tm=tm)
+                        session = get_fitbit_oauth_session(
+                            "123",
+                            config=app.config,
+                            tokens=expired_tokens,
+                            tm=tm,
+                        )
 
                         # Simulate a request that returns 401 and then 200 after refresh
-                        with patch("shared.fitbit.requests.request") as mock_request:
+                        with patch(
+                            "shared.fitbit.requests.request"
+                        ) as mock_request:
                             # First call returns 401
                             mock_response_401 = MagicMock()
                             mock_response_401.status_code = 401
@@ -124,10 +150,13 @@ def test_get_fitbit_oauth_session_token_refresh(app):
                             mock_response_200 = MagicMock()
                             mock_response_200.status_code = 200
                             mock_request.side_effect = [
-                                mock_response_401, mock_response_200]
+                                mock_response_401,
+                                mock_response_200,
+                            ]
 
                             response = session.get(
-                                "https://api.fitbit.com/1/user/-/profile.json")
+                                "https://api.fitbit.com/1/user/-/profile.json"
+                            )
                             assert response.status_code == 200
                             assert mock_post.called
                             assert mock_add_update_api_token.called
@@ -143,14 +172,17 @@ def test_get_fitbit_oauth_session_refresh_failure(app):
         }
 
         # Mock tm.get_api_tokens to return expired tokens
-        with patch.object(tm, 'get_api_tokens') as mock_get_api_tokens:
+        with patch.object(tm, "get_api_tokens") as mock_get_api_tokens:
             mock_get_api_tokens.return_value = expired_tokens
 
             # Mock tm.add_or_update_api_token (should not be called due to refresh failure)
-            with patch.object(tm, 'add_or_update_api_token') as mock_add_update_api_token:
-
+            with patch.object(
+                tm, "add_or_update_api_token"
+            ) as mock_add_update_api_token:
                 # Mock WebApplicationClient
-                with patch("shared.fitbit.WebApplicationClient") as mock_client_class:
+                with patch(
+                    "shared.fitbit.WebApplicationClient"
+                ) as mock_client_class:
                     mock_client = MagicMock()
                     mock_client_class.return_value = mock_client
 
@@ -158,29 +190,47 @@ def test_get_fitbit_oauth_session_refresh_failure(app):
                     with patch("shared.fitbit.requests.post") as mock_post:
                         mock_response = MagicMock()
                         mock_response.status_code = 400
-                        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-                            "Token refresh failed")
+                        mock_response.raise_for_status.side_effect = (
+                            requests.exceptions.HTTPError(
+                                "Token refresh failed"
+                            )
+                        )
                         mock_post.return_value = mock_response
 
                         # Initialize the OAuth2 session
-                        session = get_fitbit_oauth_session("123", config=app.config, tokens=expired_tokens, tm=tm)
+                        session = get_fitbit_oauth_session(
+                            "123",
+                            config=app.config,
+                            tokens=expired_tokens,
+                            tm=tm,
+                        )
 
                         # Simulate a request that triggers token refresh failure
-                        with patch("shared.fitbit.requests.request") as mock_request:
+                        with patch(
+                            "shared.fitbit.requests.request"
+                        ) as mock_request:
                             mock_response_401 = MagicMock()
                             mock_response_401.status_code = 401
                             mock_request.return_value = mock_response_401
 
                             # Expect an HTTPError due to failed token refresh
-                            with pytest.raises(requests.exceptions.HTTPError, match="Token refresh failed"):
+                            with pytest.raises(
+                                requests.exceptions.HTTPError,
+                                match="Token refresh failed",
+                            ):
                                 session.get(
-                                    "https://api.fitbit.com/1/user/-/profile.json")
+                                    "https://api.fitbit.com/1/user/-/profile.json"
+                                )
 
 
 def test_get_fitbit_oauth_session_tm_get_api_tokens_failure(app):
     with app.app_context():
         # Mock tm.get_api_tokens to raise an exception
-        with patch.object(tm, 'get_api_tokens', side_effect=Exception("TM get_api_tokens failed")):
+        with patch.object(
+            tm,
+            "get_api_tokens",
+            side_effect=Exception("TM get_api_tokens failed"),
+        ):
             with pytest.raises(Exception, match="TM get_api_tokens failed"):
                 get_fitbit_oauth_session("123", config=app.config, tm=tm)
 
@@ -195,14 +245,19 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_failure(app):
         }
 
         # Mock tm.get_api_tokens to return expired tokens
-        with patch.object(tm, 'get_api_tokens') as mock_get_api_tokens:
+        with patch.object(tm, "get_api_tokens") as mock_get_api_tokens:
             mock_get_api_tokens.return_value = expired_tokens
 
             # Mock tm.add_or_update_api_token to raise an exception during token update
-            with patch.object(tm, 'add_or_update_api_token', side_effect=Exception("TM add_or_update_api_token failed")) as mock_add_update_api_token:
-
+            with patch.object(
+                tm,
+                "add_or_update_api_token",
+                side_effect=Exception("TM add_or_update_api_token failed"),
+            ) as mock_add_update_api_token:
                 # Mock WebApplicationClient
-                with patch("shared.fitbit.WebApplicationClient") as mock_client_class:
+                with patch(
+                    "shared.fitbit.WebApplicationClient"
+                ) as mock_client_class:
                     mock_client = MagicMock()
                     mock_client_class.return_value = mock_client
 
@@ -218,21 +273,34 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_failure(app):
                         mock_post.return_value = mock_response
 
                         # Initialize the OAuth2 session
-                        session = get_fitbit_oauth_session("123", config=app.config, tokens=expired_tokens, tm=tm)
+                        session = get_fitbit_oauth_session(
+                            "123",
+                            config=app.config,
+                            tokens=expired_tokens,
+                            tm=tm,
+                        )
 
                         # Simulate a request that triggers token refresh
-                        with patch("shared.fitbit.requests.request") as mock_request:
+                        with patch(
+                            "shared.fitbit.requests.request"
+                        ) as mock_request:
                             mock_response_401 = MagicMock()
                             mock_response_401.status_code = 401
                             mock_request.return_value = mock_response_401
 
                             # Expect an Exception due to failed token update
-                            with pytest.raises(Exception, match="TM add_or_update_api_token failed"):
+                            with pytest.raises(
+                                Exception,
+                                match="TM add_or_update_api_token failed",
+                            ):
                                 session.get(
-                                    "https://api.fitbit.com/1/user/-/profile.json")
+                                    "https://api.fitbit.com/1/user/-/profile.json"
+                                )
 
 
-def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(app):
+def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(
+    app,
+):
     with app.app_context():
         # Mock expired access token and existing refresh token
         expired_tokens = {
@@ -242,24 +310,30 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(app)
         }
 
         # Mock tm.get_api_tokens to return expired tokens
-        with patch.object(tm, 'get_api_tokens') as mock_get_api_tokens:
+        with patch.object(tm, "get_api_tokens") as mock_get_api_tokens:
             mock_get_api_tokens.return_value = expired_tokens
 
             # Mock tm.add_or_update_api_token to perform partial update (e.g., missing refresh_token)
-            with patch.object(tm, 'add_or_update_api_token') as mock_add_update_api_token:
+            with patch.object(
+                tm, "add_or_update_api_token"
+            ) as mock_add_update_api_token:
                 # Define a side effect function to simulate partial update
                 def add_update_side_effect(api_name, ditti_id, tokens):
                     if tokens.get("access_token"):
                         expired_tokens["access_token"] = tokens["access_token"]
                     if tokens.get("refresh_token"):
-                        expired_tokens["refresh_token"] = tokens["refresh_token"]
+                        expired_tokens["refresh_token"] = tokens[
+                            "refresh_token"
+                        ]
                     if tokens.get("expires_at"):
                         expired_tokens["expires_at"] = tokens["expires_at"]
 
                 mock_add_update_api_token.side_effect = add_update_side_effect
 
                 # Mock WebApplicationClient
-                with patch("shared.fitbit.WebApplicationClient") as mock_client_class:
+                with patch(
+                    "shared.fitbit.WebApplicationClient"
+                ) as mock_client_class:
                     mock_client = MagicMock()
                     mock_client_class.return_value = mock_client
 
@@ -275,10 +349,17 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(app)
                         mock_post.return_value = mock_response
 
                         # Initialize the OAuth2 session
-                        session = get_fitbit_oauth_session("123", config=app.config, tokens=expired_tokens, tm=tm)
+                        session = get_fitbit_oauth_session(
+                            "123",
+                            config=app.config,
+                            tokens=expired_tokens,
+                            tm=tm,
+                        )
 
                         # Simulate a request that returns 401 and then 200 after refresh
-                        with patch("shared.fitbit.requests.request") as mock_request:
+                        with patch(
+                            "shared.fitbit.requests.request"
+                        ) as mock_request:
                             # First call returns 401
                             mock_response_401 = MagicMock()
                             mock_response_401.status_code = 401
@@ -286,13 +367,19 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(app)
                             mock_response_200 = MagicMock()
                             mock_response_200.status_code = 200
                             mock_request.side_effect = [
-                                mock_response_401, mock_response_200]
+                                mock_response_401,
+                                mock_response_200,
+                            ]
 
                             response = session.get(
-                                "https://api.fitbit.com/1/user/-/profile.json")
+                                "https://api.fitbit.com/1/user/-/profile.json"
+                            )
                             assert response.status_code == 200
                             assert mock_post.called
                             assert mock_add_update_api_token.called
 
                             # Verify that the refresh_token remains unchanged
-                            assert expired_tokens["refresh_token"] == "existing_refresh_token"
+                            assert (
+                                expired_tokens["refresh_token"]
+                                == "existing_refresh_token"
+                            )

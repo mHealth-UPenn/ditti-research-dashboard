@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime, date
 import json
 import logging
 import sys
+from datetime import date, datetime
 
 
 # Custom JSON formatter
@@ -48,7 +48,8 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record):
         log_entry = {
-            "timestamp": datetime.fromtimestamp(record.created).isoformat() + "Z",
+            "timestamp": datetime.fromtimestamp(record.created).isoformat()
+            + "Z",
             "level": record.levelname,
             "message": record.getMessage(),
         }

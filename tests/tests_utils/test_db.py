@@ -1,4 +1,5 @@
 import pytest
+
 from backend.extensions import db
 from backend.models import AccessGroup, Account, App, Study
 from backend.utils.db import populate_model
@@ -6,11 +7,7 @@ from backend.utils.db import populate_model
 
 def test_populate_model(app):
     study = Study.query.get(1)
-    data = {
-        "name": "baz",
-        "acronym": "BAZ",
-        "ditti_id": "BZ"
-    }
+    data = {"name": "baz", "acronym": "BAZ", "ditti_id": "BZ"}
 
     populate_model(study, data)
     db.session.commit()
@@ -70,7 +67,7 @@ def test_populate_model_camel_to_snake(app):
     data = {
         "name": "baz",
         "acronym": "BAZ",
-        "dittiId": "BZ"  # camelCase key
+        "dittiId": "BZ",  # camelCase key
     }
 
     populate_model(study, data, use_camel_to_snake=True)
@@ -85,13 +82,10 @@ def test_populate_model_custom_mapping(app):
     study = Study.query.get(1)
     data = {
         "studyName": "baz",  # Custom key
-        "studyAcronym": "BAZ"
+        "studyAcronym": "BAZ",
     }
 
-    custom_mapping = {
-        "studyName": "name",
-        "studyAcronym": "acronym"
-    }
+    custom_mapping = {"studyName": "name", "studyAcronym": "acronym"}
 
     populate_model(study, data, custom_mapping=custom_mapping)
     db.session.commit()

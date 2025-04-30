@@ -18,24 +18,27 @@ import os
 
 from install.aws_providers import AwsAccountProvider
 from install.local_providers.local_provider_types import (
-    WearableDataRetrievalEnv,
     RootEnv,
+    WearableDataRetrievalEnv,
 )
 from install.project_config import ProjectConfigProvider
-from install.utils import Logger, Colorizer
+from install.utils import Colorizer, Logger
 from install.utils.enums import Postgres
 
 
 class EnvFileProvider:
-    wearable_data_retrieval_filename: str = "functions/wearable_data_retrieval/.env"
+    wearable_data_retrieval_filename: str = (
+        "functions/wearable_data_retrieval/.env"
+    )
     root_filename: str = ".env"
 
     def __init__(
-            self, *,
-            logger: Logger,
-            config: ProjectConfigProvider,
-            aws_account_provider: AwsAccountProvider
-        ):
+        self,
+        *,
+        logger: Logger,
+        config: ProjectConfigProvider,
+        aws_account_provider: AwsAccountProvider,
+    ):
         self.logger = logger
         self.config = config
         self.aws_account_provider = aws_account_provider
@@ -51,8 +54,7 @@ class EnvFileProvider:
             "S3_BUCKET": self.config.logs_bucket_name,
             "AWS_CONFIG_SECRET_NAME": self.config.secret_name,
             "AWS_ACCESS_KEY_ID": self.aws_account_provider.aws_access_key_id,
-            "AWS_SECRET_ACCESS_KEY": \
-                self.aws_account_provider.aws_secret_access_key,
+            "AWS_SECRET_ACCESS_KEY": self.aws_account_provider.aws_secret_access_key,
             "AWS_DEFAULT_REGION": self.aws_account_provider.aws_region,
             "TESTING": "true",
         }
@@ -75,23 +77,20 @@ class EnvFileProvider:
             "AWS_TABLENAME_AUDIO_TAP": "",
             "AWS_TABLENAME_TAP": "",
             "AWS_TABLENAME_USER": "",
-            "COGNITO_PARTICIPANT_CLIENT_ID": \
-                self.config.participant_client_id,
+            "COGNITO_PARTICIPANT_CLIENT_ID": self.config.participant_client_id,
             "COGNITO_PARTICIPANT_DOMAIN": (
                 f"{self.config.participant_user_pool_domain}.auth."
                 f"{self.aws_account_provider.aws_region}.amazoncognito.com"
             ),
             "COGNITO_PARTICIPANT_REGION": self.aws_account_provider.aws_region,
-            "COGNITO_PARTICIPANT_USER_POOL_ID": \
-                self.config.participant_user_pool_id,
+            "COGNITO_PARTICIPANT_USER_POOL_ID": self.config.participant_user_pool_id,
             "COGNITO_RESEARCHER_CLIENT_ID": self.config.researcher_client_id,
             "COGNITO_RESEARCHER_DOMAIN": (
                 f"{self.config.researcher_user_pool_domain}.auth."
                 f"{self.aws_account_provider.aws_region}.amazoncognito.com"
             ),
             "COGNITO_RESEARCHER_REGION": self.aws_account_provider.aws_region,
-            "COGNITO_RESEARCHER_USER_POOL_ID": \
-                self.config.researcher_user_pool_id,
+            "COGNITO_RESEARCHER_USER_POOL_ID": self.config.researcher_user_pool_id,
             "LOCAL_LAMBDA_ENDPOINT": (
                 "http://localhost:9000/2015-03-31/functions/function/"
                 "invocations"
@@ -111,6 +110,10 @@ class EnvFileProvider:
         """Uninstall the .env files."""
         try:
             os.remove(self.root_filename)
-            self.logger(f".env file {Colorizer.blue(self.root_filename)} removed")
+            self.logger(
+                f".env file {Colorizer.blue(self.root_filename)} removed"
+            )
         except FileNotFoundError:
-            self.logger.warning(f"Env file {Colorizer.blue(self.root_filename)} not found")
+            self.logger.warning(
+                f"Env file {Colorizer.blue(self.root_filename)} not found"
+            )

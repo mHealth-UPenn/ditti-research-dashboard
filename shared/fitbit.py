@@ -16,8 +16,8 @@
 
 import base64
 import hashlib
-import os
 import logging
+import os
 import time
 from typing import Any, Dict
 
@@ -45,9 +45,11 @@ def generate_code_verifier(length: int = 128) -> str:
     """
     if not 43 <= length <= 128:
         raise ValueError("length must be between 43 and 128 characters")
-    code_verifier = base64.urlsafe_b64encode(os.urandom(length))\
-        .rstrip(b'=')\
-        .decode('utf-8')
+    code_verifier = (
+        base64.urlsafe_b64encode(os.urandom(length))
+        .rstrip(b"=")
+        .decode("utf-8")
+    )
     return code_verifier[:length]
 
 
@@ -61,10 +63,10 @@ def create_code_challenge(code_verifier: str) -> str:
     Returns:
         str: The generated code challenge string.
     """
-    code_challenge = hashlib.sha256(code_verifier.encode('utf-8')).digest()
-    code_challenge = base64.urlsafe_b64encode(code_challenge)\
-        .rstrip(b'=')\
-        .decode('utf-8')
+    code_challenge = hashlib.sha256(code_verifier.encode("utf-8")).digest()
+    code_challenge = (
+        base64.urlsafe_b64encode(code_challenge).rstrip(b"=").decode("utf-8")
+    )
     return code_challenge
 
 
@@ -107,7 +109,7 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
         "refresh_token": refresh_token,
         "token_type": "Bearer",
         "expires_at": expires_at,
-        "expires_in": expires_at - int(time.time())
+        "expires_in": expires_at - int(time.time()),
     }
 
     # Initialize the OAuth2 WebApplicationClient
@@ -133,14 +135,12 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
             updated_token_data = {
                 "access_token": new_token["access_token"],
                 "refresh_token": new_token.get("refresh_token", refresh_token),
-                "expires_at": new_expires_at
+                "expires_at": new_expires_at,
             }
 
             # Store the updated tokens
             tm.add_or_update_api_token(
-                api_name="Fitbit",
-                ditti_id=ditti_id,
-                tokens=updated_token_data
+                api_name="Fitbit", ditti_id=ditti_id, tokens=updated_token_data
             )
         except Exception as e:
             logger.error(f"Error updating tokens in Secrets Manager: {e}")
@@ -155,14 +155,16 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
         """
         token_issuer_endpoint = "https://api.fitbit.com/oauth2/token"
         auth = requests.auth.HTTPBasicAuth(
-            fitbit_client_id, fitbit_client_secret)
+            fitbit_client_id, fitbit_client_secret
+        )
         refresh_params = {
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
         }
         try:
             response = requests.post(
-                token_issuer_endpoint, data=refresh_params, auth=auth)
+                token_issuer_endpoint, data=refresh_params, auth=auth
+            )
             response.raise_for_status()
             new_token = response.json()
 
@@ -194,16 +196,18 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
                 requests.Response: The HTTP response received.
             """
             headers = kwargs.pop("headers", {})
-            headers["Authorization"] = f"Bearer {
-                self.client.token['access_token']}"
+            headers["Authorization"] = (
+                f"Bearer {self.client.token['access_token']}"
+            )
             kwargs["headers"] = headers
             response = requests.request(method, url, **kwargs)
             if response.status_code == 401:
                 # Token expired, refresh it
                 refresh_token_func()
                 # Retry the request with the new token
-                headers["Authorization"] = f"Bearer {
-                    self.client.token['access_token']}"
+                headers["Authorization"] = (
+                    f"Bearer {self.client.token['access_token']}"
+                )
                 kwargs["headers"] = headers
                 response = requests.request(method, url, **kwargs)
             return response

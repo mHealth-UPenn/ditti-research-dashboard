@@ -14,20 +14,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from functools import reduce
 import json
 import logging
 import os
 import re
 import traceback
+from functools import reduce
 
 import boto3
+import pandas as pd
 from botocore.exceptions import ClientError, NoCredentialsError
 from flask import Blueprint, current_app, jsonify, make_response, request
-import pandas as pd
 
-from backend.models import JoinAccountStudy, Study
 from backend.auth.decorators import researcher_auth_required
+from backend.models import JoinAccountStudy, Study
 from backend.utils.aws import MutationClient, Query, Updater
 
 blueprint = Blueprint("aws", __name__, url_prefix="/aws")
@@ -65,11 +65,10 @@ def get_taps(account):
 
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
-        q = "user_permission_idBEGINS\"%s\"" % right
+        q = 'user_permission_idBEGINS"%s"' % right
         return left + ("OR" if left else "") + q
 
     try:
-
         # if the user has permission to view all studies, get all users
         app_id = request.args["app"]
         permissions = account.get_permissions(app_id)
@@ -77,12 +76,12 @@ def get_taps(account):
         users = Query("User").scan()["Items"]
 
     except ValueError:
-
         # get users only for the studies the user as access to
-        studies = Study.query\
-            .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == account.id)\
+        studies = (
+            Study.query.join(JoinAccountStudy)
+            .filter(JoinAccountStudy.account_id == account.id)
             .all()
+        )
 
         prefixes = [s.ditti_id for s in studies]
         query = reduce(f, prefixes, "")
@@ -92,25 +91,32 @@ def get_taps(account):
         exc = traceback.format_exc()
         logger.warning(exc)
 
-        return make_response({"msg": "Query failed due to internal server error."}, 500)
+        return make_response(
+            {"msg": "Query failed due to internal server error."}, 500
+        )
 
     # get all taps
     taps = Query("Tap").scan()["Items"]
-    df_users = pd.DataFrame(users, columns=["id", "user_permission_id"])\
-        .rename(columns={"user_permission_id": "dittiId"})
+    df_users = pd.DataFrame(users, columns=["id", "user_permission_id"]).rename(
+        columns={"user_permission_id": "dittiId"}
+    )
 
-    df_taps = pd.DataFrame(taps, columns=["tapUserId", "time", "timeZone"])\
-        .rename(columns={"tapUserId": "id", "timeZone": "timezone"})
+    df_taps = pd.DataFrame(
+        taps, columns=["tapUserId", "time", "timeZone"]
+    ).rename(columns={"tapUserId": "id", "timeZone": "timezone"})
 
     # Old versions of the app record UTC timestamps
     # Fill missing timezone values with the UTC timezone
-    df_taps["timezone"] = df_taps["timezone"]\
-        .fillna("GMT Universal Coordinated Time")
+    df_taps["timezone"] = df_taps["timezone"].fillna(
+        "GMT Universal Coordinated Time"
+    )
 
     # merge on only the users that were returned earlier
-    res = pd.merge(df_users, df_taps, on="id")\
-        .drop("id", axis=1)\
+    res = (
+        pd.merge(df_users, df_taps, on="id")
+        .drop("id", axis=1)
         .to_dict("records")
+    )
 
     return jsonify(res)
 
@@ -120,7 +126,7 @@ def get_taps(account):
 def get_audio_taps(account):
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
-        q = "user_permission_idBEGINS\"%s\"" % right
+        q = 'user_permission_idBEGINS"%s"' % right
         return left + ("OR" if left else "") + q
 
     try:
@@ -132,10 +138,11 @@ def get_audio_taps(account):
 
     except ValueError:
         # get users only for the studies the user as access to
-        studies = Study.query\
-            .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == account.id)\
+        studies = (
+            Study.query.join(JoinAccountStudy)
+            .filter(JoinAccountStudy.account_id == account.id)
             .all()
+        )
 
         prefixes = [s.ditti_id for s in studies]
         query = reduce(f, prefixes, "")
@@ -145,7 +152,9 @@ def get_audio_taps(account):
         exc = traceback.format_exc()
         logger.warning(exc)
 
-        return make_response({"msg": "Query failed due to internal server error."}, 500)
+        return make_response(
+            {"msg": "Query failed due to internal server error."}, 500
+        )
 
     # Get all audio files
     audio_files = Query("AudioFile").scan()["Items"]
@@ -153,11 +162,13 @@ def get_audio_taps(account):
     # Get all taps
     audio_taps = Query("AudioTap").scan()["Items"]
 
-    df_users = pd.DataFrame(users, columns=["id", "user_permission_id"])\
-        .rename(columns={"id": "userId", "user_permission_id": "dittiId"})
+    df_users = pd.DataFrame(users, columns=["id", "user_permission_id"]).rename(
+        columns={"id": "userId", "user_permission_id": "dittiId"}
+    )
 
-    df_audio_files = pd.DataFrame(audio_files, columns=["id", "title"])\
-        .rename(columns={"id": "audioFileId", "title": "audioFileTitle"})
+    df_audio_files = pd.DataFrame(audio_files, columns=["id", "title"]).rename(
+        columns={"id": "audioFileId", "title": "audioFileTitle"}
+    )
 
     df_audio_taps = pd.DataFrame(
         audio_taps,
@@ -167,18 +178,22 @@ def get_audio_taps(account):
             "time",
             "timeZone",
             "action",
-        ]
-    ).rename(columns={
-        "audioTapUserId": "userId",
-        "audioTapAudioFileId": "audioFileId",
-        "timeZone": "timezone",
-    })
+        ],
+    ).rename(
+        columns={
+            "audioTapUserId": "userId",
+            "audioTapAudioFileId": "audioFileId",
+            "timeZone": "timezone",
+        }
+    )
 
     # Merge on only the users that were returned earlier
-    res = df_users.merge(df_audio_taps, on="userId")\
-        .merge(df_audio_files, on="audioFileId")\
-        .drop(["userId", "audioFileId"], axis=1)\
+    res = (
+        df_users.merge(df_audio_taps, on="userId")
+        .merge(df_audio_files, on="audioFileId")
+        .drop(["userId", "audioFileId"], axis=1)
         .to_dict("records")
+    )
 
     return jsonify(res)
 
@@ -218,12 +233,11 @@ def get_users(account):
 
     # add expressions to the query to return all users for multiple studies
     def f(left, right):
-        q = "user_permission_idBEGINS\"%s\"" % right
+        q = 'user_permission_idBEGINS"%s"' % right
         return left + ("OR" if left else "") + q
 
     # gets only useful user data
     def map_users(user):
-
         # if information is empty, use an empty string instead of None
         information = user["information"] if "information" in user else ""
 
@@ -233,13 +247,12 @@ def get_users(account):
             "userPermissionId": user["user_permission_id"],
             "expTime": user["exp_time"],
             "teamEmail": user["team_email"],
-            "createdAt": user["createdAt"]
+            "createdAt": user["createdAt"],
         }
 
     users = None
 
     try:
-
         # if the user has permission to view all studies, get all studies
         app_id = request.args["app"]
         permissions = account.get_permissions(app_id)
@@ -250,18 +263,20 @@ def get_users(account):
         return jsonify(list(res))
 
     except ValueError:
-
         # get only the studies the user has access to
-        studies = Study.query\
-            .join(JoinAccountStudy)\
-            .filter(JoinAccountStudy.account_id == account.id)\
+        studies = (
+            Study.query.join(JoinAccountStudy)
+            .filter(JoinAccountStudy.account_id == account.id)
             .all()
+        )
 
     except Exception as e:
         exc = traceback.format_exc()
         logger.warning(exc)
 
-        return make_response({"msg": "Query failed due to internal server error."}, 500)
+        return make_response(
+            {"msg": "Query failed due to internal server error."}, 500
+        )
 
     # get all users for the studies that were returned earlier
     prefixes = [s.ditti_id for s in studies]
@@ -318,7 +333,7 @@ def user_create(account):
         client.set_mutation(
             "CreateUserPermissionInput",
             "createUserPermission",
-            request.json.get("create")
+            request.json.get("create"),
         )
 
         client.post_mutation()
@@ -327,7 +342,9 @@ def user_create(account):
         exc = traceback.format_exc()
         logger.warning(exc)
 
-        return make_response({"msg": "User creation failed due to internal server error."}, 500)
+        return make_response(
+            {"msg": "User creation failed due to internal server error."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -383,7 +400,12 @@ def user_edit(account):
 
     # check that the user_permission_id is alphanumeric
     if re.search(r"[^\dA-Za-z]", user_permission_id) is not None:
-        return jsonify({"msg": "Invalid study or study subject Ditti ID: %s" % user_permission_id})
+        return jsonify(
+            {
+                "msg": "Invalid study or study subject Ditti ID: %s"
+                % user_permission_id
+            }
+        )
 
     study_ditti_id = re.sub(r"[\d]+", "", user_permission_id)
     study_id = request_data.get("study")
@@ -393,7 +415,7 @@ def user_edit(account):
     if study_ditti_id != study.ditti_id:
         return jsonify({"msg": "Invalid study Ditti ID: %s" % study_ditti_id})
 
-    query = "user_permission_id==\"%s\"" % user_permission_id
+    query = 'user_permission_id=="%s"' % user_permission_id
     res = Query("User", query).scan()
 
     # if the ditti id does not exist
@@ -410,7 +432,9 @@ def user_edit(account):
         exc = traceback.format_exc()
         logger.warning(exc)
 
-        return make_response({"msg": "User edit failed due to internal server error."}, 500)
+        return make_response(
+            {"msg": "User edit failed due to internal server error."}, 500
+        )
 
     return jsonify({"msg": msg})
 
@@ -453,7 +477,6 @@ def get_audio_files(account):
     try:
         result = Query("AudioFile").scan()["Items"]
         for item in result:
-
             # Skip deleted audio files
             try:
                 if item["_deleted"]:
@@ -499,7 +522,9 @@ def get_audio_files(account):
     except Exception as e:
         exc = traceback.format_exc()
         logger.warning(exc)
-        return make_response({"msg": "Query failed due to internal server error."}, 500)
+        return make_response(
+            {"msg": "Query failed due to internal server error."}, 500
+        )
 
     return jsonify(res)
 
@@ -561,7 +586,12 @@ def audio_file_create(account):
     except Exception as e:
         exc = traceback.format_exc()
         logger.warning(exc)
-        return make_response({"msg": "Creation of audio file failed due to internal server error."}, 500)
+        return make_response(
+            {
+                "msg": "Creation of audio file failed due to internal server error."
+            },
+            500,
+        )
 
     return jsonify({"msg": msg})
 
@@ -598,12 +628,12 @@ def audio_file_delete(account):
     msg = "Audio file successfully deleted."
 
     try:
-
         # Get the audio file
         audio_file_id = request.json["id"]
         version = request.json["_version"]
-        audio_file = Query("AudioFile", f"id==\"{audio_file_id}\"").scan()[
-            "Items"][0]
+        audio_file = Query("AudioFile", f'id=="{audio_file_id}"').scan()[
+            "Items"
+        ][0]
 
         # Try deleting the audio file from S3
         try:
@@ -611,7 +641,8 @@ def audio_file_delete(account):
             bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
             client = boto3.client("s3")
             deleted = client.delete_object(Bucket=bucket, Key=key)[
-                "DeleteMarker"]
+                "DeleteMarker"
+            ]
 
             # Return an error if the audio file was not deleted
             if not deleted:
@@ -628,7 +659,7 @@ def audio_file_delete(account):
         client.set_mutation(
             "DeleteAudioFileInput",
             "deleteAudioFile",
-            {"id": audio_file_id, "_version": int(version)}
+            {"id": audio_file_id, "_version": int(version)},
         )
 
         client.post_mutation()
@@ -636,7 +667,12 @@ def audio_file_delete(account):
     except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
-        return make_response({"msg": "Deletion of audio file failed due to internal server error."}, 500)
+        return make_response(
+            {
+                "msg": "Deletion of audio file failed due to internal server error."
+            },
+            500,
+        )
 
     return jsonify({"msg": msg})
 
@@ -690,7 +726,7 @@ def audio_file_generate_presigned_urls(account):
                 Params={
                     "Bucket": current_app.config["AWS_AUDIO_FILE_BUCKET"],
                     "Key": file["key"],
-                    "ContentType": file["type"]
+                    "ContentType": file["type"],
                 },
                 ExpiresIn=3600,
             )
@@ -702,4 +738,6 @@ def audio_file_generate_presigned_urls(account):
         return jsonify({"msg": "AWS credentials not available"}), 500
 
     except ClientError:
-        return jsonify({"msg": "Unknown error while generating presigned URLs"}), 500
+        return jsonify(
+            {"msg": "Unknown error while generating presigned URLs"}
+        ), 500

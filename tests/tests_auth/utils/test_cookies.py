@@ -1,6 +1,7 @@
 import pytest
 from flask import Flask, Response
-from backend.auth.utils.cookies import set_auth_cookies, clear_auth_cookies
+
+from backend.auth.utils.cookies import clear_auth_cookies, set_auth_cookies
 
 
 @pytest.fixture
@@ -24,7 +25,7 @@ def test_set_auth_cookies(mock_app):
             "access_token": "test-access-token",
             "id_token": "test-id-token",
             "refresh_token": "test-refresh-token",
-            "expires_in": 3600
+            "expires_in": 3600,
         }
 
         result = set_auth_cookies(response, tokens)
@@ -39,7 +40,10 @@ def test_set_auth_cookies(mock_app):
 
         # Verify security flags for each auth cookie
         for cookie in cookies:
-            if any(token_name in cookie[1] for token_name in ["id_token", "access_token", "refresh_token"]):
+            if any(
+                token_name in cookie[1]
+                for token_name in ["id_token", "access_token", "refresh_token"]
+            ):
                 assert "HttpOnly" in cookie[1]
                 assert "Secure" in cookie[1]
                 assert "SameSite" in cookie[1]
@@ -57,7 +61,7 @@ def test_set_auth_cookies_without_refresh(mock_app):
         tokens = {
             "access_token": "test-access-token",
             "id_token": "test-id-token",
-            "expires_in": 3600
+            "expires_in": 3600,
         }
 
         result = set_auth_cookies(response, tokens)
@@ -90,5 +94,6 @@ def test_clear_auth_cookies(mock_app):
 
         # Verify all cookies have been expired by checking for Expires attribute
         for cookie_name in ["id_token", "access_token", "refresh_token"]:
-            assert any(cookie_name in h[1]
-                       and "Expires" in h[1] for h in cookies)
+            assert any(
+                cookie_name in h[1] and "Expires" in h[1] for h in cookies
+            )

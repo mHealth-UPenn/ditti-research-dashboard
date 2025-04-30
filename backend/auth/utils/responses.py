@@ -29,9 +29,7 @@ def create_error_response(message, status_code=401, error_code=None):
     Returns:
         Response: A Flask response with standardized error format
     """
-    response = {
-        "msg": message
-    }
+    response = {"msg": message}
 
     if error_code:
         response["code"] = error_code
@@ -39,7 +37,9 @@ def create_error_response(message, status_code=401, error_code=None):
     return make_response(response, status_code)
 
 
-def create_success_response(data=None, message="Operation successful", status_code=200):
+def create_success_response(
+    data=None, message="Operation successful", status_code=200
+):
     """
     Create a standardized success response.
 

@@ -16,6 +16,7 @@
 
 import logging
 from typing import Optional, Tuple
+
 from flask import Response, make_response, request
 
 from backend.models import Account, App, Study
@@ -39,7 +40,9 @@ def get_token_from_request() -> Optional[str]:
     return request.cookies.get("id_token")
 
 
-def check_permissions(auth_account: Account, action: str, resource_param: Optional[str] = None) -> Tuple[bool, Optional[Response]]:
+def check_permissions(
+    auth_account: Account, action: str, resource_param: Optional[str] = None
+) -> Tuple[bool, Optional[Response]]:
     """
     Check if the authenticated account has the required permissions.
 

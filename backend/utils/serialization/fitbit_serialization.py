@@ -14,14 +14,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime, date
-from typing import Any, List, Optional, Dict
-from pydantic import BaseModel, Field, ValidationError, field_serializer
-from backend.models import (
-    SleepCategoryTypeEnum, SleepLevelEnum, SleepLog, SleepLogTypeEnum
-)
-from .serialization_common import common_config
 import logging
+from datetime import date, datetime
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field, ValidationError, field_serializer
+
+from backend.models import (
+    SleepCategoryTypeEnum,
+    SleepLevelEnum,
+    SleepLog,
+    SleepLogTypeEnum,
+)
+
+from .serialization_common import common_config
 
 logger = logging.getLogger(__name__)
 
@@ -58,16 +64,12 @@ def serialize_fitbit_data(sleep_logs: List[SleepLog]) -> List[Dict[str, Any]]:
         try:
             log_model = SleepLogModel.model_validate(log)
             serialized_dump = log_model.model_dump(
-                by_alias=True,
-                exclude_unset=True,
-                exclude_none=True
+                by_alias=True, exclude_unset=True, exclude_none=True
             )
 
             serialized.append(serialized_dump)
         except ValidationError as ve:
-            logger.error(
-                f"Validation error in SleepLogModel: {ve}"
-            )
+            logger.error(f"Validation error in SleepLogModel: {ve}")
         except Exception as e:
             logger.error(f"Error validating SleepLogModel: {e}")
     return serialized

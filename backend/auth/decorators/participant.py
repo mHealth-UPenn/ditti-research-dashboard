@@ -16,6 +16,7 @@
 
 import functools
 import logging
+
 from flask import make_response, request
 
 from backend.auth.controllers import ParticipantAuthController
@@ -59,8 +60,7 @@ def participant_auth_required(decorated_func=None):
 
         # Create auth controller and validate token
         auth_controller = ParticipantAuthController()
-        ditti_id, error_response = auth_controller.get_user_from_token(
-            id_token)
+        ditti_id, error_response = auth_controller.get_user_from_token(id_token)
 
         if not ditti_id:
             # If validation failed, return error response

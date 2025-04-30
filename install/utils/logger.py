@@ -16,6 +16,7 @@
 
 import logging
 from typing import Any
+
 from install.utils.colorizer import Colorizer
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")

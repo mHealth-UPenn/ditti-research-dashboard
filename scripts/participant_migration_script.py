@@ -1,17 +1,17 @@
-from datetime import datetime
 import os
-from pprint import pprint
 import random
 import re
 import string
+from datetime import datetime
+from pprint import pprint
 from typing import Optional, TypedDict
 
 import boto3
 from sqlalchemy import select
 
+import backend.models as m
 from backend.app import create_app
 from backend.extensions import db
-import backend.models as m
 from backend.utils.aws import Query
 
 
@@ -41,19 +41,25 @@ if __name__ == "__main__":
     with app.app_context():
         for user in users:
             try:
-                match = re.match(r"^[A-Za-z]+(?=\d)", user["user_permission_id"])
+                match = re.match(
+                    r"^[A-Za-z]+(?=\d)", user["user_permission_id"]
+                )
 
                 if not match:
                     continue
 
                 study_prefix = match[0]
 
-                study = m.Study.query.filter(m.Study.ditti_id == study_prefix).first()
+                study = m.Study.query.filter(
+                    m.Study.ditti_id == study_prefix
+                ).first()
 
                 if not study:
                     continue
 
-                participant = m.StudySubject(ditti_id=user["user_permission_id"])
+                participant = m.StudySubject(
+                    ditti_id=user["user_permission_id"]
+                )
                 m.JoinStudySubjectStudy(
                     study_subject=participant,
                     study=study,
@@ -70,7 +76,7 @@ if __name__ == "__main__":
                     UserPoolId=os.getenv("USER_POOL_ID"),
                     Username=user["user_permission_id"],
                     TemporaryPassword=temp_password,
-                    MessageAction="SUPPRESS"
+                    MessageAction="SUPPRESS",
                 )
 
             except Exception:

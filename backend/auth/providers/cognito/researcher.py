@@ -15,9 +15,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
+
+from backend.auth.providers.cognito.base import CognitoAuthBase
 from backend.extensions import oauth
 from backend.models import Account
-from backend.auth.providers.cognito.base import CognitoAuthBase
 
 logger = logging.getLogger(__name__)
 
@@ -110,9 +111,10 @@ def init_researcher_oauth_client():
             client_secret=client_secret,
             server_metadata_url=f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/openid-configuration",
             client_kwargs={
-                "scope": "openid email profile aws.cognito.signin.user.admin"},
+                "scope": "openid email profile aws.cognito.signin.user.admin"
+            },
             authorize_url=f"https://{domain}/oauth2/authorize",
             access_token_url=f"https://{domain}/oauth2/token",
             userinfo_endpoint=f"https://{domain}/oauth2/userInfo",
-            jwks_uri=f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/jwks.json"
+            jwks_uri=f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/jwks.json",
         )

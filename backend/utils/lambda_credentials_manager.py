@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import boto3
-import logging
 import json
-from botocore.exceptions import ClientError
+import logging
+
+import boto3
 from botocore.credentials import Credentials
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +41,8 @@ class LambdaCredentialsManager:
         self.secret_name = secret_name
         self.region_name = region_name
         self.client = boto3.client(
-            "secretsmanager", region_name=self.region_name)
+            "secretsmanager", region_name=self.region_name
+        )
         self.credentials = None  # Cache credentials after retrieval
 
     def get_credentials(self) -> Credentials:
@@ -63,9 +65,11 @@ class LambdaCredentialsManager:
             secret_string = response.get("SecretString")
             if not secret_string:
                 logger.error(
-                    f"Secret '{self.secret_name}' does not contain 'SecretString'.")
+                    f"Secret '{self.secret_name}' does not contain 'SecretString'."
+                )
                 raise ValueError(
-                    f"Secret '{self.secret_name}' does not contain 'SecretString'.")
+                    f"Secret '{self.secret_name}' does not contain 'SecretString'."
+                )
             secret_data = json.loads(secret_string)
             access_key = secret_data.get("LAMBDA_ACCESS_KEY_ID")
             secret_key = secret_data.get("LAMBDA_SECRET_ACCESS_KEY")
@@ -73,21 +77,25 @@ class LambdaCredentialsManager:
 
             if not access_key or not secret_key:
                 logger.error(
-                    "Access Key ID or Secret Access Key missing in the secret.")
+                    "Access Key ID or Secret Access Key missing in the secret."
+                )
                 raise ValueError(
-                    "Access Key ID or Secret Access Key missing in the secret.")
+                    "Access Key ID or Secret Access Key missing in the secret."
+                )
 
             self.credentials = Credentials(access_key, secret_key)
             logger.info(
-                "Successfully retrieved and cached Lambda execution credentials from Secrets Manager.")
+                "Successfully retrieved and cached Lambda execution credentials from Secrets Manager."
+            )
             return self.credentials
 
         except ClientError as e:
             logger.error(f"Error retrieving secret '{self.secret_name}': {e}")
             raise e
         except json.JSONDecodeError as e:
-            logger.error(f"Error decoding JSON from secret '{
-                         self.secret_name}': {e}")
+            logger.error(
+                f"Error decoding JSON from secret '{self.secret_name}': {e}"
+            )
             raise e
         except Exception as e:
             logger.error(f"Unexpected error retrieving credentials: {e}")

@@ -15,20 +15,28 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import functools
-import logging
 import inspect
+import logging
 from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
+
 from flask import make_response
+
 from backend.auth.controllers import ResearcherAuthController
-from backend.auth.utils.auth_helpers import get_token_from_request, check_permissions
+from backend.auth.utils.auth_helpers import (
+    check_permissions,
+    get_token_from_request,
+)
 from backend.models import Account
 
 logger = logging.getLogger(__name__)
 
-F = TypeVar('F', bound=Callable[..., Any])
+F = TypeVar("F", bound=Callable[..., Any])
 
 
-def researcher_auth_required(action: Optional[Union[str, Callable]] = None, resource: Optional[str] = None) -> Callable:
+def researcher_auth_required(
+    action: Optional[Union[str, Callable]] = None,
+    resource: Optional[str] = None,
+) -> Callable:
     """
     Decorator that authenticates researchers using tokens and optionally checks permissions.
 
@@ -45,38 +53,43 @@ def researcher_auth_required(action: Optional[Union[str, Callable]] = None, reso
     Returns:
         The decorated function with authentication and authorization added
     """
+
     def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Dict[str, Any]) -> Any:
             # Check if we've already authenticated in a previous decorator
             # and added account to kwargs - only add once to avoid parameter conflict
-            if 'account' in kwargs:
+            if "account" in kwargs:
                 # Account already authenticated and added by a previous decorator
-                auth_account = cast(Account, kwargs['account'])
+                auth_account = cast(Account, kwargs["account"])
             else:
                 # First decorator to run, need to authenticate
                 id_token = get_token_from_request()
 
                 if not id_token:
                     logger.warning("No token found in request")
-                    return make_response({"msg": "Authentication required"}, 401)
+                    return make_response(
+                        {"msg": "Authentication required"}, 401
+                    )
 
                 # Create auth controller and validate token
                 auth_controller = ResearcherAuthController()
-                auth_account, error_response = auth_controller.get_user_from_token(
-                    id_token)
+                auth_account, error_response = (
+                    auth_controller.get_user_from_token(id_token)
+                )
 
                 if not auth_account:
                     # If validation failed, return error response
                     return error_response
 
                 # Save account to kwargs for this and future decorators
-                kwargs['account'] = auth_account
+                kwargs["account"] = auth_account
 
             # Check permissions if action was provided
             if isinstance(action_param, str):
                 has_permission, error_response = check_permissions(
-                    auth_account, action_param, resource)
+                    auth_account, action_param, resource
+                )
                 if not has_permission:
                     return error_response
 
@@ -85,9 +98,9 @@ def researcher_auth_required(action: Optional[Union[str, Callable]] = None, reso
             sig = inspect.signature(func)
 
             # Simplify the parameter passing logic
-            if 'account' not in sig.parameters and 'account' in kwargs:
+            if "account" not in sig.parameters and "account" in kwargs:
                 # If function doesn't expect 'account', remove it from kwargs
-                account = kwargs.pop('account')
+                account = kwargs.pop("account")
 
             return func(*args, **kwargs)
 

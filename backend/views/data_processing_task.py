@@ -16,15 +16,18 @@
 
 import logging
 import traceback
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+
 from flask import Blueprint, jsonify, make_response, request
+
+from backend.auth.decorators import researcher_auth_required
 from backend.extensions import db
 from backend.models import LambdaTask
-from backend.auth.decorators import researcher_auth_required
 from backend.utils.lambda_task import create_and_invoke_lambda_task
 
-blueprint = Blueprint("data_processing_task", __name__,
-                      url_prefix="/data_processing_task")
+blueprint = Blueprint(
+    "data_processing_task", __name__, url_prefix="/data_processing_task"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -76,7 +79,8 @@ def get_data_processing_tasks(account, task_id: int | None):
         else:
             # Retrieve all tasks sorted by created_on in descending order (most recent first)
             tasks = LambdaTask.query.order_by(
-                LambdaTask.created_on.desc()).all()
+                LambdaTask.created_on.desc()
+            ).all()
         res = [task.meta for task in tasks]
         return jsonify(res), 200
 
@@ -84,7 +88,12 @@ def get_data_processing_tasks(account, task_id: int | None):
         exc = traceback.format_exc()
         logger.warning(f"Error retrieving data processing tasks: {exc}")
         db.session.rollback()
-        return make_response({"msg": "Internal server error when retrieving data processing tasks."}, 500)
+        return make_response(
+            {
+                "msg": "Internal server error when retrieving data processing tasks."
+            },
+            500,
+        )
 
 
 @blueprint.route("/invoke", methods=["POST"])
@@ -135,19 +144,25 @@ def invoke_data_processing_task(account):
         # Create and invoke a new LambdaTask
         lambda_task = create_and_invoke_lambda_task()
         if lambda_task is None:
-            raise Exception(
-                "Failed to create and invoke data processing task.")
+            raise Exception("Failed to create and invoke data processing task.")
 
-        return jsonify({
-            "msg": "Data processing task invoked successfully",
-            "task": lambda_task.meta
-        }), 200
+        return jsonify(
+            {
+                "msg": "Data processing task invoked successfully",
+                "task": lambda_task.meta,
+            }
+        ), 200
 
     except Exception:
         exc = traceback.format_exc()
         logger.warning(f"Error invoking data processing task: {exc}")
         db.session.rollback()
-        return make_response({"msg": "Internal server error when invoking data processing task."}, 500)
+        return make_response(
+            {
+                "msg": "Internal server error when invoking data processing task."
+            },
+            500,
+        )
 
 
 @blueprint.route("/force-stop", methods=["POST"])
@@ -190,18 +205,32 @@ def force_stop_data_processing_task(account):
         if function_id is None:
             return make_response({"msg": "function_id is required"}, 400)
 
-        lambda_task = LambdaTask.query.filter(LambdaTask.id == function_id).first()
+        lambda_task = LambdaTask.query.filter(
+            LambdaTask.id == function_id
+        ).first()
         if lambda_task is None:
-            return make_response({"msg": f"Data processing task with id {function_id} not found."}, 404)
+            return make_response(
+                {
+                    "msg": f"Data processing task with id {function_id} not found."
+                },
+                404,
+            )
 
         lambda_task.status = "Failed"
         lambda_task.completed_on = datetime.now(UTC)
         lambda_task.error_code = "ForceStopped"
         db.session.commit()
-        return jsonify({"msg": "Data processing task stopped successfully"}), 200
+        return jsonify(
+            {"msg": "Data processing task stopped successfully"}
+        ), 200
 
     except Exception:
         exc = traceback.format_exc()
         logger.warning(f"Error stopping data processing task: {exc}")
         db.session.rollback()
-        return make_response({"msg": "Internal server error when stopping data processing task."}, 500)
+        return make_response(
+            {
+                "msg": "Internal server error when stopping data processing task."
+            },
+            500,
+        )

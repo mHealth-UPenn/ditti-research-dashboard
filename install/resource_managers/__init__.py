@@ -14,10 +14,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from .aws_cloudformation_resource_manager import AwsCloudformationResourceManager
+from .aws_cloudformation_resource_manager import (
+    AwsCloudformationResourceManager,
+)
 from .aws_cognito_resource_manager import AwsCognitoResourceManager
 from .aws_s3_resource_manager import AwsS3ResourceManager
-from .aws_secretsmanager_resource_manager import AwsSecretsmanagerResourceManager
+from .aws_secretsmanager_resource_manager import (
+    AwsSecretsmanagerResourceManager,
+)
 
 __all__ = [
     "AwsCloudformationResourceManager",
