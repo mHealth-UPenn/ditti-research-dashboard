@@ -94,16 +94,12 @@ def researcher_auth_required(
                     return error_response
 
             # Call the decorated function with account
-            # Check if the function expects 'account' or '_account' parameter
+            # Check if the function expects 'account' parameter
             sig = inspect.signature(func)
 
-            # Check parameter naming preference (with or without underscore)
-            if "_account" in sig.parameters:
-                kwargs["_account"] = auth_account
-                if "account" in kwargs:
-                    kwargs.pop("account")
-            elif "account" not in sig.parameters and "account" in kwargs:
-                # If function doesn't expect either 'account' or '_account', remove it from kwargs
+            # Simplify the parameter passing logic
+            if "account" not in sig.parameters and "account" in kwargs:
+                # If function doesn't expect 'account', remove it from kwargs
                 kwargs.pop("account")
 
             return func(*args, **kwargs)
