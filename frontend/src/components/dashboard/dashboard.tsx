@@ -22,16 +22,14 @@ import { Outlet } from "react-router-dom";
 import { NavbarContextProvider } from "../../contexts/navbarContext";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 
-
 export const Dashboard = () => {
   const { flashMessages } = useFlashMessages();
 
   return (
-    <main className="flex flex-col h-screen">
+    <main className="flex h-screen flex-col">
       {/* header with the account menu  */}
       <Header />
-      <div className="flex flex-grow max-h-[calc(100vh-4rem)]">
-
+      <div className="flex max-h-[calc(100vh-4rem)] flex-grow">
         {/* list of studies on the left of the screen */}
         {/* <StudiesMenu
           setView={setStudy}
@@ -42,16 +40,19 @@ export const Dashboard = () => {
           goBack={goBack} /> */}
 
         {/* main dashboard */}
-        <div className="flex flex-col flex-grow max-w-[calc(100vw-16rem) overflow-hidden relative">
+        <div
+          className="max-w-[calc(100vw-16rem) relative flex flex-grow flex-col
+            overflow-hidden"
+        >
           <NavbarContextProvider>
             <Navbar />
 
             {/* flash messages */}
-            {!!flashMessages.length &&
+            {!!flashMessages.length && (
               <div className="flash-message-container">
                 {flashMessages.map((fm) => fm.element)}
               </div>
-            }
+            )}
             <Outlet />
           </NavbarContextProvider>
         </div>

@@ -67,7 +67,10 @@ function humanReadableStatus(status: DataRetrievalTask["status"]): string {
  * @param isoDate - The ISO date string.
  * @returns An object containing the display string and the original ISO string for sorting.
  */
-function formatDate(isoDate: string | null): { display: string; sortValue: string } {
+function formatDate(isoDate: string | null): {
+  display: string;
+  sortValue: string;
+} {
   if (!isoDate) return { display: "N/A", sortValue: "" };
 
   const date = new Date(isoDate);
@@ -91,7 +94,9 @@ export const DataRetrievalTasks = () => {
   const fetchData = async () => {
     try {
       // Fetch data retrieval tasks (View permission is handled by the server)
-      const data: DataRetrievalTask[] = await makeRequest("/data_processing_task/?app=1");
+      const data: DataRetrievalTask[] = await makeRequest(
+        "/data_processing_task/?app=1"
+      );
       setTasks(data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -174,16 +179,17 @@ export const DataRetrievalTasks = () => {
         },
         {
           contents: (
-            <div className="flex w-full h-full">
-              {task.status === "InProgress" && canInvoke &&
+            <div className="flex h-full w-full">
+              {task.status === "InProgress" && canInvoke && (
                 <AsyncButton
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => handleForceStop(task.id)}>
-                    Force Stop
+                  onClick={() => handleForceStop(task.id)}
+                >
+                  Force Stop
                 </AsyncButton>
-              }
+              )}
             </div>
           ),
           searchValue: "",
@@ -197,9 +203,7 @@ export const DataRetrievalTasks = () => {
 
   const tableControl = <></>;
 
-  const navbar = (
-    <AdminNavbar activeView="Data Retrieval Tasks" />
-  );
+  const navbar = <AdminNavbar activeView="Data Retrieval Tasks" />;
 
   if (loading) {
     return (

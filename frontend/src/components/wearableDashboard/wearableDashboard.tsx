@@ -19,7 +19,6 @@ import { CoordinatorStudySubjectProvider } from "../../contexts/coordinatorStudy
 import { Outlet } from "react-router-dom";
 import { StudiesProvider } from "../../contexts/studiesContext";
 
-
 // React Router container for passing context to the WearableDashboard
 export function WearableDashboard() {
   return (

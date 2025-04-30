@@ -38,7 +38,7 @@ import { useFlashMessages } from "../../hooks/useFlashMessages";
 export const StudiesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
-  const studyId = id ? parseInt(id) : 0
+  const studyId = id ? parseInt(id) : 0;
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
@@ -120,7 +120,7 @@ export const StudiesEdit = () => {
         defaultExpiryDelta: 14,
         consentInformation: "",
         dataSummary: "",
-        isQi: false
+        isQi: false,
       };
     }
 
@@ -139,7 +139,7 @@ export const StudiesEdit = () => {
       defaultExpiryDelta: study.defaultExpiryDelta,
       consentInformation: study.consentInformation,
       dataSummary: study.dataSummary,
-      isQi: study.isQi
+      isQi: study.isQi,
     };
   };
 
@@ -156,7 +156,7 @@ export const StudiesEdit = () => {
       defaultExpiryDelta,
       consentInformation,
       dataSummary,
-      isQi
+      isQi,
     };
     const id = studyId;
     const body = {
@@ -320,22 +320,33 @@ export const StudiesEdit = () => {
         <FormSummaryTitle>Study Summary</FormSummaryTitle>
         <FormSummaryContent>
           <FormSummaryText>
-            <b>Name:</b><br />
+            <b>Name:</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{name}
-            <br /><br />
-            <b>Team Email:</b><br />
+            <br />
+            <br />
+            <b>Team Email:</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{email}
-            <br /><br />
-            <b>Acronym:</b><br />
+            <br />
+            <br />
+            <b>Acronym:</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{acronym}
-            <br /><br />
-            <b>Ditti ID:</b><br />
+            <br />
+            <br />
+            <b>Ditti ID:</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
-            <br /><br />
-            <b>Default Enrollment Period (days):</b><br />
+            <br />
+            <br />
+            <b>Default Enrollment Period (days):</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{defaultExpiryDelta}
-            <br /><br />
-            <b>Is QI:</b><br />
+            <br />
+            <br />
+            <b>Is QI:</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{isQi ? "Yes" : "No"}
             <br />
           </FormSummaryText>

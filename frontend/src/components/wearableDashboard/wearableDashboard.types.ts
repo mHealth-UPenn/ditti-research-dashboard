@@ -44,5 +44,5 @@ export interface WearableStudyDetails {
   [key: number]: {
     numSubjects: number;
     numSubjectsWithApi: number;
-  }
+  };
 }

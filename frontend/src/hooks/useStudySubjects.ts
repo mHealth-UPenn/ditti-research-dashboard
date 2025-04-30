@@ -26,7 +26,9 @@ import { StudySubjectContextValue } from "../contexts/studySubjectContext.types"
 export function useStudySubjects(): StudySubjectContextValue {
   const context = useContext(StudySubjectContext);
   if (!context) {
-    throw new Error("useStudySubjects must be used within a StudySubjectContext provider");
+    throw new Error(
+      "useStudySubjects must be used within a StudySubjectContext provider"
+    );
   }
   return context;
 }

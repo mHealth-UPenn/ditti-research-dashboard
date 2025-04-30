@@ -19,8 +19,12 @@ import { ActiveIconProps } from "./activeIcon.types";
 
 export const ActiveIcon = ({ active, className = "" }: ActiveIconProps) => {
   return (
-    <div className="h-[1.35rem] flex items-end">
-      <div className={`w-0 h-0 border-solid border-[0.5rem] ${active ? "border-[#00CC00]" : "border-[gray]"} rounded-2xl ${className}`} />
+    <div className="flex h-[1.35rem] items-end">
+      <div
+        className={`h-0 w-0 border-[0.5rem] border-solid
+          ${active ? "border-[#00CC00]" : "border-[gray]"} rounded-2xl
+          ${className}`}
+      />
     </div>
   );
 };

@@ -16,7 +16,11 @@
  */
 
 import { useState, useEffect } from "react";
-import { downloadExcelFromUrl, getAccess, getEnrollmentInfoForStudy } from "../../utils";
+import {
+  downloadExcelFromUrl,
+  getAccess,
+  getEnrollmentInfoForStudy,
+} from "../../utils";
 import { SmallLoader } from "../loader/loader";
 import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { Card } from "../cards/card";
@@ -27,7 +31,7 @@ import { Button } from "../buttons/button";
 import { APP_ENV } from "../../environment";
 import { useWearableData } from "../../hooks/useWearableData";
 import { WearableVisualization } from "../visualizations/wearableVisualization";
-import SyncIcon from '@mui/icons-material/Sync';
+import SyncIcon from "@mui/icons-material/Sync";
 import { Link } from "react-router-dom";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useStudies } from "../../hooks/useStudies";
@@ -38,7 +42,7 @@ import { WearableVisualsContentProps } from "./wearableDashboard.types";
  * Fetch the width and height of the current window.
  * @returns { width: number; height: number; }
  */
-function getWindowDimensions(): { width: number; height: number; } {
+function getWindowDimensions(): { width: number; height: number } {
   const { innerWidth: width, innerHeight: height } = window;
   return { width, height };
 }
@@ -48,7 +52,9 @@ function getWindowDimensions(): { width: number; height: number; } {
  * @returns { width: number; height: number; }
  */
 function useWindowDimensions() {
-  const [windowDimensions, setWindowDimensions] = useState(getWindowDimensions());
+  const [windowDimensions, setWindowDimensions] = useState(
+    getWindowDimensions()
+  );
 
   useEffect(() => {
     function handleResize() {
@@ -71,8 +77,9 @@ export function WearableVisualsContent({
   const [loading, setLoading] = useState(true);
 
   const { isSyncing, syncData } = useWearableData();
-  
-  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjects();
+
+  const { studySubjectLoading, getStudySubjectByDittiId } =
+    useCoordinatorStudySubjects();
   const { studiesLoading, study } = useStudies();
   const { flashMessage } = useFlashMessages();
 
@@ -85,18 +92,28 @@ export function WearableVisualsContent({
     day: "numeric",
   };
 
-  const expTimeFormatted = (new Date(expiresOn)).toLocaleDateString("en-US", dateOpts);
+  const expTimeFormatted = new Date(expiresOn).toLocaleDateString(
+    "en-US",
+    dateOpts
+  );
 
   // Get user access permission on load
   useEffect(() => {
     if (study) {
       const promises: Promise<unknown>[] = [];
-      promises.push(getAccess(3, "Edit", "Participants", study.id)
-        .then(() => setCanEdit(true)));
-      promises.push(getAccess(3, "Invoke", "Data Retrieval Task", study.id)
-        .then(() => setCanInvoke(true)));
-      promises.push(getAccess(3, "View", "Taps", study.id)
-        .then(() => setCanViewTaps(true)));
+      promises.push(
+        getAccess(3, "Edit", "Participants", study.id).then(() =>
+          setCanEdit(true)
+        )
+      );
+      promises.push(
+        getAccess(3, "Invoke", "Data Retrieval Task", study.id).then(() =>
+          setCanInvoke(true)
+        )
+      );
+      promises.push(
+        getAccess(3, "View", "Taps", study.id).then(() => setCanViewTaps(true))
+      );
 
       Promise.all(promises)
         .then(() => setLoading(false))
@@ -131,32 +148,37 @@ export function WearableVisualsContent({
     <ViewContainer>
       <Card>
         <CardContentRow>
-          <div className="flex flex-grow flex-col lg:flex-row lg:justify-between">
-
+          <div
+            className="flex flex-grow flex-col lg:flex-row lg:justify-between"
+          >
             {/* The participant's details */}
-            <div className="flex flex-col mb-4 lg:mb-0">
+            <div className="mb-4 flex flex-col lg:mb-0">
               <Title>{studySubject?.dittiId}</Title>
               <Subtitle>Enrollment ends on: {expTimeFormatted}</Subtitle>
             </div>
 
             {/* Buttons for downloading Excel data and editing details */}
             <div className="flex flex-col lg:flex-row">
-              <div className="flex mb-2 lg:mb-0 lg:mr-2">
+              <div className="mb-2 flex lg:mb-0 lg:mr-2">
                 {/* download the subject's data as excel */}
                 <Button
                   variant="secondary"
                   className="mr-2"
                   onClick={downloadExcel}
-                  rounded={true}>
-                    Download Excel
+                  rounded={true}
+                >
+                  Download Excel
                 </Button>
                 {/* if the user can edit, show the edit button */}
-                <Link to={`/coordinator/wearable/participants/edit?dittiId=${studySubject?.dittiId}&sid=${study?.id}`}>
+                <Link
+                  to={`/coordinator/wearable/participants/edit?dittiId=${studySubject?.dittiId}&sid=${study?.id}`}
+                >
                   <Button
                     variant="secondary"
                     disabled={!(canEdit || APP_ENV === "demo")}
-                    rounded={true}>
-                      Edit Details
+                    rounded={true}
+                  >
+                    Edit Details
                   </Button>
                 </Link>
               </div>
@@ -167,12 +189,16 @@ export function WearableVisualsContent({
                   variant="secondary"
                   onClick={syncData}
                   rounded={true}
-                  disabled={isSyncing || !canInvoke}>
-                    <span className="mr-2">
-                      {isSyncing && canInvoke ? "Data Syncing..." : "Sync Data"}
-                    </span>
-                    <SyncIcon
-                      className={isSyncing && canInvoke ? "animate-spin-reverse-slow" : ""} />
+                  disabled={isSyncing || !canInvoke}
+                >
+                  <span className="mr-2">
+                    {isSyncing && canInvoke ? "Data Syncing..." : "Sync Data"}
+                  </span>
+                  <SyncIcon
+                    className={
+                      isSyncing && canInvoke ? "animate-spin-reverse-slow" : ""
+                    }
+                  />
                 </Button>
               </div>
             </div>
@@ -185,7 +211,8 @@ export function WearableVisualsContent({
             showDayControls={true}
             showTapsData={canViewTaps}
             dittiId={studySubject?.dittiId}
-            horizontalPadding={md} />
+            horizontalPadding={md}
+          />
         </CardContentRow>
       </Card>
     </ViewContainer>
