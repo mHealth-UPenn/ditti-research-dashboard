@@ -17,6 +17,7 @@
 
 import { Link } from "react-router-dom";
 import { useNavbar } from "../hooks/useNavbar";
+import React from "react";
 
 export const Navbar = () => {
   const { breadcrumbs } = useNavbar();
@@ -38,7 +39,7 @@ export const Navbar = () => {
             );
           } else {
             return (
-              <>
+              <React.Fragment key={i}>
                 <div
                   className="flex cursor-pointer items-center text-link
                     hover:text-link-hover"
@@ -50,7 +51,7 @@ export const Navbar = () => {
                 <div>
                   <span>&nbsp;&nbsp;/&nbsp;&nbsp;</span>
                 </div>
-              </>
+              </React.Fragment>
             );
           }
         })}
