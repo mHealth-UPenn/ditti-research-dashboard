@@ -33,6 +33,12 @@ logger = logging.getLogger(__name__)
 
 
 class SleepLevelModel(BaseModel):
+    """
+    Model for sleep level data serialization.
+
+    Represents a discrete sleep level reading with timestamp and level.
+    """
+
     date_time: datetime
     level: SleepLevelEnum
     seconds: int
@@ -41,11 +47,30 @@ class SleepLevelModel(BaseModel):
     model_config = common_config
 
     @field_serializer("date_time", mode="plain")
-    def serialize_date_time(value: datetime) -> str:
+    def serialize_date_time(self, value: datetime) -> str:
+        """
+        Serialize datetime to ISO format string.
+
+        Parameters
+        ----------
+        value : datetime
+            The datetime object to serialize.
+
+        Returns
+        -------
+        str
+            ISO-formatted datetime string.
+        """
         return value.isoformat()
 
 
 class SleepLogModel(BaseModel):
+    """
+    Model for sleep log data serialization.
+
+    Represents a complete sleep log entry with date and type information.
+    """
+
     date_of_sleep: date
     log_type: SleepLogTypeEnum
     type: SleepCategoryTypeEnum
@@ -54,11 +79,40 @@ class SleepLogModel(BaseModel):
     model_config = common_config
 
     @field_serializer("date_of_sleep", mode="plain")
-    def serialize_date_of_sleep(value: date) -> str:
+    def serialize_date_of_sleep(self, value: date) -> str:
+        """
+        Serialize date to ISO format string.
+
+        Parameters
+        ----------
+        value : date
+            The date object to serialize.
+
+        Returns
+        -------
+        str
+            ISO-formatted date string.
+        """
         return value.isoformat()
 
 
 def serialize_fitbit_data(sleep_logs: list[SleepLog]) -> list[dict[str, Any]]:
+    """
+    Serialize Fitbit sleep log data for API responses.
+
+    Takes a list of SleepLog objects from the database and converts them
+    to a list of dictionaries suitable for JSON serialization.
+
+    Parameters
+    ----------
+    sleep_logs : list[SleepLog]
+        List of SleepLog objects to serialize.
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        List of serialized sleep log dictionaries.
+    """
     serialized = []
     for log in sleep_logs:
         try:

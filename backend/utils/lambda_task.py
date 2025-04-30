@@ -32,9 +32,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_and_invoke_lambda_task():
-    """
-    Creates a new LambdaTask and invokes the Lambda function.
-    """
+    """Create a new LambdaTask and invokes the Lambda function."""
     try:
         now = datetime.now(UTC)
         # Create a new LambdaTask with status "Pending"
@@ -56,7 +54,9 @@ def create_and_invoke_lambda_task():
 
 def check_and_invoke_lambda_task():
     """
-    Checks if a LambdaTask has been run today. If not, invokes a new Lambda task.
+    Check if a LambdaTask has been run today.
+
+    If not, invoke a new Lambda task.
     """
     try:
         # Get the latest completed or in progress lambda function

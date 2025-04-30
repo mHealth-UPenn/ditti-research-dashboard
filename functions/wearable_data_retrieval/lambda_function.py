@@ -806,6 +806,24 @@ def build_url(
 
 
 def handler(event, _context):
+    """
+    AWS Lambda handler function for wearable data retrieval.
+
+    Processes wearable data retrieval requests initiated by the Lambda service.
+    Fetches data from wearable APIs and stores it in the database.
+
+    Parameters
+    ----------
+    event : dict
+        The event data passed to the Lambda function.
+    _context : object
+        AWS Lambda context object (unused).
+
+    Returns
+    -------
+    dict
+        Response object containing status and execution details.
+    """
     logger.info(
         "Starting wearable data retrieval job",
         extra={"function_timestamp": function_timestamp},

@@ -34,6 +34,13 @@ from install.utils.exceptions import CancelInstallation, ProjectConfigError
 
 
 class ProjectConfigProvider:
+    """
+    Provider for project configuration management.
+
+    Handles loading, creating, and managing project configuration settings,
+    including gathering user input and persisting configuration to disk.
+    """
+
     project_config_filename: str = "project-config.json"
     user_input: UserInput | None
     project_config: ProjectConfig | None
@@ -66,18 +73,50 @@ class ProjectConfigProvider:
 
     @property
     def admin_email(self) -> str:
+        """
+        Get the administrator email address.
+
+        Returns
+        -------
+        str
+            The administrator email address.
+        """
         return self.user_input["admin_email"]
 
     @property
     def fitbit_client_id(self) -> str:
+        """
+        Get the Fitbit client ID.
+
+        Returns
+        -------
+        str
+            The Fitbit client ID.
+        """
         return self.user_input["fitbit_client_id"]
 
     @property
     def fitbit_client_secret(self) -> str:
+        """
+        Get the Fitbit client secret.
+
+        Returns
+        -------
+        str
+            The Fitbit client secret.
+        """
         return self.user_input["fitbit_client_secret"]
 
     @property
     def project_name(self) -> str:
+        """
+        Get the project name.
+
+        Returns
+        -------
+        str
+            The project name.
+        """
         if self.user_input is not None:
             return self.user_input["project_name"]
         return self.project_config["project_name"]
@@ -89,6 +128,14 @@ class ProjectConfigProvider:
 
     @property
     def participant_user_pool_name(self) -> str:
+        """
+        Get the participant user pool name.
+
+        Returns
+        -------
+        str
+            The participant user pool name.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["cognito"]["participant_user_pool_name"]
@@ -102,6 +149,14 @@ class ProjectConfigProvider:
 
     @property
     def participant_user_pool_domain(self) -> str:
+        """
+        Get the participant user pool domain.
+
+        Returns
+        -------
+        str
+            The participant user pool domain.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["cognito"][
@@ -117,6 +172,14 @@ class ProjectConfigProvider:
 
     @property
     def participant_user_pool_id(self) -> str:
+        """
+        Get the participant user pool ID.
+
+        Returns
+        -------
+        str
+            The participant user pool ID.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["cognito"]["participant_user_pool_id"]
@@ -128,6 +191,14 @@ class ProjectConfigProvider:
 
     @property
     def participant_client_id(self) -> str:
+        """
+        Get the participant client ID.
+
+        Returns
+        -------
+        str
+            The participant client ID.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["cognito"]["participant_client_id"]
@@ -139,6 +210,14 @@ class ProjectConfigProvider:
 
     @property
     def researcher_user_pool_name(self) -> str:
+        """
+        Get the researcher user pool name.
+
+        Returns
+        -------
+        str
+            The researcher user pool name.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["cognito"]["researcher_user_pool_name"]
@@ -150,6 +229,14 @@ class ProjectConfigProvider:
 
     @property
     def researcher_user_pool_domain(self) -> str:
+        """
+        Get the researcher user pool domain.
+
+        Returns
+        -------
+        str
+            The researcher user pool domain.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["cognito"][
@@ -165,6 +252,14 @@ class ProjectConfigProvider:
 
     @property
     def researcher_user_pool_id(self) -> str:
+        """
+        Get the researcher user pool ID.
+
+        Returns
+        -------
+        str
+            The researcher user pool ID.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["cognito"]["researcher_user_pool_id"]
@@ -176,6 +271,14 @@ class ProjectConfigProvider:
 
     @property
     def researcher_client_id(self) -> str:
+        """
+        Get the researcher client ID.
+
+        Returns
+        -------
+        str
+            The researcher client ID.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["cognito"]["researcher_client_id"]
@@ -187,6 +290,14 @@ class ProjectConfigProvider:
 
     @property
     def logs_bucket_name(self) -> str:
+        """
+        Get the logs bucket name.
+
+        Returns
+        -------
+        str
+            The logs bucket name.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["s3"]["logs_bucket_name"]
@@ -198,6 +309,14 @@ class ProjectConfigProvider:
 
     @property
     def audio_bucket_name(self) -> str:
+        """
+        Get the audio bucket name.
+
+        Returns
+        -------
+        str
+            The audio bucket name.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["s3"]["audio_bucket_name"]
@@ -209,6 +328,14 @@ class ProjectConfigProvider:
 
     @property
     def secret_name(self) -> str:
+        """
+        Get the secret name.
+
+        Returns
+        -------
+        str
+            The secret name.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["secrets_manager"]["secret_name"]
@@ -220,6 +347,14 @@ class ProjectConfigProvider:
 
     @property
     def tokens_secret_name(self) -> str:
+        """
+        Get the tokens secret name.
+
+        Returns
+        -------
+        str
+            The tokens secret name.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["secrets_manager"]["tokens_secret_name"]
@@ -233,6 +368,14 @@ class ProjectConfigProvider:
 
     @property
     def stack_name(self) -> str:
+        """
+        Get the CloudFormation stack name.
+
+        Returns
+        -------
+        str
+            The CloudFormation stack name.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["aws"]["stack_name"]
@@ -244,6 +387,14 @@ class ProjectConfigProvider:
 
     @property
     def network_name(self) -> str:
+        """
+        Get the Docker network name.
+
+        Returns
+        -------
+        str
+            The Docker network name.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["docker"]["network_name"]
@@ -255,6 +406,14 @@ class ProjectConfigProvider:
 
     @property
     def postgres_container_name(self) -> str:
+        """
+        Get the PostgreSQL container name.
+
+        Returns
+        -------
+        str
+            The PostgreSQL container name.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["docker"]["postgres_container_name"]
@@ -266,6 +425,14 @@ class ProjectConfigProvider:
 
     @property
     def wearable_data_retrieval_container_name(self) -> str:
+        """
+        Get the wearable data retrieval container name.
+
+        Returns
+        -------
+        str
+            The wearable data retrieval container name.
+        """
         if self.project_config is None:
             return ""
         return self.project_config["docker"][
@@ -280,9 +447,27 @@ class ProjectConfigProvider:
         self.write_project_config()
 
     def project_settings_exists(self) -> bool:
+        """
+        Check if project settings file exists.
+
+        Returns
+        -------
+        bool
+            True if project settings file exists, False otherwise.
+        """
         return os.path.exists(self.project_config_filename)
 
     def get_user_input(self) -> None:
+        """
+        Get user input for project configuration.
+
+        Prompts the user for project settings if no existing configuration
+        is found, or offers to use existing configuration.
+
+        Returns
+        -------
+        None
+        """
         if self.project_settings_exists():
             msg = (
                 "Project settings already exist. Please uninstall the project "
@@ -336,14 +521,38 @@ class ProjectConfigProvider:
 
     @staticmethod
     def get_continue_input() -> str:
+        """
+        Get user confirmation to continue with installation.
+
+        Returns
+        -------
+        str
+            User input ('y' or 'n').
+        """
         return input("\nDo you want to continue? (y/n): ").lower()
 
     @staticmethod
     def get_project_name_input() -> str:
+        """
+        Get project name from user input.
+
+        Returns
+        -------
+        str
+            User-provided project name.
+        """
         return input("\nEnter a name for your project: ")
 
     @staticmethod
     def get_fitbit_credentials_input() -> tuple[str, str]:
+        """
+        Get Fitbit OAuth credentials from user input.
+
+        Returns
+        -------
+        tuple[str, str]
+            Tuple containing Fitbit client ID and client secret.
+        """
         return (
             input("Enter your dev Fitbit OAuth 2.0 Client ID: "),
             getpass("Enter your dev Fitbit Client Secret: "),
@@ -351,6 +560,14 @@ class ProjectConfigProvider:
 
     @staticmethod
     def get_admin_email_input() -> str:
+        """
+        Get administrator email from user input.
+
+        Returns
+        -------
+        str
+            Administrator email address.
+        """
         return input("Enter an email to login as admin: ")
 
     def setup_project_config(self) -> None:
@@ -417,6 +634,21 @@ class ProjectConfigProvider:
         }
 
     def format_string(self, fstr: str, add_hashstr: bool = False) -> str:
+        """
+        Format a string with project configuration values.
+
+        Parameters
+        ----------
+        fstr : str
+            The string to format.
+        add_hashstr : bool, optional
+            Whether to add a hash string to the formatted result.
+
+        Returns
+        -------
+        str
+            The formatted string.
+        """
         project_name = self.project_name
         if add_hashstr:
             project_name += f"-{self.hashstr}"

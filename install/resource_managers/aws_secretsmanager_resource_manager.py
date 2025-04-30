@@ -27,7 +27,13 @@ from install.utils import Colorizer, Logger
 from install.utils.exceptions import ResourceManagerError
 
 
-class AwsSecretsmanagerResourceManager(BaseResourceManager):
+class AwsSecretsManagerResourceManager(BaseResourceManager):
+    """
+    Resource manager for AWS Secrets Manager operations.
+
+    Manages creation, updating, and deletion of secrets used by the application.
+    """
+
     secret_value: dict[str, str] | None
 
     def __init__(

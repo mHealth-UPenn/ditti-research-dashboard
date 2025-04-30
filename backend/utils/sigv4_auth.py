@@ -28,6 +28,23 @@ logger = logging.getLogger(__name__)
 
 
 def sigv4_required(func):
+    """
+    Require AWS SigV4 authentication for the decorated function.
+
+    This decorator validates the AWS SigV4 signature in request headers
+    against the configured Lambda execution credentials.
+
+    Parameters
+    ----------
+    func : callable
+        The function to decorate with SigV4 authentication requirement.
+
+    Returns
+    -------
+    callable
+        The wrapped function that enforces SigV4 authentication.
+    """
+
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:

@@ -38,17 +38,21 @@ logger = logging.getLogger(__name__)
 
 
 class ParticipantApiModel(BaseModel):
+    """
+    Model for participant API access information.
+
+    Contains information about API access granted to study participants,
+    including access scopes and identification.
+    """
+
     scope: list[str] = Field(default_factory=list)
     api_name: str
 
     model_config = common_config
 
     @model_validator(mode="before")
-    def extract_api_name(cls, obj):
-        """
-        Transforms a JoinStudySubjectApi ORM instance into a dict
-        with the required fields for ParticipantApiModel.
-        """
+    def extract_api_name(self, obj):
+        """Transform ORM instance into dict with ParticipantApiModel fields."""
         if isinstance(obj, JoinStudySubjectApi):
             return {
                 "scope": obj.scope,
@@ -58,6 +62,13 @@ class ParticipantApiModel(BaseModel):
 
 
 class ParticipantStudyModel(BaseModel):
+    """
+    Model for participant study enrollment information.
+
+    Contains information about studies a participant is enrolled in,
+    including study metadata and enrollment details.
+    """
+
     study_name: str
     study_id: int
     did_consent: bool
@@ -70,7 +81,23 @@ class ParticipantStudyModel(BaseModel):
     model_config = common_config
 
     @model_validator(mode="before")
-    def extract_study_fields(cls, obj):
+    def extract_study_fields(self, obj):
+        """
+        Extract study fields from the join model.
+
+        Converts a JoinStudySubjectStudy database object to a dictionary
+        format suitable for this model.
+
+        Parameters
+        ----------
+        obj : Any
+            The input object (typically a JoinStudySubjectStudy instance).
+
+        Returns
+        -------
+        dict
+            A dictionary with extracted field values.
+        """
         if isinstance(obj, JoinStudySubjectStudy):
             return {
                 "study_name": obj.study.name,
@@ -87,11 +114,31 @@ class ParticipantStudyModel(BaseModel):
         return obj
 
     @field_serializer("created_on", "expires_on", mode="plain")
-    def serialize_datetimes(value: datetime | None) -> str | None:
+    def serialize_datetimes(self, value: datetime | None) -> str | None:
+        """
+        Serialize datetime fields to ISO format strings.
+
+        Parameters
+        ----------
+        value : datetime or None
+            The datetime object to serialize, or None.
+
+        Returns
+        -------
+        str or None
+            ISO-formatted datetime string or None if input is None.
+        """
         return value.isoformat() if value else None
 
 
 class ParticipantModel(BaseModel):
+    """
+    Model for participant information.
+
+    Represents a study participant with their Ditti ID and associated
+    API access and study enrollments.
+    """
+
     ditti_id: str
     apis: list[ParticipantApiModel] = Field(default_factory=list)
     studies: list[ParticipantStudyModel] = Field(default_factory=list)
@@ -105,13 +152,15 @@ def serialize_participant(
     """
     Serialize a StudySubject ORM instance into a suitable dictionary.
 
-    Args:
-        study_subject (StudySubject): The study subject to serialize.
+    Parameters
+    ----------
+    study_subject : StudySubject
+        The study subject to serialize.
 
     Returns
     -------
-        Optional[Dict[str, Any]]: The serialized participant data if successful,
-            otherwise None.
+    dict[str, Any] or None
+        The serialized participant data if successful, otherwise None.
     """
     try:
         participant_model = ParticipantModel.model_validate(study_subject)

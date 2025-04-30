@@ -38,14 +38,18 @@ from install.resource_managers import (
     AwsSecretsmanagerResourceManager,
 )
 from install.utils import Colorizer, Logger
-from install.utils.exceptions import (
-    CancelInstallation,
-    ProjectConfigError,
-)
+from install.utils.exceptions import CancelInstallation, ProjectConfigError
 from install.utils.types import Env
 
 
 class Installer:
+    """
+    Main installer class for the Ditti Research Dashboard.
+
+    Coordinates the installation and configuration process for
+    the application across local and AWS environments.
+    """
+
     def __init__(self, env: Env) -> None:
         self.logger = Logger()
         self.env = env
@@ -124,6 +128,16 @@ class Installer:
         )
 
     def run(self) -> None:
+        """
+        Run the installation process.
+
+        Executes the complete installation sequence including configuration,
+        environment setup, database initialization, and application deployment.
+
+        Returns
+        -------
+        None
+        """
         try:
             # Get project config
             self.logger(Colorizer.cyan("\n[Project Setup]"))

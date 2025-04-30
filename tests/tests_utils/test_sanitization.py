@@ -3,7 +3,7 @@ from backend.utils.sanitization import sanitize_quill_html
 
 class TestSanitizeQuillHTML:
     def test_basic_html_sanitization(self):
-        """Test basic HTML sanitization preserves allowed elements and removes disallowed ones."""
+        """Test basic preserves allowed elements and removes disallowed ones."""
         # Basic allowed HTML
         html = "<p>Test paragraph</p><strong>Bold text</strong>"
         result = sanitize_quill_html(html)
@@ -19,7 +19,6 @@ class TestSanitizeQuillHTML:
 
     def test_allowed_tags(self):
         """Test all allowed tags are preserved."""
-
         # Define table-related tags that need special handling
         table_tags = {"table", "tbody", "tr", "td"}
 
@@ -83,7 +82,8 @@ class TestSanitizeQuillHTML:
 
         # Check self-closing tags
         assert "<br>" in result
-        assert "<img" in result and 'src="test.jpg"' in result
+        assert "<img" in result
+        assert 'src="test.jpg"' in result
 
         # Check table tags (just verify they exist in the result)
         for tag in table_tags:
@@ -162,7 +162,7 @@ class TestSanitizeQuillHTML:
         assert "ql-align-center" in result
 
     def test_url_schemes(self):
-        """Test allowed URL schemes are preserved and disallowed ones are removed."""
+        """Test allowed URL schemes preserved and disallowed removed."""
         html = """
         <a href="https://example.com">Valid HTTPS</a>
         <a href="http://example.com">Valid HTTP</a>

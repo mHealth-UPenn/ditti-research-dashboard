@@ -72,6 +72,16 @@ dictConfig(
 
 
 def create_app(testing=False):
+    """
+    Create and configure the Flask application.
+
+    Args:
+        testing (bool): Flag to indicate if app should use testing configuration.
+
+    Returns
+    -------
+        Flask: Configured Flask application.
+    """
     app = Flask(__name__)
 
     flask_config = "Testing" if testing else os.getenv("FLASK_CONFIG", "Default")
@@ -93,6 +103,12 @@ def create_app(testing=False):
 
 
 def register_blueprints(app):
+    """
+    Register all blueprint routes with the application.
+
+    Args:
+        app (Flask): The Flask application instance.
+    """
     app.register_blueprint(admin.blueprint)
     app.register_blueprint(aws_requests.blueprint)
     app.register_blueprint(base.blueprint)
@@ -107,6 +123,12 @@ def register_blueprints(app):
 
 
 def register_commands(app):
+    """
+    Register CLI commands with the application.
+
+    Args:
+        app (Flask): The Flask application instance.
+    """
     app.cli.add_command(init_admin_app_click)
     app.cli.add_command(init_admin_group_click)
     app.cli.add_command(init_admin_account_click)
@@ -122,6 +144,12 @@ def register_commands(app):
 
 
 def register_extensions(app):
+    """
+    Initialize and register Flask extensions with the application.
+
+    Args:
+        app (Flask): The Flask application instance.
+    """
     cors.init_app(
         app,
         origins=app.config.get("CORS_ORIGINS", "*"),

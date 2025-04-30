@@ -33,8 +33,10 @@ logger = logging.getLogger(__name__)
 
 def init_db():
     """
-    Create all database tables. This can only be run in a testing environment
-    or if the database is hosted locally.
+    Create all database tables.
+
+    This can only be run in a testing environment or
+    if the database is hosted locally.
 
     Raises
     ------
@@ -107,7 +109,7 @@ def init_admin_group():
     if app is None:
         raise ValueError(
             "The admin dashboard app has not been created. It can be created u"
-            + "sing `flask init-admin-app`"
+            "sing `flask init-admin-app`"
         )
 
     access_group = AccessGroup(name="Admin", app=app)
@@ -128,7 +130,7 @@ def init_admin_group():
 
 def init_admin_account(email=None):
     """
-    Initialize the admin account
+    Initialize the admin account.
 
     Args
     ----
@@ -156,7 +158,7 @@ def init_admin_account(email=None):
     if admin_group is None:
         raise ValueError(
             "The admin access group has not been created. It can be created us"
-            + "ing `flask init-access-group`"
+            "ing `flask init-access-group`"
         )
 
     query = AccessGroup.name == "Ditti Admin"
@@ -189,9 +191,7 @@ def init_admin_account(email=None):
 
 
 def init_api(click=None):
-    """
-    Insert Fitbit API entry.
-    """
+    """Insert Fitbit API entry."""
     api_name = "Fitbit"
     existing_api = Api.query.filter_by(name=api_name).first()
 
@@ -208,6 +208,12 @@ def init_api(click=None):
 
 
 def init_integration_testing_db():
+    """
+    Initialize the database for integration testing.
+
+    Creates necessary tables and populates the database with test data.
+    Enforces that the environment must be pointing at a local database.
+    """
     # Enforce that the environment must be pointing at a local database
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
     if "localhost" not in db_uri:
@@ -703,17 +709,36 @@ mindfulness on sleep."""
 
 
 def init_lambda_task(status: str):
+    """
+    Initialize a lambda task with the specified status.
+
+    Args:
+        status: The status of the lambda task to create.
+    """
     db.session.add(LambdaTask(status=status))
     db.session.commit()
 
 
 def delete_lambda_tasks():
+    """
+    Delete all lambda tasks from the database.
+
+    Used primarily for testing and cleanup operations.
+    """
     for task in LambdaTask.query.all():
         db.session.delete(task)
     db.session.commit()
 
 
 def init_study_subject(ditti_id):
+    """
+    Initialize a study subject with the specified Ditti ID.
+
+    Creates a new StudySubject record with the given Ditti ID.
+
+    Args:
+        ditti_id: The Ditti ID for the study subject.
+    """
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
     if "localhost" not in db_uri:
         raise RuntimeError(
@@ -747,6 +772,8 @@ def init_study_subject(ditti_id):
 
 
 class SleepLevelEnum(enum.Enum):
+    """Enumeration of sleep levels tracked in the system."""
+
     wake = "wake"
     light = "light"
     deep = "deep"
@@ -757,11 +784,15 @@ class SleepLevelEnum(enum.Enum):
 
 
 class SleepLogTypeEnum(enum.Enum):
+    """Enumeration of sleep log types in the system."""
+
     auto_detected = "auto_detected"
     manual = "manual"
 
 
 class SleepCategoryTypeEnum(enum.Enum):
+    """Enumeration of sleep category types in the system."""
+
     stages = "stages"
     classic = "classic"
 
@@ -807,10 +838,10 @@ class Account(db.Model):
         cascade="all, delete-orphan",
         primaryjoin=(
             "and_("
-            + "   Account.id == JoinAccountAccessGroup.account_id,"
-            + "   JoinAccountAccessGroup.access_group_id == AccessGroup.id,"
-            + "   AccessGroup.is_archived == False"
-            + ")"
+            "   Account.id == JoinAccountAccessGroup.account_id,"
+            "   JoinAccountAccessGroup.access_group_id == AccessGroup.id,"
+            "   AccessGroup.is_archived == False"
+            ")"
         ),
     )
 
@@ -821,18 +852,16 @@ class Account(db.Model):
         cascade="all, delete-orphan",
         primaryjoin=(
             "and_("
-            + "   Account.id == JoinAccountStudy.account_id,"
-            + "   JoinAccountStudy.study_id == Study.id,"
-            + "   Study.is_archived == False"
-            + ")"
+            "   Account.id == JoinAccountStudy.account_id,"
+            "   JoinAccountStudy.study_id == Study.id,"
+            "   Study.is_archived == False"
+            ")"
         ),
     )
 
     @validates("created_on")
     def validate_created_on(self, _key, val):
-        """
-        Make the created_on column read-only.
-        """
+        """Make the created_on column read-only."""
         if self.created_on:
             raise ValueError("Account.created_on cannot be modified.")
 
@@ -841,8 +870,22 @@ class Account(db.Model):
     @validates("phone_number")
     def validate_phone_number(self, _key, value):
         """
-        Validate phone number format. Must be in E.164 format.
+        Validate phone number format.
+
+        Must be in E.164 format.
         For US numbers: +1 followed by 10 digits.
+
+        Parameters
+        ----------
+        _key : str
+            The attribute name (not used).
+        value : str or None
+            The phone number to validate.
+
+        Returns
+        -------
+        str or None
+            The validated phone number or None.
         """
         if value is None:
             return None
@@ -858,29 +901,39 @@ class Account(db.Model):
 
     @hybrid_property
     def full_name(self):
-        """
-        str: The full name of the account holder
-        """
+        """str: The full name of the account holder."""
         return f"{self.first_name} {self.last_name}"
 
     @full_name.expression
     def full_name(cls):
+        """
+        Generate SQL expression for concatenating first and last name.
+
+        Returns
+        -------
+        SQLAlchemy expression
+            SQL expression for the full name.
+        """
         return func.concat(cls.first_name, " ", cls.last_name)
 
     def get_permissions(self, app_id, study_id=None):
         """
-        Get all of an account"s permissions for an app and optionally for a
-        study.
+        Get all of an account's permissions for an app and study.
 
-        Args
-        ----
-        app_id: int
-            The app"s primary key.
-        study_id: int (optional)
-            The study"s primary key.
+        Retrieves all permissions that are granted to the account by access
+        groups for the specified app and optionally for a specific study.
+
+        Parameters
+        ----------
+        app_id : int
+            The app's primary key.
+        study_id : int, optional
+            The study's primary key.
 
         Returns
         -------
+        dict
+            A dictionary of permission objects.
         """
         # query all permissions that are granted to the account by access
         # groups that grant access to the app
@@ -917,7 +970,7 @@ class Account(db.Model):
 
     def validate_ask(self, action, resource, permissions):
         """
-        Validate a request using a set of permissions
+        Validate a request using a set of permissions.
 
         Args
         ----
@@ -947,9 +1000,7 @@ class Account(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {
             "id": self.id,
             "createdOn": self.created_on,
@@ -996,13 +1047,19 @@ class JoinAccountAccessGroup(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.account_id, self.access_group_id
 
     @primary_key.expression
     def primary_key(cls):
+        """
+        Generate SQL expression for the primary key.
+
+        Returns
+        -------
+        SQLAlchemy tuple expression
+            The composite primary key expression.
+        """
         return tuple_(cls.account_id, cls.access_group_id)
 
     def __repr__(self):
@@ -1047,9 +1104,7 @@ class JoinAccountStudy(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.account_id, self.study_id
 
     @primary_key.expression
@@ -1058,9 +1113,7 @@ class JoinAccountStudy(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {**self.study.meta, "role": self.role.meta}
 
     def __repr__(self):
@@ -1099,10 +1152,10 @@ class AccessGroup(db.Model):
         cascade="all, delete-orphan",
         primaryjoin=(
             "and_("
-            + "   AccessGroup.id == JoinAccountAccessGroup.access_group_id,"
-            + "   JoinAccountAccessGroup.account_id == Account.id,"
-            + "   Account.is_archived == False"
-            + ")"
+            "   AccessGroup.id == JoinAccountAccessGroup.access_group_id,"
+            "   JoinAccountAccessGroup.account_id == Account.id,"
+            "   Account.is_archived == False"
+            ")"
         ),
     )
 
@@ -1114,9 +1167,7 @@ class AccessGroup(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {
             "id": self.id,
             "name": self.name,
@@ -1159,20 +1210,24 @@ class JoinAccessGroupPermission(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key
-        """
+        """Tuple of int: an entry's primary key."""
         return self.access_group_id, self.permission_id
 
     @primary_key.expression
     def primary_key(cls):
+        """
+        Generate SQL expression for the primary key.
+
+        Returns
+        -------
+        SQLAlchemy tuple expression
+            The composite primary key expression.
+        """
         return tuple_(cls.access_group_id, cls.permission_id)
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return self.permission.meta
 
     def __repr__(self):
@@ -1204,9 +1259,7 @@ class Role(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {
             "id": self.id,
             "name": self.name,
@@ -1248,9 +1301,7 @@ class JoinRolePermission(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.role_id, self.permission_id
 
     @primary_key.expression
@@ -1259,9 +1310,7 @@ class JoinRolePermission(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return self.permission.meta
 
     def __repr__(self):
@@ -1284,9 +1333,7 @@ class Action(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "value": self.value}
 
     def __repr__(self):
@@ -1309,9 +1356,7 @@ class Resource(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "value": self.value}
 
     def __repr__(self):
@@ -1346,9 +1391,7 @@ class Permission(db.Model):
 
     @hybrid_property
     def action(self):
-        """
-        str: an entry's action
-        """
+        """str: an entry's action."""
         return self._action.value
 
     @action.setter
@@ -1362,6 +1405,14 @@ class Permission(db.Model):
 
     @action.expression
     def action(cls):
+        """
+        Generate SQL expression for the action attribute.
+
+        Returns
+        -------
+        SQLAlchemy subquery
+            The subquery for the action value.
+        """
         return (
             select(Action.value)
             .where(Action.id == cls._action_id)
@@ -1370,9 +1421,7 @@ class Permission(db.Model):
 
     @hybrid_property
     def resource(self):
-        """
-        str: an entry's resource
-        """
+        """str: an entry's resource."""
         return self._resource.value
 
     @resource.setter
@@ -1386,6 +1435,14 @@ class Permission(db.Model):
 
     @resource.expression
     def resource(cls):
+        """
+        Generate SQL expression for the resource attribute.
+
+        Returns
+        -------
+        SQLAlchemy subquery
+            The subquery for the resource value.
+        """
         return (
             select(Resource.value)
             .where(Resource.id == cls._resource_id)
@@ -1394,9 +1451,7 @@ class Permission(db.Model):
 
     @validates("_action_id")
     def validate_action(self, _key, val):
-        """
-        Ensure an entry's action cannot be modified.
-        """
+        """Ensure an entry's action cannot be modified."""
         if self._action_id is not None:
             raise ValueError("permission.action cannot be modified.")
 
@@ -1404,9 +1459,7 @@ class Permission(db.Model):
 
     @validates("_resource_id")
     def validate_resource(self, _key, val):
-        """
-        Ensure an entry's resource cannot be modified.
-        """
+        """Ensure an entry's resource cannot be modified."""
         if self._resource_id is not None:
             raise ValueError("permission.resource cannot be modified.")
 
@@ -1414,13 +1467,19 @@ class Permission(db.Model):
 
     @hybrid_property
     def definition(self):
-        """
-        Tuple of str: an entry's (action, resource) definition
-        """
+        """Tuple of str: an entry's (action, resource) definition."""
         return self.action, self.resource
 
     @definition.expression
     def definition(cls):
+        """
+        Generate SQL expression for the definition attribute.
+
+        Returns
+        -------
+        SQLAlchemy tuple expression
+            The tuple expression combining action and resource.
+        """
         return tuple_(
             select(Action.value)
             .where(Action.id == cls._action_id)
@@ -1432,9 +1491,7 @@ class Permission(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "action": self.action, "resource": self.resource}
 
     def __repr__(self):
@@ -1457,9 +1514,7 @@ class App(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "name": self.name}
 
     def __repr__(self):
@@ -1507,9 +1562,7 @@ class Study(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {
             "id": self.id,
             "name": self.name,
@@ -1554,9 +1607,7 @@ class JoinStudyRole(db.Model):
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.study_id, self.role_id
 
     @primary_key.expression
@@ -1565,9 +1616,7 @@ class JoinStudyRole(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return self.role.meta
 
     def __repr__(self):
@@ -1576,8 +1625,9 @@ class JoinStudyRole(db.Model):
 
 class BlockedToken(db.Model):
     """
-    The blocked_token table mapping class. This is used to log users out using
-    JWT tokens.
+    Log users out using JWT tokens.
+
+    The blocked_token table mapping class.
 
     Vars
     ----
@@ -1616,9 +1666,7 @@ class AboutSleepTemplate(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "name": self.name, "text": self.text}
 
     def __repr__(self):
@@ -1744,9 +1792,7 @@ class JoinStudySubjectStudy(db.Model):
 
     @validates("created_on")
     def validate_created_on(self, _key, val):
-        """
-        Make the created_on column read-only.
-        """
+        """Make the created_on column read-only."""
         if self.created_on:
             raise ValueError(
                 "JoinStudySubjectStudy.created_on cannot be modified."
@@ -1755,15 +1801,33 @@ class JoinStudySubjectStudy(db.Model):
 
     @validates("expires_on")
     def validate_expires_on(self, _key, value):
+        """
+        Validate that expires_on is a future date.
+
+        Parameters
+        ----------
+        _key : str
+            The attribute name (not used).
+        value : datetime or None
+            The date value to validate.
+
+        Returns
+        -------
+        datetime or None
+            The validated value if it passes validation.
+
+        Raises
+        ------
+        ValueError
+            If the value is not a future date.
+        """
         if value and value <= datetime.now(UTC):
             raise ValueError("expires_on must be a future date.")
         return value
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.study_subject_id, self.study_id
 
     @primary_key.expression
@@ -1772,9 +1836,7 @@ class JoinStudySubjectStudy(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {
             "didConsent": self.did_consent,
             "createdOn": self.created_on.isoformat(),
@@ -1791,8 +1853,10 @@ class JoinStudySubjectStudy(db.Model):
 @event.listens_for(JoinStudySubjectStudy, "before_insert")
 def set_expires_on(_mapper, connection, target):
     """
-    Automatically set the expires_on field based on the Study's
-    default_expiry_delta if expires_on is not provided.
+    Set the expires_on field.
+
+    Automatically set based on the Study's default_expiry_delta
+    if expires_on is not provided.
     """
     if not target.expires_on:
         if target.study_id:
@@ -1854,18 +1918,14 @@ class JoinStudySubjectApi(db.Model):
 
     @validates("created_on")
     def validate_created_on(self, _key, val):
-        """
-        Make the created_on column read-only.
-        """
+        """Make the created_on column read-only."""
         if self.created_on:
             raise ValueError("JoinStudySubjectApi.created_on cannot be modified.")
         return val
 
     @hybrid_property
     def primary_key(self):
-        """
-        Tuple of int: an entry's primary key.
-        """
+        """Tuple of int: an entry's primary key."""
         return self.study_subject_id, self.api_id
 
     @primary_key.expression
@@ -1874,9 +1934,7 @@ class JoinStudySubjectApi(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: An entry's metadata.
-        """
+        """dict: An entry's metadata."""
         return {
             "apiUserUuid": self.api_user_uuid,
             "scope": self.scope,
@@ -1912,9 +1970,7 @@ class Api(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: an entry's metadata.
-        """
+        """dict: an entry's metadata."""
         return {"id": self.id, "name": self.name}
 
     def __repr__(self):
@@ -2002,15 +2058,33 @@ class SleepLog(db.Model):
 
     @validates("efficiency")
     def validate_efficiency(self, _key, value):
+        """
+        Validate that efficiency value is within acceptable range.
+
+        Parameters
+        ----------
+        _key : str
+            The attribute name (not used).
+        value : int or None
+            The value to validate.
+
+        Returns
+        -------
+        int or None
+            The validated value if it passes validation.
+
+        Raises
+        ------
+        ValueError
+            If the value is not between 0 and 100.
+        """
         if value is not None and not (0 <= value <= 100):
             raise ValueError("Efficiency must be between 0 and 100.")
         return value
 
     @property
     def meta(self):
-        """
-        dict: An entry's metadata.
-        """
+        """dict: An entry's metadata."""
         return {
             "id": self.id,
             "studySubjectId": self.study_subject_id,
@@ -2085,9 +2159,7 @@ class SleepLevel(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: An entry's metadata.
-        """
+        """dict: An entry's metadata."""
         return {
             "dateTime": self.date_time.isoformat(),
             "level": self.level.value,
@@ -2140,9 +2212,7 @@ class SleepSummary(db.Model):
 
     @property
     def meta(self):
-        """
-        dict: An entry's metadata.
-        """
+        """dict: An entry's metadata."""
         return {
             "level": self.level.value,
             "count": self.count,
