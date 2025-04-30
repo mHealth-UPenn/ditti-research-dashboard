@@ -107,7 +107,7 @@ def account():
 @blueprint.route("/account/create", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Create", "Accounts")
-def account_create(account):
+def account_create():
     """
     Create a new account in the database and Cognito user pool.
 
