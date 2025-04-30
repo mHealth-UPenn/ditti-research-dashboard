@@ -304,7 +304,7 @@ class ProjectConfigProvider:
         self.logger("- Local .env files")
         self.logger("- Docker containers for the project")
 
-        if not self.get_continue_input() == "y":
+        if self.get_continue_input() != "y":
             self.logger.warning("Installation cancelled")
             raise CancelInstallation()
 
