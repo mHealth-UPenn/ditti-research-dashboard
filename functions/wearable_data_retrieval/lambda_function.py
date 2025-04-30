@@ -197,7 +197,7 @@ class LambdaTaskService(DBService):
 
     Methods
     -------
-        get_entry(id: int):
+        get_entry(entry_id: int):
             Queries the `lambda_task` table for a specific entry by ID and loads
             it as a `LambdaTaskEntry` instance.
 
@@ -230,12 +230,12 @@ class LambdaTaskService(DBService):
         self.table = Table("lambda_task", m, autoload_with=e)
         self.__entry: LambdaTaskEntry | None = None
 
-    def get_entry(self, id: int):
+    def get_entry(self, entry_id: int):
         """
         Query `lambda_task` table for entry by ID and store as `LambdaTaskEntry`.
 
         Args:
-            id (int): The ID of the Lambda task to query.
+            entry_id (int): The ID of the Lambda task to query.
 
         Raises
         ------
@@ -259,7 +259,7 @@ class LambdaTaskService(DBService):
             )
 
         # Query the table for the specific function_id and update status
-        query = select(self.table).where(self.table.c.id == id)
+        query = select(self.table).where(self.table.c.id == entry_id)
         entry = self.connection.execute(query).first()
         self.__entry = LambdaTaskEntry(**entry._asdict())
 
@@ -270,10 +270,10 @@ class LambdaTaskService(DBService):
 
         else:
             logger.warning(
-                "No entry found for function_id", extra={"function_id": id}
+                "No entry found for function_id", extra={"function_id": entry_id}
             )
 
-            raise RuntimeError(f"No entry found for function_id {id}")
+            raise RuntimeError(f"No entry found for function_id {entry_id}")
 
     def update_status(self, status: TaskStatus, **kwargs):
         """

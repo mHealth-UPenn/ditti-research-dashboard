@@ -29,7 +29,8 @@ class AwsCognitoResourceManager(BaseResourceManager):
     """
     Resource manager for AWS Cognito operations.
 
-    Manages user pools, clients, and other Cognito resources for user authentication.
+    Manages user pools, clients, and other Cognito resources
+    for user authentication.
     """
 
     def __init__(
