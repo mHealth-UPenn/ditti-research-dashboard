@@ -28,9 +28,7 @@ cors = CORS()
 db = SQLAlchemy()
 jwt = JWTManager()
 migrate = Migrate()
-cache = Cache(
-    config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 7200}
-)
+cache = Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 7200})
 
 tm = TokensManager()
 oauth = OAuth()

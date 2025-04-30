@@ -27,7 +27,8 @@ def get_researcher_cognito_client():
     """
     Initialize and return a boto3 Cognito IDP client for the researcher user pool.
 
-    Returns:
+    Returns
+    -------
         boto3.client: Cognito IDP client configured for researcher operations
     """
     region = current_app.config["COGNITO_RESEARCHER_REGION"]
@@ -37,14 +38,17 @@ def get_researcher_cognito_client():
 def create_researcher(email, temp_password=None, attributes=None):
     """
     Create a new researcher in the Cognito user pool with a temporary password.
+
     Cognito will send an invitation email with the temporary password.
 
     Args:
         email (str): Researcher's email address (used as username)
-        temp_password (str, optional): Custom temporary password. If None, a random one is generated.
+        temp_password (str, optional): Custom temporary password. If None,
+            a random one is generated.
         attributes (dict, optional): Additional user attributes to set
 
-    Returns:
+    Returns
+    -------
         tuple: (bool, str) - (success, message)
     """
     try:
@@ -71,7 +75,7 @@ def create_researcher(email, temp_password=None, attributes=None):
         # Create user in Cognito
         if temp_password:
             # Create user with specified temporary password
-            response = client.admin_create_user(
+            client.admin_create_user(
                 UserPoolId=user_pool_id,
                 Username=email,
                 UserAttributes=user_attributes,
@@ -80,7 +84,7 @@ def create_researcher(email, temp_password=None, attributes=None):
             )
         else:
             # Let Cognito generate a temporary password and send invitation
-            response = client.admin_create_user(
+            client.admin_create_user(
                 UserPoolId=user_pool_id,
                 Username=email,
                 UserAttributes=user_attributes,
@@ -107,7 +111,7 @@ def create_researcher(email, temp_password=None, attributes=None):
             return False, f"Error creating user: {error_message}"
 
     except Exception as e:
-        logger.error(f"Unexpected error creating Cognito user: {str(e)}")
+        logger.error(f"Unexpected error creating Cognito user: {e!s}")
         return False, "Unexpected error creating user"
 
 
@@ -115,23 +119,26 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
     """
     Update a researcher's attributes in the Cognito user pool.
 
-    This function supports both adding/updating attributes and removing attributes.
-    For attributes that should be updated, provide them in the attributes dictionary.
-    For attributes that should be removed, list them in attributes_to_delete.
+    This function supports both adding/updating attributes and removing
+    attributes. For attributes that should be updated, provide them in the
+    attributes dictionary. For attributes that should be removed, list them in
+    attributes_to_delete.
 
-    Note: Only non-required attributes can be deleted. Required attributes like email
-    cannot be removed but can be updated.
+    Note: Only non-required attributes can be deleted. Required attributes like
+    email cannot be removed but can be updated.
 
     Args:
         email (str): Researcher's email address (used as username)
         attributes (dict, optional): User attributes to update. Keys should match
-                                    Cognito attribute names (e.g., 'given_name', 'family_name', 'phone_number').
-        attributes_to_delete (list, optional): Attribute names to delete from the user's profile.
-                                              Standard Cognito attribute names should be used.
+            Cognito attribute names (e.g., 'given_name', 'family_name',
+            'phone_number').
+        attributes_to_delete (list, optional): Attribute names to delete from the
+            user's profile. Standard Cognito attribute names should be used.
 
-    Returns:
+    Returns
+    -------
         tuple: (bool, str) - (success, message)
-            success: True if the operations completed successfully, False otherwise
+            success: True if the operations completed successfully, else False
             message: A descriptive success or error message
     """
     try:
@@ -147,7 +154,8 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
                 # Never allow updating the email attribute
                 if key == "email":
                     logger.warning(
-                        f"Attempt to update email attribute for user {email} was blocked"
+                        "Attempt to update email attribute for user "
+                        f"{email} was blocked"
                     )
                     continue
 
@@ -168,10 +176,12 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
         # Process attributes to delete
         if attributes_to_delete:
             for attr_name in attributes_to_delete:
-                # Never allow deleting the email attribute (critical security measure)
+                # Critical Security Measure
+                # Never allow deleting the email attribute
                 if attr_name == "email":
                     logger.warning(
-                        f"Attempt to delete email attribute for user {email} was blocked"
+                        "Attempt to delete email attribute for user "
+                        f"{email} was blocked"
                     )
                     continue
 
@@ -182,14 +192,14 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
                         Username=email,
                         UserAttributeNames=[attr_name],
                     )
-                    logger.info(
-                        f"Deleted attribute {attr_name} for user {email}"
-                    )
+                    logger.info(f"Deleted attribute {attr_name} for user {email}")
                 except ClientError as attr_error:
                     # Log the error but continue processing other attributes
-                    # This prevents a single attribute failure from blocking other operations
+                    # This prevents a single attribute failure from blocking
+                    # other operations
                     logger.warning(
-                        f"Failed to delete attribute {attr_name} for user {email}: {str(attr_error)}"
+                        f"Failed to delete attribute {attr_name} for user "
+                        f"{email}: {attr_error!s}"
                     )
 
         return True, "User attributes updated successfully"
@@ -209,7 +219,7 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
             return False, f"Error updating user: {error_message}"
 
     except Exception as e:
-        logger.error(f"Unexpected error updating Cognito user: {str(e)}")
+        logger.error(f"Unexpected error updating Cognito user: {e!s}")
         return False, "Unexpected error updating user"
 
 
@@ -220,7 +230,8 @@ def delete_researcher(email):
     Args:
         email (str): Researcher's email address (used as username)
 
-    Returns:
+    Returns
+    -------
         tuple: (bool, str) - (success, message)
     """
     try:
@@ -249,7 +260,7 @@ def delete_researcher(email):
             return False, f"Error deleting user: {error_message}"
 
     except Exception as e:
-        logger.error(f"Unexpected error deleting Cognito user: {str(e)}")
+        logger.error(f"Unexpected error deleting Cognito user: {e!s}")
         return False, "Unexpected error deleting user"
 
 
@@ -260,9 +271,10 @@ def get_researcher(email):
     Args:
         email (str): Researcher's email address (used as username)
 
-    Returns:
+    Returns
+    -------
         tuple: (user_info, error_message)
-            user_info: Researcher information dictionary if successful, None otherwise
+            user_info: Researcher information dictionary if successful, else None
             error_message: Error message if user_info is None, None otherwise
     """
     try:
@@ -271,9 +283,7 @@ def get_researcher(email):
         user_pool_id = current_app.config["COGNITO_RESEARCHER_USER_POOL_ID"]
 
         # Get user from Cognito
-        response = client.admin_get_user(
-            UserPoolId=user_pool_id, Username=email
-        )
+        response = client.admin_get_user(UserPoolId=user_pool_id, Username=email)
 
         # Extract user attributes
         user_info = {
@@ -301,5 +311,5 @@ def get_researcher(email):
             return None, f"Error getting user: {error_message}"
 
     except Exception as e:
-        logger.error(f"Unexpected error getting Cognito user: {str(e)}")
+        logger.error(f"Unexpected error getting Cognito user: {e!s}")
         return None, "Unexpected error getting user"

@@ -16,7 +16,7 @@
 
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import (
     BaseModel,
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 class ParticipantApiModel(BaseModel):
-    scope: List[str] = Field(default_factory=list)
+    scope: list[str] = Field(default_factory=list)
     api_name: str
 
     model_config = common_config
@@ -63,9 +63,9 @@ class ParticipantStudyModel(BaseModel):
     did_consent: bool
     created_on: datetime
     starts_on: datetime
-    expires_on: Optional[datetime]
-    consent_information: Optional[str]
-    data_summary: Optional[str]
+    expires_on: datetime | None
+    consent_information: str | None
+    data_summary: str | None
 
     model_config = common_config
 
@@ -87,29 +87,31 @@ class ParticipantStudyModel(BaseModel):
         return obj
 
     @field_serializer("created_on", "expires_on", mode="plain")
-    def serialize_datetimes(value: Optional[datetime]) -> Optional[str]:
+    def serialize_datetimes(value: datetime | None) -> str | None:
         return value.isoformat() if value else None
 
 
 class ParticipantModel(BaseModel):
     ditti_id: str
-    apis: List[ParticipantApiModel] = Field(default_factory=list)
-    studies: List[ParticipantStudyModel] = Field(default_factory=list)
+    apis: list[ParticipantApiModel] = Field(default_factory=list)
+    studies: list[ParticipantStudyModel] = Field(default_factory=list)
 
     model_config = common_config
 
 
 def serialize_participant(
     study_subject: StudySubject,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
-    Serializes a StudySubject ORM instance into a dictionary suitable for JSON responses.
+    Serialize a StudySubject ORM instance into a suitable dictionary.
 
     Args:
         study_subject (StudySubject): The study subject to serialize.
 
-    Returns:
-        Optional[Dict[str, Any]]: The serialized participant data if successful, otherwise None.
+    Returns
+    -------
+        Optional[Dict[str, Any]]: The serialized participant data if successful,
+            otherwise None.
     """
     try:
         participant_model = ParticipantModel.model_validate(study_subject)

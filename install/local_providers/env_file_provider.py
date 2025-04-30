@@ -54,7 +54,9 @@ class EnvFileProvider:
             "S3_BUCKET": self.config.logs_bucket_name,
             "AWS_CONFIG_SECRET_NAME": self.config.secret_name,
             "AWS_ACCESS_KEY_ID": self.aws_account_provider.aws_access_key_id,
-            "AWS_SECRET_ACCESS_KEY": self.aws_account_provider.aws_secret_access_key,
+            "AWS_SECRET_ACCESS_KEY": (
+                self.aws_account_provider.aws_secret_access_key
+            ),
             "AWS_DEFAULT_REGION": self.aws_account_provider.aws_region,
             "TESTING": "true",
         }
@@ -83,17 +85,20 @@ class EnvFileProvider:
                 f"{self.aws_account_provider.aws_region}.amazoncognito.com"
             ),
             "COGNITO_PARTICIPANT_REGION": self.aws_account_provider.aws_region,
-            "COGNITO_PARTICIPANT_USER_POOL_ID": self.config.participant_user_pool_id,
+            "COGNITO_PARTICIPANT_USER_POOL_ID": (
+                self.config.participant_user_pool_id
+            ),
             "COGNITO_RESEARCHER_CLIENT_ID": self.config.researcher_client_id,
             "COGNITO_RESEARCHER_DOMAIN": (
                 f"{self.config.researcher_user_pool_domain}.auth."
                 f"{self.aws_account_provider.aws_region}.amazoncognito.com"
             ),
             "COGNITO_RESEARCHER_REGION": self.aws_account_provider.aws_region,
-            "COGNITO_RESEARCHER_USER_POOL_ID": self.config.researcher_user_pool_id,
+            "COGNITO_RESEARCHER_USER_POOL_ID": (
+                self.config.researcher_user_pool_id
+            ),
             "LOCAL_LAMBDA_ENDPOINT": (
-                "http://localhost:9000/2015-03-31/functions/function/"
-                "invocations"
+                "http://localhost:9000/2015-03-31/functions/function/invocations"
             ),
             "TM_FSTRING": f"{self.config.project_name}-tokens",
         }
@@ -110,9 +115,7 @@ class EnvFileProvider:
         """Uninstall the .env files."""
         try:
             os.remove(self.root_filename)
-            self.logger(
-                f".env file {Colorizer.blue(self.root_filename)} removed"
-            )
+            self.logger(f".env file {Colorizer.blue(self.root_filename)} removed")
         except FileNotFoundError:
             self.logger.warning(
                 f"Env file {Colorizer.blue(self.root_filename)} not found"

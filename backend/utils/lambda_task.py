@@ -38,9 +38,7 @@ def create_and_invoke_lambda_task():
     try:
         now = datetime.now(UTC)
         # Create a new LambdaTask with status "Pending"
-        lambda_task = LambdaTask(
-            status="Pending", created_on=now, updated_on=now
-        )
+        lambda_task = LambdaTask(status="Pending", created_on=now, updated_on=now)
         db.session.add(lambda_task)
         db.session.commit()
 
@@ -103,12 +101,13 @@ def check_and_invoke_lambda_task():
 
 def invoke_lambda_task(function_id):
     """
-    Invokes an AWS Lambda function asynchronously and stores the task in the database.
+    Invoke an AWS Lambda function asynchronously and store the task in the db.
 
     Args:
         function_id: The database ID of the LambdaTask to update.
 
-    Returns:
+    Returns
+    -------
         LambdaTask: The LambdaTask object stored in the database.
     """
     try:
@@ -137,10 +136,11 @@ def invoke_lambda_task(function_id):
             )
 
         else:
-            # In development and testing environments send an async invocation to the local lambda endpoint
+            # In development and testing environments,
+            # send an async invocation to the local lambda endpoint
             def send_request(url, data):
                 try:
-                    requests.post(url, json=data)
+                    requests.post(url, json=data, timeout=30)
                 except requests.RequestException as e:
                     logger.error(f"Lambda invocation failed: {e}")
 

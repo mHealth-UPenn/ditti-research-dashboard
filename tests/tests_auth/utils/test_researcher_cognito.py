@@ -61,7 +61,7 @@ def test_create_researcher(mock_cognito_client, app_context):
     # Execute
     success, message = create_researcher(
         email="researcher@example.com",
-        temp_password="initial-password",
+        temp_password="initial-password",  # noqa: S106
         attributes={"first_name": "Test", "last_name": "Researcher"},
     )
 
@@ -87,9 +87,7 @@ def test_create_researcher(mock_cognito_client, app_context):
 def test_create_researcher_with_error(mock_cognito_client, app_context):
     """Test handling errors when creating researcher."""
     # Setup - simulate error
-    mock_cognito_client.admin_create_user.side_effect = Exception(
-        "Cognito error"
-    )
+    mock_cognito_client.admin_create_user.side_effect = Exception("Cognito error")
 
     # Execute
     success, message = create_researcher(email="researcher@example.com")
@@ -223,9 +221,7 @@ def test_delete_researcher(mock_cognito_client, app_context):
 def test_delete_researcher_with_error(mock_cognito_client, app_context):
     """Test handling errors when deleting researcher."""
     # Setup - simulate error
-    mock_cognito_client.admin_delete_user.side_effect = Exception(
-        "Cognito error"
-    )
+    mock_cognito_client.admin_delete_user.side_effect = Exception("Cognito error")
 
     # Execute
     success, message = delete_researcher(email="researcher@example.com")

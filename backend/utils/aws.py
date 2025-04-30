@@ -27,7 +27,7 @@ from requests_aws4auth import AWS4Auth
 
 class MutationClient:
     """
-    The client that makes mutation requests to AWS AppSync
+    The client that makes mutation requests to AWS AppSync.
 
     Vars
     ----
@@ -89,7 +89,7 @@ class MutationClient:
         query = self.f_string % fmt
         self.__body = {
             "query": query,
-            "variables": '{"in": %s}' % json.dumps(var),
+            "variables": f'{{"in": {json.dumps(var)}}}',
         }
 
     def set_mutation_v2(self, items):
@@ -102,8 +102,17 @@ class MutationClient:
             index = i + 1  # Start indexing at 1 for unique variables
 
             # Add variable declarations to the query
-            query += f"$availability{index}: String!, $bucket{index}: String!, $category{index}: String!, "
-            query += f"$fileName{index}: String!, $studies{index}: [String]!, $length{index}: Int!, $title{index}: String!,\n"
+            query += (
+                f"$availability{index}: String!, "
+                f"$bucket{index}: String!, "
+                f"$category{index}: String!, "
+            )
+            query += (
+                f"$fileName{index}: String!, "
+                f"$studies{index}: [String]!, "
+                f"$length{index}: Int!, "
+                f"$title{index}: String!,\n"
+            )
 
             # Prepare variables to be sent in the POST request
             variables[f"availability{index}"] = item["availability"]
@@ -125,19 +134,19 @@ class MutationClient:
         # Build the operations inside the mutation block
         for i in range(len(items)):
             index = i + 1
-            query += """
-                CreateAudioFileOperation%(index)s: createAudioFile(input: {
-                    availability: $availability%(index)s, 
-                    bucket: $bucket%(index)s, 
-                    category: $category%(index)s, 
-                    fileName: $fileName%(index)s, 
-                    studies: $studies%(index)s, 
-                    length: $length%(index)s, 
-                    title: $title%(index)s
-                }) {
+            query += f"""
+                CreateAudioFileOperation{index}: createAudioFile(input: {{
+                    availability: $availability{index},
+                    bucket: $bucket{index},
+                    category: $category{index},
+                    fileName: $fileName{index},
+                    studies: $studies{index},
+                    length: $length{index},
+                    title: $title{index}
+                }}) {{
                     id
-                }
-            """ % {"index": index}
+                }}
+            """
 
         # Close the mutation block
         query += "\n}"
@@ -304,8 +313,10 @@ class Updater:
             to update and the value is the new value to update the column
             with. Any number of key, value pairs can be passed to this function
         """
-        e = reduce(lambda l, r: l + f" {r}=:{r[0] + r[1]},", exp.keys(), "SET")
-        a = {":%s" % k[0] + k[1]: v for k, v in exp.items()}
+        e = reduce(
+            lambda acc, r: acc + f" {r}=:{r[0] + r[1]},", exp.keys(), "SET"
+        )
+        a = {f":{k[0]}" + k[1]: v for k, v in exp.items()}
         self.__update_expression = e[:-1]
         self.__expression_attribute_values = a
 
@@ -335,7 +346,7 @@ class Updater:
             If tablekey or key is not set
 
         Returns
-        ------
+        -------
         dict
             The return value of DynamoDB.Table.update_items
         """
@@ -582,8 +593,7 @@ class Query:
             pos = match.start(0)
 
             raise ValueError(
-                "Query contains invalid string at position %s: %s"
-                % (pos, string)
+                f"Query contains invalid string at position {pos}: {string}"
             )
 
         return True
@@ -591,7 +601,9 @@ class Query:
     @classmethod
     def build_query(cls, query):
         """
-        Build the query expression to pass to DynamoDB.Table.scan. The resulting query returns only elements that have
+        Build the query expression to pass to DynamoDB.Table.scan.
+
+        The resulting query returns only elements that have
         not been deleted.
 
         Args
@@ -618,7 +630,15 @@ class Query:
     @classmethod
     def build_blocks(cls, query, blocks=None):
         """
-        Extracts paranthentical subexpressions from a given query. The expression is
+        Extract paranthentical subexpressions from a given query.
+
+        The expression is a list of subexpressions sorted in the order of
+        evaluation. Nested subexpressions are replaced with "$X" in following
+        subexpressions, where X is the index of the nested subexpression.
+        For example, the expression
+        (a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))
+        will return
+        ["a=="a"ORa=="b"", "b=="b"ORb=="c"", "b=="a"AND$1", "$0AND$2"]
 
         Args
         ----
@@ -628,14 +648,7 @@ class Query:
         Returns
         -------
         list of str
-            a list of subexpressions sorted in the order of evaluation. Nested
-            subexpressions are replaced with "$X" in following subexpressions,
-            where X is the index of the nested subexpression. For example, the
-            expression "(a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))" will
-            return:
-                ["a=="a"ORa=="b"", "b=="b"ORb=="c"", "b=="a"AND$1", "$0AND$2"]
         """
-
         # an empty list on the first call
         blocks = blocks or []
 
@@ -651,7 +664,7 @@ class Query:
         # replace nested subqueries with "$X"
         for i, block in enumerate(match):
             _i = i + len(blocks)
-            query = query.replace(f"({block})", "$%s" % _i)
+            query = query.replace(f"({block})", f"${_i}")
 
         blocks.extend(match)
         return cls.build_blocks(query, blocks=blocks)
@@ -673,7 +686,6 @@ class Query:
         -------
         DynamoDB.conditions.Attr
         """
-
         # an empty list on the first call
         expressions = expressions or []
 
@@ -735,7 +747,6 @@ class Query:
         -------
         DynamoDB.conditions.Attr
         """
-
         # remove conditionals
         popped = re.sub(cls.conditionals, "", string)
 

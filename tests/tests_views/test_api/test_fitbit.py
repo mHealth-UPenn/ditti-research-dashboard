@@ -9,7 +9,6 @@ from oauthlib.oauth2 import WebApplicationClient
 
 from backend.extensions import db, tm
 from backend.models import Api, JoinStudySubjectApi, StudySubject
-from tests.testing_utils import mock_db_query_result
 
 
 @pytest.fixture
@@ -171,21 +170,21 @@ def test_fitbit_callback_success_new_association(
                 # Verify that tokens are stored
                 mock_add_update_api_token.assert_called_once()
                 args, kwargs = mock_add_update_api_token.call_args
-                assert (
-                    kwargs["api_name"] == "Fitbit"
-                ), f"Expected api_name 'Fitbit', got {kwargs['api_name']}"
+                assert kwargs["api_name"] == "Fitbit", (
+                    f"Expected api_name 'Fitbit', got {kwargs['api_name']}"
+                )
                 assert (
                     kwargs["ditti_id"] == study_subject.ditti_id
                 ), f"Expected ditti_id {study_subject.ditti_id}, got {
                     kwargs['ditti_id']
                 }"
                 assert (
-                    kwargs["tokens"]["access_token"] == "access_token_value"
+                    kwargs["tokens"]["access_token"] == "access_token_value"  # noqa: S105
                 ), f"Expected access_token 'access_token_value', got {
                     kwargs['tokens']['access_token']
                 }"
                 assert (
-                    kwargs["tokens"]["refresh_token"] == "refresh_token_value"
+                    kwargs["tokens"]["refresh_token"] == "refresh_token_value"  # noqa: S105
                 ), f"Expected refresh_token 'refresh_token_value', got {
                     kwargs['tokens']['refresh_token']
                 }"

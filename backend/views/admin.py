@@ -18,7 +18,6 @@ import logging
 import traceback
 from datetime import UTC, datetime
 
-import nh3
 from flask import Blueprint, jsonify, make_response, request
 from sqlalchemy import tuple_
 
@@ -55,7 +54,9 @@ logger = logging.getLogger(__name__)
 @researcher_auth_required("View", "Admin Dashboard")
 def account(account):
     """
-    Get one account or a list of all accounts. This will return one account if
+    Get one account or a list of all accounts.
+
+    This will return one account if
     the account's database primary key is passed as a URL option
 
     Options
@@ -108,6 +109,7 @@ def account(account):
 def account_create(account):
     """
     Create a new account in the database and Cognito user pool.
+
     Cognito will send an email with a temporary password to the user.
 
     Request syntax
@@ -169,11 +171,13 @@ def account_create(account):
                 # International format: +[country code][number]
                 import re
 
-                # Check for + followed by digits not starting with 0 (country codes don't start with 0)
+                # Check for + followed by digits not starting with 0
+                # (country codes don't start with 0)
                 if not re.match(r"^\+[1-9]\d*$", phone):
                     return make_response(
                         {
-                            "msg": "Phone number must start with + followed by country code and digits"
+                            "msg": "Phone number must start with + followed by "
+                            "country code and digits"
                         },
                         400,
                     )
@@ -189,9 +193,7 @@ def account_create(account):
         # Add access groups
         for entry in data["access_groups"]:
             access_group = AccessGroup.query.get(entry["id"])
-            JoinAccountAccessGroup(
-                access_group=access_group, account=new_account
-            )
+            JoinAccountAccessGroup(access_group=access_group, account=new_account)
 
         # Add studies
         for entry in data["studies"]:
@@ -220,9 +222,12 @@ def account_create(account):
             db.session.commit()
             return make_response({"msg": message}, 400)
 
-        msg = "Account Created Successfully. An email with temporary login credentials has been sent to the user."
+        msg = (
+            "Account Created Successfully. An email with temporary login "
+            "credentials has been sent to the user."
+        )
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
@@ -308,7 +313,8 @@ def account_edit(account):
                 if not re.match(r"^\+[1-9]\d*$", phone):
                     return make_response(
                         {
-                            "msg": "Phone number must start with + followed by country code and digits"
+                            "msg": "Phone number must start with + "
+                            "followed by country code and digits"
                         },
                         400,
                     )
@@ -323,7 +329,8 @@ def account_edit(account):
             # Log any attempt to change email
             if data["email"] != edited_account.email:
                 logger.warning(
-                    f"Attempt to change email from {edited_account.email} to {data['email']} was blocked"
+                    f"Attempt to change email from {edited_account.email} to "
+                    f"{data['email']} was blocked"
                 )
             # Remove email from data to prevent it from being updated
             del data["email"]
@@ -398,7 +405,8 @@ def account_edit(account):
         if not success:
             return make_response(
                 {
-                    "msg": f"Account updated in database but failed to update in Cognito: {message}"
+                    "msg": f"Account updated in database but failed to update "
+                    f"in Cognito: {message}"
                 },
                 400,
             )
@@ -423,6 +431,7 @@ def account_edit(account):
 def account_archive(account):
     """
     Archive an account in the database and disable it in Cognito.
+
     This action has the same effect as deleting an entry from the database.
     However, archived items are only filtered from queries and can be retrieved.
 
@@ -464,9 +473,11 @@ def account_archive(account):
 
         if not success:
             logger.warning(
-                f"Failed to disable Cognito account for {archived_account.email}: {message}"
+                f"Failed to disable Cognito account for "
+                f"{archived_account.email}: {message}"
             )
-            # We don't return an error here because the account was successfully archived in the database
+            # We don't return an error here because the account was
+            # successfully archived in the database
 
         msg = "Account Archived Successfully"
 
@@ -486,8 +497,10 @@ def account_archive(account):
 @researcher_auth_required("View", "Admin Dashboard")
 def study(account):
     """
-    Get one study or a list of all studies. This will return one study if the
-    study's database primary key is passed as a URL option
+    Get one study or a list of all studies.
+
+    This will return one study if the study's database primary key
+    is passed as a URL option.
 
     Options
     -------
@@ -620,7 +633,7 @@ def study_create(account):
 @researcher_auth_required("Edit", "Studies")
 def study_edit(account):
     """
-    Edit an existing study
+    Edit an existing study.
 
     Request syntax
     --------------
@@ -694,9 +707,10 @@ def study_edit(account):
 @researcher_auth_required("Archive", "Studies")
 def study_archive(account):
     """
-    Archive a study. This action has the same effect as deleting an entry
-    from the database. However, archived items are only filtered from queries
-    and can be retrieved.
+    Archive a study.
+
+    This action has the same effect as deleting an entry from the database.
+    However, archived items are only filtered from queries and can be retrieved.
 
     Request syntax
     --------------
@@ -740,8 +754,10 @@ def study_archive(account):
 @researcher_auth_required("View", "Admin Dashboard")
 def access_group(account):
     """
-    Get one access group or a list of all studies. This will return one access
-    group if the access groups's database primary key is passed as a URL option
+    Get one access group or a list of all studies.
+
+    This will return one access group if the access groups's
+    database primary key is passed as a URL option.
 
     Options
     -------
@@ -955,9 +971,10 @@ def access_group_edit(account):
 @researcher_auth_required("Archive", "Access Groups")
 def access_group_archive(account):
     """
-    Archive an access group. This action has the same effect as deleting an entry
-    from the database. However, archived items are only filtered from queries
-    and can be retrieved.
+    Archive an access group.
+
+    This action has the same effect as deleting an entry from the database.
+    However, archived items are only filtered from queries and can be retrieved.
 
     Request syntax
     --------------
@@ -1001,8 +1018,10 @@ def access_group_archive(account):
 @researcher_auth_required("View", "Admin Dashboard")
 def role(account):
     """
-    Get one role or a list of all studies. This will return one role if the
-    role's database primary key is passed as a URL option
+    Get one role or a list of all studies.
+
+    This will return one role if the role's database primary key
+    is passed as a URL option.
 
     Options
     -------
@@ -1203,9 +1222,10 @@ def role_edit(account):
 @researcher_auth_required("Archive", "Roles")
 def role_archive(account):
     """
-    Archive a role. This action has the same effect as deleting an entry
-    from the database. However, archived items are only filtered from queries
-    and can be retrieved.
+    Archive a role.
+
+    This action has the same effect as deleting an entry from the database.
+    However, archived items are only filtered from queries and can be retrieved.
 
     Request syntax
     --------------
@@ -1308,7 +1328,7 @@ def app_edit(account):
 @researcher_auth_required("View", "Admin Dashboard")
 def action(account):
     """
-    Get all actions
+    Get all actions.
 
     Response syntax (200)
     ---------------------
@@ -1344,7 +1364,7 @@ def action(account):
 @researcher_auth_required("View", "Admin Dashboard")
 def resource(account):
     """
-    Get all resources
+    Get all resources.
 
     Response syntax (200)
     ---------------------
@@ -1380,9 +1400,10 @@ def resource(account):
 @researcher_auth_required("View", "Admin Dashboard")
 def about_sleep_template(account):
     """
-    Get one about sleep template or a list of all studies. This will return one
-    about sleep template if the about sleep template"s database primary key is
-    passed as a URL option
+    Get one about sleep template or a list of all studies.
+
+    This will return one about sleep template if the about sleep template's
+    database primary key is passed as a URL option.
 
     Options
     -------
@@ -1426,7 +1447,8 @@ def about_sleep_template(account):
 
         return make_response(
             {
-                "msg": "Internal server error when retrieving about sleep templates."
+                "msg": "Internal server error when retrieving about "
+                "sleep templates."
             },
             500,
         )
@@ -1476,9 +1498,7 @@ def about_sleep_template_create(account):
         db.session.rollback()
 
         return make_response(
-            {
-                "msg": "Internal server error when creating about sleep template."
-            },
+            {"msg": "Internal server error when creating about sleep template."},
             500,
         )
 
@@ -1490,7 +1510,7 @@ def about_sleep_template_create(account):
 @researcher_auth_required("Edit", "Studies")
 def about_sleep_template_edit(account):
     """
-    Edit an existing about sleep template
+    Edit an existing about sleep template.
 
     Request syntax
     --------------
@@ -1539,9 +1559,7 @@ def about_sleep_template_edit(account):
         db.session.rollback()
 
         return make_response(
-            {
-                "msg": "Internal server error when updating about sleep template."
-            },
+            {"msg": "Internal server error when updating about sleep template."},
             500,
         )
 
@@ -1553,9 +1571,10 @@ def about_sleep_template_edit(account):
 @researcher_auth_required("Archive", "Studies")
 def about_sleep_template_archive(account):
     """
-    Archive an about sleep template. This action has the same effect as
-    deleting an entry from the database. However, archived items are only
-    filtered from queries and can be retrieved.
+    Archive an about sleep template.
+
+    This action has the same effect as deleting an entry from the database.
+    However, archived items are only filtered from queries and can be retrieved.
 
     Request syntax
     --------------
@@ -1591,9 +1610,7 @@ def about_sleep_template_archive(account):
         db.session.rollback()
 
         return make_response(
-            {
-                "msg": "Internal server error when archiving about sleep template."
-            },
+            {"msg": "Internal server error when archiving about sleep template."},
             500,
         )
 
@@ -1604,8 +1621,10 @@ def about_sleep_template_archive(account):
 @researcher_auth_required("View", "Participants")
 def study_subject(account):
     """
-    Get one study subject or a list of all study subjects. This will return one
-    study subject if the study subject's database primary key is passed as a URL option.
+    Get one study subject or a list of all study subjects.
+
+    This will return one study subject if the study subject's database
+    primary key is passed as a URL option.
 
     Options
     -------
@@ -1642,8 +1661,7 @@ def study_subject(account):
 
             # Query for the specific StudySubject, excluding archived entries
             query = StudySubject.query.filter(
-                ~StudySubject.is_archived
-                & (StudySubject.id == study_subject_id)
+                ~StudySubject.is_archived & (StudySubject.id == study_subject_id)
             )
         else:
             # Query for all non-archived StudySubjects
@@ -1756,7 +1774,8 @@ def study_subject_create(account):
             if study.is_archived:
                 return make_response(
                     {
-                        "msg": f"Cannot associate with archived study ID: {study_id}"
+                        "msg": f"Cannot associate with archived study ID: "
+                        f"{study_id}"
                     },
                     400,
                 )
@@ -1771,7 +1790,8 @@ def study_subject_create(account):
                 except ValueError:
                     return make_response(
                         {
-                            "msg": f"Invalid date format for expires_on: {expires_on_str}"
+                            "msg": f"Invalid date format for expires_on: "
+                            f"{expires_on_str}"
                         },
                         400,
                     )
@@ -1827,7 +1847,7 @@ def study_subject_create(account):
 
         return jsonify({"msg": "Study Subject Created Successfully"}), 200
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
         db.session.rollback()
@@ -1877,7 +1897,8 @@ def study_subject_archive(account):
         if study_subject is None:
             return make_response(
                 {
-                    "msg": f"Study Subject with ID {study_subject_id} does not exist"
+                    "msg": f"Study Subject with ID {study_subject_id} "
+                    f"does not exist"
                 },
                 400,
             )
@@ -1901,7 +1922,7 @@ def study_subject_archive(account):
 @researcher_auth_required("Edit", "Participants")
 def study_subject_edit(account):
     """
-    Edit an existing study subject
+    Edit an existing study subject.
 
     Request syntax
     --------------
@@ -1965,7 +1986,8 @@ def study_subject_edit(account):
         if not study_subject:
             return make_response(
                 {
-                    "msg": f"Study Subject with ID {study_subject_id} does not exist"
+                    "msg": f"Study Subject with ID {study_subject_id} "
+                    f"does not exist"
                 },
                 400,
             )
@@ -1978,9 +2000,7 @@ def study_subject_edit(account):
                     StudySubject.ditti_id == new_ditti_id,
                     StudySubject.id != study_subject_id,
                 ).first():
-                    return make_response(
-                        {"msg": "ditti_id already exists"}, 400
-                    )
+                    return make_response({"msg": "ditti_id already exists"}, 400)
                 study_subject.ditti_id = new_ditti_id
 
         # Update other non-relationship fields using populate_model
@@ -2015,7 +2035,8 @@ def study_subject_edit(account):
                 if study.is_archived:
                     return make_response(
                         {
-                            "msg": f"Cannot associate with archived study ID: {study_id}"
+                            "msg": f"Cannot associate with archived study ID: "
+                            f"{study_id}"
                         },
                         400,
                     )
@@ -2031,7 +2052,8 @@ def study_subject_edit(account):
                     except ValueError:
                         return make_response(
                             {
-                                "msg": f"Invalid date format for expires_on: {expires_on_str}"
+                                "msg": f"Invalid date format for expires_on: "
+                                f"{expires_on_str}"
                             },
                             400,
                         )
@@ -2048,7 +2070,8 @@ def study_subject_edit(account):
                     except ValueError:
                         return make_response(
                             {
-                                "msg": f"Invalid date format for starts_on: {starts_on_str}"
+                                "msg": f"Invalid date format for starts_on: "
+                                f"{starts_on_str}"
                             },
                             400,
                         )
@@ -2102,7 +2125,8 @@ def study_subject_edit(account):
                 if api.is_archived:
                     return make_response(
                         {
-                            "msg": f"Cannot associate with archived API ID: {api_id}"
+                            "msg": f"Cannot associate with archived API ID: "
+                            f"{api_id}"
                         },
                         400,
                     )
@@ -2111,7 +2135,8 @@ def study_subject_edit(account):
                 if not api_user_uuid:
                     return make_response(
                         {
-                            "msg": f"'api_user_uuid' is required for API ID {api_id}"
+                            "msg": f"'api_user_uuid' is required for API ID "
+                            f"{api_id}"
                         },
                         400,
                     )
@@ -2157,8 +2182,10 @@ def study_subject_edit(account):
 @researcher_auth_required("View", "APIs")
 def api(account):
     """
-    Get one API or a list of all APIs. This will return one API if the API's
-    database primary key is passed as a URL option.
+    Get one API or a list of all APIs.
+
+    This will return one API if the API's database primary key
+    is passed as a URL option.
 
     Options
     -------
@@ -2173,6 +2200,13 @@ def api(account):
         },
         ...
     ]
+
+    Response syntax (400)
+    ---------------------
+    {
+        msg: "API with the same name already exists" or
+             "API with ID X does not exist"
+    }
 
     Response syntax (500)
     ---------------------
@@ -2295,7 +2329,8 @@ def api_edit(account):
     Response syntax (400)
     ---------------------
     {
-        msg: "API with the same name already exists" or "API with ID X does not exist"
+        msg: "API with the same name already exists"
+            or "API with ID X does not exist"
     }
 
     Response syntax (500)
@@ -2350,9 +2385,11 @@ def api_edit(account):
 @researcher_auth_required("Archive", "APIs")
 def api_archive(account):
     """
-    Archive an API. This action has the same effect as deleting an entry
-    from the database without actually deleting it. An API that is archived
-    still exists in the database but is not included in queries
+    Archive an API.
+
+    This action has the same effect as deleting an entry from the database
+    without actually deleting it. An API that is archived still exists
+    in the database but is not included in queries.
 
     Request syntax
     --------------

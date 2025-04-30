@@ -17,7 +17,8 @@
 import functools
 import inspect
 import logging
-from typing import Any, Callable, Dict, Optional, TypeVar, Union, cast
+from collections.abc import Callable
+from typing import Any, TypeVar, cast
 
 from flask import make_response
 
@@ -34,11 +35,11 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 
 def researcher_auth_required(
-    action: Optional[Union[str, Callable]] = None,
-    resource: Optional[str] = None,
+    action: str | Callable | None = None,
+    resource: str | None = None,
 ) -> Callable:
     """
-    Decorator that authenticates researchers using tokens and optionally checks permissions.
+    Authenticate researchers using tokens and optionally checks permissions.
 
     This decorator:
     1. Validates the token using the auth controller
@@ -50,15 +51,16 @@ def researcher_auth_required(
         action: The action to check permissions for or the function to decorate
         resource: The resource to check permissions for
 
-    Returns:
+    Returns
+    -------
         The decorated function with authentication and authorization added
     """
 
     def decorator(func: F) -> F:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Dict[str, Any]) -> Any:
+        def wrapper(*args: Any, **kwargs: dict[str, Any]) -> Any:
             # Check if we've already authenticated in a previous decorator
-            # and added account to kwargs - only add once to avoid parameter conflict
+            # and added account to kwargs - only add once to avoid param conflict
             if "account" in kwargs:
                 # Account already authenticated and added by a previous decorator
                 auth_account = cast(Account, kwargs["account"])
@@ -68,9 +70,7 @@ def researcher_auth_required(
 
                 if not id_token:
                     logger.warning("No token found in request")
-                    return make_response(
-                        {"msg": "Authentication required"}, 401
-                    )
+                    return make_response({"msg": "Authentication required"}, 401)
 
                 # Create auth controller and validate token
                 auth_controller = ResearcherAuthController()
@@ -100,7 +100,7 @@ def researcher_auth_required(
             # Simplify the parameter passing logic
             if "account" not in sig.parameters and "account" in kwargs:
                 # If function doesn't expect 'account', remove it from kwargs
-                account = kwargs.pop("account")
+                kwargs.pop("account")
 
             return func(*args, **kwargs)
 

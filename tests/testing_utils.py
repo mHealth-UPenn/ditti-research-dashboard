@@ -155,15 +155,11 @@ def create_tables():
 
 def create_joins():
     # Associate AccessGroups with Apps
-    foo_access_group = AccessGroup.query.filter(
-        AccessGroup.name == "foo"
-    ).first()
+    foo_access_group = AccessGroup.query.filter(AccessGroup.name == "foo").first()
     foo_app = App.query.filter(App.name == "foo").first()
     foo_access_group.app = foo_app
 
-    bar_access_group = AccessGroup.query.filter(
-        AccessGroup.name == "bar"
-    ).first()
+    bar_access_group = AccessGroup.query.filter(AccessGroup.name == "bar").first()
     bar_app = App.query.filter(App.name == "bar").first()
     bar_access_group.app = bar_app
 
@@ -309,9 +305,7 @@ def setup_auth_flow_session(client, user_type="participant"):
         flask_session["cognito_state"] = "mock_state"
         flask_session["cognito_code_verifier"] = "mock_code_verifier"
         flask_session["cognito_nonce"] = "mock_nonce"
-        flask_session["cognito_nonce_generated"] = int(
-            datetime.now().timestamp()
-        )
+        flask_session["cognito_nonce_generated"] = int(datetime.now().timestamp())
         flask_session["auth_flow_user_type"] = user_type
 
     return "mock_state"
@@ -324,9 +318,6 @@ def get_unwrapped_view(view_module, view_func_name):
     This allows testing the core view logic without authentication
     decorators getting in the way.
     """
-    import inspect
-    from functools import wraps
-
     # Get the wrapped view function
     view_func = getattr(view_module, view_func_name)
 
@@ -348,7 +339,8 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
         client: Flask test client
         is_admin: Whether to make the mocked researcher an admin
 
-    Returns:
+    Returns
+    -------
         Headers dict with authentication token
     """
     # Create a mock account for the researcher
@@ -357,13 +349,13 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     mock_account = Account.query.filter_by(email="foo@email.com").first()
 
     # Generate a mock ID token
-    mock_token = "mock_id_token_for_researcher"
+    mock_token = "mock_id_token_for_researcher"  # noqa: S105
 
     # Create headers with the mock token
     headers = {"Authorization": f"Bearer {mock_token}"}
 
     # Patch the ResearcherAuthController to return our mock account
-    from unittest.mock import MagicMock, patch
+    from unittest.mock import patch
 
     from backend.auth.controllers.researcher import ResearcherAuthController
 
@@ -376,7 +368,6 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     patcher1.start()
 
     # Also patch the check_permissions function to always return True
-    from backend.auth.decorators.researcher import check_permissions
 
     patcher2 = patch(
         "backend.auth.decorators.researcher.check_permissions",
@@ -418,7 +409,6 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     except (ImportError, AttributeError) as e:
         # If these modules or methods don't exist, just continue
         print(f"Skipping some patchers due to: {e}")
-        pass
 
     # Store the patchers in the client for cleanup
     if not hasattr(client, "_auth_patchers"):
@@ -442,7 +432,8 @@ def mock_db_query_result(model_class, result_or_results):
         model_class: The SQLAlchemy model class to mock
         result_or_results: Single object or list of objects to return from the query
 
-    Returns:
+    Returns
+    -------
         Mock query object
 
     Example:
@@ -494,7 +485,8 @@ def mock_boto3_client(service_name, mock_methods=None):
         service_name: Name of the AWS service (e.g., 'cognito-idp')
         mock_methods: Dict of method names and their return values or side effects
 
-    Returns:
+    Returns
+    -------
         Mock boto3 client
 
     Example:
@@ -520,6 +512,6 @@ def mock_boto3_client(service_name, mock_methods=None):
 
     # Patch boto3.client to return our mock
     patcher = patch("boto3.client", return_value=mock_client)
-    mock_boto3 = patcher.start()
+    patcher.start()
 
     return mock_client

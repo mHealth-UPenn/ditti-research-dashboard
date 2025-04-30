@@ -1,13 +1,12 @@
+import logging
 import os
-import random
 import re
+import secrets
 import string
 from datetime import datetime
-from pprint import pprint
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 import boto3
-from sqlalchemy import select
 
 import backend.models as m
 from backend.app import create_app
@@ -20,20 +19,28 @@ class User(TypedDict):
     _lastChangedAt: int
     _version: int
     createdAt: str
-    exp_time: Optional[str]
+    exp_time: str | None
     id: str
-    tap_permission: Optional[bool]
-    team_email: Optional[str]
+    tap_permission: bool | None
+    team_email: str | None
     updatedAt: str
-    user_permission_id: Optional[str]
+    user_permission_id: str | None
 
 
 def generate_temp_password(length=20):
     characters = string.ascii_letters + string.digits
-    return "".join(random.choice(characters) for i in range(length))
+    return "".join(secrets.choice(characters) for i in range(length))
 
 
 if __name__ == "__main__":
+    # Set up logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        filename="participant_migration.log",
+    )
+    logger = logging.getLogger(__name__)
+
     app = create_app()
     users: list[User] = Query("User").scan()["Items"]
     client = boto3.client("cognito-idp")
@@ -41,9 +48,7 @@ if __name__ == "__main__":
     with app.app_context():
         for user in users:
             try:
-                match = re.match(
-                    r"^[A-Za-z]+(?=\d)", user["user_permission_id"]
-                )
+                match = re.match(r"^[A-Za-z]+(?=\d)", user["user_permission_id"])
 
                 if not match:
                     continue
@@ -57,9 +62,7 @@ if __name__ == "__main__":
                 if not study:
                     continue
 
-                participant = m.StudySubject(
-                    ditti_id=user["user_permission_id"]
-                )
+                participant = m.StudySubject(ditti_id=user["user_permission_id"])
                 m.JoinStudySubjectStudy(
                     study_subject=participant,
                     study=study,
@@ -79,5 +82,9 @@ if __name__ == "__main__":
                     MessageAction="SUPPRESS",
                 )
 
-            except Exception:
+            except Exception as e:
+                logger.error(
+                    f"Error processing user {user.get('user_permission_id')}: {e!s}",
+                    exc_info=True,
+                )
                 continue

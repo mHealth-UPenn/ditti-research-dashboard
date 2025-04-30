@@ -1,4 +1,5 @@
-"""remove password and public_id fields, update phone number format
+"""
+Remove password and public_id fields, update phone number format.
 
 Revision ID: 1ea7fa443990
 Revises: 65a966f12056
@@ -93,9 +94,10 @@ def downgrade():
     result = conn.execute(sa.select([account_table.c.id]))
     account_ids = [row[0] for row in result]
 
-    # Set a dummy password hash (this is a placeholder, real passwords can't be restored)
+    # Set a dummy password hash
+    # (this is a placeholder, real passwords can't be restored)
     dummy_password = (
-        "$2b$12$c6AqbeZ4OLQVbzL.DF9dleOxDf6Y3QDrVJPdCZ3m0U8xdWtxRHAuW"
+        "$2b$12$c6AqbeZ4OLQVbzL.DF9dleOxDf6Y3QDrVJPdCZ3m0U8xdWtxRHAuW"  # noqa: S105
     )
 
     # Update each account individually with a unique UUID
@@ -110,9 +112,7 @@ def downgrade():
     with op.batch_alter_table("account", schema=None) as batch_op:
         batch_op.alter_column("public_id", nullable=False)
         batch_op.alter_column("_password", nullable=False)
-        batch_op.create_unique_constraint(
-            "account_public_id_key", ["public_id"]
-        )
+        batch_op.create_unique_constraint("account_public_id_key", ["public_id"])
 
     # Get phone numbers and process them individually
     result = conn.execute(

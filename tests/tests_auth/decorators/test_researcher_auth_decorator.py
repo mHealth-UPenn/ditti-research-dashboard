@@ -6,7 +6,7 @@ from flask import jsonify, make_response
 
 from backend.auth.decorators.researcher import researcher_auth_required
 
-from .test_auth_common import create_mock_response, test_app
+from .test_auth_common import create_mock_response, test_app  # noqa: F401
 
 
 class TestResearcherAuthDecorator:

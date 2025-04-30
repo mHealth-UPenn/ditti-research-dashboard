@@ -19,7 +19,6 @@ import os
 import random
 import string
 from getpass import getpass
-from typing import Optional
 
 from install.project_config.project_config_types import (
     CognitoConfig,
@@ -29,23 +28,15 @@ from install.project_config.project_config_types import (
     SecretsResourceManagerConfig,
     UserInput,
 )
-from install.utils import (
-    Colorizer,
-    Logger,
-    is_valid_email,
-    is_valid_name,
-)
+from install.utils import Colorizer, Logger, is_valid_email, is_valid_name
 from install.utils.enums import FString
-from install.utils.exceptions import (
-    CancelInstallation,
-    ProjectConfigError,
-)
+from install.utils.exceptions import CancelInstallation, ProjectConfigError
 
 
 class ProjectConfigProvider:
     project_config_filename: str = "project-config.json"
-    user_input: Optional[UserInput]
-    project_config: Optional[ProjectConfig]
+    user_input: UserInput | None
+    project_config: ProjectConfig | None
 
     def __init__(
         self,
@@ -56,20 +47,21 @@ class ProjectConfigProvider:
         self.project_config = None
         self.user_input = None
         self.hashstr = "".join(
-            random.choices(string.ascii_letters + string.digits, k=8)
+            random.choices(string.ascii_letters + string.digits, k=8)  # noqa: S311
         ).lower()
 
     def load_existing_config(self) -> None:
         """Load project config from a JSON file."""
         if not os.path.exists(self.project_config_filename):
-            self.logger.error(
-                f"Project config file {Colorizer.blue(self.project_config_filename)} not found"
+            msg = (
+                "Project config file "
+                f"{Colorizer.blue(self.project_config_filename)}"
+                " not found"
             )
-            raise ProjectConfigError(
-                f"Project config file {Colorizer.blue(self.project_config_filename)} not found"
-            )
+            self.logger.error(msg)
+            raise ProjectConfigError(msg)
 
-        with open(self.project_config_filename, "r") as f:
+        with open(self.project_config_filename) as f:
             self.project_config = json.load(f)
 
     @property
@@ -99,9 +91,7 @@ class ProjectConfigProvider:
     def participant_user_pool_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"][
-            "participant_user_pool_name"
-        ]
+        return self.project_config["aws"]["cognito"]["participant_user_pool_name"]
 
     @participant_user_pool_name.setter
     def participant_user_pool_name(self, value: str) -> None:
@@ -120,9 +110,9 @@ class ProjectConfigProvider:
 
     @participant_user_pool_domain.setter
     def participant_user_pool_domain(self, value: str) -> None:
-        self.project_config["aws"]["cognito"][
-            "participant_user_pool_domain"
-        ] = value
+        self.project_config["aws"]["cognito"]["participant_user_pool_domain"] = (
+            value
+        )
         self.write_project_config()
 
     @property
@@ -133,9 +123,7 @@ class ProjectConfigProvider:
 
     @participant_user_pool_id.setter
     def participant_user_pool_id(self, value: str) -> None:
-        self.project_config["aws"]["cognito"]["participant_user_pool_id"] = (
-            value
-        )
+        self.project_config["aws"]["cognito"]["participant_user_pool_id"] = value
         self.write_project_config()
 
     @property
@@ -153,15 +141,11 @@ class ProjectConfigProvider:
     def researcher_user_pool_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["cognito"][
-            "researcher_user_pool_name"
-        ]
+        return self.project_config["aws"]["cognito"]["researcher_user_pool_name"]
 
     @researcher_user_pool_name.setter
     def researcher_user_pool_name(self, value: str) -> None:
-        self.project_config["aws"]["cognito"]["researcher_user_pool_name"] = (
-            value
-        )
+        self.project_config["aws"]["cognito"]["researcher_user_pool_name"] = value
         self.write_project_config()
 
     @property
@@ -238,9 +222,7 @@ class ProjectConfigProvider:
     def tokens_secret_name(self) -> str:
         if self.project_config is None:
             return ""
-        return self.project_config["aws"]["secrets_manager"][
-            "tokens_secret_name"
-        ]
+        return self.project_config["aws"]["secrets_manager"]["tokens_secret_name"]
 
     @tokens_secret_name.setter
     def tokens_secret_name(self, value: str) -> None:
@@ -302,9 +284,11 @@ class ProjectConfigProvider:
 
     def get_user_input(self) -> None:
         if self.project_settings_exists():
-            raise ProjectConfigError(
-                "Project settings already exist. Please uninstall the project first."
+            msg = (
+                "Project settings already exist. Please uninstall the project "
+                "first."
             )
+            raise ProjectConfigError(msg)
 
         self.logger(
             "\nThis script will install the development environment for"
@@ -447,10 +431,16 @@ class ProjectConfigProvider:
         """Uninstall the project config."""
         try:
             os.remove(self.project_config_filename)
-            self.logger(
-                f"Project config file {Colorizer.blue(self.project_config_filename)} removed"
+            msg = (
+                "Project config file "
+                f"{Colorizer.blue(self.project_config_filename)}"
+                " removed"
             )
+            self.logger(msg)
         except FileNotFoundError:
-            self.logger.warning(
-                f"Project config file {Colorizer.blue(self.project_config_filename)} not found"
+            msg = (
+                "Project config file "
+                f"{Colorizer.blue(self.project_config_filename)}"
+                " not found"
             )
+            self.logger.warning(msg)

@@ -57,9 +57,7 @@ class TestAuthControllerBase:
                 "backend.auth.controllers.base.current_app"
             ) as mock_current_app:
                 # In the implementation, it checks CORS_ORIGINS for this value
-                mock_current_app.config = {
-                    "CORS_ORIGINS": "http://test-frontend"
-                }
+                mock_current_app.config = {"CORS_ORIGINS": "http://test-frontend"}
                 frontend_url = auth_controller.get_frontend_url()
 
         assert frontend_url == "http://test-frontend"
@@ -70,7 +68,7 @@ class TestAuthControllerBase:
         mock_redirect_response = MagicMock()
 
         with app.test_request_context():
-            app.secret_key = "test-secret-key"  # Required for session
+            app.secret_key = "test-secret-key"  # noqa: S105
 
             # Mock the login method directly to avoid implementation details
             with patch.object(
@@ -86,7 +84,7 @@ class TestAuthControllerBase:
         mock_success_response = MagicMock(name="success_response")
 
         with app.test_request_context("/?state=test-state"):
-            app.secret_key = "test-secret-key"  # Required for session
+            app.secret_key = "test-secret-key"  # noqa: S105
 
             # Mock the callback method directly to avoid implementation details
             with patch.object(
@@ -102,7 +100,7 @@ class TestAuthControllerBase:
         mock_error_response = MagicMock(name="error_response")
 
         with app.test_request_context("/?error=access_denied&state=test-state"):
-            app.secret_key = "test-secret-key"  # Required for session
+            app.secret_key = "test-secret-key"  # noqa: S105
 
             # Mock the callback method to return an error
             with patch.object(
@@ -144,7 +142,7 @@ class TestAuthControllerBase:
         mock_logout_response = MagicMock(name="logout_response")
 
         with app.test_request_context():
-            app.secret_key = "test-secret-key"  # Required for session
+            app.secret_key = "test-secret-key"  # noqa: S105
 
             # Mock the logout method directly
             with patch.object(
@@ -160,7 +158,7 @@ class TestAuthControllerBase:
         mock_success_response = MagicMock(name="success_response")
 
         with app.test_request_context():
-            app.secret_key = "test-secret-key"  # Required for session
+            app.secret_key = "test-secret-key"  # noqa: S105
 
             # Mock request cookies and the check_login method
             with patch("backend.auth.controllers.base.request") as mock_request:
@@ -181,7 +179,7 @@ class TestAuthControllerBase:
         mock_error_response = MagicMock(name="error_response")
 
         with app.test_request_context():
-            app.secret_key = "test-secret-key"  # Required for session
+            app.secret_key = "test-secret-key"  # noqa: S105
 
             # Mock request with no cookies and the check_login method
             with patch("backend.auth.controllers.base.request") as mock_request:
@@ -202,7 +200,7 @@ class TestAuthControllerBase:
         mock_error_response = MagicMock(name="error_response")
 
         with app.test_request_context():
-            app.secret_key = "test-secret-key"  # Required for session
+            app.secret_key = "test-secret-key"  # noqa: S105
 
             # Mock request cookies and token verification
             with patch("backend.auth.controllers.base.request") as mock_request:

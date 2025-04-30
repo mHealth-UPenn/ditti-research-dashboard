@@ -1,6 +1,6 @@
 # adoption numbers https://github.com/astral-sh/ruff/discussions/9772
 
-line-length = 80
+line-length = 82
 indent-width = 4
 target-version = "py312"
 show-fixes = true        # surfaces exact auto‑fix patches in CI logs
@@ -52,6 +52,9 @@ ignore = [
   # Team‑specific allowances
   "G004", # f‑strings in logging are acceptable (571 projects ignore)
   "D1",   # Not everything needs a docstring (63 projects ignore)
+  "S104", # Binding to 0.0.0.0 is acceptable
+  "S603", # subprocess.run is acceptable
+  "S607", # starting of a process with a partial executable path is acceptable
 
   # Postponed
   "ANN",    # missing type annotations (430 projects ignore)
@@ -68,5 +71,6 @@ dummy-variable-rgx = "^(_+|(_+[A-Za-z0-9_]*[A-Za-z0-9]+?))$"
 convention = "numpy"
 
 [lint.per-file-ignores]
-"**/__init__.py" = ["F401"] # allow unused imports in package inits
-"tests/**/*.py" = ["S101"]  # bare `assert` in pytest tests is idiomatic
+"backend/auth/providers/cognito/constants.py" = ["E501"]
+"**/__init__.py" = ["F401"]
+"tests/**/*.py" = ["S101", "E501", "E402", "F811"]

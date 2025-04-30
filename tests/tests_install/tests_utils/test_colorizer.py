@@ -1,7 +1,6 @@
 import pytest
 
 from install.utils.colorizer import Colorizer
-from install.utils.types import Color
 
 
 def test_colorize_all_colors():

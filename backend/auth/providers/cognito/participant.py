@@ -21,7 +21,7 @@ from sqlalchemy import func
 from backend.auth.providers.cognito import CognitoAuthBase
 from backend.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
 from backend.extensions import oauth
-from backend.models import Study, StudySubject
+from backend.models import StudySubject
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +38,11 @@ class ParticipantAuth(CognitoAuthBase):
 
         Args:
             ditti_id (str): The ditti ID to search for
-            include_archived (bool, optional): Whether to include archived study subjects
+            include_archived (bool, optional): Whether to include archived
+                study subjects
 
-        Returns:
+        Returns
+        -------
             StudySubject or None: The matching study subject or None if not found
         """
         if not ditti_id:
@@ -51,7 +53,7 @@ class ParticipantAuth(CognitoAuthBase):
         )
 
         if not include_archived:
-            query = query.filter(StudySubject.is_archived == False)
+            query = query.filter(StudySubject.is_archived is False)
 
         return query.first()
 
@@ -61,12 +63,14 @@ class ParticipantAuth(CognitoAuthBase):
 
         Args:
             id_token (str): The ID token
-            include_archived (bool, optional): Whether to include archived study subjects
+            include_archived (bool, optional): Whether to include archived
+                study subjects
 
-        Returns:
+        Returns
+        -------
             tuple: (study_subject, error_message)
-                study_subject: The StudySubject object if successful, None otherwise
-                error_message: Error message if study_subject is None, None otherwise
+                study_subject: The StudySubject object if successful, else None
+                error_message: Error message if study_subject is None, else None
         """
         success, claims = self.validate_token_for_authenticated_route(id_token)
 

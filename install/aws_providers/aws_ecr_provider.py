@@ -44,7 +44,8 @@ class AwsEcrProvider:
     def get_password(self) -> str:
         """Get the password for the ECR repository."""
         try:
-            # NOTE: This is a workaround to login to ECR. See: https://github.com/docker/docker-py/issues/2256
+            # NOTE: This is a workaround to login to ECR.
+            # See: https://github.com/docker/docker-py/issues/2256
             res = self.ecr_client.get_authorization_token()
             if len(res["authorizationData"]) == 0:
                 raise AwsProviderError("No authorization data found")
@@ -54,15 +55,17 @@ class AwsEcrProvider:
         except ClientError as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error getting password for ECR repository due to ClientError: {Colorizer.white(e)}"
+                "Error getting password for ECR repository due to ClientError: "
+                f"{Colorizer.white(e)}"
             )
-            raise AwsProviderError(e)
+            raise AwsProviderError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Error getting password for ECR repository due to unexpected error: {Colorizer.white(e)}"
+                "Error getting password for ECR repository due to unexpected "
+                f"error: {Colorizer.white(e)}"
             )
-            raise AwsProviderError(e)
+            raise AwsProviderError(e) from e
 
     def get_repo_uri(self) -> str:
         """Get the URL for the ECR repository."""

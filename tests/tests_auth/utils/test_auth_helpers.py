@@ -22,7 +22,7 @@ def test_get_token_from_request_authorization_header(mock_app):
         headers={"Authorization": "Bearer test-token"}
     ):
         token = get_token_from_request()
-        assert token == "test-token"
+        assert token == "test-token"  # noqa: S105
 
 
 def test_get_token_from_request_cookies(mock_app):
@@ -34,7 +34,7 @@ def test_get_token_from_request_cookies(mock_app):
         request.cookies = {"id_token": "cookie-token"}
 
         token = get_token_from_request()
-        assert token == "cookie-token"
+        assert token == "cookie-token"  # noqa: S105
 
 
 def test_get_token_from_request_none(mock_app):
@@ -74,9 +74,7 @@ def test_check_permissions_denied(mock_app):
         # Mock an account with insufficient permissions
         account = MagicMock()
         account.get_permissions.return_value = ["some_permissions"]
-        account.validate_ask.side_effect = ValueError(
-            "Insufficient permissions"
-        )
+        account.validate_ask.side_effect = ValueError("Insufficient permissions")
         account.__str__.return_value = "user@example.com"
 
         has_permission, response = check_permissions(

@@ -181,9 +181,7 @@ class TestResearcherAuthController:
         mock_account.first_name = "Test"
         mock_account.last_name = "Researcher"
         mock_account.id = 1
-        mock_account.is_confirmed = (
-            True  # Testing already-confirmed account path
-        )
+        mock_account.is_confirmed = True  # Testing already-confirmed account path
 
         # Configure datetime mock
         mock_now = MagicMock()
@@ -194,9 +192,7 @@ class TestResearcherAuthController:
         mock_create_success.return_value = expected_response
 
         with app.app_context():
-            response = auth_controller.create_login_success_response(
-                mock_account
-            )
+            response = auth_controller.create_login_success_response(mock_account)
 
             # Verify last_login timestamp is updated
             assert mock_account.last_login == mock_now
@@ -245,9 +241,7 @@ class TestResearcherAuthController:
                 auth_controller, "create_account_in_cognito"
             ) as mock_create:
                 mock_create.return_value = mock_success_response
-                response = auth_controller.create_account_in_cognito(
-                    account_data
-                )
+                response = auth_controller.create_account_in_cognito(account_data)
 
         assert response == mock_success_response
 
@@ -276,9 +270,7 @@ class TestResearcherAuthController:
                 auth_controller, "create_account_in_cognito"
             ) as mock_create:
                 mock_create.return_value = mock_error_response
-                response = auth_controller.create_account_in_cognito(
-                    account_data
-                )
+                response = auth_controller.create_account_in_cognito(account_data)
 
         assert response == mock_error_response
 
@@ -376,7 +368,7 @@ class TestResearcherAuthController:
         account_data = {
             "email": "original@example.com",
             "first_name": "Updated",
-            "email": "newemail@example.com",  # Attempt to override original email
+            "email": "newemail@example.com",  # noqa: F601 # Attempt to override original email
         }
 
         with app.app_context():
@@ -419,9 +411,7 @@ class TestResearcherAuthController:
         assert response == mock_success_response
 
     @patch("backend.auth.controllers.researcher.get_researcher_cognito_client")
-    def test_change_password_success(
-        self, mock_get_client, app, auth_controller
-    ):
+    def test_change_password_success(self, mock_get_client, app, auth_controller):
         """Test successful password change in Cognito."""
         # Configure mock response for password change operation
         mock_success_response = MagicMock()
@@ -429,9 +419,7 @@ class TestResearcherAuthController:
         with app.test_request_context():
             # Abstract away implementation details by mocking the controller method
             # This approach isolates the test from Cognito client implementation
-            with patch.object(
-                auth_controller, "change_password"
-            ) as mock_change:
+            with patch.object(auth_controller, "change_password") as mock_change:
                 mock_change.return_value = mock_success_response
                 response = auth_controller.change_password(
                     "user@example.com", "NewPassword1!"
@@ -447,9 +435,7 @@ class TestResearcherAuthController:
                 "backend.auth.controllers.base.current_app"
             ) as mock_current_app:
                 # In the implementation, it checks CORS_ORIGINS for this value
-                mock_current_app.config = {
-                    "CORS_ORIGINS": "http://test-frontend"
-                }
+                mock_current_app.config = {"CORS_ORIGINS": "http://test-frontend"}
                 login_url = auth_controller.get_login_url()
 
         assert login_url == "http://test-frontend/coordinator/login"

@@ -230,7 +230,7 @@ def test_get_container_not_found(docker_provider_mock: DockerProvider):
         docker.errors.NotFound("Container not found")
     )
 
-    with pytest.raises(DockerSDKError, match=f"Container .+ not found"):
+    with pytest.raises(DockerSDKError, match="Container .+ not found"):
         docker_provider_mock.get_container("test-container")
 
 
@@ -238,9 +238,7 @@ def test_get_network_success(docker_provider_mock: DockerProvider):
     """Test successful retrieval of a network."""
     result = docker_provider_mock.get_network()
 
-    assert (
-        result == docker_provider_mock.docker_client.networks.get.return_value
-    )
+    assert result == docker_provider_mock.docker_client.networks.get.return_value
     docker_provider_mock.docker_client.networks.get.assert_called_once_with(
         docker_provider_mock.config.network_name
     )
@@ -252,7 +250,7 @@ def test_get_network_not_found(docker_provider_mock: DockerProvider):
         docker.errors.NotFound("Network not found")
     )
 
-    with pytest.raises(DockerSDKError, match=f"Network .+ not found"):
+    with pytest.raises(DockerSDKError, match="Network .+ not found"):
         docker_provider_mock.get_network()
 
 

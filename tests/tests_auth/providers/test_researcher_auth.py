@@ -16,9 +16,7 @@ def researcher_auth(researcher_auth_fixture):
 def test_get_account_from_email(mock_account, researcher_auth):
     """Test getting an account from an email."""
     # Setup
-    mock_acc = MagicMock(
-        id=1, email="researcher@example.com", is_archived=False
-    )
+    mock_acc = MagicMock(id=1, email="researcher@example.com", is_archived=False)
     mock_filter = MagicMock()
     mock_filter.filter_by.return_value.first.return_value = mock_acc
     mock_account.query.filter_by.return_value = mock_filter
@@ -113,9 +111,7 @@ def test_get_account_from_token(
     )
 
     # Mock account lookup
-    mock_acc = MagicMock(
-        id=1, email="researcher@example.com", is_archived=False
-    )
+    mock_acc = MagicMock(id=1, email="researcher@example.com", is_archived=False)
 
     # Setup mock to use the implementation's way of calling
     researcher_auth.get_account_from_email = MagicMock()
@@ -332,7 +328,7 @@ def test_init_researcher_oauth_client(mock_oauth):
         args, kwargs = mock_oauth.register.call_args
         assert kwargs["name"] == "researcher_oidc"
         assert kwargs["client_id"] == "test-client-id"
-        assert kwargs["client_secret"] == "test-client-secret"
+        assert kwargs["client_secret"] == "test-client-secret"  # noqa: S105
         assert "authorize_url" in kwargs
         assert "access_token_url" in kwargs
         assert "jwks_uri" in kwargs

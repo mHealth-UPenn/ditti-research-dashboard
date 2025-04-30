@@ -19,7 +19,7 @@ from enum import Enum
 
 class Postgres(Enum):
     USER = "username"
-    PASSWORD = "password"
+    PASSWORD = "password"  # noqa: S105
     PORT = 5432
     DB = "postgres"
 
@@ -31,8 +31,8 @@ class FString(Enum):
     researcher_user_pool_domain = "{project_name}-researcher"
     logs_bucket_name = "{project_name}-wearable-data-retrieval-logs"
     audio_bucket_name = "{project_name}-audio-files"
-    secret_name = "{project_name}-secret"
-    tokens_secret_name = "{project_name}-Fitbit-tokens"
+    secret_name = "{project_name}-secret"  # noqa: S105
+    tokens_secret_name = "{project_name}-Fitbit-tokens"  # noqa: S105
     stack_name = "{project_name}-stack"
     network_name = "{project_name}-network"
     postgres_container_name = "{project_name}-postgres"

@@ -16,7 +16,7 @@
 
 import logging
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field, ValidationError, field_serializer
 
@@ -36,7 +36,7 @@ class SleepLevelModel(BaseModel):
     date_time: datetime
     level: SleepLevelEnum
     seconds: int
-    is_short: Optional[bool] = None
+    is_short: bool | None = None
 
     model_config = common_config
 
@@ -49,7 +49,7 @@ class SleepLogModel(BaseModel):
     date_of_sleep: date
     log_type: SleepLogTypeEnum
     type: SleepCategoryTypeEnum
-    levels: List[SleepLevelModel] = Field(default_factory=list)
+    levels: list[SleepLevelModel] = Field(default_factory=list)
 
     model_config = common_config
 
@@ -58,7 +58,7 @@ class SleepLogModel(BaseModel):
         return value.isoformat()
 
 
-def serialize_fitbit_data(sleep_logs: List[SleepLog]) -> List[Dict[str, Any]]:
+def serialize_fitbit_data(sleep_logs: list[SleepLog]) -> list[dict[str, Any]]:
     serialized = []
     for log in sleep_logs:
         try:

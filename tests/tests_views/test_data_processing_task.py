@@ -86,9 +86,7 @@ def test_get_data_processing_tasks_success(
         mock_task2,
     ]
 
-    response = researcher_get(
-        "/data_processing_task/", query_string={"app": "1"}
-    )
+    response = researcher_get("/data_processing_task/", query_string={"app": "1"})
 
     assert response.status_code == 200
     assert response.is_json
@@ -109,9 +107,7 @@ def test_get_data_processing_tasks_internal_error(
         Exception("Database error")
     )
 
-    response = researcher_get(
-        "/data_processing_task/", query_string={"app": "1"}
-    )
+    response = researcher_get("/data_processing_task/", query_string={"app": "1"})
 
     assert response.status_code == 500
     assert response.is_json
@@ -133,9 +129,7 @@ def test_get_data_processing_tasks_empty_list(
     mock_lambda_task_model.created_on.desc.return_value = mock_desc
     mock_lambda_task_model.query.order_by.return_value.all.return_value = []
 
-    response = researcher_get(
-        "/data_processing_task/", query_string={"app": "1"}
-    )
+    response = researcher_get("/data_processing_task/", query_string={"app": "1"})
 
     assert response.status_code == 200
     assert response.is_json
@@ -168,9 +162,7 @@ def test_invoke_data_processing_task_success(
     }
     mock_create_and_invoke.return_value = mock_task
 
-    response = researcher_post(
-        "/data_processing_task/invoke", json={"app": "1"}
-    )
+    response = researcher_post("/data_processing_task/invoke", json={"app": "1"})
 
     assert response.status_code == 200
     assert response.is_json
@@ -190,9 +182,7 @@ def test_invoke_data_processing_task_failure(
     """
     mock_create_and_invoke.return_value = None
 
-    response = researcher_post(
-        "/data_processing_task/invoke", json={"app": "1"}
-    )
+    response = researcher_post("/data_processing_task/invoke", json={"app": "1"})
 
     assert response.status_code == 500
     assert response.is_json
@@ -211,9 +201,7 @@ def test_invoke_data_processing_task_exception(
     """
     mock_create_and_invoke.side_effect = Exception("Invocation error")
 
-    response = researcher_post(
-        "/data_processing_task/invoke", json={"app": "1"}
-    )
+    response = researcher_post("/data_processing_task/invoke", json={"app": "1"})
 
     assert response.status_code == 500
     assert response.is_json
@@ -286,9 +274,7 @@ def test_force_stop_data_processing_task_success(
     }
 
 
-def test_force_stop_data_processing_task_no_function_id(
-    client, researcher_post
-):
+def test_force_stop_data_processing_task_no_function_id(client, researcher_post):
     """
     Test force stopping of a data processing task with no function_id.
     """

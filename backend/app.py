@@ -54,7 +54,9 @@ dictConfig(
         "version": 1,
         "formatters": {
             "default": {
-                "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+                "format": (
+                    "[%(asctime)s] %(levelname)s in %(module)s: %(message)s"
+                ),
             }
         },
         "handlers": {
@@ -78,7 +80,7 @@ def create_app(testing=False):
         flask_config = os.getenv("FLASK_CONFIG", "Default")
 
     # configure and initialize the app
-    app.config.from_object("backend.config.%s" % flask_config)
+    app.config.from_object(f"backend.config.{flask_config}")
     register_blueprints(app)
     register_commands(app)
     register_extensions(app)

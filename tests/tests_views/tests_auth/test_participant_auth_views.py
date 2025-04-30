@@ -43,9 +43,7 @@ def test_participant_login_view(mock_get, client, mock_auth_oauth):
         assert response.status_code == 302
 
 
-@patch(
-    "backend.auth.controllers.participant.ParticipantAuthController.callback"
-)
+@patch("backend.auth.controllers.participant.ParticipantAuthController.callback")
 def test_participant_callback_success(mock_callback, client):
     """Test successful callback handling."""
     # Set up mock
@@ -64,9 +62,7 @@ def test_participant_callback_success(mock_callback, client):
     assert response.status_code == 302
 
 
-@patch(
-    "backend.auth.controllers.participant.ParticipantAuthController.callback"
-)
+@patch("backend.auth.controllers.participant.ParticipantAuthController.callback")
 def test_participant_callback_invalid_state(mock_callback, client):
     """Test callback with invalid state parameter."""
     # Set up mock
@@ -89,9 +85,7 @@ def test_participant_callback_invalid_state(mock_callback, client):
     assert response.status_code == 401
 
 
-@patch(
-    "backend.auth.controllers.participant.ParticipantAuthController.callback"
-)
+@patch("backend.auth.controllers.participant.ParticipantAuthController.callback")
 def test_participant_callback_missing_code(mock_callback, client):
     """Test callback with missing code parameter."""
     # Set up mock

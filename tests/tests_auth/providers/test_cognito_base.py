@@ -181,7 +181,7 @@ def test_validate_access_token_with_refresh(
     # Verify
     assert success is True
     assert "new_token" in result
-    assert result["new_token"] == "new-fake-access-token"
+    assert result["new_token"] == "new-fake-access-token"  # noqa: S105
 
 
 @patch("requests.post")
@@ -243,7 +243,6 @@ def test_validate_token_for_authenticated_route_success(
 ):
     """Test successful validation of token for authenticated route."""
     # This test is complex and would require more detailed knowledge of the implementation
-    pass
 
 
 @patch("jwt.get_unverified_header")

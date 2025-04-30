@@ -1,5 +1,4 @@
-import subprocess
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from install.aws_providers import AwsAccountProvider
 from tests.tests_install.tests_aws_providers.mock_aws_client_provider import (
@@ -10,7 +9,7 @@ from tests.tests_install.tests_utils.mock_logger import logger
 mock_account_id = "test-account-id"
 mock_aws_region = "test-region"
 mock_aws_access_key_id = "test-access-key-id"
-mock_aws_secret_access_key = "test-secret-access-key"
+mock_aws_secret_access_key = "test-secret-access-key"  # noqa: S105
 
 
 def aws_account_provider():

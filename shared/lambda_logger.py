@@ -48,8 +48,7 @@ class JsonFormatter(logging.Formatter):
 
     def format(self, record):
         log_entry = {
-            "timestamp": datetime.fromtimestamp(record.created).isoformat()
-            + "Z",
+            "timestamp": datetime.fromtimestamp(record.created).isoformat() + "Z",
             "level": record.levelname,
             "message": record.getMessage(),
         }
@@ -74,7 +73,7 @@ class StreamFormatter(JsonFormatter):
 
 class JsonFileHandler(logging.Handler):
     def __init__(self, log_filename):
-        super(JsonFileHandler, self).__init__()
+        super().__init__()
         self.log_filename = log_filename
         self.log_entries = []  # Keep track of all log entries in memory
 
@@ -92,7 +91,7 @@ class JsonFileHandler(logging.Handler):
 class LambdaLogger(logging.Logger):
     def __init__(self, job_timestamp: str, /, *, level=logging.INFO):
         self.job_timestamp = job_timestamp
-        self.log_filename = f"/tmp/log_{self.job_timestamp}.json"
+        self.log_filename = f"/tmp/log_{self.job_timestamp}.json"  # noqa: S108
 
         # Set up logger
         self.__logger = logging.getLogger(__name__)

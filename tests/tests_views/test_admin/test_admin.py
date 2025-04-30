@@ -180,8 +180,8 @@ def test_study_create(post_admin):
     assert created_study.default_expiry_delta == 30
 
     # Assert default values for optional fields
-    assert created_study.is_archived == False
-    assert created_study.is_qi == False
+    assert created_study.is_archived is False
+    assert created_study.is_qi is False
 
     # Other optional fields
     assert created_study.consent_information == "Consent text..."

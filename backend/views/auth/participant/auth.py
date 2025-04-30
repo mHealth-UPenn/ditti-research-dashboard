@@ -45,16 +45,20 @@ def login():
     This endpoint:
     1. Generates a secure nonce for ID token validation
     2. Generates a secure state parameter for CSRF protection
-    3. Generates PKCE code_verifier and code_challenge for authorization code security
-    4. Redirects to the Cognito authorization endpoint with all security parameters
+    3. Generates PKCE code_verifier and code_challenge for authorization
+        code security
+    4. Redirects to the Cognito authorization endpoint with
+        all security parameters
 
     Query Parameters:
         elevated (bool): If "true", requests additional admin scopes
 
-    Returns:
+    Returns
+    -------
         Redirect to Cognito login page
     """
-    # For elevated login, pass the "elevated" url param and add scope handling in auth_controller.login()
+    # For elevated login, pass the "elevated" url param
+    # and add scope handling in auth_controller.login()
     return auth_controller.login()
 
 
@@ -72,7 +76,8 @@ def cognito_callback():
     6. Sets secure cookies with the tokens
     7. Redirects to the frontend application
 
-    Returns:
+    Returns
+    -------
         Redirect to frontend with tokens set in cookies, or
         400 Bad Request on authentication errors
         403 Forbidden if study subject is archived
@@ -91,7 +96,8 @@ def logout():
     3. Clears authentication cookies
     4. Redirects to Cognito logout
 
-    Returns:
+    Returns
+    -------
         Redirect to Cognito logout URL with cookies cleared
     """
     return auth_controller.logout()
@@ -107,7 +113,8 @@ def check_login():
     2. Validates the token and extracts the ditti_id
     3. Returns the ditti_id on success
 
-    Returns:
+    Returns
+    -------
         200 OK with ditti_id on success
         401 Unauthorized if not authenticated or token invalid
         403 Forbidden if study subject is archived
@@ -120,11 +127,12 @@ def check_login():
 @researcher_auth_required("Create", "Participants")
 def register_participant(account):
     """
-    Registers a study participant in AWS Cognito with a temporary password.
+    Register a study participant in AWS Cognito with a temporary password.
 
-    This endpoint allows a research coordinator to create a new participant account
-    in the AWS Cognito user pool. The research coordinator provides a Cognito username
-    and a temporary password that the participant will use to log in initially.
+    This endpoint allows a research coordinator to create a new participant
+    account in the AWS Cognito user pool. The research coordinator provides
+    a Cognito username and a temporary password that the participant will use
+    to log in initially.
 
     The temporary password will require the participant to reset their password
     upon first login.
@@ -136,7 +144,8 @@ def register_participant(account):
             - cognitoUsername (str): The unique username for the participant.
             - temporaryPassword (str): A temporary password for the participant.
 
-    Returns:
+    Returns
+    -------
         Response: A JSON response with one of the following:
             - 200 OK: Participant registered successfully.
             - 400 Bad Request: Missing required fields.
@@ -181,7 +190,7 @@ def register_participant(account):
             error_code=f"COGNITO_ERROR_{error_code}",
         )
     except Exception as e:
-        logger.error(f"Registration error: {str(e)}")
+        logger.error(f"Registration error: {e!s}")
         return create_error_response(
             "Registration failed. Please try again.",
             status_code=500,

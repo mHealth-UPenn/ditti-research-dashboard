@@ -16,7 +16,6 @@
 
 import json
 import traceback
-from typing import Optional
 
 from botocore.exceptions import ClientError
 
@@ -29,7 +28,7 @@ from install.utils.exceptions import ResourceManagerError
 
 
 class AwsSecretsmanagerResourceManager(BaseResourceManager):
-    secret_value: Optional[dict[str, str]]
+    secret_value: dict[str, str] | None
 
     def __init__(
         self,
@@ -54,9 +53,10 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Secret write failed due to unexpected error: {Colorizer.white(e)}"
+                f"Secret write failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def dev(self) -> None:
         """Run the provider in development mode."""
@@ -65,17 +65,22 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Secret value setting failed due to unexpected error: {Colorizer.white(e)}"
+                f"Secret value setting failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
 
     def set_dev_secret_value(self) -> None:
         """Set the secret value."""
         secret_value: DevSecretValue = {
             "FITBIT_CLIENT_ID": self.config.fitbit_client_id,
             "FITBIT_CLIENT_SECRET": self.config.fitbit_client_secret,
-            "COGNITO_PARTICIPANT_CLIENT_SECRET": self.cognito_provider.get_participant_client_secret(),
-            "COGNITO_RESEARCHER_CLIENT_SECRET": self.cognito_provider.get_researcher_client_secret(),
+            "COGNITO_PARTICIPANT_CLIENT_SECRET": (
+                self.cognito_provider.get_participant_client_secret()
+            ),
+            "COGNITO_RESEARCHER_CLIENT_SECRET": (
+                self.cognito_provider.get_researcher_client_secret()
+            ),
         }
         self.secret_value = secret_value
 
@@ -96,10 +101,11 @@ class AwsSecretsmanagerResourceManager(BaseResourceManager):
             self.logger.error(
                 f"Secret write failed due to ClientError: {Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
-                f"Secret write failed due to unexpected error: {Colorizer.white(e)}"
+                f"Secret write failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
             )
-            raise ResourceManagerError(e)
+            raise ResourceManagerError(e) from e

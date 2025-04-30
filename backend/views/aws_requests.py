@@ -38,7 +38,9 @@ logger = logging.getLogger(__name__)
 @researcher_auth_required("View", "Ditti App Dashboard")
 def get_taps(account):
     """
-    Get tap data. If the user has permissions to view all studies, this will
+    Get tap data.
+
+    If the user has permissions to view all studies, this will
     return all tap data. Otherwise, this will return tap data for only the
     studies the user has access to
 
@@ -65,7 +67,7 @@ def get_taps(account):
 
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
-        q = 'user_permission_idBEGINS"%s"' % right
+        q = f'user_permission_idBEGINS"{right}"'
         return left + ("OR" if left else "") + q
 
     try:
@@ -87,7 +89,7 @@ def get_taps(account):
         query = reduce(f, prefixes, "")
         users = Query("User", query).scan()["Items"]
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
 
@@ -113,9 +115,7 @@ def get_taps(account):
 
     # merge on only the users that were returned earlier
     res = (
-        pd.merge(df_users, df_taps, on="id")
-        .drop("id", axis=1)
-        .to_dict("records")
+        pd.merge(df_users, df_taps, on="id").drop("id", axis=1).to_dict("records")
     )
 
     return jsonify(res)
@@ -126,7 +126,7 @@ def get_taps(account):
 def get_audio_taps(account):
     # add expressions to the query to return all taps for multiple studies
     def f(left, right):
-        q = 'user_permission_idBEGINS"%s"' % right
+        q = f'user_permission_idBEGINS"{right}"'
         return left + ("OR" if left else "") + q
 
     try:
@@ -148,7 +148,7 @@ def get_audio_taps(account):
         query = reduce(f, prefixes, "")
         users = Query("User", query).scan()["Items"]
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
 
@@ -202,7 +202,9 @@ def get_audio_taps(account):
 @researcher_auth_required("View", "Ditti App Dashboard")
 def get_users(account):
     """
-    Get user data. If the user has permissions to view all studies, this will
+    Get user data.
+
+    If the user has permissions to view all studies, this will
     return all user data. Otherwise, this will return user data for only the
     studies the user has access to
 
@@ -233,7 +235,7 @@ def get_users(account):
 
     # add expressions to the query to return all users for multiple studies
     def f(left, right):
-        q = 'user_permission_idBEGINS"%s"' % right
+        q = f'user_permission_idBEGINS"{right}"'
         return left + ("OR" if left else "") + q
 
     # gets only useful user data
@@ -270,7 +272,7 @@ def get_users(account):
             .all()
         )
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
 
@@ -297,7 +299,7 @@ def get_users(account):
 @researcher_auth_required("Create", "Participants")
 def user_create(account):
     """
-    Create a new user
+    Create a new user.
 
     Request Syntax
     --------------
@@ -338,7 +340,7 @@ def user_create(account):
 
         client.post_mutation()
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
 
@@ -354,7 +356,7 @@ def user_create(account):
 @researcher_auth_required("Edit", "Participants")
 def user_edit(account):
     """
-    Edit an exisitng user
+    Edit an exisitng user.
 
     Request Syntax
     --------------
@@ -402,8 +404,8 @@ def user_edit(account):
     if re.search(r"[^\dA-Za-z]", user_permission_id) is not None:
         return jsonify(
             {
-                "msg": "Invalid study or study subject Ditti ID: %s"
-                % user_permission_id
+                "msg": "Invalid study or study subject Ditti ID: "
+                f"{user_permission_id}"
             }
         )
 
@@ -413,14 +415,14 @@ def user_edit(account):
 
     # check that the ditti id is valid
     if study_ditti_id != study.ditti_id:
-        return jsonify({"msg": "Invalid study Ditti ID: %s" % study_ditti_id})
+        return jsonify({"msg": f"Invalid study Ditti ID: {study_ditti_id}"})
 
-    query = 'user_permission_id=="%s"' % user_permission_id
+    query = f'user_permission_id=="{user_permission_id}"'
     res = Query("User", query).scan()
 
     # if the ditti id does not exist
     if not res["Items"]:
-        return jsonify({"msg": "Ditti ID not found: %s" % user_permission_id})
+        return jsonify({"msg": f"Ditti ID not found: {user_permission_id}"})
 
     try:
         updater = Updater("User")
@@ -428,7 +430,7 @@ def user_edit(account):
         updater.set_expression(request_data.get("edit"))
         updater.update()
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
 
@@ -519,7 +521,7 @@ def get_audio_files(account):
                 pass
             res.append(audio_file)
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
         return make_response(
@@ -583,12 +585,13 @@ def audio_file_create(account):
         if "data" not in data or not data["data"]:
             raise Exception(data["errors"][0]["message"])
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(exc)
         return make_response(
             {
-                "msg": "Creation of audio file failed due to internal server error."
+                "msg": "Creation of audio file failed "
+                "due to internal server error."
             },
             500,
         )
@@ -601,7 +604,9 @@ def audio_file_create(account):
 @researcher_auth_required("Delete", "Audio File")
 def audio_file_delete(account):
     """
-    Permanently deletes an audio file. This endpoint first deletes the audio
+    Permanently deletes an audio file.
+
+    This endpoint first deletes the audio
     file from S3 then deletes the audio file from DynamoDB. If the deletion from
     S3 fails, the audio file is not deleted from DynamoDB.
 
@@ -631,18 +636,16 @@ def audio_file_delete(account):
         # Get the audio file
         audio_file_id = request.json["id"]
         version = request.json["_version"]
-        audio_file = Query("AudioFile", f'id=="{audio_file_id}"').scan()[
-            "Items"
-        ][0]
+        audio_file = Query("AudioFile", f'id=="{audio_file_id}"').scan()["Items"][
+            0
+        ]
 
         # Try deleting the audio file from S3
         try:
             key = audio_file["fileName"]
             bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
             client = boto3.client("s3")
-            deleted = client.delete_object(Bucket=bucket, Key=key)[
-                "DeleteMarker"
-            ]
+            deleted = client.delete_object(Bucket=bucket, Key=key)["DeleteMarker"]
 
             # Return an error if the audio file was not deleted
             if not deleted:
@@ -669,7 +672,8 @@ def audio_file_delete(account):
         logger.warning(exc)
         return make_response(
             {
-                "msg": "Deletion of audio file failed due to internal server error."
+                "msg": "Deletion of audio file failed "
+                "due to internal server error."
             },
             500,
         )
@@ -682,8 +686,9 @@ def audio_file_delete(account):
 @researcher_auth_required("Create", "Audio File")
 def audio_file_generate_presigned_urls(account):
     """
-    Generates a list of presigned URLs for a given set of files. The request
-    body must include a key for uploading to S3 and its MIME type.
+    Generate a list of presigned URLs for a given set of files.
+
+    The request body must include a key for uploading to S3 and its MIME type.
 
     Request syntax
     --------------

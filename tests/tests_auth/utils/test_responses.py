@@ -79,9 +79,7 @@ def test_create_error_response_with_special_chars(mock_app):
     Verifies proper handling of messages with special characters.
     """
     with mock_app.app_context():
-        special_message = (
-            "Error! @#$%^&*() <script>alert('xss')</script> エラー"
-        )
+        special_message = "Error! @#$%^&*() <script>alert('xss')</script> エラー"
         response = create_error_response(special_message)
 
         # Parse and verify the response data
@@ -234,9 +232,7 @@ def test_create_success_response_with_special_chars():
     Verifies proper handling of messages with special characters.
     """
     special_message = "Success! @#$%^&*() 成功"
-    response_dict, status_code = create_success_response(
-        message=special_message
-    )
+    response_dict, status_code = create_success_response(message=special_message)
 
     # Verify the tuple components
     assert status_code == 200

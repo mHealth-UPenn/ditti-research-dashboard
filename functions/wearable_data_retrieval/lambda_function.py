@@ -54,51 +54,27 @@ logger = LambdaLogger(
 
 
 class NestedError(Exception):
-    """
-    Exception for error on a nested database transaction.
-    """
-
-    pass
+    """Exception for error on a nested database transaction."""
 
 
 class DBInitializationError(Exception):
-    """
-    Exception for error on initialization of database engine and connection.
-    """
-
-    pass
+    """Exception for error on initialization of database engine and connection."""
 
 
 class ConfigFetchError(Exception):
-    """
-    Exception for error on fetching config from AWS Secrets Manager.
-    """
-
-    pass
+    """Exception for error on fetching config from AWS Secrets Manager."""
 
 
 class DBFetchError(Exception):
-    """
-    Exception for error on fetching any data from the database.
-    """
-
-    pass
+    """Exception for error on fetching any data from the database."""
 
 
 class DBUpdateError(Exception):
-    """
-    Exception for error on updating or inserting any data to the database.
-    """
-
-    pass
+    """Exception for error on updating or inserting any data to the database."""
 
 
 class S3UploadError(Exception):
-    """
-    Exception for error on uploading the log file to S3.
-    """
-
-    pass
+    """Exception for error on uploading the log file to S3."""
 
 
 class DB:
@@ -132,8 +108,8 @@ class DBService:
         Context manager for establishing and managing a database connection.
 
         This method provides a transactional scope for database operations.
-        It ensures that the connection is properly managed, beginning a transaction
-        on entry and committing or rolling back as needed on exit.
+        It ensures that the connection is properly managed, beginning a
+        transaction on entry and committing or rolling back as needed on exit.
 
         Usage:
         ```python
@@ -142,8 +118,10 @@ class DBService:
             # Perform database operations using the `connection`
         ```
 
-        Yields:
-        - connection: An active database connection to be used for database operations.
+        Yields
+        ------
+        - connection: An active database connection to be used for
+            database operations.
 
         Ensures:
         - The connection is properly closed and cleaned up after use.
@@ -166,23 +144,30 @@ type TaskStatus = Literal[
 @dataclass
 class LambdaTaskEntry:
     """
-    Represents a row from the `lambda_task` table, reflecting the status and details of a Lambda function.
+    Represents a row from the `lambda_task` table.
 
-    Attributes:
+    Reflects the status and details of a Lambda function.
+
+    Attributes
+    ----------
     - id (int): The unique identifier of the Lambda function.
-    - status (TaskStatus): The current status of the function, which can be one of the following:
+    - status (TaskStatus): The current status of the function,
+        which can be one of the following:
         - "Pending"
         - "InProgress"
         - "Success"
         - "Failed"
         - "CompletedWithErrors"
-    - billed_ms (int | None): The number of milliseconds billed for the function's execution.
+    - billed_ms (int | None): The number of milliseconds billed
+        for the function's execution.
     - created_on (datetime): The timestamp when the function was created.
     - updated_on (datetime): The timestamp when the function was last updated.
-    - completed_on (datetime | None): The timestamp when the function was completed. `None` if the function is Pending
-      or InProcess.
-    - log_file (str | None): The S3 URI location of the function's log file. `None` if no log file exists
-    - error_code (str | None): The error code (if any) returned during function execution. `None` if no error occurred.
+    - completed_on (datetime | None): The timestamp when the function
+        was completed. `None` if the function is Pending or InProcess.
+    - log_file (str | None): The S3 URI location of the function's log file.
+        `None` if no log file exists
+    - error_code (str | None): The error code (if any) returned
+        during function execution. `None` if no error occurred.
     """
 
     id: int
@@ -199,35 +184,43 @@ class LambdaTaskService(DBService):
     """
     A database service for interacting with the `lambda_task` table.
 
-    This class provides methods to query and update entries in the table, specifically
-    designed for managing Lambda task statuses and related metadata.
+    This class provides methods to query and update entries in the table,
+    specifically designed for managing Lambda task statuses and related metadata.
 
     Inherits:
         DBService: Base database service class.
 
-    Attributes:
+    Attributes
+    ----------
         table (Table): SQLAlchemy Table object for the `lambda_task` table.
-        __entry (LambdaTaskEntry | None): The current task entry being managed, or None if no entry is loaded.
+        __entry (LambdaTaskEntry | None): The current task entry being managed,
+            or None if no entry is loaded.
 
-    Methods:
+    Methods
+    -------
         get_entry(id: int):
-            Queries the `lambda_task` table for a specific entry by ID and loads it as a `LambdaTaskEntry` instance.
+            Queries the `lambda_task` table for a specific entry by ID and loads
+            it as a `LambdaTaskEntry` instance.
 
         update_status(status: TaskStatus, **kwargs):
-            Updates the status and optional additional fields of the current task entry.
+            Updates the status and optional additional fields
+            of the current task entry.
     """
 
     def __init__(self, db: DB):
         """
-        Initializes the LambdaTaskService.
+        Initialize the LambdaTaskService.
 
         Args:
-            db (DB): An instance of the `DB` helper class to manage database connections.
+            db (DB): An instance of the `DB` helper class
+                to manage database connections.
 
-        Raises:
-            RuntimeError: If the table reflection fails or the database schema is inconsistent.
+        Raises
+        ------
+            RuntimeError: If the table reflection fails
+                or the database schema is inconsistent.
         """
-        super(LambdaTaskService, self).__init__(db)
+        super().__init__(db)
         m = self.db.metadata
         e = self.db.engine
 
@@ -240,13 +233,15 @@ class LambdaTaskService(DBService):
 
     def get_entry(self, id: int):
         """
-        Queries the `lambda_task` table for a specific entry by ID and stores it as a `LambdaTaskEntry` instance.
+        Query `lambda_task` table for entry by ID and store as `LambdaTaskEntry`.
 
         Args:
             id (int): The ID of the Lambda task to query.
 
-        Raises:
-            RuntimeError: If called outside the `connect` context or if no entry is found.
+        Raises
+        ------
+            RuntimeError: If called outside the `connect` context
+                or if no entry is found.
 
         Side Effects:
             - Logs the result of the query.
@@ -259,7 +254,6 @@ class LambdaTaskService(DBService):
                 print(service.__entry)
             ```
         """
-
         if self.connection is None:
             raise RuntimeError(
                 "`get_entry` must be called within `connect` context."
@@ -284,14 +278,16 @@ class LambdaTaskService(DBService):
 
     def update_status(self, status: TaskStatus, **kwargs):
         """
-        Updates the status and optional additional fields of the currently loaded Lambda task entry.
+        Update the currently loaded Lambda task entry status and optional fields.
 
         Args:
             status (TaskStatus): The new status to set for the task.
             **kwargs: Additional fields to update in the `lambda_task` table.
 
-        Raises:
-            RuntimeError: If called outside the `connect` context or if no entry is loaded.
+        Raises
+        ------
+            RuntimeError: If called outside the `connect` context or
+                if no entry is loaded.
 
         Side Effects:
             - Executes an update statement on the `lambda_task` table.
@@ -304,7 +300,6 @@ class LambdaTaskService(DBService):
                 service.update_status("InProgress", billed_ms=1500)
             ```
         """
-
         if self.connection is None:
             raise RuntimeError(
                 "`update_status` must be called within `connect` context."
@@ -333,19 +328,24 @@ class LambdaTaskService(DBService):
 @dataclass
 class StudySubjectEntry:
     """
-    Represents entries in the `study_subject` table and its joins that are relevant for updating data.
+    Represents entries in the `study_subject` table and its relevant joins.
 
-    Attributes:
+    Attributes
+    ----------
         id (int): Unique identifier for the study subject.
         ditti_id (str): A study subject's Ditti ID.
         api_user_uuid (str): UUID of the user in the associated API system.
         api_id (int): Identifier for the associated API.
-        last_sync_date (str | None): Timestamp of the last synchronization with the API, if any.
-        starts_on (datetime): Start date for the subject's enrollment in a study. This attribute is the earliest
-          `starts_on` value for all `join_study_subject_study` entries.
-        expires_on (str): Expiration date for the subject's enrollment in a study. This attribute is the latest
-          `expires_on` value for all `join_study_subject_study` entries.
-        earliest_sleep_log (date | None): Earliest date of sleep logs available for the study subject.
+        last_sync_date (str | None): Timestamp of the last synchronization
+            with the API, if any.
+        starts_on (datetime): Start date for the subject's enrollment in
+            a study. This attribute is the earliest `starts_on` value for all
+            `join_study_subject_study` entries.
+        expires_on (str): Expiration date for the subject's enrollment in
+            a study. This attribute is the latest `expires_on` value for all
+            `join_study_subject_study` entries.
+        earliest_sleep_log (date | None): Earliest date of sleep logs available
+            for the study subject.
     """
 
     id: int
@@ -360,28 +360,33 @@ class StudySubjectEntry:
 
 class StudySubjectService(DBService):
     """
-    Service for managing the `study_subject` table and associated tables,
-    including APIs, studies, sleep logs, sleep levels, and sleep summaries.
+    Manage the `study_subject` table and associated tables.
 
-    This class provides methods to query study subject data, manage sleep-related data,
-    and handle synchronization with APIs.
+    Includes APIs, studies, sleep logs, sleep levels, and sleep summaries.
 
-    Methods:
-        get_entries(): Fetches all entries of study subjects requiring API synchronization.
+    This class provides methods to query study subject data, manage
+    sleep-related data, and handle synchronization with APIs.
+
+    Methods
+    -------
+        get_entries(): Fetches all entries of study subjects
+            requiring API synchronization.
         iter_entries(): Yields each study subject entry for iterative processing.
-        insert_data(data): Inserts sleep log, level, and summary data into the database for the current entry.
-        update_last_sync_date(): Updates the `last_sync_date` for the current study subject.
+        insert_data(data): Inserts sleep log, level,
+            and summary data into the database for the current entry.
+        update_last_sync_date(): Updates the `last_sync_date`
+            for the current study subject.
     """
 
     def __init__(self, *args):
         """
-        Initializes the StudySubjectService with the database connection and metadata.
+        Initialize the StudySubjectService with the db connection and metadata.
 
         Args:
-            *args: Positional arguments to be passed to the base `DBService` class.
+            *args: Positional arguments to be passed to the
+                base `DBService` class.
         """
-
-        super(StudySubjectService, self).__init__(*args)
+        super().__init__(*args)
         m = self.db.metadata
         e = self.db.engine
 
@@ -410,15 +415,15 @@ class StudySubjectService(DBService):
 
     def get_entries(self):
         """
-        Retrieves all study subject entries requiring synchronization with their associated APIs.
+        Retrieve all study subject entries that require API association.
 
         Populates the `__entries` attribute with `StudySubjectEntry` instances,
         representing the consolidated data for each study subject.
 
-        Raises:
+        Raises
+        ------
             RuntimeError: If called outside of a `connect` context.
         """
-
         if self.connection is None:
             raise RuntimeError(
                 "`get_entries` must be called within `connect` context."
@@ -454,18 +459,21 @@ class StudySubjectService(DBService):
             )
             .where(
                 and_(
-                    self.study.c.did_consent,  # Get only studies that have been consented
+                    # Get only studies that have been consented
+                    self.study.c.did_consent,
                     or_(
                         self.api.c.last_sync_date
-                        == None,  # Get any entries without a `last_sync_date`
-                        and_(  # Get any entries with a `last_sync_date` before today and before the `expires_on` date
+                        is None,  # Get any entries without a `last_sync_date`
+                        # Get any entries with a `last_sync_date` before today
+                        # and before the `expires_on` date
+                        and_(
                             self.api.c.last_sync_date < date.today(),
                             self.study.c.expires_on > self.api.c.last_sync_date,
                         ),
-                        self.study.c.starts_on
-                        < earliest_sleep_log_subquery,  # Get any entries with past data that was not pulled
+                        # Get any entries with past data that was not pulled
+                        self.study.c.starts_on < earliest_sleep_log_subquery,
                         earliest_sleep_log_subquery
-                        == None,  # Get any entries where no sleep logs exist
+                        is None,  # Get any entries where no sleep logs exist
                     ),
                 )
             )
@@ -480,7 +488,8 @@ class StudySubjectService(DBService):
             entry_id = entry.id
 
             try:
-                # Query APIs starting from the study subject's earliest start date (if `last_sync_date` is null)
+                # Query APIs starting from the study subject's earliest
+                # start date (if `last_sync_date` is null)
                 result_map[entry_id]["starts_on"] = min(
                     result_map[entry_id]["starts_on"], entry.starts_on
                 )
@@ -515,24 +524,24 @@ class StudySubjectService(DBService):
 
     def iter_entries(self):
         """
-        Iterates over all fetched study subject entries.
+        Iterate over all fetched study subject entries.
 
-        Yields:
+        Yields
+        ------
             StudySubjectEntry: The next entry in the sequence.
 
-        Raises:
-            RuntimeError: If no entries are available or if called outside of a `connect` context.
+        Raises
+        ------
+            RuntimeError: If no entries are available
+                or if called outside of a `connect` context.
         """
-
         if self.connection is None:
             raise RuntimeError(
                 "`iter_entries` must be called within `connect` context."
             )
 
         if self.__entries is None:
-            raise RuntimeError(
-                "No entries to iterate. Call `get_entries` first."
-            )
+            raise RuntimeError("No entries to iterate. Call `get_entries` first.")
 
         for i in range(len(self.__entries)):
             self.__index = i
@@ -542,18 +551,21 @@ class StudySubjectService(DBService):
 
     def insert_data(self, data: list[dict]):
         """
-        Inserts sleep-related data into the database for the current study subject entry.
+        Insert sleep-related data into current study subject entry.
 
         Args:
-            data (list[dict]): A list of sleep record dictionaries containing log, level, and summary details.
+            data (list[dict]): A list of sleep record dictionaries containing
+                log, level, and summary details.
 
-        Raises:
-            RuntimeError: If called outside of the `iter_entries` block or without a valid index.
+        Raises
+        ------
+            RuntimeError: If called outside of the `iter_entries` block
+                or without a valid index.
         """
-
         if self.__index is None:
             raise RuntimeError(
-                "No index found. `insert_data` must be called inside `iter_entries` block."
+                "No index found. `insert_data` must be called "
+                "inside `iter_entries` block."
             )
 
         entry = self.__entries[self.__index]
@@ -607,9 +619,7 @@ class StudySubjectService(DBService):
                     is_short=False,
                 )
                 self.connection.execute(insert_level_stmt)
-            for level_data in sleep_record.get("levels", {}).get(
-                "shortData", []
-            ):
+            for level_data in sleep_record.get("levels", {}).get("shortData", []):
                 insert_level_stmt = insert(self.sleep_level_table).values(
                     sleep_log_id=sleep_log_id,
                     date_time=datetime.strptime(
@@ -638,19 +648,21 @@ class StudySubjectService(DBService):
 
     def update_last_sync_date(self, last_sync_date: str | None = None):
         """
-        Updates the `last_sync_date` for the current study subject to the current timestamp.
+        Update the current study subject `last_sync_date` to now.
 
         Args:
-        - last_sync_date (str, optional): The date to set last sync to. If not passed, `function_timestamp` is used
-            by default.
+        - last_sync_date (str, optional): The date to set last sync to.
+            If not passed, `function_timestamp` is used by default.
 
-        Raises:
-            RuntimeError: If called outside of the `iter_entries` block or without a valid index.
+        Raises
+        ------
+            RuntimeError: If called outside of the `iter_entries` block
+                or without a valid index.
         """
-
         if self.__index is None:
             raise RuntimeError(
-                "No index found. `insert_data` must be called inside `iter_entries` block."
+                "No index found. `insert_data` must be called "
+                "inside `iter_entries` block."
             )
 
         if last_sync_date is None:
@@ -686,7 +698,8 @@ def get_secret(secret_name: str) -> dict:
     Args:
     - secret_name (str): The name of the secret to retrieve a value from.
 
-    Returns:
+    Returns
+    -------
     - dict: The secret's value.
     """
     # Initialize a session using environment variables
@@ -740,10 +753,12 @@ def build_url(
             "YYYY-MM-DD" format. Defaults to the earlier of the subject's expiry
             date or the current timestamp.
 
-    Returns:
+    Returns
+    -------
         str: The constructed URL for querying the Fitbit API.
 
-    Raises:
+    Raises
+    ------
         ValueError: If the `start_date` is on or after the `end_date`.
 
     Example:
@@ -769,9 +784,7 @@ def build_url(
             start_date = entry.starts_on.strftime("%Y-%m-%d")
 
     if end_date is None:
-        timestamp = datetime.strptime(
-            function_timestamp, "%Y-%m-%dT%H:%M:%S.%f"
-        )
+        timestamp = datetime.strptime(function_timestamp, "%Y-%m-%dT%H:%M:%S.%f")
         end_date = min(entry.expires_on, timestamp).strftime("%Y-%m-%d")
 
     if start_date >= end_date:
@@ -823,12 +836,12 @@ def handler(event, context):
                 tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
                 config.update(get_secret(config_secret_name))
                 tokens_config = get_secret(tokens_secret_name)
-            except Exception:
+            except Exception as err:
                 logger.error(
-                    f"Error retrieving secret",
+                    "Error retrieving secret",
                     extra={"error": traceback.format_exc()},
                 )
-                raise ConfigFetchError
+                raise ConfigFetchError from err
 
         # Database connection setup
         try:
@@ -836,12 +849,12 @@ def handler(event, context):
             lambda_task_service = LambdaTaskService(db)
             study_subject_service = StudySubjectService(db)
 
-        except Exception:
+        except Exception as err:
             logger.error(
-                f"Error initializing database services",
+                "Error initializing database services",
                 extra={"error": traceback.format_exc()},
             )
-            raise DBInitializationError
+            raise DBInitializationError from err
 
         # Get and update the `lambda_task` database entry
         with lambda_task_service.connect() as connection:
@@ -849,23 +862,23 @@ def handler(event, context):
                 lambda_task_service.get_entry(function_id)
 
             # On error raise exception and exit
-            except Exception:
+            except Exception as err:
                 logger.error(
                     "Error fetching lambda function from database",
                     extra={"error": traceback.format_exc()},
                 )
-                raise DBFetchError
+                raise DBFetchError from err
 
             try:
                 lambda_task_service.update_status("InProgress")
 
             # On error raise exception and exit
-            except Exception:
+            except Exception as err:
                 logger.error(
                     "Error updating lambda function status from database",
                     extra={"error": traceback.format_exc()},
                 )
-                raise DBUpdateError
+                raise DBUpdateError from err
 
         # Get and update participant data
         with study_subject_service.connect() as connection:
@@ -874,12 +887,12 @@ def handler(event, context):
                 study_subject_service.get_entries()
 
             # On error raise exception and exit
-            except Exception:
+            except Exception as err:
                 logger.error(
                     "Error fetching participant API data from database",
                     extra={"error": traceback.format_exc()},
                 )
-                raise DBFetchError
+                raise DBFetchError from err
 
             # Iterate over each result to query the Fitbit API
             for entry in study_subject_service.iter_entries():
@@ -893,7 +906,8 @@ def handler(event, context):
                 except ValueError:
                     urls = []
 
-                # Handle edge case when a participant's `starts_on` changes to an earlier date
+                # Handle edge case when a participant's `starts_on`
+                # changes to an earlier date
                 # Generate an additional URL for fetching retroactive data
                 if (entry.earliest_sleep_log is None) or (
                     entry.earliest_sleep_log
@@ -901,7 +915,9 @@ def handler(event, context):
                     < entry.earliest_sleep_log - timedelta(days=1)
                 ):
                     logger.info(
-                        "Participant's `starts_on` value is before their earliest sleep log. Generating extra URL for fetching retroactive data.",
+                        "Participant's `starts_on` value is before their"
+                        "earliest sleep log. Generating extra URL for fetching "
+                        "retroactive data.",
                         extra={
                             "study_subject_id": entry.id,
                             "starts_on": entry.starts_on,
@@ -925,7 +941,8 @@ def handler(event, context):
                         )
                     except ValueError:
                         logger.warning(
-                            "Error building URL for retroactive data. Continuing to next study subject.",
+                            "Error building URL for retroactive data. "
+                            "Continuing to next study subject.",
                             extra={"error": traceback.format_exc()},
                         )
                         continue
@@ -992,7 +1009,7 @@ def handler(event, context):
                             study_subject_service.insert_data(data)
 
                         # On error continue to next study subject
-                        except Exception:
+                        except Exception as err:
                             logger.error(
                                 "Error inserting Fitbit data to database",
                                 extra={
@@ -1000,9 +1017,10 @@ def handler(event, context):
                                     "error": traceback.format_exc(),
                                 },
                             )
-                            raise NestedError
+                            raise NestedError from err
 
-                        # Try updating `api.last_sync_date` to the latest `dateOfSleep` in `data`
+                        # Try updating `api.last_sync_date` to the
+                        # latest `dateOfSleep` in `data`
                         last_sync_date = None
                         try:
                             last_sync_date = max(
@@ -1020,14 +1038,16 @@ def handler(event, context):
                                 last_sync_date, "%Y-%m-%d"
                             )
 
-                            # Convert to string matching the same format as `function_timestamp`
+                            # Convert to string matching the same format
+                            # as `function_timestamp`
                             last_sync_date = last_sync_date.isoformat(
                                 timespec="milliseconds"
                             )
 
                         except Exception:
                             logger.warning(
-                                "Error parsing `last_sync_date` from sleep data. Falling back to `function_timestamp`.",
+                                "Error parsing `last_sync_date` from sleep "
+                                "data. Falling back to `function_timestamp`.",
                                 extra={
                                     "study_subject_id": entry.id,
                                     "error": traceback.format_exc(),
@@ -1039,7 +1059,7 @@ def handler(event, context):
                             )
 
                         # On error continue to next study subject
-                        except Exception:
+                        except Exception as err:
                             logger.error(
                                 "Error updating `last_sync_date`",
                                 extra={
@@ -1048,7 +1068,7 @@ def handler(event, context):
                                     "error": traceback.format_exc(),
                                 },
                             )
-                            raise NestedError
+                            raise NestedError from err
 
                 # Continue to next study subject in case of handled error
                 except NestedError:
@@ -1060,7 +1080,7 @@ def handler(event, context):
                     continue
 
                 # Log error and exit in case of unhandled error
-                except Exception:
+                except Exception as err:
                     logger.error(
                         "Unhandled error when updating study subject. Exiting.",
                         extra={
@@ -1068,7 +1088,7 @@ def handler(event, context):
                             "error": traceback.format_exc(),
                         },
                     )
-                    raise DBUpdateError
+                    raise DBUpdateError from err
 
         # Upload log file to S3
         try:
@@ -1089,7 +1109,7 @@ def handler(event, context):
                 "Error uploading log file to S3", extra={"error": str(s3_error)}
             )
 
-            raise S3UploadError
+            raise S3UploadError from s3_error
 
     except ConfigFetchError:
         error_code = "ConfigFetchError"

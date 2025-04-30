@@ -1,7 +1,6 @@
 import json
 import pprint
-import traceback
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, UTC
 
 import pytest
 
@@ -208,8 +207,8 @@ def test_study_subject_create(post_admin, create_studies, create_apis):
     join_study = subject.studies[0]
     assert join_study.study_id == 1
     assert join_study.did_consent is True
-    assert join_study.expires_on.replace(tzinfo=timezone.utc) == datetime(
-        year, 12, 31, 23, 59, 59, tzinfo=timezone.utc
+    assert join_study.expires_on.replace(tzinfo=UTC) == datetime(
+        year, 12, 31, 23, 59, 59, tzinfo=UTC
     )
     assert len(subject.apis) == 1
     join_api = subject.apis[0]
@@ -316,9 +315,7 @@ def test_study_subject_edit_remove_apis(post_admin, create_study_subject):
     assert len(edited_subject.apis) == 0
 
 
-def test_study_subject_edit_invalid_scope_type(
-    post_admin, create_study_subject
-):
+def test_study_subject_edit_invalid_scope_type(post_admin, create_study_subject):
     """
     Test providing a string instead of a list for an API's scope.
     The API actually handles this by converting the string to a list.
@@ -364,9 +361,7 @@ def test_study_subject_edit_associate_existing_api(
     Test associating an existing API with a study subject.
     """
     # Create subject with no APIs
-    subject = create_study_subject(
-        "associate_api_ditti_id", studies=[], apis=[]
-    )
+    subject = create_study_subject("associate_api_ditti_id", studies=[], apis=[])
 
     subject_id = subject.id
 
@@ -376,9 +371,7 @@ def test_study_subject_edit_associate_existing_api(
 
     # Prepare edit data to add an API
     edit_data = {
-        "apis": [
-            get_api_entry(1, "new-api-association-uuid", ["read", "write"])
-        ]
+        "apis": [get_api_entry(1, "new-api-association-uuid", ["read", "write"])]
     }
 
     # Send edit request
@@ -397,9 +390,7 @@ def test_study_subject_edit_associate_existing_api(
     assert edited_subject.apis[0].scope == ["read", "write"]
 
 
-def test_study_subject_edit_add_existing_study(
-    post_admin, create_study_subject
-):
+def test_study_subject_edit_add_existing_study(post_admin, create_study_subject):
     """
     Test adding an existing study to a study subject.
 
@@ -493,15 +484,13 @@ def test_study_subject_edit_add_existing_study(
                 {
                     "study_id": 1,
                     "did_consent": False,
-                    "expires_on": datetime(
-                        next_year, 1, 1, 0, 0, 0, tzinfo=timezone.utc
-                    ),
+                    "expires_on": datetime(next_year, 1, 1, 0, 0, 0, tzinfo=UTC),
                 },
                 {
                     "study_id": 2,
                     "did_consent": True,
                     "expires_on": datetime(
-                        next_next_year, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                        next_next_year, 1, 1, 0, 0, 0, tzinfo=UTC
                     ),
                 },
             ],
@@ -598,9 +587,7 @@ def test_study_subject_edit_success(
     print(f"\nTest: {test_name}")
     print(f"Edit payload: {edit_payload}")
 
-    res_edit, data_edit = edit_study_subject(
-        post_admin, subject_id, edit_payload
-    )
+    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_payload)
 
     # Add error details if test fails
     if res_edit.status_code != 200:
@@ -799,9 +786,7 @@ def test_study_subject_edit_errors(
         # Update edit_payload with the archived API ID
         edit_payload = {
             "apis": [
-                get_api_entry(
-                    archived_api.id, "archived-api-user-uuid", ["read"]
-                )
+                get_api_entry(archived_api.id, "archived-api-user-uuid", ["read"])
             ]
         }
 
@@ -895,10 +880,10 @@ def test_study_subject_get_all(get_admin, post_admin, create_study_subject):
     existing_len = len(data_res)
 
     # Create multiple StudySubjects
-    subject1 = create_study_subject(
+    create_study_subject(
         ditti_id="get_all_subject1_ditti_id", studies=[], apis=[]
     )
-    subject2 = create_study_subject(
+    create_study_subject(
         ditti_id="get_all_subject2_ditti_id", studies=[], apis=[]
     )
     subject3 = create_study_subject(
@@ -991,9 +976,7 @@ def test_study_subject_get_non_existent_id(get_admin):
     assert len(data_res) == 0
 
 
-def test_study_subject_get_archived_not_returned(
-    get_admin, create_study_subject
-):
+def test_study_subject_get_archived_not_returned(get_admin, create_study_subject):
     """
     Test that archived StudySubjects are not returned in the list.
     """
@@ -1006,7 +989,7 @@ def test_study_subject_get_archived_not_returned(
     existing_len = len(data_res)
 
     # Create StudySubjects
-    subject1 = create_study_subject(
+    create_study_subject(
         ditti_id="archived_not_returned1_ditti_id", studies=[], apis=[]
     )
     subject2 = create_study_subject(

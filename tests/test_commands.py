@@ -125,7 +125,7 @@ def test_create_researcher_account(runner):
     assert foo.first_name == "Jane"
     assert foo.last_name == "Doe"
     assert foo.phone_number == "+12345678901"
-    assert foo.is_confirmed == True
+    assert foo.is_confirmed is True
 
     # Check that the account has access to all groups
     q2 = AccessGroup.name == "Admin"

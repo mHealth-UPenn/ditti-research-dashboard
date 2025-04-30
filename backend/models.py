@@ -72,7 +72,7 @@ def init_admin_app():
     app = App.query.filter(query).first()
 
     if app is not None:
-        raise ValueError("This app already exists: %s" % app)
+        raise ValueError(f"This app already exists: {app}")
 
     app = App(name="Admin Dashboard")
     db.session.add(app)
@@ -99,7 +99,7 @@ def init_admin_group():
     access_group = AccessGroup.query.filter(query).first()
 
     if access_group is not None:
-        raise ValueError("This access group already exists: %s" % access_group)
+        raise ValueError(f"This access group already exists: {access_group}")
 
     query = App.name == "Admin Dashboard"
     app = App.query.filter(query).first()
@@ -148,7 +148,7 @@ def init_admin_account(email=None):
     admin = Account.query.filter(Account.email == email).first()
 
     if admin is not None:
-        raise ValueError("An admin account already exists: %s" % admin)
+        raise ValueError(f"An admin account already exists: {admin}")
 
     query = AccessGroup.name == "Admin"
     admin_group = AccessGroup.query.filter(query).first()
@@ -291,9 +291,7 @@ def init_integration_testing_db():
     # Create the Ditti Admin access group
     ditti_app = App(name="Ditti App Dashboard")
     ditti_admin_group = AccessGroup(name="Ditti App Admin", app=ditti_app)
-    JoinAccessGroupPermission(
-        access_group=ditti_admin_group, permission=wildcard
-    )
+    JoinAccessGroupPermission(access_group=ditti_admin_group, permission=wildcard)
     query = Permission.definition == tuple_("View", "Ditti App Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
@@ -336,12 +334,8 @@ def init_integration_testing_db():
 
     # Create the Wearable Admin access group
     wear_app = App(name="Wearable Dashboard")
-    wear_admin_group = AccessGroup(
-        name="Wearable Dashboard Admin", app=wear_app
-    )
-    JoinAccessGroupPermission(
-        access_group=wear_admin_group, permission=wildcard
-    )
+    wear_admin_group = AccessGroup(name="Wearable Dashboard Admin", app=wear_app)
+    JoinAccessGroupPermission(access_group=wear_admin_group, permission=wildcard)
     query = Permission.definition == tuple_("View", "Wearable Dashboard")
     permission = Permission.query.filter(query).first()
     JoinAccessGroupPermission(
@@ -462,12 +456,18 @@ def init_integration_testing_db():
             )
         db.session.add(access_group)
 
-    data_summary = """The clinical trial collects sleep data from participants' wearable devices over four weeks to evaluate the
-impact of mindfulness exercises on treating insomnia. By monitoring sleep patterns, duration, and quality,
-researchers can gain objective insights into participants' sleep behavior before, during, and after engaging in
-mindfulness interventions. This data enables the study to measure the effectiveness of these exercises in
-improving sleep outcomes. Wearable devices provide a convenient, non-invasive method for gathering accurate,
-real-time data essential for understanding the physiological effects of mindfulness on sleep."""
+    data_summary = """The clinical trial collects sleep data from participants' \
+wearable devices over four weeks to evaluate the
+impact of mindfulness exercises on treating insomnia. By monitoring sleep \
+patterns, duration, and quality,
+researchers can gain objective insights into participants' sleep behavior \
+before, during, and after engaging in
+mindfulness interventions. This data enables the study to measure the \
+effectiveness of these exercises in
+improving sleep outcomes. Wearable devices provide a convenient, non-invasive \
+method for gathering accurate,
+real-time data essential for understanding the physiological effects of \
+mindfulness on sleep."""
 
     studies = [
         {
@@ -476,7 +476,9 @@ real-time data essential for understanding the physiological effects of mindfuln
             "ditti_id": "TA",
             "email": "test.study.A@studyAemail.com",
             "default_expiry_delta": 14,
-            "consent_information": "By accepting, you agree that your data will be used. You can withdraw consent at any time.",
+            "consent_information": "By accepting, you agree that your data "
+            "will be used. You can withdraw consent "
+            "at any time.",
             "data_summary": data_summary,
         },
         {
@@ -485,7 +487,8 @@ real-time data essential for understanding the physiological effects of mindfuln
             "ditti_id": "TB",
             "email": "test.study.B@studyBemail.com",
             "default_expiry_delta": 14,
-            "consent_information": "By accepting, you agree that your data will be used. You cannot withdraw consent.",
+            "consent_information": "By accepting, you agree that your data "
+            "will be used. You cannot withdraw consent.",
             "data_summary": data_summary,
         },
     ]
@@ -496,7 +499,8 @@ real-time data essential for understanding the physiological effects of mindfuln
     db.session.add(study_a)
     db.session.add(study_b)
 
-    # Create a Ditti admin account to test whether permissions are scoped to the Ditti Dashboard only
+    # Create a Ditti admin account to test whether permissions are scoped to the
+    # Ditti Dashboard only
     account = Account(
         created_on=datetime.now(UTC),
         first_name="Jane",
@@ -507,7 +511,8 @@ real-time data essential for understanding the physiological effects of mindfuln
     JoinAccountAccessGroup(account=account, access_group=ditti_admin_group)
     db.session.add(account)
 
-    # Create a Wearable admin account to test whether permissions are scoped to the Wearable Dashboard only
+    # Create a Wearable admin account to test whether permissions are scoped
+    # to the Wearable Dashboard only
     account = Account(
         created_on=datetime.now(UTC),
         first_name="Jane",
@@ -518,7 +523,8 @@ real-time data essential for understanding the physiological effects of mindfuln
     JoinAccountAccessGroup(account=account, access_group=wear_admin_group)
     db.session.add(account)
 
-    # Create a Study A Admin account to test whether permissions are scoped to Study A only
+    # Create a Study A Admin account to test whether permissions are scoped to the
+    # Study A only
     account = Account(
         created_on=datetime.now(UTC),
         first_name="Jane",
@@ -528,17 +534,16 @@ real-time data essential for understanding the physiological effects of mindfuln
     )
     role = Role.query.filter(Role.name == "Admin").first()
     JoinAccountStudy(account=account, study=study_a, role=role)
-    JoinAccountAccessGroup(
-        account=account, access_group=ditti_coordinator_group
-    )
+    JoinAccountAccessGroup(account=account, access_group=ditti_coordinator_group)
     JoinAccountAccessGroup(account=account, access_group=wear_coordinator_group)
     JoinAccountAccessGroup(account=account, access_group=admin_group)
     db.session.add(account)
 
     # Create an account for each role
-    # Assign each role to Study A to test whether permissions are scoped to Study A only
+    # Assign each role to Study A to test whether permissions are scoped
+    # to Study A only
     other_role = Role.query.filter(Role.name == "Can View Participants").first()
-    for role_name in roles.keys():
+    for role_name in roles:
         account = Account(
             created_on=datetime.now(UTC),
             first_name="Jane",
@@ -558,7 +563,8 @@ real-time data essential for understanding the physiological effects of mindfuln
         JoinAccountAccessGroup(account=account, access_group=admin_group)
         db.session.add(account)
 
-    # Create an account for each access group to test whether permissions are scoped properly on the Admin Dashboard
+    # Create an account for each access group to test whether permissions are
+    # scoped properly on the Admin Dashboard
     access_group_names = list(admin_access_groups.keys()) + list(
         ditti_access_groups.keys()
     )
@@ -876,7 +882,6 @@ class Account(db.Model):
         Returns
         -------
         """
-
         # query all permissions that are granted to the account by access
         # groups that grant access to the app
         q1 = (
@@ -898,9 +903,7 @@ class Account(db.Model):
                 Permission.query.join(JoinRolePermission)
                 .join(Role)
                 .join(JoinAccountStudy, Role.id == JoinAccountStudy.role_id)
-                .filter(
-                    JoinAccountStudy.primary_key == tuple_(self.id, study_id)
-                )
+                .filter(JoinAccountStudy.primary_key == tuple_(self.id, study_id))
             )
 
             # return the union of all permission for the app and study
@@ -961,7 +964,7 @@ class Account(db.Model):
         }
 
     def __repr__(self):
-        return "<Account %s>" % self.email
+        return f"<Account {self.email}>"
 
 
 class JoinAccountAccessGroup(db.Model):
@@ -994,7 +997,7 @@ class JoinAccountAccessGroup(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.account_id, self.access_group_id
 
@@ -1003,7 +1006,7 @@ class JoinAccountAccessGroup(db.Model):
         return tuple_(cls.account_id, cls.access_group_id)
 
     def __repr__(self):
-        return "<JoinAccountAccessGroup %s-%s>" % self.primary_key
+        return "<JoinAccountAccessGroup {}-{}>".format(*self.primary_key)
 
 
 class JoinAccountStudy(db.Model):
@@ -1045,7 +1048,7 @@ class JoinAccountStudy(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.account_id, self.study_id
 
@@ -1061,7 +1064,7 @@ class JoinAccountStudy(db.Model):
         return {**self.study.meta, "role": self.role.meta}
 
     def __repr__(self):
-        return "<JoinAccountStudy %s-%s>" % self.primary_key
+        return "<JoinAccountStudy {}-{}>".format(*self.primary_key)
 
 
 class AccessGroup(db.Model):
@@ -1122,7 +1125,7 @@ class AccessGroup(db.Model):
         }
 
     def __repr__(self):
-        return "<AccessGroup %s>" % self.name
+        return f"<AccessGroup {self.name}>"
 
 
 class JoinAccessGroupPermission(db.Model):
@@ -1157,7 +1160,7 @@ class JoinAccessGroupPermission(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key
+        Tuple of int: an entry's primary key
         """
         return self.access_group_id, self.permission_id
 
@@ -1173,7 +1176,7 @@ class JoinAccessGroupPermission(db.Model):
         return self.permission.meta
 
     def __repr__(self):
-        return "<JoinAccessGroupPermission %s-%s>" % self.primary_key
+        return "<JoinAccessGroupPermission {}-{}>".format(*self.primary_key)
 
 
 class Role(db.Model):
@@ -1211,7 +1214,7 @@ class Role(db.Model):
         }
 
     def __repr__(self):
-        return "<Role %s>" % self.name
+        return f"<Role {self.name}>"
 
 
 class JoinRolePermission(db.Model):
@@ -1246,7 +1249,7 @@ class JoinRolePermission(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.role_id, self.permission_id
 
@@ -1262,7 +1265,7 @@ class JoinRolePermission(db.Model):
         return self.permission.meta
 
     def __repr__(self):
-        return "<JoinRolePermission %s-%s>" % self.primary_key
+        return "<JoinRolePermission {}-{}>".format(*self.primary_key)
 
 
 class Action(db.Model):
@@ -1287,7 +1290,7 @@ class Action(db.Model):
         return {"id": self.id, "value": self.value}
 
     def __repr__(self):
-        return "<Action %s>" % self.value
+        return f"<Action {self.value}>"
 
 
 class Resource(db.Model):
@@ -1312,7 +1315,7 @@ class Resource(db.Model):
         return {"id": self.id, "value": self.value}
 
     def __repr__(self):
-        return "<Resource %s>" % self.value
+        return f"<Resource {self.value}>"
 
 
 class Permission(db.Model):
@@ -1412,7 +1415,7 @@ class Permission(db.Model):
     @hybrid_property
     def definition(self):
         """
-        tuple of str: an entry's (action, resource) definition
+        Tuple of str: an entry's (action, resource) definition
         """
         return self.action, self.resource
 
@@ -1435,7 +1438,7 @@ class Permission(db.Model):
         return {"id": self.id, "action": self.action, "resource": self.resource}
 
     def __repr__(self):
-        return "<Permission %s %s>" % self.definition
+        return "<Permission {} {}>".format(*self.definition)
 
 
 class App(db.Model):
@@ -1460,7 +1463,7 @@ class App(db.Model):
         return {"id": self.id, "name": self.name}
 
     def __repr__(self):
-        return "<App %s>" % self.name
+        return f"<App {self.name}>"
 
 
 class Study(db.Model):
@@ -1476,8 +1479,8 @@ class Study(db.Model):
     email: sqlalchemy.Column
     default_expiry_delta: sqlalchemy.Column
         The default amount of time in number of days that a subject is enrolled
-        in the study. A JoinStudySubjectStudy's expires_on column will be automatically set
-        according to this value.
+        in the study. A JoinStudySubjectStudy's expires_on column will be
+        automatically set according to this value.
     consent_information: sqlalchemy.Column
         The consent text to show to a study subject.
     is_archived: sqlalchemy.Column
@@ -1521,7 +1524,7 @@ class Study(db.Model):
         }
 
     def __repr__(self):
-        return "<Study %s>" % self.acronym
+        return f"<Study {self.acronym}>"
 
 
 class JoinStudyRole(db.Model):
@@ -1538,9 +1541,7 @@ class JoinStudyRole(db.Model):
 
     __tablename__ = "join_study_role"
 
-    study_id = db.Column(
-        db.Integer, db.ForeignKey("study.id"), primary_key=True
-    )
+    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), primary_key=True)
 
     role_id = db.Column(
         db.Integer,
@@ -1554,7 +1555,7 @@ class JoinStudyRole(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.study_id, self.role_id
 
@@ -1592,7 +1593,7 @@ class BlockedToken(db.Model):
     created_on = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     def __repr__(self):
-        return "<BlockedToken %s>" % self.id
+        return f"<BlockedToken {self.id}>"
 
 
 class AboutSleepTemplate(db.Model):
@@ -1621,7 +1622,7 @@ class AboutSleepTemplate(db.Model):
         return {"id": self.id, "name": self.name, "text": self.text}
 
     def __repr__(self):
-        return "<AboutSleepTemplate %s>" % self.name
+        return f"<AboutSleepTemplate {self.name}>"
 
 
 class StudySubject(db.Model):
@@ -1761,7 +1762,7 @@ class JoinStudySubjectStudy(db.Model):
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.study_subject_id, self.study_id
 
@@ -1778,24 +1779,20 @@ class JoinStudySubjectStudy(db.Model):
             "didConsent": self.did_consent,
             "createdOn": self.created_on.isoformat(),
             "startsOn": self.starts_on.isoformat(),
-            "expiresOn": self.expires_on.isoformat()
-            if self.expires_on
-            else None,
+            "expiresOn": self.expires_on.isoformat() if self.expires_on else None,
             "dataSummary": self.study.data_summary,
             "study": self.study.meta,
         }
 
     def __repr__(self):
-        return (
-            f"<JoinStudySubjectStudy {self.study_subject_id}-{self.study_id}>"
-        )
+        return f"<JoinStudySubjectStudy {self.study_subject_id}-{self.study_id}>"
 
 
 @event.listens_for(JoinStudySubjectStudy, "before_insert")
 def set_expires_on(mapper, connection, target):
     """
-    Automatically set the expires_on field based on the Study's default_expiry_delta
-    if expires_on is not provided.
+    Automatically set the expires_on field based on the Study's
+    default_expiry_delta if expires_on is not provided.
     """
     if not target.expires_on:
         if target.study_id:
@@ -1861,15 +1858,13 @@ class JoinStudySubjectApi(db.Model):
         Make the created_on column read-only.
         """
         if self.created_on:
-            raise ValueError(
-                "JoinStudySubjectApi.created_on cannot be modified."
-            )
+            raise ValueError("JoinStudySubjectApi.created_on cannot be modified.")
         return val
 
     @hybrid_property
     def primary_key(self):
         """
-        tuple of int: an entry's primary key.
+        Tuple of int: an entry's primary key.
         """
         return self.study_subject_id, self.api_id
 
@@ -1893,10 +1888,10 @@ class JoinStudySubjectApi(db.Model):
         }
 
     def __repr__(self):
-        return f"<JoinStudySubjectApi StudySubject {self.study_subject_id} - Api {self.api_id}>"
-
-    def __repr__(self):
-        return "<JoinStudySubjectApi %s-%s>" % self.primary_key
+        return (
+            f"<JoinStudySubjectApi StudySubject {self.study_subject_id} - "
+            f"Api {self.api_id}>"
+        )
 
 
 class Api(db.Model):
@@ -1923,7 +1918,7 @@ class Api(db.Model):
         return {"id": self.id, "name": self.name}
 
     def __repr__(self):
-        return "<Api %s>" % self.name
+        return f"<Api {self.name}>"
 
 
 class SleepLog(db.Model):
@@ -2031,9 +2026,7 @@ class SleepLog(db.Model):
             "minutesAwake": self.minutes_awake,
             "minutesToFallAsleep": self.minutes_to_fall_asleep,
             "logType": self.log_type.value,
-            "startTime": self.start_time.isoformat()
-            if self.start_time
-            else None,
+            "startTime": self.start_time.isoformat() if self.start_time else None,
             "timeInBed": self.time_in_bed,
             "type": self.type.value,
             "totalMinutesAsleep": self.minutes_asleep,
@@ -2103,7 +2096,10 @@ class SleepLevel(db.Model):
         }
 
     def __repr__(self):
-        return f"<SleepLevel {self.level.value} at {self.date_time} for SleepLog {self.sleep_log_id}>"
+        return (
+            f"<SleepLevel {self.level.value} at {self.date_time} for "
+            f"SleepLog {self.sleep_log_id}>"
+        )
 
 
 class SleepSummary(db.Model):
@@ -2155,7 +2151,9 @@ class SleepSummary(db.Model):
         }
 
     def __repr__(self):
-        return f"<SleepSummary {self.level.value} for SleepLog {self.sleep_log_id}>"
+        return (
+            f"<SleepSummary {self.level.value} for SleepLog {self.sleep_log_id}>"
+        )
 
 
 class LambdaTask(db.Model):
@@ -2166,7 +2164,8 @@ class LambdaTask(db.Model):
     ----
     id: sqlalchemy.Column
     status: sqlalchemy.Column
-        The status of the task ("Pending", "InProgress", "Success", "Failed", "CompletedWithErrors").
+        The status of the task ("Pending", "InProgress", "Success", "Failed",
+        "CompletedWithErrors").
     billed_ms: sqlalchemy.Column
         The billed duration of the Lambda function in milliseconds.
     created_on: sqlalchemy.Column

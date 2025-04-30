@@ -39,8 +39,8 @@ def get_data_processing_tasks(account, task_id: int | None):
     """
     Retrieve all data processing tasks sorted by creation date.
 
-    Optionally, retrieve a specific data processing task by ID. If task_id is provided, the response will contain a
-    single task.
+    Optionally, retrieve a specific data processing task by ID.
+    If task_id is provided, the response will contain a single task.
 
     Request:
     --------
@@ -56,7 +56,8 @@ def get_data_processing_tasks(account, task_id: int | None):
     [
         {
             "id": int,
-            "status": str,          # "Pending", "InProgress", "Success", "Failed", or "CompletedWithErrors"
+            "status": str,          # "Pending", "InProgress", "Success",
+                                    # "Failed", or "CompletedWithErrors"
             "billedMs": int,
             "createdOn": str,       # ISO 8601 format
             "updatedOn": str,       # ISO 8601 format
@@ -77,20 +78,19 @@ def get_data_processing_tasks(account, task_id: int | None):
         if task_id is not None:
             tasks = LambdaTask.query.filter(LambdaTask.id == task_id).all()
         else:
-            # Retrieve all tasks sorted by created_on in descending order (most recent first)
-            tasks = LambdaTask.query.order_by(
-                LambdaTask.created_on.desc()
-            ).all()
+            # Retrieve all tasks sorted by created_on in descending order
+            tasks = LambdaTask.query.order_by(LambdaTask.created_on.desc()).all()
         res = [task.meta for task in tasks]
         return jsonify(res), 200
 
-    except Exception as e:
+    except Exception:
         exc = traceback.format_exc()
         logger.warning(f"Error retrieving data processing tasks: {exc}")
         db.session.rollback()
         return make_response(
             {
-                "msg": "Internal server error when retrieving data processing tasks."
+                "msg": "Internal server error when "
+                "retrieving data processing tasks."
             },
             500,
         )
@@ -118,7 +118,8 @@ def invoke_data_processing_task(account):
         "msg": "Data processing task invoked successfully",
         "task": {
             "id": int,
-            "status": str,          # "Pending", "InProgress", "Success", "Failed", or "CompletedWithErrors"
+            "status": str,          # "Pending", "InProgress", "Success",
+                                    # "Failed", or "CompletedWithErrors"
             "billedMs": int,
             "createdOn": str,       # ISO 8601 format
             "updatedOn": str,       # ISO 8601 format
@@ -158,9 +159,7 @@ def invoke_data_processing_task(account):
         logger.warning(f"Error invoking data processing task: {exc}")
         db.session.rollback()
         return make_response(
-            {
-                "msg": "Internal server error when invoking data processing task."
-            },
+            {"msg": "Internal server error when invoking data processing task."},
             500,
         )
 
@@ -210,9 +209,7 @@ def force_stop_data_processing_task(account):
         ).first()
         if lambda_task is None:
             return make_response(
-                {
-                    "msg": f"Data processing task with id {function_id} not found."
-                },
+                {"msg": f"Data processing task with id {function_id} not found."},
                 404,
             )
 
@@ -220,17 +217,13 @@ def force_stop_data_processing_task(account):
         lambda_task.completed_on = datetime.now(UTC)
         lambda_task.error_code = "ForceStopped"
         db.session.commit()
-        return jsonify(
-            {"msg": "Data processing task stopped successfully"}
-        ), 200
+        return jsonify({"msg": "Data processing task stopped successfully"}), 200
 
     except Exception:
         exc = traceback.format_exc()
         logger.warning(f"Error stopping data processing task: {exc}")
         db.session.rollback()
         return make_response(
-            {
-                "msg": "Internal server error when stopping data processing task."
-            },
+            {"msg": "Internal server error when stopping data processing task."},
             500,
         )

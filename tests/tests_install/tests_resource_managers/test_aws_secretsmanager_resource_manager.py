@@ -77,9 +77,7 @@ def test_write_secret(
     aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
     dev_secret_value_mock: DevSecretValue,
 ):
-    aws_secretsmanager_resource_manager_mock.secret_value = (
-        dev_secret_value_mock
-    )
+    aws_secretsmanager_resource_manager_mock.secret_value = dev_secret_value_mock
     res = aws_secretsmanager_resource_manager_mock.write_secret()
     assert res is not None
 
@@ -87,8 +85,8 @@ def test_write_secret(
 def test_write_secret_unexpected_error(
     aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
 ):
-    aws_secretsmanager_resource_manager_mock.client.put_secret_value = (
-        MagicMock(side_effect=Exception("Unexpected error"))
+    aws_secretsmanager_resource_manager_mock.client.put_secret_value = MagicMock(
+        side_effect=Exception("Unexpected error")
     )
     with pytest.raises(ResourceManagerError, match="Unexpected error"):
         aws_secretsmanager_resource_manager_mock.write_secret()
@@ -97,12 +95,10 @@ def test_write_secret_unexpected_error(
 def test_write_secret_client_error(
     aws_secretsmanager_resource_manager_mock: AwsSecretsmanagerResourceManager,
 ):
-    aws_secretsmanager_resource_manager_mock.client.put_secret_value = (
-        MagicMock(
-            side_effect=ClientError(
-                error_response={"Error": {"Code": "ClientError"}},
-                operation_name="PutSecretValue",
-            )
+    aws_secretsmanager_resource_manager_mock.client.put_secret_value = MagicMock(
+        side_effect=ClientError(
+            error_response={"Error": {"Code": "ClientError"}},
+            operation_name="PutSecretValue",
         )
     )
     with pytest.raises(ResourceManagerError, match="ClientError"):

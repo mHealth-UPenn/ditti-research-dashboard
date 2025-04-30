@@ -208,9 +208,7 @@ class TestParticipantAuthController:
                 "backend.auth.controllers.base.current_app"
             ) as mock_current_app:
                 # In the implementation, it checks CORS_ORIGINS for this value
-                mock_current_app.config = {
-                    "CORS_ORIGINS": "http://test-frontend"
-                }
+                mock_current_app.config = {"CORS_ORIGINS": "http://test-frontend"}
                 login_url = auth_controller.get_login_url()
 
         assert login_url == "http://test-frontend/login"

@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from datetime import date, datetime
-from typing import List, Optional, Tuple
 
 from sqlalchemy import select
 from sqlalchemy.orm import load_only, selectinload
@@ -28,32 +27,41 @@ MAX_DATE_RANGE_DAYS = 30
 
 
 def validate_date_range(
-    start_date_str: str, end_date_str: Optional[str] = None
-) -> Tuple[date, date]:
+    start_date_str: str, end_date_str: str | None = None
+) -> tuple[date, date]:
     """
-    Validates the provided date range.
+    Validate the provided date range.
 
-    Parameters:
+    Parameters
+    ----------
         start_date_str (str): The start date in 'YYYY-MM-DD' format.
-        end_date_str (str, optional): The end date in 'YYYY-MM-DD' format. Defaults to None.
+        end_date_str (str, optional): The end date in 'YYYY-MM-DD' format.
+            Defaults to None.
 
-    Returns:
-        tuple: A tuple containing the validated start_date and end_date as `datetime.date` objects.
+    Returns
+    -------
+        tuple: A tuple containing the validated start_date and end_date
+            as `datetime.date` objects.
 
-    Raises:
-        ValueError: If the dates are invalid, the end date is earlier than the start date,
-                    or the date range exceeds the allowed maximum.
+    Raises
+    ------
+        ValueError: If the dates are invalid, the end date is earlier than
+            the start date, or the date range exceeds the allowed maximum.
     """
     try:
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-    except ValueError:
-        raise ValueError("Invalid start_date format. Expected YYYY-MM-DD.")
+    except ValueError as err:
+        raise ValueError(
+            "Invalid start_date format. Expected YYYY-MM-DD."
+        ) from err
 
     if end_date_str:
         try:
             end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
-        except ValueError:
-            raise ValueError("Invalid end_date format. Expected YYYY-MM-DD.")
+        except ValueError as err:
+            raise ValueError(
+                "Invalid end_date format. Expected YYYY-MM-DD."
+            ) from err
     else:
         end_date = start_date
 
@@ -61,40 +69,40 @@ def validate_date_range(
         raise ValueError("end_date cannot be earlier than start_date.")
 
     if (end_date - start_date).days > MAX_DATE_RANGE_DAYS:
-        raise ValueError(
-            f"Date range cannot exceed {MAX_DATE_RANGE_DAYS} days."
-        )
+        raise ValueError(f"Date range cannot exceed {MAX_DATE_RANGE_DAYS} days.")
 
     return start_date, end_date
 
 
 def cache_key_admin(ditti_id: str, start_date: date, end_date: date) -> str:
     """
-    Generates a cache key for admin Fitbit data requests.
+    Generate a cache key for admin Fitbit data requests.
 
-    Parameters:
+    Parameters
+    ----------
         ditti_id (str): The unique ID of the study subject.
         start_date (datetime.date): The start date of the data request.
         end_date (datetime.date): The end date of the data request.
 
-    Returns:
+    Returns
+    -------
         str: The generated cache key string.
     """
     return f"admin_fitbit_data:{ditti_id}:{start_date}:{end_date}"
 
 
-def cache_key_participant(
-    ditti_id: str, start_date: date, end_date: date
-) -> str:
+def cache_key_participant(ditti_id: str, start_date: date, end_date: date) -> str:
     """
-    Generates a cache key for participant Fitbit data requests.
+    Generate a cache key for participant Fitbit data requests.
 
-    Parameters:
+    Parameters
+    ----------
         ditti_id (str): The unique ID of the participant.
         start_date (datetime.date): The start date of the data request.
         end_date (datetime.date): The end date of the data request.
 
-    Returns:
+    Returns
+    -------
         str: The generated cache key string.
     """
     return f"participant_fitbit_data:{ditti_id}:{start_date}:{end_date}"
@@ -102,16 +110,18 @@ def cache_key_participant(
 
 def get_fitbit_data_for_subject(
     ditti_id: str, start_date: date, end_date: date
-) -> Optional[List[dict]]:
+) -> list[dict] | None:
     """
-    Retrieves and serializes Fitbit data for a specific study subject within a given date range.
+    Retrieve and serialize a study subject's Fitbit data within a date range.
 
-    Parameters:
+    Parameters
+    ----------
         ditti_id (str): The unique ID of the study subject.
         start_date (datetime.date): The start date for the query.
         end_date (datetime.date): The end date for the query.
 
-    Returns:
+    Returns
+    -------
         list: A list of serialized sleep log data dictionaries if found.
         None: If the study subject is not found or is archived.
     """

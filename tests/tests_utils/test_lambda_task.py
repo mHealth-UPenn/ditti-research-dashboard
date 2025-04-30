@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, UTC
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -50,7 +50,7 @@ def mock_boto3_client():
 
 @pytest.fixture
 def fixed_datetime():
-    fixed_time = datetime(2024, 12, 1, 12, 0, 0, tzinfo=timezone.utc)
+    fixed_time = datetime(2024, 12, 1, 12, 0, 0, tzinfo=UTC)
     with freeze_time(fixed_time):
         yield fixed_time
 
@@ -375,9 +375,7 @@ def test_invoke_lambda_task_lambda_invoke_exception(
     # Mock boto3 Lambda client to raise an exception on invoke
     mock_lambda_client = MagicMock()
     mock_boto3_client.return_value = mock_lambda_client
-    mock_lambda_client.invoke.side_effect = Exception(
-        "Lambda invocation failed"
-    )
+    mock_lambda_client.invoke.side_effect = Exception("Lambda invocation failed")
 
     result = invoke_lambda_task(function_id)
 

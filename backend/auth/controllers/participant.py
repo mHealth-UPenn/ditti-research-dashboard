@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from flask import request
 
@@ -50,7 +50,8 @@ class ParticipantAuthController(AuthControllerBase):
     def get_scope(self):
         """Get the OAuth scope.
 
-        Returns:
+        Returns
+        -------
             str: The OAuth scope
         """
         # Check if elevated scope is requested
@@ -60,7 +61,8 @@ class ParticipantAuthController(AuthControllerBase):
     def get_login_url(self):
         """Get the login URL.
 
-        Returns:
+        Returns
+        -------
             str: The login URL
         """
         return f"{self.get_frontend_url()}/login"
@@ -72,10 +74,11 @@ class ParticipantAuthController(AuthControllerBase):
             token (dict): The token from Cognito
             userinfo (dict): The user info from Cognito
 
-        Returns:
+        Returns
+        -------
             tuple: (study_subject, error_response)
-                study_subject: The StudySubject object if successful, None otherwise
-                error_response: Error response if error occurred, None otherwise
+                study_subject: The StudySubject object if successful, else None
+                error_response: Error response if error occurred, else None
         """
         # Extract ditti_id from userinfo
         ditti_id = userinfo.get("cognito:username")
@@ -96,10 +99,13 @@ class ParticipantAuthController(AuthControllerBase):
         Args:
             ditti_id (str): The participant's ditti ID
 
-        Returns:
+        Returns
+        -------
             tuple: (study_subject, error_response)
-                study_subject: The StudySubject object if found/created successfully, None otherwise
-                error_response: Error response object if error occurred, None otherwise
+                study_subject: The StudySubject object
+                    if found/created successfully, else None
+                error_response: Error response object
+                    if error occurred, else None
         """
         try:
             # Check for existing study subject
@@ -121,7 +127,7 @@ class ParticipantAuthController(AuthControllerBase):
 
             # Create new study subject
             study_subject = StudySubject(
-                created_on=datetime.now(timezone.utc),
+                created_on=datetime.now(UTC),
                 ditti_id=ditti_id,
                 is_archived=False,
             )
@@ -131,7 +137,7 @@ class ParticipantAuthController(AuthControllerBase):
             return study_subject, None
 
         except Exception as e:
-            logger.error(f"Database error with study subject: {str(e)}")
+            logger.error(f"Database error with study subject: {e!s}")
             db.session.rollback()
             return None, create_error_response(
                 AUTH_ERROR_MESSAGES["system_error"],
@@ -145,13 +151,14 @@ class ParticipantAuthController(AuthControllerBase):
         Args:
             id_token (str): The ID token
 
-        Returns:
+        Returns
+        -------
             tuple: (ditti_id, error_response)
                 ditti_id: The ditti_id if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
         """
-        study_subject, error_msg = (
-            self.auth_manager.get_study_subject_from_token(id_token)
+        study_subject, error_msg = self.auth_manager.get_study_subject_from_token(
+            id_token
         )
 
         if not study_subject:
@@ -163,9 +170,7 @@ class ParticipantAuthController(AuthControllerBase):
                         status_code=404,
                         error_code="USER_NOT_FOUND",
                     )
-                elif (
-                    error_msg == "Account unavailable. Please contact support."
-                ):
+                elif error_msg == "Account unavailable. Please contact support.":
                     return None, create_error_response(
                         AUTH_ERROR_MESSAGES["account_archived"],
                         status_code=403,
@@ -188,7 +193,8 @@ class ParticipantAuthController(AuthControllerBase):
         Args:
             ditti_id: The ditti ID
 
-        Returns:
+        Returns
+        -------
             Response: JSON response with ditti ID
         """
         return create_success_response(

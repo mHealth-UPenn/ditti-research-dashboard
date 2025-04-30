@@ -49,9 +49,9 @@ def aws_cognito_resource_manager():
     participant_client = participant_user_pool_client(participant)
     researcher_client = researcher_user_pool_client(researcher)
     provider.config.participant_user_pool_id = participant["UserPool"]["Id"]
-    provider.config.participant_client_id = participant_client[
-        "UserPoolClient"
-    ]["ClientId"]
+    provider.config.participant_client_id = participant_client["UserPoolClient"][
+        "ClientId"
+    ]
     provider.config.researcher_user_pool_id = researcher["UserPool"]["Id"]
     provider.config.researcher_client_id = researcher_client["UserPoolClient"][
         "ClientId"

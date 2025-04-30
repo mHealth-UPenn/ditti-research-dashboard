@@ -130,9 +130,7 @@ def clear_cache_click():
     cache.clear()
 
 
-@click.command(
-    "init-lambda-task", help="Create a new LambdaTask database entry."
-)
+@click.command("init-lambda-task", help="Create a new LambdaTask database entry.")
 @click.option(
     "--status", default="InProgress", help="The status of the LambdaTask."
 )

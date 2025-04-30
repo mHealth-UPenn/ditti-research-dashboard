@@ -20,7 +20,7 @@ def app():
     app = Flask(__name__)
     app.config["TESTING"] = True
     app.config["FITBIT_CLIENT_ID"] = "fake_fitbit_client_id"
-    app.config["FITBIT_CLIENT_SECRET"] = "fake_fitbit_client_secret"
+    app.config["FITBIT_CLIENT_SECRET"] = "fake_fitbit_client_secret"  # noqa: S105
     return app
 
 
@@ -77,9 +77,7 @@ def test_get_fitbit_oauth_session_success(app):
             mock_get_api_tokens.return_value = fake_tokens
 
             # Mock tm.add_or_update_api_token if needed
-            with patch.object(
-                tm, "add_or_update_api_token"
-            ) as mock_add_update_api_token:
+            with patch.object(tm, "add_or_update_api_token"):
                 # Mock WebApplicationClient
                 with patch(
                     "shared.fitbit.WebApplicationClient"
@@ -176,9 +174,7 @@ def test_get_fitbit_oauth_session_refresh_failure(app):
             mock_get_api_tokens.return_value = expired_tokens
 
             # Mock tm.add_or_update_api_token (should not be called due to refresh failure)
-            with patch.object(
-                tm, "add_or_update_api_token"
-            ) as mock_add_update_api_token:
+            with patch.object(tm, "add_or_update_api_token"):
                 # Mock WebApplicationClient
                 with patch(
                     "shared.fitbit.WebApplicationClient"
@@ -191,9 +187,7 @@ def test_get_fitbit_oauth_session_refresh_failure(app):
                         mock_response = MagicMock()
                         mock_response.status_code = 400
                         mock_response.raise_for_status.side_effect = (
-                            requests.exceptions.HTTPError(
-                                "Token refresh failed"
-                            )
+                            requests.exceptions.HTTPError("Token refresh failed")
                         )
                         mock_post.return_value = mock_response
 
@@ -253,7 +247,7 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_failure(app):
                 tm,
                 "add_or_update_api_token",
                 side_effect=Exception("TM add_or_update_api_token failed"),
-            ) as mock_add_update_api_token:
+            ):
                 # Mock WebApplicationClient
                 with patch(
                     "shared.fitbit.WebApplicationClient"
@@ -322,9 +316,7 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(
                     if tokens.get("access_token"):
                         expired_tokens["access_token"] = tokens["access_token"]
                     if tokens.get("refresh_token"):
-                        expired_tokens["refresh_token"] = tokens[
-                            "refresh_token"
-                        ]
+                        expired_tokens["refresh_token"] = tokens["refresh_token"]
                     if tokens.get("expires_at"):
                         expired_tokens["expires_at"] = tokens["expires_at"]
 
@@ -381,5 +373,5 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(
                             # Verify that the refresh_token remains unchanged
                             assert (
                                 expired_tokens["refresh_token"]
-                                == "existing_refresh_token"
+                                == "existing_refresh_token"  # noqa: S105
                             )

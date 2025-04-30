@@ -43,9 +43,7 @@ def test_initialize_database_subprocess_error(
         output=b"Subprocess Error",
     )
 
-    with pytest.raises(
-        SubprocessError, match="returned non-zero exit status 1"
-    ):
+    with pytest.raises(SubprocessError, match="returned non-zero exit status 1"):
         database_provider_mock.upgrade_database()
 
 
@@ -81,9 +79,7 @@ def test_initialize_database_subprocess_error(
         output=b"Subprocess Error",
     )
 
-    with pytest.raises(
-        SubprocessError, match="returned non-zero exit status 1"
-    ):
+    with pytest.raises(SubprocessError, match="returned non-zero exit status 1"):
         database_provider_mock.initialize_database()
 
 
@@ -133,9 +129,7 @@ def test_create_researcher_account_subprocess_error(
         output=b"Subprocess Error",
     )
 
-    with pytest.raises(
-        SubprocessError, match="returned non-zero exit status 1"
-    ):
+    with pytest.raises(SubprocessError, match="returned non-zero exit status 1"):
         database_provider_mock.create_researcher_account()
 
 

@@ -72,9 +72,9 @@ def auth_required(action, _resource=None):
                 # log an error
                 app = App.query.get(app_id) if study_id else None
                 study = Study.query.get(study_id) if study_id else None
-                ask = "%s -> %s -> %s -> %s" % (app, study, action, resource)
+                ask = f"{app} -> {study} -> {action} -> {resource}"
                 s = current_user, ask
-                logger.warning("Unauthorized request from %s: %s" % s)
+                logger.warning("Unauthorized request from {}: {}".format(*s))
 
                 # return 403
                 return make_response({"msg": "Unauthorized Request"}, 403)
