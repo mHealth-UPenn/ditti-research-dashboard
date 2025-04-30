@@ -67,5 +67,3 @@ export const FlashMessage: React.FC<PropsWithChildren<FlashMessageProps>> = ({
     </div>
   );
 };
-
-FlashMessage.displayName = "FlashMessage";
