@@ -55,7 +55,8 @@ class AuthControllerBase:
     def get_redirect_uri(self):
         """Get the redirect URI from config.
 
-        Returns:
+        Returns
+        -------
             str: The redirect URI
         """
         key = f"COGNITO_{self.user_type.upper()}_REDIRECT_URI"
@@ -64,7 +65,8 @@ class AuthControllerBase:
     def get_frontend_url(self):
         """Get the frontend URL to redirect to after login.
 
-        Returns:
+        Returns
+        -------
             str: The frontend URL
         """
         return current_app.config.get("CORS_ORIGINS", "http://localhost:3000")
@@ -72,7 +74,8 @@ class AuthControllerBase:
     def get_login_url(self):
         """Get the login URL.
 
-        Returns:
+        Returns
+        -------
             str: The login URL
         """
         raise NotImplementedError("Subclasses must implement get_login_url")
@@ -80,7 +83,8 @@ class AuthControllerBase:
     def login(self):
         """Handle login request.
 
-        Returns:
+        Returns
+        -------
             Response: Redirect to Cognito login page
         """
         # Initialize OAuth client
@@ -111,7 +115,8 @@ class AuthControllerBase:
     def get_scope(self):
         """Get the OAuth scope.
 
-        Returns:
+        Returns
+        -------
             str: The OAuth scope
         """
         raise NotImplementedError("Subclasses must implement get_scope")
@@ -119,7 +124,8 @@ class AuthControllerBase:
     def callback(self):
         """Handle callback request.
 
-        Returns:
+        Returns
+        -------
             Response: Redirect to frontend with cookies set
         """
         self.init_oauth_client()
@@ -161,7 +167,7 @@ class AuthControllerBase:
             try:
                 userinfo = oauth_client.parse_id_token(token, nonce=nonce)
             except Exception as e:
-                logger.error(f"Failed to validate ID token: {str(e)}")
+                logger.error(f"Failed to validate ID token: {e!s}")
                 return create_error_response(
                     AUTH_ERROR_MESSAGES["auth_failed"],
                     status_code=401,
@@ -188,7 +194,7 @@ class AuthControllerBase:
             return set_auth_cookies(response, token)
 
         except Exception as e:
-            logger.error(f"Authentication error: {str(e)}")
+            logger.error(f"Authentication error: {e!s}")
             db.session.rollback()
             return create_error_response(
                 AUTH_ERROR_MESSAGES["auth_failed"],
@@ -203,7 +209,8 @@ class AuthControllerBase:
             token (dict): The token from Cognito
             userinfo (dict): The user info from Cognito
 
-        Returns:
+        Returns
+        -------
             tuple: (user, error_response)
                 user: The user object if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
@@ -213,7 +220,8 @@ class AuthControllerBase:
     def get_redirect_url(self):
         """Get the URL to redirect to after login.
 
-        Returns:
+        Returns
+        -------
             str: The redirect URL
         """
         return self.get_frontend_url()
@@ -221,7 +229,8 @@ class AuthControllerBase:
     def get_cognito_logout_url(self):
         """Build the Cognito logout URL with appropriate parameters.
 
-        Returns:
+        Returns
+        -------
             str: The Cognito logout URL
         """
         # Get the appropriate configuration based on user type
@@ -243,7 +252,8 @@ class AuthControllerBase:
     def logout(self):
         """Handle logout request.
 
-        Returns:
+        Returns
+        -------
             Response: Redirect to Cognito logout URL
         """
         self.init_oauth_client()
@@ -260,7 +270,8 @@ class AuthControllerBase:
     def check_login(self):
         """Handle check-login request.
 
-        Returns:
+        Returns
+        -------
             Response: JSON response with user info or error
         """
         self.init_oauth_client()
@@ -288,7 +299,8 @@ class AuthControllerBase:
         Args:
             id_token (str): The ID token
 
-        Returns:
+        Returns
+        -------
             tuple: (user, error_response)
                 user: The user object if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
@@ -301,7 +313,8 @@ class AuthControllerBase:
         Args:
             user: The user object
 
-        Returns:
+        Returns
+        -------
             Response: JSON response with user info
         """
         raise NotImplementedError(

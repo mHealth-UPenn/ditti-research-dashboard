@@ -51,8 +51,8 @@ def stop():
     # if there was a request in the last two hours
     if events:
         # log the timestamp of the last event
-        timestamps = map(lambda x: x["timestamp"], events)
-        last = sorted(list(timestamps))[-1]
+        timestamps = (event["timestamp"] for event in events)
+        last = sorted(timestamps)[-1]
         last = datetime.fromtimestamp(last // 1000)
 
         logger.info(f"Last request timestamp: {last}")

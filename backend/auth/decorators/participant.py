@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import functools
+import inspect
 import logging
 
 from flask import make_response, request
@@ -68,7 +69,13 @@ def participant_auth_required(decorated_func=None):
             # If validation failed, return error response
             return error_response
 
-        # Call the decorated function with ditti_id
-        return decorated_func(*args, ditti_id=ditti_id, **kwargs)
+        # Check if the decorated function expects 'ditti_id'
+        sig = inspect.signature(decorated_func)
+        if "ditti_id" in sig.parameters:
+            # Call the decorated function with ditti_id
+            return decorated_func(*args, ditti_id=ditti_id, **kwargs)
+        else:
+            # Call the decorated function without ditti_id
+            return decorated_func(*args, **kwargs)
 
     return wrapper

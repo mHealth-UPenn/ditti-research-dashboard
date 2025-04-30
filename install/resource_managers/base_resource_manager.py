@@ -36,23 +36,18 @@ class BaseResourceManager:
 
     def on_start(self) -> None:
         """Run before resource creation."""
-        pass
 
     def on_end(self) -> None:
         """Run after resource creation."""
-        pass
 
     def dev(self) -> None:
         """Create resources in development mode."""
-        pass
 
     def staging(self) -> None:
         """Create resources in staging mode."""
-        pass
 
     def prod(self) -> None:
         """Create resources in production mode."""
-        pass
 
     def uninstall(self, env: Env = "dev") -> None:
         """Uninstall the resources."""
@@ -72,20 +67,15 @@ class BaseResourceManager:
 
     def on_start_uninstall(self) -> None:
         """Run before resource deletion."""
-        pass
 
     def on_end_uninstall(self) -> None:
         """Run after resource deletion."""
-        pass
 
     def dev_uninstall(self) -> None:
         """Uninstall the resources in development mode."""
-        pass
 
     def staging_uninstall(self) -> None:
         """Uninstall the resources in staging mode."""
-        pass
 
     def prod_uninstall(self) -> None:
         """Uninstall the resources in production mode."""
-        pass

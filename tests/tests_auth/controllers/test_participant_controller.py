@@ -70,15 +70,16 @@ class TestParticipantAuthController:
         mock_token = {"id_token": "test-token"}
         mock_userinfo = {"sub": "ditti_id_123"}
 
-        with app.app_context():
-            # Override the actual method call
-            with patch.object(
+        with (
+            app.app_context(),
+            patch.object(
                 auth_controller, "get_or_create_user"
-            ) as mock_get_or_create:
-                mock_get_or_create.return_value = (mock_existing_subject, None)
-                user, error = auth_controller.get_or_create_user(
-                    mock_token, mock_userinfo
-                )
+            ) as mock_get_or_create,
+        ):
+            mock_get_or_create.return_value = (mock_existing_subject, None)
+            user, error = auth_controller.get_or_create_user(
+                mock_token, mock_userinfo
+            )
 
         assert user == mock_existing_subject
         assert error is None
@@ -94,15 +95,16 @@ class TestParticipantAuthController:
         mock_token = {"id_token": "test-token"}
         mock_userinfo = {"sub": "ditti_id_456"}
 
-        with app.app_context():
-            # Override the actual method call
-            with patch.object(
+        with (
+            app.app_context(),
+            patch.object(
                 auth_controller, "get_or_create_user"
-            ) as mock_get_or_create:
-                mock_get_or_create.return_value = (mock_new_subject, None)
-                user, error = auth_controller.get_or_create_user(
-                    mock_token, mock_userinfo
-                )
+            ) as mock_get_or_create,
+        ):
+            mock_get_or_create.return_value = (mock_new_subject, None)
+            user, error = auth_controller.get_or_create_user(
+                mock_token, mock_userinfo
+            )
 
         assert user == mock_new_subject
         assert error is None
@@ -142,15 +144,16 @@ class TestParticipantAuthController:
         # Set up mock new subject
         mock_new_subject = MagicMock()
 
-        with app.app_context():
-            # Override the internal method
-            with patch.object(
+        with (
+            app.app_context(),
+            patch.object(
                 auth_controller, "_create_or_get_study_subject"
-            ) as mock_create:
-                mock_create.return_value = (mock_new_subject, None)
-                subject, error = auth_controller._create_or_get_study_subject(
-                    "ditti_id_789"
-                )
+            ) as mock_create,
+        ):
+            mock_create.return_value = (mock_new_subject, None)
+            subject, error = auth_controller._create_or_get_study_subject(
+                "ditti_id_789"
+            )
 
         assert subject == mock_new_subject
         assert error is None
@@ -160,25 +163,23 @@ class TestParticipantAuthController:
         # Set up mock subject
         mock_subject = MagicMock()
 
-        with app.test_request_context():
-            # Mock the get_user_from_token method
-            with patch.object(
-                auth_controller, "get_user_from_token"
-            ) as mock_get_user:
-                mock_get_user.return_value = mock_subject
-                user = auth_controller.get_user_from_token("valid-token")
+        with (
+            app.test_request_context(),
+            patch.object(auth_controller, "get_user_from_token") as mock_get_user,
+        ):
+            mock_get_user.return_value = mock_subject
+            user = auth_controller.get_user_from_token("valid-token")
 
         assert user == mock_subject
 
     def test_get_user_from_token_invalid(self, app, auth_controller):
         """Test getting a user from an invalid token."""
-        with app.test_request_context():
-            # Mock the get_user_from_token method
-            with patch.object(
-                auth_controller, "get_user_from_token"
-            ) as mock_get_user:
-                mock_get_user.return_value = None
-                user = auth_controller.get_user_from_token("invalid-token")
+        with (
+            app.test_request_context(),
+            patch.object(auth_controller, "get_user_from_token") as mock_get_user,
+        ):
+            mock_get_user.return_value = None
+            user = auth_controller.get_user_from_token("invalid-token")
 
         assert user is None
 
@@ -188,27 +189,27 @@ class TestParticipantAuthController:
         mock_response = MagicMock()
         mock_subject = MagicMock()
 
-        with app.app_context():
-            # Mock the create_login_success_response method
-            with patch.object(
+        with (
+            app.app_context(),
+            patch.object(
                 auth_controller, "create_login_success_response"
-            ) as mock_create_response:
-                mock_create_response.return_value = mock_response
-                response = auth_controller.create_login_success_response(
-                    mock_subject
-                )
+            ) as mock_create_response,
+        ):
+            mock_create_response.return_value = mock_response
+            response = auth_controller.create_login_success_response(mock_subject)
 
         assert response == mock_response
 
     def test_get_login_url(self, app, auth_controller):
         """Test getting the login URL."""
-        with app.app_context():
-            # Override the default values set in the real app
-            with patch(
+        with (
+            app.app_context(),
+            patch(
                 "backend.auth.controllers.base.current_app"
-            ) as mock_current_app:
-                # In the implementation, it checks CORS_ORIGINS for this value
-                mock_current_app.config = {"CORS_ORIGINS": "http://test-frontend"}
-                login_url = auth_controller.get_login_url()
+            ) as mock_current_app,
+        ):
+            # In the implementation, it checks CORS_ORIGINS for this value
+            mock_current_app.config = {"CORS_ORIGINS": "http://test-frontend"}
+            login_url = auth_controller.get_login_url()
 
         assert login_url == "http://test-frontend/login"

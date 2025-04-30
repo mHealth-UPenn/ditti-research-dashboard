@@ -52,16 +52,18 @@ class TestResearcherAuthController:
 
     def test_get_redirect_url(self, app, auth_controller):
         """Test getting redirect URL."""
-        with app.app_context():
-            # Mock frontend URL
-            with patch.object(
+        with (
+            app.app_context(),
+            patch.object(
                 auth_controller,
                 "get_frontend_url",
                 return_value="http://frontend",
-            ):
-                # Test the redirect URL
-                url = auth_controller.get_redirect_url()
-                assert url == "http://frontend/coordinator"
+            ),
+        ):
+            # Mock frontend URL
+            # Test the redirect URL
+            url = auth_controller.get_redirect_url()
+            assert url == "http://frontend/coordinator"
 
     @patch("backend.auth.controllers.researcher.db")
     def test_get_or_create_user_existing(self, mock_db, app, auth_controller):
@@ -71,15 +73,17 @@ class TestResearcherAuthController:
         mock_token = {"id_token": "test-token"}
         mock_userinfo = {"email": "researcher@example.com"}
 
-        with app.app_context():
-            # Mock get_or_create_user to return an existing account
-            with patch.object(
+        with (
+            app.app_context(),
+            patch.object(
                 auth_controller, "get_or_create_user"
-            ) as mock_get_create:
-                mock_get_create.return_value = (existing_account, None)
-                user, error = auth_controller.get_or_create_user(
-                    mock_token, mock_userinfo
-                )
+            ) as mock_get_create,
+        ):
+            # Mock get_or_create_user to return an existing account
+            mock_get_create.return_value = (existing_account, None)
+            user, error = auth_controller.get_or_create_user(
+                mock_token, mock_userinfo
+            )
 
         assert user == existing_account
         assert error is None
@@ -92,15 +96,17 @@ class TestResearcherAuthController:
         mock_token = {"id_token": "test-token"}
         mock_userinfo = {"email": "new_researcher@example.com"}
 
-        with app.app_context():
-            # Mock get_or_create_user to return a new account
-            with patch.object(
+        with (
+            app.app_context(),
+            patch.object(
                 auth_controller, "get_or_create_user"
-            ) as mock_get_create:
-                mock_get_create.return_value = (new_account, None)
-                user, error = auth_controller.get_or_create_user(
-                    mock_token, mock_userinfo
-                )
+            ) as mock_get_create,
+        ):
+            # Mock get_or_create_user to return a new account
+            mock_get_create.return_value = (new_account, None)
+            user, error = auth_controller.get_or_create_user(
+                mock_token, mock_userinfo
+            )
 
         assert user == new_account
         assert error is None
@@ -110,25 +116,25 @@ class TestResearcherAuthController:
         # Set up mock researcher account
         researcher_account = MagicMock()
 
-        with app.test_request_context():
+        with (
+            app.test_request_context(),
+            patch.object(auth_controller, "get_user_from_token") as mock_get_user,
+        ):
             # Mock get_user_from_token
-            with patch.object(
-                auth_controller, "get_user_from_token"
-            ) as mock_get_user:
-                mock_get_user.return_value = researcher_account
-                user = auth_controller.get_user_from_token("valid-token")
+            mock_get_user.return_value = researcher_account
+            user = auth_controller.get_user_from_token("valid-token")
 
         assert user == researcher_account
 
     def test_get_user_from_token_invalid(self, app, auth_controller):
         """Test getting a user from an invalid token."""
-        with app.test_request_context():
+        with (
+            app.test_request_context(),
+            patch.object(auth_controller, "get_user_from_token") as mock_get_user,
+        ):
             # Mock get_user_from_token to return None
-            with patch.object(
-                auth_controller, "get_user_from_token"
-            ) as mock_get_user:
-                mock_get_user.return_value = None
-                user = auth_controller.get_user_from_token("invalid-token")
+            mock_get_user.return_value = None
+            user = auth_controller.get_user_from_token("invalid-token")
 
         assert user is None
 
@@ -149,15 +155,15 @@ class TestResearcherAuthController:
         mock_account.id = 1
         mock_account.is_confirmed = False  # First login flow
 
-        with app.app_context():
-            with patch("backend.auth.controllers.researcher.db") as mock_db:
-                response = auth_controller.create_login_success_response(
-                    mock_account
-                )
+        with (
+            app.app_context(),
+            patch("backend.auth.controllers.researcher.db") as mock_db,
+        ):
+            response = auth_controller.create_login_success_response(mock_account)
 
-                # Verify first-login behavior sets confirmed status
-                assert mock_account.is_confirmed is True
-                mock_db.session.commit.assert_called()
+            # Verify first-login behavior sets confirmed status
+            assert mock_account.is_confirmed is True
+            mock_db.session.commit.assert_called()
 
         # Verify response is passed through correctly
         assert response == mock_success_response
@@ -234,14 +240,16 @@ class TestResearcherAuthController:
             "group": "testgroup",
         }
 
-        with app.app_context():
+        with (
+            app.app_context(),
+            patch.object(
+                auth_controller, "create_account_in_cognito"
+            ) as mock_create,
+        ):
             # Mock the controller method to isolate test from Cognito implementation
             # This allows testing the interface rather than the implementation
-            with patch.object(
-                auth_controller, "create_account_in_cognito"
-            ) as mock_create:
-                mock_create.return_value = mock_success_response
-                response = auth_controller.create_account_in_cognito(account_data)
+            mock_create.return_value = mock_success_response
+            response = auth_controller.create_account_in_cognito(account_data)
 
         assert response == mock_success_response
 
@@ -263,14 +271,16 @@ class TestResearcherAuthController:
             "group": "testgroup",
         }
 
-        with app.app_context():
+        with (
+            app.app_context(),
+            patch.object(
+                auth_controller, "create_account_in_cognito"
+            ) as mock_create,
+        ):
             # Mock the controller method to test error response handling
             # This is important to ensure errors are properly propagated
-            with patch.object(
-                auth_controller, "create_account_in_cognito"
-            ) as mock_create:
-                mock_create.return_value = mock_error_response
-                response = auth_controller.create_account_in_cognito(account_data)
+            mock_create.return_value = mock_error_response
+            response = auth_controller.create_account_in_cognito(account_data)
 
         assert response == mock_error_response
 
@@ -397,16 +407,18 @@ class TestResearcherAuthController:
         # Configure mock response for account disabling operation
         mock_success_response = MagicMock()
 
-        with app.app_context():
+        with (
+            app.app_context(),
+            patch.object(
+                auth_controller, "disable_account_in_cognito"
+            ) as mock_disable,
+        ):
             # Mock the actual implementation to focus on controller behavior
             # rather than Cognito API details
-            with patch.object(
-                auth_controller, "disable_account_in_cognito"
-            ) as mock_disable:
-                mock_disable.return_value = mock_success_response
-                response = auth_controller.disable_account_in_cognito(
-                    "disable@example.com"
-                )
+            mock_disable.return_value = mock_success_response
+            response = auth_controller.disable_account_in_cognito(
+                "disable@example.com"
+            )
 
         assert response == mock_success_response
 
@@ -416,26 +428,29 @@ class TestResearcherAuthController:
         # Configure mock response for password change operation
         mock_success_response = MagicMock()
 
-        with app.test_request_context():
+        with (
+            app.test_request_context(),
+            patch.object(auth_controller, "change_password") as mock_change,
+        ):
             # Abstract away implementation details by mocking the controller method
             # This approach isolates the test from Cognito client implementation
-            with patch.object(auth_controller, "change_password") as mock_change:
-                mock_change.return_value = mock_success_response
-                response = auth_controller.change_password(
-                    "user@example.com", "NewPassword1!"
-                )
+            mock_change.return_value = mock_success_response
+            response = auth_controller.change_password(
+                "user@example.com", "NewPassword1!"
+            )
 
         assert response == mock_success_response
 
     def test_get_login_url(self, app, auth_controller):
         """Test getting the login URL."""
-        with app.app_context():
-            # Override the default values set in the real app
-            with patch(
+        with (
+            app.app_context(),
+            patch(
                 "backend.auth.controllers.base.current_app"
-            ) as mock_current_app:
-                # In the implementation, it checks CORS_ORIGINS for this value
-                mock_current_app.config = {"CORS_ORIGINS": "http://test-frontend"}
-                login_url = auth_controller.get_login_url()
+            ) as mock_current_app,
+        ):
+            # Override the default values set in the real app
+            mock_current_app.config = {"CORS_ORIGINS": "http://test-frontend"}
+            login_url = auth_controller.get_login_url()
 
         assert login_url == "http://test-frontend/coordinator/login"

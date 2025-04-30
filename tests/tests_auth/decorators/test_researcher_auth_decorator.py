@@ -26,27 +26,28 @@ class TestResearcherAuthDecorator:
 
     def test_requires_token(self, test_app):
         """Test that the decorator requires a token and returns 401 when missing."""
-        with test_app.test_request_context("/test-researcher"):
-            with test_app.app_context():
-                # Mock token extraction to return None (no token)
-                with patch(
-                    "backend.auth.decorators.researcher.get_token_from_request"
-                ) as mock_get_token:
-                    mock_get_token.return_value = None
+        with (
+            test_app.test_request_context("/test-researcher"),
+            test_app.app_context(),
+            patch(
+                "backend.auth.decorators.researcher.get_token_from_request"
+            ) as mock_get_token,
+        ):
+            mock_get_token.return_value = None
 
-                    @researcher_auth_required
-                    def test_route(account):
-                        return make_response(
-                            jsonify({"msg": "OK", "account_id": account.id}),
-                            200,
-                        )
+            @researcher_auth_required
+            def test_route(account):
+                return make_response(
+                    jsonify({"msg": "OK", "account_id": account.id}),
+                    200,
+                )
 
-                    response = test_route()
+            response = test_route()
 
-                    # Verify authentication failure response
-                    assert response.status_code == 401
-                    data = json.loads(response.get_data(as_text=True))
-                    assert "msg" in data
+            # Verify authentication failure response
+            assert response.status_code == 401
+            data = json.loads(response.get_data(as_text=True))
+            assert "msg" in data
 
     @patch("backend.auth.decorators.researcher.get_token_from_request")
     @patch("backend.auth.decorators.researcher.ResearcherAuthController")
@@ -69,20 +70,19 @@ class TestResearcherAuthDecorator:
             return jsonify({"account_id": account.id, "msg": "OK"})
 
         # Execute test with request context
-        with test_app.test_request_context("/test-func"):
-            with test_app.app_context():
-                response = test_func()
+        with test_app.test_request_context("/test-func"), test_app.app_context():
+            response = test_func()
 
-                # Verify controller interaction
-                mock_controller.get_user_from_token.assert_called_once_with(
-                    "valid-token"
-                )
+            # Verify controller interaction
+            mock_controller.get_user_from_token.assert_called_once_with(
+                "valid-token"
+            )
 
-                # Verify successful response
-                assert response.status_code == 200
-                data = json.loads(response.get_data(as_text=True))
-                assert data["account_id"] == 123
-                assert data["msg"] == "OK"
+            # Verify successful response
+            assert response.status_code == 200
+            data = json.loads(response.get_data(as_text=True))
+            assert data["account_id"] == 123
+            assert data["msg"] == "OK"
 
     @patch("backend.auth.decorators.researcher.get_token_from_request")
     @patch("backend.auth.decorators.researcher.ResearcherAuthController")
@@ -107,16 +107,15 @@ class TestResearcherAuthDecorator:
             return jsonify({"account_id": account.id, "msg": "OK"})
 
         # Execute test with request context
-        with test_app.test_request_context("/test-func"):
-            with test_app.app_context():
-                response = test_func()
+        with test_app.test_request_context("/test-func"), test_app.app_context():
+            response = test_func()
 
-                # Verify controller interaction
-                mock_controller.get_user_from_token.assert_called_once()
+            # Verify controller interaction
+            mock_controller.get_user_from_token.assert_called_once()
 
-                # Verify error response is passed through
-                assert response.status_code == 401
-                assert b'"error": "Invalid token"' in response.get_data()
+            # Verify error response is passed through
+            assert response.status_code == 401
+            assert b'"error": "Invalid token"' in response.get_data()
 
     @patch("backend.auth.decorators.researcher.get_token_from_request")
     @patch("backend.auth.decorators.researcher.ResearcherAuthController")
@@ -147,20 +146,19 @@ class TestResearcherAuthDecorator:
             return jsonify({"account_id": account.id, "msg": "OK"})
 
         # Execute test with request context
-        with test_app.test_request_context("/test-func"):
-            with test_app.app_context():
-                response = test_func()
+        with test_app.test_request_context("/test-func"), test_app.app_context():
+            response = test_func()
 
-                # Verify permission check
-                mock_check_permissions.assert_called_once_with(
-                    mock_account, "Create", "Accounts"
-                )
+            # Verify permission check
+            mock_check_permissions.assert_called_once_with(
+                mock_account, "Create", "Accounts"
+            )
 
-                # Verify successful response
-                assert response.status_code == 200
-                data = json.loads(response.get_data(as_text=True))
-                assert data["account_id"] == 123
-                assert data["msg"] == "OK"
+            # Verify successful response
+            assert response.status_code == 200
+            data = json.loads(response.get_data(as_text=True))
+            assert data["account_id"] == 123
+            assert data["msg"] == "OK"
 
     @patch("backend.auth.decorators.researcher.get_token_from_request")
     @patch("backend.auth.decorators.researcher.ResearcherAuthController")
@@ -192,12 +190,11 @@ class TestResearcherAuthDecorator:
             return jsonify({"account_id": account.id, "msg": "OK"})
 
         # Execute test with request context
-        with test_app.test_request_context("/test-func"):
-            with test_app.app_context():
-                response = test_func()
+        with test_app.test_request_context("/test-func"), test_app.app_context():
+            response = test_func()
 
-                # Verify permission failure response
-                assert response.status_code == 403
+            # Verify permission failure response
+            assert response.status_code == 403
 
     @patch("backend.auth.decorators.researcher.get_token_from_request")
     @patch("backend.auth.decorators.researcher.ResearcherAuthController")
@@ -237,16 +234,15 @@ class TestResearcherAuthDecorator:
             return jsonify({"account_id": account.id, "msg": "OK"})
 
         # Execute test with request context
-        with test_app.test_request_context("/test-func"):
-            with test_app.app_context():
-                response = test_func()
+        with test_app.test_request_context("/test-func"), test_app.app_context():
+            response = test_func()
 
-                # Verify error response is passed through
-                assert response.status_code == 500
-                assert (
-                    b"Internal server error" in response.get_data()
-                    or b"error" in response.get_data()
-                )
+            # Verify error response is passed through
+            assert response.status_code == 500
+            assert (
+                b"Internal server error" in response.get_data()
+                or b"error" in response.get_data()
+            )
 
     def test_decorator_as_factory(self):
         """Test that the decorator can be used as a factory with parameters."""
@@ -316,16 +312,15 @@ class TestResearcherAuthDecorator:
             return jsonify({"account_id": account.id, "msg": "OK"})
 
         # Execute test with request context
-        with test_app.test_request_context("/test-func"):
-            with test_app.app_context():
-                response = test_func()
+        with test_app.test_request_context("/test-func"), test_app.app_context():
+            response = test_func()
 
-                # Verify archived account response
-                assert response.status_code == 401
-                assert (
-                    b"Account archived" in response.get_data()
-                    or b"error" in response.get_data()
-                )
+            # Verify archived account response
+            assert response.status_code == 401
+            assert (
+                b"Account archived" in response.get_data()
+                or b"error" in response.get_data()
+            )
 
     @patch("backend.auth.decorators.researcher.get_token_from_request")
     @patch("backend.auth.decorators.researcher.ResearcherAuthController")
@@ -348,15 +343,14 @@ class TestResearcherAuthDecorator:
             return jsonify({"account_id": account.id, "msg": "OK"})
 
         # Execute test with request context
-        with test_app.test_request_context("/test-func"):
-            with test_app.app_context():
-                response = test_func()
+        with test_app.test_request_context("/test-func"), test_app.app_context():
+            response = test_func()
 
-                # Verify successful response
-                assert response.status_code == 200
-                data = json.loads(response.get_data(as_text=True))
-                assert data["account_id"] == 123
-                assert data["msg"] == "OK"
+            # Verify successful response
+            assert response.status_code == 200
+            data = json.loads(response.get_data(as_text=True))
+            assert data["account_id"] == 123
+            assert data["msg"] == "OK"
 
     @patch("backend.auth.decorators.researcher.get_token_from_request")
     @patch("backend.auth.decorators.researcher.ResearcherAuthController")
@@ -381,27 +375,29 @@ class TestResearcherAuthDecorator:
             return jsonify({"account_id": account.id, "msg": "OK"})
 
         # Execute test with request context
-        with test_app.test_request_context("/test-func"):
-            with test_app.app_context():
-                # Mock permissions check for inner decorator
-                with patch(
-                    "backend.auth.decorators.researcher.check_permissions"
-                ) as mock_check_permissions:
-                    mock_check_permissions.return_value = (True, None)
+        with (
+            test_app.test_request_context("/test-func"),
+            test_app.app_context(),
+            patch(
+                "backend.auth.decorators.researcher.check_permissions"
+            ) as mock_check_permissions,
+        ):
+            # Mock permissions check for inner decorator
+            mock_check_permissions.return_value = (True, None)
 
-                    response = test_func()
+            response = test_func()
 
-                    # Verify successful response
-                    assert response.status_code == 200
-                    data = json.loads(response.get_data(as_text=True))
-                    assert data["account_id"] == 123
-                    assert data["msg"] == "OK"
+            # Verify successful response
+            assert response.status_code == 200
+            data = json.loads(response.get_data(as_text=True))
+            assert data["account_id"] == 123
+            assert data["msg"] == "OK"
 
-                    # Verify controller called only once (decorator reuses account)
-                    mock_controller.get_user_from_token.assert_called_once()
+            # Verify controller called only once (decorator reuses account)
+            mock_controller.get_user_from_token.assert_called_once()
 
-                    # Verify permissions were checked
-                    mock_check_permissions.assert_called_once()
+            # Verify permissions were checked
+            mock_check_permissions.assert_called_once()
 
     @patch("backend.auth.decorators.researcher.get_token_from_request")
     @patch("backend.auth.decorators.researcher.ResearcherAuthController")
@@ -430,19 +426,16 @@ class TestResearcherAuthDecorator:
             )
 
         # Execute test with request context and pre-provided account
-        with test_app.test_request_context("/test-func"):
-            with test_app.app_context():
-                # Call with account already in kwargs (simulating previous decorator)
-                response = test_func(
-                    account=mock_account, other_param="test value"
-                )
+        with test_app.test_request_context("/test-func"), test_app.app_context():
+            # Call with account already in kwargs (simulating previous decorator)
+            response = test_func(account=mock_account, other_param="test value")
 
-                # Verify controller was not called (account already provided)
-                mock_controller.get_user_from_token.assert_not_called()
+            # Verify controller was not called (account already provided)
+            mock_controller.get_user_from_token.assert_not_called()
 
-                # Verify successful response with parameters
-                assert response.status_code == 200
-                data = json.loads(response.get_data(as_text=True))
-                assert data["account_id"] == 123
-                assert data["msg"] == "OK"
-                assert data["other_param"] == "test value"
+            # Verify successful response with parameters
+            assert response.status_code == 200
+            data = json.loads(response.get_data(as_text=True))
+            assert data["account_id"] == 123
+            assert data["msg"] == "OK"
+            assert data["other_param"] == "test value"

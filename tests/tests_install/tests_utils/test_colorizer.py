@@ -6,7 +6,7 @@ from install.utils.colorizer import Colorizer
 def test_colorize_all_colors():
     """Test that colorize method works for all available colors."""
     text = "test text"
-    for color in Colorizer.color_codes.keys():
+    for color in Colorizer.color_codes:
         if color == "reset":
             continue
         colored_text = Colorizer.colorize(text, color)
@@ -61,7 +61,7 @@ def test_invalid_color():
 
 def test_empty_text():
     """Test that empty text is handled correctly."""
-    for color in Colorizer.color_codes.keys():
+    for color in Colorizer.color_codes:
         if color == "reset":
             continue
         colored_text = Colorizer.colorize("", color)

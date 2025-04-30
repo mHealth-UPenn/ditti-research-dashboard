@@ -127,10 +127,9 @@ class DBService:
         - The connection is properly closed and cleaned up after use.
         """
         try:
-            with self.db.engine.connect() as connection:
-                with connection.begin():
-                    self.connection = connection
-                    yield connection
+            with self.db.engine.connect() as connection, connection.begin():
+                self.connection = connection
+                yield connection
         finally:
             self.connection = None
 
@@ -806,7 +805,7 @@ def build_url(
     return url
 
 
-def handler(event, context):
+def handler(event, _context):
     logger.info(
         "Starting wearable data retrieval job",
         extra={"function_timestamp": function_timestamp},
