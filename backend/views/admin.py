@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 
 @blueprint.route("/account")
 @researcher_auth_required("View", "Admin Dashboard")
-def account(account):
+def account():
     """
     Get one account or a list of all accounts.
 
@@ -243,7 +243,7 @@ def account_create(account):
 @blueprint.route("/account/edit", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Edit", "Accounts")
-def account_edit(account):
+def account_edit():
     """
     Edit an existing account in the database and Cognito user pool.
 
@@ -429,7 +429,7 @@ def account_edit(account):
 @blueprint.route("/account/archive", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Archive", "Accounts")
-def account_archive(account):
+def account_archive():
     """
     Archive an account in the database and disable it in Cognito.
 
@@ -496,7 +496,7 @@ def account_archive(account):
 
 @blueprint.route("/study")
 @researcher_auth_required("View", "Admin Dashboard")
-def study(account):
+def study():
     """
     Get one study or a list of all studies.
 
@@ -548,7 +548,7 @@ def study(account):
 @blueprint.route("/study/create", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Create", "Studies")
-def study_create(account):
+def study_create():
     """
     Create a new study.
 
@@ -632,7 +632,7 @@ def study_create(account):
 @blueprint.route("/study/edit", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Edit", "Studies")
-def study_edit(account):
+def study_edit():
     """
     Edit an existing study.
 
@@ -706,7 +706,7 @@ def study_edit(account):
 @blueprint.route("/study/archive", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Archive", "Studies")
-def study_archive(account):
+def study_archive():
     """
     Archive a study.
 
@@ -753,7 +753,7 @@ def study_archive(account):
 
 @blueprint.route("/access-group")
 @researcher_auth_required("View", "Admin Dashboard")
-def access_group(account):
+def access_group():
     """
     Get one access group or a list of all studies.
 
@@ -807,7 +807,7 @@ def access_group(account):
 @blueprint.route("/access-group/create", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Create", "Access Groups")
-def access_group_create(account):
+def access_group_create():
     """
     Create a new access group.
 
@@ -883,7 +883,7 @@ def access_group_create(account):
 @blueprint.route("/access-group/edit", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Edit", "Access Groups")
-def access_group_edit(account):
+def access_group_edit():
     """
     Edit an existing access group.
 
@@ -970,7 +970,7 @@ def access_group_edit(account):
 @blueprint.route("/access-group/archive", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Archive", "Access Groups")
-def access_group_archive(account):
+def access_group_archive():
     """
     Archive an access group.
 
@@ -1017,7 +1017,7 @@ def access_group_archive(account):
 
 @blueprint.route("/role")
 @researcher_auth_required("View", "Admin Dashboard")
-def role(account):
+def role():
     """
     Get one role or a list of all studies.
 
@@ -1069,7 +1069,7 @@ def role(account):
 @blueprint.route("/role/create", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Create", "Roles")
-def role_create(account):
+def role_create():
     """
     Create a new role.
 
@@ -1141,7 +1141,7 @@ def role_create(account):
 @blueprint.route("/role/edit", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Edit", "Roles")
-def role_edit(account):
+def role_edit():
     """
     Edit an existing role.
 
@@ -1221,7 +1221,7 @@ def role_edit(account):
 @blueprint.route("/role/archive", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Archive", "Roles")
-def role_archive(account):
+def role_archive():
     """
     Archive a role.
 
@@ -1268,7 +1268,7 @@ def role_archive(account):
 
 @blueprint.route("/app")
 @researcher_auth_required("View", "Admin Dashboard")
-def app(account):
+def app():
     apps = App.query.all()
     res = [a.meta for a in apps]
     return jsonify(res)
@@ -1277,7 +1277,7 @@ def app(account):
 @blueprint.route("/app/create", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Create", "Apps")
-def app_create(account):
+def app_create():
     data = request.json["create"]
     app = App()
 
@@ -1302,7 +1302,7 @@ def app_create(account):
 @blueprint.route("/app/edit", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Edit", "Apps")
-def app_edit(account):
+def app_edit():
     data = request.json["edit"]
     app_id = request.json["id"]
     app = App.query.get(app_id)
@@ -1327,7 +1327,7 @@ def app_edit(account):
 
 @blueprint.route("/action")
 @researcher_auth_required("View", "Admin Dashboard")
-def action(account):
+def action():
     """
     Get all actions.
 
@@ -1363,7 +1363,7 @@ def action(account):
 
 @blueprint.route("/resource")
 @researcher_auth_required("View", "Admin Dashboard")
-def resource(account):
+def resource():
     """
     Get all resources.
 
@@ -1399,7 +1399,7 @@ def resource(account):
 
 @blueprint.route("/about-sleep-template")
 @researcher_auth_required("View", "Admin Dashboard")
-def about_sleep_template(account):
+def about_sleep_template():
     """
     Get one about sleep template or a list of all studies.
 
@@ -1458,7 +1458,7 @@ def about_sleep_template(account):
 @blueprint.route("/about-sleep-template/create", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Create", "Studies")
-def about_sleep_template_create(account):
+def about_sleep_template_create():
     """
     Create a new about sleep template.
 
@@ -1509,7 +1509,7 @@ def about_sleep_template_create(account):
 @blueprint.route("/about-sleep-template/edit", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Edit", "Studies")
-def about_sleep_template_edit(account):
+def about_sleep_template_edit():
     """
     Edit an existing about sleep template.
 
@@ -1568,7 +1568,7 @@ def about_sleep_template_edit(account):
 @blueprint.route("/about-sleep-template/archive", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Archive", "Studies")
-def about_sleep_template_archive(account):
+def about_sleep_template_archive():
     """
     Archive an about sleep template.
 
@@ -1618,7 +1618,7 @@ def about_sleep_template_archive(account):
 
 @blueprint.route("/study_subject")
 @researcher_auth_required("View", "Participants")
-def study_subject(account):
+def study_subject():
     """
     Get one study subject or a list of all study subjects.
 
@@ -1683,7 +1683,7 @@ def study_subject(account):
 
 @blueprint.route("/study_subject/create", methods=["POST"])
 @researcher_auth_required("Create", "Participants")
-def study_subject_create(account):
+def study_subject_create():
     """
     Create a new study subject.
 
@@ -1857,7 +1857,7 @@ def study_subject_create(account):
 
 @blueprint.route("/study_subject/archive", methods=["POST"])
 @researcher_auth_required("Archive", "Participants")
-def study_subject_archive(account):
+def study_subject_archive():
     """
     Archive a study subject.
 
@@ -1919,7 +1919,7 @@ def study_subject_archive(account):
 
 @blueprint.route("/study_subject/edit", methods=["POST"])
 @researcher_auth_required("Edit", "Participants")
-def study_subject_edit(account):
+def study_subject_edit():
     """
     Edit an existing study subject.
 
@@ -2179,7 +2179,7 @@ def study_subject_edit(account):
 @blueprint.route("/api")
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("View", "APIs")
-def api(account):
+def api():
     """
     Get one API or a list of all APIs.
 
@@ -2237,7 +2237,7 @@ def api(account):
 @blueprint.route("/api/create", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Create", "APIs")
-def api_create(account):
+def api_create():
     """
     Create a new API.
 
@@ -2302,7 +2302,7 @@ def api_create(account):
 @blueprint.route("/api/edit", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Edit", "APIs")
-def api_edit(account):
+def api_edit():
     """
     Edit an existing API.
 
@@ -2382,7 +2382,7 @@ def api_edit(account):
 @blueprint.route("/api/archive", methods=["POST"])
 @researcher_auth_required("View", "Admin Dashboard")
 @researcher_auth_required("Archive", "APIs")
-def api_archive(account):
+def api_archive():
     """
     Archive an API.
 
