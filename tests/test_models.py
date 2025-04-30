@@ -1,5 +1,5 @@
+from datetime import datetime, UTC
 import os
-from datetime import UTC, datetime
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -7,25 +7,11 @@ from sqlalchemy.exc import IntegrityError
 from backend.app import create_app
 from backend.extensions import db
 from backend.models import (
-    AccessGroup,
-    Account,
-    Api,
-    App,
-    JoinAccessGroupPermission,
-    JoinAccountAccessGroup,
-    JoinAccountStudy,
-    JoinRolePermission,
-    JoinStudyRole,
-    JoinStudySubjectApi,
-    JoinStudySubjectStudy,
-    Permission,
-    Role,
-    Study,
-    StudySubject,
-    init_admin_account,
-    init_admin_app,
-    init_admin_group,
-    init_db,
+    AccessGroup, Account, App, JoinAccessGroupPermission,
+    JoinAccountAccessGroup, JoinAccountStudy, JoinRolePermission,
+    JoinStudyRole, Permission, Role, Study, StudySubject, JoinStudySubjectApi,
+    JoinStudySubjectStudy, Api, init_admin_account, init_admin_app,
+    init_admin_group, init_db
 )
 from tests.testing_utils import create_joins, create_tables
 
@@ -68,7 +54,7 @@ class TestPermission:
     def test_definition(self, app):
         q1 = Permission.definition == ("foo", "baz")
         foo = Permission.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
         assert foo.action == "foo"
         assert foo.resource == "baz"
 
@@ -84,7 +70,7 @@ class TestAccount:
     def test_full_name(self, app):
         q1 = Account.full_name == "John Smith"
         foo = Account.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
         assert foo.first_name == "John"
         assert foo.last_name == "Smith"
 
@@ -94,7 +80,7 @@ class TestAccount:
         foo = Account.query.filter(q1).first()
         bar = AccessGroup.query.filter(q2).first()
         qux = foo.get_permissions(bar.id).all()
-        assert f"qux: {qux}" != f"qux: {None}"
+        assert "qux: %s" % qux != "qux: %s" % None
 
         qux = [x.definition for x in qux]
         assert qux == [("foo", "baz")]
@@ -107,7 +93,7 @@ class TestAccount:
         bar = AccessGroup.query.filter(q2).first()
         baz = Study.query.filter(q3).first()
         qux = foo.get_permissions(bar.id, baz.id).all()
-        assert f"qux: {qux}" != f"qux: {None}"
+        assert "qux: %s" % qux != "qux: %s" % None
 
         qux = [x.definition for x in qux]
         assert qux == [("bar", "baz"), ("bar", "qux")]
@@ -149,111 +135,111 @@ class TestDeletions:
     def test_delete_access_group(self, app):
         q1 = AccessGroup.name == "foo"
         foo = AccessGroup.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
 
         foo_id = foo.id
         q2 = JoinAccessGroupPermission.access_group_id == foo_id
         q3 = JoinAccountAccessGroup.access_group_id == foo_id
         bar = JoinAccessGroupPermission.query.filter(q2).first()
         baz = JoinAccountAccessGroup.query.filter(q3).first()
-        assert f"bar: {bar}" != f"bar: {None}"
-        assert f"baz: {baz}" != f"baz: {None}"
+        assert "bar: %s" % bar != "bar: %s" % None
+        assert "baz: %s" % baz != "baz: %s" % None
 
         db.session.delete(foo)
         db.session.commit()
         foo = AccessGroup.query.filter(q1).first()
         bar = JoinAccessGroupPermission.query.filter(q2).first()
         baz = JoinAccountAccessGroup.query.filter(q3).first()
-        assert f"foo: {foo}" == f"foo: {None}"
-        assert f"bar: {bar}" == f"bar: {None}"
-        assert f"baz: {baz}" == f"baz: {None}"
+        assert "foo: %s" % foo == "foo: %s" % None
+        assert "bar: %s" % bar == "bar: %s" % None
+        assert "baz: %s" % baz == "baz: %s" % None
 
     def test_delete_account(self, app):
         q1 = Account.email == "foo@email.com"
         foo = Account.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
 
         foo_id = foo.id
         q2 = JoinAccountAccessGroup.account_id == foo_id
         q3 = JoinAccountStudy.account_id == foo_id
         bar = JoinAccountAccessGroup.query.filter(q2).first()
         baz = JoinAccountStudy.query.filter(q3).first()
-        assert f"bar: {bar}" != f"bar: {None}"
-        assert f"baz: {baz}" != f"baz: {None}"
+        assert "bar: %s" % bar != "bar: %s" % None
+        assert "baz: %s" % baz != "baz: %s" % None
 
         db.session.delete(foo)
         db.session.commit()
         foo = Account.query.filter(q1).first()
         bar = JoinAccountAccessGroup.query.filter(q2).first()
         baz = JoinAccountStudy.query.filter(q3).first()
-        assert f"foo: {foo}" == f"foo: {None}"
-        assert f"bar: {bar}" == f"bar: {None}"
-        assert f"baz: {baz}" == f"baz: {None}"
+        assert "foo: %s" % foo == "foo: %s" % None
+        assert "bar: %s" % bar == "bar: %s" % None
+        assert "baz: %s" % baz == "baz: %s" % None
 
     def test_delete_app(self, app):
         q1 = App.name == "foo"
         foo = App.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
 
         db.session.delete(foo)
         db.session.commit()
         foo = App.query.filter(q1).first()
-        assert f"foo: {foo}" == f"foo: {None}"
+        assert "foo: %s" % foo == "foo: %s" % None
 
     def test_delete_permission(self, app):
         q1 = Permission.definition == ("foo", "baz")
         foo = Permission.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
 
         foo_id = foo.id
         q2 = JoinAccessGroupPermission.permission_id == foo_id
         q3 = JoinRolePermission.permission_id == foo_id
         bar = JoinAccessGroupPermission.query.filter(q2).first()
         baz = JoinRolePermission.query.filter(q3).first()
-        assert f"bar: {bar}" != f"bar: {None}"
-        assert f"baz: {baz}" != f"baz: {None}"
+        assert "bar: %s" % bar != "bar: %s" % None
+        assert "baz: %s" % baz != "baz: %s" % None
 
         db.session.delete(foo)
         db.session.commit()
         foo = Permission.query.filter(q1).first()
         bar = JoinAccessGroupPermission.query.filter(q2).first()
         baz = JoinRolePermission.query.filter(q3).first()
-        assert f"foo: {foo}" == f"foo: {None}"
-        assert f"bar: {bar}" == f"bar: {None}"
-        assert f"baz: {baz}" == f"baz: {None}"
+        assert "foo: %s" % foo == "foo: %s" % None
+        assert "bar: %s" % bar == "bar: %s" % None
+        assert "baz: %s" % baz == "baz: %s" % None
 
     def test_delete_role(self, app):
         q1 = Role.name == "foo"
         foo = Role.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
 
         foo_id = foo.id
         q2 = JoinRolePermission.role_id == foo_id
         q3 = JoinAccountStudy.role_id == foo_id
         bar = JoinRolePermission.query.filter(q2).first()
         baz = JoinAccountStudy.query.filter(q3).first()
-        assert f"bar: {bar}" != f"bar: {None}"
-        assert f"baz: {baz}" != f"baz: {None}"
+        assert "bar: %s" % bar != "bar: %s" % None
+        assert "baz: %s" % baz != "baz: %s" % None
 
         db.session.delete(foo)
         db.session.commit()
         foo = Role.query.filter(q1).first()
         bar = JoinRolePermission.query.filter(q2).first()
         baz = JoinAccountStudy.query.filter(q3).first()
-        assert f"foo: {foo}" == f"foo: {None}"
-        assert f"bar: {bar}" == f"bar: {None}"
-        assert f"baz: {baz}" == f"baz: {None}"
+        assert "foo: %s" % foo == "foo: %s" % None
+        assert "bar: %s" % bar == "bar: %s" % None
+        assert "baz: %s" % baz == "baz: %s" % None
 
     def test_delete_study_with_enrolled_subject(self, app):
         with pytest.raises(IntegrityError):
             q1 = Study.name == "foo"
             foo = Study.query.filter(q1).first()
-            assert f"foo: {foo}" != f"foo: {None}"
+            assert "foo: %s" % foo != "foo: %s" % None
 
             foo_id = foo.id
             q2 = JoinStudySubjectStudy.study_id == foo_id
             bar = JoinStudySubjectStudy.query.filter(q2).first()
-            assert f"bar: {bar}" != f"bar: {None}"
+            assert "bar: %s" % bar != "bar: %s" % None
 
             db.session.delete(foo)
             db.session.commit()
@@ -261,7 +247,7 @@ class TestDeletions:
     def test_delete_study(self, app):
         q1 = Study.name == "foo"
         foo = Study.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
 
         # First delete all enrolled subjects
         foo_id = foo.id
@@ -280,25 +266,23 @@ class TestDeletions:
         q3 = JoinStudyRole.study_id == foo_id
         bar = JoinAccountStudy.query.filter(q2).first()
         baz = JoinStudyRole.query.filter(q3).first()
-        assert f"bar: {bar}" != f"bar: {None}"
-        assert f"baz: {baz}" != f"baz: {None}"
+        assert "bar: %s" % bar != "bar: %s" % None
+        assert "baz: %s" % baz != "baz: %s" % None
 
         db.session.delete(foo)
         db.session.commit()
         foo = Study.query.filter(q1).filter().first()
         bar = JoinAccountStudy.query.filter(q2).first()
         baz = JoinStudyRole.query.filter(q3).first()
-        assert f"foo: {foo}" == f"foo: {None}"
-        assert f"bar: {bar}" == f"bar: {None}"
-        assert f"baz: {baz}" == f"baz: {None}"
+        assert "foo: %s" % foo == "foo: %s" % None
+        assert "bar: %s" % bar == "bar: %s" % None
+        assert "baz: %s" % baz == "baz: %s" % None
 
     def test_delete_study_subject(self, app):
         # Query the StudySubject using ditti_id
         q1 = StudySubject.ditti_id == "ditti_foo_123"
         foo = StudySubject.query.filter(q1).first()
-        assert foo is not None, (
-            "StudySubject with ditti_id 'ditti_foo_123' should exist."
-        )
+        assert foo is not None, "StudySubject with ditti_id 'ditti_foo_123' should exist."
 
         # Get the IDs for JoinStudySubjectStudy and JoinStudySubjectApi associations
         foo_id = foo.id
@@ -325,12 +309,12 @@ class TestDeletions:
         with pytest.raises(IntegrityError):
             q1 = Api.name == "foo"
             foo = Api.query.filter(q1).first()
-            assert f"foo: {foo}" != f"foo: {None}"
+            assert "foo: %s" % foo != "foo: %s" % None
 
             foo_id = foo.id
             q2 = JoinStudySubjectApi.api_id == foo_id
             bar = JoinStudySubjectApi.query.filter(q2).first()
-            assert f"bar: {bar}" != f"bar: {None}"
+            assert "bar: %s" % bar != "bar: %s" % None
 
             db.session.delete(foo)
             db.session.commit()
@@ -338,7 +322,7 @@ class TestDeletions:
     def test_delete_api(self, app):
         q1 = Api.name == "foo"
         foo = Api.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
 
         # First delete all enrolled subjects
         foo_id = foo.id
@@ -356,19 +340,19 @@ class TestDeletions:
         db.session.commit()
         foo = Api.query.filter(q1).filter().first()
         bar = JoinStudySubjectApi.query.filter(q2).first()
-        assert f"foo: {foo}" == f"foo: {None}"
-        assert f"bar: {bar}" == f"bar: {None}"
+        assert "foo: %s" % foo == "foo: %s" % None
+        assert "bar: %s" % bar == "bar: %s" % None
 
 
 class TestArchives:
     def test_archive_account(self, app):
         q1 = Account.email == "foo@email.com"
         foo = Account.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
 
         q2 = AccessGroup.name == "foo"
         bar = AccessGroup.query.filter(q2).first()
-        assert f"bar: {bar}" != f"bar: {None}"
+        assert "bar: %s" % bar != "bar: %s" % None
         assert len(bar.accounts) == 1
         assert bar.accounts[0].account is foo
 
@@ -380,16 +364,16 @@ class TestArchives:
     def test_archive_access_group(self, app):
         q1 = AccessGroup.name == "foo"
         foo = AccessGroup.query.filter(q1).first()
-        assert f"foo: {foo}" != f"foo: {None}"
+        assert "foo: %s" % foo != "foo: %s" % None
 
         q2 = Account.email == "foo@email.com"
         bar = Account.query.filter(q2).first()
-        assert f"bar: {bar}" != f"bar: {None}"
+        assert "bar: %s" % bar != "bar: %s" % None
         assert len(bar.access_groups) == 1
         assert bar.access_groups[0].access_group is foo
 
         baz = bar.get_permissions(foo.id).all()
-        assert f"baz: {baz}" != f"baz: {None}"
+        assert "baz: %s" % baz != "baz: %s" % None
 
         qux = [x.definition for x in baz]
         assert qux == [("foo", "baz")]
@@ -400,7 +384,7 @@ class TestArchives:
         assert len(bar.access_groups) == 0
 
         baz = bar.get_permissions(foo.id).all()
-        assert f"baz: {baz}" != f"baz: {None}"
+        assert "baz: %s" % baz != "baz: %s" % None
 
         qux = [x.definition for x in baz]
         assert qux == []
@@ -415,20 +399,16 @@ class TestArchives:
         q2 = Account.email == "bar@email.com"
         bar = Account.query.filter(q2).first()
         assert bar is not None, "Account 'bar@email.com' should exist."
-        assert len(bar.studies) == 1, (
-            "Account should be associated with one study."
-        )
+        assert len(
+            bar.studies) == 1, "Account should be associated with one study."
         assert bar.studies[0].study is foo, "Associated study should be 'bar'."
 
         # Retrieve the StudySubject using ditti_id
         q2 = StudySubject.ditti_id == "ditti_bar_456"
         baz = StudySubject.query.filter(q2).first()
-        assert baz is not None, (
-            "StudySubject with ditti_id 'ditti_bar_456' should exist."
-        )
-        assert len(baz.studies) == 1, (
-            "StudySubject should be associated with one study."
-        )
+        assert baz is not None, "StudySubject with ditti_id 'ditti_bar_456' should exist."
+        assert len(
+            baz.studies) == 1, "StudySubject should be associated with one study."
         assert baz.studies[0].study is foo, "Associated study should be 'bar'."
 
         # Archive the Study
@@ -437,12 +417,10 @@ class TestArchives:
 
         # Validate archiving
         assert foo.is_archived, "Study should be marked as archived."
-        assert len(bar.studies) == 0, (
-            "Account should no longer be associated with the archived study."
-        )
-        assert len(baz.studies) == 0, (
-            "StudySubject should no longer be associated with the archived study."
-        )
+        assert len(
+            bar.studies) == 0, "Account should no longer be associated with the archived study."
+        assert len(
+            baz.studies) == 0, "StudySubject should no longer be associated with the archived study."
 
     def test_archive_api(self, app):
         q1 = Api.name == "bar"
@@ -452,10 +430,7 @@ class TestArchives:
         # Updated to use ditti_id instead of email
         q2 = StudySubject.ditti_id == "ditti_bar_456"
         baz = StudySubject.query.filter(q2).first()
-        assert baz is not None, (
-            "StudySubject with ditti_id 'ditti_bar_456' should exist."
-        )
-        assert len(baz.apis) == 1, (
-            "StudySubject should be associated with one API."
-        )
+        assert baz is not None, "StudySubject with ditti_id 'ditti_bar_456' should exist."
+        assert len(
+            baz.apis) == 1, "StudySubject should be associated with one API."
         assert baz.apis[0].api is foo, "Associated API should be 'bar'."

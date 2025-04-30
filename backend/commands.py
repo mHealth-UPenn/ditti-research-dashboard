@@ -21,20 +21,11 @@ from flask import current_app
 from flask.cli import with_appcontext
 from flask_migrate import upgrade
 
-from backend.extensions import cache, db
+from backend.extensions import db, cache
 from backend.models import (
-    AccessGroup,
-    Account,
-    JoinAccountAccessGroup,
-    delete_lambda_tasks,
-    init_admin_account,
-    init_admin_app,
-    init_admin_group,
-    init_api,
-    init_db,
-    init_integration_testing_db,
-    init_lambda_task,
-    init_study_subject,
+    init_admin_app, init_admin_group, init_admin_account, init_db, init_api,
+    init_integration_testing_db, init_study_subject, init_lambda_task,
+    delete_lambda_tasks, Account, JoinAccountAccessGroup, AccessGroup
 )
 
 
@@ -100,22 +91,15 @@ def reset_db_click():
     click.echo("Database successfully reset.")
 
 
-@click.command(
-    "init-integration-testing-db",
-    help="Initialize the integration testing database.",
-)
+@click.command("init-integration-testing-db", help="Initialize the integration testing database.")
 @with_appcontext
 def init_integration_testing_db_click():
     init_integration_testing_db()
     click.echo("Database successfully initialized.")
 
 
-@click.command(
-    "init-study-subject", help="Create a new StudySubject database entry."
-)
-@click.option(
-    "--ditti_id", default=None, help="The ditti_id of the StudySubject."
-)
+@click.command("init-study-subject", help="Create a new StudySubject database entry.")
+@click.option("--ditti_id", default=None, help="The ditti_id of the StudySubject.")
 @with_appcontext
 def init_study_subject_click(ditti_id):
     if ditti_id is None:
@@ -131,25 +115,19 @@ def clear_cache_click():
 
 
 @click.command("init-lambda-task", help="Create a new LambdaTask database entry.")
-@click.option(
-    "--status", default="InProgress", help="The status of the LambdaTask."
-)
+@click.option("--status", default="InProgress", help="The status of the LambdaTask.")
 @with_appcontext
 def init_lambda_task_click(status):
     init_lambda_task(status)
 
 
-@click.command(
-    "delete-lambda-tasks", help="Delete all LambdaTask database entries."
-)
+@click.command("delete-lambda-tasks", help="Delete all LambdaTask database entries.")
 @with_appcontext
 def delete_lambda_tasks_click():
     delete_lambda_tasks()
 
 
-@click.command(
-    "export-accounts-to-cognito", help="Export accounts to AWS Cognito."
-)
+@click.command("export-accounts-to-cognito", help="Export accounts to AWS Cognito.")
 @with_appcontext
 def export_accounts_to_cognito_click():
     """Export accounts to AWS Cognito for researcher authentication."""
@@ -158,9 +136,7 @@ def export_accounts_to_cognito_click():
     click.echo("Export accounts to AWS Cognito functionality would go here.")
 
 
-@click.command(
-    "create-researcher-account", help="Create a new researcher account."
-)
+@click.command("create-researcher-account", help="Create a new researcher account.")
 @click.option("--email", default=None, help="The email of the researcher.")
 @with_appcontext
 def create_researcher_account_click(email):
@@ -183,28 +159,14 @@ def create_researcher_account_click(email):
     # Give the account access to all groups
     admin_group = AccessGroup.query.filter_by(name="Admin").first()
     ditti_group = AccessGroup.query.filter_by(name="Ditti App Admin").first()
-    wearable_group = AccessGroup.query.filter_by(
-        name="Wearable Dashboard Admin"
-    ).first()
+    wearable_group = AccessGroup.query.filter_by(name="Wearable Dashboard Admin").first()
 
     if not (admin_group and ditti_group and wearable_group):
         raise RuntimeError("One or more access groups were not found.")
 
-    db.session.add(
-        JoinAccountAccessGroup(
-            account_id=account.id, access_group_id=admin_group.id
-        )
-    )
-    db.session.add(
-        JoinAccountAccessGroup(
-            account_id=account.id, access_group_id=ditti_group.id
-        )
-    )
-    db.session.add(
-        JoinAccountAccessGroup(
-            account_id=account.id, access_group_id=wearable_group.id
-        )
-    )
+    db.session.add(JoinAccountAccessGroup(account_id=account.id, access_group_id=admin_group.id))
+    db.session.add(JoinAccountAccessGroup(account_id=account.id, access_group_id=ditti_group.id))
+    db.session.add(JoinAccountAccessGroup(account_id=account.id, access_group_id=wearable_group.id))
 
     db.session.commit()
 

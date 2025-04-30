@@ -25,13 +25,11 @@ from install.utils.exceptions import AwsProviderError
 
 
 class AwsCloudformationProvider:
-    def __init__(
-        self,
-        *,
-        logger: Logger,
-        config: ProjectConfigProvider,
-        aws_client_provider: AwsClientProvider,
-    ):
+    def __init__(self, *,
+            logger: Logger,
+            config: ProjectConfigProvider,
+            aws_client_provider: AwsClientProvider,
+        ):
         self.logger = logger
         self.config = config
         self.client = aws_client_provider.cloudformation_client
@@ -40,9 +38,7 @@ class AwsCloudformationProvider:
         try:
             res = self.client.describe_stacks(StackName=self.config.stack_name)
             if len(res["Stacks"]) == 0:
-                raise AwsProviderError(
-                    f"Stack {self.config.stack_name} not found"
-                )
+                raise AwsProviderError(f"Stack {self.config.stack_name} not found")
             return {
                 output["OutputKey"]: output["OutputValue"]
                 for output in res["Stacks"][0]["Outputs"]
@@ -51,17 +47,11 @@ class AwsCloudformationProvider:
             raise
         except ClientError as e:
             traceback.print_exc()
-            self.logger.error(
-                "Error getting outputs for stack due to ClientError: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Error getting outputs for stack due to ClientError: {Colorizer.white(e)}")
             raise AwsProviderError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(
-                "Error getting outputs for stack due to unexpected error: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Error getting outputs for stack due to unexpected error: {Colorizer.white(e)}")
             raise AwsProviderError(e)
 
     def update_dev_project_config(self) -> None:

@@ -1,12 +1,7 @@
 import json
-
 import pytest
 from flask import Flask
-
-from backend.auth.utils.responses import (
-    create_error_response,
-    create_success_response,
-)
+from backend.auth.utils.responses import create_error_response, create_success_response
 
 
 @pytest.fixture
@@ -60,7 +55,9 @@ def test_create_error_response_with_error_code(mock_app):
     """
     with mock_app.app_context():
         response = create_error_response(
-            "Test error message", status_code=400, error_code="VALIDATION_ERROR"
+            "Test error message",
+            status_code=400,
+            error_code="VALIDATION_ERROR"
         )
 
         # Verify response properties
@@ -139,8 +136,7 @@ def test_create_success_response_with_custom_message():
     Verifies that a provided message overrides the default.
     """
     response_dict, status_code = create_success_response(
-        message="Custom success message"
-    )
+        message="Custom success message")
 
     # Verify the tuple components
     assert status_code == 200
@@ -170,7 +166,9 @@ def test_create_success_response_complete():
     """
     test_data = {"id": 123, "name": "Test"}
     response_dict, status_code = create_success_response(
-        data=test_data, message="Created successfully", status_code=201
+        data=test_data,
+        message="Created successfully",
+        status_code=201
     )
 
     # Verify the tuple components
@@ -188,7 +186,8 @@ def test_create_success_response_with_msg_key_conflict():
     """
     test_data = {"msg": "This should be overwritten", "id": 456}
     response_dict, status_code = create_success_response(
-        data=test_data, message="This message should win"
+        data=test_data,
+        message="This message should win"
     )
 
     # Verify the tuple components - the explicit message parameter should take precedence
@@ -232,7 +231,8 @@ def test_create_success_response_with_special_chars():
     Verifies proper handling of messages with special characters.
     """
     special_message = "Success! @#$%^&*() 成功"
-    response_dict, status_code = create_success_response(message=special_message)
+    response_dict, status_code = create_success_response(
+        message=special_message)
 
     # Verify the tuple components
     assert status_code == 200

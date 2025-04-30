@@ -14,10 +14,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from datetime import datetime, timedelta, UTC
 import logging
 import os
-from datetime import datetime, timedelta
-
 import boto3
 
 logger = logging.getLogger()
@@ -32,7 +31,9 @@ def stop():
     pattern = os.getenv("AWS_LOG_PATTERN")
     start = int((datetime.now() - timedelta(hours=2)).timestamp() * 1000)
     res = logs.filter_log_events(
-        logGroupName=name, filterPattern=pattern, startTime=start
+        logGroupName=name,
+        filterPattern=pattern,
+        startTime=start
     )
     events = res["events"]
 
@@ -42,20 +43,21 @@ def stop():
             logGroupName=name,
             filterPattern=pattern,
             nextToken=res["nextToken"],
-            startTime=start,
+            startTime=start
         )
         events.extend(res["events"])
 
-    logger.info(f"Current time: {datetime.now()}")
+    logger.info("Current time: %s" % datetime.now())
 
     # if there was a request in the last two hours
     if events:
+
         # log the timestamp of the last event
         timestamps = map(lambda x: x["timestamp"], events)
         last = sorted(list(timestamps))[-1]
         last = datetime.fromtimestamp(last // 1000)
 
-        logger.info(f"Last request timestamp: {last}")
+        logger.info("Last request timestamp: %s" % last)
 
     else:
         logger.info("No requests in the last two hours")
@@ -66,11 +68,11 @@ def stop():
         res = rds.describe_db_instances(DBInstanceIdentifier=instance)
         status = res["DBInstances"][0]["DBInstanceStatus"]
 
-        logger.info(f"Current DB status: {status}")
+        logger.info("Current DB status: %s" % status)
 
         # if the database is running
         if status == "available":
-            logger.info(f"Stopping DB instance: {instance}")
+            logger.info("Stopping DB instance: %s" % instance)
 
             # stop the database
             rds.stop_db_instance(DBInstanceIdentifier=instance)

@@ -1,12 +1,6 @@
-from install.resource_managers.aws_s3_resource_manager import (
-    AwsS3ResourceManager,
-)
-from tests.tests_install.tests_aws_providers.mock_aws_client_provider import (
-    aws_client_provider,
-)
-from tests.tests_install.tests_project_config.mock_project_config_provider import (
-    project_config_provider,
-)
+from install.resource_managers.aws_s3_resource_manager import AwsS3ResourceManager
+from tests.tests_install.tests_aws_providers.mock_aws_client_provider import aws_client_provider
+from tests.tests_install.tests_project_config.mock_project_config_provider import project_config_provider
 from tests.tests_install.tests_utils.mock_logger import logger
 
 

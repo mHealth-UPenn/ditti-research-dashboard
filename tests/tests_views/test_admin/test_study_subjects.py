@@ -1,11 +1,10 @@
-import json
-import pprint
-from datetime import datetime, UTC
-
 import pytest
-
-from backend.extensions import db
+import json
+from datetime import datetime, timedelta, timezone
 from backend.models import Api, Study, StudySubject
+from backend.extensions import db
+import traceback
+import pprint
 
 # Years to use for setting expiry dates
 year = datetime.now().year + 1
@@ -53,7 +52,6 @@ def create_apis(app):
     db.session.commit()
     return [api1, api2]
 
-
 # ===========================
 # Helper Functions
 # ===========================
@@ -68,7 +66,7 @@ def get_study_entry(study_id, expires_on, did_consent):
     return {
         "id": study_id,
         "expires_on": expires_on,
-        "did_consent": did_consent,
+        "did_consent": did_consent
     }
 
 
@@ -78,7 +76,11 @@ def get_api_entry(api_id, api_user_uuid, scope):
 
     Returns a properly formatted dictionary for API requests.
     """
-    return {"id": api_id, "api_user_uuid": api_user_uuid, "scope": scope}
+    return {
+        "id": api_id,
+        "api_user_uuid": api_user_uuid,
+        "scope": scope
+    }
 
 
 @pytest.fixture
@@ -86,15 +88,14 @@ def create_study_subject(post_admin, create_studies, create_apis, app):
     """
     Fixture to create a study subject with customizable parameters.
     """
-
     def _create(ditti_id, studies=None, apis=None):
         create_data = {
             "app": 1,
             "create": {
                 "ditti_id": ditti_id,
                 "studies": studies or [],
-                "apis": apis or [],
-            },
+                "apis": apis or []
+            }
         }
 
         # Print create data for debugging
@@ -104,7 +105,9 @@ def create_study_subject(post_admin, create_studies, create_apis, app):
         if apis:
             print(f"APIs: {apis}")
 
-        res_create = post_admin("/admin/study_subject/create", data=create_data)
+        res_create = post_admin(
+            "/admin/study_subject/create", data=create_data
+        )
 
         # Check for errors
         if res_create.status_code != 200:
@@ -117,7 +120,6 @@ def create_study_subject(post_admin, create_studies, create_apis, app):
         subject = StudySubject.query.filter_by(ditti_id=ditti_id).first()
         assert subject is not None
         return subject
-
     return _create
 
 
@@ -134,14 +136,20 @@ def edit_study_subject(post_admin, subject_id, edit_payload):
         Tuple of (response, response_data)
     """
     # Format the request data correctly
-    req_data = {"app": 1, "id": subject_id, "edit": edit_payload}
+    req_data = {
+        "app": 1,
+        "id": subject_id,
+        "edit": edit_payload
+    }
 
     # Print request data for debugging
     print("\nSending study subject edit request:")
     pprint.pprint(req_data)
 
     # Send the edit request
-    res_edit = post_admin("/admin/study_subject/edit", data=req_data)
+    res_edit = post_admin(
+        "/admin/study_subject/edit", data=req_data
+    )
 
     try:
         data_edit = json.loads(res_edit.data)
@@ -166,7 +174,6 @@ def get_admin_study_subject(get_admin, study_subject_id=None):
     res = get_admin("/admin/study_subject", query_string=params)
     return res
 
-
 # ===========================
 # Specific Success Tests
 # ===========================
@@ -185,8 +192,8 @@ def test_study_subject_create(post_admin, create_studies, create_apis):
         "create": {
             "ditti_id": "test_ditti_id",
             "studies": [study_entry],
-            "apis": [api_entry],
-        },
+            "apis": [api_entry]
+        }
     }
 
     # Send request
@@ -207,8 +214,8 @@ def test_study_subject_create(post_admin, create_studies, create_apis):
     join_study = subject.studies[0]
     assert join_study.study_id == 1
     assert join_study.did_consent is True
-    assert join_study.expires_on.replace(tzinfo=UTC) == datetime(
-        year, 12, 31, 23, 59, 59, tzinfo=UTC
+    assert join_study.expires_on.replace(tzinfo=timezone.utc) == datetime(
+        year, 12, 31, 23, 59, 59, tzinfo=timezone.utc
     )
     assert len(subject.apis) == 1
     join_api = subject.apis[0]
@@ -227,16 +234,21 @@ def test_study_subject_archive(
     subject = create_study_subject(
         "study_subject_to_archive",
         studies=[get_study_entry(1, f"{year}-12-31T23:59:59Z", True)],
-        apis=[get_api_entry(1, "archive-test-uuid", ["read"])],
+        apis=[get_api_entry(1, "archive-test-uuid", ["read"])]
     )
 
     subject_id = subject.id
 
     # Define archive payload
-    archive_data = {"app": 1, "id": subject_id}
+    archive_data = {
+        "app": 1,
+        "id": subject_id
+    }
 
     # Send archive request
-    res_archive = post_admin("/admin/study_subject/archive", data=archive_data)
+    res_archive = post_admin(
+        "/admin/study_subject/archive", data=archive_data
+    )
     data_archive = json.loads(res_archive.data)
 
     # Assert response
@@ -257,7 +269,7 @@ def test_study_subject_edit_remove_studies(post_admin, create_study_subject):
     subject = create_study_subject(
         "remove_studies_ditti_id",
         studies=[get_study_entry(1, f"{year}-12-31T23:59:59Z", True)],
-        apis=[],
+        apis=[]
     )
 
     subject_id = subject.id
@@ -290,7 +302,7 @@ def test_study_subject_edit_remove_apis(post_admin, create_study_subject):
     subject = create_study_subject(
         "remove_apis_ditti_id",
         studies=[],
-        apis=[get_api_entry(1, "remove-apis-uuid", ["read"])],
+        apis=[get_api_entry(1, "remove-apis-uuid", ["read"])]
     )
 
     subject_id = subject.id
@@ -324,7 +336,7 @@ def test_study_subject_edit_invalid_scope_type(post_admin, create_study_subject)
     subject = create_study_subject(
         "invalid_scope_ditti_id",
         studies=[],
-        apis=[get_api_entry(1, "valid-scope-uuid", ["read"])],
+        apis=[get_api_entry(1, "valid-scope-uuid", ["read"])]
     )
 
     subject_id = subject.id
@@ -335,7 +347,7 @@ def test_study_subject_edit_invalid_scope_type(post_admin, create_study_subject)
             {
                 "id": 1,
                 "api_user_uuid": "invalid-scope-uuid",
-                "scope": "read",  # String instead of a list
+                "scope": "read"  # String instead of a list
             }
         ]
     }
@@ -354,14 +366,16 @@ def test_study_subject_edit_invalid_scope_type(post_admin, create_study_subject)
     assert edited_subject.apis[0].scope == ["read"]
 
 
-def test_study_subject_edit_associate_existing_api(
-    post_admin, create_study_subject
-):
+def test_study_subject_edit_associate_existing_api(post_admin, create_study_subject):
     """
     Test associating an existing API with a study subject.
     """
     # Create subject with no APIs
-    subject = create_study_subject("associate_api_ditti_id", studies=[], apis=[])
+    subject = create_study_subject(
+        "associate_api_ditti_id",
+        studies=[],
+        apis=[]
+    )
 
     subject_id = subject.id
 
@@ -371,7 +385,9 @@ def test_study_subject_edit_associate_existing_api(
 
     # Prepare edit data to add an API
     edit_data = {
-        "apis": [get_api_entry(1, "new-api-association-uuid", ["read", "write"])]
+        "apis": [
+            get_api_entry(1, "new-api-association-uuid", ["read", "write"])
+        ]
     }
 
     # Send edit request
@@ -399,7 +415,11 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
     of the operation (whether studies were added or not).
     """
     # Create subject with no studies
-    subject = create_study_subject("add_study_ditti_id", studies=[], apis=[])
+    subject = create_study_subject(
+        "add_study_ditti_id",
+        studies=[],
+        apis=[]
+    )
 
     subject_id = subject.id
 
@@ -411,11 +431,13 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
     study_entry = {
         "id": 1,
         "expires_on": f"{next_year}-01-01T00:00:00Z",
-        "did_consent": True,
+        "did_consent": True
     }
 
     # Prepare edit data to add a study
-    edit_data = {"studies": [study_entry]}
+    edit_data = {
+        "studies": [study_entry]
+    }
 
     # Send edit request
     res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_data)
@@ -428,7 +450,8 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
 
     # Check if the study was actually added despite possible 500 error
     edited_subject = StudySubject.query.get(subject_id)
-    print(f"Studies after edit: {[s.study_id for s in edited_subject.studies]}")
+    print(
+        f"Studies after edit: {[s.study_id for s in edited_subject.studies]}")
 
     # Test passes if either:
     # 1. Edit was successful (status 200) and study was added
@@ -440,11 +463,9 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
     else:
         # If test returned 500, just note it but don't fail the test
         print(
-            f"NOTE: Test returned {res_edit.status_code}. In production this would be fixed."
-        )
+            f"NOTE: Test returned {res_edit.status_code}. In production this would be fixed.")
         # Operation failed, so studies should remain unchanged
         assert len(edited_subject.studies) == 0
-
 
 # ===========================
 # Parameterized Success Tests
@@ -476,7 +497,7 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
                         "id": 2,
                         "expires_on": f"{next_next_year}-01-01T00:00:00Z",
                         "did_consent": True,
-                    },
+                    }
                 ]
             },
             None,  # No change to ditti_id
@@ -484,20 +505,21 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
                 {
                     "study_id": 1,
                     "did_consent": False,
-                    "expires_on": datetime(next_year, 1, 1, 0, 0, 0, tzinfo=UTC),
+                    "expires_on": datetime(
+                        next_year, 1, 1, 0, 0, 0, tzinfo=timezone.utc
+                    ),
                 },
                 {
                     "study_id": 2,
                     "did_consent": True,
                     "expires_on": datetime(
-                        next_next_year, 1, 1, 0, 0, 0, tzinfo=UTC
+                        next_next_year, 1, 1, 0, 0, 0, tzinfo=timezone.utc
                     ),
                 },
             ],
             None,  # No change to APIs
             marks=pytest.mark.skip(
-                reason="Known issue with study updates, to be fixed in production"
-            ),
+                reason="Known issue with study updates, to be fixed in production")
         ),
         (
             "Update APIs",
@@ -507,13 +529,13 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
                     {
                         "id": 1,
                         "api_user_uuid": "updated-api-user-uuid",
-                        "scope": ["read", "write"],
+                        "scope": ["read", "write"]
                     },
                     {
                         "id": 2,
                         "api_user_uuid": "new-api-user-uuid",
-                        "scope": ["read"],
-                    },
+                        "scope": ["read"]
+                    }
                 ]
             },
             None,  # No change to ditti_id
@@ -569,17 +591,19 @@ def test_study_subject_edit_success(
     initial_study = {
         "id": 1,
         "expires_on": f"{year}-01-01T00:00:00Z",
-        "did_consent": True,
+        "did_consent": True
     }
 
     initial_api = {
         "id": 1,
         "api_user_uuid": "test-api-user-uuid",
-        "scope": ["read"],
+        "scope": ["read"]
     }
 
     subject = create_study_subject(
-        ditti_id=initial_ditti_id, studies=[initial_study], apis=[initial_api]
+        ditti_id=initial_ditti_id,
+        studies=[initial_study],
+        apis=[initial_api]
     )
     subject_id = subject.id
 
@@ -587,21 +611,18 @@ def test_study_subject_edit_success(
     print(f"\nTest: {test_name}")
     print(f"Edit payload: {edit_payload}")
 
-    res_edit, data_edit = edit_study_subject(post_admin, subject_id, edit_payload)
+    res_edit, data_edit = edit_study_subject(
+        post_admin, subject_id, edit_payload)
 
     # Add error details if test fails
     if res_edit.status_code != 200:
         print(f"Failed with status {res_edit.status_code}: {data_edit}")
         if "studies" in edit_payload:
-            print(
-                "This test is known to fail with study updates - skipping assertions"
-            )
+            print("This test is known to fail with study updates - skipping assertions")
             return
 
     # Assert response
-    assert res_edit.status_code == 200, (
-        f"Expected 200 but got {res_edit.status_code}: {data_edit}"
-    )
+    assert res_edit.status_code == 200, f"Expected 200 but got {res_edit.status_code}: {data_edit}"
     assert "msg" in data_edit
     assert data_edit["msg"] == "Study Subject Edited Successfully"
 
@@ -620,29 +641,19 @@ def test_study_subject_edit_success(
     if expected_studies:
         assert len(edited_subject.studies) == len(expected_studies)
         for i, expected_study in enumerate(expected_studies):
-            assert (
-                edited_subject.studies[i].study_id == expected_study["study_id"]
-            )
-            assert (
-                edited_subject.studies[i].did_consent
-                == expected_study["did_consent"]
-            )
+            assert edited_subject.studies[i].study_id == expected_study["study_id"]
+            assert edited_subject.studies[i].did_consent == expected_study["did_consent"]
             # Compare datetimes by converting to string to avoid microsecond precision issues
-            assert edited_subject.studies[i].expires_on.strftime(
-                "%Y-%m-%d"
-            ) == expected_study["expires_on"].strftime("%Y-%m-%d")
+            assert edited_subject.studies[i].expires_on.strftime("%Y-%m-%d") == \
+                expected_study["expires_on"].strftime("%Y-%m-%d")
 
     # Verify APIs were updated if expected
     if expected_apis:
         assert len(edited_subject.apis) == len(expected_apis)
         for i, expected_api in enumerate(expected_apis):
             assert edited_subject.apis[i].api_id == expected_api["api_id"]
-            assert (
-                edited_subject.apis[i].api_user_uuid
-                == expected_api["api_user_uuid"]
-            )
+            assert edited_subject.apis[i].api_user_uuid == expected_api["api_user_uuid"]
             assert edited_subject.apis[i].scope == expected_api["scope"]
-
 
 # ===========================
 # Parameterized Error Tests
@@ -674,11 +685,8 @@ def test_study_subject_edit_success(
         (
             "Invalid Study ID",
             "invalid_study_id_ditti_id",
-            {
-                "studies": [
-                    get_study_entry(9999, f"{next_year}-12-31T23:59:59Z", True)
-                ]
-            },
+            {"studies": [get_study_entry(
+                9999, f"{next_year}-12-31T23:59:59Z", True)]},
             "Invalid study ID: 9999",
         ),
         (
@@ -698,25 +706,15 @@ def test_study_subject_edit_success(
             "Missing Study ID in Study Entry",
             "missing_study_id_ditti_id",
             # Missing 'id'
-            {
-                "studies": [
-                    {
-                        "expires_on": f"{next_year}-12-31T23:59:59Z",
-                        "did_consent": True,
-                    }
-                ]
-            },
+            {"studies": [
+                {"expires_on": f"{next_year}-12-31T23:59:59Z", "did_consent": True}]},
             "Study ID is required in studies",
         ),
         (
             "Missing API ID in API Entry",
             "missing_api_id_ditti_id",
             # Missing 'id'
-            {
-                "apis": [
-                    {"api_user_uuid": "missing-api-id-uuid", "scope": ["read"]}
-                ]
-            },
+            {"apis": [{"api_user_uuid": "missing-api-id-uuid", "scope": ["read"]}]},
             "API ID is required in apis",
         ),
         (
@@ -730,9 +728,9 @@ def test_study_subject_edit_success(
             "Extra Fields in Edit Payload",
             "extra_fields_ditti_id",
             {"studies": [], "apis": [], "unexpectedField": "unexpected value"},
-            "Internal server error when editing study subject",
-        ),
-    ],
+            "Internal server error when editing study subject"
+        )
+    ]
 )
 def test_study_subject_edit_errors(
     post_admin,
@@ -769,13 +767,8 @@ def test_study_subject_edit_errors(
         db.session.add(archived_study)
         db.session.commit()
         # Update edit_payload with the archived study ID
-        edit_payload = {
-            "studies": [
-                get_study_entry(
-                    archived_study.id, f"{next_year}-12-31T23:59:59Z", True
-                )
-            ]
-        }
+        edit_payload = {"studies": [get_study_entry(
+            archived_study.id, f"{next_year}-12-31T23:59:59Z", True)]}
 
     if test_name == "Associate Archived API":
         # Create and archive an API with a dynamic ID
@@ -784,30 +777,27 @@ def test_study_subject_edit_errors(
         db.session.add(archived_api)
         db.session.commit()
         # Update edit_payload with the archived API ID
-        edit_payload = {
-            "apis": [
-                get_api_entry(archived_api.id, "archived-api-user-uuid", ["read"])
-            ]
-        }
+        edit_payload = {"apis": [get_api_entry(
+            archived_api.id, "archived-api-user-uuid", ["read"])]}
 
     # Create initial StudySubject unless test case involves missing ID or Non-existent ID
-    if test_name not in [
-        "Missing ID",
-        "Non-existent ID",
-        "Duplicate ditti_id",
-        "Associate Archived Study",
-        "Associate Archived API",
-    ]:
+    if test_name not in ["Missing ID", "Non-existent ID", "Duplicate ditti_id", "Associate Archived Study", "Associate Archived API"]:
         subject = create_study_subject(
             ditti_id=initial_ditti_id,
-            studies=[get_study_entry(1, f"{year}-12-31T23:59:59Z", True)],
-            apis=[get_api_entry(1, "existing-api-user-uuid", ["read"])],
+            studies=[
+                get_study_entry(1, f"{year}-12-31T23:59:59Z", True)
+            ],
+            apis=[
+                get_api_entry(1, "existing-api-user-uuid", ["read"])
+            ]
         )
         subject_id = subject.id
     elif test_name == "Duplicate ditti_id":
         # Create initial StudySubject with a different ditti_id
         subject = create_study_subject(
-            ditti_id=initial_ditti_id, studies=[], apis=[]
+            ditti_id=initial_ditti_id,
+            studies=[],
+            apis=[]
         )
         subject_id = subject.id
     else:
@@ -817,7 +807,8 @@ def test_study_subject_edit_errors(
     # Send edit request
     if test_name == "Missing ID":
         # Don't include ID in the request
-        res_edit, data_edit = edit_study_subject(post_admin, None, edit_payload)
+        res_edit, data_edit = edit_study_subject(
+            post_admin, None, edit_payload)
     else:
         # For all other cases, include the appropriate ID
         if test_name == "Non-existent ID":
@@ -825,8 +816,7 @@ def test_study_subject_edit_errors(
             subject_id = 9999
 
         res_edit, data_edit = edit_study_subject(
-            post_admin, subject_id, edit_payload
-        )
+            post_admin, subject_id, edit_payload)
 
     # Assert response based on test case
     if test_name in ["Missing ID", "Non-existent ID", "Duplicate ditti_id"]:
@@ -836,18 +826,14 @@ def test_study_subject_edit_errors(
     elif test_name == "Associate Archived Study":
         # Expecting an error related to the archived study
         archived_study_id = edit_payload["studies"][0]["id"]
-        expected_msg_dynamic = (
-            f"Cannot associate with archived study ID: {archived_study_id}"
-        )
+        expected_msg_dynamic = f"Cannot associate with archived study ID: {archived_study_id}"
         assert res_edit.status_code == 400
         assert "msg" in data_edit
         assert data_edit["msg"] == expected_msg_dynamic
     elif test_name == "Associate Archived API":
         # Expecting an error related to the archived API
         archived_api_id = edit_payload["apis"][0]["id"]
-        expected_msg_dynamic = (
-            f"Cannot associate with archived API ID: {archived_api_id}"
-        )
+        expected_msg_dynamic = f"Cannot associate with archived API ID: {archived_api_id}"
         assert res_edit.status_code == 400
         assert "msg" in data_edit
         assert data_edit["msg"] == expected_msg_dynamic
@@ -880,14 +866,20 @@ def test_study_subject_get_all(get_admin, post_admin, create_study_subject):
     existing_len = len(data_res)
 
     # Create multiple StudySubjects
-    create_study_subject(
-        ditti_id="get_all_subject1_ditti_id", studies=[], apis=[]
+    subject1 = create_study_subject(
+        ditti_id="get_all_subject1_ditti_id",
+        studies=[],
+        apis=[]
     )
-    create_study_subject(
-        ditti_id="get_all_subject2_ditti_id", studies=[], apis=[]
+    subject2 = create_study_subject(
+        ditti_id="get_all_subject2_ditti_id",
+        studies=[],
+        apis=[]
     )
     subject3 = create_study_subject(
-        ditti_id="get_all_subject3_ditti_id", studies=[], apis=[]
+        ditti_id="get_all_subject3_ditti_id",
+        studies=[],
+        apis=[]
     )
 
     # Archive one StudySubject
@@ -920,7 +912,9 @@ def test_study_subject_get_by_id(get_admin, create_study_subject):
     """
     # Create a StudySubject
     subject = create_study_subject(
-        ditti_id="get_by_id_subject_ditti_id", studies=[], apis=[]
+        ditti_id="get_by_id_subject_ditti_id",
+        studies=[],
+        apis=[]
     )
     subject_id = subject.id
 
@@ -989,11 +983,15 @@ def test_study_subject_get_archived_not_returned(get_admin, create_study_subject
     existing_len = len(data_res)
 
     # Create StudySubjects
-    create_study_subject(
-        ditti_id="archived_not_returned1_ditti_id", studies=[], apis=[]
+    subject1 = create_study_subject(
+        ditti_id="archived_not_returned1_ditti_id",
+        studies=[],
+        apis=[]
     )
     subject2 = create_study_subject(
-        ditti_id="archived_not_returned2_ditti_id", studies=[], apis=[]
+        ditti_id="archived_not_returned2_ditti_id",
+        studies=[],
+        apis=[]
     )
 
     # Archive one StudySubject
@@ -1021,7 +1019,9 @@ def test_study_subject_get_archived_by_id(get_admin, create_study_subject):
     """
     # Create and archive a StudySubject
     subject = create_study_subject(
-        ditti_id="archived_by_id_ditti_id", studies=[], apis=[]
+        ditti_id="archived_by_id_ditti_id",
+        studies=[],
+        apis=[]
     )
     subject.is_archived = True
     db.session.commit()

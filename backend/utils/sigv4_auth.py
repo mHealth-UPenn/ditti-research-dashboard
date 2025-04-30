@@ -17,11 +17,9 @@
 import logging
 import traceback
 from functools import wraps
-
+from flask import request, abort, current_app
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
-from flask import abort, current_app, request
-
 from .lambda_credentials_manager import LambdaCredentialsManager
 
 logger = logging.getLogger(__name__)
@@ -37,20 +35,14 @@ def sigv4_required(func):
 
             if not authorization or not amz_date:
                 logger.warning("Missing Authorization or X-Amz-Date header.")
-                abort(
-                    401,
-                    description="Missing Authorization or X-Amz-Date header.",
-                )
+                abort(401, description="Missing Authorization or X-Amz-Date header.")
 
             # Prepare the request for SigV4 verification
             headers = dict(request.headers)
 
             # Exclude 'x-forwarded-*' headers added by Ngrok (used for testing)
-            headers = {
-                k: v
-                for k, v in headers.items()
-                if not k.lower().startswith("x-forwarded-")
-            }
+            headers = {k: v for k, v in headers.items()
+                       if not k.lower().startswith("x-forwarded-")}
 
             if "Host" not in headers:
                 headers["Host"] = request.host
@@ -72,15 +64,17 @@ def sigv4_required(func):
 
             # Create an AWSRequest object without 'x-forwarded-*' headers
             aws_request = AWSRequest(
-                method=request.method, url=full_url, data=body, headers=headers
+                method=request.method,
+                url=full_url,
+                data=body,
+                headers=headers
             )
 
             # Initialize LambdaCredentialsManager
             secret_name = "lambda-execution-user-credentials"
             region = current_app.config.get("LAMBDA_AWS_REGION", "us-east-1")
             credentials_manager = LambdaCredentialsManager(
-                secret_name=secret_name, region_name=region
-            )
+                secret_name=secret_name, region_name=region)
             credentials = credentials_manager.get_credentials()
 
             service = "execute-api"
@@ -110,5 +104,4 @@ def sigv4_required(func):
             abort(401, description="Unauthorized: SigV4 authentication failed.")
 
         return func(*args, **kwargs)
-
     return wrapper

@@ -14,20 +14,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from functools import reduce
 import json
 import os
 import re
-from functools import reduce
-
-import boto3
 import requests
+import boto3
 from boto3.dynamodb.conditions import Attr
 from requests_aws4auth import AWS4Auth
 
 
 class MutationClient:
     """
-    The client that makes mutation requests to AWS AppSync.
+    The client that makes mutation requests to AWS AppSync
 
     Vars
     ----
@@ -36,7 +35,6 @@ class MutationClient:
     headers: dict
         used to validate the mutation request
     """
-
     f_string = "mutation($in:%(inp)s!){%(fun)s(input:$in){%(var)s}}"
 
     def __init__(self):
@@ -68,7 +66,7 @@ class MutationClient:
             os.getenv("APPSYNC_ACCESS_KEY"),
             os.getenv("APPSYNC_SECRET_KEY"),
             "us-east-1",
-            "appsync",
+            "appsync"
         )
 
     def set_mutation(self, inp, fun, var):
@@ -89,69 +87,59 @@ class MutationClient:
         query = self.f_string % fmt
         self.__body = {
             "query": query,
-            "variables": f'{{"in": {json.dumps(var)}}}',
+            "variables": "{\"in\": %s}" % json.dumps(var)
         }
 
     def set_mutation_v2(self, items):
         # Declare variables in the query
         query = "mutation (\n"
         variables = {}
-
+        
         # Build variable declarations and operations
         for i, item in enumerate(items):
             index = i + 1  # Start indexing at 1 for unique variables
-
+            
             # Add variable declarations to the query
-            query += (
-                f"$availability{index}: String!, "
-                f"$bucket{index}: String!, "
-                f"$category{index}: String!, "
-            )
-            query += (
-                f"$fileName{index}: String!, "
-                f"$studies{index}: [String]!, "
-                f"$length{index}: Int!, "
-                f"$title{index}: String!,\n"
-            )
-
+            query += f"$availability{index}: String!, $bucket{index}: String!, $category{index}: String!, "
+            query += f"$fileName{index}: String!, $studies{index}: [String]!, $length{index}: Int!, $title{index}: String!,\n"
+            
             # Prepare variables to be sent in the POST request
             variables[f"availability{index}"] = item["availability"]
             variables[f"bucket{index}"] = item["bucket"]
             variables[f"category{index}"] = item["category"]
             variables[f"fileName{index}"] = item["fileName"]
-            variables[f"studies{index}"] = (
-                item["studies"]
-                if isinstance(item["studies"], list)
-                else [item["studies"]]
-            )
+            variables[f"studies{index}"] = item["studies"] if isinstance(item["studies"], list) else [item["studies"]]
             variables[f"length{index}"] = int(item["length"])
             variables[f"title{index}"] = item["title"]
-
+        
         # Close the variable declaration section
-        query = query.rstrip(",\n")  # Remove the trailing comma and newline
+        query = query.rstrip(',\n')  # Remove the trailing comma and newline
         query += ") {\n"
 
         # Build the operations inside the mutation block
         for i in range(len(items)):
             index = i + 1
-            query += f"""
-                CreateAudioFileOperation{index}: createAudioFile(input: {{
-                    availability: $availability{index},
-                    bucket: $bucket{index},
-                    category: $category{index},
-                    fileName: $fileName{index},
-                    studies: $studies{index},
-                    length: $length{index},
-                    title: $title{index}
-                }}) {{
+            query += """
+                CreateAudioFileOperation%(index)s: createAudioFile(input: {
+                    availability: $availability%(index)s, 
+                    bucket: $bucket%(index)s, 
+                    category: $category%(index)s, 
+                    fileName: $fileName%(index)s, 
+                    studies: $studies%(index)s, 
+                    length: $length%(index)s, 
+                    title: $title%(index)s
+                }) {
                     id
-                }}
-            """
-
+                }
+            """ % {"index": index}
+        
         # Close the mutation block
         query += "\n}"
 
-        self.__body = {"query": query, "variables": variables}
+        self.__body = {
+            "query": query,
+            "variables": variables
+        }
 
     def post_mutation(self):
         """
@@ -173,7 +161,9 @@ class MutationClient:
             raise ValueError("Mutation is not set. Call set_mutation() first.")
 
         res = self.__conn.request(
-            "POST", os.getenv("APP_SYNC_HOST"), json=self.__body
+            "POST",
+            os.getenv("APP_SYNC_HOST"),
+            json=self.__body
         )
 
         return res.text
@@ -183,7 +173,6 @@ class Connection:
     """
     A connection with an AWS resource
     """
-
     def __init__(self):
         self.__session = None
 
@@ -214,7 +203,6 @@ class Loader:
     ----
     tablekey: the short name of the table (User, Tap, etc.)
     """
-
     def __init__(self, tablekey):
         self.__tablekey = tablekey
         self.__table = None
@@ -222,7 +210,7 @@ class Loader:
             "User": os.getenv("AWS_TABLENAME_USER"),
             "Tap": os.getenv("AWS_TABLENAME_TAP"),
             "AudioFile": os.getenv("AWS_TABLENAME_AUDIO_FILE"),
-            "AudioTap": os.getenv("AWS_TABLENAME_AUDIO_TAP"),
+            "AudioTap": os.getenv("AWS_TABLENAME_AUDIO_TAP")
         }
 
     def get_tablename(self, tablekey):
@@ -233,7 +221,7 @@ class Loader:
         ----
         tablekey: str
             the short name of the table (User, Tap, etc.)
-
+        
         Returns
         -------
         str: the full name of the table as it appears on dynamodb
@@ -269,7 +257,6 @@ class Updater:
     ----
     tablekey: the short name of the table (User, Tap, etc., optional)
     """
-
     def __init__(self, tablekey=None):
         self.tablekey = tablekey
         self.__key = None
@@ -313,10 +300,8 @@ class Updater:
             to update and the value is the new value to update the column
             with. Any number of key, value pairs can be passed to this function
         """
-        e = reduce(
-            lambda acc, r: acc + f" {r}=:{r[0] + r[1]},", exp.keys(), "SET"
-        )
-        a = {f":{k[0]}" + k[1]: v for k, v in exp.items()}
+        e = reduce(lambda l, r: l + f" {r}=:{r[0] + r[1]},", exp.keys(), "SET")
+        a = {":%s" % k[0] + k[1]: v for k, v in exp.items()}
         self.__update_expression = e[:-1]
         self.__expression_attribute_values = a
 
@@ -346,7 +331,7 @@ class Updater:
             If tablekey or key is not set
 
         Returns
-        -------
+        ------
         dict
             The return value of DynamoDB.Table.update_items
         """
@@ -362,7 +347,7 @@ class Updater:
             Key=self.__key,
             UpdateExpression=self.__update_expression,
             ExpressionAttributeValues=self.__expression_attribute_values,
-            ReturnValues="UPDATED_NEW",
+            ReturnValues="UPDATED_NEW"
         )
 
         return res
@@ -377,7 +362,6 @@ class Column:
     col: str
         The name of the column
     """
-
     def __init__(self, col):
         self.__col = col
         self.__switch = False
@@ -423,7 +407,6 @@ class Scanner:
     tablekey: str
         The short name of the table (User, Tap, etc.)
     """
-
     def __init__(self, tablekey):
         self.__loader = Loader(tablekey)
         self.__filter = None
@@ -482,7 +465,7 @@ class Query:
 
     Args
     ----
-    key: str
+    key: str 
         The short name of the table (User, Tap, etc.)
     query: str (optional)
         The expression to query the table with, for example:
@@ -518,7 +501,6 @@ class Query:
     keys: str
         a regex string for keys
     """
-
     invalid_chars = r"[^\w|\d|=|\"|\-|:|\.|<|>|(|)|~|!]"
     blocks = r"((?<=\()[\w\d=<>\"\-:.$~!]+(?=\)))"
     conditionals = r"(==|!=|<=|>=|<<|>>|BETWEEN|BEGINS|CONTAINS|~~|~)"
@@ -559,7 +541,9 @@ class Query:
         while "LastEvaluatedKey" in res:
             last = res["LastEvaluatedKey"]
             res = scanner.scan(
-                ExclusiveStartKey=last, ReturnConsumedCapacity="TOTAL", **kwargs
+              ExclusiveStartKey=last,
+              ReturnConsumedCapacity="TOTAL",
+              **kwargs
             )
 
             # tally the consumed read units
@@ -593,7 +577,8 @@ class Query:
             pos = match.start(0)
 
             raise ValueError(
-                f"Query contains invalid string at position {pos}: {string}"
+                "Query contains invalid string at position %s: %s"
+                % (pos, string)
             )
 
         return True
@@ -601,9 +586,7 @@ class Query:
     @classmethod
     def build_query(cls, query):
         """
-        Build the query expression to pass to DynamoDB.Table.scan.
-
-        The resulting query returns only elements that have
+        Build the query expression to pass to DynamoDB.Table.scan. The resulting query returns only elements that have
         not been deleted.
 
         Args
@@ -615,7 +598,7 @@ class Query:
         DynamoDB.conditions.Attr
         """
         # Build an expression to filter any deleted elements
-        deleted_exp = cls.get_expression_from_string('~"_deleted"')
+        deleted_exp = cls.get_expression_from_string("~\"_deleted\"")
         if query is None:
             return deleted_exp
 
@@ -630,15 +613,7 @@ class Query:
     @classmethod
     def build_blocks(cls, query, blocks=None):
         """
-        Extract paranthentical subexpressions from a given query.
-
-        The expression is a list of subexpressions sorted in the order of
-        evaluation. Nested subexpressions are replaced with "$X" in following
-        subexpressions, where X is the index of the nested subexpression.
-        For example, the expression
-        (a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))
-        will return
-        ["a=="a"ORa=="b"", "b=="b"ORb=="c"", "b=="a"AND$1", "$0AND$2"]
+        Extracts paranthentical subexpressions from a given query. The expression is
 
         Args
         ----
@@ -648,7 +623,14 @@ class Query:
         Returns
         -------
         list of str
+            a list of subexpressions sorted in the order of evaluation. Nested
+            subexpressions are replaced with "$X" in following subexpressions,
+            where X is the index of the nested subexpression. For example, the
+            expression "(a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))" will
+            return:
+                ["a=="a"ORa=="b"", "b=="b"ORb=="c"", "b=="a"AND$1", "$0AND$2"]
         """
+
         # an empty list on the first call
         blocks = blocks or []
 
@@ -664,7 +646,7 @@ class Query:
         # replace nested subqueries with "$X"
         for i, block in enumerate(match):
             _i = i + len(blocks)
-            query = query.replace(f"({block})", f"${_i}")
+            query = query.replace(f"({block})", "$%s" % _i)
 
         blocks.extend(match)
         return cls.build_blocks(query, blocks=blocks)
@@ -681,11 +663,12 @@ class Query:
         expressions: list of DynamoDB.conditions.Attr
             A list used for iteratively building the expression, where the last
             element will be the ultimate return value
-
+        
         Returns
         -------
         DynamoDB.conditions.Attr
         """
+
         # an empty list on the first call
         expressions = expressions or []
 
@@ -697,17 +680,20 @@ class Query:
         # iterate over each subexpression in this block
         strings = re.split(cls.comparitors, block)
         for i, string in enumerate(strings):
+
             # odd-indexed items will be comparitors. Continue
             if i % 2:
                 continue
 
             # if this subexpression is a nested subexpression
             if "$" in string:
+
                 # get the index and subexpression
                 ix = int(string.replace("$", ""))
                 _expression = expressions[ix]
 
             else:
+
                 # parse the subexpression
                 _expression = cls.get_expression_from_string(string)
 
@@ -738,7 +724,7 @@ class Query:
     def get_expression_from_string(cls, string):
         """
         Parse a subexpression
-
+        
         Args
         ----
         string: str
@@ -747,6 +733,7 @@ class Query:
         -------
         DynamoDB.conditions.Attr
         """
+
         # remove conditionals
         popped = re.sub(cls.conditionals, "", string)
 

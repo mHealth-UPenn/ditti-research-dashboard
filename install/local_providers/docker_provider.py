@@ -15,6 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import shutil
+import subprocess
 import time
 import traceback
 
@@ -28,15 +29,13 @@ from install.utils import Colorizer, Logger
 from install.utils.enums import Postgres
 from install.utils.exceptions import DockerSDKError, LocalProviderError
 
-
 class DockerProvider:
     def __init__(
-        self,
-        *,
-        logger: Logger,
-        config: ProjectConfigProvider,
-        env_file_provider: EnvFileProvider,
-    ):
+            self, *,
+            logger: Logger,
+            config: ProjectConfigProvider,
+            env_file_provider: EnvFileProvider,
+        ):
         self.logger = logger
         self.config = config
         self.docker_client = docker.from_env()
@@ -47,23 +46,14 @@ class DockerProvider:
         # Create Docker network
         try:
             self.docker_client.networks.create(self.config.network_name)
-            self.logger(
-                "Created docker network "
-                f"{Colorizer.blue(self.config.network_name)}"
-            )
+            self.logger(f"Created docker network {Colorizer.blue(self.config.network_name)}")
         except docker.errors.APIError as e:
             traceback.print_exc()
-            self.logger.error(
-                "Error creating docker network due to APIError: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Error creating docker network due to APIError: {Colorizer.white(e)}")
             raise DockerSDKError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(
-                "Error creating docker network due to unexpected error: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Error creating docker network due to unexpected error: {Colorizer.white(e)}")
             raise DockerSDKError(e)
 
     def run_postgres_container(self) -> None:
@@ -84,33 +74,22 @@ class DockerProvider:
             )
         except docker.errors.ContainerError as e:
             traceback.print_exc()
-            self.logger.error(
-                "Error creating postgres container due to ContainerError: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Error creating postgres container due to ContainerError: {Colorizer.white(e)}")
             raise DockerSDKError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(
-                "Error creating postgres container due to unexpected error: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Error creating postgres container due to unexpected error: {Colorizer.white(e)}")
             raise DockerSDKError(e)
 
         # Wait for Postgres to be ready
         while True:
             try:
-                response = self.get_container(
-                    self.config.postgres_container_name
-                ).exec_run(
-                    [
+                response = self.get_container(self.config.postgres_container_name) \
+                    .exec_run([
                         "pg_isready",
-                        "-U",
-                        Postgres.USER.value,
-                        "-d",
-                        Postgres.DB.value,
-                    ]
-                )
+                        "-U", Postgres.USER.value,
+                        "-d", Postgres.DB.value
+                    ])
                 if (
                     response.exit_code == 0
                     and "accepting connections"
@@ -123,10 +102,7 @@ class DockerProvider:
                 time.sleep(1)
             except Exception as e:
                 traceback.print_exc()
-                self.logger.error(
-                    "Error waiting for postgres container due to unexpected "
-                    f"error: {Colorizer.white(e)}"
-                )
+                self.logger.error(f"Error waiting for postgres container due to unexpected error: {Colorizer.white(e)}")
                 raise DockerSDKError(e)
 
         self.logger(
@@ -140,47 +116,34 @@ class DockerProvider:
             shutil.copytree("shared", "functions/wearable_data_retrieval/shared")
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(
-                "Error copying shared files due to unexpected error: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Error copying shared files due to unexpected error: {Colorizer.white(e)}")
             raise LocalProviderError(e)
 
         try:
             self.docker_client.images.build(
                 path="functions/wearable_data_retrieval",
                 tag=self.config.wearable_data_retrieval_container_name,
-                platform="linux/amd64",
+                platform="linux/amd64"
             )
         except docker.errors.BuildError as e:
             traceback.print_exc()
-            self.logger.error(
-                "Wearable data retrieval container creation failed due to "
-                f"BuildError: {Colorizer.white(e)}"
-            )
+            self.logger.error(f"Wearable data retrieval container creation failed due to BuildError: {Colorizer.white(e)}")
             raise DockerSDKError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(
-                "Wearable data retrieval container creation failed due to "
-                f"unexpected error: {Colorizer.white(e)}"
-            )
+            self.logger.error(f"Wearable data retrieval container creation failed due to unexpected error: {Colorizer.white(e)}")
             raise DockerSDKError(e)
 
         try:
             shutil.rmtree("functions/wearable_data_retrieval/shared")
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(
-                "Error removing shared files due to unexpected error: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Error removing shared files due to unexpected error: {Colorizer.white(e)}")
             raise LocalProviderError(e)
 
         self.logger(
             f"Wearable data retrieval image "
-            f"{Colorizer.blue(self.config.wearable_data_retrieval_container_name)}"
-            " created"
+            f"{Colorizer.blue(self.config.wearable_data_retrieval_container_name)} created"
         )
 
     def run_wearable_data_retrieval_container(self) -> None:
@@ -197,23 +160,16 @@ class DockerProvider:
             )
         except docker.errors.ContainerError as e:
             traceback.print_exc()
-            self.logger.error(
-                "Wearable data retrieval container creation failed due to "
-                f"ContainerError: {Colorizer.white(e)}"
-            )
+            self.logger.error(f"Wearable data retrieval container creation failed due to ContainerError: {Colorizer.white(e)}")
             raise DockerSDKError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(
-                "Wearable data retrieval container creation failed due to "
-                f"unexpected error: {Colorizer.white(e)}"
-            )
+            self.logger.error(f"Wearable data retrieval container creation failed due to unexpected error: {Colorizer.white(e)}")
             raise DockerSDKError(e)
 
         self.logger(
             f"Wearable data retrieval container "
-            f"{Colorizer.blue(self.config.wearable_data_retrieval_container_name)}"
-            " created"
+            f"{Colorizer.blue(self.config.wearable_data_retrieval_container_name)} created"
         )
 
     def get_container(self, container_name: str) -> Container:
@@ -221,25 +177,16 @@ class DockerProvider:
         try:
             return self.docker_client.containers.get(container_name)
         except docker.errors.NotFound:
-            self.logger.warning(
-                f"Docker container {Colorizer.blue(container_name)} not found"
-            )
-            raise DockerSDKError(
-                f"Container {Colorizer.blue(container_name)} not found"
-            )
+            self.logger.warning(f"Docker container {Colorizer.blue(container_name)} not found")
+            raise DockerSDKError(f"Container {Colorizer.blue(container_name)} not found")
 
     def get_network(self) -> Network:
         """Get a network by name."""
         try:
             return self.docker_client.networks.get(self.config.network_name)
         except docker.errors.NotFound:
-            self.logger.warning(
-                f"Docker network {Colorizer.blue(self.config.network_name)}"
-                " not found"
-            )
-            raise DockerSDKError(
-                f"Network {Colorizer.blue(self.config.network_name)} not found"
-            )
+            self.logger.warning(f"Docker network {Colorizer.blue(self.config.network_name)} not found")
+            raise DockerSDKError(f"Network {Colorizer.blue(self.config.network_name)} not found")
 
     def uninstall(self) -> None:
         """Uninstall the Docker containers."""
@@ -247,42 +194,21 @@ class DockerProvider:
             container = self.get_container(self.config.postgres_container_name)
             container.stop()
             container.remove()
-            self.logger(
-                f"Postgres container "
-                f"{Colorizer.blue(self.config.postgres_container_name)} removed"
-            )
+            self.logger(f"Postgres container {Colorizer.blue(self.config.postgres_container_name)} removed")
         except DockerSDKError:
-            self.logger.warning(
-                "Unable to stop and remove postgres container "
-                f"{Colorizer.blue(self.config.postgres_container_name)}"
-            )
+            self.logger.warning(f"Unable to stop and remove postgres container {Colorizer.blue(self.config.postgres_container_name)}")
 
         try:
-            container = self.get_container(
-                self.config.wearable_data_retrieval_container_name
-            )
+            container = self.get_container(self.config.wearable_data_retrieval_container_name)
             container.stop()
             container.remove()
-            self.logger(
-                "Wearable data retrieval container "
-                f"{Colorizer.blue(self.config.wearable_data_retrieval_container_name)}"
-                " removed"
-            )
+            self.logger(f"Wearable data retrieval container {Colorizer.blue(self.config.wearable_data_retrieval_container_name)} removed")
         except DockerSDKError:
-            self.logger.warning(
-                f"Unable to stop and remove wearable data retrieval container "
-                f"{Colorizer.blue(self.config.wearable_data_retrieval_container_name)}"
-            )
+            self.logger.warning(f"Unable to stop and remove wearable data retrieval container {Colorizer.blue(self.config.wearable_data_retrieval_container_name)}")
 
         try:
             network = self.get_network()
             network.remove()
-            self.logger(
-                f"Docker network {Colorizer.blue(self.config.network_name)} "
-                "removed"
-            )
+            self.logger(f"Docker network {Colorizer.blue(self.config.network_name)} removed")
         except DockerSDKError:
-            self.logger.warning(
-                f"Unable to remove docker network "
-                f"{Colorizer.blue(self.config.network_name)}"
-            )
+            self.logger.warning(f"Unable to remove docker network {Colorizer.blue(self.config.network_name)}")

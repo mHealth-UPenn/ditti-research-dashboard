@@ -1,23 +1,10 @@
-from install.resource_managers.aws_secretsmanager_resource_manager import (
-    AwsSecretsmanagerResourceManager,
-)
 from install.resource_managers.resource_manager_types import DevSecretValue
-from tests.tests_install.tests_aws_providers.mock_aws_client_provider import (
-    aws_client_provider,
-)
-from tests.tests_install.tests_aws_providers.mock_aws_cognito_provider import (
-    aws_cognito_provider,
-)
-from tests.tests_install.tests_project_config.mock_project_config_provider import (
-    project_config_provider,
-)
-from tests.tests_install.tests_resource_managers.mock_aws_cognito_resource_manager import (
-    participant_user_pool,
-    participant_user_pool_client,
-    researcher_user_pool,
-    researcher_user_pool_client,
-)
+from install.resource_managers.aws_secretsmanager_resource_manager import AwsSecretsmanagerResourceManager
+from tests.tests_install.tests_resource_managers.mock_aws_cognito_resource_manager import participant_user_pool_client, researcher_user_pool_client, participant_user_pool, researcher_user_pool
 from tests.tests_install.tests_utils.mock_logger import logger
+from tests.tests_install.tests_project_config.mock_project_config_provider import project_config_provider
+from tests.tests_install.tests_aws_providers.mock_aws_client_provider import aws_client_provider
+from tests.tests_install.tests_aws_providers.mock_aws_cognito_provider import aws_cognito_provider
 
 
 def dev_secret_value() -> DevSecretValue:
@@ -26,12 +13,8 @@ def dev_secret_value() -> DevSecretValue:
     return {
         "FITBIT_CLIENT_ID": "test-fitbit-client-id",
         "FITBIT_CLIENT_SECRET": "test-fitbit-client-secret",
-        "COGNITO_PARTICIPANT_CLIENT_SECRET": participant_user_pool_client(
-            participant
-        )["UserPoolClient"]["ClientSecret"],
-        "COGNITO_RESEARCHER_CLIENT_SECRET": researcher_user_pool_client(
-            researcher
-        )["UserPoolClient"]["ClientSecret"],
+        "COGNITO_PARTICIPANT_CLIENT_SECRET": participant_user_pool_client(participant)["UserPoolClient"]["ClientSecret"],
+        "COGNITO_RESEARCHER_CLIENT_SECRET": researcher_user_pool_client(researcher)["UserPoolClient"]["ClientSecret"]
     }
 
 

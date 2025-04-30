@@ -1,9 +1,7 @@
 import json
-from unittest.mock import MagicMock, patch
-
 import pytest
+from unittest.mock import patch, MagicMock
 from flask import jsonify, redirect
-
 from tests.testing_utils import setup_auth_flow_session
 
 
@@ -22,18 +20,13 @@ def test_researcher_login_view(mock_get, client, mock_auth_oauth):
     mock_response.status_code = 200
     mock_response.json.return_value = {
         "authorization_endpoint": "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/authorize",
-        "token_endpoint": "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/token",
+        "token_endpoint": "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/token"
     }
     mock_get.return_value = mock_response
 
     # Mock the OAuth client
-    with patch(
-        "backend.auth.controllers.base.AuthControllerBase.login"
-    ) as mock_login:
-        mock_login.return_value = (
-            "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/authorize",
-            302,
-        )
+    with patch("backend.auth.controllers.base.AuthControllerBase.login") as mock_login:
+        mock_login.return_value = "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/authorize", 302
 
         # Execute
         response = client.get("/auth/researcher/login")
@@ -54,8 +47,7 @@ def test_researcher_callback_success(mock_callback, client):
 
     # Execute
     response = client.get(
-        f"/auth/researcher/callback?code=test_code&state={auth_flow}"
-    )
+        f"/auth/researcher/callback?code=test_code&state={auth_flow}")
 
     # Verify
     assert mock_callback.called
@@ -67,18 +59,15 @@ def test_researcher_callback_invalid_state(mock_callback, client):
     """Test callback with invalid state parameter."""
     # Set up mock
     with client.application.app_context():
-        mock_callback.return_value = (
-            jsonify({"error": "Invalid state parameter"}),
-            401,
-        )
+        mock_callback.return_value = jsonify(
+            {"error": "Invalid state parameter"}), 401
 
     # Set up session
     setup_auth_flow_session(client, "researcher")
 
     # Execute with invalid state
     response = client.get(
-        "/auth/researcher/callback?code=test_code&state=invalid_state"
-    )
+        "/auth/researcher/callback?code=test_code&state=invalid_state")
 
     # Verify
     assert mock_callback.called
@@ -90,10 +79,8 @@ def test_researcher_callback_missing_code(mock_callback, client):
     """Test callback with missing code parameter."""
     # Set up mock
     with client.application.app_context():
-        mock_callback.return_value = (
-            jsonify({"error": "Missing code parameter"}),
-            401,
-        )
+        mock_callback.return_value = jsonify(
+            {"error": "Missing code parameter"}), 401
 
     # Set up session
     auth_flow = setup_auth_flow_session(client, "researcher")
@@ -111,10 +98,8 @@ def test_researcher_check_login_authenticated(mock_check_login, client):
     """Test check login when authenticated."""
     # Set up mock
     with client.application.app_context():
-        mock_check_login.return_value = (
-            jsonify({"authenticated": True, "user": "test-user"}),
-            200,
-        )
+        mock_check_login.return_value = jsonify(
+            {"authenticated": True, "user": "test-user"}), 200
 
     # Execute
     response = client.get("/auth/researcher/check-login")
@@ -147,10 +132,8 @@ def test_researcher_check_login_unauthenticated(mock_check_login, client):
 def test_researcher_logout(mock_logout, client):
     """Test logout."""
     # Set up mock
-    mock_logout.return_value = (
-        redirect("https://test-domain.auth.us-east-1.amazoncognito.com/logout"),
-        302,
-    )
+    mock_logout.return_value = redirect(
+        "https://test-domain.auth.us-east-1.amazoncognito.com/logout"), 302
 
     # Execute
     response = client.get("/auth/researcher/logout")
@@ -168,18 +151,15 @@ def test_researcher_change_password_success(client):
     controller = ResearcherAuthController()
 
     # Mock the controller's internal methods
-    with patch.object(controller, "change_password") as mock_change_password:
+    with patch.object(controller, 'change_password') as mock_change_password:
         # Set up the mock
         with client.application.app_context():
-            mock_change_password.return_value = (
-                jsonify({"message": "Password changed successfully"}),
-                200,
-            )
+            mock_change_password.return_value = jsonify(
+                {"message": "Password changed successfully"}), 200
 
         # Call the method directly
         result = controller.change_password(
-            "old-password", "new-password", "mock_token"
-        )
+            "old-password", "new-password", "mock_token")
 
         # Verify
         assert mock_change_password.called
@@ -196,18 +176,15 @@ def test_researcher_change_password_error(client):
     controller = ResearcherAuthController()
 
     # Mock the controller's internal methods
-    with patch.object(controller, "change_password") as mock_change_password:
+    with patch.object(controller, 'change_password') as mock_change_password:
         # Set up the mock
         with client.application.app_context():
-            mock_change_password.return_value = (
-                jsonify({"error": "Password change error"}),
-                400,
-            )
+            mock_change_password.return_value = jsonify(
+                {"error": "Password change error"}), 400
 
         # Call the method directly
         result = controller.change_password(
-            "old-password", "new-password", "mock_token"
-        )
+            "old-password", "new-password", "mock_token")
 
         # Verify
         assert mock_change_password.called
@@ -224,13 +201,11 @@ def test_researcher_change_password_missing_fields(client):
     controller = ResearcherAuthController()
 
     # Mock the controller's internal methods
-    with patch.object(controller, "change_password") as mock_change_password:
+    with patch.object(controller, 'change_password') as mock_change_password:
         # Set up the mock
         with client.application.app_context():
-            mock_change_password.return_value = (
-                jsonify({"error": "Missing required fields"}),
-                400,
-            )
+            mock_change_password.return_value = jsonify(
+                {"error": "Missing required fields"}), 400
 
         # Call the method directly
         result = controller.change_password("old-password", None, "mock_token")
@@ -246,20 +221,17 @@ def test_get_access_authorized(client):
     """Test the get_access endpoint with authorized request."""
     # Create a mock account with permissions
     mock_account = MagicMock()
-    mock_account.get_permissions.return_value = {"permissions": ["Create:User"]}
+    mock_account.get_permissions.return_value = {
+        "permissions": ["Create:User"]}
     mock_account.validate_ask.return_value = True
 
     # Create a mock for the get_access function that bypasses the decorator
-    with patch(
-        "backend.views.auth.researcher.auth.get_access",
-        wraps=lambda account: jsonify({"msg": "Authorized"}),
-    ):
+    with patch("backend.views.auth.researcher.auth.get_access", wraps=lambda account: jsonify({"msg": "Authorized"})):
         # Execute the request with the account directly
         with client.application.test_request_context(
             "/auth/researcher/get-access?app=1&study=1&action=Create&resource=User"
         ):
             from backend.views.auth.researcher.auth import get_access
-
             response = get_access(mock_account)
 
             # Verify
@@ -276,16 +248,12 @@ def test_get_access_unauthorized(client):
     mock_account.validate_ask.side_effect = ValueError("Unauthorized")
 
     # Create a mock for the get_access function that bypasses the decorator
-    with patch(
-        "backend.views.auth.researcher.auth.get_access",
-        wraps=lambda account: jsonify({"msg": "Unauthorized"}),
-    ):
+    with patch("backend.views.auth.researcher.auth.get_access", wraps=lambda account: jsonify({"msg": "Unauthorized"})):
         # Execute the request with the account directly
         with client.application.test_request_context(
             "/auth/researcher/get-access?app=1&study=1&action=Create&resource=User"
         ):
             from backend.views.auth.researcher.auth import get_access
-
             response = get_access(mock_account)
 
             # Verify

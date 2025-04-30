@@ -1,13 +1,5 @@
 import json
-
-from backend.models import (
-    AccessGroup,
-    Account,
-    App,
-    JoinAccessGroupPermission,
-    Role,
-    Study,
-)
+from backend.models import AccessGroup, Account, App, JoinAccessGroupPermission, Role, Study
 
 
 def test_account_create(post_admin):
@@ -17,9 +9,18 @@ def test_account_create(post_admin):
             "first_name": "foo",
             "last_name": "bar",
             "email": "baz@email.com",
-            "access_groups": [{"id": 1}],
-            "studies": [{"id": 1, "role": {"id": 1}}],
-        },
+            "access_groups": [
+                {"id": 1}
+            ],
+            "studies": [
+                {
+                    "id": 1,
+                    "role": {
+                        "id": 1
+                    }
+                }
+            ]
+        }
     }
 
     res = post_admin("/admin/account/create", data=data)
@@ -46,9 +47,18 @@ def test_account_edit(post_admin):
         "edit": {
             "first_name": "foo",
             "last_name": "bar",
-            "access_groups": [{"id": 2}],
-            "studies": [{"id": 2, "role": {"id": 2}}],
-        },
+            "access_groups": [
+                {"id": 2}
+            ],
+            "studies": [
+                {
+                    "id": 2,
+                    "role": {
+                        "id": 2
+                    }
+                }
+            ]
+        }
     }
 
     res = post_admin("/admin/account/edit", data=data)
@@ -65,7 +75,13 @@ def test_account_edit(post_admin):
     assert foo.studies[0].role_id == 2
 
     # Case 2: Adding a valid phone number
-    data = {"app": 1, "id": 1, "edit": {"phone_number": "+14155551234"}}
+    data = {
+        "app": 1,
+        "id": 1,
+        "edit": {
+            "phone_number": "+14155551234"
+        }
+    }
 
     res = post_admin("/admin/account/edit", data=data)
     assert res.status_code == 200
@@ -82,7 +98,7 @@ def test_account_edit(post_admin):
         "id": 1,
         "edit": {
             "phone_number": "+0123456789"  # Invalid: starts with +0
-        },
+        }
     }
 
     res = post_admin("/admin/account/edit", data=data)
@@ -96,7 +112,7 @@ def test_account_edit(post_admin):
         "id": 1,
         "edit": {
             "phone_number": ""  # Empty string to remove phone number
-        },
+        }
     }
 
     res = post_admin("/admin/account/edit", data=data)
@@ -112,7 +128,10 @@ def test_account_edit(post_admin):
     data = {
         "app": 1,
         "id": 1,
-        "edit": {"email": "newemail@example.com", "first_name": "UpdatedName"},
+        "edit": {
+            "email": "newemail@example.com",
+            "first_name": "UpdatedName"
+        }
     }
 
     res = post_admin("/admin/account/edit", data=data)
@@ -127,7 +146,10 @@ def test_account_edit(post_admin):
 
 
 def test_account_archive(post_admin):
-    data = {"app": 1, "id": 1}
+    data = {
+        "app": 1,
+        "id": 1
+    }
 
     res = post_admin("/admin/account/archive", data=data)
     data = json.loads(res.data)
@@ -157,8 +179,8 @@ def test_study_create(post_admin):
             "email": "baz@email.com",
             "defaultExpiryDelta": 30,
             "consentInformation": "Consent text...",
-            "dataSummary": "Data summary...",
-        },
+            "dataSummary": "Data summary..."
+        }
     }
 
     res = post_admin("/admin/study/create", data=data)
@@ -180,8 +202,8 @@ def test_study_create(post_admin):
     assert created_study.default_expiry_delta == 30
 
     # Assert default values for optional fields
-    assert created_study.is_archived is False
-    assert created_study.is_qi is False
+    assert created_study.is_archived == False
+    assert created_study.is_qi == False
 
     # Other optional fields
     assert created_study.consent_information == "Consent text..."
@@ -195,7 +217,7 @@ def test_study_edit(post_admin):
         "edit": {
             "name": "qux",
             "acronym": "QUX",
-        },
+        }
     }
 
     res = post_admin("/admin/study/edit", data=data)
@@ -209,7 +231,10 @@ def test_study_edit(post_admin):
 
 
 def test_study_archive(post_admin):
-    data = {"app": 1, "id": 1}
+    data = {
+        "app": 1,
+        "id": 1
+    }
 
     res = post_admin("/admin/study/archive", data=data)
     data = json.loads(res.data)
@@ -235,8 +260,13 @@ def test_access_group_create(post_admin):
         "create": {
             "name": "baz",
             "app": 2,
-            "permissions": [{"action": "foo", "resource": "qux"}],
-        },
+            "permissions": [
+                {
+                    "action": "foo",
+                    "resource": "qux"
+                }
+            ]
+        }
     }
 
     res = post_admin("/admin/access-group/create", data=data)
@@ -253,7 +283,14 @@ def test_access_group_create(post_admin):
 
 
 def test_access_group_edit(post_admin):
-    data = {"app": 1, "id": 2, "edit": {"name": "baz", "app": 1}}
+    data = {
+        "app": 1,
+        "id": 2,
+        "edit": {
+            "name": "baz",
+            "app": 1
+        }
+    }
 
     res = post_admin("/admin/access-group/edit", data=data)
     data = json.loads(res.data)
@@ -272,7 +309,14 @@ def test_access_group_edit_permissions(post_admin):
     data = {
         "app": 1,
         "id": 2,
-        "edit": {"permissions": [{"action": "foo", "resource": "qux"}]},
+        "edit": {
+            "permissions": [
+                {
+                    "action": "foo",
+                    "resource": "qux"
+                }
+            ]
+        }
     }
 
     foo = JoinAccessGroupPermission.query.get((2, 2))
@@ -292,7 +336,10 @@ def test_access_group_edit_permissions(post_admin):
 
 
 def test_access_group_archive(post_admin):
-    data = {"app": 1, "id": 1}
+    data = {
+        "app": 1,
+        "id": 1
+    }
 
     res = post_admin("/admin/access-group/archive", data=data)
     data = json.loads(res.data)
@@ -317,8 +364,13 @@ def test_role_create(post_admin):
         "app": 1,
         "create": {
             "name": "baz",
-            "permissions": [{"action": "foo", "resource": "baz"}],
-        },
+            "permissions": [
+                {
+                    "action": "foo",
+                    "resource": "baz"
+                }
+            ]
+        }
     }
 
     res = post_admin("/admin/role/create", data=data)
@@ -341,8 +393,13 @@ def test_role_edit(post_admin):
         "id": 1,
         "edit": {
             "name": "baz",
-            "permissions": [{"action": "bar", "resource": "qux"}],
-        },
+            "permissions": [
+                {
+                    "action": "bar",
+                    "resource": "qux"
+                }
+            ]
+        }
     }
 
     res = post_admin("/admin/role/edit", data=data)
@@ -369,7 +426,12 @@ def test_app(get_admin):
 
 
 def test_app_create(post_admin):
-    data = {"app": 1, "create": {"name": "baz"}}
+    data = {
+        "app": 1,
+        "create": {
+            "name": "baz"
+        }
+    }
 
     res = post_admin("/admin/app/create", data=data)
     data = json.loads(res.data)
@@ -383,7 +445,13 @@ def test_app_create(post_admin):
 
 
 def test_app_edit(post_admin):
-    data = {"app": 1, "id": 1, "edit": {"name": "baz"}}
+    data = {
+        "app": 1,
+        "id": 1,
+        "edit": {
+            "name": "baz"
+        }
+    }
 
     res = post_admin("/admin/app/edit", data=data)
     data = json.loads(res.data)

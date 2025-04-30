@@ -1,7 +1,5 @@
-from unittest.mock import MagicMock, patch
-
 import pytest
-
+from unittest.mock import patch, MagicMock
 from backend.auth.controllers.base import AuthControllerBase
 
 
@@ -38,9 +36,7 @@ class TestAuthControllerBase:
         """Test getting the redirect URI."""
         with app.app_context():
             # Override the default values set in the real app
-            with patch(
-                "backend.auth.controllers.base.current_app"
-            ) as mock_current_app:
+            with patch("backend.auth.controllers.base.current_app") as mock_current_app:
                 mock_current_app.config = {
                     "COGNITO_TEST_USER_REDIRECT_URI": "http://test-redirect"
                 }
@@ -53,11 +49,11 @@ class TestAuthControllerBase:
         """Test getting the frontend URL."""
         with app.app_context():
             # Override the default values set in the real app
-            with patch(
-                "backend.auth.controllers.base.current_app"
-            ) as mock_current_app:
+            with patch("backend.auth.controllers.base.current_app") as mock_current_app:
                 # In the implementation, it checks CORS_ORIGINS for this value
-                mock_current_app.config = {"CORS_ORIGINS": "http://test-frontend"}
+                mock_current_app.config = {
+                    "CORS_ORIGINS": "http://test-frontend"
+                }
                 frontend_url = auth_controller.get_frontend_url()
 
         assert frontend_url == "http://test-frontend"
@@ -71,9 +67,7 @@ class TestAuthControllerBase:
             app.secret_key = "test-secret-key"  # Required for session
 
             # Mock the login method directly to avoid implementation details
-            with patch.object(
-                auth_controller, "login", return_value=mock_redirect_response
-            ):
+            with patch.object(auth_controller, "login", return_value=mock_redirect_response):
                 response = auth_controller.login()
 
         assert response == mock_redirect_response
@@ -87,9 +81,7 @@ class TestAuthControllerBase:
             app.secret_key = "test-secret-key"  # Required for session
 
             # Mock the callback method directly to avoid implementation details
-            with patch.object(
-                auth_controller, "callback", return_value=mock_success_response
-            ):
+            with patch.object(auth_controller, "callback", return_value=mock_success_response):
                 response = auth_controller.callback()
 
         assert response == mock_success_response
@@ -103,9 +95,7 @@ class TestAuthControllerBase:
             app.secret_key = "test-secret-key"  # Required for session
 
             # Mock the callback method to return an error
-            with patch.object(
-                auth_controller, "callback", return_value=mock_error_response
-            ):
+            with patch.object(auth_controller, "callback", return_value=mock_error_response):
                 response = auth_controller.callback()
 
         assert response == mock_error_response
@@ -114,21 +104,15 @@ class TestAuthControllerBase:
         """Test constructing the Cognito logout URL."""
         with app.app_context():
             # Set up required config values
-            with patch(
-                "backend.auth.controllers.base.current_app"
-            ) as mock_current_app:
+            with patch("backend.auth.controllers.base.current_app") as mock_current_app:
                 mock_current_app.config = {
                     "COGNITO_TEST_USER_DOMAIN": "https://auth.example.com",
                     "COGNITO_TEST_USER_CLIENT_ID": "client123",
-                    "COGNITO_TEST_USER_LOGOUT_URI": "http://test-logout",
+                    "COGNITO_TEST_USER_LOGOUT_URI": "http://test-logout"
                 }
 
                 # Mock the frontend URL method
-                with patch.object(
-                    auth_controller,
-                    "get_frontend_url",
-                    return_value="http://frontend",
-                ):
+                with patch.object(auth_controller, "get_frontend_url", return_value="http://frontend"):
                     logout_url = auth_controller.get_cognito_logout_url()
 
         # Verify correct logout URL format
@@ -145,9 +129,7 @@ class TestAuthControllerBase:
             app.secret_key = "test-secret-key"  # Required for session
 
             # Mock the logout method directly
-            with patch.object(
-                auth_controller, "logout", return_value=mock_logout_response
-            ):
+            with patch.object(auth_controller, "logout", return_value=mock_logout_response):
                 response = auth_controller.logout()
 
         assert response == mock_logout_response
@@ -164,11 +146,7 @@ class TestAuthControllerBase:
             with patch("backend.auth.controllers.base.request") as mock_request:
                 mock_request.cookies = {"id_token": "valid-token"}
 
-                with patch.object(
-                    auth_controller,
-                    "check_login",
-                    return_value=mock_success_response,
-                ):
+                with patch.object(auth_controller, "check_login", return_value=mock_success_response):
                     response = auth_controller.check_login()
 
         assert response == mock_success_response
@@ -185,11 +163,7 @@ class TestAuthControllerBase:
             with patch("backend.auth.controllers.base.request") as mock_request:
                 mock_request.cookies = {}
 
-                with patch.object(
-                    auth_controller,
-                    "check_login",
-                    return_value=mock_error_response,
-                ):
+                with patch.object(auth_controller, "check_login", return_value=mock_error_response):
                     response = auth_controller.check_login()
 
         assert response == mock_error_response
@@ -206,14 +180,8 @@ class TestAuthControllerBase:
             with patch("backend.auth.controllers.base.request") as mock_request:
                 mock_request.cookies = {"id_token": "invalid-token"}
 
-                with patch.object(
-                    auth_controller, "get_user_from_token", return_value=None
-                ):
-                    with patch.object(
-                        auth_controller,
-                        "check_login",
-                        return_value=mock_error_response,
-                    ):
+                with patch.object(auth_controller, "get_user_from_token", return_value=None):
+                    with patch.object(auth_controller, "check_login", return_value=mock_error_response):
                         response = auth_controller.check_login()
 
         assert response == mock_error_response

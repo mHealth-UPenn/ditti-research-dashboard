@@ -1,9 +1,7 @@
 import json
-from unittest.mock import MagicMock, patch
-
 import pytest
-
 from tests.testing_utils import mock_researcher_auth_for_testing
+from unittest.mock import patch, MagicMock
 
 
 @pytest.fixture
@@ -15,12 +13,8 @@ def researcher_headers(client):
 @pytest.fixture
 def researcher_get(client, researcher_headers):
     """Create a test GET request function with researcher authentication"""
-
     def _get(url, query_string=None, **kwargs):
-        return client.get(
-            url, query_string=query_string, headers=researcher_headers, **kwargs
-        )
-
+        return client.get(url, query_string=query_string, headers=researcher_headers, **kwargs)
     return _get
 
 
@@ -43,8 +37,7 @@ def test_apps_admin(get_admin):
         mock_app = MagicMock()
         mock_app.meta = {"name": "Admin Dashboard"}
         mock_query.join.return_value.join.return_value.filter.return_value.all.return_value = [
-            mock_app
-        ]
+            mock_app]
 
         res = get_admin("/db/get-apps")
         res = json.loads(res.data)
@@ -100,10 +93,8 @@ def test_get_about_sleep_templates(researcher_get):
     with patch("backend.models.AboutSleepTemplate.query") as mock_query:
         # Mock the query to return a template
         mock_template = MagicMock()
-        mock_template.meta = {
-            "name": "Test Template",
-            "content": "Sample content",
-        }
+        mock_template.meta = {"name": "Test Template",
+                              "content": "Sample content"}
         mock_query.filter.return_value.all.return_value = [mock_template]
 
         # Make the request with app parameter

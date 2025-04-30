@@ -1,15 +1,17 @@
+from datetime import datetime
 import os
+from pprint import pprint
 import random
 import re
 import string
-from datetime import datetime
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 import boto3
+from sqlalchemy import select
 
-import backend.models as m
 from backend.app import create_app
 from backend.extensions import db
+import backend.models as m
 from backend.utils.aws import Query
 
 
@@ -18,12 +20,12 @@ class User(TypedDict):
     _lastChangedAt: int
     _version: int
     createdAt: str
-    exp_time: str | None
+    exp_time: Optional[str]
     id: str
-    tap_permission: bool | None
-    team_email: str | None
+    tap_permission: Optional[bool]
+    team_email: Optional[str]
     updatedAt: str
-    user_permission_id: str | None
+    user_permission_id: Optional[str]
 
 
 def generate_temp_password(length=20):
@@ -46,9 +48,7 @@ if __name__ == "__main__":
 
                 study_prefix = match[0]
 
-                study = m.Study.query.filter(
-                    m.Study.ditti_id == study_prefix
-                ).first()
+                study = m.Study.query.filter(m.Study.ditti_id == study_prefix).first()
 
                 if not study:
                     continue
@@ -70,7 +70,7 @@ if __name__ == "__main__":
                     UserPoolId=os.getenv("USER_POOL_ID"),
                     Username=user["user_permission_id"],
                     TemporaryPassword=temp_password,
-                    MessageAction="SUPPRESS",
+                    MessageAction="SUPPRESS"
                 )
 
             except Exception:

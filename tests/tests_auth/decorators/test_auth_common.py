@@ -1,12 +1,10 @@
 import json
-from unittest.mock import MagicMock
-
 import pytest
+from unittest.mock import MagicMock
 from flask import Flask, Response, jsonify
-
 from backend.auth.decorators import (
     participant_auth_required,
-    researcher_auth_required,
+    researcher_auth_required
 )
 
 

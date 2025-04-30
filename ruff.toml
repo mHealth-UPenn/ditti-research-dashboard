@@ -1,6 +1,6 @@
 # adoption numbers https://github.com/astral-sh/ruff/discussions/9772
 
-line-length = 82
+line-length = 80
 indent-width = 4
 target-version = "py312"
 show-fixes = true        # surfaces exact auto‑fix patches in CI logs
@@ -68,6 +68,5 @@ dummy-variable-rgx = "^(_+|(_+[A-Za-z0-9_]*[A-Za-z0-9]+?))$"
 convention = "numpy"
 
 [lint.per-file-ignores]
-"backend/auth/providers/cognito/constants.py" = ["E501"]
-"**/__init__.py" = ["F401"]
-"tests/**/*.py" = ["S101", "E501", "E402", "F811"]
+"**/__init__.py" = ["F401"] # allow unused imports in package inits
+"tests/**/*.py" = ["S101"]  # bare `assert` in pytest tests is idiomatic

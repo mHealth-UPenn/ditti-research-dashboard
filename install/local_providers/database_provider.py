@@ -31,73 +31,49 @@ class DatabaseProvider:
         """Initialize the database."""
         try:
             subprocess.run(
-                ["flask", "--app", "run.py", "db", "upgrade"], check=True
+                ["flask", "--app", "run.py", "db", "upgrade"],
+                check=True
             )
             self.logger(Colorizer.blue("Database upgraded"))
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
-            self.logger.error(
-                "Database upgrade failed due to subprocess error: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Database upgrade failed due to subprocess error: {Colorizer.white(e)}")
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(
-                "Database upgrade failed due to unexpected error: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Database upgrade failed due to unexpected error: {Colorizer.white(e)}")
             raise SubprocessError(e)
 
     def initialize_database(self) -> None:
         try:
             subprocess.run(
                 ["flask", "--app", "run.py", "init-integration-testing-db"],
-                check=True,
+                check=True
             )
-            self.logger(
-                Colorizer.blue("Integration testing database initialized")
-            )
+            self.logger(Colorizer.blue("Integration testing database initialized"))
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
-            self.logger.error(
-                "Integration testing database initialization failed due to "
-                f"subprocess error: {Colorizer.white(e)}"
-            )
+            self.logger.error(f"Integration testing database initialization failed due to subprocess error: {Colorizer.white(e)}")
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(
-                "Integration testing database initialization failed due to "
-                f"unexpected error: {Colorizer.white(e)}"
-            )
+            self.logger.error(f"Integration testing database initialization failed due to unexpected error: {Colorizer.white(e)}")
             raise SubprocessError(e)
 
     def create_researcher_account(self) -> None:
         try:
-            subprocess.run(
-                [
-                    "flask",
-                    "--app",
-                    "run.py",
-                    "create-researcher-account",
-                    "--email",
-                    self.config.admin_email,
-                ],
-                check=True,
-            )
+            subprocess.run([
+                "flask",
+                "--app", "run.py",
+                "create-researcher-account",
+                "--email", self.config.admin_email
+            ], check=True)
             self.logger(Colorizer.blue("Researcher account created"))
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
-            self.logger.error(
-                "Researcher account creation failed due to subprocess error: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Researcher account creation failed due to subprocess error: {Colorizer.white(e)}")
             raise SubprocessError(e)
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(
-                "Researcher account creation failed due to unexpected error: "
-                f"{Colorizer.white(e)}"
-            )
+            self.logger.error(f"Researcher account creation failed due to unexpected error: {Colorizer.white(e)}")
             raise SubprocessError(e)

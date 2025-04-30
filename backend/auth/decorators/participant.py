@@ -16,7 +16,6 @@
 
 import functools
 import logging
-
 from flask import make_response, request
 
 from backend.auth.controllers import ParticipantAuthController
@@ -26,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def participant_auth_required(decorated_func=None):
     """
-    Authenticate participants using tokens.
+    Decorator that authenticates participants using tokens.
 
     This decorator:
     1. Validates the token using the auth controller
@@ -35,11 +34,9 @@ def participant_auth_required(decorated_func=None):
     4. Ensures archived study subjects cannot authenticate
 
     Args:
-        decorated_func (function, optional): The function to decorate.
-            If None, returns a decorator.
+        decorated_func (function, optional): The function to decorate. If None, returns a decorator.
 
-    Returns
-    -------
+    Returns:
         The decorated function with authentication added
     """
     # Return a decorator if called without arguments
@@ -62,7 +59,8 @@ def participant_auth_required(decorated_func=None):
 
         # Create auth controller and validate token
         auth_controller = ParticipantAuthController()
-        ditti_id, error_response = auth_controller.get_user_from_token(id_token)
+        ditti_id, error_response = auth_controller.get_user_from_token(
+            id_token)
 
         if not ditti_id:
             # If validation failed, return error response

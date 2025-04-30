@@ -1,15 +1,10 @@
 from unittest.mock import MagicMock, patch
-
-from backend.utils.serialization.participant_serialization import (
-    ParticipantModel,
-    serialize_participant,
-)
+from backend.utils.serialization.participant_serialization import serialize_participant, ParticipantModel
 
 
 class TestParticipantSerialization:
-    @patch(
-        "backend.utils.serialization.participant_serialization.ParticipantModel.model_validate"
-    )
+
+    @patch("backend.utils.serialization.participant_serialization.ParticipantModel.model_validate")
     def test_successful_serialization(self, mock_validate, app_context):
         """Test successful serialization of a study subject with apis and studies.
 
@@ -27,7 +22,12 @@ class TestParticipantSerialization:
         # Define expected output with camelCase keys and proper nesting
         expected_data = {
             "dittiId": "ditti_12345",
-            "apis": [{"apiName": "fitbit", "scope": ["profile", "sleep"]}],
+            "apis": [
+                {
+                    "apiName": "fitbit",
+                    "scope": ["profile", "sleep"]
+                }
+            ],
             "studies": [
                 {
                     "studyName": "Sleep Study",
@@ -37,9 +37,9 @@ class TestParticipantSerialization:
                     "startsOn": "2023-01-01T12:00:00",
                     "expiresOn": "2023-12-31T12:00:00",
                     "consentInformation": "Consent text",
-                    "dataSummary": "Study data summary",
+                    "dataSummary": "Study data summary"
                 }
-            ],
+            ]
         }
         mock_model.model_dump.return_value = expected_data
 
@@ -51,12 +51,12 @@ class TestParticipantSerialization:
         assert result == expected_data
         mock_validate.assert_called_once_with(study_subject)
         mock_model.model_dump.assert_called_once_with(
-            by_alias=True, exclude_unset=True, exclude_none=True
+            by_alias=True,
+            exclude_unset=True,
+            exclude_none=True
         )
 
-    @patch(
-        "backend.utils.serialization.participant_serialization.ParticipantModel.model_validate"
-    )
+    @patch("backend.utils.serialization.participant_serialization.ParticipantModel.model_validate")
     def test_empty_relationships(self, mock_validate, app_context):
         """Test serialization when there are no apis or studies.
 
@@ -68,7 +68,11 @@ class TestParticipantSerialization:
         mock_model = MagicMock(spec=ParticipantModel)
         mock_validate.return_value = mock_model
 
-        expected_data = {"dittiId": "ditti_12345", "apis": [], "studies": []}
+        expected_data = {
+            "dittiId": "ditti_12345",
+            "apis": [],
+            "studies": []
+        }
         mock_model.model_dump.return_value = expected_data
 
         result = serialize_participant(study_subject)
@@ -77,9 +81,7 @@ class TestParticipantSerialization:
         assert result == expected_data
         mock_validate.assert_called_once_with(study_subject)
 
-    @patch(
-        "backend.utils.serialization.participant_serialization.ParticipantModel.model_validate"
-    )
+    @patch("backend.utils.serialization.participant_serialization.ParticipantModel.model_validate")
     def test_null_optional_fields(self, mock_validate, app_context):
         """Test serialization when optional fields are null.
 
@@ -101,10 +103,10 @@ class TestParticipantSerialization:
                     "studyId": 123,
                     "didConsent": True,
                     "createdOn": "2023-01-01T12:00:00",
-                    "startsOn": "2023-01-01T12:00:00",
+                    "startsOn": "2023-01-01T12:00:00"
                     # Note: expiresOn, consentInformation, and dataSummary are intentionally omitted
                 }
-            ],
+            ]
         }
         mock_model.model_dump.return_value = expected_data
 
@@ -117,9 +119,7 @@ class TestParticipantSerialization:
         assert "dataSummary" not in result["studies"][0]
         mock_validate.assert_called_once_with(study_subject)
 
-    @patch(
-        "backend.utils.serialization.participant_serialization.ParticipantModel.model_validate"
-    )
+    @patch("backend.utils.serialization.participant_serialization.ParticipantModel.model_validate")
     def test_validation_error(self, mock_validate, app_context):
         """Test handling of validation errors.
 
@@ -133,14 +133,12 @@ class TestParticipantSerialization:
         # Simulate a ValidationError during model validation
         mock_validate.side_effect = ValidationError.from_exception_data(
             title="",
-            line_errors=[
-                {
-                    "type": "missing",
-                    "loc": ("ditti_id",),
-                    "msg": "Field required",
-                    "input": {},
-                }
-            ],
+            line_errors=[{
+                "type": "missing",
+                "loc": ("ditti_id",),
+                "msg": "Field required",
+                "input": {}
+            }]
         )
 
         result = serialize_participant(study_subject)
@@ -149,13 +147,11 @@ class TestParticipantSerialization:
         assert result is None
 
     @patch("backend.utils.serialization.participant_serialization.logger")
-    @patch(
-        "backend.utils.serialization.participant_serialization.ParticipantModel.model_validate"
-    )
+    @patch("backend.utils.serialization.participant_serialization.ParticipantModel.model_validate")
     def test_exception_handling(self, mock_validate, mock_logger, app_context):
         """Test handling of unexpected exceptions.
 
-        Verifies that any unhandled exceptions are caught, logged, and
+        Verifies that any unhandled exceptions are caught, logged, and 
         the function returns None without crashing.
         """
         study_subject = MagicMock()

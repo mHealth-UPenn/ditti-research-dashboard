@@ -1,22 +1,13 @@
+from install.local_providers.local_provider_types import WearableDataRetrievalEnv, RootEnv
 from install.local_providers.env_file_provider import EnvFileProvider
-from install.local_providers.local_provider_types import (
-    RootEnv,
-    WearableDataRetrievalEnv,
-)
-from install.project_config import ProjectConfigProvider
 from install.utils.enums import Postgres
-from tests.tests_install.tests_aws_providers.mock_aws_account_provider import (
-    aws_account_provider,
-)
-from tests.tests_install.tests_project_config.mock_project_config_provider import (
-    project_config_provider,
-)
+from install.project_config import ProjectConfigProvider
+from tests.tests_install.tests_project_config.mock_project_config_provider import project_config_provider
+from tests.tests_install.tests_aws_providers.mock_aws_account_provider import aws_account_provider
 from tests.tests_install.tests_utils.mock_logger import logger
 
 
-def wearable_data_retrieval_env(
-    config: ProjectConfigProvider,
-) -> WearableDataRetrievalEnv:
+def wearable_data_retrieval_env(config: ProjectConfigProvider) -> WearableDataRetrievalEnv:
     provider = aws_account_provider()
 
     return {
@@ -69,7 +60,8 @@ def root_env(config: ProjectConfigProvider) -> RootEnv:
         "COGNITO_RESEARCHER_REGION": provider.aws_region,
         "COGNITO_RESEARCHER_USER_POOL_ID": config.researcher_user_pool_id,
         "LOCAL_LAMBDA_ENDPOINT": (
-            "http://localhost:9000/2015-03-31/functions/function/invocations"
+            "http://localhost:9000/2015-03-31/functions/function/"
+            "invocations"
         ),
         "TM_FSTRING": f"{config.project_name}-tokens",
     }
@@ -79,6 +71,6 @@ def env_file_provider() -> EnvFileProvider:
     provider = EnvFileProvider(
         logger=logger(),
         config=project_config_provider(),
-        aws_account_provider=aws_account_provider(),
+        aws_account_provider=aws_account_provider()
     )
     return provider

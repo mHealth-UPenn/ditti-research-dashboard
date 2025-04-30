@@ -1,9 +1,7 @@
 import json
-from unittest.mock import MagicMock, patch
-
 import pytest
+from unittest.mock import patch, MagicMock
 from flask import jsonify, redirect
-
 from tests.testing_utils import setup_auth_flow_session
 
 
@@ -22,18 +20,13 @@ def test_participant_login_view(mock_get, client, mock_auth_oauth):
     mock_response.status_code = 200
     mock_response.json.return_value = {
         "authorization_endpoint": "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/authorize",
-        "token_endpoint": "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/token",
+        "token_endpoint": "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/token"
     }
     mock_get.return_value = mock_response
 
     # Mock the OAuth client
-    with patch(
-        "backend.auth.controllers.base.AuthControllerBase.login"
-    ) as mock_login:
-        mock_login.return_value = (
-            "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/authorize",
-            302,
-        )
+    with patch("backend.auth.controllers.base.AuthControllerBase.login") as mock_login:
+        mock_login.return_value = "https://test-domain.auth.us-east-1.amazoncognito.com/oauth2/authorize", 302
 
         # Execute
         response = client.get("/auth/participant/login")
@@ -54,8 +47,7 @@ def test_participant_callback_success(mock_callback, client):
 
     # Execute
     response = client.get(
-        f"/auth/participant/callback?code=test_code&state={auth_flow}"
-    )
+        f"/auth/participant/callback?code=test_code&state={auth_flow}")
 
     # Verify
     assert mock_callback.called
@@ -67,18 +59,15 @@ def test_participant_callback_invalid_state(mock_callback, client):
     """Test callback with invalid state parameter."""
     # Set up mock
     with client.application.app_context():
-        mock_callback.return_value = (
-            jsonify({"error": "Invalid state parameter"}),
-            401,
-        )
+        mock_callback.return_value = jsonify(
+            {"error": "Invalid state parameter"}), 401
 
     # Set up session
     setup_auth_flow_session(client, "participant")
 
     # Execute with invalid state
     response = client.get(
-        "/auth/participant/callback?code=test_code&state=invalid_state"
-    )
+        "/auth/participant/callback?code=test_code&state=invalid_state")
 
     # Verify
     assert mock_callback.called
@@ -90,10 +79,8 @@ def test_participant_callback_missing_code(mock_callback, client):
     """Test callback with missing code parameter."""
     # Set up mock
     with client.application.app_context():
-        mock_callback.return_value = (
-            jsonify({"error": "Missing code parameter"}),
-            401,
-        )
+        mock_callback.return_value = jsonify(
+            {"error": "Missing code parameter"}), 401
 
     # Set up session
     auth_flow = setup_auth_flow_session(client, "participant")
@@ -106,17 +93,13 @@ def test_participant_callback_missing_code(mock_callback, client):
     assert response.status_code == 401
 
 
-@patch(
-    "backend.auth.controllers.participant.ParticipantAuthController.check_login"
-)
+@patch("backend.auth.controllers.participant.ParticipantAuthController.check_login")
 def test_participant_check_login_authenticated(mock_check_login, client):
     """Test check login when authenticated."""
     # Set up mock
     with client.application.app_context():
-        mock_check_login.return_value = (
-            jsonify({"authenticated": True, "user": "test-user"}),
-            200,
-        )
+        mock_check_login.return_value = jsonify(
+            {"authenticated": True, "user": "test-user"}), 200
 
     # Execute
     response = client.get("/auth/participant/check-login")
@@ -128,9 +111,7 @@ def test_participant_check_login_authenticated(mock_check_login, client):
     assert data["authenticated"] is True
 
 
-@patch(
-    "backend.auth.controllers.participant.ParticipantAuthController.check_login"
-)
+@patch("backend.auth.controllers.participant.ParticipantAuthController.check_login")
 def test_participant_check_login_unauthenticated(mock_check_login, client):
     """Test check login when not authenticated."""
     # Set up mock
@@ -151,10 +132,8 @@ def test_participant_check_login_unauthenticated(mock_check_login, client):
 def test_participant_logout(mock_logout, client):
     """Test logout."""
     # Set up mock
-    mock_logout.return_value = (
-        redirect("https://test-domain.auth.us-east-1.amazoncognito.com/logout"),
-        302,
-    )
+    mock_logout.return_value = redirect(
+        "https://test-domain.auth.us-east-1.amazoncognito.com/logout"), 302
 
     # Execute
     response = client.get("/auth/participant/logout")

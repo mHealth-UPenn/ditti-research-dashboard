@@ -1,14 +1,12 @@
-from unittest.mock import MagicMock
-
 import pytest
+from unittest.mock import MagicMock
 from flask import Flask
-
 from backend.auth.utils.researcher_cognito import (
-    create_researcher,
-    delete_researcher,
-    get_researcher,
     get_researcher_cognito_client,
+    create_researcher,
     update_researcher,
+    delete_researcher,
+    get_researcher
 )
 
 
@@ -62,7 +60,10 @@ def test_create_researcher(mock_cognito_client, app_context):
     success, message = create_researcher(
         email="researcher@example.com",
         temp_password="initial-password",
-        attributes={"first_name": "Test", "last_name": "Researcher"},
+        attributes={
+            "first_name": "Test",
+            "last_name": "Researcher"
+        }
     )
 
     # Verify
@@ -77,9 +78,8 @@ def test_create_researcher(mock_cognito_client, app_context):
     assert len(call_args["UserAttributes"]) > 0
 
     # Check attributes
-    user_attrs = {
-        attr["Name"]: attr["Value"] for attr in call_args["UserAttributes"]
-    }
+    user_attrs = {attr["Name"]: attr["Value"]
+                  for attr in call_args["UserAttributes"]}
     assert user_attrs["email"] == "researcher@example.com"
     assert user_attrs["email_verified"] == "true"
 
@@ -87,7 +87,8 @@ def test_create_researcher(mock_cognito_client, app_context):
 def test_create_researcher_with_error(mock_cognito_client, app_context):
     """Test handling errors when creating researcher."""
     # Setup - simulate error
-    mock_cognito_client.admin_create_user.side_effect = Exception("Cognito error")
+    mock_cognito_client.admin_create_user.side_effect = Exception(
+        "Cognito error")
 
     # Execute
     success, message = create_researcher(email="researcher@example.com")
@@ -106,7 +107,10 @@ def test_update_researcher(mock_cognito_client, app_context):
     # Case 1: Normal attribute update
     success, message = update_researcher(
         email="researcher@example.com",
-        attributes={"first_name": "Updated", "last_name": "Name"},
+        attributes={
+            "first_name": "Updated",
+            "last_name": "Name"
+        }
     )
 
     # Verify
@@ -127,7 +131,7 @@ def test_update_researcher(mock_cognito_client, app_context):
     success, message = update_researcher(
         email="researcher@example.com",
         attributes={"first_name": "Updated"},
-        attributes_to_delete=["phone_number"],
+        attributes_to_delete=["phone_number"]
     )
 
     # Verify
@@ -141,7 +145,7 @@ def test_update_researcher(mock_cognito_client, app_context):
     mock_cognito_client.admin_delete_user_attributes.assert_called_once_with(
         UserPoolId="test-pool-id",
         Username="researcher@example.com",
-        UserAttributeNames=["phone_number"],
+        UserAttributeNames=["phone_number"]
     )
 
     # Reset mocks
@@ -150,7 +154,10 @@ def test_update_researcher(mock_cognito_client, app_context):
     # Case 3: Email attribute update should be blocked
     success, message = update_researcher(
         email="researcher@example.com",
-        attributes={"email": "newemail@example.com", "first_name": "Updated"},
+        attributes={
+            "email": "newemail@example.com",
+            "first_name": "Updated"
+        }
     )
 
     # Verify that update succeeds but with email attribute blocked
@@ -171,7 +178,7 @@ def test_update_researcher(mock_cognito_client, app_context):
     success, message = update_researcher(
         email="researcher@example.com",
         attributes={},
-        attributes_to_delete=["email", "phone_number"],
+        attributes_to_delete=["email", "phone_number"]
     )
 
     # Verify that update succeeds but with email deletion blocked
@@ -187,12 +194,12 @@ def test_update_researcher_with_error(mock_cognito_client, app_context):
     """Test handling errors when updating researcher."""
     # Setup - simulate error
     mock_cognito_client.admin_update_user_attributes.side_effect = Exception(
-        "Cognito error"
-    )
+        "Cognito error")
 
     # Execute
     success, message = update_researcher(
-        email="researcher@example.com", attributes={"first_name": "Test"}
+        email="researcher@example.com",
+        attributes={"first_name": "Test"}
     )
 
     # Verify error message
@@ -221,7 +228,8 @@ def test_delete_researcher(mock_cognito_client, app_context):
 def test_delete_researcher_with_error(mock_cognito_client, app_context):
     """Test handling errors when deleting researcher."""
     # Setup - simulate error
-    mock_cognito_client.admin_delete_user.side_effect = Exception("Cognito error")
+    mock_cognito_client.admin_delete_user.side_effect = Exception(
+        "Cognito error")
 
     # Execute
     success, message = delete_researcher(email="researcher@example.com")
@@ -240,9 +248,9 @@ def test_get_researcher(mock_cognito_client, app_context):
             {"Name": "email", "Value": "researcher@example.com"},
             {"Name": "given_name", "Value": "Test"},
             {"Name": "family_name", "Value": "Researcher"},
-            {"Name": "custom:is_confirmed", "Value": "true"},
+            {"Name": "custom:is_confirmed", "Value": "true"}
         ],
-        "Enabled": True,
+        "Enabled": True
     }
 
     # Execute
@@ -266,7 +274,8 @@ def test_get_researcher(mock_cognito_client, app_context):
 def test_get_researcher_with_error(mock_cognito_client, app_context):
     """Test handling errors when getting researcher."""
     # Setup - simulate error
-    mock_cognito_client.admin_get_user.side_effect = Exception("Cognito error")
+    mock_cognito_client.admin_get_user.side_effect = Exception(
+        "Cognito error")
 
     # Execute
     user_info, error = get_researcher(email="researcher@example.com")
