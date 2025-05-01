@@ -102,7 +102,7 @@ export const WearableVisualizationContent = ({
       taps
         .filter((tap) => tap.dittiId === dittiId)
         .map((tap) => tap.time.getTime()),
-    [taps]
+    [taps, dittiId]
   );
 
   const audioTimestamps = useMemo(
@@ -110,7 +110,7 @@ export const WearableVisualizationContent = ({
       audioTaps
         .filter((tap) => tap.dittiId === dittiId)
         .map((tap) => tap.time.getTime()),
-    [taps]
+    [audioTaps, dittiId]
   );
 
   // Optionally override the default margins if passed as props
@@ -203,7 +203,16 @@ export const WearableVisualizationContent = ({
     setRow2(updatedRow2);
     setRow3(updatedRow3);
     setRow4(updatedRow4);
-  }, [dataIsUpdated, firstDateOfSleep, isLoading]);
+  }, [
+    dataIsUpdated,
+    firstDateOfSleep,
+    isLoading,
+    row1,
+    row2,
+    row3,
+    row4,
+    sleepLogs,
+  ]);
 
   // Reset the zoom and start date
   const resetVisualization = () => {
@@ -345,45 +354,45 @@ export const WearableVisualizationContent = ({
         <div className="flex flex-col">
           {/* Stages data legend */}
           <div className="mb-1 flex">
-            <span className="w-[3rem] text-xs font-bold">Stages:</span>
+            <span className="w-12 text-xs font-bold">Stages:</span>
             <div className="mr-4 flex">
-              <div className="mr-2 w-[1rem] bg-wearable-wake" />
+              <div className="mr-2 w-4 bg-wearable-wake" />
               <span className="text-xs">Awake</span>
             </div>
             <div className="mr-4 flex">
-              <div className="mr-2 w-[1rem] bg-wearable-rem" />
+              <div className="mr-2 w-4 bg-wearable-rem" />
               <span className="text-xs">REM</span>
             </div>
             <div className="mr-4 flex">
-              <div className="mr-2 w-[1rem] bg-wearable-light" />
+              <div className="mr-2 w-4 bg-wearable-light" />
               <span className="text-xs">Light</span>
             </div>
             <div className="flex">
-              <div className="mr-2 w-[1rem] bg-wearable-deep" />
+              <div className="mr-2 w-4 bg-wearable-deep" />
               <span className="text-xs">Deep</span>
             </div>
           </div>
 
           {/* Classic data legend */}
           <div className="mb-1 flex">
-            <span className="w-[3rem] text-xs font-bold">Classic:</span>
+            <span className="w-12 text-xs font-bold">Classic:</span>
             <div className="mr-4 flex">
               <div
-                className="mr-2 w-[1rem]
+                className="mr-2 w-4
                   bg-[repeating-linear-gradient(90deg,#E04B6F,#E04B6F_1px,transparent_1px,transparent_2px)]"
               />
               <span className="text-xs">Awake</span>
             </div>
             <div className="mr-4 flex">
               <div
-                className="mr-2 w-[1rem]
+                className="mr-2 w-4
                   bg-[repeating-linear-gradient(90deg,#5489F5,#5489F5_1px,transparent_1px,transparent_2px)]"
               />
               <span className="text-xs">Restless</span>
             </div>
             <div className="flex">
               <div
-                className="mr-2 w-[1rem]
+                className="mr-2 w-4
                   bg-[repeating-linear-gradient(90deg,#24499F,#24499F_1px,transparent_1px,transparent_2px)]"
               />
               <span className="text-xs">Asleep</span>
@@ -393,29 +402,21 @@ export const WearableVisualizationContent = ({
           {/* Taps data legend */}
           {showTapsData && (
             <div className="flex">
-              <span className="w-[3rem] text-xs font-bold">Taps:</span>
+              <span className="w-12 text-xs font-bold">Taps:</span>
               <div className="mr-4 flex items-center">
-                <div
-                  className="mr-2 h-[0.6rem] w-[0.6rem] rounded-lg bg-secondary"
-                />
+                <div className="mr-2 size-[0.6rem] rounded-lg bg-secondary" />
                 <span className="text-xs">Tap</span>
               </div>
               <div className="mr-4 flex items-center">
                 <div className="relative flex items-center">
-                  <div
-                    className="mr-2 h-[0.6rem] w-[0.6rem] rounded-lg
-                      bg-secondary"
-                  />
-                  <div
-                    className="mr-2 h-[0.6rem] w-[0.6rem] rounded-lg
-                      bg-secondary"
-                  />
-                  <div className="absolute h-[2px] w-[1.25rem] bg-secondary" />
+                  <div className="mr-2 size-[0.6rem] rounded-lg bg-secondary" />
+                  <div className="mr-2 size-[0.6rem] rounded-lg bg-secondary" />
+                  <div className="absolute h-[2px] w-5 bg-secondary" />
                 </div>
                 <span className="text-xs">Tapping Bout</span>
               </div>
               <div className="mr-4 flex items-center">
-                <div className="mr-2 h-[0.6rem] w-[0.6rem] rounded-lg bg-light" />
+                <div className="mr-2 size-[0.6rem] rounded-lg bg-light" />
                 <span className="text-xs">Audio Tap</span>
               </div>
             </div>
@@ -430,7 +431,7 @@ export const WearableVisualizationContent = ({
                   square={true}
                   size="sm"
                   variant="tertiary"
-                  className="rounded-l-[0.25rem]"
+                  className="rounded-l"
                   onClick={decrementStartDate}
                 >
                   <KeyboardArrowUp />
@@ -439,7 +440,7 @@ export const WearableVisualizationContent = ({
                   square={true}
                   size="sm"
                   variant="tertiary"
-                  className="mr-2 rounded-r-[0.25rem] border-l-0"
+                  className="mr-2 rounded-r border-l-0"
                   onClick={incrementStartDate}
                   disabled={!canIncrementStartDate}
                 >

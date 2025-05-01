@@ -17,13 +17,14 @@
 
 import { Link } from "react-router-dom";
 import { useNavbar } from "../hooks/useNavbar";
+import React from "react";
 
 export const Navbar = () => {
   const { breadcrumbs } = useNavbar();
 
   return (
     <div
-      className="z-10 flex h-16 flex-shrink-0 select-none items-center bg-white
+      className="z-10 flex h-16 shrink-0 select-none items-center bg-white
         shadow"
     >
       <div className="flex h-12 items-center pl-12">
@@ -38,7 +39,7 @@ export const Navbar = () => {
             );
           } else {
             return (
-              <>
+              <React.Fragment key={i}>
                 <div
                   className="flex cursor-pointer items-center text-link
                     hover:text-link-hover"
@@ -50,7 +51,7 @@ export const Navbar = () => {
                 <div>
                   <span>&nbsp;&nbsp;/&nbsp;&nbsp;</span>
                 </div>
-              </>
+              </React.Fragment>
             );
           }
         })}

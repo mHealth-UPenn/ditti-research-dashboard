@@ -61,7 +61,7 @@ export function NavbarContextProvider({ children }: PropsWithChildren) {
     }));
 
     setBreadcrumbs(updatedBreadcrumbs);
-  }, [matches, studySlug, dittiIdParam]);
+  }, [matches, studySlug, dittiIdParam, sidParam]);
 
   return (
     <NavbarContext.Provider

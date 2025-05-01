@@ -21,8 +21,7 @@ export const ListView = ({ children }: PropsWithChildren) => {
   return (
     <div
       className="flex h-[calc(calc(100vh-8rem)-1px)] w-full flex-col
-        overflow-x-hidden overflow-x-scroll overflow-y-scroll bg-white
-        lg:bg-[transparent] lg:px-12"
+        overflow-scroll overflow-x-hidden bg-white lg:bg-[transparent] lg:px-12"
     >
       {children}
     </div>

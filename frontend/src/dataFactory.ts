@@ -290,8 +290,8 @@ export class DataFactory {
         try {
           const response = await makeRequest("/db/get-studies?app=2");
           // Use type assertion for the response
-          const typedResponse = response as unknown as { studies?: Study[] };
-          this.studies = typedResponse.studies ?? [];
+          const typedResponse = response as unknown as Study[];
+          this.studies = typedResponse;
         } catch (error) {
           console.error(error);
         }

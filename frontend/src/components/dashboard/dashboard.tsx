@@ -29,7 +29,7 @@ export const Dashboard = () => {
     <main className="flex h-screen flex-col">
       {/* header with the account menu  */}
       <Header />
-      <div className="flex max-h-[calc(100vh-4rem)] flex-grow">
+      <div className="flex max-h-[calc(100vh-4rem)] grow">
         {/* list of studies on the left of the screen */}
         {/* <StudiesMenu
           setView={setStudy}
@@ -41,7 +41,7 @@ export const Dashboard = () => {
 
         {/* main dashboard */}
         <div
-          className="max-w-[calc(100vw-16rem) relative flex flex-grow flex-col
+          className="max-w-[calc(100vw-16rem) relative flex grow flex-col
             overflow-hidden"
         >
           <NavbarContextProvider>

@@ -156,9 +156,7 @@ export function WearableVisualsContent({
     <ViewContainer>
       <Card>
         <CardContentRow>
-          <div
-            className="flex flex-grow flex-col lg:flex-row lg:justify-between"
-          >
+          <div className="flex grow flex-col lg:flex-row lg:justify-between">
             {/* The participant's details */}
             <div className="mb-4 flex flex-col lg:mb-0">
               <Title>{studySubject?.dittiId}</Title>

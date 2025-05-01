@@ -140,17 +140,17 @@ export const Roles = () => {
         },
         {
           contents: (
-            <div className="flex h-full w-full">
+            <div className="flex size-full">
               {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="h-full flex-grow"
+                  className="h-full grow"
                   fullWidth={true}
                   fullHeight={true}
                 >
                   <Link
-                    className="flex h-full w-full items-center justify-center"
+                    className="flex size-full items-center justify-center"
                     to={`/coordinator/admin/roles/edit?id=${String(id)}`}
                   >
                     Edit
@@ -161,7 +161,7 @@ export const Roles = () => {
                 <Button
                   variant="danger"
                   size="sm"
-                  className="h-full flex-grow"
+                  className="h-full grow"
                   onClick={() => {
                     deleteRole(id);
                   }}

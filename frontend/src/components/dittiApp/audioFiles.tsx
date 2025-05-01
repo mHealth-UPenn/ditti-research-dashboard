@@ -208,12 +208,12 @@ export const AudioFiles = () => {
         },
         {
           contents: (
-            <div className="flex h-full w-full">
+            <div className="flex size-full">
               {/* if the user can edit, link to the edit subject page */}
               <Button
                 variant="danger"
                 size="sm"
-                className="h-full flex-grow"
+                className="h-full grow"
                 onClick={() =>
                   void handleDelete(id ?? "", _version ?? 0, fileName ?? "")
                 }

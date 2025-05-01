@@ -15,7 +15,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import AddIcon from "@mui/icons-material/Add";
@@ -43,7 +42,7 @@ export const TapVisualizationButtons = () => {
           square={true}
           size="sm"
           variant="tertiary"
-          className="rounded-l-[0.25rem]"
+          className="rounded-l"
           onClick={panLeft}
         >
           <KeyboardArrowLeftIcon />
@@ -52,7 +51,7 @@ export const TapVisualizationButtons = () => {
           square={true}
           size="sm"
           variant="tertiary"
-          className="mr-2 rounded-r-[0.25rem] border-l-0"
+          className="mr-2 rounded-r border-l-0"
           onClick={panRight}
         >
           <KeyboardArrowRightIcon />
@@ -61,7 +60,7 @@ export const TapVisualizationButtons = () => {
           square={true}
           size="sm"
           variant="tertiary"
-          className="rounded-l-[0.25rem]"
+          className="rounded-l"
           onClick={zoomIn}
           disabled={minRangeReached}
         >
@@ -71,7 +70,7 @@ export const TapVisualizationButtons = () => {
           square={true}
           size="sm"
           variant="tertiary"
-          className="mr-2 rounded-r-[0.25rem] border-l-0"
+          className="mr-2 rounded-r border-l-0"
           onClick={zoomOut}
           disabled={maxRangeReached}
         >

@@ -70,7 +70,7 @@ export const AdminNavbar = ({ activeView }: AdminNavbarProps) => {
         v.active ? (
           <div
             key={i}
-            className="bg-dark flex h-full items-center justify-center px-4 py-4
+            className="bg-dark flex h-full items-center justify-center p-4
               text-center lg:px-8"
           >
             {v.name}
@@ -79,7 +79,7 @@ export const AdminNavbar = ({ activeView }: AdminNavbarProps) => {
           <div key={i} className="flex h-full">
             <Link to={v.link}>
               <LinkComponent
-                className="flex h-full w-full items-center justify-center px-3
+                className="flex size-full items-center justify-center px-3
                   text-center no-underline hover:bg-extra-light lg:px-4 xl:px-8"
               >
                 {v.name}

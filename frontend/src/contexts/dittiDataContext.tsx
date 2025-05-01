@@ -24,6 +24,7 @@ import {
   useState,
   useMemo,
   useEffect,
+  useCallback,
 } from "react";
 import { DittiDataContextValue } from "./dittiDataContext.types";
 import { AudioFile, AudioTap, Tap } from "../types/api";
@@ -46,37 +47,7 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
     return null;
   }, []);
 
-  useEffect(() => {
-    const promises: Promise<void>[] = [];
-
-    if (APP_ENV === "production") {
-      promises.push(getTapsAsync().then(setTaps));
-      promises.push(getAudioTapsAsync().then(setAudioTaps));
-      promises.push(getAudioFilesAsync().then(setAudioFiles));
-    } else if (
-      (APP_ENV === "development" || APP_ENV === "demo") &&
-      dataFactory
-    ) {
-      promises.push(
-        dataFactory.init().then(() => {
-          setTaps(dataFactory.taps);
-          setAudioTaps(dataFactory.audioTaps);
-          setAudioFiles(dataFactory.audioFiles);
-        })
-      );
-    }
-
-    Promise.all(promises)
-      .then(() => {
-        setDataLoading(false);
-      })
-      .catch((error: unknown) => {
-        console.error("Error during initial data fetch:", error);
-        setDataLoading(false);
-      });
-  }, [dataFactory]);
-
-  const getTapsAsync = async (): Promise<TapModel[]> => {
+  const getTapsAsync = useCallback(async (): Promise<TapModel[]> => {
     let taps: TapModel[] = [];
 
     if (APP_ENV === "production") {
@@ -107,9 +78,9 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
     );
 
     return taps;
-  };
+  }, [dataFactory]);
 
-  const getAudioTapsAsync = async (): Promise<AudioTapModel[]> => {
+  const getAudioTapsAsync = useCallback(async (): Promise<AudioTapModel[]> => {
     let audioTaps: AudioTapModel[] = [];
 
     if (APP_ENV == "production") {
@@ -142,9 +113,9 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
     );
 
     return audioTaps;
-  };
+  }, [dataFactory]);
 
-  const getAudioFilesAsync = async (): Promise<AudioFile[]> => {
+  const getAudioFilesAsync = useCallback(async (): Promise<AudioFile[]> => {
     let audioFiles: AudioFile[] = [];
 
     if (APP_ENV === "production") {
@@ -161,7 +132,37 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
     }
 
     return audioFiles;
-  };
+  }, [dataFactory]);
+
+  useEffect(() => {
+    const promises: Promise<void>[] = [];
+
+    if (APP_ENV === "production") {
+      promises.push(getTapsAsync().then(setTaps));
+      promises.push(getAudioTapsAsync().then(setAudioTaps));
+      promises.push(getAudioFilesAsync().then(setAudioFiles));
+    } else if (
+      (APP_ENV === "development" || APP_ENV === "demo") &&
+      dataFactory
+    ) {
+      promises.push(
+        dataFactory.init().then(() => {
+          setTaps(dataFactory.taps);
+          setAudioTaps(dataFactory.audioTaps);
+          setAudioFiles(dataFactory.audioFiles);
+        })
+      );
+    }
+
+    Promise.all(promises)
+      .then(() => {
+        setDataLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error during initial data fetch:", error);
+        setDataLoading(false);
+      });
+  }, [dataFactory, getAudioFilesAsync, getAudioTapsAsync, getTapsAsync]);
 
   const refreshAudioFiles = async () => {
     setAudioFiles(await getAudioFilesAsync());

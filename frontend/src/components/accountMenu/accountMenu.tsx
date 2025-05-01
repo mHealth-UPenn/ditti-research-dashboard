@@ -345,7 +345,7 @@ export const AccountMenu = ({
         [@media(min-width:383px)]:transition-[width]
         [@media(min-width:383px)]:duration-500"
     >
-      <div className="w-[24rem] p-8">
+      <div className="w-96 p-8">
         <div
           className="mb-6 flex items-center justify-between border-b
             border-light pb-6"

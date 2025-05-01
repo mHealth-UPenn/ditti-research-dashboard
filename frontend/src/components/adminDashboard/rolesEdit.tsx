@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { SelectField } from "../fields/selectField";
 import {
@@ -56,6 +56,21 @@ export const RolesEdit = () => {
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
+  const getPrefill = useCallback(async (): Promise<RolesFormPrefill> => {
+    const id = roleId;
+
+    // if editing an existing entry, return prefill data, else return empty data
+    return id
+      ? makeRequest(`/admin/role?app=1&id=${String(id)}`).then((response) =>
+          makePrefill(response as unknown as Role[])
+        )
+      : { name: "", permissions: [] };
+  }, [roleId]);
+
   useEffect(() => {
     // get all available actions
     const fetchActions = makeRequest("/admin/action?app=1").then((response) => {
@@ -84,22 +99,7 @@ export const RolesEdit = () => {
         console.error("Error loading form data:", error);
         setLoading(false);
       });
-  }, []);
-
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = async (): Promise<RolesFormPrefill> => {
-    const id = roleId;
-
-    // if editing an existing entry, return prefill data, else return empty data
-    return id
-      ? makeRequest(`/admin/role?app=1&id=${String(id)}`).then((response) =>
-          makePrefill(response as unknown as Role[])
-        )
-      : { name: "", permissions: [] };
-  };
+  }, [getPrefill]);
 
   /**
    * Map the data returned from the backend to form prefill data

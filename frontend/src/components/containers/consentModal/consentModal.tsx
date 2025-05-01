@@ -21,13 +21,13 @@ import { ConsentModalProps } from "./consentModal.types";
 import { QuillView } from "../quillView/quillView";
 
 export const ConsentModal: FC<ConsentModalProps> = memo(
-  ({ isOpen, onAccept, onDeny, onClose, contentHtml }) => {
+  ({ isOpen, onAccept, onDeny, onClose, contentHtml }: ConsentModalProps) => {
     if (!isOpen) return null;
 
     return (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black
-          bg-opacity-50"
+        className="fixed inset-0 z-50 flex items-center justify-center
+          bg-black/50"
         aria-labelledby="consent-modal-title"
         role="dialog"
         aria-modal="true"
@@ -54,7 +54,7 @@ export const ConsentModal: FC<ConsentModalProps> = memo(
               onClick={onClose}
             >
               <svg
-                className="h-4 w-4"
+                className="size-4"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 14 14"
@@ -97,3 +97,5 @@ export const ConsentModal: FC<ConsentModalProps> = memo(
     );
   }
 );
+
+ConsentModal.displayName = "ConsentModal";

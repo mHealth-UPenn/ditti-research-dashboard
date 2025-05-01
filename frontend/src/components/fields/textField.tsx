@@ -67,19 +67,18 @@ export const TextField = ({
       )}
 
       <div
-        className={`flex items-center ${
-          type === "textarea" ? "h-[24rem]" : "h-[2.75rem]" } border
-          border-light ${disabled ? "bg-extra-light" : ""}`}
+        className={`flex items-center ${type === "textarea" ? "h-96" : "h-11"}
+          border border-light ${disabled ? "bg-extra-light" : ""}`}
       >
         {/* place children here as prefix icons (e.g., a password icon) */}
         {children ?? null}
 
         {/* the input */}
-        <div className="flex h-full flex-grow items-center p-2">
+        <div className="flex h-full grow items-center p-2">
           {/* textareas require a unique e.target class */}
           {type === "textarea" ? (
             <textarea
-              className={`h-full w-full resize-none focus:outline-none ${
+              className={`size-full resize-none focus:outline-none ${
                 disabled ? "italic text-link" : "" }`}
               onChange={handleKeyUp}
               onKeyDown={onKeyDown}

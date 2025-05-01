@@ -21,6 +21,7 @@ import {
   useEffect,
   PropsWithChildren,
   useMemo,
+  useCallback,
 } from "react";
 import { makeRequest } from "../utils";
 import { APP_ENV } from "../environment";
@@ -59,7 +60,7 @@ export function StudiesProvider({
   }, []);
 
   // Make an sync request to get studies from the database
-  const getStudiesAsync = async (): Promise<Study[]> => {
+  const getStudiesAsync = useCallback(async (): Promise<Study[]> => {
     let studies: Study[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
@@ -77,7 +78,7 @@ export function StudiesProvider({
     }
 
     return studies;
-  };
+  }, [app, dataFactory]);
 
   // Fetch studies on load
   useEffect(() => {
@@ -101,7 +102,7 @@ export function StudiesProvider({
       setStudies(dataFactory.studies);
       setStudiesLoading(false);
     }
-  }, [studyId]);
+  }, [studyId, dataFactory, getStudiesAsync, setSidParam, setStudySlug]);
 
   return (
     <StudiesContext.Provider value={{ studies, studiesLoading, study }}>

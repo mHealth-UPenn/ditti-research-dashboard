@@ -82,8 +82,8 @@ export const StudySubjects: React.FC<StudySubjectsProps> = ({
         return (
           <div
             key={i}
-            className="hidden w-[60px] flex-grow-0 flex-col items-center
-              border-r border-light md:flex"
+            className="hidden w-[60px] grow-0 flex-col items-center border-r
+              border-light md:flex"
           >
             <span>{weekday}</span>
             <span>{filteredTaps + filteredAudioTaps}</span>
@@ -153,9 +153,7 @@ export const StudySubjects: React.FC<StudySubjectsProps> = ({
         </div>
 
         {canViewTaps && (
-          <div className="flex flex-grow-0 overflow-x-hidden">
-            {summaryTaps}
-          </div>
+          <div className="flex grow-0 overflow-x-hidden">{summaryTaps}</div>
         )}
       </CardContentRow>
     );

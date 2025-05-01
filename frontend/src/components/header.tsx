@@ -68,8 +68,8 @@ export const Header = () => {
     <>
       {/* the header */}
       <div
-        className="flex h-16 flex-shrink-0 items-center justify-between
-          bg-secondary text-white"
+        className="flex h-16 shrink-0 items-center justify-between bg-secondary
+          text-white"
       >
         <div className="ml-8 flex flex-col text-2xl">
           <span className="mr-2">Ditti</span>
@@ -85,16 +85,16 @@ export const Header = () => {
           {/* clicking on this icon shows the account menu */}
           {showMenu ? (
             <div
-              className="flex h-[2.5rem] w-[2.5rem] cursor-pointer items-center
-                justify-center rounded-[2rem] hover:border-2"
+              className="flex size-10 cursor-pointer items-center justify-center
+                rounded-[2rem] hover:border-2"
               onClick={handleCloseMenu}
             >
               <CloseIcon />
             </div>
           ) : (
             <div
-              className="flex h-[2.5rem] w-[2.5rem] cursor-pointer items-center
-                justify-center rounded-[2rem] hover:border-2"
+              className="flex size-10 cursor-pointer items-center justify-center
+                rounded-[2rem] hover:border-2"
               onClick={handleOpenMenu}
             >
               <SettingsIcon />

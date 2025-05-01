@@ -26,7 +26,7 @@ export const CheckField = ({
   return (
     <div className="flex h-full flex-col">
       <div className="mb-1 hidden md:flex">&nbsp;</div>
-      <div className="flex flex-grow items-center">
+      <div className="flex grow items-center">
         <div>
           {label && (
             <label className="mr-4" htmlFor={id}>

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 import { makeRequest } from "../../utils";
@@ -47,6 +47,27 @@ export const AboutSleepTemplatesEdit = () => {
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
+  const getPrefill =
+    useCallback(async (): Promise<AboutSleepTemplateFormPrefill> => {
+      const id = aboutSleepTemplateId;
+
+      // if editing an existing entry, return prefill data, else return empty data
+      return id
+        ? makeRequest(
+            `/admin/about-sleep-template?app=1&id=${String(id)}`
+          ).then((res: ResponseBody) =>
+            makePrefill(res as unknown as AboutSleepTemplate[])
+          )
+        : {
+            name: "",
+            text: "",
+          };
+    }, [aboutSleepTemplateId]);
+
   useEffect(() => {
     const fetchPrefill = async () => {
       const prefill = await getPrefill();
@@ -56,26 +77,7 @@ export const AboutSleepTemplatesEdit = () => {
     };
 
     void fetchPrefill();
-  }, []);
-
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = async (): Promise<AboutSleepTemplateFormPrefill> => {
-    const id = aboutSleepTemplateId;
-
-    // if editing an existing entry, return prefill data, else return empty data
-    return id
-      ? makeRequest(`/admin/about-sleep-template?app=1&id=${String(id)}`).then(
-          (res: ResponseBody) =>
-            makePrefill(res as unknown as AboutSleepTemplate[])
-        )
-      : {
-          name: "",
-          text: "",
-        };
-  };
+  }, [getPrefill]);
 
   /**
    * Map the data returned from the backend to form prefill data
