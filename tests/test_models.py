@@ -1,4 +1,3 @@
-import os
 from datetime import UTC, datetime
 
 import pytest
@@ -142,7 +141,7 @@ class TestAccount:
         init_admin_app()
         init_admin_group()
         init_admin_account()
-        q1 = Account.email == os.getenv("FLASK_ADMIN_EMAIL")
+        q1 = Account.email == "testing"
         q2 = AccessGroup.name == "Admin"
         foo = Account.query.filter(q1).first()
         bar = AccessGroup.query.filter(q2).first()

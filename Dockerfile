@@ -10,7 +10,6 @@ RUN pip3 install --upgrade pip && pip3 install wheel
 RUN pip3 install boto3 \
     Authlib==1.4.1 \
     Flask==2.3.3 \
-    Flask-APScheduler \
     Flask-Caching \
     Flask-Cors \
     Flask-JWT-Extended \
@@ -21,7 +20,7 @@ RUN pip3 install boto3 \
     pandas \
     psycopg2-binary \
     pydantic \
-    python-dotenv==1.0.1 \
+    python-dotenv==1.1.0 \
     requests-aws4auth \
     SQLAlchemy==1.4.52 \
     zappa
