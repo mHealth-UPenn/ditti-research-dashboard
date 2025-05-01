@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from moto import mock_aws
 
-load_dotenv("flask.env")
+load_dotenv()
 
 # Environment variables
 os.environ["AWS_ACCESS_KEY_ID"] = "testing"

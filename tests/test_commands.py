@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from sqlalchemy import tuple_
 
@@ -86,7 +84,7 @@ def test_init_admin_account(runner):
     runner.invoke(init_admin_app_click)
     runner.invoke(init_admin_group_click)
     res = runner.invoke(init_admin_account_click)
-    q1 = Account.email == os.getenv("FLASK_ADMIN_EMAIL")
+    q1 = Account.email == "testing"
     q2 = AccessGroup.name == "Admin"
     foo = Account.query.filter(q1).first()
     bar = AccessGroup.query.filter(q2).first()
