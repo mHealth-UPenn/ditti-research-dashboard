@@ -106,7 +106,7 @@ We ask that all contributions are divided into atomic pull requests (PRs). The c
 
 1. **Create a new branch:**
 
-   - Please adhere to our branch naming convention `<github-handle>/branch-name`.
+   - Please adhere to our [branching strategy](#branching-strategy).
 
    ```bash
    cd ...
@@ -154,3 +154,28 @@ We ask that all contributions are divided into atomic pull requests (PRs). The c
    Be responsive to feedback and ready to implement suggested changes. Remember, feedback means your work is valued and intended for inclusion!
 
 Thank you for contributing to the Ditti Research Dashboard open source project!
+
+### Branching Strategy
+
+We follow a simplified Git Flow branching strategy:
+
+#### Main Branches
+
+- `main`: Production-ready code
+- `staging`: Intermediary branch for staging changes
+- `dev`: Integration branch for features
+
+#### Supporting Branches
+
+- `feature/*`: New features
+- `bugfix/*`: Bug fixes
+- `hotfix/*`: Critical production fixes
+- `release/*`: Release preparation
+
+#### Branch Naming Convention
+
+```plaintext
+<type>/<github-handle>/<description>
+```
+
+Example: `feature/johndoe/add-user-authentication`

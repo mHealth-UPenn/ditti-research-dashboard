@@ -19,6 +19,18 @@ The Ditti Research Dashboard is a centralized platform for managing and visualiz
 - Serverless architecture for controlling costs on an on demand basis
 - Integrations with Fitbit for visualizing sleep research data
 
+## Getting Started
+
+### Development Setup
+
+Follow our [Development Setup Guide](docs/INSTALL-dev.md) to set up your local environment
+
+### Production Setup
+
+🚧 **Under Construction** 🚧
+
+We are working hard at creating a straightforward process for installing and hosting your own version of the Ditti Research Dashboard. A future version will include a step-by-step installation for free, self-hosted options.
+
 ## Contributing
 
 The Ditti Research Dashboard is **100% free** and **open source**. We encourage any users to contribute through open discussions, feature requests, bug reports, and contributions.
@@ -27,12 +39,6 @@ Looking to get involved? Our [Contribution Guide](docs/CONTRIBUTING.md) outlines
 
 If you want to contribute, see our [Development Setup Guide](docs/INSTALL-dev.md) to get started with development.
 
-## Installation
-
-🚧 **Under Construction** 🚧
-
-We are working hard at creating a straightforward process for installing and hosting your own version of the Ditti Research Dashboard. A future version will include a step-by-step installation for free, self-hosted options.
-
 ## Built With
 
 - **[Flask](https://flask.palletsprojects.com/en/stable/)**: Our backend is a Python Flask app that responds RESTfully in JSON.
@@ -40,6 +46,16 @@ We are working hard at creating a straightforward process for installing and hos
 - **[Tailwind CSS](https://tailwindcss.com/)**: Our frontend is styled using Tailwind CSS.
 - **[PostgreSQL](https://www.postgresql.org/)**: Our database leverages PostgreSQL for secure data storage.
 - **[Amazon Web Services](https://aws.amazon.com/)**: Our stack is deployed on AWS and uses managed services like [Cognito](https://aws.amazon.com/cognito/) to lock-in scalability and security.
+
+## Security
+
+The Ditti Research Dashboard is built with security and HIPAA compliance in mind:
+
+- **Data Encryption**: All data is encrypted at rest and in transit
+- **Access Control**: Role-based access control (RBAC) for all users
+- **Audit Logging**: Comprehensive logging of all system activities
+- **Secure Authentication**: AWS Cognito for secure user authentication
+- **Data Privacy**: Strict adherence to HIPAA guidelines for PHI handling
 
 ## Copyright/License
 
