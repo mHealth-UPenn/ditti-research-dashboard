@@ -31,7 +31,6 @@ import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
 
-
 export const StudiesView = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [canViewAudioFiles, setCanViewAudioFiles] = useState(true);
@@ -49,37 +48,41 @@ export const StudiesView = () => {
 
         // get all tap and audio file data
         promises.push(
-          getAccess(2, "View", "Audio Files")
-            .catch(() => setCanViewAudioFiles(false))
+          getAccess(2, "View", "Audio Files").catch(() => {
+            setCanViewAudioFiles(false);
+          })
         );
         promises.push(
-          getAccess(2, "Create", "Audio Files")
-            .catch(() => setCanCreateAudioFiles(false))
+          getAccess(2, "Create", "Audio Files").catch(() => {
+            setCanCreateAudioFiles(false);
+          })
         );
 
         // when all promises resolve, hide the loader
-        Promise.all(promises).then(() => setLoading(false));
+        await Promise.all(promises);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching data: ", error);
         setLoading(false);
       }
     };
 
-    fetchData();
+    void fetchData();
   }, []);
 
   useEffect(() => {
     const updateCanViewTaps = async () => {
-      const updatedCanViewTaps: Set<number> = new Set();
-      const promises = studies.map(s => {
+      const updatedCanViewTaps = new Set<number>();
+      const promises = studies.map((s) => {
         return getAccess(2, "View", "Taps", s.id)
           .then(() => updatedCanViewTaps.add(s.id))
           .catch(() => updatedCanViewTaps.delete(s.id));
       });
-      await Promise.all(promises)
-      setCanViewTaps(updatedCanViewTaps)
-    }
-    updateCanViewTaps();
+      await Promise.all(promises);
+      setCanViewTaps(updatedCanViewTaps);
+    };
+
+    void updateCanViewTaps();
   }, [studies]);
 
   if (loading || studiesLoading || dataLoading) {
@@ -128,17 +131,16 @@ export const StudiesView = () => {
               <CardContentRow key={s.id} className="border-b border-light">
                 <div className="flex items-start">
                   {/* active tapping icon */}
-                  {canViewTaps.has(s.id) ?
-                    <ActiveIcon active={!!lastWeek} className="mr-2" /> :
+                  {canViewTaps.has(s.id) ? (
+                    <ActiveIcon active={!!lastWeek} className="mr-2" />
+                  ) : (
                     // Optimistic hydration
                     <ActiveIcon active={false} className="mr-2" />
-                  }
+                  )}
                   {/* link to study summary */}
                   <div className="flex flex-col">
-                    <Link to={`/coordinator/ditti/study?sid=${s.id}`}>
-                      <LinkComponent>
-                        {s.acronym}
-                      </LinkComponent>
+                    <Link to={`/coordinator/ditti/study?sid=${String(s.id)}`}>
+                      <LinkComponent>{s.acronym}</LinkComponent>
                     </Link>
                     <span className="text-sm">{s.name}</span>
                   </div>
@@ -146,9 +148,9 @@ export const StudiesView = () => {
 
                 {/* display the number of taps in the last 7 days and 24 hours */}
                 <div className="flex whitespace-nowrap">
-                  {canViewTaps.has(s.id) ?
+                  {canViewTaps.has(s.id) ? (
                     <>
-                      <div className="flex flex-col mr-2 font-bold">
+                      <div className="mr-2 flex flex-col font-bold">
                         <div>24 hours:</div>
                         <div>1 week:</div>
                       </div>
@@ -156,10 +158,11 @@ export const StudiesView = () => {
                         <div>{last24hrs} active subjects</div>
                         <div>{lastWeek} active subjects</div>
                       </div>
-                    </> :
+                    </>
+                  ) : (
                     // Optimistic hydration
                     <>
-                      <div className="flex flex-col mr-2 font-bold">
+                      <div className="mr-2 flex flex-col font-bold">
                         <div>24 hours:</div>
                         <div>1 week:</div>
                       </div>
@@ -168,7 +171,7 @@ export const StudiesView = () => {
                         <div>0 active subjects</div>
                       </div>
                     </>
-                  }
+                  )}
                 </div>
               </CardContentRow>
             );
@@ -176,27 +179,23 @@ export const StudiesView = () => {
         }
       </Card>
 
-      {canViewAudioFiles &&
+      {canViewAudioFiles && (
         <Card width="sm">
           <CardContentRow>
             <Title>Audio Files</Title>
           </CardContentRow>
           <CardContentRow>
             <div className="flex">
-              {(canCreateAudioFiles || APP_ENV === "demo") &&
+              {(canCreateAudioFiles || APP_ENV === "demo") && (
                 <Link to="/coordinator/ditti/audio/upload">
-                  <Button
-                    className="mr-2"
-                    rounded={true}>
-                      Upload +
+                  <Button className="mr-2" rounded={true}>
+                    Upload +
                   </Button>
                 </Link>
-              }
+              )}
               <Link to="/coordinator/ditti/audio">
-                <Button
-                  variant="secondary"
-                  rounded={true}>
-                    View all
+                <Button variant="secondary" rounded={true}>
+                  View all
                 </Button>
               </Link>
             </div>
@@ -206,7 +205,7 @@ export const StudiesView = () => {
             <b>{audioFiles.length} files</b>
           </CardContentRow>
         </Card>
-      }
+      )}
     </ViewContainer>
   );
 };

@@ -145,7 +145,7 @@ export interface StudyJoin {
 export interface ApiJoin {
   apiUserUuid: string;
   scope: string[];
-  api: { id: number; name: string; };
+  api: { id: number; name: string };
   lastSyncDate: string;
   createdOn: string;
 }
@@ -259,7 +259,12 @@ export interface AudioFile {
  */
 export interface DataRetrievalTask {
   id: number;
-  status: "Pending" | "InProgress" | "Success" | "Failed" | "CompletedWithErrors";
+  status:
+    | "Pending"
+    | "InProgress"
+    | "Success"
+    | "Failed"
+    | "CompletedWithErrors";
   billedMs: number | null;
   createdOn: string;
   updatedOn: string;
@@ -333,12 +338,10 @@ export interface Participant {
  */
 export type SleepLevelStages = "deep" | "light" | "rem" | "wake";
 
-
 /**
  * Classic sleep levels.
  */
 export type SleepLevelClassic = "asleep" | "restless" | "awake";
-
 
 /**
  * Represents a sleep level with details about the level and duration.
@@ -353,7 +356,6 @@ export interface SleepLevel {
   seconds: number;
   isShort: boolean | null;
 }
-
 
 /**
  * Represents a sleep log entry.
@@ -372,7 +374,8 @@ export interface SleepLog {
 /**
  * Represents a data processing task status.
  */
-type DataProcessingTaskStatus = "Pending"
+type DataProcessingTaskStatus =
+  | "Pending"
   | "InProgress"
   | "Success"
   | "Failed"

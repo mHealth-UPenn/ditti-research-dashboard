@@ -17,10 +17,12 @@
 
 import { PropsWithChildren } from "react";
 
-
-export const FormSummary = ({ children }: PropsWithChildren<unknown>) => {
+export const FormSummary = ({ children }: PropsWithChildren) => {
   return (
-    <div className="flex flex-col flex-shrink-0 px-16 py-12 w-full lg:px-8 lg:w-[20rem] 2xl:w-[28rem] bg-secondary text-white lg:max-h-[calc(100vh-8rem)]">
+    <div
+      className="flex w-full shrink-0 flex-col bg-secondary px-16 py-12
+        text-white lg:max-h-[calc(100vh-8rem)] lg:w-80 lg:px-8 2xl:w-[28rem]"
+    >
       {children}
     </div>
   );

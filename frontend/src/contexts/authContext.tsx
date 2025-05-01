@@ -15,37 +15,59 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { createContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  ReactNode,
+  useCallback,
+  useMemo,
+} from "react";
 import { makeRequest } from "../utils";
-import { AuthContextValue } from "./authContext.types";
+import {
+  AuthContextValue,
+  ParticipantAuthResponse,
+  ResearcherAccountInfo,
+  ResearcherAuthResponse,
+} from "./authContext.types";
 
-export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(
+  undefined
+);
 
 /**
  * AuthProvider component that wraps children with authentication context.
  */
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [isParticipantAuthenticated, setIsParticipantAuthenticated] = useState<boolean>(false);
-  const [isResearcherAuthenticated, setIsResearcherAuthenticated] = useState<boolean>(false);
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const [isParticipantAuthenticated, setIsParticipantAuthenticated] =
+    useState<boolean>(false);
+  const [isResearcherAuthenticated, setIsResearcherAuthenticated] =
+    useState<boolean>(false);
   const [isFirstLogin, setIsFirstLogin] = useState<boolean>(false);
-  const [isParticipantLoading, setIsParticipantLoading] = useState<boolean>(true);
+  const [isParticipantLoading, setIsParticipantLoading] =
+    useState<boolean>(true);
   const [isResearcherLoading, setIsResearcherLoading] = useState<boolean>(true);
   const [dittiId, setDittiId] = useState<string | null>(null);
-  const INITIAL_ACCOUNT_STATE: AuthContextValue["accountInfo"] = {
-    msg: "",
-    email: "",
-    firstName: "",
-    lastName: "",
-    accountId: "",
-    phoneNumber: undefined
-  };
-  const [accountInfo, setAccountInfo] = useState<AuthContextValue["accountInfo"]>(INITIAL_ACCOUNT_STATE);
-  const navigate = useNavigate();
+  const INITIAL_ACCOUNT_STATE = useMemo(
+    () => ({
+      msg: "",
+      email: "",
+      firstName: "",
+      lastName: "",
+      accountId: "",
+      phoneNumber: undefined,
+    }),
+    []
+  );
+  const [accountInfo, setAccountInfo] = useState<ResearcherAccountInfo>(
+    INITIAL_ACCOUNT_STATE
+  );
 
   const resetAccountInfo = useCallback(() => {
     setAccountInfo(INITIAL_ACCOUNT_STATE);
-  }, []);
+  }, [INITIAL_ACCOUNT_STATE]);
 
   useEffect(() => {
     /**
@@ -53,10 +75,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
      */
     const checkParticipantAuthStatus = async () => {
       try {
-        const res = await makeRequest("/auth/participant/check-login", { method: "GET" });
-        if (res.msg === "Login successful") {
+        const res = await makeRequest("/auth/participant/check-login", {
+          method: "GET",
+        });
+        // Type assertion with type guard
+        const typedRes = res as ParticipantAuthResponse;
+        if (typedRes.msg === "Login successful") {
           setIsParticipantAuthenticated(true);
-          setDittiId(res.dittiId);
+          setDittiId(typedRes.dittiId);
         }
       } catch {
         setIsParticipantAuthenticated(false);
@@ -70,20 +96,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
      */
     const checkResearcherAuthStatus = async () => {
       try {
-        const res = await makeRequest("/auth/researcher/check-login", { method: "GET" });
-        if (res.msg === "Login successful") {
+        const res = await makeRequest("/auth/researcher/check-login", {
+          method: "GET",
+        });
+        // Type assertion with type guard
+        const typedRes = res as ResearcherAuthResponse;
+        if (typedRes.msg === "Login successful") {
           setIsResearcherAuthenticated(true);
           setAccountInfo({
-            msg: res.msg,
-            email: res.email,
-            firstName: res.firstName,
-            lastName: res.lastName,
-            accountId: res.accountId,
-            phoneNumber: res.phoneNumber
+            msg: typedRes.msg,
+            email: typedRes.email,
+            firstName: typedRes.firstName,
+            lastName: typedRes.lastName,
+            accountId: typedRes.accountId,
+            phoneNumber: typedRes.phoneNumber,
           });
-          
+
           // Set isFirstLogin state directly from the response
-          setIsFirstLogin(Boolean(res.isFirstLogin));
+          setIsFirstLogin(Boolean(typedRes.isFirstLogin));
         }
       } catch {
         setIsResearcherAuthenticated(false);
@@ -93,23 +123,28 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     };
 
-    checkParticipantAuthStatus();
-    checkResearcherAuthStatus();
+    void checkParticipantAuthStatus();
+    void checkResearcherAuthStatus();
   }, [resetAccountInfo]);
 
   /**
    * Redirects to Participant login page.
    */
-  const participantLogin = useCallback((): void => {
-    // For elevated mode, make sure to pass it as a url param
-    window.location.href = `${import.meta.env.VITE_FLASK_SERVER}/auth/participant/login`;
-  }, []);
+  const participantLogin = useCallback(
+    (options?: { elevated: boolean }): void => {
+      // For elevated mode, make sure to pass it as a url param
+      const baseUrl = `${import.meta.env.VITE_FLASK_SERVER as string}/auth/participant/login`;
+      const url = options?.elevated ? `${baseUrl}?elevated=true` : baseUrl;
+      window.location.href = url;
+    },
+    []
+  );
 
   /**
    * Logs out the Participant user by redirecting to the logout endpoint.
    */
   const participantLogout = useCallback((): void => {
-    window.location.href = `${import.meta.env.VITE_FLASK_SERVER}/auth/participant/logout`;
+    window.location.href = `${import.meta.env.VITE_FLASK_SERVER as string}/auth/participant/logout`;
     setIsParticipantAuthenticated(false);
     setDittiId(null);
   }, []);
@@ -117,15 +152,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   /**
    * Redirects to Researcher Cognito login page.
    */
-  const researcherLogin = useCallback((): void => {
-    window.location.href = `${import.meta.env.VITE_FLASK_SERVER}/auth/researcher/login`;
-  }, [navigate]);
+  const researcherLogin = useCallback(
+    (options?: { elevated: boolean }): void => {
+      const baseUrl = `${import.meta.env.VITE_FLASK_SERVER as string}/auth/researcher/login`;
+      const url = options?.elevated ? `${baseUrl}?elevated=true` : baseUrl;
+      window.location.href = url;
+    },
+    []
+  );
 
   /**
    * Logs out the Researcher from Cognito by redirecting to the logout endpoint.
    */
   const researcherLogout = useCallback((): void => {
-    window.location.href = `${import.meta.env.VITE_FLASK_SERVER}/auth/researcher/logout`;
+    window.location.href = `${import.meta.env.VITE_FLASK_SERVER as string}/auth/researcher/logout`;
     setIsResearcherAuthenticated(false);
     resetAccountInfo();
   }, [resetAccountInfo]);

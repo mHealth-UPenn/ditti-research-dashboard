@@ -39,7 +39,9 @@ export const TextField = ({
   max,
   children,
 }: PropsWithChildren<TextFieldProps>) => {
-  const handleKeyUp = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleKeyUp = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     if (onKeyup) {
       onKeyup(e.target.value);
     }
@@ -48,13 +50,14 @@ export const TextField = ({
   return (
     <>
       {/* if a label was passed as a prop */}
-      {label &&
+      {label && (
         <div className="mb-1">
           <label htmlFor={id}>
-            {label}{required && <span className="ml-1 text-[red]">*</span>}
+            {label}
+            {required && <span className="ml-1 text-[red]">*</span>}
           </label>
         </div>
-      }
+      )}
 
       {/* Render description if provided */}
       {description && (
@@ -64,40 +67,37 @@ export const TextField = ({
       )}
 
       <div
-        className={`flex items-center ${
-          type === "textarea" ? "h-[24rem]" : "h-[2.75rem]"
-        } border border-light ${disabled ? "bg-extra-light" : ""}`}
+        className={`flex items-center ${type === "textarea" ? "h-96" : "h-11"}
+          border border-light ${disabled ? "bg-extra-light" : ""}`}
       >
         {/* place children here as prefix icons (e.g., a password icon) */}
-        {children || null}
+        {children ?? null}
 
         {/* the input */}
-        <div className="flex items-center flex-grow h-full p-2">
+        <div className="flex h-full grow items-center p-2">
           {/* textareas require a unique e.target class */}
           {type === "textarea" ? (
             <textarea
-              className={`w-full h-full resize-none focus:outline-none ${
-                disabled && "italic text-link"
-              }`}
+              className={`size-full resize-none focus:outline-none ${
+                disabled ? "italic text-link" : "" }`}
               onChange={handleKeyUp}
               onKeyDown={onKeyDown}
               disabled={disabled}
               value={value}
-              ref={textAreaRef} 
+              ref={textAreaRef}
             />
           ) : (
             <input
               className={`w-full focus:outline-none ${
-                disabled && "italic text-link"
-              }`}
-              type={type || "text"}
-              placeholder={placeholder || ""}
+                disabled ? "italic text-link" : "" }`}
+              type={type ?? "text"}
+              placeholder={placeholder ?? ""}
               onChange={handleKeyUp}
               onKeyDown={onKeyDown}
               disabled={disabled}
               value={value}
               {...(type === "number" ? { min, max } : {})} // Pass min and max if type is number
-              ref={inputRef} 
+              ref={inputRef}
             />
           )}
         </div>
@@ -106,8 +106,7 @@ export const TextField = ({
       {/* feedback on error */}
       <span
         className={`text-sm text-[red] ${
-          feedback && feedback !== "" ? "" : "hidden"
-        }`}
+          feedback && feedback !== "" ? "" : "hidden" }`}
       >
         {feedback}
       </span>

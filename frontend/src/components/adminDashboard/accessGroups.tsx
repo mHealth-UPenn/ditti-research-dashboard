@@ -88,14 +88,14 @@ export const AccessGroups = () => {
       }
 
       try {
-        const accessGroups = await makeRequest("/admin/access-group?app=1");
-        setAccessGroups(accessGroups);
+        const response = await makeRequest("/admin/access-group?app=1");
+        setAccessGroups(response as unknown as AccessGroup[]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    void fetchData();
   }, []);
 
   const getData = (): TableData[][] => {
@@ -106,16 +106,12 @@ export const AccessGroups = () => {
       // Map each row to a set of cells for each table column
       return [
         {
-          contents: (
-            <span>{name}</span>
-          ),
+          contents: <span>{name}</span>,
           searchValue: name,
           sortValue: name,
         },
         {
-          contents: (
-            <span>{app.name}</span>
-          ),
+          contents: <span>{app.name}</span>,
           searchValue: app.name,
           sortValue: app.name,
         },
@@ -137,30 +133,35 @@ export const AccessGroups = () => {
         },
         {
           contents: (
-            <div className="flex w-full h-full">
-              {canEdit &&
+            <div className="flex size-full">
+              {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="h-full flex-grow"
+                  className="h-full grow"
                   fullWidth={true}
-                  fullHeight={true}>
-                    <Link
-                      className="w-full h-full flex items-center justify-center"
-                      to={`/coordinator/admin/access-groups/edit?id=${id}`}>
-                        Edit
-                    </Link>
+                  fullHeight={true}
+                >
+                  <Link
+                    className="flex size-full items-center justify-center"
+                    to={`/coordinator/admin/access-groups/edit?id=${String(id)}`}
+                  >
+                    Edit
+                  </Link>
                 </Button>
-              }
-              {canArchive &&
+              )}
+              {canArchive && (
                 <Button
                   variant="danger"
                   size="sm"
-                  className="h-full flex-grow"
-                  onClick={() => deleteAccessGroup(id)}>
-                    Archive
+                  className="h-full grow"
+                  onClick={() => {
+                    deleteAccessGroup(id);
+                  }}
+                >
+                  Archive
                 </Button>
-              }
+              )}
             </div>
           ),
           searchValue: "",
@@ -191,10 +192,12 @@ export const AccessGroups = () => {
     setLoading(true);
 
     // Refresh the table's data
-    makeRequest("/admin/access-group?app=1").then((accessGroups) => {
-      setAccessGroups(accessGroups);
-      setLoading(false);
-    });
+    void makeRequest("/admin/access-group?app=1")
+      .then((response) => {
+        setAccessGroups(response as unknown as AccessGroup[]);
+        setLoading(false);
+      })
+      .catch(handleFailure);
   };
 
   const handleFailure = (res: ResponseBody) => {
@@ -212,13 +215,13 @@ export const AccessGroups = () => {
   // If the user has permission to create, show the create button
   const tableControl = canCreate ? (
     <Link to={`/coordinator/admin/access-groups/create`}>
-      <Button variant="primary">
-          Create +
-      </Button>
+      <Button variant="primary">Create +</Button>
     </Link>
-  ) : <React.Fragment />;
+  ) : (
+    <React.Fragment />
+  );
 
-  const navbar = <AdminNavbar activeView="Access Groups" />
+  const navbar = <AdminNavbar activeView="Access Groups" />;
 
   if (loading) {
     return (
@@ -243,7 +246,8 @@ export const AccessGroups = () => {
           includeControl={true}
           includeSearch={true}
           paginationPer={10}
-          sortDefault="" />
+          sortDefault=""
+        />
       </ListContent>
     </ListView>
   );

@@ -20,14 +20,14 @@ import { APP_ENV } from "../environment";
 import { StudySubjectContextValue } from "./studySubjectContext.types";
 import { Participant, ParticipantApi, ParticipantStudy } from "../types/api";
 
-export const StudySubjectContext = createContext<StudySubjectContextValue | undefined>(undefined);
+export const StudySubjectContext = createContext<
+  StudySubjectContextValue | undefined
+>(undefined);
 
 // StudySubjectProvider component that wraps children with the study subject context.
-export function StudySubjectProvider({
-  children
-}: PropsWithChildren<unknown>) {
+export function StudySubjectProvider({ children }: PropsWithChildren) {
   const [studies, setStudies] = useState<ParticipantStudy[]>([]);
-  const [apis, setApis] = useState<ParticipantApi[]>([])
+  const [apis, setApis] = useState<ParticipantApi[]>([]);
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
 
   // Fetch the participant's enrolled studies and connected APIs
@@ -35,28 +35,41 @@ export function StudySubjectProvider({
     const promises: Promise<void>[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
-      promises.push(getStudySubject().then(([studiesData, apisData]) => {
-        setStudies(studiesData);
-        setApis(apisData);
-      }));
+      promises.push(
+        getStudySubject().then(([studiesData, apisData]) => {
+          setStudies(studiesData);
+          setApis(apisData);
+        })
+      );
     }
 
-    Promise.all(promises).then(() => setStudySubjectLoading(false));
+    Promise.all(promises)
+      .then(() => {
+        setStudySubjectLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error fetching initial study subject data:", error);
+        setStudySubjectLoading(false);
+      });
   }, []);
 
   // Async fetch the participant's enrolled studies and connected APIs
-  const getStudySubject = async (): Promise<[ParticipantStudy[], ParticipantApi[]]> => {
+  const getStudySubject = async (): Promise<
+    [ParticipantStudy[], ParticipantApi[]]
+  > => {
     let studiesData: ParticipantStudy[] = [];
     let apisData: ParticipantApi[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
       await makeRequest(`/participant`)
-        .then((res: Participant) => {
-          studiesData = res.studies;
-          apisData = res.apis;
+        .then((res) => {
+          // Explicitly cast the response type
+          const participantData = res as unknown as Participant;
+          studiesData = participantData.studies;
+          apisData = participantData.apis;
         })
         .catch(() => {
-          console.error("Unable to fetch participant data.")
+          console.error("Unable to fetch participant data.");
         });
     }
 
@@ -70,7 +83,7 @@ export function StudySubjectProvider({
       const [studiesData, apisData] = await getStudySubject();
       setStudies(studiesData);
       setApis(apisData);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to refetch participant data:", error);
     } finally {
       setStudySubjectLoading(false);
@@ -79,8 +92,9 @@ export function StudySubjectProvider({
 
   return (
     <StudySubjectContext.Provider
-      value={{ studies, apis, studySubjectLoading, refetch }}>
-        {children}
+      value={{ studies, apis, studySubjectLoading, refetch }}
+    >
+      {children}
     </StudySubjectContext.Provider>
   );
 }

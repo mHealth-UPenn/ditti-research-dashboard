@@ -1,10 +1,12 @@
 import json
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 from flask import Flask, Response, jsonify
+
 from backend.auth.decorators import (
     participant_auth_required,
-    researcher_auth_required
+    researcher_auth_required,
 )
 
 
@@ -16,11 +18,13 @@ def create_mock_response(data, status_code=200):
     Flask responses without requiring a full app context. Useful for
     creating mock error and success responses in tests.
 
-    Args:
+    Parameters
+    ----------
         data: The response data to be JSON-serialized
         status_code: HTTP status code for the response
 
-    Returns:
+    Returns
+    -------
         A mock Response object with appropriate methods
     """
     response = MagicMock(spec=Response)
@@ -40,7 +44,8 @@ def test_app():
     decorators, allowing tests to verify the decorators' behavior in a
     realistic Flask context.
 
-    Returns:
+    Returns
+    -------
         A configured Flask app for testing
     """
     app = Flask(__name__)

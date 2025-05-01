@@ -32,7 +32,7 @@ export interface AccountMenuProps {
 /**
  * Password error type to handle validation
  */
-export type PasswordError = 
-  | "PASSWORDS_DONT_MATCH" 
-  | "CURRENT_PASSWORD_REQUIRED" 
+export type PasswordError =
+  | "PASSWORDS_DONT_MATCH"
+  | "CURRENT_PASSWORD_REQUIRED"
   | null;

@@ -1,39 +1,69 @@
-from datetime import datetime
+import logging
 import os
-from pprint import pprint
-import random
 import re
+import secrets
 import string
-from typing import Optional, TypedDict
+from datetime import datetime
+from typing import TypedDict
 
 import boto3
-from sqlalchemy import select
 
+import backend.models as m
 from backend.app import create_app
 from backend.extensions import db
-import backend.models as m
 from backend.utils.aws import Query
 
 
 class User(TypedDict):
+    """
+    Type definition for user data from AppSync API.
+
+    Contains fields representing a user record as returned
+    by the AppSync GraphQL API.
+    """
+
     __typename: str
     _lastChangedAt: int
     _version: int
     createdAt: str
-    exp_time: Optional[str]
+    exp_time: str | None
     id: str
-    tap_permission: Optional[bool]
-    team_email: Optional[str]
+    tap_permission: bool | None
+    team_email: str | None
     updatedAt: str
-    user_permission_id: Optional[str]
+    user_permission_id: str | None
 
 
 def generate_temp_password(length=20):
+    """
+    Generate a secure temporary password.
+
+    Creates a random password using letters and digits
+    for temporary user authentication.
+
+    Parameters
+    ----------
+    length : int, optional
+        The length of the password to generate, by default 20
+
+    Returns
+    -------
+    str
+        A randomly generated password
+    """
     characters = string.ascii_letters + string.digits
-    return "".join(random.choice(characters) for i in range(length))
+    return "".join(secrets.choice(characters) for i in range(length))
 
 
 if __name__ == "__main__":
+    # Set up logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        filename="participant_migration.log",
+    )
+    logger = logging.getLogger(__name__)
+
     app = create_app()
     users: list[User] = Query("User").scan()["Items"]
     client = boto3.client("cognito-idp")
@@ -48,7 +78,9 @@ if __name__ == "__main__":
 
                 study_prefix = match[0]
 
-                study = m.Study.query.filter(m.Study.ditti_id == study_prefix).first()
+                study = m.Study.query.filter(
+                    m.Study.ditti_id == study_prefix
+                ).first()
 
                 if not study:
                     continue
@@ -70,8 +102,13 @@ if __name__ == "__main__":
                     UserPoolId=os.getenv("USER_POOL_ID"),
                     Username=user["user_permission_id"],
                     TemporaryPassword=temp_password,
-                    MessageAction="SUPPRESS"
+                    MessageAction="SUPPRESS",
                 )
 
-            except Exception:
+            except Exception as e:
+                logger.error(
+                    f"Error processing user {user.get('user_permission_id')}: "
+                    f"{e!s}",
+                    exc_info=True,
+                )
                 continue

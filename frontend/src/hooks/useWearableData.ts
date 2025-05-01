@@ -16,9 +16,11 @@
  */
 
 import { useContext } from "react";
-import { ParticipantWearableDataContext } from "../contexts/wearableDataContext";
+import {
+  ParticipantWearableDataContext,
+  CoordinatorWearableDataContext,
+} from "../contexts/wearableDataContext";
 import { WearableDataContextValue } from "../contexts/wearableDataContext.types";
-import { CoordinatorWearableDataContext } from "../contexts/wearableDataContext";
 
 // Returns either the participant or coordinator context depending on which provider was used
 export const useWearableData = (): WearableDataContextValue => {

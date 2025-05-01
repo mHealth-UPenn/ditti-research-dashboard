@@ -32,7 +32,12 @@ const COLUMNS: Column[] = [
   { name: "Name", searchable: true, sortable: true, width: 30 },
   { name: "Ditti ID", searchable: true, sortable: true, width: 10 },
   { name: "Email", searchable: true, sortable: true, width: 20 },
-  { name: "Default Enrollment Period", searchable: false, sortable: true, width: 15 },
+  {
+    name: "Default Enrollment Period",
+    searchable: false,
+    sortable: true,
+    width: 15,
+  },
   { name: "QI", searchable: false, sortable: true, width: 5 },
   { name: "", searchable: false, sortable: false, width: 10 },
 ];
@@ -52,10 +57,18 @@ export const Studies = () => {
       try {
         // Check create, edit, and archive permissions
         await Promise.all([
-          getAccess(1, "Create", "Studies").then(() => setCanCreate(true)),
-          getAccess(1, "Edit", "Studies").then(() => setCanEdit(true)),
-          getAccess(1, "Archive", "Studies").then(() => setCanArchive(true)),
-          makeRequest("/admin/study?app=1").then((data) => setStudies(data))
+          getAccess(1, "Create", "Studies").then(() => {
+            setCanCreate(true);
+          }),
+          getAccess(1, "Edit", "Studies").then(() => {
+            setCanEdit(true);
+          }),
+          getAccess(1, "Archive", "Studies").then(() => {
+            setCanArchive(true);
+          }),
+          makeRequest("/admin/study?app=1").then((data) => {
+            setStudies(data as unknown as Study[]);
+          }),
         ]);
       } catch (error) {
         console.error("Error fetching permissions or data", error);
@@ -64,7 +77,7 @@ export const Studies = () => {
       }
     };
 
-    fetchData();
+    void fetchData();
   }, []);
 
   /**
@@ -78,56 +91,58 @@ export const Studies = () => {
         {
           contents: <span>{acronym}</span>,
           searchValue: acronym,
-          sortValue: acronym
+          sortValue: acronym,
         },
         {
           contents: <span>{name}</span>,
           searchValue: name,
-          sortValue: name
+          sortValue: name,
         },
         {
           contents: <span>{dittiId}</span>,
           searchValue: dittiId,
-          sortValue: dittiId
+          sortValue: dittiId,
         },
         {
           contents: <span>{email}</span>,
           searchValue: email,
-          sortValue: email
+          sortValue: email,
         },
         {
           contents: <span>{defaultExpiryDelta} days</span>,
           searchValue: defaultExpiryDelta.toString(),
-          sortValue: defaultExpiryDelta
+          sortValue: defaultExpiryDelta,
         },
         {
           contents: <span>{isQi ? "Yes" : "No"}</span>,
           searchValue: isQi ? "Yes" : "No",
-          sortValue: isQi ? "Yes" : "No"
+          sortValue: isQi ? "Yes" : "No",
         },
         {
           contents: (
-            <div className="flex w-full h-full">
+            <div className="flex size-full">
               {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="h-full flex-grow"
+                  className="h-full grow"
                   fullWidth={true}
-                  fullHeight={true}>
-                    <Link
-                      className="w-full h-full flex items-center justify-center"
-                      to={`/coordinator/admin/studies/edit?id=${id}`}>
-                        Edit
-                    </Link>
+                  fullHeight={true}
+                >
+                  <Link
+                    className="flex size-full items-center justify-center"
+                    to={`/coordinator/admin/studies/edit?id=${String(id)}`}
+                  >
+                    Edit
+                  </Link>
                 </Button>
               )}
               {canArchive && (
                 <Button
                   variant="danger"
                   size="sm"
-                  className="h-full flex-grow"
-                  onClick={() => deleteStudy(id)}
+                  className="h-full grow"
+                  onClick={() => void deleteStudy(id)}
                 >
                   Archive
                 </Button>
@@ -137,8 +152,8 @@ export const Studies = () => {
           searchValue: "",
           sortValue: "",
           paddingX: 0,
-          paddingY: 0
-        }
+          paddingY: 0,
+        },
       ];
     });
   };
@@ -154,25 +169,27 @@ export const Studies = () => {
 
     // Prepare and send the request
     const body = { app: 1, id }; // Admin Dashboard = 1
-    await makeRequest("/admin/study/archive", { 
-      method: "POST", 
-      body: JSON.stringify(body) 
-    }).then(handleSuccess).catch(handleFailure);
+    await makeRequest("/admin/study/archive", {
+      method: "POST",
+      body: JSON.stringify(body),
+    })
+      .then(handleSuccess)
+      .catch(handleFailure);
   };
 
   /**
    * Handle a successful response
    * @param id - the archived study id
    */
-  const handleSuccess = async () => {
+  const handleSuccess = () => {
     flashMessage(<span>Study archived successfully.</span>, "success");
 
     // show the loading screen
     setLoading(true);
 
     // refresh the table's data
-    makeRequest("/admin/study?app=1").then((studies) => {
-      setStudies(studies);
+    void makeRequest("/admin/study?app=1").then((studies) => {
+      setStudies(studies as unknown as Study[]);
       setLoading(false);
     });
   };
@@ -194,15 +211,13 @@ export const Studies = () => {
 
   const tableControl = canCreate ? (
     <Link to={`/coordinator/admin/studies/create`}>
-      <Button variant="primary">
-        Create +
-      </Button>
+      <Button variant="primary">Create +</Button>
     </Link>
   ) : (
     <React.Fragment />
   );
 
-  const navbar = <AdminNavbar activeView="Studies" />
+  const navbar = <AdminNavbar activeView="Studies" />;
 
   if (loading) {
     return (

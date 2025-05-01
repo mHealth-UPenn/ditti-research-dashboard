@@ -30,7 +30,9 @@ import { Link } from "react-router-dom";
 import { WearableStudyDetails } from "./wearableDashboard.types";
 
 export function WearableStudies() {
-  const [canViewWearableData, setCanViewWearableData] = useState<Set<number>>(new Set());
+  const [canViewWearableData, setCanViewWearableData] = useState<Set<number>>(
+    new Set()
+  );
   const [loading, setLoading] = useState(true);
 
   const { studies, studiesLoading } = useStudies();
@@ -41,18 +43,20 @@ export function WearableStudies() {
   for (const ss of studySubjects) {
     // Count `hasApi` if the current subject has at least 1 API connected and is active in at least one study
     const hasApi = Number(
-      ss.apis.length &&
-      ss.studies.some(s => new Date(s.expiresOn) > new Date())
+      Boolean(ss.apis.length) &&
+        ss.studies.some((s) => new Date(s.expiresOn) > new Date())
     );
 
     for (const join of ss.studies) {
-      if (wearableDetails[join.study.id]) {
+      if (
+        Object.prototype.hasOwnProperty.call(wearableDetails, join.study.id)
+      ) {
         wearableDetails[join.study.id].numSubjects += 1;
         wearableDetails[join.study.id].numSubjectsWithApi += hasApi;
       } else {
         wearableDetails[join.study.id] = {
           numSubjects: 1,
-          numSubjectsWithApi: hasApi
+          numSubjectsWithApi: hasApi,
         };
       }
     }
@@ -60,10 +64,10 @@ export function WearableStudies() {
 
   // Get which studies the current user can view wearable data for on load
   useEffect(() => {
-    const updatedCanViewWearableData: Set<number> = new Set();
+    const updatedCanViewWearableData = new Set<number>();
     const promises: Promise<unknown>[] = [];
 
-    studies.forEach(s =>
+    studies.forEach((s) =>
       promises.push(
         getAccess(3, "View", "Wearable Data", s.id)
           .then(() => updatedCanViewWearableData.add(s.id))
@@ -71,10 +75,14 @@ export function WearableStudies() {
       )
     );
 
-    Promise.all(promises).then(() => {
-      setCanViewWearableData(updatedCanViewWearableData);
-    }).catch(console.error)
-    .finally(() => setLoading(false));
+    Promise.all(promises)
+      .then(() => {
+        setCanViewWearableData(updatedCanViewWearableData);
+      })
+      .catch(console.error)
+      .finally(() => {
+        setLoading(false);
+      });
   }, [studies]);
 
   if (loading || studiesLoading || studySubjectLoading) {
@@ -99,20 +107,20 @@ export function WearableStudies() {
             return (
               <CardContentRow key={s.id} className="border-b border-light">
                 <div className="flex items-start">
-
                   {/* Active icon */}
-                  {canViewWearableData.has(s.id) ?
-                    <ActiveIcon active={true} className="mr-2" /> :
+                  {canViewWearableData.has(s.id) ? (
+                    <ActiveIcon active={true} className="mr-2" />
+                  ) : (
                     // Optimistic hydration
                     <ActiveIcon active={false} className="mr-2" />
-                  }
+                  )}
 
                   {/* link to study summary */}
                   <div className="flex flex-col">
-                    <Link to={`/coordinator/wearable/study?sid=${s.id}`}>
-                      <LinkComponent>
-                        {s.acronym}
-                      </LinkComponent>
+                    <Link
+                      to={`/coordinator/wearable/study?sid=${String(s.id)}`}
+                    >
+                      <LinkComponent>{s.acronym}</LinkComponent>
                     </Link>
                     <span className="text-sm">{s.name}</span>
                   </div>
@@ -121,18 +129,16 @@ export function WearableStudies() {
                 {/* Study summary details */}
                 <div className="flex flex-col">
                   <div className="text-sm font-bold">
-                    {
-                      s.id in wearableDetails
-                        ? wearableDetails[s.id].numSubjectsWithApi
-                        : 0
-                    } subjects with connected APIs
+                    {s.id in wearableDetails
+                      ? wearableDetails[s.id].numSubjectsWithApi
+                      : 0}{" "}
+                    subjects with connected APIs
                   </div>
                   <div className="text-sm">
-                    {
-                      s.id in wearableDetails
-                        ? wearableDetails[s.id].numSubjects
-                        : 0
-                    } enrolled subjects
+                    {s.id in wearableDetails
+                      ? wearableDetails[s.id].numSubjects
+                      : 0}{" "}
+                    enrolled subjects
                   </div>
                 </div>
               </CardContentRow>

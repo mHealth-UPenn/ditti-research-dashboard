@@ -36,52 +36,62 @@ export function WearableStudySubjects({
   const { study } = useStudies();
 
   // Get only study subjects with prefixes that equal the current study's prefix
-  const studySubjectsFiltered = studySubjects.filter(ss => new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId));
+  const studySubjectsFiltered = studySubjects.filter((ss) => {
+    const prefix = String(studyDetails.dittiId);
+    return new RegExp(`^${prefix}\\d`).test(ss.dittiId);
+  });
 
-  const getSubjectSummary = (subject: StudySubjectModel): React.ReactElement => {
+  const getSubjectSummary = (
+    subject: StudySubjectModel
+  ): React.ReactElement => {
     const { expiresOn } = getEnrollmentInfoForStudy(subject, study?.id);
     const expiresOnDiff = differenceInDays(new Date(expiresOn), new Date());
 
     return (
-      <CardContentRow
-        key={subject.dittiId}
-        className="border-b border-light">
-          <div className="flex flex-col">
-            <div className="flex items-center">
+      <CardContentRow key={subject.dittiId} className="border-b border-light">
+        <div className="flex flex-col">
+          <div className="flex items-center">
+            {/* Active icon */}
+            {canViewWearableData && (
+              <ActiveIcon active={true} className="mr-2" />
+            )}
 
-              {/* Active icon */}
-              {canViewWearableData && <ActiveIcon active={true} className="mr-2" />}
-
-              {/* Link to the subject's visualization */}
-              {canViewWearableData && subject.apis.length ?
-                <Link to={`/coordinator/wearable/participants/view?dittiId=${subject.dittiId}&sid=${studyDetails.id}`}>
-                  <LinkComponent>
-                    {subject.dittiId}
-                  </LinkComponent>
-                </Link> :
-                <span>{subject.dittiId}</span>
-              }
-            </div>
-            <i className="w-max">Enrollment ends in: {expiresOnDiff ? expiresOnDiff + " days" : "Today"}</i>
+            {/* Link to the subject's visualization */}
+            {canViewWearableData && subject.apis.length ? (
+              <Link
+                to={`/coordinator/wearable/participants/view?dittiId=${subject.dittiId}&sid=${String(studyDetails.id)}`}
+              >
+                <LinkComponent>{subject.dittiId}</LinkComponent>
+              </Link>
+            ) : (
+              <span>{subject.dittiId}</span>
+            )}
           </div>
+          <i className="w-max">
+            Enrollment ends in:{" "}
+            {expiresOnDiff ? `${String(expiresOnDiff)} days` : "Today"}
+          </i>
+        </div>
 
-          {/* A list of connected APIs for the current study subject */}
-          {canViewWearableData &&
-            <div className="flex flex-grow-0 overflow-x-hidden">
-              <div className="hidden md:flex items-center">
-                {subject.apis.length ?
-                  subject.apis.map((api, i) =>
-                    <span
-                      className={i ? "border-l border-light ml-2 pl-2" : ""}
-                      key={api.api.id}>
-                        {api.api.name}
-                    </span>
-                  ) :
-                  <span>No APIs connected</span>
-                }
-              </div>
+        {/* A list of connected APIs for the current study subject */}
+        {canViewWearableData && (
+          <div className="flex grow-0 overflow-x-hidden">
+            <div className="hidden items-center md:flex">
+              {subject.apis.length ? (
+                subject.apis.map((api, i) => (
+                  <span
+                    className={i ? "ml-2 border-l border-light pl-2" : ""}
+                    key={api.api.id}
+                  >
+                    {api.api.name}
+                  </span>
+                ))
+              ) : (
+                <span>No APIs connected</span>
+              )}
             </div>
-          }
+          </div>
+        )}
       </CardContentRow>
     );
   };
@@ -92,7 +102,9 @@ export function WearableStudySubjects({
 
   return (
     <>
-      {studySubjectsFiltered.length ? studySubjectsFiltered.map(getSubjectSummary) : "No active subjects"}
+      {studySubjectsFiltered.length
+        ? studySubjectsFiltered.map(getSubjectSummary)
+        : "No active subjects"}
     </>
   );
 }

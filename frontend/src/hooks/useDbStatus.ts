@@ -35,22 +35,28 @@ export const useDbStatus = () => {
     const touch = async (): Promise<string> => {
       try {
         const res: ResponseBody = await makeRequest("/touch");
-        if (res.msg === "OK") setLoadingDb(false);
-        if (res.msg === "OK" && intervalId) clearInterval(intervalId);
+        if (res.msg === "OK") {
+          setLoadingDb(false);
+          clearInterval(intervalId);
+        }
         return res.msg;
       } catch {
         return "Error";
       }
     };
 
-    touch().then((msg: string) => {
+    // Use void to explicitly mark promise as intentionally not awaited
+    void (async () => {
+      const msg = await touch();
       if (msg !== "OK") {
-        intervalId = setInterval(() => touch(), 2000);
+        intervalId = setInterval(() => {
+          void touch();
+        }, 2000);
       }
-    });
+    })();
 
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      clearInterval(intervalId);
     };
   }, []);
 

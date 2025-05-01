@@ -21,13 +21,15 @@ import { LinkComponentProps } from "./linkComponent.types";
 export const LinkComponent = ({
   onClick,
   className = "",
-  children
+  children,
 }: PropsWithChildren<LinkComponentProps>) => {
   return (
     <span
-      className={`${className} text-link underline hover:text-link-hover cursor-pointer`}
-      onClick={onClick}>
-        {children}
+      className={`${className} cursor-pointer text-link underline
+        hover:text-link-hover`}
+      onClick={onClick}
+    >
+      {children}
     </span>
   );
 };

@@ -5,12 +5,12 @@ Revises: 65a966f12056
 Create Date: 2025-03-13 10:40:56.374645
 
 """
-from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.sql import table, column
-import uuid
 import re
+import uuid
 
+import sqlalchemy as sa
+from alembic import op
+from sqlalchemy.sql import column, table
 
 # revision identifiers, used by Alembic.
 revision = '1ea7fa443990'

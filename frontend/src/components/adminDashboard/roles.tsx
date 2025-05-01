@@ -38,51 +38,71 @@ export const Roles = () => {
       name: "Name",
       searchable: true,
       sortable: true,
-      width: 15
+      width: 15,
     },
     {
       name: "Permissions",
       searchable: false,
       sortable: false,
-      width: 75
+      width: 75,
     },
     {
       name: "",
       searchable: false,
       sortable: false,
-      width: 10
-    }
+      width: 10,
+    },
   ]);
   const [loading, setLoading] = useState<boolean>(true);
   const { flashMessage } = useFlashMessages();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = () => {
       // check whether the user has permission to create
       const create = getAccess(1, "Create", "Roles")
-        .then(() => setCanCreate(true))
-        .catch(() => setCanCreate(false));
+        .then(() => {
+          setCanCreate(true);
+        })
+        .catch(() => {
+          setCanCreate(false);
+        });
 
       // check whether the user has permissions to edit
       const edit = getAccess(1, "Edit", "Roles")
-        .then(() => setCanEdit(true))
-        .catch(() => setCanEdit(false));
+        .then(() => {
+          setCanEdit(true);
+        })
+        .catch(() => {
+          setCanEdit(false);
+        });
 
       // check whether the user has permissions to archive
       const archive = getAccess(1, "Archive", "Roles")
-        .then(() => setCanArchive(true))
-        .catch(() => setCanArchive(false));
+        .then(() => {
+          setCanArchive(true);
+        })
+        .catch(() => {
+          setCanArchive(false);
+        });
 
       // get the table's data
-      const rolesData = makeRequest("/admin/role?app=1").then((roles) => {
-        setRoles(roles);
-      });
+      const rolesData = makeRequest("/admin/role?app=1").then(
+        (response: ResponseBody) => {
+          setRoles(response as unknown as Role[]);
+        }
+      );
 
       // when all requests are complete, hide the loading screen
-      Promise.all([create, edit, archive, rolesData]).then(() => {
-        setLoading(false);
-      });
+      Promise.all([create, edit, archive, rolesData])
+        .then(() => {
+          setLoading(false);
+        })
+        .catch((error: unknown) => {
+          console.error("Error fetching data:", error);
+          setLoading(false);
+        });
     };
+
     fetchData();
   }, []);
 
@@ -98,11 +118,9 @@ export const Roles = () => {
       // map each row to a set of cells for each table column
       return [
         {
-          contents: (
-            <span>{name}</span>
-          ),
+          contents: <span>{name}</span>,
           searchValue: name,
-          sortValue: name
+          sortValue: name,
         },
         {
           contents: (
@@ -118,41 +136,46 @@ export const Roles = () => {
             </span>
           ),
           searchValue: "",
-          sortValue: ""
+          sortValue: "",
         },
         {
           contents: (
-            <div className="flex w-full h-full">
-              {canEdit &&
+            <div className="flex size-full">
+              {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="h-full flex-grow"
+                  className="h-full grow"
                   fullWidth={true}
-                  fullHeight={true}>
-                    <Link
-                      className="w-full h-full flex items-center justify-center"
-                      to={`/coordinator/admin/roles/edit?id=${id}`}>
-                        Edit
-                    </Link>
+                  fullHeight={true}
+                >
+                  <Link
+                    className="flex size-full items-center justify-center"
+                    to={`/coordinator/admin/roles/edit?id=${String(id)}`}
+                  >
+                    Edit
+                  </Link>
                 </Button>
-              }
-              {canArchive &&
+              )}
+              {canArchive && (
                 <Button
                   variant="danger"
                   size="sm"
-                  className="h-full flex-grow"
-                  onClick={() => deleteRole(id)}>
-                    Archive
+                  className="h-full grow"
+                  onClick={() => {
+                    deleteRole(id);
+                  }}
+                >
+                  Archive
                 </Button>
-              }
+              )}
             </div>
           ),
           searchValue: "",
           sortValue: "",
           paddingX: 0,
           paddingY: 0,
-        }
+        },
       ];
     });
   };
@@ -186,10 +209,15 @@ export const Roles = () => {
     setLoading(true);
 
     // refresh the table's data
-    makeRequest("/admin/role?app=1").then((roles) => {
-      setRoles(roles);
-      setLoading(false);
-    });
+    makeRequest("/admin/role?app=1")
+      .then((response: ResponseBody) => {
+        setRoles(response as unknown as Role[]);
+        setLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error refreshing roles:", error);
+        setLoading(false);
+      });
   };
 
   /**
@@ -212,9 +240,7 @@ export const Roles = () => {
   // if the user has permission to create, show the create button
   const tableControl = canCreate ? (
     <Link to={`/coordinator/admin/roles/create`}>
-      <Button variant="primary">
-          Create +
-      </Button>
+      <Button variant="primary">Create +</Button>
     </Link>
   ) : (
     <></>
@@ -245,7 +271,8 @@ export const Roles = () => {
           includeControl={true}
           includeSearch={true}
           paginationPer={10}
-          sortDefault="" />
+          sortDefault=""
+        />
       </ListContent>
     </ListView>
   );

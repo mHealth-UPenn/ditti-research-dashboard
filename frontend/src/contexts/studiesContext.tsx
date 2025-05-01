@@ -15,21 +15,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { createContext, useState, useEffect, PropsWithChildren, useMemo } from "react";
+import {
+  createContext,
+  useState,
+  useEffect,
+  PropsWithChildren,
+  useMemo,
+  useCallback,
+} from "react";
 import { makeRequest } from "../utils";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
 import { useNavbar } from "../hooks/useNavbar";
 import { useSearchParams } from "react-router-dom";
-import { StudiesContextValue, StudiesProviderProps } from "./studiesContext.types";
+import {
+  StudiesContextValue,
+  StudiesProviderProps,
+} from "./studiesContext.types";
 import { Study } from "../types/api";
 
-export const StudiesContext = createContext<StudiesContextValue | undefined>(undefined);
+export const StudiesContext = createContext<StudiesContextValue | undefined>(
+  undefined
+);
 
 // StudiesProvider component that wraps children with studies context.
 export function StudiesProvider({
   app,
-  children
+  children,
 }: PropsWithChildren<StudiesProviderProps>) {
   const [searchParams] = useSearchParams();
   const sid = searchParams.get("sid");
@@ -48,45 +60,53 @@ export function StudiesProvider({
   }, []);
 
   // Make an sync request to get studies from the database
-  const getStudiesAsync = async (): Promise<Study[]> => {
+  const getStudiesAsync = useCallback(async (): Promise<Study[]> => {
     let studies: Study[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
-      studies = await makeRequest(`/db/get-studies?app=${app}`)
-        .catch(() => {
-          console.error("Unable to fetch studies data. Check account permissions.")
+      // Explicitly cast the response type and convert app to string
+      studies = (await makeRequest(`/db/get-studies?app=${String(app)}`).catch(
+        () => {
+          console.error(
+            "Unable to fetch studies data. Check account permissions."
+          );
           return [];
-        });
+        }
+      )) as unknown as Study[];
     } else if (dataFactory) {
       studies = dataFactory.studies;
     }
 
     return studies;
-  };
+  }, [app, dataFactory]);
 
   // Fetch studies on load
   useEffect(() => {
     if (APP_ENV === "production" || APP_ENV === "development") {
-      getStudiesAsync().then(studies => {
-        setStudies(studies)
-        const study = studies.find(s => s.id === studyId);
-        if (study) {
-          setStudy(study);
-          setStudySlug(study.acronym);
-          setSidParam(study.id.toString());
-        }
-        setStudiesLoading(false)
-      });
+      getStudiesAsync()
+        .then((studies) => {
+          setStudies(studies);
+          const study = studies.find((s) => s.id === studyId);
+          if (study) {
+            setStudy(study);
+            setStudySlug(study.acronym);
+            setSidParam(study.id.toString());
+          }
+          setStudiesLoading(false);
+        })
+        .catch((error: unknown) => {
+          console.error("Error fetching studies:", error);
+          setStudiesLoading(false); // Ensure loading is false on error
+        });
     } else if (APP_ENV === "demo" && dataFactory) {
       setStudies(dataFactory.studies);
       setStudiesLoading(false);
     }
-  }, [studyId]);
+  }, [studyId, dataFactory, getStudiesAsync, setSidParam, setStudySlug]);
 
   return (
-    <StudiesContext.Provider
-      value={{ studies, studiesLoading, study }}>
-        {children}
+    <StudiesContext.Provider value={{ studies, studiesLoading, study }}>
+      {children}
     </StudiesContext.Provider>
   );
 }
