@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from sqlalchemy import tuple_
 
