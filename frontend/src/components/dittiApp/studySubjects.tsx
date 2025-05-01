@@ -137,7 +137,7 @@ export const StudySubjects: React.FC<StudySubjectsProps> = ({
             {/* link to the studySubject's summary page */}
             {canViewTaps ? (
               <Link
-                to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${study.id}`}
+                to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${String(study.id)}`}
               >
                 <LinkComponent>{studySubject.dittiId}</LinkComponent>
               </Link>
@@ -147,7 +147,7 @@ export const StudySubjects: React.FC<StudySubjectsProps> = ({
           </div>
           <i className="w-max">
             Enrollment ends in:{" "}
-            {expiresOnDiff ? expiresOnDiff + " days" : "Today"}
+            {expiresOnDiff ? `${String(expiresOnDiff)} days` : "Today"}
           </i>
           {/* summary tap data */}
         </div>

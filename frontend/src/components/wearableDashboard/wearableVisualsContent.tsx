@@ -62,7 +62,9 @@ function useWindowDimensions() {
     }
 
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   return windowDimensions;
@@ -102,28 +104,34 @@ export function WearableVisualsContent({
     if (study) {
       const promises: Promise<unknown>[] = [];
       promises.push(
-        getAccess(3, "Edit", "Participants", study.id).then(() =>
-          setCanEdit(true)
-        )
+        getAccess(3, "Edit", "Participants", study.id).then(() => {
+          setCanEdit(true);
+        })
       );
       promises.push(
-        getAccess(3, "Invoke", "Data Retrieval Task", study.id).then(() =>
-          setCanInvoke(true)
-        )
+        getAccess(3, "Invoke", "Data Retrieval Task", study.id).then(() => {
+          setCanInvoke(true);
+        })
       );
       promises.push(
-        getAccess(3, "View", "Taps", study.id).then(() => setCanViewTaps(true))
+        getAccess(3, "View", "Taps", study.id).then(() => {
+          setCanViewTaps(true);
+        })
       );
 
       Promise.all(promises)
-        .then(() => setLoading(false))
-        .catch(() => setLoading(false));
+        .then(() => {
+          setLoading(false);
+        })
+        .catch(() => {
+          setLoading(false);
+        });
     }
   }, [study]);
 
   // Download the current participant's data in Excel format.
   const downloadExcel = async (): Promise<void> => {
-    const url = `/admin/fitbit_data/download/participant/${studySubject?.dittiId}?app=3`;
+    const url = `/admin/fitbit_data/download/participant/${studySubject?.dittiId ?? ""}?app=3`;
     const res = await downloadExcelFromUrl(url);
     if (res) {
       flashMessage(<span>{res}</span>, "danger");
@@ -164,14 +172,14 @@ export function WearableVisualsContent({
                 <Button
                   variant="secondary"
                   className="mr-2"
-                  onClick={downloadExcel}
+                  onClick={() => void downloadExcel()}
                   rounded={true}
                 >
                   Download Excel
                 </Button>
                 {/* if the user can edit, show the edit button */}
                 <Link
-                  to={`/coordinator/wearable/participants/edit?dittiId=${studySubject?.dittiId}&sid=${study?.id}`}
+                  to={`/coordinator/wearable/participants/edit?dittiId=${studySubject?.dittiId ?? ""}&sid=${study?.id !== undefined ? String(study.id) : "0"}`}
                 >
                   <Button
                     variant="secondary"
@@ -189,7 +197,7 @@ export function WearableVisualsContent({
                   variant="secondary"
                   onClick={syncData}
                   rounded={true}
-                  disabled={isSyncing || !canInvoke}
+                  disabled={isSyncing === true || !canInvoke}
                 >
                   <span className="mr-2">
                     {isSyncing && canInvoke ? "Data Syncing..." : "Sync Data"}
@@ -210,7 +218,7 @@ export function WearableVisualsContent({
           <WearableVisualization
             showDayControls={true}
             showTapsData={canViewTaps}
-            dittiId={studySubject?.dittiId}
+            dittiId={studySubject?.dittiId ?? ""}
             horizontalPadding={md}
           />
         </CardContentRow>

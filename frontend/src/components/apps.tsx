@@ -71,7 +71,9 @@ export const Apps = () => {
     });
 
     // when all promises resolve, hide the loader
-    Promise.all([admin, ditti, wear]).then(() => setLoading(false));
+    void Promise.all([admin, ditti, wear]).then(() => {
+      setLoading(false);
+    });
   }, []);
 
   if (loading) {

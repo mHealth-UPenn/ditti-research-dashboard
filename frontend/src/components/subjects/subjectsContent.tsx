@@ -47,7 +47,7 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
   const appSlug = app === 2 ? "ditti" : "wearable";
 
   const filteredStudySubjects = studySubjects.filter((ss) =>
-    ss.dittiId.startsWith(study?.dittiId || "undefined")
+    ss.dittiId.startsWith(study?.dittiId ?? "undefined")
   );
 
   const columns: Column[] = [
@@ -94,29 +94,52 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
       const promises: Promise<void>[] = [];
       promises.push(
         getAccess(app, "Create", "Participants", study.id)
-          .then(() => setCanCreate(true))
-          .catch(() => setCanCreate(false))
+          .then(() => {
+            setCanCreate(true);
+          })
+          .catch(() => {
+            setCanCreate(false);
+          })
       );
 
       promises.push(
         getAccess(app, "Edit", "Participants", study.id)
-          .then(() => setCanEdit(true))
-          .catch(() => setCanEdit(false))
+          .then(() => {
+            setCanEdit(true);
+          })
+          .catch(() => {
+            setCanEdit(false);
+          })
       );
 
       promises.push(
         getAccess(app, "View", "Taps", study.id)
-          .then(() => setCanViewTaps(true))
-          .catch(() => setCanViewTaps(false))
+          .then(() => {
+            setCanViewTaps(true);
+          })
+          .catch(() => {
+            setCanViewTaps(false);
+          })
       );
 
       promises.push(
         getAccess(app, "View", "Wearable Data", study.id)
-          .then(() => setCanViewWearableData(true))
-          .catch(() => setCanViewWearableData(false))
+          .then(() => {
+            setCanViewWearableData(true);
+          })
+          .catch(() => {
+            setCanViewWearableData(false);
+          })
       );
 
-      Promise.all(promises).then(() => setLoading(false));
+      Promise.all(promises)
+        .then(() => {
+          setLoading(false);
+        })
+        .catch((error: unknown) => {
+          console.error("Error checking access:", error);
+          setLoading(false);
+        });
     }
   }, [study]);
 
@@ -139,13 +162,13 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
             <>
               {app === 2 && studySubject.tapPermission && canViewTaps ? (
                 <Link
-                  to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}
+                  to={`/coordinator/ditti/participants/view?dittiId=${studySubject.dittiId}&sid=${String(study?.id)}`}
                 >
                   <LinkComponent>{studySubject.dittiId}</LinkComponent>
                 </Link>
               ) : studySubject.apis.length && canViewWearableData ? (
                 <Link
-                  to={`/coordinator/wearable/participants/view?dittiId=${studySubject.dittiId}&sid=${study?.id}`}
+                  to={`/coordinator/wearable/participants/view?dittiId=${studySubject.dittiId}&sid=${String(study?.id)}`}
                 >
                   <LinkComponent>{studySubject.dittiId}</LinkComponent>
                 </Link>
@@ -202,7 +225,7 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
               >
                 <Link
                   className="flex h-full w-full items-center justify-center"
-                  to={`/coordinator/${appSlug}/participants/edit?dittiId=${studySubject.dittiId}&sid=${study?.id}`}
+                  to={`/coordinator/${appSlug}/participants/edit?dittiId=${studySubject.dittiId}&sid=${String(study?.id)}`}
                 >
                   Edit
                 </Link>
@@ -220,7 +243,9 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
 
   // if the user can enroll subjects, include an enroll button
   const tableControl = (
-    <Link to={`/coordinator/${appSlug}/participants/enroll?sid=${study?.id}`}>
+    <Link
+      to={`/coordinator/${appSlug}/participants/enroll?sid=${String(study?.id)}`}
+    >
       <Button disabled={!(canCreate || APP_ENV === "demo")} rounded={true}>
         Enroll +
       </Button>

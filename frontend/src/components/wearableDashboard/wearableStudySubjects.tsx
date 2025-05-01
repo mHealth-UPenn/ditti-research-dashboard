@@ -36,9 +36,10 @@ export function WearableStudySubjects({
   const { study } = useStudies();
 
   // Get only study subjects with prefixes that equal the current study's prefix
-  const studySubjectsFiltered = studySubjects.filter((ss) =>
-    new RegExp(`^${studyDetails.dittiId}\\d`).test(ss.dittiId)
-  );
+  const studySubjectsFiltered = studySubjects.filter((ss) => {
+    const prefix = String(studyDetails.dittiId);
+    return new RegExp(`^${prefix}\\d`).test(ss.dittiId);
+  });
 
   const getSubjectSummary = (
     subject: StudySubjectModel
@@ -58,7 +59,7 @@ export function WearableStudySubjects({
             {/* Link to the subject's visualization */}
             {canViewWearableData && subject.apis.length ? (
               <Link
-                to={`/coordinator/wearable/participants/view?dittiId=${subject.dittiId}&sid=${studyDetails.id}`}
+                to={`/coordinator/wearable/participants/view?dittiId=${subject.dittiId}&sid=${String(studyDetails.id)}`}
               >
                 <LinkComponent>{subject.dittiId}</LinkComponent>
               </Link>
@@ -68,7 +69,7 @@ export function WearableStudySubjects({
           </div>
           <i className="w-max">
             Enrollment ends in:{" "}
-            {expiresOnDiff ? expiresOnDiff + " days" : "Today"}
+            {expiresOnDiff ? `${String(expiresOnDiff)} days` : "Today"}
           </i>
         </div>
 

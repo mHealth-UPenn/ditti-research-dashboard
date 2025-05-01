@@ -81,19 +81,29 @@ export const AudioFiles = () => {
     // Get whether user can upload audio files
     promises.push(
       getAccess(2, "Create", "Participants")
-        .then(() => setCanCreateAudioFiles(true))
-        .catch(() => setCanCreateAudioFiles(false))
+        .then(() => {
+          setCanCreateAudioFiles(true);
+        })
+        .catch(() => {
+          setCanCreateAudioFiles(false);
+        })
     );
 
     // get whether the user can edit subjects
     promises.push(
       getAccess(2, "Delete", "Audio Files")
-        .then(() => setCanDeleteAudioFiles(true))
-        .catch(() => setCanDeleteAudioFiles(false))
+        .then(() => {
+          setCanDeleteAudioFiles(true);
+        })
+        .catch(() => {
+          setCanDeleteAudioFiles(false);
+        })
     );
 
     // when all promises complete, hide the loader
-    Promise.all(promises).then(() => setLoading(false));
+    void Promise.all(promises).then(() => {
+      setLoading(false);
+    });
   }, []);
 
   const handleDelete = async (id: string, _version: number, name: string) => {
@@ -111,16 +121,18 @@ export const AudioFiles = () => {
         setLoading(true);
 
         refreshAudioFiles()
-          .then(() => setLoading(false))
-          .catch(() =>
+          .then(() => {
+            setLoading(false);
+          })
+          .catch(() => {
             flashMessage(
               <span>
                 And error occurred while reloading the page. Please refresh and
                 try again.
               </span>,
               "danger"
-            )
-          );
+            );
+          });
       } catch (error) {
         console.error(error);
         const e = error as { msg: string };
@@ -153,12 +165,12 @@ export const AudioFiles = () => {
         {
           contents: <span>{title}</span>,
           searchValue: title,
-          sortValue: title ? title : "",
+          sortValue: title ?? "",
         },
         {
           contents: <span>{category}</span>,
           searchValue: category,
-          sortValue: category ? category : "",
+          sortValue: category ?? "",
         },
         {
           contents: (
@@ -187,7 +199,7 @@ export const AudioFiles = () => {
           contents: (
             <span>
               {length
-                ? `${parseInt((length / 60).toString())}:${(length % 60).toString().padStart(2, "0")}`
+                ? `${parseInt((length / 60).toString()).toString()}:${(length % 60).toString().padStart(2, "0")}`
                 : ""}
             </span>
           ),
@@ -203,7 +215,7 @@ export const AudioFiles = () => {
                 size="sm"
                 className="h-full flex-grow"
                 onClick={() =>
-                  handleDelete(id || "", _version || 0, fileName || "")
+                  void handleDelete(id ?? "", _version ?? 0, fileName ?? "")
                 }
                 disabled={!canDeleteAudioFiles}
               >

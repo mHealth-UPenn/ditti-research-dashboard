@@ -57,32 +57,52 @@ export const Roles = () => {
   const { flashMessage } = useFlashMessages();
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchData = () => {
       // check whether the user has permission to create
       const create = getAccess(1, "Create", "Roles")
-        .then(() => setCanCreate(true))
-        .catch(() => setCanCreate(false));
+        .then(() => {
+          setCanCreate(true);
+        })
+        .catch(() => {
+          setCanCreate(false);
+        });
 
       // check whether the user has permissions to edit
       const edit = getAccess(1, "Edit", "Roles")
-        .then(() => setCanEdit(true))
-        .catch(() => setCanEdit(false));
+        .then(() => {
+          setCanEdit(true);
+        })
+        .catch(() => {
+          setCanEdit(false);
+        });
 
       // check whether the user has permissions to archive
       const archive = getAccess(1, "Archive", "Roles")
-        .then(() => setCanArchive(true))
-        .catch(() => setCanArchive(false));
+        .then(() => {
+          setCanArchive(true);
+        })
+        .catch(() => {
+          setCanArchive(false);
+        });
 
       // get the table's data
-      const rolesData = makeRequest("/admin/role?app=1").then((roles) => {
-        setRoles(roles);
-      });
+      const rolesData = makeRequest("/admin/role?app=1").then(
+        (response: ResponseBody) => {
+          setRoles(response as unknown as Role[]);
+        }
+      );
 
       // when all requests are complete, hide the loading screen
-      Promise.all([create, edit, archive, rolesData]).then(() => {
-        setLoading(false);
-      });
+      Promise.all([create, edit, archive, rolesData])
+        .then(() => {
+          setLoading(false);
+        })
+        .catch((error: unknown) => {
+          console.error("Error fetching data:", error);
+          setLoading(false);
+        });
     };
+
     fetchData();
   }, []);
 
@@ -131,7 +151,7 @@ export const Roles = () => {
                 >
                   <Link
                     className="flex h-full w-full items-center justify-center"
-                    to={`/coordinator/admin/roles/edit?id=${id}`}
+                    to={`/coordinator/admin/roles/edit?id=${String(id)}`}
                   >
                     Edit
                   </Link>
@@ -142,7 +162,9 @@ export const Roles = () => {
                   variant="danger"
                   size="sm"
                   className="h-full flex-grow"
-                  onClick={() => deleteRole(id)}
+                  onClick={() => {
+                    deleteRole(id);
+                  }}
                 >
                   Archive
                 </Button>
@@ -187,10 +209,15 @@ export const Roles = () => {
     setLoading(true);
 
     // refresh the table's data
-    makeRequest("/admin/role?app=1").then((roles) => {
-      setRoles(roles);
-      setLoading(false);
-    });
+    makeRequest("/admin/role?app=1")
+      .then((response: ResponseBody) => {
+        setRoles(response as unknown as Role[]);
+        setLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error refreshing roles:", error);
+        setLoading(false);
+      });
   };
 
   /**

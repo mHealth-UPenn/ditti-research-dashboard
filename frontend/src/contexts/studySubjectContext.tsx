@@ -25,7 +25,7 @@ export const StudySubjectContext = createContext<
 >(undefined);
 
 // StudySubjectProvider component that wraps children with the study subject context.
-export function StudySubjectProvider({ children }: PropsWithChildren<unknown>) {
+export function StudySubjectProvider({ children }: PropsWithChildren) {
   const [studies, setStudies] = useState<ParticipantStudy[]>([]);
   const [apis, setApis] = useState<ParticipantApi[]>([]);
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
@@ -43,7 +43,14 @@ export function StudySubjectProvider({ children }: PropsWithChildren<unknown>) {
       );
     }
 
-    Promise.all(promises).then(() => setStudySubjectLoading(false));
+    Promise.all(promises)
+      .then(() => {
+        setStudySubjectLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error fetching initial study subject data:", error);
+        setStudySubjectLoading(false);
+      });
   }, []);
 
   // Async fetch the participant's enrolled studies and connected APIs
@@ -55,9 +62,11 @@ export function StudySubjectProvider({ children }: PropsWithChildren<unknown>) {
 
     if (APP_ENV === "production" || APP_ENV === "development") {
       await makeRequest(`/participant`)
-        .then((res: Participant) => {
-          studiesData = res.studies;
-          apisData = res.apis;
+        .then((res) => {
+          // Explicitly cast the response type
+          const participantData = res as unknown as Participant;
+          studiesData = participantData.studies;
+          apisData = participantData.apis;
         })
         .catch(() => {
           console.error("Unable to fetch participant data.");
@@ -74,7 +83,7 @@ export function StudySubjectProvider({ children }: PropsWithChildren<unknown>) {
       const [studiesData, apisData] = await getStudySubject();
       setStudies(studiesData);
       setApis(apisData);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Failed to refetch participant data:", error);
     } finally {
       setStudySubjectLoading(false);

@@ -43,12 +43,14 @@ export function WearableStudies() {
   for (const ss of studySubjects) {
     // Count `hasApi` if the current subject has at least 1 API connected and is active in at least one study
     const hasApi = Number(
-      ss.apis.length &&
+      Boolean(ss.apis.length) &&
         ss.studies.some((s) => new Date(s.expiresOn) > new Date())
     );
 
     for (const join of ss.studies) {
-      if (wearableDetails[join.study.id]) {
+      if (
+        Object.prototype.hasOwnProperty.call(wearableDetails, join.study.id)
+      ) {
         wearableDetails[join.study.id].numSubjects += 1;
         wearableDetails[join.study.id].numSubjectsWithApi += hasApi;
       } else {
@@ -62,7 +64,7 @@ export function WearableStudies() {
 
   // Get which studies the current user can view wearable data for on load
   useEffect(() => {
-    const updatedCanViewWearableData: Set<number> = new Set();
+    const updatedCanViewWearableData = new Set<number>();
     const promises: Promise<unknown>[] = [];
 
     studies.forEach((s) =>
@@ -78,7 +80,9 @@ export function WearableStudies() {
         setCanViewWearableData(updatedCanViewWearableData);
       })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+      });
   }, [studies]);
 
   if (loading || studiesLoading || studySubjectLoading) {
@@ -113,7 +117,9 @@ export function WearableStudies() {
 
                   {/* link to study summary */}
                   <div className="flex flex-col">
-                    <Link to={`/coordinator/wearable/study?sid=${s.id}`}>
+                    <Link
+                      to={`/coordinator/wearable/study?sid=${String(s.id)}`}
+                    >
                       <LinkComponent>{s.acronym}</LinkComponent>
                     </Link>
                     <span className="text-sm">{s.name}</span>

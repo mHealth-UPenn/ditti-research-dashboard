@@ -85,7 +85,7 @@ export const AudioFileUpload = () => {
         method: "POST",
         body: JSON.stringify({ app: 2, files }),
       });
-      return res.urls as string[];
+      return (res as unknown as { urls: string[] }).urls;
     } catch (error) {
       const e = error as { msg: string };
       throw new AxiosError(e.msg);
@@ -99,7 +99,9 @@ export const AudioFileUpload = () => {
    * @param urls string[]
    */
   const uploadFiles = async (urls: string[]) => {
-    const progressArray: number[] = new Array(selectedFiles.length).fill(0);
+    const progressArray: number[] = Array.from(
+      new Array(selectedFiles.length).fill(0)
+    ) as number[];
     setUploadProgress(progressArray);
 
     const uploadPromises = selectedFiles.map((file, index) => {
@@ -126,7 +128,16 @@ export const AudioFileUpload = () => {
     const errors = responses.filter((res) => res.status !== 200);
 
     if (errors.length) {
-      const error = errors.map((res) => res.data.error).join("\n");
+      const error = errors
+        .map((res) => {
+          // Type assertion for data object
+          const data = res.data as Record<string, unknown> | undefined;
+          // Safely access error property and ensure it's a string
+          const errorMessage =
+            typeof data?.error === "string" ? data.error : "Unknown error";
+          return errorMessage;
+        })
+        .join("\n");
       throw Error(error);
     }
   };
@@ -317,11 +328,11 @@ export const AudioFileUpload = () => {
 
     // If there are hours, include them in the output (HH:MM:SS)
     if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+      return `${hours.toString()}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
     }
 
     // Otherwise, just return MM:SS
-    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+    return `${minutes.toString()}:${secs.toString().padStart(2, "0")}`;
   };
 
   const percentComplete = uploadProgress.length
@@ -424,7 +435,9 @@ export const AudioFileUpload = () => {
                     <span className="truncate">{`${s.acronym}: ${s.name}`}</span>
                     <div
                       className="cursor-pointer p-2"
-                      onClick={() => removeStudy(s.id)}
+                      onClick={() => {
+                        removeStudy(s.id);
+                      }}
                     >
                       <CloseIcon color="warning" />
                     </div>
@@ -443,7 +456,9 @@ export const AudioFileUpload = () => {
               multiple
               className="hidden"
               accept=".mp3"
-              onChange={handleSelectFiles}
+              onChange={(e) => {
+                void handleSelectFiles(e);
+              }}
             />
             <label htmlFor="audio-file-upload" className="mb-1">
               Select audio files
@@ -486,7 +501,9 @@ export const AudioFileUpload = () => {
                         id={`file-${file.name}`}
                         type="text"
                         value={file.title}
-                        onKeyup={(text: string) => handleTitleKeyup(text, i)}
+                        onKeyup={(text: string) => {
+                          handleTitleKeyup(text, i);
+                        }}
                       >
                         <span
                           className="flex h-full items-center bg-extra-light
@@ -549,7 +566,7 @@ export const AudioFileUpload = () => {
               studies
                 .filter((study) => selectedStudies.has(study.id))
                 .map((s, i) => (
-                  <span key={`study-${i}`}>
+                  <span key={`study-${i.toString()}`}>
                     {Boolean(i) && <br />}
                     &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}: {s.name}
                   </span>
@@ -568,7 +585,9 @@ export const AudioFileUpload = () => {
                   <span
                     className={"h-[4px] bg-white transition-all duration-500"}
                     style={{
-                      width: percentComplete ? `${percentComplete}%` : 0,
+                      width: percentComplete
+                        ? `${percentComplete.toString()}%`
+                        : 0,
                     }}
                   />
                 </div>

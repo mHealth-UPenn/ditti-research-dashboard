@@ -61,9 +61,9 @@ export const Table = ({
     row.map((cell, i) => ({
       contents: cell.contents,
       searchable: columns[i].searchable,
-      searchValue: cell.searchValue || "",
+      searchValue: cell.searchValue ?? "",
       sortable: columns[i].sortable,
-      sortValue: cell.sortValue || "",
+      sortValue: cell.sortValue ?? "",
       width: columns[i].width,
       paddingX: cell.paddingX,
       paddingY: cell.paddingY,
@@ -148,7 +148,11 @@ export const Table = ({
             size="sm"
             square={true}
             disabled={page === 1}
-            onClick={() => page > 1 && setPage(page - 1)}
+            onClick={() => {
+              if (page > 1) {
+                setPage(page - 1);
+              }
+            }}
           >
             <KeyboardArrowLeftIcon />
           </Button>
@@ -157,7 +161,11 @@ export const Table = ({
             size="sm"
             square={true}
             disabled={!rows.length || page === totalPages}
-            onClick={() => page < totalPages && setPage(page + 1)}
+            onClick={() => {
+              if (page < totalPages) {
+                setPage(page + 1);
+              }
+            }}
           >
             <KeyboardArrowRightIcon />
           </Button>
@@ -168,10 +176,10 @@ export const Table = ({
         <span>
           {!!rows.length &&
             totalPages &&
-            `${(page - 1) * paginationPer + 1} - ${Math.min(
+            `${((page - 1) * paginationPer + 1).toString()} - ${Math.min(
               rows.length,
               page * paginationPer
-            )} of `}
+            ).toString()} of `}
           {rows.length} item{rows.length === 1 ? "" : "s"}
         </span>
       </div>

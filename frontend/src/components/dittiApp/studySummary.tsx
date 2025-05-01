@@ -50,32 +50,44 @@ export const StudySummary = () => {
       const promises: Promise<void>[] = [];
       promises.push(
         getAccess(2, "Create", "Participants", study.id)
-          .then(() => setCanCreate(true))
-          .catch(() => setCanCreate(false))
+          .then(() => {
+            setCanCreate(true);
+          })
+          .catch(() => {
+            setCanCreate(false);
+          })
       );
 
       promises.push(
         getAccess(2, "View", "Taps", study.id)
-          .then(() => setCanViewTaps(true))
-          .catch(() => setCanViewTaps(false))
+          .then(() => {
+            setCanViewTaps(true);
+          })
+          .catch(() => {
+            setCanViewTaps(false);
+          })
       );
 
       // get other accounts that have access to this study
       promises.push(
-        makeRequest("/db/get-study-contacts?app=2&study=" + study.id).then(
-          (contacts: StudyContactModel[]) => setStudyContacts(contacts)
-        )
+        makeRequest(
+          `/db/get-study-contacts?app=2&study=${String(study.id)}`
+        ).then((contacts: unknown) => {
+          setStudyContacts(contacts as StudyContactModel[]);
+        })
       );
 
       // when all promises resolve, hide the loader
-      Promise.all(promises).then(() => setLoading(false));
+      void Promise.all(promises).then(() => {
+        setLoading(false);
+      });
     }
   }, [study]);
 
   /**
    * Download all of the study's data in excel format
    */
-  const downloadExcel = async (): Promise<void> => {
+  const downloadExcel = () => {
     if (!study) {
       return;
     }
@@ -130,7 +142,7 @@ export const StudySummary = () => {
     sheet.addRows(data);
 
     // write the workbook to a blob
-    workbook.xlsx.writeBuffer().then((data) => {
+    void workbook.xlsx.writeBuffer().then((data) => {
       const blob = new Blob([data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
@@ -175,14 +187,16 @@ export const StudySummary = () => {
           <div className="flex">
             {(canCreate || APP_ENV === "demo") && (
               <Link
-                to={`/coordinator/ditti/participants/enroll?sid=${study?.id}`}
+                to={`/coordinator/ditti/participants/enroll?sid=${study?.id ? String(study.id) : ""}`}
               >
                 <Button className="mr-2" rounded={true}>
                   Enroll subject +
                 </Button>
               </Link>
             )}
-            <Link to={`/coordinator/ditti/participants?sid=${study?.id}`}>
+            <Link
+              to={`/coordinator/ditti/participants?sid=${study?.id ? String(study.id) : ""}`}
+            >
               <Button variant="secondary" rounded={true}>
                 View all subjects
               </Button>
@@ -191,7 +205,7 @@ export const StudySummary = () => {
         </CardContentRow>
 
         <StudySubjects
-          study={study || ({} as Study)}
+          study={study ?? ({} as Study)}
           canViewTaps={canViewTaps}
         />
       </Card>

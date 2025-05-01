@@ -63,16 +63,16 @@ export const AccessGroupsEdit = () => {
     const fetchData = async () => {
       try {
         // Fetch all available actions
-        const actions = await makeRequest("/admin/action?app=1");
-        setActions(actions);
+        const actionsResponse = await makeRequest("/admin/action?app=1");
+        setActions(actionsResponse as unknown as ActionResource[]);
 
         // Fetch all available resources
-        const resources = await makeRequest("/admin/resource?app=1");
-        setResources(resources);
+        const resourcesResponse = await makeRequest("/admin/resource?app=1");
+        setResources(resourcesResponse as unknown as ActionResource[]);
 
         // Fetch all available apps
-        const apps = await makeRequest("/admin/app?app=1");
-        setApps(apps);
+        const appsResponse = await makeRequest("/admin/app?app=1");
+        setApps(appsResponse as unknown as App[]);
 
         // Fetch any form prefill data
         const prefillData = await getPrefill();
@@ -87,7 +87,7 @@ export const AccessGroupsEdit = () => {
       }
     };
 
-    fetchData();
+    void fetchData();
   }, [accessGroupId]);
 
   /**
@@ -99,7 +99,9 @@ export const AccessGroupsEdit = () => {
 
     // if editing an existing entry, return prefill data, else return empty data
     return id
-      ? makeRequest("/admin/access-group?app=1&id=" + id).then(makePrefill)
+      ? makeRequest(`/admin/access-group?app=1&id=${String(id)}`).then((res) =>
+          makePrefill(res as unknown as AccessGroup[])
+        )
       : {
           name: "",
           appSelected: {} as App,
@@ -134,7 +136,7 @@ export const AccessGroupsEdit = () => {
    * Get the currently selected app
    * @returns - the database primary key
    */
-  const getSelectedApp = (): number => (appSelected ? appSelected.id : 0);
+  const getSelectedApp = (): number => appSelected.id || 0;
 
   /**
    * Add a new permission and pair of action and resource dropdown menus
@@ -258,7 +260,9 @@ export const AccessGroupsEdit = () => {
         <CloseIcon
           color="warning"
           fontSize="large"
-          onClick={() => removePermission(p.id)}
+          onClick={() => {
+            removePermission(p.id);
+          }}
         />
       </div>
     </FormRow>
@@ -367,7 +371,9 @@ export const AccessGroupsEdit = () => {
               placeholder=""
               value={name}
               label="Name"
-              onKeyup={(text: string) => setName(text)}
+              onKeyup={(text: string) => {
+                setName(text);
+              }}
               feedback=""
             />
           </FormField>

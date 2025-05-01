@@ -27,9 +27,7 @@ export const FlashMessageContext = createContext<
 >(undefined);
 
 // FlashMessageContextProvider component that wraps children with studies context.
-export function FlashMessageContextProvider({
-  children,
-}: PropsWithChildren<unknown>) {
+export function FlashMessageContextProvider({ children }: PropsWithChildren) {
   const [flashMessages, setFlashMessages] = useState<FlashMessageModel[]>([]);
 
   const flashMessage = (
@@ -49,7 +47,9 @@ export function FlashMessageContextProvider({
         key={id}
         variant={variant}
         containerRef={containerRef}
-        onClose={() => closeMessage(id)}
+        onClose={() => {
+          closeMessage(id);
+        }}
       >
         {msg}
       </FlashMessage>

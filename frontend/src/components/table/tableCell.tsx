@@ -26,12 +26,12 @@ export const TableCell = ({
 }: PropsWithChildren<TableCellProps>) => {
   let padding = "";
   if (paddingX !== undefined) {
-    padding += `px-[${paddingX}px]`;
+    padding += `px-[${String(paddingX)}px]`;
   } else {
     padding += "px-1 lg:px-2";
   }
   if (paddingY !== undefined) {
-    padding += ` py-[${paddingX}px]`;
+    padding += ` py-[${String(paddingY)}px]`;
   } else {
     padding += " py-2";
   }
@@ -39,7 +39,7 @@ export const TableCell = ({
   return (
     <td
       className="h-[inherit] border-r border-t border-light p-0"
-      style={{ width: `${width}%` }}
+      style={{ width: `${String(width)}%` }}
     >
       <div className={`flex h-full w-full items-center ${padding}`}>
         <div

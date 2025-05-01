@@ -63,6 +63,7 @@ export default tseslint.config(
     extends: [
       js.configs.recommended,
       importPlugin.flatConfigs.recommended,
+      importPlugin.flatConfigs.typescript,
       tseslint.configs.recommended,
       tseslint.configs.strictTypeChecked,
       tseslint.configs.stylisticTypeChecked,

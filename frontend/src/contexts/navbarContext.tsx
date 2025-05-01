@@ -27,13 +27,11 @@ const formatString = (
   template: string,
   values: Record<string, string>
 ): string => {
-  return template.replace(/\{(\w+)\}/g, (_, key) => values[key] || "");
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => values[key] || "");
 };
 
 // NavbarContextProvider component that wraps children with studies context.
-export function NavbarContextProvider({
-  children,
-}: PropsWithChildren<unknown>) {
+export function NavbarContextProvider({ children }: PropsWithChildren) {
   const matches = useMatches();
 
   const [breadcrumbs, setBreadcrumbs] = useState<Breadcrumb[]>([]);

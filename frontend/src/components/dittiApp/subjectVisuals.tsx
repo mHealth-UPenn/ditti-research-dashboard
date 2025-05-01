@@ -43,7 +43,7 @@ export const SubjectVisualsV2 = () => {
   const [searchParams] = useSearchParams();
   const sid = searchParams.get("sid");
   const studyId = sid ? parseInt(sid) : 0;
-  const dittiId = searchParams.get("dittiId") || "";
+  const dittiId = searchParams.get("dittiId") ?? "";
 
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -54,7 +54,7 @@ export const SubjectVisualsV2 = () => {
     useCoordinatorStudySubjects();
 
   useEffect(() => {
-    getAccess(2, "Edit", "Participants", studyId)
+    void getAccess(2, "Edit", "Participants", studyId)
       .then(() => {
         setCanEdit(true);
         setLoading(false);
@@ -91,7 +91,7 @@ export const SubjectVisualsV2 = () => {
     return timezones;
   }, [filteredTaps, filteredAudioTaps]);
 
-  const downloadExcel = async (): Promise<void> => {
+  const downloadExcel = () => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
     const fileName = format(new Date(), `'${dittiId}_'yyyy-MM-dd'_'HH:mm:ss`);
@@ -124,7 +124,7 @@ export const SubjectVisualsV2 = () => {
     sheet.addRows(data);
 
     // write the workbook to a blob
-    workbook.xlsx.writeBuffer().then((data) => {
+    void workbook.xlsx.writeBuffer().then((data) => {
       const blob = new Blob([data], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
@@ -174,7 +174,7 @@ export const SubjectVisualsV2 = () => {
             </Button>
             {/* if the user can edit, show the edit button */}
             <Link
-              to={`/coordinator/ditti/participants/edit?dittiId=${dittiId}&sid=${studyId}`}
+              to={`/coordinator/ditti/participants/edit?dittiId=${dittiId}&sid=${String(studyId)}`}
             >
               <Button
                 variant="secondary"

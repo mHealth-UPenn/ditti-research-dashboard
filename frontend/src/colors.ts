@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export const colors: { [key: string]: string } = {
+export const colors: Record<string, string> = {
   white: "#FFFFFF",
   black: "#000000",
   primary: "#3366FF",

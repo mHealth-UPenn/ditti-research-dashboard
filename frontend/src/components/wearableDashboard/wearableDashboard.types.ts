@@ -40,9 +40,10 @@ export interface WearableStudySubjectsProps {
  * @property numSubjects: The number of subjects enrolled in the study.
  * @property numSubjectsWithApi: The number of subjects who are enrolled in the study and who have connected any API.
  */
-export interface WearableStudyDetails {
-  [key: number]: {
+export type WearableStudyDetails = Record<
+  number,
+  {
     numSubjects: number;
     numSubjectsWithApi: number;
-  };
-}
+  }
+>;

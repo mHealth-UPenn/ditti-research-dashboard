@@ -26,8 +26,7 @@ import { scaleLinear } from "@visx/scale";
 import { Button } from "../buttons/button";
 import ReplayIcon from "@mui/icons-material/Replay";
 import { differenceInDays } from "date-fns";
-import { KeyboardArrowDown } from "@mui/icons-material";
-import { KeyboardArrowUp } from "@mui/icons-material";
+import { KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import { useEffect, useMemo, useState } from "react";
 import { useDittiData } from "../../hooks/useDittiData";
 import { BoutsTimeline } from "./boutsTimeline";
@@ -116,10 +115,10 @@ export const WearableVisualizationContent = ({
 
   // Optionally override the default margins if passed as props
   const margin = {
-    top: marginTop !== undefined ? marginTop : defaultMargin.top,
-    right: marginRight !== undefined ? marginRight : defaultMargin.right,
-    bottom: marginBottom !== undefined ? marginBottom : defaultMargin.bottom,
-    left: marginLeft !== undefined ? marginLeft : defaultMargin.left,
+    top: marginTop ?? defaultMargin.top,
+    right: marginRight ?? defaultMargin.right,
+    bottom: marginBottom ?? defaultMargin.bottom,
+    left: marginLeft ?? defaultMargin.left,
   };
 
   // Generate the row visualizations on load and when data changes.

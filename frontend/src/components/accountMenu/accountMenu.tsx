@@ -37,7 +37,7 @@ export const AccountMenu = ({
   const [email, setEmail] = useState(prefill.email);
   const [firstName, setFirstName] = useState(prefill.firstName);
   const [lastName, setLastName] = useState(prefill.lastName);
-  const [phoneNumber, setPhoneNumber] = useState(prefill.phoneNumber || "");
+  const [phoneNumber, setPhoneNumber] = useState(prefill.phoneNumber ?? "");
   const [phoneNumberError, setPhoneNumberError] = useState<string>("");
 
   // Password state
@@ -105,7 +105,7 @@ export const AccountMenu = ({
     }
 
     // Validate phone number format if provided
-    if (phoneNumber && phoneNumber.trim()) {
+    if (phoneNumber.trim()) {
       // International phone numbers should start with + followed by at least 1 digit for country code
       const phoneRegex = /^\+[1-9]\d*$/;
       if (!phoneRegex.test(phoneNumber)) {
@@ -314,7 +314,7 @@ export const AccountMenu = ({
     setFirstName(prefill.firstName);
     setLastName(prefill.lastName);
     setEmail(prefill.email);
-    setPhoneNumber(prefill.phoneNumber || "");
+    setPhoneNumber(prefill.phoneNumber ?? "");
     setPhoneNumberError("");
 
     // Reset password fields
@@ -359,7 +359,9 @@ export const AccountMenu = ({
             <Button
               variant="tertiary"
               size="sm"
-              onClick={() => setEdit(true)}
+              onClick={() => {
+                setEdit(true);
+              }}
               rounded={true}
             >
               Edit
@@ -442,7 +444,9 @@ export const AccountMenu = ({
             <Button
               variant="tertiary"
               size="sm"
-              onClick={() => setEditPassword(true)}
+              onClick={() => {
+                setEditPassword(true);
+              }}
               rounded={true}
             >
               Change
