@@ -56,7 +56,7 @@ For any issues that do not fit in bug reports or feature requests. Use this temp
 
 ### Screenshots
 
-You can **Issues** in the repository navigation bar at the top of the page:
+You can view **Issues** in the repository navigation bar at the top of the page:
 
 ![Issues](../images/repo-issues.png)
 
@@ -78,7 +78,7 @@ See our [Dev Setup Guide](./INSTALL-dev.md) for details on getting started with 
    git clone git@github.com:mHealth-UPenn/ditti-research-dashboard.git
    ```
 
-2. **Install recommended VsCode extensions (optional):**
+2. **Install recommended VS Code extensions (optional):**
 
    - [Prettier - Code formatter](https://marketplace.visualstudio.com/items/?itemName=esbenp.prettier-vscode) for formatting the React.js/TypeScript frontend.
    - [ESLint](https://marketplace.visualstudio.com/items/?itemName=dbaeumer.vscode-eslint) for linting the React.js/TypeScript frontend.
@@ -86,7 +86,7 @@ See our [Dev Setup Guide](./INSTALL-dev.md) for details on getting started with 
    - [Ruff](https://marketplace.visualstudio.com/items/?itemName=charliermarsh.ruff) for linting and formatting the Flask/Python backend and functions.
    - [Code Spell Checker](https://marketplace.visualstudio.com/items/?itemName=streetsidesoftware.code-spell-checker) for handling any unexpected typos.
 
-3. **Set up your `settings.json` if using VsCode (optional):**
+3. **Set up your `settings.json` if using VS Code (optional):**
 
    - This repo comes with a default `settings.sample.json` with the following default settings:
       - Automatic on-save formatting for all Python, TypeScript, and JavaScript.
