@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import datetime, timedelta, UTC
 import logging
 import os
+from datetime import datetime, timedelta
+
 import boto3
 
 logger = logging.getLogger()
@@ -24,6 +25,17 @@ logger.setLevel(logging.INFO)
 
 
 def stop():
+    """
+    Check for recent activity and stop RDS instance if inactive.
+
+    Retrieves HTTP request logs from CloudWatch and checks for activity
+    in the past two hours. If no activity is detected, checks the status
+    of the RDS instance and stops it if it's running.
+
+    Returns
+    -------
+    None
+    """
     logs = boto3.client("logs")
 
     # get all HTTP requests from the last two hours
@@ -31,9 +43,7 @@ def stop():
     pattern = os.getenv("AWS_LOG_PATTERN")
     start = int((datetime.now() - timedelta(hours=2)).timestamp() * 1000)
     res = logs.filter_log_events(
-        logGroupName=name,
-        filterPattern=pattern,
-        startTime=start
+        logGroupName=name, filterPattern=pattern, startTime=start
     )
     events = res["events"]
 
@@ -43,21 +53,20 @@ def stop():
             logGroupName=name,
             filterPattern=pattern,
             nextToken=res["nextToken"],
-            startTime=start
+            startTime=start,
         )
         events.extend(res["events"])
 
-    logger.info("Current time: %s" % datetime.now())
+    logger.info(f"Current time: {datetime.now()}")
 
     # if there was a request in the last two hours
     if events:
-
         # log the timestamp of the last event
-        timestamps = map(lambda x: x["timestamp"], events)
-        last = sorted(list(timestamps))[-1]
+        timestamps = (event["timestamp"] for event in events)
+        last = sorted(timestamps)[-1]
         last = datetime.fromtimestamp(last // 1000)
 
-        logger.info("Last request timestamp: %s" % last)
+        logger.info(f"Last request timestamp: {last}")
 
     else:
         logger.info("No requests in the last two hours")
@@ -68,11 +77,11 @@ def stop():
         res = rds.describe_db_instances(DBInstanceIdentifier=instance)
         status = res["DBInstances"][0]["DBInstanceStatus"]
 
-        logger.info("Current DB status: %s" % status)
+        logger.info(f"Current DB status: {status}")
 
         # if the database is running
         if status == "available":
-            logger.info("Stopping DB instance: %s" % instance)
+            logger.info(f"Stopping DB instance: {instance}")
 
             # stop the database
             rds.stop_db_instance(DBInstanceIdentifier=instance)

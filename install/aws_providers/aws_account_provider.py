@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import shutil
 import subprocess
 import traceback
 
@@ -25,78 +26,170 @@ from install.utils.exceptions import AwsProviderError, SubprocessError
 
 
 class AwsAccountProvider:
-    def __init__(
-            self, *,
-            logger: Logger,
-            aws_client_provider: AwsClientProvider
-        ):
+    """
+    Provider for AWS account operations and credential management.
+
+    Responsible for retrieving AWS account information and credentials
+    required for AWS service interactions.
+    """
+
+    def __init__(self, *, logger: Logger, aws_client_provider: AwsClientProvider):
         self.logger = logger
         self.client = aws_client_provider.sts_client
 
     @property
     def aws_region(self) -> str:
+        """
+        Get the AWS region for the current session.
+
+        Returns
+        -------
+        str
+            The AWS region name.
+        """
         return self.client.meta.region_name
 
     @property
     def aws_access_key_id(self) -> str:
+        """
+        Get the AWS access key ID for the current session.
+
+        Returns
+        -------
+        str
+            The AWS access key ID.
+        """
         try:
             return self.get_aws_access_key_id()
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
-            self.logger.error(f"AWS access key ID retrieval failed due to subprocess error: {Colorizer.white(e)}")
-            raise SubprocessError(e)
+            self.logger.error(
+                "AWS access key ID retrieval failed due to subprocess error: "
+                f"{Colorizer.white(e)}"
+            )
+            raise SubprocessError(e) from e
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(f"AWS access key ID retrieval failed due to unexpected error: {Colorizer.white(e)}")
-            raise SubprocessError(e)
+            self.logger.error(
+                "AWS access key ID retrieval failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
+            )
+            raise SubprocessError(e) from e
 
     @property
     def aws_secret_access_key(self) -> str:
+        """
+        Get the AWS secret access key for the current session.
+
+        Returns
+        -------
+        str
+            The AWS secret access key.
+        """
         try:
             return self.get_aws_secret_access_key()
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
-            self.logger.error(f"AWS secret access key retrieval failed due to subprocess error: {Colorizer.white(e)}")
-            raise SubprocessError(e)
+            self.logger.error(
+                "AWS secret access key retrieval failed due to subprocess error: "
+                f"{Colorizer.white(e)}"
+            )
+            raise SubprocessError(e) from e
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(f"AWS secret access key retrieval failed due to unexpected error: {Colorizer.white(e)}")
-            raise SubprocessError(e)
+            self.logger.error(
+                "AWS secret access key retrieval failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
+            )
+            raise SubprocessError(e) from e
 
     @property
     def aws_account_id(self) -> str:
+        """
+        Get the AWS account ID for the current session.
+
+        Returns
+        -------
+        str
+            The AWS account ID.
+        """
         try:
             return self.client.get_caller_identity()["Account"]
         except ClientError as e:
             traceback.print_exc()
-            self.logger.error(f"AWS account ID retrieval failed due to ClientError: {Colorizer.white(e)}")
-            raise AwsProviderError(e)
+            self.logger.error(
+                "AWS account ID retrieval failed due to ClientError: "
+                f"{Colorizer.white(e)}"
+            )
+            raise AwsProviderError(e) from e
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(f"AWS account ID retrieval failed due to unexpected error: {Colorizer.white(e)}")
-            raise AwsProviderError(e)
-        
+            self.logger.error(
+                "AWS account ID retrieval failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
+            )
+            raise AwsProviderError(e) from e
+
     @staticmethod
     def get_aws_access_key_id() -> str:
-        return subprocess.check_output(
-            ["aws", "configure", "get", "aws_access_key_id"]
-        ).decode("utf-8").strip()
-    
+        """
+        Get the AWS access key ID from the AWS CLI configuration.
+
+        Returns
+        -------
+        str
+            The AWS access key ID.
+        """
+        aws_executable = shutil.which("aws")
+        if aws_executable is None:
+            raise FileNotFoundError("AWS CLI executable not found")
+
+        return (
+            subprocess.check_output(
+                [aws_executable, "configure", "get", "aws_access_key_id"]
+            )
+            .decode("utf-8")
+            .strip()
+        )
+
     @staticmethod
     def get_aws_secret_access_key() -> str:
-        return subprocess.check_output(
-            ["aws", "configure", "get", "aws_secret_access_key"]
-        ).decode("utf-8").strip()
+        """
+        Get the AWS secret access key from the AWS CLI configuration.
+
+        Returns
+        -------
+        str
+            The AWS secret access key.
+        """
+        aws_executable = shutil.which("aws")
+        if aws_executable is None:
+            raise FileNotFoundError("AWS CLI executable not found")
+
+        return (
+            subprocess.check_output(
+                [aws_executable, "configure", "get", "aws_secret_access_key"]
+            )
+            .decode("utf-8")
+            .strip()
+        )
 
     def configure_aws_cli(self) -> None:
         """Configure the AWS CLI."""
         try:
-            subprocess.run(["aws", "configure"])
+            aws_executable = shutil.which("aws")
+            if aws_executable is None:
+                raise FileNotFoundError("AWS CLI executable not found")
+
+            subprocess.run([aws_executable, "configure"])
         except subprocess.CalledProcessError as e:
             traceback.print_exc()
             self.logger.error("AWS CLI configuration failed")
-            raise SubprocessError(e)
+            raise SubprocessError(e) from e
         except Exception as e:
             traceback.print_exc()
-            self.logger.error(f"AWS CLI configuration failed due to unexpected error: {Colorizer.white(e)}")
-            raise SubprocessError(e)
+            self.logger.error(
+                "AWS CLI configuration failed due to unexpected error: "
+                f"{Colorizer.white(e)}"
+            )
+            raise SubprocessError(e) from e

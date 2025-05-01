@@ -39,22 +39,22 @@ import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubj
 import { useStudies } from "../../hooks/useStudies";
 import { VisualizationContextProvider } from "../../contexts/visualizationContext";
 
-
 export const SubjectVisualsV2 = () => {
   const [searchParams] = useSearchParams();
   const sid = searchParams.get("sid");
   const studyId = sid ? parseInt(sid) : 0;
-  const dittiId = searchParams.get("dittiId") || "";
+  const dittiId = searchParams.get("dittiId") ?? "";
 
   const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const { dataLoading, taps, audioTaps } = useDittiData();
   const { studiesLoading, study } = useStudies();
-  const { studySubjectLoading, getStudySubjectByDittiId } = useCoordinatorStudySubjects();
+  const { studySubjectLoading, getStudySubjectByDittiId } =
+    useCoordinatorStudySubjects();
 
   useEffect(() => {
-    getAccess(2, "Edit", "Participants", studyId)
+    void getAccess(2, "Edit", "Participants", studyId)
       .then(() => {
         setCanEdit(true);
         setLoading(false);
@@ -71,36 +71,36 @@ export const SubjectVisualsV2 = () => {
   const filteredAudioTaps = audioTaps.filter((at) => at.dittiId === dittiId);
 
   const timestamps = useMemo(
-    () => filteredTaps.map(t => t.time.getTime()), [filteredTaps]
+    () => filteredTaps.map((t) => t.time.getTime()),
+    [filteredTaps]
   );
 
   const timezones = useMemo(() => {
     const timezones: { time: number; name: string }[] = [];
     let prevTimezone: string | null = null;
-    [...filteredTaps, ...filteredAudioTaps].sort(
-      (a, b) => differenceInMilliseconds(a.time, b.time)
-    ).forEach(t => {
-      const name = t.timezone === ""
-        ? "GMT Universal Coordinated Time"
-        : t.timezone;
-      if (name !== prevTimezone) {
-        timezones.push({ time: t.time.getTime(), name });
-        prevTimezone = name;
-      }
-    });
-  return timezones;
+    [...filteredTaps, ...filteredAudioTaps]
+      .sort((a, b) => differenceInMilliseconds(a.time, b.time))
+      .forEach((t) => {
+        const name =
+          t.timezone === "" ? "GMT Universal Coordinated Time" : t.timezone;
+        if (name !== prevTimezone) {
+          timezones.push({ time: t.time.getTime(), name });
+          prevTimezone = name;
+        }
+      });
+    return timezones;
   }, [filteredTaps, filteredAudioTaps]);
 
-  const downloadExcel = async (): Promise<void> => {
+  const downloadExcel = () => {
     const workbook = new Workbook();
     const sheet = workbook.addWorksheet("Sheet 1");
     const fileName = format(new Date(), `'${dittiId}_'yyyy-MM-dd'_'HH:mm:ss`);
 
-    const tapsData = filteredTaps.map(t => {
+    const tapsData = filteredTaps.map((t) => {
       return [t.dittiId, t.time, t.timezone, "", ""];
     });
 
-    const audioTapsData = filteredAudioTaps.map(t => {
+    const audioTapsData = filteredAudioTaps.map((t) => {
       return [t.dittiId, t.time, t.timezone, t.action, t.audioFileTitle];
     });
 
@@ -124,9 +124,9 @@ export const SubjectVisualsV2 = () => {
     sheet.addRows(data);
 
     // write the workbook to a blob
-    workbook.xlsx.writeBuffer().then((data) => {
+    void workbook.xlsx.writeBuffer().then((data) => {
       const blob = new Blob([data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
 
       // download the blob
@@ -140,7 +140,7 @@ export const SubjectVisualsV2 = () => {
     day: "numeric",
   };
 
-  const expTime = (new Date(expiresOn)).toLocaleDateString("en-US", dateOpts);
+  const expTime = new Date(expiresOn).toLocaleDateString("en-US", dateOpts);
 
   if (loading || studiesLoading || dataLoading || studySubjectLoading) {
     return (
@@ -168,27 +168,40 @@ export const SubjectVisualsV2 = () => {
               variant="secondary"
               className="mb-2 md:mb-0 md:mr-2"
               onClick={downloadExcel}
-              rounded={true}>
-                Download Excel
+              rounded={true}
+            >
+              Download Excel
             </Button>
             {/* if the user can edit, show the edit button */}
-            <Link to={`/coordinator/ditti/participants/edit?dittiId=${dittiId}&sid=${studyId}`}>
+            <Link
+              to={`/coordinator/ditti/participants/edit?dittiId=${dittiId}&sid=${String(studyId)}`}
+            >
               <Button
                 variant="secondary"
                 disabled={!(canEdit || APP_ENV === "demo")}
-                rounded={true}>
-                  Edit Details
+                rounded={true}
+              >
+                Edit Details
               </Button>
             </Link>
           </div>
         </CardContentRow>
 
         <VisualizationContextProvider
-          defaultMargin={{ top: 50, right: 40, bottom: 75, left: 60 }}>
-            <TapVisualizationButtons />
-            <TimestampHistogram timestamps={timestamps} timezones={timezones} />
-            <BoutsTimeline timestamps={timestamps} marginBottom={30} marginTop={30} />
-            <AudioTapsTimeline audioTaps={filteredAudioTaps} marginBottom={30} marginTop={30} />
+          defaultMargin={{ top: 50, right: 40, bottom: 75, left: 60 }}
+        >
+          <TapVisualizationButtons />
+          <TimestampHistogram timestamps={timestamps} timezones={timezones} />
+          <BoutsTimeline
+            timestamps={timestamps}
+            marginBottom={30}
+            marginTop={30}
+          />
+          <AudioTapsTimeline
+            audioTaps={filteredAudioTaps}
+            marginBottom={30}
+            marginTop={30}
+          />
         </VisualizationContextProvider>
       </Card>
     </ViewContainer>

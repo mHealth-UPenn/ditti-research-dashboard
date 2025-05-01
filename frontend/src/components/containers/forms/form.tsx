@@ -17,10 +17,11 @@
 
 import { PropsWithChildren } from "react";
 
-
-export const Form = ({ children }: PropsWithChildren<unknown>) => {
+export const Form = ({ children }: PropsWithChildren) => {
   return (
-    <div className="p-12 2xl:px-24 flex-grow bg-white text-black lg:overflow-y-scroll">
+    <div
+      className="grow bg-white p-12 text-black lg:overflow-y-scroll 2xl:px-24"
+    >
       {children}
     </div>
   );

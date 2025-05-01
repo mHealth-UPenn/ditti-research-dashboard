@@ -30,10 +30,7 @@ export type ButtonVariant =
 /**
  * The size of the button
  */
-export type ButtonSize =
-  | "sm"
-  | "md"
-  | "lg";
+export type ButtonSize = "sm" | "md" | "lg";
 
 /**
  * The props for the AsyncButton component
@@ -64,7 +61,7 @@ export interface ButtonProps {
   fullHeight?: boolean;
   className?: string;
   rounded?: boolean;
-  onClick?: () => void;
+  onClick?: () => void | Promise<void>;
 }
 
 /**

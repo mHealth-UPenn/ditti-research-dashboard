@@ -14,19 +14,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from functools import reduce
 import json
 import os
 import re
-import requests
+from functools import reduce
+
 import boto3
+import requests
 from boto3.dynamodb.conditions import Attr
 from requests_aws4auth import AWS4Auth
 
 
 class MutationClient:
     """
-    The client that makes mutation requests to AWS AppSync
+    The client that makes mutation requests to AWS AppSync.
 
     Vars
     ----
@@ -35,6 +36,7 @@ class MutationClient:
     headers: dict
         used to validate the mutation request
     """
+
     f_string = "mutation($in:%(inp)s!){%(fun)s(input:$in){%(var)s}}"
 
     def __init__(self):
@@ -43,36 +45,42 @@ class MutationClient:
 
     def get_body(self):
         """
+        Get the formatted mutation request body.
+
         Returns
         -------
-        str: the formatted mutation request body
+        str
+            The formatted mutation request body.
         """
         return self.__body
 
     def get_connection(self):
         """
+        Get the connection to AppSync.
+
         Returns
         -------
-        http.client.HTTPSConnection: the connection to AppSync
+        http.client.HTTPSConnection
+            The connection to AppSync.
         """
         return self.__conn
 
     def open_connection(self):
-        """
-        Initialize an HTTP connection to AppSync
-        """
+        """Initialize an HTTP connection to AppSync."""
         self.__conn = requests.Session()
         self.__conn.auth = AWS4Auth(
             os.getenv("APPSYNC_ACCESS_KEY"),
             os.getenv("APPSYNC_SECRET_KEY"),
             "us-east-1",
-            "appsync"
+            "appsync",
         )
 
     def set_mutation(self, inp, fun, var):
         """
-        Set the mutation request body. See AWS AppSync documentation for more
-        details on how the mutation request is formatted
+        Set the mutation request body.
+
+        See AWS AppSync documentation for more details
+        on how the mutation request is formatted.
 
         Args
         ----
@@ -87,63 +95,81 @@ class MutationClient:
         query = self.f_string % fmt
         self.__body = {
             "query": query,
-            "variables": "{\"in\": %s}" % json.dumps(var)
+            "variables": f'{{"in": {json.dumps(var)}}}',
         }
 
     def set_mutation_v2(self, items):
+        """
+        Set a mutation with the specified items using V2 format.
+
+        Parameters
+        ----------
+        items : dict
+            Dictionary of items to include in the mutation.
+        """
         # Declare variables in the query
         query = "mutation (\n"
         variables = {}
-        
+
         # Build variable declarations and operations
         for i, item in enumerate(items):
             index = i + 1  # Start indexing at 1 for unique variables
-            
+
             # Add variable declarations to the query
-            query += f"$availability{index}: String!, $bucket{index}: String!, $category{index}: String!, "
-            query += f"$fileName{index}: String!, $studies{index}: [String]!, $length{index}: Int!, $title{index}: String!,\n"
-            
+            query += (
+                f"$availability{index}: String!, "
+                f"$bucket{index}: String!, "
+                f"$category{index}: String!, "
+            )
+            query += (
+                f"$fileName{index}: String!, "
+                f"$studies{index}: [String]!, "
+                f"$length{index}: Int!, "
+                f"$title{index}: String!,\n"
+            )
+
             # Prepare variables to be sent in the POST request
             variables[f"availability{index}"] = item["availability"]
             variables[f"bucket{index}"] = item["bucket"]
             variables[f"category{index}"] = item["category"]
             variables[f"fileName{index}"] = item["fileName"]
-            variables[f"studies{index}"] = item["studies"] if isinstance(item["studies"], list) else [item["studies"]]
+            variables[f"studies{index}"] = (
+                item["studies"]
+                if isinstance(item["studies"], list)
+                else [item["studies"]]
+            )
             variables[f"length{index}"] = int(item["length"])
             variables[f"title{index}"] = item["title"]
-        
+
         # Close the variable declaration section
-        query = query.rstrip(',\n')  # Remove the trailing comma and newline
+        query = query.rstrip(",\n")  # Remove the trailing comma and newline
         query += ") {\n"
 
         # Build the operations inside the mutation block
         for i in range(len(items)):
             index = i + 1
-            query += """
-                CreateAudioFileOperation%(index)s: createAudioFile(input: {
-                    availability: $availability%(index)s, 
-                    bucket: $bucket%(index)s, 
-                    category: $category%(index)s, 
-                    fileName: $fileName%(index)s, 
-                    studies: $studies%(index)s, 
-                    length: $length%(index)s, 
-                    title: $title%(index)s
-                }) {
+            query += f"""
+                CreateAudioFileOperation{index}: createAudioFile(input: {{
+                    availability: $availability{index},
+                    bucket: $bucket{index},
+                    category: $category{index},
+                    fileName: $fileName{index},
+                    studies: $studies{index},
+                    length: $length{index},
+                    title: $title{index}
+                }}) {{
                     id
-                }
-            """ % {"index": index}
-        
+                }}
+            """
+
         # Close the mutation block
         query += "\n}"
 
-        self.__body = {
-            "query": query,
-            "variables": variables
-        }
+        self.__body = {"query": query, "variables": variables}
 
     def post_mutation(self):
         """
-        POST the mutation request
+        POST the mutation request.
 
         Returns
         -------
@@ -161,24 +187,21 @@ class MutationClient:
             raise ValueError("Mutation is not set. Call set_mutation() first.")
 
         res = self.__conn.request(
-            "POST",
-            os.getenv("APP_SYNC_HOST"),
-            json=self.__body
+            "POST", os.getenv("APP_SYNC_HOST"), json=self.__body
         )
 
         return res.text
 
 
 class Connection:
-    """
-    A connection with an AWS resource
-    """
+    """A connection with an AWS resource."""
+
     def __init__(self):
         self.__session = None
 
     def open_connection(self, resource):
         """
-        Open a connection with a given resource
+        Open a connection with a given resource.
 
         Args
         ----
@@ -189,20 +212,19 @@ class Connection:
 
     @property
     def session(self):
-        """
-        boto3.resource: an AWS resource session
-        """
+        """boto3.resource: an AWS resource session."""
         return self.__session
 
 
 class Loader:
     """
-    Loads a dynamodb table
+    Loads a dynamodb table.
 
     Args
     ----
     tablekey: the short name of the table (User, Tap, etc.)
     """
+
     def __init__(self, tablekey):
         self.__tablekey = tablekey
         self.__table = None
@@ -210,18 +232,18 @@ class Loader:
             "User": os.getenv("AWS_TABLENAME_USER"),
             "Tap": os.getenv("AWS_TABLENAME_TAP"),
             "AudioFile": os.getenv("AWS_TABLENAME_AUDIO_FILE"),
-            "AudioTap": os.getenv("AWS_TABLENAME_AUDIO_TAP")
+            "AudioTap": os.getenv("AWS_TABLENAME_AUDIO_TAP"),
         }
 
     def get_tablename(self, tablekey):
         """
-        Get the full name of a table as it appears on dynamodb
+        Get the full name of a table as it appears on dynamodb.
 
         Args
         ----
         tablekey: str
             the short name of the table (User, Tap, etc.)
-        
+
         Returns
         -------
         str: the full name of the table as it appears on dynamodb
@@ -229,34 +251,29 @@ class Loader:
         return self.config[tablekey]
 
     def connect(self, connection):
-        """
-        Connect to an AWS session
-        """
+        """Connect to an AWS session."""
         self.__session = connection.session
 
     def load_table(self):
-        """
-        Load the table
-        """
+        """Load the table."""
         tablename = self.get_tablename(self.__tablekey)
         self.__table = self.__session.Table(tablename)
 
     @property
     def table(self):
-        """
-        DynamoDB.Table
-        """
+        """DynamoDB.Table."""
         return self.__table
 
 
 class Updater:
     """
-    Updates an item"s value on a dynamodb table
+    Updates an item"s value on a dynamodb table.
 
     Args
     ----
     tablekey: the short name of the table (User, Tap, etc., optional)
     """
+
     def __init__(self, tablekey=None):
         self.tablekey = tablekey
         self.__key = None
@@ -265,9 +282,10 @@ class Updater:
 
     def set_key_from_query(self, q, pk="id"):
         """
-        Set the primary key of the item to update using the primary key of the
-        first result from a query. This function assumes the query is against a
-        column of unique values
+        Set the primary key of the item to update.
+
+        Uses the primary key of the first result from a query. This function
+        assumes the query is against a column of unique values.
 
         Args
         ----
@@ -282,16 +300,21 @@ class Updater:
 
     def get_key(self):
         """
+        Get the primary key for DynamoDB operations.
+
         Returns
         -------
-        str
+        dict
+            The primary key dictionary.
         """
         return self.__key
 
     def set_expression(self, exp):
         """
-        Set the update expression. See boto3 documentation for more information
-        about how dynamodb update expressions are formatted
+        Set the update expression.
+
+        See boto3 documentation for more information about how
+        dynamodb update expressions are formatted.
 
         Args
         ----
@@ -300,30 +323,38 @@ class Updater:
             to update and the value is the new value to update the column
             with. Any number of key, value pairs can be passed to this function
         """
-        e = reduce(lambda l, r: l + f" {r}=:{r[0] + r[1]},", exp.keys(), "SET")
-        a = {":%s" % k[0] + k[1]: v for k, v in exp.items()}
+        e = reduce(
+            lambda acc, r: acc + f" {r}=:{r[0] + r[1]},", exp.keys(), "SET"
+        )
+        a = {f":{k[0]}" + k[1]: v for k, v in exp.items()}
         self.__update_expression = e[:-1]
         self.__expression_attribute_values = a
 
     def get_update_expression(self):
         """
+        Get the update expression for DynamoDB update operations.
+
         Returns
         -------
         str
+            The update expression.
         """
         return self.__update_expression
 
     def get_expression_attribute_values(self):
         """
+        Get the expression attribute values for DynamoDB operations.
+
         Returns
         -------
         dict
+            The expression attribute values.
         """
         return self.__expression_attribute_values
 
     def update(self):
         """
-        Update the table
+        Update the table.
 
         Raises
         ------
@@ -331,7 +362,7 @@ class Updater:
             If tablekey or key is not set
 
         Returns
-        ------
+        -------
         dict
             The return value of DynamoDB.Table.update_items
         """
@@ -347,7 +378,7 @@ class Updater:
             Key=self.__key,
             UpdateExpression=self.__update_expression,
             ExpressionAttributeValues=self.__expression_attribute_values,
-            ReturnValues="UPDATED_NEW"
+            ReturnValues="UPDATED_NEW",
         )
 
         return res
@@ -355,65 +386,164 @@ class Updater:
 
 class Column:
     """
-    A helper class for dynamodb columns that handles comparison operations
+    A helper class for dynamodb columns that handles comparison operations.
 
     Args
     ----
     col: str
         The name of the column
     """
+
     def __init__(self, col):
         self.__col = col
         self.__switch = False
 
     def __eq__(self, other):
+        """
+        Equality comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Equals condition.
+        """
         return Attr(self.__col).eq(other)
 
     def __ne__(self, other):
+        """
+        Not equal comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Not equals condition.
+        """
         return Attr(self.__col).ne(other)
 
     def __lt__(self, other):
+        """
+        Less than comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Less than condition.
+        """
         return Attr(self.__col).lt(other)
 
     def __le__(self, other):
+        """
+        Less than or equal comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Less than or equal condition.
+        """
         return Attr(self.__col).lte(other)
 
     def __gt__(self, other):
+        """
+        Greater than comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Greater than condition.
+        """
         return Attr(self.__col).gt(other)
 
     def __ge__(self, other):
+        """
+        Greater than or equal comparison with another value.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Attr
+            Greater than or equal condition.
+        """
         return Attr(self.__col).gte(other)
 
     def __invert__(self):
+        """
+        Invert the condition.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Not
+            Inverted condition.
+        """
         self.__switch = not self.__switch
         return ~Attr(self.__col).eq(self.__switch)
 
     def between(self, start, stop):
+        """
+        Check if value is between start and stop (inclusive).
+
+        Parameters
+        ----------
+        start : Any
+            The lower bound.
+        stop : Any
+            The upper bound.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Between
+            Between condition.
+        """
         return Attr(self.__col).between(start, stop)
 
     def begins_with(self, other):
+        """
+        Check if value begins with the specified prefix.
+
+        Parameters
+        ----------
+        other : Any
+            The prefix to check.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.BeginsWith
+            Begins with condition.
+        """
         return Attr(self.__col).begins_with(other)
 
     def contains(self, other):
+        """
+        Check if value contains the specified value.
+
+        Parameters
+        ----------
+        other : Any
+            The value to check for.
+
+        Returns
+        -------
+        boto3.dynamodb.conditions.Contains
+            Contains condition.
+        """
         return Attr(self.__col).contains(other)
 
 
 class Scanner:
     """
-    Scans a dynamodb table
+    Scans a dynamodb table.
 
     Args
     ----
     tablekey: str
         The short name of the table (User, Tap, etc.)
     """
+
     def __init__(self, tablekey):
         self.__loader = Loader(tablekey)
         self.__filter = None
 
     def query(self, expression):
         """
-        Sets the query to scan with
+        Set the query to scan with.
 
         Args
         ----
@@ -428,7 +558,7 @@ class Scanner:
 
     def scan(self, connection=None, **kwargs):
         """
-        Scan the table
+        Scan the table.
 
         Args
         ----
@@ -461,11 +591,11 @@ class Scanner:
 
 class Query:
     """
-    Handles queries against a dynamodb table
+    Handle queries against a dynamodb table.
 
     Args
     ----
-    key: str 
+    key: str
         The short name of the table (User, Tap, etc.)
     query: str (optional)
         The expression to query the table with, for example:
@@ -501,6 +631,7 @@ class Query:
     keys: str
         a regex string for keys
     """
+
     invalid_chars = r"[^\w|\d|=|\"|\-|:|\.|<|>|(|)|~|!]"
     blocks = r"((?<=\()[\w\d=<>\"\-:.$~!]+(?=\)))"
     conditionals = r"(==|!=|<=|>=|<<|>>|BETWEEN|BEGINS|CONTAINS|~~|~)"
@@ -517,7 +648,7 @@ class Query:
 
     def scan(self, **kwargs):
         """
-        Run the query
+        Run the query.
 
         Args
         ----
@@ -541,9 +672,7 @@ class Query:
         while "LastEvaluatedKey" in res:
             last = res["LastEvaluatedKey"]
             res = scanner.scan(
-              ExclusiveStartKey=last,
-              ReturnConsumedCapacity="TOTAL",
-              **kwargs
+                ExclusiveStartKey=last, ReturnConsumedCapacity="TOTAL", **kwargs
             )
 
             # tally the consumed read units
@@ -555,7 +684,7 @@ class Query:
     @classmethod
     def check_query(cls, query):
         """
-        Validates whether a query is valid
+        Validate whether a query is valid.
 
         Args
         ----
@@ -577,8 +706,7 @@ class Query:
             pos = match.start(0)
 
             raise ValueError(
-                "Query contains invalid string at position %s: %s"
-                % (pos, string)
+                f"Query contains invalid string at position {pos}: {string}"
             )
 
         return True
@@ -586,7 +714,9 @@ class Query:
     @classmethod
     def build_query(cls, query):
         """
-        Build the query expression to pass to DynamoDB.Table.scan. The resulting query returns only elements that have
+        Build the query expression to pass to DynamoDB.Table.scan.
+
+        The resulting query returns only elements that have
         not been deleted.
 
         Args
@@ -598,7 +728,7 @@ class Query:
         DynamoDB.conditions.Attr
         """
         # Build an expression to filter any deleted elements
-        deleted_exp = cls.get_expression_from_string("~\"_deleted\"")
+        deleted_exp = cls.get_expression_from_string('~"_deleted"')
         if query is None:
             return deleted_exp
 
@@ -613,7 +743,15 @@ class Query:
     @classmethod
     def build_blocks(cls, query, blocks=None):
         """
-        Extracts paranthentical subexpressions from a given query. The expression is
+        Extract paranthentical subexpressions from a given query.
+
+        The expression is a list of subexpressions sorted in the order of
+        evaluation. Nested subexpressions are replaced with "$X" in following
+        subexpressions, where X is the index of the nested subexpression.
+        For example, the expression
+        (a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))
+        will return
+        ["a=="a"ORa=="b"", "b=="b"ORb=="c"", "b=="a"AND$1", "$0AND$2"]
 
         Args
         ----
@@ -623,14 +761,7 @@ class Query:
         Returns
         -------
         list of str
-            a list of subexpressions sorted in the order of evaluation. Nested
-            subexpressions are replaced with "$X" in following subexpressions,
-            where X is the index of the nested subexpression. For example, the
-            expression "(a=="a"ORa=="b")AND(b=="a"AND(b=="b"ORb=="c"))" will
-            return:
-                ["a=="a"ORa=="b"", "b=="b"ORb=="c"", "b=="a"AND$1", "$0AND$2"]
         """
-
         # an empty list on the first call
         blocks = blocks or []
 
@@ -646,7 +777,7 @@ class Query:
         # replace nested subqueries with "$X"
         for i, block in enumerate(match):
             _i = i + len(blocks)
-            query = query.replace(f"({block})", "$%s" % _i)
+            query = query.replace(f"({block})", f"${_i}")
 
         blocks.extend(match)
         return cls.build_blocks(query, blocks=blocks)
@@ -654,8 +785,7 @@ class Query:
     @classmethod
     def build_expression(cls, blocks, expressions=None):
         """
-        Build the expression to be passed to DynamoDB.Table.scan given a set
-        of blocks
+        Build expression to pass to DynamoDB.Table.scan given a set of blocks.
 
         Args
         ----
@@ -663,12 +793,11 @@ class Query:
         expressions: list of DynamoDB.conditions.Attr
             A list used for iteratively building the expression, where the last
             element will be the ultimate return value
-        
+
         Returns
         -------
         DynamoDB.conditions.Attr
         """
-
         # an empty list on the first call
         expressions = expressions or []
 
@@ -680,20 +809,17 @@ class Query:
         # iterate over each subexpression in this block
         strings = re.split(cls.comparitors, block)
         for i, string in enumerate(strings):
-
             # odd-indexed items will be comparitors. Continue
             if i % 2:
                 continue
 
             # if this subexpression is a nested subexpression
             if "$" in string:
-
                 # get the index and subexpression
                 ix = int(string.replace("$", ""))
                 _expression = expressions[ix]
 
             else:
-
                 # parse the subexpression
                 _expression = cls.get_expression_from_string(string)
 
@@ -723,8 +849,8 @@ class Query:
     @classmethod
     def get_expression_from_string(cls, string):
         """
-        Parse a subexpression
-        
+        Parse a subexpression.
+
         Args
         ----
         string: str
@@ -733,7 +859,6 @@ class Query:
         -------
         DynamoDB.conditions.Attr
         """
-
         # remove conditionals
         popped = re.sub(cls.conditionals, "", string)
 

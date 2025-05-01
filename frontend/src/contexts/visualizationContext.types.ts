@@ -58,5 +58,5 @@ export interface VisualizationContextValue {
  * @property defaultMargin - The default margin of the visualization.
  */
 export interface VisualizationContextProviderProps {
-  defaultMargin?: { top: number, right: number, bottom: number, left: number };
+  defaultMargin?: { top: number; right: number; bottom: number; left: number };
 }

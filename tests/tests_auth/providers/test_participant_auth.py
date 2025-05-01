@@ -1,5 +1,7 @@
+from unittest.mock import ANY, MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, ANY
+
 from backend.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
 
 
@@ -21,7 +23,8 @@ def test_get_study_subject_from_ditti_id(mock_study_subject, participant_auth):
 
     # Execute
     result = participant_auth.get_study_subject_from_ditti_id(
-        ditti_id="ditti_12345")
+        ditti_id="ditti_12345"
+    )
 
     # Verify
     assert result.id == 1
@@ -33,7 +36,9 @@ def test_get_study_subject_from_ditti_id(mock_study_subject, participant_auth):
 
 
 @patch("backend.auth.providers.cognito.participant.StudySubject")
-def test_get_study_subject_from_ditti_id_empty_id(mock_study_subject, participant_auth):
+def test_get_study_subject_from_ditti_id_empty_id(
+    mock_study_subject, participant_auth
+):
     """
     Test getting a study subject with empty ditti ID.
 
@@ -50,7 +55,9 @@ def test_get_study_subject_from_ditti_id_empty_id(mock_study_subject, participan
 
 
 @patch("backend.auth.providers.cognito.participant.StudySubject")
-def test_get_study_subject_from_ditti_id_include_archived(mock_study_subject, participant_auth):
+def test_get_study_subject_from_ditti_id_include_archived(
+    mock_study_subject, participant_auth
+):
     """Test getting a study subject from a ditti ID including archived."""
     # Setup
     mock_study = MagicMock(id=1, ditti_id="ditti_12345", is_archived=True)
@@ -60,7 +67,8 @@ def test_get_study_subject_from_ditti_id_include_archived(mock_study_subject, pa
 
     # Execute
     result = participant_auth.get_study_subject_from_ditti_id(
-        ditti_id="ditti_12345", include_archived=True)
+        ditti_id="ditti_12345", include_archived=True
+    )
 
     # Verify
     assert result.id == 1
@@ -80,7 +88,8 @@ def test_get_study_subject_not_found(mock_study_subject, participant_auth):
 
     # Execute
     result = participant_auth.get_study_subject_from_ditti_id(
-        ditti_id="nonexistent_id")
+        ditti_id="nonexistent_id"
+    )
 
     # Verify
     assert result is None
@@ -90,37 +99,51 @@ def test_get_study_subject_not_found(mock_study_subject, participant_auth):
     mock_filter.filter.assert_called_once_with(ANY)
 
 
-@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
-def test_get_study_subject_from_token(mock_validate, participant_auth, mock_auth_test_data):
+@patch(
+    "backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route"
+)
+def test_get_study_subject_from_token(
+    mock_validate, participant_auth, mock_auth_test_data
+):
     """Test getting a study subject from a token."""
     # Setup
     mock_validate.return_value = (
-        True, mock_auth_test_data["participant_claims"])
+        True,
+        mock_auth_test_data["participant_claims"],
+    )
 
     # Mock study subject lookup - use a direct implementation
     mock_study = MagicMock(id=1, ditti_id="ditti_12345", is_archived=False)
 
     # Create a mock with the right return value, but verify using positional args
     participant_auth.get_study_subject_from_ditti_id = MagicMock(
-        return_value=mock_study)
+        return_value=mock_study
+    )
 
     # Execute
     study_subject, error = participant_auth.get_study_subject_from_token(
-        id_token=mock_auth_test_data["fake_tokens"]["id_token"])
+        id_token=mock_auth_test_data["fake_tokens"]["id_token"]
+    )
 
     # Verify
     assert study_subject.id == 1
     assert study_subject.ditti_id == "ditti_12345"
     assert error is None
     mock_validate.assert_called_once_with(
-        mock_auth_test_data["fake_tokens"]["id_token"])
+        mock_auth_test_data["fake_tokens"]["id_token"]
+    )
     # Use the positional args format instead of named kwargs
     participant_auth.get_study_subject_from_ditti_id.assert_called_once_with(
-        "ditti_12345", False)
+        "ditti_12345", False
+    )
 
 
-@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
-def test_get_study_subject_from_token_archived(mock_validate, participant_auth, mock_auth_test_data):
+@patch(
+    "backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route"
+)
+def test_get_study_subject_from_token_archived(
+    mock_validate, participant_auth, mock_auth_test_data
+):
     """
     Test getting an archived study subject from a token.
 
@@ -128,28 +151,38 @@ def test_get_study_subject_from_token_archived(mock_validate, participant_auth, 
     """
     # Setup
     mock_validate.return_value = (
-        True, mock_auth_test_data["participant_claims"])
+        True,
+        mock_auth_test_data["participant_claims"],
+    )
 
     # Mock archived study subject
     mock_study = MagicMock(id=1, ditti_id="ditti_12345", is_archived=True)
     participant_auth.get_study_subject_from_ditti_id = MagicMock(
-        return_value=mock_study)
+        return_value=mock_study
+    )
 
     # Execute
     study_subject, error = participant_auth.get_study_subject_from_token(
-        id_token=mock_auth_test_data["fake_tokens"]["id_token"])
+        id_token=mock_auth_test_data["fake_tokens"]["id_token"]
+    )
 
     # Verify
     assert study_subject is None
     assert error == AUTH_ERROR_MESSAGES["account_archived"]
     mock_validate.assert_called_once_with(
-        mock_auth_test_data["fake_tokens"]["id_token"])
+        mock_auth_test_data["fake_tokens"]["id_token"]
+    )
     participant_auth.get_study_subject_from_ditti_id.assert_called_once_with(
-        "ditti_12345", False)
+        "ditti_12345", False
+    )
 
 
-@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
-def test_get_study_subject_from_token_missing_username(mock_validate, participant_auth, mock_auth_test_data):
+@patch(
+    "backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route"
+)
+def test_get_study_subject_from_token_missing_username(
+    mock_validate, participant_auth, mock_auth_test_data
+):
     """
     Test handling token without username claim.
 
@@ -158,61 +191,79 @@ def test_get_study_subject_from_token_missing_username(mock_validate, participan
     # Setup - claims missing cognito:username
     mock_claims = {
         "sub": "test-user-id",
-        "email": "test@example.com"
+        "email": "test@example.com",
         # Missing cognito:username
     }
     mock_validate.return_value = (True, mock_claims)
 
     # Execute
     study_subject, error = participant_auth.get_study_subject_from_token(
-        id_token=mock_auth_test_data["fake_tokens"]["id_token"])
+        id_token=mock_auth_test_data["fake_tokens"]["id_token"]
+    )
 
     # Verify
     assert study_subject is None
     assert error == "Invalid token"
     mock_validate.assert_called_once_with(
-        mock_auth_test_data["fake_tokens"]["id_token"])
+        mock_auth_test_data["fake_tokens"]["id_token"]
+    )
 
 
-@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
-def test_get_study_subject_from_token_not_found(mock_validate, participant_auth, mock_auth_test_data):
+@patch(
+    "backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route"
+)
+def test_get_study_subject_from_token_not_found(
+    mock_validate, participant_auth, mock_auth_test_data
+):
     """Test token validation returns None when study subject not found."""
     # Setup
     mock_validate.return_value = (
-        True, mock_auth_test_data["participant_claims"])
+        True,
+        mock_auth_test_data["participant_claims"],
+    )
 
     # Mock study subject lookup
     participant_auth.get_study_subject_from_ditti_id = MagicMock(
-        return_value=None)
+        return_value=None
+    )
 
     # Execute
     study_subject, error = participant_auth.get_study_subject_from_token(
-        id_token=mock_auth_test_data["fake_tokens"]["id_token"])
+        id_token=mock_auth_test_data["fake_tokens"]["id_token"]
+    )
 
     # Verify
     assert study_subject is None
     assert error == AUTH_ERROR_MESSAGES["not_found"]
     mock_validate.assert_called_once_with(
-        mock_auth_test_data["fake_tokens"]["id_token"])
+        mock_auth_test_data["fake_tokens"]["id_token"]
+    )
     participant_auth.get_study_subject_from_ditti_id.assert_called_once_with(
-        "ditti_12345", False)
+        "ditti_12345", False
+    )
 
 
-@patch("backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route")
-def test_get_study_subject_from_token_validation_error(mock_validate, participant_auth, mock_auth_test_data):
+@patch(
+    "backend.auth.providers.cognito.base.CognitoAuthBase.validate_token_for_authenticated_route"
+)
+def test_get_study_subject_from_token_validation_error(
+    mock_validate, participant_auth, mock_auth_test_data
+):
     """Test handling token validation errors."""
     # Setup
     mock_validate.return_value = (False, "Invalid token")
 
     # Execute
     study_subject, error = participant_auth.get_study_subject_from_token(
-        id_token=mock_auth_test_data["fake_tokens"]["id_token"])
+        id_token=mock_auth_test_data["fake_tokens"]["id_token"]
+    )
 
     # Verify
     assert study_subject is None
     assert error == "Invalid token"
     mock_validate.assert_called_once_with(
-        mock_auth_test_data["fake_tokens"]["id_token"])
+        mock_auth_test_data["fake_tokens"]["id_token"]
+    )
 
 
 @patch("backend.auth.providers.cognito.participant.oauth")
@@ -236,7 +287,7 @@ def test_init_participant_oauth_client(mock_oauth):
                 "COGNITO_PARTICIPANT_USER_POOL_ID": "us-west-2_testpool",
                 "COGNITO_PARTICIPANT_DOMAIN": "test-domain.auth.us-west-2.amazoncognito.com",
                 "COGNITO_PARTICIPANT_CLIENT_ID": "test-client-id",
-                "COGNITO_PARTICIPANT_CLIENT_SECRET": "test-client-secret"
+                "COGNITO_PARTICIPANT_CLIENT_SECRET": "test-client-secret",
             }
 
             if "participant_oidc" not in mock_oauth._clients:
@@ -246,11 +297,12 @@ def test_init_participant_oauth_client(mock_oauth):
                     client_secret=config["COGNITO_PARTICIPANT_CLIENT_SECRET"],
                     server_metadata_url=f"https://cognito-idp.{config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{config['COGNITO_PARTICIPANT_USER_POOL_ID']}/.well-known/openid-configuration",
                     client_kwargs={
-                        "scope": "openid aws.cognito.signin.user.admin"},
+                        "scope": "openid aws.cognito.signin.user.admin"
+                    },
                     authorize_url=f"https://{config['COGNITO_PARTICIPANT_DOMAIN']}/oauth2/authorize",
                     access_token_url=f"https://{config['COGNITO_PARTICIPANT_DOMAIN']}/oauth2/token",
                     userinfo_endpoint=f"https://{config['COGNITO_PARTICIPANT_DOMAIN']}/oauth2/userInfo",
-                    jwks_uri=f"https://cognito-idp.{config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{config['COGNITO_PARTICIPANT_USER_POOL_ID']}/.well-known/jwks.json"
+                    jwks_uri=f"https://cognito-idp.{config['COGNITO_PARTICIPANT_REGION']}.amazonaws.com/{config['COGNITO_PARTICIPANT_USER_POOL_ID']}/.well-known/jwks.json",
                 )
 
         # Replace the init function with our mock
@@ -267,7 +319,7 @@ def test_init_participant_oauth_client(mock_oauth):
         args, kwargs = mock_oauth.register.call_args
         assert kwargs["name"] == "participant_oidc"
         assert kwargs["client_id"] == "test-client-id"
-        assert kwargs["client_secret"] == "test-client-secret"
+        assert kwargs["client_secret"] == "test-client-secret"  # noqa: S105
         assert "authorize_url" in kwargs
         assert "access_token_url" in kwargs
         assert "jwks_uri" in kwargs

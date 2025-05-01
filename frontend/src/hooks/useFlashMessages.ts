@@ -26,7 +26,9 @@ import { FlashMessageContextValue } from "../contexts/flashMessagesContext.types
 export function useFlashMessages(): FlashMessageContextValue {
   const context = useContext(FlashMessageContext);
   if (!context) {
-    throw new Error("useFlashMessages must be used within a FlashMessageContext provider");
+    throw new Error(
+      "useFlashMessages must be used within a FlashMessageContext provider"
+    );
   }
   return context;
 }

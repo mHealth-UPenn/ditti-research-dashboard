@@ -26,25 +26,30 @@ export const TableCell = ({
 }: PropsWithChildren<TableCellProps>) => {
   let padding = "";
   if (paddingX !== undefined) {
-    padding += `px-[${paddingX}px]`;
+    padding += `px-[${String(paddingX)}px]`;
   } else {
     padding += "px-1 lg:px-2";
   }
   if (paddingY !== undefined) {
-    padding += ` py-[${paddingX}px]`;
+    padding += ` py-[${String(paddingY)}px]`;
   } else {
     padding += " py-2";
   }
 
   return (
     <td
-      className="border-t border-r border-light h-[inherit] p-0"
-      style={{ width: `${width}%` }}>
-        <div className={`w-full h-full flex items-center ${padding}`}>
-          <div className={`max-w-[500px] truncate ${paddingY !== undefined ? "h-full" : ""} ${paddingX !== undefined ? "w-full" : ""}`}>
-            {children}
-          </div>
+      className="h-[inherit] border-r border-t border-light p-0"
+      style={{ width: `${String(width)}%` }}
+    >
+      <div className={`flex size-full items-center ${padding}`}>
+        <div
+          className={`max-w-[500px] truncate
+            ${paddingY !== undefined ? "h-full" : ""}
+            ${paddingX !== undefined ? "w-full" : ""}`}
+        >
+          {children}
         </div>
+      </div>
     </td>
   );
 };

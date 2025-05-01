@@ -21,19 +21,22 @@ import { ConsentModalProps } from "./consentModal.types";
 import { QuillView } from "../quillView/quillView";
 
 export const ConsentModal: FC<ConsentModalProps> = memo(
-  ({ isOpen, onAccept, onDeny, onClose, contentHtml }) => {
+  ({ isOpen, onAccept, onDeny, onClose, contentHtml }: ConsentModalProps) => {
     if (!isOpen) return null;
 
     return (
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+        className="fixed inset-0 z-50 flex items-center justify-center
+          bg-black/50"
         aria-labelledby="consent-modal-title"
         role="dialog"
         aria-modal="true"
       >
         {/* Modal container */}
         <div
-          className="relative w-full sm:max-w-[70vw] md:max-w-[60vw] lg:max-w-[50vw] xl:max-w-[40vw] m-4 bg-white rounded-xl shadow-lg flex flex-col max-h-[90vh]"
+          className="relative m-4 flex max-h-[90vh] w-full flex-col rounded-xl
+            bg-white shadow-lg sm:max-w-[70vw] md:max-w-[60vw] lg:max-w-[50vw]
+            xl:max-w-[40vw]"
         >
           {/* Modal header */}
           <div className="flex items-center justify-between p-8">
@@ -45,11 +48,13 @@ export const ConsentModal: FC<ConsentModalProps> = memo(
             </h3>
             <button
               type="button"
-              className="flex items-center text-black bg-transparent hover:bg-extra-light hover:text-secondary-hover rounded-lg text-sm px-2 py-1"
+              className="bg-transparent flex items-center rounded-lg px-2 py-1
+                text-sm text-black hover:bg-extra-light
+                hover:text-secondary-hover"
               onClick={onClose}
             >
               <svg
-                className="w-4 h-4"
+                className="size-4"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 14 14"
@@ -70,13 +75,16 @@ export const ConsentModal: FC<ConsentModalProps> = memo(
 
           {/* Modal body */}
           <QuillView
-            className="overflow-auto text-black text-sm"
+            className="overflow-auto text-sm text-black"
             content={contentHtml}
             style={{ padding: "0 2rem" }}
           />
 
           {/* Modal footer */}
-          <div className="p-8 flex items-center justify-end space-x-3 rtl:space-x-reverse">
+          <div
+            className="flex items-center justify-end space-x-3 p-8
+              rtl:space-x-reverse"
+          >
             <Button onClick={onAccept} rounded size="sm" variant="success">
               Accept
             </Button>
@@ -89,3 +97,5 @@ export const ConsentModal: FC<ConsentModalProps> = memo(
     );
   }
 );
+
+ConsentModal.displayName = "ConsentModal";

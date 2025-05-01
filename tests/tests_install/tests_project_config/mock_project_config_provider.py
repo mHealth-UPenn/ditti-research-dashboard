@@ -1,15 +1,15 @@
 from unittest.mock import MagicMock
 
+from install.project_config.project_config_provider import ProjectConfigProvider
 from install.project_config.project_config_types import (
     AwsConfig,
-    UserInput,
-    ProjectConfig,
     CognitoConfig,
+    DockerConfig,
+    ProjectConfig,
     S3Config,
     SecretsResourceManagerConfig,
-    DockerConfig,
+    UserInput,
 )
-from install.project_config.project_config_provider import ProjectConfigProvider
 from tests.tests_install.tests_utils.mock_logger import logger
 
 
@@ -42,7 +42,9 @@ def s3_config(hashstr: str) -> S3Config:
     }
 
 
-def secrets_resource_manager_config(hashstr: str) -> SecretsResourceManagerConfig:
+def secrets_resource_manager_config(
+    hashstr: str,
+) -> SecretsResourceManagerConfig:
     return {
         "secret_name": f"test-project-{hashstr}-secret",
         "tokens_secret_name": f"test-project-{hashstr}-Fitbit-tokens",
@@ -60,9 +62,9 @@ def aws_config(hashstr: str) -> AwsConfig:
 
 def docker_config(hashstr: str) -> DockerConfig:
     return {
-        "network_name": f"test-project-network",
-        "postgres_container_name": f"test-project-postgres",
-        "wearable_data_retrieval_container_name": f"test-project-wearable-data-retrieval",
+        "network_name": "test-project-network",
+        "postgres_container_name": "test-project-postgres",
+        "wearable_data_retrieval_container_name": "test-project-wearable-data-retrieval",
     }
 
 
@@ -81,8 +83,17 @@ def project_config_provider() -> ProjectConfigProvider:
     provider.project_config = project_config(provider.hashstr)
     provider.project_settings_exists = MagicMock(return_value=False)
     provider.get_continue_input = MagicMock(return_value="y")
-    provider.get_project_name_input = MagicMock(return_value=provider.user_input["project_name"])
-    provider.get_fitbit_credentials_input = MagicMock(return_value=(provider.user_input["fitbit_client_id"], provider.user_input["fitbit_client_secret"]))
-    provider.get_admin_email_input = MagicMock(return_value=provider.user_input["admin_email"])
+    provider.get_project_name_input = MagicMock(
+        return_value=provider.user_input["project_name"]
+    )
+    provider.get_fitbit_credentials_input = MagicMock(
+        return_value=(
+            provider.user_input["fitbit_client_id"],
+            provider.user_input["fitbit_client_secret"],
+        )
+    )
+    provider.get_admin_email_input = MagicMock(
+        return_value=provider.user_input["admin_email"]
+    )
     provider.write_project_config = MagicMock()  # Suppresses writing to file
     return provider

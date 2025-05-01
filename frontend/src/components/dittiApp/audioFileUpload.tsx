@@ -47,7 +47,9 @@ export const AudioFileUpload = () => {
   const [availability, setAvailability] = useState("All Users");
   const [dittiId, setDittiId] = useState("");
   const [studiesRadio, setStudiesRadio] = useState("All Studies");
-  const [selectedStudies, setSelectedStudies] = useState<Set<number>>(new Set());
+  const [selectedStudies, setSelectedStudies] = useState<Set<number>>(
+    new Set()
+  );
   const [files, setFiles] = useState<FileMetadata[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
@@ -66,27 +68,24 @@ export const AudioFileUpload = () => {
   const navigate = useNavigate();
 
   const existingFiles = new Set();
-  audioFiles.forEach(af => existingFiles.add(af.fileName))
-
+  audioFiles.forEach((af) => existingFiles.add(af.fileName));
 
   /**
    * Get a set of presigned URLs for uploading audio files to S3.
    * @returns string[]: The array of presigned URLs
    */
   const getPresignedUrls = async () => {
-    const files = selectedFiles.map(file => (
-      { key: file.name, type: file.type }
-    ));
+    const files = selectedFiles.map((file) => ({
+      key: file.name,
+      type: file.type,
+    }));
 
     try {
-      const res = await makeRequest(
-        "/aws/audio-file/get-presigned-urls",
-        {
-          method: "POST",
-          body: JSON.stringify({ app: 2, files })
-        }
-      )
-      return res.urls as string[];
+      const res = await makeRequest("/aws/audio-file/get-presigned-urls", {
+        method: "POST",
+        body: JSON.stringify({ app: 2, files }),
+      });
+      return (res as unknown as { urls: string[] }).urls;
     } catch (error) {
       const e = error as { msg: string };
       throw new AxiosError(e.msg);
@@ -100,37 +99,45 @@ export const AudioFileUpload = () => {
    * @param urls string[]
    */
   const uploadFiles = async (urls: string[]) => {
-    const progressArray: number[] = new Array(selectedFiles.length).fill(0);
+    const progressArray: number[] = Array.from(
+      new Array(selectedFiles.length).fill(0)
+    ) as number[];
     setUploadProgress(progressArray);
 
     const uploadPromises = selectedFiles.map((file, index) => {
-      return axios.put(
-        urls[index],
-        file, {
-          headers: {
-            "Content-Type": file.type,
-          },
-          onUploadProgress: (progressEvent) => {
-            let progress;
+      return axios.put(urls[index], file, {
+        headers: {
+          "Content-Type": file.type,
+        },
+        onUploadProgress: (progressEvent) => {
+          let progress;
 
-            if (progressEvent.total) {
-              progress = (progressEvent.loaded / progressEvent.total) * 100;
-            } else {
-              progress = 100;
-            }
+          if (progressEvent.total) {
+            progress = (progressEvent.loaded / progressEvent.total) * 100;
+          } else {
+            progress = 100;
+          }
 
-            progressArray[index] = progress;
-            setUploadProgress([...progressArray]);
-          },
-        }
-      );
+          progressArray[index] = progress;
+          setUploadProgress([...progressArray]);
+        },
+      });
     });
 
     const responses = await Promise.all(uploadPromises);
-    const errors = responses.filter(res => res.status !== 200);
+    const errors = responses.filter((res) => res.status !== 200);
 
     if (errors.length) {
-      const error = errors.map(res => res.data.error).join("\n");
+      const error = errors
+        .map((res) => {
+          // Type assertion for data object
+          const data = res.data as Record<string, unknown> | undefined;
+          // Safely access error property and ensure it's a string
+          const errorMessage =
+            typeof data?.error === "string" ? data.error : "Unknown error";
+          return errorMessage;
+        })
+        .join("\n");
       throw Error(error);
     }
   };
@@ -138,8 +145,8 @@ export const AudioFileUpload = () => {
   const insertFiles = async (): Promise<void> => {
     try {
       const selected = studies
-        .filter(s => selectedStudies.has(s.id))
-        .map(s => s.acronym);
+        .filter((s) => selectedStudies.has(s.id))
+        .map((s) => s.acronym);
 
       const data = selectedFiles.map((file, i) => ({
         availability: availability === "All Users" ? "all" : dittiId,
@@ -151,8 +158,8 @@ export const AudioFileUpload = () => {
       }));
 
       const body = {
-        app: 2,  // Ditti Dashboard = 2
-        create: data
+        app: 2, // Ditti Dashboard = 2
+        create: data,
       };
 
       const opts = { method: "POST", body: JSON.stringify(body) };
@@ -167,7 +174,7 @@ export const AudioFileUpload = () => {
    * Handles when the user clicks "Upload." This function does nothing if the
    * user did not select any files. This function attempts to get presigned URLs
    * for all selected files and attempts to upload them using these files.
-   * @returns 
+   * @returns
    */
   const handleUpload = async () => {
     // Validate the form
@@ -202,25 +209,28 @@ export const AudioFileUpload = () => {
       navigate(-1);
       flashMessage(<span>All files successfully uploaded.</span>, "success");
     } catch (error) {
-      const axiosError = error as AxiosError
+      const axiosError = error as AxiosError;
       console.error("Error uploading files:", error);
-      flashMessage(<span>Error uploading files: {axiosError.message}</span>, "danger");
+      flashMessage(
+        <span>Error uploading files: {axiosError.message}</span>,
+        "danger"
+      );
     } finally {
       setUploading(false);
     }
   };
 
   const selectStudy = (id: number): void => {
-    setSelectedStudies(prevSelectedStudies => {
-      const newSelectedStudies = new Set(prevSelectedStudies)
+    setSelectedStudies((prevSelectedStudies) => {
+      const newSelectedStudies = new Set(prevSelectedStudies);
       newSelectedStudies.add(id);
       return newSelectedStudies;
     });
   };
 
   const removeStudy = (id: number): void => {
-    setSelectedStudies(prevSelectedStudies => {
-      const newSelectedStudies = new Set(prevSelectedStudies)
+    setSelectedStudies((prevSelectedStudies) => {
+      const newSelectedStudies = new Set(prevSelectedStudies);
       newSelectedStudies.delete(id);
       return newSelectedStudies;
     });
@@ -279,13 +289,13 @@ export const AudioFileUpload = () => {
 
       reader.readAsDataURL(file);
     });
-  }
+  };
 
   const handleSelectFiles = async (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const arr = Array.from(e.target.files);
       const files = await Promise.all(
-        arr.map(async file => {
+        arr.map(async (file) => {
           const size = (file.size / (1024 * 1024)).toFixed(1) + " MB";
           const title = file.name.split(".").slice(0, -1).join();
           const length = await getAudioDuration(file);
@@ -296,8 +306,8 @@ export const AudioFileUpload = () => {
 
       setFiles(files);
       setSelectedFiles(arr);
-      
-      if (!files.some(file => file.exists)) {
+
+      if (!files.some((file) => file.exists)) {
         setCanUpload(true);
       }
     } else {
@@ -309,25 +319,25 @@ export const AudioFileUpload = () => {
     const updatedFiles = [...files];
     files[i].title = text;
     setFiles(updatedFiles);
-  }
+  };
 
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = Math.floor(seconds % 60);
-  
+
     // If there are hours, include them in the output (HH:MM:SS)
     if (hours > 0) {
-      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    } 
-  
-    // Otherwise, just return MM:SS
-    return `${minutes}:${secs.toString().padStart(2, '0')}`;
-  }
+      return `${hours.toString()}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
 
-  const percentComplete = uploadProgress.length ? Math.floor(
-    uploadProgress.reduce((a, b) => a + b) / uploadProgress.length
-  ) : 0;
+    // Otherwise, just return MM:SS
+    return `${minutes.toString()}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const percentComplete = uploadProgress.length
+    ? Math.floor(uploadProgress.reduce((a, b) => a + b) / uploadProgress.length)
+    : 0;
 
   if (studiesLoading || dataLoading) {
     return (
@@ -336,7 +346,7 @@ export const AudioFileUpload = () => {
           <SmallLoader />
         </Form>
       </FormView>
-    )
+    );
   }
 
   return (
@@ -354,7 +364,8 @@ export const AudioFileUpload = () => {
               label="Category"
               onKeyup={setCategory}
               feedback={categoryFeedback}
-              value={category} />
+              value={category}
+            />
           </FormField>
         </FormRow>
 
@@ -377,7 +388,8 @@ export const AudioFileUpload = () => {
               value={dittiId}
               onKeyup={setDittiId}
               disabled={availability === "All Users"}
-              feedback={availabilityFeedback} />
+              feedback={availabilityFeedback}
+            />
           </FormField>
         </FormRow>
 
@@ -393,43 +405,47 @@ export const AudioFileUpload = () => {
             />
           </FormField>
           <FormField>
-            <div className="mb-1">
-              Add study
-            </div>
+            <div className="mb-1">Add study</div>
             <div className="border-light">
               <SelectField
                 id={0}
-                opts={studies.map(
-                  s => {return { value: s.id, label: s.acronym }}
-                )}
+                opts={studies.map((s) => {
+                  return { value: s.id, label: s.acronym };
+                })}
                 placeholder="Select studies..."
                 callback={selectStudy}
-                disabled={studiesRadio === "All Studies"}/>
+                disabled={studiesRadio === "All Studies"}
+              />
             </div>
-            {studiesFeedback !== "" && <span className="text-sm text-[red]">{studiesFeedback}</span>}
+            {studiesFeedback !== "" && (
+              <span className="text-sm text-[red]">{studiesFeedback}</span>
+            )}
           </FormField>
         </FormRow>
-        {!!selectedStudies.size &&
+        {!!selectedStudies.size && (
           <FormRow>
             <FormField>
               <div className="mb-1">
                 <p>Selected studies</p>
               </div>
-              {
-                studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
+              {studies
+                .filter((study) => selectedStudies.has(study.id))
+                .map((s, i) => (
                   <div key={i} className="flex items-center justify-between">
                     <span className="truncate">{`${s.acronym}: ${s.name}`}</span>
                     <div
-                      className="p-2 cursor-pointer"
-                      onClick={() => removeStudy(s.id)}>
+                      className="cursor-pointer p-2"
+                      onClick={() => {
+                        removeStudy(s.id);
+                      }}
+                    >
                       <CloseIcon color="warning" />
                     </div>
                   </div>
-                )
-              }
+                ))}
             </FormField>
           </FormRow>
-        }
+        )}
 
         {/* Select audio files field */}
         <FormRow>
@@ -440,10 +456,11 @@ export const AudioFileUpload = () => {
               multiple
               className="hidden"
               accept=".mp3"
-              onChange={handleSelectFiles} />
-            <label
-              htmlFor="audio-file-upload"
-              className="mb-1">
+              onChange={(e) => {
+                void handleSelectFiles(e);
+              }}
+            />
+            <label htmlFor="audio-file-upload" className="mb-1">
               Select audio files
             </label>
             <Button
@@ -451,46 +468,57 @@ export const AudioFileUpload = () => {
               onClick={handleClickChooseFiles}
               className="w-max"
               size="sm"
-              rounded={true}>
-                Choose files
+              rounded={true}
+            >
+              Choose files
             </Button>
           </FormField>
         </FormRow>
 
         {/* Selected audio files list */}
-        {
-          Boolean(files.length) &&
+        {Boolean(files.length) && (
           <FormRow>
             <FormField>
               <span className="mb-1">Audio files</span>
-              {files.map((file, i) =>
+              {files.map((file, i) => (
                 <div key={i} className="w-full">
-                  <div className="flex justify-between w-full mb-1">
+                  <div className="mb-1 flex w-full justify-between">
                     <span className="truncate">{file.name}</span>
-                    <span className="w-max flex-shrink-0">{file.size} - {formatDuration(file.length)}</span>
+                    <span className="w-max shrink-0">
+                      {file.size} - {formatDuration(file.length)}
+                    </span>
                   </div>
-                  <div className="flex w-full flex-col mb-4">
-                    {
-                      file.exists ?
+                  <div className="mb-4 flex w-full flex-col">
+                    {file.exists ? (
                       <span className="text-sm text-[red]">
-                        An audio file with this name already exists.<br />
+                        An audio file with this name already exists.
+                        <br />
                         Rename this file or delete the existing file and try
                         again.
-                      </span> :
+                      </span>
+                    ) : (
                       <TextField
                         id={`file-${file.name}`}
                         type="text"
                         value={file.title}
-                        onKeyup={(text: string) => handleTitleKeyup(text, i)}>
-                          <span className="flex items-center px-2 bg-extra-light h-full">Title</span>
+                        onKeyup={(text: string) => {
+                          handleTitleKeyup(text, i);
+                        }}
+                      >
+                        <span
+                          className="flex h-full items-center bg-extra-light
+                            px-2"
+                        >
+                          Title
+                        </span>
                       </TextField>
-                    }
+                    )}
                   </div>
                 </div>
-              )}
+              ))}
             </FormField>
           </FormRow>
-        }
+        )}
       </Form>
 
       {/* the subject summary */}
@@ -501,16 +529,20 @@ export const AudioFileUpload = () => {
             Files:
             <br />
             {/* &nbsp;&nbsp;&nbsp;&nbsp;{title} */}
-            {
-              files.map((file, i) =>
-                <span key={i}>
-                  {Boolean(i) && <><br /><br /></>}
-                  &nbsp;&nbsp;&nbsp;&nbsp;{file.title}
-                  <br />
-                  &nbsp;&nbsp;&nbsp;&nbsp;{file.size} - {formatDuration(file.length)}
-                </span>
-              )
-            }
+            {files.map((file, i) => (
+              <span key={i}>
+                {Boolean(i) && (
+                  <>
+                    <br />
+                    <br />
+                  </>
+                )}
+                &nbsp;&nbsp;&nbsp;&nbsp;{file.title}
+                <br />
+                &nbsp;&nbsp;&nbsp;&nbsp;{file.size} -{" "}
+                {formatDuration(file.length)}
+              </span>
+            ))}
             <br />
             <br />
             Category:
@@ -528,43 +560,53 @@ export const AudioFileUpload = () => {
             <br />
             Studies:
             <br />
-            {
-              studiesRadio === "All Studies" ?
-              <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span> :
-              studies.filter(study => selectedStudies.has(study.id)).map((s, i) =>
-                <span key={`study-${i}`}>
-                  {Boolean(i) && <br />}
-                  &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}: {s.name}
-                </span>
-              )
-            }
+            {studiesRadio === "All Studies" ? (
+              <span>&nbsp;&nbsp;&nbsp;&nbsp;All Studies</span>
+            ) : (
+              studies
+                .filter((study) => selectedStudies.has(study.id))
+                .map((s, i) => (
+                  <span key={`study-${i.toString()}`}>
+                    {Boolean(i) && <br />}
+                    &nbsp;&nbsp;&nbsp;&nbsp;{s.acronym}: {s.name}
+                  </span>
+                ))
+            )}
           </FormSummaryText>
           <div>
             {
               // Upload progres bar
-              uploading &&
-              <div className="flex flex-col w-full mb-4">
-                <div className="flex justify-between mb-1 w-full">
-                  <span>Uploading...</span>
-                  <span>{percentComplete}%</span>
+              uploading && (
+                <div className="mb-4 flex w-full flex-col">
+                  <div className="mb-1 flex w-full justify-between">
+                    <span>Uploading...</span>
+                    <span>{percentComplete}%</span>
+                  </div>
+                  <span
+                    className={"h-[4px] bg-white transition-all duration-500"}
+                    style={{
+                      width: percentComplete
+                        ? `${percentComplete.toString()}%`
+                        : 0,
+                    }}
+                  />
                 </div>
-                <span className={`h-[4px] bg-white transition-all duration-500`}
-                  style={{ width: percentComplete ? `${percentComplete}%` : 0 }}/>
-              </div>
+              )
             }
             <FormSummaryButton
               onClick={handleUpload}
-              disabled={!canUpload || APP_ENV === "demo"}>
-                Upload
+              disabled={!canUpload || APP_ENV === "demo"}
+            >
+              Upload
             </FormSummaryButton>
-            {APP_ENV === "demo" &&
+            {APP_ENV === "demo" && (
               <FormSummarySubtext>
                 Audio file uploads are disabled in demo mode.
               </FormSummarySubtext>
-            }
+            )}
             <FormSummarySubtext>
-              Audio file details cannot be changed after upload. The files must be
-              deleted and uploaded again.
+              Audio file details cannot be changed after upload. The files must
+              be deleted and uploaded again.
             </FormSummarySubtext>
           </div>
         </FormSummaryContent>

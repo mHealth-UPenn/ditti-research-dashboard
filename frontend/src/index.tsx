@@ -17,7 +17,12 @@
 
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserRouter, RouterProvider, Outlet, RouteObject } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Outlet,
+  RouteObject,
+} from "react-router-dom";
 import { ParticipantLoginPage } from "./pages/participantLoginPage";
 import { ResearcherLoginPage } from "./pages/researcherLoginPage";
 import { Dashboard } from "./components/dashboard/dashboard";
@@ -26,6 +31,7 @@ import { ProtectedRoute } from "./components/protectedRoute/protectedRoute";
 import { AuthProvider } from "./contexts/authContext";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import "./index.css";
+// eslint-disable-next-line import/no-unresolved
 import "./output.css";
 import { FullLoader } from "./components/loader/loader";
 import { PrivacyPolicy } from "./pages/privacyPolicy";
@@ -74,7 +80,7 @@ const Root: React.FC = () => {
 
 /**
  * Define application routes with nested routes for protected areas and login pages.
- * 
+ *
  * `handle.breadcrumbs` is used to display breadcrumbs in the Navbar component. `handle.breadcrumbs` is an array of
  * objects with `name` and `link` keys. The `name` key is the breadcrumb text and the `link` key is the breadcrumb link.
  * Either can contain a template string that is automatically replaced with the `studySlug`, `sidParam`, and
@@ -96,7 +102,7 @@ const router = createBrowserRouter([
       {
         path: "coordinator",
         element: (
-          <ProtectedRoute authMethod='researcher'>
+          <ProtectedRoute authMethod="researcher">
             <FlashMessageContextProvider>
               <FullLoader loading={false} msg="" />
               <Dashboard />
@@ -125,14 +131,21 @@ const router = createBrowserRouter([
                 path: "",
                 element: <Accounts />,
                 handle: {
-                  breadcrumbs: [{ name: "Accounts", link: "/coordinator/admin/accounts" }],
+                  breadcrumbs: [
+                    { name: "Accounts", link: "/coordinator/admin/accounts" },
+                  ],
                 },
               },
               {
                 path: "about-sleep-templates",
                 element: <AboutSleepTemplates />,
                 handle: {
-                  breadcrumbs: [{ name: "About Sleep Templates", link: "/coordinator/admin/about-sleep-templates" }],
+                  breadcrumbs: [
+                    {
+                      name: "About Sleep Templates",
+                      link: "/coordinator/admin/about-sleep-templates",
+                    },
+                  ],
                 },
               },
               {
@@ -140,8 +153,14 @@ const router = createBrowserRouter([
                 element: <AboutSleepTemplatesEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "About Sleep Templates", link: "/coordinator/admin/about-sleep-templates" },
-                    { name: "Create", link: "/coordinator/admin/about-sleep-templates/create" }
+                    {
+                      name: "About Sleep Templates",
+                      link: "/coordinator/admin/about-sleep-templates",
+                    },
+                    {
+                      name: "Create",
+                      link: "/coordinator/admin/about-sleep-templates/create",
+                    },
                   ],
                 },
               },
@@ -150,8 +169,14 @@ const router = createBrowserRouter([
                 element: <AboutSleepTemplatesEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "About Sleep Templates", link: "/coordinator/admin/about-sleep-templates" },
-                    { name: "Edit", link: "/coordinator/admin/about-sleep-templates/edit" }
+                    {
+                      name: "About Sleep Templates",
+                      link: "/coordinator/admin/about-sleep-templates",
+                    },
+                    {
+                      name: "Edit",
+                      link: "/coordinator/admin/about-sleep-templates/edit",
+                    },
                   ],
                 },
               },
@@ -159,7 +184,12 @@ const router = createBrowserRouter([
                 path: "access-groups",
                 element: <AccessGroups />,
                 handle: {
-                  breadcrumbs: [{ name: "Access Groups", link: "/coordinator/admin/access-groups" }],
+                  breadcrumbs: [
+                    {
+                      name: "Access Groups",
+                      link: "/coordinator/admin/access-groups",
+                    },
+                  ],
                 },
               },
               {
@@ -167,8 +197,14 @@ const router = createBrowserRouter([
                 element: <AccessGroupsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "Access Groups", link: "/coordinator/admin/access-groups" },
-                    { name: "Create", link: "/coordinator/admin/access-groups/create" }
+                    {
+                      name: "Access Groups",
+                      link: "/coordinator/admin/access-groups",
+                    },
+                    {
+                      name: "Create",
+                      link: "/coordinator/admin/access-groups/create",
+                    },
                   ],
                 },
               },
@@ -177,8 +213,14 @@ const router = createBrowserRouter([
                 element: <AccessGroupsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "Access Groups", link: "/coordinator/admin/access-groups" },
-                    { name: "Edit", link: "/coordinator/admin/access-groups/edit" }
+                    {
+                      name: "Access Groups",
+                      link: "/coordinator/admin/access-groups",
+                    },
+                    {
+                      name: "Edit",
+                      link: "/coordinator/admin/access-groups/edit",
+                    },
                   ],
                 },
               },
@@ -186,7 +228,9 @@ const router = createBrowserRouter([
                 path: "accounts",
                 element: <Accounts />,
                 handle: {
-                  breadcrumbs: [{ name: "Accounts", link: "/coordinator/admin/accounts" }],
+                  breadcrumbs: [
+                    { name: "Accounts", link: "/coordinator/admin/accounts" },
+                  ],
                 },
               },
               {
@@ -195,7 +239,10 @@ const router = createBrowserRouter([
                 handle: {
                   breadcrumbs: [
                     { name: "Accounts", link: "/coordinator/admin/accounts" },
-                    { name: "Create", link: "/coordinator/admin/accounts/create" }
+                    {
+                      name: "Create",
+                      link: "/coordinator/admin/accounts/create",
+                    },
                   ],
                 },
               },
@@ -205,7 +252,7 @@ const router = createBrowserRouter([
                 handle: {
                   breadcrumbs: [
                     { name: "Accounts", link: "/coordinator/admin/accounts" },
-                    { name: "Edit", link: "/coordinator/admin/accounts/edit" }
+                    { name: "Edit", link: "/coordinator/admin/accounts/edit" },
                   ],
                 },
               },
@@ -213,14 +260,21 @@ const router = createBrowserRouter([
                 path: "data-retrieval-tasks",
                 element: <DataRetrievalTasks />,
                 handle: {
-                  breadcrumbs: [{ name: "Data Retrieval Tasks", link: "/coordinator/admin/data-retrieval-tasks" }],
+                  breadcrumbs: [
+                    {
+                      name: "Data Retrieval Tasks",
+                      link: "/coordinator/admin/data-retrieval-tasks",
+                    },
+                  ],
                 },
               },
               {
                 path: "roles",
                 element: <Roles />,
                 handle: {
-                  breadcrumbs: [{ name: "Roles", link: "/coordinator/admin/roles" }],
+                  breadcrumbs: [
+                    { name: "Roles", link: "/coordinator/admin/roles" },
+                  ],
                 },
               },
               {
@@ -229,7 +283,7 @@ const router = createBrowserRouter([
                 handle: {
                   breadcrumbs: [
                     { name: "Roles", link: "/coordinator/admin/roles" },
-                    { name: "Create", link: "/coordinator/admin/roles/create" }
+                    { name: "Create", link: "/coordinator/admin/roles/create" },
                   ],
                 },
               },
@@ -239,7 +293,7 @@ const router = createBrowserRouter([
                 handle: {
                   breadcrumbs: [
                     { name: "Roles", link: "/coordinator/admin/roles" },
-                    { name: "Edit", link: "/coordinator/admin/roles/edit" }
+                    { name: "Edit", link: "/coordinator/admin/roles/edit" },
                   ],
                 },
               },
@@ -247,7 +301,9 @@ const router = createBrowserRouter([
                 path: "studies",
                 element: <Studies />,
                 handle: {
-                  breadcrumbs: [{ name: "Studies", link: "/coordinator/admin/studies" }],
+                  breadcrumbs: [
+                    { name: "Studies", link: "/coordinator/admin/studies" },
+                  ],
                 },
               },
               {
@@ -256,7 +312,10 @@ const router = createBrowserRouter([
                 handle: {
                   breadcrumbs: [
                     { name: "Studies", link: "/coordinator/admin/studies" },
-                    { name: "Create", link: "/coordinator/admin/studies/create" }
+                    {
+                      name: "Create",
+                      link: "/coordinator/admin/studies/create",
+                    },
                   ],
                 },
               },
@@ -266,11 +325,11 @@ const router = createBrowserRouter([
                 handle: {
                   breadcrumbs: [
                     { name: "Studies", link: "/coordinator/admin/studies" },
-                    { name: "Edit", link: "/coordinator/admin/studies/edit" }
+                    { name: "Edit", link: "/coordinator/admin/studies/edit" },
                   ],
                 },
               },
-            ]
+            ],
           },
           {
             path: "ditti",
@@ -278,7 +337,7 @@ const router = createBrowserRouter([
             handle: {
               breadcrumbs: [
                 { name: "Home", link: "/coordinator" },
-                { name: "Ditti App Dashboard", link: "/coordinator/ditti" }
+                { name: "Ditti App Dashboard", link: "/coordinator/ditti" },
               ],
             },
             children: [
@@ -290,7 +349,9 @@ const router = createBrowserRouter([
                 path: "audio",
                 element: <AudioFiles />,
                 handle: {
-                  breadcrumbs: [{ name: "Audio Files", link: "/coordinator/ditti/audio" }],
+                  breadcrumbs: [
+                    { name: "Audio Files", link: "/coordinator/ditti/audio" },
+                  ],
                 },
               },
               {
@@ -299,7 +360,7 @@ const router = createBrowserRouter([
                 handle: {
                   breadcrumbs: [
                     { name: "Audio Files", link: "/coordinator/ditti/audio" },
-                    { name: "Upload", link: "/coordinator/ditti/audio/upload" }
+                    { name: "Upload", link: "/coordinator/ditti/audio/upload" },
                   ],
                 },
               },
@@ -307,7 +368,12 @@ const router = createBrowserRouter([
                 path: "study",
                 element: <StudySummary />,
                 handle: {
-                  breadcrumbs: [{ name: "{study}", link: "/coordinator/ditti/study?sid={sid}" }],
+                  breadcrumbs: [
+                    {
+                      name: "{study}",
+                      link: "/coordinator/ditti/study?sid={sid}",
+                    },
+                  ],
                 },
               },
               {
@@ -315,8 +381,14 @@ const router = createBrowserRouter([
                 element: <Subjects />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/ditti/study?sid={sid}" },
-                    { name: "Participants", link: "/coordinator/ditti/participants?sid={sid}" }
+                    {
+                      name: "{study}",
+                      link: "/coordinator/ditti/study?sid={sid}",
+                    },
+                    {
+                      name: "Participants",
+                      link: "/coordinator/ditti/participants?sid={sid}",
+                    },
                   ],
                 },
               },
@@ -325,9 +397,18 @@ const router = createBrowserRouter([
                 element: <SubjectsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/ditti/study?sid={sid}" },
-                    { name: "Participants", link: "/coordinator/ditti/participants?sid={sid}" },
-                    { name: "Enroll", link: "/coordinator/ditti/participants/enroll?sid={sid}" }
+                    {
+                      name: "{study}",
+                      link: "/coordinator/ditti/study?sid={sid}",
+                    },
+                    {
+                      name: "Participants",
+                      link: "/coordinator/ditti/participants?sid={sid}",
+                    },
+                    {
+                      name: "Enroll",
+                      link: "/coordinator/ditti/participants/enroll?sid={sid}",
+                    },
                   ],
                 },
               },
@@ -336,9 +417,18 @@ const router = createBrowserRouter([
                 element: <SubjectsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/ditti/study?sid={sid}" },
-                    { name: "Participants", link: "/coordinator/ditti/participants?sid={sid}" },
-                    { name: "Edit", link: "/coordinator/ditti/participants/edit?dittiId={dittiId}&sid={sid}" }
+                    {
+                      name: "{study}",
+                      link: "/coordinator/ditti/study?sid={sid}",
+                    },
+                    {
+                      name: "Participants",
+                      link: "/coordinator/ditti/participants?sid={sid}",
+                    },
+                    {
+                      name: "Edit",
+                      link: "/coordinator/ditti/participants/edit?dittiId={dittiId}&sid={sid}",
+                    },
                   ],
                 },
               },
@@ -347,13 +437,22 @@ const router = createBrowserRouter([
                 element: <SubjectVisualsV2 />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/ditti/study?sid={sid}" },
-                    { name: "Participants", link: "/coordinator/ditti/participants?sid={sid}" },
-                    { name: "View", link: "/coordinator/ditti/participants/view?&dittiId={dittiId}&sid={sid}" }
+                    {
+                      name: "{study}",
+                      link: "/coordinator/ditti/study?sid={sid}",
+                    },
+                    {
+                      name: "Participants",
+                      link: "/coordinator/ditti/participants?sid={sid}",
+                    },
+                    {
+                      name: "View",
+                      link: "/coordinator/ditti/participants/view?&dittiId={dittiId}&sid={sid}",
+                    },
                   ],
                 },
               },
-            ]
+            ],
           },
           {
             path: "wearable",
@@ -361,7 +460,7 @@ const router = createBrowserRouter([
             handle: {
               breadcrumbs: [
                 { name: "Home", link: "/coordinator" },
-                { name: "Wearable Dashboard", link: "/coordinator/wearable" }
+                { name: "Wearable Dashboard", link: "/coordinator/wearable" },
               ],
             },
             children: [
@@ -373,7 +472,12 @@ const router = createBrowserRouter([
                 path: "study",
                 element: <WearableStudySummary />,
                 handle: {
-                  breadcrumbs: [{ name: "{study}", link: "/coordinator/wearable/study?sid={sid}" }],
+                  breadcrumbs: [
+                    {
+                      name: "{study}",
+                      link: "/coordinator/wearable/study?sid={sid}",
+                    },
+                  ],
                 },
               },
               {
@@ -381,8 +485,15 @@ const router = createBrowserRouter([
                 element: <WearableSubjects />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/wearable/study?sid={sid}" },
-                    { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" }],
+                    {
+                      name: "{study}",
+                      link: "/coordinator/wearable/study?sid={sid}",
+                    },
+                    {
+                      name: "Participants",
+                      link: "/coordinator/wearable/participants?sid={sid}",
+                    },
+                  ],
                 },
               },
               {
@@ -390,9 +501,18 @@ const router = createBrowserRouter([
                 element: <WearableSubjectsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/wearable/study?sid={sid}" },
-                    { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" },
-                    { name: "Enroll", link: "/coordinator/wearable/participants/enroll?sid={sid}" }
+                    {
+                      name: "{study}",
+                      link: "/coordinator/wearable/study?sid={sid}",
+                    },
+                    {
+                      name: "Participants",
+                      link: "/coordinator/wearable/participants?sid={sid}",
+                    },
+                    {
+                      name: "Enroll",
+                      link: "/coordinator/wearable/participants/enroll?sid={sid}",
+                    },
                   ],
                 },
               },
@@ -401,9 +521,18 @@ const router = createBrowserRouter([
                 element: <SubjectsEdit />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/wearable/study?sid={sid}" },
-                    { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" },
-                    { name: "Edit", link: "/coordinator/wearable/participants/edit?dittiId={dittiId}&sid={sid}" }
+                    {
+                      name: "{study}",
+                      link: "/coordinator/wearable/study?sid={sid}",
+                    },
+                    {
+                      name: "Participants",
+                      link: "/coordinator/wearable/participants?sid={sid}",
+                    },
+                    {
+                      name: "Edit",
+                      link: "/coordinator/wearable/participants/edit?dittiId={dittiId}&sid={sid}",
+                    },
                   ],
                 },
               },
@@ -412,15 +541,24 @@ const router = createBrowserRouter([
                 element: <WearableVisuals />,
                 handle: {
                   breadcrumbs: [
-                    { name: "{study}", link: "/coordinator/wearable/study?sid={sid}" },
-                    { name: "Participants", link: "/coordinator/wearable/participants?sid={sid}" },
-                    { name: "View", link: "/coordinator/wearable/participants/view?dittiId={dittiId}&sid={sid}" }
+                    {
+                      name: "{study}",
+                      link: "/coordinator/wearable/study?sid={sid}",
+                    },
+                    {
+                      name: "Participants",
+                      link: "/coordinator/wearable/participants?sid={sid}",
+                    },
+                    {
+                      name: "View",
+                      link: "/coordinator/wearable/participants/view?dittiId={dittiId}&sid={sid}",
+                    },
                   ],
                 },
               },
-            ]
-          }
-        ]
+            ],
+          },
+        ],
       },
       {
         path: "login",
@@ -439,7 +577,7 @@ const router = createBrowserRouter([
   {
     path: "/terms-of-use",
     element: <TermsOfUse />,
-  }
+  },
 ] as RouteObject[]);
 
 /**

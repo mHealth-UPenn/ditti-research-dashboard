@@ -46,7 +46,7 @@ import { AccessGroupFormPrefill } from "./adminDashboard.types";
 export const AccessGroupsEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
-  const accessGroupId = id ? parseInt(id) : 0
+  const accessGroupId = id ? parseInt(id) : 0;
 
   const [actions, setActions] = useState<ActionResource[]>([]);
   const [resources, setResources] = useState<ActionResource[]>([]);
@@ -59,20 +59,65 @@ export const AccessGroupsEdit = () => {
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
+  /**
+   * Map the data returned from the backend to form prefill data
+   * @param res - the response body
+   * @returns - the form prefill data
+   */
+  const makePrefill = (res: AccessGroup[]): AccessGroupFormPrefill => {
+    const accessGroup = res[0];
+    return {
+      name: accessGroup.name,
+      appSelected: accessGroup.app,
+      permissions: accessGroup.permissions,
+    };
+  };
+
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
+  const getPrefill = useCallback(async (): Promise<AccessGroupFormPrefill> => {
+    const id = accessGroupId;
+
+    // if editing an existing entry, return prefill data, else return empty data
+    return id
+      ? makeRequest(`/admin/access-group?app=1&id=${String(id)}`).then((res) =>
+          makePrefill(res as unknown as AccessGroup[])
+        )
+      : {
+          name: "",
+          appSelected: {} as App,
+          permissions: [],
+        };
+  }, [accessGroupId]);
+
+  /**
+   * Add a new permission and pair of action and resource dropdown menus
+   */
+  const addPermission = useCallback((): void => {
+    setPermissions((prevPermissions) => {
+      const id = prevPermissions.length
+        ? prevPermissions[prevPermissions.length - 1].id + 1
+        : 0;
+      return [...prevPermissions, { id: id, action: "", resource: "" }];
+    });
+  }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         // Fetch all available actions
-        const actions = await makeRequest("/admin/action?app=1");
-        setActions(actions);
+        const actionsResponse = await makeRequest("/admin/action?app=1");
+        setActions(actionsResponse as unknown as ActionResource[]);
 
         // Fetch all available resources
-        const resources = await makeRequest("/admin/resource?app=1");
-        setResources(resources);
+        const resourcesResponse = await makeRequest("/admin/resource?app=1");
+        setResources(resourcesResponse as unknown as ActionResource[]);
 
         // Fetch all available apps
-        const apps = await makeRequest("/admin/app?app=1");
-        setApps(apps);
+        const appsResponse = await makeRequest("/admin/app?app=1");
+        setApps(appsResponse as unknown as App[]);
 
         // Fetch any form prefill data
         const prefillData = await getPrefill();
@@ -87,39 +132,8 @@ export const AccessGroupsEdit = () => {
       }
     };
 
-    fetchData();
-  }, [accessGroupId]);
-
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = async (): Promise<AccessGroupFormPrefill> => {
-    const id = accessGroupId;
-
-    // if editing an existing entry, return prefill data, else return empty data
-    return id
-      ? makeRequest("/admin/access-group?app=1&id=" + id).then(makePrefill)
-      : {
-          name: "",
-          appSelected: {} as App,
-          permissions: []
-        };
-  };
-
-  /**
-   * Map the data returned from the backend to form prefill data
-   * @param res - the response body
-   * @returns - the form prefill data
-   */
-  const makePrefill = (res: AccessGroup[]): AccessGroupFormPrefill => {
-    const accessGroup = res[0];
-    return {
-      name: accessGroup.name,
-      appSelected: accessGroup.app,
-      permissions: accessGroup.permissions
-    };
-  };
+    void fetchData();
+  }, [getPrefill, addPermission]);
 
   /**
    * Change the selected app when one is chosen from the dropdown menu
@@ -134,17 +148,7 @@ export const AccessGroupsEdit = () => {
    * Get the currently selected app
    * @returns - the database primary key
    */
-  const getSelectedApp = (): number => (appSelected ? appSelected.id : 0);
-
-  /**
-   * Add a new permission and pair of action and resource dropdown menus
-   */
-  const addPermission = useCallback((): void => {
-    setPermissions((prevPermissions) => {
-      const id = prevPermissions.length ? prevPermissions[prevPermissions.length - 1].id + 1 : 0;
-      return [...prevPermissions, { id: id, action: "", resource: "" }];
-    });
-  }, []);
+  const getSelectedApp = (): number => appSelected.id || 0;
 
   /**
    * Remove a permission and pair of action and resource dropdown menus
@@ -161,66 +165,78 @@ export const AccessGroupsEdit = () => {
    * @param actionId - the action's database primary key
    * @param permissionId - the permission's database primary key
    */
-  const selectAction = useCallback((actionId: number, permissionId: number): void => {
-    const action = actions.find((a) => a.id === actionId);
-    if (action) {
-      setPermissions((prevPermissions) =>
-        prevPermissions.map((p) =>
-          p.id === permissionId ? { ...p, action: action.value } : p
-        )
-      );
-    }
-  }, [actions]);
+  const selectAction = useCallback(
+    (actionId: number, permissionId: number): void => {
+      const action = actions.find((a) => a.id === actionId);
+      if (action) {
+        setPermissions((prevPermissions) =>
+          prevPermissions.map((p) =>
+            p.id === permissionId ? { ...p, action: action.value } : p
+          )
+        );
+      }
+    },
+    [actions]
+  );
 
   /**
    * Get the selected action for a given permission
    * @param id - the permission's database primary key
    * @returns - the action's database primary key
    */
-  const getSelectedAction = useCallback((id: number): number => {
-    const permission = permissions.find((p) => p.id === id);
-    if (permission) {
-      const action = actions.find((a) => a.value === permission.action);
-      return action ? action.id : 0;
-    }
-    return 0;
-  }, [permissions, actions]);
+  const getSelectedAction = useCallback(
+    (id: number): number => {
+      const permission = permissions.find((p) => p.id === id);
+      if (permission) {
+        const action = actions.find((a) => a.value === permission.action);
+        return action ? action.id : 0;
+      }
+      return 0;
+    },
+    [permissions, actions]
+  );
 
   /**
    * Select a new resource for a given permission
    * @param resourceId - the resource's database primary key
    * @param permissionId - the permission's database primary key
    */
-  const selectResource = useCallback((resourceId: number, permissionId: number): void => {
-    const resource = resources.find((r) => r.id === resourceId);
-    if (resource) {
-      setPermissions((prevPermissions) =>
-        prevPermissions.map((p) =>
-          p.id === permissionId ? { ...p, resource: resource.value } : p
-        )
-      );
-    }
-  }, [resources]);
+  const selectResource = useCallback(
+    (resourceId: number, permissionId: number): void => {
+      const resource = resources.find((r) => r.id === resourceId);
+      if (resource) {
+        setPermissions((prevPermissions) =>
+          prevPermissions.map((p) =>
+            p.id === permissionId ? { ...p, resource: resource.value } : p
+          )
+        );
+      }
+    },
+    [resources]
+  );
 
   /**
    * Get the currently selected resource for a given permission
    * @param id - the permission's database primary key
    * @returns - the permission's database primary key
    */
-  const getSelectedResource = useCallback((id: number): number => {
-    const permission = permissions.find((p) => p.id === id);
-    if (permission) {
-      const resource = resources.find((r) => r.value === permission.resource);
-      return resource ? resource.id : 0;
-    }
-    return 0;
-  }, [permissions, resources]);
+  const getSelectedResource = useCallback(
+    (id: number): number => {
+      const permission = permissions.find((p) => p.id === id);
+      if (permission) {
+        const resource = resources.find((r) => r.value === permission.resource);
+        return resource ? resource.id : 0;
+      }
+      return 0;
+    },
+    [permissions, resources]
+  );
 
   /**
    * Get the action and resource dropdown menus for each permission
    * @returns - the permission fields
    */
-  const permissionFields =permissions.map((p: Permission) =>
+  const permissionFields = permissions.map((p: Permission) => (
     <FormRow key={p.id} forceRow={true}>
       <FormField className="mr-4 xl:mr-8">
         <SelectField
@@ -228,7 +244,8 @@ export const AccessGroupsEdit = () => {
           opts={actions.map((a) => ({ value: a.id, label: a.value }))}
           placeholder="Action"
           callback={selectAction}
-          getDefault={() => getSelectedAction(p.id)} />
+          getDefault={() => getSelectedAction(p.id)}
+        />
       </FormField>
       <FormField>
         <SelectField
@@ -236,16 +253,20 @@ export const AccessGroupsEdit = () => {
           opts={resources.map((r) => ({ value: r.id, label: r.value }))}
           placeholder="Permission"
           callback={selectResource}
-          getDefault={() => getSelectedResource(p.id)} />
+          getDefault={() => getSelectedResource(p.id)}
+        />
       </FormField>
-      <div className="flex items-center mb-8 px-2 cursor-pointer lg:pr-4">
+      <div className="mb-8 flex cursor-pointer items-center px-2 lg:pr-4">
         <CloseIcon
           color="warning"
           fontSize="large"
-          onClick={() => removePermission(p.id)} />
+          onClick={() => {
+            removePermission(p.id);
+          }}
+        />
       </div>
     </FormRow>
-  );
+  ));
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating
@@ -254,22 +275,20 @@ export const AccessGroupsEdit = () => {
   const post = async (): Promise<void> => {
     const ps = permissions.map((p) => ({
       action: p.action,
-      resource: p.resource
+      resource: p.resource,
     }));
 
     const id = accessGroupId;
     const data = { app: appSelected.id, name: name, permissions: ps };
     const body = {
-      app: 1,  // Admin Dashboard = 1
-      ...(id ? { id: id, edit: data } : { create: data })
+      app: 1, // Admin Dashboard = 1
+      ...(id ? { id: id, edit: data } : { create: data }),
     };
 
     const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/access-group/edit" : "/admin/access-group/create";
 
-    await makeRequest(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    await makeRequest(url, opts).then(handleSuccess).catch(handleFailure);
   };
 
   /**
@@ -341,7 +360,9 @@ export const AccessGroupsEdit = () => {
   return (
     <FormView>
       <Form>
-        <FormTitle>{accessGroupId ? "Edit " : "Create "} Access Group</FormTitle>
+        <FormTitle>
+          {accessGroupId ? "Edit " : "Create "} Access Group
+        </FormTitle>
         <FormRow>
           <FormField>
             <TextField
@@ -350,8 +371,11 @@ export const AccessGroupsEdit = () => {
               placeholder=""
               value={name}
               label="Name"
-              onKeyup={(text: string) => setName(text)}
-              feedback="" />
+              onKeyup={(text: string) => {
+                setName(text);
+              }}
+              feedback=""
+            />
           </FormField>
         </FormRow>
         <FormRow>
@@ -362,11 +386,12 @@ export const AccessGroupsEdit = () => {
                 id={accessGroupId || 0}
                 opts={apps.map((a: App) => ({
                   value: a.id,
-                  label: a.name
+                  label: a.name,
                 }))}
                 placeholder="Select app..."
                 callback={selectApp}
-                getDefault={getSelectedApp} />
+                getDefault={getSelectedApp}
+              />
             </div>
           </FormField>
         </FormRow>
@@ -380,8 +405,9 @@ export const AccessGroupsEdit = () => {
               variant="tertiary"
               onClick={addPermission}
               className="w-max"
-              size="sm">
-                Add Permission
+              size="sm"
+            >
+              Add Permission
             </Button>
           </FormField>
         </FormRow>
@@ -405,9 +431,7 @@ export const AccessGroupsEdit = () => {
             {getPermissionsSummary}
             <br />
           </FormSummaryText>
-          <FormSummaryButton onClick={post}>
-            {buttonText}
-          </FormSummaryButton>
+          <FormSummaryButton onClick={post}>{buttonText}</FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>
     </FormView>

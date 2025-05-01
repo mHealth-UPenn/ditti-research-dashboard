@@ -1,0 +1,20 @@
+export default {
+  arrowParens: "always",
+  bracketSpacing: true,
+  bracketSameLine: false,
+  printWidth: 80,
+  proseWrap: "always",
+  semi: true,
+  singleQuote: false,
+  tabWidth: 2,
+  trailingComma: "es5",
+  useTabs: false,
+  plugins: [
+    "prettier-plugin-tailwindcss",
+    "prettier-plugin-classnames",
+    "prettier-plugin-merge",
+  ],
+  tailwindStylesheet: "./src/index.css",
+  tailwindConfig: "tailwind.config.js",
+  endingPosition: "absolute-with-indent",
+};

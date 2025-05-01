@@ -11,5 +11,5 @@ from backend.auth.decorators.researcher import researcher_auth_required
 __all__ = [
     "auth_required",  # Deprecated, maintained for backward compatibility
     "participant_auth_required",
-    "researcher_auth_required"
+    "researcher_auth_required",
 ]

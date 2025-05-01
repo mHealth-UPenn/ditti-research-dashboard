@@ -14,44 +14,57 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from collections import defaultdict
-from datetime import datetime, timedelta, date
 import random
+from collections import defaultdict
+from datetime import date, datetime, timedelta
 
 
 def generate_random_time_between(start_hour, end_hour):
-    """Generates a random time between the specified hours of the day."""
-    hour = random.randint(start_hour, end_hour - 1)
-    minute = random.randint(0, 59)
+    """Generate a random time between the specified hours of the day."""
+    hour = random.randint(start_hour, end_hour - 1)  # noqa: S311
+    minute = random.randint(0, 59)  # noqa: S311
     return datetime.now().replace(hour=hour, minute=minute)
 
 
 def get_random_level_stages(previous_level):
-    """Returns a random sleep level stage, avoiding the previous level."""
+    """Return a random sleep level stage, avoiding the previous level."""
     levels_stages = ["deep", "light", "rem", "wake"]
     levels_stages.remove(previous_level)
-    return random.choice(levels_stages)
+    return random.choice(levels_stages)  # noqa: S311
 
 
 def get_random_level_classic(previous_level):
-    """Returns a random sleep level classic, avoiding the previous level."""
+    """Return a random sleep level classic, avoiding the previous level."""
     levels_classic = ["asleep", "awake", "restless"]
     levels_classic.remove(previous_level)
-    return random.choice(levels_classic)
+    return random.choice(levels_classic)  # noqa: S311
 
 
 def generate_sleep_logs():
+    """
+    Generate random sleep log data for testing.
+
+    Creates a set of synthetic sleep logs with realistic patterns
+    for testing data visualization and analysis features.
+
+    Returns
+    -------
+    list
+        List of dictionaries containing sleep log data
+    """
     sleep_logs = []
     levels_stages = ["deep", "light", "rem", "wake"]
     levels_classic = ["asleep", "awake", "restless"]
-    classic_day = random.randint(1, 7)
+    classic_day = random.randint(1, 7)  # noqa: S311
 
     for i in range(7, 0, -1):
         date_of_sleep = date.today() - timedelta(days=i)
-        start_time = generate_random_time_between(22, 24).replace(day=date_of_sleep.day)
+        start_time = generate_random_time_between(22, 24).replace(
+            day=date_of_sleep.day
+        )
 
         sleep_log = {
-            "logId": random.randint(0, int(1e9)),
+            "logId": random.randint(0, int(1e9)),  # noqa: S311
             "dateOfSleep": date_of_sleep.isoformat(),
             "startTime": start_time.isoformat(),
             "duration": 1,
@@ -80,16 +93,19 @@ def generate_sleep_logs():
 
         previous_level = None
         total_duration_minutes = 0
-        max_duration_minutes = 360 + random.random() * 120
+        max_duration_minutes = 360 + random.random() * 120  # noqa: S311
 
         while total_duration_minutes < max_duration_minutes:
-            if random.randint(0, 1):
-                seconds = random.randint(210, 30 * 60)
+            if random.randint(0, 1):  # noqa: S311
+                seconds = random.randint(210, 30 * 60)  # noqa: S311
             else:
-                seconds = random.randint(60, 210)
+                seconds = random.randint(60, 210)  # noqa: S311
             seconds = seconds - seconds % 30
             date_time = (
-                datetime.strptime(previous_level["dateTime"], "%Y-%m-%dT%H:%M:%S.%f") + timedelta(seconds=previous_level["seconds"])
+                datetime.strptime(
+                    previous_level["dateTime"], "%Y-%m-%dT%H:%M:%S.%f"
+                )
+                + timedelta(seconds=previous_level["seconds"])
                 if previous_level
                 else start_time
             )
@@ -98,12 +114,12 @@ def generate_sleep_logs():
                 if previous_level:
                     level = get_random_level_classic(previous_level["level"])
                 else:
-                    level = random.choice(levels_classic)
+                    level = random.choice(levels_classic)  # noqa: S311
             else:
                 if previous_level:
                     level = get_random_level_stages(previous_level["level"])
                 else:
-                    level = random.choice(levels_stages)
+                    level = random.choice(levels_stages)  # noqa: S311
 
             level_data = {
                 "dateTime": date_time.isoformat(),
@@ -114,7 +130,9 @@ def generate_sleep_logs():
             sleep_log["levels"]["data"].append(level_data)
             sleep_log["levels"]["summary"][level]["count"] += 1
             sleep_log["levels"]["summary"][level]["minutes"] += seconds // 60
-            sleep_log["levels"]["summary"][level]["thirtyDayAverageMinutes"] += seconds // 60
+            sleep_log["levels"]["summary"][level]["thirtyDayAverageMinutes"] += (
+                seconds // 60
+            )
 
             if seconds < 210:
                 sleep_log["levels"]["shortData"].append(level_data)

@@ -22,16 +22,17 @@ import { FormSummaryButtonProps } from "./forms.types";
 export const FormSummaryButton = ({
   disabled,
   onClick,
-  children
+  children,
 }: PropsWithChildren<FormSummaryButtonProps>) => {
   return (
-    <div className="flex flex-col w-full w-full justify-end">
+    <div className="flex w-full flex-col justify-end">
       <AsyncButton
         className="p-4"
         onClick={onClick}
         disabled={disabled}
-        rounded={true}>
-          {children}
+        rounded={true}
+      >
+        {children}
       </AsyncButton>
     </div>
   );

@@ -20,6 +20,13 @@ import boto3
 
 
 class AwsClientProvider:
+    """
+    Provider for AWS service clients.
+
+    Creates and manages clients for various AWS services used
+    during installation and configuration.
+    """
+
     sts_client: Any
     cognito_client: Any
     s3_client: Any

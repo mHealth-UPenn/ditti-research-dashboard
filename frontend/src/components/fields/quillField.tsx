@@ -17,7 +17,8 @@
 
 import { debounce } from "lodash";
 import { memo, useEffect, useMemo, useRef } from "react";
-import Quill, { QuillOptions } from "quill";
+import Quill from "quill";
+import type { QuillOptions } from "quill";
 import "quill/dist/quill.snow.css";
 import { sanitize_quill_html } from "../../utils";
 import { QuillFieldProps } from "./fields.types";
@@ -53,7 +54,7 @@ const QuillField = ({
     };
     return {
       ...defaultModules,
-      ...(config.modules || {}),
+      ...(config.modules ?? {}),
     };
   }, [config.modules]);
 
@@ -85,7 +86,7 @@ const QuillField = ({
 
       // Listen for editor content changes and call the debounced `onChange`
       quillInstanceRef.current.on("text-change", () => {
-        const html = quillInstanceRef.current?.root.innerHTML || "";
+        const html = quillInstanceRef.current?.root.innerHTML ?? "";
         debouncedOnChange(html);
       });
 
@@ -99,7 +100,8 @@ const QuillField = ({
     return () => {
       debouncedOnChange.cancel();
     };
-    // Removed 'value' from dependencies to prevent re-running on every value change
+    // Intentionally omitting 'value' to prevent re-initializing the editor when value changes externally
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quillConfig, containerClassName, debouncedOnChange]);
 
   /**
@@ -115,17 +117,14 @@ const QuillField = ({
     <div className={`mb-4 w-full ${className}`}>
       {/* Display the optional label, if provided */}
       {label && (
-        <label
-          htmlFor={id}
-          className="mb-2 block font-semibold text-gray-700"
-        >
+        <label htmlFor={id} className="text-gray-700 mb-2 block font-semibold">
           {label}
         </label>
       )}
 
       {/* Display the optional description, if provided */}
       {description && (
-        <p className="text-sm text-gray-500 mb-2">{description}</p>
+        <p className="text-gray-500 mb-2 text-sm">{description}</p>
       )}
 
       {/* The container where the Quill editor is mounted */}
@@ -133,9 +132,8 @@ const QuillField = ({
         <div
           ref={editorRef}
           id={id}
-          className="border border-gray-300 rounded-b p-2 w-full
-                    min-h-[10rem] focus:outline-none focus:ring-2
-                    focus:ring-blue-500"
+          className="border-gray-300 focus:ring-blue-500 min-h-40 w-full
+            rounded-b border p-2 focus:outline-none focus:ring-2"
         />
       </div>
     </div>

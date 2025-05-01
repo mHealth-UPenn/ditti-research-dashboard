@@ -14,23 +14,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from pydantic import ConfigDict
 import re
+
+from pydantic import ConfigDict
 
 
 def snake_to_camel(string: str) -> str:
-    """
-    Converts a snake_case string to camelCase.
-    """
+    """Convert a snake_case string to camelCase."""
     parts = string.split("_")
     return parts[0] + "".join(word.capitalize() for word in parts[1:])
 
 
 def camel_to_snake(name: str) -> str:
-    """
-    Converts a camelCase string to snake_case.
-    """
-    return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+    """Convert a camelCase string to snake_case."""
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
 common_config = ConfigDict(
@@ -38,5 +35,5 @@ common_config = ConfigDict(
     extra="forbid",  # Disallow extra fields
     alias_generator=snake_to_camel,
     populate_by_name=True,
-    use_enum_values=True
+    use_enum_values=True,
 )
