@@ -31,6 +31,7 @@ import { ProtectedRoute } from "./components/protectedRoute/protectedRoute";
 import { AuthProvider } from "./contexts/authContext";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import "./index.css";
+// eslint-disable-next-line import/no-unresolved
 import "./output.css";
 import { FullLoader } from "./components/loader/loader";
 import { PrivacyPolicy } from "./pages/privacyPolicy";
