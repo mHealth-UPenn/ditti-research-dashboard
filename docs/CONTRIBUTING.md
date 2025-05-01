@@ -75,7 +75,7 @@ See our [Dev Setup Guide](./INSTALL-dev.md) for details on getting started with 
 1. **Clone the repository:**
 
    ```bash
-   git clone ...
+   git clone git@github.com:mHealth-UPenn/ditti-research-dashboard.git
    ```
 
 2. **Install recommended VsCode extensions (optional):**
@@ -109,7 +109,7 @@ We ask that all contributions are divided into atomic pull requests (PRs). The c
    - Please adhere to our [branching strategy](#branching-strategy).
 
    ```bash
-   cd ...
+   cd ditti-research-dashboard
    git checkout -b <new-branch-name>
    ```
 
