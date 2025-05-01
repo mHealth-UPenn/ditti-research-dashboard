@@ -15,7 +15,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import os
-from logging.config import dictConfig
 
 from flask import Flask, Response, request
 
