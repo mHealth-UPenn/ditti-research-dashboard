@@ -6,7 +6,7 @@ target-version = "py312"
 show-fixes = true        # surfaces exact auto‑fix patches in CI logs
 respect-gitignore = true # skip files ignored by Git, like Black does
 
-exclude = ["frontend"]
+exclude = ["frontend", "migrations"]
 
 [format]
 quote-style = "double"
@@ -74,7 +74,6 @@ dummy-variable-rgx = "^(_+|(_+[A-Za-z0-9_]*[A-Za-z0-9]+?))$"
 convention = "numpy"
 
 [lint.per-file-ignores]
-"migrations/**/*.py" = ["D", "N"]
 "backend/models.py" = ["D102", "D105", "N805"]
 "backend/auth/providers/cognito/constants.py" = ["E501"]
 "**/__init__.py" = ["F401", "D104"]
