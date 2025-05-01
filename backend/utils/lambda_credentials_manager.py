@@ -36,7 +36,8 @@ class LambdaCredentialsManager:
         """
         Initialize the Secrets Manager client and sets the secret name and region.
 
-        Args:
+        Parameters
+        ----------
             secret_name (str): The name of the secret to retrieve.
             region_name (str): AWS region where the secret is stored.
         """

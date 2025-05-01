@@ -37,7 +37,8 @@ class AuthControllerBase:
     def __init__(self, user_type):
         """Initialize the auth controller.
 
-        Args:
+        Parameters
+        ----------
             user_type (str): Either "participant" or "researcher"
         """
         self.user_type = user_type
@@ -205,7 +206,8 @@ class AuthControllerBase:
     def get_or_create_user(self, token, userinfo):
         """Get or create user from token.
 
-        Args:
+        Parameters
+        ----------
             token (dict): The token from Cognito
             userinfo (dict): The user info from Cognito
 
@@ -296,7 +298,8 @@ class AuthControllerBase:
     def get_user_from_token(self, id_token):
         """Get user from token.
 
-        Args:
+        Parameters
+        ----------
             id_token (str): The ID token
 
         Returns
@@ -310,7 +313,8 @@ class AuthControllerBase:
     def create_login_success_response(self, user):
         """Create success response for check-login.
 
-        Args:
+        Parameters
+        ----------
             user: The user object
 
         Returns

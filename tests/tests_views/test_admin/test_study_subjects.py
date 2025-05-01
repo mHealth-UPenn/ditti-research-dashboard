@@ -119,7 +119,8 @@ def edit_study_subject(post_admin, subject_id, edit_payload):
     """
     Edit a study subject.
 
-    Args:
+    Parameters
+    ----------
         post_admin: The fixture for making admin POST requests
         subject_id: The ID of the subject to edit
         edit_payload: The data to update (without app or id wrapper)

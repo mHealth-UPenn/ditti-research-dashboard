@@ -24,7 +24,8 @@ def populate_model(model, data, use_camel_to_snake=False, custom_mapping=None):
     """
     Populate a SQLAlchemy model instance using a dictionary of data.
 
-    Args:
+    Parameters
+    ----------
         model (sqlalchemy.orm.Mapper): The SQLAlchemy model instance to populate.
         data (dict): A dictionary of key-value pairs.
         use_camel_to_snake (bool): If True, convert camelCase keys

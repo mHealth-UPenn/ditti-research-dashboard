@@ -36,7 +36,8 @@ class CognitoAuthBase:
         """
         Initialize with user type (participant or researcher).
 
-        Args:
+        Parameters
+        ----------
             user_type (str): Either "participant" or "researcher"
         """
         self.user_type = user_type
@@ -58,7 +59,8 @@ class CognitoAuthBase:
         """
         Validate the access token and refreshes it if expired.
 
-        Args:
+        Parameters
+        ----------
             access_token (str): The access token to validate
             refresh_token (str, optional): The refresh token to use
                 if access_token is expired
@@ -145,7 +147,8 @@ class CognitoAuthBase:
         validating existing tokens in authenticated routes where nonce isn't
         available.
 
-        Args:
+        Parameters
+        ----------
             id_token (str): The ID token to validate
 
         Returns

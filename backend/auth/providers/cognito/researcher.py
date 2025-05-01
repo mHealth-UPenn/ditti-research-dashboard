@@ -33,7 +33,8 @@ class ResearcherAuth(CognitoAuthBase):
         """
         Get Account object from email address.
 
-        Args:
+        Parameters
+        ----------
             email (str): The email address to search for
             include_archived (bool, optional): Include archived accounts?
 
@@ -55,7 +56,8 @@ class ResearcherAuth(CognitoAuthBase):
         """
         Get an account from an ID token.
 
-        Args:
+        Parameters
+        ----------
             id_token (str): The ID token
             include_archived (bool, optional): Include archived accounts?
 

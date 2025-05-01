@@ -44,7 +44,8 @@ from backend.models import (
 def init_admin_app_click(uri):
     """Initialize the admin application.
 
-    Args:
+    Parameters
+    ----------
         uri (str, optional): Database URI to use. Defaults to None.
     """
     if uri is not None:
@@ -60,7 +61,8 @@ def init_admin_app_click(uri):
 def init_admin_group_click(uri):
     """Initialize the admin group.
 
-    Args:
+    Parameters
+    ----------
         uri (str, optional): Database URI to use. Defaults to None.
     """
     if uri is not None:
@@ -77,7 +79,8 @@ def init_admin_group_click(uri):
 def init_admin_account_click(uri, email):
     """Initialize an admin account.
 
-    Args:
+    Parameters
+    ----------
         uri (str, optional): Database URI to use. Defaults to None.
         email (str, optional): Email for the admin account. Defaults to None.
     """
@@ -139,7 +142,8 @@ def init_integration_testing_db_click():
 def init_study_subject_click(ditti_id):
     """Initialize a study subject with the specified Ditti ID.
 
-    Args:
+    Parameters
+    ----------
         ditti_id (str): The Ditti ID for the study subject.
     """
     if ditti_id is None:
@@ -163,7 +167,8 @@ def clear_cache_click():
 def init_lambda_task_click(status):
     """Initialize a lambda task with the specified status.
 
-    Args:
+    Parameters
+    ----------
         status (str): The status for the lambda task.
     """
     init_lambda_task(status)
@@ -198,7 +203,8 @@ def export_accounts_to_cognito_click():
 def create_researcher_account_click(email):
     """Create a researcher account with the specified email.
 
-    Args:
+    Parameters
+    ----------
         email (str): Email for the researcher account.
     """
     if email is None:

@@ -335,7 +335,8 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     Instead of going through the login flow, this directly simulates
     an authenticated researcher (admin or non-admin).
 
-    Args:
+    Parameters
+    ----------
         client: Flask test client
         is_admin: Whether to make the mocked researcher an admin
 
@@ -428,7 +429,8 @@ def mock_db_query_result(model_class, result_or_results):
     This is a more flexible alternative to mock_model_not_found that allows
     specifying the exact return values.
 
-    Args:
+    Parameters
+    ----------
         model_class: The SQLAlchemy model class to mock
         result_or_results: Single object or list of objects to return from the query
 
@@ -481,7 +483,8 @@ def mock_boto3_client(service_name, mock_methods=None):
     """
     Create a standardized mock for boto3 clients.
 
-    Args:
+    Parameters
+    ----------
         service_name: Name of the AWS service (e.g., 'cognito-idp')
         mock_methods: Dict of method names and their return values or side effects
 

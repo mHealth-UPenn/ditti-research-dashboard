@@ -21,7 +21,8 @@ def create_error_response(message, status_code=401, error_code=None):
     """
     Create a standardized error response.
 
-    Args:
+    Parameters
+    ----------
         message (str): The user-friendly error message
         status_code (int): The HTTP status code (default: 401)
         error_code (str, optional): An optional error code for the client
@@ -44,7 +45,8 @@ def create_success_response(
     """
     Create a standardized success response.
 
-    Args:
+    Parameters
+    ----------
         data (dict, optional): The response data
         message (str): The success message (default: "Operation successful")
         status_code (int): The HTTP status code (default: 200)

@@ -65,7 +65,8 @@ class AuthFlowSession:
     def validate_state(request_state):
         """Validate the state parameter from callback.
 
-        Args:
+        Parameters
+        ----------
             request_state (str): The state parameter from the request
 
         Returns
@@ -118,7 +119,8 @@ class AuthFlowSession:
     def set_user_data(user_type, user_id, userinfo):
         """Set user session data.
 
-        Args:
+        Parameters
+        ----------
             user_type (str): "participant" or "researcher"
             user_id: ID of the user (either account_id or study_subject_id)
             userinfo (dict): User info from Cognito

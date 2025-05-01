@@ -329,7 +329,8 @@ def mock_model_not_found():
             query_mock = mock_model_not_found(User)
             # Test logic here...
 
-    Args:
+    Parameters
+    ----------
         model_class: The SQLAlchemy model class to mock
 
     Returns

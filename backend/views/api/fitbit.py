@@ -109,7 +109,8 @@ def fitbit_callback(ditti_id: str):
     study subject record, stores the tokens securely,
     and redirects the user to a success page.
 
-    Args:
+    Parameters
+    ----------
         ditti_id (str): The username of the study subject,
             provided by the decorator.
 
@@ -262,7 +263,8 @@ def fitbit_sleep_list(ditti_id: str):
     Fetches the study subject's Fitbit API session, makes a request
     to the Fitbit API for sleep data, and returns the data as a JSON response.
 
-    Args:
+    Parameters
+    ----------
         ditti_id (str): The unique ID of the study subject,
             provided by the decorator.
 

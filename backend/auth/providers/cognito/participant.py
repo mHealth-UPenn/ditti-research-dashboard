@@ -36,7 +36,8 @@ class ParticipantAuth(CognitoAuthBase):
         """
         Get a study subject by ditti_id.
 
-        Args:
+        Parameters
+        ----------
             ditti_id (str): The ditti ID to search for
             include_archived (bool, optional): Whether to include archived
                 study subjects
@@ -61,7 +62,8 @@ class ParticipantAuth(CognitoAuthBase):
         """
         Get a study subject from an ID token.
 
-        Args:
+        Parameters
+        ----------
             id_token (str): The ID token
             include_archived (bool, optional): Whether to include archived
                 study subjects

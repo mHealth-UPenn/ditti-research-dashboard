@@ -30,7 +30,8 @@ def get_cognito_jwks(jwks_url):
     """
     Retrieve and cache the JSON Web Key Set (JWKS) from Cognito.
 
-    Args:
+    Parameters
+    ----------
         jwks_url (str): The URL to the JWKS endpoint
 
     Returns
@@ -52,7 +53,8 @@ def generate_code_verifier(length: int = 128) -> str:
     """
     Generate a high-entropy cryptographic random string for PKCE.
 
-    Args:
+    Parameters
+    ----------
         length (int, optional): Length of the code verifier.
             Must be between 43 and 128 characters.
             Defaults to 128.
@@ -77,7 +79,8 @@ def create_code_challenge(code_verifier: str) -> str:
     """
     Create a S256 code challenge from the provided code verifier for PKCE.
 
-    Args:
+    Parameters
+    ----------
         code_verifier (str): The code verifier string.
 
     Returns

@@ -41,7 +41,8 @@ def create_researcher(email, temp_password=None, attributes=None):
 
     Cognito will send an invitation email with the temporary password.
 
-    Args:
+    Parameters
+    ----------
         email (str): Researcher's email address (used as username)
         temp_password (str, optional): Custom temporary password. If None,
             a random one is generated.
@@ -127,7 +128,8 @@ def update_researcher(email, attributes=None, attributes_to_delete=None):
     Note: Only non-required attributes can be deleted. Required attributes like
     email cannot be removed but can be updated.
 
-    Args:
+    Parameters
+    ----------
         email (str): Researcher's email address (used as username)
         attributes (dict, optional): User attributes to update. Keys should match
             Cognito attribute names (e.g., 'given_name', 'family_name',
@@ -227,7 +229,8 @@ def delete_researcher(email):
     """
     Delete a researcher from the Cognito user pool.
 
-    Args:
+    Parameters
+    ----------
         email (str): Researcher's email address (used as username)
 
     Returns
@@ -268,7 +271,8 @@ def get_researcher(email):
     """
     Get researcher information from Cognito.
 
-    Args:
+    Parameters
+    ----------
         email (str): Researcher's email address (used as username)
 
     Returns

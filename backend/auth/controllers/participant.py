@@ -70,7 +70,8 @@ class ParticipantAuthController(AuthControllerBase):
     def get_or_create_user(self, _token, userinfo):
         """Get or create study subject from token.
 
-        Args:
+        Parameters
+        ----------
             token (dict): The token from Cognito
             userinfo (dict): The user info from Cognito
 
@@ -96,7 +97,8 @@ class ParticipantAuthController(AuthControllerBase):
         """
         Find an existing study subject or create a new one.
 
-        Args:
+        Parameters
+        ----------
             ditti_id (str): The participant's ditti ID
 
         Returns
@@ -148,7 +150,8 @@ class ParticipantAuthController(AuthControllerBase):
     def get_user_from_token(self, id_token):
         """Get ditti_id from token.
 
-        Args:
+        Parameters
+        ----------
             id_token (str): The ID token
 
         Returns
@@ -190,7 +193,8 @@ class ParticipantAuthController(AuthControllerBase):
     def create_login_success_response(self, ditti_id):
         """Create success response for check-login.
 
-        Args:
+        Parameters
+        ----------
             ditti_id: The ditti ID
 
         Returns

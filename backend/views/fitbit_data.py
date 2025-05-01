@@ -127,7 +127,8 @@ def participant_get_fitbit_data(ditti_id: str):
         start_date (str): The start date in 'YYYY-MM-DD' format (required).
         end_date (str, optional): The end date in 'YYYY-MM-DD' format.
 
-    Args:
+    Parameters
+    ----------
         ditti_id (str): The study subject's username,
             passed from participant_auth_required.
 
@@ -202,7 +203,8 @@ def download_fitbit_participant(ditti_id: str):
     generated with a timestamped filename and returned to the client
     as a downloadable file.
 
-    Args:
+    Parameters
+    ----------
         ditti_id (str): The unique identifier for the participant.
 
     Returns
@@ -283,7 +285,8 @@ def download_fitbit_study(study_id: int):
     The file is generated with a timestamped filename and returned to the client
     as a downloadable file.
 
-    Args:
+    Parameters
+    ----------
         study_id (int): The unique identifier for the study.
 
     Returns

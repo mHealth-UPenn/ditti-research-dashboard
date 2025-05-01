@@ -47,7 +47,8 @@ def researcher_auth_required(
     3. Passes the account to the decorated function instead of token_claims
     4. Ensures archived accounts cannot authenticate
 
-    Args:
+    Parameters
+    ----------
         action: The action to check permissions for or the function to decorate
         resource: The resource to check permissions for
 

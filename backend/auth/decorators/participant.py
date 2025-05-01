@@ -35,7 +35,8 @@ def participant_auth_required(decorated_func=None):
     3. Passes the ditti_id to the decorated function
     4. Ensures archived study subjects cannot authenticate
 
-    Args:
+    Parameters
+    ----------
         decorated_func (function, optional): The function to decorate.
             If None, returns a decorator.
 

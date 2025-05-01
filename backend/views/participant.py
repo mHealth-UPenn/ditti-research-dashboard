@@ -43,7 +43,8 @@ def get_participant(ditti_id: str):
     """
     Endpoint to retrieve a participant's data.
 
-    Args:
+    Parameters
+    ----------
         ditti_id (str): The unique ID of the study subject,
             provided by the decorator.
 
@@ -101,7 +102,8 @@ def update_consent(study_id: int, ditti_id: str):
     """
     Endpoint to update a participant's consent status for a specific study.
 
-    Args:
+    Parameters
+    ----------
         study_id (int): The ID of the study.
         ditti_id (str): The unique ID of the study subject,
             provided by the decorator.
@@ -198,7 +200,8 @@ def revoke_api_access(api_name: str, ditti_id: str):
     Deletes tokens associated with the API from Secrets Manager,
     removes API access, and commits changes to the database.
 
-    Args:
+    Parameters
+    ----------
         api_name (str): Name of the API to revoke access for.
         ditti_id (str): The unique ID of the study subject,
             provided by the decorator.
@@ -280,7 +283,8 @@ def delete_participant(ditti_id: str):
     Deletes API tokens and data, archives the StudySubject in the database,
     and removes the user from AWS Cognito.
 
-    Args:
+    Parameters
+    ----------
         ditti_id (str): ditti_id of the StudySubject to delete.
 
     Returns

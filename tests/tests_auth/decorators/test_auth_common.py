@@ -18,7 +18,8 @@ def create_mock_response(data, status_code=200):
     Flask responses without requiring a full app context. Useful for
     creating mock error and success responses in tests.
 
-    Args:
+    Parameters
+    ----------
         data: The response data to be JSON-serialized
         status_code: HTTP status code for the response
 

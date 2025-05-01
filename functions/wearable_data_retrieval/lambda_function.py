@@ -81,7 +81,8 @@ class DB:
     """
     Helper class for initializing a database connection.
 
-    Args:
+    Parameters
+    ----------
     - db_uri (str): The URI for securely connecting to the database.
     """
 
@@ -94,7 +95,8 @@ class DBService:
     """
     Base database service class for providing a database connection context.
 
-    Args:
+    Parameters
+    ----------
     - db (DB): A database connection class.
     """
 
@@ -210,7 +212,8 @@ class LambdaTaskService(DBService):
         """
         Initialize the LambdaTaskService.
 
-        Args:
+        Parameters
+        ----------
             db (DB): An instance of the `DB` helper class
                 to manage database connections.
 
@@ -234,7 +237,8 @@ class LambdaTaskService(DBService):
         """
         Query `lambda_task` table for entry by ID and store as `LambdaTaskEntry`.
 
-        Args:
+        Parameters
+        ----------
             entry_id (int): The ID of the Lambda task to query.
 
         Raises
@@ -279,7 +283,8 @@ class LambdaTaskService(DBService):
         """
         Update the currently loaded Lambda task entry status and optional fields.
 
-        Args:
+        Parameters
+        ----------
             status (TaskStatus): The new status to set for the task.
             **kwargs: Additional fields to update in the `lambda_task` table.
 
@@ -381,7 +386,8 @@ class StudySubjectService(DBService):
         """
         Initialize the StudySubjectService with the db connection and metadata.
 
-        Args:
+        Parameters
+        ----------
             *args: Positional arguments to be passed to the
                 base `DBService` class.
         """
@@ -552,7 +558,8 @@ class StudySubjectService(DBService):
         """
         Insert sleep-related data into current study subject entry.
 
-        Args:
+        Parameters
+        ----------
             data (list[dict]): A list of sleep record dictionaries containing
                 log, level, and summary details.
 
@@ -649,7 +656,8 @@ class StudySubjectService(DBService):
         """
         Update the current study subject `last_sync_date` to now.
 
-        Args:
+        Parameters
+        ----------
         - last_sync_date (str, optional): The date to set last sync to.
             If not passed, `function_timestamp` is used by default.
 
@@ -694,7 +702,8 @@ def get_secret(secret_name: str) -> dict:
     """
     Retrieve a secret from AWS Secrets Manager.
 
-    Args:
+    Parameters
+    ----------
     - secret_name (str): The name of the secret to retrieve a value from.
 
     Returns
@@ -741,7 +750,8 @@ def build_url(
     start date, and end date. If `start_date` or `end_date` are not provided,
     they are derived from the `StudySubjectEntry` object.
 
-    Args:
+    Parameters
+    ----------
         entry (StudySubjectEntry): The entry containing details about the study
             subject, including API user UUID, last sync date, start date, and
             expiry date.

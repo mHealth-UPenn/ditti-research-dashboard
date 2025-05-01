@@ -40,7 +40,8 @@ class TokensManager:
         """
         Construct the secret name based on the API name.
 
-        Args:
+        Parameters
+        ----------
             api_name (str): The name of the API.
 
         Returns
@@ -53,7 +54,8 @@ class TokensManager:
         """
         Retrieve the secret JSON object from AWS Secrets Manager.
 
-        Args:
+        Parameters
+        ----------
             secret_name (str): The name of the secret.
 
         Returns
@@ -90,7 +92,8 @@ class TokensManager:
         """
         Store the secret JSON object to AWS Secrets Manager.
 
-        Args:
+        Parameters
+        ----------
             secret_name (str): The name of the secret.
             secret_data (Dict[str, Any]): The secret data to store.
 
@@ -121,7 +124,8 @@ class TokensManager:
         """
         Add or update the a study subject's tokens within an API's secret.
 
-        Args:
+        Parameters
+        ----------
             api_name (str): The name of the API.
             ditti_id (str): The Ditti ID of the study subject.
             tokens (Dict[str, Any]): A dictionary containing token information.
@@ -161,7 +165,8 @@ class TokensManager:
         """
         Retrieve the tokens for a specific study subject within an API's secret.
 
-        Args:
+        Parameters
+        ----------
             api_name (str): The name of the API.
             ditti_id (int): The ID of the study subject.
 
@@ -202,7 +207,8 @@ class TokensManager:
         """
         Delete the tokens for a specific study subject within an API's secret.
 
-        Args:
+        Parameters
+        ----------
             api_name (str): The name of the API.
             ditti_id (int): The ID of the study subject.
 
@@ -246,7 +252,8 @@ class TokensManager:
         This sets the default format string to
         that set in the Flask app's config dictionary.
 
-        Args:
+        Parameters
+        ----------
             app (Flask): The Flask app.
         """
         self.fstr = app.config["TM_FSTRING"]

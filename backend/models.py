@@ -712,7 +712,8 @@ def init_lambda_task(status: str):
     """
     Initialize a lambda task with the specified status.
 
-    Args:
+    Parameters
+    ----------
         status: The status of the lambda task to create.
     """
     db.session.add(LambdaTask(status=status))
@@ -736,7 +737,8 @@ def init_study_subject(ditti_id):
 
     Creates a new StudySubject record with the given Ditti ID.
 
-    Args:
+    Parameters
+    ----------
         ditti_id: The Ditti ID for the study subject.
     """
     db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]

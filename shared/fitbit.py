@@ -33,7 +33,8 @@ def generate_code_verifier(length: int = 128) -> str:
     """
     Generate a high-entropy cryptographic random string for PKCE.
 
-    Args:
+    Parameters
+    ----------
         length (int, optional): Length of the code verifier.
             Must be between 43 and 128 characters. Defaults to 128.
 
@@ -57,7 +58,8 @@ def create_code_challenge(code_verifier: str) -> str:
     """
     Create a S256 code challenge from the provided code verifier.
 
-    Args:
+    Parameters
+    ----------
         code_verifier (str): The code verifier string.
 
     Returns
@@ -75,7 +77,8 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
     """
     Create an OAuth2Session for Fitbit API, using stored tokens.
 
-    Args:
+    Parameters
+    ----------
         ditti_id (str): The Ditti ID fo the subject that the OAuth session
             will be used to retrieve data for.
 
@@ -124,7 +127,8 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
         """
         Update the tokens in Secrets Manager.
 
-        Args:
+        Parameters
+        ----------
             new_token (Dict[str, Any]): The new token data obtained from Fitbit.
 
         Raises
@@ -193,7 +197,8 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
 
             Handles token refresh on 401 responses.
 
-            Args:
+            Parameters
+            ----------
                 method (str): HTTP method (e.g., 'GET', 'POST').
                 url (str): The URL to make the request to.
                 **kwargs: Additional arguments for the requests.request method.
@@ -225,7 +230,8 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
 
             Convenience method.
 
-            Args:
+            Parameters
+            ----------
                 url (str): The URL to make the GET request to.
                 **kwargs: Additional arguments for the requests.get method.
 
@@ -241,7 +247,8 @@ def get_fitbit_oauth_session(ditti_id: str, config, tokens=None, tm=None):
 
             Convenience method.
 
-            Args:
+            Parameters
+            ----------
                 url (str): The URL to make the POST request to.
                 **kwargs: Additional arguments for the requests.post method.
 

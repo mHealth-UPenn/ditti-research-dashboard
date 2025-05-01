@@ -23,7 +23,8 @@ def clear_auth_cookies(response):
     """
     Clear authentication cookies from a response.
 
-    Args:
+    Parameters
+    ----------
         response: Flask response object to clear cookies from
 
     Returns
@@ -48,7 +49,8 @@ def set_auth_cookies(response, token):
     """
     Set authentication cookies on a response.
 
-    Args:
+    Parameters
+    ----------
         response: Flask response object to set cookies on
         token: Dict containing tokens (id_token, access_token,
             and optionally refresh_token)

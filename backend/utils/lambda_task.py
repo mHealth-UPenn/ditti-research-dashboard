@@ -103,7 +103,8 @@ def invoke_lambda_task(function_id):
     """
     Invoke an AWS Lambda function asynchronously and store the task in the db.
 
-    Args:
+    Parameters
+    ----------
         function_id: The database ID of the LambdaTask to update.
 
     Returns

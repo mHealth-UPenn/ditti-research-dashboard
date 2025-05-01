@@ -75,7 +75,8 @@ def create_app(testing=False):
     """
     Create and configure the Flask application.
 
-    Args:
+    Parameters
+    ----------
         testing (bool): Flag to indicate if app should use testing configuration.
 
     Returns
@@ -106,7 +107,8 @@ def register_blueprints(app):
     """
     Register all blueprint routes with the application.
 
-    Args:
+    Parameters
+    ----------
         app (Flask): The Flask application instance.
     """
     app.register_blueprint(admin.blueprint)
@@ -126,7 +128,8 @@ def register_commands(app):
     """
     Register CLI commands with the application.
 
-    Args:
+    Parameters
+    ----------
         app (Flask): The Flask application instance.
     """
     app.cli.add_command(init_admin_app_click)
@@ -147,7 +150,8 @@ def register_extensions(app):
     """
     Initialize and register Flask extensions with the application.
 
-    Args:
+    Parameters
+    ----------
         app (Flask): The Flask application instance.
     """
     cors.init_app(

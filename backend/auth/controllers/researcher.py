@@ -79,7 +79,8 @@ class ResearcherAuthController(AuthControllerBase):
     def get_or_create_user(self, token, userinfo):
         """Get researcher account from token.
 
-        Args:
+        Parameters
+        ----------
             token (dict): The token from Cognito
             userinfo (dict): The user info from Cognito
 
@@ -130,7 +131,8 @@ class ResearcherAuthController(AuthControllerBase):
     def get_user_from_token(self, id_token):
         """Get account from token.
 
-        Args:
+        Parameters
+        ----------
             id_token (str): The ID token
 
         Returns
@@ -167,7 +169,8 @@ class ResearcherAuthController(AuthControllerBase):
     def create_login_success_response(self, account):
         """Create success response for check-login.
 
-        Args:
+        Parameters
+        ----------
             account: The Account object
 
         Returns
@@ -216,7 +219,8 @@ class ResearcherAuthController(AuthControllerBase):
         """
         Create a new account in Cognito.
 
-        Args:
+        Parameters
+        ----------
             account_data (dict): Account information with keys:
                 email, first_name, last_name, phone_number
 
@@ -258,7 +262,8 @@ class ResearcherAuthController(AuthControllerBase):
         include them in the account_data with a None or empty value, and they'll
         be added to attributes_to_delete.
 
-        Args:
+        Parameters
+        ----------
             account_data (dict): Account information with keys:
                 email (required): User's email address (used as identifier)
                 first_name (optional): User's first name
@@ -311,7 +316,8 @@ class ResearcherAuthController(AuthControllerBase):
         """
         Disable an account in Cognito.
 
-        Args:
+        Parameters
+        ----------
             email (str): The account's email address
 
         Returns
@@ -338,7 +344,8 @@ class ResearcherAuthController(AuthControllerBase):
         """
         Synchronize account data with Cognito.
 
-        Args:
+        Parameters
+        ----------
             account: The Account object to synchronize
 
         Returns
@@ -362,7 +369,8 @@ class ResearcherAuthController(AuthControllerBase):
         """
         Change a researcher's password in Cognito.
 
-        Args:
+        Parameters
+        ----------
             previous_password (str): The user's current password
             new_password (str): The new password to set
             access_token (str, optional): The access token for the user.

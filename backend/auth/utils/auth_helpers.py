@@ -46,7 +46,8 @@ def check_permissions(
     """
     Check if the authenticated account has the required permissions.
 
-    Args:
+    Parameters
+    ----------
         auth_account: The authenticated account
         action: The action to check permissions for
         resource_param: The resource to check permissions for
