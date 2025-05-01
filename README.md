@@ -42,3 +42,9 @@ We are working hard at creating a straightforward process for installing and hos
 - **[Amazon Web Services](https://aws.amazon.com/)**: Our stack is deployed on AWS and uses managed services like [Cognito](https://aws.amazon.com/cognito/) to lock-in scalability and security.
 
 ## Copyright/License
+
+Copyright (C) 2025 the Trustees of the University of Pennsylvania.
+
+Ditti Research Dashboard is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+
+Ditti Research Dashboard is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more details: [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/).
