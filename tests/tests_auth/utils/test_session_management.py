@@ -1,11 +1,11 @@
-import pytest
 from datetime import datetime
-from backend.auth.utils.session import (
-    AuthFlowSession
-)
+
+import pytest
+
+from backend.auth.utils.session import AuthFlowSession
 from backend.auth.utils.tokens import (
+    create_code_challenge,
     generate_code_verifier,
-    create_code_challenge
 )
 
 
@@ -166,7 +166,7 @@ def test_authflow_session_set_user_data(client):
         AuthFlowSession.set_user_data(
             user_type="participant",
             user_id="123",
-            userinfo={"name": "Test Participant"}
+            userinfo={"name": "Test Participant"},
         )
 
         assert flask_session["study_subject_id"] == "123"
@@ -178,7 +178,7 @@ def test_authflow_session_set_user_data(client):
         AuthFlowSession.set_user_data(
             user_type="researcher",
             user_id="456",
-            userinfo={"name": "Test Researcher"}
+            userinfo={"name": "Test Researcher"},
         )
 
         assert flask_session["account_id"] == "456"

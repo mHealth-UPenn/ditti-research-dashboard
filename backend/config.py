@@ -14,19 +14,32 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from datetime import timedelta
 import os
+from typing import ClassVar
 
 
 class Default:
+    """
+    Default configuration for development environment.
+
+    Contains base configuration settings used across all environments.
+    """
+
     ENV = "development"
     DEBUG = True
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "secret")
 
-    CORS_ALLOW_HEADERS = ["Authorization", "Content-Type", "X-CSRF-TOKEN"]
+    CORS_ALLOW_HEADERS: ClassVar[list[str]] = [
+        "Authorization",
+        "Content-Type",
+        "X-CSRF-TOKEN",
+    ]
 
     # Headers for the client to access when downloading Excel files
-    CORS_EXPOSE_HEADERS = ["Content-Type", "Content-Disposition"]
+    CORS_EXPOSE_HEADERS: ClassVar[list[str]] = [
+        "Content-Type",
+        "Content-Disposition",
+    ]
     CORS_SUPPORTS_CREDENTIALS = True
 
     SQLALCHEMY_DATABASE_URI = os.getenv("FLASK_DB")
@@ -53,20 +66,24 @@ class Default:
 
     COGNITO_PARTICIPANT_DOMAIN = os.getenv("COGNITO_PARTICIPANT_DOMAIN")
     COGNITO_PARTICIPANT_REGION = os.getenv("COGNITO_PARTICIPANT_REGION")
-    COGNITO_PARTICIPANT_REDIRECT_URI = "http://localhost:5000/auth/participant/callback"
+    COGNITO_PARTICIPANT_REDIRECT_URI = (
+        "http://localhost:5000/auth/participant/callback"
+    )
     COGNITO_PARTICIPANT_LOGOUT_URI = "http://localhost:3000/login"
     COGNITO_PARTICIPANT_USER_POOL_ID = os.getenv(
-        "COGNITO_PARTICIPANT_USER_POOL_ID")
+        "COGNITO_PARTICIPANT_USER_POOL_ID"
+    )
 
-    COGNITO_RESEARCHER_CLIENT_ID = os.environ.get(
-        "COGNITO_RESEARCHER_CLIENT_ID")
+    COGNITO_RESEARCHER_CLIENT_ID = os.environ.get("COGNITO_RESEARCHER_CLIENT_ID")
     COGNITO_RESEARCHER_CLIENT_SECRET = os.environ.get(
-        "COGNITO_RESEARCHER_CLIENT_SECRET")
+        "COGNITO_RESEARCHER_CLIENT_SECRET"
+    )
     COGNITO_RESEARCHER_DOMAIN = os.getenv("COGNITO_RESEARCHER_DOMAIN")
     COGNITO_RESEARCHER_REGION = os.getenv("COGNITO_RESEARCHER_REGION")
-    COGNITO_RESEARCHER_USER_POOL_ID = os.getenv(
-        "COGNITO_RESEARCHER_USER_POOL_ID")
-    COGNITO_RESEARCHER_REDIRECT_URI = "http://localhost:5000/auth/researcher/callback"
+    COGNITO_RESEARCHER_USER_POOL_ID = os.getenv("COGNITO_RESEARCHER_USER_POOL_ID")
+    COGNITO_RESEARCHER_REDIRECT_URI = (
+        "http://localhost:5000/auth/researcher/callback"
+    )
     COGNITO_RESEARCHER_LOGOUT_URI = "http://localhost:3000/coordinator/login"
 
     TM_FSTRING = os.getenv("TM_FSTRING")
@@ -84,30 +101,43 @@ class Default:
 
 
 class Staging(Default):
+    """
+    Staging environment configuration.
+
+    Configuration for the staging environment with production-like settings
+    but separate from the actual production environment.
+    """
+
     ENV = "production"
     DEBUG = False
 
-    CORS_ALLOW_HEADERS = [
+    CORS_ALLOW_HEADERS: ClassVar[list[str]] = [
         "Content-Type",
         "X-Amz-Date",
         "Authorization",
         "X-Api-Key",
         "X-Amz-Security-Token",
-        "X-CSRF-TOKEN"
+        "X-CSRF-TOKEN",
     ]
 
 
 class Production(Default):
+    """
+    Production environment configuration.
+
+    Configuration for the live production environment with secure settings.
+    """
+
     ENV = "production"
     DEBUG = False
 
-    CORS_ALLOW_HEADERS = [
+    CORS_ALLOW_HEADERS: ClassVar[list[str]] = [
         "Content-Type",
         "X-Amz-Date",
         "Authorization",
         "X-Api-Key",
         "X-Amz-Security-Token",
-        "X-CSRF-TOKEN"
+        "X-CSRF-TOKEN",
     ]
 
     CORS_ORIGINS = os.getenv("AWS_CLOUDFRONT_DOMAIN_NAME")
@@ -132,16 +162,25 @@ class Production(Default):
 
     # Researcher Cognito Production configuration
     COGNITO_RESEARCHER_USER_POOL_ID = os.environ.get(
-        "COGNITO_RESEARCHER_USER_POOL_ID")
+        "COGNITO_RESEARCHER_USER_POOL_ID"
+    )
     COGNITO_RESEARCHER_REDIRECT_URI = os.environ.get(
-        "COGNITO_RESEARCHER_REDIRECT_URI")
+        "COGNITO_RESEARCHER_REDIRECT_URI"
+    )
     COGNITO_RESEARCHER_LOGOUT_URI = os.environ.get(
-        "COGNITO_RESEARCHER_LOGOUT_URI")
+        "COGNITO_RESEARCHER_LOGOUT_URI"
+    )
     COGNITO_RESEARCHER_DOMAIN = os.environ.get("COGNITO_RESEARCHER_DOMAIN")
     COGNITO_RESEARCHER_REGION = os.environ.get("COGNITO_RESEARCHER_REGION")
 
 
 class Testing(Default):
+    """
+    Testing environment configuration.
+
+    Configuration specifically designed for running automated tests.
+    """
+
     ENV = "testing"
     TESTING = True
 

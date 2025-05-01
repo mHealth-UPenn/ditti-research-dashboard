@@ -24,9 +24,7 @@ export const CardContentRow = ({
 }: PropsWithChildren<CardContentRowProps>) => {
   return (
     <div className={`mb-8 ${className}`}>
-      <div className="flex items-center justify-between mb-4">
-        {children}
-      </div>
+      <div className="mb-4 flex items-center justify-between">{children}</div>
     </div>
   );
 };

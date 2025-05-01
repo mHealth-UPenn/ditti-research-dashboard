@@ -24,60 +24,70 @@ export const AdminNavbar = ({ activeView }: AdminNavbarProps) => {
     {
       active: false,
       name: "Accounts",
-      link: "/coordinator/admin/accounts"
+      link: "/coordinator/admin/accounts",
     },
     {
       active: false,
       name: "Studies",
-      link: "/coordinator/admin/studies"
+      link: "/coordinator/admin/studies",
     },
     {
       active: false,
       name: "Roles",
-      link: "/coordinator/admin/roles"
+      link: "/coordinator/admin/roles",
     },
     {
       active: false,
       name: "Access Groups",
-      link: "/coordinator/admin/access-groups"
+      link: "/coordinator/admin/access-groups",
     },
     {
       active: false,
       name: "About Sleep Templates",
-      link: "/coordinator/admin/about-sleep-templates"
+      link: "/coordinator/admin/about-sleep-templates",
     },
     {
       active: false,
       name: "Data Retrieval Tasks",
-      link: "/coordinator/admin/data-retrieval-tasks"
-    }
+      link: "/coordinator/admin/data-retrieval-tasks",
+    },
   ];
 
   // Set the current view as active
-  views.forEach(v => {
+  views.forEach((v) => {
     if (v.name === activeView) {
       v.active = true;
     }
   });
 
   return (
-    <div className="flex items-center justify-left px-6 lg:px-12 bg-white select-none whitespace-nowrap">
+    <div
+      className="justify-left flex select-none items-center whitespace-nowrap
+        bg-white px-6 lg:px-12"
+    >
       {/* If the view is active, highlight it using bg-dark */}
-      {views.map((v, i) => (
-        v.active ?
+      {views.map((v, i) =>
+        v.active ? (
           <div
             key={i}
-            className="flex px-4 lg:px-8 items-center justify-center h-full py-4 bg-dark text-center">
-              {v.name}
-          </div> :
+            className="bg-dark flex h-full items-center justify-center p-4
+              text-center lg:px-8"
+          >
+            {v.name}
+          </div>
+        ) : (
           <div key={i} className="flex h-full">
             <Link to={v.link}>
-              <LinkComponent className="flex items-center justify-center px-3 lg:px-4 xl:px-8 h-full w-full no-underline hover:bg-extra-light text-center">
-                  {v.name}
+              <LinkComponent
+                className="flex size-full items-center justify-center px-3
+                  text-center no-underline hover:bg-extra-light lg:px-4 xl:px-8"
+              >
+                {v.name}
               </LinkComponent>
             </Link>
           </div>
-      ))}
+        )
+      )}
     </div>
   );
 };

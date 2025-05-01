@@ -17,8 +17,10 @@
 import logging
 import os
 import traceback
+
 from flask import Blueprint, current_app, jsonify, make_response
 from sqlalchemy import text
+
 from backend.extensions import db
 from backend.utils.lambda_task import check_and_invoke_lambda_task
 
@@ -56,10 +58,11 @@ def health_check():
 @blueprint.route("/touch")
 def touch():
     """
-    Send an empty request to the server to see the status of the database. If
-    the database was stopped, this will start the database. This returns OK if
-    the database is running, STARTING if it was stopped or is current starting,
-    or STATUS: ... if a different status arises
+    Send an empty request to the server to see the status of the database.
+
+    If the database was stopped, this will start the database. This returns OK
+    if the database is running, STARTING if it was stopped or is current
+    starting, or STATUS: ... if a different status arises.
 
     Response Syntax (200)
     ---------------------
@@ -98,10 +101,9 @@ def touch():
                 res["msg"] = "STARTING"
 
             else:
-                res["msg"] = "STATUS: %s" % status
+                res["msg"] = f"STATUS: {status}"
 
     if available:
-
         # check that the database is healthy
         try:
             with db.engine.connect() as conn:
@@ -114,6 +116,9 @@ def touch():
             exc = traceback.format_exc()
             logger.warning(exc)
 
-            return make_response({"msg": "Internal server error when getting database status."}, 500)
+            return make_response(
+                {"msg": "Internal server error when getting database status."},
+                500,
+            )
 
     return jsonify(res)

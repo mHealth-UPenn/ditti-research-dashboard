@@ -14,33 +14,37 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-from logging.config import dictConfig
 import os
+from logging.config import dictConfig
 
 from dotenv import load_dotenv
 
 load_dotenv(override=True)
 
 # Set up logging before importing the app
-dictConfig({
-    "version": 1,
-    "formatters": {"default": {
-        "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
-    }},
-    "handlers": {"wsgi": {
-        "class": "logging.StreamHandler",
-        "stream": "ext://flask.logging.wsgi_errors_stream",
-        "formatter": "default"
-    }},
-    "root": {
-        "level": "INFO",
-        "handlers": ["wsgi"]
+dictConfig(
+    {
+        "version": 1,
+        "formatters": {
+            "default": {
+                "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
+            }
+        },
+        "handlers": {
+            "wsgi": {
+                "class": "logging.StreamHandler",
+                "stream": "ext://flask.logging.wsgi_errors_stream",
+                "formatter": "default",
+            }
+        },
+        "root": {"level": "INFO", "handlers": ["wsgi"]},
     }
-})
+)
 
 # if the app is running in a production environment
 if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
     import json
+
     import boto3
 
     # get the secret"s values
@@ -54,7 +58,7 @@ if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
         os.environ[k] = v
 
 # import the app after the environment variables are exported
-from backend.app import create_app
+from backend.app import create_app  # noqa: E402
 
 # NOTE: Zappa wraps the app object in production-ready WSGI middleware
 app = create_app()

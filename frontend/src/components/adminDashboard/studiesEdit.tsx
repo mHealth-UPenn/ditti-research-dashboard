@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { CheckField } from "../fields/checkField";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
@@ -38,7 +38,7 @@ import { useFlashMessages } from "../../hooks/useFlashMessages";
 export const StudiesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
-  const studyId = id ? parseInt(id) : 0
+  const studyId = id ? parseInt(id) : 0;
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
@@ -53,54 +53,11 @@ export const StudiesEdit = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [expiryError, setExpiryError] = useState<string>("");
 
-  useEffect(() => {
-    // Fetch prefill data if editing an existing study
-    const fetchPrefill = async () => {
-      try {
-        const prefillData = await getPrefill();
-        setName(prefillData.name);
-        setAcronym(prefillData.acronym);
-        setDittiId(prefillData.dittiId);
-        setEmail(prefillData.email);
-        setDefaultExpiryDelta(prefillData.defaultExpiryDelta);
-        setConsentInformation(prefillData.consentInformation || "");
-        setDataSummary(prefillData.dataSummary || "");
-        setIsQi(prefillData.isQi);
-      } catch (error) {
-        console.error("Error fetching study data:", error);
-        flashMessage(
-          <span>
-            <b>Failed to load study data.</b>
-            <br />
-            {error instanceof Error ? error.message : "Unknown error"}
-          </span>,
-          "danger"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPrefill();
-  }, [studyId]);
-
-  /**
-   * Ensure that defaultExpiryDelta is non-negative
-   */
-  useEffect(() => {
-    if (defaultExpiryDelta < 0) {
-      setDefaultExpiryDelta(0);
-      setExpiryError("Default Enrollment Period must be nonnegative.");
-    } else {
-      setExpiryError("");
-    }
-  }, [defaultExpiryDelta]);
-
   /**
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<{
+  const getPrefill = useCallback(async (): Promise<{
     name: string;
     acronym: string;
     dittiId: string;
@@ -120,13 +77,15 @@ export const StudiesEdit = () => {
         defaultExpiryDelta: 14,
         consentInformation: "",
         dataSummary: "",
-        isQi: false
+        isQi: false,
       };
     }
 
     // Fetch existing study data from the backend
-    const data: Study[] = await makeRequest(`/admin/study?app=1&id=${studyId}`);
-    if (!data || data.length === 0) {
+    const data = (await makeRequest(
+      `/admin/study?app=1&id=${String(studyId)}`
+    )) as unknown as Study[];
+    if (data.length === 0) {
       throw new Error("Study not found.");
     }
 
@@ -139,9 +98,52 @@ export const StudiesEdit = () => {
       defaultExpiryDelta: study.defaultExpiryDelta,
       consentInformation: study.consentInformation,
       dataSummary: study.dataSummary,
-      isQi: study.isQi
+      isQi: study.isQi,
     };
-  };
+  }, [studyId]);
+
+  useEffect(() => {
+    // Fetch prefill data if editing an existing study
+    const fetchPrefill = async () => {
+      try {
+        const prefillData = await getPrefill();
+        setName(prefillData.name);
+        setAcronym(prefillData.acronym);
+        setDittiId(prefillData.dittiId);
+        setEmail(prefillData.email);
+        setDefaultExpiryDelta(prefillData.defaultExpiryDelta);
+        setConsentInformation(prefillData.consentInformation ?? "");
+        setDataSummary(prefillData.dataSummary ?? "");
+        setIsQi(prefillData.isQi);
+      } catch (error) {
+        console.error("Error fetching study data:", error);
+        flashMessage(
+          <span>
+            <b>Failed to load study data.</b>
+            <br />
+            {error instanceof Error ? error.message : "Unknown error"}
+          </span>,
+          "danger"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchPrefill();
+  }, [getPrefill, flashMessage]);
+
+  /**
+   * Ensure that defaultExpiryDelta is non-negative
+   */
+  useEffect(() => {
+    if (defaultExpiryDelta < 0) {
+      setDefaultExpiryDelta(0);
+      setExpiryError("Default Enrollment Period must be nonnegative.");
+    } else {
+      setExpiryError("");
+    }
+  }, [defaultExpiryDelta]);
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating
@@ -156,7 +158,7 @@ export const StudiesEdit = () => {
       defaultExpiryDelta,
       consentInformation,
       dataSummary,
-      isQi
+      isQi,
     };
     const id = studyId;
     const body = {
@@ -226,7 +228,9 @@ export const StudiesEdit = () => {
               placeholder=""
               value={name}
               label="Name"
-              onKeyup={(text: string) => setName(text)}
+              onKeyup={(text: string) => {
+                setName(text);
+              }}
               feedback=""
             />
           </FormField>
@@ -237,7 +241,9 @@ export const StudiesEdit = () => {
               placeholder=""
               value={email}
               label="Team Email"
-              onKeyup={(text: string) => setEmail(text)}
+              onKeyup={(text: string) => {
+                setEmail(text);
+              }}
               feedback=""
             />
           </FormField>
@@ -250,7 +256,9 @@ export const StudiesEdit = () => {
               placeholder=""
               value={acronym}
               label="Acronym"
-              onKeyup={(text: string) => setAcronym(text)}
+              onKeyup={(text: string) => {
+                setAcronym(text);
+              }}
               feedback=""
             />
           </FormField>
@@ -261,7 +269,9 @@ export const StudiesEdit = () => {
               placeholder=""
               value={dittiId}
               label="Ditti ID"
-              onKeyup={(text: string) => setDittiId(text)}
+              onKeyup={(text: string) => {
+                setDittiId(text);
+              }}
               feedback=""
             />
           </FormField>
@@ -320,22 +330,33 @@ export const StudiesEdit = () => {
         <FormSummaryTitle>Study Summary</FormSummaryTitle>
         <FormSummaryContent>
           <FormSummaryText>
-            <b>Name:</b><br />
+            <b>Name:</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{name}
-            <br /><br />
-            <b>Team Email:</b><br />
+            <br />
+            <br />
+            <b>Team Email:</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{email}
-            <br /><br />
-            <b>Acronym:</b><br />
+            <br />
+            <br />
+            <b>Acronym:</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{acronym}
-            <br /><br />
-            <b>Ditti ID:</b><br />
+            <br />
+            <br />
+            <b>Ditti ID:</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
-            <br /><br />
-            <b>Default Enrollment Period (days):</b><br />
+            <br />
+            <br />
+            <b>Default Enrollment Period (days):</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{defaultExpiryDelta}
-            <br /><br />
-            <b>Is QI:</b><br />
+            <br />
+            <br />
+            <b>Is QI:</b>
+            <br />
             &nbsp;&nbsp;&nbsp;&nbsp;{isQi ? "Yes" : "No"}
             <br />
           </FormSummaryText>

@@ -18,5 +18,6 @@ pydantic==2.8.2
 pytest==8.2.2
 python-dotenv==1.1.0
 requests-aws4auth==1.2.3
+ruff==0.11.6
 SQLAlchemy==1.4.52
 zappa==0.59.0

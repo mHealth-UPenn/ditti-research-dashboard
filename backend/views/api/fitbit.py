@@ -18,18 +18,26 @@ import base64
 import logging
 import os
 import time
+
 import requests
 from flask import (
-    current_app, Blueprint, jsonify, make_response,
-    redirect, request, session
+    Blueprint,
+    current_app,
+    jsonify,
+    make_response,
+    redirect,
+    request,
+    session,
 )
 from oauthlib.oauth2 import WebApplicationClient
+
+from backend.auth.decorators import participant_auth_required
 from backend.extensions import db, tm
 from backend.models import Api, JoinStudySubjectApi, StudySubject
-from backend.auth.decorators import participant_auth_required
 from shared.fitbit import (
-    generate_code_verifier, create_code_challenge,
-    get_fitbit_oauth_session
+    create_code_challenge,
+    generate_code_verifier,
+    get_fitbit_oauth_session,
 )
 
 blueprint = Blueprint("api_fitbit", __name__, url_prefix="/api/fitbit")
@@ -38,16 +46,17 @@ logger = logging.getLogger(__name__)
 
 @blueprint.route("/authorize")
 @participant_auth_required
-def fitbit_authorize(ditti_id: str):
+def fitbit_authorize():
     """
-    Initiates the OAuth2 authorization flow with Fitbit.
+    Initiate the OAuth2 authorization flow with Fitbit.
 
     Generates a code verifier and code challenge for PKCE,
     saves them along with a state parameter in the session,
     constructs the Fitbit authorization URL,
     and redirects the user to Fitbit's login page.
 
-    Returns:
+    Returns
+    -------
         Any: A redirect response to Fitbit's authorization URL.
     """
     try:
@@ -63,9 +72,9 @@ def fitbit_authorize(ditti_id: str):
         code_challenge = create_code_challenge(code_verifier)
 
         # Generate a random state string for CSRF protection
-        state = base64.urlsafe_b64encode(os.urandom(32))\
-            .rstrip(b"=")\
-            .decode("utf-8")
+        state = (
+            base64.urlsafe_b64encode(os.urandom(32)).rstrip(b"=").decode("utf-8")
+        )
 
         # Save code_verifier and state in session for later verification
         session["oauth_code_verifier"] = code_verifier
@@ -83,25 +92,32 @@ def fitbit_authorize(ditti_id: str):
 
         return redirect(authorization_url)
     except Exception as e:
-        logger.error(f"Error initiating Fitbit authorization: {str(e)}")
-        return make_response({"msg": "Failed to initiate Fitbit authorization."}, 500)
+        logger.error(f"Error initiating Fitbit authorization: {e!s}")
+        return make_response(
+            {"msg": "Failed to initiate Fitbit authorization."}, 500
+        )
 
 
 @blueprint.route("/callback")
 @participant_auth_required
 def fitbit_callback(ditti_id: str):
     """
-    Handles the OAuth2 callback from Fitbit after user authorization.
+    Handle the OAuth2 callback from Fitbit after user authorization.
 
-    Exchanges the authorization code for access and refresh tokens, verifies the ID token,
-    associates the tokens with the user's study subject record, stores the tokens securely,
+    Exchanges the authorization code for access and refresh tokens,
+    verifies the ID token, associates the tokens with the user's
+    study subject record, stores the tokens securely,
     and redirects the user to a success page.
 
-    Args:
-        ditti_id (str): The username of the study subject, provided by the decorator.
+    Parameters
+    ----------
+        ditti_id (str): The username of the study subject,
+            provided by the decorator.
 
-    Returns:
-        Any: A redirect response to the Fitbit authorization success page or an error response.
+    Returns
+    -------
+        Any: A redirect response to the Fitbit authorization success page
+            or an error response.
     """
     try:
         fitbit_client_id = current_app.config["FITBIT_CLIENT_ID"]
@@ -113,8 +129,7 @@ def fitbit_callback(ditti_id: str):
         code_verifier = session.get("oauth_code_verifier")
 
         if not state or not code_verifier:
-            logger.error(
-                "Authorization failed: Missing state or code_verifier")
+            logger.error("Authorization failed: Missing state or code_verifier")
             return make_response({"msg": "Authorization failed."}, 400)
 
         # Verify the state parameter to prevent CSRF attacks
@@ -137,32 +152,32 @@ def fitbit_callback(ditti_id: str):
             "https://api.fitbit.com/oauth2/token",
             code=code,
             redirect_url=fitbit_redirect_uri,
-            code_verifier=code_verifier
+            code_verifier=code_verifier,
         )
 
         # Fitbit requires HTTP Basic Authentication for the token request
-        auth = requests.auth.HTTPBasicAuth(
-            fitbit_client_id, fitbit_client_secret)
+        auth = requests.auth.HTTPBasicAuth(fitbit_client_id, fitbit_client_secret)
 
         # Send the token request to Fitbit
         try:
             response = requests.post(
-                token_url,
-                headers=headers,
-                data=body,
-                auth=auth
+                token_url, headers=headers, data=body, auth=auth, timeout=30
             )
             response.raise_for_status()
             token = client.parse_request_body_response(response.text)
         except Exception as e:
-            logger.error(f"Failed to fetch Fitbit tokens: {str(e)}")
-            return make_response({"msg": "Failed to retrieve Fitbit tokens."}, 400)
+            logger.error(f"Failed to fetch Fitbit tokens: {e!s}")
+            return make_response(
+                {"msg": "Failed to retrieve Fitbit tokens."}, 400
+            )
 
         # Retrieve the Fitbit API record from the database
         fitbit_api = Api.query.filter_by(name="Fitbit").first()
         if not fitbit_api:
             logger.error("Fitbit API not configured in the database.")
-            return make_response({"msg": "Fitbit integration not available."}, 500)
+            return make_response(
+                {"msg": "Fitbit integration not available."}, 500
+            )
 
         # Retrieve the StudySubject using ditti_id
         study_subject = StudySubject.query.filter_by(ditti_id=ditti_id).first()
@@ -172,8 +187,7 @@ def fitbit_callback(ditti_id: str):
 
         # Associate the tokens with the study subject's Fitbit API entry
         join_entry = JoinStudySubjectApi.query.filter_by(
-            study_subject_id=study_subject.id,
-            api_id=fitbit_api.id
+            study_subject_id=study_subject.id, api_id=fitbit_api.id
         ).first()
 
         if not join_entry:
@@ -182,7 +196,7 @@ def fitbit_callback(ditti_id: str):
                 study_subject_id=study_subject.id,
                 api_id=fitbit_api.id,
                 api_user_uuid=token.get("user_id"),
-                scope=token.get("scope")
+                scope=token.get("scope"),
             )
             db.session.add(join_entry)
         else:
@@ -205,13 +219,16 @@ def fitbit_callback(ditti_id: str):
 
         if not access_token or not refresh_token:
             logger.error(
-                "Missing access_token or refresh_token in Fitbit response")
-            return make_response({"msg": "Incomplete Fitbit token response."}, 400)
+                "Missing access_token or refresh_token in Fitbit response"
+            )
+            return make_response(
+                {"msg": "Incomplete Fitbit token response."}, 400
+            )
 
         token_data = {
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "expires_at": expires_at
+            "expires_at": expires_at,
         }
 
         # Store tokens securely using TokensManager
@@ -219,10 +236,10 @@ def fitbit_callback(ditti_id: str):
             tm.add_or_update_api_token(
                 api_name="Fitbit",
                 ditti_id=study_subject.ditti_id,
-                tokens=token_data
+                tokens=token_data,
             )
         except Exception as e:
-            logger.error(f"Error storing Fitbit tokens: {str(e)}")
+            logger.error(f"Error storing Fitbit tokens: {e!s}")
             return make_response({"msg": "Failed to store Fitbit tokens."}, 500)
 
         # Clear OAuth session variables
@@ -233,7 +250,7 @@ def fitbit_callback(ditti_id: str):
         return redirect(current_app.config.get("API_AUTHORIZE_REDIRECT"))
 
     except Exception as e:
-        logger.error(f"Unhandled error in fitbit_callback: {str(e)}")
+        logger.error(f"Unhandled error in fitbit_callback: {e!s}")
         return make_response({"msg": "An unexpected error occurred."}, 500)
 
 
@@ -243,20 +260,25 @@ def fitbit_sleep_list(ditti_id: str):
     """
     Test: Retrieves the user's sleep data from Fitbit.
 
-    Fetches the study subject's Fitbit API session, makes a request to the Fitbit API for sleep data,
-    and returns the data as a JSON response.
+    Fetches the study subject's Fitbit API session, makes a request
+    to the Fitbit API for sleep data, and returns the data as a JSON response.
 
-    Args:
-        ditti_id (str): The unique ID of the study subject, provided by the decorator.
+    Parameters
+    ----------
+        ditti_id (str): The unique ID of the study subject,
+            provided by the decorator.
 
-    Returns:
+    Returns
+    -------
         Any: A JSON response containing the sleep data or an error response.
     """
     try:
         fitbit_api = Api.query.filter_by(name="Fitbit").first()
         if not fitbit_api:
             logger.error("Fitbit API not configured in the database.")
-            return make_response({"msg": "Fitbit integration not available."}, 500)
+            return make_response(
+                {"msg": "Fitbit integration not available."}, 500
+            )
 
         # Retrieve the StudySubject using ditti_id
         study_subject = StudySubject.query.filter_by(ditti_id=ditti_id).first()
@@ -265,8 +287,7 @@ def fitbit_sleep_list(ditti_id: str):
             return make_response({"msg": "Study subject not found."}, 404)
 
         study_subject_fitbit = JoinStudySubjectApi.query.filter_by(
-            study_subject_id=study_subject.id,
-            api_id=fitbit_api.id
+            study_subject_id=study_subject.id, api_id=fitbit_api.id
         ).first()
 
         if study_subject_fitbit:
@@ -275,9 +296,12 @@ def fitbit_sleep_list(ditti_id: str):
                     study_subject.ditti_id, config=current_app.config, tm=tm
                 )
             except Exception as e:
-                logger.error(f"OAuth Session Error for ditti_id {
-                             ditti_id}: {str(e)}")
-                return make_response({"msg": "Failed to create Fitbit session."}, 401)
+                logger.error(
+                    f"OAuth Session Error for ditti_id {ditti_id}: {e!s}"
+                )
+                return make_response(
+                    {"msg": "Failed to create Fitbit session."}, 401
+                )
             try:
                 # Example: Fetch sleep data from Fitbit API
                 sleep_list_data = fitbit_session.get(
@@ -286,20 +310,26 @@ def fitbit_sleep_list(ditti_id: str):
                         "afterDate": "2024-01-01",
                         "sort": "asc",
                         "offset": 0,
-                        "limit": 100
-                    }
+                        "limit": 100,
+                    },
                 ).json()
             except Exception as e:
-                logger.error(f"Fitbit Data Request Error for ditti_id {
-                             ditti_id}: {str(e)}")
-                return make_response({"msg": "Failed to retrieve sleep data."}, 401)
+                logger.error(
+                    f"Fitbit Data Request Error for ditti_id {ditti_id}: {e!s}"
+                )
+                return make_response(
+                    {"msg": "Failed to retrieve sleep data."}, 401
+                )
         else:
             logger.warning(f"Fitbit API not linked for ditti_id {ditti_id}")
-            return make_response({"msg": "Fitbit API not linked to your account."}, 401)
+            return make_response(
+                {"msg": "Fitbit API not linked to your account."}, 401
+            )
 
         return jsonify(sleep_list_data)
 
     except Exception as e:
-        logger.error(f"Unhandled error in fitbit_sleep_list for ditti_id {
-                     ditti_id}: {str(e)}")
+        logger.error(
+            f"Unhandled error in fitbit_sleep_list for ditti_id {ditti_id}: {e!s}"
+        )
         return make_response({"msg": "An unexpected error occurred."}, 500)

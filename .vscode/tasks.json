@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ESLint",
+      "type": "shell",
+      "problemMatcher": "$eslint-stylish",
+      "command": "cd frontend && npm run lint",
+      "windows": {
+        "command": "cd frontend && npm run lint"
+      }
+    },
+    {
+      "label": "ESLint:fix",
+      "type": "shell",
+      "problemMatcher": "$eslint-stylish",
+      "command": "cd frontend && npm run lint:fix",
+      "windows": {
+        "command": "cd frontend && npm run lint:fix"
+      }
+    }
+  ]
+}

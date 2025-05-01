@@ -16,12 +16,17 @@
 
 import logging
 from urllib.parse import urlencode
+
 from flask import current_app, make_response, redirect, request, session
-from backend.extensions import db, oauth
+
 from backend.auth.providers.cognito import AUTH_ERROR_MESSAGES
 from backend.auth.utils import (
-    clear_auth_cookies, set_auth_cookies, create_error_response, AuthFlowSession
+    AuthFlowSession,
+    clear_auth_cookies,
+    create_error_response,
+    set_auth_cookies,
 )
+from backend.extensions import db, oauth
 
 logger = logging.getLogger(__name__)
 
@@ -32,22 +37,27 @@ class AuthControllerBase:
     def __init__(self, user_type):
         """Initialize the auth controller.
 
-        Args:
+        Parameters
+        ----------
             user_type (str): Either "participant" or "researcher"
         """
         self.user_type = user_type
-        self.oauth_client_name = "participant_oidc" if user_type == "participant" else "researcher_oidc"
+        self.oauth_client_name = (
+            "participant_oidc"
+            if user_type == "participant"
+            else "researcher_oidc"
+        )
         self.auth_manager = None  # To be set by subclasses
 
     def init_oauth_client(self):
         """Initialize the OAuth client."""
-        raise NotImplementedError(
-            "Subclasses must implement init_oauth_client")
+        raise NotImplementedError("Subclasses must implement init_oauth_client")
 
     def get_redirect_uri(self):
         """Get the redirect URI from config.
 
-        Returns:
+        Returns
+        -------
             str: The redirect URI
         """
         key = f"COGNITO_{self.user_type.upper()}_REDIRECT_URI"
@@ -56,7 +66,8 @@ class AuthControllerBase:
     def get_frontend_url(self):
         """Get the frontend URL to redirect to after login.
 
-        Returns:
+        Returns
+        -------
             str: The frontend URL
         """
         return current_app.config.get("CORS_ORIGINS", "http://localhost:3000")
@@ -64,7 +75,8 @@ class AuthControllerBase:
     def get_login_url(self):
         """Get the login URL.
 
-        Returns:
+        Returns
+        -------
             str: The login URL
         """
         raise NotImplementedError("Subclasses must implement get_login_url")
@@ -72,7 +84,8 @@ class AuthControllerBase:
     def login(self):
         """Handle login request.
 
-        Returns:
+        Returns
+        -------
             Response: Redirect to Cognito login page
         """
         # Initialize OAuth client
@@ -97,13 +110,14 @@ class AuthControllerBase:
             nonce=security_params["nonce"],
             state=security_params["state"],
             code_challenge=security_params["code_challenge"],
-            code_challenge_method="S256"
+            code_challenge_method="S256",
         )
 
     def get_scope(self):
         """Get the OAuth scope.
 
-        Returns:
+        Returns
+        -------
             str: The OAuth scope
         """
         raise NotImplementedError("Subclasses must implement get_scope")
@@ -111,7 +125,8 @@ class AuthControllerBase:
     def callback(self):
         """Handle callback request.
 
-        Returns:
+        Returns
+        -------
             Response: Redirect to frontend with cookies set
         """
         self.init_oauth_client()
@@ -131,7 +146,7 @@ class AuthControllerBase:
                 return create_error_response(
                     AUTH_ERROR_MESSAGES["invalid_request"],
                     status_code=401,
-                    error_code="MISSING_CODE_VERIFIER"
+                    error_code="MISSING_CODE_VERIFIER",
                 )
 
             # Validate nonce
@@ -140,23 +155,24 @@ class AuthControllerBase:
                 return create_error_response(
                     AUTH_ERROR_MESSAGES["session_expired"],
                     status_code=401,
-                    error_code="EXPIRED_NONCE"
+                    error_code="EXPIRED_NONCE",
                 )
 
             # Exchange code for tokens
             oauth_client = getattr(oauth, self.oauth_client_name)
             token = oauth_client.authorize_access_token(
-                code_verifier=code_verifier)
+                code_verifier=code_verifier
+            )
 
             # Parse ID token with nonce validation
             try:
                 userinfo = oauth_client.parse_id_token(token, nonce=nonce)
             except Exception as e:
-                logger.error(f"Failed to validate ID token: {str(e)}")
+                logger.error(f"Failed to validate ID token: {e!s}")
                 return create_error_response(
                     AUTH_ERROR_MESSAGES["auth_failed"],
                     status_code=401,
-                    error_code="TOKEN_VALIDATION_FAILED"
+                    error_code="TOKEN_VALIDATION_FAILED",
                 )
 
             # Get or create user (to be implemented by subclasses)
@@ -168,7 +184,7 @@ class AuthControllerBase:
             AuthFlowSession.set_user_data(
                 self.user_type,
                 user.id if hasattr(user, "id") else None,
-                userinfo
+                userinfo,
             )
 
             # Create redirect response
@@ -179,33 +195,35 @@ class AuthControllerBase:
             return set_auth_cookies(response, token)
 
         except Exception as e:
-            logger.error(f"Authentication error: {str(e)}")
+            logger.error(f"Authentication error: {e!s}")
             db.session.rollback()
             return create_error_response(
                 AUTH_ERROR_MESSAGES["auth_failed"],
                 status_code=400,
-                error_code="AUTHENTICATION_ERROR"
+                error_code="AUTHENTICATION_ERROR",
             )
 
     def get_or_create_user(self, token, userinfo):
         """Get or create user from token.
 
-        Args:
+        Parameters
+        ----------
             token (dict): The token from Cognito
             userinfo (dict): The user info from Cognito
 
-        Returns:
+        Returns
+        -------
             tuple: (user, error_response)
                 user: The user object if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
         """
-        raise NotImplementedError(
-            "Subclasses must implement get_or_create_user")
+        raise NotImplementedError("Subclasses must implement get_or_create_user")
 
     def get_redirect_url(self):
         """Get the URL to redirect to after login.
 
-        Returns:
+        Returns
+        -------
             str: The redirect URL
         """
         return self.get_frontend_url()
@@ -213,7 +231,8 @@ class AuthControllerBase:
     def get_cognito_logout_url(self):
         """Build the Cognito logout URL with appropriate parameters.
 
-        Returns:
+        Returns
+        -------
             str: The Cognito logout URL
         """
         # Get the appropriate configuration based on user type
@@ -226,7 +245,7 @@ class AuthControllerBase:
         params = {
             "client_id": client_id,
             "logout_uri": logout_uri,
-            "response_type": "code"
+            "response_type": "code",
         }
 
         # Return the full logout URL
@@ -235,7 +254,8 @@ class AuthControllerBase:
     def logout(self):
         """Handle logout request.
 
-        Returns:
+        Returns
+        -------
             Response: Redirect to Cognito logout URL
         """
         self.init_oauth_client()
@@ -252,7 +272,8 @@ class AuthControllerBase:
     def check_login(self):
         """Handle check-login request.
 
-        Returns:
+        Returns
+        -------
             Response: JSON response with user info or error
         """
         self.init_oauth_client()
@@ -263,7 +284,7 @@ class AuthControllerBase:
             return create_error_response(
                 AUTH_ERROR_MESSAGES["auth_required"],
                 status_code=401,
-                error_code="NO_TOKEN"
+                error_code="NO_TOKEN",
             )
 
         # Get user from token
@@ -277,25 +298,29 @@ class AuthControllerBase:
     def get_user_from_token(self, id_token):
         """Get user from token.
 
-        Args:
+        Parameters
+        ----------
             id_token (str): The ID token
 
-        Returns:
+        Returns
+        -------
             tuple: (user, error_response)
                 user: The user object if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
         """
-        raise NotImplementedError(
-            "Subclasses must implement get_user_from_token")
+        raise NotImplementedError("Subclasses must implement get_user_from_token")
 
     def create_login_success_response(self, user):
         """Create success response for check-login.
 
-        Args:
+        Parameters
+        ----------
             user: The user object
 
-        Returns:
+        Returns
+        -------
             Response: JSON response with user info
         """
         raise NotImplementedError(
-            "Subclasses must implement create_login_success_response")
+            "Subclasses must implement create_login_success_response"
+        )

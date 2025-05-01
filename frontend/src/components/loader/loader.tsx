@@ -20,10 +20,7 @@ import { LoaderProps, FullLoaderProps } from "./loader.types";
 
 const Loader = ({ style, msg }: LoaderProps) => {
   return (
-    <div
-      id="loader"
-      style={style as React.CSSProperties}
-    >
+    <div id="loader" style={style}>
       <div className="lds-ring">
         <div></div>
         <div></div>

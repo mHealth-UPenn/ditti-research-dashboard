@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 import { makeRequest } from "../../utils";
@@ -38,7 +38,7 @@ import { AboutSleepTemplateFormPrefill } from "./adminDashboard.types";
 export const AboutSleepTemplatesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
-  const aboutSleepTemplateId = id ? parseInt(id) : 0
+  const aboutSleepTemplateId = id ? parseInt(id) : 0;
 
   const [name, setName] = useState<string>("");
   const [text, setText] = useState<string>("");
@@ -46,6 +46,27 @@ export const AboutSleepTemplatesEdit = () => {
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
+
+  /**
+   * Get the form prefill if editing
+   * @returns - the form prefill data
+   */
+  const getPrefill =
+    useCallback(async (): Promise<AboutSleepTemplateFormPrefill> => {
+      const id = aboutSleepTemplateId;
+
+      // if editing an existing entry, return prefill data, else return empty data
+      return id
+        ? makeRequest(
+            `/admin/about-sleep-template?app=1&id=${String(id)}`
+          ).then((res: ResponseBody) =>
+            makePrefill(res as unknown as AboutSleepTemplate[])
+          )
+        : {
+            name: "",
+            text: "",
+          };
+    }, [aboutSleepTemplateId]);
 
   useEffect(() => {
     const fetchPrefill = async () => {
@@ -55,38 +76,22 @@ export const AboutSleepTemplatesEdit = () => {
       setLoading(false);
     };
 
-    fetchPrefill();
-  }, []);
-
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = async (): Promise<AboutSleepTemplateFormPrefill> => {
-    const id = aboutSleepTemplateId;
-
-    // if editing an existing entry, return prefill data, else return empty data
-    return id
-      ? makeRequest("/admin/about-sleep-template?app=1&id=" + id).then(
-          makePrefill
-        )
-      : {
-          name: "",
-          text: ""
-        };
-  };
+    void fetchPrefill();
+  }, [getPrefill]);
 
   /**
    * Map the data returned from the backend to form prefill data
    * @param res - the response body
    * @returns - the form prefill data
    */
-  const makePrefill = (res: AboutSleepTemplate[]): AboutSleepTemplateFormPrefill => {
+  const makePrefill = (
+    res: AboutSleepTemplate[]
+  ): AboutSleepTemplateFormPrefill => {
     const aboutSleepTemplate = res[0];
 
     return {
       name: aboutSleepTemplate.name,
-      text: aboutSleepTemplate.text
+      text: aboutSleepTemplate.text,
     };
   };
 
@@ -98,8 +103,8 @@ export const AboutSleepTemplatesEdit = () => {
     const data = { text, name };
     const id = aboutSleepTemplateId;
     const body = {
-      app: 1,  // Admin Dashboard = 1
-      ...(id ? { id: id, edit: data } : { create: data })
+      app: 1, // Admin Dashboard = 1
+      ...(id ? { id: id, edit: data } : { create: data }),
     };
 
     const opts = { method: "POST", body: JSON.stringify(body) };
@@ -107,9 +112,7 @@ export const AboutSleepTemplatesEdit = () => {
       ? "/admin/about-sleep-template/edit"
       : "/admin/about-sleep-template/create";
 
-    await makeRequest(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    await makeRequest(url, opts).then(handleSuccess).catch(handleFailure);
   };
 
   /**
@@ -154,14 +157,12 @@ export const AboutSleepTemplatesEdit = () => {
   return (
     <FormView>
       <Form>
-        <FormTitle>{aboutSleepTemplateId ? "Edit " : "Create "} Template</FormTitle>
+        <FormTitle>
+          {aboutSleepTemplateId ? "Edit " : "Create "} Template
+        </FormTitle>
         <FormRow>
           <FormField>
-            <TextField
-              id="name"
-              value={name}
-              label="Name"
-              onKeyup={setName} />
+            <TextField id="name" value={name} label="Name" onKeyup={setName} />
           </FormField>
         </FormRow>
         <FormRow>
@@ -186,9 +187,7 @@ export const AboutSleepTemplatesEdit = () => {
             &nbsp;&nbsp;&nbsp;&nbsp;{name}
             <br />
           </FormSummaryText>
-          <FormSummaryButton onClick={post}>
-            {buttonText}
-          </FormSummaryButton>
+          <FormSummaryButton onClick={post}>{buttonText}</FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>
     </FormView>

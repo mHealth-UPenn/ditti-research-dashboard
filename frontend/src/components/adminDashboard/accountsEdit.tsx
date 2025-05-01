@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useCallback } from "react";
 import { Table } from "../table/table";
 import { TableData } from "../table/table.types";
 import { TextField } from "../fields/textField";
@@ -42,30 +42,33 @@ import { FormSummaryText } from "../containers/forms/formSummaryText";
 import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
-import { AccountsEditState, AccountFormPrefill, RoleSelected } from "./adminDashboard.types";
+import {
+  AccountsEditState,
+  AccountFormPrefill,
+  RoleSelected,
+} from "./adminDashboard.types";
 
 type Action =
   | {
-    type: "INIT";
-    accessGroups: AccessGroup[];
-    roles: Role[];
-    studies: Study[];
-    prefill: AccountFormPrefill;
-    loading: boolean;
-  }
+      type: "INIT";
+      accessGroups: AccessGroup[];
+      roles: Role[];
+      studies: Study[];
+      prefill: AccountFormPrefill;
+      loading: boolean;
+    }
   | {
-    type: "EDIT_FIELD";
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phoneNumber?: string
-  }
+      type: "EDIT_FIELD";
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      phoneNumber?: string;
+    }
   | { type: "SELECT_ROLE"; roleId: number; studyId: number }
   | { type: "SELECT_ACCESS_GROUP"; id: number }
   | { type: "REMOVE_ACCESS_GROUP"; id: number }
   | { type: "SELECT_STUDY"; id: number }
   | { type: "REMOVE_STUDY"; id: number };
-
 
 const reducer = (state: AccountsEditState, action: Action) => {
   switch (action.type) {
@@ -75,14 +78,10 @@ const reducer = (state: AccountsEditState, action: Action) => {
     }
     case "EDIT_FIELD": {
       const { firstName, lastName, email, phoneNumber } = action;
-      if (firstName)
-        return { ...state, firstName };
-      if (lastName)
-        return { ...state, lastName };
-      if (email)
-        return { ...state, email };
-      if (phoneNumber !== undefined)
-        return { ...state, phoneNumber };
+      if (firstName) return { ...state, firstName };
+      if (lastName) return { ...state, lastName };
+      if (email) return { ...state, email };
+      if (phoneNumber !== undefined) return { ...state, phoneNumber };
       return state;
     }
     case "SELECT_ROLE": {
@@ -92,7 +91,7 @@ const reducer = (state: AccountsEditState, action: Action) => {
       const rolesSelected: RoleSelected[] = state.rolesSelected.filter(
         (x: RoleSelected) => x.study != studyId
       );
-  
+
       // add this role
       rolesSelected.push({ study: studyId, role: roleId });
       return { ...state, rolesSelected };
@@ -100,10 +99,13 @@ const reducer = (state: AccountsEditState, action: Action) => {
     case "SELECT_ACCESS_GROUP": {
       const { id } = action;
       const { accessGroups, accessGroupsSelected } = state;
-  
+
       // get the access group
-      const accessGroup = accessGroups.filter(ag => ag.id == id)[0];
-      if (accessGroup && !accessGroupsSelected.some(ag => ag.id === accessGroup.id)) {
+      const accessGroup = accessGroups.find((ag) => ag.id == id);
+      if (
+        accessGroup &&
+        !accessGroupsSelected.some((ag) => ag.id === accessGroup.id)
+      ) {
         // add it to the selected access groups
         accessGroupsSelected.push(accessGroup);
         return { ...state, accessGroupsSelected };
@@ -113,21 +115,21 @@ const reducer = (state: AccountsEditState, action: Action) => {
     case "REMOVE_ACCESS_GROUP": {
       const { id } = action;
       const accessGroupsSelected = state.accessGroupsSelected.filter(
-        ag => ag.id != id
+        (ag) => ag.id != id
       );
       return { ...state, accessGroupsSelected };
     }
     case "SELECT_STUDY": {
       const { id } = action;
       const { studies, studiesSelected } = state;
-  
+
       // get the study
       const study = Object.assign(
         {},
-        studies.filter((s: Study) => s.id == id)[0]
+        studies.find((s: Study) => s.id == id)
       );
-  
-      if (study && !studiesSelected.some(s => s.id === study.id)) {
+
+      if (!studiesSelected.some((s) => s.id === study.id)) {
         // add it to the selected studies
         studiesSelected.push(study);
         return { ...state, studiesSelected };
@@ -136,13 +138,13 @@ const reducer = (state: AccountsEditState, action: Action) => {
     }
     case "REMOVE_STUDY": {
       const { id } = action;
-      const studiesSelected = state.studiesSelected.filter(s => s.id != id);
+      const studiesSelected = state.studiesSelected.filter((s) => s.id != id);
       return { ...state, studiesSelected };
     }
     default:
       return state;
   }
-};  
+};
 
 const initialState: AccountsEditState = {
   accessGroups: [],
@@ -161,7 +163,7 @@ const initialState: AccountsEditState = {
 export const AccountsEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
-  const accountId = id ? parseInt(id) : 0
+  const accountId = id ? parseInt(id) : 0;
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const {
@@ -181,35 +183,16 @@ export const AccountsEdit = () => {
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
-  useEffect(() => {
-
-    // when all requests are complete, initialize the state
-    Promise.all([
-      makeRequest("/admin/access-group?app=1") as Promise<AccessGroup[]>,
-      makeRequest("/admin/role?app=1") as Promise<Role[]>,
-      makeRequest("/admin/study?app=1") as Promise<Study[]>,
-      getPrefill(),
-    ]).then(([accessGroups, roles, studies, prefill]) => {
-      dispatch({
-        type: "INIT",
-        accessGroups,
-        roles,
-        studies,
-        prefill,
-        loading: false
-      });
-    });
-  }, []);
-
   /**
    * Get the form prefill if editing
    * @returns - the form prefill data
    */
-  const getPrefill = async (): Promise<AccountFormPrefill> => {
-
+  const getPrefill = useCallback(async (): Promise<AccountFormPrefill> => {
     // if editing an existing entry, return prefill data, else return empty data
     return accountId
-      ? makeRequest("/admin/account?app=1&id=" + accountId).then(makePrefill)
+      ? makeRequest(`/admin/account?app=1&id=${String(accountId)}`).then(
+          (res: ResponseBody) => makePrefill(res as unknown as Account[])
+        )
       : {
           firstName: "",
           lastName: "",
@@ -217,9 +200,39 @@ export const AccountsEdit = () => {
           phoneNumber: "",
           accessGroupsSelected: [],
           rolesSelected: [],
-          studiesSelected: []
+          studiesSelected: [],
         };
-  };
+  }, [accountId]);
+
+  useEffect(() => {
+    // when all requests are complete, initialize the state
+    const fetchData = async () => {
+      try {
+        const [accessGroups, roles, studies, prefill] = await Promise.all([
+          makeRequest("/admin/access-group?app=1") as unknown as Promise<
+            AccessGroup[]
+          >,
+          makeRequest("/admin/role?app=1") as unknown as Promise<Role[]>,
+          makeRequest("/admin/study?app=1") as unknown as Promise<Study[]>,
+          getPrefill(),
+        ]);
+
+        dispatch({
+          type: "INIT",
+          accessGroups,
+          roles,
+          studies,
+          prefill,
+          loading: false,
+        });
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        // Handle error as needed
+      }
+    };
+
+    void fetchData();
+  }, [getPrefill]);
 
   /**
    * Map the data returned from the backend to form prefill data
@@ -229,7 +242,7 @@ export const AccountsEdit = () => {
   const makePrefill = (res: Account[]): AccountFormPrefill => {
     const account = res[0];
     const roles = account.studies.map((s): RoleSelected => {
-      return { study: s.id, role: s.role?.id || 0 };
+      return { study: s.id, role: s.role?.id ?? 0 };
     });
 
     return {
@@ -239,7 +252,7 @@ export const AccountsEdit = () => {
       phoneNumber: account.phoneNumber,
       accessGroupsSelected: account.accessGroups,
       rolesSelected: roles,
-      studiesSelected: account.studies
+      studiesSelected: account.studies,
     };
   };
 
@@ -258,10 +271,10 @@ export const AccountsEdit = () => {
    * @returns - the role's database primary key
    */
   const getSelectedRole = (id: number) => {
-    if (rolesSelected.some(x => x.study == id)) {
+    if (rolesSelected.some((x) => x.study == id)) {
       // get the role selected for this study
-      const roleSelected = rolesSelected.filter(x => x.study == id)[0];
-      return roleSelected.role;
+      const roleSelected = rolesSelected.find((x) => x.study == id);
+      return roleSelected?.role ?? 0;
     }
     return 0;
   };
@@ -278,7 +291,7 @@ export const AccountsEdit = () => {
   /**
    * Remove an access group
    * @param id - the access group's database primary key
-   * @param callback 
+   * @param callback
    */
   const removeAccessGroup = (id: number): void => {
     dispatch({ type: "REMOVE_ACCESS_GROUP", id });
@@ -287,7 +300,7 @@ export const AccountsEdit = () => {
   /**
    * Assign a study to the user
    * @param id - the study's database primary key
-   * @param callback 
+   * @param callback
    */
   const addStudy = (id: number): void => {
     dispatch({ type: "SELECT_STUDY", id });
@@ -296,7 +309,7 @@ export const AccountsEdit = () => {
   /**
    * Remove a study
    * @param id - the study's database primary key
-   * @param callback 
+   * @param callback
    */
   const removeStudy = (id: number): void => {
     dispatch({ type: "REMOVE_STUDY", id });
@@ -315,39 +328,55 @@ export const AccountsEdit = () => {
   const post = async (): Promise<void> => {
     // Validate required fields
     if (!firstName.trim()) {
-      flashMessage(<span><b>First name is required</b></span>, "danger");
+      flashMessage(
+        <span>
+          <b>First name is required</b>
+        </span>,
+        "danger"
+      );
       return;
     }
-    
+
     if (!lastName.trim()) {
-      flashMessage(<span><b>Last name is required</b></span>, "danger");
+      flashMessage(
+        <span>
+          <b>Last name is required</b>
+        </span>,
+        "danger"
+      );
       return;
     }
-    
+
     if (!email.trim()) {
-      flashMessage(<span><b>Email is required</b></span>, "danger");
+      flashMessage(
+        <span>
+          <b>Email is required</b>
+        </span>,
+        "danger"
+      );
       return;
     }
-    
+
     // Validate phone number format if provided
-    if (phoneNumber && phoneNumber.trim()) {
+    if (phoneNumber?.trim()) {
       // International phone numbers should start with + followed by at least 1 digit for country code
-      // Country codes typically don't start with 0 
+      // Country codes typically don't start with 0
       const phoneRegex = /^\+[1-9]\d*$/;
       if (!phoneRegex.test(phoneNumber)) {
         flashMessage(
           <span>
-            <b>Invalid phone number format</b> - Phone number must start with + followed by country code and digits
-          </span>, 
+            <b>Invalid phone number format</b> - Phone number must start with +
+            followed by country code and digits
+          </span>,
           "danger"
         );
         return;
       }
     }
-    
+
     // Construct studies data structure with role assignments
-    const studies = studiesSelected.map(s => {
-      const role = rolesSelected.filter(r => r.study == s.id)[0];
+    const studies = studiesSelected.map((s) => {
+      const role = rolesSelected.find((r) => r.study == s.id);
       return { id: s.id, role: role ? { id: role.role } : {} };
     });
 
@@ -357,14 +386,14 @@ export const AccountsEdit = () => {
       email: email,
       first_name: firstName,
       last_name: lastName,
-      phone_number: phoneNumber || "", // Always send phone_number, empty string signals deletion
-      studies: studies
+      phone_number: phoneNumber ?? "", // Always send phone_number, empty string signals deletion
+      studies: studies,
     };
 
     // Determine if this is an edit or create operation
     const body = {
-      app: 1,  // Admin Dashboard = 1
-      ...(accountId ? { id: accountId, edit: data } : { create: data })
+      app: 1, // Admin Dashboard = 1
+      ...(accountId ? { id: accountId, edit: data } : { create: data }),
     };
 
     const opts = { method: "POST", body: JSON.stringify(body) };
@@ -405,7 +434,6 @@ export const AccountsEdit = () => {
    */
   const getAccessGroupsSummary = () => {
     return accessGroupsSelected.map((ag, i) => {
-
       // the permissions of each access group
       const permissions = ag.permissions.map((p, i) => {
         const action = p.action == "*" ? "All Actions" : p.action;
@@ -440,7 +468,7 @@ export const AccountsEdit = () => {
    * @returns - the user's study summary
    */
   const getStudiesSummary = () => {
-    let role: Role;
+    let role: Role | undefined;
     let permissions: React.ReactElement[];
 
     return studiesSelected.map((s, i) => {
@@ -448,17 +476,15 @@ export const AccountsEdit = () => {
       permissions = [<React.Fragment key={0} />];
 
       // get the selected role for each study
-      const selectedRole: RoleSelected = rolesSelected.filter(
+      const selectedRole: RoleSelected | undefined = rolesSelected.find(
         (sr: RoleSelected) => sr.study == s.id
-      )[0];
+      );
 
       if (selectedRole) {
-
         // get the selected role's data
-        role = roles.filter(r => r.id == selectedRole.role)[0];
+        role = roles.find((r) => r.id == selectedRole.role);
 
-        if (role) {
-
+        if (role?.permissions) {
           // list the permissions for each selected role
           permissions = role.permissions.map((p, j) => {
             const action = p.action == "*" ? "All Actions" : p.action;
@@ -482,14 +508,14 @@ export const AccountsEdit = () => {
           &nbsp;&nbsp;&nbsp;&nbsp;
           {s.name}
           <br />
-          {role ? (
+          {role && (
             <span>
               &nbsp;&nbsp;&nbsp;&nbsp;Role:
               {role.name ? " " + role.name : " " + "unassigned"}
               <br />
               {permissions}
             </span>
-          ) : null}
+          )}
         </span>
       );
     });
@@ -502,59 +528,55 @@ export const AccountsEdit = () => {
       name: "Name",
       sortable: true,
       searchable: false,
-      width: 43
+      width: 43,
     },
     {
       name: "App",
       sortable: true,
       searchable: false,
-      width: 43
+      width: 43,
     },
     {
       name: "Added",
       sortable: true,
       searchable: false,
-      width: 14
-    }
-  ]
+      width: 14,
+    },
+  ];
 
   const columnsStudies = [
     {
       name: "Name",
       sortable: true,
       searchable: false,
-      width: 43
+      width: 43,
     },
     {
       name: "Role",
       sortable: false,
       searchable: false,
-      width: 43
+      width: 43,
     },
     {
       name: "Added",
       sortable: true,
       searchable: false,
-      width: 14
-    }
-  ]
+      width: 14,
+    },
+  ];
 
-  const accessGroupsData: TableData[][] = accessGroups.map(ag => {
-    const selected = accessGroupsSelected.some(sag => sag.id == ag.id);
+  const accessGroupsData: TableData[][] = accessGroups.map((ag) => {
+    const selected = accessGroupsSelected.some((sag) => sag.id == ag.id);
     return [
       {
-        contents: (
-          <span>{ag.name}</span>
-        ),
+        contents: <span>{ag.name}</span>,
         searchValue: "",
-        sortValue: ag.name
+        sortValue: ag.name,
       },
       {
-        contents: (
-          <span>{ag.app.name}</span>
-        ),
+        contents: <span>{ag.app.name}</span>,
         searchValue: "",
-        sortValue: ag.app.name
+        sortValue: ag.app.name,
       },
       {
         contents: (
@@ -565,18 +587,19 @@ export const AccountsEdit = () => {
             add={addAccessGroup}
             remove={removeAccessGroup}
             fullWidth={true}
-            fullHeight={true} />
+            fullHeight={true}
+          />
         ),
         searchValue: "",
         sortValue: selected ? 1 : 0,
         paddingX: 0,
         paddingY: 0,
-      }
+      },
     ];
   });
 
   const studiesData = studies.map((s) => {
-    const selected = studiesSelected.some(ss => ss.id == s.id);
+    const selected = studiesSelected.some((ss) => ss.id == s.id);
     return [
       {
         contents: (
@@ -585,7 +608,7 @@ export const AccountsEdit = () => {
           </div>
         ),
         searchValue: "",
-        sortValue: s.name
+        sortValue: s.name,
       },
       {
         contents: (
@@ -596,7 +619,8 @@ export const AccountsEdit = () => {
             placeholder="Select role..."
             callback={selectRole}
             getDefault={getSelectedRole}
-            hideBorder={true} />
+            hideBorder={true}
+          />
         ),
         searchValue: "",
         sortValue: "",
@@ -612,13 +636,14 @@ export const AccountsEdit = () => {
             add={addStudy}
             remove={removeStudy}
             fullWidth={true}
-            fullHeight={true} />
+            fullHeight={true}
+          />
         ),
         searchValue: "",
         sortValue: selected ? 1 : 0,
         paddingX: 0,
         paddingY: 0,
-      }
+      },
     ];
   });
 
@@ -647,7 +672,8 @@ export const AccountsEdit = () => {
               onKeyup={(firstName) => {
                 dispatch({ type: "EDIT_FIELD", firstName });
               }}
-              feedback="" />
+              feedback=""
+            />
           </FormField>
           <FormField>
             <TextField
@@ -659,7 +685,8 @@ export const AccountsEdit = () => {
               onKeyup={(lastName) => {
                 dispatch({ type: "EDIT_FIELD", lastName });
               }}
-              feedback="" />
+              feedback=""
+            />
           </FormField>
         </FormRow>
         <FormRow>
@@ -670,23 +697,31 @@ export const AccountsEdit = () => {
               placeholder=""
               value={email}
               label="Email"
-              onKeyup={accountId ? undefined : (email) => dispatch({ type: "EDIT_FIELD", email })}
+              onKeyup={
+                accountId
+                  ? undefined
+                  : (email) => {
+                      dispatch({ type: "EDIT_FIELD", email });
+                    }
+              }
               feedback=""
-              disabled={accountId ? true : false} />
+              disabled={accountId ? true : false}
+            />
           </FormField>
           <FormField>
             <TextField
               id="phoneNumber"
               type="text"
               placeholder=""
-              value={phoneNumber || ""}
+              value={phoneNumber ?? ""}
               label="Phone Number"
               onKeyup={handlePhoneNumberChange}
               feedback={
-                phoneNumber && phoneNumber.trim() && !/^\+[1-9]\d*$/.test(phoneNumber)
+                phoneNumber?.trim() && !/^\+[1-9]\d*$/.test(phoneNumber)
                   ? "Phone number must start with + followed by country code and digits"
                   : ""
-              } />
+              }
+            />
           </FormField>
         </FormRow>
         <FormRow>
@@ -700,7 +735,8 @@ export const AccountsEdit = () => {
               includeControl={false}
               includeSearch={false}
               paginationPer={4}
-              sortDefault="Name" />
+              sortDefault="Name"
+            />
           </FormField>
         </FormRow>
         <FormRow>
@@ -714,7 +750,8 @@ export const AccountsEdit = () => {
               includeControl={false}
               includeSearch={false}
               paginationPer={4}
-              sortDefault="Name" />
+              sortDefault="Name"
+            />
           </FormField>
         </FormRow>
       </Form>
@@ -743,9 +780,7 @@ export const AccountsEdit = () => {
             {getStudiesSummary()}
             <br />
           </FormSummaryText>
-          <FormSummaryButton onClick={post}>
-            {buttonText}
-          </FormSummaryButton>
+          <FormSummaryButton onClick={post}>{buttonText}</FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>
     </FormView>

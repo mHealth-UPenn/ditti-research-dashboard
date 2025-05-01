@@ -56,28 +56,47 @@ export const AboutSleepTemplates = () => {
   useEffect(() => {
     // check whether the user has permission to create
     const create = getAccess(1, "Create", "About Sleep Templates")
-      .then(() => setCanCreate(true))
-      .catch(() => setCanCreate(false));
+      .then(() => {
+        setCanCreate(true);
+      })
+      .catch(() => {
+        setCanCreate(false);
+      });
 
     // check whether the user has permissions to edit
     const edit = getAccess(1, "Edit", "About Sleep Templates")
-      .then(() => setCanEdit(true))
-      .catch(() => setCanEdit(false));
+      .then(() => {
+        setCanEdit(true);
+      })
+      .catch(() => {
+        setCanEdit(false);
+      });
 
     // check whether the user has permissions to archive
     const archive = getAccess(1, "Archive", "About Sleep Templates")
-      .then(() => setCanArchive(true))
-      .catch(() => setCanArchive(false));
+      .then(() => {
+        setCanArchive(true);
+      })
+      .catch(() => {
+        setCanArchive(false);
+      });
 
     // get the table's data
     const fetchTemplates = makeRequest(
       "/admin/about-sleep-template?app=1"
-    ).then((templates) => setAboutSleepTemplates(templates));
+    ).then((templates) => {
+      setAboutSleepTemplates(templates as unknown as AboutSleepTemplate[]);
+    });
 
     // when all requests are complete, hide the loading screen
-    Promise.all([create, edit, archive, fetchTemplates]).then(() =>
-      setLoading(false)
-    );
+    Promise.all([create, edit, archive, fetchTemplates])
+      .then(() => {
+        setLoading(false);
+      })
+      .catch((error: unknown) => {
+        console.error("Error loading templates:", error);
+        setLoading(false);
+      });
   }, []);
 
   /**
@@ -91,38 +110,41 @@ export const AboutSleepTemplates = () => {
       // map each row to a set of cells for each table column
       return [
         {
-          contents: (
-            <span>{name}</span>
-          ),
+          contents: <span>{name}</span>,
           searchValue: name,
           sortValue: name,
         },
         {
           contents: (
-            <div className="flex w-full h-full">
-              {canEdit &&
+            <div className="flex size-full">
+              {canEdit && (
                 <Button
                   variant="secondary"
                   size="sm"
-                  className="h-full flex-grow"
+                  className="h-full grow"
                   fullWidth={true}
-                  fullHeight={true}>
-                    <Link
-                      className="w-full h-full flex items-center justify-center"
-                      to={`/coordinator/admin/about-sleep-templates/edit?id=${id}`}>
-                        Edit
-                    </Link>
+                  fullHeight={true}
+                >
+                  <Link
+                    className="flex size-full items-center justify-center"
+                    to={`/coordinator/admin/about-sleep-templates/edit?id=${String(id)}`}
+                  >
+                    Edit
+                  </Link>
                 </Button>
-              }
-              {canArchive &&
+              )}
+              {canArchive && (
                 <Button
                   variant="danger"
                   size="sm"
-                  className="h-full flex-grow"
-                  onClick={() => deleteTemplate(id)}>
-                    Archive
+                  className="h-full grow"
+                  onClick={() => {
+                    deleteTemplate(id);
+                  }}
+                >
+                  Archive
                 </Button>
-              }
+              )}
             </div>
           ),
           searchValue: "",
@@ -162,12 +184,15 @@ export const AboutSleepTemplates = () => {
     flashMessage(<span>{res.msg}</span>, "success");
 
     // refresh the table's data
-    makeRequest("/admin/about-sleep-template?app=1").then(
-      (templates) => {
-        setAboutSleepTemplates(templates);
+    makeRequest("/admin/about-sleep-template?app=1")
+      .then((templates) => {
+        setAboutSleepTemplates(templates as unknown as AboutSleepTemplate[]);
         setLoading(false);
-      }
-    );
+      })
+      .catch((error: unknown) => {
+        console.error("Error refreshing templates:", error);
+        setLoading(false);
+      });
   };
 
   /**
@@ -188,11 +213,13 @@ export const AboutSleepTemplates = () => {
   };
 
   // if the user has permission to create, show the create button
-  const tableControl = canCreate ?
+  const tableControl = canCreate ? (
     <Link to={`/coordinator/admin/about-sleep-templates/create`}>
       <Button variant="primary">Create +</Button>
-    </Link> :
-    <React.Fragment />;
+    </Link>
+  ) : (
+    <React.Fragment />
+  );
 
   const navbar = <AdminNavbar activeView="About Sleep Templates" />;
 
@@ -219,7 +246,8 @@ export const AboutSleepTemplates = () => {
           includeControl={true}
           includeSearch={true}
           paginationPer={10}
-          sortDefault="" />
+          sortDefault=""
+        />
       </ListContent>
     </ListView>
   );

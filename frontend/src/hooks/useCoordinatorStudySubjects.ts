@@ -26,7 +26,9 @@ import { CoordinatorStudySubjectContextValue } from "../contexts/coordinatorStud
 export function useCoordinatorStudySubjects(): CoordinatorStudySubjectContextValue {
   const context = useContext(CoordinatorStudySubjectContext);
   if (!context) {
-    throw new Error("useCoordinatorStudySubjects must be used within a CoordinatorStudySubjectContext provider");
+    throw new Error(
+      "useCoordinatorStudySubjects must be used within a CoordinatorStudySubjectContext provider"
+    );
   }
   return context;
 }

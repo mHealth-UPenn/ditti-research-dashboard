@@ -13,9 +13,11 @@ frontend/yarn-debug.log*
 frontend/yarn-error.log*
 
 __pycache__/
+.pytest_cache/
+.ruff_cache/
 .log/
 .postgresql/
-.vscode/
+.vscode/settings.json
 .cursor/
 env/
 *.env

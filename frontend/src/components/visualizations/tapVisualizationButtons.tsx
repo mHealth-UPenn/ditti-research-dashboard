@@ -15,16 +15,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import React from "react";
-import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
-import AddIcon from '@mui/icons-material/Add';
-import RemoveIcon from '@mui/icons-material/Remove';
-import ReplayIcon from '@mui/icons-material/Replay';
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import ReplayIcon from "@mui/icons-material/Replay";
 
 import { useVisualization } from "../../hooks/useVisualization";
 import { Button } from "../buttons/button";
-
 
 export const TapVisualizationButtons = () => {
   const {
@@ -44,34 +42,38 @@ export const TapVisualizationButtons = () => {
           square={true}
           size="sm"
           variant="tertiary"
-          className="rounded-l-[0.25rem]"
-          onClick={panLeft}>
+          className="rounded-l"
+          onClick={panLeft}
+        >
           <KeyboardArrowLeftIcon />
         </Button>
         <Button
           square={true}
           size="sm"
           variant="tertiary"
-          className="mr-2 border-l-0 rounded-r-[0.25rem]"
-          onClick={panRight}>
+          className="mr-2 rounded-r border-l-0"
+          onClick={panRight}
+        >
           <KeyboardArrowRightIcon />
         </Button>
         <Button
           square={true}
           size="sm"
           variant="tertiary"
-          className="rounded-l-[0.25rem]"
+          className="rounded-l"
           onClick={zoomIn}
-          disabled={minRangeReached}>
+          disabled={minRangeReached}
+        >
           <AddIcon />
         </Button>
         <Button
           square={true}
           size="sm"
           variant="tertiary"
-          className="mr-2 border-l-0 rounded-r-[0.25rem]"
+          className="mr-2 rounded-r border-l-0"
           onClick={zoomOut}
-          disabled={maxRangeReached}>
+          disabled={maxRangeReached}
+        >
           <RemoveIcon />
         </Button>
         <Button
@@ -79,13 +81,14 @@ export const TapVisualizationButtons = () => {
           size="sm"
           variant="primary"
           onClick={resetZoom}
-          rounded={true}>
+          rounded={true}
+        >
           <ReplayIcon />
         </Button>
       </div>
       <div>
-        <span className="italic text-sm">Click and drag to zoom</span>
+        <span className="text-sm italic">Click and drag to zoom</span>
       </div>
     </div>
   );
-}
+};

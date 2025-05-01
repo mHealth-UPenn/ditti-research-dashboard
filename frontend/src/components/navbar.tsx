@@ -17,18 +17,20 @@
 
 import { Link } from "react-router-dom";
 import { useNavbar } from "../hooks/useNavbar";
-
+import React from "react";
 
 export const Navbar = () => {
   const { breadcrumbs } = useNavbar();
 
   return (
-    <div className="bg-white flex items-center h-16 flex-shrink-0 select-none z-10 shadow">
-      <div className="flex items-center h-12 pl-12">
+    <div
+      className="z-10 flex h-16 shrink-0 select-none items-center bg-white
+        shadow"
+    >
+      <div className="flex h-12 items-center pl-12">
         {breadcrumbs.map((b, i) => {
           // If this is the last breadcrumb or if there is no link associated with it
           if (i === breadcrumbs.length - 1 || b.link === null) {
-
             // Don't make the breadcrumb clickable
             return (
               <div key={i} className="flex items-center">
@@ -37,8 +39,11 @@ export const Navbar = () => {
             );
           } else {
             return (
-              <>
-                <div className="flex items-center text-link hover:text-link-hover cursor-pointer">
+              <React.Fragment key={i}>
+                <div
+                  className="flex cursor-pointer items-center text-link
+                    hover:text-link-hover"
+                >
                   <Link to={b.link}>
                     <span>{b.name}</span>
                   </Link>
@@ -46,11 +51,11 @@ export const Navbar = () => {
                 <div>
                   <span>&nbsp;&nbsp;/&nbsp;&nbsp;</span>
                 </div>
-              </>
+              </React.Fragment>
             );
           }
         })}
       </div>
     </div>
   );
-}
+};

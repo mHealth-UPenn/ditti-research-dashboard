@@ -15,10 +15,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect, createRef, useRef } from "react";
+import { useState, useEffect, createRef, useRef, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
-import { formatDateForInput, getEnrollmentInfoForStudy, makeRequest } from "../../utils";
+import {
+  formatDateForInput,
+  getEnrollmentInfoForStudy,
+  makeRequest,
+} from "../../utils";
 import { CheckField } from "../fields/checkField";
 import { SmallLoader } from "../loader/loader";
 import { SelectField } from "../fields/selectField";
@@ -45,34 +49,39 @@ import { SubjectsEditContentProps } from "./subjects.types";
  * For validating Cognito password requirements.
  */
 const cognitoPasswordValidation = {
-  isMinLen: false,  // At least 8 characters
+  isMinLen: false, // At least 8 characters
 };
 
 export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   const [searchParams] = useSearchParams();
-  const dittiId = searchParams.get("dittiId") || "";
+  const dittiId = searchParams.get("dittiId") ?? "";
 
   const [tapPermission, setTapPermission] = useState(false);
   const [information, setInformation] = useState("");
   const [userPermissionId, setUserPermissionId] = useState("");
   const [userPermissionIdFeedback, setUserPermissionIdFeedback] = useState("");
   const [temporaryPassword, setTemporaryPassword] = useState("");
-  const [temporaryPasswordValidation, setTemporaryPasswordValidation] = useState(cognitoPasswordValidation);
+  const [temporaryPasswordValidation, setTemporaryPasswordValidation] =
+    useState(cognitoPasswordValidation);
   const [dittiExpTime, setDittiExpTime] = useState("");
   const [enrollmentStart, setEnrollmentStart] = useState("");
   const [enrollmentStartFeedback, setEnrollmentStartFeedback] = useState("");
   const [enrollmentEnd, setEnrollmentEnd] = useState("");
   const [enrollmentEndFeedback, setEnrollmentEndFeedback] = useState("");
   const [dittiExpTimeFeedback, setDittiExpTimeFeedback] = useState("");
-  const [aboutSleepTemplates, setAboutSleepTemplates] = useState<AboutSleepTemplate[]>([]);
-  const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] = useState<AboutSleepTemplate>({} as AboutSleepTemplate);
+  const [aboutSleepTemplates, setAboutSleepTemplates] = useState<
+    AboutSleepTemplate[]
+  >([]);
+  const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] =
+    useState<AboutSleepTemplate>({} as AboutSleepTemplate);
   const [formIsValid, setFormIsValid] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);
 
   const dittiIdInputRef = createRef<HTMLInputElement>();
 
   const { studiesLoading, study } = useStudies();
-  const { studySubjectLoading, getStudySubjectByDittiId, fetchStudySubjects } = useCoordinatorStudySubjects();
+  const { studySubjectLoading, getStudySubjectByDittiId, fetchStudySubjects } =
+    useCoordinatorStudySubjects();
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
@@ -85,13 +94,15 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     userPermissionIdRef.current = userPermissionId;
   }, [userPermissionId]);
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     let isValid = true;
     const today = formatDateForInput(new Date());
 
     // Only validate password when creating a new study subject
     if (!studySubject) {
-      const updatedTemporaryPasswordValidation = { ...cognitoPasswordValidation };
+      const updatedTemporaryPasswordValidation = {
+        ...cognitoPasswordValidation,
+      };
 
       if (temporaryPassword.length < 8) {
         updatedTemporaryPasswordValidation.isMinLen = false;
@@ -118,15 +129,21 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     }
 
     if (dittiExpTime < enrollmentEnd) {
-      setDittiExpTimeFeedback("Ditti ID expiry date must be after enrollment end date.");
+      setDittiExpTimeFeedback(
+        "Ditti ID expiry date must be after enrollment end date."
+      );
       isValid = false;
     } else {
       setDittiExpTimeFeedback("");
     }
 
     if (enrollmentEnd <= enrollmentStart) {
-      setEnrollmentStartFeedback("Enrollment end date must be after enrollment start date.");
-      setEnrollmentEndFeedback("Enrollment end date must be after enrollment start date.");
+      setEnrollmentStartFeedback(
+        "Enrollment end date must be after enrollment start date."
+      );
+      setEnrollmentEndFeedback(
+        "Enrollment end date must be after enrollment start date."
+      );
       isValid = false;
     } else {
       setEnrollmentStartFeedback("");
@@ -139,18 +156,34 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     } else {
       setEnrollmentEndFeedback("");
     }
-  
+
     setFormIsValid(isValid);
-  };
+  }, [
+    temporaryPassword,
+    userPermissionId,
+    userPermissionIdRef,
+    dittiExpTime,
+    enrollmentEnd,
+    enrollmentStart,
+    studySubject,
+    setTemporaryPasswordValidation,
+    setUserPermissionIdFeedback,
+    setDittiExpTimeFeedback,
+    setEnrollmentStartFeedback,
+    setEnrollmentEndFeedback,
+    setFormIsValid,
+  ]);
 
   // Add event listeners for validating Ditti ID field
   useEffect(() => {
-    if (dittiIdInputRef.current) {
-      dittiIdInputRef.current.addEventListener("blur", validateForm);
-      return () => dittiIdInputRef.current?.removeEventListener("blur", validateForm);
+    const currentRef = dittiIdInputRef.current;
+    if (currentRef) {
+      currentRef.addEventListener("blur", validateForm);
+      return () => {
+        currentRef.removeEventListener("blur", validateForm);
+      };
     }
-  }, [dittiIdInputRef]);
-
+  }, [dittiIdInputRef, validateForm]);
 
   // Validate the form and set any error messages
   useEffect(validateForm, [
@@ -159,45 +192,68 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     dittiExpTime,
     userPermissionId,
     temporaryPassword,
+    validateForm,
   ]);
 
   // Load any data to prefill the form with, if any
   useEffect(() => {
     if (studySubject) {
-      const { startsOn, expiresOn } = getEnrollmentInfoForStudy(studySubject, study?.id);
+      const { startsOn, expiresOn } = getEnrollmentInfoForStudy(
+        studySubject,
+        study?.id
+      );
 
-      const selectedTemplate = aboutSleepTemplates.filter(
+      const selectedTemplate = aboutSleepTemplates.find(
         (ast: AboutSleepTemplate) => ast.text === studySubject.information
-      )[0];
+      );
 
       if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
 
       setTapPermission(studySubject.tapPermission);
       setInformation(studySubject.information);
-      setUserPermissionId(studySubject.dittiId.replace(study?.dittiId || "", ""));
-      setDittiExpTime(formatDateForInput(new Date(studySubject.dittiExpTime.replace("Z", ""))));
+      setUserPermissionId(
+        studySubject.dittiId.replace(study?.dittiId ?? "", "")
+      );
+      setDittiExpTime(
+        formatDateForInput(new Date(studySubject.dittiExpTime.replace("Z", "")))
+      );
       setEnrollmentStart(formatDateForInput(startsOn));
       setEnrollmentEnd(formatDateForInput(expiresOn));
     } else {
       const startsOn = new Date();
       const expiresOn = new Date();
-      const expiryDelta = study?.defaultExpiryDelta || 14;
+      const expiryDelta = study?.defaultExpiryDelta ?? 14;
       expiresOn.setDate(expiresOn.getDate() + expiryDelta);
       setEnrollmentStart(formatDateForInput(startsOn));
       setEnrollmentEnd(formatDateForInput(expiresOn));
       setDittiExpTime(formatDateForInput(expiresOn));
     }
-  }, [studySubject]);
+  }, [
+    studySubject,
+    study?.id,
+    study?.dittiId,
+    study?.defaultExpiryDelta,
+    aboutSleepTemplates,
+  ]);
 
   // Fetch about sleep templates from the database
   useEffect(() => {
     // get all about sleep templates
-    const fetchTemplates = makeRequest(`/db/get-about-sleep-templates?app=${app === "ditti" ? 2 : 3}`).then(
-      (templates: AboutSleepTemplate[]) => setAboutSleepTemplates(templates)
-    );
-    // when all promises finish, hide the loader
-    Promise.all([fetchTemplates]).then(() => setLoading(false));
-  }, []);
+    const fetchTemplates = async () => {
+      try {
+        const response = await makeRequest(
+          `/db/get-about-sleep-templates?app=${String(app === "ditti" ? 2 : 3)}`
+        );
+        setAboutSleepTemplates(response as unknown as AboutSleepTemplate[]);
+      } catch (error) {
+        console.error("Error fetching templates:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchTemplates();
+  }, [app]);
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating a new entry, else make a request to edit
@@ -209,15 +265,17 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     const dataAWS = {
       tap_permission: tapPermission,
       information: aboutSleepTemplateSelected.text,
-      user_permission_id: study?.dittiId + userPermissionId,
+      user_permission_id: study?.dittiId ?? "" + userPermissionId,
       exp_time: dittiExpTime + "T00:00:00.000Z",
-      team_email: study?.email
+      team_email: study?.email,
     };
 
     const bodyAWS = {
       app: app === "ditti" ? 2 : 3,
-      study: study?.id || 0,
-      ...(dittiId ? { user_permission_id: dittiId, edit: dataAWS } : { create: dataAWS })
+      study: study?.id ?? 0,
+      ...(dittiId
+        ? { user_permission_id: dittiId, edit: dataAWS }
+        : { create: dataAWS }),
     };
 
     const optsAWS = { method: "POST", body: JSON.stringify(bodyAWS) };
@@ -225,30 +283,34 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     const postAWS = makeRequest(urlAWS, optsAWS);
 
     // Prepare and make the request to the database backend
-    const { didConsent } = studySubject ?
-      getEnrollmentInfoForStudy(studySubject, study?.id)
-      : { didConsent: false};
+    const { didConsent } = studySubject
+      ? getEnrollmentInfoForStudy(studySubject, study?.id)
+      : { didConsent: false };
 
     const dataDB = {
-      ditti_id: study?.dittiId + userPermissionId,
+      ditti_id: (study?.dittiId ?? "") + userPermissionId,
       studies: [
         {
-          id: study?.id || 0,
+          id: study?.id ?? 0,
           starts_on: enrollmentStart + "T00:00:00.000Z",
           expires_on: enrollmentEnd + "T00:00:00.000Z",
           did_consent: didConsent,
-        }
-      ]
+        },
+      ],
     };
 
     const bodyDB = {
       app: app === "ditti" ? 2 : 3,
-      study: study?.id || 0,
-      ...(studySubject ? { id: studySubject.id, edit: dataDB } : { create: dataDB })
+      study: study?.id ?? 0,
+      ...(studySubject
+        ? { id: studySubject.id, edit: dataDB }
+        : { create: dataDB }),
     };
 
     const optsDB = { method: "POST", body: JSON.stringify(bodyDB) };
-    const urlDB = studySubject ? "/admin/study_subject/edit" : "/admin/study_subject/create";
+    const urlDB = studySubject
+      ? "/admin/study_subject/edit"
+      : "/admin/study_subject/create";
     const postDB = makeRequest(urlDB, optsDB);
 
     const promises: Promise<ResponseBody>[] = [postAWS, postDB];
@@ -257,9 +319,9 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     if (!studySubject) {
       const bodyCognito = {
         app: app === "ditti" ? 2 : 3,
-        study: study?.id || 0,
+        study: study?.id ?? 0,
         data: {
-          cognitoUsername: study?.dittiId + userPermissionId,
+          cognitoUsername: (study?.dittiId ?? "") + userPermissionId,
           temporaryPassword: temporaryPassword,
         },
       };
@@ -270,9 +332,12 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
       promises.push(postCognito);
     }
 
-    await Promise.all(promises)
-      .then((res) => handleSuccess(res[0]))
-      .catch(error => handleFailure(error))
+    try {
+      const results = await Promise.all(promises);
+      handleSuccess(results[0]);
+    } catch (error: unknown) {
+      handleFailure(error as ResponseBody);
+    }
   };
 
   /**
@@ -307,9 +372,9 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
    * @param id - the template's database primary key
    */
   const selectAboutSleepTemplate = (id: number): void => {
-    const selectedTemplate = aboutSleepTemplates.filter(
+    const selectedTemplate = aboutSleepTemplates.find(
       (a: AboutSleepTemplate) => a.id === id
-    )[0];
+    );
 
     if (selectedTemplate) {
       setAboutSleepTemplateSelected(selectedTemplate);
@@ -323,7 +388,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
    * @returns - the template's database primary key
    */
   const getSelectedAboutSleepTemplate = (): number => {
-    return aboutSleepTemplateSelected ? aboutSleepTemplateSelected.id : 0;
+    return aboutSleepTemplateSelected.id || 0;
   };
 
   const dateOptions: Intl.DateTimeFormatOptions = {
@@ -336,10 +401,10 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   const buttonText = dittiId ? "Update" : "Enroll";
   const enrollmentStartFormatted = enrollmentStart
     ? new Date(enrollmentStart).toLocaleDateString("en-US", dateOptions)
-    : ""
+    : "";
   const enrollmentEndFormatted = enrollmentEnd
     ? new Date(enrollmentEnd).toLocaleDateString("en-US", dateOptions)
-    : ""
+    : "";
 
   if (loading || studiesLoading || studySubjectLoading) {
     return (
@@ -363,15 +428,21 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
               placeholder=""
               value={userPermissionId}
               label="Ditti ID"
-              onKeyup={text => setUserPermissionId(text)}
+              onKeyup={(text) => {
+                setUserPermissionId(text);
+              }}
               feedback={userPermissionIdFeedback}
               required={true}
               inputRef={dittiIdInputRef}
-              disabled={Boolean(studySubject)}>
-                {/* superimpose the study prefix on the form field */}
-                <div className="flex items-center text-link h-full px-2 bg-extra-light border-r border-light">
-                  <i>{study?.dittiId}</i>
-                </div>
+              disabled={Boolean(studySubject)}
+            >
+              {/* superimpose the study prefix on the form field */}
+              <div
+                className="flex h-full items-center border-r border-light
+                  bg-extra-light px-2 text-link"
+              >
+                <i>{study?.dittiId}</i>
+              </div>
             </TextField>
           </FormField>
 
@@ -379,12 +450,13 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
           <FormField>
             <TextField
               label="Team Email"
-              value={study?.email || ""}
-              disabled={true} />
+              value={study?.email ?? ""}
+              disabled={true}
+            />
           </FormField>
         </FormRow>
 
-        {!studySubject &&
+        {!studySubject && (
           <>
             <FormRow>
               <FormField>
@@ -395,14 +467,20 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
                   value={temporaryPassword}
                   label="Temporary Password"
                   onKeyup={setTemporaryPassword}
-                  required={true} />
+                  required={true}
+                />
                 <div className="flex flex-col">
-                  <span className={`text-sm ${temporaryPasswordValidation.isMinLen ? "text-[green]" : "text-[red]"}`}>Must be 8 at least characters</span>
+                  <span
+                    className={`text-sm
+                    ${temporaryPasswordValidation.isMinLen ? "text-[green]" : "text-[red]"}`}
+                  >
+                    Must be 8 at least characters
+                  </span>
                 </div>
               </FormField>
             </FormRow>
           </>
-        }
+        )}
 
         {/* the raw timestamp includes ":00.000Z" */}
         <FormRow>
@@ -415,7 +493,8 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
               label="Enrollment Start Date"
               onKeyup={setEnrollmentStart}
               feedback={enrollmentStartFeedback}
-              required={true} />
+              required={true}
+            />
           </FormField>
           <FormField>
             <TextField
@@ -426,7 +505,8 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
               label="Enrollment End Date"
               onKeyup={setEnrollmentEnd}
               feedback={enrollmentEndFeedback}
-              required={true} />
+              required={true}
+            />
           </FormField>
         </FormRow>
         <FormRow>
@@ -439,14 +519,16 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
               label="Ditti ID Expiry Date"
               onKeyup={setDittiExpTime}
               feedback={dittiExpTimeFeedback}
-              required={true} />
+              required={true}
+            />
           </FormField>
           <FormField>
             <CheckField
               id="tapping-access"
               prefill={tapPermission}
               label="Tapping Access"
-              onChange={setTapPermission} />
+              onChange={setTapPermission}
+            />
           </FormField>
         </FormRow>
         <FormRow>
@@ -455,22 +537,21 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
             <div className="border-light">
               <SelectField
                 id={0}
-                opts={aboutSleepTemplates.map(
-                  (a: AboutSleepTemplate) => {
-                    return { value: a.id, label: a.name };
-                  }
-                )}
+                opts={aboutSleepTemplates.map((a: AboutSleepTemplate) => {
+                  return { value: a.id, label: a.name };
+                })}
                 placeholder="Select template..."
                 callback={selectAboutSleepTemplate}
-                getDefault={getSelectedAboutSleepTemplate} />
+                getDefault={getSelectedAboutSleepTemplate}
+              />
             </div>
           </FormField>
         </FormRow>
         <FormTitle className="mt-6">About Sleep Template Preview</FormTitle>
         <FormRow>
-          <QuillView 
+          <QuillView
             className="px-4"
-            content={aboutSleepTemplateSelected.text || information} 
+            content={aboutSleepTemplateSelected.text || information}
           />
         </FormRow>
       </Form>
@@ -481,7 +562,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
           <FormSummaryText>
             Ditti ID:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{study?.dittiId + userPermissionId}
+            &nbsp;&nbsp;&nbsp;&nbsp;{(study?.dittiId ?? "") + userPermissionId}
             <br />
             <br />
             Team email:
@@ -516,17 +597,17 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
           <div>
             <FormSummaryButton
               onClick={post}
-              disabled={APP_ENV === "demo" || !formIsValid}>
-                {buttonText}
+              disabled={APP_ENV === "demo" || !formIsValid}
+            >
+              {buttonText}
             </FormSummaryButton>
-            {APP_ENV === "demo" &&
+            {APP_ENV === "demo" && (
               <FormSummarySubtext>
-                {dittiId ?
-                  "Updating users is disabled in demo mode." :
-                  "Enrolling new users is disabled in demo mode."
-                }
+                {dittiId
+                  ? "Updating users is disabled in demo mode."
+                  : "Enrolling new users is disabled in demo mode."}
               </FormSummarySubtext>
-            }
+            )}
             <FormSummarySubtext>
               After enrolling a subject, log in on your smartphone using their
               Ditti ID to ensure their account was created successfully.

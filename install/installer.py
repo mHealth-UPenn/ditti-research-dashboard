@@ -17,7 +17,6 @@
 import sys
 import traceback
 
-from install.project_config import ProjectConfigProvider
 from install.aws_providers import (
     AwsAccountProvider,
     AwsClientProvider,
@@ -31,21 +30,26 @@ from install.local_providers import (
     EnvFileProvider,
     FrontendProvider,
 )
+from install.project_config import ProjectConfigProvider
 from install.resource_managers import (
     AwsCloudformationResourceManager,
     AwsCognitoResourceManager,
     AwsS3ResourceManager,
-    AwsSecretsmanagerResourceManager,
+    AwsSecretsManagerResourceManager,
 )
 from install.utils import Colorizer, Logger
+from install.utils.exceptions import CancelInstallation, ProjectConfigError
 from install.utils.types import Env
-from install.utils.exceptions import (
-    CancelInstallation,
-    ProjectConfigError,
-)
 
 
 class Installer:
+    """
+    Main installer class for the Ditti Research Dashboard.
+
+    Coordinates the installation and configuration process for
+    the application across local and AWS environments.
+    """
+
     def __init__(self, env: Env) -> None:
         self.logger = Logger()
         self.env = env
@@ -102,24 +106,38 @@ class Installer:
         )
 
         # Initialize resource managers
-        self.aws_cloudformation_resource_manager = AwsCloudformationResourceManager(
-            logger=self.logger,
-            config=self.project_config_provider,
-            aws_client_provider=self.aws_client_provider,
+        self.aws_cloudformation_resource_manager = (
+            AwsCloudformationResourceManager(
+                logger=self.logger,
+                config=self.project_config_provider,
+                aws_client_provider=self.aws_client_provider,
+            )
         )
         self.aws_cognito_resource_manager = AwsCognitoResourceManager(
             logger=self.logger,
             config=self.project_config_provider,
             aws_client_provider=self.aws_client_provider,
         )
-        self.aws_secretsmanager_resource_manager = AwsSecretsmanagerResourceManager(
-            logger=self.logger,
-            config=self.project_config_provider,
-            aws_client_provider=self.aws_client_provider,
-            aws_cognito_provider=self.aws_cognito_provider,
+        self.aws_secretsmanager_resource_manager = (
+            AwsSecretsManagerResourceManager(
+                logger=self.logger,
+                config=self.project_config_provider,
+                aws_client_provider=self.aws_client_provider,
+                aws_cognito_provider=self.aws_cognito_provider,
+            )
         )
 
     def run(self) -> None:
+        """
+        Run the installation process.
+
+        Executes the complete installation sequence including configuration,
+        environment setup, database initialization, and application deployment.
+
+        Returns
+        -------
+        None
+        """
         try:
             # Get project config
             self.logger(Colorizer.cyan("\n[Project Setup]"))
@@ -175,9 +193,13 @@ class Installer:
     def uninstall(self) -> None:
         """Uninstall the resources."""
         try:
-            self.logger("This will delete all resources created by the installer.")
-            self.logger(Colorizer.red("ANY LOST DATA WILL BE PERMANENTLY DELETED."))
-            self.logger("Please confirm by typing \"uninstall\".")
+            self.logger(
+                "This will delete all resources created by the installer."
+            )
+            self.logger(
+                Colorizer.red("ANY LOST DATA WILL BE PERMANENTLY DELETED.")
+            )
+            self.logger('Please confirm by typing "uninstall".')
             confirm = input("> ")
 
             if confirm != "uninstall":

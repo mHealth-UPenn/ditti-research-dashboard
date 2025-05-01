@@ -24,7 +24,6 @@ import { Outlet } from "react-router-dom";
 import { StudiesProvider } from "../../contexts/studiesContext";
 import { ViewContainer } from "../containers/viewContainer/viewContainer";
 
-
 // React Router container for the Ditti App Dashboard for wrapping it in context providers
 export function DittiAppDashboard() {
   const { dataLoading } = useDittiData();

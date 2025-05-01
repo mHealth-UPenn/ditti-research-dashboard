@@ -1,22 +1,30 @@
+import pytest
 from flask import json
 from moto import mock_aws
-import pytest
-from unittest.mock import patch, MagicMock
+
 from backend.utils.aws import Connection, Loader, Query
 from tests.testing_utils import mock_researcher_auth_for_testing
 
 
 @pytest.fixture
 def researcher_headers(client):
-    """Fixture providing researcher authentication headers"""
+    """Fixture providing researcher authentication headers."""
     return mock_researcher_auth_for_testing(client, is_admin=False)
 
 
 @pytest.fixture
 def researcher_post(client, researcher_headers):
-    """Create a test POST request function with researcher authentication"""
+    """Create a test POST request function with researcher authentication."""
+
     def _post(url, data=None, **kwargs):
-        return client.post(url, data=data, content_type="application/json", headers=researcher_headers, **kwargs)
+        return client.post(
+            url,
+            data=data,
+            content_type="application/json",
+            headers=researcher_headers,
+            **kwargs,
+        )
+
     return _post
 
 
@@ -32,8 +40,8 @@ def test_user_create(post_admin):
             "tap_permission": True,
             "team_email": "foo@email.com",
             "user_permission_id": "foo",
-            "information": "foo"
-        }
+            "information": "foo",
+        },
     }
 
     res = post_admin("/aws/user/create", data=json.dumps(data))
@@ -41,7 +49,7 @@ def test_user_create(post_admin):
     assert "msg" in res
     assert res["msg"] == "User Created Successfully"
 
-    query = "user_permission_id==\"foo\""
+    query = 'user_permission_id=="foo"'
     bar = Query("User", query)
     res = bar.scan()
     assert len(res["Items"]) == 1
@@ -74,9 +82,7 @@ def test_user_edit_invalid_study_ditti_id(post_admin):
         "study": 1,
         "app": 1,
         "user_permission_id": "QU000",
-        "edit": {
-            "information": "foo"
-        }
+        "edit": {"information": "foo"},
     }
 
     res = post_admin("/aws/user/edit", data=json.dumps(data))
@@ -92,9 +98,7 @@ def test_user_edit_invalid_id(post_admin):
         "study": 1,
         "app": 1,
         "user_permission_id": "FO000#",
-        "edit": {
-            "information": "foo"
-        }
+        "edit": {"information": "foo"},
     }
 
     res = post_admin("/aws/user/edit", data=json.dumps(data))
@@ -110,9 +114,7 @@ def test_user_edit_id_not_found(post_admin):
         "study": 1,
         "app": 1,
         "user_permission_id": "FO001",
-        "edit": {
-            "information": "foo"
-        }
+        "edit": {"information": "foo"},
     }
 
     res = post_admin("/aws/user/edit", data=json.dumps(data))
@@ -124,15 +126,13 @@ def test_user_edit_id_not_found(post_admin):
 @mock_aws
 @pytest.mark.skip(reason="Must create mock for requests")
 def test_user_edit(researcher_post):
-    query = "user_permission_id==\"FO000\""
+    query = 'user_permission_id=="FO000"'
     data = {
         "group": 2,
         "study": 1,
         "app": 1,
         "user_permission_id": "FO000",
-        "edit": {
-            "information": "foo"
-        }
+        "edit": {"information": "foo"},
     }
 
     res = Query("User", query).scan()

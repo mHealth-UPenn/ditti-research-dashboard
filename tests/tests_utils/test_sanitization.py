@@ -3,7 +3,7 @@ from backend.utils.sanitization import sanitize_quill_html
 
 class TestSanitizeQuillHTML:
     def test_basic_html_sanitization(self):
-        """Test basic HTML sanitization preserves allowed elements and removes disallowed ones."""
+        """Test basic preserves allowed elements and removes disallowed ones."""
         # Basic allowed HTML
         html = "<p>Test paragraph</p><strong>Bold text</strong>"
         result = sanitize_quill_html(html)
@@ -19,15 +19,34 @@ class TestSanitizeQuillHTML:
 
     def test_allowed_tags(self):
         """Test all allowed tags are preserved."""
-
         # Define table-related tags that need special handling
         table_tags = {"table", "tbody", "tr", "td"}
 
         # Test regular tags first
         regular_tags = [
-            "a", "blockquote", "div", "em", "h1", "h2", "h3", "h4", "h5", "h6",
-            "li", "ol", "p", "pre", "span", "strong", "sub", "sup",
-            "ul", "select", "option", "u", "s"
+            "a",
+            "blockquote",
+            "div",
+            "em",
+            "h1",
+            "h2",
+            "h3",
+            "h4",
+            "h5",
+            "h6",
+            "li",
+            "ol",
+            "p",
+            "pre",
+            "span",
+            "strong",
+            "sub",
+            "sup",
+            "ul",
+            "select",
+            "option",
+            "u",
+            "s",
         ]
 
         html_parts = [f"<{tag}>Test</{tag}>" for tag in regular_tags]
@@ -57,13 +76,14 @@ class TestSanitizeQuillHTML:
         for tag in regular_tags:
             if tag == "a":
                 # Special case for anchor tags which get rel attribute added
-                assert f'<a rel="noopener noreferrer">Test</a>' in result
+                assert '<a rel="noopener noreferrer">Test</a>' in result
             else:
                 assert f"<{tag}>Test</{tag}>" in result
 
         # Check self-closing tags
         assert "<br>" in result
-        assert "<img" in result and 'src="test.jpg"' in result
+        assert "<img" in result
+        assert 'src="test.jpg"' in result
 
         # Check table tags (just verify they exist in the result)
         for tag in table_tags:
@@ -139,10 +159,10 @@ class TestSanitizeQuillHTML:
         assert "<p" in result
 
         # Check that the allowed class is still present
-        assert 'ql-align-center' in result
+        assert "ql-align-center" in result
 
     def test_url_schemes(self):
-        """Test allowed URL schemes are preserved and disallowed ones are removed."""
+        """Test allowed URL schemes preserved and disallowed removed."""
         html = """
         <a href="https://example.com">Valid HTTPS</a>
         <a href="http://example.com">Valid HTTP</a>
@@ -174,9 +194,9 @@ class TestSanitizeQuillHTML:
     def test_iframe_sanitization(self):
         """Test iframe sanitization with allowed attributes."""
         html = """
-        <iframe src="https://www.youtube.com/embed/12345" 
-                allowfullscreen="true" 
-                frameborder="0" 
+        <iframe src="https://www.youtube.com/embed/12345"
+                allowfullscreen="true"
+                frameborder="0"
                 class="ql-video">
         </iframe>
         """
@@ -225,4 +245,4 @@ class TestSanitizeQuillHTML:
         # Malformed HTML
         malformed = "<p>Unclosed paragraph <strong>Bold text</p>"
         result = sanitize_quill_html(malformed)
-        assert "<p>Unclosed paragraph <strong>Bold text</strong></p>" == result
+        assert result == "<p>Unclosed paragraph <strong>Bold text</strong></p>"

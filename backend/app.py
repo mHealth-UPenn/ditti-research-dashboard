@@ -19,44 +19,76 @@ import os
 from flask import Flask, Response, request
 
 from backend.commands import (
-    init_admin_app_click, init_admin_group_click, init_admin_account_click,
-    init_db_click, init_api_click, init_integration_testing_db_click, reset_db_click,
-    init_study_subject_click, clear_cache_click, init_lambda_task_click,
-    delete_lambda_tasks_click, create_researcher_account_click
+    clear_cache_click,
+    create_researcher_account_click,
+    delete_lambda_tasks_click,
+    init_admin_account_click,
+    init_admin_app_click,
+    init_admin_group_click,
+    init_api_click,
+    init_db_click,
+    init_integration_testing_db_click,
+    init_lambda_task_click,
+    init_study_subject_click,
+    reset_db_click,
 )
-from backend.extensions import cors, db, jwt, migrate, cache, tm, oauth
+from backend.extensions import cache, cors, db, jwt, migrate, oauth, tm
 from backend.views import (
-    admin, aws_requests, base, data_processing_task, db_requests,
-    participant, fitbit_data
+    admin,
+    aws_requests,
+    base,
+    data_processing_task,
+    db_requests,
+    fitbit_data,
+    participant,
 )
-from backend.views.auth import participant_auth_blueprint, researcher_auth_blueprint
 from backend.views.api import fitbit
+from backend.views.auth import (
+    participant_auth_blueprint,
+    researcher_auth_blueprint,
+)
 
 
 def create_app(testing=False):
+    """
+    Create and configure the Flask application.
+
+    Parameters
+    ----------
+        testing (bool): Flag to indicate if app should use testing configuration.
+
+    Returns
+    -------
+        Flask: Configured Flask application.
+    """
     app = Flask(__name__)
 
-    if testing:
-        flask_config = "Testing"
-    else:
-        flask_config = os.getenv("FLASK_CONFIG", "Default")
+    flask_config = "Testing" if testing else os.getenv("FLASK_CONFIG", "Default")
 
     # configure and initialize the app
-    app.config.from_object("backend.config.%s" % flask_config)
+    app.config.from_object(f"backend.config.{flask_config}")
     register_blueprints(app)
     register_commands(app)
     register_extensions(app)
 
     @app.after_request
     def log_response(response: Response):
-        app.logger.info(f"Request: [{request.method}] {
-                        request.url} {response.status}")
+        app.logger.info(
+            f"Request: [{request.method}] {request.url} {response.status}"
+        )
         return response
 
     return app
 
 
 def register_blueprints(app):
+    """
+    Register all blueprint routes with the application.
+
+    Parameters
+    ----------
+        app (Flask): The Flask application instance.
+    """
     app.register_blueprint(admin.blueprint)
     app.register_blueprint(aws_requests.blueprint)
     app.register_blueprint(base.blueprint)
@@ -71,6 +103,13 @@ def register_blueprints(app):
 
 
 def register_commands(app):
+    """
+    Register CLI commands with the application.
+
+    Parameters
+    ----------
+        app (Flask): The Flask application instance.
+    """
     app.cli.add_command(init_admin_app_click)
     app.cli.add_command(init_admin_group_click)
     app.cli.add_command(init_admin_account_click)
@@ -86,11 +125,18 @@ def register_commands(app):
 
 
 def register_extensions(app):
+    """
+    Initialize and register Flask extensions with the application.
+
+    Parameters
+    ----------
+        app (Flask): The Flask application instance.
+    """
     cors.init_app(
         app,
         origins=app.config.get("CORS_ORIGINS", "*"),
         allow_headers=app.config.get("CORS_ALLOW_HEADERS", ["Content-Type"]),
-        supports_credentials=app.config.get("CORS_SUPPORTS_CREDENTIALS", True)
+        supports_credentials=app.config.get("CORS_SUPPORTS_CREDENTIALS", True),
     )
     db.init_app(app)
     jwt.init_app(app)

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DataRetrievalTask } from "../../types/api";
 import { getAccess, makeRequest } from "../../utils";
 import { Column, TableData } from "../table/table.types";
@@ -67,7 +67,10 @@ function humanReadableStatus(status: DataRetrievalTask["status"]): string {
  * @param isoDate - The ISO date string.
  * @returns An object containing the display string and the original ISO string for sorting.
  */
-function formatDate(isoDate: string | null): { display: string; sortValue: string } {
+function formatDate(isoDate: string | null): {
+  display: string;
+  sortValue: string;
+} {
   if (!isoDate) return { display: "N/A", sortValue: "" };
 
   const date = new Date(isoDate);
@@ -88,10 +91,12 @@ export const DataRetrievalTasks = () => {
 
   const { flashMessage } = useFlashMessages();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       // Fetch data retrieval tasks (View permission is handled by the server)
-      const data: DataRetrievalTask[] = await makeRequest("/data_processing_task/?app=1");
+      const response = await makeRequest("/data_processing_task/?app=1");
+      // Cast to DataRetrievalTask[] using unknown as intermediate type
+      const data = response as unknown as DataRetrievalTask[];
       setTasks(data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
@@ -104,15 +109,21 @@ export const DataRetrievalTasks = () => {
         "danger"
       );
     }
-  };
+  }, [flashMessage]);
 
   useEffect(() => {
     const invoke = getAccess(1, "Invoke", "Data Retrieval Task")
-      .then(() => setCanInvoke(true))
-      .catch(() => setCanInvoke(false));
+      .then(() => {
+        setCanInvoke(true);
+      })
+      .catch(() => {
+        setCanInvoke(false);
+      });
 
-    Promise.all([invoke, fetchData()]).finally(() => setLoading(false));
-  }, [flashMessage]);
+    void Promise.all([invoke, fetchData()]).finally(() => {
+      setLoading(false);
+    });
+  }, [fetchData]);
 
   const handleForceStop = async (id: number) => {
     await makeRequest(`/data_processing_task/force-stop`, {
@@ -123,7 +134,9 @@ export const DataRetrievalTasks = () => {
       }),
     }).finally(() => {
       setLoading(true);
-      fetchData().finally(() => setLoading(false));
+      void fetchData().finally(() => {
+        setLoading(false);
+      });
     });
   };
 
@@ -164,26 +177,27 @@ export const DataRetrievalTasks = () => {
           ) : (
             <span>N/A</span>
           ),
-          searchValue: task.logFile || "",
-          sortValue: task.logFile || "",
+          searchValue: task.logFile ?? "",
+          sortValue: task.logFile ?? "",
         },
         {
-          contents: <span>{task.errorCode || "N/A"}</span>,
-          searchValue: task.errorCode || "",
-          sortValue: task.errorCode || "",
+          contents: <span>{task.errorCode ?? "N/A"}</span>,
+          searchValue: task.errorCode ?? "",
+          sortValue: task.errorCode ?? "",
         },
         {
           contents: (
-            <div className="flex w-full h-full">
-              {task.status === "InProgress" && canInvoke &&
+            <div className="flex size-full">
+              {task.status === "InProgress" && canInvoke && (
                 <AsyncButton
                   variant="danger"
                   size="sm"
-                  className="h-full flex-grow"
-                  onClick={() => handleForceStop(task.id)}>
-                    Force Stop
+                  className="h-full grow"
+                  onClick={() => handleForceStop(task.id)}
+                >
+                  Force Stop
                 </AsyncButton>
-              }
+              )}
             </div>
           ),
           searchValue: "",
@@ -197,9 +211,7 @@ export const DataRetrievalTasks = () => {
 
   const tableControl = <></>;
 
-  const navbar = (
-    <AdminNavbar activeView="Data Retrieval Tasks" />
-  );
+  const navbar = <AdminNavbar activeView="Data Retrieval Tasks" />;
 
   if (loading) {
     return (
