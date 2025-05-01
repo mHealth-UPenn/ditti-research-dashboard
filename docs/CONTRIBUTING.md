@@ -67,3 +67,90 @@ If you want to contribute to an existing discussion, select one from the list of
 ## Setting Up the Development Environment
 
 See our [Dev Setup Guide](./INSTALL-dev.md) for details on getting started with a local development environment.
+
+## Submitting Code on GitHub
+
+### Setup the Repository
+
+1. **Clone the repository:**
+
+   ```bash
+   git clone ...
+   ```
+
+2. **Install recommended VsCode extensions (optional):**
+
+   - [Prettier - Code formatter](https://marketplace.visualstudio.com/items/?itemName=esbenp.prettier-vscode) for formatting the React.js/TypeScript frontend.
+   - [ESLint](https://marketplace.visualstudio.com/items/?itemName=dbaeumer.vscode-eslint) for linting the React.js/TypeScript frontend.
+   - [markdownlint](https://marketplace.visualstudio.com/items/?itemName=DavidAnson.vscode-markdownlint) for linting any Markdown (README, etc.).
+   - [Ruff](https://marketplace.visualstudio.com/items/?itemName=charliermarsh.ruff) for linting and formatting the Flask/Python backend and functions.
+   - [Code Spell Checker](https://marketplace.visualstudio.com/items/?itemName=streetsidesoftware.code-spell-checker) for handling any unexpected typos.
+
+3. **Set up your `settings.json` if using VsCode (optional):**
+
+   - This repo comes with a default `settings.sample.json` with the following default settings:
+      - Automatic on-save formatting for all Python, TypeScript, and JavaScript.
+      - ESLint validation and auto-fixing for JavaScript/TypeScript files.
+      - Ruff linting and import organization for Python files.
+      - Pytest configuration for running Python tests.
+      - Environment file configuration.
+      - Spell check configuration for commonly used terms (e.g., "ditti" and "Fitbit").
+
+4. **Bootstrap your development environment:**
+
+   - See our [Dev Setup Guide](./INSTALL-dev.md) for detailed instructions.
+
+### Make your Contributions
+
+We ask that all contributions are divided into atomic pull requests (PRs). The changes in one PR should not depend on the changes of another, and multiple contributions should be made in separate PRs where possible. Smaller PRs are easier to manage, improving the quality and transparency of contributions.
+
+1. **Create a new branch:**
+
+   - Please adhere to our branch naming convention `<github-handle>/branch-name`.
+
+   ```bash
+   cd ...
+   git checkout -b <new-branch-name>
+   ```
+
+2. **Follow coding conventions:**
+
+   **General:**
+
+      - Ensure all code is formatted according to the pre-defined rules.
+      - Any new code in `backend/`, `frontend/`, and `functions/` contain a license statement.
+      - Add TODOs as new issues instead of comments in your code.
+      - Any new packages or libraries are justified; in-house solutions are generally preferred.
+
+   **Frontend:**
+
+      - Components are organized into a relevant subfolder if they consist of more than one file.
+      - Interfaces are defined in separate `types.ts` files alongside their respective components.
+      - Use only named exports.
+
+   **Backend:**
+      - Any new endpoints include proper access controls (if applicable).
+      - Any changes to the database schema include a migration script that does not result in data loss (if applicable).
+      - Docstrings are written using the numpy documentation standard.
+
+3. **Commit and push your changes:**
+
+   Never leave a commit message blank. See [this helpful guide](https://cbea.ms/git-commit/) for writing good commits. It is also recommended to make commits [atomic](https://dev.to/samuelfaure/how-atomic-git-commits-dramatically-increased-my-productivity-and-will-increase-yours-too-4a84).
+
+4. **Create a pull request (PR):**
+
+   Navigate to the repository on GitHub and [create a pull request](https://github.com/mHealth-UPenn/ditti-research-dashboard/pulls).
+
+   We have a pull request template to ensure consistency between contributions. Provide a summary followed by a list of detailed changes. If making any changes to the UI, include screenshots. Include steps for reviewers to test your changes, if any. Include related issues, if any.
+
+   The template also includes a checklist of helpful reminders. Go through the checklist to ensure all conditions are met before publishing your pull request.
+
+5. **Monitor status checks:**
+
+   All PRs must pass [status checks](https://github.com/mHealth-UPenn/ditti-research-dashboard/actions) to be merged. Check the status of any failed status check and make the appropriate changes. If a status check is failing for a reason that is beyond the scope of your PR, please [create an issue](https://github.com/mHealth-UPenn/ditti-research-dashboard/issues).
+
+6. **Respond to feedback:**
+
+   Be responsive to feedback and ready to implement suggested changes. Remember, feedback means your work is valued and intended for inclusion!
+
+Thank you for contributing to the Ditti Research Dashboard open source project!
