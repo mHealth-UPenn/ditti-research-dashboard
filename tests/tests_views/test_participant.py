@@ -306,20 +306,7 @@ def test_delete_participant_direct(app, study_subject, api_entry, join_api):
         mock_cognito_client = MagicMock()
         mock_boto3_client.return_value = mock_cognito_client
 
-        # Mock account with admin privileges
-        mock_account = type(
-            "Account",
-            (),
-            {
-                "id": "2",
-                "email": "admin@example.com",
-                "name": "Admin User",
-                "admin": True,
-                "is_admin": True,
-            },
-        )
-
-        response = view_func(mock_account, study_subject.ditti_id)
+        response = view_func(study_subject.ditti_id)
 
         assert response.status_code == 200
         assert response.get_json() == {"msg": "Account deleted successfully."}
@@ -356,20 +343,7 @@ def test_delete_participant_success(
         mock_cognito_client = MagicMock()
         mock_boto3_client.return_value = mock_cognito_client
 
-        # Use the account already set up by auth_headers
-        mock_account = type(
-            "Account",
-            (),
-            {
-                "id": "2",
-                "email": "admin@example.com",
-                "name": "Admin User",
-                "admin": True,
-                "is_admin": True,
-            },
-        )
-
-        response = view_func(mock_account, study_subject.ditti_id)
+        response = view_func(study_subject.ditti_id)
 
         assert response.status_code == 200
         assert response.get_json() == {"msg": "Account deleted successfully."}
@@ -405,18 +379,7 @@ def test_delete_participant_user_not_found(app, mock_participant_not_found):
     view_func = get_unwrapped_view(participant_view, "delete_participant")
 
     with app.app_context():
-        mock_account = type(
-            "Account",
-            (),
-            {
-                "id": "2",
-                "email": "admin@example.com",
-                "name": "Admin User",
-                "is_admin": True,
-            },
-        )
-
-        response = view_func(mock_account, "nonexistent_ditti_id")
+        response = view_func("nonexistent_ditti_id")
 
         assert response.status_code == 404
         assert response.get_json() == {
@@ -450,19 +413,7 @@ def test_delete_participant_cognito_exception(app, study_subject):
             "cognito-idp", {"admin_delete_user": Exception("Cognito error")}
         )
 
-        # Create a mock admin account
-        mock_account = type(
-            "Account",
-            (),
-            {
-                "id": "2",
-                "email": "admin@example.com",
-                "name": "Admin User",
-                "is_admin": True,
-            },
-        )
-
-        response = view_func(mock_account, study_subject.ditti_id)
+        response = view_func(study_subject.ditti_id)
 
         assert response.status_code == 500
         error_msg = response.get_json()["msg"]
