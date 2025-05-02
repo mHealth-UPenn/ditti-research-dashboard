@@ -404,9 +404,11 @@ export interface DataProcessingTask {
  * @property msg - A message returned from the endpoint.
  * @property csrfAccessToken - The active CSRF token.
  * @property jwt - Optional JWT token.
+ * @property error_code - Optional error code.
  */
 export interface ResponseBody {
   msg: string;
   csrfAccessToken?: string;
   jwt?: string;
+  error_code?: string;
 }
