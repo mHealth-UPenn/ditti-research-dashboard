@@ -265,7 +265,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     const dataAWS = {
       tap_permission: tapPermission,
       information: aboutSleepTemplateSelected.text,
-      user_permission_id: study?.dittiId ?? "" + userPermissionId,
+      user_permission_id: (study?.dittiId ?? "") + userPermissionId,
       exp_time: dittiExpTime + "T00:00:00.000Z",
       team_email: study?.email,
     };
