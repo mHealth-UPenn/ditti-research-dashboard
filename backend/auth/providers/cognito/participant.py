@@ -54,7 +54,7 @@ class ParticipantAuth(CognitoAuthBase):
         )
 
         if not include_archived:
-            query = query.filter(StudySubject.is_archived is False)
+            query = query.filter(~StudySubject.is_archived)
 
         return query.first()
 
@@ -87,7 +87,6 @@ class ParticipantAuth(CognitoAuthBase):
         study_subject = self.get_study_subject_from_ditti_id(
             ditti_id, include_archived
         )
-
         if not study_subject:
             logger.warning(f"No study subject found for ID: {ditti_id}")
             return None, AUTH_ERROR_MESSAGES["not_found"]
