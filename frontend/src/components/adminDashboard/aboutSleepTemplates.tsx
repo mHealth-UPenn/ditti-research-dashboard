@@ -11,17 +11,20 @@
  * under the License.
  */
 
-import React, { useState, useEffect } from "react";
-import { getAccess, makeRequest } from "../../utils";
+import { useState, useEffect, useCallback } from "react";
+import { getAccess } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
 import { SmallLoader } from "../loader/loader";
 import { Button } from "../buttons/button";
+import { AsyncButton } from "../buttons/asyncButton";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { useApiHandler } from "../../hooks/useApiHandler";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 
 export const AboutSleepTemplates = () => {
@@ -31,8 +34,38 @@ export const AboutSleepTemplates = () => {
   const [aboutSleepTemplates, setAboutSleepTemplates] = useState<
     AboutSleepTemplate[]
   >([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const { flashMessage } = useFlashMessages();
+
+  /**
+   * Fetches the latest templates and updates the state.
+   */
+  const refreshTemplates = useCallback(async () => {
+    try {
+      const templates = await httpClient.request<AboutSleepTemplate[]>(
+        "/admin/about-sleep-template?app=1"
+      );
+      setAboutSleepTemplates(templates);
+    } catch (error) {
+      console.error("Failed to refresh templates:", error);
+      flashMessage(
+        <span>
+          <b>Error refreshing template list.</b>
+        </span>,
+        "danger"
+      );
+    }
+  }, [flashMessage]);
+
+  // API Handler for the archive operation
+  const { safeRequest: safeArchiveRequest, isLoading } =
+    useApiHandler<ResponseBody>({
+      onSuccess: async (res) => {
+        flashMessage(<span>{res.msg}</span>, "success");
+        await refreshTemplates(); // Refresh list after successful archive
+      },
+      // onError is handled by the default hook implementation (shows flash message)
+    });
 
   const columns: Column[] = [
     {
@@ -50,54 +83,69 @@ export const AboutSleepTemplates = () => {
   ];
 
   useEffect(() => {
-    // check whether the user has permission to create
-    const create = getAccess(1, "Create", "About Sleep Templates")
-      .then(() => {
-        setCanCreate(true);
-      })
-      .catch(() => {
-        setCanCreate(false);
-      });
+    let isMounted = true;
+    const fetchData = async () => {
+      try {
+        // Check permissions required for this view
+        const canCreatePromise = getAccess(1, "Create", "About Sleep Templates")
+          .then(() => {
+            if (isMounted) setCanCreate(true);
+          })
+          .catch(() => {
+            if (isMounted) setCanCreate(false);
+          });
+        const canEditPromise = getAccess(1, "Edit", "About Sleep Templates")
+          .then(() => {
+            if (isMounted) setCanEdit(true);
+          })
+          .catch(() => {
+            if (isMounted) setCanEdit(false);
+          });
+        const canArchivePromise = getAccess(
+          1,
+          "Archive",
+          "About Sleep Templates"
+        )
+          .then(() => {
+            if (isMounted) setCanArchive(true);
+          })
+          .catch(() => {
+            if (isMounted) setCanArchive(false);
+          });
 
-    // check whether the user has permissions to edit
-    const edit = getAccess(1, "Edit", "About Sleep Templates")
-      .then(() => {
-        setCanEdit(true);
-      })
-      .catch(() => {
-        setCanEdit(false);
-      });
+        // Fetch the initial list of templates
+        const fetchTemplatesPromise = refreshTemplates();
 
-    // check whether the user has permissions to archive
-    const archive = getAccess(1, "Archive", "About Sleep Templates")
-      .then(() => {
-        setCanArchive(true);
-      })
-      .catch(() => {
-        setCanArchive(false);
-      });
+        // Wait for all initial setup operations
+        await Promise.all([
+          canCreatePromise,
+          canEditPromise,
+          canArchivePromise,
+          fetchTemplatesPromise,
+        ]);
+      } catch (error) {
+        console.error("Error during initial data fetch:", error);
+        if (isMounted) {
+          flashMessage(<span>Failed to load initial data.</span>, "danger");
+        }
+      } finally {
+        if (isMounted) {
+          setInitialLoadComplete(true);
+        }
+      }
+    };
 
-    // get the table's data
-    const fetchTemplates = makeRequest(
-      "/admin/about-sleep-template?app=1"
-    ).then((templates) => {
-      setAboutSleepTemplates(templates as unknown as AboutSleepTemplate[]);
-    });
+    void fetchData(); // Fire off the async function
 
-    // when all requests are complete, hide the loading screen
-    Promise.all([create, edit, archive, fetchTemplates])
-      .then(() => {
-        setLoading(false);
-      })
-      .catch((error: unknown) => {
-        console.error("Error loading templates:", error);
-        setLoading(false);
-      });
-  }, []);
+    // Cleanup function to prevent state updates if component unmounts
+    return () => {
+      isMounted = false;
+    };
+  }, [flashMessage, refreshTemplates]);
 
   /**
-   * Get the table's contents
-   * @returns The table's contents, consisting of rows of table cells
+   * Prepares template data for the Table component.
+   * @returns An array of rows, where each row is an array of TableData objects.
    */
   const getData = (): TableData[][] => {
     return aboutSleepTemplates.map((s: AboutSleepTemplate) => {
@@ -130,16 +178,15 @@ export const AboutSleepTemplates = () => {
                 </Button>
               )}
               {canArchive && (
-                <Button
+                // AsyncButton handles its own loading state for the archive action
+                <AsyncButton
                   variant="danger"
                   size="sm"
                   className="h-full grow"
-                  onClick={() => {
-                    deleteTemplate(id);
-                  }}
+                  onClick={() => deleteTemplate(id)}
                 >
                   Archive
-                </Button>
+                </AsyncButton>
               )}
             </div>
           ),
@@ -153,59 +200,26 @@ export const AboutSleepTemplates = () => {
   };
 
   /**
-   * Delete a table entry and archive it in the database
+   * Archives a template using the API handler.
    * @param id - the entry's database primary key
    */
-  const deleteTemplate = (id: number): void => {
-    // prepare the request
-    const body = { app: 1, id }; // Admin Dashboard = 1
-    const opts = { method: "POST", body: JSON.stringify(body) };
-
-    // confirm deletion
+  const deleteTemplate = (id: number): Promise<void> => {
     const msg = "Are you sure you want to archive this about sleep template?";
-
-    if (confirm(msg))
-      makeRequest("/admin/about-sleep-template/archive", opts)
-        .then(handleSuccess)
-        .catch(handleFailure);
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    // show the loading screen
-    setLoading(true);
-    flashMessage(<span>{res.msg}</span>, "success");
-
-    // refresh the table's data
-    makeRequest("/admin/about-sleep-template?app=1")
-      .then((templates) => {
-        setAboutSleepTemplates(templates as unknown as AboutSleepTemplate[]);
-        setLoading(false);
-      })
-      .catch((error: unknown) => {
-        console.error("Error refreshing templates:", error);
-        setLoading(false);
-      });
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message returned from the endpoint or "Internal server error"
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg || "Internal server error"}
-      </span>
-    );
-
-    flashMessage(msg, "danger");
+    if (confirm(msg)) {
+      // Use the safeRequest from the hook for archiving and return the promise chain
+      return safeArchiveRequest(async () => {
+        const body = { app: 1, id };
+        return httpClient.request<ResponseBody>(
+          "/admin/about-sleep-template/archive",
+          {
+            method: "POST",
+            data: body,
+          }
+        );
+      }).then(() => undefined); // Adapt return type for AsyncButton
+    }
+    // If confirm is false, return a resolved promise to satisfy AsyncButton type
+    return Promise.resolve();
   };
 
   // if the user has permission to create, show the create button
@@ -214,12 +228,13 @@ export const AboutSleepTemplates = () => {
       <Button variant="primary">Create +</Button>
     </Link>
   ) : (
-    <React.Fragment />
+    <></>
   );
 
   const navbar = <AdminNavbar activeView="About Sleep Templates" />;
 
-  if (loading) {
+  // Show loader until initial permissions and data are fetched
+  if (!initialLoadComplete) {
     return (
       <ListView>
         {navbar}
@@ -234,16 +249,29 @@ export const AboutSleepTemplates = () => {
     <ListView>
       {navbar}
       <ListContent>
-        <Table
-          columns={columns}
-          control={tableControl}
-          controlWidth={10}
-          data={getData()}
-          includeControl={true}
-          includeSearch={true}
-          paginationPer={10}
-          sortDefault=""
-        />
+        {/* Relative container for the loading overlay */}
+        <div className="relative">
+          {" "}
+          <Table
+            columns={columns}
+            control={tableControl}
+            controlWidth={10}
+            data={getData()}
+            includeControl={true}
+            includeSearch={true}
+            paginationPer={10}
+            sortDefault=""
+          />
+          {/* Archive operation loading overlay */}
+          {isLoading && (
+            <div
+              className="absolute inset-0 z-10 flex items-center justify-center
+                bg-white/75"
+            >
+              <SmallLoader />
+            </div>
+          )}
+        </div>
       </ListContent>
     </ListView>
   );
