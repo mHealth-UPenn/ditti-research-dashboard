@@ -87,13 +87,12 @@ export interface AccountFormPrefill {
  * @property {AccessGroup[]} accessGroups - All available access groups for selection
  * @property {Role[]} roles - All available roles for selection
  * @property {Study[]} studies - All available studies for selection
- * @property {boolean} loading - Whether to show the loader
+ * @property {boolean} loading - Loading state flag
  */
 export interface AccountsEditState extends AccountFormPrefill {
   accessGroups: AccessGroup[];
   roles: Role[];
   studies: Study[];
-  loading: boolean;
 }
 
 // Access Groups Edit Types
