@@ -11,14 +11,16 @@
  * under the License.
  */
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { ResponseBody } from "../../types/api";
 import { TextField } from "../fields/textField";
-import { makeRequest, formatPhoneNumber } from "../../utils";
+import { formatPhoneNumber } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { AsyncButton } from "../buttons/asyncButton";
 import { Button } from "../buttons/button";
 import { useAuth } from "../../hooks/useAuth";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { useApiHandler } from "../../hooks/useApiHandler";
 import { AccountMenuProps, PasswordError } from "./accountMenu.types";
 
 /**
@@ -50,7 +52,24 @@ export const AccountMenu = ({
   const { researcherLogout } = useAuth();
   const { flashMessage } = useFlashMessages();
 
-  // Handle phone number change with formatting
+  // Setup API handler with success/error callbacks
+  const { safeRequest } = useApiHandler<ResponseBody>({
+    onSuccess: (res) => {
+      flashMessage(<span>{res.msg}</span>, "success");
+      resetForm(); // Reset form and hide menu on success
+    },
+    onError: () => {
+      // Hook handles general error messages.
+      // Component-specific logic on error:
+      if (editPassword) {
+        // Keep password edit open if change fails
+      } else {
+        setEdit(false); // Reset details edit state on failure
+      }
+    },
+  });
+
+  // Format and validate phone number input
   const handlePhoneNumberChange = (value: string) => {
     const formattedNumber = formatPhoneNumber(value);
     setPhoneNumber(formattedNumber);
@@ -66,10 +85,30 @@ export const AccountMenu = ({
   };
 
   /**
-   * Make a POST request with account detail changes
+   * Resets the form state to initial prefill values and closes the menu.
    */
-  const post = async () => {
-    // Validate required fields
+  const resetForm = useCallback(() => {
+    setFirstName(prefill.firstName);
+    setLastName(prefill.lastName);
+    setEmail(prefill.email);
+    setPhoneNumber(prefill.phoneNumber ?? "");
+    setPhoneNumberError("");
+
+    setCurrentPassword("");
+    setPasswordValue("");
+    setConfirmPasswordValue("");
+    setPasswordError(null);
+
+    setEdit(false);
+    setEditPassword(false);
+    hideMenu();
+  }, [prefill, hideMenu]);
+
+  /**
+   * Validates and submits account detail changes.
+   */
+  const post = (): Promise<void> => {
+    // --- Input Validation ---
     if (!firstName.trim()) {
       flashMessage(
         <span>
@@ -77,7 +116,7 @@ export const AccountMenu = ({
         </span>,
         "danger"
       );
-      return;
+      return Promise.resolve();
     }
 
     if (!lastName.trim()) {
@@ -87,7 +126,7 @@ export const AccountMenu = ({
         </span>,
         "danger"
       );
-      return;
+      return Promise.resolve();
     }
 
     if (!email.trim()) {
@@ -97,7 +136,7 @@ export const AccountMenu = ({
         </span>,
         "danger"
       );
-      return;
+      return Promise.resolve();
     }
 
     // Validate phone number format if provided
@@ -112,34 +151,28 @@ export const AccountMenu = ({
           </span>,
           "danger"
         );
-        return;
+        return Promise.resolve();
       }
     }
 
-    const body = {
-      app: 2,
-      email,
-      first_name: firstName,
-      last_name: lastName,
-      phone_number: phoneNumber, // Will be properly formatted or empty string
-    };
-
-    const opts = {
-      method: "POST",
-      body: JSON.stringify(body),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-
-    await makeRequest("/db/edit-account-details", opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    return safeRequest(async () => {
+      const body = {
+        app: 2,
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        phone_number: phoneNumber,
+      };
+      return httpClient.request<ResponseBody>("/db/edit-account-details", {
+        method: "POST",
+        data: body,
+      });
+    }).then(() => undefined); // Adapt return type for AsyncButton
   };
 
   /**
-   * Validate password requirements
-   * @returns A password error or null if validation passes
+   * Validates password fields.
+   * @returns A password error code or null if validation passes.
    */
   const validatePassword = (): PasswordError => {
     // Check if passwords match
@@ -157,11 +190,9 @@ export const AccountMenu = ({
   };
 
   /**
-   * Change an existing password
-   * @returns A response from the change password endpoint or null if validation fails
+   * Validates and submits password change request.
    */
-  const setPassword = async () => {
-    // Clear any previous errors
+  const trySetPassword = (): Promise<void> => {
     setPasswordError(null);
 
     // Validate password
@@ -171,28 +202,22 @@ export const AccountMenu = ({
       // Display the validation error directly through the flash message
       // instead of throwing an error
       flashMessage(<span>{getErrorMessage(error)}</span>, "danger");
-      // Return null to indicate validation failed without throwing an error
-      return null;
+      return Promise.resolve();
     }
 
-    // Prepare request body - both passwords are always required
-    // Cognito requires the previous password for all password changes
-    const body: Record<string, string> = {
-      newPassword: passwordValue,
-      previousPassword: currentPassword,
-    };
-
-    // Set up request options
-    const opts: RequestInit = {
-      method: "POST",
-      body: JSON.stringify(body),
-      credentials: "include", // Ensure cookies are sent with the request
-      headers: {
-        "Content-Type": "application/json",
-      },
-    };
-
-    return makeRequest("/auth/researcher/change-password", opts);
+    return safeRequest(async () => {
+      const body: Record<string, string> = {
+        newPassword: passwordValue,
+        previousPassword: currentPassword,
+      };
+      return httpClient.request<ResponseBody>(
+        "/auth/researcher/change-password",
+        {
+          method: "POST",
+          data: body,
+        }
+      );
+    }).then(() => undefined); // Adapt return type for AsyncButton
   };
 
   /**
@@ -210,123 +235,7 @@ export const AccountMenu = ({
   };
 
   /**
-   * Attempt to set the password and handle success/failure
-   */
-  const trySetPassword = async () => {
-    try {
-      // Since setPassword now returns null on validation error, handle that case
-      const result = await setPassword();
-      if (result) {
-        // Only handle success if we got a proper response
-        handleSuccess(result);
-      }
-    } catch (error) {
-      // Handle any errors, including LIMIT_EXCEEDED
-      handleFailure(error as Error | ResponseBody);
-    }
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - The response from the API
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    flashMessage(<span>{res.msg}</span>, "success");
-    resetForm();
-    hideMenu();
-  };
-
-  /**
-   * Handle a failed response from the server API (not local validation)
-   * @param res - The error response from the API
-   */
-  const handleFailure = (res: ResponseBody | Error) => {
-    try {
-      // Format error message
-      const errorMessage =
-        res instanceof Error ? res.message : res.msg || "Internal server error";
-
-      // Check for specific error codes to provide better feedback
-      let msgElement: React.ReactElement;
-
-      if (
-        !(res instanceof Error) &&
-        "error_code" in res &&
-        typeof res.error_code === "string"
-      ) {
-        const errorCode = res.error_code;
-
-        // For authentication errors, show with special heading
-        if (
-          errorCode.includes("AUTH_") ||
-          errorCode === "SESSION_EXPIRED" ||
-          errorCode === "FORBIDDEN"
-        ) {
-          msgElement = (
-            <span>
-              <b>Authentication Error</b>
-              <br />
-              {errorMessage}
-            </span>
-          );
-        }
-        // For all other errors, show just the message
-        // These are already user-friendly messages from the backend
-        else {
-          msgElement = <span>{errorMessage}</span>;
-        }
-      } else {
-        // Generic errors without error_code
-        msgElement = (
-          <span>
-            <b>An unexpected error occurred</b>
-            <br />
-            {errorMessage}
-          </span>
-        );
-      }
-
-      flashMessage(msgElement, "danger");
-    } catch (flashError) {
-      // If even our error handler fails, at least log it and show a generic message
-      console.error("Error in error handler:", flashError);
-      flashMessage(<span>An error occurred. Please try again.</span>, "danger");
-    } finally {
-      // Always make sure we reset UI states regardless of what happened
-      if (editPassword) {
-        // We're in password edit mode - keep it open but reset loading states
-      } else {
-        // Only reset regular edit state (not password edit state)
-        setEdit(false);
-      }
-    }
-  };
-
-  /**
-   * Reset the form state to initial values without submitting any changes
-   */
-  const resetForm = () => {
-    // Reset account details to prefill values
-    setFirstName(prefill.firstName);
-    setLastName(prefill.lastName);
-    setEmail(prefill.email);
-    setPhoneNumber(prefill.phoneNumber ?? "");
-    setPhoneNumberError("");
-
-    // Reset password fields
-    setCurrentPassword("");
-    setPasswordValue("");
-    setConfirmPasswordValue("");
-    setPasswordError(null);
-
-    // Exit edit modes
-
-    setEdit(false);
-    setEditPassword(false);
-  };
-
-  /**
-   * Get error feedback message for password fields
+   * Gets error feedback message for password input fields based on validation state.
    */
   const getPasswordErrorFeedback = (errorType: PasswordError): string => {
     return errorType ? getErrorMessage(errorType) : "";
