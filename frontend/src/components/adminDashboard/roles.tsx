@@ -13,7 +13,7 @@
 
 import { useState, useEffect } from "react";
 import { ResponseBody, Role } from "../../types/api";
-import { getAccess, makeRequest } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -22,7 +22,7 @@ import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
-import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 export const Roles = () => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
@@ -49,58 +49,75 @@ export const Roles = () => {
       width: 10,
     },
   ]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const { flashMessage } = useFlashMessages();
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
+    useApiHandler<{
+      roles: Role[];
+      permissions: { create: boolean; edit: boolean; archive: boolean };
+    }>({
+      errorMessage: "Failed to load roles or permissions.",
+      showDefaultSuccessMessage: false,
+    });
+
+  const { safeRequest: safeArchive } = useApiHandler<ResponseBody>({
+    successMessage: (data) => data.msg,
+    errorMessage: (error) => `Failed to archive role: ${error.message}`,
+    onSuccess: () => {
+      setRefreshKey((prev) => prev + 1);
+    },
+  });
 
   useEffect(() => {
-    const fetchData = () => {
-      // check whether the user has permission to create
-      const create = getAccess(1, "Create", "Roles")
-        .then(() => {
-          setCanCreate(true);
-        })
-        .catch(() => {
-          setCanCreate(false);
-        });
+    const initialFetch = async () => {
+      const fetchedData = await safeFetchInitialData(async () => {
+        const checkPermission = async (
+          appId: number,
+          action: string,
+          resource: string
+        ): Promise<boolean> => {
+          const url = `/auth/researcher/get-access?app=${String(appId)}&action=${action}&resource=${resource}`;
+          try {
+            const res = await httpClient.request<ResponseBody>(url);
+            return res.msg === "Authorized";
+          } catch {
+            return false;
+          }
+        };
 
-      // check whether the user has permissions to edit
-      const edit = getAccess(1, "Edit", "Roles")
-        .then(() => {
-          setCanEdit(true);
-        })
-        .catch(() => {
-          setCanEdit(false);
-        });
+        const adminAppId = 1;
+        const createPerm = checkPermission(adminAppId, "Create", "Roles");
+        const editPerm = checkPermission(adminAppId, "Edit", "Roles");
+        const archivePerm = checkPermission(adminAppId, "Archive", "Roles");
+        const rolesReq = httpClient.request<Role[]>("/admin/role?app=1");
 
-      // check whether the user has permissions to archive
-      const archive = getAccess(1, "Archive", "Roles")
-        .then(() => {
-          setCanArchive(true);
-        })
-        .catch(() => {
-          setCanArchive(false);
-        });
+        const [canCreateRes, canEditRes, canArchiveRes, rolesRes] =
+          await Promise.all([createPerm, editPerm, archivePerm, rolesReq]);
 
-      // get the table's data
-      const rolesData = makeRequest("/admin/role?app=1").then(
-        (response: ResponseBody) => {
-          setRoles(response as unknown as Role[]);
-        }
-      );
+        return {
+          roles: rolesRes,
+          permissions: {
+            create: canCreateRes,
+            edit: canEditRes,
+            archive: canArchiveRes,
+          },
+        };
+      });
 
-      // when all requests are complete, hide the loading screen
-      Promise.all([create, edit, archive, rolesData])
-        .then(() => {
-          setLoading(false);
-        })
-        .catch((error: unknown) => {
-          console.error("Error fetching data:", error);
-          setLoading(false);
-        });
+      if (fetchedData) {
+        setRoles(fetchedData.roles);
+        setCanCreate(fetchedData.permissions.create);
+        setCanEdit(fetchedData.permissions.edit);
+        setCanArchive(fetchedData.permissions.archive);
+      } else {
+        setRoles([]);
+        setCanCreate(false);
+        setCanEdit(false);
+        setCanArchive(false);
+      }
     };
-
-    fetchData();
-  }, []);
+    void initialFetch();
+  }, [safeFetchInitialData, refreshKey]);
 
   /**
    * Get the table's contents
@@ -159,7 +176,7 @@ export const Roles = () => {
                   size="sm"
                   className="h-full grow"
                   onClick={() => {
-                    deleteRole(id);
+                    void deleteRole(id);
                   }}
                 >
                   Archive
@@ -180,57 +197,18 @@ export const Roles = () => {
    * Delete a table entry and archive it in the database
    * @param id - the entry's database primary key
    */
-  const deleteRole = (id: number): void => {
-    // prepare the request
-    const body = { app: 1, id }; // Admin Dashboard = 1
-    const opts = { method: "POST", body: JSON.stringify(body) };
-
-    // confirm deletion
+  const deleteRole = async (id: number) => {
+    const body = { app: 1, id };
     const msg = "Are you sure you want to archive this role?";
 
-    if (confirm(msg))
-      makeRequest("/admin/role/archive", opts)
-        .then(handleSuccess)
-        .catch(handleFailure);
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    flashMessage(<span>{res.msg}</span>, "success");
-
-    // show the loading screen
-    setLoading(true);
-
-    // refresh the table's data
-    makeRequest("/admin/role?app=1")
-      .then((response: ResponseBody) => {
-        setRoles(response as unknown as Role[]);
-        setLoading(false);
-      })
-      .catch((error: unknown) => {
-        console.error("Error refreshing roles:", error);
-        setLoading(false);
-      });
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message returned from the endpoint or "Internal server error"
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
-    );
-
-    flashMessage(msg, "danger");
+    if (confirm(msg)) {
+      await safeArchive(() =>
+        httpClient.request<ResponseBody>("/admin/role/archive", {
+          method: "POST",
+          data: body,
+        })
+      );
+    }
   };
 
   // if the user has permission to create, show the create button
@@ -244,7 +222,7 @@ export const Roles = () => {
 
   const navbar = <AdminNavbar activeView="Roles" />;
 
-  if (loading) {
+  if (isLoadingData) {
     return (
       <ListView>
         {navbar}
