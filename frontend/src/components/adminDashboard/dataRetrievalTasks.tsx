@@ -11,17 +11,17 @@
  * under the License.
  */
 
-import { useState, useEffect, useCallback } from "react";
-import { DataRetrievalTask } from "../../types/api";
-import { getAccess, makeRequest } from "../../utils";
+import { useState, useEffect } from "react";
+import { DataRetrievalTask, ResponseBody } from "../../types/api";
+import { httpClient } from "../../lib/http";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
 import { SmallLoader } from "../loader/loader";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
-import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { AsyncButton } from "../buttons/asyncButton";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 /**
  * Defines the table columns for displaying data retrieval tasks.
@@ -83,57 +83,76 @@ function formatDate(isoDate: string | null): {
 export const DataRetrievalTasks = () => {
   const [canInvoke, setCanInvoke] = useState<boolean>(false);
   const [tasks, setTasks] = useState<DataRetrievalTask[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const { flashMessage } = useFlashMessages();
+  const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
+    useApiHandler<{
+      tasks: DataRetrievalTask[];
+      canInvoke: boolean;
+    }>({
+      errorMessage: "Failed to load data retrieval tasks or permissions.",
+      showDefaultSuccessMessage: false,
+    });
 
-  const fetchData = useCallback(async () => {
-    try {
-      // Fetch data retrieval tasks (View permission is handled by the server)
-      const response = await makeRequest("/data_processing_task/?app=1");
-      // Cast to DataRetrievalTask[] using unknown as intermediate type
-      const data = response as unknown as DataRetrievalTask[];
-      setTasks(data);
-    } catch (error) {
-      console.error("Error fetching tasks:", error);
-      flashMessage(
-        <span>
-          <b>An error occurred loading data retrieval tasks.</b>
-          <br />
-          {error instanceof Error ? error.message : "Unknown error"}
-        </span>,
-        "danger"
-      );
-    }
-  }, [flashMessage]);
+  const { safeRequest: safeForceStop } = useApiHandler<ResponseBody>({
+    successMessage: (data) => data.msg,
+    errorMessage: (error) => `Failed to stop task: ${error.message}`,
+    onSuccess: () => {
+      setRefreshKey((prev) => prev + 1);
+    },
+  });
 
   useEffect(() => {
-    const invoke = getAccess(1, "Invoke", "Data Retrieval Task")
-      .then(() => {
-        setCanInvoke(true);
-      })
-      .catch(() => {
-        setCanInvoke(false);
+    const initialFetch = async () => {
+      const fetchedData = await safeFetchInitialData(async () => {
+        const checkPermission = async (
+          appId: number,
+          action: string,
+          resource: string
+        ): Promise<boolean> => {
+          const url = `/auth/researcher/get-access?app=${String(appId)}&action=${action}&resource=${resource}`;
+          try {
+            const res = await httpClient.request<ResponseBody>(url);
+            return res.msg === "Authorized";
+          } catch {
+            return false;
+          }
+        };
+
+        const tasksReq = httpClient.request<DataRetrievalTask[]>(
+          "/data_processing_task/?app=1"
+        );
+        const invokePerm = checkPermission(1, "Invoke", "Data Retrieval Task");
+
+        const [tasksResponse, canInvokePermission] = await Promise.all([
+          tasksReq,
+          invokePerm,
+        ]);
+
+        return { tasks: tasksResponse, canInvoke: canInvokePermission };
       });
 
-    void Promise.all([invoke, fetchData()]).finally(() => {
-      setLoading(false);
-    });
-  }, [fetchData]);
+      if (fetchedData) {
+        setTasks(fetchedData.tasks);
+        setCanInvoke(fetchedData.canInvoke);
+      } else {
+        setTasks([]);
+        setCanInvoke(false);
+      }
+    };
+    void initialFetch();
+  }, [safeFetchInitialData, refreshKey]);
 
   const handleForceStop = async (id: number) => {
-    await makeRequest(`/data_processing_task/force-stop`, {
-      method: "POST",
-      body: JSON.stringify({
-        app: 1,
-        function_id: id,
-      }),
-    }).finally(() => {
-      setLoading(true);
-      void fetchData().finally(() => {
-        setLoading(false);
-      });
-    });
+    await safeForceStop(() =>
+      httpClient.request<ResponseBody>(`/data_processing_task/force-stop`, {
+        method: "POST",
+        data: {
+          app: 1,
+          function_id: id,
+        },
+      })
+    );
   };
 
   /**
@@ -209,7 +228,7 @@ export const DataRetrievalTasks = () => {
 
   const navbar = <AdminNavbar activeView="Data Retrieval Tasks" />;
 
-  if (loading) {
+  if (isLoadingData) {
     return (
       <ListView>
         {navbar}
