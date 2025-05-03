@@ -12,7 +12,7 @@
  */
 
 import { APP_ENV } from "./environment";
-import { makeRequest } from "./utils";
+import { httpClient } from "./lib/http";
 import {
   AudioFile,
   SleepLevel,
@@ -284,12 +284,11 @@ export class DataFactory {
 
       if (APP_ENV !== "demo") {
         try {
-          const response = await makeRequest("/db/get-studies?app=2");
-          // Use type assertion for the response
-          const typedResponse = response as unknown as Study[];
-          this.studies = typedResponse;
+          this.studies = await httpClient.request<Study[]>(
+            "/db/get-studies?app=2"
+          );
         } catch (error) {
-          console.error(error);
+          console.error("Failed to fetch studies:", error);
         }
       }
 
