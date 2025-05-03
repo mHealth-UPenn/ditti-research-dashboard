@@ -11,10 +11,10 @@
  * under the License.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
-import { makeRequest } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -28,74 +28,92 @@ import { FormSummaryText } from "../containers/forms/formSummaryText";
 import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { useApiHandler } from "../../hooks/useApiHandler";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
-import { AboutSleepTemplateFormPrefill } from "./adminDashboard.types";
 
+/**
+ * Component for creating or editing About Sleep templates.
+ * Handles fetching template data (for editing) and submitting changes.
+ */
 export const AboutSleepTemplatesEdit = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
+  // Determine if editing (ID exists) or creating (ID is 0)
   const aboutSleepTemplateId = id ? parseInt(id) : 0;
 
   const [name, setName] = useState<string>("");
   const [text, setText] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill =
-    useCallback(async (): Promise<AboutSleepTemplateFormPrefill> => {
-      const id = aboutSleepTemplateId;
+  // API Handler for fetching the template data when editing
+  const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
+    useApiHandler<{
+      // Define a return type for the fetch function
+      template: AboutSleepTemplate | null;
+    }>({
+      // Error handled by hook
+      showDefaultSuccessMessage: false, // No success message needed for load
+    });
 
-      // if editing an existing entry, return prefill data, else return empty data
-      return id
-        ? makeRequest(
-            `/admin/about-sleep-template?app=1&id=${String(id)}`
-          ).then((res: ResponseBody) =>
-            makePrefill(res as unknown as AboutSleepTemplate[])
-          )
-        : {
-            name: "",
-            text: "",
-          };
-    }, [aboutSleepTemplateId]);
+  // API Handler for creating or updating the template
+  const { safeRequest: safeSubmit } = useApiHandler<ResponseBody>({
+    successMessage: (data) => data.msg,
+    errorMessage: (error) => `Failed to save template: ${error.message}`,
+    onSuccess: () => {
+      navigate(-1); // Navigate back to the list on success
+    },
+  });
 
+  // Fetch template data if an ID is present in the URL (edit mode)
   useEffect(() => {
-    const fetchPrefill = async () => {
-      const prefill = await getPrefill();
-      setName(prefill.name);
-      setText(prefill.text);
-      setLoading(false);
-    };
+    if (aboutSleepTemplateId) {
+      const fetchData = async () => {
+        const fetchedData = await safeFetchInitialData(async () => {
+          // Fetch the specific template
+          const templates = await httpClient.request<AboutSleepTemplate[]>(
+            `/admin/about-sleep-template?app=1&id=${String(aboutSleepTemplateId)}`
+          );
+          if (templates.length > 0) {
+            return { template: templates[0] };
+          } else {
+            // Template not found for ID, throw error to be caught by hook
+            throw new Error("Template not found.");
+          }
+        });
 
-    void fetchPrefill();
-  }, [getPrefill]);
+        if (fetchedData?.template) {
+          // Set state if fetch was successful and template exists
+          setName(fetchedData.template.name);
+          setText(fetchedData.template.text);
+        } else if (fetchedData === null) {
+          // Handle case where fetch failed (error handled by hook)
+          // Navigate back as template couldn't be loaded
+          flashMessage(
+            <span>Template not found or failed to load.</span>,
+            "danger"
+          );
+          navigate(-1);
+        }
+      };
+      void fetchData();
+    }
+    // No fetch needed if creating (ID is 0)
+  }, [aboutSleepTemplateId, safeFetchInitialData, flashMessage, navigate]);
 
   /**
-   * Map the data returned from the backend to form prefill data
-   * @param res - the response body
-   * @returns - the form prefill data
-   */
-  const makePrefill = (
-    res: AboutSleepTemplate[]
-  ): AboutSleepTemplateFormPrefill => {
-    const aboutSleepTemplate = res[0];
-
-    return {
-      name: aboutSleepTemplate.name,
-      text: aboutSleepTemplate.text,
-    };
-  };
-
-  /**
-   * POST changes to the backend. Make a request to create an entry if creating
-   * a new entry, else make a request to edit an exiting entry
+   * Handles form submission: validates input and sends create/update request.
+   * Required to return Promise<void> for AsyncButton.
    */
   const post = async (): Promise<void> => {
+    // Basic validation
+    if (!name.trim()) {
+      flashMessage(<span>Name is required.</span>, "danger");
+      return;
+    }
+
+    // Prepare data and determine endpoint based on create/edit mode
     const data = { text, name };
     const id = aboutSleepTemplateId;
     const body = {
@@ -103,44 +121,23 @@ export const AboutSleepTemplatesEdit = () => {
       ...(id ? { id: id, edit: data } : { create: data }),
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id
       ? "/admin/about-sleep-template/edit"
       : "/admin/about-sleep-template/create";
 
-    await makeRequest(url, opts).then(handleSuccess).catch(handleFailure);
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    // go back to the list view and flash a message
-    navigate(-1);
-    flashMessage(<span>{res.msg}</span>, "success");
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
-    );
-
-    flashMessage(msg, "danger");
+    // Execute API call via handler
+    await safeSubmit(async () => {
+      return httpClient.request<ResponseBody>(url, {
+        method: "POST",
+        data: body,
+      });
+    });
   };
 
   const buttonText = aboutSleepTemplateId ? "Update" : "Create";
 
-  if (loading) {
+  // Show loader only during the initial data fetch in edit mode
+  if (aboutSleepTemplateId && isLoadingData) {
     return (
       <FormView>
         <Form>

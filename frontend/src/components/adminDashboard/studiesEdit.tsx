@@ -11,12 +11,12 @@
  * under the License.
  */
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { TextField } from "../fields/textField";
 import { CheckField } from "../fields/checkField";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
 import { ResponseBody, Study } from "../../types/api";
-import { makeRequest } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -30,6 +30,18 @@ import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { useApiHandler } from "../../hooks/useApiHandler";
+
+interface StudiesEditFormPrefill {
+  name: string;
+  acronym: string;
+  dittiId: string;
+  email: string;
+  defaultExpiryDelta: number;
+  consentInformation?: string;
+  dataSummary?: string;
+  isQi: boolean;
+}
 
 export const StudiesEdit = () => {
   const [searchParams] = useSearchParams();
@@ -46,63 +58,66 @@ export const StudiesEdit = () => {
   const [consentInformation, setConsentInformation] = useState<string>("");
   const [dataSummary, setDataSummary] = useState<string>("");
   const [isQi, setIsQi] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
   const [expiryError, setExpiryError] = useState<string>("");
 
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = useCallback(async (): Promise<{
-    name: string;
-    acronym: string;
-    dittiId: string;
-    email: string;
-    defaultExpiryDelta: number;
-    consentInformation?: string;
-    dataSummary?: string;
-    isQi: boolean;
-  }> => {
-    if (studyId === 0) {
-      // Creating a new study, return empty prefill data
-      return {
-        name: "",
-        acronym: "",
-        dittiId: "",
-        email: "",
-        defaultExpiryDelta: 14,
-        consentInformation: "",
-        dataSummary: "",
-        isQi: false,
-      };
-    }
+  // --- API Handlers ---
+  const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
+    useApiHandler<StudiesEditFormPrefill | null>({
+      // Using null to indicate not found or error during fetch
+      errorMessage: "Failed to load study data.",
+      showDefaultSuccessMessage: false,
+    });
 
-    // Fetch existing study data from the backend
-    const data = (await makeRequest(
-      `/admin/study?app=1&id=${String(studyId)}`
-    )) as unknown as Study[];
-    if (data.length === 0) {
-      throw new Error("Study not found.");
-    }
-
-    const study = data[0];
-    return {
-      name: study.name,
-      acronym: study.acronym,
-      dittiId: study.dittiId,
-      email: study.email,
-      defaultExpiryDelta: study.defaultExpiryDelta,
-      consentInformation: study.consentInformation,
-      dataSummary: study.dataSummary,
-      isQi: study.isQi,
-    };
-  }, [studyId]);
+  const { safeRequest: safeSubmit, isLoading: isSubmitting } =
+    useApiHandler<ResponseBody>({
+      successMessage: (data) => data.msg,
+      errorMessage: (error) => `Failed to save study: ${error.message}`,
+      onSuccess: () => {
+        navigate(-1); // Navigate back on success
+      },
+    });
+  // --------------------
 
   useEffect(() => {
-    // Fetch prefill data if editing an existing study
-    const fetchPrefill = async () => {
-      try {
-        const prefillData = await getPrefill();
+    if (studyId === 0) {
+      // If creating new, no need to fetch, reset state (though likely already default)
+      setName("");
+      setAcronym("");
+      setDittiId("");
+      setEmail("");
+      setDefaultExpiryDelta(14);
+      setConsentInformation("");
+      setDataSummary("");
+      setIsQi(false);
+      return; // Exit useEffect
+    }
+
+    // Fetch prefill data only if editing (studyId is not 0)
+    const fetchData = async () => {
+      const prefillData = await safeFetchInitialData(async () => {
+        const data = await httpClient.request<Study[]>(
+          `/admin/study?app=1&id=${String(studyId)}`
+        );
+        if (data.length > 0) {
+          const study = data[0];
+          return {
+            name: study.name,
+            acronym: study.acronym,
+            dittiId: study.dittiId,
+            email: study.email,
+            defaultExpiryDelta: study.defaultExpiryDelta,
+            consentInformation: study.consentInformation ?? "",
+            dataSummary: study.dataSummary ?? "",
+            isQi: study.isQi,
+          };
+        } else {
+          // Study not found for ID
+          throw new Error("Study not found or empty response.");
+        }
+      });
+
+      // Update state if fetch was successful
+      if (prefillData) {
         setName(prefillData.name);
         setAcronym(prefillData.acronym);
         setDittiId(prefillData.dittiId);
@@ -111,23 +126,15 @@ export const StudiesEdit = () => {
         setConsentInformation(prefillData.consentInformation ?? "");
         setDataSummary(prefillData.dataSummary ?? "");
         setIsQi(prefillData.isQi);
-      } catch (error) {
-        console.error("Error fetching study data:", error);
-        flashMessage(
-          <span>
-            <b>Failed to load study data.</b>
-            <br />
-            {error instanceof Error ? error.message : "Unknown error"}
-          </span>,
-          "danger"
-        );
-      } finally {
-        setLoading(false);
+      } else {
+        // Handle fetch failure (error message shown by hook)
+        // Navigate back as the study couldn't be loaded
+        navigate(-1);
       }
     };
 
-    void fetchPrefill();
-  }, [getPrefill, flashMessage]);
+    void fetchData();
+  }, [studyId, safeFetchInitialData, navigate]); // Dependencies for fetching
 
   /**
    * Ensure that defaultExpiryDelta is non-negative
@@ -145,7 +152,21 @@ export const StudiesEdit = () => {
    * POST changes to the backend. Make a request to create an entry if creating
    * a new entry, else make a request to edit an existing entry
    */
-  const post = async (): Promise<void> => {
+  const post = async () => {
+    // Basic Validations
+    if (!name.trim() || !acronym.trim() || !dittiId.trim() || !email.trim()) {
+      flashMessage(
+        <span>All fields except Consent/Data Summary are required.</span>,
+        "danger"
+      );
+      return;
+    }
+    if (expiryError) {
+      flashMessage(<span>Please fix the validation errors.</span>, "danger");
+      return;
+    }
+
+    // Construct the request body
     const data = {
       acronym,
       dittiId,
@@ -162,47 +183,20 @@ export const StudiesEdit = () => {
       ...(id ? { id: id, edit: data } : { create: data }),
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/study/edit" : "/admin/study/create";
 
-    try {
-      const response: ResponseBody = await makeRequest(url, opts);
-      handleSuccess(response);
-    } catch (error) {
-      handleFailure(error as ResponseBody);
-    }
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    // go back to the list view and flash a message
-    navigate(-1);
-    flashMessage(<span>{res.msg}</span>, "success");
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
+    // Use the API handler
+    await safeSubmit(() =>
+      httpClient.request<ResponseBody>(url, {
+        method: "POST",
+        data: body, // Use data property
+      })
     );
-
-    flashMessage(msg, "danger");
   };
 
   const buttonText = studyId ? "Update" : "Create";
 
-  if (loading) {
+  if (isLoadingData) {
     return (
       <FormView>
         <Form>
@@ -279,7 +273,7 @@ export const StudiesEdit = () => {
               type="number"
               placeholder="14"
               min={0}
-              value={defaultExpiryDelta.toString()}
+              value={defaultExpiryDelta.toString()} // Ensure value is string for input
               label="Default Enrollment Period (days)"
               onKeyup={(text: string) => {
                 const value = parseInt(text, 10);
@@ -328,22 +322,22 @@ export const StudiesEdit = () => {
           <FormSummaryText>
             <b>Name:</b>
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{name}
+            &nbsp;&nbsp;&nbsp;&nbsp;{name || "[No Name]"}
             <br />
             <br />
             <b>Team Email:</b>
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{email}
+            &nbsp;&nbsp;&nbsp;&nbsp;{email || "[No Email]"}
             <br />
             <br />
             <b>Acronym:</b>
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{acronym}
+            &nbsp;&nbsp;&nbsp;&nbsp;{acronym || "[No Acronym]"}
             <br />
             <br />
             <b>Ditti ID:</b>
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{dittiId}
+            &nbsp;&nbsp;&nbsp;&nbsp;{dittiId || "[No Ditti ID]"}
             <br />
             <br />
             <b>Default Enrollment Period (days):</b>
@@ -356,8 +350,9 @@ export const StudiesEdit = () => {
             &nbsp;&nbsp;&nbsp;&nbsp;{isQi ? "Yes" : "No"}
             <br />
           </FormSummaryText>
-          <FormSummaryButton onClick={post} disabled={loading}>
-            {buttonText}
+          {/* Pass post directly */}
+          <FormSummaryButton onClick={post} disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : buttonText}
           </FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>

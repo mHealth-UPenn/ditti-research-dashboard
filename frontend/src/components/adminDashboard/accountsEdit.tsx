@@ -11,7 +11,7 @@
  * under the License.
  */
 
-import React, { useEffect, useReducer, useCallback } from "react";
+import React, { useEffect, useReducer } from "react";
 import { Table } from "../table/table";
 import { TableData } from "../table/table.types";
 import { TextField } from "../fields/textField";
@@ -24,7 +24,8 @@ import {
   Study,
 } from "../../types/api";
 import { SelectField } from "../fields/selectField";
-import { makeRequest, formatPhoneNumber } from "../../utils";
+import { httpClient } from "../../lib/http";
+import { formatPhoneNumber } from "../../utils";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -43,6 +44,7 @@ import {
   AccountFormPrefill,
   RoleSelected,
 } from "./adminDashboard.types";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 type Action =
   | {
@@ -51,7 +53,6 @@ type Action =
       roles: Role[];
       studies: Study[];
       prefill: AccountFormPrefill;
-      loading: boolean;
     }
   | {
       type: "EDIT_FIELD";
@@ -69,14 +70,14 @@ type Action =
 const reducer = (state: AccountsEditState, action: Action) => {
   switch (action.type) {
     case "INIT": {
-      const { accessGroups, roles, studies, prefill, loading } = action;
-      return { ...state, accessGroups, roles, studies, loading, ...prefill };
+      const { accessGroups, roles, studies, prefill } = action;
+      return { ...state, accessGroups, roles, studies, ...prefill };
     }
     case "EDIT_FIELD": {
       const { firstName, lastName, email, phoneNumber } = action;
-      if (firstName) return { ...state, firstName };
-      if (lastName) return { ...state, lastName };
-      if (email) return { ...state, email };
+      if (firstName !== undefined) return { ...state, firstName };
+      if (lastName !== undefined) return { ...state, lastName };
+      if (email !== undefined) return { ...state, email };
       if (phoneNumber !== undefined) return { ...state, phoneNumber };
       return state;
     }
@@ -103,8 +104,10 @@ const reducer = (state: AccountsEditState, action: Action) => {
         !accessGroupsSelected.some((ag) => ag.id === accessGroup.id)
       ) {
         // add it to the selected access groups
-        accessGroupsSelected.push(accessGroup);
-        return { ...state, accessGroupsSelected };
+        return {
+          ...state,
+          accessGroupsSelected: [...accessGroupsSelected, accessGroup],
+        };
       }
       return state;
     }
@@ -120,15 +123,11 @@ const reducer = (state: AccountsEditState, action: Action) => {
       const { studies, studiesSelected } = state;
 
       // get the study
-      const study = Object.assign(
-        {},
-        studies.find((s: Study) => s.id == id)
-      );
+      const study = studies.find((s: Study) => s.id == id);
 
-      if (!studiesSelected.some((s) => s.id === study.id)) {
+      if (study && !studiesSelected.some((s) => s.id === study.id)) {
         // add it to the selected studies
-        studiesSelected.push(study);
-        return { ...state, studiesSelected };
+        return { ...state, studiesSelected: [...studiesSelected, study] };
       }
       return state;
     }
@@ -146,13 +145,23 @@ const initialState: AccountsEditState = {
   accessGroups: [],
   roles: [],
   studies: [],
-  loading: true,
   firstName: "",
   lastName: "",
   email: "",
   phoneNumber: "",
   rolesSelected: [],
   accessGroupsSelected: [],
+  studiesSelected: [],
+};
+
+// Define initial state for prefill within the component
+const initialPrefillState: AccountFormPrefill = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phoneNumber: "",
+  accessGroupsSelected: [],
+  rolesSelected: [],
   studiesSelected: [],
 };
 
@@ -166,7 +175,6 @@ export const AccountsEdit = () => {
     accessGroups,
     roles,
     studies,
-    loading,
     firstName,
     lastName,
     email,
@@ -179,64 +187,36 @@ export const AccountsEdit = () => {
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = useCallback(async (): Promise<AccountFormPrefill> => {
-    // if editing an existing entry, return prefill data, else return empty data
-    return accountId
-      ? makeRequest(`/admin/account?app=1&id=${String(accountId)}`).then(
-          (res: ResponseBody) => makePrefill(res as unknown as Account[])
-        )
-      : {
-          firstName: "",
-          lastName: "",
-          email: "",
-          phoneNumber: "",
-          accessGroupsSelected: [],
-          rolesSelected: [],
-          studiesSelected: [],
-        };
-  }, [accountId]);
+  // --- API Handlers ---
+  const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
+    useApiHandler<{
+      accessGroups: AccessGroup[];
+      roles: Role[];
+      studies: Study[];
+      prefill: AccountFormPrefill;
+    }>({
+      errorMessage: "Failed to load initial account edit data.",
+      showDefaultSuccessMessage: false,
+    });
 
-  useEffect(() => {
-    // when all requests are complete, initialize the state
-    const fetchData = async () => {
-      try {
-        const [accessGroups, roles, studies, prefill] = await Promise.all([
-          makeRequest("/admin/access-group?app=1") as unknown as Promise<
-            AccessGroup[]
-          >,
-          makeRequest("/admin/role?app=1") as unknown as Promise<Role[]>,
-          makeRequest("/admin/study?app=1") as unknown as Promise<Study[]>,
-          getPrefill(),
-        ]);
-
-        dispatch({
-          type: "INIT",
-          accessGroups,
-          roles,
-          studies,
-          prefill,
-          loading: false,
-        });
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-        // Handle error as needed
-      }
-    };
-
-    void fetchData();
-  }, [getPrefill]);
+  const { safeRequest: safeSubmit, isLoading: isSubmitting } =
+    useApiHandler<ResponseBody>({
+      successMessage: (data) => data.msg,
+      errorMessage: (error) => `Failed to save account: ${error.message}`,
+      onSuccess: () => {
+        navigate(-1); // Navigate back on success
+      },
+    });
+  // --------------------
 
   /**
    * Map the data returned from the backend to form prefill data
-   * @param res - the response body
+   * @param res - the response body (should be Account[])
    * @returns - the form prefill data
    */
   const makePrefill = (res: Account[]): AccountFormPrefill => {
     const account = res[0];
+
     const roles = account.studies.map((s): RoleSelected => {
       return { study: s.id, role: s.role?.id ?? 0 };
     });
@@ -251,6 +231,69 @@ export const AccountsEdit = () => {
       studiesSelected: account.studies,
     };
   };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const fetchedData = await safeFetchInitialData(async () => {
+        const [accessGroupsRes, rolesRes, studiesRes] = await Promise.all([
+          httpClient.request<AccessGroup[]>("/admin/access-group?app=1"),
+          httpClient.request<Role[]>("/admin/role?app=1"),
+          httpClient.request<Study[]>("/admin/study?app=1"),
+        ]);
+
+        let prefill: AccountFormPrefill;
+        if (accountId) {
+          // Fetch existing account data if editing
+          const accountRes = await httpClient.request<Account[]>(
+            `/admin/account?app=1&id=${String(accountId)}`
+          );
+          if (accountRes.length > 0) {
+            prefill = makePrefill(accountRes);
+          } else {
+            throw new Error("Account not found or empty response.");
+          }
+        } else {
+          // Use initial state if creating new
+          prefill = initialPrefillState;
+        }
+
+        return {
+          accessGroups: accessGroupsRes,
+          roles: rolesRes,
+          studies: studiesRes,
+          prefill,
+        };
+      });
+
+      if (fetchedData) {
+        // Dispatch fetched data if successful
+        dispatch({
+          type: "INIT",
+          accessGroups: fetchedData.accessGroups,
+          roles: fetchedData.roles,
+          studies: fetchedData.studies,
+          prefill: fetchedData.prefill,
+        });
+      } else {
+        // Handle fetch error (message shown by hook)
+        if (accountId) {
+          // If editing failed to load, navigate back
+          navigate(-1);
+        }
+        // Reset state using dispatch to ensure consistency if not navigating back
+        dispatch({
+          // Dispatch action to reset state on error
+          type: "INIT",
+          accessGroups: initialState.accessGroups,
+          roles: initialState.roles,
+          studies: initialState.studies,
+          prefill: initialPrefillState,
+        });
+      }
+    };
+
+    void fetchData();
+  }, [accountId, safeFetchInitialData, navigate]);
 
   /**
    * Assign a role to the user for a given study
@@ -267,18 +310,13 @@ export const AccountsEdit = () => {
    * @returns - the role's database primary key
    */
   const getSelectedRole = (id: number) => {
-    if (rolesSelected.some((x) => x.study == id)) {
-      // get the role selected for this study
-      const roleSelected = rolesSelected.find((x) => x.study == id);
-      return roleSelected?.role ?? 0;
-    }
-    return 0;
+    const roleSelected = rolesSelected.find((x) => x.study == id);
+    return roleSelected?.role ?? 0;
   };
 
   /**
    * Assign a new access group to the user
    * @param id - the access group's database primary key
-   * @param callback
    */
   const addAccessGroup = (id: number): void => {
     dispatch({ type: "SELECT_ACCESS_GROUP", id });
@@ -287,7 +325,6 @@ export const AccountsEdit = () => {
   /**
    * Remove an access group
    * @param id - the access group's database primary key
-   * @param callback
    */
   const removeAccessGroup = (id: number): void => {
     dispatch({ type: "REMOVE_ACCESS_GROUP", id });
@@ -296,7 +333,6 @@ export const AccountsEdit = () => {
   /**
    * Assign a study to the user
    * @param id - the study's database primary key
-   * @param callback
    */
   const addStudy = (id: number): void => {
     dispatch({ type: "SELECT_STUDY", id });
@@ -305,7 +341,6 @@ export const AccountsEdit = () => {
   /**
    * Remove a study
    * @param id - the study's database primary key
-   * @param callback
    */
   const removeStudy = (id: number): void => {
     dispatch({ type: "REMOVE_STUDY", id });
@@ -321,7 +356,7 @@ export const AccountsEdit = () => {
    * POST changes to the backend. Make a request to create an entry if creating
    * a new entry, else make a request to edit an exiting entry
    */
-  const post = async (): Promise<void> => {
+  const post = async () => {
     // Validate required fields
     if (!firstName.trim()) {
       flashMessage(
@@ -370,58 +405,51 @@ export const AccountsEdit = () => {
       }
     }
 
-    // Construct studies data structure with role assignments
-    const studies = studiesSelected.map((s) => {
-      const role = rolesSelected.find((r) => r.study == s.id);
-      return { id: s.id, role: role ? { id: role.role } : {} };
-    });
+    // Construct studies data, ensuring role exists
+    const studiesPayload = studiesSelected
+      .map((s) => {
+        const roleInfo = rolesSelected.find((r) => r.study === s.id);
+        // Only include study if a role is selected
+        return roleInfo ? { id: s.id, role: { id: roleInfo.role } } : null;
+      })
+      .filter((s): s is { id: number; role: { id: number } } => s !== null);
+
+    if (
+      studiesSelected.length > 0 &&
+      studiesPayload.length !== studiesSelected.length
+    ) {
+      flashMessage(
+        <span>Please assign a role to all selected studies.</span>,
+        "danger"
+      );
+      return;
+    }
 
     // Prepare account data for API submission
     const data = {
-      access_groups: accessGroupsSelected,
-      email: email,
-      first_name: firstName,
-      last_name: lastName,
-      phone_number: phoneNumber ?? "", // Always send phone_number, empty string signals deletion
-      studies: studies,
+      access_groups: accessGroupsSelected.map((ag) => ({ id: ag.id })),
+      email: email.trim(),
+      first_name: firstName.trim(),
+      last_name: lastName.trim(),
+      phone_number: phoneNumber?.trim() ?? "",
+      studies: studiesPayload,
     };
 
-    // Determine if this is an edit or create operation
+    // Construct the request body
     const body = {
       app: 1, // Admin Dashboard = 1
       ...(accountId ? { id: accountId, edit: data } : { create: data }),
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
     const url = accountId ? "/admin/account/edit" : "/admin/account/create";
-    await makeRequest(url, opts).then(handleSuccess).catch(handleFailure);
-  };
 
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    // go back to the list view and flash a message
-    navigate(-1);
-    flashMessage(<span>{res.msg}</span>, "success");
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
+    // Use the API handler to submit the request
+    await safeSubmit(() =>
+      httpClient.request<ResponseBody>(url, {
+        method: "POST",
+        data: body,
+      })
     );
-
-    flashMessage(msg, "danger");
   };
 
   /**
@@ -429,14 +457,17 @@ export const AccountsEdit = () => {
    * @returns - the user's access group summary
    */
   const getAccessGroupsSummary = () => {
+    if (accessGroupsSelected.length === 0) {
+      return <i>&nbsp;&nbsp;&nbsp;&nbsp;No access groups assigned.</i>;
+    }
     return accessGroupsSelected.map((ag, i) => {
       // the permissions of each access group
-      const permissions = ag.permissions.map((p, i) => {
+      const permissions = ag.permissions.map((p, idx) => {
         const action = p.action == "*" ? "All Actions" : p.action;
         const resource = p.resource == "*" ? "All Resources" : p.resource;
 
         return (
-          <span key={i}>
+          <span key={`${p.action}-${p.resource}-${String(idx)}`}>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
             {action + " - " + resource}
             <br />
@@ -446,8 +477,8 @@ export const AccountsEdit = () => {
 
       // each access group and its permissions
       return (
-        <span key={i}>
-          {i ? <br /> : ""}
+        <span key={ag.id}>
+          {i > 0 && <br />}
           &nbsp;&nbsp;&nbsp;&nbsp;
           {ag.name}
           <br />
@@ -464,30 +495,31 @@ export const AccountsEdit = () => {
    * @returns - the user's study summary
    */
   const getStudiesSummary = () => {
-    let role: Role | undefined;
-    let permissions: React.ReactElement[];
+    if (studiesSelected.length === 0) {
+      return <i>&nbsp;&nbsp;&nbsp;&nbsp;No studies assigned.</i>;
+    }
 
     return studiesSelected.map((s, i) => {
-      role = {} as Role;
-      permissions = [<React.Fragment key={0} />];
+      let role: Role | undefined;
+      let permissions: React.ReactElement[] = [];
 
       // get the selected role for each study
-      const selectedRole: RoleSelected | undefined = rolesSelected.find(
-        (sr: RoleSelected) => sr.study == s.id
+      const selectedRoleInfo: RoleSelected | undefined = rolesSelected.find(
+        (sr: RoleSelected) => sr.study === s.id
       );
 
-      if (selectedRole) {
+      if (selectedRoleInfo) {
         // get the selected role's data
-        role = roles.find((r) => r.id == selectedRole.role);
+        role = roles.find((r) => r.id === selectedRoleInfo.role);
 
         if (role?.permissions) {
           // list the permissions for each selected role
-          permissions = role.permissions.map((p, j) => {
-            const action = p.action == "*" ? "All Actions" : p.action;
-            const resource = p.resource == "*" ? "All Resources" : p.resource;
+          permissions = role.permissions.map((p, idx) => {
+            const action = p.action === "*" ? "All Actions" : p.action;
+            const resource = p.resource === "*" ? "All Resources" : p.resource;
 
             return (
-              <span key={j}>
+              <span key={`${p.action}-${p.resource}-${String(idx)}`}>
                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                 {action + " - " + resource}
                 <br />
@@ -499,19 +531,17 @@ export const AccountsEdit = () => {
 
       // list each study, its assigned role, and the role's permissions
       return (
-        <span key={i}>
-          {i ? <br /> : ""}
+        <span key={s.id}>
+          {i > 0 && <br />}
           &nbsp;&nbsp;&nbsp;&nbsp;
           {s.name}
           <br />
-          {role && (
-            <span>
-              &nbsp;&nbsp;&nbsp;&nbsp;Role:
-              {role.name ? " " + role.name : " " + "unassigned"}
-              <br />
-              {permissions}
-            </span>
-          )}
+          <span>
+            &nbsp;&nbsp;&nbsp;&nbsp;Role:
+            {role?.name ? ` ${role.name}` : ` [No Role Assigned]`}
+            <br />
+            {permissions.length > 0 && permissions}
+          </span>
         </span>
       );
     });
@@ -562,7 +592,7 @@ export const AccountsEdit = () => {
   ];
 
   const accessGroupsData: TableData[][] = accessGroups.map((ag) => {
-    const selected = accessGroupsSelected.some((sag) => sag.id == ag.id);
+    const selected = accessGroupsSelected.some((sag) => sag.id === ag.id);
     return [
       {
         contents: <span>{ag.name}</span>,
@@ -595,7 +625,7 @@ export const AccountsEdit = () => {
   });
 
   const studiesData = studies.map((s) => {
-    const selected = studiesSelected.some((ss) => ss.id == s.id);
+    const selected = studiesSelected.some((ss) => ss.id === s.id);
     return [
       {
         contents: (
@@ -643,7 +673,7 @@ export const AccountsEdit = () => {
     ];
   });
 
-  if (loading) {
+  if (isLoadingData) {
     return (
       <FormView>
         <Form>
@@ -701,7 +731,7 @@ export const AccountsEdit = () => {
                     }
               }
               feedback=""
-              disabled={accountId ? true : false}
+              disabled={!!accountId}
             />
           </FormField>
           <FormField>
@@ -758,7 +788,7 @@ export const AccountsEdit = () => {
             Name:
             <br />
             &nbsp;&nbsp;&nbsp;&nbsp;
-            {firstName || lastName ? firstName + " " + lastName : <i>Name</i>}
+            {firstName || lastName ? `${firstName} ${lastName}` : <i>Name</i>}
             <br />
             <br />
             Email:
@@ -776,7 +806,9 @@ export const AccountsEdit = () => {
             {getStudiesSummary()}
             <br />
           </FormSummaryText>
-          <FormSummaryButton onClick={post}>{buttonText}</FormSummaryButton>
+          <FormSummaryButton onClick={post} disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : buttonText}
+          </FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>
     </FormView>

@@ -20,7 +20,7 @@ import {
   ResponseBody,
   Role,
 } from "../../types/api";
-import { makeRequest } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -37,6 +37,7 @@ import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { RolesFormPrefill } from "./adminDashboard.types";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 export const RolesEdit = () => {
   const [searchParams] = useSearchParams();
@@ -45,88 +46,125 @@ export const RolesEdit = () => {
 
   const [actions, setActions] = useState<ActionResource[]>([]);
   const [resources, setResources] = useState<ActionResource[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [name, setName] = useState<string>("");
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = useCallback(async (): Promise<RolesFormPrefill> => {
-    const id = roleId;
+  const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
+    useApiHandler<{
+      actions: ActionResource[];
+      resources: ActionResource[];
+      prefill: RolesFormPrefill;
+    }>({
+      errorMessage: "Failed to load role edit data.",
+      showDefaultSuccessMessage: false,
+    });
 
-    // if editing an existing entry, return prefill data, else return empty data
-    return id
-      ? makeRequest(`/admin/role?app=1&id=${String(id)}`).then((response) =>
-          makePrefill(response as unknown as Role[])
-        )
-      : { name: "", permissions: [] };
-  }, [roleId]);
+  const { safeRequest: safeSubmit, isLoading: isSubmitting } =
+    useApiHandler<ResponseBody>({
+      successMessage: (data) => data.msg,
+      errorMessage: (error) => `Failed to save role: ${error.message}`,
+      onSuccess: () => {
+        navigate(-1); // Navigate back on success
+      },
+    });
+
+  // Define addPermission using useCallback to satisfy exhaustive-deps
+  const addPermission = useCallback((): void => {
+    setPermissions((prevPermissions) => {
+      const nextId =
+        prevPermissions.length > 0
+          ? Math.min(0, ...prevPermissions.map((p) => p.id)) - 1
+          : -1;
+      return [...prevPermissions, { id: nextId, action: "", resource: "" }];
+    });
+  }, []);
 
   useEffect(() => {
-    // get all available actions
-    const fetchActions = makeRequest("/admin/action?app=1").then((response) => {
-      setActions(response as unknown as ActionResource[]);
-    });
+    /** Fetches initial static data (actions, resources) and role prefill data if editing. */
+    const fetchData = async () => {
+      const fetchedData = await safeFetchInitialData(async () => {
+        const actionsPromise = httpClient.request<ActionResource[]>(
+          "/admin/action?app=1"
+        );
+        const resourcesPromise = httpClient.request<ActionResource[]>(
+          "/admin/resource?app=1"
+        );
 
-    // get all available resources
-    const fetchResources = makeRequest("/admin/resource?app=1").then(
-      (response) => {
-        setResources(response as unknown as ActionResource[]);
-      }
-    );
+        const id = roleId;
+        let prefillPromise: Promise<Role[] | null>;
+        if (id) {
+          prefillPromise = httpClient.request<Role[]>(
+            `/admin/role?app=1&id=${String(id)}`
+          );
+        } else {
+          prefillPromise = Promise.resolve(null); // No prefill needed if creating
+        }
 
-    // set any form prefill data
-    const prefill = getPrefill().then((prefill: RolesFormPrefill) => {
-      setName(prefill.name);
-      setPermissions(prefill.permissions);
-    });
+        const [actionsRes, resourcesRes, prefillRes] = await Promise.all([
+          actionsPromise,
+          resourcesPromise,
+          prefillPromise,
+        ]);
 
-    // when all promises are complete, hide the loader
-    Promise.all([fetchActions, fetchResources, prefill])
-      .then(() => {
-        setLoading(false);
-      })
-      .catch((error: unknown) => {
-        console.error("Error loading form data:", error);
-        setLoading(false);
+        let prefillData: RolesFormPrefill;
+        if (prefillRes && prefillRes.length > 0) {
+          prefillData = {
+            name: prefillRes[0].name,
+            permissions: prefillRes[0].permissions,
+          };
+        } else if (id && (!prefillRes || prefillRes.length === 0)) {
+          // If editing and no data found, throw error
+          throw new Error("Role not found or empty response.");
+        } else {
+          // Creating new role
+          prefillData = { name: "", permissions: [] };
+        }
+
+        return {
+          actions: actionsRes,
+          resources: resourcesRes,
+          prefill: prefillData,
+        };
       });
-  }, [getPrefill]);
 
-  /**
-   * Map the data returned from the backend to form prefill data
-   * @param res - the response body
-   * @returns - the form prefill data
-   */
-  const makePrefill = (res: Role[]): RolesFormPrefill => {
-    const role = res[0];
-
-    return {
-      name: role.name,
-      permissions: role.permissions,
+      if (fetchedData) {
+        setActions(fetchedData.actions);
+        setResources(fetchedData.resources);
+        const prefillData = fetchedData.prefill;
+        setName(prefillData.name);
+        setPermissions(prefillData.permissions);
+        // Add an initial permission row if creating and no permissions exist
+        if (!roleId && prefillData.permissions.length === 0) {
+          addPermission(); // Call addPermission here
+        }
+      } else {
+        // Handle fetch error (message shown by hook)
+        // Reset state or navigate back
+        setName("");
+        setPermissions([]);
+        if (roleId) {
+          // If editing failed to load, navigate back
+          navigate(-1);
+        } else if (!roleId) {
+          addPermission(); // Still add permission if creating failed
+        }
+      }
     };
-  };
 
-  /**
-   * Add a new permission and pair of action and resource dropdown menus
-   */
-  const addPermission = (): void => {
-    const id = permissions.length
-      ? permissions[permissions.length - 1].id + 1
-      : 0;
-    setPermissions([...permissions, { id: id, action: "", resource: "" }]);
-  };
+    void fetchData();
+  }, [roleId, safeFetchInitialData, addPermission, navigate]);
 
   /**
    * Remove a permission and pair of action and resource dropdown menus
    * @param id - the database primary key
    */
   const removePermission = (id: number): void => {
-    setPermissions(permissions.filter((p: Permission) => p.id !== id));
+    setPermissions((prevPermissions) =>
+      prevPermissions.filter((p: Permission) => p.id !== id)
+    );
   };
 
   /**
@@ -138,8 +176,8 @@ export const RolesEdit = () => {
     const action = actions.find((a: ActionResource) => a.id === actionId);
 
     if (action) {
-      setPermissions(
-        permissions.map((p: Permission) =>
+      setPermissions((prevPermissions) =>
+        prevPermissions.map((p: Permission) =>
           p.id === permissionId ? { ...p, action: action.value } : p
         )
       );
@@ -168,8 +206,8 @@ export const RolesEdit = () => {
     const resource = resources.find((r: ActionResource) => r.id === resourceId);
 
     if (resource) {
-      setPermissions(
-        permissions.map((p: Permission) =>
+      setPermissions((prevPermissions) =>
+        prevPermissions.map((p: Permission) =>
           p.id === permissionId ? { ...p, resource: resource.value } : p
         )
       );
@@ -193,50 +231,46 @@ export const RolesEdit = () => {
    * POST changes to the backend. Make a request to create an entry if creating
    * a new entry, else make a request to edit an existing entry
    */
-  const post = async (): Promise<void> => {
-    const ps = permissions.map((p: Permission) => ({
-      action: p.action,
-      resource: p.resource,
-    }));
+  const post = async () => {
+    // Filter out incomplete permissions and validate name
+    const validPermissions = permissions
+      .filter((p) => p.action && p.resource)
+      .map((p: Permission) => ({
+        action: p.action,
+        resource: p.resource,
+      }));
 
-    const data = { name, permissions: ps };
+    if (!name.trim()) {
+      flashMessage(<span>Role Name is required.</span>, "danger");
+      return;
+    }
+    if (validPermissions.length === 0) {
+      flashMessage(
+        <span>
+          At least one valid permission (Action + Resource) is required.
+        </span>,
+        "danger"
+      );
+      return;
+    }
+
+    // Construct the request body
+    const data = { name: name.trim(), permissions: validPermissions };
     const id = roleId;
     const body = {
       app: 1, // Admin Dashboard = 1
       ...(id ? { id: id, edit: data } : { create: data }),
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/role/edit" : "/admin/role/create";
 
-    await makeRequest(url, opts).then(handleSuccess).catch(handleFailure);
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    // go back to the list view and flash a message
-    navigate(-1);
-    flashMessage(<span>{res.msg}</span>, "success");
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
+    // Use the API handler
+    await safeSubmit(() =>
+      httpClient.request<ResponseBody>(url, {
+        method: "POST",
+        data: body,
+      })
     );
-
-    flashMessage(msg, "danger");
   };
 
   /**
@@ -246,50 +280,58 @@ export const RolesEdit = () => {
   const getPermissionsSummary = (): React.ReactElement => {
     return (
       <React.Fragment>
-        {permissions.map((p: Permission) => {
-          // handle wildcard permissions
-          const action = p.action === "*" ? "All Actions" : p.action;
-          const resource = p.resource === "*" ? "All Resources" : p.resource;
+        {permissions
+          .filter((p) => p.action || p.resource)
+          .map((p: Permission, i) => {
+            // Filter incomplete rows for summary
+            // handle wildcard permissions
+            const action =
+              p.action === "*" ? "All Actions" : p.action || "[No Action]";
+            const resource =
+              p.resource === "*"
+                ? "All Resources"
+                : p.resource || "[No Resource]";
 
-          // don't compile empty permissions that have no action or resource selected
-          return action || resource ? (
-            <span key={p.id}>
-              &nbsp;&nbsp;&nbsp;&nbsp;
-              {action + " - " + resource}
-              <br />
-            </span>
-          ) : (
-            <React.Fragment key={p.id} />
-          );
-        })}
+            return (
+              <span key={`${p.id.toString()}-${i.toString()}`}>
+                {" "}
+                {/* Ensure unique key using index as well */}
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                {action + " - " + resource}
+                <br />
+              </span>
+            );
+          })}
       </React.Fragment>
     );
   };
 
-  const permissionFields = permissions.map((p: Permission, i) => (
-    <FormRow key={i} forceRow={true}>
+  // Use useCallback for permissionFields if dependencies are stable, otherwise useMemo
+  const permissionFields = permissions.map((p: Permission) => (
+    // Using p.id which can be negative for temporary rows
+    <FormRow key={p.id} forceRow={true}>
       <FormField className="mr-4 xl:mr-8">
         <SelectField
-          id={p.id}
+          id={p.id} // Pass permission id
           opts={actions.map((a: ActionResource) => ({
             value: a.id,
             label: a.value,
           }))}
           placeholder="Action"
           callback={selectAction}
-          getDefault={getSelectedAction}
+          getDefault={() => getSelectedAction(p.id)} // Pass id here
         />
       </FormField>
       <FormField>
         <SelectField
-          id={p.id}
+          id={p.id} // Pass permission id
           opts={resources.map((r: ActionResource) => ({
             value: r.id,
             label: r.value,
           }))}
-          placeholder="Permission"
+          placeholder="Permission" // Should likely be "Resource"
           callback={selectResource}
-          getDefault={getSelectedResource}
+          getDefault={() => getSelectedResource(p.id)} // Pass id here
         />
       </FormField>
       <div className="mb-8 flex cursor-pointer items-center px-2 lg:pr-4">
@@ -306,7 +348,7 @@ export const RolesEdit = () => {
 
   const buttonText = roleId ? "Update" : "Create";
 
-  if (loading) {
+  if (isLoadingData) {
     return (
       <FormView>
         <Form>
@@ -358,14 +400,16 @@ export const RolesEdit = () => {
           <FormSummaryText>
             Name:
             <br />
-            &nbsp;&nbsp;&nbsp;&nbsp;{name}
+            &nbsp;&nbsp;&nbsp;&nbsp;{name.trim() || "[No Name]"}
             <br />
             <br />
             Permissions:
             <br />
             {getPermissionsSummary()}
           </FormSummaryText>
-          <FormSummaryButton onClick={post}>{buttonText}</FormSummaryButton>
+          <FormSummaryButton onClick={post} disabled={isSubmitting}>
+            {isSubmitting ? "Saving..." : buttonText}
+          </FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>
     </FormView>

@@ -14,14 +14,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { TextField } from "../fields/textField";
 import { SelectField } from "../fields/selectField";
-import {
-  AccessGroup,
-  ActionResource,
-  App,
-  Permission,
-  ResponseBody,
-} from "../../types/api";
-import { makeRequest } from "../../utils";
+import { AccessGroup, ActionResource, App, Permission } from "../../types/api";
+import { httpClient } from "../../lib/http";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -36,8 +30,8 @@ import { FormSummaryText } from "../containers/forms/formSummaryText";
 import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import CloseIcon from "@mui/icons-material/Close";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { AccessGroupFormPrefill } from "./adminDashboard.types";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 export const AccessGroupsEdit = () => {
   const [searchParams] = useSearchParams();
@@ -47,13 +41,35 @@ export const AccessGroupsEdit = () => {
   const [actions, setActions] = useState<ActionResource[]>([]);
   const [resources, setResources] = useState<ActionResource[]>([]);
   const [apps, setApps] = useState<App[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [name, setName] = useState<string>("");
   const [appSelected, setAppSelected] = useState<App>({} as App);
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
-  const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
+
+  // Hook for handling API requests with loading state and notifications
+  const { safeRequest: safeFetchData, isLoading: isLoadingData } =
+    useApiHandler<{
+      actions: ActionResource[];
+      resources: ActionResource[];
+      apps: App[];
+      prefill: AccessGroupFormPrefill;
+    }>({
+      errorMessage: "Failed to load access group data.",
+      showDefaultSuccessMessage: false,
+    });
+
+  // Hook for handling the form submission
+  const { safeRequest: safeSubmit, isLoading: isSubmitting } = useApiHandler<{
+    msg?: string;
+  }>({
+    successMessage: (data) => data.msg ?? "Access group saved successfully.",
+    errorMessage: (error) => `Failed to save access group: ${error.message}`,
+    onSuccess: () => {
+      // Go back to the list view after successful save
+      navigate(-1);
+    },
+  });
 
   /**
    * Map the data returned from the backend to form prefill data
@@ -69,28 +85,7 @@ export const AccessGroupsEdit = () => {
     };
   };
 
-  /**
-   * Get the form prefill if editing
-   * @returns - the form prefill data
-   */
-  const getPrefill = useCallback(async (): Promise<AccessGroupFormPrefill> => {
-    const id = accessGroupId;
-
-    // if editing an existing entry, return prefill data, else return empty data
-    return id
-      ? makeRequest(`/admin/access-group?app=1&id=${String(id)}`).then((res) =>
-          makePrefill(res as unknown as AccessGroup[])
-        )
-      : {
-          name: "",
-          appSelected: {} as App,
-          permissions: [],
-        };
-  }, [accessGroupId]);
-
-  /**
-   * Add a new permission and pair of action and resource dropdown menus
-   */
+  // Define addPermission - useCallback might be needed if exhaustive-deps complains
   const addPermission = useCallback((): void => {
     setPermissions((prevPermissions) => {
       const id = prevPermissions.length
@@ -101,35 +96,68 @@ export const AccessGroupsEdit = () => {
   }, []);
 
   useEffect(() => {
+    /** Fetches initial data (actions, resources, apps, prefill) */
     const fetchData = async () => {
-      try {
-        // Fetch all available actions
-        const actionsResponse = await makeRequest("/admin/action?app=1");
-        setActions(actionsResponse as unknown as ActionResource[]);
+      const fetchedData = await safeFetchData(async () => {
+        const id = accessGroupId;
 
-        // Fetch all available resources
-        const resourcesResponse = await makeRequest("/admin/resource?app=1");
-        setResources(resourcesResponse as unknown as ActionResource[]);
+        // Define requests
+        const actionsReq = httpClient.request<ActionResource[]>(
+          "/admin/action?app=1"
+        );
+        const resourcesReq = httpClient.request<ActionResource[]>(
+          "/admin/resource?app=1"
+        );
+        const appsReq = httpClient.request<App[]>("/admin/app?app=1");
+        const prefillReq = id
+          ? httpClient.request<AccessGroup[]>(
+              `/admin/access-group?app=1&id=${String(id)}`
+            )
+          : Promise.resolve(null); // Resolve with null if creating new
 
-        // Fetch all available apps
-        const appsResponse = await makeRequest("/admin/app?app=1");
-        setApps(appsResponse as unknown as App[]);
+        // Execute requests in parallel
+        const [
+          actionsResponse,
+          resourcesResponse,
+          appsResponse,
+          prefillResponse,
+        ] = await Promise.all([actionsReq, resourcesReq, appsReq, prefillReq]);
 
-        // Fetch any form prefill data
-        const prefillData = await getPrefill();
+        // Process prefill data
+        const prefillData = prefillResponse
+          ? makePrefill(prefillResponse)
+          : { name: "", appSelected: {} as App, permissions: [] };
+
+        return {
+          actions: actionsResponse,
+          resources: resourcesResponse,
+          apps: appsResponse,
+          prefill: prefillData,
+        };
+      });
+
+      // Update state if data fetching was successful
+      if (fetchedData) {
+        setActions(fetchedData.actions);
+        setResources(fetchedData.resources);
+        setApps(fetchedData.apps);
+        const prefillData = fetchedData.prefill;
         setName(prefillData.name);
         setAppSelected(prefillData.appSelected);
         setPermissions(prefillData.permissions);
 
-        if (!prefillData.permissions.length) addPermission();
-      } finally {
-        // Hide the loader after all requests
-        setLoading(false);
+        if (!accessGroupId && !prefillData.permissions.length) addPermission();
+      } else {
+        // Handle fetch error (message shown by hook)
+        if (accessGroupId) {
+          // If editing failed to load, navigate back
+          navigate(-1);
+        }
       }
     };
 
     void fetchData();
-  }, [getPrefill, addPermission]);
+  }, [accessGroupId, addPermission, safeFetchData, navigate]);
 
   /**
    * Change the selected app when one is chosen from the dropdown menu
@@ -150,83 +178,71 @@ export const AccessGroupsEdit = () => {
    * Remove a permission and pair of action and resource dropdown menus
    * @param id - the database primary key
    */
-  const removePermission = useCallback((id: number): void => {
+  const removePermission = (id: number): void => {
     setPermissions((prevPermissions) =>
       prevPermissions.filter((p) => p.id !== id)
     );
-  }, []);
+  };
 
   /**
    * Select a new action for a given permission
    * @param actionId - the action's database primary key
    * @param permissionId - the permission's database primary key
    */
-  const selectAction = useCallback(
-    (actionId: number, permissionId: number): void => {
-      const action = actions.find((a) => a.id === actionId);
-      if (action) {
-        setPermissions((prevPermissions) =>
-          prevPermissions.map((p) =>
-            p.id === permissionId ? { ...p, action: action.value } : p
-          )
-        );
-      }
-    },
-    [actions]
-  );
+  const selectAction = (actionId: number, permissionId: number): void => {
+    const action = actions.find((a) => a.id === actionId);
+    if (action) {
+      setPermissions((prevPermissions) =>
+        prevPermissions.map((p) =>
+          p.id === permissionId ? { ...p, action: action.value } : p
+        )
+      );
+    }
+  };
 
   /**
    * Get the selected action for a given permission
    * @param id - the permission's database primary key
    * @returns - the action's database primary key
    */
-  const getSelectedAction = useCallback(
-    (id: number): number => {
-      const permission = permissions.find((p) => p.id === id);
-      if (permission) {
-        const action = actions.find((a) => a.value === permission.action);
-        return action ? action.id : 0;
-      }
-      return 0;
-    },
-    [permissions, actions]
-  );
+  const getSelectedAction = (id: number): number => {
+    const permission = permissions.find((p) => p.id === id);
+    if (permission) {
+      const action = actions.find((a) => a.value === permission.action);
+      return action ? action.id : 0;
+    }
+    return 0;
+  };
 
   /**
    * Select a new resource for a given permission
    * @param resourceId - the resource's database primary key
    * @param permissionId - the permission's database primary key
    */
-  const selectResource = useCallback(
-    (resourceId: number, permissionId: number): void => {
-      const resource = resources.find((r) => r.id === resourceId);
-      if (resource) {
-        setPermissions((prevPermissions) =>
-          prevPermissions.map((p) =>
-            p.id === permissionId ? { ...p, resource: resource.value } : p
-          )
-        );
-      }
-    },
-    [resources]
-  );
+  const selectResource = (resourceId: number, permissionId: number): void => {
+    const resource = resources.find((r) => r.id === resourceId);
+    if (resource) {
+      setPermissions((prevPermissions) =>
+        prevPermissions.map((p) =>
+          p.id === permissionId ? { ...p, resource: resource.value } : p
+        )
+      );
+    }
+  };
 
   /**
    * Get the currently selected resource for a given permission
    * @param id - the permission's database primary key
    * @returns - the permission's database primary key
    */
-  const getSelectedResource = useCallback(
-    (id: number): number => {
-      const permission = permissions.find((p) => p.id === id);
-      if (permission) {
-        const resource = resources.find((r) => r.value === permission.resource);
-        return resource ? resource.id : 0;
-      }
-      return 0;
-    },
-    [permissions, resources]
-  );
+  const getSelectedResource = (id: number): number => {
+    const permission = permissions.find((p) => p.id === id);
+    if (permission) {
+      const resource = resources.find((r) => r.value === permission.resource);
+      return resource ? resource.id : 0;
+    }
+    return 0;
+  };
 
   /**
    * Get the action and resource dropdown menus for each permission
@@ -237,6 +253,7 @@ export const AccessGroupsEdit = () => {
       <FormField className="mr-4 xl:mr-8">
         <SelectField
           id={p.id}
+          disabled={isLoadingData || isSubmitting}
           opts={actions.map((a) => ({ value: a.id, label: a.value }))}
           placeholder="Action"
           callback={selectAction}
@@ -246,6 +263,7 @@ export const AccessGroupsEdit = () => {
       <FormField>
         <SelectField
           id={p.id}
+          disabled={isLoadingData || isSubmitting}
           opts={resources.map((r) => ({ value: r.id, label: r.value }))}
           placeholder="Permission"
           callback={selectResource}
@@ -257,7 +275,9 @@ export const AccessGroupsEdit = () => {
           color="warning"
           fontSize="large"
           onClick={() => {
-            removePermission(p.id);
+            if (!isLoadingData && !isSubmitting) {
+              removePermission(p.id);
+            }
           }}
         />
       </div>
@@ -275,43 +295,23 @@ export const AccessGroupsEdit = () => {
     }));
 
     const id = accessGroupId;
-    const data = { app: appSelected.id, name: name, permissions: ps };
+    const payload = { app: appSelected.id, name: name, permissions: ps };
     const body = {
       app: 1, // Admin Dashboard = 1
-      ...(id ? { id: id, edit: data } : { create: data }),
+      ...(id ? { id: id, edit: payload } : { create: payload }),
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
     const url = id ? "/admin/access-group/edit" : "/admin/access-group/create";
 
-    await makeRequest(url, opts).then(handleSuccess).catch(handleFailure);
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    // go back to the list view and flash a message
-    navigate(-1);
-    flashMessage(<span>{res.msg}</span>, "success");
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
-    );
-
-    flashMessage(msg, "danger");
+    // Use safeSubmit from useApiHandler
+    await safeSubmit(async () => {
+      // Define the expected response type for the request
+      const response = await httpClient.request<{ msg?: string }>(url, {
+        method: "POST",
+        data: body,
+      });
+      return response; // Return the data for the hook's onSuccess handler
+    });
   };
 
   /**
@@ -319,22 +319,27 @@ export const AccessGroupsEdit = () => {
    * @returns - the permissions summary
    */
   const getPermissionsSummary = useMemo((): React.ReactElement => {
+    // Filter out permissions that haven't been fully selected yet before mapping
+    const validPermissions = permissions.filter((p) => p.action && p.resource);
+
+    if (validPermissions.length === 0) {
+      return <i>No permissions added yet.</i>;
+    }
+
     return (
       <>
-        {permissions.map((p: Permission) => {
+        {validPermissions.map((p: Permission) => {
           // handle wildcard permissions
           const action = p.action === "*" ? "All Actions" : p.action;
           const resource = p.resource === "*" ? "All Resources" : p.resource;
 
-          // don't compile empty permissions that have no action or resource selected
-          return p.action || p.resource ? (
+          // Now we know action and resource are non-empty
+          return (
             <span key={p.id}>
               &nbsp;&nbsp;&nbsp;&nbsp;
               {action + " - " + resource}
               <br />
             </span>
-          ) : (
-            <React.Fragment key={p.id} />
           );
         })}
       </>
@@ -342,8 +347,9 @@ export const AccessGroupsEdit = () => {
   }, [permissions]);
 
   const buttonText = accessGroupId ? "Update" : "Create";
+  const isProcessing = isLoadingData || isSubmitting; // Combine loading states
 
-  if (loading) {
+  if (isLoadingData) {
     return (
       <FormView>
         <Form>
@@ -362,6 +368,7 @@ export const AccessGroupsEdit = () => {
         <FormRow>
           <FormField>
             <TextField
+              disabled={isProcessing}
               id="name"
               type="text"
               placeholder=""
@@ -379,6 +386,7 @@ export const AccessGroupsEdit = () => {
             <div className="mb-1">App</div>
             <div className="border-light">
               <SelectField
+                disabled={isProcessing}
                 id={accessGroupId || 0}
                 opts={apps.map((a: App) => ({
                   value: a.id,
@@ -398,6 +406,7 @@ export const AccessGroupsEdit = () => {
         <FormRow>
           <FormField>
             <Button
+              disabled={isProcessing}
               variant="tertiary"
               onClick={addPermission}
               className="w-max"
@@ -427,7 +436,9 @@ export const AccessGroupsEdit = () => {
             {getPermissionsSummary}
             <br />
           </FormSummaryText>
-          <FormSummaryButton onClick={post}>{buttonText}</FormSummaryButton>
+          <FormSummaryButton onClick={post} disabled={isProcessing}>
+            {isSubmitting ? "Saving..." : buttonText}
+          </FormSummaryButton>
         </FormSummaryContent>
       </FormSummary>
     </FormView>
