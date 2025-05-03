@@ -11,10 +11,9 @@
  * under the License.
  */
 
-import * as React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react"; // Removed useCallback
 import { ResponseBody, Study } from "../../types/api";
-import { getAccess, makeRequest } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -22,6 +21,8 @@ import { SmallLoader } from "../loader/loader";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
+import { Link } from "react-router-dom";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 const COLUMNS: Column[] = [
   { name: "Acronym", searchable: true, sortable: true, width: 10 },
@@ -37,44 +38,84 @@ const COLUMNS: Column[] = [
   { name: "QI", searchable: false, sortable: true, width: 5 },
   { name: "", searchable: false, sortable: false, width: 10 },
 ];
-import { Link } from "react-router-dom";
-import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 export const Studies = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
   const [studies, setStudies] = useState<Study[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { flashMessage } = useFlashMessages();
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // --- API Handlers ---
+  const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
+    useApiHandler<{
+      studies: Study[];
+      permissions: { create: boolean; edit: boolean; archive: boolean };
+    }>({
+      errorMessage: "Failed to load studies or permissions.",
+      showDefaultSuccessMessage: false,
+    });
+
+  const { safeRequest: safeArchive } = useApiHandler<ResponseBody>({
+    successMessage: (data) => data.msg,
+    errorMessage: (error) => `Failed to archive study: ${error.message}`,
+    onSuccess: () => {
+      setRefreshKey((prev) => prev + 1); // Trigger refresh
+    },
+  });
+  // --------------------
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Check create, edit, and archive permissions
-        await Promise.all([
-          getAccess(1, "Create", "Studies").then(() => {
-            setCanCreate(true);
-          }),
-          getAccess(1, "Edit", "Studies").then(() => {
-            setCanEdit(true);
-          }),
-          getAccess(1, "Archive", "Studies").then(() => {
-            setCanArchive(true);
-          }),
-          makeRequest("/admin/study?app=1").then((data) => {
-            setStudies(data as unknown as Study[]);
-          }),
-        ]);
-      } catch (error) {
-        console.error("Error fetching permissions or data", error);
-      } finally {
-        setLoading(false);
+    const initialFetch = async () => {
+      const fetchedData = await safeFetchInitialData(async () => {
+        const checkPermission = async (
+          appId: number,
+          action: string,
+          resource: string
+        ): Promise<boolean> => {
+          const url = `/auth/researcher/get-access?app=${String(appId)}&action=${action}&resource=${resource}`;
+          try {
+            const res = await httpClient.request<ResponseBody>(url);
+            return res.msg === "Authorized";
+          } catch {
+            return false;
+          }
+        };
+
+        const adminAppId = 1;
+        const createPerm = checkPermission(adminAppId, "Create", "Studies");
+        const editPerm = checkPermission(adminAppId, "Edit", "Studies");
+        const archivePerm = checkPermission(adminAppId, "Archive", "Studies");
+        const studiesReq = httpClient.request<Study[]>("/admin/study?app=1");
+
+        const [canCreateRes, canEditRes, canArchiveRes, studiesRes] =
+          await Promise.all([createPerm, editPerm, archivePerm, studiesReq]);
+
+        return {
+          studies: studiesRes,
+          permissions: {
+            create: canCreateRes,
+            edit: canEditRes,
+            archive: canArchiveRes,
+          },
+        };
+      });
+
+      if (fetchedData) {
+        setStudies(fetchedData.studies);
+        setCanCreate(fetchedData.permissions.create);
+        setCanEdit(fetchedData.permissions.edit);
+        setCanArchive(fetchedData.permissions.archive);
+      } else {
+        // Reset state on error
+        setStudies([]);
+        setCanCreate(false);
+        setCanEdit(false);
+        setCanArchive(false);
       }
     };
-
-    void fetchData();
-  }, []);
+    void initialFetch();
+  }, [safeFetchInitialData, refreshKey]);
 
   /**
    * Get the table's contents
@@ -159,50 +200,17 @@ export const Studies = () => {
    * @param id - the entry's database primary key
    */
   const deleteStudy = async (id: number) => {
-    // Confirm deletion
     const msg = "Are you sure you want to archive this study?";
     if (!confirm(msg)) return;
 
-    // Prepare and send the request
-    const body = { app: 1, id }; // Admin Dashboard = 1
-    await makeRequest("/admin/study/archive", {
-      method: "POST",
-      body: JSON.stringify(body),
-    })
-      .then(handleSuccess)
-      .catch(handleFailure);
-  };
+    const body = { app: 1, id };
 
-  /**
-   * Handle a successful response
-   * @param id - the archived study id
-   */
-  const handleSuccess = () => {
-    flashMessage(<span>Study archived successfully.</span>, "success");
-
-    // show the loading screen
-    setLoading(true);
-
-    // refresh the table's data
-    void makeRequest("/admin/study?app=1").then((studies) => {
-      setStudies(studies as unknown as Study[]);
-      setLoading(false);
-    });
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
+    await safeArchive(() =>
+      httpClient.request<ResponseBody>("/admin/study/archive", {
+        method: "POST",
+        data: body,
+      })
     );
-    flashMessage(msg, "danger");
   };
 
   const tableControl = canCreate ? (
@@ -215,7 +223,7 @@ export const Studies = () => {
 
   const navbar = <AdminNavbar activeView="Studies" />;
 
-  if (loading) {
+  if (isLoadingData) {
     return (
       <ListView>
         {navbar}
