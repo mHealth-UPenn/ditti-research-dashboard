@@ -15,14 +15,14 @@ import React, { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
-import { getAccess, makeRequest } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { Account, ResponseBody } from "../../types/api";
 import { SmallLoader } from "../loader/loader";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { Button } from "../buttons/button";
 import { Link } from "react-router-dom";
-import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 /**
  * Functional component representing Accounts.
@@ -32,6 +32,7 @@ export const Accounts = () => {
   const [canEdit, setCanEdit] = useState(false);
   const [canArchive, setCanArchive] = useState(false);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [columns] = useState<Column[]>([
     {
       name: "Name",
@@ -70,48 +71,83 @@ export const Accounts = () => {
       width: 10,
     },
   ]);
-  const [loading, setLoading] = useState(true);
-  const { flashMessage } = useFlashMessages();
+
+  // API handler for fetching initial data (permissions and accounts)
+  const { safeRequest: safeFetchData, isLoading: isLoadingData } =
+    useApiHandler<{
+      accounts: Account[];
+      permissions: { create: boolean; edit: boolean; archive: boolean };
+    }>({
+      errorMessage: "Failed to load account data or permissions.",
+      showDefaultSuccessMessage: false, // No success message needed for initial load
+    });
+
+  // API handler for archiving an account
+  const { safeRequest: safeArchive } = useApiHandler<ResponseBody>({
+    successMessage: (data) => data.msg,
+    errorMessage: (error) => `Failed to archive account: ${error.message}`,
+    onSuccess: () => {
+      // Trigger a refresh of the account list
+      setRefreshKey((prev) => prev + 1);
+    },
+  });
 
   useEffect(() => {
-    // Check user permissions
-    const fetchPermissions = async () => {
-      try {
-        await getAccess(1, "Create", "Accounts");
-        setCanCreate(true);
-      } catch {
-        setCanCreate(false);
-      }
+    const initialFetch = async () => {
+      const fetchedData = await safeFetchData(async () => {
+        // Define permission check requests
+        // We assume a successful response means access granted, catch handles denial
+        const checkPermission = async (
+          appId: number,
+          action: string,
+          resource: string
+        ): Promise<boolean> => {
+          const url = `/auth/researcher/get-access?app=${String(appId)}&action=${action}&resource=${resource}`;
+          try {
+            // Make GET request and check response message
+            const res = await httpClient.request<ResponseBody>(url); // GET is default
+            return res.msg === "Authorized";
+          } catch {
+            return false; // Access denied or other error
+          }
+        };
 
-      try {
-        await getAccess(1, "Edit", "Accounts");
-        setCanEdit(true);
-      } catch {
-        setCanEdit(false);
-      }
+        const adminAppId = 1; // Admin Dashboard = 1
+        const createPerm = checkPermission(adminAppId, "Create", "Accounts");
+        const editPerm = checkPermission(adminAppId, "Edit", "Accounts");
+        const archivePerm = checkPermission(adminAppId, "Archive", "Accounts");
 
-      try {
-        await getAccess(1, "Archive", "Accounts");
-        setCanArchive(true);
-      } catch {
-        setCanArchive(false);
+        // Define accounts fetch request
+        const accountsReq = httpClient.request<Account[]>(
+          "/admin/account?app=1"
+        );
+
+        // Execute all requests in parallel
+        const [canCreate, canEdit, canArchive, accountsData] =
+          await Promise.all([createPerm, editPerm, archivePerm, accountsReq]);
+
+        // Return data for the hook to handle state updates
+        return {
+          accounts: accountsData,
+          permissions: {
+            create: canCreate,
+            edit: canEdit,
+            archive: canArchive,
+          },
+        };
+      });
+
+      // Update state if fetching was successful
+      if (fetchedData) {
+        setAccounts(fetchedData.accounts);
+        setCanCreate(fetchedData.permissions.create);
+        setCanEdit(fetchedData.permissions.edit);
+        setCanArchive(fetchedData.permissions.archive);
       }
     };
 
-    // Fetch account data
-    const fetchAccounts = async () => {
-      try {
-        const accounts = await makeRequest("/admin/account?app=1");
-        setAccounts(accounts as unknown as Account[]);
-      } catch (error) {
-        console.error("Error fetching accounts:", error);
-      }
-    };
-
-    void Promise.all([fetchPermissions(), fetchAccounts()]).then(() => {
-      setLoading(false);
-    });
-  }, []);
+    void initialFetch();
+  }, [safeFetchData, refreshKey]);
 
   /**
    * Get the table's contents
@@ -204,7 +240,7 @@ export const Accounts = () => {
                   size="sm"
                   className="h-full grow"
                   onClick={() => {
-                    deleteAccount(id);
+                    void deleteAccount(id);
                   }}
                 >
                   Archive
@@ -225,51 +261,18 @@ export const Accounts = () => {
    * Delete a table entry and archive it in the database
    * @param id - the entry's database primary key
    */
-  const deleteAccount = (id: number): void => {
+  const deleteAccount = async (id: number) => {
     const body = { app: 1, id }; // Admin Dashboard = 1
-    const opts = { method: "POST", body: JSON.stringify(body) };
-
     const msg = "Are you sure you want to archive this account?";
 
     if (confirm(msg)) {
-      makeRequest("/admin/account/archive", opts)
-        .then(handleSuccess)
-        .catch(handleFailure);
+      await safeArchive(() =>
+        httpClient.request<ResponseBody>("/admin/account/archive", {
+          method: "POST",
+          data: body,
+        })
+      );
     }
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    flashMessage(<span>{res.msg}</span>, "success");
-    setLoading(true);
-
-    // Refresh the table's data
-    void makeRequest("/admin/account?app=1")
-      .then((accounts) => {
-        setAccounts(accounts as unknown as Account[]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
-    );
-
-    flashMessage(msg, "danger");
   };
 
   // If the user has permission to create, show the create button
@@ -283,7 +286,7 @@ export const Accounts = () => {
 
   const navbar = <AdminNavbar activeView="Accounts" />;
 
-  if (loading) {
+  if (isLoadingData) {
     return (
       <ListView>
         {navbar}
