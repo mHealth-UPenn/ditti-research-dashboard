@@ -15,6 +15,8 @@ import DOMPurify from "isomorphic-dompurify";
 import { StudySubjectModel } from "./types/models";
 import { ResponseBody } from "./types/api";
 import { AttributesByTag, ClassAllowlist } from "./utils.types";
+import { HttpError } from "./lib/http.types";
+import { httpClient } from "./lib/http";
 
 /**
  * Sanitizes HTML content from the Quill editor to prevent XSS attacks
@@ -225,125 +227,43 @@ export function sanitize_quill_html(html: string): string {
 }
 
 /**
- * Makes a request with specified options.
- * @param url - The endpoint URL.
- * @param opts - Request options including method, headers, and body.
- * @returns A promise that resolves to the response body.
- */
-
-export const makeRequest = async (
-  url: string,
-  opts: RequestInit = {}
-): Promise<ResponseBody> => {
-  const jwt = localStorage.getItem("jwt");
-
-  // Set credentials to include to send cookies
-  opts.credentials = "include";
-
-  // Set headers
-  const headers = {
-    ...Object.fromEntries(Object.entries(opts.headers ?? {})),
-    ...(jwt &&
-      !(opts.headers && "Authorization" in opts.headers) && {
-        Authorization: `Bearer ${String(jwt)}`,
-      }),
-  };
-
-  opts.headers = headers;
-
-  // Add additional headers for specific request methods
-  if (["POST", "PUT", "DELETE"].includes(opts.method ?? "")) {
-    const updatedHeaders = {
-      ...Object.fromEntries(Object.entries(opts.headers ?? {})),
-      "Content-Type": "application/json",
-      "X-CSRF-TOKEN": localStorage.getItem("csrfToken") ?? "",
-    };
-
-    opts.headers = updatedHeaders;
-  }
-
-  // Execute the request
-  const response = await fetch(
-    `${String(import.meta.env.VITE_FLASK_SERVER)}${url}`,
-    opts
-  );
-  const body = (await response.json()) as ResponseBody;
-
-  // Store CSRF token for future requests
-  if (response.status === 200) {
-    if (body.csrfAccessToken)
-      localStorage.setItem("csrfToken", body.csrfAccessToken);
-    if (body.jwt) localStorage.setItem("jwt", body.jwt);
-  }
-
-  // Throw an error if the response is not successful
-  if (response.status !== 200) {
-    // Return the original body to maintain compatibility with existing error handling
-    const errorMessage =
-      body.msg || `Request failed with status: ${String(response.status)}`;
-    throw new Error(errorMessage);
-  }
-
-  return body;
-};
-
-/**
- * Downloads a file from a specified URL.
+ * Downloads an Excel file using the configured Axios instance.
  * @param url - The URL of the file to download.
- * @returns A promise that resolves to the filename or an error message.
+ * @returns A promise that resolves to null on success, or an error message string on failure.
  */
 export async function downloadExcelFromUrl(
   url: string
 ): Promise<string | null> {
-  // Fetch the file from the server
   try {
-    const jwt = localStorage.getItem("jwt");
-    const opts: RequestInit = {
+    const response = await httpClient.requestRawResponse<Blob>(url, {
       method: "GET",
-      credentials: "include",
+      responseType: "blob",
       headers: {
-        Authorization: `Bearer ${String(jwt)}`,
         Accept:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       },
-    };
+    });
 
-    const response = await fetch(
-      `${String(import.meta.env.VITE_FLASK_SERVER)}${String(url)}`,
-      opts
-    );
+    // Extract filename safely from Content-Disposition header.
+    const contentDisposition = response.headers[
+      "content-disposition"
+    ] as unknown as string | undefined;
+    let filename = "download.xlsx"; // Default filename
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch data: ${String(response.status)} ${response.statusText}`
-      );
-    }
-
-    // Handle case where no data is found
-    const contentType = response.headers.get("Content-Type");
-    if (contentType?.includes("application/json")) {
-      const jsonResponse = (await response.json()) as ResponseBody;
-      if (jsonResponse.msg.includes("not found")) {
-        return jsonResponse.msg;
+    if (contentDisposition?.includes("filename=")) {
+      const filenamePart = contentDisposition.split("filename=")[1];
+      if (filenamePart) {
+        // Further split and replace safely
+        filename = filenamePart.split(";")[0]?.replace(/"/g, "") || filename;
       }
     }
 
-    // Extract the filename from the "Content-Disposition" header
-    const contentDisposition = response.headers.get("Content-Disposition");
-    let filename = "download.xlsx"; // Default filename
-    if (contentDisposition?.includes("filename=")) {
-      filename = contentDisposition
-        .split("filename=")[1]
-        .split(";")[0]
-        .replace(/"/g, "");
-    }
+    // Type assertion for blob data based on responseType.
+    const blob = response.data;
 
-    // Read the response as a Blob
-    const blob = await response.blob();
-
-    // Create a temporary anchor element to trigger the download
+    // Trigger browser download via a temporary link.
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
+    link.href = URL.createObjectURL(blob); // blob is now known to be Blob
     link.download = filename;
 
     // Append the link to the document and trigger a click event
@@ -353,11 +273,18 @@ export async function downloadExcelFromUrl(
     // Clean up by removing the link element and revoking the object URL
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
+
+    return null; // Success
   } catch (error) {
-    console.error("Error downloading participant data:", error);
+    if (error instanceof HttpError && error.apiError?.data) {
+      const errorData = error.apiError.data as ResponseBody;
+      if (errorData.msg) {
+        return errorData.msg;
+      }
+    }
+
     return "Error downloading participant data.";
   }
-  return null;
 }
 
 /**
@@ -377,7 +304,7 @@ export const getAccess = async (
   let url = `/auth/researcher/get-access?app=${String(app)}&action=${action}&resource=${resource}`;
   if (study) url += `&study=${String(study)}`;
 
-  const res: ResponseBody = await makeRequest(url);
+  const res = await httpClient.request<ResponseBody>(url);
   if (res.msg !== "Authorized") throw new Error("Unauthorized");
 };
 
