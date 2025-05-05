@@ -46,7 +46,6 @@ export const Studies = () => {
   const [studies, setStudies] = useState<Study[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // --- API Handlers ---
   const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
     useApiHandler<{
       studies: Study[];
@@ -63,7 +62,6 @@ export const Studies = () => {
       setRefreshKey((prev) => prev + 1); // Trigger refresh
     },
   });
-  // --------------------
 
   useEffect(() => {
     const initialFetch = async () => {

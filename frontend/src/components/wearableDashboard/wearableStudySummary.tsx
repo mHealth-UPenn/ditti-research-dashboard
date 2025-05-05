@@ -43,7 +43,6 @@ export function WearableStudySummary() {
   const { flashMessage } = useFlashMessages();
   const { studySubjectLoading } = useCoordinatorStudySubjects();
 
-  // --- API Handlers ---
   const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
     useApiHandler<{
       details: Study;
@@ -58,7 +57,6 @@ export function WearableStudySummary() {
     useApiHandler({
       errorMessage: (error) => `Excel Download Failed: ${error.message}`,
     });
-  // --------------------
 
   // Get permissions and study information on load
   useEffect(() => {

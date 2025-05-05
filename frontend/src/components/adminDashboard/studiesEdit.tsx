@@ -60,7 +60,6 @@ export const StudiesEdit = () => {
   const [isQi, setIsQi] = useState<boolean>(false);
   const [expiryError, setExpiryError] = useState<string>("");
 
-  // --- API Handlers ---
   const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
     useApiHandler<StudiesEditFormPrefill | null>({
       // Using null to indicate not found or error during fetch
@@ -76,7 +75,6 @@ export const StudiesEdit = () => {
         navigate(-1); // Navigate back on success
       },
     });
-  // --------------------
 
   useEffect(() => {
     if (studyId === 0) {
