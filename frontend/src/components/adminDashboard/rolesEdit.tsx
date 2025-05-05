@@ -67,7 +67,7 @@ export const RolesEdit = () => {
       successMessage: (data) => data.msg,
       errorMessage: (error) => `Failed to save role: ${error.message}`,
       onSuccess: () => {
-        navigate(-1); // Navigate back on success
+        navigate(-1);
       },
     });
 

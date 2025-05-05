@@ -96,13 +96,12 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   const { safeRequest: safeSubmit, isLoading: isSubmitting } = useApiHandler<
     ResponseBody[]
   >({
-    // Expects array from Promise.all
     successMessage: (data) =>
       data[0]?.msg ?? "Subject details saved successfully.", // Use msg from first response
     errorMessage: (error) => `Failed to save subject details: ${error.message}`,
     onSuccess: () => {
-      fetchStudySubjects(); // Refresh subject list
-      navigate(-1); // Navigate back
+      fetchStudySubjects();
+      navigate(-1);
     },
   });
 

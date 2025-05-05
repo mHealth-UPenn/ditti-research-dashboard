@@ -101,7 +101,6 @@ export const AccessGroups = () => {
     let isMounted = true;
     const fetchData = async () => {
       try {
-        // Check permissions concurrently
         const createPromise = getAccess(1, "Create", "Access Groups")
           .then(() => {
             if (isMounted) setCanCreate(true);
@@ -124,7 +123,6 @@ export const AccessGroups = () => {
             if (isMounted) setCanArchive(false);
           });
 
-        // Fetch initial access groups using the refresh function
         const groupsPromise = refreshAccessGroups();
 
         // Wait for all initial fetches
@@ -249,7 +247,6 @@ export const AccessGroups = () => {
         });
       }).then(() => undefined); // Adapt return type for AsyncButton
     }
-    // Return resolved promise if user cancels confirmation (for AsyncButton)
     return Promise.resolve();
   };
 

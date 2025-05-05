@@ -63,7 +63,6 @@ export const AboutSleepTemplates = () => {
         flashMessage(<span>{res.msg}</span>, "success");
         await refreshTemplates(); // Refresh list after successful archive
       },
-      // onError is handled by the default hook implementation (shows flash message)
     });
 
   const columns: Column[] = [
@@ -134,9 +133,8 @@ export const AboutSleepTemplates = () => {
       }
     };
 
-    void fetchData(); // Fire off the async function
+    void fetchData();
 
-    // Cleanup function to prevent state updates if component unmounts
     return () => {
       isMounted = false;
     };
@@ -177,7 +175,6 @@ export const AboutSleepTemplates = () => {
                 </Button>
               )}
               {canArchive && (
-                // AsyncButton handles its own loading state for the archive action
                 <AsyncButton
                   variant="danger"
                   size="sm"

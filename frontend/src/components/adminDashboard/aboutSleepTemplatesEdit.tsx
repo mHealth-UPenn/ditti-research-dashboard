@@ -58,7 +58,7 @@ export const AboutSleepTemplatesEdit = () => {
     successMessage: (data) => data.msg,
     errorMessage: (error) => `Failed to save template: ${error.message}`,
     onSuccess: () => {
-      navigate(-1); // Navigate back to the list on success
+      navigate(-1);
     },
   });
 

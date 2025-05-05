@@ -82,7 +82,7 @@ export const AudioFiles = () => {
   ];
 
   useEffect(() => {
-    let isMounted = true; // Prevent state updates on unmounted component
+    let isMounted = true;
     // Fetch permissions on mount
     const checkPermissions = async () => {
       const checkPermission = async (
@@ -114,7 +114,6 @@ export const AudioFiles = () => {
         }
       } catch (error) {
         console.error("Error checking permissions:", error);
-        // Handle permission check errors silently or show a generic message
         if (isMounted) {
           setCanCreateAudioFiles(false);
           setCanDeleteAudioFiles(false);

@@ -72,7 +72,7 @@ export const AudioFileUpload = () => {
       successMessage: "All files successfully uploaded.",
       errorMessage: (error) => `Upload process failed: ${error.message}`,
       onSuccess: () => {
-        navigate(-1); // Navigate back on successful completion
+        navigate(-1);
       },
     });
 

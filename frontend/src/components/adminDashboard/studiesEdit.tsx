@@ -72,7 +72,7 @@ export const StudiesEdit = () => {
       successMessage: (data) => data.msg,
       errorMessage: (error) => `Failed to save study: ${error.message}`,
       onSuccess: () => {
-        navigate(-1); // Navigate back on success
+        navigate(-1);
       },
     });
 
@@ -87,7 +87,7 @@ export const StudiesEdit = () => {
       setConsentInformation("");
       setDataSummary("");
       setIsQi(false);
-      return; // Exit useEffect
+      return;
     }
 
     // Fetch prefill data only if editing (studyId is not 0)
@@ -151,7 +151,6 @@ export const StudiesEdit = () => {
    * a new entry, else make a request to edit an existing entry
    */
   const post = async () => {
-    // Basic Validations
     if (!name.trim() || !acronym.trim() || !dittiId.trim() || !email.trim()) {
       flashMessage(
         <span>All fields except Consent/Data Summary are required.</span>,
@@ -164,7 +163,6 @@ export const StudiesEdit = () => {
       return;
     }
 
-    // Construct the request body
     const data = {
       acronym,
       dittiId,

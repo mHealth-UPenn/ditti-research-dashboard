@@ -55,7 +55,7 @@ export const AccountMenu = ({
   const { safeRequest } = useApiHandler<ResponseBody>({
     onSuccess: (res) => {
       flashMessage(<span>{res.msg}</span>, "success");
-      resetForm(); // Reset form and hide menu on success
+      resetForm();
     },
     onError: () => {
       if (editPassword) {

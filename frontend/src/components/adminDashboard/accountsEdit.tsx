@@ -202,7 +202,7 @@ export const AccountsEdit = () => {
       successMessage: (data) => data.msg,
       errorMessage: (error) => `Failed to save account: ${error.message}`,
       onSuccess: () => {
-        navigate(-1); // Navigate back on success
+        navigate(-1);
       },
     });
 
