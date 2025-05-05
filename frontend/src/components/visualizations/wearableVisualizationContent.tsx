@@ -137,6 +137,11 @@ export const WearableVisualizationContent = ({
       );
     }
 
+    // If there is no data to update, exit early
+    if (filteredSleepLogs.length === 0) {
+      return;
+    }
+
     filteredSleepLogs.forEach((sl) => {
       // Create groups for stages data
       if (sl.type === "stages") {
