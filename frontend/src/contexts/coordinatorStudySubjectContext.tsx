@@ -18,7 +18,8 @@ import {
   PropsWithChildren,
   useCallback,
 } from "react";
-import { makeRequest } from "../utils";
+import { httpClient } from "../lib/http";
+import { useApiHandler } from "../hooks/useApiHandler";
 import {
   CoordinatorStudySubjectContextValue,
   CoordinatorStudySubjectProviderProps,
@@ -37,7 +38,6 @@ export function CoordinatorStudySubjectProvider({
   children,
 }: PropsWithChildren<CoordinatorStudySubjectProviderProps>) {
   const [studySubjects, setStudySubjects] = useState<StudySubjectModel[]>([]);
-  const [studySubjectLoading, setStudySubjectLoading] = useState(true);
 
   /**
    * Joins participant data fetched from the database and from AWS by Ditti ID. If a Ditti ID exists in only one data
@@ -113,57 +113,55 @@ export function CoordinatorStudySubjectProvider({
     return result;
   };
 
-  // Fetch data from the database
-  const fetchStudySubjectsDB = useCallback(async (): Promise<
-    StudySubject[]
-  > => {
-    if (APP_ENV === "production" || APP_ENV === "development") {
-      const data = (await makeRequest(
+  // API Handler for fetching and joining study subject data
+  const { safeRequest: safeFetchAndJoin, isLoading: studySubjectLoading } =
+    useApiHandler<StudySubjectModel[]>({
+      // Success data is the joined array
+      showDefaultSuccessMessage: false,
+      errorMessage: (error) =>
+        `Failed to load participant data: ${error.message}. Check coordinator permissions.`,
+      onSuccess: (joinedData) => {
+        setStudySubjects(joinedData);
+      },
+      onError: () => {
+        // Reset data on error
+        setStudySubjects([]);
+      },
+    });
+
+  // Function to trigger the fetch and join process
+  const fetchStudySubjects = useCallback(() => {
+    // Don't fetch if not in prod/dev env
+    if (APP_ENV !== "production" && APP_ENV !== "development") {
+      console.warn(
+        "Participant data fetching disabled in non-prod/dev environment."
+      );
+      setStudySubjects([]); // Clear any existing data
+      return;
+    }
+
+    void safeFetchAndJoin(async () => {
+      // Fetch both datasets in parallel
+      const dbPromise = httpClient.request<StudySubject[]>(
         `/admin/study_subject?app=${String(app)}`
-      )) as unknown as StudySubject[];
-      return data;
-    }
-    return [];
-  }, [app]);
-
-  // Fetch data from AWS
-  const fetchStudySubjectsAWS = useCallback(async (): Promise<UserModel[]> => {
-    if (APP_ENV === "production" || APP_ENV === "development") {
-      const data = (await makeRequest(
+      );
+      const awsPromise = httpClient.request<UserModel[]>(
         `/aws/get-users?app=${String(app)}`
-      )) as unknown as UserModel[];
-      return data;
-    }
-    return [];
-  }, [app]);
+      );
 
-  // Fetch and join data from AWS and the database
-  const fetchStudySubjects = () => {
-    setStudySubjectLoading(true);
-    const promises: [Promise<StudySubject[]>, Promise<UserModel[]>] = [
-      fetchStudySubjectsDB(),
-      fetchStudySubjectsAWS(),
-    ];
+      // Await results - use try/catch within to handle individual fetch errors gracefully
+      // Alternatively, let Promise.all fail and the hook catches it (current approach)
+      const [dbSubjects, awsUsers] = await Promise.all([dbPromise, awsPromise]);
 
-    Promise.all(promises)
-      .then(([studySubjects, studySubjectsAWS]) => {
-        setStudySubjects(
-          joinByDittiIdAndUserPermissionId(studySubjects, studySubjectsAWS)
-        );
-        setStudySubjectLoading(false);
-      })
-      .catch((error: unknown) => {
-        console.error(
-          `Failed to fetch participants: ${String(
-            error
-          )}. Check coordinator permissions.`
-        );
-        setStudySubjectLoading(false);
-      });
-  };
+      // Join the results
+      return joinByDittiIdAndUserPermissionId(dbSubjects, awsUsers);
+    });
+  }, [app, safeFetchAndJoin]); // Depend on app and the stable safe function
 
   // Fetch study subjects on load
-  useEffect(fetchStudySubjects, [fetchStudySubjectsAWS, fetchStudySubjectsDB]);
+  useEffect(() => {
+    fetchStudySubjects();
+  }, [fetchStudySubjects]); // fetchStudySubjects is memoized
 
   /**
    * Get a study subject by Ditti ID from fetched data.
