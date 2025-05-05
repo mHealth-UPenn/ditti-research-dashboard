@@ -25,6 +25,7 @@ frontend/yarn-error.log*
 .vscode/settings.json
 .cursor/**/*
 env/**/*
+env312/**/*
 *.env
 *logfile
 
