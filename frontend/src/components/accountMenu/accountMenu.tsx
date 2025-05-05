@@ -11,17 +11,17 @@
  * under the License.
  */
 
-import { useState, useCallback } from "react";
-import { ResponseBody } from "../../types/api";
+import { useState } from "react";
 import { TextField } from "../fields/textField";
 import { formatPhoneNumber } from "../../utils";
-import { httpClient } from "../../lib/http";
 import { AsyncButton } from "../buttons/asyncButton";
 import { Button } from "../buttons/button";
 import { useAuth } from "../../hooks/useAuth";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
-import { useApiHandler } from "../../hooks/useApiHandler";
 import { AccountMenuProps, PasswordError } from "./accountMenu.types";
+import { useApiHandler } from "../../hooks/useApiHandler";
+import { httpClient } from "../../lib/http";
+import { HttpError } from "../../lib/http.types";
 
 /**
  * Account Menu component for managing user account details and password
@@ -52,20 +52,93 @@ export const AccountMenu = ({
   const { researcherLogout } = useAuth();
   const { flashMessage } = useFlashMessages();
 
-  const { safeRequest } = useApiHandler<ResponseBody>({
-    onSuccess: (res) => {
-      flashMessage(<span>{res.msg}</span>, "success");
+  // Handler for editing account details
+  const accountDetailsHandler = useApiHandler({
+    successMessage: "Account details updated successfully.",
+    errorMessage: (error) => {
+      let message = "Failed to update account details. Please try again.";
+      if (error instanceof HttpError && error.apiError?.data) {
+        const errorData = error.apiError.data as { msg?: string };
+        message = errorData.msg ?? error.message;
+      } else {
+        message = error.message;
+      }
+      return message;
+    },
+    onSuccess: () => {
       resetForm();
+      hideMenu();
     },
     onError: () => {
-      if (editPassword) {
-        // Keep password edit open if change fails
-      } else {
-        setEdit(false);
-      }
+      // Keep the edit form open on error
+      setEdit(true);
     },
   });
 
+  // Handler for changing password
+  const passwordHandler = useApiHandler({
+    successMessage: "Password changed successfully.",
+    errorMessage: (error) => {
+      let message: string;
+      let errorCode: string | undefined;
+      let msgElement: React.ReactElement;
+
+      if (error instanceof HttpError && error.apiError) {
+        const errorData = error.apiError.data as {
+          msg?: string;
+          error_code?: string;
+        };
+        message = errorData.msg ?? error.message;
+        errorCode = errorData.error_code;
+      } else {
+        message = error.message;
+      }
+
+      // Custom formatting based on error code
+      if (errorCode) {
+        if (
+          errorCode.includes("AUTH_") ||
+          errorCode === "SESSION_EXPIRED" ||
+          errorCode === "FORBIDDEN"
+        ) {
+          msgElement = (
+            <span>
+              <b>Authentication Error</b>
+              <br />
+              {message}
+            </span>
+          );
+        } else {
+          msgElement = <span>{message}</span>;
+        }
+      } else {
+        msgElement = (
+          <span>
+            <b>An unexpected error occurred</b>
+            <br />
+            {message}
+          </span>
+        );
+      }
+
+      // Manually call flashMessage here with the custom element
+      flashMessage(msgElement, "danger");
+
+      // Return empty string as errorMessage expects string, and disable default message
+      return "";
+    },
+    onSuccess: () => {
+      resetForm();
+      hideMenu();
+    },
+    onError: () => {
+      // Keep the password form open on error
+      setEditPassword(true);
+    },
+    showDefaultErrorMessage: false,
+  });
+
+  // Handle phone number change with formatting
   const handlePhoneNumberChange = (value: string) => {
     const formattedNumber = formatPhoneNumber(value);
     setPhoneNumber(formattedNumber);
@@ -81,29 +154,10 @@ export const AccountMenu = ({
   };
 
   /**
-   * Resets the form state to initial prefill values and closes the menu.
+   * Make a POST request with account detail changes
    */
-  const resetForm = useCallback(() => {
-    setFirstName(prefill.firstName);
-    setLastName(prefill.lastName);
-    setEmail(prefill.email);
-    setPhoneNumber(prefill.phoneNumber ?? "");
-    setPhoneNumberError("");
-
-    setCurrentPassword("");
-    setPasswordValue("");
-    setConfirmPasswordValue("");
-    setPasswordError(null);
-
-    setEdit(false);
-    setEditPassword(false);
-    hideMenu();
-  }, [prefill, hideMenu]);
-
-  /**
-   * Validates and submits account detail changes.
-   */
-  const post = (): Promise<void> => {
+  const post = async () => {
+    // Validate required fields
     if (!firstName.trim()) {
       flashMessage(
         <span>
@@ -111,7 +165,7 @@ export const AccountMenu = ({
         </span>,
         "danger"
       );
-      return Promise.resolve();
+      return;
     }
 
     if (!lastName.trim()) {
@@ -121,7 +175,7 @@ export const AccountMenu = ({
         </span>,
         "danger"
       );
-      return Promise.resolve();
+      return;
     }
 
     if (!email.trim()) {
@@ -131,7 +185,7 @@ export const AccountMenu = ({
         </span>,
         "danger"
       );
-      return Promise.resolve();
+      return;
     }
 
     // Validate phone number format if provided
@@ -146,28 +200,29 @@ export const AccountMenu = ({
           </span>,
           "danger"
         );
-        return Promise.resolve();
+        return;
       }
     }
 
-    return safeRequest(async () => {
-      const body = {
-        app: 2,
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        phone_number: phoneNumber,
-      };
-      return httpClient.request<ResponseBody>("/db/edit-account-details", {
+    const body = {
+      app: 2,
+      email,
+      first_name: firstName,
+      last_name: lastName,
+      phone_number: phoneNumber, // Will be properly formatted or empty string
+    };
+
+    await accountDetailsHandler.safeRequest(() =>
+      httpClient.request("/db/edit-account-details", {
         method: "POST",
         data: body,
-      });
-    }).then(() => undefined); // Adapt return type for AsyncButton
+      })
+    );
   };
 
   /**
-   * Validates password fields.
-   * @returns A password error code or null if validation passes.
+   * Validate password requirements
+   * @returns A password error or null if validation passes
    */
   const validatePassword = (): PasswordError => {
     // Check if passwords match
@@ -185,34 +240,34 @@ export const AccountMenu = ({
   };
 
   /**
-   * Validates and submits password change request.
+   * Attempt to set the password and handle success/failure using useApiHandler
    */
-  const trySetPassword = (): Promise<void> => {
+  const trySetPassword = async () => {
+    // Clear any previous *local* validation errors
     setPasswordError(null);
 
-    // Validate password
+    // Perform local validation first
     const error = validatePassword();
     if (error) {
       setPasswordError(error);
       // Display the validation error directly through the flash message
-      // instead of throwing an error
       flashMessage(<span>{getErrorMessage(error)}</span>, "danger");
-      return Promise.resolve();
+      // Do not proceed with the API call if local validation fails
+      return;
     }
 
-    return safeRequest(async () => {
-      const body: Record<string, string> = {
-        newPassword: passwordValue,
-        previousPassword: currentPassword,
-      };
-      return httpClient.request<ResponseBody>(
-        "/auth/researcher/change-password",
-        {
-          method: "POST",
-          data: body,
-        }
-      );
-    }).then(() => undefined); // Adapt return type for AsyncButton
+    // Prepare request body
+    const body: Record<string, string> = {
+      newPassword: passwordValue,
+      previousPassword: currentPassword,
+    };
+
+    await passwordHandler.safeRequest(() =>
+      httpClient.request("/auth/researcher/change-password", {
+        method: "POST",
+        data: body,
+      })
+    );
   };
 
   /**
@@ -230,7 +285,29 @@ export const AccountMenu = ({
   };
 
   /**
-   * Gets error feedback message for password input fields based on validation state.
+   * Reset the form state to initial values without submitting any changes
+   */
+  const resetForm = () => {
+    // Reset account details to prefill values
+    setFirstName(prefill.firstName);
+    setLastName(prefill.lastName);
+    setEmail(prefill.email);
+    setPhoneNumber(prefill.phoneNumber ?? "");
+    setPhoneNumberError("");
+
+    // Reset password fields
+    setCurrentPassword("");
+    setPasswordValue("");
+    setConfirmPasswordValue("");
+    setPasswordError(null);
+
+    // Exit edit modes
+    setEdit(false);
+    setEditPassword(false);
+  };
+
+  /**
+   * Get error feedback message for password fields
    */
   const getPasswordErrorFeedback = (errorType: PasswordError): string => {
     return errorType ? getErrorMessage(errorType) : "";
