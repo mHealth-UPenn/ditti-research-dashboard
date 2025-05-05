@@ -12,8 +12,8 @@
  */
 
 import { useState, useEffect } from "react";
-import { Study } from "../../types/api";
-import { getAccess, makeRequest } from "../../utils";
+import { Study, ResponseBody } from "../../types/api";
+import { httpClient } from "../../lib/http";
 import { SmallLoader } from "../loader/loader";
 import { StudySubjects } from "./studySubjects";
 import { Workbook } from "exceljs";
@@ -30,55 +30,90 @@ import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
 import { StudyContactModel } from "../../types/models";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 export const StudySummary = () => {
   const [canCreate, setCanCreate] = useState(false);
   const [canViewTaps, setCanViewTaps] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContactModel[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const { studiesLoading, study } = useStudies();
   const { dataLoading, taps, audioTaps } = useDittiData();
+  const { flashMessage } = useFlashMessages();
+
+  // API Handler for component-specific data (perms, contacts)
+  const {
+    safeRequest: safeFetchComponentData,
+    isLoading: isLoadingComponentData,
+  } = useApiHandler<{
+    permissions: { create: boolean; viewTaps: boolean };
+    contacts: StudyContactModel[];
+  }>({
+    errorMessage: "Failed to load study permissions or contacts.",
+    showDefaultSuccessMessage: false,
+  });
 
   useEffect(() => {
     if (study) {
-      // check whether the user can enroll new subjects
-      const promises: Promise<void>[] = [];
-      promises.push(
-        getAccess(2, "Create", "Participants", study.id)
-          .then(() => {
-            setCanCreate(true);
-          })
-          .catch(() => {
-            setCanCreate(false);
-          })
-      );
+      const initialFetch = async () => {
+        const fetchedData = await safeFetchComponentData(async () => {
+          const checkPermission = async (
+            appId: number,
+            action: string,
+            resource: string,
+            studyId: number
+          ): Promise<boolean> => {
+            const url = `/auth/researcher/get-access?app=${String(appId)}&action=${action}&resource=${resource}&study=${String(studyId)}`;
+            try {
+              const res = await httpClient.request<ResponseBody>(url);
+              return res.msg === "Authorized";
+            } catch {
+              return false;
+            }
+          };
 
-      promises.push(
-        getAccess(2, "View", "Taps", study.id)
-          .then(() => {
-            setCanViewTaps(true);
-          })
-          .catch(() => {
-            setCanViewTaps(false);
-          })
-      );
+          const dittiAppId = 2; // Ditti App = 2
+          const createPerm = checkPermission(
+            dittiAppId,
+            "Create",
+            "Participants",
+            study.id
+          );
+          const viewTapsPerm = checkPermission(
+            dittiAppId,
+            "View",
+            "Taps",
+            study.id
+          );
+          const contactsReq = httpClient.request<StudyContactModel[]>(
+            `/db/get-study-contacts?app=${String(dittiAppId)}&study=${String(study.id)}`
+          );
 
-      // get other accounts that have access to this study
-      promises.push(
-        makeRequest(
-          `/db/get-study-contacts?app=2&study=${String(study.id)}`
-        ).then((contacts: unknown) => {
-          setStudyContacts(contacts as StudyContactModel[]);
-        })
-      );
+          const [canCreateRes, canViewTapsRes, contactsRes] = await Promise.all(
+            [createPerm, viewTapsPerm, contactsReq]
+          );
 
-      // when all promises resolve, hide the loader
-      void Promise.all(promises).then(() => {
-        setLoading(false);
-      });
+          return {
+            permissions: { create: canCreateRes, viewTaps: canViewTapsRes },
+            contacts: contactsRes,
+          };
+        });
+
+        if (fetchedData) {
+          setCanCreate(fetchedData.permissions.create);
+          setCanViewTaps(fetchedData.permissions.viewTaps);
+          setStudyContacts(fetchedData.contacts);
+        } else {
+          // Reset state on error (error message shown by hook)
+          setCanCreate(false);
+          setCanViewTaps(false);
+          setStudyContacts([]);
+        }
+      };
+      void initialFetch();
     }
-  }, [study]);
+  }, [study, safeFetchComponentData]);
 
   /**
    * Download all of the study's data in excel format
@@ -114,41 +149,61 @@ export const StudySummary = () => {
     const data = tapsData
       .concat(audioTapsData)
       .sort((a, b) => {
-        if (a[1] > b[1]) return 1;
-        else if (a[1] < b[1]) return -1;
-        else return 0;
+        // Ensure dates are compared correctly
+        const dateA = a[1] instanceof Date ? a[1].getTime() : 0;
+        const dateB = b[1] instanceof Date ? b[1].getTime() : 0;
+        return dateA - dateB;
       })
       .sort((a, b) => {
-        if (a[0] > b[0]) return 1;
-        else if (a[0] < b[0]) return -1;
-        else return 0;
+        // Sort by Ditti ID as secondary key
+        const idA = typeof a[0] === "string" ? a[0] : "";
+        const idB = typeof b[0] === "string" ? b[0] : "";
+        return idA.localeCompare(idB);
       });
 
     sheet.columns = [
-      { header: "Ditti ID", width: 10 },
-      { header: "Taps", width: 20 },
-      { header: "Timezone", width: 30 },
-      { header: "Audio Tap Action", width: 15 },
-      { header: "Audio File Title", width: 20 },
+      { header: "Ditti ID", width: 10, key: "dittiId" },
+      {
+        header: "Taps",
+        width: 20,
+        key: "time",
+        style: { numFmt: "mm/dd/yyyy hh:mm:ss" },
+      },
+      { header: "Timezone", width: 30, key: "timezone" },
+      { header: "Audio Tap Action", width: 15, key: "action" },
+      { header: "Audio File Title", width: 20, key: "audioFileTitle" },
     ];
 
-    sheet.getColumn("B").numFmt = "DD/MM/YYYY HH:mm:ss";
-
-    // add data to the workbook
+    // Add data to the workbook
     sheet.addRows(data);
 
     // write the workbook to a blob
-    void workbook.xlsx.writeBuffer().then((data) => {
-      const blob = new Blob([data], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    void workbook.xlsx
+      .writeBuffer()
+      .then((buffer) => {
+        const blob = new Blob([buffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        // download the blob
+        saveAs(blob, `${fileName}.xlsx`);
+      })
+      // Explicitly type the caught error as unknown
+      .catch((err: unknown) => {
+        console.error("Error generating Excel file:", err);
+        // Use flashMessage directly for client-side error
+        const message = err instanceof Error ? err.message : "Unknown error";
+        flashMessage(
+          <span>Failed to generate Excel file: {message}</span>,
+          "danger"
+        );
       });
-
-      // download the blob
-      saveAs(blob, fileName + ".xlsx");
-    });
   };
 
-  if (loading || studiesLoading || dataLoading) {
+  // Combine all loading states
+  const combinedLoading =
+    isLoadingComponentData || studiesLoading || dataLoading;
+
+  if (combinedLoading) {
     return (
       <ViewContainer>
         <Card width="md">
