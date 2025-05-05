@@ -13,11 +13,11 @@
 
 import { useState, ChangeEvent, createRef } from "react";
 import { TextField } from "../fields/textField";
-import { makeRequest } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { SelectField } from "../fields/selectField";
 import { RadioField } from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
 import { FormTitle } from "../text/formTitle";
@@ -37,6 +37,8 @@ import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useNavigate } from "react-router-dom";
 import { FileMetadata } from "./dittiApp.types";
+import { ResponseBody } from "../../types/api";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 export const AudioFileUpload = () => {
   const [category, setCategory] = useState("");
@@ -49,7 +51,6 @@ export const AudioFileUpload = () => {
   const [files, setFiles] = useState<FileMetadata[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number[]>([]);
-  const [uploading, setUploading] = useState(false);
   const [canUpload, setCanUpload] = useState(false);
   const [categoryFeedback, setCategoryFeedback] = useState<string>("");
   const [availabilityFeedback, setAvailabilityFeedback] = useState<string>("");
@@ -66,25 +67,39 @@ export const AudioFileUpload = () => {
   const existingFiles = new Set();
   audioFiles.forEach((af) => existingFiles.add(af.fileName));
 
+  // Single handler to manage the entire multi-step upload process
+  const { safeRequest: safeUploadProcess, isLoading: isUploading } =
+    useApiHandler({
+      successMessage: "All files successfully uploaded.",
+      errorMessage: (error) => `Upload process failed: ${error.message}`,
+      onSuccess: () => {
+        navigate(-1); // Navigate back on successful completion
+      },
+    });
+
   /**
    * Get a set of presigned URLs for uploading audio files to S3.
    * @returns string[]: The array of presigned URLs
    */
-  const getPresignedUrls = async () => {
-    const files = selectedFiles.map((file) => ({
+  const getPresignedUrls = async (): Promise<string[]> => {
+    const filesData = selectedFiles.map((file) => ({
       key: file.name,
       type: file.type,
     }));
 
     try {
-      const res = await makeRequest("/aws/audio-file/get-presigned-urls", {
-        method: "POST",
-        body: JSON.stringify({ app: 2, files }),
-      });
-      return (res as unknown as { urls: string[] }).urls;
+      const res = await httpClient.request<{ urls: string[] }>(
+        "/aws/audio-file/get-presigned-urls",
+        {
+          method: "POST",
+          data: { app: 2, files: filesData }, // Use data property
+        }
+      );
+      return res.urls;
     } catch (error) {
-      const e = error as { msg: string };
-      throw new AxiosError(e.msg);
+      // Error will be caught by safeUploadProcess
+      console.error("Failed to get presigned URLs:", error);
+      throw error; // Re-throw the original error
     }
   };
 
@@ -95,9 +110,8 @@ export const AudioFileUpload = () => {
    * @param urls string[]
    */
   const uploadFiles = async (urls: string[]) => {
-    const progressArray: number[] = Array.from(
-      new Array(selectedFiles.length).fill(0)
-    ) as number[];
+    // Explicitly type the array
+    const progressArray: number[] = Array<number>(selectedFiles.length).fill(0);
     setUploadProgress(progressArray);
 
     const uploadPromises = selectedFiles.map((file, index) => {
@@ -106,63 +120,71 @@ export const AudioFileUpload = () => {
           "Content-Type": file.type,
         },
         onUploadProgress: (progressEvent) => {
-          let progress;
-
+          let progress = 0; // Default to 0
           if (progressEvent.total) {
-            progress = (progressEvent.loaded / progressEvent.total) * 100;
-          } else {
-            progress = 100;
+            progress = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            );
+          } else if (progressEvent.loaded > 0) {
+            // If total is unknown but we loaded some bytes, estimate as 100?
+            // Or handle differently - for now, let's cap at 99 if total unknown
+            progress = 99;
           }
-
           progressArray[index] = progress;
-          setUploadProgress([...progressArray]);
+          setUploadProgress([...progressArray]); // Update state immutably
         },
       });
     });
 
-    const responses = await Promise.all(uploadPromises);
-    const errors = responses.filter((res) => res.status !== 200);
-
-    if (errors.length) {
-      const error = errors
-        .map((res) => {
-          // Type assertion for data object
-          const data = res.data as Record<string, unknown> | undefined;
-          // Safely access error property and ensure it's a string
-          const errorMessage =
-            typeof data?.error === "string" ? data.error : "Unknown error";
-          return errorMessage;
-        })
-        .join("\n");
-      throw Error(error);
+    try {
+      await Promise.all(uploadPromises);
+      // If all succeed, ensure progress is 100%
+      setUploadProgress(Array(selectedFiles.length).fill(100));
+    } catch (error) {
+      // Error will be caught by safeUploadProcess
+      console.error("Error during file upload:", error);
+      // Axios errors might need specific parsing here if not handled by global interceptor
+      throw error; // Re-throw the original error (could be AxiosError)
     }
   };
 
   const insertFiles = async (): Promise<void> => {
+    const selectedStudyAcronyms = studies
+      .filter((s) => selectedStudies.has(s.id))
+      .map((s) => s.acronym);
+
+    // Ensure files data matches selectedFiles length
+    if (files.length !== selectedFiles.length) {
+      throw new Error("Mismatch between file metadata and selected files.");
+    }
+
+    const dataToInsert = selectedFiles.map((file, i) => ({
+      availability: availability === "All Users" ? "all" : dittiId,
+      category: category,
+      fileName: file.name,
+      // Use selected acronyms, default to ["all"] if none selected or "All Studies" chosen
+      studies:
+        selectedStudyAcronyms.length > 0 && studiesRadio !== "All Studies"
+          ? selectedStudyAcronyms
+          : ["all"],
+      length: files[i].length,
+      title: files[i].title,
+    }));
+
+    const body = {
+      app: 2, // Ditti Dashboard = 2
+      create: dataToInsert,
+    };
+
     try {
-      const selected = studies
-        .filter((s) => selectedStudies.has(s.id))
-        .map((s) => s.acronym);
-
-      const data = selectedFiles.map((file, i) => ({
-        availability: availability === "All Users" ? "all" : dittiId,
-        category: category,
-        fileName: file.name,
-        studies: selected.length ? selected : ["all"],
-        length: files[i].length,
-        title: files[i].title,
-      }));
-
-      const body = {
-        app: 2, // Ditti Dashboard = 2
-        create: data,
-      };
-
-      const opts = { method: "POST", body: JSON.stringify(body) };
-      await makeRequest("/aws/audio-file/create", opts);
+      await httpClient.request<ResponseBody>("/aws/audio-file/create", {
+        method: "POST",
+        data: body, // Use data property
+      });
     } catch (error) {
-      const e = error as { msg: string };
-      throw new AxiosError(e.msg);
+      // Error will be caught by safeUploadProcess
+      console.error("Failed to insert file records:", error);
+      throw error; // Re-throw original error
     }
   };
 
@@ -173,47 +195,62 @@ export const AudioFileUpload = () => {
    * @returns
    */
   const handleUpload = async () => {
-    // Validate the form
-    let isValid = true;
+    // Reset previous feedback
     setCategoryFeedback("");
     setAvailabilityFeedback("");
     setStudiesFeedback("");
 
-    if (category === "") {
-      setCategoryFeedback("Enter a category.");
+    // Validate form fields
+    let isValid = true;
+    if (category.trim() === "") {
+      setCategoryFeedback("Category is required.");
       isValid = false;
     }
-    if (availability === "Individual" && dittiId === "") {
-      setAvailabilityFeedback("Enter a Ditti ID or select All Users");
+    if (availability === "Individual" && dittiId.trim() === "") {
+      setAvailabilityFeedback(
+        "Ditti ID is required for Individual availability."
+      );
       isValid = false;
     }
-    if (studiesRadio === "Select Studies" && !selectedStudies.size) {
-      setStudiesFeedback("Select at least one study or All Studies.");
+    if (studiesRadio === "Select Studies" && selectedStudies.size === 0) {
+      setStudiesFeedback(
+        "At least one study must be selected, or choose 'All Studies'."
+      );
       isValid = false;
     }
-    if (selectedFiles.length === 0 || !isValid) {
-      flashMessage(<span>Please fix errors in the form.</span>, "danger");
+    if (selectedFiles.length === 0) {
+      // Use 'danger' variant for form validation feedback
+      flashMessage(<span>Please select files to upload.</span>, "danger");
+      isValid = false;
+    }
+    // Check if any selected file already exists
+    if (files.some((file) => file.exists)) {
+      flashMessage(
+        <span>
+          One or more selected files already exist. Please remove them or
+          rename.
+        </span>,
+        "danger"
+      );
+      isValid = false;
+    }
+
+    if (!isValid) {
+      flashMessage(
+        <span>Please correct the errors in the form.</span>,
+        "danger"
+      );
       return;
     }
 
-    setUploading(true);
-
-    try {
+    // Execute the multi-step process using the API handler
+    await safeUploadProcess(async () => {
+      // Reset progress at the start of a new attempt
+      setUploadProgress([]);
       const urls = await getPresignedUrls();
       await uploadFiles(urls);
       await insertFiles();
-      navigate(-1);
-      flashMessage(<span>All files successfully uploaded.</span>, "success");
-    } catch (error) {
-      const axiosError = error as AxiosError;
-      console.error("Error uploading files:", error);
-      flashMessage(
-        <span>Error uploading files: {axiosError.message}</span>,
-        "danger"
-      );
-    } finally {
-      setUploading(false);
-    }
+    });
   };
 
   const selectStudy = (id: number): void => {
@@ -524,7 +561,6 @@ export const AudioFileUpload = () => {
           <FormSummaryText>
             Files:
             <br />
-            {/* &nbsp;&nbsp;&nbsp;&nbsp;{title} */}
             {files.map((file, i) => (
               <span key={i}>
                 {Boolean(i) && (
@@ -571,8 +607,8 @@ export const AudioFileUpload = () => {
           </FormSummaryText>
           <div>
             {
-              // Upload progres bar
-              uploading && (
+              // Upload progress bar
+              isUploading && (
                 <div className="mb-4 flex w-full flex-col">
                   <div className="mb-1 flex w-full justify-between">
                     <span>Uploading...</span>
@@ -591,9 +627,11 @@ export const AudioFileUpload = () => {
             }
             <FormSummaryButton
               onClick={handleUpload}
-              disabled={!canUpload || APP_ENV === "demo"}
+              disabled={!canUpload || isUploading || APP_ENV === "demo"}
             >
-              Upload
+              {isUploading
+                ? `Uploading... ${percentComplete.toString()}%`
+                : "Upload"}
             </FormSummaryButton>
             {APP_ENV === "demo" && (
               <FormSummarySubtext>
