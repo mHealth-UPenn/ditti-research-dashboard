@@ -14,24 +14,33 @@
 import { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
-import { getAccess, makeRequest } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
-import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useDittiData } from "../../hooks/useDittiData";
+import { ResponseBody } from "../../types/api";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 export const AudioFiles = () => {
   const [canCreateAudioFiles, setCanCreateAudioFiles] =
     useState<boolean>(false);
   const [canDeleteAudioFiles, setCanDeleteAudioFiles] =
     useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
 
   const { dataLoading, audioFiles, refreshAudioFiles } = useDittiData();
-  const { flashMessage } = useFlashMessages();
+
+  // Handler for deleting audio files
+  const { safeRequest: safeDelete, isLoading: isDeleting } =
+    useApiHandler<ResponseBody>({
+      successMessage: "Audio file deleted successfully.", // Assuming success
+      errorMessage: (error) => `Failed to delete audio file: ${error.message}`,
+      onSuccess: async () => {
+        await refreshAudioFiles(); // Refresh data via context hook
+      },
+    });
 
   const columns: Column[] = [
     {
@@ -73,70 +82,66 @@ export const AudioFiles = () => {
   ];
 
   useEffect(() => {
-    const promises: Promise<void>[] = [];
-    // Get whether user can upload audio files
-    promises.push(
-      getAccess(2, "Create", "Participants")
-        .then(() => {
-          setCanCreateAudioFiles(true);
-        })
-        .catch(() => {
+    let isMounted = true; // Prevent state updates on unmounted component
+    // Fetch permissions on mount
+    const checkPermissions = async () => {
+      const checkPermission = async (
+        appId: number,
+        action: string,
+        resource: string
+      ): Promise<boolean> => {
+        const url = `/auth/researcher/get-access?app=${String(appId)}&action=${action}&resource=${resource}`;
+        try {
+          const res = await httpClient.request<ResponseBody>(url);
+          return res.msg === "Authorized";
+        } catch {
+          return false;
+        }
+      };
+
+      try {
+        const dittiAppId = 2; // Ditti App = 2
+        const createPerm = checkPermission(dittiAppId, "Create", "Audio Files"); // Check correct resource name if needed
+        const deletePerm = checkPermission(dittiAppId, "Delete", "Audio Files");
+
+        const [canCreate, canDelete] = await Promise.all([
+          createPerm,
+          deletePerm,
+        ]);
+        if (isMounted) {
+          setCanCreateAudioFiles(canCreate);
+          setCanDeleteAudioFiles(canDelete);
+        }
+      } catch (error) {
+        console.error("Error checking permissions:", error);
+        // Handle permission check errors silently or show a generic message
+        if (isMounted) {
           setCanCreateAudioFiles(false);
-        })
-    );
-
-    // get whether the user can edit subjects
-    promises.push(
-      getAccess(2, "Delete", "Audio Files")
-        .then(() => {
-          setCanDeleteAudioFiles(true);
-        })
-        .catch(() => {
           setCanDeleteAudioFiles(false);
-        })
-    );
+        }
+      }
+    };
 
-    // when all promises complete, hide the loader
-    void Promise.all(promises).then(() => {
-      setLoading(false);
-    });
-  }, []);
+    void checkPermissions();
+
+    return () => {
+      isMounted = false; // Cleanup function
+    };
+  }, []); // Run permission check only once on mount
 
   const handleDelete = async (id: string, _version: number, name: string) => {
     if (
       confirm(
-        `Are you sure you want to delete ${name}? This action cannot be undone.`
+        `Are you sure you want to delete ${name || "this audio file"}? This action cannot be undone.`
       )
     ) {
-      try {
-        await makeRequest("/aws/audio-file/delete", {
+      // Use the safeDelete handler
+      await safeDelete(() =>
+        httpClient.request<ResponseBody>("/aws/audio-file/delete", {
           method: "POST",
-          body: JSON.stringify({ app: 2, id, _version }),
-        });
-        flashMessage(<span>Audio file deleted successfully</span>, "success");
-        setLoading(true);
-
-        refreshAudioFiles()
-          .then(() => {
-            setLoading(false);
-          })
-          .catch(() => {
-            flashMessage(
-              <span>
-                And error occurred while reloading the page. Please refresh and
-                try again.
-              </span>,
-              "danger"
-            );
-          });
-      } catch (error) {
-        console.error(error);
-        const e = error as { msg: string };
-        flashMessage(
-          <span>An unexpected error occurred: {e.msg}</span>,
-          "danger"
-        );
-      }
+          data: { app: 2, id, _version },
+        })
+      );
     }
   };
 
@@ -146,16 +151,8 @@ export const AudioFiles = () => {
    */
   const getData = (): TableData[][] => {
     const data: TableData[][] = audioFiles.map((audioFile) => {
-      const {
-        id,
-        _version,
-        fileName,
-        title,
-        category,
-        availability,
-        studies,
-        length,
-      } = audioFile;
+      const { id, _version, title, category, availability, studies, length } =
+        audioFile;
 
       return [
         {
@@ -185,7 +182,7 @@ export const AudioFiles = () => {
                 : "All studies"}
             </span>
           ),
-          searchValue: studies?.join(),
+          searchValue: studies?.join() ?? "",
           sortValue:
             studies?.length && studies[0] !== "all"
               ? studies.join(", ")
@@ -211,9 +208,9 @@ export const AudioFiles = () => {
                 size="sm"
                 className="h-full grow"
                 onClick={() =>
-                  void handleDelete(id ?? "", _version ?? 0, fileName ?? "")
+                  void handleDelete(id ?? "", _version ?? 0, title ?? "")
                 }
-                disabled={!canDeleteAudioFiles}
+                disabled={!canDeleteAudioFiles || isDeleting}
               >
                 Delete
               </Button>
@@ -243,7 +240,7 @@ export const AudioFiles = () => {
     </Link>
   );
 
-  if (loading || dataLoading) {
+  if (dataLoading) {
     return (
       <ListView>
         <ListContent />
