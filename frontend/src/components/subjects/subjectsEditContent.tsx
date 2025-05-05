@@ -129,7 +129,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     if (userPermissionIdRef.current === "") {
       isValid = false;
       setUserPermissionIdFeedback("Ditti ID suffix is required.");
-    } else if (/\[^0-9]/.test(userPermissionIdRef.current)) {
+    } else if (/[^0-9]/.test(userPermissionIdRef.current)) {
       isValid = false;
       setUserPermissionIdFeedback("Ditti ID suffix must contain only numbers.");
     } else {
