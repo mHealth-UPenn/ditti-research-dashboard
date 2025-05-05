@@ -14,11 +14,8 @@
 import { useState, useEffect, createRef, useRef, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
-import {
-  formatDateForInput,
-  getEnrollmentInfoForStudy,
-  makeRequest,
-} from "../../utils";
+import { formatDateForInput, getEnrollmentInfoForStudy } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { CheckField } from "../fields/checkField";
 import { SmallLoader } from "../loader/loader";
 import { SelectField } from "../fields/selectField";
@@ -40,6 +37,7 @@ import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { QuillView } from "../containers/quillView/quillView";
 import { SubjectsEditContentProps } from "./subjects.types";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 /**
  * For validating Cognito password requirements.
@@ -71,7 +69,6 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   const [aboutSleepTemplateSelected, setAboutSleepTemplateSelected] =
     useState<AboutSleepTemplate>({} as AboutSleepTemplate);
   const [formIsValid, setFormIsValid] = useState(false);
-  const [loading, setLoading] = useState<boolean>(true);
 
   const dittiIdInputRef = createRef<HTMLInputElement>();
 
@@ -89,6 +86,27 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
   useEffect(() => {
     userPermissionIdRef.current = userPermissionId;
   }, [userPermissionId]);
+
+  // --- API Handlers ---
+  const { safeRequest: safeFetchTemplates, isLoading: isLoadingTemplates } =
+    useApiHandler<AboutSleepTemplate[]>({
+      errorMessage: "Failed to load About Sleep templates.",
+      showDefaultSuccessMessage: false,
+    });
+
+  const { safeRequest: safeSubmit, isLoading: isSubmitting } = useApiHandler<
+    ResponseBody[]
+  >({
+    // Expects array from Promise.all
+    successMessage: (data) =>
+      data[0]?.msg ?? "Subject details saved successfully.", // Use msg from first response
+    errorMessage: (error) => `Failed to save subject details: ${error.message}`,
+    onSuccess: () => {
+      fetchStudySubjects(); // Refresh subject list
+      navigate(-1); // Navigate back
+    },
+  });
+  // --------------------
 
   const validateForm = useCallback(() => {
     let isValid = true;
@@ -112,19 +130,15 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
 
     if (userPermissionIdRef.current === "") {
       isValid = false;
-      setUserPermissionIdFeedback("Ditti ID is required.");
-    } else {
-      setUserPermissionIdFeedback("");
-    }
-
-    if (/\D/.test(userPermissionId)) {
+      setUserPermissionIdFeedback("Ditti ID suffix is required.");
+    } else if (/\[^0-9]/.test(userPermissionIdRef.current)) {
       isValid = false;
-      setUserPermissionIdFeedback("Ditti ID must contain only numbers.");
+      setUserPermissionIdFeedback("Ditti ID suffix must contain only numbers.");
     } else {
       setUserPermissionIdFeedback("");
     }
 
-    if (dittiExpTime < enrollmentEnd) {
+    if (dittiExpTime < enrollmentEnd && enrollmentEnd && dittiExpTime) {
       setDittiExpTimeFeedback(
         "Ditti ID expiry date must be after enrollment end date."
       );
@@ -133,7 +147,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
       setDittiExpTimeFeedback("");
     }
 
-    if (enrollmentEnd <= enrollmentStart) {
+    if (enrollmentEnd <= enrollmentStart && enrollmentStart && enrollmentEnd) {
       setEnrollmentStartFeedback(
         "Enrollment end date must be after enrollment start date."
       );
@@ -142,47 +156,36 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
       );
       isValid = false;
     } else {
-      setEnrollmentStartFeedback("");
+      if (
+        !(enrollmentEnd <= enrollmentStart && enrollmentStart && enrollmentEnd)
+      ) {
+        setEnrollmentStartFeedback("");
+      }
       setEnrollmentEndFeedback("");
     }
 
-    if (enrollmentEnd <= today) {
+    if (enrollmentEnd <= today && enrollmentEnd) {
       setEnrollmentEndFeedback("Enrollment end date must be a future date.");
       isValid = false;
-    } else {
+    } else if (!enrollmentEndFeedback) {
       setEnrollmentEndFeedback("");
     }
 
     setFormIsValid(isValid);
   }, [
     temporaryPassword,
-    userPermissionId,
     userPermissionIdRef,
     dittiExpTime,
     enrollmentEnd,
     enrollmentStart,
     studySubject,
-    setTemporaryPasswordValidation,
-    setUserPermissionIdFeedback,
-    setDittiExpTimeFeedback,
-    setEnrollmentStartFeedback,
-    setEnrollmentEndFeedback,
-    setFormIsValid,
+    enrollmentEndFeedback,
   ]);
 
-  // Add event listeners for validating Ditti ID field
-  useEffect(() => {
-    const currentRef = dittiIdInputRef.current;
-    if (currentRef) {
-      currentRef.addEventListener("blur", validateForm);
-      return () => {
-        currentRef.removeEventListener("blur", validateForm);
-      };
-    }
-  }, [dittiIdInputRef, validateForm]);
-
   // Validate the form and set any error messages
-  useEffect(validateForm, [
+  useEffect(() => {
+    validateForm();
+  }, [
     enrollmentStart,
     enrollmentEnd,
     dittiExpTime,
@@ -223,6 +226,11 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
       setEnrollmentStart(formatDateForInput(startsOn));
       setEnrollmentEnd(formatDateForInput(expiresOn));
       setDittiExpTime(formatDateForInput(expiresOn));
+      setTapPermission(false);
+      setInformation("");
+      setUserPermissionId("");
+      setTemporaryPassword("");
+      setAboutSleepTemplateSelected({} as AboutSleepTemplate);
     }
   }, [
     studySubject,
@@ -234,38 +242,53 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
 
   // Fetch about sleep templates from the database
   useEffect(() => {
-    // get all about sleep templates
     const fetchTemplates = async () => {
-      try {
-        const response = await makeRequest(
+      const response = await safeFetchTemplates(async () => {
+        return httpClient.request<AboutSleepTemplate[]>(
           `/db/get-about-sleep-templates?app=${String(app === "ditti" ? 2 : 3)}`
         );
-        setAboutSleepTemplates(response as unknown as AboutSleepTemplate[]);
-      } catch (error) {
-        console.error("Error fetching templates:", error);
-      } finally {
-        setLoading(false);
+      });
+
+      if (response) {
+        setAboutSleepTemplates(response);
+        if (studySubject && response.length > 0) {
+          const selectedTemplate = response.find(
+            (ast: AboutSleepTemplate) => ast.text === studySubject.information
+          );
+          if (selectedTemplate) setAboutSleepTemplateSelected(selectedTemplate);
+        } else if (!studySubject && response.length > 0) {
+          // Optionally set a default template when creating new subject
+          // setAboutSleepTemplateSelected(response[0]);
+        }
       }
     };
-
     void fetchTemplates();
-  }, [app]);
+  }, [app, safeFetchTemplates, studySubject]);
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating a new entry, else make a request to edit
    * an exiting entry. One request is made to the AWS backend and another to the database backend. Another request is
    * made to the Cognito backend if a new participant is being enrolled.
    */
-  const post = async (): Promise<void> => {
-    // Prepare and make the request to the AWS backend
+  const post = async () => {
+    if (!formIsValid) {
+      flashMessage(
+        <span>Please correct the errors in the form before submitting.</span>,
+        "danger"
+      );
+      return;
+    }
+
+    const fullDittiId = (study?.dittiId ?? "") + userPermissionId;
+
+    // Prepare data for AWS
     const dataAWS = {
       tap_permission: tapPermission,
       information: aboutSleepTemplateSelected.text,
-      user_permission_id: study?.dittiId ?? "" + userPermissionId,
+      user_permission_id: fullDittiId,
       exp_time: dittiExpTime + "T00:00:00.000Z",
       team_email: study?.email,
     };
-
     const bodyAWS = {
       app: app === "ditti" ? 2 : 3,
       study: study?.id ?? 0,
@@ -274,17 +297,12 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
         : { create: dataAWS }),
     };
 
-    const optsAWS = { method: "POST", body: JSON.stringify(bodyAWS) };
-    const urlAWS = dittiId ? "/aws/user/edit" : "/aws/user/create";
-    const postAWS = makeRequest(urlAWS, optsAWS);
-
-    // Prepare and make the request to the database backend
+    // Prepare data for DB
     const { didConsent } = studySubject
       ? getEnrollmentInfoForStudy(studySubject, study?.id)
       : { didConsent: false };
-
     const dataDB = {
-      ditti_id: (study?.dittiId ?? "") + userPermissionId,
+      ditti_id: fullDittiId,
       studies: [
         {
           id: study?.id ?? 0,
@@ -294,7 +312,6 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
         },
       ],
     };
-
     const bodyDB = {
       app: app === "ditti" ? 2 : 3,
       study: study?.id ?? 0,
@@ -303,64 +320,51 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
         : { create: dataDB }),
     };
 
-    const optsDB = { method: "POST", body: JSON.stringify(bodyDB) };
-    const urlDB = studySubject
-      ? "/admin/study_subject/edit"
-      : "/admin/study_subject/create";
-    const postDB = makeRequest(urlDB, optsDB);
+    // Prepare Cognito request if creating new user
+    const cognitoPromise = async (): Promise<ResponseBody | null> => {
+      if (!studySubject) {
+        const bodyCognito = {
+          app: app === "ditti" ? 2 : 3,
+          study: study?.id ?? 0,
+          data: {
+            cognitoUsername: fullDittiId,
+            temporaryPassword: temporaryPassword,
+          },
+        };
+        const urlCognito = "/auth/participant/register/participant";
+        return httpClient.request<ResponseBody>(urlCognito, {
+          method: "POST",
+          data: bodyCognito,
+        });
+      }
+      return Promise.resolve(null); // Resolve with null if not creating
+    };
 
-    const promises: Promise<ResponseBody>[] = [postAWS, postDB];
+    // Execute all promises via the API handler
+    await safeSubmit(async () => {
+      const awsPromise = httpClient.request<ResponseBody>(
+        dittiId ? "/aws/user/edit" : "/aws/user/create",
+        { method: "POST", data: bodyAWS }
+      );
+      const dbPromise = httpClient.request<ResponseBody>(
+        studySubject
+          ? "/admin/study_subject/edit"
+          : "/admin/study_subject/create",
+        { method: "POST", data: bodyDB }
+      );
+      const cognitoReqPromise = cognitoPromise(); // Invoke the async function
 
-    // If enrolling a new participant, make a request to the Cognito backend
-    if (!studySubject) {
-      const bodyCognito = {
-        app: app === "ditti" ? 2 : 3,
-        study: study?.id ?? 0,
-        data: {
-          cognitoUsername: (study?.dittiId ?? "") + userPermissionId,
-          temporaryPassword: temporaryPassword,
-        },
-      };
+      // Wait for all core requests. Cognito is optional.
+      const results = await Promise.all([
+        awsPromise,
+        dbPromise,
+        cognitoReqPromise, // Include the promise result (null if not needed)
+      ]);
 
-      const optsCognito = { method: "POST", body: JSON.stringify(bodyCognito) };
-      const urlCognito = "/auth/participant/register/participant";
-      const postCognito = makeRequest(urlCognito, optsCognito);
-      promises.push(postCognito);
-    }
-
-    try {
-      const results = await Promise.all(promises);
-      handleSuccess(results[0]);
-    } catch (error: unknown) {
-      handleFailure(error as ResponseBody);
-    }
-  };
-
-  /**
-   * Handle a successful response
-   * @param res - the response body
-   */
-  const handleSuccess = (res: ResponseBody) => {
-    // go back to the list view and flash a message
-    fetchStudySubjects();
-    navigate(-1);
-    flashMessage(<span>{res.msg}</span>, "success");
-  };
-
-  /**
-   * Handle a failed response
-   * @param res - the response body
-   */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
-    const msg = (
-      <span>
-        <b>An unexpected error occurred</b>
-        <br />
-        {res.msg ? res.msg : "Internal server error"}
-      </span>
-    );
-    flashMessage(msg, "danger");
+      // Filter out the potential null result from Cognito before returning
+      // Although the hook expects ResponseBody[], we only care about the first for success msg
+      return results.filter((res) => res !== null);
+    });
   };
 
   /**
@@ -374,8 +378,10 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
 
     if (selectedTemplate) {
       setAboutSleepTemplateSelected(selectedTemplate);
+      setInformation(selectedTemplate.text);
     } else {
       setAboutSleepTemplateSelected({} as AboutSleepTemplate);
+      setInformation("");
     }
   };
 
@@ -402,7 +408,11 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     ? new Date(enrollmentEnd).toLocaleDateString("en-US", dateOptions)
     : "";
 
-  if (loading || studiesLoading || studySubjectLoading) {
+  // Combine loading states
+  const combinedLoading =
+    isLoadingTemplates || studiesLoading || studySubjectLoading;
+
+  if (combinedLoading) {
     return (
       <FormView>
         <Form>
@@ -593,9 +603,9 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
           <div>
             <FormSummaryButton
               onClick={post}
-              disabled={APP_ENV === "demo" || !formIsValid}
+              disabled={APP_ENV === "demo" || !formIsValid || isSubmitting}
             >
-              {buttonText}
+              {isSubmitting ? "Saving..." : buttonText}
             </FormSummaryButton>
             {APP_ENV === "demo" && (
               <FormSummarySubtext>
