@@ -249,9 +249,3 @@ export const httpClient = new HttpClient(
   // Base URL is configured via environment variables.
   import.meta.env.VITE_FLASK_SERVER as string
 );
-
-/**
- * @deprecated Use `httpClient.request(...)` directly for new implementations.
- * This export is maintained for backward compatibility.
- */
-export const makeRequest = httpClient.request.bind(httpClient);
