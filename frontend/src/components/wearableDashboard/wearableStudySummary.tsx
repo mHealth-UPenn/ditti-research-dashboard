@@ -12,8 +12,9 @@
  */
 
 import { useState, useEffect } from "react";
-import { Study } from "../../types/api";
-import { downloadExcelFromUrl, getAccess, makeRequest } from "../../utils";
+import { Study, ResponseBody } from "../../types/api";
+import { downloadExcelFromUrl } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { SmallLoader } from "../loader/loader";
 import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { Card } from "../cards/card";
@@ -27,6 +28,7 @@ import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubj
 import { Link, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { StudyContactModel } from "../../types/models";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 export function WearableStudySummary() {
   const [searchParams] = useSearchParams();
@@ -36,70 +38,120 @@ export function WearableStudySummary() {
   const [canCreate, setCanCreate] = useState(false);
   const [canViewWearableData, setCanViewWearableData] = useState(false);
   const [studyContacts, setStudyContacts] = useState<StudyContactModel[]>([]);
-  const [studyDetails, setStudyDetails] = useState<Study>({} as Study);
-  const [loading, setLoading] = useState(true);
+  const [studyDetails, setStudyDetails] = useState<Study | null>(null);
 
   const { flashMessage } = useFlashMessages();
+  const { studySubjectLoading } = useCoordinatorStudySubjects();
+
+  // --- API Handlers ---
+  const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
+    useApiHandler<{
+      details: Study;
+      contacts: StudyContactModel[];
+      permissions: { create: boolean; viewData: boolean };
+    }>({
+      errorMessage: "Failed to load study details, contacts, or permissions.",
+      showDefaultSuccessMessage: false,
+    });
+
+  const { safeRequest: safeDownloadExcel, isLoading: isDownloading } =
+    useApiHandler({
+      errorMessage: (error) => `Excel Download Failed: ${error.message}`,
+    });
+  // --------------------
 
   // Get permissions and study information on load
   useEffect(() => {
-    const promises: Promise<void>[] = [];
-    promises.push(
-      getAccess(3, "Create", "Participants", studyId)
-        .then(() => {
-          setCanCreate(true);
-        })
-        .catch(() => {
-          setCanCreate(false);
-        })
-    );
+    if (!studyId) {
+      flashMessage(<span>Invalid Study ID.</span>, "danger");
+      return;
+    }
 
-    promises.push(
-      getAccess(3, "View", "Wearable Data", studyId)
-        .then(() => {
-          setCanViewWearableData(true);
-        })
-        .catch(() => {
-          setCanViewWearableData(false);
-        })
-    );
+    const initialFetch = async () => {
+      const fetchedData = await safeFetchInitialData(async () => {
+        const checkPermission = async (
+          appId: number,
+          action: string,
+          resource: string,
+          studyIdParam: number
+        ): Promise<boolean> => {
+          const url = `/auth/researcher/get-access?app=${String(appId)}&action=${action}&resource=${resource}&study=${String(studyIdParam)}`;
+          try {
+            const res = await httpClient.request<ResponseBody>(url);
+            return res.msg === "Authorized";
+          } catch {
+            return false;
+          }
+        };
 
-    promises.push(
-      makeRequest("/db/get-study-contacts?app=3&study=" + String(studyId)).then(
-        (contacts: unknown) => {
-          setStudyContacts(contacts as StudyContactModel[]);
-        }
-      )
-    );
+        const wearableAppId = 3;
+        const createPerm = checkPermission(
+          wearableAppId,
+          "Create",
+          "Participants",
+          studyId
+        );
+        const viewDataPerm = checkPermission(
+          wearableAppId,
+          "View",
+          "Wearable Data",
+          studyId
+        );
+        const contactsReq = httpClient.request<StudyContactModel[]>(
+          `/db/get-study-contacts?app=${String(wearableAppId)}&study=${String(studyId)}`
+        );
+        const detailsReq = httpClient.request<Study>(
+          `/db/get-study-details?app=${String(wearableAppId)}&study=${String(studyId)}`
+        );
 
-    promises.push(
-      makeRequest("/db/get-study-details?app=3&study=" + String(studyId)).then(
-        (details: unknown) => {
-          setStudyDetails(details as Study);
-        }
-      )
-    );
+        const [canCreateRes, canViewDataRes, contactsRes, detailsRes] =
+          await Promise.all([
+            createPerm,
+            viewDataPerm,
+            contactsReq,
+            detailsReq,
+          ]);
 
-    Promise.all(promises)
-      .then(() => {
-        setLoading(false);
-      })
-      .catch(console.error);
-  }, [studyId]);
+        return {
+          details: detailsRes,
+          contacts: contactsRes,
+          permissions: { create: canCreateRes, viewData: canViewDataRes },
+        };
+      });
+
+      if (fetchedData) {
+        setStudyDetails(fetchedData.details);
+        setStudyContacts(fetchedData.contacts);
+        setCanCreate(fetchedData.permissions.create);
+        setCanViewWearableData(fetchedData.permissions.viewData);
+      } else {
+        setStudyDetails(null);
+        setStudyContacts([]);
+        setCanCreate(false);
+        setCanViewWearableData(false);
+      }
+    };
+    void initialFetch();
+  }, [studyId, safeFetchInitialData, flashMessage]);
 
   // Download all of the study's data in excel format.
   const downloadExcel = async (): Promise<void> => {
-    const url = `/admin/fitbit_data/download/study/${String(studyId)}?app=3`;
-    const res = await downloadExcelFromUrl(url);
-    if (res) {
-      flashMessage(<span>{res}</span>, "danger");
-    }
+    if (!studyId) return;
+
+    await safeDownloadExcel(async () => {
+      const url = `/admin/fitbit_data/download/study/${String(studyId)}?app=3`;
+      const errorMessage = await downloadExcelFromUrl(url);
+      if (errorMessage) {
+        throw new Error(errorMessage);
+      }
+    });
   };
 
-  const { dittiId, email, name, acronym } = studyDetails;
-  const { studySubjectLoading } = useCoordinatorStudySubjects();
+  const { dittiId, email, name, acronym } = studyDetails ?? {};
 
-  if (loading || studySubjectLoading) {
+  const combinedLoading = isLoadingData || studySubjectLoading;
+
+  if (combinedLoading) {
     return (
       <ViewContainer>
         <Card width="md">
@@ -125,6 +177,7 @@ export function WearableStudySummary() {
           </div>
           {canViewWearableData && (
             <Button
+              disabled={isDownloading}
               onClick={() => void downloadExcel()}
               variant="secondary"
               rounded={true}
@@ -158,10 +211,12 @@ export function WearableStudySummary() {
         </CardContentRow>
 
         {/* The list of participants in this study */}
-        <WearableStudySubjects
-          studyDetails={studyDetails}
-          canViewWearableData={canViewWearableData}
-        />
+        {studyDetails && (
+          <WearableStudySubjects
+            studyDetails={studyDetails}
+            canViewWearableData={canViewWearableData}
+          />
+        )}
       </Card>
 
       {/* The list of study contacts */}
