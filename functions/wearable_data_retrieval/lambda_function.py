@@ -463,8 +463,8 @@ class StudySubjectService(DBService):
                     # Get only studies that have been consented
                     self.study.c.did_consent,
                     or_(
-                        self.api.c.last_sync_date
-                        is None,  # Get any entries without a `last_sync_date`
+                        # Get any entries without a `last_sync_date`
+                        self.api.c.last_sync_date == None,  # noqa: E711
                         # Get any entries with a `last_sync_date` before today
                         # and before the `expires_on` date
                         and_(
@@ -473,8 +473,8 @@ class StudySubjectService(DBService):
                         ),
                         # Get any entries with past data that was not pulled
                         self.study.c.starts_on < earliest_sleep_log_subquery,
-                        earliest_sleep_log_subquery
-                        is None,  # Get any entries where no sleep logs exist
+                        # Get any entries where no sleep logs exist
+                        earliest_sleep_log_subquery == None,  # noqa: E711
                     ),
                 )
             )
