@@ -1,8 +1,8 @@
-frontend/node_modules
+frontend/node_modules/**/*
 frontend/.pnp
 frontend/.pnp.js
-frontend/coverage
-frontend/dist
+frontend/coverage/**/*
+frontend/dist/**/*
 frontend/.DS_Store
 frontend/.env.local
 frontend/.env.development.local
@@ -12,14 +12,19 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 
-__pycache__/
-.pytest_cache/
-.ruff_cache/
-.log/
-.postgresql/
+**/*__pycache__/**/*
+**/*__pycache__
+**/.pytest_cache/**/*
+**/.pytest_cache
+**/.ruff_cache/**/*
+**/.ruff_cache
+**/.log/**/*
+**/.log
+**/.postgresql/**/*
+**/.postgresql
 .vscode/settings.json
-.cursor/
-env/
+.cursor/**/*
+env/**/*
 *.env
 *logfile
 
@@ -45,4 +50,4 @@ zappa_settings.json
 
 project-config*.json
 
-scripts/
+scripts/**/*
