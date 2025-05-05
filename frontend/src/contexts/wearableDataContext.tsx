@@ -22,11 +22,12 @@ import {
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
 import { httpClient } from "../lib/http";
+import { HttpError } from "../lib/http.types";
 import {
   WearableDataContextValue,
   CoordinatorWearableDataProviderProps,
 } from "./wearableDataContext.types";
-import { SleepLog, DataProcessingTask, ResponseBody } from "../types/api";
+import { SleepLog, DataProcessingTask } from "../types/api";
 
 // Context return type for participants
 export const ParticipantWearableDataContext = createContext<
@@ -72,14 +73,15 @@ export const ParticipantWearableDataProvider = ({
     return null;
   }, []);
 
-  const handleFailure = useCallback((error: unknown, context?: string) => {
-    const prefix = context ? `${context}: ` : "";
-    console.error(prefix, error);
-    setIsLoading(false);
-  }, []);
+  const handleFailure = (error: unknown) => {
+    console.error(error);
+    // Optional: Add more specific error handling based on HttpError if needed
+    if (error instanceof HttpError && error.apiError) {
+      console.error("API Error Details:", error.apiError);
+    }
+  };
 
   useEffect(() => {
-    setIsLoading(true);
     // Async fetch sleep data
     const fetchSleepData = async () => {
       try {
@@ -102,14 +104,23 @@ export const ParticipantWearableDataProvider = ({
           setSleepLogs(dataFactory.sleepLogs);
         }
       } catch (error) {
-        handleFailure(error, "Failed to fetch participant sleep data");
-      } finally {
-        setIsLoading(false);
+        handleFailure(error);
       }
     };
 
-    void fetchSleepData();
-  }, [dataFactory, startDate, endDate, handleFailure]);
+    const promises: Promise<void>[] = [];
+    promises.push(fetchSleepData());
+    Promise.all(promises)
+      .then(() => {
+        /* no-op */
+      })
+      .catch((error: unknown) => {
+        console.error("Error fetching participant sleep data:", error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [dataFactory, startDate, endDate]);
 
   return (
     <ParticipantWearableDataContext.Provider
@@ -152,40 +163,36 @@ export const CoordinatorWearableDataProvider = ({
     return null;
   }, []);
 
-  const handleFailure = useCallback((error: unknown, context?: string) => {
-    const prefix = context ? `${context}: ` : "";
-    console.error(prefix, error);
-    setIsLoading(false);
-    setIsSyncing(false);
-  }, []);
+  const handleFailure = (error: unknown) => {
+    console.error(error);
+    if (error instanceof HttpError && error.apiError) {
+      console.error("API Error Details:", error.apiError);
+    }
+  };
 
   /**
    * Fetch sleep log data asynchronously from a start date to an end date.
    * @param start: The start date to fetch data from.
    * @param end: The end date to fetch data to.
-   * @returns Promise<SleepLog[]>: The fetched sleep log data.
+   * @returns ISleepLog[]: The fetched sleep log data.
    */
   const fetchSleepDataAsync = useCallback(
-    async (start: Date, end: Date): Promise<SleepLog[]> => {
+    async (start: Date, end: Date) => {
       const params = new URLSearchParams();
       params.append("start_date", formatDate(start));
       params.append("end_date", formatDate(end));
-      params.append("app", "3");
+      params.append("app", "3"); // Assume Wearable Dashboard is app 3
       params.append("study", String(studyId));
       const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`;
 
-      try {
-        let data = await httpClient.request<SleepLog[]>(url);
-        data = data.sort((a, b) => {
-          if (a.dateOfSleep > b.dateOfSleep) return 1;
-          else if (a.dateOfSleep < b.dateOfSleep) return -1;
-          else return 0;
-        });
-        return data;
-      } catch (error) {
-        console.error("Failed to fetch sleep data async:", error);
-        throw error;
-      }
+      let data = await httpClient.request<SleepLog[]>(url);
+      data = data.sort((a, b) => {
+        if (a.dateOfSleep > b.dateOfSleep) return 1;
+        else if (a.dateOfSleep < b.dateOfSleep) return -1;
+        else return 0;
+      });
+
+      return data;
     },
     [dittiId, studyId]
   );
@@ -196,126 +203,117 @@ export const CoordinatorWearableDataProvider = ({
    */
   const scheduleSyncCheck = useCallback(
     (taskId: number) => {
+      // Define the async work inside a separate function
       const checkStatus = async () => {
         try {
           const params = new URLSearchParams();
-          params.append("app", "3");
-          params.append("study", String(studyId));
+          params.append("app", "3"); // Assume Wearable Dashboard is app 3
+          params.append("study", String(studyId)); // Convert studyId to string
+          // Convert taskId to string for the template literal
           const url = `/data_processing_task/${String(taskId)}?${params.toString()}`;
           const tasks = await httpClient.request<DataProcessingTask[]>(url);
 
+          // Assume one task is returned
           if (
-            tasks.length > 0 &&
             !(tasks[0].status == "Pending" || tasks[0].status == "InProgress")
           ) {
-            clearInterval(intervalId);
+            // When the task is no longer running, clear the interval
+            clearInterval(id);
             setIsSyncing(false);
 
-            // Reset dates and fetch new data
+            // Reset the start and end dates to fetch new data
             const updatedStartDate = new Date();
             updatedStartDate.setDate(updatedStartDate.getDate() - 7);
             setStartDate(updatedStartDate);
             const updatedEndDate = new Date();
             setEndDate(updatedEndDate);
 
-            try {
-              const data = await fetchSleepDataAsync(
-                updatedStartDate,
-                updatedEndDate
-              );
-              setSleepLogs(data);
-              if (data.length) {
-                setFirstDateOfSleep(new Date(data[0].dateOfSleep));
-              }
-              setDataIsUpdated(false);
-            } catch (fetchError) {
-              handleFailure(fetchError, "Failed to refresh data after sync");
-            }
+            // Fetch new data
+            fetchSleepDataAsync(updatedStartDate, updatedEndDate)
+              .then((data) => {
+                setSleepLogs(data);
+                if (data.length) {
+                  setFirstDateOfSleep(new Date(data[0].dateOfSleep));
+                }
+                setDataIsUpdated(false);
+              })
+              .catch((error: unknown) => {
+                console.error(
+                  `Error updating sleep log data: ${String(error)}`
+                );
+              });
           }
         } catch (error: unknown) {
-          console.error(
-            `Error checking sync status for task ${String(taskId)}:`,
-            error
-          );
-          clearInterval(intervalId);
-          handleFailure(error, `Sync check failed for task ${String(taskId)}`);
+          console.error(`Error checking sync status: ${String(error)}`);
+          clearInterval(id); // Stop interval on error
+          setIsSyncing(false);
         }
       };
 
-      const intervalId = setInterval(() => {
+      // Use void operator to explicitly ignore the promise returned by checkStatus
+      const id = setInterval(() => {
         void checkStatus();
-      }, 5000);
-
-      return () => {
-        clearInterval(intervalId);
-      };
+      }, 1000);
     },
-    [fetchSleepDataAsync, studyId, handleFailure]
+    [fetchSleepDataAsync, studyId]
   );
 
-  // Fetch initial sleep data and check for ongoing sync tasks
+  // Fetch sleep data and data processing tasks on component mount
   useEffect(() => {
-    setIsLoading(true);
-    let cleanupInterval: (() => void) | undefined;
-
-    const fetchInitialData = async () => {
+    const fetchSleepData = async () => {
       try {
-        // Fetch initial sleep data
-        const initialSleepDataPromise = (async () => {
-          try {
-            const data = await fetchSleepDataAsync(startDate, endDate);
-            if (data.length) {
-              setFirstDateOfSleep(new Date(data[0].dateOfSleep));
-            }
-            setSleepLogs(data);
-          } catch (error) {
-            console.error("Failed to fetch initial sleep data:", error);
-            handleFailure(error, "Initial data fetch failed");
+        if (APP_ENV === "production" || APP_ENV === "development") {
+          const data = await fetchSleepDataAsync(startDate, endDate);
+          if (data.length) {
+            setFirstDateOfSleep(new Date(data[0].dateOfSleep));
           }
-        })();
+          setSleepLogs(data);
+        } else if (dataFactory) {
+          await dataFactory.init();
+          setSleepLogs(dataFactory.sleepLogs);
+        }
+      } catch (error: unknown) {
+        handleFailure(error);
+      }
+    };
 
-        // Fetch data processing tasks
-        const tasksPromise = (async () => {
-          try {
-            if (APP_ENV === "production" || APP_ENV === "development") {
-              const params = new URLSearchParams();
-              params.append("app", "3");
-              params.append("study", String(studyId));
-              const url = `/data_processing_task/?${params.toString()}`;
-              const tasks = await httpClient.request<DataProcessingTask[]>(url);
+    // Fetch all data processing tasks and find if any are syncing
+    const fetchDataProcessingTasks = async () => {
+      try {
+        if (APP_ENV === "production" || APP_ENV === "development") {
+          const params = new URLSearchParams();
+          params.append("app", "3"); // Assume Wearable Dashboard is app 3
+          params.append("study", String(studyId));
+          const url = `/data_processing_task/?${params.toString()}`;
+          const tasks = await httpClient.request<DataProcessingTask[]>(url);
 
-              const syncingTask = tasks.find(
-                (task) =>
-                  task.status == "Pending" || task.status == "InProgress"
-              );
-              if (syncingTask) {
-                setIsSyncing(true);
-                cleanupInterval = scheduleSyncCheck(syncingTask.id);
-              }
-            }
-          } catch (error) {
-            console.error("Failed to fetch data processing tasks:", error);
-            handleFailure(error, "Failed to check sync status");
+          // Check if any tasks are syncing
+          const syncingTask = tasks.find(
+            (task) => task.status == "Pending" || task.status == "InProgress"
+          );
+          if (syncingTask) {
+            setIsSyncing(true);
+            scheduleSyncCheck(syncingTask.id);
           }
-        })();
+        }
+      } catch (error: unknown) {
+        handleFailure(error);
+      }
+    };
 
-        // Wait for both fetches
-        await Promise.all([initialSleepDataPromise, tasksPromise]);
-      } catch (error) {
-        console.error("Error during initial data loading sequence:", error);
-        handleFailure(error, "Initial load error");
-      } finally {
+    const promises: Promise<void>[] = [];
+    promises.push(fetchSleepData());
+    promises.push(fetchDataProcessingTasks());
+    Promise.all(promises)
+      .then(() => {
+        /* no-op */
+      })
+      .catch((error: unknown) => {
+        console.error("Error fetching coordinator initial data:", error);
+      })
+      .finally(() => {
         setIsLoading(false);
-      }
-    };
-
-    void fetchInitialData();
-
-    return () => {
-      if (cleanupInterval) {
-        cleanupInterval();
-      }
-    };
+      });
   }, [
     dittiId,
     studyId,
@@ -324,49 +322,38 @@ export const CoordinatorWearableDataProvider = ({
     dataFactory,
     fetchSleepDataAsync,
     scheduleSyncCheck,
-    handleFailure,
   ]);
 
   // Handle the user clicking Sync Data
   const syncData = async () => {
+    // Only sync data if not already syncing
     if (!isSyncing) {
-      setIsSyncing(true);
-      setIsLoading(true);
       try {
+        // Invoke the data processing task
         const params = new URLSearchParams();
         params.append("app", "3");
-        params.append("study", String(studyId));
-        const url = `/data_processing_task/invoke/${dittiId}?${params.toString()}`;
+        params.append("study", String(studyId)); // Convert studyId to string
 
-        const res = await httpClient.request<ResponseBody>(url, {
+        // Fetch the data processing task ID for checking status
+        interface InvokeTaskResponse {
+          msg: string;
+          task: DataProcessingTask;
+        }
+
+        // Use httpClient.request, adjusting options as needed for AxiosRequestConfig
+        const res = await httpClient.request<
+          InvokeTaskResponse,
+          { app: number; ditti_id: string }
+        >(`/data_processing_task/invoke?${params.toString()}`, {
           method: "POST",
+          data: { app: 3, ditti_id: dittiId }, // Include ditti_id
         });
 
-        if (res.msg.includes("successfully invoked")) {
-          const tasks = await httpClient.request<DataProcessingTask[]>(
-            `/data_processing_task/?app=3&study=${String(studyId)}`
-          );
-          const newTask = tasks.find(
-            (t) => t.status === "Pending" || t.status === "InProgress"
-          );
-          if (newTask) {
-            scheduleSyncCheck(newTask.id);
-          } else {
-            console.warn("Sync invoked but no pending task found immediately.");
-            setIsSyncing(false);
-          }
-        } else {
-          console.warn("Sync invoked but response format unexpected:", res.msg);
-          handleFailure(
-            new Error(res.msg || "Invocation failed"),
-            "Sync Invocation Problem"
-          );
-        }
+        setIsSyncing(true);
+        scheduleSyncCheck(res.task.id);
       } catch (error: unknown) {
-        console.error(`Error invoking sync task:`, error);
-        handleFailure(error, "Sync Invocation Failed");
-      } finally {
-        setIsLoading(false);
+        console.error(`Error invoking sync task: ${String(error)}`);
+        setIsSyncing(false);
       }
     }
   };
