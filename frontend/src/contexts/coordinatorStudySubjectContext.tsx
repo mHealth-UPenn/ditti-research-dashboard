@@ -147,19 +147,15 @@ export function CoordinatorStudySubjectProvider({
         `/aws/get-users?app=${String(app)}`
       );
 
-      // Await results - use try/catch within to handle individual fetch errors gracefully
-      // Alternatively, let Promise.all fail and the hook catches it (current approach)
       const [dbSubjects, awsUsers] = await Promise.all([dbPromise, awsPromise]);
-
-      // Join the results
       return joinByDittiIdAndUserPermissionId(dbSubjects, awsUsers);
     });
-  }, [app, safeFetchAndJoin]); // Depend on app and the stable safe function
+  }, [app, safeFetchAndJoin]);
 
   // Fetch study subjects on load
   useEffect(() => {
     fetchStudySubjects();
-  }, [fetchStudySubjects]); // fetchStudySubjects is memoized
+  }, [fetchStudySubjects]);
 
   /**
    * Get a study subject by Ditti ID from fetched data.

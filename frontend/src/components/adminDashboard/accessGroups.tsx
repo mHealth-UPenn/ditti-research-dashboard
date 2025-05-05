@@ -133,7 +133,6 @@ export const AccessGroups = () => {
           groupsPromise,
         ]);
       } catch (error) {
-        // Catch errors from Promise.all or initial setup if any
         console.error("Error during initial data load:", error);
         if (isMounted) {
           flashMessage(<span>Failed to load initial data.</span>, "danger");
@@ -235,17 +234,18 @@ export const AccessGroups = () => {
    * Required to return Promise<void> for AsyncButton.
    * @param id - The ID of the access group to archive.
    */
-  const deleteAccessGroup = (id: number): Promise<void> => {
+  const deleteAccessGroup = async (id: number): Promise<void> => {
     const msg = "Are you sure you want to archive this access group?";
 
     if (confirm(msg)) {
-      return safeArchiveRequest(async () => {
+      await safeArchiveRequest(async () => {
         const body = { app: 1, id };
         return httpClient.request<ResponseBody>("/admin/access-group/archive", {
           method: "POST",
           data: body,
         });
-      }).then(() => undefined); // Adapt return type for AsyncButton
+      });
+      return undefined;
     }
     return Promise.resolve();
   };

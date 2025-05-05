@@ -67,7 +67,6 @@ export const AboutSleepTemplatesEdit = () => {
     if (aboutSleepTemplateId) {
       const fetchData = async () => {
         const fetchedData = await safeFetchInitialData(async () => {
-          // Fetch the specific template
           const templates = await httpClient.request<AboutSleepTemplate[]>(
             `/admin/about-sleep-template?app=1&id=${String(aboutSleepTemplateId)}`
           );
@@ -80,12 +79,9 @@ export const AboutSleepTemplatesEdit = () => {
         });
 
         if (fetchedData?.template) {
-          // Set state if fetch was successful and template exists
           setName(fetchedData.template.name);
           setText(fetchedData.template.text);
         } else if (fetchedData === null) {
-          // Handle case where fetch failed (error handled by hook)
-          // Navigate back as template couldn't be loaded
           flashMessage(
             <span>Template not found or failed to load.</span>,
             "danger"
@@ -103,7 +99,6 @@ export const AboutSleepTemplatesEdit = () => {
    * Required to return Promise<void> for AsyncButton.
    */
   const post = async (): Promise<void> => {
-    // Basic validation
     if (!name.trim()) {
       flashMessage(<span>Name is required.</span>, "danger");
       return;
@@ -121,7 +116,6 @@ export const AboutSleepTemplatesEdit = () => {
       ? "/admin/about-sleep-template/edit"
       : "/admin/about-sleep-template/create";
 
-    // Execute API call via handler
     await safeSubmit(async () => {
       return httpClient.request<ResponseBody>(url, {
         method: "POST",

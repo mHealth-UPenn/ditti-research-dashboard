@@ -141,8 +141,8 @@ export const AboutSleepTemplates = () => {
   }, [flashMessage, refreshTemplates]);
 
   /**
-   * Prepares template data for the Table component.
-   * @returns An array of rows, where each row is an array of TableData objects.
+   * Get the table's contents
+   * @returns The table's contents, consisting of rows of table cells
    */
   const getData = (): TableData[][] => {
     return aboutSleepTemplates.map((s: AboutSleepTemplate) => {
@@ -199,11 +199,10 @@ export const AboutSleepTemplates = () => {
    * Archives a template using the API handler.
    * @param id - the entry's database primary key
    */
-  const deleteTemplate = (id: number): Promise<void> => {
+  const deleteTemplate = async (id: number): Promise<void> => {
     const msg = "Are you sure you want to archive this about sleep template?";
     if (confirm(msg)) {
-      // Use the safeRequest from the hook for archiving and return the promise chain
-      return safeArchiveRequest(async () => {
+      await safeArchiveRequest(async () => {
         const body = { app: 1, id };
         return httpClient.request<ResponseBody>(
           "/admin/about-sleep-template/archive",
@@ -212,9 +211,9 @@ export const AboutSleepTemplates = () => {
             data: body,
           }
         );
-      }).then(() => undefined); // Adapt return type for AsyncButton
+      });
+      return undefined;
     }
-    // If confirm is false, return a resolved promise to satisfy AsyncButton type
     return Promise.resolve();
   };
 
@@ -244,7 +243,6 @@ export const AboutSleepTemplates = () => {
     <ListView>
       {navbar}
       <ListContent>
-        {/* Relative container for the loading overlay */}
         <div className="relative">
           {" "}
           <Table
@@ -257,7 +255,6 @@ export const AboutSleepTemplates = () => {
             paginationPer={10}
             sortDefault=""
           />
-          {/* Archive operation loading overlay */}
           {isLoading && (
             <div
               className="absolute inset-0 z-10 flex items-center justify-center

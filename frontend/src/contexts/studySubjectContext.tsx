@@ -38,14 +38,11 @@ export function StudySubjectProvider({ children }: PropsWithChildren) {
   > => {
     if (APP_ENV === "production" || APP_ENV === "development") {
       try {
-        // Specify expected type and use await
         const participantData =
           await httpClient.request<Participant>("/participant");
-        // Remove unnecessary ?? checks as fields are required by type
         return [participantData.studies, participantData.apis];
       } catch (error) {
         console.error("Unable to fetch participant data:", error);
-        // Return empty arrays on failure to match previous behavior
         return [[], []];
       }
     }
@@ -62,7 +59,6 @@ export function StudySubjectProvider({ children }: PropsWithChildren) {
         setStudies(studiesData);
         setApis(apisData);
       } catch (error) {
-        // Error is already logged in getStudySubject, just ensure loading is off
         console.error("Error setting initial participant data:", error);
       } finally {
         setStudySubjectLoading(false);
@@ -79,9 +75,7 @@ export function StudySubjectProvider({ children }: PropsWithChildren) {
       setStudies(studiesData);
       setApis(apisData);
     } catch (error: unknown) {
-      // Error is logged within getStudySubject
       console.error("Failed to refetch participant data:", error);
-      // Optionally add a flash message here if needed
     } finally {
       setStudySubjectLoading(false);
     }

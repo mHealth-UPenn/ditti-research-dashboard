@@ -74,7 +74,7 @@ export function StudiesProvider({
     } else if (dataFactory) {
       return dataFactory.studies;
     }
-    // Default return if no condition met
+
     return [];
   }, [app, dataFactory]);
 
@@ -93,21 +93,22 @@ export function StudiesProvider({
         } else {
           // Handle case where the studyId from URL doesn't match any fetched study
           setStudy(null);
-          setStudySlug(""); // Or some default/error state
-          // setSidParam(""); // Optionally clear sid param if invalid
+          setStudySlug("");
+          setSidParam("");
         }
       } catch (error) {
         // Catch errors from getStudiesAsync if it were to re-throw
         console.error("Error setting studies state:", error);
         setStudy(null); // Ensure study state is cleared on error
         setStudySlug("");
+        setSidParam("");
       } finally {
         setStudiesLoading(false);
       }
     };
 
     void fetchAndSetStudies();
-  }, [studyId, getStudiesAsync, setSidParam, setStudySlug]); // Dependencies updated
+  }, [studyId, getStudiesAsync, setSidParam, setStudySlug]);
 
   return (
     <StudiesContext.Provider value={{ studies, studiesLoading, study }}>
