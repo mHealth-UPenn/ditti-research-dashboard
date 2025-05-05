@@ -187,7 +187,6 @@ export const AccountsEdit = () => {
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
-  // --- API Handlers ---
   const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
     useApiHandler<{
       accessGroups: AccessGroup[];
@@ -207,7 +206,6 @@ export const AccountsEdit = () => {
         navigate(-1); // Navigate back on success
       },
     });
-  // --------------------
 
   /**
    * Map the data returned from the backend to form prefill data

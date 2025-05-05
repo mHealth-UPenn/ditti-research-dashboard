@@ -239,7 +239,6 @@ class HttpClient {
   }
 }
 
-// --- Singleton Instance ---
 // Create and export a single instance of HttpClient for global use.
 export const httpClient = new HttpClient(
   // Base URL is configured via environment variables.

@@ -108,7 +108,6 @@ export const AccountMenu = ({
    * Validates and submits account detail changes.
    */
   const post = (): Promise<void> => {
-    // --- Input Validation ---
     if (!firstName.trim()) {
       flashMessage(
         <span>

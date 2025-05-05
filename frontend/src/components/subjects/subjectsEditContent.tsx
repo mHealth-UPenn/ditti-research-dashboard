@@ -87,7 +87,6 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     userPermissionIdRef.current = userPermissionId;
   }, [userPermissionId]);
 
-  // --- API Handlers ---
   const { safeRequest: safeFetchTemplates, isLoading: isLoadingTemplates } =
     useApiHandler<AboutSleepTemplate[]>({
       errorMessage: "Failed to load About Sleep templates.",
@@ -106,7 +105,6 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
       navigate(-1); // Navigate back
     },
   });
-  // --------------------
 
   const validateForm = useCallback(() => {
     let isValid = true;
