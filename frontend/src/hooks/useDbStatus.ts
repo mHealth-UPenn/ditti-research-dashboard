@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { makeRequest } from "../utils";
+import { httpClient } from "../lib/http";
 import { ResponseBody } from "../types/api";
 
 /**
@@ -26,22 +26,22 @@ export const useDbStatus = () => {
   const [loadingDb, setLoadingDb] = useState<boolean>(true);
 
   useEffect(() => {
-    let intervalId: ReturnType<typeof setInterval>;
+    let intervalId: ReturnType<typeof setInterval> | undefined = undefined;
 
     const touch = async (): Promise<string> => {
       try {
-        const res: ResponseBody = await makeRequest("/touch");
+        const res = await httpClient.request<ResponseBody>("/touch");
         if (res.msg === "OK") {
           setLoadingDb(false);
-          clearInterval(intervalId);
+          if (intervalId) clearInterval(intervalId);
         }
         return res.msg;
-      } catch {
+      } catch (error) {
+        console.error("Database touch request failed:", error);
         return "Error";
       }
     };
 
-    // Use void to explicitly mark promise as intentionally not awaited
     void (async () => {
       const msg = await touch();
       if (msg !== "OK") {
@@ -52,7 +52,7 @@ export const useDbStatus = () => {
     })();
 
     return () => {
-      clearInterval(intervalId);
+      if (intervalId) clearInterval(intervalId);
     };
   }, []);
 
