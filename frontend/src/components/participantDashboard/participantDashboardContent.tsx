@@ -24,9 +24,10 @@ import { WearableVisualization } from "../visualizations/wearableVisualization";
 import { useStudySubjects } from "../../hooks/useStudySubjects";
 import { SmallLoader } from "../loader/loader";
 import { ConsentModal } from "../containers/consentModal/consentModal";
-import { makeRequest } from "../../utils";
-import { ParticipantStudy } from "../../types/api";
+import { httpClient } from "../../lib/http";
+import { ParticipantStudy, ResponseBody } from "../../types/api";
 import { QuillView } from "../containers/quillView/quillView";
+import { useApiHandler } from "../../hooks/useApiHandler";
 
 const defaultConsentContentText =
   "By accepting, you agree that your data will be used solely for research purposes described in our terms. You can withdraw consent at any time.";
@@ -34,24 +35,40 @@ const defaultConsentContentText =
 export const ParticipantDashboardContent = () => {
   const [isConsentOpen, setIsConsentOpen] = useState<boolean>(false);
   const [consentError, setConsentError] = useState<string>("");
-  const [unconsentedStudies, setUnconsentedStudies] = useState<
+  const [studiesNeedingConsent, setStudiesNeedingConsent] = useState<
     ParticipantStudy[]
   >([]);
 
   const { dittiId } = useAuth();
   const { studies, apis, studySubjectLoading, refetch } = useStudySubjects();
 
-  const getStudiesNeedConsent = () => {
-    const studiesNeedConsent = studies.filter((s) => !s.didConsent);
-    if (studiesNeedConsent.length > 0) {
-      setUnconsentedStudies(studiesNeedConsent);
-    } else {
-      setUnconsentedStudies([]);
-    }
-  };
+  // API Handler for updating consent across multiple studies
+  const { safeRequest: safeUpdateConsent } = useApiHandler({
+    // Success message handled implicitly by redirect/UI change
+    // Error message handled by hook + specific error state
+    onError: (error) => {
+      setConsentError(error.message || "Failed to update consent.");
+    },
+    onSuccess: async () => {
+      // Clear error, close modal
+      setIsConsentOpen(false);
+      setConsentError("");
+      // Refetch data to ensure consistency
+      await refetch();
+      // Redirect to Fitbit authorization after successful consent
+      handleRedirect(); // Assuming handleRedirect is defined elsewhere or added
+    },
+  });
 
-  // Gather all studies where the user has not consented
-  useEffect(getStudiesNeedConsent, [studies]);
+  // Recalculate studies needing consent when the main studies list changes
+  useEffect(() => {
+    const filteredStudies = studies.filter((s) => !s.didConsent);
+    if (filteredStudies.length > 0) {
+      setStudiesNeedingConsent(filteredStudies);
+    } else {
+      setStudiesNeedingConsent([]);
+    }
+  }, [studies]); // Depend only on studies
 
   // Use the earliest startsOn date as the beginning of data collection
   const startDate = useMemo(() => {
@@ -95,80 +112,67 @@ export const ParticipantDashboardContent = () => {
   };
 
   const handleConsentAccept = async () => {
-    if (unconsentedStudies.length === 0) {
+    if (studiesNeedingConsent.length === 0) {
       setIsConsentOpen(false);
       return;
     }
 
-    try {
-      await Promise.all(
-        unconsentedStudies.map((study) => {
-          return makeRequest(
-            `/participant/study/${String(study.studyId)}/consent`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ didConsent: true }),
-            }
-          );
-        })
+    setConsentError(""); // Clear previous errors
+
+    // Use the API handler to manage the async operation
+    await safeUpdateConsent(async () => {
+      // Map each study consent update to an httpClient call
+      const consentPromises = studiesNeedingConsent.map((study) =>
+        httpClient.request<ResponseBody>( // Use httpClient
+          `/participant/study/${String(study.studyId)}/consent`,
+          {
+            method: "PATCH",
+            data: { didConsent: true }, // Use data property
+          }
+        )
       );
 
-      // Clear error, close modal
-      setConsentError("");
-      setIsConsentOpen(false);
+      // Wait for all consent updates to complete
+      await Promise.all(consentPromises);
 
-      // Refetch data to ensure consistency
-      await refetch();
-      getStudiesNeedConsent();
-
-      // Redirect to Fitbit authorization after successful consent
-      handleRedirect();
-    } catch (err) {
-      console.error(err);
-      const errorMsg =
-        "There was a problem updating your consent. Please try again.";
-      setConsentError(errorMsg);
-    }
+      // Error/Success handling is now managed by the useApiHandler hook
+    });
   };
 
   const handleConsentClose = () => {
     setIsConsentOpen(false);
+    // Set a specific error message related to consent denial
     setConsentError(
-      "You must accept the consent terms to connect your Fitbit API, please try again."
+      "You must accept the consent terms to connect your Fitbit API. Please try again."
     );
   };
 
-  // If there are no unconsented studies, proceed to Fitbit flow
+  // If there are no studies needing consent, proceed to Fitbit flow
   // otherwise, prompt them to consent
   const handleConnectFitBitClick = () => {
-    if (unconsentedStudies.length === 0) {
+    setConsentError(""); // Clear consent error on attempt
+    if (studiesNeedingConsent.length === 0) {
       handleRedirect();
     } else {
       setIsConsentOpen(true);
     }
   };
 
-  // Build HTML for all unconsented studies at once
+  // Build HTML for all studies needing consent at once
   const consentContentHtml = useMemo(() => {
-    if (studies.length === 0) {
-      return `<p>You are not enrolled in any studies. Please enroll in a study to connect your FitBit data.</p>`;
-    }
-    if (unconsentedStudies.length === 0) {
+    if (studiesNeedingConsent.length === 0) {
       return `<p>You have already consented to all your studies.</p>`;
     }
 
-    // Build a combined block of all unconsented study info
+    // Build a combined block of all study info needing consent
     let content = "";
-    unconsentedStudies.forEach((study) => {
+    studiesNeedingConsent.forEach((study) => {
       // This gets sanitized in QuillView
       const consentText = study.consentInformation ?? defaultConsentContentText;
       content += `<h4>${study.studyName}</h4><div>${consentText}</div>`;
     });
     return content;
-  }, [studies, unconsentedStudies]);
+  }, [studiesNeedingConsent]);
 
   if (studySubjectLoading) {
     return (
