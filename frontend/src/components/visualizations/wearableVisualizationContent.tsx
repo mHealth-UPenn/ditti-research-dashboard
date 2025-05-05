@@ -123,10 +123,10 @@ export const WearableVisualizationContent = ({
       return;
     }
 
-    const updatedRow1 = [];
-    const updatedRow2 = [];
-    const updatedRow3 = [];
-    const updatedRow4 = [];
+    const updatedRow1: Group[] = [];
+    const updatedRow2: Group[] = [];
+    const updatedRow3: Group[] = [];
+    const updatedRow4: Group[] = [];
 
     // If data is being updated, only get new data that is not currently being visualized (any data that appears before
     // the earliest sleep log)
@@ -135,11 +135,6 @@ export const WearableVisualizationContent = ({
       filteredSleepLogs = filteredSleepLogs.filter(
         (sl) => new Date(sl.dateOfSleep) <= firstDateOfSleep
       );
-    }
-
-    // If there is no data to update, exit early
-    if (filteredSleepLogs.length === 0) {
-      return;
     }
 
     filteredSleepLogs.forEach((sl) => {
@@ -195,25 +190,11 @@ export const WearableVisualizationContent = ({
     });
 
     // Append existing data to the end of data to be visualized
-    updatedRow1.push(...row1);
-    updatedRow2.push(...row2);
-    updatedRow3.push(...row3);
-    updatedRow4.push(...row4);
-
-    setRow1(updatedRow1);
-    setRow2(updatedRow2);
-    setRow3(updatedRow3);
-    setRow4(updatedRow4);
-  }, [
-    dataIsUpdated,
-    firstDateOfSleep,
-    isLoading,
-    row1,
-    row2,
-    row3,
-    row4,
-    sleepLogs,
-  ]);
+    setRow1((prev) => [...prev, ...updatedRow1]);
+    setRow2((prev) => [...prev, ...updatedRow2]);
+    setRow3((prev) => [...prev, ...updatedRow3]);
+    setRow4((prev) => [...prev, ...updatedRow4]);
+  }, [dataIsUpdated, firstDateOfSleep, isLoading, sleepLogs]);
 
   // Reset the zoom and start date
   const resetVisualization = () => {
