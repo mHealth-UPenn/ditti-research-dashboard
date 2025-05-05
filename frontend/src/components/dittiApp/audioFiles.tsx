@@ -35,10 +35,10 @@ export const AudioFiles = () => {
   // Handler for deleting audio files
   const { safeRequest: safeDelete, isLoading: isDeleting } =
     useApiHandler<ResponseBody>({
-      successMessage: "Audio file deleted successfully.", // Assuming success
+      successMessage: "Audio file deleted successfully.",
       errorMessage: (error) => `Failed to delete audio file: ${error.message}`,
       onSuccess: async () => {
-        await refreshAudioFiles(); // Refresh data via context hook
+        await refreshAudioFiles();
       },
     });
 

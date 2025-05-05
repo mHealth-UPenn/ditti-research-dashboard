@@ -47,7 +47,6 @@ export const AccessGroupsEdit = () => {
 
   const navigate = useNavigate();
 
-  // Hook for handling API requests with loading state and notifications
   const { safeRequest: safeFetchData, isLoading: isLoadingData } =
     useApiHandler<{
       actions: ActionResource[];
@@ -85,7 +84,6 @@ export const AccessGroupsEdit = () => {
     };
   };
 
-  // Define addPermission - useCallback might be needed if exhaustive-deps complains
   const addPermission = useCallback((): void => {
     setPermissions((prevPermissions) => {
       const id = prevPermissions.length
@@ -101,7 +99,6 @@ export const AccessGroupsEdit = () => {
       const fetchedData = await safeFetchData(async () => {
         const id = accessGroupId;
 
-        // Define requests
         const actionsReq = httpClient.request<ActionResource[]>(
           "/admin/action?app=1"
         );
@@ -303,14 +300,12 @@ export const AccessGroupsEdit = () => {
 
     const url = id ? "/admin/access-group/edit" : "/admin/access-group/create";
 
-    // Use safeSubmit from useApiHandler
     await safeSubmit(async () => {
-      // Define the expected response type for the request
       const response = await httpClient.request<{ msg?: string }>(url, {
         method: "POST",
         data: body,
       });
-      return response; // Return the data for the hook's onSuccess handler
+      return response;
     });
   };
 

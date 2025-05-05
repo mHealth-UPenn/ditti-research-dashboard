@@ -71,7 +71,6 @@ export const RolesEdit = () => {
       },
     });
 
-  // Define addPermission using useCallback to satisfy exhaustive-deps
   const addPermission = useCallback((): void => {
     setPermissions((prevPermissions) => {
       const nextId =
@@ -264,7 +263,6 @@ export const RolesEdit = () => {
 
     const url = id ? "/admin/role/edit" : "/admin/role/create";
 
-    // Use the API handler
     await safeSubmit(() =>
       httpClient.request<ResponseBody>(url, {
         method: "POST",

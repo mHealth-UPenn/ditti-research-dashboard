@@ -154,7 +154,6 @@ const initialState: AccountsEditState = {
   studiesSelected: [],
 };
 
-// Define initial state for prefill within the component
 const initialPrefillState: AccountFormPrefill = {
   firstName: "",
   lastName: "",
@@ -441,7 +440,6 @@ export const AccountsEdit = () => {
 
     const url = accountId ? "/admin/account/edit" : "/admin/account/create";
 
-    // Use the API handler to submit the request
     await safeSubmit(() =>
       httpClient.request<ResponseBody>(url, {
         method: "POST",

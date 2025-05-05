@@ -42,7 +42,6 @@ export const ParticipantDashboardContent = () => {
   const { dittiId } = useAuth();
   const { studies, apis, studySubjectLoading, refetch } = useStudySubjects();
 
-  // API Handler for updating consent across multiple studies
   const { safeRequest: safeUpdateConsent } = useApiHandler({
     // Success message handled implicitly by redirect/UI change
     // Error message handled by hook + specific error state
@@ -50,13 +49,11 @@ export const ParticipantDashboardContent = () => {
       setConsentError(error.message || "Failed to update consent.");
     },
     onSuccess: async () => {
-      // Clear error, close modal
       setIsConsentOpen(false);
       setConsentError("");
       // Refetch data to ensure consistency
       await refetch();
-      // Redirect to Fitbit authorization after successful consent
-      handleRedirect(); // Assuming handleRedirect is defined elsewhere or added
+      handleRedirect();
     },
   });
 
@@ -119,7 +116,6 @@ export const ParticipantDashboardContent = () => {
 
     setConsentError(""); // Clear previous errors
 
-    // Use the API handler to manage the async operation
     await safeUpdateConsent(async () => {
       // Map each study consent update to an httpClient call
       const consentPromises = studiesNeedingConsent.map((study) =>

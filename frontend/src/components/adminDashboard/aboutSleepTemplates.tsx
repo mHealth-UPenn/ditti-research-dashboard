@@ -57,7 +57,6 @@ export const AboutSleepTemplates = () => {
     }
   }, [flashMessage]);
 
-  // API Handler for the archive operation
   const { safeRequest: safeArchiveRequest, isLoading } =
     useApiHandler<ResponseBody>({
       onSuccess: async (res) => {
@@ -233,7 +232,6 @@ export const AboutSleepTemplates = () => {
 
   const navbar = <AdminNavbar activeView="About Sleep Templates" />;
 
-  // Show loader until initial permissions and data are fetched
   if (!initialLoadComplete) {
     return (
       <ListView>

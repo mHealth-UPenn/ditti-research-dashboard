@@ -238,7 +238,6 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     aboutSleepTemplates,
   ]);
 
-  // Fetch about sleep templates from the database
   useEffect(() => {
     const fetchTemplates = async () => {
       const response = await safeFetchTemplates(async () => {
@@ -338,7 +337,6 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
       return Promise.resolve(null); // Resolve with null if not creating
     };
 
-    // Execute all promises via the API handler
     await safeSubmit(async () => {
       const awsPromise = httpClient.request<ResponseBody>(
         dittiId ? "/aws/user/edit" : "/aws/user/create",

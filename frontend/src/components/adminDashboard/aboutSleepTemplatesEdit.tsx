@@ -47,17 +47,13 @@ export const AboutSleepTemplatesEdit = () => {
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
 
-  // API Handler for fetching the template data when editing
   const { safeRequest: safeFetchInitialData, isLoading: isLoadingData } =
     useApiHandler<{
-      // Define a return type for the fetch function
       template: AboutSleepTemplate | null;
     }>({
-      // Error handled by hook
       showDefaultSuccessMessage: false, // No success message needed for load
     });
 
-  // API Handler for creating or updating the template
   const { safeRequest: safeSubmit } = useApiHandler<ResponseBody>({
     successMessage: (data) => data.msg,
     errorMessage: (error) => `Failed to save template: ${error.message}`,

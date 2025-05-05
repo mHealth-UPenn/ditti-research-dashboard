@@ -42,7 +42,6 @@ export const StudySummary = () => {
   const { dataLoading, taps, audioTaps } = useDittiData();
   const { flashMessage } = useFlashMessages();
 
-  // API Handler for component-specific data (perms, contacts)
   const {
     safeRequest: safeFetchComponentData,
     isLoading: isLoadingComponentData,

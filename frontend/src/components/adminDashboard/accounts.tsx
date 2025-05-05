@@ -72,7 +72,6 @@ export const Accounts = () => {
     },
   ]);
 
-  // API handler for fetching initial data (permissions and accounts)
   const { safeRequest: safeFetchData, isLoading: isLoadingData } =
     useApiHandler<{
       accounts: Account[];
@@ -82,7 +81,6 @@ export const Accounts = () => {
       showDefaultSuccessMessage: false, // No success message needed for initial load
     });
 
-  // API handler for archiving an account
   const { safeRequest: safeArchive } = useApiHandler<ResponseBody>({
     successMessage: (data) => data.msg,
     errorMessage: (error) => `Failed to archive account: ${error.message}`,
@@ -95,8 +93,6 @@ export const Accounts = () => {
   useEffect(() => {
     const initialFetch = async () => {
       const fetchedData = await safeFetchData(async () => {
-        // Define permission check requests
-        // We assume a successful response means access granted, catch handles denial
         const checkPermission = async (
           appId: number,
           action: string,
@@ -117,16 +113,13 @@ export const Accounts = () => {
         const editPerm = checkPermission(adminAppId, "Edit", "Accounts");
         const archivePerm = checkPermission(adminAppId, "Archive", "Accounts");
 
-        // Define accounts fetch request
         const accountsReq = httpClient.request<Account[]>(
           "/admin/account?app=1"
         );
 
-        // Execute all requests in parallel
         const [canCreate, canEdit, canArchive, accountsData] =
           await Promise.all([createPerm, editPerm, archivePerm, accountsReq]);
 
-        // Return data for the hook to handle state updates
         return {
           accounts: accountsData,
           permissions: {

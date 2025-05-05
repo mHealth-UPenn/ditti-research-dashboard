@@ -67,12 +67,11 @@ export function StudiesProvider({
       } catch (error) {
         console.error(
           "Unable to fetch studies data. Check account permissions.",
-          error // Log the actual error
+          error
         );
-        return []; // Return empty array on error, matches previous behavior
+        return [];
       }
     } else if (dataFactory) {
-      // Assuming dataFactory is already initialized or handles its own errors
       return dataFactory.studies;
     }
     // Default return if no condition met

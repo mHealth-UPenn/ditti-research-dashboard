@@ -67,7 +67,6 @@ export const AudioFileUpload = () => {
   const existingFiles = new Set();
   audioFiles.forEach((af) => existingFiles.add(af.fileName));
 
-  // Single handler to manage the entire multi-step upload process
   const { safeRequest: safeUploadProcess, isLoading: isUploading } =
     useApiHandler({
       successMessage: "All files successfully uploaded.",
@@ -110,7 +109,6 @@ export const AudioFileUpload = () => {
    * @param urls string[]
    */
   const uploadFiles = async (urls: string[]) => {
-    // Explicitly type the array
     const progressArray: number[] = Array<number>(selectedFiles.length).fill(0);
     setUploadProgress(progressArray);
 
@@ -131,7 +129,7 @@ export const AudioFileUpload = () => {
             progress = 99;
           }
           progressArray[index] = progress;
-          setUploadProgress([...progressArray]); // Update state immutably
+          setUploadProgress([...progressArray]);
         },
       });
     });
@@ -153,7 +151,6 @@ export const AudioFileUpload = () => {
       .filter((s) => selectedStudies.has(s.id))
       .map((s) => s.acronym);
 
-    // Ensure files data matches selectedFiles length
     if (files.length !== selectedFiles.length) {
       throw new Error("Mismatch between file metadata and selected files.");
     }
@@ -219,11 +216,10 @@ export const AudioFileUpload = () => {
       isValid = false;
     }
     if (selectedFiles.length === 0) {
-      // Use 'danger' variant for form validation feedback
       flashMessage(<span>Please select files to upload.</span>, "danger");
       isValid = false;
     }
-    // Check if any selected file already exists
+
     if (files.some((file) => file.exists)) {
       flashMessage(
         <span>
@@ -243,9 +239,7 @@ export const AudioFileUpload = () => {
       return;
     }
 
-    // Execute the multi-step process using the API handler
     await safeUploadProcess(async () => {
-      // Reset progress at the start of a new attempt
       setUploadProgress([]);
       const urls = await getPresignedUrls();
       await uploadFiles(urls);

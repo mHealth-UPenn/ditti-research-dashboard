@@ -60,7 +60,6 @@ export const AccessGroups = () => {
     }
   }, [flashMessage]);
 
-  // API Handler for the archive operation
   const { safeRequest: safeArchiveRequest, isLoading: isArchiving } =
     useApiHandler<ResponseBody>({
       onSuccess: async (res) => {
@@ -98,7 +97,6 @@ export const AccessGroups = () => {
     },
   ];
 
-  // Effect hook to fetch initial permissions and access group list on mount
   useEffect(() => {
     let isMounted = true;
     const fetchData = async () => {
@@ -151,7 +149,6 @@ export const AccessGroups = () => {
 
     void fetchData();
 
-    // Cleanup function to prevent state updates on unmounted component
     return () => {
       isMounted = false;
     };
@@ -267,7 +264,6 @@ export const AccessGroups = () => {
 
   const navbar = <AdminNavbar activeView="Access Groups" />;
 
-  // Show loader during initial page load (permissions + data fetch)
   if (!initialLoadComplete) {
     return (
       <ListView>
@@ -283,7 +279,6 @@ export const AccessGroups = () => {
     <ListView>
       {navbar}
       <ListContent>
-        {/* Container for the table and potential loading overlay */}
         <div className="relative">
           {" "}
           <Table
@@ -296,7 +291,6 @@ export const AccessGroups = () => {
             paginationPer={10}
             sortDefault=""
           />
-          {/* Show overlay loader when the archive operation is in progress */}
           {isArchiving && (
             <div
               className="absolute inset-0 z-10 flex items-center justify-center

@@ -61,7 +61,6 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
           error
         );
       }
-      // Return empty array on error
     } else if (dataFactory) {
       taps = dataFactory.taps;
     }
@@ -94,7 +93,6 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
           "Unable to fetch audio taps data. Check account permissions.",
           error
         );
-        // Return empty array on error
       }
     } else if (dataFactory) {
       audioTaps = dataFactory.audioTaps;
@@ -121,7 +119,6 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
           "Unable to fetch audio files. Check account permissions.",
           error
         );
-        // Return empty array on error
       }
     } else if (dataFactory) {
       audioFiles = dataFactory.audioFiles;

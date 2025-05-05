@@ -52,24 +52,20 @@ export const AccountMenu = ({
   const { researcherLogout } = useAuth();
   const { flashMessage } = useFlashMessages();
 
-  // Setup API handler with success/error callbacks
   const { safeRequest } = useApiHandler<ResponseBody>({
     onSuccess: (res) => {
       flashMessage(<span>{res.msg}</span>, "success");
       resetForm(); // Reset form and hide menu on success
     },
     onError: () => {
-      // Hook handles general error messages.
-      // Component-specific logic on error:
       if (editPassword) {
         // Keep password edit open if change fails
       } else {
-        setEdit(false); // Reset details edit state on failure
+        setEdit(false);
       }
     },
   });
 
-  // Format and validate phone number input
   const handlePhoneNumberChange = (value: string) => {
     const formattedNumber = formatPhoneNumber(value);
     setPhoneNumber(formattedNumber);

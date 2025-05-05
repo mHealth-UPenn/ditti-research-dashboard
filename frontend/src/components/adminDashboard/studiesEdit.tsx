@@ -183,7 +183,6 @@ export const StudiesEdit = () => {
 
     const url = id ? "/admin/study/edit" : "/admin/study/create";
 
-    // Use the API handler
     await safeSubmit(() =>
       httpClient.request<ResponseBody>(url, {
         method: "POST",

@@ -113,7 +113,6 @@ export function CoordinatorStudySubjectProvider({
     return result;
   };
 
-  // API Handler for fetching and joining study subject data
   const { safeRequest: safeFetchAndJoin, isLoading: studySubjectLoading } =
     useApiHandler<StudySubjectModel[]>({
       // Success data is the joined array
@@ -129,7 +128,6 @@ export function CoordinatorStudySubjectProvider({
       },
     });
 
-  // Function to trigger the fetch and join process
   const fetchStudySubjects = useCallback(() => {
     // Don't fetch if not in prod/dev env
     if (APP_ENV !== "production" && APP_ENV !== "development") {
