@@ -932,7 +932,7 @@ def handler(event, _context):
                 # Handle edge case when a participant's `starts_on`
                 # changes to an earlier date
                 # Generate an additional URL for fetching retroactive data
-                if (entry.earliest_sleep_log is None) or (
+                if (
                     entry.earliest_sleep_log
                     and entry.starts_on.date()
                     < entry.earliest_sleep_log - timedelta(days=1)
