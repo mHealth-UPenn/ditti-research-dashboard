@@ -350,7 +350,7 @@ export const AudioFileUpload = () => {
 
   const handleTitleKeyup = (text: string, i: number) => {
     const updatedFiles = [...files];
-    files[i].title = text;
+    updatedFiles[i] = { ...files[i], title: text };
     setFiles(updatedFiles);
   };
 
