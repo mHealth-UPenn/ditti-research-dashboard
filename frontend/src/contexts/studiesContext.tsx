@@ -19,7 +19,7 @@ import {
   useMemo,
   useCallback,
 } from "react";
-import { makeRequest } from "../utils";
+import { httpClient } from "../lib/http";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
 import { useNavbar } from "../hooks/useNavbar";
@@ -61,14 +61,14 @@ export function StudiesProvider({
 
     if (APP_ENV === "production" || APP_ENV === "development") {
       // Explicitly cast the response type and convert app to string
-      studies = (await makeRequest(`/db/get-studies?app=${String(app)}`).catch(
-        () => {
+      studies = await httpClient
+        .request<Study[]>(`/db/get-studies?app=${String(app)}`)
+        .catch(() => {
           console.error(
             "Unable to fetch studies data. Check account permissions."
           );
-          return [];
-        }
-      )) as unknown as Study[];
+          return [] as Study[]; // Return empty array on error
+        });
     } else if (dataFactory) {
       studies = dataFactory.studies;
     }

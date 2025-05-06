@@ -24,7 +24,7 @@ import { WearableVisualization } from "../visualizations/wearableVisualization";
 import { useStudySubjects } from "../../hooks/useStudySubjects";
 import { SmallLoader } from "../loader/loader";
 import { ConsentModal } from "../containers/consentModal/consentModal";
-import { makeRequest } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { ParticipantStudy } from "../../types/api";
 import { QuillView } from "../containers/quillView/quillView";
 
@@ -103,14 +103,11 @@ export const ParticipantDashboardContent = () => {
     try {
       await Promise.all(
         unconsentedStudies.map((study) => {
-          return makeRequest(
+          return httpClient.request(
             `/participant/study/${String(study.studyId)}/consent`,
             {
               method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ didConsent: true }),
+              data: { didConsent: true },
             }
           );
         })

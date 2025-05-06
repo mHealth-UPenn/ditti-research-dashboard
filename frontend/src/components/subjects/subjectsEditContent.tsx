@@ -14,11 +14,8 @@
 import { useState, useEffect, createRef, useRef, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
-import {
-  formatDateForInput,
-  getEnrollmentInfoForStudy,
-  makeRequest,
-} from "../../utils";
+import { formatDateForInput, getEnrollmentInfoForStudy } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { CheckField } from "../fields/checkField";
 import { SmallLoader } from "../loader/loader";
 import { SelectField } from "../fields/selectField";
@@ -40,6 +37,7 @@ import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { QuillView } from "../containers/quillView/quillView";
 import { SubjectsEditContentProps } from "./subjects.types";
+import { HttpError } from "../../lib/http.types";
 
 /**
  * For validating Cognito password requirements.
@@ -237,10 +235,10 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     // get all about sleep templates
     const fetchTemplates = async () => {
       try {
-        const response = await makeRequest(
+        const response = await httpClient.request<AboutSleepTemplate[]>(
           `/db/get-about-sleep-templates?app=${String(app === "ditti" ? 2 : 3)}`
         );
-        setAboutSleepTemplates(response as unknown as AboutSleepTemplate[]);
+        setAboutSleepTemplates(response);
       } catch (error) {
         console.error("Error fetching templates:", error);
       } finally {
@@ -274,9 +272,9 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
         : { create: dataAWS }),
     };
 
-    const optsAWS = { method: "POST", body: JSON.stringify(bodyAWS) };
+    const optsAWS = { method: "POST", data: bodyAWS };
     const urlAWS = dittiId ? "/aws/user/edit" : "/aws/user/create";
-    const postAWS = makeRequest(urlAWS, optsAWS);
+    const postAWS = httpClient.request<ResponseBody>(urlAWS, optsAWS);
 
     // Prepare and make the request to the database backend
     const { didConsent } = studySubject
@@ -303,11 +301,11 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
         : { create: dataDB }),
     };
 
-    const optsDB = { method: "POST", body: JSON.stringify(bodyDB) };
+    const optsDB = { method: "POST", data: bodyDB };
     const urlDB = studySubject
       ? "/admin/study_subject/edit"
       : "/admin/study_subject/create";
-    const postDB = makeRequest(urlDB, optsDB);
+    const postDB = httpClient.request<ResponseBody>(urlDB, optsDB);
 
     const promises: Promise<ResponseBody>[] = [postAWS, postDB];
 
@@ -322,9 +320,12 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
         },
       };
 
-      const optsCognito = { method: "POST", body: JSON.stringify(bodyCognito) };
+      const optsCognito = { method: "POST", data: bodyCognito };
       const urlCognito = "/auth/participant/register/participant";
-      const postCognito = makeRequest(urlCognito, optsCognito);
+      const postCognito = httpClient.request<ResponseBody>(
+        urlCognito,
+        optsCognito
+      );
       promises.push(postCognito);
     }
 
@@ -332,7 +333,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
       const results = await Promise.all(promises);
       handleSuccess(results[0]);
     } catch (error: unknown) {
-      handleFailure(error as ResponseBody);
+      handleFailure(error);
     }
   };
 
@@ -349,17 +350,23 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
 
   /**
    * Handle a failed response
-   * @param res - the response body
+   * @param error - the error object
    */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "Internal server error";
+    if (error instanceof HttpError && error.apiError?.data) {
+      displayMessage = error.apiError.data.msg;
+    } else if (error instanceof Error) {
+      displayMessage = error.message;
+    }
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg ? res.msg : "Internal server error"}
+        {displayMessage}
       </span>
     );
+
     flashMessage(msg, "danger");
   };
 

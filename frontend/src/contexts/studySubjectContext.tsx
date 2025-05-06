@@ -12,7 +12,7 @@
  */
 
 import { createContext, useState, useEffect, PropsWithChildren } from "react";
-import { makeRequest } from "../utils";
+import { httpClient } from "../lib/http";
 import { APP_ENV } from "../environment";
 import { StudySubjectContextValue } from "./studySubjectContext.types";
 import { Participant, ParticipantApi, ParticipantStudy } from "../types/api";
@@ -58,12 +58,11 @@ export function StudySubjectProvider({ children }: PropsWithChildren) {
     let apisData: ParticipantApi[] = [];
 
     if (APP_ENV === "production" || APP_ENV === "development") {
-      await makeRequest(`/participant`)
+      await httpClient
+        .request<Participant>(`/participant`)
         .then((res) => {
-          // Explicitly cast the response type
-          const participantData = res as unknown as Participant;
-          studiesData = participantData.studies;
-          apisData = participantData.apis;
+          studiesData = res.studies;
+          apisData = res.apis;
         })
         .catch(() => {
           console.error("Unable to fetch participant data.");

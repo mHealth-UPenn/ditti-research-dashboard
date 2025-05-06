@@ -16,13 +16,15 @@ import { AdminNavbar } from "./adminNavbar";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AccessGroup, ResponseBody } from "../../types/api";
-import { getAccess, makeRequest } from "../../utils";
+import { getAccess } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { SmallLoader } from "../loader/loader";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { HttpError } from "../../lib/http.types";
 
 export const AccessGroups = () => {
   const [canCreate, setCanCreate] = useState(false);
@@ -84,8 +86,10 @@ export const AccessGroups = () => {
       }
 
       try {
-        const response = await makeRequest("/admin/access-group?app=1");
-        setAccessGroups(response as unknown as AccessGroup[]);
+        const response = await httpClient.request<AccessGroup[]>(
+          "/admin/access-group?app=1"
+        );
+        setAccessGroups(response);
       } finally {
         setLoading(false);
       }
@@ -172,12 +176,13 @@ export const AccessGroups = () => {
   const deleteAccessGroup = (id: number) => {
     // Prepare the request
     const body = { app: 1, id }; // Admin Dashboard = 1
-    const opts = { method: "POST", body: JSON.stringify(body) };
+    const opts = { method: "POST", data: body };
 
     // Confirm deletion
     const msg = "Are you sure you want to archive this access group?";
     if (confirm(msg)) {
-      makeRequest("/admin/access-group/archive", opts)
+      httpClient
+        .request<ResponseBody>("/admin/access-group/archive", opts)
         .then(handleSuccess)
         .catch(handleFailure);
     }
@@ -188,20 +193,27 @@ export const AccessGroups = () => {
     setLoading(true);
 
     // Refresh the table's data
-    void makeRequest("/admin/access-group?app=1")
+    void httpClient
+      .request<AccessGroup[]>("/admin/access-group?app=1")
       .then((response) => {
-        setAccessGroups(response as unknown as AccessGroup[]);
+        setAccessGroups(response);
         setLoading(false);
       })
       .catch(handleFailure);
   };
 
-  const handleFailure = (res: ResponseBody) => {
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "Internal server error";
+    if (error instanceof HttpError && error.apiError?.data) {
+      displayMessage = error.apiError.data.msg;
+    } else if (error instanceof Error) {
+      displayMessage = error.message;
+    }
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg ? res.msg : "Internal server error"}
+        {displayMessage}
       </span>
     );
 

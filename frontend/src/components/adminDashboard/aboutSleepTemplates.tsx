@@ -12,7 +12,8 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { getAccess, makeRequest } from "../../utils";
+import { getAccess } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -23,6 +24,7 @@ import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
+import { HttpError } from "../../lib/http.types";
 
 export const AboutSleepTemplates = () => {
   const [canCreate, setCanCreate] = useState(false);
@@ -78,11 +80,11 @@ export const AboutSleepTemplates = () => {
       });
 
     // get the table's data
-    const fetchTemplates = makeRequest(
-      "/admin/about-sleep-template?app=1"
-    ).then((templates) => {
-      setAboutSleepTemplates(templates as unknown as AboutSleepTemplate[]);
-    });
+    const fetchTemplates = httpClient
+      .request<AboutSleepTemplate[]>("/admin/about-sleep-template?app=1")
+      .then((templates: AboutSleepTemplate[]) => {
+        setAboutSleepTemplates(templates);
+      });
 
     // when all requests are complete, hide the loading screen
     Promise.all([create, edit, archive, fetchTemplates])
@@ -159,13 +161,14 @@ export const AboutSleepTemplates = () => {
   const deleteTemplate = (id: number): void => {
     // prepare the request
     const body = { app: 1, id }; // Admin Dashboard = 1
-    const opts = { method: "POST", body: JSON.stringify(body) };
+    const opts = { method: "POST", data: body };
 
     // confirm deletion
     const msg = "Are you sure you want to archive this about sleep template?";
 
     if (confirm(msg))
-      makeRequest("/admin/about-sleep-template/archive", opts)
+      httpClient
+        .request<ResponseBody>("/admin/about-sleep-template/archive", opts)
         .then(handleSuccess)
         .catch(handleFailure);
   };
@@ -180,9 +183,10 @@ export const AboutSleepTemplates = () => {
     flashMessage(<span>{res.msg}</span>, "success");
 
     // refresh the table's data
-    makeRequest("/admin/about-sleep-template?app=1")
-      .then((templates) => {
-        setAboutSleepTemplates(templates as unknown as AboutSleepTemplate[]);
+    httpClient
+      .request<AboutSleepTemplate[]>("/admin/about-sleep-template?app=1")
+      .then((templates: AboutSleepTemplate[]) => {
+        setAboutSleepTemplates(templates);
         setLoading(false);
       })
       .catch((error: unknown) => {
@@ -193,15 +197,20 @@ export const AboutSleepTemplates = () => {
 
   /**
    * Handle a failed response
-   * @param res - the response body
+   * @param error - the error object
    */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message returned from the endpoint or "Internal server error"
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "Internal server error";
+    if (error instanceof HttpError && error.apiError?.data) {
+      displayMessage = error.apiError.data.msg;
+    } else if (error instanceof Error) {
+      displayMessage = error.message;
+    }
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg || "Internal server error"}
+        {displayMessage}
       </span>
     );
 

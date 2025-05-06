@@ -13,7 +13,8 @@
 
 import { useState, useEffect } from "react";
 import { Study } from "../../types/api";
-import { downloadExcelFromUrl, getAccess, makeRequest } from "../../utils";
+import { downloadExcelFromUrl, getAccess } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { SmallLoader } from "../loader/loader";
 import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { Card } from "../cards/card";
@@ -65,19 +66,21 @@ export function WearableStudySummary() {
     );
 
     promises.push(
-      makeRequest("/db/get-study-contacts?app=3&study=" + String(studyId)).then(
-        (contacts: unknown) => {
-          setStudyContacts(contacts as StudyContactModel[]);
-        }
-      )
+      httpClient
+        .request<
+          StudyContactModel[]
+        >(`/db/get-study-contacts?app=3&study=${String(studyId)}`)
+        .then((contacts) => {
+          setStudyContacts(contacts);
+        })
     );
 
     promises.push(
-      makeRequest("/db/get-study-details?app=3&study=" + String(studyId)).then(
-        (details: unknown) => {
-          setStudyDetails(details as Study);
-        }
-      )
+      httpClient
+        .request<Study>(`/db/get-study-details?app=3&study=${String(studyId)}`)
+        .then((details) => {
+          setStudyDetails(details);
+        })
     );
 
     Promise.all(promises)

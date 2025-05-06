@@ -13,7 +13,8 @@
 
 import { useState, useEffect } from "react";
 import { Study } from "../../types/api";
-import { getAccess, makeRequest } from "../../utils";
+import { getAccess } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { SmallLoader } from "../loader/loader";
 import { StudySubjects } from "./studySubjects";
 import { Workbook } from "exceljs";
@@ -66,11 +67,13 @@ export const StudySummary = () => {
 
       // get other accounts that have access to this study
       promises.push(
-        makeRequest(
-          `/db/get-study-contacts?app=2&study=${String(study.id)}`
-        ).then((contacts: unknown) => {
-          setStudyContacts(contacts as StudyContactModel[]);
-        })
+        httpClient
+          .request<
+            StudyContactModel[]
+          >(`/db/get-study-contacts?app=2&study=${String(study.id)}`)
+          .then((contacts) => {
+            setStudyContacts(contacts);
+          })
       );
 
       // when all promises resolve, hide the loader

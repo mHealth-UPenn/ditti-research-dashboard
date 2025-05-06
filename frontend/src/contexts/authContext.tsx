@@ -19,7 +19,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { makeRequest } from "../utils";
+import { httpClient } from "../lib/http";
 import {
   AuthContextValue,
   ParticipantAuthResponse,
@@ -71,14 +71,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
      */
     const checkParticipantAuthStatus = async () => {
       try {
-        const res = await makeRequest("/auth/participant/check-login", {
-          method: "GET",
-        });
-        // Type assertion with type guard
-        const typedRes = res as ParticipantAuthResponse;
-        if (typedRes.msg === "Login successful") {
+        const res = await httpClient.request<ParticipantAuthResponse>(
+          "/auth/participant/check-login",
+          { method: "GET" }
+        );
+        if (res.msg === "Login successful") {
           setIsParticipantAuthenticated(true);
-          setDittiId(typedRes.dittiId);
+          setDittiId(res.dittiId);
         }
       } catch {
         setIsParticipantAuthenticated(false);
@@ -92,24 +91,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
      */
     const checkResearcherAuthStatus = async () => {
       try {
-        const res = await makeRequest("/auth/researcher/check-login", {
-          method: "GET",
-        });
-        // Type assertion with type guard
-        const typedRes = res as ResearcherAuthResponse;
-        if (typedRes.msg === "Login successful") {
+        const res = await httpClient.request<ResearcherAuthResponse>(
+          "/auth/researcher/check-login",
+          { method: "GET" }
+        );
+        if (res.msg === "Login successful") {
           setIsResearcherAuthenticated(true);
           setAccountInfo({
-            msg: typedRes.msg,
-            email: typedRes.email,
-            firstName: typedRes.firstName,
-            lastName: typedRes.lastName,
-            accountId: typedRes.accountId,
-            phoneNumber: typedRes.phoneNumber,
+            msg: res.msg,
+            email: res.email,
+            firstName: res.firstName,
+            lastName: res.lastName,
+            accountId: res.accountId,
+            phoneNumber: res.phoneNumber,
           });
-
-          // Set isFirstLogin state directly from the response
-          setIsFirstLogin(Boolean(typedRes.isFirstLogin));
+          setIsFirstLogin(Boolean(res.isFirstLogin));
         }
       } catch {
         setIsResearcherAuthenticated(false);

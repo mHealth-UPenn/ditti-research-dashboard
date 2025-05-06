@@ -14,12 +14,14 @@
 import { useState } from "react";
 import { ResponseBody } from "../../types/api";
 import { TextField } from "../fields/textField";
-import { makeRequest, formatPhoneNumber } from "../../utils";
+import { formatPhoneNumber } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { AsyncButton } from "../buttons/asyncButton";
 import { Button } from "../buttons/button";
 import { useAuth } from "../../hooks/useAuth";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { AccountMenuProps, PasswordError } from "./accountMenu.types";
+import { HttpError } from "../../lib/http.types";
 
 /**
  * Account Menu component for managing user account details and password
@@ -126,13 +128,11 @@ export const AccountMenu = ({
 
     const opts = {
       method: "POST",
-      body: JSON.stringify(body),
-      headers: {
-        "Content-Type": "application/json",
-      },
+      data: body,
     };
 
-    await makeRequest("/db/edit-account-details", opts)
+    await httpClient
+      .request<ResponseBody>("/db/edit-account-details", opts)
       .then(handleSuccess)
       .catch(handleFailure);
   };
@@ -183,16 +183,15 @@ export const AccountMenu = ({
     };
 
     // Set up request options
-    const opts: RequestInit = {
+    const opts = {
       method: "POST",
-      body: JSON.stringify(body),
-      credentials: "include", // Ensure cookies are sent with the request
-      headers: {
-        "Content-Type": "application/json",
-      },
+      data: body,
     };
 
-    return makeRequest("/auth/researcher/change-password", opts);
+    return httpClient.request<ResponseBody>(
+      "/auth/researcher/change-password",
+      opts
+    );
   };
 
   /**
@@ -222,7 +221,7 @@ export const AccountMenu = ({
       }
     } catch (error) {
       // Handle any errors, including LIMIT_EXCEEDED
-      handleFailure(error as Error | ResponseBody);
+      handleFailure(error);
     }
   };
 
@@ -238,66 +237,84 @@ export const AccountMenu = ({
 
   /**
    * Handle a failed response from the server API (not local validation)
-   * @param res - The error response from the API
+   * @param error - The error from the API
    */
-  const handleFailure = (res: ResponseBody | Error) => {
-    try {
-      // Format error message
-      const errorMessage =
-        res instanceof Error ? res.message : res.msg || "Internal server error";
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "An unexpected error occurred.";
+    let backendCode: string | undefined = undefined;
+    let isAuthError = false;
+    let isClientSideError = false; // Flag for non-HTTP/backend errors
 
-      // Check for specific error codes to provide better feedback
+    try {
+      if (error instanceof HttpError && error.apiError) {
+        displayMessage = error.message; // Start with the HttpError/Axios message
+
+        if (error.apiError.data) {
+          // Prefer the specific message from the backend response body if available
+          if (error.apiError.data.msg) {
+            displayMessage = error.apiError.data.msg;
+          }
+          if (error.apiError.data.code) {
+            backendCode = error.apiError.data.code;
+          }
+        }
+
+        // Determine if it's an authentication error based on backend code or HTTP status
+        isAuthError =
+          (!!backendCode &&
+            (backendCode.includes("AUTH_") ||
+              backendCode === "SESSION_EXPIRED" ||
+              backendCode === "FORBIDDEN")) ||
+          error.apiError.status === 401 ||
+          error.apiError.status === 403;
+      } else if (error instanceof Error) {
+        // It's a standard JavaScript Error
+        displayMessage = error.message;
+        isClientSideError = true;
+      } else {
+        // It's something else entirely
+        console.error("Caught non-Error throwable in handleFailure:", error);
+        // displayMessage remains the default
+      }
+
       let msgElement: React.ReactElement;
 
-      if (
-        !(res instanceof Error) &&
-        "error_code" in res &&
-        typeof res.error_code === "string"
-      ) {
-        const errorCode = res.error_code;
-
-        // For authentication errors, show with special heading
-        if (
-          errorCode.includes("AUTH_") ||
-          errorCode === "SESSION_EXPIRED" ||
-          errorCode === "FORBIDDEN"
-        ) {
-          msgElement = (
-            <span>
-              <b>Authentication Error</b>
-              <br />
-              {errorMessage}
-            </span>
-          );
-        }
-        // For all other errors, show just the message
-        // These are already user-friendly messages from the backend
-        else {
-          msgElement = <span>{errorMessage}</span>;
-        }
-      } else {
-        // Generic errors without error_code
+      if (isAuthError) {
         msgElement = (
           <span>
-            <b>An unexpected error occurred</b>
+            <b>Authentication Error</b>
             <br />
-            {errorMessage}
+            {displayMessage}
+          </span>
+        );
+      } else if (backendCode) {
+        // Use the direct message for specific, non-auth backend errors
+        msgElement = <span>{displayMessage}</span>;
+      } else {
+        // Fallback for generic HttpErrors, client-side Errors, or unknown throwables
+        const errorTitle = isClientSideError
+          ? "Error"
+          : "An unexpected error occurred";
+        msgElement = (
+          <span>
+            <b>{errorTitle}</b>
+            <br />
+            {displayMessage}
           </span>
         );
       }
 
       flashMessage(msgElement, "danger");
-    } catch (flashError) {
-      // If even our error handler fails, at least log it and show a generic message
-      console.error("Error in error handler:", flashError);
+
+      console.error("API call failed or error occurred:", error);
+    } catch (handlerError) {
+      console.error("Error in error handler:", handlerError);
       flashMessage(<span>An error occurred. Please try again.</span>, "danger");
     } finally {
-      // Always make sure we reset UI states regardless of what happened
       if (editPassword) {
-        // We're in password edit mode - keep it open but reset loading states
+        // Stay in password edit mode if the error occurred there
       } else {
-        // Only reset regular edit state (not password edit state)
-        setEdit(false);
+        setEdit(false); // Exit general edit mode on failure
       }
     }
   };
@@ -320,7 +337,6 @@ export const AccountMenu = ({
     setPasswordError(null);
 
     // Exit edit modes
-
     setEdit(false);
     setEditPassword(false);
   };

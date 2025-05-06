@@ -14,7 +14,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
-import { makeRequest } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -30,6 +30,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
 import { AboutSleepTemplateFormPrefill } from "./adminDashboard.types";
+import { HttpError } from "../../lib/http.types";
 
 export const AboutSleepTemplatesEdit = () => {
   const [searchParams] = useSearchParams();
@@ -53,11 +54,11 @@ export const AboutSleepTemplatesEdit = () => {
 
       // if editing an existing entry, return prefill data, else return empty data
       return id
-        ? makeRequest(
-            `/admin/about-sleep-template?app=1&id=${String(id)}`
-          ).then((res: ResponseBody) =>
-            makePrefill(res as unknown as AboutSleepTemplate[])
-          )
+        ? httpClient
+            .request<
+              AboutSleepTemplate[]
+            >(`/admin/about-sleep-template?app=1&id=${String(id)}`)
+            .then((response) => makePrefill(response))
         : {
             name: "",
             text: "",
@@ -103,12 +104,15 @@ export const AboutSleepTemplatesEdit = () => {
       ...(id ? { id: id, edit: data } : { create: data }),
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
+    const opts = { method: "POST", data: body };
     const url = id
       ? "/admin/about-sleep-template/edit"
       : "/admin/about-sleep-template/create";
 
-    await makeRequest(url, opts).then(handleSuccess).catch(handleFailure);
+    await httpClient
+      .request<ResponseBody>(url, opts)
+      .then(handleSuccess)
+      .catch(handleFailure);
   };
 
   /**
@@ -123,15 +127,20 @@ export const AboutSleepTemplatesEdit = () => {
 
   /**
    * Handle a failed response
-   * @param res - the response body
+   * @param error - the error object
    */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "Internal server error";
+    if (error instanceof HttpError && error.apiError?.data) {
+      displayMessage = error.apiError.data.msg;
+    } else if (error instanceof Error) {
+      displayMessage = error.message;
+    }
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg ? res.msg : "Internal server error"}
+        {displayMessage}
       </span>
     );
 

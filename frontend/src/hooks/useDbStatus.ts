@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { makeRequest } from "../utils";
+import { httpClient } from "../lib/http";
 import { ResponseBody } from "../types/api";
 
 /**
@@ -30,7 +30,7 @@ export const useDbStatus = () => {
 
     const touch = async (): Promise<string> => {
       try {
-        const res: ResponseBody = await makeRequest("/touch");
+        const res = await httpClient.request<ResponseBody>("/touch");
         if (res.msg === "OK") {
           setLoadingDb(false);
           clearInterval(intervalId);

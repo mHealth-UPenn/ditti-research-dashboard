@@ -13,7 +13,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { DataRetrievalTask } from "../../types/api";
-import { getAccess, makeRequest } from "../../utils";
+import { getAccess } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -90,10 +91,10 @@ export const DataRetrievalTasks = () => {
   const fetchData = useCallback(async () => {
     try {
       // Fetch data retrieval tasks (View permission is handled by the server)
-      const response = await makeRequest("/data_processing_task/?app=1");
-      // Cast to DataRetrievalTask[] using unknown as intermediate type
-      const data = response as unknown as DataRetrievalTask[];
-      setTasks(data);
+      const response = await httpClient.request<DataRetrievalTask[]>(
+        "/data_processing_task/?app=1"
+      );
+      setTasks(response);
     } catch (error) {
       console.error("Error fetching tasks:", error);
       flashMessage(
@@ -121,19 +122,19 @@ export const DataRetrievalTasks = () => {
     });
   }, [fetchData]);
 
-  const handleForceStop = async (id: number) => {
-    await makeRequest(`/data_processing_task/force-stop`, {
-      method: "POST",
-      body: JSON.stringify({
-        app: 1,
-        function_id: id,
-      }),
-    }).finally(() => {
-      setLoading(true);
-      void fetchData().finally(() => {
-        setLoading(false);
+  const handleForceStop = async (taskId: number) => {
+    // Set loading true immediately to cover both the stop request and the data refresh.
+    setLoading(true);
+    await httpClient
+      .request(`/data_processing_task/force-stop`, {
+        method: "POST",
+        data: { app: 1, task_id: taskId },
+      })
+      .finally(() => {
+        // Refetch data regardless of the stop request's success/failure.
+        // fetchData() is expected to set loading to false when it completes.
+        void fetchData();
       });
-    });
   };
 
   /**

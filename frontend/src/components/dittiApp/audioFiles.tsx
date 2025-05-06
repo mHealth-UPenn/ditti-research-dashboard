@@ -14,7 +14,8 @@
 import { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
-import { getAccess, makeRequest } from "../../utils";
+import { getAccess } from "../../utils";
+import { httpClient } from "../../lib/http";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
@@ -109,9 +110,9 @@ export const AudioFiles = () => {
       )
     ) {
       try {
-        await makeRequest("/aws/audio-file/delete", {
+        await httpClient.request("/aws/audio-file/delete", {
           method: "POST",
-          body: JSON.stringify({ app: 2, id, _version }),
+          data: { app: 2, id, _version },
         });
         flashMessage(<span>Audio file deleted successfully</span>, "success");
         setLoading(true);

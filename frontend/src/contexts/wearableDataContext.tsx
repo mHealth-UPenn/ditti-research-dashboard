@@ -21,7 +21,7 @@ import {
 } from "react";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
-import { makeRequest } from "../utils";
+import { httpClient } from "../lib/http";
 import {
   WearableDataContextValue,
   CoordinatorWearableDataProviderProps,
@@ -85,7 +85,7 @@ export const ParticipantWearableDataProvider = ({
           params.append("start_date", formatDate(startDate));
           params.append("end_date", formatDate(endDate));
           const url = `/participant/fitbit_data?${params.toString()}`;
-          let data = (await makeRequest(url)) as unknown as SleepLog[];
+          let data = await httpClient.request<SleepLog[]>(url);
 
           data = data.sort((a, b) => {
             if (a.dateOfSleep > b.dateOfSleep) return 1;
@@ -177,7 +177,7 @@ export const CoordinatorWearableDataProvider = ({
       params.append("study", String(studyId));
       const url = `/admin/fitbit_data/${dittiId}?${params.toString()}`;
 
-      let data = (await makeRequest(url)) as unknown as SleepLog[];
+      let data = await httpClient.request<SleepLog[]>(url);
       data = data.sort((a, b) => {
         if (a.dateOfSleep > b.dateOfSleep) return 1;
         else if (a.dateOfSleep < b.dateOfSleep) return -1;
@@ -203,9 +203,7 @@ export const CoordinatorWearableDataProvider = ({
           params.append("study", String(studyId)); // Convert studyId to string
           // Convert taskId to string for the template literal
           const url = `/data_processing_task/${String(taskId)}?${params.toString()}`;
-          const tasks = (await makeRequest(
-            url
-          )) as unknown as DataProcessingTask[];
+          const tasks = await httpClient.request<DataProcessingTask[]>(url);
 
           // Assume one task is returned
           if (
@@ -279,9 +277,7 @@ export const CoordinatorWearableDataProvider = ({
           params.append("app", "3"); // Assume Wearable Dashboard is app 3
           params.append("study", String(studyId));
           const url = `/data_processing_task/?${params.toString()}`;
-          const tasks = (await makeRequest(
-            url
-          )) as unknown as DataProcessingTask[];
+          const tasks = await httpClient.request<DataProcessingTask[]>(url);
 
           // Check if any tasks are syncing
           const syncingTask = tasks.find(
@@ -330,9 +326,9 @@ export const CoordinatorWearableDataProvider = ({
         params.append("app", "3");
         params.append("study", String(studyId)); // Convert studyId to string
         const url = `/data_processing_task/invoke?${params.toString()}`;
-        const opts: RequestInit = {
+        const opts = {
           method: "POST",
-          body: JSON.stringify({ app: 3 }),
+          data: { app: 3 },
         };
 
         // Fetch the data processing task ID for checking status
@@ -340,7 +336,7 @@ export const CoordinatorWearableDataProvider = ({
           msg: string;
           task: DataProcessingTask;
         }
-        const res = (await makeRequest(url, opts)) as unknown as ResponseBody;
+        const res = await httpClient.request<ResponseBody>(url, opts);
 
         setIsSyncing(true);
         scheduleSyncCheck(res.task.id);
