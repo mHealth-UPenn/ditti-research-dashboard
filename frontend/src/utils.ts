@@ -235,8 +235,6 @@ export async function downloadExcelFromUrl(
   url: string
 ): Promise<string | null> {
   try {
-    // The Authorization header is automatically added by httpClient's interceptor.
-    // httpClient is also configured with withCredentials: true.
     const response = await httpClient.requestRawResponse<Blob>(
       `${String(import.meta.env.VITE_FLASK_SERVER)}${String(url)}`,
       {
