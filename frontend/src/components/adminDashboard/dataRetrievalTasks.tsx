@@ -123,17 +123,17 @@ export const DataRetrievalTasks = () => {
   }, [fetchData]);
 
   const handleForceStop = async (taskId: number) => {
-    // Set loading true immediately to cover both the stop request and the data refresh.
-    setLoading(true);
     await httpClient
       .request(`/data_processing_task/force-stop`, {
         method: "POST",
-        data: { app: 1, task_id: taskId },
+        data: { app: 1, function_id: taskId },
       })
       .finally(() => {
+        setLoading(true);
         // Refetch data regardless of the stop request's success/failure.
-        // fetchData() is expected to set loading to false when it completes.
-        void fetchData();
+        void fetchData().finally(() => {
+          setLoading(false);
+        });
       });
   };
 
