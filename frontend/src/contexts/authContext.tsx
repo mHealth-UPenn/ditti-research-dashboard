@@ -19,6 +19,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
+import { HttpError } from "../lib/http.types";
 import { httpClient } from "../lib/http";
 import {
   AuthContextValue,
@@ -84,7 +85,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           setDittiId(null);
         }
       } catch (error) {
-        console.error("Participant auth check failed:", error);
+        // Check if it's a 401 error, which is expected if not logged in
+        if (!(error instanceof HttpError && error.apiError?.status === 401)) {
+          // Log only unexpected errors
+          console.error("Participant auth check failed:", error);
+        }
         setIsParticipantAuthenticated(false);
         setDittiId(null);
       } finally {
@@ -118,7 +123,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
           resetAccountInfo();
         }
       } catch (error) {
-        console.error("Researcher auth check failed:", error);
+        // Check if it's a 401 error, which is expected if not logged in
+        if (!(error instanceof HttpError && error.apiError?.status === 401)) {
+          // Log only unexpected errors
+          console.error("Researcher auth check failed:", error);
+        }
         setIsResearcherAuthenticated(false);
         resetAccountInfo();
       } finally {
