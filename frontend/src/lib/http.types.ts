@@ -11,7 +11,6 @@
  * under the License.
  */
 
-import { AxiosRequestConfig } from "axios";
 import { ResponseBody } from "../types/api";
 
 /**
@@ -53,17 +52,3 @@ export class HttpError extends Error {
     this.apiError = apiError;
   }
 }
-
-/**
- * Axios request configuration override.
- * Omits properties handled directly by the `HttpClient` methods (`url`, `method`, `data`).
- * Includes an optional `signal` for AbortController integration,
- * useful for scenarios like React 18 strict-mode cleanup.
- */
-export type RequestConfig<TData> = Omit<
-  AxiosRequestConfig<TData>,
-  "url" | "method" | "data" | "signal"
-> & {
-  /** Abort controller signal for request cancellation. */
-  signal?: AbortSignal;
-};
