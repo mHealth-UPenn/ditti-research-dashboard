@@ -15,6 +15,7 @@ import DOMPurify from "isomorphic-dompurify";
 import { StudySubjectModel } from "./types/models";
 import { ResponseBody } from "./types/api";
 import { AttributesByTag, ClassAllowlist } from "./utils.types";
+import { httpClient } from "./lib/http";
 
 /**
  * Sanitizes HTML content from the Quill editor to prevent XSS attacks
@@ -225,69 +226,6 @@ export function sanitize_quill_html(html: string): string {
 }
 
 /**
- * Makes a request with specified options.
- * @param url - The endpoint URL.
- * @param opts - Request options including method, headers, and body.
- * @returns A promise that resolves to the response body.
- */
-
-export const makeRequest = async (
-  url: string,
-  opts: RequestInit = {}
-): Promise<ResponseBody> => {
-  const jwt = localStorage.getItem("jwt");
-
-  // Set credentials to include to send cookies
-  opts.credentials = "include";
-
-  // Set headers
-  const headers = {
-    ...Object.fromEntries(Object.entries(opts.headers ?? {})),
-    ...(jwt &&
-      !(opts.headers && "Authorization" in opts.headers) && {
-        Authorization: `Bearer ${String(jwt)}`,
-      }),
-  };
-
-  opts.headers = headers;
-
-  // Add additional headers for specific request methods
-  if (["POST", "PUT", "DELETE"].includes(opts.method ?? "")) {
-    const updatedHeaders = {
-      ...Object.fromEntries(Object.entries(opts.headers ?? {})),
-      "Content-Type": "application/json",
-      "X-CSRF-TOKEN": localStorage.getItem("csrfToken") ?? "",
-    };
-
-    opts.headers = updatedHeaders;
-  }
-
-  // Execute the request
-  const response = await fetch(
-    `${String(import.meta.env.VITE_FLASK_SERVER)}${url}`,
-    opts
-  );
-  const body = (await response.json()) as ResponseBody;
-
-  // Store CSRF token for future requests
-  if (response.status === 200) {
-    if (body.csrfAccessToken)
-      localStorage.setItem("csrfToken", body.csrfAccessToken);
-    if (body.jwt) localStorage.setItem("jwt", body.jwt);
-  }
-
-  // Throw an error if the response is not successful
-  if (response.status !== 200) {
-    // Return the original body to maintain compatibility with existing error handling
-    const errorMessage =
-      body.msg || `Request failed with status: ${String(response.status)}`;
-    throw new Error(errorMessage);
-  }
-
-  return body;
-};
-
-/**
  * Downloads a file from a specified URL.
  * @param url - The URL of the file to download.
  * @returns A promise that resolves to the filename or an error message.
@@ -377,7 +315,7 @@ export const getAccess = async (
   let url = `/auth/researcher/get-access?app=${String(app)}&action=${action}&resource=${resource}`;
   if (study) url += `&study=${String(study)}`;
 
-  const res: ResponseBody = await makeRequest(url);
+  const res = await httpClient.request<ResponseBody>(url);
   if (res.msg !== "Authorized") throw new Error("Unauthorized");
 };
 
