@@ -92,6 +92,48 @@ class HttpClient {
     }
   }
 
+  /**
+   * Performs an HTTP request and returns the raw AxiosResponse object.
+   * Useful for cases where response headers or the full response status are needed,
+   * or for handling non-JSON response types like blobs.
+   *
+   * @template TResp The expected type of the response body data.
+   * @template TData The type of the request body data.
+   * @param url The target URL path (relative to `baseURL`).
+   * @param config Optional request configuration.
+   * @returns A promise that resolves with the full `AxiosResponse<TResp>`.
+   * @throws {AxiosError | Error} An AxiosError if the request fails at the Axios level,
+   *                            or a standard Error for other issues (e.g., cancellation).
+   */
+  async requestRawResponse<TResp = unknown, TData = unknown>(
+    url: string,
+    config: Omit<AxiosRequestConfig<TData>, "url"> = {}
+  ): Promise<AxiosResponse<TResp>> {
+    try {
+      const res: AxiosResponse<TResp> = await this.instance.request({
+        url,
+        ...config, // Spread the config, including method, data, responseType, etc.
+      });
+      return res;
+    } catch (err) {
+      if (isAxiosError(err)) {
+        throw err; // Re-throw AxiosError for the caller to handle raw response/error data.
+      }
+      // For other types of errors (network, cancellations before request), normalize.
+      if (isCancel(err)) {
+        throw new Error("Request canceled");
+      }
+      // Ensure it's an error type
+      if (err instanceof Error) {
+        throw err;
+      }
+      // Fallback for non-Error throwables
+      throw new Error("An unknown error occurred during raw request", {
+        cause: err,
+      });
+    }
+  }
+
   /** Registers Axios interceptors for request modification and response handling. */
   private registerInterceptors() {
     // Request interceptor: Automatically attach JWT and CSRF tokens.
@@ -103,8 +145,12 @@ class HttpClient {
       if (jwt && !headers.has("Authorization")) {
         headers.set("Authorization", `Bearer ${jwt}`);
       }
-      // Only attach CSRF for potentially state-changing methods.
+      // This X-CSRF-TOKEN mechanism relies on `localStorage.getItem("csrfToken")`
+      // being populated. The primary API CSRF protection
+      // is handled by JWT Bearer token validation on the backend. This header
+      // is included for potential future use.
       if (
+        // Only attach CSRF for potentially state-changing methods.
         csrf &&
         ["post", "put", "delete"].includes(cfg.method?.toLowerCase() ?? "")
       ) {
@@ -118,6 +164,9 @@ class HttpClient {
       (res) => {
         const body = res.data as ResponseBody | undefined; // Check if body matches expected token structure
         if (body?.jwt) localStorage.setItem("jwt", body.jwt);
+        // NOTE: This populates `localStorage` for the `X-CSRF-TOKEN` header sent by the
+        // request interceptor. It requires the backend to send `csrfAccessToken`
+        // in the response body if this CSRF mechanism is to be active.
         if (body?.csrfAccessToken)
           localStorage.setItem("csrfToken", body.csrfAccessToken);
         return res; // Pass the full response along
