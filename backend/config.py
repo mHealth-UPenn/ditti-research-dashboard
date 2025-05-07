@@ -40,6 +40,8 @@ class Default:
 
     SQLALCHEMY_DATABASE_URI = os.getenv("FLASK_DB")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS: ClassVar[dict] = {"future": True}
+    SQLALCHEMY_FUTURE_SESSION = True
 
     APP_SYNC_HOST = os.getenv("APP_SYNC_HOST")
     AWS_TABLENAME_USER = os.getenv("AWS_TABLENAME_USER")
