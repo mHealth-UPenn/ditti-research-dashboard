@@ -16,8 +16,25 @@ import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 import svgr from "vite-plugin-svgr";
 
+// Intercepts Firefox React DevTools .map requests and returns a minimal stub
+const devToolsMapStub = {
+  configureServer({ middlewares }) {
+    middlewares.use((req, res, next) => {
+      const m = req.url?.match(
+        /(installHook|react_devtools_backend_compact)\.js\.map$/
+      );
+      if (!m) return next();
+      const f = `${m[1]}.js`; // e.g. "installHook.js"
+      res.setHeader("Content-Type", "application/json");
+      res.end(
+        `{"version":3,"file":"${f}","sources":["${f}"],"sourcesContent":[""],"mappings":""}`
+      );
+    });
+  },
+};
+
 export default defineConfig({
-  plugins: [svgr(), react(), tsconfigPaths()],
+  plugins: [svgr(), react(), tsconfigPaths(), devToolsMapStub],
   server: {
     port: 3000,
   },
