@@ -12,6 +12,7 @@
 
 import json
 
+from backend.extensions import db
 from backend.models import (
     AccessGroup,
     Account,
@@ -68,7 +69,7 @@ def test_account_edit(post_admin):
     assert "msg" in data
     assert data["msg"] == "Account Edited Successfully"
 
-    foo = Account.query.get(1)
+    foo = db.session.get(Account, 1)
     assert foo.first_name == "foo"
     assert len(foo.access_groups) == 1
     assert foo.access_groups[0].access_group_id == 2
@@ -85,7 +86,7 @@ def test_account_edit(post_admin):
     assert data["msg"] == "Account Edited Successfully"
 
     # Verify phone number was saved
-    foo = Account.query.get(1)
+    foo = db.session.get(Account, 1)
     assert foo.phone_number == "+14155551234"
 
     # Case 3: Invalid phone number format
@@ -117,7 +118,7 @@ def test_account_edit(post_admin):
     assert data["msg"] == "Account Edited Successfully"
 
     # Verify phone number was removed
-    foo = Account.query.get(1)
+    foo = db.session.get(Account, 1)
     assert foo.phone_number is None
 
     # Case 5: Verify email changes are blocked
@@ -133,7 +134,7 @@ def test_account_edit(post_admin):
     assert data["msg"] == "Account Edited Successfully"
 
     # Verify first name was updated but email was not
-    foo = Account.query.get(1)
+    foo = db.session.get(Account, 1)
     assert foo.first_name == "UpdatedName"
     assert foo.email != "newemail@example.com"  # Email should not change
 
@@ -146,7 +147,7 @@ def test_account_archive(post_admin):
     assert "msg" in data
     assert data["msg"] == "Account Archived Successfully"
 
-    foo = Account.query.get(1)
+    foo = db.session.get(Account, 1)
     assert foo.is_archived
 
 
@@ -215,7 +216,7 @@ def test_study_edit(post_admin):
     assert "msg" in data
     assert data["msg"] == "Study Edited Successfully"
 
-    foo = Study.query.get(1)
+    foo = db.session.get(Study, 1)
     assert foo.name == "qux"
     assert foo.acronym == "QUX"
 
@@ -228,7 +229,7 @@ def test_study_archive(post_admin):
     assert "msg" in data
     assert data["msg"] == "Study Archived Successfully"
 
-    foo = Study.query.get(1)
+    foo = db.session.get(Study, 1)
     assert foo.is_archived
 
 
@@ -272,7 +273,7 @@ def test_access_group_edit(post_admin):
     assert "msg" in data
     assert data["msg"] == "Access Group Edited Successfully"
 
-    foo = AccessGroup.query.get(2)
+    foo = db.session.get(AccessGroup, 2)
     assert foo.name == "baz"
     assert len(foo.accounts) == 1
     assert foo.accounts[0].account.email == "foo@email.com"
@@ -287,7 +288,7 @@ def test_access_group_edit_permissions(post_admin):
         "edit": {"permissions": [{"action": "foo", "resource": "qux"}]},
     }
 
-    foo = JoinAccessGroupPermission.query.get((2, 2))
+    foo = db.session.get(JoinAccessGroupPermission, (2, 2))
     assert foo is not None
 
     res = post_admin("/admin/access-group/edit", data=data)
@@ -295,11 +296,11 @@ def test_access_group_edit_permissions(post_admin):
     assert "msg" in data
     assert data["msg"] == "Access Group Edited Successfully"
 
-    bar = AccessGroup.query.get(2)
+    bar = db.session.get(AccessGroup, 2)
     assert len(bar.permissions) == 1
     assert bar.permissions[0].permission.definition == ("foo", "qux")
 
-    foo = JoinAccessGroupPermission.query.get((2, 2))
+    foo = db.session.get(JoinAccessGroupPermission, (2, 2))
     assert foo is None
 
 
@@ -311,7 +312,7 @@ def test_access_group_archive(post_admin):
     assert "msg" in data
     assert data["msg"] == "Access Group Archived Successfully"
 
-    foo = AccessGroup.query.get(1)
+    foo = db.session.get(AccessGroup, 1)
     assert foo.is_archived
 
 
@@ -402,5 +403,5 @@ def test_app_edit(post_admin):
     assert "msg" in data
     assert data["msg"] == "App Edited Successfully"
 
-    foo = App.query.get(1)
+    foo = db.session.get(App, 1)
     assert foo.name == "baz"
