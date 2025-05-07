@@ -196,7 +196,10 @@ def account_create():
             if access_group is None:
                 raise ValueError(f"Access Group {entry['id']} does not exist")
 
-            JoinAccountAccessGroup(access_group=access_group, account=new_account)
+            new_join = JoinAccountAccessGroup(
+                access_group=access_group, account=new_account
+            )
+            db.session.add(new_join)
 
         # Add studies
         for entry in data["studies"]:
