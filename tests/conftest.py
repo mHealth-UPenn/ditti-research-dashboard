@@ -15,6 +15,9 @@ import os
 from dotenv import load_dotenv
 from moto import mock_aws
 
+# Enable SQLAlchemy 2.0 deprecation warnings for the test suite
+os.environ["SQLALCHEMY_WARN_20"] = "1"
+
 load_dotenv()
 
 # Environment variables
