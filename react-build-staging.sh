@@ -20,7 +20,7 @@ fi
 
 # build the react app
 cd frontend
-npx vite build --sourcemap true
+npm run build -- --sourcemap true
 if [ $? -ne 0 ]; then
     exit 1
 fi
