@@ -118,7 +118,7 @@ def test_build_wearable_data_retrieval_container_success(
 
     # Verify that copytree was called with the correct arguments
     mock_copytree.assert_called_once_with(
-        "shared", "functions/wearable_data_retrieval/shared"
+        "shared", "functions/wearable_data_retrieval/shared", dirs_exist_ok=True
     )
 
     # Verify that docker_client.images.build was called with the correct arguments

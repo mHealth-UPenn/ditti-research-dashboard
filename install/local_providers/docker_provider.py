@@ -140,7 +140,12 @@ class DockerProvider:
     def build_wearable_data_retrieval_container(self) -> None:
         """Build wearable data retrieval container."""
         try:
-            shutil.copytree("shared", "functions/wearable_data_retrieval/shared")
+            # Copy shared directory, allowing it to exist already
+            shutil.copytree(
+                "shared",
+                "functions/wearable_data_retrieval/shared",
+                dirs_exist_ok=True,
+            )
         except Exception as e:
             traceback.print_exc()
             self.logger.error(
