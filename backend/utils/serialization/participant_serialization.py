@@ -47,14 +47,15 @@ class ParticipantApiModel(BaseModel):
     model_config = common_config
 
     @model_validator(mode="before")
-    def extract_api_name(self, obj):
+    @classmethod
+    def extract_api_name(cls, data):
         """Transform ORM instance into dict with ParticipantApiModel fields."""
-        if isinstance(obj, JoinStudySubjectApi):
+        if isinstance(data, JoinStudySubjectApi):
             return {
-                "scope": obj.scope,
-                "api_name": obj.api.name if obj.api else None,
+                "scope": data.scope,
+                "apiName": data.api.name if data.api else None,
             }
-        return obj
+        return data
 
 
 class ParticipantStudyModel(BaseModel):
@@ -77,7 +78,8 @@ class ParticipantStudyModel(BaseModel):
     model_config = common_config
 
     @model_validator(mode="before")
-    def extract_study_fields(self, obj):
+    @classmethod
+    def extract_study_fields(cls, data):
         """
         Extract study fields from the join model.
 
@@ -94,20 +96,20 @@ class ParticipantStudyModel(BaseModel):
         dict
             A dictionary with extracted field values.
         """
-        if isinstance(obj, JoinStudySubjectStudy):
+        if isinstance(data, JoinStudySubjectStudy):
             return {
-                "study_name": obj.study.name,
-                "study_id": obj.study.id,
-                "did_consent": obj.did_consent,
-                "created_on": obj.created_on,
-                "starts_on": obj.created_on,
-                "expires_on": getattr(obj, "expires_on", None),
-                "consent_information": getattr(
-                    obj.study, "consent_information", None
+                "studyName": data.study.name,
+                "studyId": data.study.id,
+                "didConsent": data.did_consent,
+                "createdOn": data.created_on,
+                "startsOn": data.created_on,
+                "expiresOn": getattr(data, "expires_on", None),
+                "consentInformation": getattr(
+                    data.study, "consent_information", None
                 ),
-                "data_summary": getattr(obj.study, "data_summary", None),
+                "dataSummary": getattr(data.study, "data_summary", None),
             }
-        return obj
+        return data
 
     @field_serializer("created_on", "expires_on", mode="plain")
     def serialize_datetimes(self, value: datetime | None) -> str | None:

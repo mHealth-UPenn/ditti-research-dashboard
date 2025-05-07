@@ -463,8 +463,8 @@ class StudySubjectService(DBService):
                     # Get only studies that have been consented
                     self.study.c.did_consent,
                     or_(
-                        self.api.c.last_sync_date
-                        is None,  # Get any entries without a `last_sync_date`
+                        # Get any entries without a `last_sync_date`
+                        self.api.c.last_sync_date.is_(None),
                         # Get any entries with a `last_sync_date` before today
                         # and before the `expires_on` date
                         and_(
@@ -473,8 +473,8 @@ class StudySubjectService(DBService):
                         ),
                         # Get any entries with past data that was not pulled
                         self.study.c.starts_on < earliest_sleep_log_subquery,
-                        earliest_sleep_log_subquery
-                        is None,  # Get any entries where no sleep logs exist
+                        # Get any entries where no sleep logs exist
+                        earliest_sleep_log_subquery.is_(None),
                     ),
                 )
             )
@@ -932,7 +932,7 @@ def handler(event, _context):
                 # Handle edge case when a participant's `starts_on`
                 # changes to an earlier date
                 # Generate an additional URL for fetching retroactive data
-                if (entry.earliest_sleep_log is None) or (
+                if (
                     entry.earliest_sleep_log
                     and entry.starts_on.date()
                     < entry.earliest_sleep_log - timedelta(days=1)

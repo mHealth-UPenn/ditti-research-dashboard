@@ -2,7 +2,7 @@ frontend/node_modules/**/*
 frontend/.pnp
 frontend/.pnp.js
 frontend/coverage/**/*
-frontend/build/**/*
+frontend/dist/**/*
 frontend/.DS_Store
 frontend/.env.local
 frontend/.env.development.local
@@ -25,6 +25,7 @@ frontend/yarn-error.log*
 .vscode/settings.json
 .cursor/**/*
 env/**/*
+env312/**/*
 *.env
 *logfile
 
@@ -51,3 +52,4 @@ zappa_settings.json
 project-config*.json
 
 scripts/**/*
+debug/**/*

@@ -154,8 +154,6 @@ class Production(Default):
 
     API_AUTHORIZE_REDIRECT = os.environ.get("API_AUTHORIZE_REDIRECT")
 
-    TM_FSTRING = "{api_name}-tokens"
-
     # Researcher Cognito Production configuration
     COGNITO_RESEARCHER_USER_POOL_ID = os.environ.get(
         "COGNITO_RESEARCHER_USER_POOL_ID"

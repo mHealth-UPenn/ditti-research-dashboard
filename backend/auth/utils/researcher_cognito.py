@@ -77,7 +77,7 @@ def create_researcher(email, temp_password=None, attributes=None):
                 Username=email,
                 UserAttributes=user_attributes,
                 TemporaryPassword=temp_password,
-                MessageAction="SUPPRESS",  # Don't send automatic email
+                DesiredDeliveryMediums=["EMAIL"],
             )
         else:
             # Let Cognito generate a temporary password and send invitation
@@ -85,6 +85,7 @@ def create_researcher(email, temp_password=None, attributes=None):
                 UserPoolId=user_pool_id,
                 Username=email,
                 UserAttributes=user_attributes,
+                DesiredDeliveryMediums=["EMAIL"],
             )
 
         logger.info(f"Created Cognito user: {email}")

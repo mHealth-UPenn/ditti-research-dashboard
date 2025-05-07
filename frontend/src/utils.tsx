@@ -235,18 +235,12 @@ export const makeRequest = async (
   url: string,
   opts: RequestInit = {}
 ): Promise<ResponseBody> => {
-  const jwt = localStorage.getItem("jwt");
-
   // Set credentials to include to send cookies
   opts.credentials = "include";
 
   // Set headers
   const headers = {
     ...Object.fromEntries(Object.entries(opts.headers ?? {})),
-    ...(jwt &&
-      !(opts.headers && "Authorization" in opts.headers) && {
-        Authorization: `Bearer ${String(jwt)}`,
-      }),
   };
 
   opts.headers = headers;
@@ -297,12 +291,10 @@ export async function downloadExcelFromUrl(
 ): Promise<string | null> {
   // Fetch the file from the server
   try {
-    const jwt = localStorage.getItem("jwt");
     const opts: RequestInit = {
       method: "GET",
       credentials: "include",
       headers: {
-        Authorization: `Bearer ${String(jwt)}`,
         Accept:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       },
