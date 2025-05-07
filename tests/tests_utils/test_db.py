@@ -21,7 +21,6 @@ def test_populate_model(app):
     # Study model does not have 'version', testing with existing attrs
     data = {"name": "Test Study 2", "acronym": "TS2"}
     study = db.session.get(Study, 1)
-    original_name = study.name
     populate_model(study, data)
     db.session.commit()
     study = db.session.get(Study, 1)
@@ -56,7 +55,6 @@ def test_populate_model_skip_lists(app):
 
 def test_populate_model_skip_joins(app):
     account = db.session.get(Account, 2)  # Account 2 is 'Jane Doe'
-    study = db.session.get(Study, 1)
     data = {
         "email": "bar@test.com",
         "first_name": "Bar",
@@ -87,7 +85,6 @@ def test_populate_model_camel_to_snake(app):
     # Use 'consentInformation' which exists on the model
     data = {"name": "Test Study Camel", "consentInformation": "<p>Test</p>"}
     study = db.session.get(Study, 1)
-    original_name = study.name
     # Correct keyword arg: use_camel_to_snake
     populate_model(study, data, use_camel_to_snake=True)
     db.session.commit()
