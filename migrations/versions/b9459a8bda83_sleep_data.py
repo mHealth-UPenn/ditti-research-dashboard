@@ -161,14 +161,9 @@ def upgrade():
     # 8. Modify 'study_subject' Table
     with op.batch_alter_table('study_subject', schema=None) as batch_op:
         # Add 'ditti_id' column
-        batch_op.add_column(sa.Column('ditti_id', sa.String()))
+        batch_op.add_column(sa.Column('ditti_id', sa.String(), nullable=True))
         # Drop unique constraint on 'email'
         batch_op.drop_constraint('study_subject_email_key', type_='unique')
-        # Create unique constraint on 'ditti_id' with an explicit name
-        batch_op.create_unique_constraint(
-            'study_subject_ditti_id_key', ['ditti_id'])
-        # Drop 'is_confirmed' and 'email' columns
-        batch_op.drop_column('is_confirmed')
 
     # Copy data from 'email' to 'ditti_id'
     op.execute(
@@ -184,6 +179,10 @@ def upgrade():
             existing_type=sa.String(),
             nullable=False,
         )
+        # Create unique constraint on 'ditti_id' with an explicit name
+        batch_op.create_unique_constraint(
+            'study_subject_ditti_id_key', ['ditti_id'])
+        batch_op.drop_column('is_confirmed') # Now drop is_confirmed
         batch_op.drop_column('email')
 
     # 9. Add 'sleep_logs' Relationship
@@ -222,11 +221,30 @@ def downgrade():
 
     # 4. Modify 'study_subject' Table
     with op.batch_alter_table('study_subject', schema=None) as batch_op:
-        # Add 'email' and 'is_confirmed' columns
+        # Add 'email' and 'is_confirmed' columns as nullable first
         batch_op.add_column(sa.Column('email', sa.VARCHAR(),
-                            autoincrement=False, nullable=False))
+                                      autoincrement=False, nullable=True))
         batch_op.add_column(
-            sa.Column('is_confirmed', sa.BOOLEAN(), autoincrement=False, nullable=False))
+            sa.Column('is_confirmed', sa.BOOLEAN(), autoincrement=False, nullable=True))
+
+    # Copy data from 'ditti_id' to 'email' and set default for 'is_confirmed'
+    op.execute(
+        """
+        UPDATE study_subject
+        SET email = ditti_id,
+            is_confirmed = FALSE
+        """
+    )
+
+    with op.batch_alter_table('study_subject', schema=None) as batch_op:
+        # Now make 'email' and 'is_confirmed' NOT NULL
+        batch_op.alter_column('email',
+                              existing_type=sa.VARCHAR(),
+                              nullable=False)
+        batch_op.alter_column('is_confirmed',
+                              existing_type=sa.BOOLEAN(),
+                              nullable=False)
+
         # Drop unique constraint on 'ditti_id'
         batch_op.drop_constraint('study_subject_ditti_id_key', type_='unique')
         # Recreate unique constraint on 'email'
