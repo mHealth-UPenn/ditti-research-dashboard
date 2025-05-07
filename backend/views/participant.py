@@ -224,7 +224,7 @@ def revoke_api_access(api_name: str, ditti_id: str):
             return make_response({"msg": "API not found."}, 404)
 
         # Find the JoinStudySubjectApi entry
-        join_api = JoinStudySubjectApi.query.get((study_subject.id, api.id))
+        join_api = db.session.get(JoinStudySubjectApi, (study_subject.id, api.id))
         if not join_api:
             logger.info(
                 f"API access for API '{api_name}' and StudySubject ID {
