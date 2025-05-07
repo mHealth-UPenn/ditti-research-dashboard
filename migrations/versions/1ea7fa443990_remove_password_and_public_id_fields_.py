@@ -48,11 +48,12 @@ def upgrade():
     conn = op.get_bind()
 
     # Get all phone numbers that need to be processed
-    result = conn.execute(sa.select([account_table.c.id, account_table.c.phone_number]).where(
+    result = conn.execute(sa.select(account_table.c.id, account_table.c.phone_number).where(
         account_table.c.phone_number.isnot(None)
     ))
+    rows = result.fetchall()
 
-    for row in result:
+    for row in rows:
         account_id = row[0]
         phone = row[1]
 
@@ -129,11 +130,12 @@ def downgrade():
             'account_public_id_key', ['public_id'])
 
     # Get phone numbers and process them individually
-    result = conn.execute(sa.select([account_table.c.id, account_table.c.phone_number]).where(
+    result = conn.execute(sa.select(account_table.c.id, account_table.c.phone_number).where(
         account_table.c.phone_number.isnot(None)
     ))
+    rows = result.fetchall()
 
-    for row in result:
+    for row in rows:
         account_id = row[0]
         phone = row[1]
 
