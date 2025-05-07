@@ -105,7 +105,7 @@ def downgrade():
     conn = op.get_bind()
 
     # Fetch all account ids
-    result = conn.execute(sa.select([account_table.c.id]))
+    result = conn.execute(sa.select(account_table.c.id))
     account_ids = [row[0] for row in result]
 
     # Set a dummy password hash (this is a placeholder, real passwords can't be restored)
