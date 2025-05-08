@@ -103,10 +103,4 @@ echo -e "Started ${BLUE}$wearable_data_retrieval_container_name${RESET}"
 
 echo -e "${GREEN}Dev environment deployed${RESET}"
 
-# Enable SQLAlchemy 2.0 deprecation warnings
-export SQLALCHEMY_WARN_20=1
-
-# Run Flask with warnings enabled for SQLAlchemy 2.0 deprecations
-# You can change 'always' to 'error' (e.g., -W error::sqlalchemy.exc.RemovedIn20Warning) 
-# to treat these warnings as exceptions for easier debugging.
-python -W always::DeprecationWarning -m flask run
+flask run
