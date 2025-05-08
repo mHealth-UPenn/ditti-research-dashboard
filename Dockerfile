@@ -14,7 +14,7 @@ RUN pip3 install boto3 \
     Flask-Cors \
     Flask-JWT-Extended \
     Flask-Migrate \
-    Flask-SQLAlchemy>=3.0,<3.1 \
+    "Flask-SQLAlchemy>=3.0,<3.1" \
     nh3 \
     oauthlib \
     pandas \
