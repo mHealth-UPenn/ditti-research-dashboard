@@ -22,7 +22,7 @@ RUN pip3 install boto3 \
     pydantic \
     python-dotenv==1.1.0 \
     requests-aws4auth \
-    SQLAlchemy>=2.0,<2.1 \
+    "SQLAlchemy>=2.0,<2.1" \
     XlsxWriter==3.2.3 \
     zappa
 
