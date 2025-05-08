@@ -21,7 +21,7 @@ import {
   Permission,
   ResponseBody,
 } from "../../types/api";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -54,6 +54,7 @@ export const AccessGroupsEdit = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
   const navigate = useNavigate();
 
   /**
@@ -79,15 +80,15 @@ export const AccessGroupsEdit = () => {
 
     // if editing an existing entry, return prefill data, else return empty data
     return id
-      ? httpClient
-          .request<AccessGroup[]>(`/admin/access-group?app=1&id=${String(id)}`)
-          .then((res) => makePrefill(res))
+      ? request<AccessGroup[]>(
+          `/admin/access-group?app=1&id=${String(id)}`
+        ).then((res) => makePrefill(res))
       : {
           name: "",
           appSelected: {} as App,
           permissions: [],
         };
-  }, [accessGroupId]);
+  }, [accessGroupId, request]);
 
   /**
    * Add a new permission and pair of action and resource dropdown menus
@@ -105,20 +106,19 @@ export const AccessGroupsEdit = () => {
     const fetchData = async () => {
       try {
         // Fetch all available actions
-        const actionsResponse = await httpClient.request<ActionResource[]>(
+        const actionsResponse = await request<ActionResource[]>(
           "/admin/action?app=1"
         );
         setActions(actionsResponse);
 
         // Fetch all available resources
-        const resourcesResponse = await httpClient.request<ActionResource[]>(
+        const resourcesResponse = await request<ActionResource[]>(
           "/admin/resource?app=1"
         );
         setResources(resourcesResponse);
 
         // Fetch all available apps
-        const appsResponse =
-          await httpClient.request<App[]>("/admin/app?app=1");
+        const appsResponse = await request<App[]>("/admin/app?app=1");
         setApps(appsResponse);
 
         // Fetch any form prefill data
@@ -135,7 +135,7 @@ export const AccessGroupsEdit = () => {
     };
 
     void fetchData();
-  }, [getPrefill, addPermission]);
+  }, [getPrefill, addPermission, request]);
 
   /**
    * Change the selected app when one is chosen from the dropdown menu
@@ -275,13 +275,16 @@ export const AccessGroupsEdit = () => {
    * a new entry, else make a request to edit an exiting entry
    */
   const post = async (): Promise<void> => {
-    const ps = permissions.map((p) => ({
-      action: p.action,
-      resource: p.resource,
-    }));
+    const data = {
+      name,
+      appId: appSelected.id,
+      permissions: permissions.map((p) => ({
+        action: p.action,
+        resource: p.resource,
+      })),
+    };
 
     const id = accessGroupId;
-    const data = { app: appSelected.id, name: name, permissions: ps };
     const body = {
       app: 1, // Admin Dashboard = 1
       ...(id ? { id: id, edit: data } : { create: data }),
@@ -289,11 +292,12 @@ export const AccessGroupsEdit = () => {
 
     const opts = { method: "POST", data: body };
     const url = id ? "/admin/access-group/edit" : "/admin/access-group/create";
-
-    await httpClient
-      .request<ResponseBody>(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    try {
+      const res = await request<ResponseBody>(url, opts);
+      handleSuccess(res);
+    } catch (err) {
+      handleFailure(err);
+    }
   };
 
   /**

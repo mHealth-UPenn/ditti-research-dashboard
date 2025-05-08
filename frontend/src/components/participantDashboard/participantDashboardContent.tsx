@@ -24,7 +24,7 @@ import { WearableVisualization } from "../visualizations/wearableVisualization";
 import { useStudySubjects } from "../../hooks/useStudySubjects";
 import { SmallLoader } from "../loader/loader";
 import { ConsentModal } from "../containers/consentModal/consentModal";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { ParticipantStudy } from "../../types/api";
 import { QuillView } from "../containers/quillView/quillView";
 
@@ -40,6 +40,7 @@ export const ParticipantDashboardContent = () => {
 
   const { dittiId } = useAuth();
   const { studies, apis, studySubjectLoading, refetch } = useStudySubjects();
+  const { request } = useHttpClient();
 
   const getStudiesNeedConsent = () => {
     const studiesNeedConsent = studies.filter((s) => !s.didConsent);
@@ -103,7 +104,7 @@ export const ParticipantDashboardContent = () => {
     try {
       await Promise.all(
         unconsentedStudies.map((study) => {
-          return httpClient.request(
+          return request(
             `/participant/study/${String(study.studyId)}/consent`,
             {
               method: "PATCH",

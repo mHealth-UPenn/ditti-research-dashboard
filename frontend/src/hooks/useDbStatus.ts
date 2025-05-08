@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { httpClient } from "../lib/http";
+import { useHttpClient } from "../lib/HttpClientContext";
 import { ResponseBody } from "../types/api";
 
 /**
@@ -23,6 +23,7 @@ import { ResponseBody } from "../types/api";
  * @returns {boolean} - `true` if the database is still loading or unreachable, `false` if connected.
  */
 export const useDbStatus = () => {
+  const { request } = useHttpClient();
   const [loadingDb, setLoadingDb] = useState<boolean>(true);
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export const useDbStatus = () => {
 
     const touch = async (): Promise<string> => {
       try {
-        const res = await httpClient.request<ResponseBody>("/touch");
+        const res = await request<ResponseBody>("/touch");
         if (res.msg === "OK") {
           setLoadingDb(false);
           clearInterval(intervalId);
@@ -54,7 +55,7 @@ export const useDbStatus = () => {
     return () => {
       clearInterval(intervalId);
     };
-  }, []);
+  }, [request]);
 
   return loadingDb;
 };

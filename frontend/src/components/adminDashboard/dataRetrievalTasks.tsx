@@ -14,7 +14,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { DataRetrievalTask } from "../../types/api";
 import { getAccess } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -87,11 +87,12 @@ export const DataRetrievalTasks = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   const fetchData = useCallback(async () => {
     try {
       // Fetch data retrieval tasks (View permission is handled by the server)
-      const response = await httpClient.request<DataRetrievalTask[]>(
+      const response = await request<DataRetrievalTask[]>(
         "/data_processing_task/?app=1"
       );
       setTasks(response);
@@ -106,7 +107,7 @@ export const DataRetrievalTasks = () => {
         "danger"
       );
     }
-  }, [flashMessage]);
+  }, [flashMessage, request]);
 
   useEffect(() => {
     const invoke = getAccess(1, "Invoke", "Data Retrieval Task")
@@ -123,18 +124,16 @@ export const DataRetrievalTasks = () => {
   }, [fetchData]);
 
   const handleForceStop = async (taskId: number) => {
-    await httpClient
-      .request(`/data_processing_task/force-stop`, {
-        method: "POST",
-        data: { app: 1, function_id: taskId },
-      })
-      .finally(() => {
-        setLoading(true);
-        // Refetch data regardless of the stop request's success/failure.
-        void fetchData().finally(() => {
-          setLoading(false);
-        });
+    await request(`/data_processing_task/force-stop`, {
+      method: "POST",
+      data: { app: 1, function_id: taskId },
+    }).finally(() => {
+      setLoading(true);
+      // Refetch data regardless of the stop request's success/failure.
+      void fetchData().finally(() => {
+        setLoading(false);
       });
+    });
   };
 
   /**

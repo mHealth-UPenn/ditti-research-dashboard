@@ -17,7 +17,7 @@ import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AccessGroup, ResponseBody } from "../../types/api";
 import { getAccess } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
@@ -33,6 +33,7 @@ export const AccessGroups = () => {
   const [accessGroups, setAccessGroups] = useState<AccessGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   const columns: Column[] = [
     {
@@ -86,7 +87,7 @@ export const AccessGroups = () => {
       }
 
       try {
-        const response = await httpClient.request<AccessGroup[]>(
+        const response = await request<AccessGroup[]>(
           "/admin/access-group?app=1"
         );
         setAccessGroups(response);
@@ -96,7 +97,7 @@ export const AccessGroups = () => {
     };
 
     void fetchData();
-  }, []);
+  }, [request]);
 
   const getData = (): TableData[][] => {
     // Iterate over the table's rows
@@ -181,8 +182,7 @@ export const AccessGroups = () => {
     // Confirm deletion
     const msg = "Are you sure you want to archive this access group?";
     if (confirm(msg)) {
-      httpClient
-        .request<ResponseBody>("/admin/access-group/archive", opts)
+      request<ResponseBody>("/admin/access-group/archive", opts)
         .then(handleSuccess)
         .catch(handleFailure);
     }
@@ -193,8 +193,7 @@ export const AccessGroups = () => {
     setLoading(true);
 
     // Refresh the table's data
-    void httpClient
-      .request<AccessGroup[]>("/admin/access-group?app=1")
+    void request<AccessGroup[]>("/admin/access-group?app=1")
       .then((response) => {
         setAccessGroups(response);
         setLoading(false);

@@ -15,7 +15,7 @@ import { useState, useEffect, createRef, useRef, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 import { formatDateForInput, getEnrollmentInfoForStudy } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { CheckField } from "../fields/checkField";
 import { SmallLoader } from "../loader/loader";
 import { SelectField } from "../fields/selectField";
@@ -78,6 +78,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     useCoordinatorStudySubjects();
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
   const navigate = useNavigate();
 
   const studySubject = dittiId ? getStudySubjectByDittiId(dittiId) : null;
@@ -235,7 +236,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     // get all about sleep templates
     const fetchTemplates = async () => {
       try {
-        const response = await httpClient.request<AboutSleepTemplate[]>(
+        const response = await request<AboutSleepTemplate[]>(
           `/db/get-about-sleep-templates?app=${String(app === "ditti" ? 2 : 3)}`
         );
         setAboutSleepTemplates(response);
@@ -247,7 +248,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     };
 
     void fetchTemplates();
-  }, [app]);
+  }, [app, request]);
 
   /**
    * POST changes to the backend. Make a request to create an entry if creating a new entry, else make a request to edit
@@ -274,7 +275,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
 
     const optsAWS = { method: "POST", data: bodyAWS };
     const urlAWS = dittiId ? "/aws/user/edit" : "/aws/user/create";
-    const postAWS = httpClient.request<ResponseBody>(urlAWS, optsAWS);
+    const postAWS = request<ResponseBody>(urlAWS, optsAWS);
 
     // Prepare and make the request to the database backend
     const { didConsent } = studySubject
@@ -305,7 +306,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
     const urlDB = studySubject
       ? "/admin/study_subject/edit"
       : "/admin/study_subject/create";
-    const postDB = httpClient.request<ResponseBody>(urlDB, optsDB);
+    const postDB = request<ResponseBody>(urlDB, optsDB);
 
     const promises: Promise<ResponseBody>[] = [postAWS, postDB];
 
@@ -322,10 +323,7 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
 
       const optsCognito = { method: "POST", data: bodyCognito };
       const urlCognito = "/auth/participant/register/participant";
-      const postCognito = httpClient.request<ResponseBody>(
-        urlCognito,
-        optsCognito
-      );
+      const postCognito = request<ResponseBody>(urlCognito, optsCognito);
       promises.push(postCognito);
     }
 

@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect } from "react";
 import { getAccess } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -35,6 +35,7 @@ export const AboutSleepTemplates = () => {
   >([]);
   const [loading, setLoading] = useState(true);
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   const columns: Column[] = [
     {
@@ -80,11 +81,11 @@ export const AboutSleepTemplates = () => {
       });
 
     // get the table's data
-    const fetchTemplates = httpClient
-      .request<AboutSleepTemplate[]>("/admin/about-sleep-template?app=1")
-      .then((templates: AboutSleepTemplate[]) => {
-        setAboutSleepTemplates(templates);
-      });
+    const fetchTemplates = request<AboutSleepTemplate[]>(
+      "/admin/about-sleep-template?app=1"
+    ).then((templates: AboutSleepTemplate[]) => {
+      setAboutSleepTemplates(templates);
+    });
 
     // when all requests are complete, hide the loading screen
     Promise.all([create, edit, archive, fetchTemplates])
@@ -95,7 +96,7 @@ export const AboutSleepTemplates = () => {
         console.error("Error loading templates:", error);
         setLoading(false);
       });
-  }, []);
+  }, [request]);
 
   /**
    * Get the table's contents
@@ -167,8 +168,7 @@ export const AboutSleepTemplates = () => {
     const msg = "Are you sure you want to archive this about sleep template?";
 
     if (confirm(msg))
-      httpClient
-        .request<ResponseBody>("/admin/about-sleep-template/archive", opts)
+      request<ResponseBody>("/admin/about-sleep-template/archive", opts)
         .then(handleSuccess)
         .catch(handleFailure);
   };
@@ -183,8 +183,7 @@ export const AboutSleepTemplates = () => {
     flashMessage(<span>{res.msg}</span>, "success");
 
     // refresh the table's data
-    httpClient
-      .request<AboutSleepTemplate[]>("/admin/about-sleep-template?app=1")
+    request<AboutSleepTemplate[]>("/admin/about-sleep-template?app=1")
       .then((templates: AboutSleepTemplate[]) => {
         setAboutSleepTemplates(templates);
         setLoading(false);

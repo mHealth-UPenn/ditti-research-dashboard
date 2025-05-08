@@ -19,7 +19,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { httpClient } from "../lib/http";
+import { useHttpClient } from "../lib/HttpClientContext";
 import {
   AuthContextValue,
   ParticipantAuthResponse,
@@ -37,6 +37,7 @@ export const AuthContext = createContext<AuthContextValue | undefined>(
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
+  const { request } = useHttpClient();
   const [isParticipantAuthenticated, setIsParticipantAuthenticated] =
     useState<boolean>(false);
   const [isResearcherAuthenticated, setIsResearcherAuthenticated] =
@@ -71,7 +72,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
      */
     const checkParticipantAuthStatus = async () => {
       try {
-        const res = await httpClient.request<ParticipantAuthResponse>(
+        const res = await request<ParticipantAuthResponse>(
           "/auth/participant/check-login",
           { method: "GET" }
         );
@@ -91,7 +92,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
      */
     const checkResearcherAuthStatus = async () => {
       try {
-        const res = await httpClient.request<ResearcherAuthResponse>(
+        const res = await request<ResearcherAuthResponse>(
           "/auth/researcher/check-login",
           { method: "GET" }
         );
@@ -117,7 +118,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 
     void checkParticipantAuthStatus();
     void checkResearcherAuthStatus();
-  }, [resetAccountInfo]);
+  }, [resetAccountInfo, request]);
 
   /**
    * Redirects to Participant login page.

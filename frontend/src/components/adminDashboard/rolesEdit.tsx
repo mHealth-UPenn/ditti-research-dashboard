@@ -20,7 +20,7 @@ import {
   ResponseBody,
   Role,
 } from "../../types/api";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -51,6 +51,7 @@ export const RolesEdit = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
   const navigate = useNavigate();
 
   /**
@@ -62,26 +63,26 @@ export const RolesEdit = () => {
 
     // if editing an existing entry, return prefill data, else return empty data
     return id
-      ? httpClient
-          .request<Role[]>(`/admin/role?app=1&id=${String(id)}`)
-          .then((response) => makePrefill(response))
+      ? request<Role[]>(`/admin/role?app=1&id=${String(id)}`).then((response) =>
+          makePrefill(response)
+        )
       : { name: "", permissions: [] };
-  }, [roleId]);
+  }, [roleId, request]);
 
   useEffect(() => {
     // get all available actions
-    const fetchActions = httpClient
-      .request<ActionResource[]>("/admin/action?app=1")
-      .then((response) => {
+    const fetchActions = request<ActionResource[]>("/admin/action?app=1").then(
+      (response) => {
         setActions(response);
-      });
+      }
+    );
 
     // get all available resources
-    const fetchResources = httpClient
-      .request<ActionResource[]>("/admin/resource?app=1")
-      .then((response) => {
-        setResources(response);
-      });
+    const fetchResources = request<ActionResource[]>(
+      "/admin/resource?app=1"
+    ).then((response) => {
+      setResources(response);
+    });
 
     // set any form prefill data
     const prefill = getPrefill().then((prefill: RolesFormPrefill) => {
@@ -98,7 +99,7 @@ export const RolesEdit = () => {
         console.error("Error loading form data:", error);
         setLoading(false);
       });
-  }, [getPrefill]);
+  }, [getPrefill, request]);
 
   /**
    * Map the data returned from the backend to form prefill data
@@ -212,10 +213,12 @@ export const RolesEdit = () => {
     const opts = { method: "POST", data: body };
     const url = id ? "/admin/role/edit" : "/admin/role/create";
 
-    await httpClient
-      .request<ResponseBody>(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    try {
+      const res = await request<ResponseBody>(url, opts);
+      handleSuccess(res);
+    } catch (err) {
+      handleFailure(err);
+    }
   };
 
   /**

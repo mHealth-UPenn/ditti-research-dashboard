@@ -14,7 +14,7 @@
 import { useState, useEffect } from "react";
 import { ResponseBody, Role } from "../../types/api";
 import { getAccess } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -53,6 +53,7 @@ export const Roles = () => {
   ]);
   const [loading, setLoading] = useState<boolean>(true);
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   useEffect(() => {
     const fetchData = () => {
@@ -84,14 +85,14 @@ export const Roles = () => {
         });
 
       // get the table's data
-      const rolesData = httpClient
-        .request<Role[]>("/admin/role?app=1")
-        .then((response) => {
-          setRoles(response);
-        });
+      const rolesDataPromise = request<Role[]>("/admin/role?app=1");
+
+      void rolesDataPromise.then((response) => {
+        setRoles(response);
+      });
 
       // when all requests are complete, hide the loading screen
-      Promise.all([create, edit, archive, rolesData])
+      Promise.all([create, edit, archive, rolesDataPromise])
         .then(() => {
           setLoading(false);
         })
@@ -102,7 +103,7 @@ export const Roles = () => {
     };
 
     fetchData();
-  }, []);
+  }, [request]);
 
   /**
    * Get the table's contents
@@ -191,8 +192,7 @@ export const Roles = () => {
     const msg = "Are you sure you want to archive this role?";
 
     if (confirm(msg))
-      httpClient
-        .request<ResponseBody>("/admin/role/archive", opts)
+      request<ResponseBody>("/admin/role/archive", opts)
         .then(handleSuccess)
         .catch(handleFailure);
   };
@@ -208,8 +208,7 @@ export const Roles = () => {
     setLoading(true);
 
     // refresh the table's data
-    httpClient
-      .request<Role[]>("/admin/role?app=1")
+    request<Role[]>("/admin/role?app=1")
       .then((response) => {
         setRoles(response);
         setLoading(false);

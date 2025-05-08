@@ -16,7 +16,7 @@ import { TextField } from "../fields/textField";
 import { CheckField } from "../fields/checkField";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
 import { ResponseBody, Study } from "../../types/api";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -38,6 +38,7 @@ export const StudiesEdit = () => {
   const studyId = id ? parseInt(id) : 0;
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
   const navigate = useNavigate();
   const [name, setName] = useState<string>("");
   const [acronym, setAcronym] = useState<string>("");
@@ -79,7 +80,7 @@ export const StudiesEdit = () => {
     }
 
     // Fetch existing study data from the backend
-    const data = await httpClient.request<Study[]>(
+    const data = await request<Study[]>(
       `/admin/study?app=1&id=${String(studyId)}`
     );
     if (data.length === 0) {
@@ -97,7 +98,7 @@ export const StudiesEdit = () => {
       dataSummary: study.dataSummary,
       isQi: study.isQi,
     };
-  }, [studyId]);
+  }, [studyId, request]);
 
   useEffect(() => {
     // Fetch prefill data if editing an existing study
@@ -167,7 +168,7 @@ export const StudiesEdit = () => {
     const url = id ? "/admin/study/edit" : "/admin/study/create";
 
     try {
-      const response = await httpClient.request<ResponseBody>(url, opts);
+      const response = await request<ResponseBody>(url, opts);
       handleSuccess(response);
     } catch (error) {
       handleFailure(error);

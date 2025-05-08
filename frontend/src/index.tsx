@@ -26,6 +26,8 @@ import { ParticipantDashboard } from "./components/participantDashboard/particip
 import { ProtectedRoute } from "./components/protectedRoute/protectedRoute";
 import { AuthProvider } from "./contexts/authContext";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
+import { HttpClientProvider } from "./lib/HttpClientContext";
+import { HttpClient } from "./lib/http";
 import "./index.css";
 // eslint-disable-next-line import/no-unresolved
 import "./output.css";
@@ -67,10 +69,15 @@ import { DataRetrievalTasks } from "./components/adminDashboard/dataRetrievalTas
 const Root: React.FC = () => {
   useDocumentTitle("Participant Portal");
 
+  const baseURL = import.meta.env.VITE_FLASK_SERVER as string;
+  const client = new HttpClient(baseURL);
+
   return (
-    <AuthProvider>
-      <Outlet />
-    </AuthProvider>
+    <HttpClientProvider client={client}>
+      <AuthProvider>
+        <Outlet />
+      </AuthProvider>
+    </HttpClientProvider>
   );
 };
 

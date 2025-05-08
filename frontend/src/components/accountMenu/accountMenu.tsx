@@ -15,7 +15,7 @@ import { useState } from "react";
 import { ResponseBody } from "../../types/api";
 import { TextField } from "../fields/textField";
 import { formatPhoneNumber } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { AsyncButton } from "../buttons/asyncButton";
 import { Button } from "../buttons/button";
 import { useAuth } from "../../hooks/useAuth";
@@ -51,6 +51,7 @@ export const AccountMenu = ({
   // Hooks
   const { researcherLogout } = useAuth();
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   // Handle phone number change with formatting
   const handlePhoneNumberChange = (value: string) => {
@@ -131,8 +132,7 @@ export const AccountMenu = ({
       data: body,
     };
 
-    await httpClient
-      .request<ResponseBody>("/db/edit-account-details", opts)
+    await request<ResponseBody>("/db/edit-account-details", opts)
       .then(handleSuccess)
       .catch(handleFailure);
   };
@@ -188,10 +188,7 @@ export const AccountMenu = ({
       data: body,
     };
 
-    return httpClient.request<ResponseBody>(
-      "/auth/researcher/change-password",
-      opts
-    );
+    return request<ResponseBody>("/auth/researcher/change-password", opts);
   };
 
   /**

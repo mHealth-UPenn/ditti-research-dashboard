@@ -15,7 +15,7 @@ import * as React from "react";
 import { useState, useEffect } from "react";
 import { ResponseBody, Study } from "../../types/api";
 import { getAccess } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -49,6 +49,7 @@ export const Studies = () => {
   const [studies, setStudies] = useState<Study[]>([]);
   const [loading, setLoading] = useState(true);
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,7 +65,7 @@ export const Studies = () => {
           getAccess(1, "Archive", "Studies").then(() => {
             setCanArchive(true);
           }),
-          httpClient.request<Study[]>("/admin/study?app=1").then((data) => {
+          request<Study[]>("/admin/study?app=1").then((data) => {
             setStudies(data);
           }),
         ]);
@@ -76,7 +77,7 @@ export const Studies = () => {
     };
 
     void fetchData();
-  }, []);
+  }, [request]);
 
   /**
    * Get the table's contents
@@ -167,11 +168,10 @@ export const Studies = () => {
 
     // Prepare and send the request
     const body = { app: 1, id }; // Admin Dashboard = 1
-    await httpClient
-      .request<ResponseBody>("/admin/study/archive", {
-        method: "POST",
-        data: body,
-      })
+    await request<ResponseBody>("/admin/study/archive", {
+      method: "POST",
+      data: body,
+    })
       .then(handleSuccess)
       .catch(handleFailure);
   };
@@ -187,7 +187,7 @@ export const Studies = () => {
     setLoading(true);
 
     // refresh the table's data
-    void httpClient.request<Study[]>("/admin/study?app=1").then((studies) => {
+    void request<Study[]>("/admin/study?app=1").then((studies) => {
       setStudies(studies);
       setLoading(false);
     });

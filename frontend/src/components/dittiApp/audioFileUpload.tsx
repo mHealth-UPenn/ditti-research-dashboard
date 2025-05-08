@@ -13,7 +13,7 @@
 
 import { useState, ChangeEvent, createRef } from "react";
 import { TextField } from "../fields/textField";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SelectField } from "../fields/selectField";
 import { RadioField } from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
@@ -61,6 +61,7 @@ export const AudioFileUpload = () => {
   const { studiesLoading, studies } = useStudies();
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
   const navigate = useNavigate();
 
   const existingFiles = new Set();
@@ -77,7 +78,7 @@ export const AudioFileUpload = () => {
     }));
 
     try {
-      const res = await httpClient.request<{ urls: string[] }>(
+      const res = await request<{ urls: string[] }>(
         "/aws/audio-file/get-presigned-urls",
         {
           method: "POST",
@@ -162,7 +163,7 @@ export const AudioFileUpload = () => {
       };
 
       const opts = { method: "POST", data: body };
-      await httpClient.request("/aws/audio-file/create", opts);
+      await request("/aws/audio-file/create", opts);
     } catch (error) {
       const e = error as { msg: string };
       throw new AxiosError(e.msg);

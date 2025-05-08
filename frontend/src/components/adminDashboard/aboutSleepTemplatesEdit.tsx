@@ -14,7 +14,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -42,6 +42,7 @@ export const AboutSleepTemplatesEdit = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
   const navigate = useNavigate();
 
   /**
@@ -54,16 +55,14 @@ export const AboutSleepTemplatesEdit = () => {
 
       // if editing an existing entry, return prefill data, else return empty data
       return id
-        ? httpClient
-            .request<
-              AboutSleepTemplate[]
-            >(`/admin/about-sleep-template?app=1&id=${String(id)}`)
-            .then((response) => makePrefill(response))
+        ? request<AboutSleepTemplate[]>(
+            `/admin/about-sleep-template?app=1&id=${String(id)}`
+          ).then((response) => makePrefill(response))
         : {
             name: "",
             text: "",
           };
-    }, [aboutSleepTemplateId]);
+    }, [aboutSleepTemplateId, request]);
 
   useEffect(() => {
     const fetchPrefill = async () => {
@@ -109,10 +108,12 @@ export const AboutSleepTemplatesEdit = () => {
       ? "/admin/about-sleep-template/edit"
       : "/admin/about-sleep-template/create";
 
-    await httpClient
-      .request<ResponseBody>(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+    try {
+      const res = await request<ResponseBody>(url, opts);
+      handleSuccess(res);
+    } catch (err) {
+      handleFailure(err);
+    }
   };
 
   /**

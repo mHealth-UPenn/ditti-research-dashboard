@@ -16,7 +16,7 @@ import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
 import { getAccess } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { Account, ResponseBody } from "../../types/api";
 import { SmallLoader } from "../loader/loader";
 import { ListView } from "../containers/lists/listView";
@@ -74,6 +74,7 @@ export const Accounts = () => {
   ]);
   const [loading, setLoading] = useState(true);
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   useEffect(() => {
     // Check user permissions
@@ -103,9 +104,7 @@ export const Accounts = () => {
     // Fetch account data
     const fetchAccounts = async () => {
       try {
-        const accounts = await httpClient.request<Account[]>(
-          "/admin/account?app=1"
-        );
+        const accounts = await request<Account[]>("/admin/account?app=1");
         setAccounts(accounts);
       } catch (error) {
         console.error("Error fetching accounts:", error);
@@ -115,7 +114,7 @@ export const Accounts = () => {
     void Promise.all([fetchPermissions(), fetchAccounts()]).then(() => {
       setLoading(false);
     });
-  }, []);
+  }, [request]);
 
   /**
    * Get the table's contents
@@ -236,8 +235,7 @@ export const Accounts = () => {
     const msg = "Are you sure you want to archive this account?";
 
     if (confirm(msg)) {
-      httpClient
-        .request<ResponseBody>("/admin/account/archive", opts)
+      request<ResponseBody>("/admin/account/archive", opts)
         .then(handleSuccess)
         .catch(handleFailure);
     }
@@ -252,14 +250,10 @@ export const Accounts = () => {
     setLoading(true);
 
     // Refresh the table's data
-    void httpClient
-      .request<Account[]>("/admin/account?app=1")
-      .then((accounts) => {
-        setAccounts(accounts);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    void request<Account[]>("/admin/account?app=1").then((res) => {
+      setAccounts(res);
+      setLoading(false);
+    });
   };
 
   /**

@@ -25,7 +25,7 @@ import {
 } from "../../types/api";
 import { SelectField } from "../fields/selectField";
 import { formatPhoneNumber } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -180,6 +180,7 @@ export const AccountsEdit = () => {
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
+  const { request } = useHttpClient();
 
   /**
    * Get the form prefill if editing
@@ -188,9 +189,9 @@ export const AccountsEdit = () => {
   const getPrefill = useCallback(async (): Promise<AccountFormPrefill> => {
     // if editing an existing entry, return prefill data, else return empty data
     return accountId
-      ? httpClient
-          .request<Account[]>(`/admin/account?app=1&id=${String(accountId)}`)
-          .then((res) => makePrefill(res))
+      ? request<Account[]>(`/admin/account?app=1&id=${String(accountId)}`).then(
+          (res) => makePrefill(res)
+        )
       : {
           firstName: "",
           lastName: "",
@@ -200,16 +201,16 @@ export const AccountsEdit = () => {
           rolesSelected: [],
           studiesSelected: [],
         };
-  }, [accountId]);
+  }, [accountId, request]);
 
   useEffect(() => {
     // when all requests are complete, initialize the state
     const fetchData = async () => {
       try {
         const [accessGroups, roles, studies, prefill] = await Promise.all([
-          httpClient.request<AccessGroup[]>(`/admin/access-group?app=1`),
-          httpClient.request<Role[]>(`/admin/role?app=1`),
-          httpClient.request<Study[]>(`/admin/study?app=1`),
+          request<AccessGroup[]>(`/admin/access-group?app=1`),
+          request<Role[]>(`/admin/role?app=1`),
+          request<Study[]>(`/admin/study?app=1`),
           getPrefill(),
         ]);
 
@@ -228,7 +229,7 @@ export const AccountsEdit = () => {
     };
 
     void fetchData();
-  }, [getPrefill]);
+  }, [getPrefill, request]);
 
   /**
    * Map the data returned from the backend to form prefill data
@@ -394,10 +395,13 @@ export const AccountsEdit = () => {
 
     const opts = { method: "POST", data: body };
     const url = accountId ? "/admin/account/edit" : "/admin/account/create";
-    await httpClient
-      .request<ResponseBody>(url, opts)
-      .then(handleSuccess)
-      .catch(handleFailure);
+
+    try {
+      const res = await request<ResponseBody>(url, opts);
+      handleSuccess(res);
+    } catch (error) {
+      handleFailure(error);
+    }
   };
 
   /**

@@ -14,7 +14,7 @@
 import { useState, useEffect } from "react";
 import { Study } from "../../types/api";
 import { getAccess } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { StudySubjects } from "./studySubjects";
 import { Workbook } from "exceljs";
@@ -40,6 +40,7 @@ export const StudySummary = () => {
 
   const { studiesLoading, study } = useStudies();
   const { dataLoading, taps, audioTaps } = useDittiData();
+  const { request } = useHttpClient();
 
   useEffect(() => {
     if (study) {
@@ -67,13 +68,11 @@ export const StudySummary = () => {
 
       // get other accounts that have access to this study
       promises.push(
-        httpClient
-          .request<
-            StudyContactModel[]
-          >(`/db/get-study-contacts?app=2&study=${String(study.id)}`)
-          .then((contacts) => {
-            setStudyContacts(contacts);
-          })
+        request<StudyContactModel[]>(
+          `/db/get-study-contacts?app=2&study=${String(study.id)}`
+        ).then((contacts) => {
+          setStudyContacts(contacts);
+        })
       );
 
       // when all promises resolve, hide the loader
@@ -81,7 +80,7 @@ export const StudySummary = () => {
         setLoading(false);
       });
     }
-  }, [study]);
+  }, [study, request]);
 
   /**
    * Download all of the study's data in excel format

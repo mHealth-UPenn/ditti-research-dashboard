@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { getAccess } from "../../utils";
-import { httpClient } from "../../lib/http";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
@@ -33,6 +33,7 @@ export const AudioFiles = () => {
 
   const { dataLoading, audioFiles, refreshAudioFiles } = useDittiData();
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   const columns: Column[] = [
     {
@@ -110,7 +111,7 @@ export const AudioFiles = () => {
       )
     ) {
       try {
-        await httpClient.request("/aws/audio-file/delete", {
+        await request("/aws/audio-file/delete", {
           method: "POST",
           data: { app: 2, id, _version },
         });
