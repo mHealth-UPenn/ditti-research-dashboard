@@ -69,7 +69,7 @@ class HttpClient {
    * @template TResp The expected type of the response body data.
    * @template TData The type of the request body data.
    * @param url The target URL path (relative to `baseURL`).
-   * @param config Optional request configuration, including method, data, and signal.
+   * @param config Optional request config, including method, data, and signal.
    * @returns A promise that resolves with the response data (`TResp`).
    * @throws {HttpError | Error} A normalized error if the request fails.
    */
@@ -94,16 +94,16 @@ class HttpClient {
 
   /**
    * Performs an HTTP request and returns the raw AxiosResponse object.
-   * Useful for cases where response headers or the full response status are needed,
-   * or for handling non-JSON response types like blobs.
+   * Useful for cases where response headers or the full response status
+   * are needed, or for handling non-JSON response types like blobs.
    *
    * @template TResp The expected type of the response body data.
    * @template TData The type of the request body data.
    * @param url The target URL path (relative to `baseURL`).
    * @param config Optional request configuration.
    * @returns A promise that resolves with the full `AxiosResponse<TResp>`.
-   * @throws {AxiosError | Error} An AxiosError if the request fails at the Axios level,
-   *                            or a standard Error for other issues (e.g., cancellation).
+   * @throws {AxiosError | Error} An AxiosError if the request fails at the
+   *     Axios level, or a standard Error for other issues (e.g., cancellation).
    */
   async requestRawResponse<TResp = unknown, TData = unknown>(
     url: string,
@@ -112,43 +112,39 @@ class HttpClient {
     try {
       const res: AxiosResponse<TResp> = await this.instance.request({
         url,
-        ...config, // Spread the config, including method, data, responseType, etc.
+        ...config,
       });
       return res;
     } catch (err) {
       if (isAxiosError(err)) {
-        throw err; // Re-throw AxiosError for the caller to handle raw response/error data.
+        throw err; // Re-throw for the caller to handle raw response/error data.
       }
-      // For other types of errors (network, cancellations before request), normalize.
+      // For other types of errors (network, cancellations), normalize.
       if (isCancel(err)) {
         throw new Error("Request canceled");
       }
-      // Ensure it's an error type
+
       if (err instanceof Error) {
         throw err;
       }
-      // Fallback for non-Error throwables
+
       throw new Error("An unknown error occurred during raw request", {
         cause: err,
       });
     }
   }
 
-  /** Registers Axios interceptors for request modification and response handling. */
+  /** Registers interceptors for request modification and response handling. */
   private registerInterceptors() {
-    // Request interceptor: Automatically attach JWT and CSRF tokens.
+    // Request interceptor: Attach CSRF tokens from local storage to the header.
     this.instance.interceptors.request.use((cfg) => {
-      const jwt = localStorage.getItem("jwt");
       const csrf = localStorage.getItem("csrfToken");
       const headers = cfg.headers as AxiosHeaders; // Assume headers are present
 
-      if (jwt && !headers.has("Authorization")) {
-        headers.set("Authorization", `Bearer ${jwt}`);
-      }
-      // This X-CSRF-TOKEN mechanism relies on `localStorage.getItem("csrfToken")`
-      // being populated. The primary API CSRF protection
-      // is handled by JWT Bearer token validation on the backend. This header
-      // is included for potential future use.
+      // This X-CSRF-TOKEN mechanism relies on
+      // `localStorage.getItem("csrfToken")` being populated. The primary
+      // API CSRF protection is handled by JWT Bearer token validation on
+      // the backend. This header is included for potential future use.
       if (
         // Only attach CSRF for potentially state-changing methods.
         csrf &&
@@ -159,19 +155,20 @@ class HttpClient {
       return cfg;
     });
 
-    // Response interceptor: Extract and store tokens from the response body if present.
+    // Response interceptor: Attach CSRF tokens from the body to local storage.
     this.instance.interceptors.response.use(
       (res) => {
-        const body = res.data as ResponseBody | undefined; // Check if body matches expected token structure
-        if (body?.jwt) localStorage.setItem("jwt", body.jwt);
-        // NOTE: This populates `localStorage` for the `X-CSRF-TOKEN` header sent by the
-        // request interceptor. It requires the backend to send `csrfAccessToken`
-        // in the response body if this CSRF mechanism is to be active.
+        const body = res.data as ResponseBody | undefined;
+        // This populates `localStorage` for the `X-CSRF-TOKEN` header sent by
+        // the request interceptor. It requires the backend to send
+        // `csrfAccessToken` in the response body if this CSRF mechanism is
+        // to be active.
         if (body?.csrfAccessToken)
           localStorage.setItem("csrfToken", body.csrfAccessToken);
         return res; // Pass the full response along
       },
-      (error: AxiosError) => Promise.reject(error) // Let request catch block handle errors
+      // Let request catch block handle errors
+      (error: AxiosError) => Promise.reject(error)
     );
   }
 
@@ -180,24 +177,24 @@ class HttpClient {
     retry(this.instance, {
       retries: 3,
       retryDelay: exponentialDelay,
-      // Retry conditions: network errors, idempotent requests, 5xx server errors, or 429 status.
+      // Retry conditions: network errors, idempotent requests, 5xx or 429
       retryCondition: (err) =>
         isNetworkOrIdempotentRequestError(err) || err.response?.status === 429,
     });
   }
 
   /**
-   * Normalizes errors from various sources into a consistent `HttpError` or standard `Error`.
+   * Normalizes errors from various sources into `HttpError` or `Error`.
    * @param err The caught error object.
    * @returns A normalized error instance.
    */
   private normalizeError(err: unknown): Error {
     if (isCancel(err)) {
-      return new Error("Request canceled"); // Consistent error for cancellations.
+      return new Error("Request canceled");
     }
 
     if (isAxiosError(err)) {
-      // Attempt to provide a hint for common network/CORS issues, especially in Safari.
+      // Attempt to provide a hint for common network/CORS issues (e.g., Safari)
       const isNetwork = !err.response && !!err.request;
       const corsHint =
         isNetwork && /(Failed to fetch|Network Error)/i.test(err.message)
@@ -206,7 +203,7 @@ class HttpClient {
 
       const apiErrorDetails: ApiError = {
         message: err.message,
-        status: err.response?.status ?? 0, // 0 indicates network error or unknown status
+        status: err.response?.status ?? 0, // 0 == network error or unknown
         code: err.code ?? "AXIOS_ERROR",
         data: err.response?.data as ResponseBody | undefined,
         original: err, // Preserve original error for deeper debugging if needed
