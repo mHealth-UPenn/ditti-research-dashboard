@@ -90,5 +90,20 @@ export default tseslint.config(
       // TS-specific rule overrides
       "tailwindcss/no-custom-classname": "off",
     },
+  },
+
+  // Test-specific TS/TSX config
+  {
+    files: ["tests/**/*.{ts,tsx}"],
+    rules: {
+      // Disable for expect.any() and other test patterns
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      // Often needed for flexible mock call assertions
+      "@typescript-eslint/no-unsafe-call": "off",
+      // Also common for mocks
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      // Common mock assertion patterns
+      "@typescript-eslint/unbound-method": "off",
+    },
   }
 );
