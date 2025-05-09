@@ -14,7 +14,14 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "types": ["vitest/globals"]
   },
-  "include": ["src", "eslint.config.js", "vite.config.js", "tailwind.config.js"]
+  "include": [
+    "src",
+    "eslint.config.js",
+    "vite.config.js",
+    "tailwind.config.js",
+    "tests"
+  ]
 }
