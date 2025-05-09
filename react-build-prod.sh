@@ -27,7 +27,7 @@ fi
 
 # upload the built app to the AWS bucket
 echo "Uploading to s3://${AWS_BUCKET}..."
-aws s3 cp build s3://${AWS_BUCKET} --recursive
+aws s3 cp dist s3://${AWS_BUCKET} --recursive
 if [ $? -ne 0 ]; then
     exit 1
 fi

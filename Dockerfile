@@ -23,6 +23,7 @@ RUN pip3 install boto3 \
     python-dotenv==1.1.0 \
     requests-aws4auth \
     SQLAlchemy==1.4.52 \
+    XlsxWriter==3.2.3 \
     zappa
 
 COPY . ${LAMBDA_TASK_ROOT}
