@@ -835,7 +835,6 @@ class Account(db.Model):
         "JoinAccountAccessGroup",
         back_populates="account",
         cascade="all, delete-orphan",
-        cascade_backrefs=False,
         primaryjoin=(
             "and_("
             "   Account.id == JoinAccountAccessGroup.account_id,"
@@ -850,7 +849,6 @@ class Account(db.Model):
         "JoinAccountStudy",
         back_populates="account",
         cascade="all, delete-orphan",
-        cascade_backrefs=False,
         primaryjoin=(
             "and_("
             "   Account.id == JoinAccountStudy.account_id,"
@@ -1151,7 +1149,6 @@ class AccessGroup(db.Model):
         "JoinAccountAccessGroup",
         back_populates="access_group",
         cascade="all, delete-orphan",
-        cascade_backrefs=False,
         primaryjoin=(
             "and_("
             "   AccessGroup.id == JoinAccountAccessGroup.access_group_id,"
@@ -1165,7 +1162,6 @@ class AccessGroup(db.Model):
         "JoinAccessGroupPermission",
         back_populates="access_group",
         cascade="all, delete-orphan",
-        cascade_backrefs=False,
     )
 
     @property
@@ -1258,7 +1254,6 @@ class Role(db.Model):
         "JoinRolePermission",
         back_populates="role",
         cascade="all, delete-orphan",
-        cascade_backrefs=False,
     )
 
     @property
@@ -1566,7 +1561,6 @@ class Study(db.Model):
         "JoinStudyRole",
         cascade="all, delete-orphan",
         back_populates="study",
-        cascade_backrefs=False,
     )
 
     @property
@@ -1712,7 +1706,6 @@ class StudySubject(db.Model):
         "JoinStudySubjectStudy",
         back_populates="study_subject",
         cascade="all, delete-orphan",
-        cascade_backrefs=False,
         primaryjoin=(
             "and_("
             "   StudySubject.id == JoinStudySubjectStudy.study_subject_id,"
@@ -1727,7 +1720,6 @@ class StudySubject(db.Model):
         "JoinStudySubjectApi",
         back_populates="study_subject",
         cascade="all, delete-orphan",
-        cascade_backrefs=False,
         primaryjoin=(
             "and_("
             "   StudySubject.id == JoinStudySubjectApi.study_subject_id,"
