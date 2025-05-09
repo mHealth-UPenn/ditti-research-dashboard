@@ -1,21 +1,21 @@
 # Ditti Research Dashboard
 
-The Ditti Research Dashboard is a centralized platform for managing and visualizing data collected from the [Penn Ditti Mobile App](https://www.med.upenn.edu/DittiApp/). With the Ditti Research Dashboard, coordinators and clinicians can quickly enroll new participants and monitor their adherence to behavioral sleep interventions with ease.
+The Ditti Research Dashboard is a centralized platform for managing and visualizing data collected from the [Penn Ditti Mobile App](https://www.med.upenn.edu/DittiApp/). Researchers and clinicians can quickly enroll new participants and monitor their adherence to behavioral sleep interventions with ease.
 
 ![Screenshot](./images/readme-image.webp)
 
-🔬 **A Dashboard for Research and Clinical Data Management:** The Ditti Research Dashboard allows researchers and clinicians to manage and visualize anonymized study data from the Penn Ditti app for monitoring behavioral sleep intervention adherence.
+🔬 **Manage Research and Clinical Data:** The Ditti Research Dashboard allows researchers and clinicians to manage and visualize anonymized study data from the Penn Ditti app for monitoring behavioral sleep intervention adherence.
 
-🔐 **Comprehensive Role and Permission Control:** The Admin Dashboard provides granular controls for research coordinator roles, enabling specific access management across studies and app-wide permissions.
+🔐 **Control Data Access with Fine-grained Roles and Permissions:** The Admin Dashboard provides granular controls for research researcher roles, enabling specific access management across studies and app-wide permissions.
 
-☁️ **Scalable and HIPAA-compliant Cloud Infrastructure:** Built on AWS with TypeScript, React.js, and Python, the app integrates user data from DynamoDB, and is expanding to include a Fitbit Dashboard for visualizing participant sleep data.
+☁️ **Leverage Secure, HIPAA-compliant Infrastructure:** Built on AWS with TypeScript, React.js, and Python, the app integrates participant data from DynamoDB and a Fitbit Dashboard for visualizing participant sleep data.
 
 **Key Features:**
 
-- Visualizations of user interactions with the Penn Ditti Mobile App
+- Visualizations of participant interactions with the Penn Ditti Mobile App
 - Interfaces for managing study-related data and enrolling study participants
 - Tools for labeling and uploading audio files for the Penn Ditti Mobile App
-- Administrative controls for managing coordinator-level and study-level permissions
+- Administrative controls for managing researcher-level and study-level permissions
 - Serverless architecture for controlling costs on-demand
 - Integrations with Fitbit for visualizing sleep research data
 
@@ -37,7 +37,7 @@ The Ditti Research Dashboard is **100% free** and **open source**. We encourage 
 
 Looking to get involved? Our [Contribution Guide](docs/CONTRIBUTING.md) outlines how to get started with opening discussions.
 
-If you want to contribute, see our [Development Setup Guide](docs/INSTALL-dev.md) to get started with development.
+Interested in contributing? Visit our [Development Setup Guide](docs/INSTALL-dev.md) to begin.
 
 ## Built With
 
@@ -52,9 +52,9 @@ If you want to contribute, see our [Development Setup Guide](docs/INSTALL-dev.md
 The Ditti Research Dashboard is built with security and HIPAA compliance in mind:
 
 - **Data Encryption**: All data is encrypted at rest and in transit
-- **Access Control**: Role-based access control (RBAC) for all users
+- **Access Control**: Role-based access control (RBAC) for all researchers and clinicians
 - **Audit Logging**: Comprehensive logging of all system activities
-- **Secure Authentication**: AWS Cognito for secure user authentication
+- **Secure Authentication**: AWS Cognito for secure authentication
 - **Data Privacy**: Strict adherence to HIPAA guidelines for PHI handling
 
 ## Copyright/License
