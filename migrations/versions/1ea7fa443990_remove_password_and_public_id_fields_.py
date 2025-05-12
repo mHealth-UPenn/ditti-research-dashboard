@@ -48,11 +48,12 @@ def upgrade():
     conn = op.get_bind()
 
     # Get all phone numbers that need to be processed
-    result = conn.execute(sa.select([account_table.c.id, account_table.c.phone_number]).where(
+    result = conn.execute(sa.select(account_table.c.id, account_table.c.phone_number).where(
         account_table.c.phone_number.isnot(None)
     ))
+    rows = result.fetchall()
 
-    for row in result:
+    for row in rows:
         account_id = row[0]
         phone = row[1]
 
@@ -104,7 +105,7 @@ def downgrade():
     conn = op.get_bind()
 
     # Fetch all account ids
-    result = conn.execute(sa.select([account_table.c.id]))
+    result = conn.execute(sa.select(account_table.c.id))
     account_ids = [row[0] for row in result]
 
     # Set a dummy password hash (this is a placeholder, real passwords can't be restored)
@@ -129,11 +130,12 @@ def downgrade():
             'account_public_id_key', ['public_id'])
 
     # Get phone numbers and process them individually
-    result = conn.execute(sa.select([account_table.c.id, account_table.c.phone_number]).where(
+    result = conn.execute(sa.select(account_table.c.id, account_table.c.phone_number).where(
         account_table.c.phone_number.isnot(None)
     ))
+    rows = result.fetchall()
 
-    for row in result:
+    for row in rows:
         account_id = row[0]
         phone = row[1]
 

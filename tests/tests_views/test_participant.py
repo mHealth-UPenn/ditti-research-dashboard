@@ -291,7 +291,11 @@ def test_revoke_api_access_direct(app, study_subject, api_entry, join_api):
         mock_delete_tokens.assert_called_once_with(
             api_name=api_entry.name, ditti_id=study_subject.ditti_id
         )
-        mock_db_delete.assert_called_once_with(join_api)
+        mock_db_delete.assert_called_once()
+        args, kwargs = mock_db_delete.call_args
+        deleted_object = args[0]
+        assert isinstance(deleted_object, JoinStudySubjectApi)
+        assert deleted_object.primary_key == (study_subject.id, api_entry.id)
         mock_db_commit.assert_called_once()
 
 

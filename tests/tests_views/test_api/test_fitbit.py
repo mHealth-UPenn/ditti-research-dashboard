@@ -13,7 +13,7 @@
 import base64
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -28,7 +28,7 @@ def study_subject():
     """Fixture to provide a new unique study subject."""
     unique_ditti_id = f"ditti_{uuid.uuid4()}"
     subject = StudySubject(
-        created_on=datetime.utcnow(),
+        created_on=datetime.now(UTC),
         ditti_id=unique_ditti_id,
         is_archived=False,
     )
@@ -474,6 +474,7 @@ def test_fitbit_sleep_list(
             study_subject_id=study_subject.id,
             api_id=fitbit_api.id,
             api_user_uuid="fitbit_user_id",
+            created_on=datetime.now(UTC),
             scope=["sleep"],
         )
         db.session.add(join_entry)

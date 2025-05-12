@@ -14,7 +14,7 @@ RUN pip3 install boto3 \
     Flask-Cors \
     Flask-JWT-Extended \
     Flask-Migrate \
-    Flask-SQLAlchemy==2.5.1 \
+    "Flask-SQLAlchemy>=3.0,<3.1" \
     nh3 \
     oauthlib \
     pandas \
@@ -22,7 +22,7 @@ RUN pip3 install boto3 \
     pydantic \
     python-dotenv==1.1.0 \
     requests-aws4auth \
-    SQLAlchemy==1.4.52 \
+    "SQLAlchemy>=2.0,<2.1" \
     XlsxWriter==3.2.3 \
     zappa
 

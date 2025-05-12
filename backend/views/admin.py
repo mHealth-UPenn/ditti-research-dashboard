@@ -189,14 +189,26 @@ def account_create():
 
         # Add access groups
         for entry in data["access_groups"]:
-            access_group = AccessGroup.query.get(entry["id"])
-            JoinAccountAccessGroup(access_group=access_group, account=new_account)
+            if not isinstance(entry.get("id"), int):
+                raise ValueError("Each access group must have an id")
+
+            access_group = db.session.get(AccessGroup, entry["id"])
+            if access_group is None:
+                raise ValueError(f"Access Group {entry['id']} does not exist")
+
+            new_join = JoinAccountAccessGroup(
+                access_group=access_group, account=new_account
+            )
+            db.session.add(new_join)
 
         # Add studies
         for entry in data["studies"]:
-            study = Study.query.get(entry["id"])
-            role = Role.query.get(entry["role"]["id"])
-            JoinAccountStudy(account=new_account, role=role, study=study)
+            study = db.session.get(Study, entry["id"])
+            role = db.session.get(Role, entry["role"]["id"])
+            new_join = JoinAccountStudy(
+                account=new_account, role=role, study=study
+            )
+            db.session.add(new_join)
 
         # Add account to database
         db.session.add(new_account)
@@ -319,7 +331,7 @@ def account_edit():
                 data["phone_number"] = phone
 
         account_id = request.json["id"]
-        edited_account = Account.query.get(account_id)
+        edited_account = db.session.get(Account, account_id)
 
         # Prevent changing email as it's the primary account identifier
         if "email" in data:
@@ -350,10 +362,16 @@ def account_edit():
             ]
             for entry in data["access_groups"]:
                 if entry["id"] not in a_ids:
-                    access_group = AccessGroup.query.get(entry["id"])
-                    JoinAccountAccessGroup(
+                    access_group = db.session.get(AccessGroup, entry["id"])
+                    if access_group is None:
+                        raise ValueError(
+                            f"Access Group {entry['id']} does not exist"
+                        )
+                    # Explicitly add the new join object to the session
+                    new_join = JoinAccountAccessGroup(
                         access_group=access_group, account=edited_account
                     )
+                    db.session.add(new_join)
 
         # if a list of studies were provided
         if "studies" in data:
@@ -366,24 +384,25 @@ def account_edit():
 
             s_ids = [join.study_id for join in edited_account.studies]
             for entry in data["studies"]:
-                study = Study.query.get(entry["id"])
+                study = db.session.get(Study, entry["id"])
 
                 # if the study is not new
                 if entry["id"] in s_ids:
-                    join = JoinAccountStudy.query.get(
-                        (edited_account.id, study.id)
+                    join = db.session.get(
+                        JoinAccountStudy, (edited_account.id, study.id)
                     )
 
                     # update the role
                     if join.role.id != int(entry["role"]["id"]):
-                        join.role = Role.query.get(entry["role"]["id"])
+                        join.role = db.session.get(Role, entry["role"]["id"])
 
                 # add the study
                 else:
-                    role = Role.query.get(entry["role"]["id"])
-                    JoinAccountStudy(
+                    role = db.session.get(Role, entry["role"]["id"])
+                    new_join = JoinAccountStudy(
                         account=edited_account, role=role, study=study
                     )
+                    db.session.add(new_join)
 
         # Commit database changes
         db.session.commit()
@@ -456,7 +475,7 @@ def account_archive():
 
         # Get account
         account_id = request.json["id"]
-        archived_account = Account.query.get(account_id)
+        archived_account = db.session.get(Account, account_id)
 
         # Archive account in database
         archived_account.is_archived = True
@@ -667,7 +686,7 @@ def study_edit():
     try:
         data = request.json["edit"]
         study_id = request.json["id"]
-        study = Study.query.get(study_id)
+        study = db.session.get(Study, study_id)
 
         # Ensure `consent_summary` and `data_summary` HTML are sanitized
         try:
@@ -730,7 +749,7 @@ def study_archive():
     """
     try:
         study_id = request.json["id"]
-        study = Study.query.get(study_id)
+        study = db.session.get(Study, study_id)
         study.is_archived = True
         db.session.commit()
         msg = "Study Archived Successfully"
@@ -838,9 +857,8 @@ def access_group_create():
     try:
         data = request.json["create"]
         access_group = AccessGroup()
-
         populate_model(access_group, data)
-        app = App.query.get(data["app"])
+        app = db.session.get(App, data["app"])
         access_group.app = app
 
         # add permissions
@@ -918,13 +936,13 @@ def access_group_edit():
     try:
         data = request.json["edit"]
         access_group_id = request.json["id"]
-        access_group = AccessGroup.query.get(access_group_id)
+        access_group = db.session.get(AccessGroup, access_group_id)
 
         populate_model(access_group, data)
 
         # if a new app is provided
         if "app" in data:
-            app = App.query.get(data["app"])
+            app = db.session.get(App, data["app"])
             access_group.app = app
 
         # if new permissions are provided
@@ -944,9 +962,11 @@ def access_group_edit():
                     permission.action = entry["action"]
                     permission.resource = entry["resource"]
 
-                JoinAccessGroupPermission(
+                # Explicitly add the new join object
+                new_join = JoinAccessGroupPermission(
                     access_group=access_group, permission=permission
                 )
+                db.session.add(new_join)
 
         db.session.commit()
         msg = "Access Group Edited Successfully"
@@ -994,7 +1014,7 @@ def access_group_archive():
     """
     try:
         access_group_id = request.json["id"]
-        access_group = AccessGroup.query.get(access_group_id)
+        access_group = db.session.get(AccessGroup, access_group_id)
         access_group.is_archived = True
         db.session.commit()
         msg = "Access Group Archived Successfully"
@@ -1176,7 +1196,7 @@ def role_edit():
     try:
         data = request.json["edit"]
         role_id = request.json["id"]
-        role = Role.query.get(role_id)
+        role = db.session.get(Role, role_id)
 
         populate_model(role, data)
 
@@ -1245,7 +1265,7 @@ def role_archive():
     """
     try:
         role_id = request.json["id"]
-        role = Role.query.get(role_id)
+        role = db.session.get(Role, role_id)
         role.is_archived = True
         db.session.commit()
         msg = "Role Archived Successfully"
@@ -1331,7 +1351,7 @@ def app_edit():
     """
     data = request.json["edit"]
     app_id = request.json["id"]
-    app = App.query.get(app_id)
+    app = db.session.get(App, app_id)
 
     try:
         populate_model(app, data)
@@ -1791,7 +1811,7 @@ def study_subject_create():
                 return make_response(
                     {"msg": "Study ID is required in studies"}, 400
                 )
-            study = Study.query.get(study_id)
+            study = db.session.get(Study, study_id)
             if study is None:
                 return make_response(
                     {"msg": f"Invalid study ID: {study_id}"}, 400
@@ -1838,7 +1858,7 @@ def study_subject_create():
             api_id = api_entry.get("id")
             if not api_id:
                 return make_response({"msg": "API ID is required in apis"}, 400)
-            api = Api.query.get(api_id)
+            api = db.session.get(Api, api_id)
             if api is None:
                 return make_response({"msg": f"Invalid API ID: {api_id}"}, 400)
             if api.is_archived:
@@ -1914,12 +1934,15 @@ def study_subject_archive():
     }
     """
     try:
-        study_subject_id = request.json.get("id")
-        if not study_subject_id:
+        data = request.json
+        study_subject_id = data.get("id")
+
+        if study_subject_id is None:
             return make_response({"msg": "Study Subject ID not provided"}, 400)
 
-        study_subject = StudySubject.query.get(study_subject_id)
-        if study_subject is None:
+        study_subject = db.session.get(StudySubject, study_subject_id)
+
+        if not study_subject:
             return make_response(
                 {
                     "msg": f"Study Subject with ID {study_subject_id} "
@@ -2004,10 +2027,11 @@ def study_subject_edit():
         data = request.json.get("edit")
         study_subject_id = request.json.get("id")
 
-        if not study_subject_id:
+        if study_subject_id is None:
             return make_response({"msg": "Study Subject ID not provided"}, 400)
 
-        study_subject = StudySubject.query.get(study_subject_id)
+        study_subject = db.session.get(StudySubject, study_subject_id)
+
         if not study_subject:
             return make_response(
                 {
@@ -2052,7 +2076,7 @@ def study_subject_edit():
                     return make_response(
                         {"msg": "Study ID is required in studies"}, 400
                     )
-                study = Study.query.get(study_id)
+                study = db.session.get(Study, study_id)
                 if study is None:
                     return make_response(
                         {"msg": f"Invalid study ID: {study_id}"}, 400
@@ -2101,8 +2125,8 @@ def study_subject_edit():
                             400,
                         )
 
-                join = JoinStudySubjectStudy.query.get(
-                    (study_subject_id, study_id)
+                join = db.session.get(
+                    JoinStudySubjectStudy, (study_subject.id, study.id)
                 )
                 if join:
                     # Update existing association
@@ -2142,7 +2166,7 @@ def study_subject_edit():
                     return make_response(
                         {"msg": "API ID is required in apis"}, 400
                     )
-                api = Api.query.get(api_id)
+                api = db.session.get(Api, api_id)
                 if api is None:
                     return make_response(
                         {"msg": f"Invalid API ID: {api_id}"}, 400
@@ -2171,8 +2195,8 @@ def study_subject_edit():
                 elif not isinstance(scope, list):
                     scope = []
 
-                join_api = JoinStudySubjectApi.query.get(
-                    (study_subject_id, api_id)
+                join_api = db.session.get(
+                    JoinStudySubjectApi, (study_subject.id, api.id)
                 )
                 if join_api:
                     # Update existing association
@@ -2370,7 +2394,7 @@ def api_edit():
         if not api_id:
             return make_response({"msg": "API ID not provided"}, 400)
 
-        api = Api.query.get(api_id)
+        api = db.session.get(Api, api_id)
         if not api:
             return make_response(
                 {"msg": f"API with ID {api_id} does not exist"}, 400
@@ -2446,7 +2470,7 @@ def api_archive():
         if not api_id:
             return make_response({"msg": "API ID not provided"}, 400)
 
-        api = Api.query.get(api_id)
+        api = db.session.get(Api, api_id)
         if not api:
             return make_response(
                 {"msg": f"API with ID {api_id} does not exist"}, 400
