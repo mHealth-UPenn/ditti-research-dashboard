@@ -1,0 +1,39 @@
+name: Test Frontend
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+      - dev
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "22"
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: frontend
+
+      - name: Lint with ESLint
+        run: npm run lint -- --max-warnings=0
+        working-directory: frontend
+
+      - name: Check for vulnerabilities
+        run: npm audit --audit-level=low
+        working-directory: frontend
+
+      - name: Build frontend
+        run: |
+          npx tailwindcss -i ./src/index.css -o ./src/output.css
+          npm run build
+        working-directory: frontend

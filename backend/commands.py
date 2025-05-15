@@ -1,0 +1,250 @@
+# Copyright 2025 The Trustees of the University of Pennsylvania
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may]
+# not use this file except in compliance with the License. You may obtain a
+# copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+from datetime import datetime
+
+import click
+from flask import current_app
+from flask.cli import with_appcontext
+from flask_migrate import upgrade
+
+from backend.extensions import cache, db
+from backend.models import (
+    AccessGroup,
+    Account,
+    JoinAccountAccessGroup,
+    delete_lambda_tasks,
+    init_admin_account,
+    init_admin_app,
+    init_admin_group,
+    init_api,
+    init_db,
+    init_integration_testing_db,
+    init_lambda_task,
+    init_study_subject,
+)
+
+
+@click.command("init-admin-app")
+@click.option("--uri", default=None, help="Overrides the SQLAlchemy URI.")
+@with_appcontext
+def init_admin_app_click(uri):
+    """Initialize the admin application.
+
+    Parameters
+    ----------
+        uri (str, optional): Database URI to use. Defaults to None.
+    """
+    if uri is not None:
+        current_app.config["SQLALCHEMY_DATABASE_URI"] = uri
+
+    app = init_admin_app()
+    click.echo(repr(app))
+
+
+@click.command("init-admin-group")
+@click.option("--uri", default=None, help="Overrides the SQLAlchemy URI.")
+@with_appcontext
+def init_admin_group_click(uri):
+    """Initialize the admin group.
+
+    Parameters
+    ----------
+        uri (str, optional): Database URI to use. Defaults to None.
+    """
+    if uri is not None:
+        current_app.config["SQLALCHEMY_DATABASE_URI"] = uri
+
+    access_group = init_admin_group()
+    click.echo(repr(access_group))
+
+
+@click.command("init-admin")
+@click.option("--uri", default=None, help="Overrides the SQLAlchemy URI.")
+@click.option("--email", default=None)
+@with_appcontext
+def init_admin_account_click(uri, email):
+    """Initialize an admin account.
+
+    Parameters
+    ----------
+        uri (str, optional): Database URI to use. Defaults to None.
+        email (str, optional): Email for the admin account. Defaults to None.
+    """
+    if uri is not None:
+        current_app.config["SQLALCHEMY_DATABASE_URI"] = uri
+
+    admin = init_admin_account(email)
+    click.echo(repr(admin))
+
+
+@click.command("init-db")
+@with_appcontext
+def init_db_click():
+    """Initialize the database with necessary tables and seed data."""
+    init_db()
+    click.echo("Database successfully initialized.")
+
+
+@click.command("init-api")
+@with_appcontext
+def init_api_click():
+    """Initialize the API with necessary configurations."""
+    init_api(click)
+
+
+@click.command("reset-db", help="Reset the database.")
+@with_appcontext
+def reset_db_click():
+    """Reset the database to its initial state."""
+    db_uri = current_app.config["SQLALCHEMY_DATABASE_URI"]
+
+    if "localhost" in db_uri:
+        db.drop_all()
+        db.create_all()
+        upgrade()
+    else:
+        raise RuntimeError("reset-db requires a localhost database URI.")
+
+    click.echo("Database successfully reset.")
+
+
+@click.command(
+    "init-integration-testing-db",
+    help="Initialize the database for integration testing.",
+)
+@with_appcontext
+def init_integration_testing_db_click():
+    """Initialize the database for integration testing."""
+    init_integration_testing_db()
+    click.echo("Database successfully initialized.")
+
+
+@click.command(
+    "init-study-subject",
+    help="Initialize a study subject with the given Ditti ID.",
+)
+@click.option("--ditti-id", default=None, help="Ditti ID of the subject.")
+@with_appcontext
+def init_study_subject_click(ditti_id):
+    """Initialize a study subject with the specified Ditti ID.
+
+    Parameters
+    ----------
+        ditti_id (str): The Ditti ID for the study subject.
+    """
+    if ditti_id is None:
+        raise RuntimeError("Option `ditti_id` is required.")
+    init_study_subject(ditti_id)
+    click.echo("Study subject successfully initialized.")
+
+
+@click.command("clear-cache", help="Clear the Flask cache.")
+@with_appcontext
+def clear_cache_click():
+    """Clear the Flask cache."""
+    cache.clear()
+
+
+@click.command(
+    "init-lambda-task", help="Initialize a lambda task with the specified status."
+)
+@click.option("--status", default=None, help="Status of the lambda task.")
+@with_appcontext
+def init_lambda_task_click(status):
+    """Initialize a lambda task with the specified status.
+
+    Parameters
+    ----------
+        status (str): The status for the lambda task.
+    """
+    init_lambda_task(status)
+
+
+@click.command(
+    "delete-lambda-tasks", help="Delete all lambda tasks (for testing purposes)."
+)
+@with_appcontext
+def delete_lambda_tasks_click():
+    """Delete all lambda tasks from the system (for testing purposes)."""
+    delete_lambda_tasks()
+
+
+@click.command(
+    "export-accounts-to-cognito", help="Export accounts to AWS Cognito."
+)
+@with_appcontext
+def export_accounts_to_cognito_click():
+    """Export accounts to AWS Cognito for researcher authentication."""
+    # This is a stub function to fix the import error
+    # The actual implementation would interact with AWS Cognito
+    click.echo("Export accounts to AWS Cognito functionality would go here.")
+
+
+@click.command(
+    "create-researcher-account",
+    help="Create a researcher account with the specified email.",
+)
+@click.option("--email", default=None, help="The email of the researcher.")
+@with_appcontext
+def create_researcher_account_click(email):
+    """Create a researcher account with the specified email.
+
+    Parameters
+    ----------
+        email (str): Email for the researcher account.
+    """
+    if email is None:
+        raise RuntimeError("Option `email` is required.")
+
+    account = Account(
+        created_on=datetime.now(),
+        last_login=datetime.now(),
+        first_name="Jane",
+        last_name="Doe",
+        email=email,
+        phone_number="+12345678901",
+        is_confirmed=True,
+    )
+
+    db.session.add(account)
+    db.session.flush()
+
+    # Give the account access to all groups
+    admin_group = AccessGroup.query.filter_by(name="Admin").first()
+    ditti_group = AccessGroup.query.filter_by(name="Ditti App Admin").first()
+    wearable_group = AccessGroup.query.filter_by(
+        name="Wearable Dashboard Admin"
+    ).first()
+
+    if not (admin_group and ditti_group and wearable_group):
+        raise RuntimeError("One or more access groups were not found.")
+
+    db.session.add(
+        JoinAccountAccessGroup(
+            account_id=account.id, access_group_id=admin_group.id
+        )
+    )
+    db.session.add(
+        JoinAccountAccessGroup(
+            account_id=account.id, access_group_id=ditti_group.id
+        )
+    )
+    db.session.add(
+        JoinAccountAccessGroup(
+            account_id=account.id, access_group_id=wearable_group.id
+        )
+    )
+
+    db.session.commit()
+
+    click.echo("Researcher account successfully created.")

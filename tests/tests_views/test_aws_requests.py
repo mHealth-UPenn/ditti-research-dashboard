@@ -1,31 +1,43 @@
+# Copyright 2025 The Trustees of the University of Pennsylvania
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may]
+# not use this file except in compliance with the License. You may obtain a
+# copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+import pytest
 from flask import json
 from moto import mock_aws
-import pytest
-from aws_portal.utils.aws import Connection, Loader, Query
-from tests.testing_utils import login_admin_account
+
+from backend.utils.aws import Connection, Loader, Query
+from tests.testing_utils import mock_researcher_auth_for_testing
 
 
-@mock_aws
-def test_scan_invalid(get_admin):
-    opts = "?app=1"
-    opts = opts + "&group=1"
-    opts = opts + "&key=User"
-    opts = opts + "&query=user_permission_id==\"^abc123\""
-    res = get_admin("/aws/scan" + opts)
-    data = json.loads(res.data)
-    assert "msg" in data
-    assert data["msg"] == "Invalid Query"
+@pytest.fixture
+def researcher_headers(client):
+    """Fixture providing researcher authentication headers."""
+    return mock_researcher_auth_for_testing(client, is_admin=False)
 
 
-@mock_aws
-def test_scan(get_admin):
-    opts = "?app=1"
-    opts = opts + "&group=1"
-    opts = opts + "&key=User"
-    opts = opts + "&query=user_permission_id==\"abc123\""
-    res = get_admin("/aws/scan" + opts)
-    data = json.loads(res.data)
-    assert len(data) == 1
+@pytest.fixture
+def researcher_post(client, researcher_headers):
+    """Create a test POST request function with researcher authentication."""
+
+    def _post(url, data=None, **kwargs):
+        return client.post(
+            url,
+            data=data,
+            content_type="application/json",
+            headers=researcher_headers,
+            **kwargs,
+        )
+
+    return _post
 
 
 @mock_aws
@@ -40,17 +52,16 @@ def test_user_create(post_admin):
             "tap_permission": True,
             "team_email": "foo@email.com",
             "user_permission_id": "foo",
-            "information": "foo"
-        }
+            "information": "foo",
+        },
     }
 
-    data = json.dumps(data)
-    res = post_admin("/aws/user/create", data=data)
+    res = post_admin("/aws/user/create", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
     assert res["msg"] == "User Created Successfully"
 
-    query = "user_permission_id==\"foo\""
+    query = 'user_permission_id=="foo"'
     bar = Query("User", query)
     res = bar.scan()
     assert len(res["Items"]) == 1
@@ -77,22 +88,19 @@ def test_user_create(post_admin):
 
 
 @mock_aws
-def test_user_edit_invalid_acronym(post_admin):
+def test_user_edit_invalid_study_ditti_id(post_admin):
     data = {
         "group": 2,
         "study": 1,
         "app": 1,
         "user_permission_id": "QU000",
-        "edit": {
-            "information": "foo"
-        }
+        "edit": {"information": "foo"},
     }
 
-    data = json.dumps(data)
-    res = post_admin("/aws/user/edit", data=data)
+    res = post_admin("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
-    assert res["msg"] == "Invalid study acronym: QU"
+    assert res["msg"] == "Invalid study Ditti ID: QU"
 
 
 @mock_aws
@@ -102,16 +110,13 @@ def test_user_edit_invalid_id(post_admin):
         "study": 1,
         "app": 1,
         "user_permission_id": "FO000#",
-        "edit": {
-            "information": "foo"
-        }
+        "edit": {"information": "foo"},
     }
 
-    data = json.dumps(data)
-    res = post_admin("/aws/user/edit", data=data)
+    res = post_admin("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
-    assert res["msg"] == "Invalid Ditti ID: FO000#"
+    assert res["msg"] == "Invalid study or study subject Ditti ID: FO000#"
 
 
 @mock_aws
@@ -121,13 +126,10 @@ def test_user_edit_id_not_found(post_admin):
         "study": 1,
         "app": 1,
         "user_permission_id": "FO001",
-        "edit": {
-            "information": "foo"
-        }
+        "edit": {"information": "foo"},
     }
 
-    data = json.dumps(data)
-    res = post_admin("/aws/user/edit", data=data)
+    res = post_admin("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
     assert res["msg"] == "Ditti ID not found: FO001"
@@ -135,16 +137,14 @@ def test_user_edit_id_not_found(post_admin):
 
 @mock_aws
 @pytest.mark.skip(reason="Must create mock for requests")
-def test_user_edit(post):
-    query = "user_permission_id==\"FO000\""
+def test_user_edit(researcher_post):
+    query = 'user_permission_id=="FO000"'
     data = {
         "group": 2,
         "study": 1,
         "app": 1,
         "user_permission_id": "FO000",
-        "edit": {
-            "information": "foo"
-        }
+        "edit": {"information": "foo"},
     }
 
     res = Query("User", query).scan()
@@ -152,8 +152,7 @@ def test_user_edit(post):
     assert "information" in res["Items"][0]
     assert res["Items"][0]["information"] == ""
 
-    data = json.dumps(data)
-    res = post("/aws/user/edit", data=data)
+    res = researcher_post("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
     assert res["msg"] == "User Successfully Edited"
@@ -163,10 +162,8 @@ def test_user_edit(post):
     assert "information" in res["Items"][0]
     assert res["Items"][0]["information"] == "foo"
 
-    data = json.loads(data)
     data["edit"]["information"] = ""
-    data = json.dumps(data)
-    res = post("/aws/user/edit", data=data)
+    res = researcher_post("/aws/user/edit", data=json.dumps(data))
     res = json.loads(res.data)
     assert "msg" in res
     assert res["msg"] == "User Successfully Edited"

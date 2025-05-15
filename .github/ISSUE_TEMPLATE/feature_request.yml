@@ -1,0 +1,46 @@
+name: Feature Request
+description: Suggest a new feature or enhancement.
+title: "[Feature]"
+labels:
+  - enhancement
+assignees: 
+  - JStover95
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Feature Request
+        Use this form to suggest a new feature or enhancement.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "Describe the feature or enhancement."
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: "Explain why this feature is important and what problem it solves."
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-solution
+    attributes:
+      label: Suggested Solution
+      description: "Describe how the feature should work."
+    validations:
+      required: true
+
+  - type: textarea
+    id: related-issues
+    attributes:
+      label: Related Issues (if applicable)
+      description: "List any related GitHub issues."
+      placeholder: |
+        - Related to #Issue

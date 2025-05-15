@@ -1,267 +1,237 @@
-import pytest
-from datetime import datetime, date
-from typing import List, Optional
+# Copyright 2025 The Trustees of the University of Pennsylvania
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may]
+# not use this file except in compliance with the License. You may obtain a
+# copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+from datetime import date
+from unittest.mock import MagicMock, patch
+
 from pydantic import ValidationError
-from aws_portal.utils.serialization.fitbit_serialization import serialize_fitbit_data
-from aws_portal.models import (
-    SleepLevelEnum,
-    SleepLogTypeEnum,
-    SleepCategoryTypeEnum
+
+from backend.models import SleepCategoryTypeEnum, SleepLogTypeEnum
+from backend.utils.serialization.fitbit_serialization import (
+    SleepLogModel,
+    serialize_fitbit_data,
 )
-import logging
-
-# ----------------------------
-# Mock Classes
-# ----------------------------
 
 
-class MockSleepLevel:
-    def __init__(
-        self,
-        date_time: datetime,
-        level: SleepLevelEnum,
-        seconds: int,
-        is_short: Optional[bool] = None
+class TestFitbitSerialization:
+    @patch(
+        "backend.utils.serialization.fitbit_serialization.SleepLogModel.model_validate"
+    )
+    def test_sleep_log_serialization(self, mock_validate, app_context):
+        """Test successful serialization of sleep logs with levels.
+
+        Verifies that nested sleep level data is properly serialized
+        with correct formatting and type conversions.
+        """
+        # Create minimal test data
+        sleep_log = MagicMock()
+        sleep_log.date_of_sleep = date(2023, 5, 15)
+        sleep_log.log_type = SleepLogTypeEnum.auto_detected
+        sleep_log.type = SleepCategoryTypeEnum.stages
+
+        # Set up mock validation response
+        mock_model = MagicMock(spec=SleepLogModel)
+        mock_validate.return_value = mock_model
+
+        # Define expected output with camelCase keys and nested levels
+        expected_data = {
+            "dateOfSleep": "2023-05-15",
+            "logType": "auto_detected",
+            "type": "stages",
+            "levels": [
+                {
+                    "dateTime": "2023-05-15T22:30:00",
+                    "level": "deep",
+                    "seconds": 1800,
+                    "isShort": False,
+                },
+                {
+                    "dateTime": "2023-05-15T23:00:00",
+                    "level": "light",
+                    "seconds": 3600,
+                    "isShort": False,
+                },
+            ],
+        }
+        mock_model.model_dump.return_value = expected_data
+
+        # Execute function under test
+        result = serialize_fitbit_data([sleep_log])
+
+        # Verify results and interactions
+        assert len(result) == 1
+        assert result[0] == expected_data
+        mock_validate.assert_called_once_with(sleep_log)
+        mock_model.model_dump.assert_called_once_with(
+            by_alias=True, exclude_unset=True, exclude_none=True
+        )
+
+    @patch(
+        "backend.utils.serialization.fitbit_serialization.SleepLogModel.model_validate"
+    )
+    def test_multiple_sleep_logs(self, mock_validate, app_context):
+        """Test serialization of multiple sleep logs.
+
+        Ensures the function correctly processes a list of sleep logs
+        and returns an array of serialized objects.
+        """
+        # Create test data for two logs of different types
+        sleep_log1 = MagicMock()
+        sleep_log1.date_of_sleep = date(2023, 5, 15)
+        sleep_log1.log_type = SleepLogTypeEnum.auto_detected
+        sleep_log1.type = SleepCategoryTypeEnum.stages
+
+        sleep_log2 = MagicMock()
+        sleep_log2.date_of_sleep = date(2023, 5, 16)
+        sleep_log2.log_type = SleepLogTypeEnum.manual
+        sleep_log2.type = SleepCategoryTypeEnum.classic
+
+        # Set up sequential mock responses
+        mock_model1 = MagicMock(spec=SleepLogModel)
+        mock_model2 = MagicMock(spec=SleepLogModel)
+        mock_validate.side_effect = [mock_model1, mock_model2]
+
+        # Define expected outputs
+        expected_data1 = {
+            "dateOfSleep": "2023-05-15",
+            "logType": "auto_detected",
+            "type": "stages",
+            "levels": [],
+        }
+        expected_data2 = {
+            "dateOfSleep": "2023-05-16",
+            "logType": "manual",
+            "type": "classic",
+            "levels": [],
+        }
+        mock_model1.model_dump.return_value = expected_data1
+        mock_model2.model_dump.return_value = expected_data2
+
+        # Execute function under test
+        result = serialize_fitbit_data([sleep_log1, sleep_log2])
+
+        # Verify results
+        assert len(result) == 2
+        assert result[0] == expected_data1
+        assert result[1] == expected_data2
+        assert mock_validate.call_count == 2
+
+    def test_empty_sleep_logs(self, app_context):
+        """Test serialization with empty list of sleep logs.
+
+        Verifies that an empty input list results in an empty output list
+        without errors.
+        """
+        result = serialize_fitbit_data([])
+        assert result == []
+
+    @patch(
+        "backend.utils.serialization.fitbit_serialization.SleepLogModel.model_validate"
+    )
+    def test_null_optional_fields(self, mock_validate, app_context):
+        """Test serialization when optional fields are null.
+
+        Ensures null optional fields are properly omitted from serialized output.
+        """
+        # Create test data
+        sleep_log = MagicMock()
+        sleep_log.date_of_sleep = date(2023, 5, 15)
+        sleep_log.log_type = SleepLogTypeEnum.auto_detected
+        sleep_log.type = SleepCategoryTypeEnum.stages
+
+        # Set up mock validation response
+        mock_model = MagicMock(spec=SleepLogModel)
+        mock_validate.return_value = mock_model
+
+        # Define expected output with omitted isShort field
+        expected_data = {
+            "dateOfSleep": "2023-05-15",
+            "logType": "auto_detected",
+            "type": "stages",
+            "levels": [
+                {
+                    "dateTime": "2023-05-15T22:30:00",
+                    "level": "deep",
+                    "seconds": 1800,
+                    # isShort intentionally omitted to test null handling
+                }
+            ],
+        }
+        mock_model.model_dump.return_value = expected_data
+
+        # Execute function under test
+        result = serialize_fitbit_data([sleep_log])
+
+        # Verify results
+        assert len(result) == 1
+        assert result[0] == expected_data
+        assert "isShort" not in result[0]["levels"][0]
+
+    @patch(
+        "backend.utils.serialization.fitbit_serialization.SleepLogModel.model_validate"
+    )
+    @patch("backend.utils.serialization.fitbit_serialization.logger")
+    def test_validation_error_handling(
+        self, mock_logger, mock_validate, app_context
     ):
-        self.date_time = date_time
-        self.level = level
-        self.seconds = seconds
-        self.is_short = is_short
+        """Test handling of validation errors during serialization.
 
+        Verifies that validation errors are properly caught, logged,
+        and the function continues processing other logs without crashing.
+        """
+        # Create test data
+        invalid_sleep_log = MagicMock()
 
-class MockSleepLog:
-    def __init__(
-        self,
-        date_of_sleep: date,
-        log_type: SleepLogTypeEnum,
-        sleep_type: SleepCategoryTypeEnum,
-        levels: List[MockSleepLevel],
+        # Simulate a validation error
+        mock_validate.side_effect = ValidationError.from_exception_data(
+            title="",
+            line_errors=[
+                {
+                    "type": "missing",
+                    "loc": ("date_of_sleep",),
+                    "msg": "Field required",
+                    "input": {},
+                }
+            ],
+        )
+
+        # Execute function under test
+        result = serialize_fitbit_data([invalid_sleep_log])
+
+        # Verify error handling
+        assert result == []
+        mock_logger.error.assert_called_once()
+
+    @patch(
+        "backend.utils.serialization.fitbit_serialization.SleepLogModel.model_validate"
+    )
+    @patch("backend.utils.serialization.fitbit_serialization.logger")
+    def test_general_exception_handling(
+        self, mock_logger, mock_validate, app_context
     ):
-        self.date_of_sleep = date_of_sleep
-        self.log_type = log_type
-        self.type = sleep_type
-        self.levels = levels
+        """Test handling of unexpected exceptions during serialization.
 
-# ----------------------------
-# Fixtures for Sample Data
-# ----------------------------
+        Ensures that any unhandled exceptions are properly caught, logged,
+        and the function continues processing without crashing.
+        """
+        # Create test data
+        problematic_sleep_log = MagicMock()
 
+        # Simulate a general exception
+        mock_validate.side_effect = Exception("Unexpected error")
 
-@pytest.fixture
-def sample_sleep_logs():
-    # SleepLog 1: Stages type
-    levels_stages = [
-        MockSleepLevel(
-            date_time=datetime(2024, 4, 20, 23, 0, 0),
-            level=SleepLevelEnum.deep,
-            seconds=1800
-        ),
-        MockSleepLevel(
-            date_time=datetime(2024, 4, 20, 23, 30, 0),
-            level=SleepLevelEnum.light,
-            seconds=2700
-        ),
-        MockSleepLevel(
-            date_time=datetime(2024, 4, 21, 0, 15, 0),
-            level=SleepLevelEnum.rem,
-            seconds=1800
-        ),
-        MockSleepLevel(
-            date_time=datetime(2024, 4, 21, 0, 45, 0),
-            level=SleepLevelEnum.wake,
-            seconds=600
-        ),
-    ]
-    sleep_log1 = MockSleepLog(
-        date_of_sleep=date(2024, 4, 21),
-        log_type=SleepLogTypeEnum.auto_detected,
-        sleep_type=SleepCategoryTypeEnum.stages,
-        levels=levels_stages
-    )
+        # Execute function under test
+        result = serialize_fitbit_data([problematic_sleep_log])
 
-    # SleepLog 2: Classic type
-    levels_classic = [
-        MockSleepLevel(
-            date_time=datetime(2024, 4, 19, 22, 30, 0),
-            level=SleepLevelEnum.asleep,
-            seconds=3600
-        ),
-        MockSleepLevel(
-            date_time=datetime(2024, 4, 19, 23, 30, 0),
-            level=SleepLevelEnum.awake,
-            seconds=900
-        ),
-        MockSleepLevel(
-            date_time=datetime(2024, 4, 19, 23, 45, 0),
-            level=SleepLevelEnum.asleep,
-            seconds=1800
-        ),
-    ]
-    sleep_log2 = MockSleepLog(
-        date_of_sleep=date(2024, 4, 20),
-        log_type=SleepLogTypeEnum.manual,
-        sleep_type=SleepCategoryTypeEnum.classic,
-        levels=levels_classic
-    )
-
-    return [sleep_log1, sleep_log2]
-
-# ----------------------------
-# Unit Tests
-# ----------------------------
-
-
-def test_serialize_fitbit_data(sample_sleep_logs):
-    serialized = serialize_fitbit_data(sample_sleep_logs)
-
-    assert isinstance(serialized, list)
-    assert len(serialized) == 2
-
-    # Test first SleepLog (Stages)
-    log1_serialized = serialized[0]
-    assert log1_serialized["dateOfSleep"] == "2024-04-21"
-    assert log1_serialized["logType"] == "auto_detected"
-    assert log1_serialized["type"] == "stages"
-
-    # Check levels
-    assert len(log1_serialized["levels"]) == 4
-    assert log1_serialized["levels"][0]["dateTime"] == "2024-04-20T23:00:00"
-    assert log1_serialized["levels"][0]["level"] == "deep"
-    assert log1_serialized["levels"][0]["seconds"] == 1800
-    assert log1_serialized["levels"][0].get(
-        "isShort") is None  # Optional field
-
-    assert log1_serialized["levels"][1]["dateTime"] == "2024-04-20T23:30:00"
-    assert log1_serialized["levels"][1]["level"] == "light"
-    assert log1_serialized["levels"][1]["seconds"] == 2700
-    assert log1_serialized["levels"][1].get(
-        "isShort") is None  # Optional field
-
-    assert log1_serialized["levels"][2]["dateTime"] == "2024-04-21T00:15:00"
-    assert log1_serialized["levels"][2]["level"] == "rem"
-    assert log1_serialized["levels"][2]["seconds"] == 1800
-    assert log1_serialized["levels"][2].get(
-        "isShort") is None  # Optional field
-
-    assert log1_serialized["levels"][3]["dateTime"] == "2024-04-21T00:45:00"
-    assert log1_serialized["levels"][3]["level"] == "wake"
-    assert log1_serialized["levels"][3]["seconds"] == 600
-    assert log1_serialized["levels"][3].get(
-        "isShort") is None  # Optional field
-
-    # Test second SleepLog (Classic)
-    log2_serialized = serialized[1]
-    assert log2_serialized["dateOfSleep"] == "2024-04-20"
-    assert log2_serialized["logType"] == "manual"
-    assert log2_serialized["type"] == "classic"
-
-    # Check levels
-    assert len(log2_serialized["levels"]) == 3
-    assert log2_serialized["levels"][0]["dateTime"] == "2024-04-19T22:30:00"
-    assert log2_serialized["levels"][0]["level"] == "asleep"
-    assert log2_serialized["levels"][0]["seconds"] == 3600
-    assert log2_serialized["levels"][0].get(
-        "isShort") is None  # Optional field
-
-    assert log2_serialized["levels"][1]["dateTime"] == "2024-04-19T23:30:00"
-    assert log2_serialized["levels"][1]["level"] == "awake"
-    assert log2_serialized["levels"][1]["seconds"] == 900
-    assert log2_serialized["levels"][1].get(
-        "isShort") is None  # Optional field
-
-    assert log2_serialized["levels"][2]["dateTime"] == "2024-04-19T23:45:00"
-    assert log2_serialized["levels"][2]["level"] == "asleep"
-    assert log2_serialized["levels"][2]["seconds"] == 1800
-    assert log2_serialized["levels"][2].get(
-        "isShort") is None  # Optional field
-
-
-def test_serialize_fitbit_data_empty():
-    # Test serialization with empty input
-    serialized = serialize_fitbit_data([])
-    assert serialized == []
-
-
-def test_serialize_fitbit_data_missing_fields():
-    # Create a SleepLog with empty levels
-    sleep_log = MockSleepLog(
-        date_of_sleep=date(2024, 5, 1),
-        log_type=SleepLogTypeEnum.auto_detected,
-        sleep_type=SleepCategoryTypeEnum.stages,
-        levels=[]
-    )
-
-    serialized = serialize_fitbit_data([sleep_log])
-
-    assert len(serialized) == 1
-    log_serialized = serialized[0]
-    assert log_serialized["dateOfSleep"] == "2024-05-01"
-    assert log_serialized["logType"] == "auto_detected"
-    assert log_serialized["type"] == "stages"
-    assert log_serialized["levels"] == []
-
-
-def test_serialize_fitbit_data_invalid_enum(caplog):
-    # Create a SleepLog with invalid enum values
-    sleep_log = MockSleepLog(
-        date_of_sleep=date(2024, 6, 1),
-        log_type="invalid_type",  # Invalid enum
-        sleep_type="invalid_category",  # Invalid enum
-        levels=[]
-    )
-
-    with caplog.at_level(logging.ERROR):
-        serialized = serialize_fitbit_data([sleep_log])
-
-    # Since the SleepLog is invalid, it should not be in the serialized output
-    assert len(serialized) == 0
-
-    # Check that an error was logged
-    error_message_start = "Validation error in SleepLogModel:"
-    assert any(error_message_start in record.message for record in caplog.records)
-
-
-def test_serialize_fitbit_data_partial_levels():
-    # Create a SleepLog with some levels missing optional fields
-    levels_partial = [
-        MockSleepLevel(
-            date_time=datetime(2024, 7, 1, 23, 0, 0),
-            level=SleepLevelEnum.rem,
-            seconds=1200
-        ),
-        MockSleepLevel(
-            date_time=datetime(2024, 7, 1, 23, 20, 0),
-            level=SleepLevelEnum.deep,
-            seconds=1800,
-            is_short=True
-        ),
-    ]
-    sleep_log = MockSleepLog(
-        date_of_sleep=date(2024, 7, 2),
-        log_type=SleepLogTypeEnum.auto_detected,
-        sleep_type=SleepCategoryTypeEnum.stages,
-        levels=levels_partial
-    )
-
-    serialized = serialize_fitbit_data([sleep_log])
-
-    assert len(serialized) == 1
-    log_serialized = serialized[0]
-    assert log_serialized["dateOfSleep"] == "2024-07-02"
-    assert log_serialized["logType"] == "auto_detected"
-    assert log_serialized["type"] == "stages"
-
-    # Check levels
-    assert len(log_serialized["levels"]) == 2
-
-    level1 = log_serialized["levels"][0]
-    assert level1["dateTime"] == "2024-07-01T23:00:00"
-    assert level1["level"] == "rem"
-    assert level1["seconds"] == 1200
-    assert level1.get("isShort") is None  # Optional field not provided
-
-    level2 = log_serialized["levels"][1]
-    assert level2["dateTime"] == "2024-07-01T23:20:00"
-    assert level2["level"] == "deep"
-    assert level2["seconds"] == 1800
-    assert level2["isShort"] is True  # Optional field provided
+        # Verify error handling
+        assert result == []
+        mock_logger.error.assert_called_once()

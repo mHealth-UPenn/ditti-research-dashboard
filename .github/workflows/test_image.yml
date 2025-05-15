@@ -1,0 +1,72 @@
+name: Test Docker Image
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+      - dev
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: pass
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U user"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      FLASK_DB: postgresql://user:pass@localhost:5432/postgres
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build Docker image
+        run: docker build -t flask-app .
+
+      - name: Run Flask container
+        run: |
+          docker run \
+            -d \
+            --name flask-container \
+            --network host \
+            -e FLASK_DB=${{ env.FLASK_DB }} \
+            -e FLASK_APP=run.py \
+            -e AWS_DEFAULT_REGION=us-east-1 \
+            --entrypoint flask \
+            flask-app \
+            run
+
+      - name: Wait for Flask to be ready
+        run: |
+          timeout=60
+          while ! docker logs flask-container 2>&1 | grep -q "Running on http://127.0.0.1:5000"; do
+            sleep 1
+            timeout=$((timeout - 1))
+            if [ $timeout -le 0 ]; then
+              echo "Timeout waiting for the Flask app to start."
+              echo "Flask logs:"
+              docker logs flask-container
+              exit 1
+            fi
+          done
+
+      - name: Run health check
+        run: |
+          response=$(docker exec -t flask-container curl http://localhost:5000/health | jq ".msg")
+          if [ "$response" != "\"Service is healthy.\"" ]; then
+            echo "Health check failed"
+            exit 1
+          fi

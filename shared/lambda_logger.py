@@ -1,12 +1,32 @@
-from datetime import datetime, date
+# Copyright 2025 The Trustees of the University of Pennsylvania
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may]
+# not use this file except in compliance with the License. You may obtain a
+# copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
 import json
 import logging
 import sys
+from datetime import date, datetime
+from typing import ClassVar
 
 
 # Custom JSON formatter
 class JsonFormatter(logging.Formatter):
-    exclude = {
+    """
+    Custom formatter that outputs log records as JSON.
+
+    Formats log records as JSON objects, excluding specified fields
+    and adding custom fields as needed.
+    """
+
+    exclude: ClassVar[set[str]] = {
         "name",
         "msg",
         "args",
@@ -31,6 +51,19 @@ class JsonFormatter(logging.Formatter):
     }
 
     def format(self, record):
+        """
+        Format the specified record as JSON.
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            The log record to format.
+
+        Returns
+        -------
+        dict
+            A dictionary representation of the log record.
+        """
         log_entry = {
             "timestamp": datetime.fromtimestamp(record.created).isoformat() + "Z",
             "level": record.levelname,
@@ -41,7 +74,7 @@ class JsonFormatter(logging.Formatter):
         for k, v in record.__dict__.items():
             if k in self.exclude:
                 continue
-            if isinstance(v, datetime) or isinstance(v, date):
+            if isinstance(v, datetime | date):
                 log_entry[k] = v.isoformat()
             else:
                 log_entry[k] = v
@@ -50,18 +83,57 @@ class JsonFormatter(logging.Formatter):
 
 
 class StreamFormatter(JsonFormatter):
+    """
+    JSON formatter for console output with pretty printing.
+
+    Extends JsonFormatter to provide indented JSON output
+    suitable for console viewing.
+    """
+
     def format(self, record: logging.LogRecord):
+        """
+        Format the log record as indented JSON.
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            The log record to format.
+
+        Returns
+        -------
+        str
+            A JSON string representation of the log record with indentation.
+        """
         entry = super().format(record)
         return json.dumps(entry, indent=4)
 
 
 class JsonFileHandler(logging.Handler):
+    """
+    Custom log handler that saves records to a JSON file.
+
+    Collects log records in memory and writes them to a JSON file
+    when explicitly requested.
+    """
+
     def __init__(self, log_filename):
-        super(JsonFileHandler, self).__init__()
+        super().__init__()
         self.log_filename = log_filename
         self.log_entries = []  # Keep track of all log entries in memory
 
     def emit(self, record):
+        """
+        Process a log record by adding it to the in-memory collection.
+
+        Parameters
+        ----------
+        record : logging.LogRecord
+            The log record to process.
+
+        Returns
+        -------
+        None
+        """
         # Format the record and append it to the in-memory list
         formatter = self.formatter
         if formatter:
@@ -73,9 +145,16 @@ class JsonFileHandler(logging.Handler):
 
 
 class LambdaLogger(logging.Logger):
+    """
+    Specialized logger for AWS Lambda functions.
+
+    Provides structured logging capabilities with both console
+    and file outputs in JSON format.
+    """
+
     def __init__(self, job_timestamp: str, /, *, level=logging.INFO):
         self.job_timestamp = job_timestamp
-        self.log_filename = f"/tmp/log_{self.job_timestamp}.json"
+        self.log_filename = f"/tmp/log_{self.job_timestamp}.json"  # noqa: S108
 
         # Set up logger
         self.__logger = logging.getLogger(__name__)
@@ -98,16 +177,86 @@ class LambdaLogger(logging.Logger):
         self.__logger.addHandler(json_file_handler)
 
     def debug(self, *args, **kwargs):
+        """
+        Log a message with DEBUG level.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments to pass to the logger.
+        **kwargs : dict
+            Keyword arguments to pass to the logger.
+
+        Returns
+        -------
+        None
+        """
         self.__logger.debug(*args, **kwargs)
 
     def info(self, *args, **kwargs):
+        """
+        Log a message with INFO level.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments to pass to the logger.
+        **kwargs : dict
+            Keyword arguments to pass to the logger.
+
+        Returns
+        -------
+        None
+        """
         self.__logger.info(*args, **kwargs)
 
     def warning(self, *args, **kwargs):
+        """
+        Log a message with WARNING level.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments to pass to the logger.
+        **kwargs : dict
+            Keyword arguments to pass to the logger.
+
+        Returns
+        -------
+        None
+        """
         self.__logger.warning(*args, **kwargs)
 
     def error(self, *args, **kwargs):
+        """
+        Log a message with ERROR level.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments to pass to the logger.
+        **kwargs : dict
+            Keyword arguments to pass to the logger.
+
+        Returns
+        -------
+        None
+        """
         self.__logger.error(*args, **kwargs)
 
     def critical(self, *args, **kwargs):
+        """
+        Log a message with CRITICAL level.
+
+        Parameters
+        ----------
+        *args : tuple
+            Positional arguments to pass to the logger.
+        **kwargs : dict
+            Keyword arguments to pass to the logger.
+
+        Returns
+        -------
+        None
+        """
         self.__logger.critical(*args, **kwargs)

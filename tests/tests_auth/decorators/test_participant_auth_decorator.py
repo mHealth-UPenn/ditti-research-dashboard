@@ -1,0 +1,211 @@
+# Copyright 2025 The Trustees of the University of Pennsylvania
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may]
+# not use this file except in compliance with the License. You may obtain a
+# copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+import json
+from unittest.mock import MagicMock, patch
+
+from flask import jsonify
+
+from backend.auth.decorators.participant import participant_auth_required
+
+from .test_auth_common import create_mock_response, test_app  # noqa: F401
+
+
+class TestParticipantAuthDecorator:
+    """Tests for the participant_auth_required decorator."""
+
+    def test_decorator_applied_correctly(self):
+        """Test that the decorator correctly creates a wrapper function."""
+
+        @participant_auth_required
+        def test_func():
+            return "test_result"
+
+        # Verify the wrapper function maintains the same metadata
+        assert test_func.__name__ == "test_func"
+        test_func.__doc__ = "Test docstring"
+        assert test_func.__doc__ == "Test docstring"
+
+    def test_requires_token(self, test_app):
+        """Test that the decorator requires a token and returns 401 when missing."""
+        with (
+            test_app.test_request_context("/test-participant"),
+            patch("backend.auth.decorators.participant.request") as mock_request,
+        ):
+            mock_request.headers = {}
+            mock_request.cookies = {}
+
+            @participant_auth_required
+            def test_route():
+                return "OK"
+
+            response = test_route()
+
+            # Verify authentication failure response
+            assert response.status_code == 401
+            data = json.loads(response.get_data(as_text=True))
+            assert "msg" in data
+            assert data["msg"] == "Authentication required"
+
+    def test_invalid_token_format(self, test_app):
+        """Test that the decorator rejects invalid token formats."""
+        with (
+            test_app.test_request_context("/test-participant"),
+            patch("backend.auth.decorators.participant.request") as mock_request,
+        ):
+            mock_request.headers = {"Authorization": "InvalidFormat"}
+            mock_request.cookies = {}
+
+            @participant_auth_required
+            def test_route():
+                return "OK"
+
+            response = test_route()
+
+            # Verify authentication failure response
+            assert response.status_code == 401
+            data = json.loads(response.get_data(as_text=True))
+            assert "msg" in data
+            assert data["msg"] == "Authentication required"
+
+    @patch("backend.auth.decorators.participant.ParticipantAuthController")
+    def test_successful_auth(self, MockController, test_app):
+        """Test successful authentication flow with valid token."""
+        mock_controller = MagicMock()
+        MockController.return_value = mock_controller
+        mock_controller.get_user_from_token.return_value = ("test_ditti_id", None)
+
+        @participant_auth_required
+        def test_func(ditti_id):
+            return jsonify({"ditti_id": ditti_id, "msg": "OK"})
+
+        with (
+            test_app.test_request_context(
+                "/test-func",
+                headers={"Authorization": "Bearer valid-token"},
+            ),
+            test_app.app_context(),
+        ):
+            response = test_func()
+
+            # Verify controller interaction
+            mock_controller.get_user_from_token.assert_called_once()
+            args, _ = mock_controller.get_user_from_token.call_args
+            assert args[0] == "valid-token"
+
+            # Verify successful response
+            assert response.status_code == 200
+            data = json.loads(response.get_data(as_text=True))
+            assert data["ditti_id"] == "test_ditti_id"
+            assert data["msg"] == "OK"
+
+    @patch("backend.auth.decorators.participant.ParticipantAuthController")
+    @patch("backend.auth.utils.responses.create_error_response")
+    def test_auth_with_exception(
+        self, mock_create_error, MockController, test_app
+    ):
+        """Test exception handling during authentication process."""
+        mock_controller = MagicMock()
+        MockController.return_value = mock_controller
+
+        error_response = create_mock_response(
+            {"error": "Internal server error"}, status_code=500
+        )
+        mock_create_error.return_value = error_response
+        mock_controller.get_user_from_token.return_value = (None, error_response)
+
+        @participant_auth_required
+        def test_func(ditti_id):
+            return jsonify({"ditti_id": ditti_id, "msg": "OK"})
+
+        with (
+            test_app.test_request_context(
+                "/test-func",
+                headers={"Authorization": "Bearer valid-token"},
+            ),
+            test_app.app_context(),
+        ):
+            response = test_func()
+
+            # Verify error response is passed through
+            assert response.status_code == 500
+            assert (
+                b"Internal server error" in response.get_data()
+                or b"error" in response.get_data()
+            )
+
+    @patch("backend.auth.decorators.participant.ParticipantAuthController")
+    def test_auth_failure(self, MockController, test_app):
+        """Test authentication failure handling with invalid token."""
+        # Configure mock controller to return authentication failure
+        mock_controller = MagicMock()
+        MockController.return_value = mock_controller
+
+        error_response = create_mock_response(
+            {"error": "Invalid token"}, status_code=401
+        )
+        mock_controller.get_user_from_token.return_value = (None, error_response)
+
+        @participant_auth_required
+        def test_func(ditti_id):
+            return jsonify({"ditti_id": ditti_id, "msg": "OK"})
+
+        with (
+            test_app.test_request_context(
+                "/test-func",
+                headers={"Authorization": "Bearer invalid-token"},
+            ),
+            test_app.app_context(),
+        ):
+            response = test_func()
+
+            # Verify controller interaction
+            mock_controller.get_user_from_token.assert_called_once()
+            args, _ = mock_controller.get_user_from_token.call_args
+            assert args[0] == "invalid-token"
+
+            # Verify error response is passed through
+            assert response.status_code == 401
+            assert b'"error": "Invalid token"' in response.get_data()
+
+    @patch("backend.auth.decorators.participant.ParticipantAuthController")
+    def test_token_from_cookie(self, MockController, test_app):
+        """Test that the decorator can extract and use tokens from cookies."""
+        mock_controller = MagicMock()
+        MockController.return_value = mock_controller
+        mock_controller.get_user_from_token.return_value = ("test_ditti_id", None)
+
+        @participant_auth_required
+        def test_func(ditti_id):
+            return jsonify({"ditti_id": ditti_id, "msg": "OK"})
+
+        with (
+            test_app.test_request_context("/test-func"),
+            test_app.app_context(),
+            patch("backend.auth.decorators.participant.request") as mock_request,
+        ):
+            # Set cookie with token but no Authorization header
+            mock_request.headers = {}
+            mock_request.cookies = {"id_token": "cookie-token-value"}
+
+            response = test_func()
+
+            # Verify cookie token was used
+            mock_controller.get_user_from_token.assert_called_once()
+            args, _ = mock_controller.get_user_from_token.call_args
+            assert args[0] == "cookie-token-value"
+
+            # Verify successful response
+            assert response.status_code == 200
+            data = json.loads(response.get_data(as_text=True))
+            assert data["ditti_id"] == "test_ditti_id"
+            assert data["msg"] == "OK"

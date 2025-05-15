@@ -1,28 +1,37 @@
-aws_portal/frontend/node_modules
-aws_portal/frontend/.pnp
-aws_portal/frontend/.pnp.js
-aws_portal/frontend/coverage
-aws_portal/frontend/build
-aws_portal/frontend/.DS_Store
-aws_portal/frontend/.env.local
-aws_portal/frontend/.env.development.local
-aws_portal/frontend/.env.test.local
-aws_portal/frontend/.env.production.local
-aws_portal/frontend/npm-debug.log*
-aws_portal/frontend/yarn-debug.log*
-aws_portal/frontend/yarn-error.log*
+frontend/node_modules/**/*
+frontend/.pnp
+frontend/.pnp.js
+frontend/coverage/**/*
+frontend/dist/**/*
+frontend/.DS_Store
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
 
-__pycache__/
-.log/
-.postgresql/
-.vscode/
-env/
+**/*__pycache__/**/*
+**/*__pycache__
+**/.pytest_cache/**/*
+**/.pytest_cache
+**/.ruff_cache/**/*
+**/.ruff_cache
+**/.log/**/*
+**/.log
+**/.postgresql/**/*
+**/.postgresql
+.vscode/settings.json
+.cursor/**/*
+env/**/*
+env312/**/*
 *.env
 *logfile
 
 !flask.env
 !postgres.env
-!aws_portal/frontend/.env
+!frontend/.env
 
 x.py
 y.py
@@ -34,7 +43,13 @@ zappa_settings.py
 
 **/src/output.css
 
-.DS_Store
+**/.DS_Store
 .env.production
 
 data.json
+zappa_settings.json
+
+project-config*.json
+
+scripts/**/*
+debug/**/*

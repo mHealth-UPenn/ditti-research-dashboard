@@ -8,23 +8,22 @@ ENV ZAPPA_RUNNING_IN_DOCKER=True
 
 RUN pip3 install --upgrade pip && pip3 install wheel
 RUN pip3 install boto3 \
-    cryptography \
+    Authlib==1.4.1 \
     Flask==2.3.3 \
-    Flask-APScheduler \
-    Flask-Bcrypt \
     Flask-Caching \
     Flask-Cors \
     Flask-JWT-Extended \
     Flask-Migrate \
     Flask-SQLAlchemy==2.5.1 \
-    html-sanitizer \
+    nh3 \
     oauthlib \
     pandas \
     psycopg2-binary \
     pydantic \
-    requests \
+    python-dotenv==1.1.0 \
     requests-aws4auth \
     SQLAlchemy==1.4.52 \
+    XlsxWriter==3.2.3 \
     zappa
 
 COPY . ${LAMBDA_TASK_ROOT}

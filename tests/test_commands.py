@@ -1,16 +1,35 @@
-import os
+# Copyright 2025 The Trustees of the University of Pennsylvania
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may]
+# not use this file except in compliance with the License. You may obtain a
+# copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
 import pytest
 from sqlalchemy import tuple_
-from aws_portal.app import create_app
 
-from aws_portal.commands import (
-    init_admin_app_click, init_admin_group_click, init_admin_account_click,
-    init_db_click
+from backend.app import create_app
+from backend.commands import (
+    create_researcher_account_click,
+    init_admin_account_click,
+    init_admin_app_click,
+    init_admin_group_click,
+    init_db_click,
+    init_integration_testing_db_click,
 )
-
-from aws_portal.models import (
-    AccessGroup, Account, App, JoinAccessGroupPermission,
-    JoinAccountAccessGroup, Permission, init_db
+from backend.models import (
+    AccessGroup,
+    Account,
+    App,
+    JoinAccessGroupPermission,
+    JoinAccountAccessGroup,
+    Permission,
+    init_db,
 )
 
 
@@ -77,7 +96,7 @@ def test_init_admin_account(runner):
     runner.invoke(init_admin_app_click)
     runner.invoke(init_admin_group_click)
     res = runner.invoke(init_admin_account_click)
-    q1 = Account.email == os.getenv("FLASK_ADMIN_EMAIL")
+    q1 = Account.email == "testing"
     q2 = AccessGroup.name == "Admin"
     foo = Account.query.filter(q1).first()
     bar = AccessGroup.query.filter(q2).first()
@@ -99,3 +118,40 @@ def test_init_admin_account_duplicate(runner):
     runner.invoke(init_admin_account_click)
     res = runner.invoke(init_admin_account_click)
     assert isinstance(res.exception, ValueError)
+
+
+def test_create_researcher_account(runner):
+    runner.invoke(init_integration_testing_db_click)
+    res = runner.invoke(
+        create_researcher_account_click, args=["--email", "test@test.com"]
+    )
+    assert res.output == "Researcher account successfully created.\n"
+
+    # Check that the account was created
+    q1 = Account.email == "test@test.com"
+    foo = Account.query.filter(q1).first()
+    assert foo is not None
+    assert foo.email == "test@test.com"
+    assert foo.first_name == "Jane"
+    assert foo.last_name == "Doe"
+    assert foo.phone_number == "+12345678901"
+    assert foo.is_confirmed is True
+
+    # Check that the account has access to all groups
+    q2 = AccessGroup.name == "Admin"
+    bar = AccessGroup.query.filter(q2).first()
+    baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
+    assert bar is not None
+    assert baz is not None
+
+    q3 = AccessGroup.name == "Ditti App Admin"
+    bar = AccessGroup.query.filter(q3).first()
+    baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
+    assert bar is not None
+    assert baz is not None
+
+    q4 = AccessGroup.name == "Wearable Dashboard Admin"
+    bar = AccessGroup.query.filter(q4).first()
+    baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
+    assert bar is not None
+    assert baz is not None

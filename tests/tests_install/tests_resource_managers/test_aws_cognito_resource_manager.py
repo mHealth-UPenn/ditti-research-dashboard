@@ -1,0 +1,89 @@
+# Copyright 2025 The Trustees of the University of Pennsylvania
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may]
+# not use this file except in compliance with the License. You may obtain a
+# copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+
+from unittest.mock import MagicMock
+
+import pytest
+from botocore.exceptions import ClientError
+from moto import mock_aws
+
+from install.resource_managers.aws_cognito_resource_manager import (
+    AwsCognitoResourceManager,
+)
+from install.utils.exceptions import ResourceManagerError
+from tests.tests_install.tests_resource_managers.mock_aws_cognito_resource_manager import (
+    aws_cognito_resource_manager,
+)
+
+
+@pytest.fixture
+def aws_cognito_resource_manager_mock():
+    with mock_aws():
+        yield aws_cognito_resource_manager()
+
+
+def test_create_admin_user(
+    aws_cognito_resource_manager_mock: AwsCognitoResourceManager,
+):
+    res = aws_cognito_resource_manager_mock.create_admin_user()
+    assert res is not None
+
+
+def test_create_admin_user_client_error(
+    aws_cognito_resource_manager_mock: AwsCognitoResourceManager,
+):
+    aws_cognito_resource_manager_mock.client.admin_create_user = MagicMock(
+        side_effect=ClientError(
+            error_response={"Error": {"Code": "ClientError"}},
+            operation_name="AdminCreateUser",
+        )
+    )
+    with pytest.raises(ResourceManagerError, match="ClientError"):
+        aws_cognito_resource_manager_mock.create_admin_user()
+
+
+def test_create_admin_user_unexpected_error(
+    aws_cognito_resource_manager_mock: AwsCognitoResourceManager,
+):
+    aws_cognito_resource_manager_mock.client.admin_create_user = MagicMock(
+        side_effect=Exception("Unexpected error")
+    )
+    with pytest.raises(ResourceManagerError, match="Unexpected error"):
+        aws_cognito_resource_manager_mock.create_admin_user()
+
+
+def test_on_end(aws_cognito_resource_manager_mock: AwsCognitoResourceManager):
+    aws_cognito_resource_manager_mock.create_admin_user = MagicMock(
+        return_value={"User": {"Username": "test-user"}}
+    )
+    aws_cognito_resource_manager_mock.on_end()
+    aws_cognito_resource_manager_mock.create_admin_user.assert_called_once()
+
+
+def test_on_end_unexpected_error(
+    aws_cognito_resource_manager_mock: AwsCognitoResourceManager,
+):
+    aws_cognito_resource_manager_mock.create_admin_user = MagicMock(
+        side_effect=Exception("Unexpected error")
+    )
+    with pytest.raises(ResourceManagerError, match="Unexpected error"):
+        aws_cognito_resource_manager_mock.on_end()
+
+
+def test_on_end_resource_manager_error(
+    aws_cognito_resource_manager_mock: AwsCognitoResourceManager,
+):
+    aws_cognito_resource_manager_mock.create_admin_user = MagicMock(
+        side_effect=ResourceManagerError("Resource manager error")
+    )
+    with pytest.raises(ResourceManagerError, match="Resource manager error"):
+        aws_cognito_resource_manager_mock.on_end()

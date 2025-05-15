@@ -1,90 +1,106 @@
-# Initialize flags
-CONDA_FLAG=false
-INIT_FLAG=false
-NO_AWS=false
+# Copyright 2025 The Trustees of the University of Pennsylvania
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may]
+# not use this file except in compliance with the License. You may obtain a
+# copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
 
-# Check for "conda" and "init" parameters
-for arg in "$@"
-do
-    if [[ "$arg" == "conda" ]]; then
-        CONDA_FLAG=true
-    elif [[ "$arg" == "init" ]]; then
-        INIT_FLAG=true
-    elif [[ "$arg" == "no-aws" ]]; then
-        NO_AWS=true
-    fi
-done
+#!/bin/bash
 
-# Handle Python virtual environment setup if "conda" is not provided
-if [[ "$CONDA_FLAG" == false ]]; then
-    # if no python virtual environment, create one
-    if [ ! -f env/bin/activate ]; then
-        echo "Initializing Python virtual environment..."
-        python3 -m venv env
-    fi
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+MAGENTA='\033[0;35m'
+CYAN='\033[0;36m'
+RESET='\033[0m'
 
-    # enter the python virtual environment
-    if [[ "$VIRTUAL_ENV" == "" ]]; then
-        echo "Entering Python virtual environment..."
-        source env/bin/activate
-    fi
+# Read the project-settings-dev.json file
+if [[ ! -f "project-config.json" ]]; then
+    echo -e "${RED}Project settings file not found${RESET}"
+    echo "Did you run install-dev.sh?"
+    exit 1
+fi
+
+project_settings=$(cat "project-config.json")
+dev_secret_name=$(echo "$project_settings" | jq -r '.aws.secrets_manager.secret_name')
+postgres_container_name=$(echo "$project_settings" | jq -r '.docker.postgres_container_name')
+wearable_data_retrieval_container_name=$(echo "$project_settings" | jq -r '.docker.wearable_data_retrieval_container_name')
+
+# Enter the python virtual environment
+if [[ "$VIRTUAL_ENV" == "" ]]; then
+    echo "Entering Python virtual environment..."
+    source env/bin/activate
+fi
+
+# Retrieve secret value using AWS CLI
+secret_json=$(aws secretsmanager get-secret-value --secret-id "$dev_secret_name" --query 'SecretString' --output text)
+
+if [[ -z "$secret_json" ]]; then
+    echo -e "${RED}Failed to retrieve secret or secret is empty.${RESET}"
 else
-    echo "Skipping Python virtual environment setup."
+    # Create a temporary file to store the environment variables
+    temp_env_file=$(mktemp)
+    
+    # Parse the JSON and write environment variable assignments to the temporary file
+    echo "$secret_json" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' > "$temp_env_file"
+    
+    # Source the temporary file to set environment variables in the current shell
+    set -a
+    source "$temp_env_file"
+    set +a
+    
+    # Clean up the temporary file
+    rm "$temp_env_file"
 fi
 
-# install missing python packages
-arr1=$(pip3 freeze)
-arr2=$(cat requirements.txt)
-arr3=(`echo ${arr1[@]} ${arr2[@]} | tr ' ' '\n' | sort | uniq -u`)
-arr4=(`echo ${arr2[@]} ${arr3[@]} | tr ' ' '\n' | sort | uniq -d`)
+echo -e "Loaded environment variables from ${BLUE}$dev_secret_name${RESET}"
 
-if [[ ! -z ${arr4[@]} ]]; then
-    echo "Installing required Python packages..."
-    pip3 install ${arr4[@]}
-else
-    echo "Correct Python packages are installed."
+# Start docker containers
+
+postgres_container_status=$(docker inspect $postgres_container_name | jq -r '.[0].State.Status')
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}Failed to get postgres container status${RESET}"
+    echo "Did you run install-dev.sh?"
+    exit 1
 fi
 
-# if aws credentials are available, export them
-if [ -f secret-aws.env ]; then
-    echo "secret-aws.env found. Exporting credentials..."
-    export $(cat secret-aws.env | xargs)
-else
-    echo "secret-aws.env not found. Credentials not exported."
-fi
-
-# export development env variables
-export $(cat flask.env | xargs)
-
-# export development cognito and fitbit env variables
-export $(cat cognito.env | xargs)
-export $(cat fitbit.env | xargs)
-
-if [[ "$NO_AWS" == false ]]; then
-    # Secret name
-    SECRET_NAME="aws-portal-secret-dev"
-
-    # Retrieve secret value using AWS CLI
-    echo "Fetching secret: $SECRET_NAME"
-    SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id "$SECRET_NAME" --query 'SecretString' --output text)
-
-    if [[ -z "$SECRET_JSON" ]]; then
-    echo "Failed to retrieve secret or secret is empty."
-    else
-        # Parse the JSON and export key-value pairs as environment variables
-        echo "Exporting key-value pairs as environment variables..."
-        echo "$SECRET_JSON" | jq -r 'to_entries | .[] | "export \(.key)=\(.value)"' | while read -r ENV_VAR; do
-        eval "$ENV_VAR"
-        done
+if [[ "$postgres_container_status" == "exited" ]]; then
+    postgres_container_start_response=$(docker start $postgres_container_name)
+    if [[ $? -ne 0 ]]; then
+        echo "$postgres_container_start_response"
+        echo -e "${RED}Failed to start postgres container${RESET}"
+        exit 1
     fi
 fi
 
-echo "Environment variables exported successfully."
+echo -e "Started ${BLUE}$postgres_container_name${RESET}"
 
-# Run initialization commands if "init" parameter is provided
-if [[ "$INIT_FLAG" == true ]]; then
-    echo "Initializing application..."
-    docker run -ditp 5432:5432 --name aws-pg --env-file postgres.env postgres
-    flask db upgrade
-    flask init-integration-testing-db
+wearable_data_retrieval_container_status=$(docker inspect $wearable_data_retrieval_container_name | jq -r '.[0].State.Status')
+
+if [[ $? -ne 0 ]]; then
+    echo -e "${RED}Failed to get wearable data retrieval container status${RESET}"
+    echo "Did you run install-dev.sh?"
+    exit 1
 fi
+
+if [[ "$wearable_data_retrieval_container_status" == "exited" ]]; then
+    wearable_data_retrieval_container_start_response=$(docker start $wearable_data_retrieval_container_name)
+    if [[ $? -ne 0 ]]; then
+        echo "$wearable_data_retrieval_container_start_response"
+        echo -e "${RED}Failed to start wearable data retrieval container${RESET}"
+        exit 1
+    fi
+fi
+
+echo -e "Started ${BLUE}$wearable_data_retrieval_container_name${RESET}"
+
+echo -e "${GREEN}Dev environment deployed${RESET}"
+
+flask run
