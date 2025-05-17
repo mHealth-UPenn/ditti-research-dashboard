@@ -11,6 +11,14 @@
 # under the License.
 
 import logging
+from datetime import timedelta
+
+from flask import current_app
+from flask_jwt_extended import (
+    create_access_token,
+    get_csrf_token,
+    set_access_cookies,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +36,12 @@ def clear_auth_cookies(response):
         The response object with cleared cookies
     """
     # Clear all auth cookies
-    for cookie_name in ["id_token", "access_token", "refresh_token"]:
+    for cookie_name in [
+        "id_token",
+        "access_token",
+        "refresh_token",
+        "csrf_token",
+    ]:
         response.set_cookie(
             cookie_name,
             "",
@@ -55,13 +68,25 @@ def set_auth_cookies(response, token):
     -------
         The response object with set cookies
     """
+    # Environment-aware cookie attributes
+    running_dev = current_app.debug or current_app.testing
+    secure_cookie = not running_dev
+
+    # Auth cookies should use SameSite=None only in production when they are Secure.
+    auth_samesite = "Lax" if running_dev else "None"
+
+    # Flask pre-3.0 used 'None' for cross-site cookies; browsers now require these to be 'Secure'.
+    # Auth cookies (like id_token, access_token) are typically set with samesite='None' (and secure=True)
+    # to support OIDC redirects across different sites.
+    # For the XSRF-TOKEN cookie, samesite='Lax' is generally recommended.
+
     # Set ID token cookie
     response.set_cookie(
         "id_token",
         token["id_token"],
         httponly=True,
-        secure=True,
-        samesite="None",
+        secure=secure_cookie,
+        samesite=auth_samesite,
         max_age=3600,
     )
 
@@ -70,8 +95,8 @@ def set_auth_cookies(response, token):
         "access_token",
         token["access_token"],
         httponly=True,
-        secure=True,
-        samesite="None",
+        secure=secure_cookie,
+        samesite=auth_samesite,
         max_age=3600,
     )
 
@@ -81,9 +106,22 @@ def set_auth_cookies(response, token):
             "refresh_token",
             token["refresh_token"],
             httponly=True,
-            secure=True,
-            samesite="None",
+            secure=secure_cookie,
+            samesite=auth_samesite,
             max_age=86400,
         )
+
+    # Create a short-lived JWT whose sole purpose is to transport the CSRF
+    # double-submit value. The identity is irrelevant for our use-case.
+    csrf_jwt = create_access_token(
+        identity="csrf", expires_delta=timedelta(hours=1)
+    )
+
+    # This helper sets BOTH the HttpOnly JWT cookie and the non-HttpOnly
+    # CSRF cookie (named according to our JWT_* config options).
+    set_access_cookies(response, csrf_jwt)
+
+    # Expose the CSRF token via header so the SPA can refresh its cached copy
+    response.headers["X-CSRFToken"] = get_csrf_token(csrf_jwt)
 
     return response
