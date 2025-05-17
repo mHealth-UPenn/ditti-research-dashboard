@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 /* Copyright 2025 The Trustees of the University of Pennsylvania
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may]
@@ -37,5 +38,9 @@ export default defineConfig({
   plugins: [svgr(), react(), tsconfigPaths(), devToolsMapStub],
   server: {
     port: 3000,
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
   },
 });

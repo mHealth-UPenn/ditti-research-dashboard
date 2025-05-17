@@ -12,7 +12,7 @@
  */
 
 import { APP_ENV } from "../environment";
-import { makeRequest } from "../utils";
+import { httpClient } from "../lib/http";
 import { DataFactory } from "../dataFactory";
 import { differenceInMilliseconds } from "date-fns";
 import {
@@ -48,10 +48,10 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
     let taps: TapModel[] = [];
 
     if (APP_ENV === "production") {
-      taps = await makeRequest("/aws/get-taps?app=2")
-        .then((res) => {
-          const tapsData = res as unknown as Tap[];
-          return tapsData.map((tap) => {
+      taps = await httpClient
+        .request<Tap[]>("/aws/get-taps?app=2")
+        .then((res: Tap[]) => {
+          return res.map((tap) => {
             return {
               dittiId: tap.dittiId,
               time: new Date(tap.time),
@@ -81,10 +81,10 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
     let audioTaps: AudioTapModel[] = [];
 
     if (APP_ENV == "production") {
-      audioTaps = await makeRequest("/aws/get-audio-taps?app=2")
-        .then((res) => {
-          const audioTapsData = res as unknown as AudioTap[];
-          return audioTapsData.map((at) => {
+      audioTaps = await httpClient
+        .request<AudioTap[]>("/aws/get-audio-taps?app=2")
+        .then((res: AudioTap[]) => {
+          return res.map((at) => {
             return {
               dittiId: at.dittiId,
               audioFileTitle: at.audioFileTitle,
@@ -116,14 +116,14 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
     let audioFiles: AudioFile[] = [];
 
     if (APP_ENV === "production") {
-      audioFiles = (await makeRequest("/aws/get-audio-files?app=2").catch(
-        () => {
+      audioFiles = await httpClient
+        .request<AudioFile[]>("/aws/get-audio-files?app=2")
+        .catch(() => {
           console.error(
             "Unable to fetch audio files. Check account permissions."
           );
-          return [];
-        }
-      )) as unknown as AudioFile[];
+          return [] as AudioFile[];
+        });
     } else if (dataFactory) {
       audioFiles = dataFactory.audioFiles;
     }

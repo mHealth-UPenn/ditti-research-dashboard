@@ -28,13 +28,13 @@ class Default:
     CORS_ALLOW_HEADERS: ClassVar[list[str]] = [
         "Authorization",
         "Content-Type",
-        "X-CSRF-TOKEN",
+        "X-XSRF-TOKEN",
     ]
 
-    # Headers for the client to access when downloading Excel files
     CORS_EXPOSE_HEADERS: ClassVar[list[str]] = [
         "Content-Type",
         "Content-Disposition",
+        "X-XSRF-TOKEN",
     ]
     CORS_SUPPORTS_CREDENTIALS = True
 
@@ -95,6 +95,21 @@ class Default:
     # Configuration for invoking a lambda function locally
     LOCAL_LAMBDA_ENDPOINT = os.environ.get("LOCAL_LAMBDA_ENDPOINT")
 
+    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "secret")
+    # Store tokens in cookies (not headers) (default)
+    JWT_TOKEN_LOCATION: ClassVar[list[str]] = ["cookies"]
+    # Enable double-submit CSRF protection on those cookies (default)
+    JWT_COOKIE_CSRF_PROTECT = True
+    # Configure cookie and header names
+    JWT_ACCESS_CSRF_COOKIE_NAME = "XSRF-TOKEN"
+    JWT_ACCESS_CSRF_HEADER_NAME = "X-XSRF-TOKEN"
+    # Methods that must include a CSRF token (default)
+    JWT_CSRF_METHODS: ClassVar[list[str]] = ["POST", "PUT", "PATCH", "DELETE"]
+    # Cookies should not be marked Secure in local development so that we
+    # can develop over plain HTTP on localhost.
+    JWT_COOKIE_SECURE = False
+    JWT_COOKIE_SAMESITE = "Lax"
+
 
 class Staging(Default):
     """
@@ -113,8 +128,12 @@ class Staging(Default):
         "Authorization",
         "X-Api-Key",
         "X-Amz-Security-Token",
-        "X-CSRF-TOKEN",
+        "X-XSRF-TOKEN",
     ]
+
+    # JWT cookies are secure in staging
+    JWT_COOKIE_SECURE = True
+    JWT_COOKIE_SAMESITE = "None"
 
 
 class Production(Default):
@@ -133,7 +152,7 @@ class Production(Default):
         "Authorization",
         "X-Api-Key",
         "X-Amz-Security-Token",
-        "X-CSRF-TOKEN",
+        "X-XSRF-TOKEN",
     ]
 
     CORS_ORIGINS = os.getenv("AWS_CLOUDFRONT_DOMAIN_NAME")
@@ -166,6 +185,10 @@ class Production(Default):
     )
     COGNITO_RESEARCHER_DOMAIN = os.environ.get("COGNITO_RESEARCHER_DOMAIN")
     COGNITO_RESEARCHER_REGION = os.environ.get("COGNITO_RESEARCHER_REGION")
+
+    # JWT cookies are secure in production
+    JWT_COOKIE_SECURE = True
+    JWT_COOKIE_SAMESITE = "None"
 
 
 class Testing(Default):

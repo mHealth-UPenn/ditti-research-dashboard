@@ -15,7 +15,8 @@ import React, { useEffect, useState } from "react";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
-import { getAccess, makeRequest } from "../../utils";
+import { getAccess } from "../../utils";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { Account, ResponseBody } from "../../types/api";
 import { SmallLoader } from "../loader/loader";
 import { ListView } from "../containers/lists/listView";
@@ -23,6 +24,7 @@ import { ListContent } from "../containers/lists/listContent";
 import { Button } from "../buttons/button";
 import { Link } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { HttpError } from "../../lib/http.types";
 
 /**
  * Functional component representing Accounts.
@@ -72,6 +74,7 @@ export const Accounts = () => {
   ]);
   const [loading, setLoading] = useState(true);
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   useEffect(() => {
     // Check user permissions
@@ -101,8 +104,8 @@ export const Accounts = () => {
     // Fetch account data
     const fetchAccounts = async () => {
       try {
-        const accounts = await makeRequest("/admin/account?app=1");
-        setAccounts(accounts as unknown as Account[]);
+        const accounts = await request<Account[]>("/admin/account?app=1");
+        setAccounts(accounts);
       } catch (error) {
         console.error("Error fetching accounts:", error);
       }
@@ -111,7 +114,7 @@ export const Accounts = () => {
     void Promise.all([fetchPermissions(), fetchAccounts()]).then(() => {
       setLoading(false);
     });
-  }, []);
+  }, [request]);
 
   /**
    * Get the table's contents
@@ -227,12 +230,12 @@ export const Accounts = () => {
    */
   const deleteAccount = (id: number): void => {
     const body = { app: 1, id }; // Admin Dashboard = 1
-    const opts = { method: "POST", body: JSON.stringify(body) };
+    const opts = { method: "POST", data: body };
 
     const msg = "Are you sure you want to archive this account?";
 
     if (confirm(msg)) {
-      makeRequest("/admin/account/archive", opts)
+      request<ResponseBody>("/admin/account/archive", opts)
         .then(handleSuccess)
         .catch(handleFailure);
     }
@@ -247,25 +250,28 @@ export const Accounts = () => {
     setLoading(true);
 
     // Refresh the table's data
-    void makeRequest("/admin/account?app=1")
-      .then((accounts) => {
-        setAccounts(accounts as unknown as Account[]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    void request<Account[]>("/admin/account?app=1").then((res) => {
+      setAccounts(res);
+      setLoading(false);
+    });
   };
 
   /**
    * Handle a failed response
-   * @param res - the response body
+   * @param error - the error object
    */
-  const handleFailure = (res: ResponseBody) => {
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "Internal server error";
+    if (error instanceof HttpError && error.apiError?.data) {
+      displayMessage = error.apiError.data.msg;
+    } else if (error instanceof Error) {
+      displayMessage = error.message;
+    }
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg ? res.msg : "Internal server error"}
+        {displayMessage}
       </span>
     );
 

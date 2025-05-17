@@ -20,7 +20,7 @@ import {
   ResponseBody,
   Role,
 } from "../../types/api";
-import { makeRequest } from "../../utils";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -37,6 +37,7 @@ import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { RolesFormPrefill } from "./adminDashboard.types";
+import { HttpError } from "../../lib/http.types";
 
 export const RolesEdit = () => {
   const [searchParams] = useSearchParams();
@@ -50,6 +51,7 @@ export const RolesEdit = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
   const navigate = useNavigate();
 
   /**
@@ -61,24 +63,26 @@ export const RolesEdit = () => {
 
     // if editing an existing entry, return prefill data, else return empty data
     return id
-      ? makeRequest(`/admin/role?app=1&id=${String(id)}`).then((response) =>
-          makePrefill(response as unknown as Role[])
+      ? request<Role[]>(`/admin/role?app=1&id=${String(id)}`).then((response) =>
+          makePrefill(response)
         )
       : { name: "", permissions: [] };
-  }, [roleId]);
+  }, [roleId, request]);
 
   useEffect(() => {
     // get all available actions
-    const fetchActions = makeRequest("/admin/action?app=1").then((response) => {
-      setActions(response as unknown as ActionResource[]);
-    });
-
-    // get all available resources
-    const fetchResources = makeRequest("/admin/resource?app=1").then(
+    const fetchActions = request<ActionResource[]>("/admin/action?app=1").then(
       (response) => {
-        setResources(response as unknown as ActionResource[]);
+        setActions(response);
       }
     );
+
+    // get all available resources
+    const fetchResources = request<ActionResource[]>(
+      "/admin/resource?app=1"
+    ).then((response) => {
+      setResources(response);
+    });
 
     // set any form prefill data
     const prefill = getPrefill().then((prefill: RolesFormPrefill) => {
@@ -95,7 +99,7 @@ export const RolesEdit = () => {
         console.error("Error loading form data:", error);
         setLoading(false);
       });
-  }, [getPrefill]);
+  }, [getPrefill, request]);
 
   /**
    * Map the data returned from the backend to form prefill data
@@ -206,10 +210,15 @@ export const RolesEdit = () => {
       ...(id ? { id: id, edit: data } : { create: data }),
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
+    const opts = { method: "POST", data: body };
     const url = id ? "/admin/role/edit" : "/admin/role/create";
 
-    await makeRequest(url, opts).then(handleSuccess).catch(handleFailure);
+    try {
+      const res = await request<ResponseBody>(url, opts);
+      handleSuccess(res);
+    } catch (err) {
+      handleFailure(err);
+    }
   };
 
   /**
@@ -224,15 +233,20 @@ export const RolesEdit = () => {
 
   /**
    * Handle a failed response
-   * @param res - the response body
+   * @param error - the error object
    */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "Internal server error";
+    if (error instanceof HttpError && error.apiError?.data) {
+      displayMessage = error.apiError.data.msg;
+    } else if (error instanceof Error) {
+      displayMessage = error.message;
+    }
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg ? res.msg : "Internal server error"}
+        {displayMessage}
       </span>
     );
 

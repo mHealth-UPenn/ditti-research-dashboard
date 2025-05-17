@@ -15,6 +15,8 @@ import DOMPurify from "isomorphic-dompurify";
 import { StudySubjectModel } from "./types/models";
 import { ResponseBody } from "./types/api";
 import { AttributesByTag, ClassAllowlist } from "./utils.types";
+import { httpClient } from "./lib/http";
+import { isAxiosError } from "axios";
 
 /**
  * Sanitizes HTML content from the Quill editor to prevent XSS attacks
@@ -225,63 +227,6 @@ export function sanitize_quill_html(html: string): string {
 }
 
 /**
- * Makes a request with specified options.
- * @param url - The endpoint URL.
- * @param opts - Request options including method, headers, and body.
- * @returns A promise that resolves to the response body.
- */
-
-export const makeRequest = async (
-  url: string,
-  opts: RequestInit = {}
-): Promise<ResponseBody> => {
-  // Set credentials to include to send cookies
-  opts.credentials = "include";
-
-  // Set headers
-  const headers = {
-    ...Object.fromEntries(Object.entries(opts.headers ?? {})),
-  };
-
-  opts.headers = headers;
-
-  // Add additional headers for specific request methods
-  if (["POST", "PUT", "DELETE"].includes(opts.method ?? "")) {
-    const updatedHeaders = {
-      ...Object.fromEntries(Object.entries(opts.headers ?? {})),
-      "Content-Type": "application/json",
-      "X-CSRF-TOKEN": localStorage.getItem("csrfToken") ?? "",
-    };
-
-    opts.headers = updatedHeaders;
-  }
-
-  // Execute the request
-  const response = await fetch(
-    `${String(import.meta.env.VITE_FLASK_SERVER)}${url}`,
-    opts
-  );
-  const body = (await response.json()) as ResponseBody;
-
-  // Store CSRF token for future requests
-  if (response.status === 200) {
-    if (body.csrfAccessToken)
-      localStorage.setItem("csrfToken", body.csrfAccessToken);
-    if (body.jwt) localStorage.setItem("jwt", body.jwt);
-  }
-
-  // Throw an error if the response is not successful
-  if (response.status !== 200) {
-    // Return the original body to maintain compatibility with existing error handling
-    const errorMessage =
-      body.msg || `Request failed with status: ${String(response.status)}`;
-    throw new Error(errorMessage);
-  }
-
-  return body;
-};
-
-/**
  * Downloads a file from a specified URL.
  * @param url - The URL of the file to download.
  * @returns A promise that resolves to the filename or an error message.
@@ -289,39 +234,37 @@ export const makeRequest = async (
 export async function downloadExcelFromUrl(
   url: string
 ): Promise<string | null> {
-  // Fetch the file from the server
   try {
-    const opts: RequestInit = {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        Accept:
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      },
-    };
-
-    const response = await fetch(
+    const response = await httpClient.requestRawResponse<Blob>(
       `${String(import.meta.env.VITE_FLASK_SERVER)}${String(url)}`,
-      opts
+      {
+        method: "GET",
+        headers: {
+          Accept:
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+        responseType: "blob",
+      }
     );
 
-    if (!response.ok) {
-      throw new Error(
-        `Failed to fetch data: ${String(response.status)} ${response.statusText}`
-      );
-    }
-
-    // Handle case where no data is found
-    const contentType = response.headers.get("Content-Type");
+    // Check for logical errors even on successful HTTP status
+    const contentType = response.headers["content-type"] as string | undefined;
     if (contentType?.includes("application/json")) {
-      const jsonResponse = (await response.json()) as ResponseBody;
-      if (jsonResponse.msg.includes("not found")) {
-        return jsonResponse.msg;
+      try {
+        const jsonText = await response.data.text();
+        const jsonResponse = JSON.parse(jsonText) as ResponseBody;
+        if (jsonResponse.msg.includes("not found")) {
+          return jsonResponse.msg;
+        }
+      } catch (e) {
+        console.error("Error parsing JSON from successful response blob:", e);
       }
     }
 
     // Extract the filename from the "Content-Disposition" header
-    const contentDisposition = response.headers.get("Content-Disposition");
+    const contentDisposition = response.headers["content-disposition"] as
+      | string
+      | undefined;
     let filename = "download.xlsx"; // Default filename
     if (contentDisposition?.includes("filename=")) {
       filename = contentDisposition
@@ -330,12 +273,9 @@ export async function downloadExcelFromUrl(
         .replace(/"/g, "");
     }
 
-    // Read the response as a Blob
-    const blob = await response.blob();
-
     // Create a temporary anchor element to trigger the download
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
+    link.href = URL.createObjectURL(response.data);
     link.download = filename;
 
     // Append the link to the document and trigger a click event
@@ -345,11 +285,33 @@ export async function downloadExcelFromUrl(
     // Clean up by removing the link element and revoking the object URL
     document.body.removeChild(link);
     URL.revokeObjectURL(link.href);
+
+    return null; // Indicates successful download initiation
   } catch (error) {
     console.error("Error downloading participant data:", error);
+    if (isAxiosError(error) && error.response) {
+      // Attempt to parse error response if it's JSON
+      const errResp = error.response;
+      const errContentType = errResp.headers["content-type"] as
+        | string
+        | undefined;
+      if (
+        errContentType?.includes("application/json") &&
+        errResp.data instanceof Blob
+      ) {
+        try {
+          const jsonText = await errResp.data.text();
+          const jsonResponse = JSON.parse(jsonText) as ResponseBody;
+          return jsonResponse.msg || "Failed to download file.";
+        } catch (e) {
+          console.error("Error parsing JSON from error response blob:", e);
+          return "Failed to download file due to server error (unparseable).";
+        }
+      }
+      return `Failed to download file: Server responded with status ${String(errResp.status)}`;
+    }
     return "Error downloading participant data.";
   }
-  return null;
 }
 
 /**
@@ -369,7 +331,7 @@ export const getAccess = async (
   let url = `/auth/researcher/get-access?app=${String(app)}&action=${action}&resource=${resource}`;
   if (study) url += `&study=${String(study)}`;
 
-  const res: ResponseBody = await makeRequest(url);
+  const res = await httpClient.request<ResponseBody>(url);
   if (res.msg !== "Authorized") throw new Error("Unauthorized");
 };
 

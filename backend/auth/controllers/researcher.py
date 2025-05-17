@@ -90,10 +90,12 @@ class ResearcherAuthController(AuthControllerBase):
         email = userinfo.get("email")
         if not email:
             logger.warning("No email found in userinfo")
-            return None, create_error_response(
-                AUTH_ERROR_MESSAGES["auth_failed"],
-                status_code=401,
-                error_code="MISSING_EMAIL",
+            return (
+                None,
+                create_error_response(
+                    message_key="missing_email",
+                    status_code=401,
+                ),
             )
 
         # Get account
@@ -103,29 +105,36 @@ class ResearcherAuthController(AuthControllerBase):
 
         if not account:
             # Create appropriate error response based on error message
-            if error_msg == "Account unavailable. Please contact support.":
-                return None, create_error_response(
-                    AUTH_ERROR_MESSAGES["account_archived"],
-                    status_code=403,
-                    error_code="ACCOUNT_ARCHIVED",
+            if error_msg == AUTH_ERROR_MESSAGES["account_archived"]:
+                return (
+                    None,
+                    create_error_response(
+                        message_key="account_archived",
+                        status_code=403,
+                    ),
                 )
-            elif error_msg == "Invalid credentials":
-                return None, create_error_response(
-                    AUTH_ERROR_MESSAGES["invalid_credentials"],
-                    status_code=401,
-                    error_code="ACCOUNT_NOT_FOUND",
+            elif error_msg == AUTH_ERROR_MESSAGES["not_found"]:
+                return (
+                    None,
+                    create_error_response(
+                        message_key="not_found",
+                        status_code=404,
+                    ),
                 )
             else:
-                return None, create_error_response(
-                    AUTH_ERROR_MESSAGES["auth_failed"],
-                    status_code=401,
-                    error_code="AUTH_FAILED",
+                return (
+                    None,
+                    create_error_response(
+                        message_key="auth_failed",
+                        status_code=401,
+                    ),
                 )
 
         return account, None
 
     def get_user_from_token(self, id_token):
-        """Get account from token.
+        """
+        Get account from ID token.
 
         Parameters
         ----------
@@ -141,26 +150,55 @@ class ResearcherAuthController(AuthControllerBase):
 
         # Convert string error messages to proper error responses
         if not account and error_msg:
-            if error_msg == "Account unavailable. Please contact support.":
-                return None, create_error_response(
-                    AUTH_ERROR_MESSAGES["account_archived"],
-                    status_code=403,
-                    error_code="ACCOUNT_ARCHIVED",
-                )
-            elif error_msg == "Invalid credentials":
-                return None, create_error_response(
-                    AUTH_ERROR_MESSAGES["invalid_credentials"],
+            if isinstance(error_msg, str):
+                # Handle archived accounts
+                if error_msg == AUTH_ERROR_MESSAGES["account_archived"]:
+                    return (
+                        None,
+                        create_error_response(
+                            message_key="account_archived",
+                            status_code=403,
+                        ),
+                    )
+                # Handle not found
+                elif error_msg == AUTH_ERROR_MESSAGES["not_found"]:
+                    return (
+                        None,
+                        create_error_response(
+                            message_key="not_found",
+                            status_code=404,
+                        ),
+                    )
+                # Handle invalid token
+                elif error_msg == AUTH_ERROR_MESSAGES["invalid_token_format"]:
+                    return (
+                        None,
+                        create_error_response(
+                            message_key="invalid_token_format",
+                            status_code=401,
+                        ),
+                    )
+                # Default to generic auth failed
+                else:
+                    return (
+                        None,
+                        create_error_response(
+                            message_key="auth_failed",
+                            status_code=401,
+                        ),
+                    )
+            # If error_msg is already a response, return it
+            # If error_msg is None, provide a default error response
+            return (
+                None,
+                error_msg
+                or create_error_response(
+                    message_key="auth_failed",
                     status_code=401,
-                    error_code="ACCOUNT_NOT_FOUND",
-                )
-            else:
-                return None, create_error_response(
-                    AUTH_ERROR_MESSAGES["auth_failed"],
-                    status_code=401,
-                    error_code="AUTH_FAILED",
-                )
+                ),
+            )
 
-        return account, error_msg
+        return account, None
 
     def create_login_success_response(self, account):
         """Create success response for check-login.

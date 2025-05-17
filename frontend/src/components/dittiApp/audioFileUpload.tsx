@@ -13,7 +13,7 @@
 
 import { useState, ChangeEvent, createRef } from "react";
 import { TextField } from "../fields/textField";
-import { makeRequest } from "../../utils";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SelectField } from "../fields/selectField";
 import { RadioField } from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
@@ -61,6 +61,7 @@ export const AudioFileUpload = () => {
   const { studiesLoading, studies } = useStudies();
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
   const navigate = useNavigate();
 
   const existingFiles = new Set();
@@ -77,11 +78,14 @@ export const AudioFileUpload = () => {
     }));
 
     try {
-      const res = await makeRequest("/aws/audio-file/get-presigned-urls", {
-        method: "POST",
-        body: JSON.stringify({ app: 2, files }),
-      });
-      return (res as unknown as { urls: string[] }).urls;
+      const res = await request<{ urls: string[] }>(
+        "/aws/audio-file/get-presigned-urls",
+        {
+          method: "POST",
+          data: { app: 2, files },
+        }
+      );
+      return res.urls;
     } catch (error) {
       const e = error as { msg: string };
       throw new AxiosError(e.msg);
@@ -158,8 +162,8 @@ export const AudioFileUpload = () => {
         create: data,
       };
 
-      const opts = { method: "POST", body: JSON.stringify(body) };
-      await makeRequest("/aws/audio-file/create", opts);
+      const opts = { method: "POST", data: body };
+      await request("/aws/audio-file/create", opts);
     } catch (error) {
       const e = error as { msg: string };
       throw new AxiosError(e.msg);
@@ -571,7 +575,7 @@ export const AudioFileUpload = () => {
           </FormSummaryText>
           <div>
             {
-              // Upload progres bar
+              // Upload progress bar
               uploading && (
                 <div className="mb-4 flex w-full flex-col">
                   <div className="mb-1 flex w-full justify-between">

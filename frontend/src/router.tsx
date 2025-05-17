@@ -23,6 +23,8 @@ import { Dashboard } from "./components/dashboard/dashboard";
 import { ParticipantDashboard } from "./components/participantDashboard/participantDashboard";
 import { ProtectedRoute } from "./components/protectedRoute/protectedRoute";
 import { AuthProvider } from "./contexts/authContext";
+import { HttpClientProvider } from "./lib/HttpClientContext";
+import { httpClient } from "./lib/http";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 import { FullLoader } from "./components/loader/loader";
 import { PrivacyPolicy } from "./pages/privacyPolicy";
@@ -63,9 +65,11 @@ const Root: React.FC = () => {
   useDocumentTitle("Participant Portal");
 
   return (
-    <AuthProvider>
-      <Outlet />
-    </AuthProvider>
+    <HttpClientProvider client={httpClient}>
+      <AuthProvider>
+        <Outlet />
+      </AuthProvider>
+    </HttpClientProvider>
   );
 };
 

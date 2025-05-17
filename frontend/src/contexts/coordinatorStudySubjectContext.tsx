@@ -18,7 +18,7 @@ import {
   PropsWithChildren,
   useCallback,
 } from "react";
-import { makeRequest } from "../utils";
+import { useHttpClient } from "../lib/HttpClientContext";
 import {
   CoordinatorStudySubjectContextValue,
   CoordinatorStudySubjectProviderProps,
@@ -36,6 +36,7 @@ export function CoordinatorStudySubjectProvider({
   app,
   children,
 }: PropsWithChildren<CoordinatorStudySubjectProviderProps>) {
+  const { request } = useHttpClient();
   const [studySubjects, setStudySubjects] = useState<StudySubjectModel[]>([]);
   const [studySubjectLoading, setStudySubjectLoading] = useState(true);
 
@@ -118,24 +119,24 @@ export function CoordinatorStudySubjectProvider({
     StudySubject[]
   > => {
     if (APP_ENV === "production" || APP_ENV === "development") {
-      const data = (await makeRequest(
+      const data = await request<StudySubject[]>(
         `/admin/study_subject?app=${String(app)}`
-      )) as unknown as StudySubject[];
+      );
       return data;
     }
     return [];
-  }, [app]);
+  }, [app, request]);
 
   // Fetch data from AWS
   const fetchStudySubjectsAWS = useCallback(async (): Promise<UserModel[]> => {
     if (APP_ENV === "production" || APP_ENV === "development") {
-      const data = (await makeRequest(
+      const data = await request<UserModel[]>(
         `/aws/get-users?app=${String(app)}`
-      )) as unknown as UserModel[];
+      );
       return data;
     }
     return [];
-  }, [app]);
+  }, [app, request]);
 
   // Fetch and join data from AWS and the database
   const fetchStudySubjects = () => {

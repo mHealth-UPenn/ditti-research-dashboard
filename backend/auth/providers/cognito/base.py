@@ -254,3 +254,77 @@ class CognitoAuthBase:
         except Exception as e:
             logger.error(f"Error validating ID token: {e!s}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]
+
+    def refresh_id_token(self, refresh_token):
+        """
+        Refresh the ID token using the refresh token.
+
+        This method gets both new access and ID tokens from Cognito.
+
+        Parameters
+        ----------
+            refresh_token (str): The refresh token to use
+
+        Returns
+        -------
+            tuple: (success, result)
+                - If success is True, result contains new_id_token and new_access_token
+                - If success is False, result contains an error message
+        """
+        if not refresh_token:
+            logger.warning("No refresh token available")
+            return False, AUTH_ERROR_MESSAGES["session_expired"]
+
+        try:
+            domain = self.get_config("DOMAIN")
+            client_id = self.get_config("CLIENT_ID")
+            client_secret = self.get_config("CLIENT_SECRET")
+
+            token_url = f"https://{domain}/oauth2/token"
+            data = {
+                "grant_type": "refresh_token",
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "refresh_token": refresh_token,
+            }
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+            response = requests.post(
+                token_url, data=data, headers=headers, timeout=30
+            )
+
+            if not response.ok:
+                status_code = response.status_code
+                error_body = response.json() if response.content else {}
+
+                # Check for expired refresh token
+                if (
+                    status_code == 400
+                    and error_body.get("error") == "invalid_grant"
+                ):
+                    logger.error("Refresh token has expired or been revoked")
+                    return False, AUTH_ERROR_MESSAGES["session_expired"]
+
+                logger.error(
+                    f"Failed to refresh tokens: HTTP {status_code} - {error_body}"
+                )
+                return False, AUTH_ERROR_MESSAGES["session_expired"]
+
+            # Success - return new tokens
+            token_data = response.json()
+            new_access_token = token_data.get("access_token")
+            new_id_token = token_data.get("id_token")
+
+            if not new_id_token:
+                logger.error("ID token not returned from refresh operation")
+                return False, "ID token refresh failed"
+
+            logger.info("Successfully refreshed access and ID tokens")
+            return True, {
+                "new_access_token": new_access_token,
+                "new_id_token": new_id_token,
+            }
+
+        except Exception as e:
+            logger.error(f"Error refreshing tokens: {e!s}")
+            return False, AUTH_ERROR_MESSAGES["session_expired"]

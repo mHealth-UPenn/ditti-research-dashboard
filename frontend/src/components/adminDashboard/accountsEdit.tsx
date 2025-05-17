@@ -24,7 +24,8 @@ import {
   Study,
 } from "../../types/api";
 import { SelectField } from "../fields/selectField";
-import { makeRequest, formatPhoneNumber } from "../../utils";
+import { formatPhoneNumber } from "../../utils";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -43,6 +44,7 @@ import {
   AccountFormPrefill,
   RoleSelected,
 } from "./adminDashboard.types";
+import { HttpError } from "../../lib/http.types";
 
 type Action =
   | {
@@ -178,6 +180,7 @@ export const AccountsEdit = () => {
 
   const { flashMessage } = useFlashMessages();
   const navigate = useNavigate();
+  const { request } = useHttpClient();
 
   /**
    * Get the form prefill if editing
@@ -186,8 +189,8 @@ export const AccountsEdit = () => {
   const getPrefill = useCallback(async (): Promise<AccountFormPrefill> => {
     // if editing an existing entry, return prefill data, else return empty data
     return accountId
-      ? makeRequest(`/admin/account?app=1&id=${String(accountId)}`).then(
-          (res: ResponseBody) => makePrefill(res as unknown as Account[])
+      ? request<Account[]>(`/admin/account?app=1&id=${String(accountId)}`).then(
+          (res) => makePrefill(res)
         )
       : {
           firstName: "",
@@ -198,18 +201,16 @@ export const AccountsEdit = () => {
           rolesSelected: [],
           studiesSelected: [],
         };
-  }, [accountId]);
+  }, [accountId, request]);
 
   useEffect(() => {
     // when all requests are complete, initialize the state
     const fetchData = async () => {
       try {
         const [accessGroups, roles, studies, prefill] = await Promise.all([
-          makeRequest("/admin/access-group?app=1") as unknown as Promise<
-            AccessGroup[]
-          >,
-          makeRequest("/admin/role?app=1") as unknown as Promise<Role[]>,
-          makeRequest("/admin/study?app=1") as unknown as Promise<Study[]>,
+          request<AccessGroup[]>(`/admin/access-group?app=1`),
+          request<Role[]>(`/admin/role?app=1`),
+          request<Study[]>(`/admin/study?app=1`),
           getPrefill(),
         ]);
 
@@ -228,7 +229,7 @@ export const AccountsEdit = () => {
     };
 
     void fetchData();
-  }, [getPrefill]);
+  }, [getPrefill, request]);
 
   /**
    * Map the data returned from the backend to form prefill data
@@ -392,9 +393,15 @@ export const AccountsEdit = () => {
       ...(accountId ? { id: accountId, edit: data } : { create: data }),
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
+    const opts = { method: "POST", data: body };
     const url = accountId ? "/admin/account/edit" : "/admin/account/create";
-    await makeRequest(url, opts).then(handleSuccess).catch(handleFailure);
+
+    try {
+      const res = await request<ResponseBody>(url, opts);
+      handleSuccess(res);
+    } catch (error) {
+      handleFailure(error);
+    }
   };
 
   /**
@@ -409,15 +416,20 @@ export const AccountsEdit = () => {
 
   /**
    * Handle a failed response
-   * @param res - the response body
+   * @param error - the error object
    */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "Internal server error";
+    if (error instanceof HttpError && error.apiError?.data) {
+      displayMessage = error.apiError.data.msg;
+    } else if (error instanceof Error) {
+      displayMessage = error.message;
+    }
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg ? res.msg : "Internal server error"}
+        {displayMessage}
       </span>
     );
 

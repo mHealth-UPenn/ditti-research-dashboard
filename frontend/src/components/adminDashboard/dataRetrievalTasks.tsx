@@ -13,7 +13,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { DataRetrievalTask } from "../../types/api";
-import { getAccess, makeRequest } from "../../utils";
+import { getAccess } from "../../utils";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -86,14 +87,15 @@ export const DataRetrievalTasks = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   const fetchData = useCallback(async () => {
     try {
       // Fetch data retrieval tasks (View permission is handled by the server)
-      const response = await makeRequest("/data_processing_task/?app=1");
-      // Cast to DataRetrievalTask[] using unknown as intermediate type
-      const data = response as unknown as DataRetrievalTask[];
-      setTasks(data);
+      const response = await request<DataRetrievalTask[]>(
+        "/data_processing_task/?app=1"
+      );
+      setTasks(response);
     } catch (error) {
       console.error("Error fetching tasks:", error);
       flashMessage(
@@ -105,7 +107,7 @@ export const DataRetrievalTasks = () => {
         "danger"
       );
     }
-  }, [flashMessage]);
+  }, [flashMessage, request]);
 
   useEffect(() => {
     const invoke = getAccess(1, "Invoke", "Data Retrieval Task")
@@ -121,15 +123,13 @@ export const DataRetrievalTasks = () => {
     });
   }, [fetchData]);
 
-  const handleForceStop = async (id: number) => {
-    await makeRequest(`/data_processing_task/force-stop`, {
+  const handleForceStop = async (taskId: number) => {
+    await request(`/data_processing_task/force-stop`, {
       method: "POST",
-      body: JSON.stringify({
-        app: 1,
-        function_id: id,
-      }),
+      data: { app: 1, function_id: taskId },
     }).finally(() => {
       setLoading(true);
+      // Refetch data regardless of the stop request's success/failure.
       void fetchData().finally(() => {
         setLoading(false);
       });

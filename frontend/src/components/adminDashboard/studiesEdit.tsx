@@ -16,7 +16,7 @@ import { TextField } from "../fields/textField";
 import { CheckField } from "../fields/checkField";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
 import { ResponseBody, Study } from "../../types/api";
-import { makeRequest } from "../../utils";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";
@@ -30,6 +30,7 @@ import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { HttpError } from "../../lib/http.types";
 
 export const StudiesEdit = () => {
   const [searchParams] = useSearchParams();
@@ -37,6 +38,7 @@ export const StudiesEdit = () => {
   const studyId = id ? parseInt(id) : 0;
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
   const navigate = useNavigate();
   const [name, setName] = useState<string>("");
   const [acronym, setAcronym] = useState<string>("");
@@ -78,9 +80,9 @@ export const StudiesEdit = () => {
     }
 
     // Fetch existing study data from the backend
-    const data = (await makeRequest(
+    const data = await request<Study[]>(
       `/admin/study?app=1&id=${String(studyId)}`
-    )) as unknown as Study[];
+    );
     if (data.length === 0) {
       throw new Error("Study not found.");
     }
@@ -96,7 +98,7 @@ export const StudiesEdit = () => {
       dataSummary: study.dataSummary,
       isQi: study.isQi,
     };
-  }, [studyId]);
+  }, [studyId, request]);
 
   useEffect(() => {
     // Fetch prefill data if editing an existing study
@@ -162,14 +164,14 @@ export const StudiesEdit = () => {
       ...(id ? { id: id, edit: data } : { create: data }),
     };
 
-    const opts = { method: "POST", body: JSON.stringify(body) };
+    const opts = { method: "POST", data: body };
     const url = id ? "/admin/study/edit" : "/admin/study/create";
 
     try {
-      const response: ResponseBody = await makeRequest(url, opts);
+      const response = await request<ResponseBody>(url, opts);
       handleSuccess(response);
     } catch (error) {
-      handleFailure(error as ResponseBody);
+      handleFailure(error);
     }
   };
 
@@ -185,15 +187,20 @@ export const StudiesEdit = () => {
 
   /**
    * Handle a failed response
-   * @param res - the response body
+   * @param error - the error object
    */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message from the backend or "Internal server error"
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "Internal server error";
+    if (error instanceof HttpError && error.apiError?.data) {
+      displayMessage = error.apiError.data.msg;
+    } else if (error instanceof Error) {
+      displayMessage = error.message;
+    }
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg ? res.msg : "Internal server error"}
+        {displayMessage}
       </span>
     );
 

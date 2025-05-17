@@ -13,7 +13,8 @@
 
 import { useState, useEffect } from "react";
 import { Study } from "../../types/api";
-import { downloadExcelFromUrl, getAccess, makeRequest } from "../../utils";
+import { downloadExcelFromUrl, getAccess } from "../../utils";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { SmallLoader } from "../loader/loader";
 import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { Card } from "../cards/card";
@@ -40,6 +41,7 @@ export function WearableStudySummary() {
   const [loading, setLoading] = useState(true);
 
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   // Get permissions and study information on load
   useEffect(() => {
@@ -65,19 +67,19 @@ export function WearableStudySummary() {
     );
 
     promises.push(
-      makeRequest("/db/get-study-contacts?app=3&study=" + String(studyId)).then(
-        (contacts: unknown) => {
-          setStudyContacts(contacts as StudyContactModel[]);
-        }
-      )
+      request<StudyContactModel[]>(
+        `/db/get-study-contacts?app=3&study=${String(studyId)}`
+      ).then((contacts) => {
+        setStudyContacts(contacts);
+      })
     );
 
     promises.push(
-      makeRequest("/db/get-study-details?app=3&study=" + String(studyId)).then(
-        (details: unknown) => {
-          setStudyDetails(details as Study);
-        }
-      )
+      request<Study>(
+        `/db/get-study-details?app=3&study=${String(studyId)}`
+      ).then((details) => {
+        setStudyDetails(details);
+      })
     );
 
     Promise.all(promises)
@@ -85,7 +87,7 @@ export function WearableStudySummary() {
         setLoading(false);
       })
       .catch(console.error);
-  }, [studyId]);
+  }, [studyId, request]);
 
   // Download all of the study's data in excel format.
   const downloadExcel = async (): Promise<void> => {

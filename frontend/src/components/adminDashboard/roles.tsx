@@ -13,7 +13,8 @@
 
 import { useState, useEffect } from "react";
 import { ResponseBody, Role } from "../../types/api";
-import { getAccess, makeRequest } from "../../utils";
+import { getAccess } from "../../utils";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -23,6 +24,7 @@ import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { HttpError } from "../../lib/http.types";
 
 export const Roles = () => {
   const [canCreate, setCanCreate] = useState<boolean>(false);
@@ -51,6 +53,7 @@ export const Roles = () => {
   ]);
   const [loading, setLoading] = useState<boolean>(true);
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   useEffect(() => {
     const fetchData = () => {
@@ -82,14 +85,14 @@ export const Roles = () => {
         });
 
       // get the table's data
-      const rolesData = makeRequest("/admin/role?app=1").then(
-        (response: ResponseBody) => {
-          setRoles(response as unknown as Role[]);
-        }
-      );
+      const rolesDataPromise = request<Role[]>("/admin/role?app=1");
+
+      void rolesDataPromise.then((response) => {
+        setRoles(response);
+      });
 
       // when all requests are complete, hide the loading screen
-      Promise.all([create, edit, archive, rolesData])
+      Promise.all([create, edit, archive, rolesDataPromise])
         .then(() => {
           setLoading(false);
         })
@@ -100,7 +103,7 @@ export const Roles = () => {
     };
 
     fetchData();
-  }, []);
+  }, [request]);
 
   /**
    * Get the table's contents
@@ -183,13 +186,13 @@ export const Roles = () => {
   const deleteRole = (id: number): void => {
     // prepare the request
     const body = { app: 1, id }; // Admin Dashboard = 1
-    const opts = { method: "POST", body: JSON.stringify(body) };
+    const opts = { method: "POST", data: body };
 
     // confirm deletion
     const msg = "Are you sure you want to archive this role?";
 
     if (confirm(msg))
-      makeRequest("/admin/role/archive", opts)
+      request<ResponseBody>("/admin/role/archive", opts)
         .then(handleSuccess)
         .catch(handleFailure);
   };
@@ -205,9 +208,9 @@ export const Roles = () => {
     setLoading(true);
 
     // refresh the table's data
-    makeRequest("/admin/role?app=1")
-      .then((response: ResponseBody) => {
-        setRoles(response as unknown as Role[]);
+    request<Role[]>("/admin/role?app=1")
+      .then((response) => {
+        setRoles(response);
         setLoading(false);
       })
       .catch((error: unknown) => {
@@ -218,15 +221,20 @@ export const Roles = () => {
 
   /**
    * Handle a failed response
-   * @param res - the response body
+   * @param error - the error object
    */
-  const handleFailure = (res: ResponseBody) => {
-    // flash the message returned from the endpoint or "Internal server error"
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "Internal server error";
+    if (error instanceof HttpError && error.apiError?.data) {
+      displayMessage = error.apiError.data.msg;
+    } else if (error instanceof Error) {
+      displayMessage = error.message;
+    }
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg ? res.msg : "Internal server error"}
+        {displayMessage}
       </span>
     );
 

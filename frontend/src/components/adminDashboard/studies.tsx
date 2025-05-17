@@ -14,7 +14,8 @@
 import * as React from "react";
 import { useState, useEffect } from "react";
 import { ResponseBody, Study } from "../../types/api";
-import { getAccess, makeRequest } from "../../utils";
+import { getAccess } from "../../utils";
+import { useHttpClient } from "../../lib/HttpClientContext";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
@@ -22,6 +23,9 @@ import { SmallLoader } from "../loader/loader";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
+import { Link } from "react-router-dom";
+import { useFlashMessages } from "../../hooks/useFlashMessages";
+import { HttpError } from "../../lib/http.types";
 
 const COLUMNS: Column[] = [
   { name: "Acronym", searchable: true, sortable: true, width: 10 },
@@ -37,8 +41,6 @@ const COLUMNS: Column[] = [
   { name: "QI", searchable: false, sortable: true, width: 5 },
   { name: "", searchable: false, sortable: false, width: 10 },
 ];
-import { Link } from "react-router-dom";
-import { useFlashMessages } from "../../hooks/useFlashMessages";
 
 export const Studies = () => {
   const [canCreate, setCanCreate] = useState(false);
@@ -47,6 +49,7 @@ export const Studies = () => {
   const [studies, setStudies] = useState<Study[]>([]);
   const [loading, setLoading] = useState(true);
   const { flashMessage } = useFlashMessages();
+  const { request } = useHttpClient();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,8 +65,8 @@ export const Studies = () => {
           getAccess(1, "Archive", "Studies").then(() => {
             setCanArchive(true);
           }),
-          makeRequest("/admin/study?app=1").then((data) => {
-            setStudies(data as unknown as Study[]);
+          request<Study[]>("/admin/study?app=1").then((data) => {
+            setStudies(data);
           }),
         ]);
       } catch (error) {
@@ -74,7 +77,7 @@ export const Studies = () => {
     };
 
     void fetchData();
-  }, []);
+  }, [request]);
 
   /**
    * Get the table's contents
@@ -165,9 +168,9 @@ export const Studies = () => {
 
     // Prepare and send the request
     const body = { app: 1, id }; // Admin Dashboard = 1
-    await makeRequest("/admin/study/archive", {
+    await request<ResponseBody>("/admin/study/archive", {
       method: "POST",
-      body: JSON.stringify(body),
+      data: body,
     })
       .then(handleSuccess)
       .catch(handleFailure);
@@ -184,24 +187,31 @@ export const Studies = () => {
     setLoading(true);
 
     // refresh the table's data
-    void makeRequest("/admin/study?app=1").then((studies) => {
-      setStudies(studies as unknown as Study[]);
+    void request<Study[]>("/admin/study?app=1").then((studies) => {
+      setStudies(studies);
       setLoading(false);
     });
   };
 
   /**
    * Handle a failed response
-   * @param res - the response body
+   * @param error - the error object
    */
-  const handleFailure = (res: ResponseBody) => {
+  const handleFailure = (error: unknown) => {
+    let displayMessage = "Internal server error";
+    if (error instanceof HttpError && error.apiError?.data) {
+      displayMessage = error.apiError.data.msg;
+    } else if (error instanceof Error) {
+      displayMessage = error.message;
+    }
     const msg = (
       <span>
         <b>An unexpected error occurred</b>
         <br />
-        {res.msg ? res.msg : "Internal server error"}
+        {displayMessage}
       </span>
     );
+
     flashMessage(msg, "danger");
   };
 
