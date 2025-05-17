@@ -40,7 +40,7 @@ def clear_auth_cookies(response):
         "id_token",
         "access_token",
         "refresh_token",
-        "csrf_token",
+        "XSRF-TOKEN",
     ]:
         response.set_cookie(
             cookie_name,
@@ -122,6 +122,6 @@ def set_auth_cookies(response, token):
     set_access_cookies(response, csrf_jwt)
 
     # Expose the CSRF token via header so the SPA can refresh its cached copy
-    response.headers["X-CSRFToken"] = get_csrf_token(csrf_jwt)
+    response.headers["X-XSRF-TOKEN"] = get_csrf_token(csrf_jwt)
 
     return response

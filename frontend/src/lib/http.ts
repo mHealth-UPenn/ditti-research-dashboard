@@ -173,27 +173,19 @@ class HttpClient {
           config.headers.Authorization = `Bearer ${idToken}`;
         }
 
-        // Add CSRF token for non-GET requests
+        // Add CSRF header for state-changing requests. When the SPA is
+        // served from a different origin (e.g. Vite dev server on :3000)
+        // Axios will not attach the X-XSRF-TOKEN header automatically, so we
+        // add it manually using the value from the XSRF-TOKEN cookie.
         if (
           config.method &&
           ["post", "put", "delete", "patch"].includes(
             config.method.toLowerCase()
           )
         ) {
-          // Read CSRF token from cookie (single source of truth)
-          const csrfToken = getCookieValue("csrf_token") ?? "";
-
-          if (csrfToken) {
-            // Use the header name that Flask-WTF expects for AJAX requests
-            config.headers["X-CSRFToken"] = csrfToken;
-
-            // For form submissions (urlencoded), add the token only if it
-            // hasn't already been added by the caller.
-            if (config.data instanceof URLSearchParams) {
-              if (!config.data.has("csrf_token")) {
-                config.data.append("csrf_token", csrfToken);
-              }
-            }
+          const xsrfToken = getCookieValue("XSRF-TOKEN");
+          if (xsrfToken) {
+            config.headers["X-XSRF-TOKEN"] = xsrfToken;
           }
         }
 
@@ -255,44 +247,21 @@ class HttpClient {
           this.refreshTokenInProgress = true;
 
           try {
-            // Special handling for Flask-WTF CSRF protection
-            // The key insight is that Flask-WTF expects the CSRF token in:
-            // 1. The form data with key "csrf_token", OR
-            // 2. The header "X-CSRFToken" AND matching a value in the session cookie
-
-            // For this to work we need to:
-            // 1. Send the request with proper Content-Type: application/x-www-form-urlencoded
-            // 2. Format the data correctly as form data
-            // 3. Include the token in both places
-
-            // Create form URLEncoded data (not FormData)
-            const urlEncodedData = new URLSearchParams();
-
-            // Add standard CSRF token
-            const csrfToken = getCookieValue("csrf_token") ?? "";
-
-            urlEncodedData.append("csrf_token", csrfToken);
-
-            // Make the token refresh request with proper CSRF token handling
-            await this.instance.post(
-              "/api/auth/refresh-token",
-              urlEncodedData,
-              {
-                headers: {
-                  "Content-Type": "application/x-www-form-urlencoded",
-                  "X-CSRFToken": csrfToken,
-                },
-              }
-            );
+            // A POST to /api/auth/refresh-token renews the ID/Access tokens as
+            // well as the XSRF-TOKEN cookie.  Axios attaches the matching
+            // X-XSRF-TOKEN header (added above for cross-origin calls), so no
+            // extra payload is required.
+            await this.instance.post("/api/auth/refresh-token", null, {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
 
             // Token refresh completed successfully
             this.refreshTokenInProgress = false;
 
             // Get the new ID token from cookies
             const newIdToken = getCookieValue("id_token");
-
-            // No longer mirror CSRF token to sessionStorage. Token rotation is
-            // handled entirely via cookies set by the backend.
 
             // Process all queued requests
             this.processQueue(null, newIdToken);
@@ -312,7 +281,7 @@ class HttpClient {
               (refreshError.response.data as { code?: string }).code ===
                 "CSRF_ERROR";
 
-            // For CSRF errors, we need to redirect to login as the session is invalid
+            // CSRF failure means the session is invalid; force re-login.
             if (isCSRFError) {
               // Simplify by creating a standard session expired error
               const sessionExpiredError = this.createSessionExpiredError();
@@ -496,25 +465,17 @@ class HttpClient {
   /**
    * Explicitly refreshes the token and CSRF value.
    * Can be called after long periods of inactivity or when performing
-   * sensitive operations that require a fresh CSRF token.
+   * sensitive operations that require a fresh token.
    *
    * @returns Promise that resolves when token refresh is complete
    */
   public async refreshTokens(): Promise<void> {
     try {
-      // Create form URLEncoded data (not FormData)
-      const urlEncodedData = new URLSearchParams();
-
-      // Add standard CSRF token
-      const csrfToken = getCookieValue("csrf_token") ?? "";
-
-      urlEncodedData.append("csrf_token", csrfToken);
-
-      // Make the token refresh request with proper CSRF token handling
-      await this.instance.post("/api/auth/refresh-token", urlEncodedData, {
+      // Make the token refresh request
+      // Axios will automatically include X-XSRF-TOKEN header from XSRF-TOKEN cookie
+      await this.instance.post("/api/auth/refresh-token", null, {
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "X-CSRFToken": csrfToken,
+          "Content-Type": "application/json",
         },
       });
     } catch (error) {
@@ -526,7 +487,7 @@ class HttpClient {
         error.response?.status === 400 &&
         (error.response.data as { code?: string }).code === "CSRF_ERROR"
       ) {
-        console.error("CSRF Token validation failed. Redirecting to login.");
+        console.error("CSRF validation failed. Redirecting to login.");
         this.redirectToLogin();
         throw this.createSessionExpiredError();
       }

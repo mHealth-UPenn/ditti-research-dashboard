@@ -28,13 +28,13 @@ class Default:
     CORS_ALLOW_HEADERS: ClassVar[list[str]] = [
         "Authorization",
         "Content-Type",
-        "X-CSRFToken",
+        "X-XSRF-TOKEN",
     ]
 
     CORS_EXPOSE_HEADERS: ClassVar[list[str]] = [
         "Content-Type",
         "Content-Disposition",
-        "X-CSRFToken",
+        "X-XSRF-TOKEN",
     ]
     CORS_SUPPORTS_CREDENTIALS = True
 
@@ -101,8 +101,8 @@ class Default:
     # Enable double-submit CSRF protection on those cookies (default)
     JWT_COOKIE_CSRF_PROTECT = True
     # Configure cookie and header names
-    JWT_ACCESS_CSRF_COOKIE_NAME = "csrf_token"
-    JWT_ACCESS_CSRF_HEADER_NAME = "X-CSRFToken"
+    JWT_ACCESS_CSRF_COOKIE_NAME = "XSRF-TOKEN"
+    JWT_ACCESS_CSRF_HEADER_NAME = "X-XSRF-TOKEN"
     # Methods that must include a CSRF token (default)
     JWT_CSRF_METHODS: ClassVar[list[str]] = ["POST", "PUT", "PATCH", "DELETE"]
     # Cookies should not be marked Secure in local development so that we
@@ -128,7 +128,7 @@ class Staging(Default):
         "Authorization",
         "X-Api-Key",
         "X-Amz-Security-Token",
-        "X-CSRFToken",
+        "X-XSRF-TOKEN",
     ]
 
     # JWT cookies are secure in staging
@@ -152,7 +152,7 @@ class Production(Default):
         "Authorization",
         "X-Api-Key",
         "X-Amz-Security-Token",
-        "X-CSRFToken",
+        "X-XSRF-TOKEN",
     ]
 
     CORS_ORIGINS = os.getenv("AWS_CLOUDFRONT_DOMAIN_NAME")
