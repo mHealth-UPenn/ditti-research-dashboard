@@ -15,6 +15,7 @@ import inspect
 import logging
 
 from flask import make_response, request
+from flask_jwt_extended import verify_jwt_in_request
 
 from backend.auth.controllers import ParticipantAuthController
 
@@ -46,6 +47,9 @@ def participant_auth_required(decorated_func=None):
 
     @functools.wraps(decorated_func)
     def wrapper(*args, **kwargs):
+        # First verify the JWT with Flask-JWT-Extended to enable CSRF protection
+        verify_jwt_in_request()
+
         # Check for token in Authorization header
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):

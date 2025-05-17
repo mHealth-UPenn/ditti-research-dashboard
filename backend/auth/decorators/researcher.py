@@ -17,6 +17,7 @@ from collections.abc import Callable
 from typing import Any, TypeVar, cast
 
 from flask import make_response
+from flask_jwt_extended import verify_jwt_in_request
 
 from backend.auth.controllers import ResearcherAuthController
 from backend.auth.utils.auth_helpers import (
@@ -62,7 +63,10 @@ def researcher_auth_required(
                 # Account already authenticated and added by a previous decorator
                 auth_account = cast(Account, kwargs["account"])
             else:
-                # First decorator to run, need to authenticate
+                # First verify the JWT with Flask-JWT-Extended to enable CSRF protection
+                verify_jwt_in_request()
+
+                # Then continue with our custom authentication to get the account
                 id_token = get_token_from_request()
 
                 if not id_token:
