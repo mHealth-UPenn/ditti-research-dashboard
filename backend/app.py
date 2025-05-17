@@ -39,6 +39,7 @@ from backend.views import (
     participant,
 )
 from backend.views.api import fitbit
+from backend.views.api.auth import blueprint as api_auth_blueprint
 from backend.views.auth import (
     participant_auth_blueprint,
     researcher_auth_blueprint,
@@ -74,6 +75,26 @@ def create_app(testing=False):
         )
         return response
 
+    @app.after_request
+    def add_security_headers(response: Response):
+        """Add security headers to every response."""
+        # Content Security Policy - restrict sources of content
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; img-src 'self' data:; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline'; font-src 'self';"
+        )
+        # X-Content-Type-Options - prevent MIME type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        # X-Frame-Options - prevents site from being framed and clickjacked
+        response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        # Strict-Transport-Security - force HTTPS (in production)
+        if not app.debug and not app.testing:
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains"
+            )
+        return response
+
     return app
 
 
@@ -96,6 +117,7 @@ def register_blueprints(app):
     app.register_blueprint(data_processing_task.blueprint)
     app.register_blueprint(fitbit_data.admin_fitbit_blueprint)
     app.register_blueprint(fitbit_data.participant_fitbit_blueprint)
+    app.register_blueprint(api_auth_blueprint)
 
 
 def register_commands(app):
@@ -131,7 +153,8 @@ def register_extensions(app):
     cors.init_app(
         app,
         origins=app.config.get("CORS_ORIGINS", "*"),
-        allow_headers=app.config.get("CORS_ALLOW_HEADERS", ["Content-Type"]),
+        allow_headers=app.config.get("CORS_ALLOW_HEADERS"),
+        expose_headers=app.config.get("CORS_EXPOSE_HEADERS"),
         supports_credentials=app.config.get("CORS_SUPPORTS_CREDENTIALS", True),
     )
     db.init_app(app)
