@@ -73,25 +73,42 @@ class ParticipantAuth(CognitoAuthBase):
         success, claims = self.validate_token_for_authenticated_route(id_token)
 
         if not success:
-            return None, claims
+            return None, claims  # claims here is the error message
 
         ditti_id = claims.get("cognito:username")
         if not ditti_id:
             logger.warning("No cognito:username found in token claims")
-            return None, "Invalid token"
+            return (
+                None,
+                AUTH_ERROR_MESSAGES["invalid_token_format"],
+            )
 
-        study_subject = self.get_study_subject_from_ditti_id(
-            ditti_id, include_archived
+        # Check if subject exists regardless of archived status
+        any_subject = self.get_study_subject_from_ditti_id(
+            ditti_id, include_archived=True
         )
-        if not study_subject:
-            logger.warning(f"No study subject found for ID: {ditti_id}")
-            return None, AUTH_ERROR_MESSAGES["not_found"]
 
-        if study_subject.is_archived:
+        # If found but archived and not including archived subjects, return archived error
+        if any_subject and any_subject.is_archived and not include_archived:
             logger.warning(
                 f"Attempt to access with archived study subject: {ditti_id}"
             )
-            return None, AUTH_ERROR_MESSAGES["account_archived"]
+            return (
+                None,
+                AUTH_ERROR_MESSAGES["account_archived"],
+            )
+
+        # Get subject with respect to include_archived parameter
+        study_subject = self.get_study_subject_from_ditti_id(
+            ditti_id, include_archived
+        )
+
+        if not study_subject:
+            logger.warning(f"No study subject found for ID: {ditti_id}")
+            return (
+                None,
+                AUTH_ERROR_MESSAGES["not_found"],
+            )
 
         return study_subject, None
 

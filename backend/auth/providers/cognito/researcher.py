@@ -13,6 +13,7 @@
 import logging
 
 from backend.auth.providers.cognito.base import CognitoAuthBase
+from backend.auth.providers.cognito.constants import AUTH_ERROR_MESSAGES
 from backend.extensions import oauth
 from backend.models import Account
 
@@ -66,25 +67,28 @@ class ResearcherAuth(CognitoAuthBase):
         success, claims = self.validate_token_for_authenticated_route(id_token)
 
         if not success:
-            return None, claims
+            return None, claims  # claims here is the error message
 
         email = claims.get("email")
         if not email:
             logger.warning("No email found in token claims")
-            return None, "Invalid token"
+            return None, AUTH_ERROR_MESSAGES["invalid_token_format"]
 
         # First check if account exists regardless of archived status
         any_account = self.get_account_from_email(email, include_archived=True)
 
         if any_account and any_account.is_archived and not include_archived:
             logger.warning(f"Attempt to access with archived account: {email}")
-            return None, "Account unavailable. Please contact support."
+            return (
+                None,
+                AUTH_ERROR_MESSAGES["account_archived"],
+            )
 
         account = self.get_account_from_email(email, include_archived)
 
         if not account:
             logger.warning(f"No active account found for email: {email}")
-            return None, "Invalid credentials"
+            return None, AUTH_ERROR_MESSAGES["not_found"]
 
         return account, None
 
