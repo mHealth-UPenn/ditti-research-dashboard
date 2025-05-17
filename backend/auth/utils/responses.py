@@ -12,8 +12,15 @@
 
 from flask import make_response
 
+from backend.auth.providers.cognito.constants import (
+    AUTH_ERROR_MESSAGES,
+    get_error_code,
+)
 
-def create_error_response(message, status_code=401, error_code=None):
+
+def create_error_response(
+    message=None, status_code=401, error_code=None, message_key=None
+):
     """
     Create a standardized error response.
 
@@ -22,11 +29,22 @@ def create_error_response(message, status_code=401, error_code=None):
         message (str): The user-friendly error message
         status_code (int): The HTTP status code (default: 401)
         error_code (str, optional): An optional error code for the client
+        message_key (str, optional): The key in AUTH_ERROR_MESSAGES to use for
+            both message and error_code (if provided, overrides both)
 
     Returns
     -------
         Response: A Flask response with standardized error format
     """
+    # If message_key is provided, use it to get both message and error_code
+    if message_key and message_key in AUTH_ERROR_MESSAGES:
+        message = AUTH_ERROR_MESSAGES[message_key]
+        error_code = get_error_code(message_key)
+    # Otherwise, if message is a key in AUTH_ERROR_MESSAGES, use it for both
+    elif message in AUTH_ERROR_MESSAGES and not error_code:
+        error_code = get_error_code(message)
+        message = AUTH_ERROR_MESSAGES[message]
+
     response = {"msg": message}
 
     if error_code:
