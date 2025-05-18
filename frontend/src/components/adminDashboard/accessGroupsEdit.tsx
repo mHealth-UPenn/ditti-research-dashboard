@@ -21,7 +21,7 @@ import {
   Permission,
   ResponseBody,
 } from "../../types/api";
-import { useHttpClient } from "../../lib/HttpClientContext";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";

@@ -25,7 +25,7 @@ import {
 } from "../../types/api";
 import { SelectField } from "../fields/selectField";
 import { formatPhoneNumber } from "../../utils";
-import { useHttpClient } from "../../lib/HttpClientContext";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";

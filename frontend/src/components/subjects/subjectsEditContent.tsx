@@ -15,7 +15,7 @@ import { useState, useEffect, createRef, useRef, useCallback } from "react";
 import { TextField } from "../fields/textField";
 import { AboutSleepTemplate, ResponseBody } from "../../types/api";
 import { formatDateForInput, getEnrollmentInfoForStudy } from "../../utils";
-import { useHttpClient } from "../../lib/HttpClientContext";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { CheckField } from "../fields/checkField";
 import { SmallLoader } from "../loader/loader";
 import { SelectField } from "../fields/selectField";

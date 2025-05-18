@@ -12,39 +12,30 @@
  */
 
 import React from "react";
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  type MockInstance,
-} from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import {
-  HttpClientProvider,
-  useHttpClient,
-} from "../../src/lib/HttpClientContext";
-import { HttpClient } from "../../src/lib/http";
+import { HttpClientProvider } from "../../src/contexts/httpClientContext";
+import { useHttpClient } from "../../src/hooks/useHttpClient";
 import type { AxiosRequestConfig, AxiosResponse } from "axios";
 
-// Define top-level mock functions
 const mockRequestFn = vi.fn();
 const mockRequestRawResponseFn = vi.fn();
 
-// Mock HttpClient
-vi.mock("../../src/lib/http", () => {
-  const actualHttp = vi.importActual("../../src/lib/http") as object;
+vi.mock("../../src/lib/http", async (importActualOriginal) => {
+  const actual =
+    await importActualOriginal<typeof import("../../src/lib/http")>();
   return {
-    ...actualHttp,
-    HttpClient: vi.fn().mockImplementation(() => ({
-      request: mockRequestFn,
-      requestRawResponse: mockRequestRawResponseFn,
-    })),
+    ...actual,
+    HttpClient: vi.fn().mockImplementation(() => {
+      return {
+        request: mockRequestFn,
+        requestRawResponse: mockRequestRawResponseFn,
+      };
+    }),
   };
 });
 
-const mockHttpClientInstance = new HttpClient("http://fake-base-url.com");
+import { HttpClient } from "../../src/lib/http";
 
 // A simple component to test the hook
 const TestConsumerComponent: React.FC<{
@@ -99,10 +90,21 @@ const ErrorBoundaryTestComponent = () => {
 };
 
 describe("HttpClientContext", () => {
+  let mockHttpClientInstance: HttpClient;
+
   beforeEach(() => {
     vi.clearAllMocks();
-    mockRequestFn.mockClear();
-    mockRequestRawResponseFn.mockClear();
+
+    mockRequestFn.mockResolvedValue({ data: "mocked data" });
+    mockRequestRawResponseFn.mockResolvedValue({
+      data: "mocked raw data",
+      status: 200,
+      statusText: "OK",
+      headers: {},
+      config: {},
+    } as AxiosResponse);
+
+    mockHttpClientInstance = new HttpClient("http://fake-base-url.com");
   });
 
   it("should provide HttpClient methods via useHttpClient hook", async () => {
@@ -123,9 +125,6 @@ describe("HttpClientContext", () => {
   it("should call request method with correct parameters", async () => {
     const testUrl = "/api/data";
     const testConfig = { method: "POST" as const, data: { foo: "bar" } };
-    mockRequestFn.mockResolvedValueOnce({
-      data: "mock response",
-    });
 
     render(
       <HttpClientProvider client={mockHttpClientInstance}>
@@ -178,7 +177,7 @@ describe("HttpClientContext", () => {
 
   it("useHttpClient should throw error when used outside of HttpClientProvider", () => {
     const originalError = console.error;
-    console.error = vi.fn();
+    console.error = vi.fn(); // Suppress expected error message from jsdom
 
     render(<ErrorBoundaryTestComponent />);
 
@@ -186,7 +185,7 @@ describe("HttpClientContext", () => {
       "useHttpClient must be used within a <HttpClientProvider>"
     );
 
-    console.error = originalError;
+    console.error = originalError; // Restore console.error
   });
 
   it("request function from hook should correctly pass through to client instance", async () => {
@@ -236,9 +235,7 @@ describe("HttpClientContext", () => {
       config: { headers: {} } as AxiosRequestConfig,
     } as AxiosResponse;
 
-    (
-      mockHttpClientInstance.requestRawResponse as unknown as MockInstance
-    ).mockResolvedValueOnce(mockRawAxiosResponse);
+    mockRequestRawResponseFn.mockResolvedValueOnce(mockRawAxiosResponse);
 
     let receivedRawResponse: AxiosResponse | undefined;
     const HookCallerRaw = () => {
@@ -262,26 +259,21 @@ describe("HttpClientContext", () => {
     fireEvent.click(screen.getByText("Call Raw Request"));
     await vi.dynamicImportSettled();
 
-    expect(mockHttpClientInstance.requestRawResponse).toHaveBeenCalledWith(
-      testUrl,
-      {
-        responseType: "blob",
-      }
-    );
+    expect(mockRequestRawResponseFn).toHaveBeenCalledWith(testUrl, {
+      responseType: "blob",
+    });
     expect(receivedRawResponse).toEqual(mockRawAxiosResponse);
   });
 
   describe("HTTP verb methods", () => {
+    const testUrl = "/api/items";
+    const testData = { name: "Test" };
+    const itemUrl = `${testUrl}/1`;
+    const mockResponseData = { id: 1, ...testData };
+    const testConfig = { headers: { "X-Test": "true" } };
+
     it("should correctly call get method", async () => {
-      const testUrl = "/api/items";
-      const testConfig = { params: { limit: 10 } };
-      const expectedResponse = [
-        { id: 1, name: "Item 1" },
-        { id: 2, name: "Item 2" },
-      ];
-
-      mockRequestFn.mockResolvedValueOnce(expectedResponse);
-
+      mockRequestFn.mockResolvedValueOnce(mockResponseData);
       render(
         <HttpClientProvider client={mockHttpClientInstance}>
           <TestConsumerComponent
@@ -291,7 +283,6 @@ describe("HttpClientContext", () => {
           />
         </HttpClientProvider>
       );
-
       fireEvent.click(screen.getByText("Make Request"));
       await vi.dynamicImportSettled();
 
@@ -302,13 +293,7 @@ describe("HttpClientContext", () => {
     });
 
     it("should correctly call post method with data", async () => {
-      const testUrl = "/api/items";
-      const testData = { name: "New Item" };
-      const testConfig = { headers: { "X-Custom": "true" } };
-      const expectedResponse = { id: 3, name: "New Item", created: true };
-
-      mockRequestFn.mockResolvedValueOnce(expectedResponse);
-
+      mockRequestFn.mockResolvedValueOnce(mockResponseData);
       render(
         <HttpClientProvider client={mockHttpClientInstance}>
           <TestConsumerComponent
@@ -319,10 +304,8 @@ describe("HttpClientContext", () => {
           />
         </HttpClientProvider>
       );
-
       fireEvent.click(screen.getByText("Make Request"));
       await vi.dynamicImportSettled();
-
       expect(mockRequestFn).toHaveBeenCalledWith(testUrl, {
         method: "POST",
         data: testData,
@@ -331,28 +314,20 @@ describe("HttpClientContext", () => {
     });
 
     it("should correctly call put method with data", async () => {
-      const testUrl = "/api/items/1";
-      const testData = { name: "Updated Item" };
-      const testConfig = { timeout: 5000 };
-      const expectedResponse = { id: 1, name: "Updated Item", updated: true };
-
-      mockRequestFn.mockResolvedValueOnce(expectedResponse);
-
+      mockRequestFn.mockResolvedValueOnce(mockResponseData);
       render(
         <HttpClientProvider client={mockHttpClientInstance}>
           <TestConsumerComponent
-            url={testUrl}
+            url={itemUrl}
             data={testData}
             config={testConfig}
             action="put"
           />
         </HttpClientProvider>
       );
-
       fireEvent.click(screen.getByText("Make Request"));
       await vi.dynamicImportSettled();
-
-      expect(mockRequestFn).toHaveBeenCalledWith(testUrl, {
+      expect(mockRequestFn).toHaveBeenCalledWith(itemUrl, {
         method: "PUT",
         data: testData,
         ...testConfig,
@@ -360,54 +335,39 @@ describe("HttpClientContext", () => {
     });
 
     it("should correctly call delete method", async () => {
-      const testUrl = "/api/items/1";
-      const testConfig = { headers: { "X-Reason": "Outdated" } };
-      const expectedResponse = { success: true };
-
-      mockRequestFn.mockResolvedValueOnce(expectedResponse);
-
+      mockRequestFn.mockResolvedValueOnce(undefined);
       render(
         <HttpClientProvider client={mockHttpClientInstance}>
           <TestConsumerComponent
-            url={testUrl}
+            url={itemUrl}
             config={testConfig}
             action="delete"
           />
         </HttpClientProvider>
       );
-
       fireEvent.click(screen.getByText("Make Request"));
       await vi.dynamicImportSettled();
-
-      expect(mockRequestFn).toHaveBeenCalledWith(testUrl, {
+      expect(mockRequestFn).toHaveBeenCalledWith(itemUrl, {
         method: "DELETE",
         ...testConfig,
       });
     });
 
     it("should correctly call patch method with data", async () => {
-      const testUrl = "/api/items/1";
-      const testData = { status: "inactive" };
-      const testConfig = { params: { notify: false } };
-      const expectedResponse = { id: 1, status: "inactive", patched: true };
-
-      mockRequestFn.mockResolvedValueOnce(expectedResponse);
-
+      mockRequestFn.mockResolvedValueOnce(mockResponseData);
       render(
         <HttpClientProvider client={mockHttpClientInstance}>
           <TestConsumerComponent
-            url={testUrl}
+            url={itemUrl}
             data={testData}
             config={testConfig}
             action="patch"
           />
         </HttpClientProvider>
       );
-
       fireEvent.click(screen.getByText("Make Request"));
       await vi.dynamicImportSettled();
-
-      expect(mockRequestFn).toHaveBeenCalledWith(testUrl, {
+      expect(mockRequestFn).toHaveBeenCalledWith(itemUrl, {
         method: "PATCH",
         data: testData,
         ...testConfig,

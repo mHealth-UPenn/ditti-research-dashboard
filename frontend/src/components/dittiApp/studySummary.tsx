@@ -14,7 +14,7 @@
 import { useState, useEffect } from "react";
 import { Study } from "../../types/api";
 import { getAccess } from "../../utils";
-import { useHttpClient } from "../../lib/HttpClientContext";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { SmallLoader } from "../loader/loader";
 import { StudySubjects } from "./studySubjects";
 import { Workbook } from "exceljs";

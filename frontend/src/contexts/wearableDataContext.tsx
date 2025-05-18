@@ -21,7 +21,7 @@ import {
 } from "react";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
-import { useHttpClient } from "../lib/HttpClientContext";
+import { useHttpClient } from "../hooks/useHttpClient";
 import {
   WearableDataContextValue,
   CoordinatorWearableDataProviderProps,

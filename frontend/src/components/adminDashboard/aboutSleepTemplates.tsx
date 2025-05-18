@@ -13,7 +13,7 @@
 
 import React, { useState, useEffect } from "react";
 import { getAccess } from "../../utils";
-import { useHttpClient } from "../../lib/HttpClientContext";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";

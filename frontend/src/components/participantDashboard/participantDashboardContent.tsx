@@ -13,6 +13,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { Card } from "../cards/card";
 import { CardContentRow } from "../cards/cardContentRow";
 import { Title } from "../text/title";
@@ -24,7 +25,6 @@ import { WearableVisualization } from "../visualizations/wearableVisualization";
 import { useStudySubjects } from "../../hooks/useStudySubjects";
 import { SmallLoader } from "../loader/loader";
 import { ConsentModal } from "../containers/consentModal/consentModal";
-import { useHttpClient } from "../../lib/HttpClientContext";
 import { ParticipantStudy } from "../../types/api";
 import { QuillView } from "../containers/quillView/quillView";
 

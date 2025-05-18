@@ -11,15 +11,13 @@
  * under the License.
  */
 
-import React, { createContext, useContext, ReactNode } from "react";
-import { HttpClient } from "./http";
 import type { AxiosRequestConfig, AxiosResponse } from "axios";
 
 /**
  * API for HTTP client, providing both generic request methods and
  * verb-specific shortcuts (get, post, etc.) that return parsed data.
  */
-interface HttpClientApi {
+export interface HttpClientApi {
   /** Generic request method with full config options */
   request: <TResp = unknown, TData = unknown>(
     url: string,
@@ -64,73 +62,4 @@ interface HttpClientApi {
     data?: unknown,
     cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
   ) => Promise<TResp>;
-}
-
-const HttpClientContext = createContext<HttpClientApi | null>(null);
-
-export const HttpClientProvider: React.FC<{
-  children: ReactNode;
-  client: HttpClient;
-}> = ({ children, client }) => {
-  const api: HttpClientApi = {
-    request: client.request.bind(client),
-    requestRawResponse: client.requestRawResponse.bind(client),
-
-    // HTTP verb shortcuts
-    get: <TResp = unknown,>(
-      url: string,
-      cfg?: Omit<AxiosRequestConfig, "url" | "method">
-    ) => client.request<TResp>(url, { method: "GET", ...cfg }),
-
-    post: <TResp = unknown,>(
-      url: string,
-      data?: unknown,
-      cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
-    ) => client.request<TResp>(url, { method: "POST", data, ...cfg }),
-
-    put: <TResp = unknown,>(
-      url: string,
-      data?: unknown,
-      cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
-    ) => client.request<TResp>(url, { method: "PUT", data, ...cfg }),
-
-    delete: <TResp = unknown,>(
-      url: string,
-      cfg?: Omit<AxiosRequestConfig, "url" | "method">
-    ) => client.request<TResp>(url, { method: "DELETE", ...cfg }),
-
-    patch: <TResp = unknown,>(
-      url: string,
-      data?: unknown,
-      cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
-    ) => client.request<TResp>(url, { method: "PATCH", data, ...cfg }),
-  };
-
-  return (
-    <HttpClientContext.Provider value={api}>
-      {children}
-    </HttpClientContext.Provider>
-  );
-};
-
-/**
- * Hook to access the HTTP client API.
- *
- * @example
- * // Basic usage
- * const http = useHttpClient();
- * const data = await http.get('/api/users');
- *
- * // With type information
- * const users = await http.get<User[]>('/api/users');
- *
- * // POST with data
- * const nU = await http.post<User, UserInput>("/api/users", { name: "John" });
- */
-export function useHttpClient(): HttpClientApi {
-  const ctx = useContext(HttpClientContext);
-  if (!ctx) {
-    throw new Error("useHttpClient must be used within a <HttpClientProvider>");
-  }
-  return ctx;
 }

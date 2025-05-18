@@ -14,7 +14,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { DataRetrievalTask } from "../../types/api";
 import { getAccess } from "../../utils";
-import { useHttpClient } from "../../lib/HttpClientContext";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";

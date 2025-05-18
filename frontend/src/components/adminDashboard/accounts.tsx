@@ -16,7 +16,7 @@ import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { AdminNavbar } from "./adminNavbar";
 import { getAccess } from "../../utils";
-import { useHttpClient } from "../../lib/HttpClientContext";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { Account, ResponseBody } from "../../types/api";
 import { SmallLoader } from "../loader/loader";
 import { ListView } from "../containers/lists/listView";

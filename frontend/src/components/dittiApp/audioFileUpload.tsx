@@ -13,7 +13,8 @@
 
 import { useState, ChangeEvent, createRef } from "react";
 import { TextField } from "../fields/textField";
-import { useHttpClient } from "../../lib/HttpClientContext";
+import { useStudies } from "../../hooks/useStudies";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { SelectField } from "../fields/selectField";
 import { RadioField } from "../fields/radioField";
 import CloseIcon from "@mui/icons-material/Close";
@@ -33,7 +34,6 @@ import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useDittiData } from "../../hooks/useDittiData";
 import { SmallLoader } from "../loader/loader";
 import { APP_ENV } from "../../environment";
-import { useStudies } from "../../hooks/useStudies";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useNavigate } from "react-router-dom";
 import { FileMetadata } from "./dittiApp.types";

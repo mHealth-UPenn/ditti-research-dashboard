@@ -14,7 +14,7 @@
 import { useState, useEffect } from "react";
 import { Study } from "../../types/api";
 import { downloadExcelFromUrl, getAccess } from "../../utils";
-import { useHttpClient } from "../../lib/HttpClientContext";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { SmallLoader } from "../loader/loader";
 import { ViewContainer } from "../containers/viewContainer/viewContainer";
 import { Card } from "../cards/card";

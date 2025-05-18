@@ -19,7 +19,7 @@ import {
   useMemo,
   useCallback,
 } from "react";
-import { useHttpClient } from "../lib/HttpClientContext";
+import { useHttpClient } from "../hooks/useHttpClient";
 import { APP_ENV } from "../environment";
 import { DataFactory } from "../dataFactory";
 import { useNavbar } from "../hooks/useNavbar";

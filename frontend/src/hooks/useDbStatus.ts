@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { useHttpClient } from "../lib/HttpClientContext";
+import { useHttpClient } from "./useHttpClient";
 import { ResponseBody } from "../types/api";
 
 /**

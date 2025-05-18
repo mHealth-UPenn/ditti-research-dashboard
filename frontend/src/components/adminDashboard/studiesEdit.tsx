@@ -16,7 +16,7 @@ import { TextField } from "../fields/textField";
 import { CheckField } from "../fields/checkField";
 import { MemoizedQuillField as QuillField } from "../fields/quillField";
 import { ResponseBody, Study } from "../../types/api";
-import { useHttpClient } from "../../lib/HttpClientContext";
+import { useHttpClient } from "../../hooks/useHttpClient";
 import { SmallLoader } from "../loader/loader";
 import { FormView } from "../containers/forms/formView";
 import { Form } from "../containers/forms/form";

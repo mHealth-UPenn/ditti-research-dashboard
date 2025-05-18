@@ -19,7 +19,7 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { useHttpClient } from "../lib/HttpClientContext";
+import { useHttpClient } from "../hooks/useHttpClient";
 import {
   AuthContextValue,
   ParticipantAuthResponse,

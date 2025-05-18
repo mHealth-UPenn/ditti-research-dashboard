@@ -18,7 +18,7 @@ import {
   PropsWithChildren,
   useCallback,
 } from "react";
-import { useHttpClient } from "../lib/HttpClientContext";
+import { useHttpClient } from "../hooks/useHttpClient";
 import {
   CoordinatorStudySubjectContextValue,
   CoordinatorStudySubjectProviderProps,
