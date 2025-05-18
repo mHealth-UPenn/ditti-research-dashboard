@@ -15,15 +15,55 @@ import React, { createContext, useContext, ReactNode } from "react";
 import { HttpClient } from "./http";
 import type { AxiosRequestConfig, AxiosResponse } from "axios";
 
+/**
+ * API for HTTP client, providing both generic request methods and
+ * verb-specific shortcuts (get, post, etc.) that return parsed data.
+ */
 interface HttpClientApi {
+  /** Generic request method with full config options */
   request: <TResp = unknown, TData = unknown>(
     url: string,
     cfg?: Omit<AxiosRequestConfig<TData>, "url">
   ) => Promise<TResp>;
+
+  /** Request method that returns the full Axios response object */
   requestRawResponse: <TResp = unknown, TData = unknown>(
     url: string,
     cfg?: Omit<AxiosRequestConfig<TData>, "url">
   ) => Promise<AxiosResponse<TResp>>;
+
+  /** GET shortcut that returns the parsed response data */
+  get: <TResp = unknown>(
+    url: string,
+    cfg?: Omit<AxiosRequestConfig, "url" | "method">
+  ) => Promise<TResp>;
+
+  /** POST shortcut that returns the parsed response data */
+  post: <TResp = unknown>(
+    url: string,
+    data?: unknown,
+    cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
+  ) => Promise<TResp>;
+
+  /** PUT shortcut that returns the parsed response data */
+  put: <TResp = unknown>(
+    url: string,
+    data?: unknown,
+    cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
+  ) => Promise<TResp>;
+
+  /** DELETE shortcut that returns the parsed response data */
+  delete: <TResp = unknown>(
+    url: string,
+    cfg?: Omit<AxiosRequestConfig, "url" | "method">
+  ) => Promise<TResp>;
+
+  /** PATCH shortcut that returns the parsed response data */
+  patch: <TResp = unknown>(
+    url: string,
+    data?: unknown,
+    cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
+  ) => Promise<TResp>;
 }
 
 const HttpClientContext = createContext<HttpClientApi | null>(null);
@@ -35,6 +75,35 @@ export const HttpClientProvider: React.FC<{
   const api: HttpClientApi = {
     request: client.request.bind(client),
     requestRawResponse: client.requestRawResponse.bind(client),
+
+    // HTTP verb shortcuts
+    get: <TResp = unknown,>(
+      url: string,
+      cfg?: Omit<AxiosRequestConfig, "url" | "method">
+    ) => client.request<TResp>(url, { method: "GET", ...cfg }),
+
+    post: <TResp = unknown,>(
+      url: string,
+      data?: unknown,
+      cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
+    ) => client.request<TResp>(url, { method: "POST", data, ...cfg }),
+
+    put: <TResp = unknown,>(
+      url: string,
+      data?: unknown,
+      cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
+    ) => client.request<TResp>(url, { method: "PUT", data, ...cfg }),
+
+    delete: <TResp = unknown,>(
+      url: string,
+      cfg?: Omit<AxiosRequestConfig, "url" | "method">
+    ) => client.request<TResp>(url, { method: "DELETE", ...cfg }),
+
+    patch: <TResp = unknown,>(
+      url: string,
+      data?: unknown,
+      cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
+    ) => client.request<TResp>(url, { method: "PATCH", data, ...cfg }),
   };
 
   return (
@@ -44,6 +113,20 @@ export const HttpClientProvider: React.FC<{
   );
 };
 
+/**
+ * Hook to access the HTTP client API.
+ *
+ * @example
+ * // Basic usage
+ * const http = useHttpClient();
+ * const data = await http.get('/api/users');
+ *
+ * // With type information
+ * const users = await http.get<User[]>('/api/users');
+ *
+ * // POST with data
+ * const nU = await http.post<User, UserInput>("/api/users", { name: "John" });
+ */
 export function useHttpClient(): HttpClientApi {
   const ctx = useContext(HttpClientContext);
   if (!ctx) {

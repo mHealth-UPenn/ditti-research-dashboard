@@ -25,8 +25,11 @@ import retry, {
   exponentialDelay,
   isNetworkOrIdempotentRequestError,
 } from "axios-retry";
-import { ApiError, HttpError } from "./http.types";
-import { ResponseBody } from "../types/api";
+import {
+  getCookieValue,
+  createSessionExpiredError,
+  normalizeError,
+} from "./http.helpers";
 
 // Type definitions for the token refresh queue
 interface QueueItem {
@@ -117,7 +120,7 @@ class HttpClient {
       });
       return res.data;
     } catch (err) {
-      throw this.normalizeError(err);
+      throw normalizeError(err);
     }
   }
 
@@ -226,7 +229,7 @@ class HttpClient {
 
           // Skip token refresh for the refresh endpoint itself to avoid loops
           if (originalRequest.url === "/api/auth/refresh-token") {
-            return Promise.reject(this.createSessionExpiredError());
+            return Promise.reject(createSessionExpiredError());
           }
 
           // If a token refresh is already in progress, add this request to the queue
@@ -239,7 +242,7 @@ class HttpClient {
                 return this.instance(originalRequest);
               })
               .catch((err: unknown) => {
-                return Promise.reject(this.normalizeError(err));
+                return Promise.reject(normalizeError(err));
               });
           }
 
@@ -272,7 +275,7 @@ class HttpClient {
             // Token refresh failed
             this.refreshTokenInProgress = false;
 
-            const normalizedError = this.normalizeError(refreshError);
+            const normalizedError = normalizeError(refreshError);
 
             // Check if it's a CSRF error (status 400 with specific error code)
             const isCSRFError =
@@ -284,7 +287,7 @@ class HttpClient {
             // CSRF failure means the session is invalid; force re-login.
             if (isCSRFError) {
               // Simplify by creating a standard session expired error
-              const sessionExpiredError = this.createSessionExpiredError();
+              const sessionExpiredError = createSessionExpiredError();
               this.processQueue(sessionExpiredError);
               console.error(
                 "CSRF Token validation failed during token refresh. Redirecting to login."
@@ -303,7 +306,7 @@ class HttpClient {
         }
 
         // Handle all other errors
-        return Promise.reject(this.normalizeError(error));
+        return Promise.reject(normalizeError(error));
       }
     );
   }
@@ -336,133 +339,6 @@ class HttpClient {
   }
 
   /**
-   * Creates a standardized session expired error
-   * @returns A normalized HttpError for session expiration
-   */
-  private createSessionExpiredError(): HttpError {
-    return new HttpError("Session expired. Please log in again", {
-      message: "Session expired. Please log in again",
-      status: 401,
-      code: "SESSION_EXPIRED",
-    });
-  }
-
-  /**
-   * Normalizes errors from various sources into `HttpError` or `Error`.
-   * @param err The caught error object.
-   * @returns A normalized error instance.
-   */
-  private normalizeError(err: unknown): HttpError | Error {
-    if (isCancel(err)) {
-      return new Error("Request canceled");
-    }
-
-    if (isAxiosError(err)) {
-      // Attempt to provide a hint for common network/CORS issues (e.g., Safari)
-      const isNetwork = !err.response && !!err.request;
-      const corsHint =
-        isNetwork && /(Failed to fetch|Network Error)/i.test(err.message)
-          ? " (check network connection or CORS configuration)"
-          : "";
-
-      const apiErrorDetails: ApiError = {
-        message: err.message,
-        status: err.response?.status ?? 0, // 0 == network error or unknown
-        code: err.code ?? "AXIOS_ERROR",
-        data: err.response?.data as ResponseBody | undefined,
-        original: err, // Preserve original error for deeper debugging if needed
-      };
-
-      // Extract more specific error info from response if available
-      if (err.response?.data && typeof err.response.data === "object") {
-        const responseData = err.response.data as Record<string, unknown>;
-
-        // Extract message from msg or message field
-        if (responseData.msg && typeof responseData.msg === "string") {
-          apiErrorDetails.message = responseData.msg;
-        } else if (
-          responseData.message &&
-          typeof responseData.message === "string"
-        ) {
-          apiErrorDetails.message = responseData.message;
-        }
-
-        // Extract code from code field
-        if (responseData.code && typeof responseData.code === "string") {
-          apiErrorDetails.code = responseData.code;
-        }
-      }
-
-      // Wrap details in a custom HttpError.
-      return new HttpError(
-        `${apiErrorDetails.message}${corsHint}`,
-        apiErrorDetails
-      );
-    }
-
-    // If it's already a HttpError, return it directly
-    if (err instanceof HttpError) {
-      return err;
-    }
-
-    // If it's a standard Error, wrap it in HttpError
-    if (err instanceof Error) {
-      return new HttpError(err.message, {
-        message: err.message,
-        status: 0,
-        code: "UNKNOWN_ERROR",
-        original: err,
-      });
-    }
-
-    // Fallback for non-Error throwables.
-    return new HttpError("An unknown error occurred", {
-      message: "An unknown error occurred",
-      status: 0,
-      code: "UNKNOWN_ERROR",
-      original: err,
-    });
-  }
-
-  public get<TResp = unknown, TData = unknown>(
-    url: string,
-    config?: AxiosRequestConfig<TData>
-  ): Promise<AxiosResponse<TResp>> {
-    return this.instance.get<TResp>(url, config);
-  }
-
-  public post<TResp = unknown, TData = unknown>(
-    url: string,
-    data?: TData,
-    config?: AxiosRequestConfig<TData>
-  ): Promise<AxiosResponse<TResp>> {
-    return this.instance.post<TResp>(url, data, config);
-  }
-
-  public put<TResp = unknown, TData = unknown>(
-    url: string,
-    data?: TData,
-    config?: AxiosRequestConfig<TData>
-  ): Promise<AxiosResponse<TResp>> {
-    return this.instance.put<TResp>(url, data, config);
-  }
-
-  public delete<TResp = unknown, TData = unknown>(
-    url: string,
-    config?: AxiosRequestConfig<TData>
-  ): Promise<AxiosResponse<TResp>> {
-    return this.instance.delete<TResp>(url, config);
-  }
-
-  public patch<TResp = unknown, TData = unknown>(
-    url: string,
-    data?: TData,
-    config?: AxiosRequestConfig<TData>
-  ): Promise<AxiosResponse<TResp>> {
-    return this.instance.patch<TResp>(url, data, config);
-  }
-
-  /**
    * Explicitly refreshes the token and CSRF value.
    * Can be called after long periods of inactivity or when performing
    * sensitive operations that require a fresh token.
@@ -489,10 +365,10 @@ class HttpClient {
       ) {
         console.error("CSRF validation failed. Redirecting to login.");
         this.redirectToLogin();
-        throw this.createSessionExpiredError();
+        throw createSessionExpiredError();
       }
 
-      throw this.normalizeError(error);
+      throw normalizeError(error);
     }
   }
 }
@@ -502,19 +378,3 @@ export const httpClient = new HttpClient(
 );
 
 export { HttpClient };
-
-// Helper function to get cookie by name
-function getCookieValue(name: string): string | null {
-  const nameEQ = name + "=";
-  const ca = document.cookie.split(";");
-  for (const cookiePart of ca) {
-    let c = cookiePart;
-    while (c.startsWith(" ")) {
-      c = c.substring(1, c.length);
-    }
-    if (c.startsWith(nameEQ)) {
-      return c.substring(nameEQ.length, c.length);
-    }
-  }
-  return null;
-}
