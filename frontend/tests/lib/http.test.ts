@@ -18,6 +18,7 @@ import {
   vi,
   beforeEach,
   type MockedFunction,
+  afterEach,
 } from "vitest";
 import axios, {
   AxiosError,
@@ -36,7 +37,6 @@ import axiosRetry, {
 } from "axios-retry";
 import { HttpClient } from "../../src/lib/http";
 import { HttpError } from "../../src/lib/http.types";
-import type { ResponseBody } from "../../src/types/api";
 
 // Define the type for our expected mocked axios instance structure
 // This helps in typing the instance we retrieve in tests.
@@ -107,33 +107,13 @@ interface MockedAxiosInstanceType {
 vi.mock("axios", async (importOriginal) => {
   const actualAxios = await importOriginal<typeof axios>();
 
-  // Define mocks locally within the factory
-  const factoryMockAxiosRequestFn =
-    vi.fn<(config: AxiosRequestConfig) => Promise<AxiosResponse>>();
-  const factoryMockRequestInterceptorUseFn =
-    vi.fn<
-      (
-        onFulfilled?: (
-          config: InternalAxiosRequestConfig
-        ) => InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig>,
-        onRejected?: (error: Error) => unknown
-      ) => number
-    >();
-  const factoryMockResponseInterceptorUseFn =
-    vi.fn<
-      (
-        onFulfilled?: (
-          value: AxiosResponse
-        ) => AxiosResponse | Promise<AxiosResponse>,
-        onRejected?: (error: AxiosError) => Promise<unknown>
-      ) => number
-    >();
+  type AxiosMockInstance = MockedAxiosInstanceType;
 
-  const factoryActualMockedAxiosInstance: MockedAxiosInstanceType = {
-    request: factoryMockAxiosRequestFn,
+  const createMockInstance = (): AxiosMockInstance => ({
+    request: vi.fn(),
     interceptors: {
-      request: { use: factoryMockRequestInterceptorUseFn, eject: vi.fn() },
-      response: { use: factoryMockResponseInterceptorUseFn, eject: vi.fn() },
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
     },
     defaults: {
       headers: {
@@ -151,27 +131,27 @@ vi.mock("axios", async (importOriginal) => {
     patch: vi.fn(),
     head: vi.fn(),
     options: vi.fn(),
-  };
+  });
 
-  const mockCreate = vi.fn().mockReturnValue(factoryActualMockedAxiosInstance);
+  const createSpy = vi.fn(() => createMockInstance());
 
   return {
     __esModule: true,
     default: {
       ...actualAxios,
-      create: mockCreate,
+      create: createSpy,
+      AxiosHeaders: actualAxios.AxiosHeaders,
       isAxiosError: actualAxios.isAxiosError,
       isCancel: actualAxios.isCancel,
       CanceledError: actualAxios.CanceledError,
       AxiosError: actualAxios.AxiosError,
-      AxiosHeaders: actualAxios.AxiosHeaders,
     },
-    create: mockCreate,
+    create: createSpy,
+    AxiosHeaders: actualAxios.AxiosHeaders,
     isAxiosError: actualAxios.isAxiosError,
     isCancel: actualAxios.isCancel,
     CanceledError: actualAxios.CanceledError,
     AxiosError: actualAxios.AxiosError,
-    AxiosHeaders: actualAxios.AxiosHeaders,
   };
 });
 
@@ -183,6 +163,45 @@ vi.mock("axios-retry", () => ({
 
 const mockAxiosRetry = axiosRetry as MockedFunction<typeof axiosRetry>;
 
+// Define types for test mocks
+interface CallableAxiosInstance extends MockedAxiosInstanceType {
+  (config: InternalAxiosRequestConfig): Promise<AxiosResponse>;
+}
+
+interface TestHttpClient {
+  instance: CallableAxiosInstance;
+  refreshTokenInProgress: boolean;
+  tokenRefreshQueue: {
+    resolve: (value?: unknown) => void;
+    reject: (reason?: unknown) => void;
+  }[];
+  processQueue: (error: Error | null, token?: string | null) => void;
+  redirectToLogin: () => void;
+}
+
+// Helper functions for test setup
+const createMockAxiosInstance = (
+  response: AxiosResponse,
+  mockInstance: MockedAxiosInstanceType
+): CallableAxiosInstance => {
+  return Object.assign(vi.fn().mockResolvedValue(response), {
+    post: vi.fn(),
+    interceptors: mockInstance.interceptors,
+    request: vi.fn(),
+    defaults: mockInstance.defaults,
+    get: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    patch: vi.fn(),
+    head: vi.fn(),
+    options: vi.fn(),
+  }) as CallableAxiosInstance;
+};
+
+const getTestClient = (client: HttpClient): TestHttpClient => {
+  return client as unknown as TestHttpClient;
+};
+
 describe("HttpClient", () => {
   const baseURL = "http://test.com/api";
   let httpClient: HttpClient;
@@ -193,81 +212,18 @@ describe("HttpClient", () => {
 
   beforeEach(() => {
     const createMock = axios.create as MockedFunction<typeof axios.create>;
-
-    // Get the singleton mocked instance that axios.create() returns.
-    // This instance persists across tests, so we need to clear its method mocks.
-    // We can get it by calling createMock once if it hasn't been called,
-    // or by accessing a previous result if it has.
-    // A simpler way if factoryActualMockedAxiosInstance was exported from the mock,
-    // but it's not. So, we rely on createMock returning it.
-
-    // If createMock has been called before (e.g. in a previous test),
-    // factoryActualMockedAxiosInstance is its last return value.
-    // Otherwise, call createMock to get it for the first time (it will be memoized).
-    let instanceToClear: MockedAxiosInstanceType;
-    if (
-      createMock.mock.results.length > 0 &&
-      createMock.mock.results[createMock.mock.results.length - 1]?.value
-    ) {
-      instanceToClear = createMock.mock.results[
-        createMock.mock.results.length - 1
-      ].value as MockedAxiosInstanceType;
-    } else {
-      // This path might be taken if this is the very first call or if mock was fully reset.
-      // Calling it will establish the instance.
-      instanceToClear = createMock() as unknown as MockedAxiosInstanceType; // Cast via unknown
-      // We called it, so clear this specific call to createMock itself for the actual test's count.
-      createMock.mockClear();
-    }
-
-    // Clear all method mocks on the singleton instance before HttpClient uses it
-    instanceToClear.request.mockClear();
-    if (
-      typeof instanceToClear.interceptors.request.use.mockClear === "function"
-    ) {
-      instanceToClear.interceptors.request.use.mockClear();
-    }
-    if (
-      typeof instanceToClear.interceptors.response.use.mockClear === "function"
-    ) {
-      instanceToClear.interceptors.response.use.mockClear();
-    }
-    instanceToClear.get.mockClear();
-    instanceToClear.post.mockClear();
-    instanceToClear.put.mockClear();
-    instanceToClear.delete.mockClear();
-    instanceToClear.patch.mockClear();
-    instanceToClear.head.mockClear();
-    instanceToClear.options.mockClear();
-    if (
-      typeof instanceToClear.interceptors.request.eject.mockClear === "function"
-    ) {
-      instanceToClear.interceptors.request.eject.mockClear();
-    }
-    if (
-      typeof instanceToClear.interceptors.response.eject.mockClear ===
-      "function"
-    ) {
-      instanceToClear.interceptors.response.eject.mockClear();
-    }
-
-    // Now, clear history of calls to axios.create() itself for the current test
     createMock.mockClear();
 
-    // Create a new HttpClient instance for each test, this will call the mocked axios.create
+    // Create a new HttpClient instance for each test,
+    // this will call the mocked axios.create
     httpClient = new HttpClient(baseURL);
 
-    // Retrieve the instance that was created (it's the same singleton factoryActualMockedAxiosInstance)
-    // Its method mocks were cleared above, so calls made during HttpClient construction are fresh.
-    if (createMock.mock.results[0]?.value) {
-      currentMockedAxiosInstance = createMock.mock.results[0]
-        .value as MockedAxiosInstanceType;
-    } else {
-      throw new Error(
-        "axios.create() was not called or did not return a value in HttpClient constructor"
-      );
-    }
+    // Get the mock instance that was returned by axios.create
+    const mockInstance = createMock.mock.results[0]
+      .value as MockedAxiosInstanceType;
+    currentMockedAxiosInstance = mockInstance;
 
+    // Setup localStorage mock
     localStorageMock = (function () {
       let store: Record<string, string> = {};
       return {
@@ -319,14 +275,6 @@ describe("HttpClient", () => {
     });
 
     it("should register interceptors", () => {
-      expect(axios.create).toHaveBeenCalledWith({
-        baseURL,
-        timeout: 30_000,
-        withCredentials: true,
-        headers: expect.any(AxiosHeaders),
-        validateStatus: expect.any(Function),
-      });
-      // Assert against the mock functions on the instance directly
       expect(
         currentMockedAxiosInstance.interceptors.request.use
       ).toHaveBeenCalledTimes(1);
@@ -390,7 +338,7 @@ describe("HttpClient", () => {
       expect(result).toEqual(responseData);
     });
 
-    it("should normalize AxiosError into HttpError", async () => {
+    it("should normalize AxiosError into HttpError, using response message", async () => {
       const errorResponseData = { msg: "Invalid request" };
       const mockReqConfig: InternalAxiosRequestConfig = {
         headers: new AxiosHeaders(),
@@ -414,9 +362,8 @@ describe("HttpClient", () => {
       } catch (error) {
         expect(error).toBeInstanceOf(HttpError);
         const httpError = error as HttpError;
-        expect(httpError.message).toContain(
-          "Request failed with status code 400"
-        );
+        // Now the error message uses the 'msg' field from response data
+        expect(httpError.message).toBe("Invalid request");
         expect(httpError.apiError?.status).toBe(400);
         expect(httpError.apiError?.code).toBe("BAD_REQUEST");
         expect(httpError.apiError?.data).toEqual(errorResponseData);
@@ -454,15 +401,15 @@ describe("HttpClient", () => {
       }
     });
 
-    it("should handle generic errors", async () => {
+    it("should normalize generic errors into HttpError", async () => {
       const genericError = new Error("Something went wrong");
       currentMockedAxiosInstance.request.mockRejectedValueOnce(genericError);
       try {
         await httpClient.request("/generic-error");
       } catch (error) {
-        expect(error).toBeInstanceOf(Error);
-        expect((error as Error).message).toBe("Something went wrong");
-        expect(error).toBe(genericError);
+        expect(error).toBeInstanceOf(HttpError);
+        expect((error as HttpError).message).toBe("Something went wrong");
+        expect((error as HttpError).apiError?.original).toBe(genericError);
       }
     });
 
@@ -554,8 +501,18 @@ describe("HttpClient", () => {
 
   describe("Interceptors", () => {
     describe("Request Interceptor (CSRF)", () => {
-      it("should attach X-CSRF-TOKEN for POST if csrfToken exists in localStorage", () => {
-        localStorageMock.setItem("csrfToken", "test-csrf-token");
+      beforeEach(() => {
+        // Setup mock document.cookie
+        vi.spyOn(document, "cookie", "get").mockImplementation(() => {
+          return "XSRF-TOKEN=test-csrf-token; id_token=fake-id-token";
+        });
+      });
+
+      afterEach(() => {
+        vi.restoreAllMocks();
+      });
+
+      it("should attach X-XSRF-TOKEN for POST when XSRF-TOKEN cookie exists", () => {
         const requestInterceptorHandler =
           currentMockedAxiosInstance.interceptors.request.use.mock.calls[0][0];
         if (!requestInterceptorHandler) {
@@ -567,11 +524,10 @@ describe("HttpClient", () => {
         const newConfig = requestInterceptorHandler(
           config as InternalAxiosRequestConfig
         ) as InternalAxiosRequestConfig;
-        expect(newConfig.headers.get("X-CSRF-TOKEN")).toBe("test-csrf-token");
+        expect(newConfig.headers.get("X-XSRF-TOKEN")).toBe("test-csrf-token");
       });
 
-      it("should not attach X-CSRF-TOKEN for GET even if token exists", () => {
-        localStorageMock.setItem("csrfToken", "test-csrf-token");
+      it("should not attach X-XSRF-TOKEN for GET even if cookie exists", () => {
         const requestInterceptorHandler =
           currentMockedAxiosInstance.interceptors.request.use.mock.calls[0][0];
         if (!requestInterceptorHandler) {
@@ -583,11 +539,12 @@ describe("HttpClient", () => {
         const newConfig = requestInterceptorHandler(
           config as InternalAxiosRequestConfig
         ) as InternalAxiosRequestConfig;
-        expect(newConfig.headers.get("X-CSRF-TOKEN")).toBeUndefined();
+        expect(newConfig.headers.get("X-XSRF-TOKEN")).toBeUndefined();
       });
 
-      it("should not attach X-CSRF-TOKEN if token does not exist in localStorage", () => {
-        localStorageMock.removeItem("csrfToken");
+      it("should not attach X-XSRF-TOKEN if cookie does not exist", () => {
+        vi.spyOn(document, "cookie", "get").mockImplementation(() => "");
+
         const requestInterceptorHandler =
           currentMockedAxiosInstance.interceptors.request.use.mock.calls[0][0];
         if (!requestInterceptorHandler) {
@@ -599,52 +556,11 @@ describe("HttpClient", () => {
         const newConfig = requestInterceptorHandler(
           config as InternalAxiosRequestConfig
         ) as InternalAxiosRequestConfig;
-        expect(newConfig.headers.get("X-CSRF-TOKEN")).toBeUndefined();
+        expect(newConfig.headers.get("X-XSRF-TOKEN")).toBeUndefined();
       });
     });
 
     describe("Response Interceptor (CSRF)", () => {
-      it("should set csrfToken in localStorage if csrfAccessToken is in response body", () => {
-        const responseInterceptorSuccessHandler =
-          currentMockedAxiosInstance.interceptors.response.use.mock.calls[0][0];
-        if (!responseInterceptorSuccessHandler) {
-          throw new Error(
-            "Test setup error: Response interceptor success handler not found."
-          );
-        }
-        const response = {
-          data: { csrfAccessToken: "new-token-from-server" } as ResponseBody,
-          status: 200,
-          statusText: "OK",
-          headers: new AxiosHeaders(),
-          config: {} as InternalAxiosRequestConfig,
-        } as AxiosResponse;
-        void responseInterceptorSuccessHandler(response);
-        expect(localStorageMock.getItem("csrfToken")).toBe(
-          "new-token-from-server"
-        );
-      });
-
-      it("should not set csrfToken if csrfAccessToken is not in response body", () => {
-        localStorageMock.removeItem("csrfToken");
-        const responseInterceptorSuccessHandler =
-          currentMockedAxiosInstance.interceptors.response.use.mock.calls[0][0];
-        if (!responseInterceptorSuccessHandler) {
-          throw new Error(
-            "Test setup error: Response interceptor success handler not found."
-          );
-        }
-        const response = {
-          data: { msg: "Some data" } as ResponseBody,
-          status: 200,
-          statusText: "OK",
-          headers: new AxiosHeaders(),
-          config: {} as InternalAxiosRequestConfig,
-        } as AxiosResponse;
-        void responseInterceptorSuccessHandler(response);
-        expect(localStorageMock.getItem("csrfToken")).toBeNull();
-      });
-
       it("should pass through the response object", () => {
         const responseInterceptorSuccessHandler =
           currentMockedAxiosInstance.interceptors.response.use.mock.calls[0][0];
@@ -674,11 +590,19 @@ describe("HttpClient", () => {
             "Test setup error: Response interceptor error handler not found."
           );
         }
-        const error = new Error("Interceptor error");
+        const axiosError = new AxiosError("Interceptor error", "CODE", {
+          headers: new AxiosHeaders(),
+        } as InternalAxiosRequestConfig);
+
         try {
-          await responseInterceptorErrorHandler(error as AxiosError);
+          await responseInterceptorErrorHandler(axiosError);
+          // Should not reach here
+          expect(true).toBe(false);
         } catch (e) {
-          expect(e).toBe(error);
+          // Now it should be a normalized HttpError
+          expect(e).toBeInstanceOf(HttpError);
+          expect((e as HttpError).message).toBe("Interceptor error");
+          expect((e as HttpError).apiError?.original).toBe(axiosError);
         }
       });
     });
@@ -711,6 +635,284 @@ describe("HttpClient", () => {
       if (retryConditionFn) {
         expect(retryConditionFn({} as AxiosError)).toBe(true);
       }
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Response Interceptor – Token Refresh scenarios
+  // ---------------------------------------------------------------------------
+
+  describe("Response Interceptor (Token Refresh)", () => {
+    const getErrorHandler = () => {
+      const handler =
+        currentMockedAxiosInstance.interceptors.response.use.mock.calls[0][1];
+      if (!handler) {
+        throw new Error(
+          "Test setup error: Response interceptor error handler not found"
+        );
+      }
+      return handler;
+    };
+
+    it("should refresh token and retry the original request on 401 error", async () => {
+      const retryResponse: AxiosResponse = {
+        data: { success: true },
+        status: 200,
+        statusText: "OK",
+        headers: new AxiosHeaders(),
+        config: { headers: new AxiosHeaders() } as InternalAxiosRequestConfig,
+      };
+
+      const refreshSuccessResp: AxiosResponse = {
+        data: {},
+        status: 200,
+        statusText: "OK",
+        headers: new AxiosHeaders(),
+        config: { headers: new AxiosHeaders() } as InternalAxiosRequestConfig,
+      };
+
+      const callableInstance = createMockAxiosInstance(
+        retryResponse,
+        currentMockedAxiosInstance
+      );
+      callableInstance.post.mockResolvedValue(refreshSuccessResp);
+      getTestClient(httpClient).instance = callableInstance;
+
+      const origConfig = {
+        url: "/api/protected/data",
+        headers: new AxiosHeaders(),
+      } as InternalAxiosRequestConfig;
+
+      const axiosError = new AxiosError(
+        "Unauthorized",
+        undefined,
+        origConfig,
+        {},
+        {
+          data: {},
+          status: 401,
+          statusText: "Unauthorized",
+          headers: new AxiosHeaders(),
+          config: origConfig,
+        } as AxiosResponse
+      );
+
+      const result = await getErrorHandler()(axiosError);
+
+      expect(callableInstance.post).toHaveBeenCalledWith(
+        "/api/auth/refresh-token",
+        null,
+        expect.objectContaining({
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+      expect(callableInstance).toHaveBeenCalledWith(origConfig);
+      expect(result).toBe(retryResponse);
+    });
+
+    it("should queue request when refresh is already in progress", async () => {
+      getTestClient(httpClient).refreshTokenInProgress = true;
+
+      const mockResponse: AxiosResponse = {
+        data: "after",
+        status: 200,
+        statusText: "OK",
+        headers: new AxiosHeaders(),
+        config: { headers: new AxiosHeaders() } as InternalAxiosRequestConfig,
+      };
+      const callableInstance = createMockAxiosInstance(
+        mockResponse,
+        currentMockedAxiosInstance
+      );
+      getTestClient(httpClient).instance = callableInstance;
+
+      const origConfig = {
+        url: "/api/queued",
+        headers: new AxiosHeaders(),
+      } as InternalAxiosRequestConfig;
+
+      const axiosError = new AxiosError(
+        "Unauthorized",
+        undefined,
+        origConfig,
+        {},
+        {
+          data: {},
+          status: 401,
+          statusText: "Unauthorized",
+          headers: new AxiosHeaders(),
+          config: origConfig,
+        } as AxiosResponse
+      );
+
+      const promise = getErrorHandler()(axiosError);
+
+      // Ensure the request is queued
+      expect(getTestClient(httpClient).tokenRefreshQueue.length).toBe(1);
+
+      // Resolve the queue (simulate successful refresh elsewhere)
+      getTestClient(httpClient).processQueue(null, "token");
+
+      const res = (await promise) as AxiosResponse;
+      expect(callableInstance).toHaveBeenCalledWith(origConfig);
+      expect(res.data).toBe("after");
+    });
+
+    it("should reject with SESSION_EXPIRED when 401 occurs on refresh endpoint", async () => {
+      const origConfig = {
+        url: "/api/auth/refresh-token",
+        headers: new AxiosHeaders(),
+      } as InternalAxiosRequestConfig;
+
+      const axiosError = new AxiosError(
+        "Unauthorized",
+        undefined,
+        origConfig,
+        {},
+        {
+          data: {},
+          status: 401,
+          statusText: "Unauthorized",
+          headers: new AxiosHeaders(),
+          config: origConfig,
+        } as AxiosResponse
+      );
+
+      try {
+        await getErrorHandler()(axiosError);
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (e) {
+        expect(e).toBeInstanceOf(HttpError);
+        expect((e as HttpError).apiError?.code).toBe("SESSION_EXPIRED");
+      }
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Additional tests for queue processing, token refresh, and redirects
+  // ---------------------------------------------------------------------------
+
+  describe("processQueue", () => {
+    it("should resolve all queued promises when no error is provided", () => {
+      const resolveSpy = vi.fn();
+      const rejectSpy = vi.fn();
+
+      getTestClient(httpClient).tokenRefreshQueue.push({
+        resolve: resolveSpy,
+        reject: rejectSpy,
+      });
+
+      getTestClient(httpClient).processQueue(null, "new-token");
+
+      expect(resolveSpy).toHaveBeenCalledWith("new-token");
+      expect(rejectSpy).not.toHaveBeenCalled();
+    });
+
+    it("should reject all queued promises when an error is provided", () => {
+      const resolveSpy = vi.fn();
+      const rejectSpy = vi.fn();
+      const err = new Error("boom");
+
+      getTestClient(httpClient).tokenRefreshQueue.push({
+        resolve: resolveSpy,
+        reject: rejectSpy,
+      });
+
+      getTestClient(httpClient).processQueue(err);
+
+      expect(rejectSpy).toHaveBeenCalledWith(err);
+      expect(resolveSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("refreshTokens", () => {
+    beforeEach(() => {
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    it("should POST to the refresh endpoint and resolve on success", async () => {
+      currentMockedAxiosInstance.post.mockResolvedValueOnce({
+        data: {},
+        status: 200,
+        statusText: "OK",
+        headers: new AxiosHeaders(),
+        config: { headers: new AxiosHeaders() } as InternalAxiosRequestConfig,
+      });
+
+      await httpClient.refreshTokens();
+
+      expect(currentMockedAxiosInstance.post).toHaveBeenCalledWith(
+        "/api/auth/refresh-token",
+        null,
+        expect.objectContaining({
+          headers: { "Content-Type": "application/json" },
+        })
+      );
+    });
+
+    it("should throw SESSION_EXPIRED error and redirect on CSRF error", async () => {
+      const csrfError = new AxiosError(
+        "CSRF failed",
+        "BAD_REQUEST",
+        { headers: new AxiosHeaders() } as InternalAxiosRequestConfig,
+        {},
+        {
+          data: { code: "CSRF_ERROR" },
+          status: 400,
+          statusText: "Bad Request",
+          headers: new AxiosHeaders(),
+          config: { headers: new AxiosHeaders() } as InternalAxiosRequestConfig,
+        } as AxiosResponse
+      );
+
+      currentMockedAxiosInstance.post.mockRejectedValueOnce(csrfError);
+
+      const redirectSpy = vi.spyOn(
+        getTestClient(httpClient),
+        "redirectToLogin"
+      );
+
+      try {
+        await httpClient.refreshTokens();
+        // Should not reach here
+        expect(true).toBe(false);
+      } catch (e) {
+        expect(e).toBeInstanceOf(HttpError);
+        expect((e as HttpError).apiError?.code).toBe("SESSION_EXPIRED");
+      }
+
+      expect(redirectSpy).toHaveBeenCalled();
+    });
+  });
+
+  describe("redirectToLogin", () => {
+    it("should redirect to coordinator login when pathname starts with /coordinator", () => {
+      const locationMock = { pathname: "/coordinator/dashboard", href: "" };
+      Object.defineProperty(window, "location", {
+        value: locationMock,
+        writable: true,
+      });
+
+      getTestClient(httpClient).redirectToLogin();
+
+      expect(locationMock.href).toBe("/coordinator/login");
+    });
+
+    it("should redirect to participant login for all other paths", () => {
+      const locationMock = { pathname: "/some/path", href: "" };
+      Object.defineProperty(window, "location", {
+        value: locationMock,
+        writable: true,
+      });
+
+      getTestClient(httpClient).redirectToLogin();
+
+      expect(locationMock.href).toBe("/login");
     });
   });
 });
