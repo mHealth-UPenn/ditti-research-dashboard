@@ -50,16 +50,34 @@ const mockHttpClientInstance = new HttpClient("http://fake-base-url.com");
 const TestConsumerComponent: React.FC<{
   url: string;
   config?: Omit<AxiosRequestConfig, "url">;
-  action: "request" | "requestRaw";
-}> = ({ url, config, action }) => {
+  action:
+    | "request"
+    | "requestRaw"
+    | "get"
+    | "post"
+    | "put"
+    | "delete"
+    | "patch";
+  data?: unknown;
+}> = ({ url, config, action, data }) => {
   const client = useHttpClient();
   const handleClick = () => {
     void (async () => {
       try {
         if (action === "request") {
           await client.request(url, config);
-        } else {
+        } else if (action === "requestRaw") {
           await client.requestRawResponse(url, config);
+        } else if (action === "get") {
+          await client.get(url, config);
+        } else if (action === "post") {
+          await client.post(url, data, config);
+        } else if (action === "put") {
+          await client.put(url, data, config);
+        } else if (action === "delete") {
+          await client.delete(url, config);
+        } else {
+          await client.patch(url, data, config);
         }
       } catch {
         // Error is intentionally not used in this test component
@@ -251,5 +269,149 @@ describe("HttpClientContext", () => {
       }
     );
     expect(receivedRawResponse).toEqual(mockRawAxiosResponse);
+  });
+
+  describe("HTTP verb methods", () => {
+    it("should correctly call get method", async () => {
+      const testUrl = "/api/items";
+      const testConfig = { params: { limit: 10 } };
+      const expectedResponse = [
+        { id: 1, name: "Item 1" },
+        { id: 2, name: "Item 2" },
+      ];
+
+      mockRequestFn.mockResolvedValueOnce(expectedResponse);
+
+      render(
+        <HttpClientProvider client={mockHttpClientInstance}>
+          <TestConsumerComponent
+            url={testUrl}
+            config={testConfig}
+            action="get"
+          />
+        </HttpClientProvider>
+      );
+
+      fireEvent.click(screen.getByText("Make Request"));
+      await vi.dynamicImportSettled();
+
+      expect(mockRequestFn).toHaveBeenCalledWith(testUrl, {
+        method: "GET",
+        ...testConfig,
+      });
+    });
+
+    it("should correctly call post method with data", async () => {
+      const testUrl = "/api/items";
+      const testData = { name: "New Item" };
+      const testConfig = { headers: { "X-Custom": "true" } };
+      const expectedResponse = { id: 3, name: "New Item", created: true };
+
+      mockRequestFn.mockResolvedValueOnce(expectedResponse);
+
+      render(
+        <HttpClientProvider client={mockHttpClientInstance}>
+          <TestConsumerComponent
+            url={testUrl}
+            data={testData}
+            config={testConfig}
+            action="post"
+          />
+        </HttpClientProvider>
+      );
+
+      fireEvent.click(screen.getByText("Make Request"));
+      await vi.dynamicImportSettled();
+
+      expect(mockRequestFn).toHaveBeenCalledWith(testUrl, {
+        method: "POST",
+        data: testData,
+        ...testConfig,
+      });
+    });
+
+    it("should correctly call put method with data", async () => {
+      const testUrl = "/api/items/1";
+      const testData = { name: "Updated Item" };
+      const testConfig = { timeout: 5000 };
+      const expectedResponse = { id: 1, name: "Updated Item", updated: true };
+
+      mockRequestFn.mockResolvedValueOnce(expectedResponse);
+
+      render(
+        <HttpClientProvider client={mockHttpClientInstance}>
+          <TestConsumerComponent
+            url={testUrl}
+            data={testData}
+            config={testConfig}
+            action="put"
+          />
+        </HttpClientProvider>
+      );
+
+      fireEvent.click(screen.getByText("Make Request"));
+      await vi.dynamicImportSettled();
+
+      expect(mockRequestFn).toHaveBeenCalledWith(testUrl, {
+        method: "PUT",
+        data: testData,
+        ...testConfig,
+      });
+    });
+
+    it("should correctly call delete method", async () => {
+      const testUrl = "/api/items/1";
+      const testConfig = { headers: { "X-Reason": "Outdated" } };
+      const expectedResponse = { success: true };
+
+      mockRequestFn.mockResolvedValueOnce(expectedResponse);
+
+      render(
+        <HttpClientProvider client={mockHttpClientInstance}>
+          <TestConsumerComponent
+            url={testUrl}
+            config={testConfig}
+            action="delete"
+          />
+        </HttpClientProvider>
+      );
+
+      fireEvent.click(screen.getByText("Make Request"));
+      await vi.dynamicImportSettled();
+
+      expect(mockRequestFn).toHaveBeenCalledWith(testUrl, {
+        method: "DELETE",
+        ...testConfig,
+      });
+    });
+
+    it("should correctly call patch method with data", async () => {
+      const testUrl = "/api/items/1";
+      const testData = { status: "inactive" };
+      const testConfig = { params: { notify: false } };
+      const expectedResponse = { id: 1, status: "inactive", patched: true };
+
+      mockRequestFn.mockResolvedValueOnce(expectedResponse);
+
+      render(
+        <HttpClientProvider client={mockHttpClientInstance}>
+          <TestConsumerComponent
+            url={testUrl}
+            data={testData}
+            config={testConfig}
+            action="patch"
+          />
+        </HttpClientProvider>
+      );
+
+      fireEvent.click(screen.getByText("Make Request"));
+      await vi.dynamicImportSettled();
+
+      expect(mockRequestFn).toHaveBeenCalledWith(testUrl, {
+        method: "PATCH",
+        data: testData,
+        ...testConfig,
+      });
+    });
   });
 });
