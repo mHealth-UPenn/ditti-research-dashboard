@@ -54,7 +54,7 @@ def refresh_token():
                 message_key="no_id_token", status_code=401
             )
 
-        # Decode the token without verification to get the cognito:groups claim
+        # Decode the token without verification to get the iss (issuer) claim
         # This will tell us if this is a participant or researcher
         try:
             claims = jwt.decode(id_token, options={"verify_signature": False})
