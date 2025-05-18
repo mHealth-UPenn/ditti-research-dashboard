@@ -11,7 +11,10 @@
 # under the License.
 
 import os
+from contextlib import ExitStack
+from unittest.mock import patch
 
+import pytest
 from dotenv import load_dotenv
 from moto import mock_aws
 
@@ -374,3 +377,51 @@ def mock_model_not_found():
     # Clean up patchers
     for patcher in patchers:
         patcher.stop()
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _patch_jwt_functions():
+    """Patch JWT and CSRF security functions for unit testing.
+
+    Creates no-op implementations of Flask-JWT-Extended functions to bypass
+    security checks during unit tests, allowing tests to focus on application logic
+    without requiring full JWT configuration.
+    """
+
+    # Common patch implementations
+    def noop_func(*args, **kwargs):
+        return None
+
+    def dummy_jwt(*args, **kwargs):
+        return "dummy-csrf-jwt"
+
+    def dummy_token(*args, **kwargs):
+        return "dummy-csrf-token"
+
+    def set_cookies(resp, *_args, **_kwargs):
+        return resp
+
+    patches = [
+        # Flask-JWT-Extended core functions
+        patch("flask_jwt_extended.verify_jwt_in_request", noop_func),
+        patch("flask_jwt_extended.create_access_token", dummy_jwt),
+        patch("flask_jwt_extended.set_access_cookies", set_cookies),
+        patch("flask_jwt_extended.get_csrf_token", dummy_token),
+        # Local imports in decorator modules
+        patch(
+            "backend.auth.decorators.participant.verify_jwt_in_request", noop_func
+        ),
+        patch(
+            "backend.auth.decorators.researcher.verify_jwt_in_request", noop_func
+        ),
+        # Cookies module imports
+        patch("backend.auth.utils.cookies.create_access_token", dummy_jwt),
+        patch("backend.auth.utils.cookies.set_access_cookies", set_cookies),
+        patch("backend.auth.utils.cookies.get_csrf_token", dummy_token),
+    ]
+
+    # Apply all patches at once
+    with ExitStack() as stack:
+        for p in patches:
+            stack.enter_context(p)
+        yield

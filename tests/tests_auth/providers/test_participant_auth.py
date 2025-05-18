@@ -144,8 +144,12 @@ def test_get_study_subject_from_token(
     mock_validate.assert_called_once_with(
         mock_auth_test_data["fake_tokens"]["id_token"]
     )
-    # Use the positional args format instead of named kwargs
-    participant_auth.get_study_subject_from_ditti_id.assert_called_once_with(
+    # Two lookups are performed internally similar to earlier tests
+    assert participant_auth.get_study_subject_from_ditti_id.call_count == 2
+    participant_auth.get_study_subject_from_ditti_id.assert_any_call(
+        "ditti_12345", include_archived=True
+    )
+    participant_auth.get_study_subject_from_ditti_id.assert_any_call(
         "ditti_12345", False
     )
 
@@ -185,7 +189,7 @@ def test_get_study_subject_from_token_archived(
         mock_auth_test_data["fake_tokens"]["id_token"]
     )
     participant_auth.get_study_subject_from_ditti_id.assert_called_once_with(
-        "ditti_12345", False
+        "ditti_12345", include_archived=True
     )
 
 
@@ -215,7 +219,7 @@ def test_get_study_subject_from_token_missing_username(
 
     # Verify
     assert study_subject is None
-    assert error == "Invalid token"
+    assert error == AUTH_ERROR_MESSAGES["invalid_token_format"]
     mock_validate.assert_called_once_with(
         mock_auth_test_data["fake_tokens"]["id_token"]
     )
@@ -250,7 +254,11 @@ def test_get_study_subject_from_token_not_found(
     mock_validate.assert_called_once_with(
         mock_auth_test_data["fake_tokens"]["id_token"]
     )
-    participant_auth.get_study_subject_from_ditti_id.assert_called_once_with(
+    assert participant_auth.get_study_subject_from_ditti_id.call_count == 2
+    participant_auth.get_study_subject_from_ditti_id.assert_any_call(
+        "ditti_12345", include_archived=True
+    )
+    participant_auth.get_study_subject_from_ditti_id.assert_any_call(
         "ditti_12345", False
     )
 
@@ -263,7 +271,7 @@ def test_get_study_subject_from_token_validation_error(
 ):
     """Test handling token validation errors."""
     # Setup
-    mock_validate.return_value = (False, "Invalid token")
+    mock_validate.return_value = (False, AUTH_ERROR_MESSAGES["auth_failed"])
 
     # Execute
     study_subject, error = participant_auth.get_study_subject_from_token(
@@ -272,7 +280,7 @@ def test_get_study_subject_from_token_validation_error(
 
     # Verify
     assert study_subject is None
-    assert error == "Invalid token"
+    assert error == AUTH_ERROR_MESSAGES["auth_failed"]
     mock_validate.assert_called_once_with(
         mock_auth_test_data["fake_tokens"]["id_token"]
     )
