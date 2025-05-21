@@ -22,6 +22,7 @@
     "eslint.config.js",
     "vite.config.js",
     "tailwind.config.js",
+    "vitest.config.js",
     "tests"
   ]
 }
