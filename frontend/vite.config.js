@@ -43,4 +43,19 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
   },
+  build: {
+    manifest: true,
+    rollupOptions: {
+      output: {
+        format: "es",
+        entryFileNames: "assets/[name].[hash].js",
+        chunkFileNames: "assets/[name].[hash].js",
+        assetFileNames: "assets/[name].[hash].[ext]",
+      },
+    },
+    // Ensure assets are properly handled in production
+    assetsInlineLimit: 0,
+    cssCodeSplit: true,
+    sourcemap: false,
+  },
 });
