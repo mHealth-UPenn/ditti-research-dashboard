@@ -78,18 +78,64 @@ def create_app(testing=False):
     @app.after_request
     def add_security_headers(response: Response):
         """Add security headers to every response."""
-        # Content Security Policy - restrict sources of content
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; img-src 'self' data:; "
-            "script-src 'self' 'unsafe-inline'; "
-            "style-src 'self' 'unsafe-inline'; font-src 'self';"
-        )
+        if app.config["ENV"] in ["development", "testing"]:
+            # Development/Testing environment - permissive CSP
+            response.headers["Content-Security-Policy"] = (
+                # Restricts all resource types to same origin by default
+                "default-src 'self'; "
+                # Allows same-origin images and data URIs
+                "img-src 'self' data:; "
+                # Allows same-origin scripts, inline scripts, eval, Vite server
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:3000; "
+                # Allows same-origin styles, inline styles, Google Fonts, and Quill
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+                # Allows same-origin fonts and Google Fonts
+                "font-src 'self' https://fonts.gstatic.com; "
+                # Allows same-origin connections, Vite dev server, and WebSocket
+                "connect-src 'self' ws://localhost:3000 http://localhost:3000; "
+                # Allows same-origin web workers and blob URLs
+                "worker-src 'self' blob:; "
+                # Allows same-origin child frames and workers and blob URLs
+                "child-src 'self' blob:;"
+                # eval and WebSocket are allowed for Vite HMR
+            )
+        else:
+            # Staging/Production environment - strict CSP with trusted sources
+            cloudfront_domain = app.config.get("CORS_ORIGINS", "")
+            response.headers["Content-Security-Policy"] = (
+                # Restricts all resource types to same origin by default
+                f"default-src 'self'; "
+                # Allows images from same origin, data URIs, and CloudFront
+                f"img-src 'self' data: {cloudfront_domain}; "
+                # Allows scripts from same origin and CloudFront
+                # All scripts are known at build time and served from trusted domains
+                f"script-src 'self' {cloudfront_domain}; "
+                # Allows styles from same origin, inline styles, CloudFront, Google Fonts, and Quill CDN
+                f"style-src 'self' 'unsafe-inline' {cloudfront_domain} https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+                # Allows fonts from same origin, CloudFront, and Google Fonts
+                f"font-src 'self' {cloudfront_domain} https://fonts.gstatic.com; "
+                # Allows connections to same origin and CloudFront
+                f"connect-src 'self' {cloudfront_domain}; "
+                # Prevents site from being embedded in frames (clickjacking protection)
+                f"frame-ancestors 'none'; "
+                # Restricts form submissions to same origin
+                f"form-action 'self'; "
+                # Restricts base tag to same origin
+                f"base-uri 'self'; "
+                # Prevents loading of plugins (Flash, Java, etc.)
+                f"object-src 'none'; "
+                # Allows web workers from same origin and blob URLs
+                f"worker-src 'self' blob:; "
+                # Allows child frames and workers from same origin and blob URLs
+                f"child-src 'self' blob:;"
+            )
+
         # X-Content-Type-Options - prevent MIME type sniffing
         response.headers["X-Content-Type-Options"] = "nosniff"
         # X-Frame-Options - prevents site from being framed and clickjacked
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
         # Strict-Transport-Security - force HTTPS (in production)
-        if not app.debug and not app.testing:
+        if app.config["ENV"] not in ["development", "testing"]:
             response.headers["Strict-Transport-Security"] = (
                 "max-age=31536000; includeSubDomains"
             )
