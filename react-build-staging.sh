@@ -20,7 +20,7 @@ fi
 
 # build the react app
 cd frontend
-npm run build -- --sourcemap true
+npm run build -- --mode staging --sourcemap true
 if [ $? -ne 0 ]; then
     exit 1
 fi
