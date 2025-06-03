@@ -134,6 +134,7 @@ class Staging(Default):
     # JWT cookies are secure in staging
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_SAMESITE = "None"
+    JWT_COOKIE_DOMAIN = ".ditti.us"
 
 
 class Production(Default):
@@ -189,6 +190,7 @@ class Production(Default):
     # JWT cookies are secure in production
     JWT_COOKIE_SECURE = True
     JWT_COOKIE_SAMESITE = "None"
+    JWT_COOKIE_DOMAIN = ".ditti.us"
 
 
 class Testing(Default):
