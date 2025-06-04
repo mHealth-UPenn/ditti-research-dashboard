@@ -93,10 +93,22 @@ def set_auth_cookies(response, token):
     -------
         The response object with set cookies
     """
-    # Environment-aware cookie attributes
-    running_dev = current_app.debug or current_app.testing
-    secure_cookie = not running_dev
-    auth_samesite = "Lax" if running_dev else "None"
+    # Determine cookie attributes consistently
+    # Secure attribute
+    if "JWT_COOKIE_SECURE" in current_app.config:
+        secure_cookie = current_app.config["JWT_COOKIE_SECURE"]
+    else:
+        secure_cookie = not (current_app.debug or current_app.testing)
+
+    # SameSite attribute
+    if "JWT_COOKIE_SAMESITE" in current_app.config:
+        auth_samesite = current_app.config["JWT_COOKIE_SAMESITE"]
+    else:
+        # Infer based on debug/testing status only if not explicitly set in config
+        auth_samesite = (
+            "Lax" if (current_app.debug or current_app.testing) else "None"
+        )
+
     cookie_path = current_app.config.get("JWT_COOKIE_PATH", "/")
     cookie_domain = current_app.config.get("JWT_COOKIE_DOMAIN", None)
 

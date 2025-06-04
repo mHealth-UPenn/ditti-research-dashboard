@@ -392,32 +392,15 @@ def _patch_jwt_functions():
     def noop_func(*args, **kwargs):
         return None
 
-    def dummy_jwt(*args, **kwargs):
-        return "dummy-csrf-jwt"
-
-    def dummy_token(*args, **kwargs):
-        return "dummy-csrf-token"
-
-    def set_cookies(resp, *_args, **_kwargs):
-        return resp
-
     patches = [
-        # Flask-JWT-Extended core functions
+        # Mock JWT verification for general unit testing of views/decorators.
         patch("flask_jwt_extended.verify_jwt_in_request", noop_func),
-        patch("flask_jwt_extended.create_access_token", dummy_jwt),
-        patch("flask_jwt_extended.set_access_cookies", set_cookies),
-        patch("flask_jwt_extended.get_csrf_token", dummy_token),
-        # Local imports in decorator modules
         patch(
             "backend.auth.decorators.participant.verify_jwt_in_request", noop_func
         ),
         patch(
             "backend.auth.decorators.researcher.verify_jwt_in_request", noop_func
         ),
-        # Cookies module imports
-        patch("backend.auth.utils.cookies.create_access_token", dummy_jwt),
-        patch("backend.auth.utils.cookies.set_access_cookies", set_cookies),
-        patch("backend.auth.utils.cookies.get_csrf_token", dummy_token),
     ]
 
     # Apply all patches at once
