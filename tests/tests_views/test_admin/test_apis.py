@@ -145,7 +145,7 @@ def test_api_edit_success(post_admin, create_api):
     assert data_res["msg"] == "API Edited Successfully"
 
     # Verify the API was updated in the database
-    api = Api.query.get(api_id)
+    api = db.session.get(Api, api_id)
     assert api.name == "Edited API Name"
 
 
@@ -166,7 +166,7 @@ def test_api_archive_success(post_admin, create_api):
     assert data_res["msg"] == "API Archived Successfully"
 
     # Verify the API was archived in the database
-    api = Api.query.get(api_id)
+    api = db.session.get(Api, api_id)
     assert api.is_archived
 
 
@@ -293,7 +293,7 @@ def test_api_edit_parameterized(
     assert data_res["msg"] == "API Edited Successfully"
 
     # Verify the name in the database matches what we expect
-    edited_api = Api.query.get(api_id)
+    edited_api = db.session.get(Api, api_id)
     assert edited_api.name == expected_name
 
 

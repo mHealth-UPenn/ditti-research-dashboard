@@ -22,6 +22,7 @@ from backend.commands import (
     init_db_click,
     init_integration_testing_db_click,
 )
+from backend.extensions import db
 from backend.models import (
     AccessGroup,
     Account,
@@ -73,7 +74,7 @@ def test_init_admin_group(runner):
     q2 = Permission.definition == tuple_("*", "*")
     foo = AccessGroup.query.filter(q1).first()
     bar = Permission.query.filter(q2).first()
-    baz = JoinAccessGroupPermission.query.get((foo.id, bar.id))
+    baz = db.session.get(JoinAccessGroupPermission, (foo.id, bar.id))
     assert foo is not None
     assert res.output == repr(foo) + "\n"
     assert bar is not None
@@ -100,7 +101,7 @@ def test_init_admin_account(runner):
     q2 = AccessGroup.name == "Admin"
     foo = Account.query.filter(q1).first()
     bar = AccessGroup.query.filter(q2).first()
-    baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
+    baz = db.session.get(JoinAccountAccessGroup, (foo.id, bar.id))
     assert foo is not None
     assert res.output == repr(foo) + "\n"
     assert bar is not None
@@ -140,18 +141,18 @@ def test_create_researcher_account(runner):
     # Check that the account has access to all groups
     q2 = AccessGroup.name == "Admin"
     bar = AccessGroup.query.filter(q2).first()
-    baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
+    baz = db.session.get(JoinAccountAccessGroup, (foo.id, bar.id))
     assert bar is not None
     assert baz is not None
 
     q3 = AccessGroup.name == "Ditti App Admin"
     bar = AccessGroup.query.filter(q3).first()
-    baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
+    baz = db.session.get(JoinAccountAccessGroup, (foo.id, bar.id))
     assert bar is not None
     assert baz is not None
 
     q4 = AccessGroup.name == "Wearable Dashboard Admin"
     bar = AccessGroup.query.filter(q4).first()
-    baz = JoinAccountAccessGroup.query.get((foo.id, bar.id))
+    baz = db.session.get(JoinAccountAccessGroup, (foo.id, bar.id))
     assert bar is not None
     assert baz is not None

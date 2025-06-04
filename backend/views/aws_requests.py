@@ -24,6 +24,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from flask import Blueprint, current_app, jsonify, make_response, request
 
 from backend.auth.decorators import researcher_auth_required
+from backend.extensions import db
 from backend.models import JoinAccountStudy, Study
 from backend.utils.aws import MutationClient, Query, Updater
 
@@ -424,10 +425,25 @@ def user_edit():
 
     study_ditti_id = re.sub(r"[\d]+", "", user_permission_id)
     study_id = request_data.get("study")
-    study = Study.query.get(study_id)
 
-    # check that the ditti id is valid
-    if study_ditti_id != study.ditti_id:
+    # Check if study_id is valid
+    if study_id:
+        try:
+            study = db.session.get(Study, study_id)
+            if not study or study.is_archived:
+                return make_response(
+                    jsonify(error=f"Invalid study_ditti_id: {study_id}"), 400
+                )
+
+        except Exception:
+            exc = traceback.format_exc()
+            logger.warning(exc)
+            return make_response(
+                {"msg": "Query failed due to internal server error."}, 500
+            )
+
+    # Check that the derived study_ditti_id matches the fetched study
+    if study and study_ditti_id != study.ditti_id:
         return jsonify({"msg": f"Invalid study Ditti ID: {study_ditti_id}"})
 
     query = f'user_permission_id=="{user_permission_id}"'

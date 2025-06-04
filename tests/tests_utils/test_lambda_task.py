@@ -306,18 +306,21 @@ def test_check_and_invoke_lambda_task_exception(
     mock_db_session.commit.assert_not_called()
 
 
+@patch("backend.utils.lambda_task.db.session")
+@patch("backend.utils.lambda_task.boto3.client")
+@patch("backend.utils.lambda_task.datetime")
 def test_invoke_lambda_task_success(
-    app, mock_db_session, mock_query, mock_boto3_client, fixed_datetime
+    mock_datetime, mock_boto3_client, mock_db_session, app, fixed_datetime
 ):
     function_id = 101
+    mock_datetime.now.return_value = fixed_datetime
 
-    # Create a mock LambdaTask instance to be returned by query.get()
+    # Create a mock LambdaTask instance to be returned by session.get()
     mock_task = MagicMock(spec=LambdaTask)
     mock_task.id = function_id
     mock_task.status = "Pending"
     mock_task.updated_on = fixed_datetime
-
-    mock_query.get.return_value = mock_task
+    mock_db_session.get.return_value = mock_task
 
     # Mock boto3 Lambda client
     mock_lambda_client = MagicMock()
@@ -326,8 +329,12 @@ def test_invoke_lambda_task_success(
 
     result = invoke_lambda_task(function_id)
 
-    assert result == mock_task
-    mock_query.get.assert_called_once_with(function_id)
+    # Assert that db.session.get was called correctly and task status updated
+    mock_db_session.get.assert_any_call(LambdaTask, function_id)
+    assert result is mock_task
+    assert mock_task.status == "InProgress"
+    assert mock_task.updated_on == fixed_datetime
+    mock_db_session.commit.assert_called()
 
     mock_boto3_client.assert_called_once_with("lambda")
     mock_lambda_client.invoke.assert_called_once_with(
@@ -336,55 +343,52 @@ def test_invoke_lambda_task_success(
         Payload=b'{"function_id": 101}',
     )
 
-    # Verify that the task status was updated to 'InProgress'
-    mock_task.status = "InProgress"
-    mock_task.updated_on = fixed_datetime
-    mock_db_session.commit.assert_called_once()
 
-
+@patch("backend.utils.lambda_task.db.session")
+@patch("backend.utils.lambda_task.boto3.client")
+@patch("backend.utils.lambda_task.datetime")
 def test_invoke_lambda_task_missing_function_name(
-    app, mock_db_session, mock_query, mock_boto3_client, fixed_datetime
+    mock_datetime, mock_boto3_client, mock_db_session, app, fixed_datetime
 ):
     function_id = 202
     app.config["LAMBDA_FUNCTION_NAME"] = None
+    mock_datetime.now.return_value = fixed_datetime
 
-    # Create a mock LambdaTask instance to be returned by query.get()
+    # Create a mock LambdaTask instance to be returned by session.get()
     mock_task = MagicMock(spec=LambdaTask)
     mock_task.id = function_id
     mock_task.status = "Pending"
     mock_task.updated_on = fixed_datetime
-
-    mock_query.get.return_value = mock_task
+    mock_db_session.get.return_value = mock_task
 
     result = invoke_lambda_task(function_id)
 
-    assert result == mock_task
-    mock_query.get.assert_called_once_with(function_id)
+    # Assert that db.session.get was called to update the status to Failed
+    mock_db_session.get.assert_called_with(LambdaTask, function_id)
+    assert result is mock_task
+    assert mock_task.status == "Failed"
+    assert mock_task.error_code == "LAMBDA_FUNCTION_NAME is not configured."
+    assert mock_task.updated_on == fixed_datetime
 
-    # Since LAMBDA_FUNCTION_NAME is not configured,
-    # boto3 client should not be called
     mock_boto3_client.assert_called_once_with("lambda")
     mock_boto3_client.return_value.invoke.assert_not_called()
 
-    # Verify that the task status was updated to 'Failed'
-    mock_task.status = "Failed"
-    mock_task.error_code = "LAMBDA_FUNCTION_NAME is not configured."
-    mock_task.updated_on = fixed_datetime
-    mock_db_session.commit.assert_called_once()
 
-
+@patch("backend.utils.lambda_task.db.session")
+@patch("backend.utils.lambda_task.boto3.client")
+@patch("backend.utils.lambda_task.datetime")
 def test_invoke_lambda_task_lambda_invoke_exception(
-    app, mock_db_session, mock_query, mock_boto3_client, fixed_datetime
+    mock_datetime, mock_boto3_client, mock_db_session, app, fixed_datetime
 ):
     function_id = 303
+    mock_datetime.now.return_value = fixed_datetime
 
-    # Create a mock LambdaTask instance to be returned by query.get()
+    # Create a mock LambdaTask instance to be returned by session.get()
     mock_task = MagicMock(spec=LambdaTask)
     mock_task.id = function_id
     mock_task.status = "Pending"
     mock_task.updated_on = fixed_datetime
-
-    mock_query.get.return_value = mock_task
+    mock_db_session.get.return_value = mock_task
 
     # Mock boto3 Lambda client to raise an exception on invoke
     mock_lambda_client = MagicMock()
@@ -393,8 +397,12 @@ def test_invoke_lambda_task_lambda_invoke_exception(
 
     result = invoke_lambda_task(function_id)
 
-    assert result == mock_task
-    mock_query.get.assert_called_once_with(function_id)
+    # Assert that db.session.get was called to update the status to Failed
+    mock_db_session.get.assert_called_with(LambdaTask, function_id)
+    assert result is mock_task
+    assert mock_task.status == "Failed"
+    assert mock_task.error_code == "Lambda invocation failed"
+    assert mock_task.updated_on == fixed_datetime
 
     mock_boto3_client.assert_called_once_with("lambda")
     mock_lambda_client.invoke.assert_called_once_with(
@@ -402,9 +410,3 @@ def test_invoke_lambda_task_lambda_invoke_exception(
         InvocationType="Event",
         Payload=b'{"function_id": 303}',
     )
-
-    # Verify that the task status was updated to 'Failed' with the error code
-    mock_task.status = "Failed"
-    mock_task.error_code = "Lambda invocation failed"
-    mock_task.updated_on = fixed_datetime
-    mock_db_session.commit.assert_called_once()

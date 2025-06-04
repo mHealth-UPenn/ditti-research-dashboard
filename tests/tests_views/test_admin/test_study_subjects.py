@@ -247,7 +247,7 @@ def test_study_subject_archive(
     assert data_archive["msg"] == "Study Subject Archived Successfully"
 
     # Verify the subject was archived in the database
-    archived_subject = StudySubject.query.get(subject_id)
+    archived_subject = db.session.get(StudySubject, subject_id)
     assert archived_subject.is_archived is True
 
 
@@ -263,7 +263,7 @@ def test_study_subject_edit_remove_studies(post_admin, create_study_subject):
     subject_id = subject.id
 
     # Verify initial state
-    initial_subject = StudySubject.query.get(subject_id)
+    initial_subject = db.session.get(StudySubject, subject_id)
     assert len(initial_subject.studies) == 1
 
     # Prepare edit data to remove all studies
@@ -278,7 +278,7 @@ def test_study_subject_edit_remove_studies(post_admin, create_study_subject):
     assert data_edit["msg"] == "Study Subject Edited Successfully"
 
     # Verify studies were removed
-    edited_subject = StudySubject.query.get(subject_id)
+    edited_subject = db.session.get(StudySubject, subject_id)
     assert len(edited_subject.studies) == 0
 
 
@@ -294,7 +294,7 @@ def test_study_subject_edit_remove_apis(post_admin, create_study_subject):
     subject_id = subject.id
 
     # Verify initial state
-    initial_subject = StudySubject.query.get(subject_id)
+    initial_subject = db.session.get(StudySubject, subject_id)
     assert len(initial_subject.apis) == 1
 
     # Prepare edit data to remove all APIs
@@ -309,7 +309,7 @@ def test_study_subject_edit_remove_apis(post_admin, create_study_subject):
     assert data_edit["msg"] == "Study Subject Edited Successfully"
 
     # Verify APIs were removed
-    edited_subject = StudySubject.query.get(subject_id)
+    edited_subject = db.session.get(StudySubject, subject_id)
     assert len(edited_subject.apis) == 0
 
 
@@ -348,7 +348,7 @@ def test_study_subject_edit_invalid_scope_type(post_admin, create_study_subject)
     assert data_edit["msg"] == "Study Subject Edited Successfully"
 
     # The API should convert the string scope to a single-item list
-    edited_subject = StudySubject.query.get(subject_id)
+    edited_subject = db.session.get(StudySubject, subject_id)
     assert len(edited_subject.apis) == 1
     assert edited_subject.apis[0].scope == ["read"]
 
@@ -363,7 +363,7 @@ def test_study_subject_edit_associate_existing_api(
     subject_id = subject.id
 
     # Verify initial state
-    initial_subject = StudySubject.query.get(subject_id)
+    initial_subject = db.session.get(StudySubject, subject_id)
     assert len(initial_subject.apis) == 0
 
     # Prepare edit data to add an API
@@ -380,7 +380,7 @@ def test_study_subject_edit_associate_existing_api(
     assert data_edit["msg"] == "Study Subject Edited Successfully"
 
     # Verify API was added
-    edited_subject = StudySubject.query.get(subject_id)
+    edited_subject = db.session.get(StudySubject, subject_id)
     assert len(edited_subject.apis) == 1
     assert edited_subject.apis[0].api_id == 1
     assert edited_subject.apis[0].api_user_uuid == "new-api-association-uuid"
@@ -401,7 +401,7 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
     subject_id = subject.id
 
     # Verify initial state
-    initial_subject = StudySubject.query.get(subject_id)
+    initial_subject = db.session.get(StudySubject, subject_id)
     assert len(initial_subject.studies) == 0
 
     # Format study entry exactly as the API expects - using explicit values
@@ -424,7 +424,7 @@ def test_study_subject_edit_add_existing_study(post_admin, create_study_subject)
     # Instead focus on observed behavior
 
     # Check if the study was actually added despite possible 500 error
-    edited_subject = StudySubject.query.get(subject_id)
+    edited_subject = db.session.get(StudySubject, subject_id)
     print(f"Studies after edit: {[s.study_id for s in edited_subject.studies]}")
 
     # Test passes if either:
@@ -610,7 +610,7 @@ def test_study_subject_edit_success(
     assert data_edit["msg"] == "Study Subject Edited Successfully"
 
     # Fetch the updated subject from the database
-    edited_subject = StudySubject.query.get(subject_id)
+    edited_subject = db.session.get(StudySubject, subject_id)
     assert edited_subject is not None
     assert not edited_subject.is_archived
 

@@ -661,7 +661,8 @@ mindfulness on sleep."""
     ]
 
     for join in study_subject_studies:
-        JoinStudySubjectStudy(**join)
+        new_join = JoinStudySubjectStudy(**join)
+        db.session.add(new_join)
 
     study_subject_apis = [
         {
@@ -698,7 +699,8 @@ mindfulness on sleep."""
     ]
 
     for join in study_subject_apis:
-        JoinStudySubjectApi(**join)
+        new_join = JoinStudySubjectApi(**join)
+        db.session.add(new_join)
 
     db.session.commit()
 
@@ -946,7 +948,7 @@ class Account(db.Model):
         )
 
         # if a study id was passed and the study is not archived
-        if study_id and not Study.query.get(study_id).is_archived:
+        if study_id and not db.session.get(Study, study_id).is_archived:
             # query all permissions that are granted to the account by the
             # study
             q2 = (
@@ -1555,7 +1557,11 @@ class Study(db.Model):
     data_summary = db.Column(db.Text)
     is_qi = db.Column(db.Boolean, default=False, nullable=False)
 
-    roles = db.relationship("JoinStudyRole", cascade="all, delete-orphan")
+    roles = db.relationship(
+        "JoinStudyRole",
+        cascade="all, delete-orphan",
+        back_populates="study",
+    )
 
     @property
     def meta(self):

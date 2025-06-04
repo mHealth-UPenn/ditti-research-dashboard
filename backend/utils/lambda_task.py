@@ -147,7 +147,7 @@ def invoke_lambda_task(function_id):
             executor.submit(send_request, url, data)
 
         # Update the task status to 'InProgress'
-        lambda_task = LambdaTask.query.get(function_id)
+        lambda_task = db.session.get(LambdaTask, function_id)
         if lambda_task:
             lambda_task.status = "InProgress"
             lambda_task.updated_on = datetime.now(UTC)
@@ -160,7 +160,7 @@ def invoke_lambda_task(function_id):
         traceback_str = traceback.format_exc()
         logger.error(traceback_str)
         # Update the LambdaTask status to 'Failed' and set error_code
-        lambda_task = LambdaTask.query.get(function_id)
+        lambda_task = db.session.get(LambdaTask, function_id)
         if lambda_task:
             lambda_task.status = "Failed"
             lambda_task.error_code = str(e)
