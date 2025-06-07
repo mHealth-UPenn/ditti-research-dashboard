@@ -24,7 +24,7 @@ RUN pip3 install boto3 \
     requests-aws4auth \
     "SQLAlchemy>=2.0,<2.1" \
     XlsxWriter==3.2.3 \
-    zappa
+    zappa==0.59.0
 
 COPY . ${LAMBDA_TASK_ROOT}
 

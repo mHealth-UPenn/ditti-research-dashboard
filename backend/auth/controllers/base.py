@@ -176,18 +176,15 @@ class AuthControllerBase:
             if error:
                 return error
 
-            # Set session data
+            # Update session with authenticated user info
             AuthFlowSession.set_user_data(
                 self.user_type,
                 user.id if hasattr(user, "id") else None,
                 userinfo,
             )
 
-            # Create redirect response
-            redirect_url = self.get_redirect_url()
-            response = make_response(redirect(redirect_url))
-
             # Set cookies
+            response = make_response(redirect(self.get_redirect_url()))
             return set_auth_cookies(response, token)
 
         except Exception as e:

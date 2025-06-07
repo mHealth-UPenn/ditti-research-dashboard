@@ -188,10 +188,9 @@ def test_get_account_from_token_archived(
         id_token=mock_auth_test_data["fake_tokens"]["id_token"]
     )
 
-    # The implementation returns None with an error message
+    # The implementation should return archived error constant
     assert account is None
-    # The actual error message has a period at the end, different from the constant
-    assert error == "Account unavailable. Please contact support."
+    assert error == AUTH_ERROR_MESSAGES["account_archived"]
 
 
 @patch(
@@ -220,8 +219,8 @@ def test_get_account_from_token_missing_email(
 
     # Verify
     assert account is None
-    # The implementation returns "Invalid token" not "invalid_credentials"
-    assert error == "Invalid token"
+    # Expect invalid_token_format constant
+    assert error == AUTH_ERROR_MESSAGES["invalid_token_format"]
 
 
 @patch(
@@ -248,7 +247,7 @@ def test_get_account_from_token_not_found(
 
     # Verify
     assert account is None
-    assert error == AUTH_ERROR_MESSAGES["invalid_credentials"]
+    assert error == AUTH_ERROR_MESSAGES["not_found"]
     mock_validate.assert_called_once_with(
         mock_auth_test_data["fake_tokens"]["id_token"]
     )

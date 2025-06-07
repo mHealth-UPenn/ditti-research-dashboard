@@ -21,10 +21,7 @@ from backend.auth.providers.cognito import (
     ParticipantAuth,
     init_participant_oauth_client,
 )
-from backend.auth.utils.responses import (
-    create_error_response,
-    create_success_response,
-)
+from backend.auth.utils import create_error_response, create_success_response
 from backend.extensions import db
 from backend.models import StudySubject
 
@@ -44,7 +41,8 @@ class ParticipantAuthController(AuthControllerBase):
         init_participant_oauth_client()
 
     def get_scope(self):
-        """Get the OAuth scope.
+        """
+        Get the OAuth scope.
 
         Returns
         -------
@@ -54,8 +52,20 @@ class ParticipantAuthController(AuthControllerBase):
         elevated = request.args.get("elevated") == "true"
         return "openid" + (" aws.cognito.signin.user.admin" if elevated else "")
 
+    def get_redirect_url(self):
+        """
+        Get the URL to redirect to after login.
+
+        Returns
+        -------
+            str: The redirect URL
+        """
+        frontend_url = self.get_frontend_url()
+        return f"{frontend_url}"
+
     def get_login_url(self):
-        """Get the login URL.
+        """
+        Get the login URL.
 
         Returns
         -------
@@ -64,7 +74,8 @@ class ParticipantAuthController(AuthControllerBase):
         return f"{self.get_frontend_url()}/login"
 
     def get_or_create_user(self, _token, userinfo):
-        """Get or create study subject from token.
+        """
+        Get or create study subject from token.
 
         Parameters
         ----------
@@ -81,10 +92,12 @@ class ParticipantAuthController(AuthControllerBase):
         ditti_id = userinfo.get("cognito:username")
         if not ditti_id:
             logger.warning("No cognito:username found in userinfo")
-            return None, create_error_response(
-                AUTH_ERROR_MESSAGES["auth_failed"],
-                status_code=401,
-                error_code="MISSING_USERNAME",
+            return (
+                None,
+                create_error_response(
+                    message_key="missing_username",
+                    status_code=401,
+                ),
             )
 
         return self._create_or_get_study_subject(ditti_id)
@@ -116,10 +129,12 @@ class ParticipantAuthController(AuthControllerBase):
                     logger.warning(
                         f"Attempt to login with archived account: {ditti_id}"
                     )
-                    return None, create_error_response(
-                        AUTH_ERROR_MESSAGES["account_archived"],
-                        status_code=403,
-                        error_code="ACCOUNT_ARCHIVED",
+                    return (
+                        None,
+                        create_error_response(
+                            message_key="account_archived",
+                            status_code=403,
+                        ),
                     )
                 return study_subject, None
 
@@ -137,14 +152,17 @@ class ParticipantAuthController(AuthControllerBase):
         except Exception as e:
             logger.error(f"Database error with study subject: {e!s}")
             db.session.rollback()
-            return None, create_error_response(
-                AUTH_ERROR_MESSAGES["system_error"],
-                status_code=500,
-                error_code="DATABASE_ERROR",
+            return (
+                None,
+                create_error_response(
+                    message_key="database_error",
+                    status_code=500,
+                ),
             )
 
     def get_user_from_token(self, id_token):
-        """Get ditti_id from token.
+        """
+        Get ditti_id from ID token.
 
         Parameters
         ----------
@@ -163,26 +181,52 @@ class ParticipantAuthController(AuthControllerBase):
         if not study_subject:
             # Convert string error messages to proper error responses
             if isinstance(error_msg, str):
-                if error_msg == "User profile not found":
-                    return None, create_error_response(
-                        AUTH_ERROR_MESSAGES["not_found"],
-                        status_code=404,
-                        error_code="USER_NOT_FOUND",
+                # Handle not found
+                if error_msg == AUTH_ERROR_MESSAGES["not_found"]:
+                    return (
+                        None,
+                        create_error_response(
+                            message_key="not_found",
+                            status_code=404,
+                        ),
                     )
-                elif error_msg == "Account unavailable. Please contact support.":
-                    return None, create_error_response(
-                        AUTH_ERROR_MESSAGES["account_archived"],
-                        status_code=403,
-                        error_code="ACCOUNT_ARCHIVED",
+                # Handle archived accounts
+                elif error_msg == AUTH_ERROR_MESSAGES["account_archived"]:
+                    return (
+                        None,
+                        create_error_response(
+                            message_key="account_archived",
+                            status_code=403,
+                        ),
                     )
+                # Handle invalid token
+                elif error_msg == AUTH_ERROR_MESSAGES["invalid_token_format"]:
+                    return (
+                        None,
+                        create_error_response(
+                            message_key="invalid_token_format",
+                            status_code=401,
+                        ),
+                    )
+                # Default to generic auth failed
                 else:
-                    return None, create_error_response(
-                        AUTH_ERROR_MESSAGES["auth_failed"],
-                        status_code=401,
-                        error_code="AUTH_FAILED",
+                    return (
+                        None,
+                        create_error_response(
+                            message_key="auth_failed",
+                            status_code=401,
+                        ),
                     )
             # If error_msg is already a response, return it
-            return None, error_msg
+            # If error_msg is None, provide a default error response
+            return (
+                None,
+                error_msg
+                or create_error_response(
+                    message_key="auth_failed",
+                    status_code=401,
+                ),
+            )
 
         return study_subject.ditti_id, None
 

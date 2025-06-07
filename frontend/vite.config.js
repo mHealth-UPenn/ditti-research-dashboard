@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 /* Copyright 2025 The Trustees of the University of Pennsylvania
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may]
@@ -37,5 +38,24 @@ export default defineConfig({
   plugins: [svgr(), react(), tsconfigPaths(), devToolsMapStub],
   server: {
     port: 3000,
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
+  },
+  build: {
+    manifest: true,
+    rollupOptions: {
+      output: {
+        format: "es",
+        entryFileNames: "assets/[name].[hash].js",
+        chunkFileNames: "assets/[name].[hash].js",
+        assetFileNames: "assets/[name].[hash].[ext]",
+      },
+    },
+    // Ensure assets are properly handled in production
+    assetsInlineLimit: 0,
+    cssCodeSplit: true,
+    sourcemap: false,
   },
 });
