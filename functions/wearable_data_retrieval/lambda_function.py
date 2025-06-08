@@ -10,7 +10,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import json
 import logging
 import os
 import traceback
@@ -35,6 +34,7 @@ from sqlalchemy.orm import aliased
 
 from shared.fitbit import get_fitbit_oauth_session
 from shared.lambda_logger import LambdaLogger
+from shared.secrets import get_secret
 from shared.utils.sleep_logs import generate_sleep_logs
 
 TESTING = os.getenv("TESTING") is not None
@@ -694,43 +694,6 @@ class StudySubjectService(DBService):
         )
 
 
-def get_secret(secret_name: str) -> dict:
-    """
-    Retrieve a secret from AWS Secrets Manager.
-
-    Parameters
-    ----------
-    - secret_name (str): The name of the secret to retrieve a value from.
-
-    Returns
-    -------
-    - dict: The secret's value.
-    """
-    # Initialize a session using environment variables
-    session = boto3.session.Session()
-    client = session.client(
-        service_name="secretsmanager", region_name=os.getenv("AWS_REGION")
-    )
-
-    # Fetch the secret
-    response = client.get_secret_value(SecretId=secret_name)
-
-    # Parse and return the secret
-    if "SecretString" in response:
-        secret = response["SecretString"]
-        secret_data = json.loads(secret)
-    else:
-        # Decode binary secret if it"s not a string
-        secret_data = json.loads(response["SecretBinary"].decode("utf-8"))
-
-    logger.info(
-        "Secret retrieved from SecretsManager",
-        extra={"secret_name": secret_name, "num_keys": len(secret_data.keys())},
-    )
-
-    return secret_data
-
-
 def build_url(
     entry: StudySubjectEntry,
     /,
@@ -857,8 +820,8 @@ def handler(event, _context):
             try:
                 config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
                 tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
-                config.update(get_secret(config_secret_name))
-                tokens_config = get_secret(tokens_secret_name)
+                config.update(get_secret(config_secret_name).secret_dict)
+                tokens_config = get_secret(tokens_secret_name).secret_dict
             except Exception as err:
                 logger.error(
                     "Error retrieving secret",

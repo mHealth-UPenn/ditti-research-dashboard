@@ -17,6 +17,8 @@ import boto3
 from botocore.credentials import Credentials
 from botocore.exceptions import ClientError
 
+from shared.secrets import get_secret
+
 logger = logging.getLogger(__name__)
 
 
@@ -62,16 +64,7 @@ class LambdaCredentialsManager:
             return self.credentials
 
         try:
-            response = self.client.get_secret_value(SecretId=self.secret_name)
-            secret_string = response.get("SecretString")
-            if not secret_string:
-                msg = (
-                    f"Secret '{self.secret_name}' "
-                    "does not contain 'SecretString'."
-                )
-                logger.error(msg)
-                raise ValueError(msg)
-            secret_data = json.loads(secret_string)
+            secret_data = get_secret(self.secret_name).secret_dict
             access_key = secret_data.get("LAMBDA_ACCESS_KEY_ID")
             secret_key = secret_data.get("LAMBDA_SECRET_ACCESS_KEY")
             secret_data.get("LAMBDA_AWS_REGION", self.region_name)

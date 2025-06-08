@@ -17,14 +17,23 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 
+from shared.secrets import get_secret
+
 logger = logging.getLogger(__name__)
 
 
 class TokensManager:
     """
-    Manage API tokens using AWS Secrets Manager.
+    Manages the storage and retrieval of API tokens using AWS Secrets Manager.
 
-    Each API has a single secret storing tokens for all study subjects.
+    This class provides a high-level interface for handling API tokens, where
+    each API has a dedicated secret in AWS Secrets Manager. Within each secret,
+    tokens are stored in a key-value format, with the study subject's Ditti ID
+    serving as the key.
+
+    The manager handles the underlying calls to `shared.secrets.get_secret`,
+    ensuring that token retrieval is efficient and leverages the AWS Parameters
+    and Secrets Lambda Extension when available.
     """
 
     def __init__(self, /, *, fstr="{api_name}-tokens"):
@@ -48,11 +57,17 @@ class TokensManager:
 
     def _retrieve_secret(self, secret_name: str) -> dict[str, Any]:
         """
-        Retrieve the secret JSON object from AWS Secrets Manager.
+        Retrieve and parse a secret from AWS Secrets Manager.
+
+        This method acts as a wrapper around the shared `get_secret` function,
+        handling the case where a secret may not yet exist and returning an
+        empty dictionary. This simplifies token management by allowing calling
+        methods to operate on a dictionary object without checking for its
+        existence first.
 
         Parameters
         ----------
-            secret_name (str): The name of the secret.
+            secret_name (str): The name of the secret to retrieve.
 
         Returns
         -------
@@ -60,25 +75,19 @@ class TokensManager:
 
         Raises
         ------
-            ClientError: If there is an error retrieving the secret.
+            ClientError: If an AWS error other than 'ResourceNotFoundException'
+                occurs.
         """
         try:
-            response = self.client.get_secret_value(SecretId=secret_name)
-            secret_string = response.get("SecretString")
-            if secret_string is None:
-                logger.error(f"SecretString not found for secret: {secret_name}")
-                raise KeyError(
-                    f"Secret '{secret_name}' does not contain a SecretString."
-                )
-            secret_data = json.loads(secret_string)
+            secret_data = get_secret(secret_name).secret_dict
             logger.info(f"Retrieved secret for API: {secret_name}")
             return secret_data
-        except self.client.exceptions.ResourceNotFoundException:
-            logger.warning(
-                f"Secret '{secret_name}' not found. It will be created."
-            )
-            return {}
         except ClientError as e:
+            if e.response["Error"]["Code"] == "ResourceNotFoundException":
+                logger.warning(
+                    f"Secret '{secret_name}' not found. It will be created."
+                )
+                return {}
             logger.error(f"Error retrieving secret '{secret_name}': {e}")
             raise
 

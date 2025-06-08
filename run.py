@@ -15,6 +15,8 @@ from logging.config import dictConfig
 
 from dotenv import load_dotenv
 
+from shared.secrets import get_secret
+
 load_dotenv(override=True)
 
 # Set up logging before importing the app
@@ -39,19 +41,14 @@ dictConfig(
 
 # if the app is running in a production environment
 if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
-    import json
-
-    import boto3
-
-    # get the secret"s values
-    client = boto3.client("secretsmanager")
+    # In a deployed environment, secrets are managed by AWS Secrets Manager.
     secret_id = os.getenv("AWS_SECRET_NAME")
-    res = client.get_secret_value(SecretId=secret_id)
-    secret = json.loads(res["SecretString"])
+    if secret_id:
+        secret = get_secret(secret_id).secret_dict
 
-    # export the secret"s values as envirnoment variables
-    for k, v in secret.items():
-        os.environ[k] = v
+        # Export the secret's values as environment variables
+        for k, v in secret.items():
+            os.environ[k] = str(v)
 
 # import the app after the environment variables are exported
 from backend.app import create_app  # noqa: E402
