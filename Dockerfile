@@ -2,6 +2,8 @@ FROM public.ecr.aws/lambda/python:3.12
 
 WORKDIR /var/task
 
+COPY extensions/bootstrap /opt/extensions/aws-parameters-and-secrets-lambda-extension
+
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=run.py
 ENV ZAPPA_RUNNING_IN_DOCKER=True
