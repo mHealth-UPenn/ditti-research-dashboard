@@ -11,6 +11,7 @@
 # under the License.
 
 import json
+from unittest.mock import MagicMock, patch
 
 import pytest
 from botocore.exceptions import ClientError
@@ -28,8 +29,15 @@ def tokens_manager():
         yield tm
 
 
+@pytest.fixture
+def mock_lambda_env(monkeypatch):
+    """Mock the environment variables for a Lambda execution environment."""
+    monkeypatch.setenv("AWS_SESSION_TOKEN", "fake-token")
+    monkeypatch.setenv("AWS_LAMBDA_RUNTIME_API", "foo.bar")
+
+
 def test_add_and_get_api_token(tokens_manager):
-    """Test adding a new API token and retrieving it."""
+    """Test adding a new API token and retrieving it using boto3 fallback."""
     api_name = "Fitbit"
     ditti_id = "123"
     tokens = {
@@ -45,6 +53,37 @@ def test_add_and_get_api_token(tokens_manager):
     retrieved_tokens = tokens_manager.get_api_tokens(api_name, ditti_id)
 
     assert retrieved_tokens == tokens
+
+
+def test_get_api_token_from_extension(tokens_manager, mock_lambda_env):
+    """Test retrieving an API token via the Lambda extension."""
+    api_name = "Fitbit"
+    ditti_id = "123"
+    tokens = {"access_token": "access123", "refresh_token": "refresh123"}
+    secret_name = tokens_manager._get_secret_name(api_name)
+    secret_data = {ditti_id: tokens}
+
+    # Mock the response from the requests.get call
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {
+        "SecretString": json.dumps(secret_data),
+        "VersionId": "1",
+    }
+
+    with patch(
+        "shared.secrets.requests.get", return_value=mock_response
+    ) as mock_get:
+        # Since we are mocking the extension, we don't need to add the token first
+        retrieved_tokens = tokens_manager.get_api_tokens(api_name, ditti_id)
+
+        # Verify the results
+        assert retrieved_tokens == tokens
+        mock_get.assert_called_once()
+        # The secretId should be in the `params` kwarg, not the URL itself.
+        request_kwargs = mock_get.call_args.kwargs
+        assert "params" in request_kwargs
+        assert request_kwargs["params"].get("secretId") == secret_name
 
 
 def test_update_api_token(tokens_manager):
@@ -163,15 +202,18 @@ def test_get_api_tokens_with_no_secret_string(tokens_manager):
     secret_name = f"{api_name}-tokens-testing"
 
     # Create a secret with SecretBinary instead of SecretString
+    # The secret must still contain valid JSON for `get_secret` to work
     tokens_manager.client.create_secret(
-        Name=secret_name, SecretBinary=b"binarydata"
+        Name=secret_name,
+        SecretBinary=json.dumps({}).encode("utf-8"),
     )
 
     with pytest.raises(KeyError) as excinfo:
         tokens_manager.get_api_tokens(api_name, ditti_id)
 
-    assert f"Secret '{secret_name}' does not contain a SecretString." in str(
-        excinfo.value
+    assert (
+        f"Tokens for Study Subject {ditti_id} not found in API '{api_name}'."
+        in str(excinfo.value)
     )
 
 
@@ -207,29 +249,28 @@ def test_add_api_token_client_error(monkeypatch, tokens_manager):
     assert "Access denied" in str(excinfo.value)
 
 
-def test_get_api_tokens_client_error(monkeypatch, tokens_manager):
+def test_get_api_tokens_client_error(tokens_manager):
     """Test handling of ClientError when retrieving an API token."""
     api_name = "Fitbit"
     ditti_id = "333"
 
-    def mock_get_secret_value(*args, **kwargs):
-        raise ClientError(
-            error_response={
-                "Error": {
-                    "Code": "InternalServiceError",
-                    "Message": "Internal service error",
-                }
-            },
-            operation_name="GetSecretValue",
-        )
-
-    # Monkeypatch the get_secret_value method to raise ClientError
-    monkeypatch.setattr(
-        tokens_manager.client, "get_secret_value", mock_get_secret_value
+    mock_sm_client = MagicMock()
+    mock_sm_client.get_secret_value.side_effect = ClientError(
+        error_response={
+            "Error": {
+                "Code": "InternalServiceError",
+                "Message": "Internal service error",
+            }
+        },
+        operation_name="GetSecretValue",
     )
 
-    with pytest.raises(ClientError) as excinfo:
-        tokens_manager.get_api_tokens(api_name, ditti_id)
+    with patch("boto3.session.Session") as mock_session_cls:
+        mock_session_instance = mock_session_cls.return_value
+        mock_session_instance.client.return_value = mock_sm_client
+
+        with pytest.raises(ClientError) as excinfo:
+            tokens_manager.get_api_tokens(api_name, ditti_id)
 
     assert "Internal service error" in str(excinfo.value)
 
