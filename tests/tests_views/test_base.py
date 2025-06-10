@@ -42,3 +42,31 @@ def test_health_check_failure(client):
         assert res.status_code == 500
         assert "msg" in data
         assert data["msg"] == "Service is unhealthy."
+
+
+def test_healthz_endpoint(client):
+    """Test the /healthz endpoint."""
+    # Set the version ID in the app's config for the test
+    version_id = "abc-123-def-456"
+    client.application.config["FLASK_SECRET_KEY_VERSION_ID"] = version_id
+
+    res = client.get("/healthz")
+    data = json.loads(res.data)
+
+    assert res.status_code == 200
+    assert data["status"] == "ok"
+    assert data["flask_secret_key_version_id"] == version_id
+
+
+def test_healthz_endpoint_no_version_id(client):
+    """Test the /healthz endpoint when the version ID is not set."""
+    # Ensure the key is not in the config
+    if "FLASK_SECRET_KEY_VERSION_ID" in client.application.config:
+        del client.application.config["FLASK_SECRET_KEY_VERSION_ID"]
+
+    res = client.get("/healthz")
+    data = json.loads(res.data)
+
+    assert res.status_code == 200
+    assert data["status"] == "ok"
+    assert data["flask_secret_key_version_id"] == "not_set"
