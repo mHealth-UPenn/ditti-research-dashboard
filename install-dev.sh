@@ -12,9 +12,9 @@
 
 #!/bin/bash
 
-# Check if the current version of python is 3.13 and is a virtual environment
-if [[ $(python --version) != "Python 3.13"* || -z "$VIRTUAL_ENV" ]]; then
-    echo "Current version of python is not 3.13 or not a virtual environment. Please activate a 3.13 virtual environment first."
+# Check if the current version of python is 3.12 and is a virtual environment
+if [[ $(python --version) != "Python 3.12"* || -z "$VIRTUAL_ENV" ]]; then
+    echo "Current version of python is not 3.12 or not a virtual environment. Please activate a 3.12 virtual environment first."
     exit 1
 fi
 
