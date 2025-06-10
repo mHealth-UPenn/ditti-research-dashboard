@@ -118,3 +118,21 @@ def touch():
             )
 
     return jsonify(res)
+
+
+@blueprint.route("/healthz")
+def healthz():
+    """
+    Provide a health check endpoint for monitoring purposes.
+
+    This endpoint confirms that the application is running and returns the
+    version ID of the Flask secret key currently in use, which is critical
+    for validating secret rotation.
+    """
+    status = {
+        "status": "ok",
+        "flask_secret_key_version_id": current_app.config.get(
+            "FLASK_SECRET_KEY_VERSION_ID", "not_set"
+        ),
+    }
+    return jsonify(status)
