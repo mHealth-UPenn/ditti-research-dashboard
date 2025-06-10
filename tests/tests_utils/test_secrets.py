@@ -151,21 +151,24 @@ def test_get_secret_boto3_client_error(mock_aws_credentials):
 def test_get_secret_from_extension_malformed_json(
     mock_lambda_env, mock_aws_credentials
 ):
-    """Verify that `get_secret` handles malformed JSON from the extension."""
+    """Verify `get_secret` handles malformed JSON from the extension gracefully."""
     secret_name = "my-secret"
+    # This string is intentionally malformed (uses single quotes)
+    malformed_string = "{'key': 'value'}"
     mock_response = MagicMock()
     mock_response.status_code = 200
-    # The JSON is intentionally malformed
     mock_response.json.return_value = {
-        "SecretString": "{'key': 'value'}",
+        "SecretString": malformed_string,
         "VersionId": "1",
     }
 
-    # Since the extension fails, it should fall back to boto3, which will fail
-    # because the secret doesn't exist in the mock.
+    # The extension call should succeed, and _parse_response_to_payload should
+    # handle the malformed JSON gracefully by returning it as a raw string.
     with patch("requests.get", return_value=mock_response):
-        with pytest.raises(ClientError):
-            get_secret(secret_name)
+        payload = get_secret(secret_name)
+        assert payload.secret_dict is None
+        assert payload.secret_string == malformed_string
+        assert payload.version_id == "1"
 
 
 @mock_aws
@@ -178,5 +181,6 @@ def test_get_secret_boto3_malformed_json(mock_aws_credentials):
     # Store a non-JSON string in the secret
     sm_client.create_secret(Name=secret_name, SecretString="not-json")
 
-    with pytest.raises(json.JSONDecodeError):
-        get_secret(secret_name)
+    payload = get_secret(secret_name)
+    assert payload.secret_dict is None
+    assert payload.secret_string == "not-json"

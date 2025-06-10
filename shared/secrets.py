@@ -27,8 +27,9 @@ logger = logging.getLogger(__name__)
 class SecretPayload:
     """Represents the data retrieved for a secret from AWS Secrets Manager."""
 
-    secret_dict: dict[str, Any]
     version_id: str
+    secret_string: str | None = None
+    secret_dict: dict[str, Any] | None = None
     version_stages: list[str] = field(default_factory=list)
     name: str | None = None
     arn: str | None = None
@@ -36,17 +37,26 @@ class SecretPayload:
 
 def _parse_response_to_payload(response_body: dict[str, Any]) -> SecretPayload:
     """Parse the full response from Secrets Manager into a SecretPayload."""
+    secret_string = ""
     if "SecretString" in response_body:
-        secret_dict = json.loads(response_body["SecretString"])
+        secret_string = response_body["SecretString"]
     elif "SecretBinary" in response_body:
-        secret_dict = json.loads(response_body["SecretBinary"])
+        secret_string = response_body["SecretBinary"].decode("utf-8")
     else:
         raise ValueError(
             "Secret response must contain 'SecretString' or 'SecretBinary'."
         )
 
+    secret_dict = None
+    try:
+        secret_dict = json.loads(secret_string)
+    except json.JSONDecodeError:
+        logger.debug("Secret is not a JSON object, treating as a raw string.")
+        secret_dict = None
+
     return SecretPayload(
         secret_dict=secret_dict,
+        secret_string=secret_string,
         version_id=response_body["VersionId"],
         version_stages=response_body.get("VersionStages", []),
         name=response_body.get("Name"),
