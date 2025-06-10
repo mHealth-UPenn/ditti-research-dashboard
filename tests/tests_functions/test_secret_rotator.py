@@ -23,9 +23,9 @@ from functions.secret_rotator import handler as rotator_handler
 
 # Constants for testing
 SECRET_ARN = (
-    "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret-123456"
+    "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret-123456"  # noqa: S105
 )
-CLIENT_REQUEST_TOKEN = "a-very-long-and-unique-guid"
+CLIENT_REQUEST_TOKEN = "a-very-long-and-unique-guid"  # noqa: S105
 APP_LAMBDA_NAME = "my-test-app-lambda"
 APP_URL = "http://fake-app.example.com"
 
@@ -39,7 +39,7 @@ def mock_env(monkeypatch):
 
 @pytest.fixture
 def mock_sm_client():
-    """Provides a mocked Secrets Manager client."""
+    """Provide a mocked Secrets Manager client."""
     client = MagicMock()
     # Default metadata for a secret enabled for rotation
     client.describe_secret.return_value = {
@@ -59,7 +59,7 @@ def mock_sm_client():
 
 @pytest.fixture
 def mock_lambda_client():
-    """Provides a mocked Lambda client."""
+    """Provide a mocked Lambda client."""
     client = MagicMock()
     # Default lambda configuration
     client.get_function_configuration.return_value = {
@@ -83,9 +83,11 @@ def test_handler_raises_if_rotation_not_enabled(mock_sm_client):
         "Step": "createSecret",
         "ClientRequestToken": CLIENT_REQUEST_TOKEN,
     }
-    with patch("boto3.client", return_value=mock_sm_client):
-        with pytest.raises(ValueError, match="not enabled for rotation"):
-            rotator_handler.lambda_handler(event, None)
+    with (
+        patch("boto3.client", return_value=mock_sm_client),
+        pytest.raises(ValueError, match="not enabled for rotation"),
+    ):
+        rotator_handler.lambda_handler(event, None)
 
 
 @patch("functions.secret_rotator.handler.create_secret")
@@ -126,9 +128,7 @@ def test_handler_calls_test_secret(mock_test_secret, mock_sm_client):
     }
     with patch("boto3.client", return_value=mock_sm_client):
         rotator_handler.lambda_handler(event, None)
-        mock_test_secret.assert_called_once_with(
-            mock_sm_client, SECRET_ARN, CLIENT_REQUEST_TOKEN
-        )
+        mock_test_secret.assert_called_once_with(CLIENT_REQUEST_TOKEN)
 
 
 @patch("functions.secret_rotator.handler.finish_secret")
@@ -189,7 +189,7 @@ def test_set_secret_updates_lambda_env(mock_env, mock_lambda_client):
         )
         assert update_kwargs["FunctionName"] == APP_LAMBDA_NAME
         env_vars = update_kwargs["Environment"]["Variables"]
-        assert env_vars["SECRET_VERSION_STAGE"] == "AWSPENDING"
+        assert env_vars["SECRET_VERSION_STAGE"] == "AWSPENDING"  # noqa: S105
         assert "LAST_SECRET_ROTATION_TIMESTAMP" in env_vars
 
 
@@ -205,7 +205,7 @@ def test_test_secret_success(mock_requests_get, mock_env):
     mock_requests_get.return_value = mock_response
 
     # The function should run without raising an exception
-    rotator_handler.test_secret(None, SECRET_ARN, CLIENT_REQUEST_TOKEN)
+    rotator_handler.test_secret(CLIENT_REQUEST_TOKEN)
 
     mock_requests_get.assert_called_once_with(f"{APP_URL}/healthz", timeout=20)
 
@@ -224,7 +224,7 @@ def test_test_secret_fails_on_wrong_version(mock_requests_get, mock_env):
     with pytest.raises(
         ValueError, match="Application is using the wrong secret version"
     ):
-        rotator_handler.test_secret(None, SECRET_ARN, CLIENT_REQUEST_TOKEN)
+        rotator_handler.test_secret(CLIENT_REQUEST_TOKEN)
 
 
 @patch("functions.secret_rotator.handler.requests.get")
@@ -235,7 +235,7 @@ def test_test_secret_fails_on_http_error(mock_requests_get, mock_env):
     )
 
     with pytest.raises(requests.exceptions.RequestException):
-        rotator_handler.test_secret(None, SECRET_ARN, CLIENT_REQUEST_TOKEN)
+        rotator_handler.test_secret(CLIENT_REQUEST_TOKEN)
 
 
 def test_finish_secret_updates_version_stage(
@@ -246,7 +246,17 @@ def test_finish_secret_updates_version_stage(
     current_version_id = "another-version-id"
     # The version to promote is the CLIENT_REQUEST_TOKEN
 
-    with patch("boto3.client", side_effect=[mock_sm_client, mock_lambda_client]):
+    # Configure the mock to return an environment with the temp variable
+    mock_lambda_client.get_function_configuration.return_value = {
+        "Environment": {
+            "Variables": {
+                "EXISTING_VAR": "value",
+                "SECRET_VERSION_STAGE": "AWSPENDING",
+            }
+        }
+    }
+
+    with patch("boto3.client", return_value=mock_lambda_client):
         rotator_handler.finish_secret(
             mock_sm_client, SECRET_ARN, CLIENT_REQUEST_TOKEN
         )

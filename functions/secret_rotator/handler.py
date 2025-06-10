@@ -5,6 +5,7 @@ import time
 
 import boto3
 import requests
+from botocore.exceptions import ClientError
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -56,7 +57,7 @@ def lambda_handler(event, _context):
         set_secret()
 
     elif step == "testSecret":
-        test_secret(service_client, arn, token)
+        test_secret(token)
 
     elif step == "finishSecret":
         finish_secret(service_client, arn, token)
@@ -79,26 +80,29 @@ def create_secret(service_client, arn, token):
             SecretId=arn, VersionId=token, VersionStage="AWSPENDING"
         )
         logger.info(f"createSecret: Successfully retrieved secret for {arn}.")
-    except service_client.exceptions.ResourceNotFoundException:
-        # Get exclude characters from environment variable.
-        # The Flask secret key can be any string, but for simplicity, we avoid
-        # chars that might cause issues in shells or URLs.
-        exclude_characters = os.environ.get("EXCLUDE_CHARACTERS", "/@\"'\\")
-        # Generate a random password - 32 characters is a good length
-        passwd = service_client.get_random_password(
-            PasswordLength=32, ExcludeCharacters=exclude_characters
-        )
+    except ClientError as e:
+        if e.response["Error"]["Code"] == "ResourceNotFoundException":
+            # Get exclude characters from environment variable.
+            # The Flask secret key can be any string, but for simplicity, we avoid
+            # chars that might cause issues in shells or URLs.
+            exclude_characters = os.environ.get("EXCLUDE_CHARACTERS", "/@\"'\\")
+            # Generate a random password - 32 characters is a good length
+            passwd = service_client.get_random_password(
+                PasswordLength=32, ExcludeCharacters=exclude_characters
+            )
 
-        # Put the secret
-        service_client.put_secret_value(
-            SecretId=arn,
-            ClientRequestToken=token,
-            SecretString=passwd["RandomPassword"],
-            VersionStages=["AWSPENDING"],
-        )
-        logger.info(
-            f"createSecret: Successfully put secret for ARN {arn} and version {token}."
-        )
+            # Put the secret
+            service_client.put_secret_value(
+                SecretId=arn,
+                ClientRequestToken=token,
+                SecretString=passwd["RandomPassword"],
+                VersionStages=["AWSPENDING"],
+            )
+            logger.info(
+                f"createSecret: Successfully put secret for ARN {arn} and version {token}."
+            )
+        else:
+            raise
 
 
 def set_secret():
@@ -126,7 +130,7 @@ def set_secret():
         # Update a dummy env var to trigger redeployment and tell the app to use
         # the pending secret for testing.
         env_vars["LAST_SECRET_ROTATION_TIMESTAMP"] = str(time.time())
-        env_vars["SECRET_VERSION_STAGE"] = "AWSPENDING"
+        env_vars["SECRET_VERSION_STAGE"] = "AWSPENDING"  # noqa: S105
 
         # Update lambda configuration
         lambda_client.update_function_configuration(
@@ -146,7 +150,7 @@ def set_secret():
         raise e
 
 
-def test_secret(service_client, arn, token):
+def test_secret(token):
     """Tests the new secret by querying a health check endpoint on the app.
 
     This function verifies that the application is running and, more importantly,
