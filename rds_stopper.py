@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 
 import boto3
 
+from shared.secrets import get_secret
+
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -32,6 +34,15 @@ def stop():
     -------
     None
     """
+    # In a deployed environment, secrets are managed by AWS Secrets Manager.
+    secret_id = os.getenv("AWS_SECRET_NAME")
+    if secret_id:
+        payload = get_secret(secret_id)
+        if payload.secret_dict:
+            # Export the secret's values as environment variables
+            for k, v in payload.secret_dict.items():
+                os.environ[k] = str(v)
+
     logs = boto3.client("logs")
 
     # get all HTTP requests from the last two hours
