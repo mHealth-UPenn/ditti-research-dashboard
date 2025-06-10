@@ -45,7 +45,7 @@ def create_secret(
     version_stages=None,
     previous_version_data=None,
 ):
-    """Helper function to create a secret in the mocked AWS Secrets Manager."""
+    """Create a secret in the mocked AWS Secrets Manager."""
     from boto3 import client
 
     if version_stages is None:
@@ -67,7 +67,7 @@ def create_secret(
 @mock_aws
 def test_get_secret_from_extension_success(mock_lambda_env, mock_aws_credentials):
     """Verify that `get_secret` successfully retrieves a secret via the Lambda extension."""
-    secret_name = "my-secret"
+    secret_name = "my-secret"  # noqa: S105
     secret_data = {"key": "value"}
     mock_response = MagicMock()
     mock_response.status_code = 200
@@ -92,7 +92,7 @@ def test_get_secret_from_extension_success(mock_lambda_env, mock_aws_credentials
 @mock_aws
 def test_get_secret_boto3_fallback_success(mock_aws_credentials):
     """Verify that `get_secret` successfully falls back to boto3 when the extension is not available."""
-    secret_name = "my-secret"
+    secret_name = "my-secret"  # noqa: S105
     secret_data = {"key": "value"}
     create_secret(secret_name, secret_data)
 
@@ -107,7 +107,7 @@ def test_get_secret_extension_fails_boto3_fallback(
     mock_lambda_env, mock_aws_credentials
 ):
     """Verify that `get_secret` falls back to boto3 when the extension request fails."""
-    secret_name = "my-secret"
+    secret_name = "my-secret"  # noqa: S105
     secret_data = {"key": "value"}
     create_secret(secret_name, secret_data)
 
@@ -122,7 +122,7 @@ def test_get_secret_extension_fails_boto3_fallback(
 @mock_aws
 def test_get_secret_with_version_stage(mock_aws_credentials):
     """Verify `get_secret` can retrieve a specific version using a stage."""
-    secret_name = "my-versioned-secret"
+    secret_name = "my-versioned-secret"  # noqa: S105
     current_data = {"key": "current_value"}
     previous_data = {"key": "previous_value"}
     create_secret(
@@ -141,7 +141,7 @@ def test_get_secret_with_version_stage(mock_aws_credentials):
 @mock_aws
 def test_get_secret_boto3_client_error(mock_aws_credentials):
     """Verify that a ClientError from boto3 is propagated correctly."""
-    secret_name = "non-existent-secret"
+    secret_name = "non-existent-secret"  # noqa: S105
     with pytest.raises(ClientError) as exc_info:
         get_secret(secret_name)
     assert exc_info.value.response["Error"]["Code"] == "ResourceNotFoundException"
@@ -152,7 +152,7 @@ def test_get_secret_from_extension_malformed_json(
     mock_lambda_env, mock_aws_credentials
 ):
     """Verify `get_secret` handles malformed JSON from the extension gracefully."""
-    secret_name = "my-secret"
+    secret_name = "my-secret"  # noqa: S105
     # This string is intentionally malformed (uses single quotes)
     malformed_string = "{'key': 'value'}"
     mock_response = MagicMock()
@@ -174,7 +174,7 @@ def test_get_secret_from_extension_malformed_json(
 @mock_aws
 def test_get_secret_boto3_malformed_json(mock_aws_credentials):
     """Verify that `get_secret` handles malformed JSON from boto3."""
-    secret_name = "my-secret"
+    secret_name = "my-secret"  # noqa: S105
     from boto3 import client
 
     sm_client = client("secretsmanager")
@@ -183,4 +183,4 @@ def test_get_secret_boto3_malformed_json(mock_aws_credentials):
 
     payload = get_secret(secret_name)
     assert payload.secret_dict is None
-    assert payload.secret_string == "not-json"
+    assert payload.secret_string == "not-json"  # noqa: S105

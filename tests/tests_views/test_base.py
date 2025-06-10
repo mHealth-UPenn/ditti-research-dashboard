@@ -69,4 +69,4 @@ def test_healthz_endpoint_no_version_id(client):
 
     assert res.status_code == 200
     assert data["status"] == "ok"
-    assert data["flask_secret_key_version_id"] == "not_set"
+    assert data["flask_secret_key_version_id"] == "not_set"  # noqa: S105
