@@ -83,23 +83,16 @@ list_ips() {
 
 # Main script logic
 if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 <action> <ip> [description]"
+    echo "Usage: $0 <security-group-id> <action> <ip> [description]"
     echo "Actions: add, remove, list"
-    echo "Example: $0 add 203.0.113.1/32 \"Office IP\""
+    echo "Example: $0 sg-01234567890abcdef0 add 203.0.113.1/32 \"Office IP\""
     exit 1
 fi
 
 ACTION="$1"
-IP="$2"
-DESCRIPTION="${3:-Manual addition}"
-
-# Get security group ID
-SG_ID=$(get_security_group_id "ditti-dashboard" "staging")
-
-if [ -z "$SG_ID" ]; then
-    echo "Error: Could not find security group"
-    exit 1
-fi
+SG_ID="$2"
+IP="$3"
+DESCRIPTION="${4:-Manual addition}"
 
 case "$ACTION" in
     "add")

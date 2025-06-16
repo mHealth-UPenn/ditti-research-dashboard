@@ -53,12 +53,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select
-        - 0
-        - - !Cidr
-          - !Ref VpcCIDR
-          - 6
-          - 8
+      CidrBlock: !Select [0, !Cidr [!Ref VpcCIDR, 4, 8]]
       AvailabilityZone: !Select [0, !GetAZs '']
       MapPublicIpOnLaunch: true
       Tags:
@@ -73,12 +68,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select
-        - 1
-        - - !Cidr
-          - !Ref VpcCIDR
-          - 6
-          - 8
+      CidrBlock: !Select [1, !Cidr [!Ref VpcCIDR, 4, 8]]
       AvailabilityZone: !Select [1, !GetAZs '']
       MapPublicIpOnLaunch: true
       Tags:
@@ -96,12 +86,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select
-        - 2
-        - - !Cidr
-          - !Ref VpcCIDR
-          - 6
-          - 8
+      CidrBlock: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
       AvailabilityZone: !Select [0, !GetAZs '']
       Tags:
         - Key: App
@@ -115,12 +100,7 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Select
-        - 3
-        - - !Cidr
-          - !Ref VpcCIDR
-          - 6
-          - 8
+      CidrBlock: !Select [3, !Cidr [!Ref VpcCIDR, 4, 8]]
       AvailabilityZone: !Select [1, !GetAZs '']
       Tags:
         - Key: App
@@ -385,3 +365,9 @@ Outputs:
     Value: !GetAtt BastionHost.PublicIp
     Export:
       Name: !Sub ${AWS::StackName}-BastionHostPublicIP
+
+  BastionSecurityGroupId:
+    Description: Bastion Security Group ID
+    Value: !Ref BastionSecurityGroup
+    Export:
+      Name: !Sub ${AWS::StackName}-BastionSecurityGroupId
