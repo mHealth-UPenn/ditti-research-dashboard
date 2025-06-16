@@ -1,0 +1,154 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Aurora Serverless v2 PostgreSQL cluster in VPC"
+
+Parameters:
+  App:
+    Type: String
+    Default: ditti-dashboard
+    Description: App name
+
+  Environment:
+    Type: String
+    AllowedValues:
+      - staging
+      - prod
+    Description: Environment name
+
+  StackIdentifier:
+    Type: String
+    Description: Identifier for the stack (e.g., jdoe)
+
+  VpcStackName:
+    Type: String
+    Description: Name of the VPC stack to import resources from
+
+  MasterUsername:
+    Type: String
+    Description: Master username for the DB cluster
+
+  PostgresVersion:
+    Type: String
+    Description: Version of PostgreSQL to use for the DB cluster
+
+  DatabaseName:
+    Type: String
+    Description: Name of the database to create
+
+  MinCapacity:
+    Type: Number
+    Default: 0
+    Description: Minimum ACU (Aurora Capacity Units)
+
+  MaxCapacity:
+    Type: Number
+    Default: 2
+    Description: Maximum ACU (Aurora Capacity Units)
+
+  SecondsUntilAutoPause:
+    Type: Number
+    Default: 300
+    Description: Seconds until the DB cluster will automatically pause
+
+Resources:
+  DBSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${App}-${StackIdentifier}-db-credentials
+      Description: Database credentials for Aurora cluster
+      GenerateSecretString:
+        SecretStringTemplate: !Sub '{"username": "${MasterUsername}"}'
+        GenerateStringKey: "password"
+        PasswordLength: 32
+        ExcludeCharacters: '"@/\'
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${StackIdentifier}-db-secret
+
+  DBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: aurora-postgresql
+      EngineMode: provisioned
+      EngineVersion: !Ref PostgresVersion
+      DatabaseName: !Ref DatabaseName
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Sub '{{resolve:secretsmanager:${DBSecret}:SecretString:password}}'
+      DBClusterIdentifier: !Sub ${App}-${StackIdentifier}-aurora-cluster
+      VpcSecurityGroupIds:
+        - Fn::ImportValue: !Sub ${VpcStackName}-RDSSecurityGroupId
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: "03:00-04:00"
+      PreferredMaintenanceWindow: "sun:04:00-sun:05:00"
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: !Ref MinCapacity
+        MaxCapacity: !Ref MaxCapacity
+        SecondsUntilAutoPause: !Ref SecondsUntilAutoPause
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${StackIdentifier}-aurora-cluster
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Aurora cluster
+      SubnetIds:
+        - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet1
+        - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet2
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${StackIdentifier}-db-subnet-group
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: aurora-postgresql
+      DBClusterIdentifier: !Ref DBCluster
+      DBInstanceClass: db.serverless
+      PubliclyAccessible: false
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${StackIdentifier}-aurora-instance
+
+Outputs:
+  DBClusterEndpoint:
+    Description: Aurora cluster endpoint
+    Value: !GetAtt DBCluster.Endpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-DBClusterEndpoint
+
+  DBClusterPort:
+    Description: Aurora cluster port
+    Value: !GetAtt DBCluster.Endpoint.Port
+    Export:
+      Name: !Sub ${AWS::StackName}-DBClusterPort
+
+  DBSecretARN:
+    Description: ARN of the database credentials secret
+    Value: !Ref DBSecret
+    Export:
+      Name: !Sub ${AWS::StackName}-DBSecretARN
