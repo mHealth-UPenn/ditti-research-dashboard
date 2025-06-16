@@ -14,6 +14,10 @@ Parameters:
       - prod
     Description: Environment name
 
+  StackIdentifier:
+    Type: String
+    Description: Identifier for the stack (e.g., jdoe)
+
   VpcCIDR:
     Type: String
     Default: 10.0.0.0/16
@@ -41,10 +45,12 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-vpc
+          Value: !Sub ${App}-${StackIdentifier}-vpc
 
   ##################
   # Public Subnets #
@@ -59,10 +65,12 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-public-subnet-1
+          Value: !Sub ${App}-${StackIdentifier}-public-subnet-1
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -74,10 +82,12 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-public-subnet-2
+          Value: !Sub ${App}-${StackIdentifier}-public-subnet-2
 
   ###################
   # Private Subnets #
@@ -91,10 +101,12 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-private-subnet-1
+          Value: !Sub ${App}-${StackIdentifier}-private-subnet-1
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -105,10 +117,12 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-private-subnet-2
+          Value: !Sub ${App}-${StackIdentifier}-private-subnet-2
 
   ####################
   # Internet Gateway #
@@ -119,10 +133,12 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-igw
+          Value: !Sub ${App}-${StackIdentifier}-igw
 
   InternetGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -147,10 +163,12 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-nat
+          Value: !Sub ${App}-${StackIdentifier}-nat
 
   ################
   # Route Tables #
@@ -162,10 +180,12 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-public-rt
+          Value: !Sub ${App}-${StackIdentifier}-public-rt
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -182,10 +202,12 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-private-rt
+          Value: !Sub ${App}-${StackIdentifier}-private-rt
 
   PrivateRoute:
     Type: AWS::EC2::Route
@@ -235,16 +257,18 @@ Resources:
           ToPort: 5432
           SourceSecurityGroupId: !Ref LambdaSecurityGroup
         - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
+          FromPort: 3306
+          ToPort: 3306
           SourceSecurityGroupId: !Ref BastionSecurityGroup
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-rds-sg
+          Value: !Sub ${App}-${StackIdentifier}-rds-sg
 
   LambdaSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -254,24 +278,27 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-lambda-sg
+          Value: !Sub ${App}-${StackIdentifier}-lambda-sg
 
   BastionSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security group for bastion host
       VpcId: !Ref VPC
-      SecurityGroupIngress: []  # No inbound access by default
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-bastion-sg
+          Value: !Sub ${App}-${StackIdentifier}-bastion-sg
 
   ############################
   # VPC Endpoints for Lambda #
@@ -312,10 +339,12 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${Environment}-bastion
+          Value: !Sub ${App}-${StackIdentifier}-bastion
 
 Outputs:
   VpcId:
