@@ -19,6 +19,15 @@ Parameters:
     Default: 10.0.0.0/16
     Description: CIDR block for the VPC
 
+  BastionAMI:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64
+    Description: AMI ID for the bastion host
+
+  BastionKeyName:
+    Type: String
+    Description: Name of the EC2 key pair for bastion host access
+
 Resources:
   #######
   # VPC #
@@ -245,6 +254,10 @@ Resources:
           FromPort: 5432
           ToPort: 5432
           SourceSecurityGroupId: !Ref LambdaSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref BastionSecurityGroup
       Tags:
         - Key: App
           Value: !Ref App
@@ -265,6 +278,20 @@ Resources:
           Value: !Ref Environment
         - Key: Name
           Value: !Sub ${App}-${Environment}-lambda-sg
+
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for bastion host
+      VpcId: !Ref VPC
+      SecurityGroupIngress: []  # No inbound access by default
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${Environment}-bastion-sg
 
   ############################
   # VPC Endpoints for Lambda #
@@ -289,6 +316,26 @@ Resources:
       SecurityGroupIds:
         - !Ref LambdaSecurityGroup
       VpcEndpointType: Interface
+
+  ################
+  # Bastion Host #
+  ################
+  BastionHost:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref BastionAMI
+      InstanceType: t3.micro
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds:
+        - !Ref BastionSecurityGroup
+      KeyName: !Ref BastionKeyName
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${Environment}-bastion
 
 Outputs:
   VpcId:
@@ -331,4 +378,10 @@ Outputs:
     Description: Lambda Security Group ID
     Value: !Ref LambdaSecurityGroup
     Export:
-      Name: !Sub ${AWS::StackName}-LambdaSecurityGroupId 
+      Name: !Sub ${AWS::StackName}-LambdaSecurityGroupId
+
+  BastionHostPublicIP:
+    Description: Public IP of the bastion host
+    Value: !GetAtt BastionHost.PublicIp
+    Export:
+      Name: !Sub ${AWS::StackName}-BastionHostPublicIP
