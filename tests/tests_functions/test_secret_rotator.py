@@ -207,7 +207,7 @@ def test_test_secret_success(mock_requests_get, mock_env):
     # The function should run without raising an exception
     rotator_handler.test_secret(CLIENT_REQUEST_TOKEN)
 
-    mock_requests_get.assert_called_once_with(f"{APP_URL}/healthz", timeout=20)
+    mock_requests_get.assert_called_once_with(f"{APP_URL}/health", timeout=20)
 
 
 @patch("functions.secret_rotator.handler.requests.get")

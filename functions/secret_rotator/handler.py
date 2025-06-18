@@ -180,7 +180,7 @@ def test_secret(token):
         raise ValueError("APP_URL not set.")
 
     # Construct the full URL for the health check endpoint
-    health_check_url = f"{app_url.rstrip('/')}/healthz"
+    health_check_url = f"{app_url.rstrip('/')}/health"
     logger.info(
         "Testing new secret by querying health check at %s", health_check_url
     )
