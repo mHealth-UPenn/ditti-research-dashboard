@@ -820,8 +820,24 @@ def handler(event, _context):
             try:
                 config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
                 tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
-                config.update(get_secret(config_secret_name).secret_dict)
-                tokens_config = get_secret(tokens_secret_name).secret_dict
+
+                config_payload = get_secret(config_secret_name)
+                if config_payload.secret_dict is None:
+                    logger.error(
+                        "Config secret '%s' returned no data (secret_dict is None).",
+                        config_secret_name,
+                    )
+                    raise ConfigFetchError("Config secret returned no data.")
+                config.update(config_payload.secret_dict)
+
+                tokens_payload = get_secret(tokens_secret_name)
+                if tokens_payload.secret_dict is None:
+                    logger.error(
+                        "Tokens secret '%s' returned no data (secret_dict is None).",
+                        tokens_secret_name,
+                    )
+                    raise ConfigFetchError("Tokens secret returned no data.")
+                tokens_config = tokens_payload.secret_dict
             except Exception as err:
                 logger.error(
                     "Error retrieving secret",

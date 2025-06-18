@@ -80,6 +80,14 @@ class TokensManager:
         """
         try:
             secret_data = get_secret(secret_name).secret_dict
+
+            if secret_data is None:
+                logger.warning(
+                    "Secret '%s' returned no JSON data (secret_dict is None).",
+                    secret_name,
+                )
+                return {}
+
             logger.info(f"Retrieved secret for API: {secret_name}")
             return secret_data
         except ClientError as e:
