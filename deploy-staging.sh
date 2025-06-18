@@ -233,7 +233,8 @@ if [ $NOROTATOR -eq 0 ]; then
             "Effect": "Allow",
             "Action": [
                 "lambda:UpdateFunctionConfiguration",
-                "lambda:GetFunctionConfiguration"
+                "lambda:GetFunctionConfiguration",
+                "lambda:GetFunction"
             ],
             "Resource": "${APP_FUNCTION_ARN}"
         }

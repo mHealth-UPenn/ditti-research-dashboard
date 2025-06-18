@@ -196,46 +196,61 @@ def test_set_secret_updates_lambda_env(mock_env, mock_lambda_client):
 @patch("functions.secret_rotator.handler.requests.get")
 def test_test_secret_success(mock_requests_get, mock_env):
     """Verify test_secret succeeds when the app's health check returns the correct version."""
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "status": "ok",
-        "flask_secret_key_version_id": CLIENT_REQUEST_TOKEN,
-    }
-    mock_requests_get.return_value = mock_response
+    # Skip the wait helper to speed up tests
+    with patch(
+        "functions.secret_rotator.handler._wait_for_lambda_ready",
+        return_value=None,
+    ):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "status": "ok",
+            "flask_secret_key_version_id": CLIENT_REQUEST_TOKEN,
+        }
+        mock_requests_get.return_value = mock_response
 
-    # The function should run without raising an exception
-    rotator_handler.test_secret(CLIENT_REQUEST_TOKEN)
+        # The function should run without raising an exception
+        rotator_handler.test_secret(CLIENT_REQUEST_TOKEN)
 
-    mock_requests_get.assert_called_once_with(f"{APP_URL}/health", timeout=20)
+        mock_requests_get.assert_called_once_with(f"{APP_URL}/health", timeout=20)
 
 
 @patch("functions.secret_rotator.handler.requests.get")
 def test_test_secret_fails_on_wrong_version(mock_requests_get, mock_env):
     """Verify test_secret fails if the app returns the wrong secret version ID."""
-    mock_response = MagicMock()
-    mock_response.status_code = 200
-    mock_response.json.return_value = {
-        "status": "ok",
-        "flask_secret_key_version_id": "some-other-version-id",
-    }
-    mock_requests_get.return_value = mock_response
-
-    with pytest.raises(
-        ValueError, match="Application is using the wrong secret version"
+    # Skip the wait helper to speed up tests
+    with patch(
+        "functions.secret_rotator.handler._wait_for_lambda_ready",
+        return_value=None,
     ):
-        rotator_handler.test_secret(CLIENT_REQUEST_TOKEN)
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "status": "ok",
+            "flask_secret_key_version_id": "some-other-version-id",
+        }
+        mock_requests_get.return_value = mock_response
+
+        with pytest.raises(
+            ValueError, match="Application is using the wrong secret version"
+        ):
+            rotator_handler.test_secret(CLIENT_REQUEST_TOKEN)
 
 
 @patch("functions.secret_rotator.handler.requests.get")
 def test_test_secret_fails_on_http_error(mock_requests_get, mock_env):
     """Verify test_secret fails if the health check request fails."""
-    mock_requests_get.side_effect = requests.exceptions.RequestException(
-        "Connection Error"
-    )
+    # Skip the wait helper to speed up tests
+    with patch(
+        "functions.secret_rotator.handler._wait_for_lambda_ready",
+        return_value=None,
+    ):
+        mock_requests_get.side_effect = requests.exceptions.RequestException(
+            "Connection Error"
+        )
 
-    with pytest.raises(requests.exceptions.RequestException):
-        rotator_handler.test_secret(CLIENT_REQUEST_TOKEN)
+        with pytest.raises(requests.exceptions.RequestException):
+            rotator_handler.test_secret(CLIENT_REQUEST_TOKEN)
 
 
 def test_finish_secret_updates_version_stage(

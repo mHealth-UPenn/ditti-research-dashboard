@@ -162,17 +162,88 @@ def set_secret():
         raise e
 
 
+def _wait_for_lambda_ready(
+    lambda_client: "boto3.client",
+    function_name: str,
+    *,
+    timeout: int = 60,
+    poll_interval: int = 2,
+) -> None:
+    """Block until the specified Lambda function is Active and fully updated.
+
+    Parameters
+    ----------
+    lambda_client:
+        A boto3 Lambda client.
+    function_name:
+        The name or ARN of the Lambda function to check.
+    timeout:
+        Maximum seconds to wait before giving up.
+    poll_interval:
+        Delay between successive *get_function* calls.
+
+    Raises
+    ------
+    RuntimeError
+        If the function enters a *Failed* state or the last update failed.
+    TimeoutError
+        If the function does not become ready within *timeout* seconds.
+    """
+    waited = 0
+    while waited < timeout:
+        try:
+            resp = lambda_client.get_function(FunctionName=function_name)
+            config = resp["Configuration"]
+            state = config.get("State")
+            last_update_status = config.get("LastUpdateStatus")
+
+            logger.info(
+                "Lambda %s state=%s last_update_status=%s",
+                function_name,
+                state,
+                last_update_status,
+            )
+
+            if state == "Failed" or last_update_status == "Failed":
+                raise RuntimeError(
+                    f"Lambda function {function_name} update failed (state={state}, last_update_status={last_update_status})."
+                )
+
+            # Ready when Active and update has finished (Successful or None)
+            if state == "Active" and last_update_status != "InProgress":
+                return
+        except Exception as exc:  # pragma: no cover
+            # Swallow transient API errors but log them for visibility
+            logger.warning("Error checking Lambda state: %s", exc)
+
+        time.sleep(poll_interval)
+        waited += poll_interval
+
+    raise TimeoutError(
+        f"Timed out waiting for Lambda function {function_name} to become Active within {timeout} seconds."
+    )
+
+
 def test_secret(token):
     """Tests the new secret by querying a health check endpoint on the app.
 
     This function verifies that the application is running and, more importantly,
     that it has loaded the correct (pending) version of the secret key.
     """
-    # Wait for the app to restart. This is an arbitrary delay that may need
-    # tuning, but a cold start for a simple Flask app on Lambda should be
-    # well under this.
-    logger.info("Waiting for application to restart with new secret...")
-    time.sleep(15)
+    logger.info(
+        "Waiting for Lambda function to become active after secret rotation..."
+    )
+    app_lambda_name = os.environ.get("APP_LAMBDA_FUNCTION_NAME")
+    if not app_lambda_name:
+        logger.error(
+            "Environment variable APP_LAMBDA_FUNCTION_NAME not set. Cannot test secret."
+        )
+        raise ValueError("APP_LAMBDA_FUNCTION_NAME not set.")
+
+    lambda_client = boto3.client("lambda")
+
+    # Wait until the Lambda update has finished and the function is invocable
+    _wait_for_lambda_ready(lambda_client, app_lambda_name)
 
     app_url = os.environ.get("APP_URL")
     if not app_url:
