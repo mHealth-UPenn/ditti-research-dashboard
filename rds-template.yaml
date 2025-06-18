@@ -1,6 +1,20 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Aurora Serverless v2 PostgreSQL cluster in VPC"
 
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label: "Database"
+        Parameters:
+          - DBSecret
+          - DBCluster
+          - DBSubnetGroup
+          - DBInstance
+      - Label: "Bootstrap"
+        Parameters:
+          - BootStrapImageURI
+          - BootStrapDataARN
+
 Parameters:
   App:
     Type: String
@@ -49,7 +63,22 @@ Parameters:
     Default: 300
     Description: Seconds until the DB cluster will automatically pause
 
+  BootStrapImageURI:
+    Type: String
+    Description: URI of the DB bootstrap Lambda function image
+
+  BootStrapDataARN:
+    Type: String
+    Default: null
+    Description: S3 ARN of the DB bootstrap data Lambda function (optional)
+
+Conditions:
+  IsBootStrapDataARNSet: !Not [!Equals [!Ref BootStrapDataARN, "null"]]
+
 Resources:
+  #############
+  # DB Secret #
+  #############
   DBSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
@@ -70,6 +99,9 @@ Resources:
         - Key: Name
           Value: !Sub ${App}-${StackIdentifier}-db-secret
 
+  ############
+  # DB Setup #
+  ############
   DBCluster:
     Type: AWS::RDS::DBCluster
     Properties:
@@ -133,6 +165,80 @@ Resources:
           Value: !Ref Environment
         - Key: Name
           Value: !Sub ${App}-${StackIdentifier}-aurora-instance
+
+  ################
+  # DB Bootstrap #
+  ################
+  DBBootStrapLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+      Policies:
+        - PolicyName: "db-bootstrap-lambda-role-secret-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "secretsmanager:GetSecretValue"
+                Resource: !Ref DBSecret
+
+  DBBootStrapLambdaFn:
+    Type: AWS::Lambda::Function
+    Properties:
+      Code:
+        ImageUri: !Ref BootStrapImageURI
+      Description: >-
+          BootStrap a newly Created Aurora PostgreSQL Database
+      Handler: lambda_handler.handler
+      MemorySize: 128
+      Role: !GetAtt DBBootStrapLambdaRole.Arn
+      Timeout: 60
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::ImportValue: !Sub ${VpcStackName}-LambdaSecurityGroupId
+        SubnetIds:
+          - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet1
+          - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet2
+      Environment:
+        Variables:
+          DB_HOST: !GetAtt DBCluster.Endpoint.Address
+          DB_PORT: !GetAtt DBCluster.Endpoint.Port
+          DB_USER: !Ref MasterUsername
+          DB_NAME: !Ref DatabaseName
+          DB_SECRET_ARN: !Ref DBSecret
+          DB_BOOTSTRAP_DATA_ARN: !If [IsBootStrapDataARNSet, !Ref BootStrapDataARN, ""]
+
+  DBBootStrapLambdaFnTrigger:
+    Type: Custom::LambdaAPGBootStrap
+    Version: "1.0"
+    Properties:
+      ServiceToken: !GetAtt DBBootStrapLambdaFn.Arn
+
+  DBBootStrapS3AccessPolicyAttachment:
+    Condition: IsBootStrapDataARNSet
+    Type: AWS::IAM::PolicyAttachment
+    Properties:
+      PolicyName: "db-bootstrap-lambda-s3-access"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - "s3:GetObject"
+            Resource: !Ref BootStrapDataARN
+      Roles:
+        - !GetAtt DBBootStrapLambdaRole.Arn
 
 Outputs:
   DBClusterEndpoint:
