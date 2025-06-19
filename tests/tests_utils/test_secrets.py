@@ -18,7 +18,7 @@ import requests
 from botocore.exceptions import ClientError
 from moto import mock_aws
 
-from shared.secrets import get_secret
+from shared.lambda_secrets_provider import get_secret
 
 
 @pytest.fixture

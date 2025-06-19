@@ -17,7 +17,7 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 
-from shared.secrets import get_secret
+from shared.lambda_secrets_provider import get_secret
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,7 @@ class TokensManager:
     tokens are stored in a key-value format, with the study subject's Ditti ID
     serving as the key.
 
-    The manager handles the underlying calls to `shared.secrets.get_secret`,
+    The manager handles the underlying calls to `shared.lambda_secrets_provider.get_secret`,
     ensuring that token retrieval is efficient and leverages the AWS Parameters
     and Secrets Lambda Extension when available.
     """

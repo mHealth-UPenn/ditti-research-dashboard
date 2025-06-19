@@ -72,7 +72,7 @@ def test_get_api_token_from_extension(tokens_manager, mock_lambda_env):
     }
 
     with patch(
-        "shared.secrets.requests.get", return_value=mock_response
+        "shared.lambda_secrets_provider.requests.get", return_value=mock_response
     ) as mock_get:
         # Since we are mocking the extension, we don't need to add the token first
         retrieved_tokens = tokens_manager.get_api_tokens(api_name, ditti_id)

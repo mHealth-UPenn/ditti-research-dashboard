@@ -34,7 +34,7 @@ from sqlalchemy.orm import aliased
 
 from shared.fitbit import get_fitbit_oauth_session
 from shared.lambda_logger import LambdaLogger
-from shared.secrets import get_secret
+from shared.lambda_secrets_provider import get_secret
 from shared.utils.sleep_logs import generate_sleep_logs
 
 TESTING = os.getenv("TESTING") is not None

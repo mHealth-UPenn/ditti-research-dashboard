@@ -16,7 +16,7 @@ from datetime import datetime, timedelta
 
 import boto3
 
-from shared.secrets import get_secret
+from shared.lambda_secrets_provider import get_secret
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

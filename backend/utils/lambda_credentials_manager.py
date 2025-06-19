@@ -17,7 +17,7 @@ import boto3
 from botocore.credentials import Credentials
 from botocore.exceptions import ClientError
 
-from shared.secrets import get_secret
+from shared.lambda_secrets_provider import get_secret
 
 logger = logging.getLogger(__name__)
 
