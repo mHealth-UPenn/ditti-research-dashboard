@@ -62,6 +62,10 @@ def handler(event, context) -> None:
     send_success = partial(cfnresponse.send, event, context, cfnresponse.SUCCESS)
     send_failed = partial(cfnresponse.send, event, context, cfnresponse.FAILED)
 
+    if event["RequestType"] == "Delete":
+        response["Data"] = "Skipping bootstrap on delete."
+        return send_success(response)
+
     secret_arn = os.getenv("DB_SECRET_ARN")
 
     if not secret_arn:
@@ -91,16 +95,18 @@ def handler(event, context) -> None:
 
     try:
         app = create_app(db_uri)
-        logger.info("Creating database")
+        logger.info("Upgrading database")
         with app.app_context():
             upgrade()
-        logger.info("Database created")
+        logger.info("Database upgraded")
     except Exception as e:
-        logger.error(f"Error creating database: {e}")
-        response["Data"] = f"Error creating database: {e}"
+        logger.error(f"Error upgrading database: {e}")
+        response["Data"] = f"Error upgrading database: {e}"
         return send_failed(response)
 
-    if data_arn := os.getenv("DB_BOOTSTRAP_DATA_ARN"):
+    if event["RequestType"] == "Create" and (
+        data_arn := os.getenv("DB_BOOTSTRAP_DATA_ARN")
+    ):
         try:
             filename = save_datafile(data_arn)
         except Exception as e:
@@ -114,5 +120,5 @@ def handler(event, context) -> None:
             response["Data"] = f"Error loading data from file: {e}"
             return send_failed(response)
 
-    response["Data"] = "Database created"
+    response["Data"] = "Database upgraded"
     return send_success(response)
