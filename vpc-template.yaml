@@ -324,6 +324,18 @@ Resources:
         - !Ref LambdaSecurityGroup
       VpcEndpointType: Interface
 
+  VPCEndpointCloudWatchLogs:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
+      VpcId: !Ref VPC
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref LambdaSecurityGroup
+      VpcEndpointType: Interface
+
   ################
   # Bastion Host #
   ################
