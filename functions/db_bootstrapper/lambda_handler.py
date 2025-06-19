@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 DATA_FILE = "/tmp/data.json"  # noqa: S108
 
 
-def create_app(db_uri: str):
+def create_app(db_uri: str) -> Flask:
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -30,24 +30,23 @@ def create_app(db_uri: str):
     return app
 
 
-def get_secret(secret_arn: str):
+def get_secret(secret_arn: str) -> dict:
     logger.info(f"Getting secret from {secret_arn}")
     client = boto3.client("secretsmanager")
     response = client.get_secret_value(SecretId=secret_arn)
     return json.loads(response["SecretString"])
 
 
-def get_data(data_arn: str):
+def get_data(data_arn: str) -> bytes:
     logger.info(f"Loading data from {data_arn}")
     client = boto3.client("s3")
-    response = client.get_object(
-        Bucket=data_arn.split("/")[2], Key=data_arn.split("/")[3]
-    )
+    bucket, key = data_arn.split(":")[-1].split("/")
+    response = client.get_object(Bucket=bucket, Key=key)
     data = response["Body"].read()
     return data
 
 
-def save_datafile(data_arn: str):
+def save_datafile(data_arn: str) -> str:
     logger.info(f"Saving data to file from {data_arn}")
     client = boto3.client("s3")
     client.download_file(
@@ -58,7 +57,7 @@ def save_datafile(data_arn: str):
     return DATA_FILE
 
 
-def handler(event, context):
+def handler(event, context) -> None:
     response = {}
     send_success = partial(cfnresponse.send, event, context, cfnresponse.SUCCESS)
     send_failed = partial(cfnresponse.send, event, context, cfnresponse.FAILED)
