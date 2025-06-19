@@ -238,7 +238,7 @@ Resources:
       Code:
         ImageUri: !Ref BootStrapImageURI
       Description: >-
-          BootStrap a newly Created Aurora PostgreSQL Database
+          Bootstrap a newly created Aurora PostgreSQL Database
       MemorySize: 128
       PackageType: Image
       Role: !GetAtt DBBootStrapLambdaRole.Arn
