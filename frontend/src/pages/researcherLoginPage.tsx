@@ -14,7 +14,6 @@
 import React, { useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { useDbStatus } from "../hooks/useDbStatus";
 import { FullLoader } from "../components/loader/loader";
 import { useEnterKeyLogin } from "../hooks/useKeyboardEvent";
 import { Button } from "../components/buttons/button";
@@ -26,13 +25,12 @@ import "./loginPage.css";
  * Already authenticated researchers are redirected to the coordinator dashboard.
  */
 export const ResearcherLoginPage: React.FC = () => {
-  const loadingDb = useDbStatus();
   const navigate = useNavigate();
 
   const { isResearcherAuthenticated, isResearcherLoading, researcherLogin } =
     useAuth();
   // Setup Enter key to trigger login when not loading
-  useEnterKeyLogin(!loadingDb, researcherLogin);
+  useEnterKeyLogin(true, researcherLogin);
 
   /**
    * Redirects already authenticated researchers to the coordinator dashboard
@@ -50,14 +48,6 @@ export const ResearcherLoginPage: React.FC = () => {
 
   return (
     <>
-      <FullLoader
-        loading={loadingDb}
-        msg={
-          loadingDb
-            ? "Starting the database... This may take up to 6 minutes"
-            : ""
-        }
-      />
       <div
         className="mx-auto flex h-screen w-screen bg-extra-light sm:px-12
           md:w-max xl:px-20"
