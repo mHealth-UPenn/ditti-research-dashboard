@@ -14,7 +14,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 import boto3
 import requests
@@ -23,20 +23,35 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 
+T = TypeVar("T")
+
+
 @dataclass
-class SecretPayload:
+class SecretPayload(Generic[T]):
     """Represents the data retrieved for a secret from AWS Secrets Manager."""
 
     version_id: str
     secret_string: str | None = None
-    secret_dict: dict[str, Any] | None = None
+    secret_dict: T | None = None
     version_stages: list[str] = field(default_factory=list)
     name: str | None = None
     arn: str | None = None
 
 
 def _parse_response_to_payload(response_body: dict[str, Any]) -> SecretPayload:
-    """Parse the full response from Secrets Manager into a SecretPayload."""
+    """
+    Parse the full response from AWS Secrets Manager into a SecretPayload.
+
+    Parameters
+    ----------
+    response_body : dict[str, Any]
+        The raw response from AWS Secrets Manager.
+
+    Returns
+    -------
+    SecretPayload
+        The parsed secret payload with metadata.
+    """
     secret_string = ""
     if "SecretString" in response_body:
         secret_string = response_body["SecretString"]
@@ -47,7 +62,7 @@ def _parse_response_to_payload(response_body: dict[str, Any]) -> SecretPayload:
             "Secret response must contain 'SecretString' or 'SecretBinary'."
         )
 
-    secret_dict = None
+    secret_dict: dict[str, Any] | None = None
     try:
         secret_dict = json.loads(secret_string)
     except json.JSONDecodeError:
@@ -175,3 +190,47 @@ def get_secret(
             e,
         )
         raise
+
+
+class SecretProvider(Generic[T]):
+    """
+    Generic provider for retrieving and parsing AWS Secrets Manager secrets.
+
+    This class wraps `get_secret` and enables type-safe access to secret payloads.
+
+    Example
+    -------
+    >>> from typing import TypedDict
+    >>> class MySecretSchema(TypedDict):
+    ...     username: str
+    ...     password: str
+    >>> provider = SecretProvider[MySecretSchema]("my-secret-name")
+    >>> payload = provider.get_secret()
+    >>> user = payload.secret_dict["username"]  # type-checked
+    """
+
+    def __init__(
+        self,
+        secret_name: str,
+        *,
+        version_id: str | None = None,
+        version_stage: str | None = None,
+    ) -> None:
+        self._secret_name = secret_name
+        self._version_id = version_id
+        self._version_stage = version_stage
+
+    def get_secret(self) -> "SecretPayload[T]":
+        """
+        Retrieve and parse the secret, preserving the type parameter `T`.
+
+        Returns
+        -------
+        SecretPayload[T]
+            The parsed secret payload with the correct type for `secret_dict`.
+        """
+        return get_secret(
+            self._secret_name,
+            version_id=self._version_id,
+            version_stage=self._version_stage,
+        )  # type: ignore[return-value]
