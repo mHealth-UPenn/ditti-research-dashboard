@@ -4,16 +4,53 @@ Description: "Aurora Serverless v2 PostgreSQL cluster in VPC"
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label: "Database"
+      - Label:
+          default: Stack Config
         Parameters:
-          - DBSecret
-          - DBCluster
-          - DBSubnetGroup
-          - DBInstance
-      - Label: "Bootstrap"
+          - App
+          - Environment
+          - StackIdentifier
+          - VpcStackName
+      - Label:
+          default: Database Config
+        Parameters:
+          - MasterUsername
+          - PostgresVersion
+          - DatabaseName
+          - MinCapacity
+          - MaxCapacity
+          - SecondsUntilAutoPause
+      - Label:
+          default: Bootstrap Config
         Parameters:
           - BootStrapImageURI
           - BootStrapDataARN
+
+    ParameterLabels:
+      App:
+        default: App
+      Environment:
+        default: Environment
+      StackIdentifier:
+        default: Stack Identifier
+      VpcStackName:
+        default: VPC Stack Name
+      MasterUsername:
+        default: Master Username
+      PostgresVersion:
+        default: Postgres Version
+      DatabaseName:
+        default: Database Name
+      MinCapacity:
+        default: Min ACU
+      MaxCapacity:
+        default: Max ACU
+      SecondsUntilAutoPause:
+        default: Seconds Until Auto Pause
+      BootStrapImageURI:
+        default: Boot Strap Image URI
+      BootStrapDataARN:
+        default: Boot Strap Data ARN (Optional)
 
 Parameters:
   App:
@@ -69,11 +106,11 @@ Parameters:
 
   BootStrapDataARN:
     Type: String
-    Default: null
+    Default: ""
     Description: S3 ARN of the DB bootstrap data Lambda function (optional)
 
 Conditions:
-  IsBootStrapDataARNSet: !Not [!Equals [!Ref BootStrapDataARN, "null"]]
+  IsBootStrapDataARNSet: !Not [!Equals [!Ref BootStrapDataARN, ""]]
 
 Resources:
   #############
@@ -196,12 +233,14 @@ Resources:
   DBBootStrapLambdaFn:
     Type: AWS::Lambda::Function
     Properties:
+      Architectures:
+        - x86_64
       Code:
         ImageUri: !Ref BootStrapImageURI
       Description: >-
           BootStrap a newly Created Aurora PostgreSQL Database
-      Handler: lambda_handler.handler
       MemorySize: 128
+      PackageType: Image
       Role: !GetAtt DBBootStrapLambdaRole.Arn
       Timeout: 60
       VpcConfig:
@@ -227,7 +266,7 @@ Resources:
 
   DBBootStrapS3AccessPolicyAttachment:
     Condition: IsBootStrapDataARNSet
-    Type: AWS::IAM::PolicyAttachment
+    Type: AWS::IAM::RolePolicy
     Properties:
       PolicyName: "db-bootstrap-lambda-s3-access"
       PolicyDocument:
@@ -237,8 +276,7 @@ Resources:
             Action:
               - "s3:GetObject"
             Resource: !Ref BootStrapDataARN
-      Roles:
-        - !GetAtt DBBootStrapLambdaRole.Arn
+      RoleName: !Ref DBBootStrapLambdaRole
 
 Outputs:
   DBClusterEndpoint:
