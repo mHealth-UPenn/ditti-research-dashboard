@@ -257,8 +257,8 @@ Resources:
           ToPort: 5432
           SourceSecurityGroupId: !Ref LambdaSecurityGroup
         - IpProtocol: tcp
-          FromPort: 3306
-          ToPort: 3306
+          FromPort: 5432
+          ToPort: 5432
           SourceSecurityGroupId: !Ref BastionSecurityGroup
       Tags:
         - Key: App
@@ -275,6 +275,10 @@ Resources:
     Properties:
       GroupDescription: Security group for Lambda functions
       VpcId: !Ref VPC
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
       Tags:
         - Key: App
           Value: !Ref App
@@ -328,6 +332,18 @@ Resources:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
+      VpcId: !Ref VPC
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref LambdaSecurityGroup
+      VpcEndpointType: Interface
+
+  VPCEndpointRDS:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.rds
       VpcId: !Ref VPC
       SubnetIds:
         - !Ref PrivateSubnet1
