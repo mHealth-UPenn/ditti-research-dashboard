@@ -25,6 +25,8 @@ Metadata:
         Parameters:
           - BootStrapImageURI
           - BootStrapDataARN
+          - BootStrapApplicationLogLevel
+          - BootStrapSystemLogLevel
 
     ParameterLabels:
       App:
@@ -51,6 +53,10 @@ Metadata:
         default: Boot Strap Image URI
       BootStrapDataARN:
         default: Boot Strap Data ARN (Optional)
+      BootStrapApplicationLogLevel:
+        default: Boot Strap Application Log Level
+      BootStrapSystemLogLevel:
+        default: Boot Strap System Log Level
 
 Parameters:
   App:
@@ -109,6 +115,27 @@ Parameters:
     Default: ""
     Description: S3 ARN of the DB bootstrap data Lambda function (optional)
 
+  BootStrapApplicationLogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - TRACE
+      - DEBUG
+      - INFO
+      - WARNING
+      - ERROR
+      - FATAL
+    Description: Log level for the DB bootstrap Lambda function
+
+  BootStrapSystemLogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - DEBUG
+      - INFO
+      - WARN
+    Description: Log level for the DB bootstrap Lambda function
+
 Conditions:
   IsBootStrapDataARNSet: !Not [!Equals [!Ref BootStrapDataARN, ""]]
 
@@ -159,6 +186,7 @@ Resources:
         MinCapacity: !Ref MinCapacity
         MaxCapacity: !Ref MaxCapacity
         SecondsUntilAutoPause: !Ref SecondsUntilAutoPause
+      Port: 5432
       Tags:
         - Key: App
           Value: !Ref App
@@ -243,6 +271,11 @@ Resources:
       PackageType: Image
       Role: !GetAtt DBBootStrapLambdaRole.Arn
       Timeout: 60
+      LoggingConfig:
+        ApplicationLogLevel: !Ref BootStrapApplicationLogLevel
+        LogFormat: JSON
+        LogGroup: !Sub ${App}-${StackIdentifier}-db-bootstrap-lambda-log-group
+        SystemLogLevel: !Ref BootStrapSystemLogLevel
       VpcConfig:
         SecurityGroupIds:
           - Fn::ImportValue: !Sub ${VpcStackName}-LambdaSecurityGroupId
@@ -261,6 +294,7 @@ Resources:
   DBBootStrapLambdaFnTrigger:
     Type: Custom::LambdaAPGBootStrap
     Version: "1.0"
+    DependsOn: DBInstance
     Properties:
       ServiceToken: !GetAtt DBBootStrapLambdaFn.Arn
 
