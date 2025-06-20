@@ -1,6 +1,8 @@
 import json
 import logging
 import os
+import socket
+import time
 from functools import partial
 
 import boto3
@@ -21,6 +23,22 @@ logger = logging.getLogger(__name__)
 DATA_FILE = "/tmp/data.json"  # noqa: S108
 
 
+def retry_with_backoff(func, max_retries=5, initial_delay=1):
+    """Retry a function with exponential backoff."""
+    delay = initial_delay
+    for attempt in range(max_retries):
+        try:
+            return func()
+        except Exception as e:
+            if attempt == max_retries - 1:
+                raise e
+            logger.warning(
+                f"Attempt {attempt + 1} failed: {e}. Retrying in {delay} seconds..."
+            )
+            time.sleep(delay)
+            delay *= 2
+
+
 def create_app(db_uri: str) -> Flask:
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
@@ -37,21 +55,13 @@ def get_secret(secret_arn: str) -> dict:
     return json.loads(response["SecretString"])
 
 
-def get_data(data_arn: str) -> bytes:
-    logger.info(f"Loading data from {data_arn}")
-    client = boto3.client("s3")
-    bucket, key = data_arn.split(":")[-1].split("/")
-    response = client.get_object(Bucket=bucket, Key=key)
-    data = response["Body"].read()
-    return data
-
-
 def save_datafile(data_arn: str) -> str:
     logger.info(f"Saving data to file from {data_arn}")
     client = boto3.client("s3")
+    bucket, key = data_arn.split(":")[-1].split("/")
     client.download_file(
-        Bucket=data_arn.split("/")[2],
-        Key=data_arn.split("/")[3],
+        Bucket=bucket,
+        Key=key,
         Filename=DATA_FILE,
     )
     return DATA_FILE
@@ -93,11 +103,51 @@ def handler(event, context) -> None:
     password = secret["password"]
     db_uri = f"postgresql://{username}:{password}@{host}:{port}/{database}"
 
+    # Debug connection details
+    logger.info(
+        f"Database connection details:"
+        f"\n  Host: {host}"
+        f"\n  Port: {port}"
+        f"\n  Database: {database}"
+        f"\n  Username: {username}"
+        f"\n  Connection URI: postgresql://{username}:***@{host}:{port}/{database}"
+    )
+
+    # Debug DNS resolution
+    try:
+        logger.info(f"Attempting to resolve hostname: {host}")
+        resolved_ip = socket.gethostbyname(host)
+        logger.info(f"Successfully resolved {host} to {resolved_ip}")
+    except socket.gaierror as e:
+        logger.error(f"Failed to resolve hostname {host}: {e}")
+        response["Data"] = f"DNS resolution failed for {host}: {e}"
+        return send_failed(response)
+
+    # Test TCP connection
+    try:
+        logger.info(f"Testing TCP connection to {host}:{port}")
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(10)
+        result = sock.connect_ex((host, int(port)))
+        sock.close()
+        if result == 0:
+            logger.info(f"TCP connection to {host}:{port} successful")
+        else:
+            logger.warning(
+                f"TCP connection to {host}:{port} failed with error code {result}"
+            )
+    except Exception as e:
+        logger.warning(f"TCP connection test failed: {e}")
+
     try:
         app = create_app(db_uri)
         logger.info("Upgrading database")
-        with app.app_context():
-            upgrade()
+
+        def upgrade_database():
+            with app.app_context():
+                upgrade()
+
+        retry_with_backoff(upgrade_database)
         logger.info("Database upgraded")
     except Exception as e:
         logger.error(f"Error upgrading database: {e}")
@@ -107,6 +157,7 @@ def handler(event, context) -> None:
     if event["RequestType"] == "Create" and (
         data_arn := os.getenv("DB_BOOTSTRAP_DATA_ARN")
     ):
+        logger.debug(f"DB_BOOTSTRAP_DATA_ARN: {data_arn}")
         try:
             filename = save_datafile(data_arn)
         except Exception as e:
