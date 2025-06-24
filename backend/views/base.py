@@ -27,28 +27,42 @@ logger = logging.getLogger(__name__)
 @blueprint.route("/health")
 def health_check():
     """
-    Health check endpoint to verify the service is running.
+    Verify the service is running and the flask secret key version.
 
     Response Syntax (200)
     ---------------------
     {
-        msg: "Service is healthy."
+        "msg": "Service is healthy.",
+        "flask_secret_key_version_id": "..."
     }
 
     Response syntax (500)
     ---------------------
     {
-        msg: "Service is unhealthy."
+        "msg": "Service is unhealthy.",
+        "flask_secret_key_version_id": "..."
     }
     """
+    version_id = current_app.config.get("FLASK_SECRET_KEY_VERSION_ID", "not_set")
     try:
         with db.engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        return jsonify({"msg": "Service is healthy."})
+        return jsonify(
+            {
+                "msg": "Service is healthy.",
+                "flask_secret_key_version_id": version_id,
+            }
+        )
     except Exception:
         exc = traceback.format_exc()
         logger.error(exc)
-        return make_response({"msg": "Service is unhealthy."}, 500)
+        return make_response(
+            {
+                "msg": "Service is unhealthy.",
+                "flask_secret_key_version_id": version_id,
+            },
+            500,
+        )
 
 
 @blueprint.route("/touch")

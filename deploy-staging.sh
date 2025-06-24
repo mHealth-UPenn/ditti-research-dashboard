@@ -13,6 +13,7 @@
 NOTESTS=0
 NOBUILD=0
 NOCACHE=0
+NOROTATOR=0
 TAG=latest
 
 # parse arguments
@@ -28,6 +29,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-cache)
             NOCACHE=1
+            shift
+            ;;
+        --no-rotator)
+            NOROTATOR=1
             shift
             ;;
         -t|--tag)
@@ -56,6 +61,41 @@ DOCKER_IMAGE=${DOCKER_SERVER}/${AWS_ECR_REPO_NAME}:${TAG}
 # if --no-build was not used
 if [ $NOBUILD -eq 0 ]; then
 
+    # --- AWS Parameters and Secrets Lambda Extension ---
+    # To improve performance and reduce costs, the application uses the
+    # AWS-Parameters-and-Secrets-Extension. This extension retrieves and
+    # caches secrets from AWS Secrets Manager. The following steps download
+    # the extension, making it available to the Docker build process.
+    echo "Downloading AWS Parameters and Secrets Lambda Extension..."
+
+    # A specific, known-working public ARN for the extension is used here
+    # to avoid potential permission errors with `list-layer-versions` or
+    # `ssm:GetParameter` that can occur when attempting to dynamically find
+    # the latest version.
+    # NOTE: This version may need to be updated in the future.
+    EXTENSION_ARN="arn:aws:lambda:${AWS_REGION}:177933569100:layer:AWS-Parameters-and-Secrets-Lambda-Extension:17"
+
+    # Retrieve the presigned download URL for the layer's content.
+    LAYER_DOWNLOAD_URL=$(aws lambda get-layer-version-by-arn \
+        --arn "$EXTENSION_ARN" \
+        --query 'Content.Location' \
+        --output text)
+
+    if [ -z "$LAYER_DOWNLOAD_URL" ]; then
+        echo "Failed to get download URL for the layer. Check if the ARN is correct and the region is supported."
+        exit 1
+    fi
+
+    # Download and unzip the extension
+    curl -L "$LAYER_DOWNLOAD_URL" --output extension.zip
+    unzip -q extension.zip # This creates an `extensions` directory
+    if [ $? -ne 0 ]; then
+        echo "Failed to unzip the extension."
+        rm -f extension.zip
+        rm -rf extensions
+        exit 1
+    fi
+
     # login docker
     aws ecr get-login-password | docker login --username AWS --password-stdin ${DOCKER_SERVER}
     if [ $? -ne 0 ]; then
@@ -83,6 +123,9 @@ if [ $NOBUILD -eq 0 ]; then
         docker buildx build --platform linux/amd64 --provenance=false --output=type=docker -t ${DOCKER_IMAGE} .
     fi
     rm zappa_settings.py
+    # Clean up the downloaded extension files after the build.
+    rm -f extension.zip
+    rm -rf extensions
 
     if [ $? -ne 0 ]; then
         exit 1
@@ -105,6 +148,105 @@ else
 
     # update the app
     zappa update staging -d ${DOCKER_IMAGE}
+fi
+
+if [ $NOROTATOR -eq 0 ]; then
+    APP_URL=$(zappa status staging -j | jq -r '."API Gateway URL"')
+    if [ -z "$APP_URL" ]; then
+        echo "Failed to get App URL for staging. Exiting."
+        exit 1
+    fi
+    # Deploy/update the secret rotator Lambda
+    ROTATOR_STAGE="fs-rotator-stg"
+    ROTATOR_ECR_REPO_NAME="fs-rotator-stg"
+    ROTATOR_PROJECT_NAME="fs-rotator"
+    ROTATOR_FUNCTION_NAME="${ROTATOR_PROJECT_NAME}-${ROTATOR_STAGE}"
+    ROTATOR_ROLE_NAME="${ROTATOR_FUNCTION_NAME}-ZappaLambdaExecutionRole"
+    SECRET_NAME="flask-secret-key-staging"
+    # Dynamically retrieve the Lambda function name for the staging app
+    APP_FUNCTION_NAME=$(zappa status staging -j | jq -r '."Lambda Name"')
+    if [ -z "$APP_FUNCTION_NAME" ]; then
+        echo "Failed to get Lambda function name for staging. Exiting."
+        exit 1
+    fi
+
+    ROTATOR_DOCKER_SERVER=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+    ROTATOR_DOCKER_IMAGE=${ROTATOR_DOCKER_SERVER}/${ROTATOR_ECR_REPO_NAME}:${TAG}
+
+    echo "Checking for secret rotator ECR repository..."
+    aws ecr describe-repositories --repository-names ${ROTATOR_ECR_REPO_NAME} > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        echo "Creating ECR repository ${ROTATOR_ECR_REPO_NAME}..."
+        aws ecr create-repository --repository-name ${ROTATOR_ECR_REPO_NAME} > /dev/null
+    fi
+
+    echo "Building and pushing the secret rotator image..."
+    (cd functions/secret_rotator && docker buildx build --platform linux/amd64 --provenance=false --output=type=docker -t ${ROTATOR_DOCKER_IMAGE} .)
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+    docker push ${ROTATOR_DOCKER_IMAGE}
+    if [ $? -ne 0 ]; then
+        exit 1
+    fi
+
+    echo "Checking status of ${ROTATOR_STAGE}..."
+    zappa status $ROTATOR_STAGE &> /dev/null
+    if [ $? -eq 1 ]; then
+        echo "Deploying ${ROTATOR_STAGE} for the first time..."
+        # deploy the rotator
+        zappa deploy $ROTATOR_STAGE -d ${ROTATOR_DOCKER_IMAGE}
+    else
+        echo "Updating ${ROTATOR_STAGE}..."
+        # update the rotator
+        zappa update $ROTATOR_STAGE -d ${ROTATOR_DOCKER_IMAGE}
+    fi
+
+    echo "Applying IAM policies and environment variables for ${ROTATOR_STAGE}..."
+    SECRET_ARN=$(aws secretsmanager describe-secret --secret-id ${SECRET_NAME} --query ARN --output text)
+    if [ $? -ne 0 ]; then
+        echo "Failed to get ARN for secret ${SECRET_NAME}. Please ensure it exists."
+        exit 1
+    fi
+    APP_FUNCTION_ARN="arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:${APP_FUNCTION_NAME}"
+
+    POLICY_JSON=$(cat <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:PutSecretValue",
+                "secretsmanager:UpdateSecretVersionStage"
+            ],
+            "Resource": "${SECRET_ARN}"
+        },
+        {
+            "Effect": "Allow",
+            "Action": "secretsmanager:GetRandomPassword",
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "lambda:UpdateFunctionConfiguration",
+                "lambda:GetFunctionConfiguration",
+                "lambda:GetFunction"
+            ],
+            "Resource": "${APP_FUNCTION_ARN}"
+        }
+    ]
+}
+EOF
+)
+
+    aws iam put-role-policy --role-name "${ROTATOR_ROLE_NAME}" --policy-name SecretsManagerRotatorPolicy --policy-document "${POLICY_JSON}"
+    aws lambda remove-permission --function-name "${ROTATOR_FUNCTION_NAME}" --statement-id secrets-manager-rotator-invoke-permission > /dev/null 2>&1 || true
+    aws lambda add-permission --function-name "${ROTATOR_FUNCTION_NAME}" --statement-id secrets-manager-rotator-invoke-permission --action lambda:InvokeFunction --principal secretsmanager.amazonaws.com --source-arn "${SECRET_ARN}"
+    aws lambda update-function-configuration --function-name "${ROTATOR_FUNCTION_NAME}" --environment "Variables={APP_LAMBDA_FUNCTION_NAME=${APP_FUNCTION_NAME},APP_URL=${APP_URL}}"
 fi
 
 # echo "Enabling CORS..."

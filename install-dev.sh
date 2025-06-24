@@ -12,9 +12,9 @@
 
 #!/bin/bash
 
-# Check if the current version of python is 3.13 and is a virtual environment
-if [[ $(python --version) != "Python 3.13"* || -z "$VIRTUAL_ENV" ]]; then
-    echo "Current version of python is not 3.13 or not a virtual environment. Please activate a 3.13 virtual environment first."
+# Check if the current version of python is 3.12 and is a virtual environment
+if [[ $(python --version) != "Python 3.12"* || -z "$VIRTUAL_ENV" ]]; then
+    echo "Current version of python is not 3.12 or not a virtual environment. Please activate a 3.12 virtual environment first."
     exit 1
 fi
 
@@ -42,5 +42,23 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
+# Create a dummy extension file inside the wearable_data_retrieval function's
+# directory to allow the dev Docker build to succeed.
+# This file is not used at runtime in the dev environment.
+echo "Creating dummy extension file for Docker build..."
+DUMMY_DIR="functions/wearable_data_retrieval/extensions"
+mkdir -p "$DUMMY_DIR"
+touch "$DUMMY_DIR/bootstrap"
+
 # Run the Python installation script
 python -c "from install.installer import Installer; Installer('dev').run()"
+
+# Capture the exit code of the installer
+exit_code=$?
+
+# Clean up the dummy extension file regardless of the outcome
+echo "Cleaning up dummy extension file..."
+rm -rf "$DUMMY_DIR"
+
+# Exit with the installer's exit code
+exit $exit_code

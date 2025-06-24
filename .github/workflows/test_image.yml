@@ -33,6 +33,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Create dummy Lambda extension file
+        run: |
+          mkdir -p extensions
+          touch extensions/bootstrap
+
       - name: Build Docker image
         run: docker build -t flask-app .
 

@@ -29,6 +29,8 @@ env/**/*
 env312/**/*
 *.env
 *logfile
+extensions/
+extension.zip
 
 !flask.env
 !postgres.env

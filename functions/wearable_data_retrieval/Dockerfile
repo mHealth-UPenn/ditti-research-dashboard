@@ -1,6 +1,8 @@
 # Use the AWS Lambda Python base image
 FROM public.ecr.aws/lambda/python:3.12
 
+COPY extensions/bootstrap /opt/extensions/aws-parameters-and-secrets-lambda-extension
+
 # Install OS-level dependencies and PostgreSQL client
 RUN microdnf install -y \
     postgresql-libs \

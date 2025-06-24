@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- [**Python 3.13**](https://docs.python.org/3/whatsnew/3.13.html): We recommend using Python 3.13 for development.
+- [**Python 3.12**](https://docs.python.org/3/whatsnew/3.12.html): We recommend using Python 3.12 for development.
 - [**AWS CLI**](https://aws.amazon.com/cli/): Installing and [configuring](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-quickstart.html#getting-started-quickstart-new-command): the AWS CLI before getting started.
 - [**Docker**](https://www.docker.com/): Services are run locally using Docker for development.
 - [**Node.js v22**](https://nodejs.org/en/blog/release/v22.11.0): Our frontend is built using Node.js v22.
@@ -41,11 +41,11 @@ Running the install framework outputs a `project-config.json` with details about
 
 ## Setup
 
-1. Create a Python3.13 virtual environment and install project requirements.
+1. Create a Python 3.12 virtual environment and install project requirements.
 
    ```bash
-   python3.13 -m venv env
-   source env/bin/activate
+   python3.12 -m venv env312
+   source env312/bin/activate
    pip install -r requirements.txt
    ```
 
