@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Script to manage IP whitelisting for bastion host security group
-# Usage: ./whitelist-bastion-ip.sh <action> <ip> [description]
+# Script to manage IP whitelisting for NAT instance and bastion host security group
+# Usage: ./whitelist-bastion-ip.sh [security-group-id] <action> <ip> [description]
 # Actions: add, remove, list
-# Example: ./whitelist-bastion-ip.sh add 203.0.113.1/32 "Office IP"
+# Examples: 
+#   ./whitelist-bastion-ip.sh sg-01234567890abcdef0 add 203.0.113.1/32 "Office IP"
 
 set -e
 
@@ -19,23 +20,20 @@ if ! command -v jq &> /dev/null; then
     exit 1
 fi
 
-# Function to get the security group ID
-get_security_group_id() {
-    local app_name="$1"
-    local environment="$2"
-    local sg_name="${app_name}-${environment}-bastion-sg"
-
-    aws ec2 describe-security-groups \
-        --filters "Name=group-name,Values=$sg_name" \
-        --query 'SecurityGroups[0].GroupId' \
-        --output text
-}
-
 # Function to validate IP address format
 validate_ip() {
     local ip="$1"
     if [[ ! $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}$ ]]; then
         echo "Error: Invalid IP format. Use CIDR notation (e.g., 203.0.113.1/32)"
+        exit 1
+    fi
+}
+
+# Function to validate security group ID format
+validate_sg_id() {
+    local sg_id="$1"
+    if [[ ! $sg_id =~ ^sg-[a-f0-9]{17}$ ]]; then
+        echo "Error: Invalid security group ID format. Use format: sg-01234567890abcdef0"
         exit 1
     fi
 }
@@ -83,16 +81,23 @@ list_ips() {
 
 # Main script logic
 if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 <security-group-id> <action> <ip> [description]"
+    echo "Usage: $0 [security-group-id] <action> <ip> [description]"
     echo "Actions: add, remove, list"
-    echo "Example: $0 sg-01234567890abcdef0 add 203.0.113.1/32 \"Office IP\""
+    echo ""
+    echo "Examples:"
+    echo "  $0 sg-01234567890abcdef0 add 203.0.113.1/32 \"Office IP\""
     exit 1
 fi
 
-ACTION="$1"
-SG_ID="$2"
+SG_ID="$1"
+ACTION="$2"
 IP="$3"
 DESCRIPTION="${4:-Manual addition}"
+
+# Validate security group ID
+validate_sg_id "$SG_ID"
+
+echo "Using provided security group: $SG_ID"
 
 case "$ACTION" in
     "add")
