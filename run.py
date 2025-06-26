@@ -15,7 +15,7 @@ from logging.config import dictConfig
 
 from dotenv import load_dotenv
 
-from shared.secrets import get_secret
+from shared.lambda_secrets_provider import get_secret
 
 load_dotenv(override=True)
 

@@ -163,7 +163,12 @@ if [ $NOROTATOR -eq 0 ]; then
     ROTATOR_FUNCTION_NAME="${ROTATOR_PROJECT_NAME}-${ROTATOR_STAGE}"
     ROTATOR_ROLE_NAME="${ROTATOR_FUNCTION_NAME}-ZappaLambdaExecutionRole"
     SECRET_NAME="flask-secret-key-staging"
-    APP_FUNCTION_NAME="aws-portal-staging-staging"
+    # Dynamically retrieve the Lambda function name for the staging app
+    APP_FUNCTION_NAME=$(zappa status staging -j | jq -r '."Lambda Name"')
+    if [ -z "$APP_FUNCTION_NAME" ]; then
+        echo "Failed to get Lambda function name for staging. Exiting."
+        exit 1
+    fi
 
     ROTATOR_DOCKER_SERVER=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
     ROTATOR_DOCKER_IMAGE=${ROTATOR_DOCKER_SERVER}/${ROTATOR_ECR_REPO_NAME}:${TAG}
@@ -228,7 +233,8 @@ if [ $NOROTATOR -eq 0 ]; then
             "Effect": "Allow",
             "Action": [
                 "lambda:UpdateFunctionConfiguration",
-                "lambda:GetFunctionConfiguration"
+                "lambda:GetFunctionConfiguration",
+                "lambda:GetFunction"
             ],
             "Resource": "${APP_FUNCTION_ARN}"
         }

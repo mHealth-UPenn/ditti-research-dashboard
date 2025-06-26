@@ -17,7 +17,7 @@ import boto3
 from botocore.credentials import Credentials
 from botocore.exceptions import ClientError
 
-from shared.secrets import get_secret
+from shared.lambda_secrets_provider import get_secret
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,16 @@ class LambdaCredentialsManager:
 
         try:
             secret_data = get_secret(self.secret_name).secret_dict
+
+            if secret_data is None:
+                logger.error(
+                    "Secret '%s' returned no data (secret_dict is None).",
+                    self.secret_name,
+                )
+                raise ValueError(
+                    "Unable to retrieve Lambda credentials; secret is empty."
+                )
+
             access_key = secret_data.get("LAMBDA_ACCESS_KEY_ID")
             secret_key = secret_data.get("LAMBDA_SECRET_ACCESS_KEY")
             secret_data.get("LAMBDA_AWS_REGION", self.region_name)
