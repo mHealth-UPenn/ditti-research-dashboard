@@ -146,20 +146,40 @@ Resources:
       InternetGatewayId: !Ref InternetGateway
       VpcId: !Ref VPC
 
-  ###############
-  # NAT Gateway #
-  ###############
-  NatGatewayEIP:
+  ################
+  # NAT Instance #
+  ################
+  NatInstanceEIP:
     Type: AWS::EC2::EIP
     DependsOn: InternetGatewayAttachment
     Properties:
       Domain: vpc
 
-  NatGateway:
-    Type: AWS::EC2::NatGateway
+  NatInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
-      AllocationId: !GetAtt NatGatewayEIP.AllocationId
-      SubnetId: !Ref PublicSubnet1
+      GroupDescription: Security group for NAT instance and bastion host
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+          Description: Allow SSH access for bastion functionality
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTP from private subnets
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTPS from private subnets
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
       Tags:
         - Key: App
           Value: !Ref App
@@ -168,7 +188,46 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-nat
+          Value: !Sub ${App}-${StackIdentifier}-nat-bastion-sg
+
+  NatInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      ImageId: !Ref BastionAMI
+      InstanceType: t3.micro
+      SubnetId: !Ref PublicSubnet1
+      SecurityGroupIds:
+        - !Ref NatInstanceSecurityGroup
+      KeyName: !Ref BastionKeyName
+      SourceDestCheck: false
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y iptables-services
+          systemctl enable iptables
+          systemctl start iptables
+          echo 1 > /proc/sys/net/ipv4/ip_forward
+          iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+          iptables -A FORWARD -i eth0 -o eth0 -j ACCEPT
+          # Persist iptables rules
+          service iptables save
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${StackIdentifier}-nat-bastion
+
+  NatInstanceEIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt NatInstanceEIP.AllocationId
+      InstanceId: !Ref NatInstance
 
   ################
   # Route Tables #
@@ -214,7 +273,7 @@ Resources:
     Properties:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      NatGatewayId: !Ref NatGateway
+      InstanceId: !Ref NatInstance
 
   ############################
   # Route Table Associations #
@@ -259,7 +318,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
-          SourceSecurityGroupId: !Ref BastionSecurityGroup
+          SourceSecurityGroupId: !Ref NatInstanceSecurityGroup
       Tags:
         - Key: App
           Value: !Ref App
@@ -288,21 +347,6 @@ Resources:
           Value: !Ref Environment
         - Key: Name
           Value: !Sub ${App}-${StackIdentifier}-lambda-sg
-
-  BastionSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for bastion host
-      VpcId: !Ref VPC
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-bastion-sg
 
   ############################
   # VPC Endpoints for Lambda #
@@ -352,28 +396,6 @@ Resources:
         - !Ref LambdaSecurityGroup
       VpcEndpointType: Interface
 
-  ################
-  # Bastion Host #
-  ################
-  BastionHost:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: !Ref BastionAMI
-      InstanceType: t3.micro
-      SubnetId: !Ref PublicSubnet1
-      SecurityGroupIds:
-        - !Ref BastionSecurityGroup
-      KeyName: !Ref BastionKeyName
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-bastion
-
 Outputs:
   VpcId:
     Description: VPC ID
@@ -417,14 +439,14 @@ Outputs:
     Export:
       Name: !Sub ${AWS::StackName}-LambdaSecurityGroupId
 
-  BastionHostPublicIP:
-    Description: Public IP of the bastion host
-    Value: !GetAtt BastionHost.PublicIp
+  NatBastionHostPublicIP:
+    Description: Public IP of the NAT instance and bastion host
+    Value: !GetAtt NatInstance.PublicIp
     Export:
-      Name: !Sub ${AWS::StackName}-BastionHostPublicIP
+      Name: !Sub ${AWS::StackName}-NatBastionHostPublicIP
 
-  BastionSecurityGroupId:
-    Description: Bastion Security Group ID
-    Value: !Ref BastionSecurityGroup
+  NatInstanceSecurityGroupId:
+    Description: NAT Instance and Bastion Security Group ID
+    Value: !Ref NatInstanceSecurityGroup
     Export:
-      Name: !Sub ${AWS::StackName}-BastionSecurityGroupId
+      Name: !Sub ${AWS::StackName}-NatInstanceSecurityGroupId
