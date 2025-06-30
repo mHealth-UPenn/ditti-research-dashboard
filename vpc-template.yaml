@@ -169,17 +169,24 @@ Resources:
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
+          CidrIp: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
+          Description: Allow HTTP from private subnet
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
+          Description: Allow HTTPS from private subnet
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: 80
+          ToPort: 80
           CidrIp: 0.0.0.0/0
-          Description: Allow HTTP from private subnets
+          Description: Allow HTTP outbound traffic
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
-          Description: Allow HTTPS from private subnets
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0
-          Description: Allow all outbound traffic
+          Description: Allow HTTPS outbound traffic
       Tags:
         - Key: App
           Value: !Ref App
@@ -196,7 +203,7 @@ Resources:
     Properties:
       ImageId: !Ref BastionAMI
       InstanceType: t3.micro
-      SubnetId: !Ref PublicSubnet1
+      SubnetId: !Ref PublicSubnet
       SecurityGroupIds:
         - !Ref NatInstanceSecurityGroup
       KeyName: !Ref BastionKeyName
@@ -208,11 +215,14 @@ Resources:
           yum install -y iptables-services
           systemctl enable iptables
           systemctl start iptables
-          echo 1 > /proc/sys/net/ipv4/ip_forward
-          iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-          iptables -A FORWARD -i eth0 -o eth0 -j ACCEPT
-          # Persist iptables rules
-          service iptables save
+
+          # Enable IP forwarding
+          echo net.ipv4.ip_forward=1 > /etc/sysctl.d/custom-ip-forwarding.conf
+          sysctl -p /etc/sysctl.d/custom-ip-forwarding.conf
+
+          sudo /sbin/iptables -t nat -A POSTROUTING -o ens5 -j MASQUERADE
+          sudo /sbin/iptables -F FORWARD
+          sudo service iptables save
       Tags:
         - Key: App
           Value: !Ref App
@@ -315,10 +325,12 @@ Resources:
           FromPort: 5432
           ToPort: 5432
           SourceSecurityGroupId: !Ref LambdaSecurityGroup
+          Description: Allow RDS access from Lambda functions
         - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
           SourceSecurityGroupId: !Ref NatInstanceSecurityGroup
+          Description: Allow RDS access from NAT instances
       Tags:
         - Key: App
           Value: !Ref App
@@ -369,7 +381,7 @@ Resources:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
       SecurityGroupIds:
-        - !Ref LambdaSecurityGroup
+        - !Ref VPCEndpointSecurityGroup
       VpcEndpointType: Interface
 
   VPCEndpointCloudWatchLogs:
@@ -381,7 +393,7 @@ Resources:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
       SecurityGroupIds:
-        - !Ref LambdaSecurityGroup
+        - !Ref VPCEndpointSecurityGroup
       VpcEndpointType: Interface
 
   VPCEndpointRDS:
@@ -393,8 +405,33 @@ Resources:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
       SecurityGroupIds:
-        - !Ref LambdaSecurityGroup
+        - !Ref VPCEndpointSecurityGroup
       VpcEndpointType: Interface
+
+  VPCEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for VPC endpoints
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref LambdaSecurityGroup
+          Description: Allow HTTPS access from Lambda functions
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${StackIdentifier}-vpc-endpoint-sg
 
 Outputs:
   VpcId:
