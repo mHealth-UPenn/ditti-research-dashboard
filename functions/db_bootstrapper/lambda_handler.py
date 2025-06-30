@@ -10,6 +10,7 @@ import cfnresponse
 from flask import Flask
 from flask_migrate import upgrade
 from load_data import load_data
+from sqlalchemy import create_engine, text
 
 from backend.extensions import db, migrate
 
@@ -65,6 +66,76 @@ def save_datafile(data_arn: str) -> str:
         Filename=DATA_FILE,
     )
     return DATA_FILE
+
+
+def setup_iam_database_user(db_uri: str, username: str) -> None:
+    """
+    Set up a database user for IAM authentication.
+
+    Args
+    ----
+        db_uri: The database connection string
+        username: The username to create for IAM authentication
+    """
+    logger.info(f"Setting up IAM database user: {username}")
+
+    try:
+        engine = create_engine(db_uri)
+        with engine.connect() as connection:
+            # Check if user already exists
+            result = connection.execute(
+                text("SELECT 1 FROM pg_roles WHERE rolname = :username"),
+                {"username": username},
+            )
+
+            if result.fetchone():
+                logger.info(
+                    f"User {username} already exists, updating IAM permissions"
+                )
+                # Grant IAM role to existing user
+                connection.execute(text(f"GRANT rds_iam TO {username}"))
+            else:
+                logger.info(
+                    f"Creating new user {username} with IAM authentication"
+                )
+                # Create new user with IAM authentication
+                connection.execute(text(f"CREATE USER {username} WITH LOGIN"))
+                connection.execute(text(f"GRANT rds_iam TO {username}"))
+
+            # Grant necessary permissions (adjust as needed for your application)
+            connection.execute(
+                text(f"GRANT CONNECT ON DATABASE postgres TO {username}")
+            )
+            connection.execute(
+                text(f"GRANT USAGE ON SCHEMA public TO {username}")
+            )
+            connection.execute(
+                text(
+                    f"GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {username}"
+                )
+            )
+            connection.execute(
+                text(
+                    f"GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO {username}"
+                )
+            )
+            connection.execute(
+                text(
+                    f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO {username}"
+                )
+            )
+            connection.execute(
+                text(
+                    f"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO {username}"
+                )
+            )
+
+            connection.commit()
+            logger.info(f"Successfully setup IAM database user {username}")
+
+    except Exception as e:
+        logger.error(f"Error setting up IAM database user {username}: {e}")
+        raise
 
 
 def handler(event, context) -> None:
@@ -149,10 +220,24 @@ def handler(event, context) -> None:
 
         retry_with_backoff(upgrade_database)
         logger.info("Database upgraded")
+
     except Exception as e:
         logger.error(f"Error upgrading database: {e}")
         response["Data"] = f"Error upgrading database: {e}"
         return send_failed(response)
+
+    if event["RequestType"] == "Create":
+        try:
+            # Setup IAM database user after successful upgrade
+            logger.info("Setting up IAM database authentication")
+            setup_iam_database_user(db_uri, username)
+            logger.info("IAM database authentication setup")
+        except Exception as e:
+            logger.error(f"Error setting up IAM database authentication: {e}")
+            response["Data"] = (
+                f"Error setting up IAM database authentication: {e}"
+            )
+            return send_failed(response)
 
     if event["RequestType"] == "Create" and (
         data_arn := os.getenv("DB_BOOTSTRAP_DATA_ARN")
