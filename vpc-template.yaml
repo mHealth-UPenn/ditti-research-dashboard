@@ -177,7 +177,7 @@ Resources:
           CidrIp: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
           Description: Allow HTTPS from private subnet
       SecurityGroupEgress:
-        - IpProtocol: -1
+        - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
@@ -203,7 +203,7 @@ Resources:
     Properties:
       ImageId: !Ref BastionAMI
       InstanceType: t3.micro
-      SubnetId: !Ref PublicSubnet
+      SubnetId: !Ref PublicSubnet1
       SecurityGroupIds:
         - !Ref NatInstanceSecurityGroup
       KeyName: !Ref BastionKeyName
