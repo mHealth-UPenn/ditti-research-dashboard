@@ -10,6 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
 import os
 from logging.config import dictConfig
 
@@ -39,11 +40,14 @@ dictConfig(
     }
 )
 
+logger = logging.getLogger(__name__)
+
 flask_secret_payload = None
 # if the app is running in a production environment
 if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
     # In a deployed environment, secrets are managed by AWS Secrets Manager.
     secret_id = os.getenv("AWS_SECRET_NAME")
+    logger.info(f"Loading secrets from {secret_id}")
     if secret_id:
         payload = get_secret(secret_id)
         if payload.secret_dict:
@@ -56,6 +60,7 @@ if os.getenv("FLASK_CONFIG") in {"Production", "Staging"}:
     # In a deployed environment, the FLASK_SECRET_KEY is managed by AWS
     # Secrets Manager in its own secret.
     flask_secret_name = os.getenv("FLASK_SECRET_KEY_SECRET_NAME")
+    logger.info(f"Loading flask secret from {flask_secret_name}")
     if flask_secret_name:
         # The secret is a string, not a JSON object.
         # During rotation, the rotator may set SECRET_VERSION_STAGE to 'AWSPENDING'
@@ -74,6 +79,8 @@ app = create_app()
 
 if flask_secret_payload:
     app.config["FLASK_SECRET_KEY_VERSION_ID"] = flask_secret_payload.version_id
+
+logger.info("App is ready!")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
