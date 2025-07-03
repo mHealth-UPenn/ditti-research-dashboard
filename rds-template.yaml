@@ -147,29 +147,6 @@ Conditions:
   IsBootStrapDataARNSet: !Not [!Equals [!Ref BootStrapDataARN, ""]]
 
 Resources:
-  #############
-  # DB Secret #
-  #############
-  DBSecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: !Sub ${App}-${StackIdentifier}-db-credentials
-      Description: Database credentials for Aurora cluster
-      GenerateSecretString:
-        SecretStringTemplate: !Sub '{"username": "${MasterUsername}"}'
-        GenerateStringKey: "password"
-        PasswordLength: 32
-        ExcludeCharacters: '"@/\'
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-db-secret
-
   ############
   # DB Setup #
   ############
@@ -181,7 +158,7 @@ Resources:
       EngineVersion: !Ref PostgresVersion
       DatabaseName: !Ref DatabaseName
       MasterUsername: !Ref MasterUsername
-      MasterUserPassword: !Sub '{{resolve:secretsmanager:${DBSecret}:SecretString:password}}'
+      ManageMasterUserPassword: true
       DBClusterIdentifier: !Sub ${App}-${StackIdentifier}-aurora-cluster
       VpcSecurityGroupIds:
         - Fn::ImportValue: !Sub ${VpcStackName}-RDSSecurityGroupId
@@ -264,7 +241,7 @@ Resources:
             Statement:
               - Effect: "Allow"
                 Action: "secretsmanager:GetSecretValue"
-                Resource: !Ref DBSecret
+                Resource: !GetAtt DBCluster.MasterUserSecret.SecretArn
         - PolicyName: "db-bootstrap-lambda-role-rds-iam"
           PolicyDocument:
             Version: "2012-10-17"
@@ -303,7 +280,7 @@ Resources:
           DB_PORT: !GetAtt DBCluster.Endpoint.Port
           DB_USER: !Ref MasterUsername
           DB_NAME: !Ref DatabaseName
-          DB_SECRET_ARN: !Ref DBSecret
+          DB_SECRET_ARN: !GetAtt DBCluster.MasterUserSecret.SecretArn
           DB_IAM_USER: !Ref IAMUsername
           DB_BOOTSTRAP_DATA_ARN: !If [IsBootStrapDataARNSet, !Ref BootStrapDataARN, ""]
 
@@ -342,6 +319,6 @@ Outputs:
 
   DBSecretARN:
     Description: ARN of the database credentials secret
-    Value: !Ref DBSecret
+    Value: !GetAtt DBCluster.MasterUserSecret.SecretArn
     Export:
       Name: !Sub ${AWS::StackName}-DBSecretARN
