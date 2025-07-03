@@ -162,11 +162,6 @@ Resources:
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-          Description: Allow SSH access for bastion functionality
-        - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
           CidrIp: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
