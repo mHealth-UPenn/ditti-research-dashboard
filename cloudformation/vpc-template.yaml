@@ -22,106 +22,6 @@ Parameters:
     Description: Name of the EC2 key pair for bastion host access
 
 Resources:
-
-  ###################
-  # Security Groups #
-  ###################
-  RDSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for RDS
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !Ref LambdaSecurityGroup
-          Description: Allow RDS access from Lambda functions
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !Ref NatInstanceSecurityGroup
-          Description: Allow RDS access from NAT instances
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: Name
-          Value: !Sub ${App}-rds-sg
-
-  LambdaSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for Lambda functions
-      VpcId: !Ref VPC
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0
-          Description: Allow all outbound traffic
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: Name
-          Value: !Sub ${App}-lambda-sg
-
-  VPCEndpointSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for VPC endpoints
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          SourceSecurityGroupId: !Ref LambdaSecurityGroup
-          Description: Allow HTTPS access from Lambda functions
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0
-          Description: Allow all outbound traffic from VPC endpoints
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: Name
-          Value: !Sub ${App}-vpc-endpoint-sg
-
-  NatInstanceSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for NAT instance and bastion host
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
-          Description: Allow HTTP from private subnet
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
-          Description: Allow HTTPS from private subnet
-      SecurityGroupEgress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0
-          Description: Allow HTTP outbound traffic
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-          Description: Allow HTTPS outbound traffic
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          CidrIp: 0.0.0.0/0
-          Description: Allow PostgreSQL outbound traffic
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: Name
-          Value: !Sub ${App}-nat-bastion-sg
-
   #######
   # VPC #
   #######
@@ -360,6 +260,105 @@ Resources:
       RouteTableIds:
         - !Ref PrivateRouteTable
       VpcEndpointType: Gateway
+
+  ###################
+  # Security Groups #
+  ###################
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for RDS
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref LambdaSecurityGroup
+          Description: Allow RDS access from Lambda functions
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref NatInstanceSecurityGroup
+          Description: Allow RDS access from NAT instances
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Name
+          Value: !Sub ${App}-rds-sg
+
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Lambda functions
+      VpcId: !Ref VPC
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Name
+          Value: !Sub ${App}-lambda-sg
+
+  VPCEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for VPC endpoints
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref LambdaSecurityGroup
+          Description: Allow HTTPS access from Lambda functions
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic from VPC endpoints
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Name
+          Value: !Sub ${App}-vpc-endpoint-sg
+
+  NatInstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for NAT instance and bastion host
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
+          Description: Allow HTTP from private subnet
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
+          Description: Allow HTTPS from private subnet
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTP outbound traffic
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+          Description: Allow HTTPS outbound traffic
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+          Description: Allow PostgreSQL outbound traffic
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Name
+          Value: !Sub ${App}-nat-bastion-sg
 
 Outputs:
   VpcId:
