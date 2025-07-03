@@ -322,3 +322,9 @@ Outputs:
     Value: !GetAtt DBCluster.MasterUserSecret.SecretArn
     Export:
       Name: !Sub ${AWS::StackName}-DBSecretARN
+
+  IAMUserARN:
+    Description: ARN of the IAM user
+    Value: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:${DBCluster.DBClusterResourceId}/${IAMUsername}"
+    Export:
+      Name: !Sub ${AWS::StackName}-IAMUserARN
