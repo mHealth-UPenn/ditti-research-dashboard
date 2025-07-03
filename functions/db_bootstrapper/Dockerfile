@@ -12,6 +12,7 @@ RUN pip3 install boto3 \
     "SQLAlchemy>=2.0,<2.1"
 
 COPY migrations/ migrations/
+COPY shared/iam_sqlalchemy.py shared/iam_sqlalchemy.py
 COPY functions/db_bootstrapper/backend backend/
 COPY backend/models.py backend/models.py
 COPY functions/db_bootstrapper/lambda_handler.py lambda_handler.py
