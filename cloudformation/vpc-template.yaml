@@ -7,17 +7,6 @@ Parameters:
     Default: ditti-dashboard
     Description: App name
 
-  Environment:
-    Type: String
-    AllowedValues:
-      - staging
-      - prod
-    Description: Environment name
-
-  StackIdentifier:
-    Type: String
-    Description: Identifier for the stack (e.g., jdoe)
-
   VpcCIDR:
     Type: String
     Default: 10.0.0.0/16
@@ -33,127 +22,67 @@ Parameters:
     Description: Name of the EC2 key pair for bastion host access
 
 Resources:
-  #######
-  # VPC #
-  #######
-  VPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: !Ref VpcCIDR
-      EnableDnsHostnames: true
-      EnableDnsSupport: true
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-vpc
-
-  ##################
-  # Public Subnets #
-  ##################
-  PublicSubnet1:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [0, !Cidr [!Ref VpcCIDR, 4, 8]]
-      AvailabilityZone: !Select [0, !GetAZs '']
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-public-subnet-1
-
-  PublicSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      CidrBlock: !Select [1, !Cidr [!Ref VpcCIDR, 4, 8]]
-      AvailabilityZone: !Select [1, !GetAZs '']
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-public-subnet-2
 
   ###################
-  # Private Subnets #
+  # Security Groups #
   ###################
-  PrivateSubnet1:
-    Type: AWS::EC2::Subnet
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupDescription: Security group for RDS
       VpcId: !Ref VPC
-      CidrBlock: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
-      AvailabilityZone: !Select [0, !GetAZs '']
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref LambdaSecurityGroup
+          Description: Allow RDS access from Lambda functions
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref NatInstanceSecurityGroup
+          Description: Allow RDS access from NAT instances
       Tags:
         - Key: App
           Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-private-subnet-1
+          Value: !Sub ${App}-rds-sg
 
-  PrivateSubnet2:
-    Type: AWS::EC2::Subnet
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupDescription: Security group for Lambda functions
       VpcId: !Ref VPC
-      CidrBlock: !Select [3, !Cidr [!Ref VpcCIDR, 4, 8]]
-      AvailabilityZone: !Select [1, !GetAZs '']
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic
       Tags:
         - Key: App
           Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-private-subnet-2
+          Value: !Sub ${App}-lambda-sg
 
-  ####################
-  # Internet Gateway #
-  ####################
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
+  VPCEndpointSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
     Properties:
+      GroupDescription: Security group for VPC endpoints
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref LambdaSecurityGroup
+          Description: Allow HTTPS access from Lambda functions
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow all outbound traffic from VPC endpoints
       Tags:
         - Key: App
           Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-igw
-
-  InternetGatewayAttachment:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      InternetGatewayId: !Ref InternetGateway
-      VpcId: !Ref VPC
-
-  ################
-  # NAT Instance #
-  ################
-  NatInstanceEIP:
-    Type: AWS::EC2::EIP
-    DependsOn: InternetGatewayAttachment
-    Properties:
-      Domain: vpc
+          Value: !Sub ${App}-vpc-endpoint-sg
 
   NatInstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -190,12 +119,106 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-nat-bastion-sg
+          Value: !Sub ${App}-nat-bastion-sg
+
+  #######
+  # VPC #
+  #######
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCIDR
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Name
+          Value: !Sub ${App}-vpc
+
+  ##################
+  # Public Subnets #
+  ##################
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [0, !Cidr [!Ref VpcCIDR, 4, 8]]
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Name
+          Value: !Sub ${App}-public-subnet-1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [1, !Cidr [!Ref VpcCIDR, 4, 8]]
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Name
+          Value: !Sub ${App}-public-subnet-2
+
+  ###################
+  # Private Subnets #
+  ###################
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
+      AvailabilityZone: !Select [0, !GetAZs '']
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Name
+          Value: !Sub ${App}-private-subnet-1
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Select [3, !Cidr [!Ref VpcCIDR, 4, 8]]
+      AvailabilityZone: !Select [1, !GetAZs '']
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Name
+          Value: !Sub ${App}-private-subnet-2
+
+  ####################
+  # Internet Gateway #
+  ####################
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Name
+          Value: !Sub ${App}-igw
+
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  ################
+  # NAT Instance #
+  ################
+  NatInstanceEIP:
+    Type: AWS::EC2::EIP
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      Domain: vpc
 
   NatInstance:
     Type: AWS::EC2::Instance
@@ -212,7 +235,7 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           yum update -y
-          yum install -y iptables-services
+          yum install -y iptables-services postgresql16
           systemctl enable iptables
           systemctl start iptables
 
@@ -226,12 +249,8 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-nat-bastion
+          Value: !Sub ${App}-nat-bastion
 
   NatInstanceEIPAssociation:
     Type: AWS::EC2::EIPAssociation
@@ -249,12 +268,8 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-public-rt
+          Value: !Sub ${App}-public-rt
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -271,12 +286,8 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-private-rt
+          Value: !Sub ${App}-private-rt
 
   PrivateRoute:
     Type: AWS::EC2::Route
@@ -311,79 +322,6 @@ Resources:
     Properties:
       SubnetId: !Ref PrivateSubnet2
       RouteTableId: !Ref PrivateRouteTable
-
-  ###################
-  # Security Groups #
-  ###################
-  RDSSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for RDS
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !Ref LambdaSecurityGroup
-          Description: Allow RDS access from Lambda functions
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !Ref NatInstanceSecurityGroup
-          Description: Allow RDS access from NAT instances
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-rds-sg
-
-  LambdaSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for Lambda functions
-      VpcId: !Ref VPC
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0
-          Description: Allow all outbound traffic
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-lambda-sg
-
-  VPCEndpointSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for VPC endpoints
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          SourceSecurityGroupId: !Ref LambdaSecurityGroup
-          Description: Allow HTTPS access from Lambda functions
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0
-          Description: Allow all outbound traffic from VPC endpoints
-      Tags:
-        - Key: App
-          Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-vpc-endpoint-sg
 
   ############################
   # VPC Endpoints for Lambda #
