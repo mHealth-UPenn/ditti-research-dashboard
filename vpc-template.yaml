@@ -419,13 +419,9 @@ Resources:
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
       VpcId: !Ref VPC
-      SubnetIds:
-        - !Ref PrivateSubnet1
-        - !Ref PrivateSubnet2
-      SecurityGroupIds:
-        - !Ref VPCEndpointSecurityGroup
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+      VpcEndpointType: Gateway
 
 Outputs:
   VpcId:
