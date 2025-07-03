@@ -16,12 +16,12 @@ from flask_caching import Cache
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
-from flask_sqlalchemy import SQLAlchemy
 
+from shared.iam_sqlalchemy import IamSqlAlchemy
 from shared.tokens_manager import TokensManager
 
 cors = CORS()
-db = SQLAlchemy()
+db = IamSqlAlchemy()
 jwt = JWTManager()
 migrate = Migrate()
 cache = Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 7200})
