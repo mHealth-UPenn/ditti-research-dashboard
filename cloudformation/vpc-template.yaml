@@ -338,6 +338,16 @@ Resources:
           ToPort: 443
           CidrIp: !Select [2, !Cidr [!Ref VpcCIDR, 4, 8]]
           Description: Allow HTTPS from private subnet
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref LambdaSecurityGroup
+          Description: Allow HTTP from Lambda functions
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref LambdaSecurityGroup
+          Description: Allow HTTPS from Lambda functions
       SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: 80
