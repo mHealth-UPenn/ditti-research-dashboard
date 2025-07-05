@@ -61,7 +61,11 @@ export function StudiesProvider({
   const getStudiesAsync = useCallback(async (): Promise<Study[]> => {
     let studies: Study[] = [];
 
-    if (APP_ENV === "production" || APP_ENV === "development") {
+    if (
+      APP_ENV === "production" ||
+      APP_ENV === "development" ||
+      APP_ENV === "staging"
+    ) {
       // Explicitly cast the response type and convert app to string
       try {
         studies = await request<Study[]>(`/db/get-studies?app=${String(app)}`);
@@ -80,7 +84,11 @@ export function StudiesProvider({
 
   // Fetch studies on load
   useEffect(() => {
-    if (APP_ENV === "production" || APP_ENV === "development") {
+    if (
+      APP_ENV === "production" ||
+      APP_ENV === "development" ||
+      APP_ENV === "staging"
+    ) {
       getStudiesAsync()
         .then((studies) => {
           setStudies(studies);

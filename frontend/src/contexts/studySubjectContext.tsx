@@ -31,7 +31,11 @@ export function StudySubjectProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     const promises: Promise<void>[] = [];
 
-    if (APP_ENV === "production" || APP_ENV === "development") {
+    if (
+      APP_ENV === "production" ||
+      APP_ENV === "development" ||
+      APP_ENV === "staging"
+    ) {
       promises.push(
         getStudySubject().then(([studiesData, apisData]) => {
           setStudies(studiesData);
@@ -57,7 +61,11 @@ export function StudySubjectProvider({ children }: PropsWithChildren) {
     let studiesData: ParticipantStudy[] = [];
     let apisData: ParticipantApi[] = [];
 
-    if (APP_ENV === "production" || APP_ENV === "development") {
+    if (
+      APP_ENV === "production" ||
+      APP_ENV === "development" ||
+      APP_ENV === "staging"
+    ) {
       await httpClient
         .request<Participant>(`/participant`)
         .then((res) => {
