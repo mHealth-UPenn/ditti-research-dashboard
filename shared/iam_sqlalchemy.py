@@ -24,7 +24,7 @@ class IamSqlAlchemy(SQLAlchemy):
         self,
         app: Flask,
         use_iam: bool = False,
-        sslmode: str = "require",
+        iam_sslmode: str = "require",
         **kwargs,
     ):
         """
@@ -53,9 +53,8 @@ class IamSqlAlchemy(SQLAlchemy):
                 cargs: tuple[Any, ...],  # noqa: ARG001
                 cparams: dict[str, Any],
             ):
-                cparams["sslmode"] = sslmode
-
                 if use_iam:
+                    cparams["sslmode"] = iam_sslmode
                     cparams["password"] = self.create_auth_token(
                         hostname=cparams["host"],
                         port=cparams["port"],
