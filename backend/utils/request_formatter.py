@@ -9,6 +9,8 @@ class RequestFormatter(logging.Formatter):
             context = request.environ.get("lambda.context", None)
             if context:
                 record.request_id = context.aws_request_id
+            else:
+                record.request_id = None
         else:
             record.request_id = None
 
