@@ -27,19 +27,22 @@ dictConfig(
         "formatters": {
             "default": {
                 "format": "[%(asctime)s] %(levelname)s in %(module)s: %(message)s",
-            }
+            },
+            "request": {
+                "()": "backend.utils.request_formatter.RequestFormatter",
+                "format": "[%(asctime)s] RequestId: %(request_id)s - %(levelname)s in %(module)s: %(message)s",
+            },
         },
         "handlers": {
             "wsgi": {
                 "class": "logging.StreamHandler",
                 "stream": "ext://flask.logging.wsgi_errors_stream",
-                "formatter": "default",
+                "formatter": "request",
             }
         },
         "root": {"level": os.getenv("LOG_LEVEL", "INFO"), "handlers": ["wsgi"]},
     }
 )
-
 logger = logging.getLogger(__name__)
 
 flask_secret_payload = None

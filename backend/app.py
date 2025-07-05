@@ -72,11 +72,13 @@ def create_app(testing=False):
     register_commands(app)
     register_extensions(app)
 
+    @app.before_request
+    def log_request():
+        app.logger.info(f"Request: {request.url} {request.method}")
+
     @app.after_request
     def log_response(response: Response):
-        app.logger.info(
-            f"Request: [{request.method}] {request.url} {response.status}"
-        )
+        app.logger.info(f"Response: {request.url} {response.status}")
         return response
 
     @app.after_request
