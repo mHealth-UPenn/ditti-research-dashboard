@@ -212,7 +212,12 @@ def register_extensions(app):
         expose_headers=app.config.get("CORS_EXPOSE_HEADERS"),
         supports_credentials=app.config.get("CORS_SUPPORTS_CREDENTIALS", True),
     )
-    db.init_app(app, use_iam=True)
+
+    if app.config["ENV"] in ["development", "testing"]:
+        db.init_app(app, use_iam=False)
+    else:
+        db.init_app(app, use_iam=True)
+
     jwt.init_app(app)
     migrate.init_app(app, db)
     tm.init_app(app)
