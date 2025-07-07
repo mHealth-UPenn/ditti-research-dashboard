@@ -1,6 +1,7 @@
 import os
 from typing import TypedDict
 
+from shared.lambda_logger import LambdaLogger
 from shared.lambda_secrets_provider import SecretProvider
 
 LOCAL = os.getenv("LOCAL", "false") == "true"
@@ -54,7 +55,7 @@ class Config(TypedDict):
     fitbit_tokens_secret_name: str | None
 
 
-def load_config() -> Config:
+def load_config(logger: LambdaLogger) -> Config:
     fitbit_secret = None
     if fitbit_secret_name := os.getenv("FITBIT_SECRET_NAME"):
         fitbit_secret = SecretProvider[FitbitConfig](
@@ -73,6 +74,17 @@ def load_config() -> Config:
         log_level=os.getenv("LOG_LEVEL", "INFO"),
         local=LOCAL,
         fitbit_tokens_secret_name=os.getenv("FITBIT_TOKENS_SECRET_NAME"),
+    )
+
+    logger.debug(
+        "Config loaded:",
+        extra={
+            **config,
+            "fitbit": {
+                "client_id": config["fitbit"]["client_id"],
+                "client_secret": "********",
+            },
+        },
     )
 
     return config

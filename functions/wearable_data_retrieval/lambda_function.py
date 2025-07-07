@@ -840,7 +840,7 @@ def handler(event, _context):
     try:
         # Load config
         try:
-            config = load_config()
+            config = load_config(logger)
         except Exception as err:
             logger.error(
                 "Error loading config",
