@@ -10,15 +10,15 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import logging
 import os
 import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 import boto3
+from config import load_config
 from sqlalchemy import (
     Dialect,
     MetaData,
@@ -43,9 +43,7 @@ from shared.utils.sleep_logs import generate_sleep_logs
 # Use a common timestamp across the whole function
 function_timestamp = datetime.now().isoformat()
 
-logger = LambdaLogger(
-    function_timestamp, level=logging.DEBUG if DEBUG else logging.INFO
-)
+logger = LambdaLogger(function_timestamp, level=os.getenv("LOG_LEVEL", "INFO"))
 
 
 class NestedError(Exception):
@@ -833,47 +831,44 @@ def handler(event, _context):
     log_file = None
     error_code = None
     has_errors = False
+    tokens: dict[str, dict[str, str]] = {}
 
     # Retrieve function_id from the lambda function invocation event
     function_id = event.get("function_id")
     logger.info("Retrieved function_id", extra={"function_id": function_id})
 
     try:
-        config = {"S3_BUCKET": os.getenv("S3_BUCKET")}
-        tokens_config = {}
+        # Load config
+        try:
+            config = load_config()
+        except Exception as err:
+            logger.error(
+                "Error loading config",
+                extra={"error": traceback.format_exc()},
+            )
+            raise ConfigFetchError from err
 
-        # Load secrets
-        if TESTING or STAGING:
-            config = {
-                "FLASK_DB": os.getenv("FLASK_DB"),
-                "S3_BUCKET": os.getenv("S3_BUCKET"),
-            }
-
-        if (not TESTING) or STAGING:
+        # Load token secret
+        if not config["local"]:
             try:
-                config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
-                tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
-
-                config_payload = get_secret(config_secret_name)
-                if config_payload.secret_dict is None:
-                    logger.error(
-                        "Config secret '%s' returned no data (secret_dict is None).",
-                        config_secret_name,
-                    )
-                    raise ConfigFetchError("Config secret returned no data.")
-                config.update(config_payload.secret_dict)
-
-                tokens_payload = get_secret(tokens_secret_name)
+                tokens_secret_name = config["fitbit_tokens_secret_name"]
+                tokens_secret_provider = SecretProvider[
+                    dict[str, dict[str, str]]
+                ](secret_name=tokens_secret_name)
+                tokens_payload = tokens_secret_provider.get_secret()
                 if tokens_payload.secret_dict is None:
                     logger.error(
                         "Tokens secret '%s' returned no data (secret_dict is None).",
                         tokens_secret_name,
                     )
                     raise ConfigFetchError("Tokens secret returned no data.")
-                tokens_config = tokens_payload.secret_dict
+                tokens = tokens_payload.secret_dict
+
+            except ConfigFetchError:
+                raise
             except Exception as err:
                 logger.error(
-                    "Error retrieving secret",
+                    "Error loading token secret",
                     extra={"error": traceback.format_exc()},
                 )
                 raise ConfigFetchError from err
@@ -984,12 +979,12 @@ def handler(event, _context):
 
                 # Try querying the fitbit API for this study subject
                 data = []
-                if TESTING:
+                if config["local"]:
                     data += generate_sleep_logs()["sleep"]
                 else:
                     # Retrieve OAuth tokens for the subject
                     try:
-                        tokens = tokens_config[entry.ditti_id]
+                        tokens = tokens[entry.ditti_id]
                     except KeyError:
                         logger.info(
                             "Participant not found in API tokens secret.",
@@ -1128,7 +1123,7 @@ def handler(event, _context):
         # Upload log file to S3
         try:
             s3_client = boto3.client("s3")
-            bucket_name = config["S3_BUCKET"]
+            bucket_name = config["s3"]["bucket_name"]
 
             # Prepare the S3 filename including function_id
             log_file = f"{function_id}_{os.path.split(logger.log_filename)[1]}"
