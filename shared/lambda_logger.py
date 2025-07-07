@@ -14,7 +14,7 @@ import json
 import logging
 import sys
 from datetime import date, datetime
-from typing import ClassVar
+from typing import Any, ClassVar
 
 
 # Custom JSON formatter
@@ -50,6 +50,15 @@ class JsonFormatter(logging.Formatter):
         "taskName",
     }
 
+    def _convert_datetime(self, value: Any) -> str:
+        if isinstance(value, datetime | date):
+            return value.isoformat()
+        if isinstance(value, dict):
+            return {k: self._convert_datetime(v) for k, v in value.items()}
+        if isinstance(value, list):
+            return [self._convert_datetime(v) for v in value]
+        return value
+
     def format(self, record):
         """
         Format the specified record as JSON.
@@ -74,10 +83,7 @@ class JsonFormatter(logging.Formatter):
         for k, v in record.__dict__.items():
             if k in self.exclude:
                 continue
-            if isinstance(v, datetime | date):
-                log_entry[k] = v.isoformat()
-            else:
-                log_entry[k] = v
+            log_entry[k] = self._convert_datetime(v)
 
         return log_entry  # Return a dictionary instead of a JSON string
 
@@ -242,6 +248,11 @@ class LambdaLogger(logging.Logger):
         -------
         None
         """
+        traceback = kwargs.get("extra", {}).get("error")
+        if traceback:
+            print("================ TRACEBACK ==================")  # noqa: T201
+            print(traceback)  # noqa: T201
+
         self.__logger.error(*args, **kwargs)
 
     def critical(self, *args, **kwargs):
