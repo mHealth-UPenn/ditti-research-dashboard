@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lambda functions for the application."
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Stack Config
+        Parameters:
+          - App
+          - Environment
+          - VpcStackName
+          - RDSStackName
+      - Label:
+          default: Fitbit
+        Parameters:
+          - FitbitSecretName
+          - FitbitTokensSecretName
+      - Label:
+          default: Wearable Data Retrieval
+        Parameters:
+          - WearableDataRetrievalImageURI
+          - WearableDataRetrievalLogsBucketName
+          - WearableDataRetrievalLogLevel
+
+    ParameterLabels:
+      App:
+        default: App
+      Environment:
+        default: Environment
+      VpcStackName:
+        default: VPC Stack Name
+      RDSStackName:
+        default: RDS Stack Name
+      FitbitSecretName:
+        default: Fitbit Secret Name
+      FitbitTokensSecretName:
+        default: Fitbit Tokens Secret Name
+      WearableDataRetrievalImageURI:
+        default: Image URI
+      WearableDataRetrievalLogsBucketName:
+        default: Logs Bucket Name
+      WearableDataRetrievalLogLevel:
+        default: Log Level
+
+Parameters:
+  App:
+    Type: String
+    Default: ditti-dashboard
+    Description: App name
+
+  Environment:
+    Type: String
+    AllowedValues:
+      - staging
+      - prod
+    Description: Environment name
+
+  VpcStackName:
+    Type: String
+    Description: Name of the VPC stack to import resources from
+
+  RDSStackName:
+    Type: String
+    Description: Name of the RDS stack to import resources from
+
+  FitbitSecretName:
+    Type: String
+    Description: Name of the Fitbit secret
+
+  FitbitTokensSecretName:
+    Type: String
+    Description: Name of the Fitbit tokens secret
+
+  WearableDataRetrievalImageURI:
+    Type: String
+    Description: URI of the Wearable Data Retrieval image
+
+  WearableDataRetrievalLogsBucketName:
+    Type: String
+    Description: Name of the Wearable Data Retrieval logs bucket
+
+  WearableDataRetrievalLogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - TRACE
+      - DEBUG
+      - INFO
+      - WARNING
+      - ERROR
+      - FATAL
+    Description: Application log level for the Wearable Data Retrieval Lambda function
+
+Conditions:
+  DebugMode: !Equals [!Ref Environment, "staging"]
+
+Resources:
+
+  #########
+  # Roles #
+  #########
+  WearableDataRetrievalLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+      Policies:
+        - PolicyName: "wearable-data-retrieval-lambda-role-secret-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "secretsmanager:*"
+                Resource:
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${FitbitSecretName}*"
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${FitbitTokensSecretName}*"
+        - PolicyName: "wearable-data-retrieval-lambda-role-logs-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "s3:PutObject"
+                Resource: !Sub "arn:aws:s3:::${WearableDataRetrievalLogsBucketName}/*"
+        - PolicyName: "wearable-data-retrieval-lambda-role-rds-iam"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "rds-db:connect"
+                Resource:
+                  - Fn::ImportValue: !Sub ${RDSStackName}-IAMUserARN
+
+  #############
+  # Functions #
+  #############
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${App}-wearable-data-retrieval-${Environment}"
+      Architectures:
+        - x86_64
+      Code:
+        ImageUri: !Ref WearableDataRetrievalImageURI
+      MemorySize: 512
+      PackageType: Image
+      Role: !GetAtt WearableDataRetrievalLambdaRole.Arn
+      Timeout: 180
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::ImportValue: !Sub ${VpcStackName}-LambdaSecurityGroupId
+        SubnetIds:
+          - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet1
+          - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet2
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref WearableDataRetrievalLogsBucketName
+          DB_URI:
+            Fn::ImportValue:
+              !Sub ${RDSStackName}-DBClusterIamUrl
+          DB_USE_IAM: "true"
+          FITBIT_SECRET_NAME: !Ref FitbitSecretName
+          FITBIT_TOKENS_SECRET_NAME: !Ref FitbitTokensSecretName
+          LOG_LEVEL: !Ref WearableDataRetrievalLogLevel
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Environment
+          Value: !Ref Environment
