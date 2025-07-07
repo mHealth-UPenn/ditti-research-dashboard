@@ -20,10 +20,12 @@ from typing import Literal
 
 import boto3
 from sqlalchemy import (
+    Dialect,
     MetaData,
     Table,
     and_,
     create_engine,
+    event,
     func,
     insert,
     or_,
@@ -31,15 +33,12 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.orm import aliased
+from sqlalchemy.pool import ConnectionPoolEntry
 
 from shared.fitbit import get_fitbit_oauth_session
 from shared.lambda_logger import LambdaLogger
-from shared.lambda_secrets_provider import get_secret
+from shared.lambda_secrets_provider import SecretProvider
 from shared.utils.sleep_logs import generate_sleep_logs
-
-TESTING = os.getenv("TESTING") is not None
-STAGING = os.getenv("STAGING") is not None
-DEBUG = os.getenv("DEBUG") is not None
 
 # Use a common timestamp across the whole function
 function_timestamp = datetime.now().isoformat()
@@ -82,9 +81,42 @@ class DB:
     - db_uri (str): The URI for securely connecting to the database.
     """
 
-    def __init__(self, db_uri: str):
+    def __init__(
+        self, db_uri: str, *, use_iam: bool = False, iam_sslmode: str = "require"
+    ):
         self.engine = create_engine(db_uri, future=True)
-        self.metadata = MetaData(bind=self.engine)
+        self.metadata = MetaData()
+        self.client = boto3.client("rds")
+
+        @event.listens_for(self.engine, "do_connect")
+        def provide_token(
+            dialect: Dialect,  # noqa: ARG001
+            conn_rec: ConnectionPoolEntry,  # noqa: ARG001
+            cargs: tuple[Any, ...],  # noqa: ARG001
+            cparams: dict[str, Any],
+        ):
+            if use_iam:
+                cparams["sslmode"] = iam_sslmode
+                cparams["password"] = self.create_auth_token(
+                    hostname=cparams["host"],
+                    port=cparams["port"],
+                    username=cparams["user"],
+                )
+
+    def create_auth_token(
+        self, *, hostname: str, port: int, username: str
+    ) -> str:
+        """Create an IAM authentication token for the given database URI and username."""
+        try:
+            auth_token = self.client.generate_db_auth_token(
+                DBHostname=hostname,
+                Port=port,
+                DBUsername=username,
+            )
+        except Exception:
+            raise
+
+        return auth_token
 
 
 class DBService:
@@ -223,7 +255,7 @@ class LambdaTaskService(DBService):
         e = self.db.engine
 
         # Reflect existing database into a new model
-        m.reflect(only=["lambda_task"])
+        m.reflect(bind=e, only=["lambda_task"])
 
         # Access the `lambda_task` table
         self.table = Table("lambda_task", m, autoload_with=e)
@@ -393,11 +425,12 @@ class StudySubjectService(DBService):
 
         # Reflect existing tables into models
         m.reflect(
+            bind=e,
             only=[
                 "join_study_subject_api",
                 "study_subject",
                 "join_study_subject_study",
-            ]
+            ],
         )
 
         # Aliased tables for readability
@@ -847,7 +880,7 @@ def handler(event, _context):
 
         # Database connection setup
         try:
-            db = DB(config["FLASK_DB"])
+            db = DB(config["db"]["uri"], use_iam=config["db"]["use_iam"])
             lambda_task_service = LambdaTaskService(db)
             study_subject_service = StudySubjectService(db)
 
