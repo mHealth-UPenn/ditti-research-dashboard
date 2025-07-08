@@ -43,8 +43,8 @@ class RequestFormatter(logging.Formatter):
     """
 
     def format(self, record: logging.LogRecord):
-        if has_request_context():
-            context = request.environ.get("lambda.context", None)
+        if self._has_request_context():
+            context = self._get_request().environ.get("lambda.context", None)
             if context:
                 record.request_id = context.aws_request_id
             else:
@@ -53,3 +53,9 @@ class RequestFormatter(logging.Formatter):
             record.request_id = None
 
         return super().format(record)
+
+    def _get_request(self):
+        return request
+
+    def _has_request_context(self):
+        return has_request_context()
