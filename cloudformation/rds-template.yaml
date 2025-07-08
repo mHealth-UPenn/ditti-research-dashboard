@@ -1,0 +1,336 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Aurora Serverless v2 PostgreSQL cluster in VPC"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Stack Config
+        Parameters:
+          - App
+          - Environment
+          - StackIdentifier
+          - VpcStackName
+      - Label:
+          default: Database Config
+        Parameters:
+          - MasterUsername
+          - IAMUsername
+          - PostgresVersion
+          - DatabaseName
+          - MinCapacity
+          - MaxCapacity
+          - SecondsUntilAutoPause
+      - Label:
+          default: Bootstrap Config
+        Parameters:
+          - BootStrapImageURI
+          - BootStrapDataARN
+          - BootStrapApplicationLogLevel
+          - BootStrapSystemLogLevel
+
+    ParameterLabels:
+      App:
+        default: App
+      Environment:
+        default: Environment
+      StackIdentifier:
+        default: Stack Identifier
+      VpcStackName:
+        default: VPC Stack Name
+      MasterUsername:
+        default: Master Username
+      IAMUsername:
+        default: IAM Username
+      PostgresVersion:
+        default: Postgres Version
+      DatabaseName:
+        default: Database Name
+      MinCapacity:
+        default: Min ACU
+      MaxCapacity:
+        default: Max ACU
+      SecondsUntilAutoPause:
+        default: Seconds Until Auto Pause
+      BootStrapImageURI:
+        default: Boot Strap Image URI
+      BootStrapDataARN:
+        default: Boot Strap Data ARN (Optional)
+      BootStrapApplicationLogLevel:
+        default: Boot Strap Application Log Level
+      BootStrapSystemLogLevel:
+        default: Boot Strap System Log Level
+
+Parameters:
+  App:
+    Type: String
+    Default: ditti-dashboard
+    Description: App name
+
+  Environment:
+    Type: String
+    AllowedValues:
+      - staging
+      - prod
+    Description: Environment name
+
+  StackIdentifier:
+    Type: String
+    Description: Identifier for the stack (e.g., jdoe)
+
+  VpcStackName:
+    Type: String
+    Description: Name of the VPC stack to import resources from
+
+  MasterUsername:
+    Type: String
+    Description: Master username for the DB cluster
+
+  IAMUsername:
+    Type: String
+    Description: IAM username for the DB cluster
+
+  PostgresVersion:
+    Type: String
+    Description: Version of PostgreSQL to use for the DB cluster
+
+  DatabaseName:
+    Type: String
+    Description: Name of the database to create
+
+  MinCapacity:
+    Type: Number
+    Default: 0
+    Description: Minimum ACU (Aurora Capacity Units)
+
+  MaxCapacity:
+    Type: Number
+    Default: 2
+    Description: Maximum ACU (Aurora Capacity Units)
+
+  SecondsUntilAutoPause:
+    Type: Number
+    Default: 300
+    Description: Seconds until the DB cluster will automatically pause
+
+  BootStrapImageURI:
+    Type: String
+    Description: URI of the DB bootstrap Lambda function image
+
+  BootStrapDataARN:
+    Type: String
+    Default: ""
+    Description: S3 ARN of the DB bootstrap data Lambda function (optional)
+
+  BootStrapApplicationLogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - TRACE
+      - DEBUG
+      - INFO
+      - WARNING
+      - ERROR
+      - FATAL
+    Description: Log level for the DB bootstrap Lambda function
+
+  BootStrapSystemLogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - DEBUG
+      - INFO
+      - WARN
+    Description: Log level for the DB bootstrap Lambda function
+
+Conditions:
+  IsBootStrapDataARNSet: !Not [!Equals [!Ref BootStrapDataARN, ""]]
+
+Resources:
+  ############
+  # DB Setup #
+  ############
+  DBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: aurora-postgresql
+      EngineMode: provisioned
+      EngineVersion: !Ref PostgresVersion
+      DatabaseName: !Ref DatabaseName
+      MasterUsername: !Ref MasterUsername
+      ManageMasterUserPassword: true
+      DBClusterIdentifier: !Sub ${App}-${StackIdentifier}-aurora-cluster
+      VpcSecurityGroupIds:
+        - Fn::ImportValue: !Sub ${VpcStackName}-RDSSecurityGroupId
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: "03:00-04:00"
+      PreferredMaintenanceWindow: "sun:04:00-sun:05:00"
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: !Ref MinCapacity
+        MaxCapacity: !Ref MaxCapacity
+        SecondsUntilAutoPause: !Ref SecondsUntilAutoPause
+      Port: 5432
+      EnableIAMDatabaseAuthentication: true
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${StackIdentifier}-aurora-cluster
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Aurora cluster
+      SubnetIds:
+        - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet1
+        - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet2
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${StackIdentifier}-db-subnet-group
+
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: aurora-postgresql
+      DBClusterIdentifier: !Ref DBCluster
+      DBInstanceClass: db.serverless
+      PubliclyAccessible: false
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: StackIdentifier
+          Value: !Ref StackIdentifier
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub ${App}-${StackIdentifier}-aurora-instance
+
+  ################
+  # DB Bootstrap #
+  ################
+  DBBootStrapLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+      Policies:
+        - PolicyName: "db-bootstrap-lambda-role-secret-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "secretsmanager:GetSecretValue"
+                Resource: !GetAtt DBCluster.MasterUserSecret.SecretArn
+        - PolicyName: "db-bootstrap-lambda-role-rds-iam"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "rds-db:connect"
+                Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:${DBCluster.DBClusterResourceId}/${IAMUsername}"
+
+  DBBootStrapLambdaFn:
+    Type: AWS::Lambda::Function
+    Properties:
+      Architectures:
+        - x86_64
+      Code:
+        ImageUri: !Ref BootStrapImageURI
+      Description: >-
+          Bootstrap a newly created Aurora PostgreSQL Database
+      MemorySize: 128
+      PackageType: Image
+      Role: !GetAtt DBBootStrapLambdaRole.Arn
+      Timeout: 180
+      LoggingConfig:
+        ApplicationLogLevel: !Ref BootStrapApplicationLogLevel
+        LogFormat: JSON
+        LogGroup: !Sub ${App}-${StackIdentifier}-db-bootstrap-lambda-log-group
+        SystemLogLevel: !Ref BootStrapSystemLogLevel
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::ImportValue: !Sub ${VpcStackName}-LambdaSecurityGroupId
+        SubnetIds:
+          - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet1
+          - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet2
+      Environment:
+        Variables:
+          DB_HOST: !GetAtt DBCluster.Endpoint.Address
+          DB_PORT: !GetAtt DBCluster.Endpoint.Port
+          DB_USER: !Ref MasterUsername
+          DB_NAME: !Ref DatabaseName
+          DB_SECRET_ARN: !GetAtt DBCluster.MasterUserSecret.SecretArn
+          DB_IAM_USER: !Ref IAMUsername
+          DB_BOOTSTRAP_DATA_ARN: !If [IsBootStrapDataARNSet, !Ref BootStrapDataARN, ""]
+
+  DBBootStrapLambdaFnTrigger:
+    Type: Custom::LambdaAPGBootStrap
+    Version: "1.0"
+    DependsOn: DBInstance
+    Properties:
+      ServiceToken: !GetAtt DBBootStrapLambdaFn.Arn
+
+  DBBootStrapS3AccessPolicyAttachment:
+    Condition: IsBootStrapDataARNSet
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      PolicyName: "db-bootstrap-lambda-s3-access"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "s3:GetObject"
+            Resource: !Ref BootStrapDataARN
+      RoleName: !Ref DBBootStrapLambdaRole
+
+Outputs:
+  DBClusterEndpoint:
+    Description: Aurora cluster endpoint
+    Value: !GetAtt DBCluster.Endpoint.Address
+    Export:
+      Name: !Sub ${AWS::StackName}-DBClusterEndpoint
+
+  DBClusterPort:
+    Description: Aurora cluster port
+    Value: !GetAtt DBCluster.Endpoint.Port
+    Export:
+      Name: !Sub ${AWS::StackName}-DBClusterPort
+
+  DBClusterIamUrl:
+    Description: Aurora cluster IAM URL
+    Value: !Sub "postgresql://${IAMUsername}@${DBCluster.Endpoint.Address}:${DBCluster.Endpoint.Port}/${DatabaseName}"
+    Export:
+      Name: !Sub ${AWS::StackName}-DBClusterIamUrl
+
+  DBSecretARN:
+    Description: ARN of the database credentials secret
+    Value: !GetAtt DBCluster.MasterUserSecret.SecretArn
+    Export:
+      Name: !Sub ${AWS::StackName}-DBSecretARN
+
+  IAMUserARN:
+    Description: ARN of the IAM user
+    Value: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:${DBCluster.DBClusterResourceId}/${IAMUsername}"
+    Export:
+      Name: !Sub ${AWS::StackName}-IAMUserARN
