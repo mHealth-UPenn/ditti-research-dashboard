@@ -10,6 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
 from typing import Any, Literal
 
 import boto3
@@ -17,6 +18,8 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Dialect, event
 from sqlalchemy.pool import ConnectionPoolEntry
+
+logger = logging.getLogger(__name__)
 
 type SSLMode = Literal["require", "prefer"]
 
@@ -85,7 +88,8 @@ class IamSqlAlchemy(SQLAlchemy):
                 Port=port,
                 DBUsername=username,
             )
-        except Exception:
+        except Exception as e:
+            logger.error(f"Failed to create IAM authentication token: {e!s}")
             raise
 
         return auth_token
