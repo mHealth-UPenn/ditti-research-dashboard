@@ -118,7 +118,11 @@ export function CoordinatorStudySubjectProvider({
   const fetchStudySubjectsDB = useCallback(async (): Promise<
     StudySubject[]
   > => {
-    if (APP_ENV === "production" || APP_ENV === "development") {
+    if (
+      APP_ENV === "production" ||
+      APP_ENV === "development" ||
+      APP_ENV === "staging"
+    ) {
       const data = await request<StudySubject[]>(
         `/admin/study_subject?app=${String(app)}`
       );
@@ -129,7 +133,11 @@ export function CoordinatorStudySubjectProvider({
 
   // Fetch data from AWS
   const fetchStudySubjectsAWS = useCallback(async (): Promise<UserModel[]> => {
-    if (APP_ENV === "production" || APP_ENV === "development") {
+    if (
+      APP_ENV === "production" ||
+      APP_ENV === "development" ||
+      APP_ENV === "staging"
+    ) {
       const data = await request<UserModel[]>(
         `/aws/get-users?app=${String(app)}`
       );

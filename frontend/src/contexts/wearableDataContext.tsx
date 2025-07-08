@@ -81,7 +81,11 @@ export const ParticipantWearableDataProvider = ({
     // Async fetch sleep data
     const fetchSleepData = async () => {
       try {
-        if (APP_ENV === "production" || APP_ENV === "development") {
+        if (
+          APP_ENV === "production" ||
+          APP_ENV === "development" ||
+          APP_ENV === "staging"
+        ) {
           const params = new URLSearchParams();
           params.append("start_date", formatDate(startDate));
           params.append("end_date", formatDate(endDate));
@@ -256,7 +260,11 @@ export const CoordinatorWearableDataProvider = ({
   useEffect(() => {
     const fetchSleepData = async () => {
       try {
-        if (APP_ENV === "production" || APP_ENV === "development") {
+        if (
+          APP_ENV === "production" ||
+          APP_ENV === "development" ||
+          APP_ENV === "staging"
+        ) {
           const data = await fetchSleepDataAsync(startDate, endDate);
           if (data.length) {
             setFirstDateOfSleep(new Date(data[0].dateOfSleep));
@@ -274,7 +282,11 @@ export const CoordinatorWearableDataProvider = ({
     // Fetch all data processing tasks and find if any are syncing
     const fetchDataProcessingTasks = async () => {
       try {
-        if (APP_ENV === "production" || APP_ENV === "development") {
+        if (
+          APP_ENV === "production" ||
+          APP_ENV === "development" ||
+          APP_ENV === "staging"
+        ) {
           const params = new URLSearchParams();
           params.append("app", "3"); // Assume Wearable Dashboard is app 3
           params.append("study", String(studyId));
