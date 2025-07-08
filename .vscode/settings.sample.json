@@ -49,8 +49,26 @@
   "python.envFile": "${workspaceFolder}/.env",
   "python.terminal.activateEnvInCurrentTerminal": true,
 
-  "cSpell.words": [
-    "ditti",
-    "Fitbit"
+  "cSpell.words": ["ditti", "Fitbit"],
+
+  "yaml.customTags": [
+    "!Base64 scalar",
+    "!Cidr sequence",
+    "!And sequence",
+    "!Equals sequence",
+    "!If sequence",
+    "!Not sequence",
+    "!Or sequence",
+    "!Condition scalar",
+    "!FindInMap sequence",
+    "!GetAtt scalar",
+    "!GetAZs scalar",
+    "!ImportValue scalar",
+    "!Join sequence",
+    "!Select sequence",
+    "!Split sequence",
+    "!Sub scalar",
+    "!Transform mapping",
+    "!Ref scalar"
   ]
 }
