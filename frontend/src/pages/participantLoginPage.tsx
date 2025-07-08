@@ -14,9 +14,7 @@
 import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../components/buttons/button";
-import { FullLoader } from "../components/loader/loader";
 import { useAuth } from "../hooks/useAuth";
-import { useDbStatus } from "../hooks/useDbStatus";
 import { useEnterKeyLogin } from "../hooks/useKeyboardEvent";
 import "./loginPage.css";
 
@@ -29,9 +27,8 @@ export const ParticipantLoginPage: React.FC = () => {
   const navigate = useNavigate();
 
   const { participantLogin, isParticipantAuthenticated } = useAuth();
-  const loadingDb = useDbStatus();
   // Setup Enter key to trigger login when not loading
-  useEnterKeyLogin(!loadingDb, participantLogin);
+  useEnterKeyLogin(true, participantLogin);
 
   /**
    * Redirects already authenticated participants to the root dashboard
@@ -44,14 +41,6 @@ export const ParticipantLoginPage: React.FC = () => {
 
   return (
     <>
-      <FullLoader
-        loading={loadingDb}
-        msg={
-          loadingDb
-            ? "Starting the database... This may take up to 6 minutes"
-            : ""
-        }
-      />
       <div
         className="mx-auto flex h-screen w-screen bg-extra-light sm:px-12
           md:w-max xl:px-20"
