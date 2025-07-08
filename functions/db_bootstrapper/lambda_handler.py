@@ -18,13 +18,17 @@ from backend.extensions import db, migrate
 # It is safe to use /tmp because the lambda function is ephemeral
 DATA_FILE = "/tmp/data.json"  # noqa: S108
 
+LOCAL_DB = os.getenv("LOCAL_DB", "false").lower() == "true"
+if LOCAL_DB:
+    print("Using local database! IAM authentication is disabled.")
+
 
 def create_app(db_uri: DbUri, use_iam: bool = False) -> Flask:
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = db_uri.uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    db.init_app(app, use_iam=use_iam, sslmode="require")
+    db.init_app(app, use_iam=use_iam)
     migrate.init_app(app, db)
 
     return app
@@ -239,7 +243,11 @@ def lambda_handler(event, context) -> None:
         database=db_uri.database,
         username=iam_username,
     )
-    app = create_app(iam_db_uri, use_iam=True)
+
+    if LOCAL_DB:
+        app = create_app(db_uri, use_iam=False)
+    else:
+        app = create_app(iam_db_uri, use_iam=True)
 
     # 3. Test the IAM database connection
     try:
@@ -273,6 +281,8 @@ def lambda_handler(event, context) -> None:
             print(f"Error loading data from file: {e}")
             response["Data"] = f"Error loading data from file: {e}"
             return send_failed(response)
+    else:
+        print("No data to load")
 
     response["Data"] = "Database upgraded"
     return send_success(response)
