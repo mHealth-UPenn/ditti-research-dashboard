@@ -1,3 +1,6 @@
+from urllib.parse import quote_plus
+
+
 class DbUri:
     """A database URI.
 
@@ -25,9 +28,9 @@ class DbUri:
         if password is None:
             self.uri = f"postgresql://{username}@{hostname}:{port}/{database}"
         else:
-            self.uri = (
-                f"postgresql://{username}:{password}@{hostname}:{port}/{database}"
-            )
+            # URL-encode the password to handle special characters like @, :, etc.
+            encoded_password = quote_plus(password)
+            self.uri = f"postgresql://{username}:{encoded_password}@{hostname}:{port}/{database}"
         self.has_password = password is not None
         self.hostname = hostname
         self.port = int(port)
