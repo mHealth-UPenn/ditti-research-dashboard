@@ -28,7 +28,10 @@ RUN pip3 install boto3 \
     XlsxWriter==3.2.3 \
     zappa==0.59.0
 
-COPY . ${LAMBDA_TASK_ROOT}
+COPY backend/ backend/
+COPY shared/ shared/
+COPY run.py run.py
+COPY zappa_settings.py zappa_settings.py
 
 RUN cp $(python -c "from zappa import handler;print(handler.__file__)") .
 
