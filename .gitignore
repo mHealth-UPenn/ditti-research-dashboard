@@ -56,3 +56,5 @@ project-config*.json
 
 scripts/**/*
 debug/**/*
+
+*.pem
