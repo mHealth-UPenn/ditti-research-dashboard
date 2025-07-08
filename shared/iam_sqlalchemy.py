@@ -10,7 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from typing import Any
+from typing import Any, Literal
 
 import boto3
 from flask import Flask
@@ -18,13 +18,19 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Dialect, event
 from sqlalchemy.pool import ConnectionPoolEntry
 
+type SSLMode = Literal["require", "prefer"]
+
 
 class IamSqlAlchemy(SQLAlchemy):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.client = boto3.client("rds")
+
     def init_app(
         self,
         app: Flask,
         use_iam: bool = False,
-        iam_sslmode: str = "require",
+        iam_sslmode: SSLMode = "require",
         **kwargs,
     ):
         """
@@ -51,7 +57,6 @@ class IamSqlAlchemy(SQLAlchemy):
         >>> db.init_app(app, use_iam=True)
         """
         super().init_app(app, **kwargs)
-        self.client = boto3.client("rds")
 
         with app.app_context():
 
