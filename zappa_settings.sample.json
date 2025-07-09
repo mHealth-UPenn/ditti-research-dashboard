@@ -1,0 +1,32 @@
+{
+  "[stage]": {
+    "app_function": "run.app",
+    "aws_region": "[region]",
+    "environment_variables": {
+      "FLASK_CONFIG": "Production",
+      "FLASK_DB": "[db-uri]",
+      "AWS_SECRET_NAME": "[secret-name]",
+      "FLASK_SECRET_KEY_SECRET_NAME": "[secret-key-secret-name]",
+      "LOG_LEVEL": "[log-level]"
+    },
+    "log_level": "[log-level]",
+    "project_name": "[project-name]",
+    "tags": {
+      "app": "[project-name]"
+    },
+    "touch_path": "/health",
+    "certificate_arn": "[certificate-arn]",
+    "domain": "[domain]",
+    "vpc_config": {
+      "SubnetIds": ["[subnet-id-1]", "[subnet-id-2]"],
+      "SecurityGroupIds": ["[security-group-id]"]
+    },
+    "extra_permissions": [
+      {
+        "Effect": "Allow",
+        "Action": ["rds-db:connect"],
+        "Resource": "[rds-iam-user-arn]"
+      }
+    ]
+  }
+}
