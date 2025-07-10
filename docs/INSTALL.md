@@ -13,27 +13,39 @@ We are working hard at creating a straightforward process for installing and hos
 
 ## Installation
 
-**1. Deploy your VPC:**
+### 1. Deploy your VPC
+
+> See [VPC CloudFormation Template](#vpc-cloudformation-template) for more information.
 
 It is highly recommended to run the Ditti Research Dashboard within a VPC. This repo includes a [VPC CloudFormation template](../cloudformation/vpc-template.yaml) to get started.
 
-**2. Whitelist your IP (optional):**
+### 2. Whitelist your IP (optional)
 
-The provided [VPC CloudFormation template](../cloudformation/vpc-template.yaml) disables SSH access by default. You can use the [whitelist-bastion-ip.sh](../whitelist-bastion-ip.sh) script to enable SSH access from your IP address.
+> See [Whitelist Bastion IP Script](#whitelist-bastion-ip-script) for more information.
 
-**3. Deploy your Database:**
+The provided [VPC CloudFormation template](../cloudformation/vpc-template.yaml) includes an NAT bastion instance and disables SSH access by default. You can use the [whitelist-bastion-ip.sh](../whitelist-bastion-ip.sh) script to enable SSH access from your IP address.
 
-This repo includes an [RDS CloudFormation template](../cloudformation/rds-template.yaml) that sets up a slim Aurora for PostgreSQL instance on AWS.
+### 3. Deploy your Database
 
-**4. Set Up Zappa:**
+> See [RDS CloudFormation Template](#rds-cloudformation-template) for more information.
 
-Rename the [zappa_settings.sample.json](../zappa_settings.sample.json) to `zappa_settings.json` and replace the following placeholders with your information.
+This repo includes an [RDS CloudFormation template](../cloudformation/rds-template.yaml) that sets up a minimal serverless Aurora for PostgreSQL instance on AWS.
 
-**5. Deploy the Flask Backend:**
+### 4. Set Up Zappa
 
-Create .env files for your staging or production builds (`secret-staging.env` or `secret-deploy.env`). And use the deploy scripts to set up the Flask backend.
+> See [Zappa Configuration](#zappa-configuration) for more information.
 
-**6. Deploy the Vite Frontend:**
+Rename the [zappa_settings.sample.json](../zappa_settings.sample.json) to `zappa_settings.json` and fill the template with your information.
+
+### 5. Deploy the Flask Backend
+
+> See [Staging & Deploy .env Files](#staging--deploy-env-files) and [Deployment Scripts](#deployment-scripts) for more information.
+
+Create .env files for your staging or production builds (`secret-staging.env` or `secret-deploy.env`) and use the deploy scripts to set up the Flask backend.
+
+### 6. Deploy the Vite Frontend
+
+> See [Staging & Deploy .env Files](#staging--deploy-env-files) and [Deployment Scripts](#deployment-scripts) for more information.
 
 Create a `.staging.env` or `.production.env` file in the `frontend/` directory and use either of the React build scripts to set up the Vite frontend.
 
