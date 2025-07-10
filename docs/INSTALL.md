@@ -128,7 +128,7 @@ The `zappa_settings.json` file configures the Flask application deployment to AW
 |-------------|-------------|
 | `[stage]` | Deployment stage name |
 | `[region]` | AWS region |
-| `[db-uri]` | Database connection string. This should use your IAM username. A password is not required for IAM-enabled access. |
+| `[db-uri]` | Database connection string. This is  output as the `DBClusterIamUrl` from the RDS CloudFormation template. |
 | `[secret-name]` | AWS Secrets Manager secret name |
 | `[secret-key-secret-name]` | Flask secret key secret name |
 | `[log-level]` | Application log level |
