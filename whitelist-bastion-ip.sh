@@ -47,10 +47,7 @@ add_ip() {
     echo "Adding IP $ip to security group $sg_id..."
     aws ec2 authorize-security-group-ingress \
         --group-id "$sg_id" \
-        --protocol tcp \
-        --port 22 \
-        --cidr "$ip" \
-        --tag-specifications "ResourceType=security-group-rule,Tags=[{Key=Description,Value=$description}]"
+        --ip-permissions "[{\"IpProtocol\":\"tcp\",\"FromPort\":22,\"ToPort\":22,\"IpRanges\":[{\"CidrIp\":\"$ip\",\"Description\":\"$description\"}]}]"
     echo "IP $ip added successfully"
 }
 
