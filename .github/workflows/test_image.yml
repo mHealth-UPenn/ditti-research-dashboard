@@ -38,6 +38,10 @@ jobs:
           mkdir -p extensions
           touch extensions/bootstrap
 
+      - name: Create dummy Zappa settings file
+        run: |
+          touch zappa_settings.py
+
       - name: Build Docker image
         run: docker build -t flask-app .
 
