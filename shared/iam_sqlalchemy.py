@@ -46,7 +46,7 @@ class IamSqlAlchemy(SQLAlchemy):
         ----
             app: The Flask application instance.
             use_iam: Whether to use IAM authentication.
-            sslmode: The SSL mode to use.
+            iam_sslmode: The SSL mode to use.
             **kwargs: Additional keyword arguments to pass to the SQLAlchemy
                 extension.
 
