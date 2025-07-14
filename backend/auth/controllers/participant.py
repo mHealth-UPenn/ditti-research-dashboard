@@ -35,10 +35,15 @@ class ParticipantAuthController(AuthControllerBase):
         """Initialize the participant auth controller."""
         super().__init__("participant")
         self.auth_manager = ParticipantAuth()
+        logger.debug(
+            "Initialized ParticipantAuthController with ParticipantAuth manager"
+        )
 
     def init_oauth_client(self):
         """Initialize the OAuth client."""
+        logger.debug("Initializing participant OAuth client")
         init_participant_oauth_client()
+        logger.debug("Participant OAuth client initialized successfully")
 
     def get_scope(self):
         """
@@ -50,7 +55,9 @@ class ParticipantAuthController(AuthControllerBase):
         """
         # Check if elevated scope is requested
         elevated = request.args.get("elevated") == "true"
-        return "openid" + (" aws.cognito.signin.user.admin" if elevated else "")
+        scope = "openid" + (" aws.cognito.signin.user.admin" if elevated else "")
+        logger.debug(f"Participant OAuth scope: {scope}")
+        return scope
 
     def get_redirect_url(self):
         """
@@ -61,7 +68,9 @@ class ParticipantAuthController(AuthControllerBase):
             str: The redirect URL
         """
         frontend_url = self.get_frontend_url()
-        return f"{frontend_url}"
+        redirect_url = f"{frontend_url}"
+        logger.debug(f"Participant redirect URL: {redirect_url}")
+        return redirect_url
 
     def get_login_url(self):
         """
@@ -71,7 +80,9 @@ class ParticipantAuthController(AuthControllerBase):
         -------
             str: The login URL
         """
-        return f"{self.get_frontend_url()}/login"
+        login_url = f"{self.get_frontend_url()}/login"
+        logger.debug(f"Participant login URL: {login_url}")
+        return login_url
 
     def get_or_create_user(self, _token, userinfo):
         """
@@ -88,10 +99,12 @@ class ParticipantAuthController(AuthControllerBase):
                 study_subject: The StudySubject object if successful, else None
                 error_response: Error response if error occurred, else None
         """
+        logger.debug("Getting or creating participant study subject from token")
+
         # Extract ditti_id from userinfo
         ditti_id = userinfo.get("cognito:username")
         if not ditti_id:
-            logger.warning("No cognito:username found in userinfo")
+            logger.warning("No cognito:username found in participant userinfo")
             return (
                 None,
                 create_error_response(
@@ -99,6 +112,7 @@ class ParticipantAuthController(AuthControllerBase):
                     status_code=401,
                 ),
             )
+        logger.debug(f"Extracted ditti_id from userinfo: {ditti_id}")
 
         return self._create_or_get_study_subject(ditti_id)
 
@@ -118,6 +132,10 @@ class ParticipantAuthController(AuthControllerBase):
                 error_response: Error response object
                     if error occurred, else None
         """
+        logger.debug(
+            f"Creating or getting study subject for ditti_id: {ditti_id}"
+        )
+
         try:
             # Check for existing study subject
             study_subject = StudySubject.query.filter_by(
@@ -125,6 +143,7 @@ class ParticipantAuthController(AuthControllerBase):
             ).first()
 
             if study_subject:
+                logger.debug(f"Found existing study subject: {study_subject.id}")
                 if study_subject.is_archived:
                     logger.warning(
                         f"Attempt to login with archived account: {ditti_id}"
@@ -136,9 +155,13 @@ class ParticipantAuthController(AuthControllerBase):
                             status_code=403,
                         ),
                     )
+                logger.debug(
+                    f"Returning existing study subject: {study_subject.id}"
+                )
                 return study_subject, None
 
             # Create new study subject
+            logger.debug(f"Creating new study subject for ditti_id: {ditti_id}")
             study_subject = StudySubject(
                 created_on=datetime.now(UTC),
                 ditti_id=ditti_id,
@@ -146,6 +169,9 @@ class ParticipantAuthController(AuthControllerBase):
             )
             db.session.add(study_subject)
             db.session.commit()
+            logger.info(
+                f"Created new study subject: {study_subject.id} for ditti_id: {ditti_id}"
+            )
 
             return study_subject, None
 
@@ -174,15 +200,20 @@ class ParticipantAuthController(AuthControllerBase):
                 ditti_id: The ditti_id if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
         """
+        logger.debug("Getting participant ditti_id from ID token")
         study_subject, error_msg = self.auth_manager.get_study_subject_from_token(
             id_token
         )
 
         if not study_subject:
+            logger.warning(
+                f"Failed to get participant study subject from token: {error_msg}"
+            )
             # Convert string error messages to proper error responses
             if isinstance(error_msg, str):
                 # Handle not found
                 if error_msg == AUTH_ERROR_MESSAGES["not_found"]:
+                    logger.debug("Participant study subject not found")
                     return (
                         None,
                         create_error_response(
@@ -192,6 +223,7 @@ class ParticipantAuthController(AuthControllerBase):
                     )
                 # Handle archived accounts
                 elif error_msg == AUTH_ERROR_MESSAGES["account_archived"]:
+                    logger.debug("Participant account is archived")
                     return (
                         None,
                         create_error_response(
@@ -201,6 +233,7 @@ class ParticipantAuthController(AuthControllerBase):
                     )
                 # Handle invalid token
                 elif error_msg == AUTH_ERROR_MESSAGES["invalid_token_format"]:
+                    logger.debug("Invalid token format for participant")
                     return (
                         None,
                         create_error_response(
@@ -210,6 +243,7 @@ class ParticipantAuthController(AuthControllerBase):
                     )
                 # Default to generic auth failed
                 else:
+                    logger.debug("Generic authentication failure for participant")
                     return (
                         None,
                         create_error_response(
@@ -228,6 +262,9 @@ class ParticipantAuthController(AuthControllerBase):
                 ),
             )
 
+        logger.debug(
+            f"Successfully retrieved participant ditti_id from token: {study_subject.ditti_id if study_subject else 'None'}"
+        )
         return study_subject.ditti_id, None
 
     def create_login_success_response(self, ditti_id):
@@ -241,7 +278,14 @@ class ParticipantAuthController(AuthControllerBase):
         -------
             Response: JSON response with ditti ID
         """
+        logger.debug(
+            f"Creating login success response for participant: {ditti_id}"
+        )
+
+        response_data = {"dittiId": ditti_id}
+        logger.debug(f"Created login success response with data: {response_data}")
+
         return create_success_response(
-            data={"dittiId": ditti_id},
+            data=response_data,
             message=AUTH_ERROR_MESSAGES["login_successful"],
         )

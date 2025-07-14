@@ -10,6 +10,7 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import logging
 import os
 
 from flask import Flask, Response, request
@@ -45,6 +46,8 @@ from backend.views.auth import (
     researcher_auth_blueprint,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def create_app(testing=False):
     """
@@ -58,6 +61,7 @@ def create_app(testing=False):
     -------
         Flask: Configured Flask application.
     """
+    logger.info(f"Creating app with config {os.getenv('FLASK_CONFIG')}")
     app = Flask(__name__)
 
     flask_config = "Testing" if testing else os.getenv("FLASK_CONFIG", "Default")
@@ -68,11 +72,13 @@ def create_app(testing=False):
     register_commands(app)
     register_extensions(app)
 
+    @app.before_request
+    def log_request():
+        app.logger.info(f"Request: {request.url} {request.method}")
+
     @app.after_request
     def log_response(response: Response):
-        app.logger.info(
-            f"Request: [{request.method}] {request.url} {response.status}"
-        )
+        app.logger.info(f"Response: {request.url} {response.status}")
         return response
 
     @app.after_request
@@ -152,6 +158,7 @@ def register_blueprints(app):
     ----------
         app (Flask): The Flask application instance.
     """
+    logger.info("Registering blueprints")
     app.register_blueprint(admin.blueprint)
     app.register_blueprint(aws_requests.blueprint)
     app.register_blueprint(base.blueprint)
@@ -174,6 +181,7 @@ def register_commands(app):
     ----------
         app (Flask): The Flask application instance.
     """
+    logger.info("Registering commands")
     app.cli.add_command(init_admin_app_click)
     app.cli.add_command(init_admin_group_click)
     app.cli.add_command(init_admin_account_click)
@@ -196,6 +204,7 @@ def register_extensions(app):
     ----------
         app (Flask): The Flask application instance.
     """
+    logger.info("Registering extensions")
     cors.init_app(
         app,
         origins=app.config.get("CORS_ORIGINS", "*"),
