@@ -10,20 +10,22 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import logging
 import os
 import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
-from typing import Literal
+from typing import Any, Literal
 
 import boto3
+from config import load_config
 from sqlalchemy import (
+    Dialect,
     MetaData,
     Table,
     and_,
     create_engine,
+    event,
     func,
     insert,
     or_,
@@ -31,22 +33,17 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.orm import aliased
+from sqlalchemy.pool import ConnectionPoolEntry
 
 from shared.fitbit import get_fitbit_oauth_session
 from shared.lambda_logger import LambdaLogger
-from shared.lambda_secrets_provider import get_secret
+from shared.lambda_secrets_provider import SecretProvider
 from shared.utils.sleep_logs import generate_sleep_logs
-
-TESTING = os.getenv("TESTING") is not None
-STAGING = os.getenv("STAGING") is not None
-DEBUG = os.getenv("DEBUG") is not None
 
 # Use a common timestamp across the whole function
 function_timestamp = datetime.now().isoformat()
 
-logger = LambdaLogger(
-    function_timestamp, level=logging.DEBUG if DEBUG else logging.INFO
-)
+logger = LambdaLogger(function_timestamp, level=os.getenv("LOG_LEVEL", "INFO"))
 
 
 class NestedError(Exception):
@@ -82,9 +79,42 @@ class DB:
     - db_uri (str): The URI for securely connecting to the database.
     """
 
-    def __init__(self, db_uri: str):
+    def __init__(
+        self, db_uri: str, *, use_iam: bool = False, iam_sslmode: str = "require"
+    ):
         self.engine = create_engine(db_uri, future=True)
-        self.metadata = MetaData(bind=self.engine)
+        self.metadata = MetaData()
+        self.client = boto3.client("rds")
+
+        @event.listens_for(self.engine, "do_connect")
+        def provide_token(
+            dialect: Dialect,  # noqa: ARG001
+            conn_rec: ConnectionPoolEntry,  # noqa: ARG001
+            cargs: tuple[Any, ...],  # noqa: ARG001
+            cparams: dict[str, Any],
+        ):
+            if use_iam:
+                cparams["sslmode"] = iam_sslmode
+                cparams["password"] = self.create_auth_token(
+                    hostname=cparams["host"],
+                    port=cparams["port"],
+                    username=cparams["user"],
+                )
+
+    def create_auth_token(
+        self, *, hostname: str, port: int, username: str
+    ) -> str:
+        """Create an IAM authentication token for the given database URI and username."""
+        try:
+            auth_token = self.client.generate_db_auth_token(
+                DBHostname=hostname,
+                Port=port,
+                DBUsername=username,
+            )
+        except Exception:
+            raise
+
+        return auth_token
 
 
 class DBService:
@@ -223,7 +253,7 @@ class LambdaTaskService(DBService):
         e = self.db.engine
 
         # Reflect existing database into a new model
-        m.reflect(only=["lambda_task"])
+        m.reflect(bind=e, only=["lambda_task"])
 
         # Access the `lambda_task` table
         self.table = Table("lambda_task", m, autoload_with=e)
@@ -393,11 +423,12 @@ class StudySubjectService(DBService):
 
         # Reflect existing tables into models
         m.reflect(
+            bind=e,
             only=[
                 "join_study_subject_api",
                 "study_subject",
                 "join_study_subject_study",
-            ]
+            ],
         )
 
         # Aliased tables for readability
@@ -800,54 +831,51 @@ def handler(event, _context):
     log_file = None
     error_code = None
     has_errors = False
+    tokens: dict[str, dict[str, str]] = {}
 
     # Retrieve function_id from the lambda function invocation event
     function_id = event.get("function_id")
     logger.info("Retrieved function_id", extra={"function_id": function_id})
 
     try:
-        config = {"S3_BUCKET": os.getenv("S3_BUCKET")}
-        tokens_config = {}
+        # Load config
+        try:
+            config = load_config(logger)
+        except Exception as err:
+            logger.error(
+                "Error loading config",
+                extra={"error": traceback.format_exc()},
+            )
+            raise ConfigFetchError from err
 
-        # Load secrets
-        if TESTING or STAGING:
-            config = {
-                "FLASK_DB": os.getenv("FLASK_DB"),
-                "S3_BUCKET": os.getenv("S3_BUCKET"),
-            }
-
-        if (not TESTING) or STAGING:
+        # Load token secret
+        if not config["local"]:
             try:
-                config_secret_name = os.getenv("AWS_CONFIG_SECRET_NAME")
-                tokens_secret_name = os.getenv("AWS_KEYS_SECRET_NAME")
-
-                config_payload = get_secret(config_secret_name)
-                if config_payload.secret_dict is None:
-                    logger.error(
-                        "Config secret '%s' returned no data (secret_dict is None).",
-                        config_secret_name,
-                    )
-                    raise ConfigFetchError("Config secret returned no data.")
-                config.update(config_payload.secret_dict)
-
-                tokens_payload = get_secret(tokens_secret_name)
+                tokens_secret_name = config["fitbit_tokens_secret_name"]
+                tokens_secret_provider = SecretProvider[
+                    dict[str, dict[str, str]]
+                ](secret_name=tokens_secret_name)
+                tokens_payload = tokens_secret_provider.get_secret()
                 if tokens_payload.secret_dict is None:
                     logger.error(
                         "Tokens secret '%s' returned no data (secret_dict is None).",
                         tokens_secret_name,
                     )
                     raise ConfigFetchError("Tokens secret returned no data.")
-                tokens_config = tokens_payload.secret_dict
+                tokens = tokens_payload.secret_dict
+
+            except ConfigFetchError:
+                raise
             except Exception as err:
                 logger.error(
-                    "Error retrieving secret",
+                    "Error loading token secret",
                     extra={"error": traceback.format_exc()},
                 )
                 raise ConfigFetchError from err
 
         # Database connection setup
         try:
-            db = DB(config["FLASK_DB"])
+            db = DB(config["db"]["uri"], use_iam=config["db"]["use_iam"])
             lambda_task_service = LambdaTaskService(db)
             study_subject_service = StudySubjectService(db)
 
@@ -951,12 +979,12 @@ def handler(event, _context):
 
                 # Try querying the fitbit API for this study subject
                 data = []
-                if TESTING:
+                if config["local"]:
                     data += generate_sleep_logs()["sleep"]
                 else:
                     # Retrieve OAuth tokens for the subject
                     try:
-                        tokens = tokens_config[entry.ditti_id]
+                        tokens = tokens[entry.ditti_id]
                     except KeyError:
                         logger.info(
                             "Participant not found in API tokens secret.",
@@ -1095,7 +1123,7 @@ def handler(event, _context):
         # Upload log file to S3
         try:
             s3_client = boto3.client("s3")
-            bucket_name = config["S3_BUCKET"]
+            bucket_name = config["s3"]["bucket_name"]
 
             # Prepare the S3 filename including function_id
             log_file = f"{function_id}_{os.path.split(logger.log_filename)[1]}"
