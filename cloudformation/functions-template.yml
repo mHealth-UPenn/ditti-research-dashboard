@@ -1,0 +1,348 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Lambda functions for the application."
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: Stack Config
+        Parameters:
+          - App
+          - Environment
+          - VpcStackName
+          - RDSStackName
+          - AppFunctionName
+          - AppInvocationURL
+      - Label:
+          default: Fitbit
+        Parameters:
+          - FitbitSecretName
+          - FitbitTokensSecretName
+      - Label:
+          default: Wearable Data Retrieval
+        Parameters:
+          - WearableDataRetrievalImageURI
+          - WearableDataRetrievalLogsBucketName
+          - WearableDataRetrievalLogLevel
+          - WearableDataRetrievalDailyTriggerSchedule
+      - Label:
+          default: Flask Secret Key Rotator
+        Parameters:
+          - FlaskSecretKeySecretName
+          - FlaskSecretKeyRotatorImageURI
+          - FlaskSecretKeyRotatorLogsBucketName
+          - FlaskSecretKeyRotatorLogLevel
+          - FlaskSecretKeyRotatorDailyTriggerSchedule
+
+    ParameterLabels:
+      App:
+        default: App
+      Environment:
+        default: Environment
+      VpcStackName:
+        default: VPC Stack Name
+      RDSStackName:
+        default: RDS Stack Name
+      AppInvocationURL:
+        default: App Invocation URL
+      AppFunctionName:
+        default: App Function Name
+      FitbitSecretName:
+        default: Fitbit Secret Name
+      FitbitTokensSecretName:
+        default: Fitbit Tokens Secret Name
+      WearableDataRetrievalImageURI:
+        default: Image URI
+      WearableDataRetrievalLogsBucketName:
+        default: Logs Bucket Name
+      WearableDataRetrievalLogLevel:
+        default: Log Level
+      WearableDataRetrievalDailyTriggerSchedule:
+        default: Daily Trigger Schedule
+      FlaskSecretKeySecretName:
+        default: Flask Secret Key Secret Name
+      FlaskSecretKeyRotatorImageURI:
+        default: Flask Secret Key Rotator Image URI
+      FlaskSecretKeyRotatorLogsBucketName:
+        default: Flask Secret Key Rotator Logs Bucket Name
+      FlaskSecretKeyRotatorLogLevel:
+        default: Flask Secret Key Rotator Log Level
+      FlaskSecretKeyRotatorDailyTriggerSchedule:
+        default: Flask Secret Key Rotator Daily Trigger Schedule
+
+Parameters:
+  App:
+    Type: String
+    Default: ditti-dashboard
+    Description: App name
+
+  Environment:
+    Type: String
+    AllowedValues:
+      - staging
+      - prod
+    Description: Environment name
+
+  VpcStackName:
+    Type: String
+    Description: Name of the VPC stack to import resources from
+
+  RDSStackName:
+    Type: String
+    Description: Name of the RDS stack to import resources from
+
+  AppInvocationURL:
+    Type: String
+    Description: URL of the Flask application to invoke the secret key rotator function
+
+  AppFunctionName:
+    Type: String
+    Description: Name of the Flask application function
+
+  FitbitSecretName:
+    Type: String
+    Description: Name of the Fitbit secret
+
+  FitbitTokensSecretName:
+    Type: String
+    Description: Name of the Fitbit tokens secret
+
+  WearableDataRetrievalImageURI:
+    Type: String
+    Description: URI of the Wearable Data Retrieval image
+
+  WearableDataRetrievalLogsBucketName:
+    Type: String
+    Description: Name of the Wearable Data Retrieval logs bucket
+
+  WearableDataRetrievalLogLevel:
+    Type: String
+    Default: INFO
+    AllowedValues:
+      - TRACE
+      - DEBUG
+      - INFO
+      - WARNING
+      - ERROR
+      - FATAL
+    Description: Application log level for the Wearable Data Retrieval Lambda function
+
+  WearableDataRetrievalDailyTriggerSchedule:
+    Type: String
+    Default: "cron(0 0 * * ? *)"
+    Description: Schedule expression for the Wearable Data Retrieval daily trigger
+
+  FlaskSecretKeySecretName:
+    Type: String
+    Description: Name of the Flask secret key secret
+
+  FlaskSecretKeyRotatorImageURI:
+    Type: String
+    Description: URI of the Flask Secret Key Rotator image
+
+  FlaskSecretKeyRotatorDailyTriggerSchedule:
+    Type: String
+    Default: "cron(0 1 ? * SUN *)"
+    Description: Schedule expression for the Flask Secret Key Rotator daily trigger
+
+Conditions:
+  DebugMode: !Equals [!Ref Environment, "staging"]
+
+Resources:
+
+  #########
+  # Roles #
+  #########
+  WearableDataRetrievalLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+      Policies:
+        - PolicyName: "wearable-data-retrieval-lambda-role-secret-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "secretsmanager:*"
+                Resource:
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${FitbitSecretName}*"
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${FitbitTokensSecretName}*"
+        - PolicyName: "wearable-data-retrieval-lambda-role-logs-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "s3:PutObject"
+                Resource: !Sub "arn:aws:s3:::${WearableDataRetrievalLogsBucketName}/*"
+        - PolicyName: "wearable-data-retrieval-lambda-role-rds-iam"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "rds-db:connect"
+                Resource:
+                  - Fn::ImportValue: !Sub ${RDSStackName}-IAMUserARN
+
+  FlaskSecretKeyRotatorLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+      Policies:
+        - PolicyName: "flask-secret-key-rotator-lambda-role-secrets-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "secretsmanager:DescribeSecret"
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:PutSecretValue"
+                  - "secretsmanager:UpdateSecretVersionStage"
+                Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${FlaskSecretKeySecretName}*"
+        - PolicyName: "flask-secret-key-rotator-lambda-role-random-password-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "secretsmanager:GetRandomPassword"
+                Resource: "*"
+        - PolicyName: "flask-secret-key-rotator-lambda-role-lambda-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "lambda:UpdateFunctionConfiguration"
+                  - "lambda:GetFunctionConfiguration"
+                  - "lambda:GetFunction"
+                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AppFunctionName}*"
+
+  #############
+  # Functions #
+  #############
+  WearableDataRetrievalLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${App}-wearable-data-retrieval-${Environment}"
+      Architectures:
+        - x86_64
+      Code:
+        ImageUri: !Ref WearableDataRetrievalImageURI
+      MemorySize: 512
+      PackageType: Image
+      Role: !GetAtt WearableDataRetrievalLambdaRole.Arn
+      Timeout: 180
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::ImportValue: !Sub ${VpcStackName}-LambdaSecurityGroupId
+        SubnetIds:
+          - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet1
+          - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet2
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref WearableDataRetrievalLogsBucketName
+          DB_URI:
+            Fn::ImportValue:
+              !Sub ${RDSStackName}-DBClusterIamUrl
+          DB_USE_IAM: "true"
+          FITBIT_SECRET_NAME: !Ref FitbitSecretName
+          FITBIT_TOKENS_SECRET_NAME: !Ref FitbitTokensSecretName
+          LOG_LEVEL: !Ref WearableDataRetrievalLogLevel
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Environment
+          Value: !Ref Environment
+
+  FlaskSecretKeyRotatorLambdaFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${App}-flask-secret-key-rotator-${Environment}"
+      Architectures:
+        - x86_64
+      Code:
+        ImageUri: !Ref FlaskSecretKeyRotatorImageURI
+      MemorySize: 512
+      PackageType: Image
+      Role: !GetAtt FlaskSecretKeyRotatorLambdaRole.Arn
+      Timeout: 180
+      VpcConfig:
+        SecurityGroupIds:
+          - Fn::ImportValue: !Sub ${VpcStackName}-LambdaSecurityGroupId
+        SubnetIds:
+          - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet1
+          - Fn::ImportValue: !Sub ${VpcStackName}-PrivateSubnet2
+      Environment:
+        Variables:
+          APP_LAMBDA_FUNCTION_NAME: !Ref AppFunctionName
+          APP_URL: !Ref AppInvocationURL
+      Tags:
+        - Key: App
+          Value: !Ref App
+        - Key: Environment
+          Value: !Ref Environment
+
+  ####################
+  # Event Triggers #
+  ####################
+  WearableDataRetrievalDailyTrigger:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "${App}-wearable-data-retrieval-daily-${Environment}"
+      Description: "Triggers wearable data retrieval function daily at midnight"
+      ScheduleExpression: !Ref WearableDataRetrievalDailyTriggerSchedule
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt WearableDataRetrievalLambdaFunction.Arn
+          Id: "WearableDataRetrievalTarget"
+
+  WearableDataRetrievalLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref WearableDataRetrievalLambdaFunction
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt WearableDataRetrievalDailyTrigger.Arn
+
+  FlaskSecretKeyRotatorDailyTrigger:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "${App}-flask-secret-key-rotator-daily-${Environment}"
+      Description: "Triggers flask secret key rotator function daily at midnight"
+      ScheduleExpression: !Ref FlaskSecretKeyRotatorDailyTriggerSchedule
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt FlaskSecretKeyRotatorLambdaFunction.Arn
+          Id: "FlaskSecretKeyRotatorTarget"
+
+  FlaskSecretKeyRotatorLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref FlaskSecretKeyRotatorLambdaFunction
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt FlaskSecretKeyRotatorDailyTrigger.Arn
