@@ -11,9 +11,8 @@
 # under the License.
 
 NOCACHE=0
-DEBUG=0
-STAGING=0
 PORT=9001
+NETWORK=""
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
@@ -22,13 +21,9 @@ while [[ $# -gt 0 ]]; do
             NOCACHE=1
             shift
             ;;
-        --debug)
-            DEBUG=1
-            shift
-            ;;
-        --staging)
-            STAGING=1
-            shift
+        --network)
+            NETWORK=$2
+            shift 2
             ;;
         --port)
             PORT=$2
@@ -42,45 +37,38 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-cp -r ../../shared shared
-if [ $NOCACHE -eq 1 ]; then
-    docker build --platform linux/amd64 --no-cache -t wearable-data-retrieval:test .
-else
-    docker build --platform linux/amd64 -t wearable-data-retrieval:test .
-fi
-if [ $? -ne 0 ]; then
-    rm -rf shared
+if [ -z "$NETWORK" ]; then
+    echo "Network is required using --network"
     exit 1
 fi
-rm -rf shared
 
-if [ "$STAGING" -eq 1 ]; then
-    docker run --rm \
+if [ $NOCACHE -eq 1 ]; then
+    docker build \
+        -t wearable-data-retrieval-dev \
         --platform linux/amd64 \
-        --name wearable-data-retrieval-test \
-        --network aws-network \
-        -p "${PORT}:8080" \
-        --env-file .env \
-        -e DEBUG=true \
-        -e STAGING=true \
-        wearable-data-retrieval:test
-elif [ "$DEBUG" -eq 1 ]; then
-    docker run --rm \
-        --platform linux/amd64 \
-        --name wearable-data-retrieval-test \
-        --network aws-network \
-        -p "${PORT}:8080" \
-        --env-file .env \
-        -e TESTING=true \
-        -e DEBUG=true \
-        wearable-data-retrieval:test
+        --secret id=aws,src=$HOME/.aws/credentials \
+        --target dev \
+        --no-cache \
+        -f functions/wearable_data_retrieval/Dockerfile .
 else
-    docker run --rm \
+    docker build \
+        -t wearable-data-retrieval-dev \
         --platform linux/amd64 \
-        --name wearable-data-retrieval-test \
-        --network aws-network \
-        -p "${PORT}:8080" \
-        --env-file .env \
-        -e TESTING=true \
-        wearable-data-retrieval:test
+        --secret id=aws,src=$HOME/.aws/credentials \
+        --target dev \
+        -f functions/wearable_data_retrieval/Dockerfile .
 fi
+
+if [ $? -ne 0 ]; then
+    echo "Failed to build the image"
+    exit 1
+fi
+
+docker run \
+    -itp "${PORT}:8080" \
+    --env-file functions/wearable_data_retrieval/.env \
+    --rm \
+    --platform linux/amd64 \
+    --network $NETWORK \
+    wearable-data-retrieval-dev
+
