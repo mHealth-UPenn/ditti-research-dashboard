@@ -14,6 +14,7 @@ import os
 from collections.abc import Callable
 from typing import Any
 from unittest.mock import MagicMock
+from urllib.parse import urlparse
 
 import pytest
 from flask import Flask
@@ -40,16 +41,14 @@ def mock_db():
 @pytest.fixture
 def db_uri_params():
     uri = os.getenv("FLASK_DB")
-    print(uri)
-    x = {
-        "hostname": uri.split("@")[1].split(":")[0],
-        "port": int(uri.split(":")[3].split("/")[0]),
-        "database": uri.split("/")[-1],
-        "username": uri.split("@")[0].split(":")[1][2:],
-        "password": uri.split("@")[0].split(":")[2],
+    parsed = urlparse(uri)
+    return {
+        "hostname": parsed.hostname,
+        "port": parsed.port,
+        "database": parsed.path.lstrip("/"),
+        "username": parsed.username,
+        "password": parsed.password,
     }
-    print(x)
-    return x
 
 
 def set_connection_test(app: Flask, db: IamSqlAlchemy, test_func: Callable):
