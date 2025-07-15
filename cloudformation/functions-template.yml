@@ -28,11 +28,9 @@ Metadata:
       - Label:
           default: Flask Secret Key Rotator
         Parameters:
-          - FlaskSecretKeySecretName
           - FlaskSecretKeyRotatorImageURI
-          - FlaskSecretKeyRotatorLogsBucketName
-          - FlaskSecretKeyRotatorLogLevel
-          - FlaskSecretKeyRotatorDailyTriggerSchedule
+          - FlaskSecretKeyRotatorSecretName
+          - FlaskSecretKeyRotatorDays
 
     ParameterLabels:
       App:
@@ -59,16 +57,12 @@ Metadata:
         default: Log Level
       WearableDataRetrievalDailyTriggerSchedule:
         default: Daily Trigger Schedule
-      FlaskSecretKeySecretName:
-        default: Flask Secret Key Secret Name
       FlaskSecretKeyRotatorImageURI:
-        default: Flask Secret Key Rotator Image URI
-      FlaskSecretKeyRotatorLogsBucketName:
-        default: Flask Secret Key Rotator Logs Bucket Name
-      FlaskSecretKeyRotatorLogLevel:
-        default: Flask Secret Key Rotator Log Level
-      FlaskSecretKeyRotatorDailyTriggerSchedule:
-        default: Flask Secret Key Rotator Daily Trigger Schedule
+        default: Image URI
+      FlaskSecretKeyRotatorSecretName:
+        default: Flask Secret Key Secret Name
+      FlaskSecretKeyRotatorDays:
+        default: Rotate Automatically After Days
 
 Parameters:
   App:
@@ -132,27 +126,27 @@ Parameters:
     Default: "cron(0 0 * * ? *)"
     Description: Schedule expression for the Wearable Data Retrieval daily trigger
 
-  FlaskSecretKeySecretName:
-    Type: String
-    Description: Name of the Flask secret key secret
-
   FlaskSecretKeyRotatorImageURI:
     Type: String
     Description: URI of the Flask Secret Key Rotator image
 
-  FlaskSecretKeyRotatorDailyTriggerSchedule:
+  FlaskSecretKeyRotatorSecretName:
     Type: String
-    Default: "cron(0 1 ? * SUN *)"
-    Description: Schedule expression for the Flask Secret Key Rotator daily trigger
+    Description: Name of the Flask secret key secret
+
+  FlaskSecretKeyRotatorDays:
+    Type: Number
+    Default: 14
+    Description: Number of days after which to rotate the Flask secret key
 
 Conditions:
   DebugMode: !Equals [!Ref Environment, "staging"]
 
 Resources:
 
-  #########
-  # Roles #
-  #########
+  ###########################
+  # Wearable Data Retrieval #
+  ###########################
   WearableDataRetrievalLambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -195,55 +189,6 @@ Resources:
                 Resource:
                   - Fn::ImportValue: !Sub ${RDSStackName}-IAMUserARN
 
-  FlaskSecretKeyRotatorLambdaRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: "/"
-      ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
-      Policies:
-        - PolicyName: "flask-secret-key-rotator-lambda-role-secrets-access"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - "secretsmanager:DescribeSecret"
-                  - "secretsmanager:GetSecretValue"
-                  - "secretsmanager:PutSecretValue"
-                  - "secretsmanager:UpdateSecretVersionStage"
-                Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${FlaskSecretKeySecretName}*"
-        - PolicyName: "flask-secret-key-rotator-lambda-role-random-password-access"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action: "secretsmanager:GetRandomPassword"
-                Resource: "*"
-        - PolicyName: "flask-secret-key-rotator-lambda-role-lambda-access"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action:
-                  - "lambda:UpdateFunctionConfiguration"
-                  - "lambda:GetFunctionConfiguration"
-                  - "lambda:GetFunction"
-                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AppFunctionName}*"
-
-  #############
-  # Functions #
-  #############
   WearableDataRetrievalLambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -278,6 +223,74 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
+  WearableDataRetrievalDailyTrigger:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "${App}-wearable-data-retrieval-daily-${Environment}"
+      Description: "Triggers wearable data retrieval function daily at midnight"
+      ScheduleExpression: !Ref WearableDataRetrievalDailyTriggerSchedule
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt WearableDataRetrievalLambdaFunction.Arn
+          Id: "WearableDataRetrievalTarget"
+
+  WearableDataRetrievalLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref WearableDataRetrievalLambdaFunction
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt WearableDataRetrievalDailyTrigger.Arn
+
+  ############################
+  # Flask Secret Key Rotator #
+  ############################
+  FlaskSecretKeyRotatorLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+        - "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPullOnly"
+      Policies:
+        - PolicyName: "flask-secret-key-rotator-lambda-role-secrets-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "secretsmanager:DescribeSecret"
+                  - "secretsmanager:GetSecretValue"
+                  - "secretsmanager:PutSecretValue"
+                  - "secretsmanager:UpdateSecretVersionStage"
+                Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${FlaskSecretKeyRotatorSecretName}*"
+        - PolicyName: "flask-secret-key-rotator-lambda-role-random-password-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "secretsmanager:GetRandomPassword"
+                Resource: "*"
+        - PolicyName: "flask-secret-key-rotator-lambda-role-lambda-access"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "lambda:UpdateFunctionConfiguration"
+                  - "lambda:GetFunctionConfiguration"
+                  - "lambda:GetFunction"
+                Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AppFunctionName}*"
+
   FlaskSecretKeyRotatorLambdaFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -306,43 +319,18 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
-  ####################
-  # Event Triggers #
-  ####################
-  WearableDataRetrievalDailyTrigger:
-    Type: AWS::Events::Rule
+  FlaskSecretKeyRotatorRotationSchedule:
+    Type: AWS::SecretsManager::RotationSchedule
     Properties:
-      Name: !Sub "${App}-wearable-data-retrieval-daily-${Environment}"
-      Description: "Triggers wearable data retrieval function daily at midnight"
-      ScheduleExpression: !Ref WearableDataRetrievalDailyTriggerSchedule
-      State: ENABLED
-      Targets:
-        - Arn: !GetAtt WearableDataRetrievalLambdaFunction.Arn
-          Id: "WearableDataRetrievalTarget"
+      RotationLambdaARN: !GetAtt FlaskSecretKeyRotatorLambdaFunction.Arn
+      RotationRules:
+        AutomaticallyAfterDays: !Ref FlaskSecretKeyRotatorDays
+      SecretId: !Ref FlaskSecretKeyRotatorSecretName
 
-  WearableDataRetrievalLambdaPermission:
-    Type: AWS::Lambda::Permission
-    Properties:
-      FunctionName: !Ref WearableDataRetrievalLambdaFunction
-      Action: "lambda:InvokeFunction"
-      Principal: "events.amazonaws.com"
-      SourceArn: !GetAtt WearableDataRetrievalDailyTrigger.Arn
-
-  FlaskSecretKeyRotatorDailyTrigger:
-    Type: AWS::Events::Rule
-    Properties:
-      Name: !Sub "${App}-flask-secret-key-rotator-daily-${Environment}"
-      Description: "Triggers flask secret key rotator function daily at midnight"
-      ScheduleExpression: !Ref FlaskSecretKeyRotatorDailyTriggerSchedule
-      State: ENABLED
-      Targets:
-        - Arn: !GetAtt FlaskSecretKeyRotatorLambdaFunction.Arn
-          Id: "FlaskSecretKeyRotatorTarget"
-
-  FlaskSecretKeyRotatorLambdaPermission:
+  FlaskSecretKeyRotatorRotationSchedulePermission:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !Ref FlaskSecretKeyRotatorLambdaFunction
       Action: "lambda:InvokeFunction"
-      Principal: "events.amazonaws.com"
-      SourceArn: !GetAtt FlaskSecretKeyRotatorDailyTrigger.Arn
+      Principal: "secretsmanager.amazonaws.com"
+      SourceAccount: !Ref AWS::AccountId
