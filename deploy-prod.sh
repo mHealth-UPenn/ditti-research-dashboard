@@ -10,24 +10,33 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-NOBUILD=0
+DEPLOY_APP=0
+DEPLOY_WEARABLE_DATA_RETRIEVAL=0
+DEPLOY_FLASK_SECRET_KEY_ROTATOR=0
 NOCACHE=0
-TAG=latest
+
+if [ "$#" -lt 1 ]; then
+    echo "Usage: $0 [--app] [--wearable-data-retrieval] [--flask-secret-key-rotator] [--no-cache]"
+    exit 1
+fi
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --no-build)
-            NOBUILD=1
+        --app)
+            DEPLOY_APP=1
+            shift
+            ;;
+        --wearable-data-retrieval)
+            DEPLOY_WEARABLE_DATA_RETRIEVAL=1
+            shift
+            ;;
+        --flask-secret-key-rotator)
+            DEPLOY_FLASK_SECRET_KEY_ROTATOR=1
             shift
             ;;
         --no-cache)
             NOCACHE=1
-            shift
-            ;;
-        -t|--tag)
-            TAG="$2"
-            shift
             shift
             ;;
         -*|--*)
@@ -45,11 +54,15 @@ else
     exit 1
 fi
 
+# login docker
 DOCKER_SERVER=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-DOCKER_IMAGE=${DOCKER_SERVER}/${AWS_ECR_REPO_NAME}:${TAG}
+aws ecr get-login-password | docker login --username AWS --password-stdin ${DOCKER_SERVER}
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 
-# if --no-build was not used
-if [ $NOBUILD -eq 0 ]; then
+if [ $DEPLOY_APP -eq 1 ]; then
+    DOCKER_IMAGE=${DOCKER_SERVER}/${AWS_ECR_REPO_NAME}:latest
 
     # --- AWS Parameters and Secrets Lambda Extension ---
     # To improve performance and reduce costs, the application uses the
@@ -113,16 +126,118 @@ if [ $NOBUILD -eq 0 ]; then
     if [ $? -ne 0 ]; then
         exit 1
     fi
+
+    # check if the app has been deployed yet
+    zappa status app &> /dev/null
+    if [ $? -eq 1 ]; then
+
+        # deploy the app
+        zappa deploy app -d ${DOCKER_IMAGE}
+    else
+
+        # update the app
+        zappa update app -d ${DOCKER_IMAGE}
+    fi
 fi
 
-# check if the app has been deployed yet
-zappa status app &> /dev/null
-if [ $? -eq 1 ]; then
 
-    # deploy the app
-    zappa deploy app -d ${DOCKER_IMAGE}
-else
 
-    # update the app
-    zappa update app -d ${DOCKER_IMAGE}
+if [ $DEPLOY_WEARABLE_DATA_RETRIEVAL -eq 1 ] || [ $DEPLOY_FLASK_SECRET_KEY_ROTATOR -eq 1 ]; then
+    STACK_OUTPUTS=$(aws cloudformation describe-stacks --stack-name ${AWS_FUNCTIONS_CLOUDFORMATION_STACK_NAME} | jq ".Stacks[0].Outputs")
+fi
+
+if [ $DEPLOY_WEARABLE_DATA_RETRIEVAL -eq 1 ]; then
+    echo "Deploying wearable data retrieval..."
+    WEARABLE_DATA_RETRIEVAL_LAMBDA_FUNCTION_NAME=$(echo $STACK_OUTPUTS | jq -r '.[] | select(.OutputKey == "WearableDataRetrievalLambdaFunctionName") | .OutputValue')
+    WEARABLE_DATA_RETRIEVAL_IMAGE_URI=$(echo $STACK_OUTPUTS | jq -r '.[] | select(.OutputKey == "WearableDataRetrievalImageUri") | .OutputValue')
+
+    if [ $NOCACHE -eq 1 ]; then
+        docker build \
+            -f functions/wearable_data_retrieval/Dockerfile \
+            -t ${WEARABLE_DATA_RETRIEVAL_IMAGE_URI} \
+            --platform linux/amd64 \
+            --secret id=aws,src=$HOME/.aws/credentials \
+            --target prod \
+            --no-cache .
+    else
+        docker build \
+            -f functions/wearable_data_retrieval/Dockerfile \
+            -t ${WEARABLE_DATA_RETRIEVAL_IMAGE_URI} \
+            --platform linux/amd64 \
+            --secret id=aws,src=$HOME/.aws/credentials \
+            --target prod .
+    fi
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to build the wearable data retrieval function."
+        exit 1
+    fi
+
+    docker push ${WEARABLE_DATA_RETRIEVAL_IMAGE_URI}
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to push the wearable data retrieval function."
+        exit 1
+    fi
+
+    aws lambda update-function-code \
+        --image-uri ${WEARABLE_DATA_RETRIEVAL_IMAGE_URI} \
+        --function-name ${WEARABLE_DATA_RETRIEVAL_LAMBDA_FUNCTION_NAME} \
+        > /dev/null
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to update the wearable data retrieval function."
+        exit 1
+    fi
+
+    echo "Waiting for the function to update..."
+    aws lambda wait function-updated-v2 --function-name ${WEARABLE_DATA_RETRIEVAL_LAMBDA_FUNCTION_NAME}
+
+    echo "Wearable data retrieval function updated."
+fi
+
+if [ $DEPLOY_FLASK_SECRET_KEY_ROTATOR -eq 1 ]; then
+    echo "Deploying flask secret key rotator..."
+    FLASK_SECRET_KEY_ROTATOR_LAMBDA_FUNCTION_NAME=$(echo $STACK_OUTPUTS | jq -r '.[] | select(.OutputKey == "FlaskSecretKeyRotatorLambdaFunctionName") | .OutputValue')
+    FLASK_SECRET_KEY_ROTATOR_IMAGE_URI=$(echo $STACK_OUTPUTS | jq -r '.[] | select(.OutputKey == "FlaskSecretKeyRotatorImageUri") | .OutputValue')
+
+    if [ $NOCACHE -eq 1 ]; then
+        docker build \
+            -f functions/secret_rotator/Dockerfile \
+            -t ${FLASK_SECRET_KEY_ROTATOR_IMAGE_URI} \
+            --platform linux/amd64 \
+            --no-cache .
+    else
+        docker build \
+            -f functions/secret_rotator/Dockerfile \
+            -t ${FLASK_SECRET_KEY_ROTATOR_IMAGE_URI} \
+            --platform linux/amd64 .
+    fi
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to build the flask secret key rotator function."
+        exit 1
+    fi
+
+    docker push ${FLASK_SECRET_KEY_ROTATOR_IMAGE_URI}
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to push the flask secret key rotator function."
+        exit 1
+    fi
+
+    aws lambda update-function-code \
+        --image-uri ${FLASK_SECRET_KEY_ROTATOR_IMAGE_URI} \
+        --function-name ${FLASK_SECRET_KEY_ROTATOR_LAMBDA_FUNCTION_NAME} \
+        > /dev/null
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to update the flask secret key rotator function."
+        exit 1
+    fi
+
+    echo "Waiting for the function to update..."
+    aws lambda wait function-updated-v2 --function-name ${FLASK_SECRET_KEY_ROTATOR_LAMBDA_FUNCTION_NAME}
+
+    echo "Flask secret key rotator function updated."
 fi
