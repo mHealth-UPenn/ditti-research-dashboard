@@ -334,3 +334,13 @@ Resources:
       Action: "lambda:InvokeFunction"
       Principal: "secretsmanager.amazonaws.com"
       SourceAccount: !Ref AWS::AccountId
+
+Outputs:
+  FlaskSecretKeyRotatorLambdaFunctionName:
+    Value: !Ref FlaskSecretKeyRotatorLambdaFunction
+  FlaskSecretKeyRotatorImageUri:
+    Value: !Ref FlaskSecretKeyRotatorImageURI
+  WearableDataRetrievalLambdaFunctionName:
+    Value: !Ref WearableDataRetrievalLambdaFunction
+  WearableDataRetrievalImageUri:
+    Value: !Ref WearableDataRetrievalImageURI
