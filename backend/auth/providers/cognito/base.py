@@ -42,14 +42,22 @@ class CognitoAuthBase:
             if user_type == "participant"
             else "researcher_oidc"
         )
+        logger.debug(
+            f"Initialized CognitoAuthBase for {user_type} with OAuth client: {self.oauth_client_name}"
+        )
 
     def get_config_prefix(self):
         """Get the configuration prefix for this user type."""
-        return f"COGNITO_{self.user_type.upper()}"
+        prefix = f"COGNITO_{self.user_type.upper()}"
+        logger.debug(f"Config prefix for {self.user_type}: {prefix}")
+        return prefix
 
     def get_config(self, key):
         """Get a configuration value for this user type."""
-        return current_app.config[f"{self.get_config_prefix()}_{key}"]
+        config_key = f"{self.get_config_prefix()}_{key}"
+        value = current_app.config[config_key]
+        logger.debug(f"Retrieved config {config_key} for {self.user_type}")
+        return value
 
     def validate_access_token(self, access_token, refresh_token=None):
         """
@@ -67,6 +75,8 @@ class CognitoAuthBase:
                 - If success is True, result is None or dict with new_token
                 - If success is False, result contains an error message
         """
+        logger.debug(f"Validating access token for {self.user_type}")
+
         try:
             # Check token expiration
             claims = jwt.decode(access_token, options={"verify_signature": False})
@@ -75,12 +85,17 @@ class CognitoAuthBase:
 
             # Token still valid
             if exp > now:
+                logger.debug(f"Access token for {self.user_type} is still valid")
                 return True, None
+
+            logger.debug(
+                f"Access token for {self.user_type} has expired, attempting refresh"
+            )
 
             # Token expired, try to refresh
             if not refresh_token:
                 logger.warning(
-                    "Access token expired but no refresh token available"
+                    f"Access token expired for {self.user_type} but no refresh token available"
                 )
                 return False, AUTH_ERROR_MESSAGES["session_expired"]
 
@@ -99,6 +114,9 @@ class CognitoAuthBase:
                 }
                 headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
+                logger.debug(
+                    f"Refreshing access token for {self.user_type} via {token_url}"
+                )
                 response = requests.post(
                     token_url, data=data, headers=headers, timeout=30
                 )
@@ -112,11 +130,13 @@ class CognitoAuthBase:
                         status_code == 400
                         and error_body.get("error") == "invalid_grant"
                     ):
-                        logger.error("Refresh token has expired or been revoked")
+                        logger.error(
+                            f"Refresh token has expired or been revoked for {self.user_type}"
+                        )
                         return False, AUTH_ERROR_MESSAGES["session_expired"]
 
                     logger.error(
-                        "Failed to refresh token: "
+                        f"Failed to refresh token for {self.user_type}: "
                         f"HTTP {status_code} - {error_body}"
                     )
                     return False, AUTH_ERROR_MESSAGES["session_expired"]
@@ -124,15 +144,19 @@ class CognitoAuthBase:
                 # Success - return new token
                 token_data = response.json()
                 new_access_token = token_data["access_token"]
-                logger.info("Successfully refreshed access token")
+                logger.info(
+                    f"Successfully refreshed access token for {self.user_type}"
+                )
                 return True, {"new_token": new_access_token}
 
             except Exception as e:
-                logger.error(f"Error refreshing token: {e!s}")
+                logger.error(
+                    f"Error refreshing token for {self.user_type}: {e!s}"
+                )
                 return False, AUTH_ERROR_MESSAGES["session_expired"]
 
         except Exception as e:
-            logger.error(f"Token validation error: {e!s}")
+            logger.error(f"Token validation error for {self.user_type}: {e!s}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
     def validate_token_for_authenticated_route(self, id_token):
@@ -153,21 +177,35 @@ class CognitoAuthBase:
                 - If success is True, result contains the parsed user info
                 - If success is False, result contains an error message
         """
+        logger.debug(
+            f"Validating ID token for authenticated route for {self.user_type}"
+        )
+
         try:
             # Decode the token without verification to get the header and claims
             unverified_header = jwt.get_unverified_header(id_token)
+            logger.debug(
+                f"Token header for {self.user_type}: {unverified_header}"
+            )
 
             unverified_claims = jwt.decode(
                 id_token, options={"verify_signature": False}
             )
+            logger.debug(
+                f"Token claims for {self.user_type}: {unverified_claims}"
+            )
 
             # Check basic claims before fetching keys
             # Check token_use
-            if unverified_claims.get("token_use") != "id":
+            token_use = unverified_claims.get("token_use")
+            if token_use != "id":  # noqa: S105
                 logger.error(
-                    f"Invalid token use: {unverified_claims.get('token_use')}"
+                    f"Invalid token use for {self.user_type}: {token_use}"
                 )
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
+            logger.debug(
+                f"Token use validation passed for {self.user_type}: {token_use}"
+            )
 
             # Check issuer
             region = self.get_config("REGION")
@@ -175,34 +213,60 @@ class CognitoAuthBase:
             expected_issuer = (
                 f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}"
             )
-            if unverified_claims.get("iss") != expected_issuer:
-                logger.error(f"Invalid issuer: {unverified_claims.get('iss')}")
+            actual_issuer = unverified_claims.get("iss")
+            if actual_issuer != expected_issuer:
+                logger.error(
+                    f"Invalid issuer for {self.user_type}: expected {expected_issuer}, got {actual_issuer}"
+                )
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
+            logger.debug(
+                f"Issuer validation passed for {self.user_type}: {actual_issuer}"
+            )
 
             # Check audience
             expected_audience = self.get_config("CLIENT_ID")
-            if unverified_claims.get("aud") != expected_audience:
-                logger.error(f"Invalid audience: {unverified_claims.get('aud')}")
+            actual_audience = unverified_claims.get("aud")
+            if actual_audience != expected_audience:
+                logger.error(
+                    f"Invalid audience for {self.user_type}: expected {expected_audience}, got {actual_audience}"
+                )
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
+            logger.debug(
+                f"Audience validation passed for {self.user_type}: {actual_audience}"
+            )
 
             # Check expiration
             now = int(time.time())
-            if unverified_claims.get("exp", 0) <= now:
-                logger.warning("ID token has expired")
+            exp = unverified_claims.get("exp", 0)
+            if exp <= now:
+                logger.warning(
+                    f"ID token has expired for {self.user_type}: exp={exp}, now={now}"
+                )
                 return False, AUTH_ERROR_MESSAGES["session_expired"]
+            logger.debug(
+                f"Token expiration validation passed for {self.user_type}: exp={exp}"
+            )
 
             # Manually verify signature using PyJWT instead of Authlib
             try:
                 # Fetch JWKs from Cognito
                 jwks_url = f"https://cognito-idp.{region}.amazonaws.com/{user_pool_id}/.well-known/jwks.json"
+                logger.debug(
+                    f"Fetching JWKS for {self.user_type} from: {jwks_url}"
+                )
                 jwks = get_cognito_jwks(jwks_url)
 
                 if not jwks:
-                    logger.error(f"Failed to fetch JWKS: {jwks_url}")
+                    logger.error(
+                        f"Failed to fetch JWKS for {self.user_type}: {jwks_url}"
+                    )
                     return False, AUTH_ERROR_MESSAGES["system_error"]
 
                 # Find the key that matches our token's key ID
                 kid = unverified_header.get("kid")
+                logger.debug(
+                    f"Looking for key with kid: {kid} for {self.user_type}"
+                )
                 key = None
                 for jwk in jwks.get("keys", []):
                     if jwk.get("kid") == kid:
@@ -210,13 +274,20 @@ class CognitoAuthBase:
                         break
 
                 if not key:
-                    logger.error(f"No matching key found for kid: {kid}")
+                    logger.error(
+                        f"No matching key found for kid: {kid} for {self.user_type}"
+                    )
                     return False, AUTH_ERROR_MESSAGES["auth_failed"]
+                logger.debug(
+                    f"Found matching key for {self.user_type} with kid: {kid}"
+                )
 
                 # Get public key in PEM format for PyJWT
                 public_key = RSAAlgorithm.from_jwk(key)
+                logger.debug(f"Converted JWK to PEM format for {self.user_type}")
 
                 # Verify the token
+                logger.debug(f"Verifying token signature for {self.user_type}")
                 claims = jwt.decode(
                     id_token,
                     public_key,
@@ -233,26 +304,33 @@ class CognitoAuthBase:
                 )
 
                 # Validation successful
+                logger.debug(f"Token validation successful for {self.user_type}")
                 return True, claims
 
             except jwt.ExpiredSignatureError:
-                logger.warning("Token has expired during verification")
+                logger.warning(
+                    f"Token has expired during verification for {self.user_type}"
+                )
                 return False, AUTH_ERROR_MESSAGES["session_expired"]
             except jwt.InvalidTokenError as e:
-                logger.error(f"Invalid token during verification: {e!s}")
+                logger.error(
+                    f"Invalid token during verification for {self.user_type}: {e!s}"
+                )
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
             except Exception as e:
-                logger.error(f"Error during manual token verification: {e!s}")
+                logger.error(
+                    f"Error during manual token verification for {self.user_type}: {e!s}"
+                )
                 return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
         except ExpiredSignatureError:
-            logger.warning("ID token has expired")
+            logger.warning(f"ID token has expired for {self.user_type}")
             return False, AUTH_ERROR_MESSAGES["session_expired"]
         except InvalidTokenError as e:
-            logger.error(f"Invalid ID token: {e!s}")
+            logger.error(f"Invalid ID token for {self.user_type}: {e!s}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]
         except Exception as e:
-            logger.error(f"Error validating ID token: {e!s}")
+            logger.error(f"Error validating ID token for {self.user_type}: {e!s}")
             return False, AUTH_ERROR_MESSAGES["auth_failed"]
 
     def refresh_id_token(self, refresh_token):
@@ -271,8 +349,10 @@ class CognitoAuthBase:
                 - If success is True, result contains new_id_token and new_access_token
                 - If success is False, result contains an error message
         """
+        logger.debug(f"Refreshing ID token for {self.user_type}")
+
         if not refresh_token:
-            logger.warning("No refresh token available")
+            logger.warning(f"No refresh token available for {self.user_type}")
             return False, AUTH_ERROR_MESSAGES["session_expired"]
 
         try:
@@ -289,6 +369,9 @@ class CognitoAuthBase:
             }
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
+            logger.debug(
+                f"Refreshing tokens for {self.user_type} via {token_url}"
+            )
             response = requests.post(
                 token_url, data=data, headers=headers, timeout=30
             )
@@ -302,11 +385,13 @@ class CognitoAuthBase:
                     status_code == 400
                     and error_body.get("error") == "invalid_grant"
                 ):
-                    logger.error("Refresh token has expired or been revoked")
+                    logger.error(
+                        f"Refresh token has expired or been revoked for {self.user_type}"
+                    )
                     return False, AUTH_ERROR_MESSAGES["session_expired"]
 
                 logger.error(
-                    f"Failed to refresh tokens: HTTP {status_code} - {error_body}"
+                    f"Failed to refresh tokens for {self.user_type}: HTTP {status_code} - {error_body}"
                 )
                 return False, AUTH_ERROR_MESSAGES["session_expired"]
 
@@ -316,15 +401,19 @@ class CognitoAuthBase:
             new_id_token = token_data.get("id_token")
 
             if not new_id_token:
-                logger.error("ID token not returned from refresh operation")
+                logger.error(
+                    f"ID token not returned from refresh operation for {self.user_type}"
+                )
                 return False, "ID token refresh failed"
 
-            logger.info("Successfully refreshed access and ID tokens")
+            logger.info(
+                f"Successfully refreshed access and ID tokens for {self.user_type}"
+            )
             return True, {
                 "new_access_token": new_access_token,
                 "new_id_token": new_id_token,
             }
 
         except Exception as e:
-            logger.error(f"Error refreshing tokens: {e!s}")
+            logger.error(f"Error refreshing tokens for {self.user_type}: {e!s}")
             return False, AUTH_ERROR_MESSAGES["session_expired"]

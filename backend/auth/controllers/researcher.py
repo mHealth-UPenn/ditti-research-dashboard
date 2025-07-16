@@ -39,10 +39,15 @@ class ResearcherAuthController(AuthControllerBase):
         """Initialize the researcher auth controller."""
         super().__init__("researcher")
         self.auth_manager = ResearcherAuth()
+        logger.debug(
+            "Initialized ResearcherAuthController with ResearcherAuth manager"
+        )
 
     def init_oauth_client(self):
         """Initialize the OAuth client."""
+        logger.debug("Initializing researcher OAuth client")
         init_researcher_oauth_client()
+        logger.debug("Researcher OAuth client initialized successfully")
 
     def get_scope(self):
         """Get the OAuth scope.
@@ -51,7 +56,9 @@ class ResearcherAuthController(AuthControllerBase):
         -------
             str: The OAuth scope
         """
-        return "openid email profile aws.cognito.signin.user.admin"
+        scope = "openid email profile aws.cognito.signin.user.admin"
+        logger.debug(f"Researcher OAuth scope: {scope}")
+        return scope
 
     def get_redirect_url(self):
         """Get the URL to redirect to after login.
@@ -61,7 +68,9 @@ class ResearcherAuthController(AuthControllerBase):
             str: The redirect URL
         """
         frontend_url = self.get_frontend_url()
-        return f"{frontend_url}/coordinator"
+        redirect_url = f"{frontend_url}/coordinator"
+        logger.debug(f"Researcher redirect URL: {redirect_url}")
+        return redirect_url
 
     def get_login_url(self):
         """Get the login URL.
@@ -70,7 +79,9 @@ class ResearcherAuthController(AuthControllerBase):
         -------
             str: The login URL
         """
-        return f"{self.get_frontend_url()}/coordinator/login"
+        login_url = f"{self.get_frontend_url()}/coordinator/login"
+        logger.debug(f"Researcher login URL: {login_url}")
+        return login_url
 
     def get_or_create_user(self, token, userinfo):
         """Get researcher account from token.
@@ -86,10 +97,12 @@ class ResearcherAuthController(AuthControllerBase):
                 account: The Account object if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
         """
+        logger.debug("Getting or creating researcher account from token")
+
         # Extract email from userinfo
         email = userinfo.get("email")
         if not email:
-            logger.warning("No email found in userinfo")
+            logger.warning("No email found in researcher userinfo")
             return (
                 None,
                 create_error_response(
@@ -97,15 +110,19 @@ class ResearcherAuthController(AuthControllerBase):
                     status_code=401,
                 ),
             )
+        logger.debug(f"Extracted email from userinfo: {email}")
 
         # Get account
+        logger.debug("Getting researcher account from token")
         account, error_msg = self.auth_manager.get_account_from_token(
             token["id_token"]
         )
 
         if not account:
+            logger.warning(f"Failed to get researcher account: {error_msg}")
             # Create appropriate error response based on error message
             if error_msg == AUTH_ERROR_MESSAGES["account_archived"]:
+                logger.debug("Researcher account is archived")
                 return (
                     None,
                     create_error_response(
@@ -114,6 +131,7 @@ class ResearcherAuthController(AuthControllerBase):
                     ),
                 )
             elif error_msg == AUTH_ERROR_MESSAGES["not_found"]:
+                logger.debug("Researcher account not found")
                 return (
                     None,
                     create_error_response(
@@ -122,6 +140,7 @@ class ResearcherAuthController(AuthControllerBase):
                     ),
                 )
             else:
+                logger.debug("Generic authentication failure for researcher")
                 return (
                     None,
                     create_error_response(
@@ -130,6 +149,7 @@ class ResearcherAuthController(AuthControllerBase):
                     ),
                 )
 
+        logger.debug(f"Successfully retrieved researcher account: {account.id}")
         return account, None
 
     def get_user_from_token(self, id_token):
@@ -146,13 +166,18 @@ class ResearcherAuthController(AuthControllerBase):
                 account: The Account object if successful, None otherwise
                 error_response: Error response if error occurred, None otherwise
         """
+        logger.debug("Getting researcher account from ID token")
         account, error_msg = self.auth_manager.get_account_from_token(id_token)
 
         # Convert string error messages to proper error responses
         if not account and error_msg:
+            logger.warning(
+                f"Failed to get researcher account from token: {error_msg}"
+            )
             if isinstance(error_msg, str):
                 # Handle archived accounts
                 if error_msg == AUTH_ERROR_MESSAGES["account_archived"]:
+                    logger.debug("Researcher account is archived")
                     return (
                         None,
                         create_error_response(
@@ -162,6 +187,7 @@ class ResearcherAuthController(AuthControllerBase):
                     )
                 # Handle not found
                 elif error_msg == AUTH_ERROR_MESSAGES["not_found"]:
+                    logger.debug("Researcher account not found")
                     return (
                         None,
                         create_error_response(
@@ -171,6 +197,7 @@ class ResearcherAuthController(AuthControllerBase):
                     )
                 # Handle invalid token
                 elif error_msg == AUTH_ERROR_MESSAGES["invalid_token_format"]:
+                    logger.debug("Invalid token format for researcher")
                     return (
                         None,
                         create_error_response(
@@ -180,6 +207,7 @@ class ResearcherAuthController(AuthControllerBase):
                     )
                 # Default to generic auth failed
                 else:
+                    logger.debug("Generic authentication failure for researcher")
                     return (
                         None,
                         create_error_response(
@@ -198,6 +226,9 @@ class ResearcherAuthController(AuthControllerBase):
                 ),
             )
 
+        logger.debug(
+            f"Successfully retrieved researcher account from token: {account.id if account else 'None'}"
+        )
         return account, None
 
     def create_login_success_response(self, account):
@@ -211,13 +242,19 @@ class ResearcherAuthController(AuthControllerBase):
         -------
             Response: JSON response with account info
         """
+        logger.debug(
+            f"Creating login success response for researcher: {account.email}"
+        )
+
         # Check if this is the first login
         is_first_login = not account.is_confirmed
+        logger.debug(f"Researcher first login: {is_first_login}")
 
         # If this is a successful login and the account wasn't previously
         # confirmed, mark it as confirmed now
         if not account.is_confirmed:
             try:
+                logger.debug(f"Confirming researcher account: {account.email}")
                 account.is_confirmed = True
                 db.session.commit()
                 logger.info(f"Account confirmed for {account.email}")
@@ -231,21 +268,28 @@ class ResearcherAuthController(AuthControllerBase):
         try:
             from datetime import UTC, datetime
 
+            logger.debug(
+                f"Updating last_login timestamp for researcher: {account.email}"
+            )
             account.last_login = datetime.now(UTC)
             db.session.commit()
+            logger.debug("Successfully updated last_login timestamp")
         except Exception as e:
             logger.error(f"Failed to update last_login timestamp: {e!s}")
             db.session.rollback()
 
+        response_data = {
+            "email": account.email,
+            "firstName": account.first_name,
+            "lastName": account.last_name,
+            "accountId": account.id,
+            "phoneNumber": account.phone_number,
+            "isFirstLogin": is_first_login,
+        }
+        logger.debug(f"Created login success response with data: {response_data}")
+
         return create_success_response(
-            data={
-                "email": account.email,
-                "firstName": account.first_name,
-                "lastName": account.last_name,
-                "accountId": account.id,
-                "phoneNumber": account.phone_number,
-                "isFirstLogin": is_first_login,
-            },
+            data=response_data,
             message=AUTH_ERROR_MESSAGES["login_successful"],
         )
 
@@ -264,18 +308,25 @@ class ResearcherAuthController(AuthControllerBase):
                 success: True if account was created successfully, False otherwise
                 message: Success/error message
         """
+        logger.debug(
+            f"Creating researcher account in Cognito: {account_data.get('email', 'unknown')}"
+        )
+
         # Validate required fields
         email = account_data.get("email")
         first_name = account_data.get("first_name")
         last_name = account_data.get("last_name")
 
         if not email or not first_name or not last_name:
-            logger.error("Missing required fields for account creation")
+            logger.error(
+                "Missing required fields for researcher account creation"
+            )
             return False, AUTH_ERROR_MESSAGES["missing_required_fields"]
 
         # Phone number is optional - only include if non-empty
         phone_number = account_data.get("phone_number")
         phone_number = phone_number if phone_number else None
+        logger.debug(f"Researcher phone number: {phone_number}")
 
         # Prepare user attributes
         attributes = {"given_name": first_name, "family_name": last_name}
@@ -284,6 +335,9 @@ class ResearcherAuthController(AuthControllerBase):
         if phone_number:
             attributes["phone_number"] = phone_number
 
+        logger.debug(
+            f"Creating researcher in Cognito with attributes: {attributes}"
+        )
         # Create user in Cognito - let Cognito generate and send temp password
         return create_researcher(email, attributes=attributes)
 
@@ -313,10 +367,14 @@ class ResearcherAuthController(AuthControllerBase):
                 success: True if account was updated successfully, False otherwise
                 message: Success/error message
         """
+        logger.debug(
+            f"Updating researcher account in Cognito: {account_data.get('email', 'unknown')}"
+        )
+
         # Validate required fields
         email = account_data.get("email")
         if not email:
-            logger.error("Missing email for account update")
+            logger.error("Missing email for researcher account update")
             return False, AUTH_ERROR_MESSAGES["missing_email"]
 
         first_name = account_data.get("first_name")
@@ -339,6 +397,9 @@ class ResearcherAuthController(AuthControllerBase):
         else:
             attributes_to_delete.append("phone_number")
 
+        logger.debug(
+            f"Updating researcher in Cognito - attributes: {attributes}, to_delete: {attributes_to_delete}"
+        )
         # Update user in Cognito
         return update_researcher(
             email,
@@ -360,18 +421,25 @@ class ResearcherAuthController(AuthControllerBase):
                 success: If account was disabled successfully, True, else False
                 message: Success/error message
         """
+        logger.debug(f"Disabling researcher account in Cognito: {email}")
+
         try:
             client = get_researcher_cognito_client()
             user_pool_id = current_app.config["COGNITO_RESEARCHER_USER_POOL_ID"]
 
             # Disable user
+            logger.debug(
+                f"Calling Cognito admin_disable_user for researcher: {email}"
+            )
             client.admin_disable_user(UserPoolId=user_pool_id, Username=email)
 
             logger.info(f"Disabled Cognito user: {email}")
             return True, AUTH_ERROR_MESSAGES["account_disabled"]
 
         except Exception as e:
-            logger.error(f"Failed to disable account in Cognito: {e!s}")
+            logger.error(
+                f"Failed to disable researcher account in Cognito: {e!s}"
+            )
             return False, AUTH_ERROR_MESSAGES["account_disable_error"]
 
     def sync_account_with_cognito(self, account):
@@ -388,6 +456,10 @@ class ResearcherAuthController(AuthControllerBase):
                 success: If account synchronized successfully, True, else False
                 message: Success/error message
         """
+        logger.debug(
+            f"Synchronizing researcher account with Cognito: {account.email}"
+        )
+
         account_data = {
             "email": account.email,
             "first_name": account.first_name,
@@ -397,6 +469,7 @@ class ResearcherAuthController(AuthControllerBase):
             else None,
         }
 
+        logger.debug(f"Account data for sync: {account_data}")
         return self.update_account_in_cognito(account_data)
 
     def change_password(self, previous_password, new_password, access_token=None):
@@ -416,9 +489,14 @@ class ResearcherAuthController(AuthControllerBase):
                 success: If password changed successfully, True, else False
                 message_or_response: Success message or error response object
         """
+        logger.debug("Changing researcher password in Cognito")
+
         try:
             # Validate input parameters
             if not new_password:
+                logger.warning(
+                    "Missing new password for researcher password change"
+                )
                 return False, create_error_response(
                     AUTH_ERROR_MESSAGES["missing_password"],
                     status_code=400,
@@ -426,6 +504,9 @@ class ResearcherAuthController(AuthControllerBase):
                 )
 
             if not previous_password:
+                logger.warning(
+                    "Missing previous password for researcher password change"
+                )
                 return False, create_error_response(
                     AUTH_ERROR_MESSAGES["missing_previous_password"],
                     status_code=400,
@@ -435,8 +516,12 @@ class ResearcherAuthController(AuthControllerBase):
             # If no access token was provided, try to get it from the request
             if not access_token and request:
                 access_token = request.cookies.get("access_token")
+                logger.debug("Retrieved access token from request cookies")
 
             if not access_token:
+                logger.warning(
+                    "No access token available for researcher password change"
+                )
                 return False, create_error_response(
                     AUTH_ERROR_MESSAGES["auth_required"],
                     status_code=401,
@@ -444,21 +529,26 @@ class ResearcherAuthController(AuthControllerBase):
                 )
 
             # Initialize Cognito client
+            logger.debug("Initializing Cognito client for password change")
             client = get_researcher_cognito_client()
 
             # Change password using the access token
+            logger.debug("Calling Cognito change_password")
             client.change_password(
                 PreviousPassword=previous_password,
                 ProposedPassword=new_password,
                 AccessToken=access_token,
             )
 
+            logger.info("Successfully changed researcher password")
             return True, create_success_response(
                 message=AUTH_ERROR_MESSAGES["password_change_success"]
             )
 
         except client.exceptions.NotAuthorizedException:
-            logger.warning("Incorrect password provided during password change")
+            logger.warning(
+                "Incorrect password provided during researcher password change"
+            )
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["incorrect_password"],
                 status_code=400,
@@ -466,7 +556,9 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
         except client.exceptions.InvalidPasswordException:
-            logger.warning("Invalid password format during password change")
+            logger.warning(
+                "Invalid password format during researcher password change"
+            )
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["invalid_password"],
                 status_code=400,
@@ -474,7 +566,7 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
         except client.exceptions.UserNotFoundException:
-            logger.error("User not found during password change")
+            logger.error("User not found during researcher password change")
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["user_not_found"],
                 status_code=404,
@@ -482,7 +574,7 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
         except client.exceptions.UserNotConfirmedException:
-            logger.error("User not confirmed during password change")
+            logger.error("User not confirmed during researcher password change")
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["user_not_confirmed"],
                 status_code=400,
@@ -490,7 +582,7 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
         except client.exceptions.PasswordResetRequiredException:
-            logger.warning("Password reset required")
+            logger.warning("Password reset required for researcher")
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["password_reset_required"],
                 status_code=400,
@@ -498,7 +590,9 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
         except client.exceptions.TooManyRequestsException:
-            logger.warning("Rate limit exceeded during password change")
+            logger.warning(
+                "Rate limit exceeded during researcher password change"
+            )
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["too_many_requests"],
                 status_code=429,
@@ -506,7 +600,7 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
         except client.exceptions.LimitExceededException:
-            logger.warning("Limit exceeded during password change")
+            logger.warning("Limit exceeded during researcher password change")
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["limit_exceeded"],
                 status_code=400,
@@ -514,7 +608,7 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
         except client.exceptions.ForbiddenException:
-            logger.error("Forbidden request during password change")
+            logger.error("Forbidden request during researcher password change")
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["forbidden"],
                 status_code=403,
@@ -522,7 +616,9 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
         except client.exceptions.InvalidParameterException as e:
-            logger.error(f"Invalid parameter during password change: {e!s}")
+            logger.error(
+                f"Invalid parameter during researcher password change: {e!s}"
+            )
 
             # Check the error message to see if it's a password format issue
             error_message = str(e)
@@ -540,7 +636,7 @@ class ResearcherAuthController(AuthControllerBase):
                 )
 
         except client.exceptions.ResourceNotFoundException:
-            logger.error("Resource not found during password change")
+            logger.error("Resource not found during researcher password change")
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["resource_not_found"],
                 status_code=404,
@@ -548,7 +644,9 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
         except client.exceptions.InternalErrorException:
-            logger.error("Cognito internal error during password change")
+            logger.error(
+                "Cognito internal error during researcher password change"
+            )
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["internal_service_error"],
                 status_code=500,
@@ -556,7 +654,9 @@ class ResearcherAuthController(AuthControllerBase):
             )
 
         except Exception as e:
-            logger.error(f"Unexpected error during password change: {e!s}")
+            logger.error(
+                f"Unexpected error during researcher password change: {e!s}"
+            )
             return False, create_error_response(
                 AUTH_ERROR_MESSAGES["password_change_error"],
                 status_code=500,
