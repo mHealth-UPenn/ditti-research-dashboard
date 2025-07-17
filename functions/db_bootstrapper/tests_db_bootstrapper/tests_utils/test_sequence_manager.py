@@ -16,29 +16,14 @@ from unittest.mock import Mock
 import pytest
 from flask import Flask
 from sqlalchemy.orm import Session
-from src.backend.extensions import db
 from src.utils import DatabaseSessionManager, SequenceManager
+from src.utils.sequence_manager import SequenceManagerMessage
 
 from tests_db_bootstrapper.conftest import (
     MOCK_EMPTY_TABLE_NAME,
     MOCK_TABLE_NAME,
-    MockTable,
 )
 from tests_db_bootstrapper.tests_utils.mock_file_reader import load_mock_data
-
-
-@pytest.fixture
-def with_mock_data(test_client: Flask) -> Generator[None, None, None]:
-    db.create_all()
-
-    for row in load_mock_data()[MOCK_TABLE_NAME]:
-        db.session.add(MockTable(**row))
-    db.session.commit()
-
-    try:
-        yield
-    finally:
-        db.drop_all()
 
 
 @pytest.fixture
@@ -129,6 +114,14 @@ class TestSequenceManager:
 
         mock_data = load_mock_data()
         expected_id = max(row["id"] for row in mock_data[MOCK_TABLE_NAME]) + 1
-        assert f"Reset sequence for {MOCK_TABLE_NAME} to {expected_id}" in result
-        assert "All sequences have been reset successfully!" in result
+        expected_messages = {
+            SequenceManagerMessage.SEQUENCE_RESET.value.format(
+                table_name=MOCK_TABLE_NAME, max_id=expected_id
+            ),
+            SequenceManagerMessage.SEQUENCE_RESET.value.format(
+                table_name=MOCK_EMPTY_TABLE_NAME, max_id=1
+            ),
+            SequenceManagerMessage.SEQUENCE_RESET_SUCCESS.value,
+        }
+        assert set(result) == expected_messages
         mock_session.commit.assert_called_once()
