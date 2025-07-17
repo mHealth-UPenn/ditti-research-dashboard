@@ -1,3 +1,4 @@
+from .app_factory import AppFactory
 from .data_loader import DataLoader
 from .data_processor import DataProcessor
 from .database_manager import DatabaseManager
@@ -9,6 +10,7 @@ from .secret_manager import SecretManager
 from .sequence_manager import SequenceManager
 
 __all__ = [
+    "AppFactory",
     "DataLoader",
     "DataProcessor",
     "DatabaseManager",
