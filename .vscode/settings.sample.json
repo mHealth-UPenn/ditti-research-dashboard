@@ -43,7 +43,11 @@
   "eslint.runtime": "[If Node v22 is not your default, change this to the path of your binary]",
   "eslint.codeActionsOnSave.mode": "all",
 
-  "python.testing.pytestArgs": ["tests"],
+  "python.testing.pytestArgs": [
+    "tests",
+    "functions/db_bootstrapper/tests_db_bootstrapper",
+    "-s"
+  ],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.envFile": "${workspaceFolder}/.env",
