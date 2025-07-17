@@ -1,7 +1,7 @@
 from urllib.parse import quote_plus
 
 import pytest
-from src.db_uri import DbUri
+from src.utils import DbUri
 
 
 class TestDbUri:
