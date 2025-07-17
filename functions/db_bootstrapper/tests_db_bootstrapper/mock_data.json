@@ -1,0 +1,19 @@
+{
+  "mock_table": [
+    {
+      "id": 1,
+      "name": "Test Table",
+      "description": "This is a test table"
+    },
+    {
+      "id": 2,
+      "name": "Test Table 2",
+      "description": "This is a test table 2"
+    },
+    {
+      "id": 4,
+      "name": "Test Table 4",
+      "description": "This is a test table 4"
+    }
+  ]
+}
