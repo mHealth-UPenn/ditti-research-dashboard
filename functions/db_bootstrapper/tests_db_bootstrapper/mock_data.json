@@ -15,5 +15,6 @@
       "name": "Test Table 4",
       "description": "This is a test table 4"
     }
-  ]
+  ],
+  "alembic_version": [{ "version_num": "123" }]
 }

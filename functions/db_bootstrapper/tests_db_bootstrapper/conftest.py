@@ -6,11 +6,8 @@ import pytest
 from docker.models.containers import Container
 from flask import Flask
 from src.backend.extensions import db, migrate
-from src.utils import FileReader
 
-from tests_db_bootstrapper.tests_utils.mock_file_reader import (
-    create_mock_file_reader,
-)
+from tests_db_bootstrapper.tests_utils.mock_file_reader import load_mock_data
 
 MOCK_TABLE_NAME = "mock_table"
 MOCK_EMPTY_TABLE_NAME = "empty_table"
@@ -104,22 +101,40 @@ class MockPostgresContainer:
 
 
 @pytest.fixture(scope="session")
-def test_client() -> Generator[Flask, None, None]:
-    with MockPostgresContainer():
-        app = Flask(__name__)
-        app.config["SQLALCHEMY_DATABASE_URI"] = POSTGRES_CONTAINER_URI
-        app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-        app.config["TESTING"] = True
-
-        db.init_app(app)
-        migrate.init_app(app, db)
-
-        with app.app_context():
-            yield app
-            # Clean up database engine connections
-            db.engine.dispose()
+def mock_postgres_container() -> Generator[MockPostgresContainer, None, None]:
+    with MockPostgresContainer() as container:
+        yield container
 
 
-@pytest.fixture(scope="session")
-def mock_file_reader() -> FileReader:
-    return create_mock_file_reader()
+@pytest.fixture(scope="module")
+def test_client(
+    mock_postgres_container: MockPostgresContainer,
+) -> Generator[Flask, None, None]:
+    app = Flask(__name__)
+    app.config["SQLALCHEMY_DATABASE_URI"] = POSTGRES_CONTAINER_URI
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["TESTING"] = True
+
+    db.init_app(app)
+    migrate.init_app(app, db)
+
+    with app.app_context():
+        yield app
+        # Clean up database engine connections
+        db.engine.dispose()
+
+
+@pytest.fixture
+def with_mock_tables(test_client: Flask) -> Generator[None, None, None]:
+    db.create_all()
+    try:
+        yield
+    finally:
+        db.drop_all()
+
+
+@pytest.fixture
+def with_mock_data(with_mock_tables: None) -> None:
+    for row in load_mock_data()[MOCK_TABLE_NAME]:
+        db.session.add(MockTable(**row))
+    db.session.commit()
