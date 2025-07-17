@@ -11,6 +11,7 @@
 # under the License.
 
 import json
+import os
 from typing import Any
 from unittest.mock import Mock
 
@@ -18,7 +19,15 @@ from src.utils import FileReader
 
 
 def load_mock_data() -> dict[str, list[dict[str, Any]]]:
-    with open("tests_db_bootstrapper/mock_data.json") as f:
+    with open(
+        os.path.join(
+            os.getcwd(),
+            "functions",
+            "db_bootstrapper",
+            "tests_db_bootstrapper",
+            "mock_data.json",
+        ),
+    ) as f:
         return json.load(f)
 
 
