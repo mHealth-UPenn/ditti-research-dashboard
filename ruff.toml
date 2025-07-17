@@ -77,8 +77,10 @@ convention = "numpy"
 "backend/models.py" = ["D102", "D105", "N805"]
 "backend/auth/providers/cognito/constants.py" = ["E501"]
 "**/__init__.py" = ["F401", "D104"]
-"tests/**/*.py" = [
+"**/tests_*/**/*.py" = [
   "S101",
+  "S105",
+  "S106",
   "E501",
   "E402",
   "F811",
