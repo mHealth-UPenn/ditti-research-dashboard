@@ -53,3 +53,11 @@ class DbUri:
         if not self.has_password:
             return self.uri
         return f"postgresql://{self.username}:***@{self.hostname}:{self.port}/{self.database}"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, DbUri):
+            return False
+        return self.uri == other.uri
+
+    def __repr__(self):
+        return f"DbUri(uri={self}, has_password={self.has_password})"
