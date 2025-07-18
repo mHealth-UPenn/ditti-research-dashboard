@@ -6,6 +6,7 @@ import pytest
 from docker.models.containers import Container
 from flask import Flask
 from src.backend.extensions import db, migrate
+from src.utils.database_manager import DatabaseManager
 
 from tests_db_bootstrapper.tests_utils.mock_file_reader import load_mock_data
 
@@ -16,6 +17,12 @@ POSTGRES_USER = "username"
 POSTGRES_DB = "db"
 POSTGRES_PORT = 5433
 POSTGRES_CONTAINER_URI = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:{POSTGRES_PORT}/{POSTGRES_DB}"
+IAM_USERNAME = "iam_username"
+MOCK_FILENAME = "mock_filename.json"
+
+DatabaseManager.MIGRATION_DIR = (
+    "functions/db_bootstrapper/tests_db_bootstrapper/migrations"
+)
 
 
 class MockTable(db.Model):
@@ -91,8 +98,22 @@ class MockPostgresContainer:
                     "Failed to connect to the container due to unexpected error"
                 ) from e
 
+    def create_dummy_role(self):
+        self.container.exec_run(
+            [
+                "psql",
+                "-U",
+                POSTGRES_USER,
+                "-d",
+                POSTGRES_DB,
+                "-c",
+                "CREATE ROLE rds_iam",
+            ]
+        )
+
     def __enter__(self):
         self.wait_for_container()
+        self.create_dummy_role()
         return self.container
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -106,7 +127,7 @@ def mock_postgres_container() -> Generator[MockPostgresContainer, None, None]:
         yield container
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def test_client(
     mock_postgres_container: MockPostgresContainer,
 ) -> Generator[Flask, None, None]:
