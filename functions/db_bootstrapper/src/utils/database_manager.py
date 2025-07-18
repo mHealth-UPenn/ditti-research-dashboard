@@ -25,19 +25,19 @@ from src.backend.extensions import db
 class DatabaseManagerTextClause(Enum):
     GET_USER_EXISTS = "SELECT 1 FROM pg_roles WHERE rolname = :iam_username"
     GET_CURRENT_DATABASE = "SELECT current_database()"
-    CREATE_USER = "CREATE USER :iam_username WITH LOGIN"
-    GRANT_IAM_TO_USER = "GRANT rds_iam TO :iam_username"
+    CREATE_USER = "CREATE USER {iam_username} WITH LOGIN"
+    GRANT_IAM_TO_USER = "GRANT rds_iam TO {iam_username}"
     GRANT_CONNECT_TO_DATABASE = (
-        "GRANT CONNECT ON DATABASE {database} TO :iam_username"
+        "GRANT CONNECT ON DATABASE {database} TO {iam_username}"
     )
-    GRANT_USAGE_TO_SCHEMA = "GRANT USAGE ON SCHEMA public TO :iam_username"
+    GRANT_USAGE_TO_SCHEMA = "GRANT USAGE ON SCHEMA public TO {iam_username}"
     GRANT_ALL_PRIVILEGES_TO_TABLES = (
-        "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO :iam_username"
+        "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {iam_username}"
     )
     GRANT_ALL_PRIVILEGES_TO_SEQUENCES = (
-        "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO :iam_username"
+        "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO {iam_username}"
     )
-    ALTER_DEFAULT_PRIVILEGES_TO_TABLES = "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO :iam_username"
+    ALTER_DEFAULT_PRIVILEGES_TO_TABLES = "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO {iam_username}"
     TEST_IAM_CONNECTION = (
         "SELECT 1 as test, current_user as user, current_database() as db"
     )
@@ -45,6 +45,8 @@ class DatabaseManagerTextClause(Enum):
 
 class DatabaseManager:
     """Manages database operations."""
+
+    MIGRATION_DIR = "./migrations"
 
     def __init__(self, app: Flask):
         """
@@ -58,7 +60,7 @@ class DatabaseManager:
     def upgrade_database(self) -> None:
         """Upgrade the database using Flask-Migrate."""
         with self.app.app_context():
-            upgrade()
+            upgrade(self.MIGRATION_DIR)
 
     def _get_connection(self) -> Connection:
         """Get a connection to the database."""
@@ -78,7 +80,9 @@ class DatabaseManager:
                 try:
                     # Check if user already exists
                     result = connection.execute(
-                        text(DatabaseManagerTextClause.GET_USER_EXISTS.value),
+                        text(
+                            DatabaseManagerTextClause.GET_USER_EXISTS.value,
+                        ),
                         {"iam_username": iam_username},
                     )
 
@@ -87,8 +91,11 @@ class DatabaseManager:
                             f"Creating new user {iam_username} with IAM authentication"
                         )
                         connection.execute(
-                            text(DatabaseManagerTextClause.CREATE_USER.value),
-                            {"iam_username": iam_username},
+                            text(
+                                DatabaseManagerTextClause.CREATE_USER.value.format(
+                                    iam_username=iam_username
+                                )
+                            ),
                         )
                     else:
                         print(
@@ -96,8 +103,11 @@ class DatabaseManager:
                         )
 
                     connection.execute(
-                        text(DatabaseManagerTextClause.GRANT_IAM_TO_USER.value),
-                        {"iam_username": iam_username},
+                        text(
+                            DatabaseManagerTextClause.GRANT_IAM_TO_USER.value.format(
+                                iam_username=iam_username
+                            )
+                        ),
                     )
 
                     # Get the current database name from the connection
@@ -129,16 +139,24 @@ class DatabaseManager:
         """Grant necessary permissions to the IAM user."""
         permissions = [
             DatabaseManagerTextClause.GRANT_CONNECT_TO_DATABASE.value.format(
-                database=database
+                database=database, iam_username=iam_username
             ),
-            DatabaseManagerTextClause.GRANT_USAGE_TO_SCHEMA.value,
-            DatabaseManagerTextClause.GRANT_ALL_PRIVILEGES_TO_TABLES.value,
-            DatabaseManagerTextClause.GRANT_ALL_PRIVILEGES_TO_SEQUENCES.value,
-            DatabaseManagerTextClause.ALTER_DEFAULT_PRIVILEGES_TO_TABLES.value,
+            DatabaseManagerTextClause.GRANT_USAGE_TO_SCHEMA.value.format(
+                iam_username=iam_username
+            ),
+            DatabaseManagerTextClause.GRANT_ALL_PRIVILEGES_TO_TABLES.value.format(
+                iam_username=iam_username
+            ),
+            DatabaseManagerTextClause.GRANT_ALL_PRIVILEGES_TO_SEQUENCES.value.format(
+                iam_username=iam_username
+            ),
+            DatabaseManagerTextClause.ALTER_DEFAULT_PRIVILEGES_TO_TABLES.value.format(
+                iam_username=iam_username
+            ),
         ]
 
         for permission in permissions:
-            connection.execute(text(permission), {"iam_username": iam_username})
+            connection.execute(text(permission))
 
     def test_iam_connection(self) -> None:
         """Test the IAM database connection."""
