@@ -1,7 +1,15 @@
+import os
+import sys
 import time
 from collections.abc import Generator
 from typing import Any
 from unittest.mock import Mock
+
+# Add parent directories to Python path to find the shared package
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+sys.path.insert(
+    0, os.path.join(os.path.dirname(__file__), "..", "..", "..", "shared")
+)
 
 import docker
 import pytest
