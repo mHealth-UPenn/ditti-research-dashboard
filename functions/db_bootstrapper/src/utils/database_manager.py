@@ -19,7 +19,7 @@ from flask_migrate import upgrade
 from sqlalchemy import Connection
 
 from src.backend.extensions import db
-from src.utils import DbConnectionExecuter
+from src.utils.database_connection_executer import DbConnectionExecuter
 
 
 class DatabaseManager:

@@ -1,11 +1,15 @@
 import time
 from collections.abc import Generator
+from typing import Any
+from unittest.mock import Mock
 
 import docker
 import pytest
 from docker.models.containers import Container
 from flask import Flask
+from sqlalchemy import Connection, Result, TextClause
 from src.backend.extensions import db, migrate
+from src.utils.database_connection_executer import DbConnectionExecuter
 from src.utils.database_manager import DatabaseManager
 
 from tests_db_bootstrapper.tests_utils.mock_file_reader import load_mock_data
@@ -159,3 +163,28 @@ def with_mock_data(with_mock_tables: None) -> None:
     for row in load_mock_data()[MOCK_TABLE_NAME]:
         db.session.add(MockTable(**row))
     db.session.commit()
+
+
+class MockResult(Result):
+    def __init__(self, return_value: Any):
+        self.fetchone = Mock(return_value=return_value)
+
+
+class MockConnection(Connection):
+    def __init__(self, *, user_exists: bool):
+        self.user_exists = user_exists
+        self.commit = Mock()
+        self.close = Mock()
+        self.call_args_list = []
+
+    def execute(
+        self, statement: TextClause, parameters=None, **kwargs
+    ) -> MockResult:
+        self.call_args_list.append(str((statement.text, parameters, kwargs)))
+        if statement.text == DbConnectionExecuter.GET_USER_EXISTS:
+            return MockResult(self.user_exists)
+        if statement.text == DbConnectionExecuter.GET_CURRENT_DATABASE:
+            return MockResult((POSTGRES_DB,))
+        if statement.text == DbConnectionExecuter.TEST_IAM_CONNECTION:
+            return MockResult((1, "test_user", POSTGRES_DB))
+        return None
