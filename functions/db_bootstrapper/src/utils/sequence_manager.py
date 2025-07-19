@@ -11,18 +11,10 @@
 # under the License.
 
 
-from enum import Enum
-
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-
-class SequenceManagerMessage(Enum):
-    """Messages for the sequence manager."""
-
-    SEQUENCE_RESET = "Reset sequence for {table_name} to {max_id}."
-    SEQUENCE_NOT_FOUND = "No sequence found for {table_name}."
-    SEQUENCE_RESET_SUCCESS = "All sequences have been reset successfully!"
+from src.utils.enums import SequenceManagerMessage
 
 
 class SequenceManager:
@@ -87,20 +79,14 @@ class SequenceManager:
             if self.sequence_exists(sequence_name):
                 self.reset_sequence(sequence_name, max_id + 1)
                 status_messages.append(
-                    SequenceManagerMessage.SEQUENCE_RESET.value.format(
-                        table_name=table_name, max_id=max_id + 1
-                    )
+                    SequenceManagerMessage.sequence_reset(table_name, max_id + 1)
                 )
             else:
                 status_messages.append(
-                    SequenceManagerMessage.SEQUENCE_NOT_FOUND.value.format(
-                        table_name=table_name
-                    )
+                    SequenceManagerMessage.sequence_not_found(table_name)
                 )
 
         self.session.commit()
-        status_messages.append(
-            SequenceManagerMessage.SEQUENCE_RESET_SUCCESS.value
-        )
+        status_messages.append(SequenceManagerMessage.sequence_reset_success())
 
         return status_messages

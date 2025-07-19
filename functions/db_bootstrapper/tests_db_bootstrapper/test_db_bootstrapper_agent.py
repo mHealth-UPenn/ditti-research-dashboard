@@ -268,7 +268,7 @@ class TestDBBootstrapperAgent:
         result = agent.handle_create_request(event)
 
         # Check the return value
-        assert result["Data"] == DBBootstrapperAgentMessage.CREATE_SUCCESS.value
+        assert result["Data"] == DBBootstrapperAgentMessage.create_success()
 
         # Check the calls
         agent.validate_environment.assert_called_once()
@@ -325,7 +325,7 @@ class TestDBBootstrapperAgent:
         result = agent.handle_create_request(event)
 
         # Check the return value
-        assert result["Data"] == DBBootstrapperAgentMessage.CREATE_SUCCESS.value
+        assert result["Data"] == DBBootstrapperAgentMessage.create_success()
 
         # Check the calls
         agent.validate_environment.assert_called_once()
@@ -355,10 +355,8 @@ class TestDBBootstrapperAgent:
         agent.validate_environment = Mock(side_effect=ValueError("Test error"))
         event = {"RequestType": "Create"}
         result = agent.handle_create_request(event)
-        assert result[
-            "Data"
-        ] == DBBootstrapperAgentMessage.CREATE_ERROR.value.format(
-            error="Test error"
+        assert result["Data"] == DBBootstrapperAgentMessage.create_error(
+            "Test error"
         )
 
     def test_handle_update_request_success(self, agent: DBBootstrapperAgent):
@@ -380,17 +378,15 @@ class TestDBBootstrapperAgent:
         agent.create_master_app.assert_called_once_with(POSTGRES_PASSWORD)
         agent.create_db_manager.assert_called_once_with(mock_app)
         mock_db_manager.upgrade_database.assert_called_once()
-        assert result["Data"] == DBBootstrapperAgentMessage.UPDATE_SUCCESS.value
+        assert result["Data"] == DBBootstrapperAgentMessage.update_success()
 
     def test_handle_update_request_error(self, agent: DBBootstrapperAgent):
         """Test error handling for Update request."""
         agent.validate_environment = Mock(side_effect=ValueError("Test error"))
         event = {"RequestType": "Update"}
         result = agent.handle_update_request(event)
-        assert result[
-            "Data"
-        ] == DBBootstrapperAgentMessage.UPDATE_ERROR.value.format(
-            error="Test error"
+        assert result["Data"] == DBBootstrapperAgentMessage.update_error(
+            "Test error"
         )
 
     def test_handle_delete_request(self, agent: DBBootstrapperAgent):
@@ -399,7 +395,7 @@ class TestDBBootstrapperAgent:
 
         result = agent.handle_delete_request(event)
 
-        assert result["Data"] == DBBootstrapperAgentMessage.DELETE_SUCCESS.value
+        assert result["Data"] == DBBootstrapperAgentMessage.delete_success()
 
     def test_handle_request_create(self, agent: DBBootstrapperAgent):
         """Test request handling for Create type."""
@@ -427,7 +423,7 @@ class TestDBBootstrapperAgent:
 
         result = agent.handle_request(event)
 
-        assert result["Data"] == DBBootstrapperAgentMessage.DELETE_SUCCESS.value
+        assert result["Data"] == DBBootstrapperAgentMessage.delete_success()
 
     def test_handle_request_unknown_type(self, agent: DBBootstrapperAgent):
         """Test request handling for unknown type."""
@@ -450,7 +446,7 @@ class TestDBBootstrapperAgentIntegration:
         result = agent.handle_request(event)
 
         # Assert success message is returned
-        assert result["Data"] == DBBootstrapperAgentMessage.CREATE_SUCCESS.value
+        assert result["Data"] == DBBootstrapperAgentMessage.create_success()
 
         # Assert tables are created
         result = db.session.execute(
@@ -482,7 +478,7 @@ class TestDBBootstrapperAgentIntegration:
         # Perform a create request to create the tables
         event = {"RequestType": "Create"}
         result = agent.handle_request(event)
-        assert result["Data"] == DBBootstrapperAgentMessage.CREATE_SUCCESS.value
+        assert result["Data"] == DBBootstrapperAgentMessage.create_success()
 
         # Add a new table
         class NewTable(db.Model):
@@ -498,7 +494,7 @@ class TestDBBootstrapperAgentIntegration:
         result = agent.handle_request(event)
 
         # Assert success message is returned
-        assert result["Data"] == DBBootstrapperAgentMessage.UPDATE_SUCCESS.value
+        assert result["Data"] == DBBootstrapperAgentMessage.update_success()
 
         # Assert new table is created
         result = db.session.execute(

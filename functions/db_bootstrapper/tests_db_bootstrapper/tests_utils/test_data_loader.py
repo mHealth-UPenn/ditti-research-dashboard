@@ -38,19 +38,11 @@ def expected_messages() -> set[str]:
     num_rows = len(mock_data[MOCK_TABLE_NAME])
     max_id = max(row["id"] for row in mock_data[MOCK_TABLE_NAME])
     return {
-        DataLoaderMessage.ROWS_INSERTED.value.format(
-            rows_inserted=num_rows,
-            table_name=MOCK_TABLE_NAME,
-        ),
-        SequenceManagerMessage.SEQUENCE_RESET.value.format(
-            table_name=MOCK_TABLE_NAME,
-            max_id=max_id + 1,
-        ),
-        SequenceManagerMessage.SEQUENCE_RESET.value.format(
-            table_name=MOCK_EMPTY_TABLE_NAME, max_id=1
-        ),
-        DataLoaderMessage.DATA_COMMITTED.value,
-        SequenceManagerMessage.SEQUENCE_RESET_SUCCESS.value,
+        DataLoaderMessage.rows_inserted(num_rows, MOCK_TABLE_NAME),
+        SequenceManagerMessage.sequence_reset(MOCK_TABLE_NAME, max_id + 1),
+        SequenceManagerMessage.sequence_reset(MOCK_EMPTY_TABLE_NAME, 1),
+        DataLoaderMessage.data_committed(),
+        SequenceManagerMessage.sequence_reset_success(),
     }
 
 
@@ -84,11 +76,9 @@ class TestDataLoader:
         result = mock_data_loader.load_data("test.json")
 
         expected_messages = {
-            DataLoaderMessage.TABLE_NOT_FOUND.value.format(
-                table_name="nonexistent_table"
-            ),
-            SequenceManagerMessage.SEQUENCE_RESET_SUCCESS.value,
-            DataLoaderMessage.DATA_COMMITTED.value,
+            DataLoaderMessage.table_not_found("nonexistent_table"),
+            SequenceManagerMessage.sequence_reset_success(),
+            DataLoaderMessage.data_committed(),
         }
 
         # Assert

@@ -13,34 +13,13 @@
 # Disable linter warnings for print statements (quick fix for logging issues with alembic)
 # ruff: noqa: T201
 
-from enum import Enum
 
 from flask import Flask
 from flask_migrate import upgrade
 from sqlalchemy import Connection, text
 
 from src.backend.extensions import db
-
-
-class DatabaseManagerTextClause(Enum):
-    GET_USER_EXISTS = "SELECT 1 FROM pg_roles WHERE rolname = :iam_username"
-    GET_CURRENT_DATABASE = "SELECT current_database()"
-    CREATE_USER = "CREATE USER {iam_username} WITH LOGIN"
-    GRANT_IAM_TO_USER = "GRANT rds_iam TO {iam_username}"
-    GRANT_CONNECT_TO_DATABASE = (
-        "GRANT CONNECT ON DATABASE {database} TO {iam_username}"
-    )
-    GRANT_USAGE_TO_SCHEMA = "GRANT USAGE ON SCHEMA public TO {iam_username}"
-    GRANT_ALL_PRIVILEGES_TO_TABLES = (
-        "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO {iam_username}"
-    )
-    GRANT_ALL_PRIVILEGES_TO_SEQUENCES = (
-        "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO {iam_username}"
-    )
-    ALTER_DEFAULT_PRIVILEGES_TO_TABLES = "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO {iam_username}"
-    TEST_IAM_CONNECTION = (
-        "SELECT 1 as test, current_user as user, current_database() as db"
-    )
+from src.utils.enums import DatabaseManagerTextClause
 
 
 class DatabaseManager:
@@ -81,7 +60,7 @@ class DatabaseManager:
                     # Check if user already exists
                     result = connection.execute(
                         text(
-                            DatabaseManagerTextClause.GET_USER_EXISTS.value,
+                            DatabaseManagerTextClause.get_user_exists(),
                         ),
                         {"iam_username": iam_username},
                     )
@@ -92,8 +71,8 @@ class DatabaseManager:
                         )
                         connection.execute(
                             text(
-                                DatabaseManagerTextClause.CREATE_USER.value.format(
-                                    iam_username=iam_username
+                                DatabaseManagerTextClause.create_user(
+                                    iam_username
                                 )
                             ),
                         )
@@ -104,17 +83,15 @@ class DatabaseManager:
 
                     connection.execute(
                         text(
-                            DatabaseManagerTextClause.GRANT_IAM_TO_USER.value.format(
-                                iam_username=iam_username
+                            DatabaseManagerTextClause.grant_iam_to_user(
+                                iam_username
                             )
                         ),
                     )
 
                     # Get the current database name from the connection
                     db_result = connection.execute(
-                        text(
-                            DatabaseManagerTextClause.GET_CURRENT_DATABASE.value
-                        ),
+                        text(DatabaseManagerTextClause.get_current_database()),
                     )
                     current_db = db_result.fetchone()[0]
                     print(f"Setting up permissions for database: {current_db}")
@@ -138,20 +115,18 @@ class DatabaseManager:
     ) -> None:
         """Grant necessary permissions to the IAM user."""
         permissions = [
-            DatabaseManagerTextClause.GRANT_CONNECT_TO_DATABASE.value.format(
-                database=database, iam_username=iam_username
+            DatabaseManagerTextClause.grant_connect_to_database(
+                database, iam_username
             ),
-            DatabaseManagerTextClause.GRANT_USAGE_TO_SCHEMA.value.format(
-                iam_username=iam_username
+            DatabaseManagerTextClause.grant_usage_to_schema(iam_username),
+            DatabaseManagerTextClause.grant_all_privileges_to_tables(
+                iam_username
             ),
-            DatabaseManagerTextClause.GRANT_ALL_PRIVILEGES_TO_TABLES.value.format(
-                iam_username=iam_username
+            DatabaseManagerTextClause.grant_all_privileges_to_sequences(
+                iam_username
             ),
-            DatabaseManagerTextClause.GRANT_ALL_PRIVILEGES_TO_SEQUENCES.value.format(
-                iam_username=iam_username
-            ),
-            DatabaseManagerTextClause.ALTER_DEFAULT_PRIVILEGES_TO_TABLES.value.format(
-                iam_username=iam_username
+            DatabaseManagerTextClause.alter_default_privileges_to_tables(
+                iam_username
             ),
         ]
 
@@ -164,7 +139,7 @@ class DatabaseManager:
             connection = self._get_connection()
             try:
                 result = connection.execute(
-                    text(DatabaseManagerTextClause.TEST_IAM_CONNECTION.value)
+                    text(DatabaseManagerTextClause.test_iam_connection())
                 )
                 result.fetchone()
             except Exception as e:

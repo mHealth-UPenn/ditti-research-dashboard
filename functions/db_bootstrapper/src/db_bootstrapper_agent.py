@@ -15,7 +15,6 @@
 
 import os
 import traceback
-from enum import Enum
 from typing import Any
 
 from flask import Flask
@@ -28,16 +27,7 @@ from src.utils import (
     S3FileManager,
     SecretManager,
 )
-
-
-class DBBootstrapperAgentMessage(Enum):
-    """Message types for the database bootstrapper agent."""
-
-    CREATE_SUCCESS = "Database upgraded and configured successfully."
-    CREATE_ERROR = "Error in Create request: {error}"
-    UPDATE_SUCCESS = "Database upgraded."
-    UPDATE_ERROR = "Error in Update request: {error}"
-    DELETE_SUCCESS = "Skipping bootstrap on delete."
+from src.utils.enums import DBBootstrapperAgentMessage
 
 
 class DBBootstrapperAgent:
@@ -217,16 +207,12 @@ class DBBootstrapperAgent:
             else:
                 print("No data to load")
 
-            return {"Data": DBBootstrapperAgentMessage.CREATE_SUCCESS.value}
+            return {"Data": DBBootstrapperAgentMessage.create_success()}
 
         except Exception as e:
             print(f"Error in Create request: {e}")
             traceback.print_exc()
-            return {
-                "Data": DBBootstrapperAgentMessage.CREATE_ERROR.value.format(
-                    error=e
-                )
-            }
+            return {"Data": DBBootstrapperAgentMessage.create_error(e)}
 
     def handle_update_request(self, event: dict[str, Any]) -> dict[str, Any]:  # noqa: ARG002
         """
@@ -256,16 +242,12 @@ class DBBootstrapperAgent:
             db_manager.upgrade_database()
             print("Database upgraded successfully")
 
-            return {"Data": DBBootstrapperAgentMessage.UPDATE_SUCCESS.value}
+            return {"Data": DBBootstrapperAgentMessage.update_success()}
 
         except Exception as e:
             print(f"Error in Update request: {e}")
             traceback.print_exc()
-            return {
-                "Data": DBBootstrapperAgentMessage.UPDATE_ERROR.value.format(
-                    error=e
-                )
-            }
+            return {"Data": DBBootstrapperAgentMessage.update_error(e)}
 
     def handle_delete_request(self, event: dict[str, Any]) -> dict[str, Any]:  # noqa: ARG002
         """
@@ -278,7 +260,7 @@ class DBBootstrapperAgent:
         -------
             Response dictionary.
         """
-        return {"Data": DBBootstrapperAgentMessage.DELETE_SUCCESS.value}
+        return {"Data": DBBootstrapperAgentMessage.delete_success()}
 
     def handle_request(self, event: dict[str, Any]) -> dict[str, Any]:
         """

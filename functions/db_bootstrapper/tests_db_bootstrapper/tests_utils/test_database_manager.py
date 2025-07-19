@@ -38,11 +38,11 @@ class MockConnection(Connection):
         self, statement: TextClause, parameters=None, **kwargs
     ) -> MockResult:
         self.call_args_list.append(str((statement.text, parameters, kwargs)))
-        if statement.text == DatabaseManagerTextClause.GET_USER_EXISTS.value:
+        if statement.text == DatabaseManagerTextClause.get_user_exists():
             return MockResult(self.user_exists)
-        if statement.text == DatabaseManagerTextClause.GET_CURRENT_DATABASE.value:
+        if statement.text == DatabaseManagerTextClause.get_current_database():
             return MockResult((POSTGRES_DB,))
-        if statement.text == DatabaseManagerTextClause.TEST_IAM_CONNECTION.value:
+        if statement.text == DatabaseManagerTextClause.test_iam_connection():
             return MockResult((1, "test_user", POSTGRES_DB))
         return None
 
@@ -57,43 +57,47 @@ def mock_database_manager(test_client: Flask) -> DatabaseManager:
 def expected_calls() -> list[str]:
     return [
         (
-            DatabaseManagerTextClause.GET_USER_EXISTS.value,
+            DatabaseManagerTextClause.get_user_exists(),
             {"iam_username": "test_user"},
             {},
         ),
         (
-            DatabaseManagerTextClause.GRANT_IAM_TO_USER.value,
+            DatabaseManagerTextClause.grant_iam_to_user("test_user"),
             {"iam_username": "test_user"},
             {},
         ),
         (
-            DatabaseManagerTextClause.GRANT_CONNECT_TO_DATABASE.value.format(
-                database=POSTGRES_DB
+            DatabaseManagerTextClause.grant_connect_to_database(
+                POSTGRES_DB, "test_user"
             ),
             {"iam_username": "test_user"},
             {},
         ),
         (
-            DatabaseManagerTextClause.GRANT_USAGE_TO_SCHEMA.value,
+            DatabaseManagerTextClause.grant_usage_to_schema("test_user"),
             {"iam_username": "test_user"},
             {},
         ),
         (
-            DatabaseManagerTextClause.GRANT_ALL_PRIVILEGES_TO_TABLES.value,
+            DatabaseManagerTextClause.grant_all_privileges_to_tables("test_user"),
             {"iam_username": "test_user"},
             {},
         ),
         (
-            DatabaseManagerTextClause.GRANT_ALL_PRIVILEGES_TO_SEQUENCES.value,
+            DatabaseManagerTextClause.grant_all_privileges_to_sequences(
+                "test_user"
+            ),
             {"iam_username": "test_user"},
             {},
         ),
         (
-            DatabaseManagerTextClause.ALTER_DEFAULT_PRIVILEGES_TO_TABLES.value,
+            DatabaseManagerTextClause.alter_default_privileges_to_tables(
+                "test_user"
+            ),
             {"iam_username": "test_user"},
             {},
         ),
-        (DatabaseManagerTextClause.GET_CURRENT_DATABASE.value, None, {}),
+        (DatabaseManagerTextClause.get_current_database(), None, {}),
     ]
 
 
@@ -110,7 +114,7 @@ class TestDatabaseManager:
 
         expected_calls.append(
             (
-                DatabaseManagerTextClause.CREATE_USER.value,
+                DatabaseManagerTextClause.create_user("test_user"),
                 {"iam_username": "test_user"},
                 {},
             )
@@ -146,7 +150,7 @@ class TestDatabaseManager:
         # Assert
         mock_connection.call_args_list = [
             (
-                DatabaseManagerTextClause.TEST_IAM_CONNECTION.value,
+                DatabaseManagerTextClause.test_iam_connection(),
                 None,
                 {},
             )

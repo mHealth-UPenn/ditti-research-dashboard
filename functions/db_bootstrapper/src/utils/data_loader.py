@@ -10,7 +10,6 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from enum import Enum
 
 from flask import Flask
 from sqlalchemy import MetaData, Table
@@ -18,16 +17,9 @@ from sqlalchemy import MetaData, Table
 from src.backend.extensions import db
 from src.utils.data_processor import DataProcessor
 from src.utils.database_session_manager import DatabaseSessionManager
+from src.utils.enums import DataLoaderMessage
 from src.utils.file_reader import FileReader
 from src.utils.sequence_manager import SequenceManager
-
-
-class DataLoaderMessage(Enum):
-    """Messages for the data loader."""
-
-    TABLE_NOT_FOUND = "Table {table_name} not found"
-    ROWS_INSERTED = "Inserted {rows_inserted} rows into {table_name}."
-    DATA_COMMITTED = "All data has been committed successfully!"
 
 
 class DataLoader:
@@ -64,9 +56,7 @@ class DataLoader:
             for table_name, rows in data.items():
                 if table_name not in meta.tables:
                     status_messages.append(
-                        DataLoaderMessage.TABLE_NOT_FOUND.value.format(
-                            table_name=table_name
-                        )
+                        DataLoaderMessage.table_not_found(table_name)
                     )
                     continue
 
@@ -80,15 +70,12 @@ class DataLoader:
                     rows_inserted += 1
 
                 status_messages.append(
-                    DataLoaderMessage.ROWS_INSERTED.value.format(
-                        rows_inserted=rows_inserted,
-                        table_name=table_name,
-                    )
+                    DataLoaderMessage.rows_inserted(rows_inserted, table_name)
                 )
 
             # Commit all changes
             session.commit()
-            status_messages.append(DataLoaderMessage.DATA_COMMITTED.value)
+            status_messages.append(DataLoaderMessage.data_committed())
 
             # Fix sequences after data insertion
             sequence_manager = SequenceManager(session)

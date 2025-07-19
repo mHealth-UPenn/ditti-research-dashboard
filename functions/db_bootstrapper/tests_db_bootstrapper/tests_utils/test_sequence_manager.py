@@ -115,13 +115,9 @@ class TestSequenceManager:
         mock_data = load_mock_data()
         expected_id = max(row["id"] for row in mock_data[MOCK_TABLE_NAME]) + 1
         expected_messages = {
-            SequenceManagerMessage.SEQUENCE_RESET.value.format(
-                table_name=MOCK_TABLE_NAME, max_id=expected_id
-            ),
-            SequenceManagerMessage.SEQUENCE_RESET.value.format(
-                table_name=MOCK_EMPTY_TABLE_NAME, max_id=1
-            ),
-            SequenceManagerMessage.SEQUENCE_RESET_SUCCESS.value,
+            SequenceManagerMessage.sequence_reset(MOCK_TABLE_NAME, expected_id),
+            SequenceManagerMessage.sequence_reset(MOCK_EMPTY_TABLE_NAME, 1),
+            SequenceManagerMessage.sequence_reset_success(),
         }
         assert set(result) == expected_messages
         mock_session.commit.assert_called_once()
