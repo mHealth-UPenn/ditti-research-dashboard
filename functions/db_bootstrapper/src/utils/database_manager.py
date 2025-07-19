@@ -16,10 +16,10 @@
 
 from flask import Flask
 from flask_migrate import upgrade
-from sqlalchemy import Connection, text
+from sqlalchemy import Connection
 
 from src.backend.extensions import db
-from src.utils.enums import DatabaseManagerTextClause
+from src.utils import DbConnectionExecutioner
 
 
 class DatabaseManager:
@@ -52,96 +52,50 @@ class DatabaseManager:
         Args:
             iam_username: The username to create for IAM authentication.
         """
-        try:
-            with self.app.app_context():
-                connection = self._get_connection()
+        with self.app.app_context():
+            connection = self._get_connection()
+            executor = DbConnectionExecutioner(connection)
 
-                try:
-                    # Check if user already exists
-                    result = connection.execute(
-                        text(
-                            DatabaseManagerTextClause.get_user_exists(),
-                        ),
-                        {"iam_username": iam_username},
+            try:
+                # Check if user already exists
+                result = executor.get_user_exists(iam_username)
+
+                if not result:
+                    print(
+                        f"Creating new user {iam_username} with IAM authentication"
+                    )
+                    executor.create_user(iam_username)
+                else:
+                    print(
+                        f"User {iam_username} already exists, updating IAM permissions"
                     )
 
-                    if not result.fetchone():
-                        print(
-                            f"Creating new user {iam_username} with IAM authentication"
-                        )
-                        connection.execute(
-                            text(
-                                DatabaseManagerTextClause.create_user(
-                                    iam_username
-                                )
-                            ),
-                        )
-                    else:
-                        print(
-                            f"User {iam_username} already exists, updating IAM permissions"
-                        )
+                # Get the current database name from the connection
+                current_db = executor.get_current_database()
+                print(f"Setting up permissions for database: {current_db}")
 
-                    connection.execute(
-                        text(
-                            DatabaseManagerTextClause.grant_iam_to_user(
-                                iam_username
-                            )
-                        ),
-                    )
+                # Grant necessary permissions
+                executor.grant_iam_to_user(iam_username)
+                executor.grant_connect_to_database(current_db, iam_username)
+                executor.grant_usage_to_schema(iam_username)
+                executor.grant_all_privileges_to_tables(iam_username)
+                executor.grant_all_privileges_to_sequences(iam_username)
+                executor.alter_default_privileges_to_tables(iam_username)
 
-                    # Get the current database name from the connection
-                    db_result = connection.execute(
-                        text(DatabaseManagerTextClause.get_current_database()),
-                    )
-                    current_db = db_result.fetchone()[0]
-                    print(f"Setting up permissions for database: {current_db}")
-
-                    # Grant necessary permissions
-                    self._grant_database_permissions(
-                        connection, iam_username, current_db
-                    )
-
-                    connection.commit()
-
-                finally:
-                    connection.close()
-
-        except Exception as e:
-            print(f"Error setting up IAM database user {iam_username}: {e}")
-            raise
-
-    def _grant_database_permissions(
-        self, connection: Connection, iam_username: str, database: str
-    ) -> None:
-        """Grant necessary permissions to the IAM user."""
-        permissions = [
-            DatabaseManagerTextClause.grant_connect_to_database(
-                database, iam_username
-            ),
-            DatabaseManagerTextClause.grant_usage_to_schema(iam_username),
-            DatabaseManagerTextClause.grant_all_privileges_to_tables(
-                iam_username
-            ),
-            DatabaseManagerTextClause.grant_all_privileges_to_sequences(
-                iam_username
-            ),
-            DatabaseManagerTextClause.alter_default_privileges_to_tables(
-                iam_username
-            ),
-        ]
-
-        for permission in permissions:
-            connection.execute(text(permission))
+                connection.commit()
+            except Exception as e:
+                print(f"Error setting up IAM database user {iam_username}: {e}")
+                raise
+            finally:
+                connection.close()
 
     def test_iam_connection(self) -> None:
         """Test the IAM database connection."""
         with self.app.app_context():
             connection = self._get_connection()
             try:
-                result = connection.execute(
-                    text(DatabaseManagerTextClause.test_iam_connection())
-                )
-                result.fetchone()
+                executor = DbConnectionExecutioner(connection)
+                executor.test_iam_connection()
             except Exception as e:
                 print(f"Error testing IAM database connection: {e}")
                 raise
