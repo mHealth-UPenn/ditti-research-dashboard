@@ -149,7 +149,7 @@ class DBBootstrapperAgent:
         """Create a data loader."""
         return DataLoader(app)
 
-    def handle_create_request(self, event: dict[str, Any]) -> dict[str, Any]:  # noqa: ARG002
+    def handle_create_request(self) -> dict[str, Any]:
         """
         Handle CloudFormation Create request.
 
@@ -214,7 +214,7 @@ class DBBootstrapperAgent:
             traceback.print_exc()
             return {"Data": DBBootstrapperAgentMessage.create_error(e)}
 
-    def handle_update_request(self, event: dict[str, Any]) -> dict[str, Any]:  # noqa: ARG002
+    def handle_update_request(self) -> dict[str, Any]:
         """
         Handle CloudFormation Update request.
 
@@ -249,7 +249,7 @@ class DBBootstrapperAgent:
             traceback.print_exc()
             return {"Data": DBBootstrapperAgentMessage.update_error(e)}
 
-    def handle_delete_request(self, event: dict[str, Any]) -> dict[str, Any]:  # noqa: ARG002
+    def handle_delete_request(self) -> dict[str, Any]:
         """
         Handle CloudFormation Delete request.
 
@@ -276,10 +276,10 @@ class DBBootstrapperAgent:
         request_type = event.get("RequestType")
 
         if request_type == "Create":
-            return self.handle_create_request(event)
+            return self.handle_create_request()
         elif request_type == "Update":
-            return self.handle_update_request(event)
+            return self.handle_update_request()
         elif request_type == "Delete":
-            return self.handle_delete_request(event)
+            return self.handle_delete_request()
         else:
             raise ValueError(f"Unknown request type: {request_type}")
