@@ -16,7 +16,11 @@ import pytest
 from flask import Flask
 from src.utils import DatabaseManager, DbConnectionExecuter
 
-from tests_db_bootstrapper.conftest import MockConnection
+from tests_db_bootstrapper.conftest import (
+    IAM_USERNAME,
+    POSTGRES_DB,
+    MockConnection,
+)
 
 
 @pytest.fixture
@@ -30,37 +34,49 @@ def expected_calls() -> list[str]:
     return [
         (
             DbConnectionExecuter.GET_USER_EXISTS,
-            {"iam_username": "test_user"},
+            {"iam_username": IAM_USERNAME},
             {},
         ),
         (
-            DbConnectionExecuter.GRANT_IAM_TO_USER,
-            {"iam_username": "test_user"},
+            DbConnectionExecuter.GRANT_IAM_TO_USER.format(
+                iam_username=IAM_USERNAME
+            ),
+            None,
             {},
         ),
         (
-            DbConnectionExecuter.GRANT_CONNECT_TO_DATABASE,
-            {"iam_username": "test_user"},
+            DbConnectionExecuter.GRANT_CONNECT_TO_DATABASE.format(
+                database=POSTGRES_DB, iam_username=IAM_USERNAME
+            ),
+            None,
             {},
         ),
         (
-            DbConnectionExecuter.GRANT_USAGE_TO_SCHEMA,
-            {"iam_username": "test_user"},
+            DbConnectionExecuter.GRANT_USAGE_TO_SCHEMA.format(
+                iam_username=IAM_USERNAME
+            ),
+            None,
             {},
         ),
         (
-            DbConnectionExecuter.GRANT_ALL_PRIVILEGES_TO_TABLES,
-            {"iam_username": "test_user"},
+            DbConnectionExecuter.GRANT_ALL_PRIVILEGES_TO_TABLES.format(
+                iam_username=IAM_USERNAME
+            ),
+            None,
             {},
         ),
         (
-            DbConnectionExecuter.GRANT_ALL_PRIVILEGES_TO_SEQUENCES,
-            {"iam_username": "test_user"},
+            DbConnectionExecuter.GRANT_ALL_PRIVILEGES_TO_SEQUENCES.format(
+                iam_username=IAM_USERNAME
+            ),
+            None,
             {},
         ),
         (
-            DbConnectionExecuter.ALTER_DEFAULT_PRIVILEGES_TO_TABLES,
-            {"iam_username": "test_user"},
+            DbConnectionExecuter.ALTER_DEFAULT_PRIVILEGES_TO_TABLES.format(
+                iam_username=IAM_USERNAME
+            ),
+            None,
             {},
         ),
         (DbConnectionExecuter.GET_CURRENT_DATABASE, None, {}),
@@ -76,12 +92,14 @@ class TestDatabaseManager:
         """Test setting up IAM database user for new user."""
         mock_connection = MockConnection(user_exists=False)
         mock_database_manager._get_connection = Mock(return_value=mock_connection)
-        mock_database_manager.setup_iam_database_user("test_user")
+        mock_database_manager.setup_iam_database_user(IAM_USERNAME)
 
         expected_calls.append(
             (
-                DbConnectionExecuter.CREATE_USER,
-                {"iam_username": "test_user"},
+                DbConnectionExecuter.CREATE_USER.format(
+                    iam_username=IAM_USERNAME
+                ),
+                None,
                 {},
             )
         )
@@ -97,7 +115,7 @@ class TestDatabaseManager:
         """Test setting up IAM database user for new user."""
         mock_connection = MockConnection(user_exists=True)
         mock_database_manager._get_connection = Mock(return_value=mock_connection)
-        mock_database_manager.setup_iam_database_user("test_user")
+        mock_database_manager.setup_iam_database_user(IAM_USERNAME)
 
         # Verify user creation commands were executed
         assert set(mock_connection.call_args_list) == {

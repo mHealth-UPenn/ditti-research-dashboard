@@ -88,8 +88,10 @@ class TestDbConnectionExecuter:
         assert len(mock_connection.call_args_list) == 1
         assert mock_connection.call_args_list[0] == str(
             (
-                DbConnectionExecuter.CREATE_USER,
-                {"iam_username": iam_username},
+                DbConnectionExecuter.CREATE_USER.format(
+                    iam_username=iam_username
+                ),
+                None,
                 {},
             )
         )
@@ -107,8 +109,10 @@ class TestDbConnectionExecuter:
         assert len(mock_connection.call_args_list) == 1
         assert mock_connection.call_args_list[0] == str(
             (
-                DbConnectionExecuter.GRANT_IAM_TO_USER,
-                {"iam_username": iam_username},
+                DbConnectionExecuter.GRANT_IAM_TO_USER.format(
+                    iam_username=iam_username
+                ),
+                None,
                 {},
             )
         )
@@ -126,8 +130,10 @@ class TestDbConnectionExecuter:
 
         assert mock_connection.call_args_list[0] == str(
             (
-                DbConnectionExecuter.GRANT_CONNECT_TO_DATABASE,
-                {"database": database, "iam_username": iam_username},
+                DbConnectionExecuter.GRANT_CONNECT_TO_DATABASE.format(
+                    database=database, iam_username=iam_username
+                ),
+                None,
                 {},
             )
         )
@@ -144,8 +150,10 @@ class TestDbConnectionExecuter:
 
         assert mock_connection.call_args_list[0] == str(
             (
-                DbConnectionExecuter.GRANT_USAGE_TO_SCHEMA,
-                {"iam_username": iam_username},
+                DbConnectionExecuter.GRANT_USAGE_TO_SCHEMA.format(
+                    iam_username=iam_username
+                ),
+                None,
                 {},
             )
         )
@@ -162,8 +170,10 @@ class TestDbConnectionExecuter:
 
         assert mock_connection.call_args_list[0] == str(
             (
-                DbConnectionExecuter.GRANT_ALL_PRIVILEGES_TO_TABLES,
-                {"iam_username": iam_username},
+                DbConnectionExecuter.GRANT_ALL_PRIVILEGES_TO_TABLES.format(
+                    iam_username=iam_username
+                ),
+                None,
                 {},
             )
         )
@@ -180,8 +190,10 @@ class TestDbConnectionExecuter:
 
         assert mock_connection.call_args_list[0] == str(
             (
-                DbConnectionExecuter.GRANT_ALL_PRIVILEGES_TO_SEQUENCES,
-                {"iam_username": iam_username},
+                DbConnectionExecuter.GRANT_ALL_PRIVILEGES_TO_SEQUENCES.format(
+                    iam_username=iam_username
+                ),
+                None,
                 {},
             )
         )
@@ -198,8 +210,10 @@ class TestDbConnectionExecuter:
 
         assert mock_connection.call_args_list[0] == str(
             (
-                DbConnectionExecuter.ALTER_DEFAULT_PRIVILEGES_TO_TABLES,
-                {"iam_username": iam_username},
+                DbConnectionExecuter.ALTER_DEFAULT_PRIVILEGES_TO_TABLES.format(
+                    iam_username=iam_username
+                ),
+                None,
                 {},
             )
         )
@@ -267,16 +281,20 @@ class TestDbConnectionExecuter:
 
         assert mock_connection.call_args_list[1] == str(
             (
-                DbConnectionExecuter.CREATE_USER,
-                {"iam_username": special_username},
+                DbConnectionExecuter.CREATE_USER.format(
+                    iam_username=special_username
+                ),
+                None,
                 {},
             )
         )
 
         assert mock_connection.call_args_list[2] == str(
             (
-                DbConnectionExecuter.GRANT_IAM_TO_USER,
-                {"iam_username": special_username},
+                DbConnectionExecuter.GRANT_IAM_TO_USER.format(
+                    iam_username=special_username
+                ),
+                None,
                 {},
             )
         )
@@ -308,16 +326,20 @@ class TestDbConnectionExecuter:
 
         assert mock_connection.call_args_list[1] == str(
             (
-                DbConnectionExecuter.CREATE_USER,
-                {"iam_username": empty_username},
+                DbConnectionExecuter.CREATE_USER.format(
+                    iam_username=empty_username
+                ),
+                None,
                 {},
             )
         )
 
         assert mock_connection.call_args_list[2] == str(
             (
-                DbConnectionExecuter.GRANT_CONNECT_TO_DATABASE,
-                {"database": empty_database, "iam_username": empty_username},
+                DbConnectionExecuter.GRANT_CONNECT_TO_DATABASE.format(
+                    database=empty_database, iam_username=empty_username
+                ),
+                None,
                 {},
             )
         )

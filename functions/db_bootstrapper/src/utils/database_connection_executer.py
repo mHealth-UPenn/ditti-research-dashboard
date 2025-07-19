@@ -41,7 +41,7 @@ class DbConnectionExecuter:
         return self.connection.execute(
             text(self.GET_USER_EXISTS),
             {"iam_username": iam_username},
-        )
+        ).fetchone()
 
     def get_current_database(self) -> str:
         return self.connection.execute(
@@ -50,44 +50,53 @@ class DbConnectionExecuter:
 
     def create_user(self, iam_username: str) -> str:
         return self.connection.execute(
-            text(self.CREATE_USER),
-            {"iam_username": iam_username},
+            text(self.CREATE_USER.format(iam_username=iam_username)),
         )
 
     def grant_iam_to_user(self, iam_username: str) -> str:
         return self.connection.execute(
-            text(self.GRANT_IAM_TO_USER),
-            {"iam_username": iam_username},
+            text(self.GRANT_IAM_TO_USER.format(iam_username=iam_username)),
         )
 
     def grant_connect_to_database(self, database: str, iam_username: str) -> str:
         return self.connection.execute(
-            text(self.GRANT_CONNECT_TO_DATABASE),
-            {"database": database, "iam_username": iam_username},
+            text(
+                self.GRANT_CONNECT_TO_DATABASE.format(
+                    database=database, iam_username=iam_username
+                )
+            ),
         )
 
     def grant_usage_to_schema(self, iam_username: str) -> str:
         return self.connection.execute(
-            text(self.GRANT_USAGE_TO_SCHEMA),
-            {"iam_username": iam_username},
+            text(self.GRANT_USAGE_TO_SCHEMA.format(iam_username=iam_username)),
         )
 
     def grant_all_privileges_to_tables(self, iam_username: str) -> str:
         return self.connection.execute(
-            text(self.GRANT_ALL_PRIVILEGES_TO_TABLES),
-            {"iam_username": iam_username},
+            text(
+                self.GRANT_ALL_PRIVILEGES_TO_TABLES.format(
+                    iam_username=iam_username
+                )
+            ),
         )
 
     def grant_all_privileges_to_sequences(self, iam_username: str) -> str:
         return self.connection.execute(
-            text(self.GRANT_ALL_PRIVILEGES_TO_SEQUENCES),
-            {"iam_username": iam_username},
+            text(
+                self.GRANT_ALL_PRIVILEGES_TO_SEQUENCES.format(
+                    iam_username=iam_username
+                )
+            ),
         )
 
     def alter_default_privileges_to_tables(self, iam_username: str) -> str:
         return self.connection.execute(
-            text(self.ALTER_DEFAULT_PRIVILEGES_TO_TABLES),
-            {"iam_username": iam_username},
+            text(
+                self.ALTER_DEFAULT_PRIVILEGES_TO_TABLES.format(
+                    iam_username=iam_username
+                )
+            ),
         )
 
     def test_iam_connection(self) -> str:
