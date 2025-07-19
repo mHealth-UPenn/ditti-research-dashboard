@@ -19,6 +19,9 @@ from typing import Any
 
 from flask import Flask
 
+from functions.db_bootstrapper.src.utils.messages import (
+    DBBootstrapperAgentMessage,
+)
 from src.utils import (
     AppFactory,
     DatabaseManager,
@@ -27,7 +30,6 @@ from src.utils import (
     S3FileManager,
     SecretManager,
 )
-from src.utils.enums import DBBootstrapperAgentMessage
 
 
 class DBBootstrapperAgent:
