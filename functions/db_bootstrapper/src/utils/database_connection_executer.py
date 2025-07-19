@@ -14,7 +14,7 @@
 from sqlalchemy import Connection, text
 
 
-class DbConnectionExecutioner:
+class DbConnectionExecuter:
     GET_USER_EXISTS = "SELECT 1 FROM pg_roles WHERE rolname = :iam_username"
     GET_CURRENT_DATABASE = "SELECT current_database()"
     CREATE_USER = "CREATE USER {iam_username} WITH LOGIN"

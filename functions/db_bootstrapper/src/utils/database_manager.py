@@ -19,7 +19,7 @@ from flask_migrate import upgrade
 from sqlalchemy import Connection
 
 from src.backend.extensions import db
-from src.utils import DbConnectionExecutioner
+from src.utils import DbConnectionExecuter
 
 
 class DatabaseManager:
@@ -54,7 +54,7 @@ class DatabaseManager:
         """
         with self.app.app_context():
             connection = self._get_connection()
-            executor = DbConnectionExecutioner(connection)
+            executor = DbConnectionExecuter(connection)
 
             try:
                 # Check if user already exists
@@ -94,7 +94,7 @@ class DatabaseManager:
         with self.app.app_context():
             connection = self._get_connection()
             try:
-                executor = DbConnectionExecutioner(connection)
+                executor = DbConnectionExecuter(connection)
                 executor.test_iam_connection()
             except Exception as e:
                 print(f"Error testing IAM database connection: {e}")

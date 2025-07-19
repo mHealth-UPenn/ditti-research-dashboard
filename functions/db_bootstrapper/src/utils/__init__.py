@@ -1,7 +1,7 @@
 from .app_factory import AppFactory
 from .data_loader import DataLoader
 from .data_processor import DataProcessor
-from .database_connection_executioner import DbConnectionExecutioner
+from .database_connection_executer import DbConnectionExecuter
 from .database_manager import DatabaseManager
 from .database_session_manager import DatabaseSessionManager
 from .db_uri import DbUri
@@ -16,7 +16,7 @@ __all__ = [
     "DataProcessor",
     "DatabaseManager",
     "DatabaseSessionManager",
-    "DbConnectionExecutioner",
+    "DbConnectionExecuter",
     "DbUri",
     "FileReader",
     "S3FileManager",
