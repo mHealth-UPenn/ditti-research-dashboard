@@ -133,16 +133,14 @@ class MockPostgresContainer:
         self.container.remove()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="session", autouse=True)
 def mock_postgres_container() -> Generator[MockPostgresContainer, None, None]:
     with MockPostgresContainer() as container:
         yield container
 
 
-@pytest.fixture(scope="session")
-def test_client(
-    mock_postgres_container: MockPostgresContainer,
-) -> Generator[Flask, None, None]:
+@pytest.fixture
+def test_client() -> Generator[Flask, None, None]:
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = POSTGRES_CONTAINER_URI
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
