@@ -10,17 +10,14 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import json
 import os
 from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-import boto3
 import pytest
 from flask import Flask
 from flask_migrate import init, migrate
-from moto import mock_aws
 from sqlalchemy import text
 from src.backend.extensions import db
 from src.db_bootstrapper_agent import (
@@ -38,29 +35,15 @@ from src.utils import (
 
 from tests_db_bootstrapper.conftest import (
     IAM_USERNAME,
+    MOCK_DATA_ARN,
     MOCK_EMPTY_TABLE_NAME,
+    MOCK_SECRET_NAME,
     POSTGRES_DB,
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USER,
     MockEmptyTable,
 )
-
-
-@pytest.fixture(scope="module", autouse=True)
-def mock_secret_arn() -> Generator[str, None, None]:
-    with mock_aws():
-        client = boto3.client("secretsmanager")
-        response = client.create_secret(
-            Name="test_secret",
-            SecretString=json.dumps(
-                {
-                    "password": POSTGRES_PASSWORD,
-                    "username": POSTGRES_USER,
-                }
-            ),
-        )
-        yield response["ARN"]
 
 
 @pytest.fixture
@@ -82,23 +65,10 @@ def mock_migrations_dir(
         db.session.commit()
 
 
-@pytest.fixture(scope="module", autouse=True)
-def mock_data_arn() -> Generator[str, None, None]:
-    with mock_aws():
-        client = boto3.client("s3")
-        client.create_bucket(Bucket="test-bucket")
-        client.put_object(
-            Bucket="test-bucket",
-            Key="data.json",
-            Body=json.dumps({"test": "data"}),
-        )
-        yield "arn:aws:s3:::test-bucket/data.json"
-
-
 @pytest.fixture
-def agent(mock_secret_arn: str) -> DBBootstrapperAgent:
+def agent(with_mock_secret: None, with_mock_bucket: None) -> DBBootstrapperAgent:
     agent = DBBootstrapperAgent()
-    agent.secret_arn = mock_secret_arn
+    agent.secret_arn = MOCK_SECRET_NAME
     agent.host = "localhost"
     agent.port = POSTGRES_PORT
     agent.database = POSTGRES_DB
@@ -297,7 +267,6 @@ class TestDBBootstrapperAgent:
     def test_handle_create_request_with_data(
         self,
         agent: DBBootstrapperAgent,
-        mock_data_arn: str,
     ):
         """Test successful Create request handling."""
         mock_app = Mock()
@@ -313,7 +282,7 @@ class TestDBBootstrapperAgent:
         mock_data_loader = Mock()
         mock_data_loader.load_data = Mock()
 
-        agent.data_arn = mock_data_arn
+        agent.data_arn = MOCK_DATA_ARN
         agent.validate_environment = Mock()
         agent.get_database_secret = Mock(
             return_value={"password": POSTGRES_PASSWORD}
@@ -346,7 +315,7 @@ class TestDBBootstrapperAgent:
 
         # Data loading if data ARN is provided
         agent.s3_file_manager.download_file.assert_called_once_with(
-            mock_data_arn, DBBootstrapperAgent.data_file
+            MOCK_DATA_ARN, DBBootstrapperAgent.data_file
         )
         agent.create_data_loader.assert_called_once_with(mock_iam_app)
         mock_data_loader.load_data.assert_called_once_with(mock_filename)

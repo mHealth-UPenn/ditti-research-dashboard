@@ -1,9 +1,13 @@
+import json
 import os
 import sys
 import time
 from collections.abc import Generator
 from typing import Any
 from unittest.mock import Mock
+
+import boto3
+from moto import mock_aws
 
 # Add parent directories to Python path to find the shared package
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", ".."))
@@ -18,7 +22,6 @@ from flask import Flask
 from sqlalchemy import Connection, Result, TextClause
 from src.backend.extensions import db, migrate
 from src.utils.database_connection_executer import DbConnectionExecuter
-from src.utils.database_manager import DatabaseManager
 
 from tests_db_bootstrapper.tests_utils.mock_file_reader import load_mock_data
 
@@ -31,10 +34,9 @@ POSTGRES_PORT = 5433
 POSTGRES_CONTAINER_URI = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@localhost:{POSTGRES_PORT}/{POSTGRES_DB}"
 IAM_USERNAME = "iam_username"
 MOCK_FILENAME = "mock_filename.json"
-
-DatabaseManager.MIGRATION_DIR = (
-    "functions/db_bootstrapper/tests_db_bootstrapper/migrations"
-)
+MOCK_SECRET_NAME = "test_secret"
+MOCK_BUCKET_NAME = "test-bucket"
+MOCK_DATA_ARN = "arn:aws:s3:::test-bucket/data.json"
 
 
 class MockTable(db.Model):
@@ -133,44 +135,6 @@ class MockPostgresContainer:
         self.container.remove()
 
 
-@pytest.fixture(scope="session", autouse=True)
-def mock_postgres_container() -> Generator[MockPostgresContainer, None, None]:
-    with MockPostgresContainer() as container:
-        yield container
-
-
-@pytest.fixture
-def test_client() -> Generator[Flask, None, None]:
-    app = Flask(__name__)
-    app.config["SQLALCHEMY_DATABASE_URI"] = POSTGRES_CONTAINER_URI
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    app.config["TESTING"] = True
-
-    db.init_app(app)
-    migrate.init_app(app, db)
-
-    with app.app_context():
-        yield app
-        # Clean up database engine connections
-        db.engine.dispose()
-
-
-@pytest.fixture
-def with_mock_tables(test_client: Flask) -> Generator[None, None, None]:
-    db.create_all()
-    try:
-        yield
-    finally:
-        db.drop_all()
-
-
-@pytest.fixture
-def with_mock_data(with_mock_tables: None) -> None:
-    for row in load_mock_data()[MOCK_TABLE_NAME]:
-        db.session.add(MockTable(**row))
-    db.session.commit()
-
-
 class MockResult(Result):
     def __init__(self, return_value: Any):
         self.fetchone = Mock(return_value=return_value)
@@ -194,3 +158,68 @@ class MockConnection(Connection):
         if statement.text == DbConnectionExecuter.TEST_IAM_CONNECTION:
             return MockResult((1, "test_user", POSTGRES_DB))
         return None
+
+
+@pytest.fixture(scope="session", autouse=True)
+def mock_postgres_container() -> Generator[MockPostgresContainer, None, None]:
+    with MockPostgresContainer() as container:
+        yield container
+
+
+@pytest.fixture
+def test_client() -> Generator[Flask, None, None]:
+    app = Flask(__name__)
+    app.config["SQLALCHEMY_DATABASE_URI"] = POSTGRES_CONTAINER_URI
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["TESTING"] = True
+
+    db.init_app(app)
+    migrate.init_app(app, db)
+
+    with app.app_context():
+        yield app
+
+
+@pytest.fixture
+def with_mock_tables(test_client: Flask) -> Generator[None, None, None]:
+    db.create_all()
+    try:
+        yield
+    finally:
+        db.drop_all()
+
+
+@pytest.fixture
+def with_mock_data(with_mock_tables: None) -> None:
+    for row in load_mock_data()[MOCK_TABLE_NAME]:
+        db.session.add(MockTable(**row))
+    db.session.commit()
+
+
+@pytest.fixture
+def with_mock_secret() -> Generator[str, None, None]:
+    with mock_aws():
+        client = boto3.client("secretsmanager")
+        client.create_secret(
+            Name=MOCK_SECRET_NAME,
+            SecretString=json.dumps(
+                {
+                    "password": POSTGRES_PASSWORD,
+                    "username": POSTGRES_USER,
+                }
+            ),
+        )
+        yield
+
+
+@pytest.fixture
+def with_mock_bucket() -> Generator[str, None, None]:
+    with mock_aws():
+        client = boto3.client("s3")
+        client.create_bucket(Bucket=MOCK_BUCKET_NAME)
+        client.put_object(
+            Bucket=MOCK_BUCKET_NAME,
+            Key="data.json",
+            Body=json.dumps({"test": "data"}),
+        )
+        yield

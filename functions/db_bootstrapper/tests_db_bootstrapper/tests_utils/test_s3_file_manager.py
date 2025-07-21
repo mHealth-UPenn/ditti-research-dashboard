@@ -10,23 +10,13 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from collections.abc import Generator
 from pathlib import Path
 from unittest.mock import Mock
 
-import boto3
 import pytest
-from moto import mock_aws
 from src.utils import S3FileManager
 
-
-@pytest.fixture
-def with_mock_bucket() -> Generator[None, None, None]:
-    with mock_aws():
-        client = boto3.client("s3")
-        client.create_bucket(Bucket="bucket")
-        client.put_object(Bucket="bucket", Key="key", Body=b"test")
-        yield
+from tests_db_bootstrapper.conftest import MOCK_DATA_ARN
 
 
 class TestS3FileManager:
@@ -39,7 +29,7 @@ class TestS3FileManager:
 
         # Act
         result = s3_manager.download_file(
-            "arn:aws:s3:::bucket/key", str(tmp_path / "test.json")
+            MOCK_DATA_ARN, str(tmp_path / "test.json")
         )
 
         # Assert
@@ -53,6 +43,4 @@ class TestS3FileManager:
 
         # Act & Assert
         with pytest.raises(Exception, match="S3 Error"):
-            s3_manager.download_file(
-                "arn:aws:s3:::bucket/key", str(tmp_path / "test.json")
-            )
+            s3_manager.download_file(MOCK_DATA_ARN, str(tmp_path / "test.json"))

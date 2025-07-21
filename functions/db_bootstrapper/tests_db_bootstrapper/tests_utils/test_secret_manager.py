@@ -10,23 +10,16 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-from collections.abc import Generator
 from unittest.mock import Mock
 
-import boto3
 import pytest
-from moto import mock_aws
 from src.utils import SecretManager
 
-
-@pytest.fixture
-def with_mock_secret() -> Generator[None, None, None]:
-    with mock_aws():
-        client = boto3.client("secretsmanager")
-        client.create_secret(
-            Name="test_secret", SecretString='{"password": "test123"}'
-        )
-        yield
+from tests_db_bootstrapper.conftest import (
+    MOCK_SECRET_NAME,
+    POSTGRES_PASSWORD,
+    POSTGRES_USER,
+)
 
 
 class TestAWSSecretManager:
@@ -38,10 +31,13 @@ class TestAWSSecretManager:
         secret_manager = SecretManager()
 
         # Act
-        result = secret_manager.get_secret("test_secret")
+        result = secret_manager.get_secret(MOCK_SECRET_NAME)
 
         # Assert
-        assert result == {"password": "test123"}
+        assert result == {
+            "password": POSTGRES_PASSWORD,
+            "username": POSTGRES_USER,
+        }
 
     def test_get_secret_with_error(self):
         """Test secret retrieval with error."""
