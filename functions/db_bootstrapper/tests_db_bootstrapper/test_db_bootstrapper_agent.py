@@ -38,10 +38,12 @@ from src.utils import (
 
 from tests_db_bootstrapper.conftest import (
     IAM_USERNAME,
+    MOCK_EMPTY_TABLE_NAME,
     POSTGRES_DB,
     POSTGRES_PASSWORD,
     POSTGRES_PORT,
     POSTGRES_USER,
+    MockEmptyTable,
 )
 
 
@@ -62,8 +64,9 @@ def mock_secret_arn() -> Generator[str, None, None]:
 
 
 @pytest.fixture
-def with_mock_migrations_dir(
-    test_client: Flask, tmp_path: Path
+def mock_migrations_dir(
+    test_client: Flask,
+    tmp_path: Path,
 ) -> Generator[None, None, None]:
     db.drop_all()
     try:
@@ -71,10 +74,12 @@ def with_mock_migrations_dir(
         DatabaseManager.MIGRATION_DIR = migrations_dir
         init(migrations_dir)
         migrate(migrations_dir)
-        yield
+        yield migrations_dir
     finally:
         DatabaseManager.MIGRATION_DIR = "./migrations"
         db.drop_all()
+        db.session.execute(text("DELETE FROM alembic_version"))
+        db.session.commit()
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -263,9 +268,7 @@ class TestDBBootstrapperAgent:
         agent.create_db_manager = Mock(return_value=mock_db_manager)
         agent.create_data_loader = Mock(return_value=mock_data_loader)
 
-        event = {"RequestType": "Create"}
-
-        result = agent.handle_create_request(event)
+        result = agent.handle_create_request()
 
         # Check the return value
         assert result["Data"] == DBBootstrapperAgentMessage.create_success()
@@ -320,9 +323,7 @@ class TestDBBootstrapperAgent:
         agent.create_db_manager = Mock(return_value=mock_db_manager)
         agent.create_data_loader = Mock(return_value=mock_data_loader)
 
-        event = {"RequestType": "Create"}
-
-        result = agent.handle_create_request(event)
+        result = agent.handle_create_request()
 
         # Check the return value
         assert result["Data"] == DBBootstrapperAgentMessage.create_success()
@@ -353,8 +354,7 @@ class TestDBBootstrapperAgent:
     def test_handle_create_request_error(self, agent: DBBootstrapperAgent):
         """Test error handling for Create request."""
         agent.validate_environment = Mock(side_effect=ValueError("Test error"))
-        event = {"RequestType": "Create"}
-        result = agent.handle_create_request(event)
+        result = agent.handle_create_request()
         assert result["Data"] == DBBootstrapperAgentMessage.create_error(
             "Test error"
         )
@@ -370,8 +370,7 @@ class TestDBBootstrapperAgent:
         agent.create_master_app = Mock(return_value=mock_app)
         agent.create_db_manager = Mock(return_value=mock_db_manager)
 
-        event = {"RequestType": "Update"}
-        result = agent.handle_update_request(event)
+        result = agent.handle_update_request()
 
         agent.validate_environment.assert_called_once()
         agent.get_database_secret.assert_called_once()
@@ -383,17 +382,14 @@ class TestDBBootstrapperAgent:
     def test_handle_update_request_error(self, agent: DBBootstrapperAgent):
         """Test error handling for Update request."""
         agent.validate_environment = Mock(side_effect=ValueError("Test error"))
-        event = {"RequestType": "Update"}
-        result = agent.handle_update_request(event)
+        result = agent.handle_update_request()
         assert result["Data"] == DBBootstrapperAgentMessage.update_error(
             "Test error"
         )
 
     def test_handle_delete_request(self, agent: DBBootstrapperAgent):
         """Test Delete request handling."""
-        event = {"RequestType": "Delete"}
-
-        result = agent.handle_delete_request(event)
+        result = agent.handle_delete_request()
 
         assert result["Data"] == DBBootstrapperAgentMessage.delete_success()
 
@@ -405,7 +401,7 @@ class TestDBBootstrapperAgent:
         result = agent.handle_request(event)
 
         assert result["Data"] == "Success"
-        agent.handle_create_request.assert_called_once_with(event)
+        agent.handle_create_request.assert_called_once()
 
     def test_handle_request_update(self, agent: DBBootstrapperAgent):
         """Test request handling for Update type."""
@@ -415,7 +411,7 @@ class TestDBBootstrapperAgent:
         result = agent.handle_request(event)
 
         assert result["Data"] == "Success"
-        agent.handle_update_request.assert_called_once_with(event)
+        agent.handle_update_request.assert_called_once()
 
     def test_handle_request_delete(self, agent: DBBootstrapperAgent):
         """Test request handling for Delete type."""
@@ -438,7 +434,7 @@ class TestDBBootstrapperAgentIntegration:
     def test_integration_create_request(
         self,
         agent: DBBootstrapperAgent,
-        with_mock_migrations_dir: None,
+        mock_migrations_dir: str,
     ):
         """Test integration of Create request."""
         agent.local_db = True
@@ -470,24 +466,29 @@ class TestDBBootstrapperAgentIntegration:
     def test_integration_update_request(
         self,
         agent: DBBootstrapperAgent,
-        with_mock_migrations_dir: None,
+        test_client: Flask,
+        mock_migrations_dir: str,
     ):
         """Test integration of Update request."""
         agent.local_db = True
+        sql = f"SELECT column_name FROM information_schema.columns WHERE table_name = '{MOCK_EMPTY_TABLE_NAME}'"  # noqa: S608
 
         # Perform a create request to create the tables
         event = {"RequestType": "Create"}
         result = agent.handle_request(event)
         assert result["Data"] == DBBootstrapperAgentMessage.create_success()
 
-        # Add a new table
-        class NewTable(db.Model):
-            __tablename__ = "new_table"
-            id = db.Column(db.Integer, primary_key=True)
-            name = db.Column(db.String(50), nullable=False)
-            description = db.Column(db.String(255), nullable=True)
+        # Get column names of empty_table
+        result = db.session.execute(text(sql))
+        assert set(result.fetchall()) == {
+            ("id",),
+            ("name",),
+            ("description",),
+        }
 
-        migrate(DatabaseManager.MIGRATION_DIR)
+        # Add a new column to the MockEmptyTable class
+        MockEmptyTable.new_column = db.Column(db.String(255), nullable=True)
+        migrate(mock_migrations_dir)
 
         # Perform an update request to add the new table
         event = {"RequestType": "Update"}
@@ -496,15 +497,11 @@ class TestDBBootstrapperAgentIntegration:
         # Assert success message is returned
         assert result["Data"] == DBBootstrapperAgentMessage.update_success()
 
-        # Assert new table is created
-        result = db.session.execute(
-            text(
-                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"
-            )
-        )
+        # Assert the new column is added
+        result = db.session.execute(text(sql))
         assert set(result.fetchall()) == {
-            ("alembic_version",),
-            ("mock_table",),
-            ("empty_table",),
-            ("new_table",),
+            ("id",),
+            ("name",),
+            ("description",),
+            ("new_column",),
         }
