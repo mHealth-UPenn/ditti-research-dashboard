@@ -14,7 +14,7 @@
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from functions.db_bootstrapper.src.utils.messages import SequenceManagerMessage
+from src.utils.messages import SequenceManagerMessage
 
 
 class SequenceManager:

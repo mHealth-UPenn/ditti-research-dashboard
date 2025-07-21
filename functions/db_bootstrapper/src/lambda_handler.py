@@ -29,6 +29,8 @@ def lambda_handler(event: dict[str, Any], context: Any) -> None:
         event: The CloudFormation event.
         context: The Lambda context.
     """
+    print(f"Received event: {event}")
+
     # Determine if using local database
     local_db = os.getenv("LOCAL_DB", "false").lower() == "true"
     if local_db:

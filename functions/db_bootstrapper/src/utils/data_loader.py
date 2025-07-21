@@ -14,11 +14,11 @@
 from flask import Flask
 from sqlalchemy import MetaData, Table
 
-from functions.db_bootstrapper.src.utils.messages import DataLoaderMessage
 from src.backend.extensions import db
 from src.utils.data_processor import DataProcessor
 from src.utils.database_session_manager import DatabaseSessionManager
 from src.utils.file_reader import FileReader
+from src.utils.messages import DataLoaderMessage
 from src.utils.sequence_manager import SequenceManager
 
 
