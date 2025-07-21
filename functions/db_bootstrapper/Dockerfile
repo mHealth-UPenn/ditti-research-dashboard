@@ -25,10 +25,7 @@ RUN pip3 install boto3 \
 
 COPY migrations/ migrations/
 COPY shared/iam_sqlalchemy.py shared/iam_sqlalchemy.py
-COPY functions/db_bootstrapper/backend backend/
-COPY backend/models.py backend/models.py
-COPY functions/db_bootstrapper/lambda_handler.py lambda_handler.py
-COPY functions/db_bootstrapper/load_data.py load_data.py
-COPY functions/db_bootstrapper/db_uri.py db_uri.py
+COPY migrations/ migrations/
+COPY functions/db_bootstrapper/src src/
 
-CMD ["lambda_handler.lambda_handler"]
+CMD ["src.lambda_handler.lambda_handler"]
