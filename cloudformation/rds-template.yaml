@@ -260,7 +260,9 @@ Resources:
           - Effect: "Allow"
             Action: "s3:GetObject"
             Resource: !Ref BootStrapDataARN
-      RoleName: !ImportValue "${IamStackName}-DBBootStrapLambdaRoleName"
+      RoleName: 
+        Fn::ImportValue:
+          !Sub "${IamStackName}-DBBootStrapLambdaRoleName"
 
   DBBootStrapLambdaFn:
     Type: AWS::Lambda::Function
@@ -273,7 +275,9 @@ Resources:
           Bootstrap a newly created Aurora PostgreSQL Database
       MemorySize: 128
       PackageType: Image
-      Role: !ImportValue "${IamStackName}-DBBootStrapLambdaRoleArn"
+      Role:
+        Fn::ImportValue:
+          !Sub "${IamStackName}-DBBootStrapLambdaRoleArn"
       Timeout: 180
       LoggingConfig:
         ApplicationLogLevel: !Ref BootStrapApplicationLogLevel
