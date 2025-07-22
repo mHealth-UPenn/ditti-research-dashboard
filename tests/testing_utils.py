@@ -362,7 +362,7 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     mock_account = Account.query.filter_by(email="foo@email.com").first()
 
     # Generate a mock ID token
-    mock_token = "mock_id_token_for_researcher"  # noqa: S105
+    mock_token = "mock_id_token_for_researcher"
 
     # Create headers with the mock token
     headers = {"Authorization": f"Bearer {mock_token}"}

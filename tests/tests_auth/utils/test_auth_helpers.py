@@ -34,7 +34,7 @@ def test_get_token_from_request_authorization_header(mock_app):
         headers={"Authorization": "Bearer test-token"}
     ):
         token = get_token_from_request()
-        assert token == "test-token"  # noqa: S105
+        assert token == "test-token"
 
 
 def test_get_token_from_request_cookies(mock_app):
@@ -46,7 +46,7 @@ def test_get_token_from_request_cookies(mock_app):
         request.cookies = {"id_token": "cookie-token"}
 
         token = get_token_from_request()
-        assert token == "cookie-token"  # noqa: S105
+        assert token == "cookie-token"
 
 
 def test_get_token_from_request_none(mock_app):

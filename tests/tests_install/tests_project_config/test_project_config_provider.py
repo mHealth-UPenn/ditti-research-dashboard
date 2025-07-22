@@ -416,22 +416,22 @@ def test_property_getters_and_setters(
         mock_write.assert_called_once()
 
         mock_write.reset_mock()
-        project_config_provider_mock.secret_name = "new-secret"  # noqa: S105
+        project_config_provider_mock.secret_name = "new-secret"
         assert (
             project_config_provider_mock.project_config["aws"]["secrets_manager"][
                 "secret_name"
             ]
-            == "new-secret"  # noqa: S105
+            == "new-secret"
         )
         mock_write.assert_called_once()
 
         mock_write.reset_mock()
-        project_config_provider_mock.tokens_secret_name = "new-tokens-secret"  # noqa: S105
+        project_config_provider_mock.tokens_secret_name = "new-tokens-secret"
         assert (
             project_config_provider_mock.project_config["aws"]["secrets_manager"][
                 "tokens_secret_name"
             ]
-            == "new-tokens-secret"  # noqa: S105
+            == "new-tokens-secret"
         )
         mock_write.assert_called_once()
 

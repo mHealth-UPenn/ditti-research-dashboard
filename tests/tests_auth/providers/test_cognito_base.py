@@ -193,7 +193,7 @@ def test_validate_access_token_with_refresh(
     # Verify
     assert success is True
     assert "new_token" in result
-    assert result["new_token"] == "new-fake-access-token"  # noqa: S105
+    assert result["new_token"] == "new-fake-access-token"
 
 
 @patch("requests.post")

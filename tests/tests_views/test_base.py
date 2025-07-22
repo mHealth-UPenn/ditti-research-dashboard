@@ -55,4 +55,4 @@ def test_health_check_version_id_not_set(client):
     res = client.get("/health")
     data = json.loads(res.data)
     assert res.status_code == 200
-    assert data["flask_secret_key_version_id"] == "not_set"  # noqa: S105
+    assert data["flask_secret_key_version_id"] == "not_set"

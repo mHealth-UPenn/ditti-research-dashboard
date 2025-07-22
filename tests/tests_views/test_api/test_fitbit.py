@@ -188,12 +188,12 @@ def test_fitbit_callback_success_new_association(
                     kwargs['ditti_id']
                 }"
                 assert (
-                    kwargs["tokens"]["access_token"] == "access_token_value"  # noqa: S105
+                    kwargs["tokens"]["access_token"] == "access_token_value"
                 ), f"Expected access_token 'access_token_value', got {
                     kwargs['tokens']['access_token']
                 }"
                 assert (
-                    kwargs["tokens"]["refresh_token"] == "refresh_token_value"  # noqa: S105
+                    kwargs["tokens"]["refresh_token"] == "refresh_token_value"
                 ), f"Expected refresh_token 'refresh_token_value', got {
                     kwargs['tokens']['refresh_token']
                 }"

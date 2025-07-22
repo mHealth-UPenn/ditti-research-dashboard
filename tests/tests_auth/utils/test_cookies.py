@@ -23,7 +23,7 @@ def mock_app():
     app = Flask(__name__)
     app.config.update(
         TESTING=True,
-        JWT_SECRET_KEY="super-secret",  # noqa: S106
+        JWT_SECRET_KEY="super-secret",
         JWT_TOKEN_LOCATION=["cookies"],
         JWT_SESSION_COOKIE=True,
         JWT_CSRF_IN_COOKIES=True,
