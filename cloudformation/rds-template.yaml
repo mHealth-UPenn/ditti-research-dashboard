@@ -223,8 +223,6 @@ Resources:
   ################
   # DB Bootstrap #
   ################
-  # IAM role is now imported from the IAM stack
-
   DBBootStrapLambdaRoleSecretAccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -250,6 +248,19 @@ Resources:
             Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:${DBCluster.DBClusterResourceId}/${IAMUsername}"
       Roles:
         - Fn::ImportValue: !Sub "${IamStackName}-DBBootStrapLambdaRoleName"
+
+  DBBootStrapS3AccessPolicyAttachment:
+    Condition: IsBootStrapDataARNSet
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      PolicyName: "db-bootstrap-lambda-s3-access"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "s3:GetObject"
+            Resource: !Ref BootStrapDataARN
+      RoleName: !ImportValue "${IamStackName}-DBBootStrapLambdaRoleName"
 
   DBBootStrapLambdaFn:
     Type: AWS::Lambda::Function

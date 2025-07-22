@@ -1,19 +1,17 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "IAM roles for Aurora DB bootstrap Lambda"
 
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterLabels:
+      App:
+        default: App Name
+
 Parameters:
   App:
     Type: String
     Default: ditti-dashboard
     Description: App name
-
-  BootStrapDataARN:
-    Type: String
-    Default: ""
-    Description: S3 ARN of the DB bootstrap data Lambda function (optional)
-
-Conditions:
-  IsBootStrapDataARNSet: !Not [!Equals [!Ref BootStrapDataARN, ""]]
 
 Resources:
   DBBootStrapLambdaRole:
@@ -31,20 +29,6 @@ Resources:
       Path: "/"
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-      # Inline policies must be attached in the consuming stack, since they reference resources not defined here
-
-  DBBootStrapS3AccessPolicyAttachment:
-    Condition: IsBootStrapDataARNSet
-    Type: AWS::IAM::RolePolicy
-    Properties:
-      PolicyName: "db-bootstrap-lambda-s3-access"
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Action: "s3:GetObject"
-            Resource: !Ref BootStrapDataARN
-      RoleName: !Ref DBBootStrapLambdaRole
 
 Outputs:
   DBBootStrapLambdaRoleArn:
