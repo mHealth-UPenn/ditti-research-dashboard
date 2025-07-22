@@ -106,7 +106,7 @@ class TestDBBootstrapperAgent:
 
         agent.validate_environment()  # Should not raise
 
-    @patch.dict(os.environ, {}, clear=True)
+    @patch.dict(os.environ, {"AWS_DEFAULT_REGION": "us-east-1"}, clear=True)
     def test_validate_environment_missing_secret_arn(self):
         """Test environment validation with missing secret ARN."""
         agent = DBBootstrapperAgent()
