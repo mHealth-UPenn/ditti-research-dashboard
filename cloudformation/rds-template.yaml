@@ -23,6 +23,7 @@ Metadata:
           - Environment
           - StackIdentifier
           - VpcStackName
+          - IamStackName
       - Label:
           default: Database Config
         Parameters:
@@ -93,6 +94,10 @@ Parameters:
   VpcStackName:
     Type: String
     Description: Name of the VPC stack to import resources from
+
+  IamStackName:
+    Type: String
+    Description: Name of the IAM stack to import resources from
 
   MasterUsername:
     Type: String
@@ -231,36 +236,33 @@ Resources:
   ################
   # DB Bootstrap #
   ################
-  DBBootStrapLambdaRole:
-    Type: AWS::IAM::Role
+  # IAM role is now imported from the IAM stack
+
+  DBBootStrapLambdaRoleSecretAccessPolicy:
+    Type: AWS::IAM::Policy
     Properties:
-      AssumeRolePolicyDocument:
+      PolicyName: db-bootstrap-lambda-role-secret-access
+      PolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-              - lambda.amazonaws.com
-            Action:
-              - sts:AssumeRole
-      Path: "/"
-      ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
-      Policies:
-        - PolicyName: "db-bootstrap-lambda-role-secret-access"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action: "secretsmanager:GetSecretValue"
-                Resource: !GetAtt DBCluster.MasterUserSecret.SecretArn
-        - PolicyName: "db-bootstrap-lambda-role-rds-iam"
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: "Allow"
-                Action: "rds-db:connect"
-                Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:${DBCluster.DBClusterResourceId}/${IAMUsername}"
+          - Effect: "Allow"
+            Action: "secretsmanager:GetSecretValue"
+            Resource: !GetAtt DBCluster.MasterUserSecret.SecretArn
+      Roles:
+        - Fn::ImportValue: !Sub "${IamStackName}-DBBootStrapLambdaRoleName"
+
+  DBBootStrapLambdaRoleRdsIamPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: db-bootstrap-lambda-role-rds-iam
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action: "rds-db:connect"
+            Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:${DBCluster.DBClusterResourceId}/${IAMUsername}"
+      Roles:
+        - Fn::ImportValue: !Sub "${IamStackName}-DBBootStrapLambdaRoleName"
 
   DBBootStrapLambdaFn:
     Type: AWS::Lambda::Function
@@ -273,7 +275,7 @@ Resources:
           Bootstrap a newly created Aurora PostgreSQL Database
       MemorySize: 128
       PackageType: Image
-      Role: !GetAtt DBBootStrapLambdaRole.Arn
+      Role: !ImportValue "${IamStackName}-DBBootStrapLambdaRoleArn"
       Timeout: 180
       LoggingConfig:
         ApplicationLogLevel: !Ref BootStrapApplicationLogLevel
@@ -302,19 +304,6 @@ Resources:
     DependsOn: DBInstance
     Properties:
       ServiceToken: !GetAtt DBBootStrapLambdaFn.Arn
-
-  DBBootStrapS3AccessPolicyAttachment:
-    Condition: IsBootStrapDataARNSet
-    Type: AWS::IAM::RolePolicy
-    Properties:
-      PolicyName: "db-bootstrap-lambda-s3-access"
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Action: "s3:GetObject"
-            Resource: !Ref BootStrapDataARN
-      RoleName: !Ref DBBootStrapLambdaRole
 
 Outputs:
   DBClusterEndpoint:
