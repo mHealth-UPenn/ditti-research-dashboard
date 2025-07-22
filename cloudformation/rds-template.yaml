@@ -21,7 +21,6 @@ Metadata:
         Parameters:
           - App
           - Environment
-          - StackIdentifier
           - VpcStackName
           - IamStackName
       - Label:
@@ -47,8 +46,6 @@ Metadata:
         default: App
       Environment:
         default: Environment
-      StackIdentifier:
-        default: Stack Identifier
       VpcStackName:
         default: VPC Stack Name
       MasterUsername:
@@ -86,10 +83,6 @@ Parameters:
       - staging
       - prod
     Description: Environment name
-
-  StackIdentifier:
-    Type: String
-    Description: Identifier for the stack (e.g., jdoe)
 
   VpcStackName:
     Type: String
@@ -176,7 +169,7 @@ Resources:
       DatabaseName: !Ref DatabaseName
       MasterUsername: !Ref MasterUsername
       ManageMasterUserPassword: true
-      DBClusterIdentifier: !Sub ${App}-${StackIdentifier}-aurora-cluster
+      DBClusterIdentifier: !Sub ${App}-aurora-cluster
       VpcSecurityGroupIds:
         - Fn::ImportValue: !Sub ${VpcStackName}-RDSSecurityGroupId
       DBSubnetGroupName: !Ref DBSubnetGroup
@@ -192,12 +185,10 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-aurora-cluster
+          Value: !Sub ${App}-aurora-cluster
 
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -209,12 +200,10 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-db-subnet-group
+          Value: !Sub ${App}-db-subnet-group
 
   DBInstance:
     Type: AWS::RDS::DBInstance
@@ -226,12 +215,10 @@ Resources:
       Tags:
         - Key: App
           Value: !Ref App
-        - Key: StackIdentifier
-          Value: !Ref StackIdentifier
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-${StackIdentifier}-aurora-instance
+          Value: !Sub ${App}-aurora-instance
 
   ################
   # DB Bootstrap #
@@ -280,7 +267,7 @@ Resources:
       LoggingConfig:
         ApplicationLogLevel: !Ref BootStrapApplicationLogLevel
         LogFormat: JSON
-        LogGroup: !Sub ${App}-${StackIdentifier}-db-bootstrap-lambda-log-group
+        LogGroup: !Sub ${App}-db-bootstrap-lambda-log-group
         SystemLogLevel: !Ref BootStrapSystemLogLevel
       VpcConfig:
         SecurityGroupIds:
