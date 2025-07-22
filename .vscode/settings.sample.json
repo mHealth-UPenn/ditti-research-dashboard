@@ -45,8 +45,7 @@
 
   "python.testing.pytestArgs": [
     "tests",
-    "functions/db_bootstrapper/tests_db_bootstrapper",
-    "-s"
+    "functions/db_bootstrapper/tests_db_bootstrapper"
   ],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
