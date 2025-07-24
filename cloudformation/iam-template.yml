@@ -1,17 +1,25 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "IAM roles for Aurora DB bootstrap Lambda"
+Description: "Application IAM roles"
 
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterLabels:
       App:
         default: App Name
+      PrincipalUserArns:
+        default: Principals
 
 Parameters:
   App:
     Type: String
     Default: ditti-dashboard
     Description: App name
+  PrincipalUserArns:
+    Type: String
+    Description: User ARNs to override default role principals for (optional) (e.g. arn:aws:iam::123456789012:user/user1,arn:aws:iam::123456789012:user/user2).
+
+Conditions:
+  OverridePrincipals: !Not [!Equals [!Ref PrincipalUserArns, ""]]
 
 Resources:
   DBBootStrapLambdaRole:
@@ -21,9 +29,44 @@ Resources:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
+            Principal: !If
+              - OverridePrincipals
+              - AWS: !Split [",", !Ref PrincipalUserArns]
+              - Service: "lambda.amazonaws.com"
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+
+  FlaskSecretKeyRotatorLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: !If
+              - OverridePrincipals
+              - AWS: !Split [",", !Ref PrincipalUserArns]
+              - Service: "lambda.amazonaws.com"
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+
+  WearableDataRetrievalLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: !If
+              - OverridePrincipals
+              - AWS: !Split [",", !Ref PrincipalUserArns]
+              - Service: "lambda.amazonaws.com"
             Action:
               - sts:AssumeRole
       Path: "/"
@@ -32,12 +75,8 @@ Resources:
 
 Outputs:
   DBBootStrapLambdaRoleArn:
-    Description: ARN of the DB bootstrap Lambda role
     Value: !GetAtt DBBootStrapLambdaRole.Arn
-    Export:
-      Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleArn"
-  DBBootStrapLambdaRoleName:
-    Description: Name of the DB bootstrap Lambda role
-    Value: !Ref DBBootStrapLambdaRole
-    Export:
-      Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleName" 
+  FlaskSecretKeyRotatorLambdaRoleArn:
+    Value: !GetAtt FlaskSecretKeyRotatorLambdaRole.Arn
+  WearableDataRetrievalLambdaRoleArn:
+    Value: !GetAtt WearableDataRetrievalLambdaRole.Arn
