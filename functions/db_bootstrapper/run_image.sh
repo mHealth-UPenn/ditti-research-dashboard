@@ -12,6 +12,7 @@
 
 NOCACHE=0
 DEBUG=0
+PORT=9001
 DATA_FILE=""
 
 # parse arguments
@@ -27,6 +28,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --data-file)
             DATA_FILE=$2
+            shift
+            shift
+            ;;
+        --port)
+            PORT=$2
             shift
             shift
             ;;
@@ -162,7 +168,7 @@ if [ "$DEBUG" -eq 1 ]; then
         --name db-bootstrapper-test \
         --network db-bootstrapper-network \
         --add-host "${DB_HOST}:${DB_CONTAINER_IP}" \
-        -p 9000:8080 \
+        -p "${PORT}:8080" \
         -e AWS_CA_BUNDLE="/tmp/moto/moto_proxy/ca.crt" \
         -e HTTPS_PROXY=http://moto-proxy:5005 \
         -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
@@ -184,7 +190,7 @@ else
         --name db-bootstrapper-test \
         --network db-bootstrapper-network \
         --add-host "${DB_HOST}:${DB_CONTAINER_IP}" \
-        -p 9000:8080 \
+        -p "${PORT}:8080" \
         -e AWS_CA_BUNDLE="/tmp/moto/moto_proxy/ca.crt" \
         -e HTTPS_PROXY=http://moto-proxy:5005 \
         -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \

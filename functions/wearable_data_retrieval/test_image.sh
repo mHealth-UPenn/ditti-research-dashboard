@@ -10,4 +10,21 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{"function_id": 1}'
+PORT=9001
+
+# parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --port)
+            PORT=$2
+            shift
+            shift
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            exit 1
+            ;;
+    esac
+done
+
+curl "http://localhost:${PORT}/2015-03-31/functions/function/invocations" -d '{"function_id": 1}'

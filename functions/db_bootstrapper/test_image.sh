@@ -11,11 +11,17 @@
 # under the License.
 
 RequestType="Create"
+PORT=9001
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --request-type)
             RequestType=$2
+            shift
+            shift
+            ;;
+        --port)
+            PORT=$2
             shift
             shift
             ;;
@@ -32,7 +38,7 @@ if [[ ! "$RequestType" =~ ^(Create|Update|Delete)$ ]]; then
     exit 1
 fi
 
-curl "http://localhost:9000/2015-03-31/functions/function/invocations" -d '{
+curl "http://localhost:${PORT}/2015-03-31/functions/function/invocations" -d '{
   "RequestType": "'${RequestType}'",
   "ResponseURL": "http://pre-signed-S3-url-for-response",
   "StackId": "arn:aws:cloudformation:us-east-1:123456789012:stack/MyStack/guid",

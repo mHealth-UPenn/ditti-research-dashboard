@@ -13,6 +13,7 @@
 NOCACHE=0
 DEBUG=0
 STAGING=0
+PORT=9001
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
@@ -27,6 +28,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --staging)
             STAGING=1
+            shift
+            ;;
+        --port)
+            PORT=$2
+            shift
             shift
             ;;
         -*|--*)
@@ -53,7 +59,7 @@ if [ "$STAGING" -eq 1 ]; then
         --platform linux/amd64 \
         --name wearable-data-retrieval-test \
         --network aws-network \
-        -p 9000:8080 \
+        -p "${PORT}:8080" \
         --env-file .env \
         -e DEBUG=true \
         -e STAGING=true \
@@ -63,7 +69,7 @@ elif [ "$DEBUG" -eq 1 ]; then
         --platform linux/amd64 \
         --name wearable-data-retrieval-test \
         --network aws-network \
-        -p 9000:8080 \
+        -p "${PORT}:8080" \
         --env-file .env \
         -e TESTING=true \
         -e DEBUG=true \
@@ -73,7 +79,7 @@ else
         --platform linux/amd64 \
         --name wearable-data-retrieval-test \
         --network aws-network \
-        -p 9000:8080 \
+        -p "${PORT}:8080" \
         --env-file .env \
         -e TESTING=true \
         wearable-data-retrieval:test
