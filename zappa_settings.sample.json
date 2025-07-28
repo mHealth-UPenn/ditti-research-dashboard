@@ -27,6 +27,7 @@
         "Action": ["rds-db:connect"],
         "Resource": "[rds-iam-user-arn]"
       }
-    ]
+    ],
+    "timeout_seconds": 60
   }
 }
