@@ -106,12 +106,12 @@ The RDS template creates an Aurora Serverless v2 PostgreSQL cluster with automat
 
 ### Whitelist Bastion IP Script
 
-The `whitelist-bastion-ip.sh` script manages SSH access to the bastion host by adding/removing IP addresses from the security group.
+The `whitelist-bastion-ip.sh` script manages SSH access to the bastion host by adding/removing IP addresses from NAT bastion the security group.
 
 **Usage:**
 
 ```bash
-./whitelist-bastion-ip.sh [security-group-id] <action> <ip> [description]
+./whitelist-bastion-ip.sh [nat-security-group-id] <action> <ip> [description]
 ```
 
 | Action | Description | Example |
@@ -136,7 +136,7 @@ The `zappa_settings.json` file configures the Flask application deployment to AW
 | `[certificate-arn]` | Your ACM certificate ARN |
 | `[domain]` | Your custom domain name |
 | `[subnet-id-*]` | Private subnet ID |
-| `[security-group-id]` | VPC security group ID. This is output as the `LambdaSecurityGroupId` from the VPC CloudFormation template |
+| `[lambda-security-group-id]` | Lambda security group ID. This is output as the `LambdaSecurityGroupId` from the VPC CloudFormation template |
 | `[rds-iam-user-arn]` | RDS IAM user ARN. This is output as the `IAMUserARN` from the RDS CloudFormation template |
 
 ### Staging & Deploy .env Files

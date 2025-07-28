@@ -10,8 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# Script to manage IP whitelisting for NAT instance and bastion host security group
-# Usage: ./whitelist-bastion-ip.sh [security-group-id] <action> <ip> [description]
+# Script to manage IP whitelisting for NAT instance and NAT bastion host security group
+# Usage: ./whitelist-bastion-ip.sh [nat-security-group-id] <action> <ip> [description]
 # Actions: add, remove, list
 # Examples: 
 #   ./whitelist-bastion-ip.sh sg-01234567890abcdef0 add 203.0.113.1/32 "Office IP"
@@ -88,7 +88,7 @@ list_ips() {
 
 # Main script logic
 if [ "$#" -lt 2 ]; then
-    echo "Usage: $0 [security-group-id] <action> <ip> [description]"
+    echo "Usage: $0 [nat-security-group-id] <action> <ip> [description]"
     echo "Actions: add, remove, list"
     echo ""
     echo "Examples:"

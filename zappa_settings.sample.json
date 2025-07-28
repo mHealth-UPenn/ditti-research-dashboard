@@ -19,7 +19,7 @@
     "domain": "[domain]",
     "vpc_config": {
       "SubnetIds": ["[subnet-id-1]", "[subnet-id-2]"],
-      "SecurityGroupIds": ["[security-group-id]"]
+      "SecurityGroupIds": ["[lambda-security-group-id]"]
     },
     "extra_permissions": [
       {
