@@ -182,6 +182,7 @@ Resources:
         SecondsUntilAutoPause: !Ref SecondsUntilAutoPause
       Port: 5432
       EnableIAMDatabaseAuthentication: true
+      StorageEncrypted: true
       Tags:
         - Key: App
           Value: !Ref App
