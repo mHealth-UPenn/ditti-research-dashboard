@@ -71,9 +71,9 @@ def load_config(logger: LambdaLogger) -> Config:
             bucket_name=os.getenv("S3_BUCKET_NAME"),
         ),
         fitbit=fitbit_secret.secret_dict if fitbit_secret else None,
+        fitbit_tokens_secret_name=os.getenv("FITBIT_TOKENS_SECRET_NAME"),
         log_level=os.getenv("LOG_LEVEL", "INFO"),
         local=LOCAL,
-        fitbit_tokens_secret_name=os.getenv("FITBIT_TOKENS_SECRET_NAME"),
     )
 
     logger.debug(
@@ -83,7 +83,9 @@ def load_config(logger: LambdaLogger) -> Config:
             "fitbit": {
                 "client_id": config["fitbit"]["client_id"],
                 "client_secret": "********",
-            },
+            }
+            if not LOCAL
+            else None,
         },
     )
 
