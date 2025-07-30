@@ -13,7 +13,6 @@
 NOCACHE=0
 PORT=9001
 DB_PORT=5433
-HELP=0
 
 HELP_MESSAGE="
 Usage: $0 [options]
@@ -43,7 +42,8 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --help)
-            HELP=1
+            echo "$HELP_MESSAGE"
+            exit 0
             shift
             ;;
         -*|--*)
@@ -52,11 +52,6 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-if [ $HELP -eq 1 ]; then
-    echo "$HELP_MESSAGE"
-    exit 0
-fi
 
 if [ $NOCACHE -eq 1 ]; then
     docker build \
@@ -91,6 +86,7 @@ docker rm -f moto-proxy || true
 docker rm -f wearable-data-retrieval-test-db || true
 docker rm -f wearable-data-retrieval-test || true
 
+# Set up moto proxy
 docker run -dp 5005:5000 \
     --name moto-proxy \
     --network wearable-data-retrieval-network \
@@ -132,6 +128,13 @@ docker run \
     -e PGPASSWORD=test \
     -e POSTGRES_DB=test \
     -d postgres:16
+
+# Wait for database to be ready
+while ! docker exec wearable-data-retrieval-test-db psql -U test -d test -c "SELECT 1;" > /dev/null 2>&1; do
+    echo "Waiting for database to be ready..."
+    sleep 1
+done
+echo "Database is ready"
 
 # Bootstrap the database
 export TEST_FLASK_DB="postgresql://test:test@localhost:${DB_PORT}/test"
