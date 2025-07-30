@@ -6,33 +6,32 @@ Metadata:
     ParameterLabels:
       App:
         default: App Name
-      PrincipalUserArns:
-        default: Principals
+      Environment:
+        default: Environment
 
 Parameters:
   App:
     Type: String
     Default: ditti-dashboard
     Description: App name
-  PrincipalUserArns:
+  Environment:
     Type: String
-    Description: User ARNs to override default role principals for (optional) (e.g. arn:aws:iam::123456789012:user/user1,arn:aws:iam::123456789012:user/user2).
-
-Conditions:
-  OverridePrincipals: !Not [!Equals [!Ref PrincipalUserArns, ""]]
+    AllowedValues:
+      - staging
+      - prod
+    Description: Environment
 
 Resources:
   DBBootStrapLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub "${App}-${Environment}-db-bootstrap-lambda-role"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Principal: !If
-              - OverridePrincipals
-              - AWS: !Split [",", !Ref PrincipalUserArns]
-              - Service: "lambda.amazonaws.com"
+            Principal:
+              Service: "lambda.amazonaws.com"
             Action:
               - sts:AssumeRole
       Path: "/"
@@ -42,14 +41,13 @@ Resources:
   FlaskSecretKeyRotatorLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub "${App}-${Environment}-flask-secret-key-rotator-lambda-role"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Principal: !If
-              - OverridePrincipals
-              - AWS: !Split [",", !Ref PrincipalUserArns]
-              - Service: "lambda.amazonaws.com"
+            Principal:
+              Service: "lambda.amazonaws.com"
             Action:
               - sts:AssumeRole
       Path: "/"
@@ -59,14 +57,13 @@ Resources:
   WearableDataRetrievalLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub "${App}-${Environment}-wearable-data-retrieval-lambda-role"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Principal: !If
-              - OverridePrincipals
-              - AWS: !Split [",", !Ref PrincipalUserArns]
-              - Service: "lambda.amazonaws.com"
+            Principal:
+              Service: "lambda.amazonaws.com"
             Action:
               - sts:AssumeRole
       Path: "/"
