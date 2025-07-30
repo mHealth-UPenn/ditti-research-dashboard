@@ -11,6 +11,15 @@
 # under the License.
 
 PORT=9001
+DB_PORT=5433
+
+HELP_MESSAGE="
+Usage: $0 [--port <port>] [--db-port <db-port>] [--help]
+
+Options:
+    --port <port>        Port to run the Lambda function on (default: 9001)
+    --db-port <db-port>  Port to run the database on (default: 5433)
+"
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
@@ -20,6 +29,15 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --db-port)
+            DB_PORT=$2
+            shift
+            shift
+            ;;
+        --help)
+            echo "$HELP_MESSAGE"
+            exit 0
+            ;;
         *)
             echo "Unknown argument: $1"
             exit 1
@@ -27,7 +45,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-OUTPUT=$(flask init-lambda-task --status Pending)
+export TEST_FLASK_DB="postgresql://test:test@localhost:${DB_PORT}/test"
+export FLASK_CONFIG="Testing"
+OUTPUT=$(flask --app run.py init-lambda-task --status Pending)
 
 if [ $? -ne 0 ]; then
     echo "Failed to initialize lambda task"
@@ -35,5 +55,7 @@ if [ $? -ne 0 ]; then
 fi
 
 FUNCTION_ID=$(echo $OUTPUT | grep ID: | awk -F "ID: " '{ print $2 }')
+
+echo "Invoking with function ID: ${FUNCTION_ID}"
 
 curl "http://localhost:${PORT}/2015-03-31/functions/function/invocations" -d '{"function_id": '${FUNCTION_ID}'}'
