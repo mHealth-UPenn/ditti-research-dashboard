@@ -51,32 +51,6 @@ RUN pip3 install boto3==1.34.144 \
     requests==2.32.3 \
     "SQLAlchemy>=2.0,<2.1"
 
-#####################
-# DEVELOPMENT LAYER #
-#####################
-
-# Add a final layer only for development that allows for role assumption
-FROM function-layer AS dev
-
-# Install AWS CLI for role assumption
-RUN dnf install -y unzip
-RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
-    unzip awscliv2.zip && \
-    ./aws/install
-
-# Copy the entrypoint script for role assumption
-COPY functions/wearable_data_retrieval/entrypoint.sh /var/task/entrypoint.sh
-RUN chmod +x /var/task/entrypoint.sh
-
-# Copy the Lambda function code
-COPY functions/wearable_data_retrieval/lambda_function.py /var/task/lambda_function.py
-COPY functions/wearable_data_retrieval/config.py /var/task/config.py
-COPY shared/ /var/task/shared/
-
-# Set the entrypoint for role assumption
-ENTRYPOINT ["/var/task/entrypoint.sh"]
-CMD ["lambda_function.handler"]
-
 ####################
 # PRODUCTION LAYER #
 ####################
