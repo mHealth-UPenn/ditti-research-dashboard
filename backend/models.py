@@ -705,7 +705,7 @@ mindfulness on sleep."""
     db.session.commit()
 
 
-def init_lambda_task(status: str):
+def init_lambda_task(status: str) -> int:
     """
     Initialize a lambda task with the specified status.
 
@@ -713,8 +713,10 @@ def init_lambda_task(status: str):
     ----------
         status: The status of the lambda task to create.
     """
-    db.session.add(LambdaTask(status=status))
+    task = LambdaTask(status=status)
+    db.session.add(task)
     db.session.commit()
+    return task.id
 
 
 def delete_lambda_tasks():
