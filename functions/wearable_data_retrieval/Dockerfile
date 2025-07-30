@@ -57,10 +57,6 @@ RUN pip3 install boto3==1.34.144 \
 
 FROM function-layer AS prod
 
-# Copy the entrypoint script for role assumption
-COPY functions/wearable_data_retrieval/entrypoint.sh /var/task/entrypoint.sh
-RUN chmod +x /var/task/entrypoint.sh
-
 # Copy the Lambda function code
 COPY functions/wearable_data_retrieval/lambda_function.py /var/task/lambda_function.py
 COPY functions/wearable_data_retrieval/config.py /var/task/config.py
