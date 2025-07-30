@@ -27,4 +27,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-curl "http://localhost:${PORT}/2015-03-31/functions/function/invocations" -d '{"function_id": 1}'
+OUTPUT=$(flask init-lambda-task --status Pending)
+
+if [ $? -ne 0 ]; then
+    echo "Failed to initialize lambda task"
+    exit 1
+fi
+
+FUNCTION_ID=$(echo $OUTPUT | grep ID: | awk -F "ID: " '{ print $2 }')
+
+curl "http://localhost:${PORT}/2015-03-31/functions/function/invocations" -d '{"function_id": '${FUNCTION_ID}'}'

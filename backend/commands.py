@@ -158,16 +158,17 @@ def clear_cache_click():
 @click.command(
     "init-lambda-task", help="Initialize a lambda task with the specified status."
 )
-@click.option("--status", default=None, help="Status of the lambda task.")
+@click.option("--status", help="Status of the lambda task.")
 @with_appcontext
-def init_lambda_task_click(status):
+def init_lambda_task_click(status: str):
     """Initialize a lambda task with the specified status.
 
     Parameters
     ----------
         status (str): The status for the lambda task.
     """
-    init_lambda_task(status)
+    task_id = init_lambda_task(status)
+    click.echo(f"Lambda task successfully initialized. ID: {task_id}")
 
 
 @click.command(
