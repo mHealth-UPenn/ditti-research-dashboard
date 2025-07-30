@@ -11,19 +11,24 @@
 # under the License.
 
 NOCACHE=0
-DEBUG=0
 PORT=9001
 DATA_FILE=""
+
+HELP_MESSAGE="
+Usage: $0 [options]
+
+Options:
+    --no-cache: Build without cache (default: false)
+    --data-file: Path to the data file to upload to S3 (default: "")
+    --port: Port to use (default: 9001)
+    --help: Show this help message
+"
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --no-cache)
             NOCACHE=1
-            shift
-            ;;
-        --debug)
-            DEBUG=1
             shift
             ;;
         --data-file)
@@ -34,6 +39,11 @@ while [[ $# -gt 0 ]]; do
         --port)
             PORT=$2
             shift
+            shift
+            ;;
+        --help)
+            echo "$HELP_MESSAGE"
+            exit 0
             shift
             ;;
         -*|--*)
@@ -57,6 +67,7 @@ else
         -f functions/db_bootstrapper/Dockerfile \
         .
 fi
+
 if [ $? -ne 0 ]; then
     exit 1
 fi
@@ -72,21 +83,13 @@ docker rm -f moto-proxy || true
 docker rm -f db-bootstrapper-test-db || true
 docker rm -f db-bootstrapper-test || true
 
-# Build moto proxy
-docker build -t moto-proxy -f moto_proxy/Dockerfile .
-
-# Setup moto proxy
-MOTO_LOCATION=$(pip show moto | grep "Location" | cut -d " " -f 2)
-
-docker run -d \
+# Set up moto proxy
+docker run -dp 5005:5000 \
     --name moto-proxy \
     --network db-bootstrapper-network \
-    -p 5005:5005 \
-    -v "${MOTO_LOCATION}/moto:/moto" \
-    moto-proxy
+    motoserver/moto:latest
 
-export AWS_CA_BUNDLE="${MOTO_LOCATION}/moto/moto_proxy/ca.crt"
-export HTTPS_PROXY=http://localhost:5005
+export AWS_ENDPOINT_URL=http://localhost:5005
 export AWS_DEFAULT_REGION=us-east-1
 export AWS_ACCESS_KEY_ID=testing
 export AWS_SECRET_ACCESS_KEY=testing
@@ -162,54 +165,29 @@ docker exec db-bootstrapper-test-db psql -U "${DB_USERNAME}" -d test -c "CREATE 
 # Get the Postgres container's IP for host mapping
 DB_CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' db-bootstrapper-test-db)
 
-if [ "$DEBUG" -eq 1 ]; then
-    docker run --rm \
-        --platform linux/amd64 \
-        --name db-bootstrapper-test \
-        --network db-bootstrapper-network \
-        --add-host "${DB_HOST}:${DB_CONTAINER_IP}" \
-        -p "${PORT}:8080" \
-        -e AWS_CA_BUNDLE="/tmp/moto/moto_proxy/ca.crt" \
-        -e HTTPS_PROXY=http://moto-proxy:5005 \
-        -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
-        -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
-        -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
-        -e DB_SECRET_ARN="${DB_SECRET_ARN}" \
-        -e DB_HOST="${DB_HOST}" \
-        -e DB_PORT=5432 \
-        -e DB_USER="${DB_USERNAME}" \
-        -e DB_NAME=test \
-        -e DB_BOOTSTRAP_DATA_ARN="${DB_BOOTSTRAP_DATA_ARN}" \
-        -e DB_IAM_USER=iam_user \
-        -e LOCAL_DB=true \
-        -v "${MOTO_LOCATION}/moto:/tmp/moto" \
-        db-bootstrapper:test
-else
-    docker run --rm \
-        --platform linux/amd64 \
-        --name db-bootstrapper-test \
-        --network db-bootstrapper-network \
-        --add-host "${DB_HOST}:${DB_CONTAINER_IP}" \
-        -p "${PORT}:8080" \
-        -e AWS_CA_BUNDLE="/tmp/moto/moto_proxy/ca.crt" \
-        -e HTTPS_PROXY=http://moto-proxy:5005 \
-        -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
-        -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
-        -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
-        -e DB_SECRET_ARN="${DB_SECRET_ARN}" \
-        -e DB_HOST="${DB_HOST}" \
-        -e DB_PORT=5432 \
-        -e DB_USER="${DB_USERNAME}" \
-        -e DB_NAME=test \
-        -e DB_BOOTSTRAP_DATA_ARN="${DB_BOOTSTRAP_DATA_ARN}" \
-        -e DB_IAM_USER=iam_user \
-        -e LOCAL_DB=true \
-        -v "${MOTO_LOCATION}/moto:/tmp/moto" \
-        db-bootstrapper:test
-fi
+docker run --rm \
+    --platform linux/amd64 \
+    --name db-bootstrapper-test \
+    --network db-bootstrapper-network \
+    --add-host "${DB_HOST}:${DB_CONTAINER_IP}" \
+    -p "${PORT}:8080" \
+    -e AWS_ENDPOINT_URL="http://moto-proxy:5000" \
+    -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
+    -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+    -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+    -e DB_SECRET_ARN="${DB_SECRET_ARN}" \
+    -e DB_HOST="${DB_HOST}" \
+    -e DB_PORT="5432" \
+    -e DB_USER="${DB_USERNAME}" \
+    -e DB_NAME=test \
+    -e DB_BOOTSTRAP_DATA_ARN="${DB_BOOTSTRAP_DATA_ARN}" \
+    -e DB_IAM_USER=iam_user \
+    -e LOCAL_DB=true \
+    db-bootstrapper:test
 
 # Clean up moto proxy
 docker stop moto-proxy || true
 docker stop db-bootstrapper-test-db || true
 docker rm -f moto-proxy || true
 docker rm -f db-bootstrapper-test-db || true
+docker network rm db-bootstrapper-network || true
