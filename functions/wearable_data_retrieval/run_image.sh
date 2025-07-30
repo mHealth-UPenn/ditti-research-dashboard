@@ -12,18 +12,16 @@
 
 NOCACHE=0
 PORT=9001
-NETWORK=""
-IAM_STACK=""
+DB_PORT=5433
 HELP=0
 
 HELP_MESSAGE="
-Usage: $0 --network <network> --iam-stack <iam-stack> [options]
+Usage: $0 [options]
 
 Options:
-    --network: Network to use
-    --iam-stack: Stack name to use
     --no-cache: Build without cache (default: false)
     --port: Port to use (default: 9001)
+    --db-port: Port to use for the database (default: 5433)
     --help: Show this help message
 "
 
@@ -34,18 +32,15 @@ while [[ $# -gt 0 ]]; do
             NOCACHE=1
             shift
             ;;
-        --network)
-            NETWORK=$2
-            shift 2
-            ;;
         --port)
             PORT=$2
             shift
             shift
             ;;
-        --iam-stack)
-            IAM_STACK=$2
-            shift 2
+        --db-port)
+            DB_PORT=$2
+            shift
+            shift
             ;;
         --help)
             HELP=1
@@ -58,25 +53,25 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [ $HELP -eq 1 ] || [ -z "$NETWORK" ] || [ -z "$IAM_STACK" ]; then
+if [ $HELP -eq 1 ]; then
     echo "$HELP_MESSAGE"
     exit 0
 fi
 
 if [ $NOCACHE -eq 1 ]; then
     docker build \
-        -t wearable-data-retrieval-dev \
+        -t wearable-data-retrieval:test \
         --platform linux/amd64 \
         --secret id=aws,src=$HOME/.aws/credentials \
-        --target dev \
+        --target prod \
         --no-cache \
         -f functions/wearable_data_retrieval/Dockerfile .
 else
     docker build \
-        -t wearable-data-retrieval-dev \
+        -t wearable-data-retrieval:test \
         --platform linux/amd64 \
         --secret id=aws,src=$HOME/.aws/credentials \
-        --target dev \
+        --target prod \
         -f functions/wearable_data_retrieval/Dockerfile .
 fi
 
@@ -85,28 +80,85 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-if [ -z "$IAM_STACK" ]; then
-    echo "Stack name is required using --iam-stack"
-    exit 1
-fi
+# Create network if it doesn't exist
+docker network create wearable-data-retrieval-network || true
 
-ROLE_ARN=$(aws cloudformation describe-stacks \
-    --stack-name $IAM_STACK \
-    --query "Stacks[0].Outputs[?OutputKey=='WearableDataRetrievalLambdaRoleArn'].OutputValue" \
+# Remove existing containers
+docker stop moto-proxy || true
+docker stop wearable-data-retrieval-test-db || true
+docker stop wearable-data-retrieval-test || true
+docker rm -f moto-proxy || true
+docker rm -f wearable-data-retrieval-test-db || true
+docker rm -f wearable-data-retrieval-test || true
+
+docker run -dp 5005:5000 \
+    --name moto-proxy \
+    --network wearable-data-retrieval-network \
+    motoserver/moto:latest
+
+export AWS_ENDPOINT_URL=http://localhost:5005
+export AWS_DEFAULT_REGION=us-east-1
+export AWS_ACCESS_KEY_ID=testing
+export AWS_SECRET_ACCESS_KEY=testing
+
+# Create a dummy bucket
+aws s3api create-bucket --bucket test-bucket
+
+# Create a mock lambda execution role
+ROLE_ARN=$(aws iam create-role  \
+    --role-name test-lambda-role \
+    --assume-role-policy-document '{
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "lambda.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+            }
+        ]
+    }' \
+    --query 'Role.Arn' \
     --output text)
 
-if [ $? -ne 0 ]; then
-    echo "Failed to get the role ARN"
-    exit 1
-fi
-
+# Create a dummy postgres container
 docker run \
-    -itp "${PORT}:8080" \
-    --env-file functions/wearable_data_retrieval/.env \
-    -e ROLE_ARN=$ROLE_ARN \
-    --rm \
-    --platform linux/amd64 \
-    --network $NETWORK \
-    --volume $HOME/.aws/credentials:/root/.aws/credentials \
-    wearable-data-retrieval-dev
+    --name wearable-data-retrieval-test-db \
+    --network wearable-data-retrieval-network \
+    -p "${DB_PORT}:5432" \
+    -e POSTGRES_USER=test \
+    -e POSTGRES_PASSWORD=test \
+    -e PGPASSWORD=test \
+    -e POSTGRES_DB=test \
+    -d postgres:16
 
+# Bootstrap the database
+export TEST_FLASK_DB="postgresql://test:test@localhost:${DB_PORT}/test"
+export FLASK_CONFIG="Testing"
+flask --app run.py db upgrade
+flask --app run.py init-integration-testing-db
+
+docker run --rm \
+    --name wearable-data-retrieval-test \
+    --platform linux/amd64 \
+    --network wearable-data-retrieval-network \
+    -itp "${PORT}:8080" \
+    -e S3_BUCKET_NAME=test-bucket \
+    -e DB_URI=postgresql://test:test@wearable-data-retrieval-test-db:5432/test \
+    -e LOG_LEVEL=DEBUG \
+    -e LOCAL=true \
+    -e AWSROLE_ARN=$ROLE_ARN \
+    -e AWS_ENDPOINT_URL=http://moto-proxy:5000 \
+    -e AWS_DEFAULT_REGION=us-east-1 \
+    -e AWS_ACCESS_KEY_ID=testing \
+    -e AWS_SECRET_ACCESS_KEY=testing \
+    wearable-data-retrieval:test
+
+# Clean up
+# rm -rf /tmp/.aws
+docker stop moto-proxy || true
+docker rm moto-proxy || true
+docker stop wearable-data-retrieval-test-db || true
+docker rm wearable-data-retrieval-test-db || true
+docker network rm wearable-data-retrieval-network || true
