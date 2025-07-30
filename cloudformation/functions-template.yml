@@ -146,9 +146,6 @@ Parameters:
     Default: 14
     Description: Number of days after which to rotate the Flask secret key
 
-Conditions:
-  DebugMode: !Equals [!Ref Environment, "staging"]
-
 Resources:
 
   ###########################
@@ -397,7 +394,8 @@ Resources:
         ImageUri: !Ref FlaskSecretKeyRotatorImageURI
       MemorySize: 512
       PackageType: Image
-      Role: !GetAtt FlaskSecretKeyRotatorLambdaRole.Arn
+      Role:
+        Fn::ImportValue: !Sub ${IAMStackName}-FlaskSecretKeyRotatorLambdaRoleArn
       Timeout: 180
       VpcConfig:
         SecurityGroupIds:
