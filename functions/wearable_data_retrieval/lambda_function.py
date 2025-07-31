@@ -14,7 +14,7 @@ import os
 import traceback
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from typing import Any, Literal
 
 import boto3
@@ -304,6 +304,40 @@ class LambdaTaskService(DBService):
             )
 
             raise RuntimeError(f"No entry found for function_id {entry_id}")
+
+    def create_entry(self) -> int:
+        """
+        Create a new entry in the `lambda_task` table.
+
+        Returns
+        -------
+            int: The ID of the newly created entry.
+
+        Raises
+        ------
+            RuntimeError: If called outside the `connect` context.
+            Exception: If the database operation fails.
+        """
+        if self.connection is None:
+            raise RuntimeError(
+                "`create_entry` must be called within `connect` context."
+            )
+
+        insert_stmt = insert(self.table).values(
+            status="InProgress",
+            created_on=datetime.now(UTC),
+            updated_on=datetime.now(UTC),
+        )
+
+        try:
+            result = self.connection.execute(insert_stmt)
+            return result.inserted_primary_key[0]
+        except Exception:
+            logger.error(
+                "Error creating lambda task entry",
+                extra={"error": traceback.format_exc()},
+            )
+            raise
 
     def update_status(self, status: TaskStatus, **kwargs):
         """
@@ -834,8 +868,11 @@ def handler(event, _context):
     tokens: dict[str, dict[str, str]] = {}
 
     # Retrieve function_id from the lambda function invocation event
-    function_id = event.get("function_id")
-    logger.info("Retrieved function_id", extra={"function_id": function_id})
+    function_id: int | None = event.get("function_id")
+    if function_id is not None:
+        logger.info("Retrieved function_id", extra={"function_id": function_id})
+    else:
+        logger.info("No function_id found in event", extra={"event": event})
 
     try:
         # Load config
@@ -889,12 +926,14 @@ def handler(event, _context):
         # Get and update the `lambda_task` database entry
         with lambda_task_service.connect() as connection:
             try:
+                if function_id is None:
+                    function_id = lambda_task_service.create_entry()
                 lambda_task_service.get_entry(function_id)
 
             # On error raise exception and exit
             except Exception as err:
                 logger.error(
-                    "Error fetching lambda function from database",
+                    "Error creating or fetching lambda function from database",
                     extra={"error": traceback.format_exc()},
                 )
                 raise DBFetchError from err
