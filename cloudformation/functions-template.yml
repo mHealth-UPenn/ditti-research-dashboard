@@ -165,7 +165,7 @@ Resources:
             Action: "secretsmanager:*"
             Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${FitbitTokensSecretName}*"
       RoleName:
-        Fn::ImportValue: !Sub ${IAMStackName}-WearableDataRetrievalLambdaRoleArn
+        Fn::ImportValue: !Sub ${IAMStackName}-WearableDataRetrievalLambdaRoleName
 
   WearableDataRetrievalLogsAccessPolicy:
     Type: AWS::IAM::RolePolicy
@@ -178,7 +178,7 @@ Resources:
             Action: "s3:PutObject"
             Resource: !Sub "arn:aws:s3:::${WearableDataRetrievalLogsBucketName}/*"
       RoleName:
-        Fn::ImportValue: !Sub ${IAMStackName}-WearableDataRetrievalLambdaRoleArn
+        Fn::ImportValue: !Sub ${IAMStackName}-WearableDataRetrievalLambdaRoleName
 
   WearableDataRetrievalRDSIAMAccessPolicy:
     Type: AWS::IAM::RolePolicy
@@ -190,9 +190,9 @@ Resources:
           - Effect: "Allow"
             Action: "rds-db:connect"
             Resource:
-              - Fn::ImportValue: !Sub ${RDSStackName}-DBClusterIamUrl
+              - Fn::ImportValue: !Sub ${RDSStackName}-IAMUserARN
       RoleName:
-        Fn::ImportValue: !Sub ${IAMStackName}-WearableDataRetrievalLambdaRoleArn
+        Fn::ImportValue: !Sub ${IAMStackName}-WearableDataRetrievalLambdaRoleName
 
   WearableDataRetrievalLambdaFunction:
     Type: AWS::Lambda::Function
@@ -265,7 +265,7 @@ Resources:
               - "secretsmanager:UpdateSecretVersionStage"
             Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:${FlaskSecretKeyRotatorSecretName}*"
       RoleName:
-        Fn::ImportValue: !Sub ${IAMStackName}-FlaskSecretKeyRotatorLambdaRoleArn
+        Fn::ImportValue: !Sub ${IAMStackName}-FlaskSecretKeyRotatorLambdaRoleName
 
   FlaskSecretKeyRotatorRandomPasswordAccessPolicy:
     Type: AWS::IAM::RolePolicy
@@ -278,7 +278,7 @@ Resources:
             Action: "secretsmanager:GetRandomPassword"
             Resource: "*"
       RoleName:
-        Fn::ImportValue: !Sub ${IAMStackName}-FlaskSecretKeyRotatorLambdaRoleArn
+        Fn::ImportValue: !Sub ${IAMStackName}-FlaskSecretKeyRotatorLambdaRoleName
 
   FlaskSecretKeyRotatorLambdaAccessPolicy:
     Type: AWS::IAM::RolePolicy
@@ -294,7 +294,7 @@ Resources:
               - "lambda:GetFunction"
             Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AppFunctionName}*"
       RoleName:
-        Fn::ImportValue: !Sub ${IAMStackName}-FlaskSecretKeyRotatorLambdaRoleArn
+        Fn::ImportValue: !Sub ${IAMStackName}-FlaskSecretKeyRotatorLambdaRoleName
 
   FlaskSecretKeyRotatorLambdaFunction:
     Type: AWS::Lambda::Function
@@ -325,14 +325,6 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
 
-  FlaskSecretKeyRotatorRotationSchedule:
-    Type: AWS::SecretsManager::RotationSchedule
-    Properties:
-      RotationLambdaARN: !GetAtt FlaskSecretKeyRotatorLambdaFunction.Arn
-      RotationRules:
-        AutomaticallyAfterDays: !Ref FlaskSecretKeyRotatorDays
-      SecretId: !Ref FlaskSecretKeyRotatorSecretName
-
   FlaskSecretKeyRotatorRotationSchedulePermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -340,6 +332,15 @@ Resources:
       Action: "lambda:InvokeFunction"
       Principal: "secretsmanager.amazonaws.com"
       SourceAccount: !Ref AWS::AccountId
+
+  FlaskSecretKeyRotatorRotationSchedule:
+    Type: AWS::SecretsManager::RotationSchedule
+    DependsOn: FlaskSecretKeyRotatorRotationSchedulePermission
+    Properties:
+      RotationLambdaARN: !GetAtt FlaskSecretKeyRotatorLambdaFunction.Arn
+      RotationRules:
+        AutomaticallyAfterDays: !Ref FlaskSecretKeyRotatorDays
+      SecretId: !Ref FlaskSecretKeyRotatorSecretName
 
 Outputs:
   FlaskSecretKeyRotatorLambdaFunctionName:
