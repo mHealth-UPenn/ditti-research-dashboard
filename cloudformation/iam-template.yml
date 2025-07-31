@@ -73,7 +73,25 @@ Resources:
 Outputs:
   DBBootStrapLambdaRoleArn:
     Value: !GetAtt DBBootStrapLambdaRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleArn"
+  DBBootStrapLambdaRoleName:
+    Value: !Ref DBBootStrapLambdaRole
+    Export:
+      Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleName"
   FlaskSecretKeyRotatorLambdaRoleArn:
     Value: !GetAtt FlaskSecretKeyRotatorLambdaRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-FlaskSecretKeyRotatorLambdaRoleArn"
+  FlaskSecretKeyRotatorLambdaRoleName:
+    Value: !Ref FlaskSecretKeyRotatorLambdaRole
+    Export:
+      Name: !Sub "${AWS::StackName}-FlaskSecretKeyRotatorLambdaRoleName"
   WearableDataRetrievalLambdaRoleArn:
     Value: !GetAtt WearableDataRetrievalLambdaRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-WearableDataRetrievalLambdaRoleArn"
+  WearableDataRetrievalLambdaRoleName:
+    Value: !Ref WearableDataRetrievalLambdaRole
+    Export:
+      Name: !Sub "${AWS::StackName}-WearableDataRetrievalLambdaRoleName"
