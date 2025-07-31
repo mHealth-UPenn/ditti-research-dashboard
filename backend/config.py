@@ -192,6 +192,9 @@ class Production(Default):
     JWT_COOKIE_SAMESITE = "None"
     JWT_COOKIE_DOMAIN = ".ditti.us"
 
+    SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
+    JWT_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
+
 
 class Testing(Default):
     """
