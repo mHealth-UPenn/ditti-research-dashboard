@@ -15,10 +15,16 @@ DEPLOY_WEARABLE_DATA_RETRIEVAL=0
 DEPLOY_FLASK_SECRET_KEY_ROTATOR=0
 NOCACHE=0
 
-if [ "$#" -lt 1 ]; then
-    echo "Usage: $0 [--app] [--wearable-data-retrieval] [--flask-secret-key-rotator] [--no-cache]"
-    exit 1
-fi
+HELP_MESSAGE="
+Usage: $0 (--app|--wearable-data-retrieval|--flask-secret-key-rotator) [--no-cache] [--help]
+
+Options:
+    --app: Deploy the app
+    --wearable-data-retrieval: Deploy the wearable data retrieval function
+    --flask-secret-key-rotator: Deploy the flask secret key rotator function
+    --no-cache: Build without cache (default: false)
+    --help: Show this help message
+"
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
@@ -39,12 +45,22 @@ while [[ $# -gt 0 ]]; do
             NOCACHE=1
             shift
             ;;
+        --help)
+            echo "$HELP_MESSAGE"
+            exit 0
+            ;;
         -*|--*)
             echo "Unknown option $1"
             exit 1
             ;;
     esac
 done
+
+if [ $DEPLOY_APP -eq 0 ] && [ $DEPLOY_WEARABLE_DATA_RETRIEVAL -eq 0 ] && [ $DEPLOY_FLASK_SECRET_KEY_ROTATOR -eq 0 ]; then
+    echo "No deployment target specified. Please specify one or more of --app, --wearable-data-retrieval, or --flask-secret-key-rotator."
+    echo "$HELP_MESSAGE"
+    exit 1
+fi
 
 # export deployment env variables
 if [ -f secret-staging.env ]; then
