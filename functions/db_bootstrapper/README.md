@@ -12,7 +12,7 @@ The DB Bootstrapper Lambda function serves as a CloudFormation custom resource t
 - **Integrates with CloudFormation**: Responds to Create, Update, and Delete events from CloudFormation stacks
 - **Provides Comprehensive Logging**: Detailed logging for monitoring and troubleshooting
 
-## Key Features
+### Key Features
 
 - **Schema Migration Management**: Uses Flask-Migrate to handle database schema changes
 - **IAM Database Authentication**: Secure database connections using AWS IAM roles
@@ -21,7 +21,7 @@ The DB Bootstrapper Lambda function serves as a CloudFormation custom resource t
 - **Error Handling**: Robust error handling with detailed CloudFormation responses
 - **Local Development Support**: Complete local testing environment with Docker containers
 
-## Architecture
+### Architecture
 
 The function follows a modular architecture with clear separation of concerns:
 
@@ -30,7 +30,7 @@ The function follows a modular architecture with clear separation of concerns:
 - **Utility Modules**: Specialized components for database, S3, and secrets management
 - **Flask Integration**: Leverages Flask for database operations and migrations
 
-## Use Cases
+### Use Cases
 
 - **Initial Database Setup**: Automatically configure new Aurora PostgreSQL clusters
 - **Environment Provisioning**: Set up development, staging, and production databases
