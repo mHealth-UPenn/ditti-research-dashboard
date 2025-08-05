@@ -230,7 +230,7 @@ docker run --rm \
     -e DB_URI=postgresql://test:test@wearable-data-retrieval-test-db:5432/test \
     -e LOG_LEVEL=DEBUG \
     -e LOCAL=true \
-    -e AWSROLE_ARN=$ROLE_ARN \
+    -e AWS_ROLE_ARN=$ROLE_ARN \
     -e AWS_ENDPOINT_URL=http://moto-proxy:5000 \
     -e AWS_DEFAULT_REGION=us-east-1 \
     -e AWS_ACCESS_KEY_ID=testing \
