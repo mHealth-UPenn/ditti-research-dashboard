@@ -216,15 +216,7 @@ The DB Bootstrapper Lambda function includes a comprehensive test suite designed
 - **`test_file_reader.py`**: File reading and parsing tests
 - **`test_sequence_manager.py`**: Database sequence management tests
 
-### Test Infrastructure
-
-#### Docker Integration
-
-- **PostgreSQL Container**: Real database testing using Docker containers
-- **Mock AWS Services**: Uses moto library for AWS service mocking
-- **Isolated Test Environment**: Each test runs in isolation with clean state
-
-#### Key Fixtures
+### Key Fixtures
 
 - **`mock_postgres_container`**: Provides a real PostgreSQL database for integration tests
 - **`test_client`**: Flask test client with database configuration
@@ -232,6 +224,73 @@ The DB Bootstrapper Lambda function includes a comprehensive test suite designed
 - **`with_mock_data`**: Loads test data into database
 - **`with_mock_secret`**: Mocks AWS Secrets Manager responses
 - **`with_mock_bucket`**: Mocks S3 bucket operations
+
+### Mocking Strategy
+
+#### PostgreSQL Container (`MockPostgresContainer`)
+
+The `MockPostgresContainer` class provides a real PostgreSQL database for integration testing:
+
+- **Real Database**: Uses actual PostgreSQL Docker container for authentic database operations
+- **Automatic Setup**: Handles container lifecycle, connection waiting, and cleanup
+- **IAM Role Simulation**: Creates dummy `rds_iam` role for IAM authentication testing
+- **Session Scoped**: Container persists across all tests in a session for efficiency
+
+#### AWS Service Mocks (`mock_aws`)
+
+AWS services are mocked using the Moto library for controlled testing:
+
+- **Secrets Manager**: Simulates database credential retrieval
+- **S3**: Mocks bootstrap data file operations
+- **RDS**: Provides database cluster information
+- **IAM**: Simulates authentication and authorization
+
+#### Database Connection Mocks (`MockConnection`, `MockResult`)
+
+Custom database connection mocks provide controlled testing scenarios:
+
+- **Connection State**: Simulates different connection states (user exists/doesn't exist)
+- **Query Responses**: Returns predefined responses for specific SQL queries
+- **Transaction Control**: Mocks commit and close operations
+- **Call Tracking**: Records executed statements for verification
+
+#### Flask Application Mocks (`test_client`)
+
+Flask application mocking provides database integration testing:
+
+- **Real Database URI**: Uses actual PostgreSQL container connection
+- **Flask Extensions**: Initializes SQLAlchemy and Flask-Migrate
+- **App Context**: Provides proper Flask application context
+- **Session Management**: Handles database session lifecycle
+
+#### Mock Data Structure (`mock_data.json`)
+
+Test data is structured to simulate real database scenarios:
+
+```json
+{
+  "mock_table": [
+    {
+      "id": 1,
+      "name": "Test Table",
+      "description": "This is a test table"
+    }
+  ],
+  "alembic_version": [{ "version_num": "123" }]
+}
+```
+
+#### Database Table Models (`MockTable`, `MockEmptyTable`)
+
+SQLAlchemy models provide structure for test data:
+
+```python
+class MockTable(db.Model):
+    __tablename__ = MOCK_TABLE_NAME
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(255), nullable=True)
+```
 
 ## Deployment
 
