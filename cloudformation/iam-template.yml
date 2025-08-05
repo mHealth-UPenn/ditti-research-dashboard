@@ -1,29 +1,69 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "IAM roles for Aurora DB bootstrap Lambda"
+Description: "Application IAM roles"
 
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterLabels:
       App:
         default: App Name
+      Environment:
+        default: Environment
 
 Parameters:
   App:
     Type: String
     Default: ditti-dashboard
     Description: App name
+  Environment:
+    Type: String
+    AllowedValues:
+      - staging
+      - prod
+    Description: Environment
 
 Resources:
   DBBootStrapLambdaRole:
     Type: AWS::IAM::Role
     Properties:
+      RoleName: !Sub "${App}-${Environment}-db-bootstrap-lambda-role"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              Service:
-                - lambda.amazonaws.com
+              Service: "lambda.amazonaws.com"
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+
+  FlaskSecretKeyRotatorLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${App}-${Environment}-flask-secret-key-rotator-lambda-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "lambda.amazonaws.com"
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+
+  WearableDataRetrievalLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${App}-${Environment}-wearable-data-retrieval-lambda-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "lambda.amazonaws.com"
             Action:
               - sts:AssumeRole
       Path: "/"
@@ -32,12 +72,26 @@ Resources:
 
 Outputs:
   DBBootStrapLambdaRoleArn:
-    Description: ARN of the DB bootstrap Lambda role
     Value: !GetAtt DBBootStrapLambdaRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleArn"
   DBBootStrapLambdaRoleName:
-    Description: Name of the DB bootstrap Lambda role
     Value: !Ref DBBootStrapLambdaRole
     Export:
-      Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleName" 
+      Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleName"
+  FlaskSecretKeyRotatorLambdaRoleArn:
+    Value: !GetAtt FlaskSecretKeyRotatorLambdaRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-FlaskSecretKeyRotatorLambdaRoleArn"
+  FlaskSecretKeyRotatorLambdaRoleName:
+    Value: !Ref FlaskSecretKeyRotatorLambdaRole
+    Export:
+      Name: !Sub "${AWS::StackName}-FlaskSecretKeyRotatorLambdaRoleName"
+  WearableDataRetrievalLambdaRoleArn:
+    Value: !GetAtt WearableDataRetrievalLambdaRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-WearableDataRetrievalLambdaRoleArn"
+  WearableDataRetrievalLambdaRoleName:
+    Value: !Ref WearableDataRetrievalLambdaRole
+    Export:
+      Name: !Sub "${AWS::StackName}-WearableDataRetrievalLambdaRoleName"
