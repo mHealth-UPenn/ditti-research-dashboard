@@ -10,20 +10,77 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+# Color codes for terminal output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Helper functions for colored output
+print_header() {
+    echo ""
+    echo "${BLUE}=== $1 ===${NC}"
+}
+
+print_success() {
+    echo "${GREEN}✓ $1${NC}"
+}
+
+print_warning() {
+    echo "${YELLOW}⚠ $1${NC}"
+}
+
+print_error() {
+    echo "${RED}✗ $1${NC}"
+}
+
+print_info() {
+    echo "${CYAN}ℹ $1${NC}"
+}
+
+print_step() {
+    echo "→ $1"
+}
+
+# Function to run commands with progress indication
+run_with_progress() {
+    local message="$1"
+    local command="$2"
+    
+    print_step "$message"
+    if eval "$command" > /dev/null 2>&1; then
+        print_success "$message completed"
+        return 0
+    else
+        print_error "$message failed"
+        return 1
+    fi
+}
+
 NOCACHE=0
-DEBUG=0
 PORT=9001
 DATA_FILE=""
+
+HELP_MESSAGE="
+Usage: $0 [options]
+
+Options:
+    --no-cache: Build without cache (default: false)
+    --data-file: Path to the data file to upload to S3 (default: "")
+    --port: Port to use (default: 9001)
+    --help: Show this help message
+"
+
+print_header "Database Bootstrapper Test Environment Setup"
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
         --no-cache)
             NOCACHE=1
-            shift
-            ;;
-        --debug)
-            DEBUG=1
             shift
             ;;
         --data-file)
@@ -36,14 +93,24 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --help)
+            echo "$HELP_MESSAGE"
+            exit 0
+            shift
+            ;;
         -*|--*)
-            echo "Unknown option $1"
+            print_error "Unknown option $1"
             exit 1
             ;;
     esac
 done
 
+print_info "Configuration: Port=$PORT, No Cache=$NOCACHE, Data File=$DATA_FILE"
+
+# Build Docker image
+print_header "Building Docker Image"
 if [ $NOCACHE -eq 1 ]; then
+    print_step "Building image without cache..."
     docker build \
         --platform linux/amd64 \
         --no-cache \
@@ -51,58 +118,67 @@ if [ $NOCACHE -eq 1 ]; then
         -f functions/db_bootstrapper/Dockerfile \
         .
 else
+    print_step "Building image with cache..."
     docker build \
         --platform linux/amd64 \
         -t db-bootstrapper:test \
         -f functions/db_bootstrapper/Dockerfile \
         .
 fi
+
 if [ $? -ne 0 ]; then
+    print_error "Failed to build the image"
     exit 1
 fi
+print_success "Docker image built successfully"
+
+# Setup infrastructure
+print_header "Setting Up Infrastructure"
 
 # Create network if it doesn't exist
-docker network create db-bootstrapper-network || true
+run_with_progress "Creating Docker network" "docker network create db-bootstrapper-network 2>/dev/null || true"
 
-# Remove existing containers
-docker stop moto-proxy || true
-docker stop db-bootstrapper-test-db || true
-docker stop db-bootstrapper-test || true
-docker rm -f moto-proxy || true
-docker rm -f db-bootstrapper-test-db || true
-docker rm -f db-bootstrapper-test || true
+# Clean up existing containers silently
+print_step "Cleaning up existing containers..."
+docker stop moto-proxy db-bootstrapper-test-db db-bootstrapper-test 2>/dev/null || true
+docker rm -f moto-proxy db-bootstrapper-test-db db-bootstrapper-test 2>/dev/null || true
+print_success "Cleanup completed"
 
-# Build moto proxy
-docker build -t moto-proxy -f moto_proxy/Dockerfile .
-
-# Setup moto proxy
-MOTO_LOCATION=$(pip show moto | grep "Location" | cut -d " " -f 2)
-
-docker run -d \
+# Set up moto proxy
+print_step "Starting Moto proxy (AWS mock service)..."
+docker run -dp 5005:5000 \
     --name moto-proxy \
     --network db-bootstrapper-network \
-    -p 5005:5005 \
-    -v "${MOTO_LOCATION}/moto:/moto" \
-    moto-proxy
+    motoserver/moto:latest
+print_success "Moto proxy started"
 
-export AWS_CA_BUNDLE="${MOTO_LOCATION}/moto/moto_proxy/ca.crt"
-export HTTPS_PROXY=http://localhost:5005
+# Configure AWS environment
+export AWS_ENDPOINT_URL=http://localhost:5005
 export AWS_DEFAULT_REGION=us-east-1
 export AWS_ACCESS_KEY_ID=testing
 export AWS_SECRET_ACCESS_KEY=testing
 
+# AWS Resources Setup
+print_header "AWS Resources Setup"
+
 # Upload dummy data to S3 if provided
 DB_BOOTSTRAP_DATA_ARN=""
 if [ -n "${DATA_FILE}" ]; then
+    print_step "Setting up S3 data file..."
     # Create a dummy bucket
     aws s3api create-bucket --bucket test-bucket
+    print_success "S3 bucket created"
 
     # Upload the data to the bucket
     aws s3 cp "${DATA_FILE}" s3://test-bucket/data.json
     DB_BOOTSTRAP_DATA_ARN="arn:aws:s3:::test-bucket/data.json"
+    print_success "Data file uploaded to S3"
+else
+    print_info "No data file provided, skipping S3 setup"
 fi
 
-# Create a dummy Aurora PostgreSQL cluster and instance
+# Create Aurora PostgreSQL cluster and instance
+print_step "Creating Aurora PostgreSQL cluster..."
 aws rds create-db-cluster \
     --db-cluster-identifier test-aurora-cluster \
     --engine aurora-postgresql \
@@ -111,35 +187,44 @@ aws rds create-db-cluster \
     --master-username admin \
     --manage-master-user-password \
     --port 5432 \
-    --enable-iam-database-authentication > /dev/null
+    --enable-iam-database-authentication > /dev/null 2>&1
+print_success "Aurora cluster created"
 
+print_step "Creating Aurora PostgreSQL instance..."
 aws rds create-db-instance \
     --db-instance-identifier test-aurora-instance \
     --db-cluster-identifier test-aurora-cluster \
     --engine aurora-postgresql \
-    --db-instance-class db.serverless > /dev/null
+    --db-instance-class db.serverless > /dev/null 2>&1
+print_success "Aurora instance created"
 
 # Get DB hostname
+print_step "Retrieving database connection details..."
 DB_HOST=$(aws rds describe-db-instances \
     --db-instance-identifier test-aurora-instance \
     --query "DBInstances[0].Endpoint.Address" \
-    --output text)
+    --output text 2>/dev/null)
 
 # Get secret ARN
 DB_SECRET_ARN=$(aws rds describe-db-clusters \
     --db-cluster-identifier test-aurora-cluster \
     --query "DBClusters[0].MasterUserSecret.SecretArn" \
-    --output text)
+    --output text 2>/dev/null)
 
 # Get master username and password
 SECRET_VALUE=$(aws secretsmanager get-secret-value \
     --secret-id "${DB_SECRET_ARN}" \
     --query "SecretString" \
-    --output text)
+    --output text 2>/dev/null)
 DB_USERNAME=$(echo "${SECRET_VALUE}" | jq -r '.username')
 DB_PASSWORD=$(echo "${SECRET_VALUE}" | jq -r '.password')
+print_success "Database credentials retrieved"
+
+# Database setup
+print_header "Database Setup"
 
 # Create a dummy database
+print_step "Starting PostgreSQL container..."
 docker run \
     --name db-bootstrapper-test-db \
     --network db-bootstrapper-network \
@@ -148,68 +233,56 @@ docker run \
     -e PGPASSWORD="${DB_PASSWORD}" \
     -e POSTGRES_DB=test \
     -d postgres:16
+print_success "PostgreSQL container started"
 
 # Wait for database to be ready
+print_step "Waiting for database to be ready..."
 while ! docker exec db-bootstrapper-test-db psql -U "${DB_USERNAME}" -d test -c "SELECT 1;" > /dev/null 2>&1; do
-    echo "Waiting for database to be ready..."
     sleep 1
 done
-echo "Database is ready"
+echo ""
+print_success "Database is ready"
 
 # Create dummy rds_iam role in database
+print_step "Setting up IAM database authentication..."
 docker exec db-bootstrapper-test-db psql -U "${DB_USERNAME}" -d test -c "CREATE ROLE rds_iam;"
+print_success "IAM role created in database"
 
 # Get the Postgres container's IP for host mapping
+print_step "Configuring network mapping..."
 DB_CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' db-bootstrapper-test-db)
+print_success "Network mapping configured"
 
-if [ "$DEBUG" -eq 1 ]; then
-    docker run --rm \
-        --platform linux/amd64 \
-        --name db-bootstrapper-test \
-        --network db-bootstrapper-network \
-        --add-host "${DB_HOST}:${DB_CONTAINER_IP}" \
-        -p "${PORT}:8080" \
-        -e AWS_CA_BUNDLE="/tmp/moto/moto_proxy/ca.crt" \
-        -e HTTPS_PROXY=http://moto-proxy:5005 \
-        -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
-        -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
-        -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
-        -e DB_SECRET_ARN="${DB_SECRET_ARN}" \
-        -e DB_HOST="${DB_HOST}" \
-        -e DB_PORT=5432 \
-        -e DB_USER="${DB_USERNAME}" \
-        -e DB_NAME=test \
-        -e DB_BOOTSTRAP_DATA_ARN="${DB_BOOTSTRAP_DATA_ARN}" \
-        -e DB_IAM_USER=iam_user \
-        -e LOCAL_DB=true \
-        -v "${MOTO_LOCATION}/moto:/tmp/moto" \
-        db-bootstrapper:test
-else
-    docker run --rm \
-        --platform linux/amd64 \
-        --name db-bootstrapper-test \
-        --network db-bootstrapper-network \
-        --add-host "${DB_HOST}:${DB_CONTAINER_IP}" \
-        -p "${PORT}:8080" \
-        -e AWS_CA_BUNDLE="/tmp/moto/moto_proxy/ca.crt" \
-        -e HTTPS_PROXY=http://moto-proxy:5005 \
-        -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
-        -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
-        -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
-        -e DB_SECRET_ARN="${DB_SECRET_ARN}" \
-        -e DB_HOST="${DB_HOST}" \
-        -e DB_PORT=5432 \
-        -e DB_USER="${DB_USERNAME}" \
-        -e DB_NAME=test \
-        -e DB_BOOTSTRAP_DATA_ARN="${DB_BOOTSTRAP_DATA_ARN}" \
-        -e DB_IAM_USER=iam_user \
-        -e LOCAL_DB=true \
-        -v "${MOTO_LOCATION}/moto:/tmp/moto" \
-        db-bootstrapper:test
-fi
+# Start the main application
+print_header "Starting Application"
+print_info "Application will be available at http://localhost:${PORT}"
+print_info "Press Ctrl+C to stop the application and cleanup"
 
-# Clean up moto proxy
-docker stop moto-proxy || true
-docker stop db-bootstrapper-test-db || true
-docker rm -f moto-proxy || true
-docker rm -f db-bootstrapper-test-db || true
+docker run --rm \
+    --platform linux/amd64 \
+    --name db-bootstrapper-test \
+    --network db-bootstrapper-network \
+    --add-host "${DB_HOST}:${DB_CONTAINER_IP}" \
+    -p "${PORT}:8080" \
+    -e AWS_ENDPOINT_URL="http://moto-proxy:5000" \
+    -e AWS_DEFAULT_REGION="${AWS_DEFAULT_REGION}" \
+    -e AWS_ACCESS_KEY_ID="${AWS_ACCESS_KEY_ID}" \
+    -e AWS_SECRET_ACCESS_KEY="${AWS_SECRET_ACCESS_KEY}" \
+    -e DB_SECRET_ARN="${DB_SECRET_ARN}" \
+    -e DB_HOST="${DB_HOST}" \
+    -e DB_PORT="5432" \
+    -e DB_USER="${DB_USERNAME}" \
+    -e DB_NAME=test \
+    -e DB_BOOTSTRAP_DATA_ARN="${DB_BOOTSTRAP_DATA_ARN}" \
+    -e DB_IAM_USER=iam_user \
+    -e LOCAL_DB=true \
+    db-bootstrapper:test
+
+# Clean up
+print_header "Cleanup"
+print_step "Stopping and removing containers..."
+docker stop moto-proxy db-bootstrapper-test-db 2>/dev/null || true
+docker rm -f moto-proxy db-bootstrapper-test-db 2>/dev/null || true
+docker network rm db-bootstrapper-network 2>/dev/null || true
+print_success "Cleanup completed"
+print_info "Test environment has been cleaned up"
