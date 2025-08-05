@@ -28,12 +28,12 @@ functions/{function_name}/tests_{function_name}/
 
 - Define any shared testing constants, for example:
 
-```python
-POSTGRES_PASSWORD = "password"
-POSTGRES_USER = "username"
-POSTGRES_DB = "db"
-POSTGRES_PORT = 5433
-```
+    ```python
+    POSTGRES_PASSWORD = "password"
+    POSTGRES_USER = "username"
+    POSTGRES_DB = "db"
+    POSTGRES_PORT = 5433
+    ```
 
 ## Mocking Strategy
 
@@ -66,66 +66,66 @@ POSTGRES_PORT = 5433
 
 - When a fixture is used in one module only, define it in that module only:
 
-```py
-@pytest.fixture
-def db_executer(mock_connection: Mock) -> DbConnectionExecuter:
-    """Create a DbConnectionExecuter instance with a mock connection."""
-    return DbConnectionExecuter(mock_connection)
-```
+    ```py
+    @pytest.fixture
+    def db_executer(mock_connection: Mock) -> DbConnectionExecuter:
+        """Create a DbConnectionExecuter instance with a mock connection."""
+        return DbConnectionExecuter(mock_connection)
+    ```
 
 - Create mock modules in separate `mock_{module_name}.py` files and import them when needed:
 
-```py
-# mock_file_reader.py
-def create_mock_file_reader() -> FileReader:
-    """Create a mock file reader that returns the given data."""
-    file_reader = FileReader()
-    file_reader.read_json = Mock(return_value=load_mock_data())
-    return file_reader
+    ```py
+    # mock_file_reader.py
+    def create_mock_file_reader() -> FileReader:
+        """Create a mock file reader that returns the given data."""
+        file_reader = FileReader()
+        file_reader.read_json = Mock(return_value=load_mock_data())
+        return file_reader
 
-# test_data_loader.py
-@pytest.fixture
-def mock_data_loader() -> DataLoader:
-    data_loader = DataLoader()
-    data_loader.file_reader = create_mock_file_reader()
-    return data_loader
-```
+    # test_data_loader.py
+    @pytest.fixture
+    def mock_data_loader() -> DataLoader:
+        data_loader = DataLoader()
+        data_loader.file_reader = create_mock_file_reader()
+        return data_loader
+    ```
 
 - Prefix fixtures that set up resources but yield or return `None` with `with_`:
 
-```py
-@pytest.fixture
-def with_mock_tables(test_client: Flask) -> None:
-    create_mock_tables()
-```
+    ```py
+    @pytest.fixture
+    def with_mock_tables(test_client: Flask) -> None:
+        create_mock_tables()
+    ```
 
 - Always use `mock_aws` when creating mock AWS resources and use a one-resource-one-fixture pattern:
 
-```py
-@pytest.fixture
-def with_mock_secret() -> Generator[str]:
-    with mock_aws():
-        client = boto3.client("secretsmanager")
-        client.create_secret(
-            Name=MOCK_SECRET_NAME,
-            SecretString=json.dumps(
-                {
-                    "password": POSTGRES_PASSWORD,
-                    "username": POSTGRES_USER,
-                }
-            ),
-        )
-        yield
-```
+    ```py
+    @pytest.fixture
+    def with_mock_secret() -> Generator[str]:
+        with mock_aws():
+            client = boto3.client("secretsmanager")
+            client.create_secret(
+                Name=MOCK_SECRET_NAME,
+                SecretString=json.dumps(
+                    {
+                        "password": POSTGRES_PASSWORD,
+                        "username": POSTGRES_USER,
+                    }
+                ),
+            )
+            yield
+    ```
 
 - **Always** enforce cleanup in fixtures by using with `with` or `try`/`yield`/`finally` blocks:
 
-```py
-@pytest.fixture
-def with_mock_tables(test_client: Flask) -> Generator[None]:
-    db.create_all()
-    try:
-        yield
-    finally:
-        db.drop_all()
-```
+    ```py
+    @pytest.fixture
+    def with_mock_tables(test_client: Flask) -> Generator[None]:
+        db.create_all()
+        try:
+            yield
+        finally:
+            db.drop_all()
+    ```
