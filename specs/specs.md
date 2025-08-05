@@ -9,6 +9,7 @@ This document is a single source of truth for design patterns, testing patterns,
 - [**Local Development**](./functions/local_development.md): Outlines local development workflows using Docker containers with mocked AWS services, standardized bash scripts, and Moto for AWS service simulation.
 - [**Testing**](./functions/testing.md): Establishes comprehensive testing frameworks using pytest with container-based testing, extensive mocking strategies, and standardized test file organization patterns.
 - [**Deployment**](./functions/deployment.md): Defines CloudFormation-based deployment patterns with separate IAM and function stacks, proper role management, and environment-specific configurations for staging and production.
+- [**Planning**](./functions/planning.md): Provides a structured planning framework that ensures all aspects of Lambda function development are considered before implementation begins.
 
 ## Style Guides
 
