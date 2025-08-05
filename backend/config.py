@@ -192,6 +192,9 @@ class Production(Default):
     JWT_COOKIE_SAMESITE = "None"
     JWT_COOKIE_DOMAIN = ".ditti.us"
 
+    SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
+    JWT_SECRET_KEY = os.getenv("FLASK_SECRET_KEY")
+
 
 class Testing(Default):
     """
@@ -204,5 +207,6 @@ class Testing(Default):
     TESTING = True
 
     CORS_ORIGINS = "http://localhost:3000"
+    SQLALCHEMY_DATABASE_URI = os.getenv("TEST_FLASK_DB", os.getenv("FLASK_DB"))
 
     TM_FSTRING = "{api_name}-tokens-testing"
