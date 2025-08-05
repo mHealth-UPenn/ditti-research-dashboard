@@ -225,7 +225,7 @@ Resources:
   # DB Bootstrap #
   ################
   DBBootStrapLambdaRoleSecretAccessPolicy:
-    Type: AWS::IAM::Policy
+    Type: AWS::IAM::RolePolicy
     Properties:
       PolicyName: db-bootstrap-lambda-role-secret-access
       PolicyDocument:
@@ -234,11 +234,12 @@ Resources:
           - Effect: "Allow"
             Action: "secretsmanager:GetSecretValue"
             Resource: !GetAtt DBCluster.MasterUserSecret.SecretArn
-      Roles:
-        - Fn::ImportValue: !Sub "${IamStackName}-DBBootStrapLambdaRoleName"
+      RoleName:
+        Fn::ImportValue:
+          !Sub "${IamStackName}-DBBootStrapLambdaRoleName"
 
   DBBootStrapLambdaRoleRdsIamPolicy:
-    Type: AWS::IAM::Policy
+    Type: AWS::IAM::RolePolicy
     Properties:
       PolicyName: db-bootstrap-lambda-role-rds-iam
       PolicyDocument:
@@ -247,8 +248,9 @@ Resources:
           - Effect: "Allow"
             Action: "rds-db:connect"
             Resource: !Sub "arn:aws:rds-db:${AWS::Region}:${AWS::AccountId}:dbuser:${DBCluster.DBClusterResourceId}/${IAMUsername}"
-      Roles:
-        - Fn::ImportValue: !Sub "${IamStackName}-DBBootStrapLambdaRoleName"
+      RoleName:
+        Fn::ImportValue:
+          !Sub "${IamStackName}-DBBootStrapLambdaRoleName"
 
   DBBootStrapS3AccessPolicyAttachment:
     Condition: IsBootStrapDataARNSet
