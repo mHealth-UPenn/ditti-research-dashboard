@@ -107,10 +107,6 @@ The following variables are required when running in non-local environments (AWS
   - Set to `"testing"` for local development with mock services
   - Required for AWS API calls and service authentication
 
-- **`AWS_ROLE_ARN`**: AWS IAM role ARN for Lambda execution
-  - Used for Lambda function execution context and permissions
-  - Automatically created by the local development setup
-
 #### Database Configuration Variables
 
 - **`POSTGRES_USER`**: PostgreSQL database username (default: `test`)
