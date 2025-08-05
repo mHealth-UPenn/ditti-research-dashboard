@@ -20,7 +20,6 @@ class RootEnv(TypedDict):
     Contains environment variables required for the main application.
     """
 
-    FLASK_CONFIG: str
     FLASK_DEBUG: str
     FLASK_DB: str
     FLASK_APP: str
