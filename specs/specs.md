@@ -9,3 +9,8 @@ This document is a single source of truth for design patterns, testing patterns,
 - [**Local Development**](./functions/local_development.md): Outlines local development workflows using Docker containers with mocked AWS services, standardized bash scripts, and Moto for AWS service simulation.
 - [**Testing**](./functions/testing.md): Establishes comprehensive testing frameworks using pytest with container-based testing, extensive mocking strategies, and standardized test file organization patterns.
 - [**Deployment**](./functions/deployment.md): Defines CloudFormation-based deployment patterns with separate IAM and function stacks, proper role management, and environment-specific configurations for staging and production.
+
+## Style Guides
+
+- [**Markdown Style Guide**](./style/markdown.md): Defines coding standards and best practices for markdown documentation including heading structure, list formatting, code blocks, and link conventions.
+- [**Bash Script Style Guide**](./style/bash.md): Establishes coding standards for bash scripts including color coding, logging functions, variable naming, error handling, and Docker command patterns.
