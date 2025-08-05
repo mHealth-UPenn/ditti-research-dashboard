@@ -100,6 +100,12 @@ See our [Dev Setup Guide](./INSTALL-dev.md) for details on getting started with 
 
    - See our [Dev Setup Guide](./INSTALL-dev.md) for detailed instructions.
 
+### Refer to Specifications
+
+It is recommended to refer to our specification documents for details on implementation, code style, etc. (see [Ditti Research Dashboard Specifications](../specs/specs.md)). This document is also very useful for providing scoped context to IDE agents to streamline AI-assisted development.
+
+This repo's specifications are a living document and should be regularly updated, added to, or redacted as patterns and requirements evolve.
+
 ### Make your Contributions
 
 We ask that all contributions are divided into atomic pull requests (PRs). The changes in one PR should not depend on the changes of another, and multiple contributions should be made in separate PRs where possible. Smaller PRs are easier to manage, improving the quality and transparency of contributions.
