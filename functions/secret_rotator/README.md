@@ -1,9 +1,5 @@
 # Flask Secret Key Rotator
 
-A serverless AWS Lambda function that automatically rotates Flask secret keys using AWS Secrets Manager's rotation framework. This function ensures Flask applications maintain security by regularly generating new secret keys, testing them through application health checks, and updating the application configuration without downtime. It integrates seamlessly with CloudFormation deployments and provides comprehensive logging for monitoring and troubleshooting.
-
-## Overview
-
 The Flask Secret Key Rotator Lambda function serves as an AWS Secrets Manager rotation function that:
 
 - **Automates Secret Rotation**: Automatically generates and rotates Flask secret keys on a configurable schedule
@@ -12,6 +8,8 @@ The Flask Secret Key Rotator Lambda function serves as an AWS Secrets Manager ro
 - **Validates Rotations**: Tests new secrets by calling application health check endpoints
 - **Provides Zero-Downtime Updates**: Updates application Lambda functions to use new secrets without service interruption
 - **Offers Comprehensive Logging**: Detailed logging for monitoring and troubleshooting rotation events
+
+## Overview
 
 ### Key Features
 

@@ -1,9 +1,5 @@
 # DB Bootstrapper
 
-The DB Bootstrapper is an AWS Lambda function designed to automatically initialize and configure Aurora PostgreSQL databases during CloudFormation deployments. It provides a secure, automated solution for database bootstrapping that integrates seamlessly with AWS infrastructure.
-
-## Overview
-
 The DB Bootstrapper Lambda function serves as a CloudFormation custom resource that:
 
 - **Automates Database Setup**: Initializes newly created Aurora PostgreSQL clusters with schema migrations and initial data
@@ -11,6 +7,8 @@ The DB Bootstrapper Lambda function serves as a CloudFormation custom resource t
 - **Supports Data Loading**: Optionally loads bootstrap data from S3 to populate the database
 - **Integrates with CloudFormation**: Responds to Create, Update, and Delete events from CloudFormation stacks
 - **Provides Comprehensive Logging**: Detailed logging for monitoring and troubleshooting
+
+## Overview
 
 ### Key Features
 
