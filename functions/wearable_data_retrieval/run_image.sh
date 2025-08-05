@@ -165,25 +165,6 @@ print_step "Creating AWS test resources..."
 aws s3api create-bucket --bucket test-bucket
 print_success "S3 bucket created"
 
-# Create a mock lambda execution role
-ROLE_ARN=$(aws iam create-role  \
-    --role-name test-lambda-role \
-    --assume-role-policy-document '{
-        "Version": "2012-10-17",
-        "Statement": [
-            {
-                "Effect": "Allow",
-                "Principal": {
-                    "Service": "lambda.amazonaws.com"
-                },
-                "Action": "sts:AssumeRole"
-            }
-        ]
-    }' \
-    --query 'Role.Arn' \
-    --output text 2>/dev/null)
-print_success "IAM role created"
-
 # Database setup
 print_header "Database Setup"
 
@@ -230,7 +211,6 @@ docker run --rm \
     -e DB_URI=postgresql://test:test@wearable-data-retrieval-test-db:5432/test \
     -e LOG_LEVEL=DEBUG \
     -e LOCAL=true \
-    -e AWS_ROLE_ARN=$ROLE_ARN \
     -e AWS_ENDPOINT_URL=http://moto-proxy:5000 \
     -e AWS_DEFAULT_REGION=us-east-1 \
     -e AWS_ACCESS_KEY_ID=testing \
