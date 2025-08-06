@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "IAM roles for Aurora DB bootstrap Lambda"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterLabels:
+      App:
+        default: App Name
+
+Parameters:
+  App:
+    Type: String
+    Default: ditti-dashboard
+    Description: App name
+
+Resources:
+  DBBootStrapLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
+
+Outputs:
+  DBBootStrapLambdaRoleArn:
+    Description: ARN of the DB bootstrap Lambda role
+    Value: !GetAtt DBBootStrapLambdaRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleArn"
+  DBBootStrapLambdaRoleName:
+    Description: Name of the DB bootstrap Lambda role
+    Value: !Ref DBBootStrapLambdaRole
+    Export:
+      Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleName" 

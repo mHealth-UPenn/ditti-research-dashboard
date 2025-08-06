@@ -23,9 +23,9 @@ from functions.secret_rotator import handler as rotator_handler
 
 # Constants for testing
 SECRET_ARN = (
-    "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret-123456"  # noqa: S105
+    "arn:aws:secretsmanager:us-east-1:123456789012:secret:my-secret-123456"
 )
-CLIENT_REQUEST_TOKEN = "a-very-long-and-unique-guid"  # noqa: S105
+CLIENT_REQUEST_TOKEN = "a-very-long-and-unique-guid"
 APP_LAMBDA_NAME = "my-test-app-lambda"
 APP_URL = "http://fake-app.example.com"
 
@@ -189,7 +189,7 @@ def test_set_secret_updates_lambda_env(mock_env, mock_lambda_client):
         )
         assert update_kwargs["FunctionName"] == APP_LAMBDA_NAME
         env_vars = update_kwargs["Environment"]["Variables"]
-        assert env_vars["SECRET_VERSION_STAGE"] == "AWSPENDING"  # noqa: S105
+        assert env_vars["SECRET_VERSION_STAGE"] == "AWSPENDING"
         assert "LAST_SECRET_ROTATION_TIMESTAMP" in env_vars
 
 

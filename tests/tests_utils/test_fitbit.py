@@ -32,7 +32,7 @@ def app():
     app = Flask(__name__)
     app.config["TESTING"] = True
     app.config["FITBIT_CLIENT_ID"] = "fake_fitbit_client_id"
-    app.config["FITBIT_CLIENT_SECRET"] = "fake_fitbit_client_secret"  # noqa: S105
+    app.config["FITBIT_CLIENT_SECRET"] = "fake_fitbit_client_secret"
     return app
 
 
@@ -364,5 +364,5 @@ def test_get_fitbit_oauth_session_tm_add_or_update_api_token_partial_update(
                             # Verify that the refresh_token remains unchanged
                             assert (
                                 expired_tokens["refresh_token"]
-                                == "existing_refresh_token"  # noqa: S105
+                                == "existing_refresh_token"
                             )

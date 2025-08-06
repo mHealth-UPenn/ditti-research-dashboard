@@ -47,7 +47,7 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
   const getTapsAsync = useCallback(async (): Promise<TapModel[]> => {
     let taps: TapModel[] = [];
 
-    if (APP_ENV === "production") {
+    if (APP_ENV === "production" || APP_ENV === "staging") {
       taps = await httpClient
         .request<Tap[]>("/aws/get-taps?app=2")
         .then((res: Tap[]) => {
@@ -115,7 +115,7 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
   const getAudioFilesAsync = useCallback(async (): Promise<AudioFile[]> => {
     let audioFiles: AudioFile[] = [];
 
-    if (APP_ENV === "production") {
+    if (APP_ENV === "production" || APP_ENV === "staging") {
       audioFiles = await httpClient
         .request<AudioFile[]>("/aws/get-audio-files?app=2")
         .catch(() => {
@@ -134,7 +134,7 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     const promises: Promise<void>[] = [];
 
-    if (APP_ENV === "production") {
+    if (APP_ENV === "production" || APP_ENV === "staging") {
       promises.push(getTapsAsync().then(setTaps));
       promises.push(getAudioTapsAsync().then(setAudioTaps));
       promises.push(getAudioFilesAsync().then(setAudioFiles));

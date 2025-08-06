@@ -362,7 +362,7 @@ def mock_researcher_auth_for_testing(client, is_admin=True):
     mock_account = Account.query.filter_by(email="foo@email.com").first()
 
     # Generate a mock ID token
-    mock_token = "mock_id_token_for_researcher"  # noqa: S105
+    mock_token = "mock_id_token_for_researcher"
 
     # Create headers with the mock token
     headers = {"Authorization": f"Bearer {mock_token}"}
@@ -514,19 +514,22 @@ def mock_boto3_client(service_name, mock_methods=None):
     """
     from unittest.mock import MagicMock, patch
 
-    mock_client = MagicMock()
+    try:
+        mock_client = MagicMock()
 
-    # Configure methods if provided
-    if mock_methods:
-        for method_name, return_value in mock_methods.items():
-            method_mock = getattr(mock_client, method_name)
-            if isinstance(return_value, Exception):
-                method_mock.side_effect = return_value
-            else:
-                method_mock.return_value = return_value
+        # Configure methods if provided
+        if mock_methods:
+            for method_name, return_value in mock_methods.items():
+                method_mock = getattr(mock_client, method_name)
+                if isinstance(return_value, Exception):
+                    method_mock.side_effect = return_value
+                else:
+                    method_mock.return_value = return_value
 
-    # Patch boto3.client to return our mock
-    patcher = patch("boto3.client", return_value=mock_client)
-    patcher.start()
+        # Patch boto3.client to return our mock
+        patcher = patch("boto3.client", return_value=mock_client)
+        patcher.start()
 
-    return mock_client
+        return mock_client
+    finally:
+        patcher.stop()
