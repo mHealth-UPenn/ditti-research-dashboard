@@ -10,7 +10,7 @@ src/
 ├── config.py                     # Configuration handling
 ├── lambda_handler.py             # AWS Lambda entry point
 ├── {function_name}_agent.py      # Main business logic agent class
-├── backend/                      # Backend framework integration
+├── backend/                      # Backend framework integration (if any)
 └── utils/                        # Utility modules and helpers
     ├── __init__.py               # Utils package with clean exports
     ├── {utility_name}.py         # Individual utility modules
@@ -22,6 +22,7 @@ src/
 
 - Use descriptive, snake_case naming for all files and directories
 - Separate concerns: configuration, handler, agent, utilities, and backend integrations
+  - Backend integrations are only required for functions that rely on application resources (e.g., Flask extensions).
 - Maintain clean package boundaries with proper `__init__.py` exports
 
 ## Configuration Handling
