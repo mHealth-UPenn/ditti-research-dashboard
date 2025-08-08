@@ -1,4 +1,4 @@
-# Ditti Research Dashboard Specifications
+# Ditti Specifications
 
 This document is a single source of truth for design patterns, testing patterns, deployment patterns, coding style, etc.
 

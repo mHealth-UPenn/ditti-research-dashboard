@@ -1,6 +1,6 @@
 # Bash Script Style Guide
 
-This document defines the coding standards and best practices for bash scripts in the Ditti Research Dashboard project.
+This document defines the coding standards and best practices for bash scripts in Ditti projects.
 
 ## File Structure
 
