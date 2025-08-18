@@ -185,7 +185,22 @@ docker run -dp 5005:5000 \
     --name moto-proxy \
     --network db-bootstrapper-network \
     motoserver/moto:latest
-print_success "Moto proxy started"
+
+print_step "Waiting for Moto to be ready..."
+MOTO_READY=false
+for i in {1..50}; do
+  if aws s3api list-buckets >/dev/null 2>&1; then
+    print_success "Moto is ready"
+    MOTO_READY=true
+    break
+  fi
+  sleep 0.2
+done
+
+if [ "$MOTO_READY" = false ]; then
+    print_error "Moto failed to start"
+    exit 1
+fi
 
 # Configure AWS environment
 export AWS_ENDPOINT_URL=http://localhost:5005
@@ -272,11 +287,21 @@ print_success "PostgreSQL container started"
 
 # Wait for database to be ready
 print_step "Waiting for database to be ready..."
-while ! docker exec db-bootstrapper-test-db psql -U "${DB_USERNAME}" -d test -c "SELECT 1;" > /dev/null 2>&1; do
-    sleep 1
+DB_READY=false
+for i in {1..50}; do
+    if docker exec db-bootstrapper-test-db psql -U "${DB_USERNAME}" -d test -c "SELECT 1;" > /dev/null 2>&1; then
+        print_success "Database is ready"
+        DB_READY=true
+        break
+    fi
+    sleep 0.2
 done
+
+if [ "$DB_READY" = false ]; then
+    print_error "Database failed to start"
+    exit 1
+fi
 echo ""
-print_success "Database is ready"
 
 # Create dummy rds_iam role in database
 print_step "Setting up IAM database authentication..."
