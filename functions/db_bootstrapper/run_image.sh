@@ -62,6 +62,11 @@ run_with_progress() {
     fi
 }
 
+require_cmd() { command -v "$1" >/dev/null 2>&1 || { print_error "Missing dependency: $1"; exit 1; }; }
+require_cmd docker
+require_cmd aws
+require_cmd jq
+
 # Flag to prevent double cleanup
 CLEANUP_RUN=false
 
