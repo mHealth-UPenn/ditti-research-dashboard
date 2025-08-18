@@ -123,6 +123,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --data-file)
+            [ -f "$2" ] || { print_error "Data file not found: $2"; exit 1; }
             DATA_FILE=$2
             shift
             shift
