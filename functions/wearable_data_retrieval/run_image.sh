@@ -10,6 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+set -Eeuo pipefail
+
 # Color codes for terminal output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -59,6 +61,43 @@ run_with_progress() {
         return 1
     fi
 }
+
+require_cmd() { command -v "$1" >/dev/null 2>&1 || { print_error "Missing dependency: $1"; exit 1; }; }
+require_cmd docker
+require_cmd aws
+require_cmd jq
+
+# Flag to prevent double cleanup
+CLEANUP_RUN=false
+
+# Flag for cleanup on successful run
+DOCKER_REACHED=false
+
+cleanup() {
+    if [ "$CLEANUP_RUN" = true ]; then
+        return
+    fi
+    CLEANUP_RUN=true
+
+    print_header "Cleanup"
+    print_step "Stopping and removing containers..."
+    docker stop moto-proxy wearable-data-retrieval-test-db 2>/dev/null || true
+    docker rm -f moto-proxy wearable-data-retrieval-test-db 2>/dev/null || true
+    docker network rm wearable-data-retrieval-network 2>/dev/null || true
+    print_success "Cleanup completed"
+    print_info "Test environment has been cleaned up"
+}
+
+cleanup_on_interrupt() {
+    cleanup
+    if [ "$DOCKER_REACHED" = true ]; then
+        exit 0
+    fi
+}
+
+# Set up traps for different scenarios
+trap cleanup_on_interrupt INT TERM
+trap cleanup EXIT
 
 NOCACHE=0
 PORT=9001
@@ -128,10 +167,6 @@ else
         -f functions/wearable_data_retrieval/Dockerfile .
 fi
 
-if [ $? -ne 0 ]; then
-    print_error "Failed to build the image"
-    exit 1
-fi
 print_success "Docker image built successfully"
 
 # Setup infrastructure
@@ -152,7 +187,22 @@ docker run -dp 5005:5000 \
     --name moto-proxy \
     --network wearable-data-retrieval-network \
     motoserver/moto:latest
-print_success "Moto proxy started"
+
+print_step "Waiting for Moto to be ready..."
+MOTO_READY=false
+for i in {1..50}; do
+  if aws s3api list-buckets >/dev/null 2>&1; then
+    print_success "Moto is ready"
+    MOTO_READY=true
+    break
+  fi
+  sleep 0.2
+done
+
+if [ "$MOTO_READY" = false ]; then
+    print_error "Moto failed to start"
+    exit 1
+fi
 
 # Configure AWS environment
 export AWS_ENDPOINT_URL=http://localhost:5005
@@ -179,15 +229,24 @@ docker run \
     -e PGPASSWORD=test \
     -e POSTGRES_DB=test \
     -d postgres:16
-print_success "PostgreSQL container started"
 
 # Wait for database to be ready
 print_step "Waiting for database to be ready..."
-while ! docker exec wearable-data-retrieval-test-db psql -U test -d test -c "SELECT 1;" > /dev/null 2>&1; do
-    sleep 1
+DB_READY=false
+for i in {1..50}; do
+    if docker exec wearable-data-retrieval-test-db psql -U test -d test -c "SELECT 1;" > /dev/null 2>&1; then
+        print_success "Database is ready"
+        DB_READY=true
+        break
+    fi
+    sleep 0.2
 done
+
+if [ "$DB_READY" = false ]; then
+    print_error "Database failed to start"
+    exit 1
+fi
 echo ""
-print_success "Database is ready"
 
 # Bootstrap the database
 print_step "Bootstrapping database..."
@@ -216,12 +275,3 @@ docker run --rm \
     -e AWS_ACCESS_KEY_ID=testing \
     -e AWS_SECRET_ACCESS_KEY=testing \
     wearable-data-retrieval:test
-
-# Clean up
-print_header "Cleanup"
-print_step "Stopping and removing containers..."
-docker stop moto-proxy wearable-data-retrieval-test-db 2>/dev/null || true
-docker rm moto-proxy wearable-data-retrieval-test-db 2>/dev/null || true
-docker network rm wearable-data-retrieval-network 2>/dev/null || true
-print_success "Cleanup completed"
-print_info "Test environment has been cleaned up"
