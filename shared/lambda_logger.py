@@ -50,7 +50,7 @@ class JsonFormatter(logging.Formatter):
         "taskName",
     }
 
-    def _convert_datetime(self, value: Any) -> str:
+    def _convert_datetime(self, value: Any) -> Any:
         if isinstance(value, datetime | date):
             return value.isoformat()
         if isinstance(value, dict):
