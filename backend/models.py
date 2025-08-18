@@ -798,6 +798,14 @@ class SleepCategoryTypeEnum(enum.Enum):
     classic = "classic"
 
 
+class TaskStatusTypeEnum(enum.Enum):
+    Pending = "Pending"
+    InProgress = "InProgress"
+    Success = "Success"
+    Failed = "Failed"
+    CompletedWithErrors = "CompletedWithErrors"
+
+
 class Account(db.Model):
     """
     The account table mappeing class.
@@ -2255,17 +2263,7 @@ class LambdaTask(db.Model):
 
     __tablename__ = "lambda_task"
     id = db.Column(db.Integer, primary_key=True)
-    status = db.Column(
-        db.Enum(
-            "Pending",
-            "InProgress",
-            "Success",
-            "Failed",
-            "CompletedWithErrors",
-            name="taskstatustypeenum",
-        ),
-        nullable=False,
-    )
+    status = db.Column(db.Enum(TaskStatusTypeEnum), nullable=False)
     billed_ms = db.Column(db.Integer, nullable=True)
     created_on = db.Column(
         db.DateTime, default=func.now(), nullable=False, index=True
