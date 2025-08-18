@@ -10,6 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+set -Eeuo pipefail
+
 # Color codes for terminal output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -59,6 +61,38 @@ run_with_progress() {
         return 1
     fi
 }
+
+# Flag to prevent double cleanup
+CLEANUP_RUN=false
+
+# Flag for cleanup on successful run
+DOCKER_REACHED=false
+
+cleanup() {
+    if [ "$CLEANUP_RUN" = true ]; then
+        return
+    fi
+    CLEANUP_RUN=true
+
+    print_header "Cleanup"
+    print_step "Stopping and removing containers..."
+    docker stop moto-proxy db-bootstrapper-test-db 2>/dev/null || true
+    docker rm -f moto-proxy db-bootstrapper-test-db 2>/dev/null || true
+    docker network rm db-bootstrapper-network 2>/dev/null || true
+    print_success "Cleanup completed"
+    print_info "Test environment has been cleaned up"
+}
+
+cleanup_on_interrupt() {
+    cleanup
+    if [ "$DOCKER_REACHED" = true ]; then
+        exit 0
+    fi
+}
+
+# Set up traps for different scenarios
+trap cleanup_on_interrupt INT TERM
+trap cleanup EXIT
 
 NOCACHE=0
 PORT=9001
@@ -126,10 +160,6 @@ else
         .
 fi
 
-if [ $? -ne 0 ]; then
-    print_error "Failed to build the image"
-    exit 1
-fi
 print_success "Docker image built successfully"
 
 # Setup infrastructure
@@ -258,6 +288,7 @@ print_header "Starting Application"
 print_info "Application will be available at http://localhost:${PORT}"
 print_info "Press Ctrl+C to stop the application and cleanup"
 
+DOCKER_REACHED=true
 docker run --rm \
     --platform linux/amd64 \
     --name db-bootstrapper-test \
@@ -277,12 +308,3 @@ docker run --rm \
     -e DB_IAM_USER=iam_user \
     -e LOCAL_DB=true \
     db-bootstrapper:test
-
-# Clean up
-print_header "Cleanup"
-print_step "Stopping and removing containers..."
-docker stop moto-proxy db-bootstrapper-test-db 2>/dev/null || true
-docker rm -f moto-proxy db-bootstrapper-test-db 2>/dev/null || true
-docker network rm db-bootstrapper-network 2>/dev/null || true
-print_success "Cleanup completed"
-print_info "Test environment has been cleaned up"
