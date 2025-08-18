@@ -257,7 +257,7 @@ def test_secret(token):
     )
 
     try:
-        response = requests.get(health_check_url, timeout=20)
+        response = requests.get(health_check_url, timeout=60)
         response.raise_for_status()
 
         response_data = response.json()
