@@ -705,7 +705,7 @@ mindfulness on sleep."""
     db.session.commit()
 
 
-def init_lambda_task(status: str):
+def init_lambda_task(status: str) -> int:
     """
     Initialize a lambda task with the specified status.
 
@@ -713,8 +713,10 @@ def init_lambda_task(status: str):
     ----------
         status: The status of the lambda task to create.
     """
-    db.session.add(LambdaTask(status=status))
+    task = LambdaTask(status=status)
+    db.session.add(task)
     db.session.commit()
+    return task.id
 
 
 def delete_lambda_tasks():
@@ -794,6 +796,14 @@ class SleepCategoryTypeEnum(enum.Enum):
 
     stages = "stages"
     classic = "classic"
+
+
+class TaskStatusTypeEnum(enum.Enum):
+    Pending = "Pending"
+    InProgress = "InProgress"
+    Success = "Success"
+    Failed = "Failed"
+    CompletedWithErrors = "CompletedWithErrors"
 
 
 class Account(db.Model):
@@ -2253,17 +2263,7 @@ class LambdaTask(db.Model):
 
     __tablename__ = "lambda_task"
     id = db.Column(db.Integer, primary_key=True)
-    status = db.Column(
-        db.Enum(
-            "Pending",
-            "InProgress",
-            "Success",
-            "Failed",
-            "CompletedWithErrors",
-            name="taskstatustypeenum",
-        ),
-        nullable=False,
-    )
+    status = db.Column(db.Enum(TaskStatusTypeEnum), nullable=False)
     billed_ms = db.Column(db.Integer, nullable=True)
     created_on = db.Column(
         db.DateTime, default=func.now(), nullable=False, index=True

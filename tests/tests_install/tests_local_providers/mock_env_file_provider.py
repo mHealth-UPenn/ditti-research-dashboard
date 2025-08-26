@@ -51,7 +51,6 @@ def root_env(config: ProjectConfigProvider) -> RootEnv:
 
     """Get .env."""
     return {
-        "FLASK_CONFIG": "Default",
         "FLASK_DEBUG": "True",
         "FLASK_DB": (
             f"postgresql://{Postgres.USER.value}:{Postgres.PASSWORD.value}@"

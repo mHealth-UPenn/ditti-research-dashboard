@@ -22,6 +22,7 @@ from backend.models import (
     AccessGroup,
     Account,
     JoinAccountAccessGroup,
+    TaskStatusTypeEnum,
     delete_lambda_tasks,
     init_admin_account,
     init_admin_app,
@@ -158,16 +159,21 @@ def clear_cache_click():
 @click.command(
     "init-lambda-task", help="Initialize a lambda task with the specified status."
 )
-@click.option("--status", default=None, help="Status of the lambda task.")
+@click.option(
+    "--status",
+    type=click.Choice(TaskStatusTypeEnum, case_sensitive=True),
+    help="Status of the lambda task.",
+)
 @with_appcontext
-def init_lambda_task_click(status):
+def init_lambda_task_click(status: TaskStatusTypeEnum):
     """Initialize a lambda task with the specified status.
 
     Parameters
     ----------
         status (str): The status for the lambda task.
     """
-    init_lambda_task(status)
+    task_id = init_lambda_task(status.value)
+    click.echo(f"Lambda task successfully initialized. ID: {task_id}")
 
 
 @click.command(
