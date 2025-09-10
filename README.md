@@ -57,6 +57,27 @@ The Ditti Research Dashboard is built with security and HIPAA compliance in mind
 - **Secure Authentication**: AWS Cognito for secure authentication
 - **Data Privacy**: Strict adherence to HIPAA guidelines for PHI handling
 
+## Specifications
+
+Specifications are included from the [Ditti Specifications](https://github.com/mHealth-UPenn/ditti-specs) repo as a git subtree. This approach is preferred over git submodules to make specifications visible to IDE coding agents.
+
+### Pull Spec Changes
+
+Use `git subtree pull` to update this repo with latest specifications:
+
+```bash
+git subtree pull --prefix=specs https://github.com/mHealth-UPenn/ditti-specs.git main --squash
+```
+
+### Push Spec Changes
+
+Use `git subtree split` and `git subtree push` to push any changes to specifications made in this repo:
+
+```bash
+git subtree split --prefix=specs -b <branch-name>
+git subtree push --prefix=specs https://github.com/mHealth-UPenn/ditti-specs.git <branch-name>
+```
+
 ## Copyright/License
 
 Copyright (C) 2025 the Trustees of the University of Pennsylvania.

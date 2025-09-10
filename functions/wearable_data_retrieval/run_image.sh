@@ -147,6 +147,11 @@ while [[ $# -gt 0 ]]; do
             shift
             shift
             ;;
+        --port)
+            PORT=$2
+            shift
+            shift
+            ;;
         -*|--*)
             print_error "Unknown option $1"
             exit 1

@@ -1,0 +1,5 @@
+# Cursor Rules
+
+## Code Specifications
+
+Review [code specifications](./specs/specs.md) before starting your task to retrieve any relevant information on architecture, design patterns, or code style. Add or update any new specifications with new information, if any. Keep specifications narrowly-scoped so that one spec document does not overwhelm an agent's context window.
