@@ -84,26 +84,32 @@ Resources:
 
 Outputs:
   DBBootStrapLambdaRoleArn:
+    Description: ARN of the DB bootstrap Lambda role
     Value: !GetAtt DBBootStrapLambdaRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleArn"
   DBBootStrapLambdaRoleName:
+    Description: Name of the DB bootstrap Lambda role
     Value: !Ref DBBootStrapLambdaRole
     Export:
       Name: !Sub "${AWS::StackName}-DBBootStrapLambdaRoleName"
   FlaskSecretKeyRotatorLambdaRoleArn:
+    Description: ARN of the Flask secret key rotator Lambda role
     Value: !GetAtt FlaskSecretKeyRotatorLambdaRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-FlaskSecretKeyRotatorLambdaRoleArn"
   FlaskSecretKeyRotatorLambdaRoleName:
+    Description: Name of the Flask secret key rotator Lambda role
     Value: !Ref FlaskSecretKeyRotatorLambdaRole
     Export:
       Name: !Sub "${AWS::StackName}-FlaskSecretKeyRotatorLambdaRoleName"
   WearableDataRetrievalLambdaRoleArn:
+    Description: ARN of the wearable data retrieval Lambda role
     Value: !GetAtt WearableDataRetrievalLambdaRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-WearableDataRetrievalLambdaRoleArn"
   WearableDataRetrievalLambdaRoleName:
+    Description: Name of the wearable data retrieval Lambda role
     Value: !Ref WearableDataRetrievalLambdaRole
     Export:
       Name: !Sub "${AWS::StackName}-WearableDataRetrievalLambdaRoleName"

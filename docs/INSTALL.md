@@ -57,7 +57,7 @@ Create .env files for your staging or production builds (`secret-staging.env` or
 
 A [Functions CloudFormation template](../cloudformation/functions-template.yml) is provided to automate the initial deployment of Lambda functions.
 
-### 6. Deploy the Vite Frontend
+### 8. Deploy the Vite Frontend
 
 > See [Staging & Deploy .env Files](#staging--deploy-env-files-) and [Deployment Scripts](#deployment-scripts-) for more information.
 

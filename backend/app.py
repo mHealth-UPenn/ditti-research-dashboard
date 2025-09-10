@@ -68,6 +68,10 @@ def create_app(testing=False):
 
     # configure and initialize the app
     app.config.from_object(f"backend.config.{flask_config}")
+
+    if not (app.config["SECRET_KEY"] and app.config["JWT_SECRET_KEY"]):
+        raise RuntimeError("SECRET_KEY or JWT_SECRET_KEY is not set")
+
     register_blueprints(app)
     register_commands(app)
     register_extensions(app)
