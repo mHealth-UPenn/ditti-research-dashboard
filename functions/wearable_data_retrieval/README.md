@@ -309,6 +309,7 @@ docker build \
   --platform linux/amd64 \
   -t wearable-data-retrieval:latest \
   -f functions/wearable_data_retrieval/Dockerfile \
+  --secret id=aws,src=$HOME/.aws/credentials \
   .
 
 # Tag the image for ECR
