@@ -10,35 +10,44 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-NOTESTS=0
-NOBUILD=0
+DEPLOY_APP=0
+DEPLOY_WEARABLE_DATA_RETRIEVAL=0
+DEPLOY_FLASK_SECRET_KEY_ROTATOR=0
 NOCACHE=0
-NOROTATOR=0
-TAG=latest
+
+HELP_MESSAGE="
+Usage: $0 (--app|--wearable-data-retrieval|--flask-secret-key-rotator) [--no-cache] [--help]
+
+Options:
+    --app: Deploy the app
+    --wearable-data-retrieval: Deploy the wearable data retrieval function
+    --flask-secret-key-rotator: Deploy the flask secret key rotator function
+    --no-cache: Build without cache (default: false)
+    --help: Show this help message
+"
 
 # parse arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --no-tests)
-            NOTESTS=1
+        --app)
+            DEPLOY_APP=1
             shift
             ;;
-        --no-build)
-            NOBUILD=1
+        --wearable-data-retrieval)
+            DEPLOY_WEARABLE_DATA_RETRIEVAL=1
+            shift
+            ;;
+        --flask-secret-key-rotator)
+            DEPLOY_FLASK_SECRET_KEY_ROTATOR=1
             shift
             ;;
         --no-cache)
             NOCACHE=1
             shift
             ;;
-        --no-rotator)
-            NOROTATOR=1
-            shift
-            ;;
-        -t|--tag)
-            TAG="$2"
-            shift
-            shift
+        --help)
+            echo "$HELP_MESSAGE"
+            exit 0
             ;;
         -*|--*)
             echo "Unknown option $1"
@@ -46,6 +55,12 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+if [ $DEPLOY_APP -eq 0 ] && [ $DEPLOY_WEARABLE_DATA_RETRIEVAL -eq 0 ] && [ $DEPLOY_FLASK_SECRET_KEY_ROTATOR -eq 0 ]; then
+    echo "No deployment target specified. Please specify one or more of --app, --wearable-data-retrieval, or --flask-secret-key-rotator."
+    echo "$HELP_MESSAGE"
+    exit 1
+fi
 
 # export deployment env variables
 if [ -f secret-staging.env ]; then
@@ -55,11 +70,15 @@ else
     exit 1
 fi
 
+# login docker
 DOCKER_SERVER=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-DOCKER_IMAGE=${DOCKER_SERVER}/${AWS_ECR_REPO_NAME}:${TAG}
+aws ecr get-login-password | docker login --username AWS --password-stdin ${DOCKER_SERVER}
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 
-# if --no-build was not used
-if [ $NOBUILD -eq 0 ]; then
+if [ $DEPLOY_APP -eq 1 ]; then
+    DOCKER_IMAGE=${DOCKER_SERVER}/${AWS_ECR_REPO_NAME}:latest
 
     # --- AWS Parameters and Secrets Lambda Extension ---
     # To improve performance and reduce costs, the application uses the
@@ -96,25 +115,6 @@ if [ $NOBUILD -eq 0 ]; then
         exit 1
     fi
 
-    # login docker
-    aws ecr get-login-password | docker login --username AWS --password-stdin ${DOCKER_SERVER}
-    if [ $? -ne 0 ]; then
-        exit 1
-    fi
-
-    # if --no-tests was not used
-    if [ $NOTESTS -eq 0 ]; then
-
-        # run tests
-        pytest
-
-        if [ $? -ne 0 ]; then
-            exit 1
-        fi
-    else
-        echo "Skipping tests..."
-    fi
-
     # include the zappa settings file in the docker image
     zappa save-python-settings-file staging
     if [ $NOCACHE -eq 1 ]; then
@@ -136,154 +136,116 @@ if [ $NOBUILD -eq 0 ]; then
     if [ $? -ne 0 ]; then
         exit 1
     fi
-fi
 
-# check if the app has been deployed yet
-zappa status staging &> /dev/null
-if [ $? -eq 1 ]; then
-
-    # deploy the app
-    zappa deploy staging -d ${DOCKER_IMAGE}
-else
-
-    # update the app
-    zappa update staging -d ${DOCKER_IMAGE}
-fi
-
-if [ $NOROTATOR -eq 0 ]; then
-    APP_URL=$(zappa status staging -j | jq -r '."API Gateway URL"')
-    if [ -z "$APP_URL" ]; then
-        echo "Failed to get App URL for staging. Exiting."
-        exit 1
-    fi
-    # Deploy/update the secret rotator Lambda
-    ROTATOR_STAGE="fs-rotator-stg"
-    ROTATOR_ECR_REPO_NAME="fs-rotator-stg"
-    ROTATOR_PROJECT_NAME="fs-rotator"
-    ROTATOR_FUNCTION_NAME="${ROTATOR_PROJECT_NAME}-${ROTATOR_STAGE}"
-    ROTATOR_ROLE_NAME="${ROTATOR_FUNCTION_NAME}-ZappaLambdaExecutionRole"
-    SECRET_NAME="flask-secret-key-staging"
-    # Dynamically retrieve the Lambda function name for the staging app
-    APP_FUNCTION_NAME=$(zappa status staging -j | jq -r '."Lambda Name"')
-    if [ -z "$APP_FUNCTION_NAME" ]; then
-        echo "Failed to get Lambda function name for staging. Exiting."
-        exit 1
-    fi
-
-    ROTATOR_DOCKER_SERVER=${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
-    ROTATOR_DOCKER_IMAGE=${ROTATOR_DOCKER_SERVER}/${ROTATOR_ECR_REPO_NAME}:${TAG}
-
-    echo "Checking for secret rotator ECR repository..."
-    aws ecr describe-repositories --repository-names ${ROTATOR_ECR_REPO_NAME} > /dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        echo "Creating ECR repository ${ROTATOR_ECR_REPO_NAME}..."
-        aws ecr create-repository --repository-name ${ROTATOR_ECR_REPO_NAME} > /dev/null
-    fi
-
-    echo "Building and pushing the secret rotator image..."
-    (cd functions/secret_rotator && docker buildx build --platform linux/amd64 --provenance=false --output=type=docker -t ${ROTATOR_DOCKER_IMAGE} .)
-    if [ $? -ne 0 ]; then
-        exit 1
-    fi
-    docker push ${ROTATOR_DOCKER_IMAGE}
-    if [ $? -ne 0 ]; then
-        exit 1
-    fi
-
-    echo "Checking status of ${ROTATOR_STAGE}..."
-    zappa status $ROTATOR_STAGE &> /dev/null
+    # check if the app has been deployed yet
+    zappa status staging &> /dev/null
     if [ $? -eq 1 ]; then
-        echo "Deploying ${ROTATOR_STAGE} for the first time..."
-        # deploy the rotator
-        zappa deploy $ROTATOR_STAGE -d ${ROTATOR_DOCKER_IMAGE}
+
+        # deploy the app
+        zappa deploy staging -d ${DOCKER_IMAGE}
     else
-        echo "Updating ${ROTATOR_STAGE}..."
-        # update the rotator
-        zappa update $ROTATOR_STAGE -d ${ROTATOR_DOCKER_IMAGE}
+
+        # update the app
+        zappa update staging -d ${DOCKER_IMAGE}
     fi
-
-    echo "Applying IAM policies and environment variables for ${ROTATOR_STAGE}..."
-    SECRET_ARN=$(aws secretsmanager describe-secret --secret-id ${SECRET_NAME} --query ARN --output text)
-    if [ $? -ne 0 ]; then
-        echo "Failed to get ARN for secret ${SECRET_NAME}. Please ensure it exists."
-        exit 1
-    fi
-    APP_FUNCTION_ARN="arn:aws:lambda:${AWS_REGION}:${AWS_ACCOUNT_ID}:function:${APP_FUNCTION_NAME}"
-
-    POLICY_JSON=$(cat <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "secretsmanager:DescribeSecret",
-                "secretsmanager:GetSecretValue",
-                "secretsmanager:PutSecretValue",
-                "secretsmanager:UpdateSecretVersionStage"
-            ],
-            "Resource": "${SECRET_ARN}"
-        },
-        {
-            "Effect": "Allow",
-            "Action": "secretsmanager:GetRandomPassword",
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "lambda:UpdateFunctionConfiguration",
-                "lambda:GetFunctionConfiguration",
-                "lambda:GetFunction"
-            ],
-            "Resource": "${APP_FUNCTION_ARN}"
-        }
-    ]
-}
-EOF
-)
-
-    aws iam put-role-policy --role-name "${ROTATOR_ROLE_NAME}" --policy-name SecretsManagerRotatorPolicy --policy-document "${POLICY_JSON}"
-    aws lambda remove-permission --function-name "${ROTATOR_FUNCTION_NAME}" --statement-id secrets-manager-rotator-invoke-permission > /dev/null 2>&1 || true
-    aws lambda add-permission --function-name "${ROTATOR_FUNCTION_NAME}" --statement-id secrets-manager-rotator-invoke-permission --action lambda:InvokeFunction --principal secretsmanager.amazonaws.com --source-arn "${SECRET_ARN}"
-    aws lambda update-function-configuration --function-name "${ROTATOR_FUNCTION_NAME}" --environment "Variables={APP_LAMBDA_FUNCTION_NAME=${APP_FUNCTION_NAME},APP_URL=${APP_URL}}"
 fi
 
-# echo "Enabling CORS..."
+if [ $DEPLOY_WEARABLE_DATA_RETRIEVAL -eq 1 ] || [ $DEPLOY_FLASK_SECRET_KEY_ROTATOR -eq 1 ]; then
+    STACK_OUTPUTS=$(aws cloudformation describe-stacks --stack-name ${AWS_FUNCTIONS_CLOUDFORMATION_STACK_NAME} | jq ".Stacks[0].Outputs")
+fi
 
-# # save the CORS policy as a JSON string with the CloudFront domain as the only allowed origin
-# RESPONSE_PARAMETERS=$(jq -jrc --arg origin "'$AWS_CLOUDFRONT_DOMAIN_NAME'" \
-#     '. += { "method.response.header.Access-Control-Allow-Origin": $origin }' <<< "$(cat cors.json)")
+if [ $DEPLOY_WEARABLE_DATA_RETRIEVAL -eq 1 ]; then
+    echo "Deploying wearable data retrieval..."
+    WEARABLE_DATA_RETRIEVAL_LAMBDA_FUNCTION_NAME=$(echo $STACK_OUTPUTS | jq -r '.[] | select(.OutputKey == "WearableDataRetrievalLambdaFunctionName") | .OutputValue')
+    WEARABLE_DATA_RETRIEVAL_IMAGE_URI=$(echo $STACK_OUTPUTS | jq -r '.[] | select(.OutputKey == "WearableDataRetrievalImageUri") | .OutputValue')
 
-# # extract the REST API ID and resource ID from the zappa app status
-# ZAPPA_STATUS=$(zappa status app -j)
-# if [ $? -ne 0 ]; then
-#     exit 1
-# fi
+    if [ $NOCACHE -eq 1 ]; then
+        docker build \
+            -f functions/wearable_data_retrieval/Dockerfile \
+            -t ${WEARABLE_DATA_RETRIEVAL_IMAGE_URI} \
+            --platform linux/amd64 \
+            --secret id=aws,src=$HOME/.aws/credentials \
+            --target prod \
+            --no-cache .
+    else
+        docker build \
+            -f functions/wearable_data_retrieval/Dockerfile \
+            -t ${WEARABLE_DATA_RETRIEVAL_IMAGE_URI} \
+            --platform linux/amd64 \
+            --secret id=aws,src=$HOME/.aws/credentials \
+            --target prod .
+    fi
 
-# REST_API_ID=$(echo "$ZAPPA_STATUS" | jq -r '."API Gateway URL"' | cut -d"." -f1 | cut -d"/" -f3)
-# RESOURCE_ID=$(aws apigateway get-resources --rest-api-id $REST_API_ID | jq -r '.items[] | select(.path == "/") | .id')
-# if [ $? -ne 0 ]; then
-#     exit 1
-# fi
+    if [ $? -ne 0 ]; then
+        echo "Failed to build the wearable data retrieval function."
+        exit 1
+    fi
 
-# # check if a method response already exists on the API gateway
-# RESPONSES=$(aws apigateway get-method --rest-api-id $REST_API_ID --resource-id $RESOURCE_ID --http-method ANY | jq -rc ".methodResponses")
+    docker push ${WEARABLE_DATA_RETRIEVAL_IMAGE_URI}
 
-# # if not, create one
-# if [ $RESPONSES = 'null' ]; then
-#     aws apigateway put-method-response \
-#         --rest-api-id $REST_API_ID \
-#         --resource-id $RESOURCE_ID \
-#         --http-method ANY \
-#         --status-code 200 \
-#         --response-parameters "method.response.header.Access-Control-Allow-Credentials=true","method.response.header.Access-Control-Allow-Headers=true","method.response.header.Access-Control-Allow-Methods=true","method.response.header.Access-Control-Allow-Origin=true"
-# fi
+    if [ $? -ne 0 ]; then
+        echo "Failed to push the wearable data retrieval function."
+        exit 1
+    fi
 
-# # enable CORS on the API gateway's method response
-# aws apigateway put-integration-response \
-#     --rest-api-id $REST_API_ID \
-#     --resource-id $RESOURCE_ID \
-#     --http-method ANY \
-#     --status-code 200 \
-#     --response-parameters $RESPONSE_PARAMETERS
+    aws lambda update-function-code \
+        --image-uri ${WEARABLE_DATA_RETRIEVAL_IMAGE_URI} \
+        --function-name ${WEARABLE_DATA_RETRIEVAL_LAMBDA_FUNCTION_NAME} \
+        > /dev/null
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to update the wearable data retrieval function."
+        exit 1
+    fi
+
+    echo "Waiting for the function to update..."
+    aws lambda wait function-updated-v2 --function-name ${WEARABLE_DATA_RETRIEVAL_LAMBDA_FUNCTION_NAME}
+
+    echo "Wearable data retrieval function updated."
+fi
+
+if [ $DEPLOY_FLASK_SECRET_KEY_ROTATOR -eq 1 ]; then
+    echo "Deploying flask secret key rotator..."
+    FLASK_SECRET_KEY_ROTATOR_LAMBDA_FUNCTION_NAME=$(echo $STACK_OUTPUTS | jq -r '.[] | select(.OutputKey == "FlaskSecretKeyRotatorLambdaFunctionName") | .OutputValue')
+    FLASK_SECRET_KEY_ROTATOR_IMAGE_URI=$(echo $STACK_OUTPUTS | jq -r '.[] | select(.OutputKey == "FlaskSecretKeyRotatorImageUri") | .OutputValue')
+
+    if [ $NOCACHE -eq 1 ]; then
+        docker build \
+            -f functions/secret_rotator/Dockerfile \
+            -t ${FLASK_SECRET_KEY_ROTATOR_IMAGE_URI} \
+            --platform linux/amd64 \
+            --no-cache .
+    else
+        docker build \
+            -f functions/secret_rotator/Dockerfile \
+            -t ${FLASK_SECRET_KEY_ROTATOR_IMAGE_URI} \
+            --platform linux/amd64 .
+    fi
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to build the flask secret key rotator function."
+        exit 1
+    fi
+
+    docker push ${FLASK_SECRET_KEY_ROTATOR_IMAGE_URI}
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to push the flask secret key rotator function."
+        exit 1
+    fi
+
+    aws lambda update-function-code \
+        --image-uri ${FLASK_SECRET_KEY_ROTATOR_IMAGE_URI} \
+        --function-name ${FLASK_SECRET_KEY_ROTATOR_LAMBDA_FUNCTION_NAME} \
+        > /dev/null
+
+    if [ $? -ne 0 ]; then
+        echo "Failed to update the flask secret key rotator function."
+        exit 1
+    fi
+
+    echo "Waiting for the function to update..."
+    aws lambda wait function-updated-v2 --function-name ${FLASK_SECRET_KEY_ROTATOR_LAMBDA_FUNCTION_NAME}
+
+    echo "Flask secret key rotator function updated."
+fi
