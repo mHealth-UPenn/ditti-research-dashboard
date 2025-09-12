@@ -11,7 +11,13 @@
  * under the License.
  */
 
-import { createContext, useState, PropsWithChildren, createRef } from "react";
+import {
+  createContext,
+  useState,
+  PropsWithChildren,
+  createRef,
+  useCallback,
+} from "react";
 import {
   FlashMessageContextValue,
   FlashMessageModel,
@@ -27,43 +33,45 @@ export const FlashMessageContext = createContext<
 export function FlashMessageContextProvider({ children }: PropsWithChildren) {
   const [flashMessages, setFlashMessages] = useState<FlashMessageModel[]>([]);
 
-  const flashMessage = (
-    msg: React.ReactElement,
-    variant: FlashMessageVariant
-  ) => {
-    const updatedFlashMessages = [...flashMessages];
-    const containerRef = createRef<HTMLDivElement>();
-
-    // Set the element's key to 0 or the last message's key + 1
-    const id = updatedFlashMessages.length
-      ? updatedFlashMessages[updatedFlashMessages.length - 1].id + 1
-      : 0;
-
-    const element = (
-      <FlashMessage
-        key={id}
-        variant={variant}
-        containerRef={containerRef}
-        onClose={() => {
-          closeMessage(id);
-        }}
-      >
-        {msg}
-      </FlashMessage>
-    );
-
-    // Add the message to the page
-    updatedFlashMessages.push({ id, element, containerRef });
-    setFlashMessages(updatedFlashMessages);
-  };
-
-  const closeMessage = (id: number) => {
+  const closeMessage = useCallback((id: number) => {
     setFlashMessages((prevFlashMessages) => {
       let updatedFlashMessages = [...prevFlashMessages];
       updatedFlashMessages = updatedFlashMessages.filter((fm) => fm.id != id);
       return updatedFlashMessages;
     });
-  };
+  }, []);
+
+  const flashMessage = useCallback(
+    (msg: React.ReactElement, variant: FlashMessageVariant) => {
+      setFlashMessages((prevFlashMessages) => {
+        const updatedFlashMessages = [...prevFlashMessages];
+        const containerRef = createRef<HTMLDivElement>();
+
+        // Set the element's key to 0 or the last message's key + 1
+        const id = updatedFlashMessages.length
+          ? updatedFlashMessages[updatedFlashMessages.length - 1].id + 1
+          : 0;
+
+        const element = (
+          <FlashMessage
+            key={id}
+            variant={variant}
+            containerRef={containerRef}
+            onClose={() => {
+              closeMessage(id);
+            }}
+          >
+            {msg}
+          </FlashMessage>
+        );
+
+        // Add the message to the page
+        updatedFlashMessages.push({ id, element, containerRef });
+        return updatedFlashMessages;
+      });
+    },
+    [closeMessage]
+  );
 
   return (
     <FlashMessageContext.Provider value={{ flashMessages, flashMessage }}>
