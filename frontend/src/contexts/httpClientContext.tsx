@@ -11,7 +11,7 @@
  * under the License.
  */
 
-import React, { createContext, ReactNode } from "react";
+import React, { createContext, ReactNode, useMemo } from "react";
 import { HttpClient } from "../lib/http";
 import type { AxiosRequestConfig } from "axios";
 import type { HttpClientApi } from "./httpClientContext.types";
@@ -23,39 +23,42 @@ export const HttpClientProvider: React.FC<{
   children: ReactNode;
   client: HttpClient;
 }> = ({ children, client }) => {
-  const api: HttpClientApi = {
-    request: client.request.bind(client),
-    requestRawResponse: client.requestRawResponse.bind(client),
+  const api: HttpClientApi = useMemo(
+    () => ({
+      request: client.request.bind(client),
+      requestRawResponse: client.requestRawResponse.bind(client),
 
-    // HTTP verb shortcuts
-    get: <TResp = unknown,>(
-      url: string,
-      cfg?: Omit<AxiosRequestConfig, "url" | "method">
-    ) => client.request<TResp>(url, { method: "GET", ...cfg }),
+      // HTTP verb shortcuts
+      get: <TResp = unknown,>(
+        url: string,
+        cfg?: Omit<AxiosRequestConfig, "url" | "method">
+      ) => client.request<TResp>(url, { method: "GET", ...cfg }),
 
-    post: <TResp = unknown,>(
-      url: string,
-      data?: unknown,
-      cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
-    ) => client.request<TResp>(url, { method: "POST", data, ...cfg }),
+      post: <TResp = unknown,>(
+        url: string,
+        data?: unknown,
+        cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
+      ) => client.request<TResp>(url, { method: "POST", data, ...cfg }),
 
-    put: <TResp = unknown,>(
-      url: string,
-      data?: unknown,
-      cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
-    ) => client.request<TResp>(url, { method: "PUT", data, ...cfg }),
+      put: <TResp = unknown,>(
+        url: string,
+        data?: unknown,
+        cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
+      ) => client.request<TResp>(url, { method: "PUT", data, ...cfg }),
 
-    delete: <TResp = unknown,>(
-      url: string,
-      cfg?: Omit<AxiosRequestConfig, "url" | "method">
-    ) => client.request<TResp>(url, { method: "DELETE", ...cfg }),
+      delete: <TResp = unknown,>(
+        url: string,
+        cfg?: Omit<AxiosRequestConfig, "url" | "method">
+      ) => client.request<TResp>(url, { method: "DELETE", ...cfg }),
 
-    patch: <TResp = unknown,>(
-      url: string,
-      data?: unknown,
-      cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
-    ) => client.request<TResp>(url, { method: "PATCH", data, ...cfg }),
-  };
+      patch: <TResp = unknown,>(
+        url: string,
+        data?: unknown,
+        cfg?: Omit<AxiosRequestConfig, "url" | "method" | "data">
+      ) => client.request<TResp>(url, { method: "PATCH", data, ...cfg }),
+    }),
+    [client]
+  );
 
   return (
     <HttpClientContext.Provider value={api}>
