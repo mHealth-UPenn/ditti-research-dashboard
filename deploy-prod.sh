@@ -78,7 +78,7 @@ if [ $? -ne 0 ]; then
 fi
 
 if [ $DEPLOY_APP -eq 1 ]; then
-    DOCKER_IMAGE=${DOCKER_SERVER}/${AWS_ECR_REPO_NAME}:latest
+    DOCKER_IMAGE=${DOCKER_SERVER}/${AWS_ECR_REPO_NAME}:prod
 
     # --- AWS Parameters and Secrets Lambda Extension ---
     # To improve performance and reduce costs, the application uses the
