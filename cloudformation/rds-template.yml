@@ -40,6 +40,7 @@ Metadata:
           - BootStrapDataARN
           - BootStrapApplicationLogLevel
           - BootStrapSystemLogLevel
+          - BootStrapRevision
 
     ParameterLabels:
       App:
@@ -70,6 +71,8 @@ Metadata:
         default: Boot Strap Application Log Level
       BootStrapSystemLogLevel:
         default: Boot Strap System Log Level
+      BootStrapRevision:
+        default: Boot Strap Database Revision
 
 Parameters:
   App:
@@ -152,6 +155,11 @@ Parameters:
       - INFO
       - WARN
     Description: Log level for the DB bootstrap Lambda function
+
+  BootStrapRevision:
+    Type: String
+    Default: "1.0"
+    Description: Database revision number to force bootstrap function execution on updates
 
 Conditions:
   IsBootStrapDataARNSet: !Not [!Equals [!Ref BootStrapDataARN, ""]]
@@ -309,6 +317,7 @@ Resources:
     DependsOn: DBInstance
     Properties:
       ServiceToken: !GetAtt DBBootStrapLambdaFn.Arn
+      Version: !Ref BootStrapRevision
 
 Outputs:
   DBClusterEndpoint:
