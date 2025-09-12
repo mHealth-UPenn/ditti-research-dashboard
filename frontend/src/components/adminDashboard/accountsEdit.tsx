@@ -76,9 +76,9 @@ const reducer = (state: AccountsEditState, action: Action) => {
     }
     case "EDIT_FIELD": {
       const { firstName, lastName, email, phoneNumber } = action;
-      if (firstName) return { ...state, firstName };
-      if (lastName) return { ...state, lastName };
-      if (email) return { ...state, email };
+      if (firstName !== undefined) return { ...state, firstName };
+      if (lastName !== undefined) return { ...state, lastName };
+      if (email !== undefined) return { ...state, email };
       if (phoneNumber !== undefined) return { ...state, phoneNumber };
       return state;
     }
