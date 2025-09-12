@@ -836,7 +836,7 @@ class Account(db.Model):
     first_name = db.Column(db.String, nullable=False)
     last_name = db.Column(db.String, nullable=False)
     email = db.Column(db.String, nullable=False, unique=True)
-    phone_number = db.Column(db.String, nullable=True, unique=True)
+    phone_number = db.Column(db.String, nullable=True)
     is_confirmed = db.Column(db.Boolean, default=False, nullable=False)
     is_archived = db.Column(db.Boolean, default=False, nullable=False)
 
