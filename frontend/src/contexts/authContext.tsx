@@ -126,7 +126,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   const participantLogin = useCallback(
     (options?: { elevated: boolean }): void => {
       // For elevated mode, make sure to pass it as a url param
-      const baseUrl = `${import.meta.env.VITE_FLASK_SERVER as string}/auth/participant/login`;
+      const baseUrl = `${import.meta.env.VITE_FLASK_SERVER}/auth/participant/login`;
       const url = options?.elevated ? `${baseUrl}?elevated=true` : baseUrl;
       window.location.href = url;
     },
@@ -137,7 +137,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
    * Logs out the Participant user by redirecting to the logout endpoint.
    */
   const participantLogout = useCallback((): void => {
-    window.location.href = `${import.meta.env.VITE_FLASK_SERVER as string}/auth/participant/logout`;
+    window.location.href = `${import.meta.env.VITE_FLASK_SERVER}/auth/participant/logout`;
     setIsParticipantAuthenticated(false);
     setDittiId(null);
   }, []);
@@ -147,7 +147,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
    */
   const researcherLogin = useCallback(
     (options?: { elevated: boolean }): void => {
-      const baseUrl = `${import.meta.env.VITE_FLASK_SERVER as string}/auth/researcher/login`;
+      const baseUrl = `${import.meta.env.VITE_FLASK_SERVER}/auth/researcher/login`;
       const url = options?.elevated ? `${baseUrl}?elevated=true` : baseUrl;
       window.location.href = url;
     },
@@ -158,7 +158,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
    * Logs out the Researcher from Cognito by redirecting to the logout endpoint.
    */
   const researcherLogout = useCallback((): void => {
-    window.location.href = `${import.meta.env.VITE_FLASK_SERVER as string}/auth/researcher/logout`;
+    window.location.href = `${import.meta.env.VITE_FLASK_SERVER}/auth/researcher/logout`;
     setIsResearcherAuthenticated(false);
     resetAccountInfo();
   }, [resetAccountInfo]);

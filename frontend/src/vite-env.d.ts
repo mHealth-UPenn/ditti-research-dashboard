@@ -14,6 +14,16 @@
 /// <reference types="vite/client" />
 /// <reference types="vite-plugin-svgr/client" />
 
+interface ViteTypeOptions {
+  readonly VITE_FLASK_SERVER: string;
+  readonly VITE_DEMO: string;
+}
+
+interface ImportMetaEnv {
+  readonly VITE_FLASK_SERVER: string;
+  readonly VITE_DEMO: string;
+}
+
 interface ImportMeta {
   readonly env: {
     readonly VITE_FLASK_SERVER: string;

@@ -86,7 +86,7 @@ export const ParticipantDashboardContent = () => {
 
   // Redirect after authenticating with Fitbit
   const handleRedirect = () => {
-    window.location.href = `${String(import.meta.env.VITE_FLASK_SERVER)}/api/fitbit/authorize`;
+    window.location.href = `${import.meta.env.VITE_FLASK_SERVER}/api/fitbit/authorize`;
   };
 
   // Redirect to form for requesting deletion of account

@@ -236,7 +236,7 @@ export async function downloadExcelFromUrl(
 ): Promise<string | null> {
   try {
     const response = await httpClient.requestRawResponse<Blob>(
-      `${String(import.meta.env.VITE_FLASK_SERVER)}${String(url)}`,
+      `${import.meta.env.VITE_FLASK_SERVER}${String(url)}`,
       {
         method: "GET",
         headers: {

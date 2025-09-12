@@ -373,8 +373,6 @@ class HttpClient {
   }
 }
 
-export const httpClient = new HttpClient(
-  import.meta.env.VITE_FLASK_SERVER as string
-);
+export const httpClient = new HttpClient(import.meta.env.VITE_FLASK_SERVER);
 
 export { HttpClient };
