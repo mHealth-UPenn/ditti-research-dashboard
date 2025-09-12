@@ -2279,7 +2279,7 @@ class LambdaTask(db.Model):
     def meta(self):
         return {
             "id": self.id,
-            "status": self.status,
+            "status": self.status.value,
             "billedMs": self.billed_ms,
             "createdOn": self.created_on.isoformat(),
             "updatedOn": self.updated_on.isoformat(),
