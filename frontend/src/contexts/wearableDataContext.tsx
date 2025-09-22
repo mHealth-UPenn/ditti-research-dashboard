@@ -19,8 +19,6 @@ import {
   useState,
   useCallback,
 } from "react";
-import { APP_ENV } from "../environment";
-import { DataFactory } from "../dataFactory";
 import { useHttpClient } from "../hooks/useHttpClient";
 import {
   WearableDataContextValue,
@@ -66,13 +64,6 @@ export const ParticipantWearableDataProvider = ({
   const startDate = start; // Start one week ago
   const endDate = useMemo(() => new Date(), []); // End today
 
-  const dataFactory: DataFactory | null = useMemo(() => {
-    if (APP_ENV === "development" || APP_ENV === "demo") {
-      return new DataFactory();
-    }
-    return null;
-  }, []);
-
   const handleFailure = (error: unknown) => {
     console.error(error);
   };
@@ -81,28 +72,19 @@ export const ParticipantWearableDataProvider = ({
     // Async fetch sleep data
     const fetchSleepData = async () => {
       try {
-        if (
-          APP_ENV === "production" ||
-          APP_ENV === "development" ||
-          APP_ENV === "staging"
-        ) {
-          const params = new URLSearchParams();
-          params.append("start_date", formatDate(startDate));
-          params.append("end_date", formatDate(endDate));
-          const url = `/participant/fitbit_data?${params.toString()}`;
-          let data = await request<SleepLog[]>(url);
+        const params = new URLSearchParams();
+        params.append("start_date", formatDate(startDate));
+        params.append("end_date", formatDate(endDate));
+        const url = `/participant/fitbit_data?${params.toString()}`;
+        let data = await request<SleepLog[]>(url);
 
-          data = data.sort((a, b) => {
-            if (a.dateOfSleep > b.dateOfSleep) return 1;
-            else if (a.dateOfSleep < b.dateOfSleep) return -1;
-            else return 0;
-          });
+        data = data.sort((a, b) => {
+          if (a.dateOfSleep > b.dateOfSleep) return 1;
+          else if (a.dateOfSleep < b.dateOfSleep) return -1;
+          else return 0;
+        });
 
-          setSleepLogs(data);
-        } else if (dataFactory) {
-          await dataFactory.init();
-          setSleepLogs(dataFactory.sleepLogs);
-        }
+        setSleepLogs(data);
       } catch (error) {
         handleFailure(error);
       }
@@ -120,7 +102,7 @@ export const ParticipantWearableDataProvider = ({
       .finally(() => {
         setIsLoading(false);
       });
-  }, [dataFactory, startDate, endDate, request]);
+  }, [startDate, endDate, request]);
 
   return (
     <ParticipantWearableDataContext.Provider
@@ -156,13 +138,6 @@ export const CoordinatorWearableDataProvider = ({
 
   // The date of the first sleep log entry
   const [firstDateOfSleep, setFirstDateOfSleep] = useState<Date | null>(null);
-
-  const dataFactory: DataFactory | null = useMemo(() => {
-    if (APP_ENV === "development" || APP_ENV === "demo") {
-      return new DataFactory();
-    }
-    return null;
-  }, []);
 
   const handleFailure = (error: unknown) => {
     console.error(error);
@@ -260,20 +235,11 @@ export const CoordinatorWearableDataProvider = ({
   useEffect(() => {
     const fetchSleepData = async () => {
       try {
-        if (
-          APP_ENV === "production" ||
-          APP_ENV === "development" ||
-          APP_ENV === "staging"
-        ) {
-          const data = await fetchSleepDataAsync(startDate, endDate);
-          if (data.length) {
-            setFirstDateOfSleep(new Date(data[0].dateOfSleep));
-          }
-          setSleepLogs(data);
-        } else if (dataFactory) {
-          await dataFactory.init();
-          setSleepLogs(dataFactory.sleepLogs);
+        const data = await fetchSleepDataAsync(startDate, endDate);
+        if (data.length) {
+          setFirstDateOfSleep(new Date(data[0].dateOfSleep));
         }
+        setSleepLogs(data);
       } catch (error: unknown) {
         handleFailure(error);
       }
@@ -282,25 +248,19 @@ export const CoordinatorWearableDataProvider = ({
     // Fetch all data processing tasks and find if any are syncing
     const fetchDataProcessingTasks = async () => {
       try {
-        if (
-          APP_ENV === "production" ||
-          APP_ENV === "development" ||
-          APP_ENV === "staging"
-        ) {
-          const params = new URLSearchParams();
-          params.append("app", "3"); // Assume Wearable Dashboard is app 3
-          params.append("study", String(studyId));
-          const url = `/data_processing_task/?${params.toString()}`;
-          const tasks = await request<DataProcessingTask[]>(url);
+        const params = new URLSearchParams();
+        params.append("app", "3"); // Assume Wearable Dashboard is app 3
+        params.append("study", String(studyId));
+        const url = `/data_processing_task/?${params.toString()}`;
+        const tasks = await request<DataProcessingTask[]>(url);
 
-          // Check if any tasks are syncing
-          const syncingTask = tasks.find(
-            (task) => task.status == "Pending" || task.status == "InProgress"
-          );
-          if (syncingTask) {
-            setIsSyncing(true);
-            scheduleSyncCheck(syncingTask.id);
-          }
+        // Check if any tasks are syncing
+        const syncingTask = tasks.find(
+          (task) => task.status == "Pending" || task.status == "InProgress"
+        );
+        if (syncingTask) {
+          setIsSyncing(true);
+          scheduleSyncCheck(syncingTask.id);
         }
       } catch (error: unknown) {
         handleFailure(error);
@@ -321,7 +281,6 @@ export const CoordinatorWearableDataProvider = ({
         setIsLoading(false);
       });
   }, [
-    dataFactory,
     startDate,
     endDate,
     fetchSleepDataAsync,
