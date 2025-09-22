@@ -33,7 +33,6 @@ import { Button } from "../buttons/button";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
 import { useDittiData } from "../../hooks/useDittiData";
 import { SmallLoader } from "../loader/loader";
-import { APP_ENV } from "../../environment";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useNavigate } from "react-router-dom";
 import { FileMetadata } from "./dittiApp.types";
@@ -593,17 +592,9 @@ export const AudioFileUpload = () => {
                 </div>
               )
             }
-            <FormSummaryButton
-              onClick={handleUpload}
-              disabled={!canUpload || APP_ENV === "demo"}
-            >
+            <FormSummaryButton onClick={handleUpload} disabled={!canUpload}>
               Upload
             </FormSummaryButton>
-            {APP_ENV === "demo" && (
-              <FormSummarySubtext>
-                Audio file uploads are disabled in demo mode.
-              </FormSummarySubtext>
-            )}
             <FormSummarySubtext>
               Audio file details cannot be changed after upload. The files must
               be deleted and uploaded again.

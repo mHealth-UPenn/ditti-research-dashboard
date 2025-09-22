@@ -23,7 +23,6 @@ import { Title } from "../text/title";
 import { ActiveIcon } from "../icons/activeIcon";
 import { LinkComponent } from "../links/linkComponent";
 import { useDittiData } from "../../hooks/useDittiData";
-import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
 
@@ -182,7 +181,7 @@ export const StudiesView = () => {
           </CardContentRow>
           <CardContentRow>
             <div className="flex">
-              {(canCreateAudioFiles || APP_ENV === "demo") && (
+              {canCreateAudioFiles && (
                 <Link to="/coordinator/ditti/audio/upload">
                   <Button className="mr-2" rounded={true}>
                     Upload +

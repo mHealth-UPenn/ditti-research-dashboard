@@ -30,7 +30,6 @@ import { FormSummaryText } from "../containers/forms/formSummaryText";
 import { FormSummaryButton } from "../containers/forms/formSummaryButton";
 import { FormSummarySubtext } from "../containers/forms/formSummarySubtext";
 import { FormSummaryContent } from "../containers/forms/formSummaryContent";
-import { APP_ENV } from "../../environment";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
@@ -596,19 +595,9 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
             <br />
           </FormSummaryText>
           <div>
-            <FormSummaryButton
-              onClick={post}
-              disabled={APP_ENV === "demo" || !formIsValid}
-            >
+            <FormSummaryButton onClick={post} disabled={!formIsValid}>
               {buttonText}
             </FormSummaryButton>
-            {APP_ENV === "demo" && (
-              <FormSummarySubtext>
-                {dittiId
-                  ? "Updating users is disabled in demo mode."
-                  : "Enrolling new users is disabled in demo mode."}
-              </FormSummarySubtext>
-            )}
             <FormSummarySubtext>
               After enrolling a subject, log in on your smartphone using their
               Ditti ID to ensure their account was created successfully.

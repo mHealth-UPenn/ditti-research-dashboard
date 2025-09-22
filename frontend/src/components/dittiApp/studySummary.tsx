@@ -27,7 +27,6 @@ import { Subtitle } from "../text/subtitle";
 import { Button } from "../buttons/button";
 import { CardContentRow } from "../cards/cardContentRow";
 import { useDittiData } from "../../hooks/useDittiData";
-import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useStudies } from "../../hooks/useStudies";
 import { StudyContactModel } from "../../types/models";
@@ -183,7 +182,7 @@ export const StudySummary = () => {
         <CardContentRow>
           <Title>Active Subjects</Title>
           <div className="flex">
-            {(canCreate || APP_ENV === "demo") && (
+            {canCreate && (
               <Link
                 to={`/coordinator/ditti/participants/enroll?sid=${study?.id ? String(study.id) : ""}`}
               >

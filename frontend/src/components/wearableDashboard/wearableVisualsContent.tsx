@@ -24,7 +24,6 @@ import { CardContentRow } from "../cards/cardContentRow";
 import { Title } from "../text/title";
 import { Subtitle } from "../text/subtitle";
 import { Button } from "../buttons/button";
-import { APP_ENV } from "../../environment";
 import { useWearableData } from "../../hooks/useWearableData";
 import { WearableVisualization } from "../visualizations/wearableVisualization";
 import SyncIcon from "@mui/icons-material/Sync";
@@ -177,7 +176,7 @@ export function WearableVisualsContent({
                 >
                   <Button
                     variant="secondary"
-                    disabled={!(canEdit || APP_ENV === "demo")}
+                    disabled={!canEdit}
                     rounded={true}
                   >
                     Edit Details
