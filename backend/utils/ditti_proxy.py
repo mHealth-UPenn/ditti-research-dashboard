@@ -30,11 +30,14 @@ class DittiProxyGetResponse(BaseModel):
 
 
 class DittiProxy:
-    def __init__(self):
+    def __init__(self, app: Flask | None = None):
         self.client_id: str | None = None
         self.client_secret_name: str | None = None
         self.ditti_endpoint: str | None = None
         self.__secret_provider: SecretProvider | None = None
+
+        if app:
+            self.init_app(app)
 
     def init_app(self, app: Flask):
         self.client_id = app.config.get("DITTI_CLIENT_ID")
@@ -50,22 +53,6 @@ class DittiProxy:
 
         self.__secret_provider = SecretProvider(self.client_secret_name)
 
-    def _get_client_secret(self) -> str:
-        return self.__secret_provider.get_secret().secret_string
-
-    def _handle_error(self, response: dict[str, Any]) -> None:
-        if "message" in response:
-            raise DittiProxyError(response["message"])
-        if "Message" in response:
-            raise DittiProxyError(response["Message"])
-        raise DittiProxyError("An unknown error occurred")
-
-    def _parse_response(self, response: dict[str, Any]) -> DittiProxyGetResponse:
-        try:
-            return DittiProxyGetResponse(**response)
-        except ValidationError as e:
-            raise DittiProxyError(f"Invalid response: {e}") from e
-
     def get(
         self,
         endpoint: DittiProxyEndpoint,
@@ -75,15 +62,37 @@ class DittiProxy:
         timeout: int = 20,
     ) -> DittiProxyGetResponse:
         response = requests.get(
-            f"{self.ditti_endpoint}/{endpoint}",
-            headers={
-                "Authorization": f"{self.client_id}:{self._get_client_secret()}"
-            },
-            params={"query": query, "attributes": attributes},
+            self._get_url(endpoint),
+            headers=self._get_auth_header(),
+            params={"query": query, "attributes": str(attributes)},
             timeout=timeout,
         )
 
         if response.status_code != 200:
             self._handle_error(response.json())
 
-        return self._parse_response(response.json())
+        return self._parse_get_response(response.json())
+
+    def _get_url(self, endpoint: DittiProxyEndpoint) -> str:
+        return f"{self.ditti_endpoint}/{endpoint}"
+
+    def _get_client_secret(self) -> str:
+        return self.__secret_provider.get_secret().secret_string
+
+    def _get_auth_header(self) -> dict[str, str]:
+        return {"Authorization": f"{self.client_id}:{self._get_client_secret()}"}
+
+    def _handle_error(self, response: dict[str, Any]) -> None:
+        if "message" in response:
+            raise DittiProxyError(response["message"])
+        if "Message" in response:
+            raise DittiProxyError(response["Message"])
+        raise DittiProxyError("An unknown error occurred")
+
+    def _parse_get_response(
+        self, response: dict[str, Any]
+    ) -> DittiProxyGetResponse:
+        try:
+            return DittiProxyGetResponse(**response)
+        except ValidationError as e:
+            raise DittiProxyError(f"Invalid response: {e}") from e
