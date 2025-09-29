@@ -40,17 +40,11 @@ class DittiProxy:
             self.init_app(app)
 
     def init_app(self, app: Flask):
+        self._validate_app(app)
+
         self.client_id = app.config.get("DITTI_CLIENT_ID")
         self.client_secret_name = app.config.get("DITTI_CLIENT_SECRET_NAME")
         self.ditti_endpoint = app.config.get("DITTI_ENDPOINT")
-
-        if not (
-            self.client_id and self.client_secret_name and self.ditti_endpoint
-        ):
-            raise ValueError(
-                "DITTI_CLIENT_ID, DITTI_CLIENT_SECRET_NAME, and DITTI_ENDPOINT must be set"
-            )
-
         self.__secret_provider = SecretProvider(self.client_secret_name)
 
     def get(
@@ -72,6 +66,18 @@ class DittiProxy:
             self._handle_error(response.json())
 
         return self._parse_get_response(response.json())
+
+    def _validate_app(self, app: Flask) -> None:
+        required_config = {
+            "DITTI_CLIENT_ID",
+            "DITTI_CLIENT_SECRET_NAME",
+            "DITTI_ENDPOINT",
+        }
+        missing_config = required_config - set(app.config.keys())
+        if missing_config:
+            raise ValueError(
+                f"Missing required configuration: {', '.join(missing_config)}"
+            )
 
     def _get_url(self, endpoint: DittiProxyEndpoint) -> str:
         return f"{self.ditti_endpoint}/{endpoint}"
