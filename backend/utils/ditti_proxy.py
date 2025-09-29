@@ -29,6 +29,11 @@ class DittiProxyGetResponse(BaseModel):
     message: str = Field(alias="message")
 
 
+class DittiProxyCreateResponse(BaseModel):
+    id: str = Field(alias="id")
+    message: str = Field(alias="message")
+
+
 class DittiProxy:
     def __init__(self, app: Flask | None = None):
         self.client_id: str | None = None
@@ -67,6 +72,25 @@ class DittiProxy:
 
         return self._parse_get_response(response.json())
 
+    def create(
+        self,
+        endpoint: DittiProxyEndpoint,
+        *,
+        data: dict[str, Any],
+        timeout: int = 20,
+    ) -> DittiProxyCreateResponse:
+        response = requests.put(
+            self._get_url(endpoint),
+            headers=self._get_auth_header(),
+            json={"data": data},
+            timeout=timeout,
+        )
+
+        if response.status_code != 200:
+            self._handle_error(response.json())
+
+        return self._parse_create_response(response.json())
+
     def _validate_app(self, app: Flask) -> None:
         required_config = {
             "DITTI_CLIENT_ID",
@@ -100,5 +124,13 @@ class DittiProxy:
     ) -> DittiProxyGetResponse:
         try:
             return DittiProxyGetResponse(**response)
+        except ValidationError as e:
+            raise DittiProxyError(f"Invalid response: {e}") from e
+
+    def _parse_create_response(
+        self, response: dict[str, Any]
+    ) -> DittiProxyCreateResponse:
+        try:
+            return DittiProxyCreateResponse(**response)
         except ValidationError as e:
             raise DittiProxyError(f"Invalid response: {e}") from e
