@@ -49,7 +49,7 @@ class DittiProxy:
         self.client_id: str | None = None
         self.client_secret_name: str | None = None
         self.ditti_endpoint: str | None = None
-        self.__secret_provider: SecretProvider | None = None
+        self._secret_provider: SecretProvider | None = None
 
         if app:
             self.init_app(app)
@@ -60,7 +60,7 @@ class DittiProxy:
         self.client_id = app.config.get("DITTI_CLIENT_ID")
         self.client_secret_name = app.config.get("DITTI_CLIENT_SECRET_NAME")
         self.ditti_endpoint = app.config.get("DITTI_ENDPOINT")
-        self.__secret_provider = SecretProvider(self.client_secret_name)
+        self._secret_provider = SecretProvider(self.client_secret_name)
 
     def get(
         self,
@@ -139,7 +139,8 @@ class DittiProxy:
 
         return self._parse_delete_response(response.json())
 
-    def _validate_app(self, app: Flask) -> None:
+    @staticmethod
+    def _validate_app(app: Flask) -> Literal[True]:
         required_config = {
             "DITTI_CLIENT_ID",
             "DITTI_CLIENT_SECRET_NAME",
@@ -150,12 +151,13 @@ class DittiProxy:
             raise ValueError(
                 f"Missing required configuration: {', '.join(missing_config)}"
             )
+        return True
 
     def _get_url(self, endpoint: DittiProxyEndpoint) -> str:
         return f"{self.ditti_endpoint}/{endpoint}"
 
     def _get_client_secret(self) -> str:
-        return self.__secret_provider.get_secret().secret_string
+        return self._secret_provider.get_secret().secret_string
 
     def _get_auth_header(self) -> dict[str, str]:
         return {"Authorization": f"{self.client_id}:{self._get_client_secret()}"}
