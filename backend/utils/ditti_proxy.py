@@ -174,12 +174,14 @@ class DittiProxy:
     def _get_auth_header(self) -> dict[str, str]:
         return {"Authorization": f"{self.client_id}:{self._get_client_secret()}"}
 
-    def _handle_error(self, response: dict[str, Any]) -> None:
+    def _handle_error(
+        self, response: dict[str, Any], e: Exception | None = None
+    ) -> None:
         if "message" in response:
-            raise DittiProxyError(response["message"])
+            raise DittiProxyError(response["message"]) from e
         if "Message" in response:
-            raise DittiProxyError(response["Message"])
-        raise DittiProxyError("An unknown error occurred")
+            raise DittiProxyError(response["Message"]) from e
+        raise DittiProxyError("An unknown error occurred") from e
 
     def _parse_get_response(
         self, response: dict[str, Any]
@@ -187,7 +189,7 @@ class DittiProxy:
         try:
             return DittiProxyGetResponse(**response)
         except ValidationError as e:
-            raise DittiProxyError(f"Invalid response: {e}") from e
+            self._handle_error(response, e)
 
     def _parse_create_response(
         self, response: dict[str, Any]
@@ -195,7 +197,7 @@ class DittiProxy:
         try:
             return DittiProxyCreateResponse(**response)
         except ValidationError as e:
-            raise DittiProxyError(f"Invalid response: {e}") from e
+            self._handle_error(response, e)
 
     def _parse_edit_response(
         self, response: dict[str, Any]
@@ -203,7 +205,7 @@ class DittiProxy:
         try:
             return DittiProxyEditResponse(**response)
         except ValidationError as e:
-            raise DittiProxyError(f"Invalid response: {e}") from e
+            self._handle_error(response, e)
 
     def _parse_delete_response(
         self, response: dict[str, Any]
@@ -211,4 +213,4 @@ class DittiProxy:
         try:
             return DittiProxyDeleteResponse(**response)
         except ValidationError as e:
-            raise DittiProxyError(f"Invalid response: {e}") from e
+            self._handle_error(response, e)
