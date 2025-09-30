@@ -15,7 +15,6 @@ import logging
 import os
 import re
 import traceback
-from contextlib import suppress
 from functools import reduce
 
 import boto3
@@ -24,7 +23,7 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from flask import Blueprint, current_app, jsonify, make_response, request
 
 from backend.auth.decorators import researcher_auth_required
-from backend.extensions import db
+from backend.extensions import db, ditti
 from backend.models import JoinAccountStudy, Study
 from backend.utils.aws import MutationClient, Query, Updater
 
@@ -63,20 +62,20 @@ def get_taps(account):
     }
     """
 
-    # add expressions to the query to return all taps for multiple studies
+    # Add expressions to the query to return all taps for multiple studies
     def f(left, right):
-        q = f'user_permission_idBEGINS"{right}"'
-        return left + ("OR" if left else "") + q
+        q = f'user_permission_id^"{right}"'
+        return left + ("|" if left else "") + q
 
     try:
-        # if the user has permission to view all studies, get all users
+        # If the user has permission to view all studies, get all users
         app_id = request.args["app"]
         permissions = account.get_permissions(app_id)
         account.validate_ask("View", "All Studies", permissions)
-        users = Query("User").scan()["Items"]
+        users = ditti.get("user_permission", query="", attributes=["id"]).data
 
     except ValueError:
-        # get users only for the studies the user as access to
+        # Get users only for the studies the user as access to
         studies = (
             Study.query.join(JoinAccountStudy)
             .filter(JoinAccountStudy.account_id == account.id)
@@ -85,7 +84,11 @@ def get_taps(account):
 
         prefixes = [s.ditti_id for s in studies]
         query = reduce(f, prefixes, "")
-        users = Query("User", query).scan()["Items"]
+        users = ditti.get(
+            "user_permission",
+            query=query,
+            attributes=["id"],
+        ).data
 
     except Exception:
         exc = traceback.format_exc()
@@ -95,8 +98,13 @@ def get_taps(account):
             {"msg": "Query failed due to internal server error."}, 500
         )
 
-    # get all taps
-    taps = Query("Tap").scan()["Items"]
+    # Get all taps
+    taps = ditti.get(
+        "tap",
+        query="",
+        attributes=["id", "tapUserId", "time", "timeZone"],
+    ).data
+
     df_users = pd.DataFrame(users, columns=["id", "user_permission_id"]).rename(
         columns={"user_permission_id": "dittiId"}
     )
@@ -111,7 +119,7 @@ def get_taps(account):
         "GMT Universal Coordinated Time"
     )
 
-    # merge on only the users that were returned earlier
+    # Merge on only the users that were returned earlier
     res = (
         pd.merge(df_users, df_taps, on="id").drop("id", axis=1).to_dict("records")
     )
@@ -138,20 +146,20 @@ def get_audio_taps(account):
         JSON response containing audio taps data.
     """
 
-    # add expressions to the query to return all taps for multiple studies
-    def f(left, right):
-        q = f'user_permission_idBEGINS"{right}"'
-        return left + ("OR" if left else "") + q
+    # Add expressions to the query to return all taps for multiple studies
+    def f(left: str, right: str) -> str:
+        q = f'user_permission_id^"{right}"'
+        return left + ("|" if left else "") + q
 
     try:
-        # if the user has permission to view all studies, get all users
+        # If the user has permission to view all studies, get all users
         app_id = request.args["app"]
         permissions = account.get_permissions(app_id)
         account.validate_ask("View", "All Studies", permissions)
-        users = Query("User").scan()["Items"]
+        users = ditti.get("user_permission", query="", attributes=["id"]).data
 
     except ValueError:
-        # get users only for the studies the user as access to
+        # Get users only for the studies the user as access to
         studies = (
             Study.query.join(JoinAccountStudy)
             .filter(JoinAccountStudy.account_id == account.id)
@@ -159,8 +167,11 @@ def get_audio_taps(account):
         )
 
         prefixes = [s.ditti_id for s in studies]
-        query = reduce(f, prefixes, "")
-        users = Query("User", query).scan()["Items"]
+        users = ditti.get(
+            "user_permission",
+            query=reduce(f, prefixes, ""),
+            attributes=["id"],
+        ).data
 
     except Exception:
         exc = traceback.format_exc()
@@ -171,10 +182,25 @@ def get_audio_taps(account):
         )
 
     # Get all audio files
-    audio_files = Query("AudioFile").scan()["Items"]
+    audio_files = ditti.get(
+        "audio_file",
+        query="",
+        attributes=["id", "title"],
+    ).data
 
     # Get all taps
-    audio_taps = Query("AudioTap").scan()["Items"]
+    audio_taps = ditti.get(
+        "audio_tap",
+        query="",
+        attributes=[
+            "id",
+            "audioTapAudioFileId",
+            "audioTapUserId",
+            "time",
+            "timeZone",
+            "action",
+        ],
+    ).data
 
     df_users = pd.DataFrame(users, columns=["id", "user_permission_id"]).rename(
         columns={"id": "userId", "user_permission_id": "dittiId"}
@@ -247,14 +273,14 @@ def get_users(account):
     }
     """
 
-    # add expressions to the query to return all users for multiple studies
+    # Add expressions to the query to return all users for multiple studies
     def f(left, right):
-        q = f'user_permission_idBEGINS"{right}"'
-        return left + ("OR" if left else "") + q
+        q = f'user_permission_id^"{right}"'
+        return left + ("|" if left else "") + q
 
-    # gets only useful user data
+    # Gets only useful user data
     def map_users(user):
-        # if information is empty, use an empty string instead of None
+        # If information is empty, use an empty string instead of None
         information = user.get("information", "")
 
         return {
@@ -263,23 +289,32 @@ def get_users(account):
             "userPermissionId": user["user_permission_id"],
             "expTime": user["exp_time"],
             "teamEmail": user["team_email"],
-            "createdAt": user["createdAt"],
         }
 
     users = None
 
     try:
-        # if the user has permission to view all studies, get all studies
+        # If the user has permission to view all studies, get all studies
         app_id = request.args["app"]
         permissions = account.get_permissions(app_id)
         account.validate_ask("View", "All Studies", permissions)
-        users = Query("User").scan()["Items"]
+        users = ditti.get(
+            "user_permission",
+            query="",
+            attributes=[
+                "information",
+                "tap_permission",
+                "user_permission_id",
+                "exp_time",
+                "team_email",
+            ],
+        ).data
         res = map(map_users, users)
 
         return jsonify(list(res))
 
     except ValueError:
-        # get only the studies the user has access to
+        # Get only the studies the user has access to
         studies = (
             Study.query.join(JoinAccountStudy)
             .filter(JoinAccountStudy.account_id == account.id)
@@ -294,7 +329,7 @@ def get_users(account):
             {"msg": "Query failed due to internal server error."}, 500
         )
 
-    # get all users for the studies that were returned earlier
+    # Get all users for the studies that were returned earlier
     prefixes = [s.ditti_id for s in studies]
 
     # If no studies were found, return an empty list
@@ -302,7 +337,17 @@ def get_users(account):
         return jsonify([])
 
     query = reduce(f, prefixes, "")
-    users = Query("User", query).scan()["Items"]
+    users = ditti.get(
+        "user_permission",
+        query=query,
+        attributes=[
+            "information",
+            "tap_permission",
+            "user_permission_id",
+            "exp_time",
+            "team_email",
+        ],
+    ).data
     res = map(map_users, users)
 
     return jsonify(list(res))
@@ -503,35 +548,21 @@ def get_audio_files():
         msg: "Query failed due to internal server error."
     }
     """
-    res = []
-
     try:
-        result = Query("AudioFile").scan()["Items"]
-        for item in result:
-            # Skip deleted audio files
-            with suppress(KeyError):
-                if item["_deleted"]:
-                    continue
+        result = ditti.get(
+            "audio_file",
+            query="",
+            attributes=[
+                "fileName",
+                "title",
+                "category",
+                "availability",
+                "studies",
+                "length",
+            ],
+        ).data
 
-            audio_file = {}
-            with suppress(KeyError):
-                audio_file["id"] = item["id"]
-            with suppress(KeyError):
-                audio_file["_version"] = item["_version"]
-            with suppress(KeyError):
-                audio_file["fileName"] = item["fileName"]
-            with suppress(KeyError):
-                audio_file["title"] = item["title"]
-            with suppress(KeyError):
-                audio_file["category"] = item["category"]
-            with suppress(KeyError):
-                audio_file["availability"] = item["availability"]
-            with suppress(KeyError):
-                audio_file["studies"] = item["studies"]
-            with suppress(KeyError):
-                audio_file["length"] = int(item["length"])
-
-            res.append(audio_file)
+        return jsonify(result)
 
     except Exception:
         exc = traceback.format_exc()
@@ -539,8 +570,6 @@ def get_audio_files():
         return make_response(
             {"msg": "Query failed due to internal server error."}, 500
         )
-
-    return jsonify(res)
 
 
 @blueprint.route("/audio-file/create", methods=["POST"])
