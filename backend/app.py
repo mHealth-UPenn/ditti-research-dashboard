@@ -29,7 +29,16 @@ from backend.commands import (
     init_study_subject_click,
     reset_db_click,
 )
-from backend.extensions import cache, cors, db, jwt, migrate, oauth, tm
+from backend.extensions import (
+    cache,
+    cors,
+    db,
+    ditti,
+    jwt,
+    migrate,
+    oauth,
+    tm,
+)
 from backend.views import (
     admin,
     aws_requests,
@@ -227,3 +236,4 @@ def register_extensions(app):
     tm.init_app(app)
     oauth.init_app(app)
     cache.init_app(app)
+    ditti.init_app(app)

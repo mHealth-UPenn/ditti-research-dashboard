@@ -17,6 +17,7 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 
+from backend.utils.ditti_proxy import DittiProxy
 from shared.iam_sqlalchemy import IamSqlAlchemy
 from shared.tokens_manager import TokensManager
 
@@ -28,3 +29,4 @@ cache = Cache(config={"CACHE_TYPE": "SimpleCache", "CACHE_DEFAULT_TIMEOUT": 7200
 
 tm = TokensManager()
 oauth = OAuth()
+ditti = DittiProxy()
