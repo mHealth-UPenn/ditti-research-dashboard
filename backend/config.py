@@ -110,6 +110,10 @@ class Default:
     JWT_COOKIE_SECURE = False
     JWT_COOKIE_SAMESITE = "Lax"
 
+    DITTI_CLIENT_ID = os.getenv("DITTI_CLIENT_ID")
+    DITTI_CLIENT_SECRET_NAME = os.getenv("DITTI_CLIENT_SECRET_NAME")
+    DITTI_ENDPOINT = os.getenv("DITTI_ENDPOINT")
+
 
 class Staging(Default):
     """
