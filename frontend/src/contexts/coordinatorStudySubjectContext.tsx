@@ -82,7 +82,6 @@ export function CoordinatorStudySubjectProvider({
       userPermissionId: "",
       expTime: "",
       teamEmail: "",
-      createdAt: "",
     };
 
     // Join data on Ditti IDs
@@ -106,7 +105,6 @@ export function CoordinatorStudySubjectProvider({
         information: matchedUserDetail.information,
         dittiExpTime: matchedUserDetail.expTime,
         teamEmail: matchedUserDetail.teamEmail,
-        createdAt: matchedUserDetail.createdAt,
       };
       result.push(res);
     }

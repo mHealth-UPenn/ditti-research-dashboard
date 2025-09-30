@@ -20,7 +20,6 @@ import { ApiJoin, StudyJoin } from "./api";
  * @property userPermissionId - The user's ditti ID.
  * @property expTime - Expiration time of the user's ID.
  * @property teamEmail - The team email assigned to this user.
- * @property createdAt - When the user was created.
  */
 export interface UserModel {
   tapPermission: boolean;
@@ -28,7 +27,6 @@ export interface UserModel {
   userPermissionId: string;
   expTime: string;
   teamEmail: string;
-  createdAt: string;
 }
 
 /**
@@ -94,7 +92,6 @@ export interface StudySubjectModel {
   information: string;
   dittiExpTime: string;
   teamEmail: string;
-  createdAt: string;
 }
 
 /**

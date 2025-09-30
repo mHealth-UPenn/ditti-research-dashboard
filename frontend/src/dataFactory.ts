@@ -60,7 +60,6 @@ const generateUsers = (studyIds: string[]): UserModel[] => {
         userPermissionId: `${studyId}${String(i).padStart(3, "0")}`,
         expTime: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
         teamEmail: `${studyId}@email.com`,
-        createdAt: new Date().toISOString(),
       };
 
       users.push(user);

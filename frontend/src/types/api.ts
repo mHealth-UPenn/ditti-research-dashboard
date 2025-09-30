@@ -175,7 +175,6 @@ export interface ActionResource {
  * @property user_permission_id - The user's ditti ID.
  * @property exp_time - Expiration time of the user's ID.
  * @property team_email - The team email assigned to this user.
- * @property createdAt - When the user was created.
  * @property updatedAt - When the user was last updated.
  * @property id - The user's ID.
  */
@@ -185,7 +184,6 @@ export interface User {
   user_permission_id: string;
   exp_time: string;
   team_email: string;
-  createdAt: string;
   __typename: string;
   _lastChangedAt: number;
   _version: number;
