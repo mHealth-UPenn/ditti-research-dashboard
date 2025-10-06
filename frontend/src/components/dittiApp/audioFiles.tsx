@@ -19,7 +19,6 @@ import { useHttpClient } from "../../hooks/useHttpClient";
 import { Button } from "../buttons/button";
 import { ListView } from "../containers/lists/listView";
 import { ListContent } from "../containers/lists/listContent";
-import { APP_ENV } from "../../environment";
 import { Link } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useDittiData } from "../../hooks/useDittiData";
@@ -235,11 +234,7 @@ export const AudioFiles = () => {
   // if the user can enroll subjects, include an enroll button
   const tableControl = (
     <Link to="/coordinator/ditti/audio/upload">
-      <Button
-        variant="primary"
-        disabled={!(canCreateAudioFiles || APP_ENV === "demo")}
-        rounded={true}
-      >
+      <Button variant="primary" disabled={!canCreateAudioFiles} rounded={true}>
         Upload +
       </Button>
     </Link>

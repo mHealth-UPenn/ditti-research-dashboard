@@ -11,15 +11,12 @@
  * under the License.
  */
 
-import { APP_ENV } from "../environment";
 import { httpClient } from "../lib/http";
-import { DataFactory } from "../dataFactory";
 import { differenceInMilliseconds } from "date-fns";
 import {
   createContext,
   PropsWithChildren,
   useState,
-  useMemo,
   useEffect,
   useCallback,
 } from "react";
@@ -37,119 +34,73 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
   const [audioTaps, setAudioTaps] = useState<AudioTapModel[]>([]);
   const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]);
 
-  const dataFactory: DataFactory | null = useMemo(() => {
-    if (APP_ENV === "development" || APP_ENV === "demo") {
-      return new DataFactory();
-    }
-    return null;
-  }, []);
-
   const getTapsAsync = useCallback(async (): Promise<TapModel[]> => {
-    let taps: TapModel[] = [];
-
-    if (APP_ENV === "production" || APP_ENV === "staging") {
-      taps = await httpClient
-        .request<Tap[]>("/aws/get-taps?app=2")
-        .then((res: Tap[]) => {
-          return res.map((tap) => {
-            return {
-              dittiId: tap.dittiId,
-              time: new Date(tap.time),
-              timezone: tap.timezone,
-            };
-          });
-        })
-        .catch(() => {
-          console.error(
-            "Unable to fetch taps data. Check account permissions."
-          );
-          return [];
+    const taps = await httpClient
+      .request<Tap[]>("/aws/get-taps?app=2")
+      .then((res: Tap[]) => {
+        return res.map((tap) => {
+          return {
+            dittiId: tap.dittiId,
+            time: new Date(tap.time),
+            timezone: tap.timezone,
+          };
         });
-    } else if (dataFactory) {
-      taps = dataFactory.taps;
-    }
+      })
+      .catch(() => {
+        console.error("Unable to fetch taps data. Check account permissions.");
+        return [];
+      });
 
     // Sort taps by timestamp
-    taps = taps.sort((a, b) =>
+    return taps.sort((a, b) =>
       differenceInMilliseconds(new Date(a.time), new Date(b.time))
     );
-
-    return taps;
-  }, [dataFactory]);
+  }, []);
 
   const getAudioTapsAsync = useCallback(async (): Promise<AudioTapModel[]> => {
-    let audioTaps: AudioTapModel[] = [];
-
-    if (APP_ENV == "production") {
-      audioTaps = await httpClient
-        .request<AudioTap[]>("/aws/get-audio-taps?app=2")
-        .then((res: AudioTap[]) => {
-          return res.map((at) => {
-            return {
-              dittiId: at.dittiId,
-              audioFileTitle: at.audioFileTitle,
-              time: new Date(at.time),
-              timezone: at.timezone,
-              action: at.action,
-            };
-          });
-        })
-        .catch(() => {
-          console.error(
-            "Unable to fetch audio taps data. Check account permissions."
-          );
-          return [];
+    const audioTaps = await httpClient
+      .request<AudioTap[]>("/aws/get-audio-taps?app=2")
+      .then((res: AudioTap[]) => {
+        return res.map((at) => {
+          return {
+            dittiId: at.dittiId,
+            audioFileTitle: at.audioFileTitle,
+            time: new Date(at.time),
+            timezone: at.timezone,
+            action: at.action,
+          };
         });
-    } else if (dataFactory) {
-      audioTaps = dataFactory.audioTaps;
-    }
+      })
+      .catch(() => {
+        console.error(
+          "Unable to fetch audio taps data. Check account permissions."
+        );
+        return [];
+      });
 
     // sort taps by timestamp
-    audioTaps = audioTaps.sort((a, b) =>
+    return audioTaps.sort((a, b) =>
       differenceInMilliseconds(new Date(a.time), new Date(b.time))
     );
-
-    return audioTaps;
-  }, [dataFactory]);
+  }, []);
 
   const getAudioFilesAsync = useCallback(async (): Promise<AudioFile[]> => {
-    let audioFiles: AudioFile[] = [];
-
-    if (APP_ENV === "production" || APP_ENV === "staging") {
-      audioFiles = await httpClient
-        .request<AudioFile[]>("/aws/get-audio-files?app=2")
-        .catch(() => {
-          console.error(
-            "Unable to fetch audio files. Check account permissions."
-          );
-          return [] as AudioFile[];
-        });
-    } else if (dataFactory) {
-      audioFiles = dataFactory.audioFiles;
-    }
-
-    return audioFiles;
-  }, [dataFactory]);
+    return await httpClient
+      .request<AudioFile[]>("/aws/get-audio-files?app=2")
+      .catch(() => {
+        console.error(
+          "Unable to fetch audio files. Check account permissions."
+        );
+        return [] as AudioFile[];
+      });
+  }, []);
 
   useEffect(() => {
     const promises: Promise<void>[] = [];
 
-    if (APP_ENV === "production" || APP_ENV === "staging") {
-      promises.push(getTapsAsync().then(setTaps));
-      promises.push(getAudioTapsAsync().then(setAudioTaps));
-      promises.push(getAudioFilesAsync().then(setAudioFiles));
-    } else if (
-      (APP_ENV === "development" || APP_ENV === "demo") &&
-      dataFactory
-    ) {
-      promises.push(
-        dataFactory.init().then(() => {
-          setTaps(dataFactory.taps);
-          setAudioTaps(dataFactory.audioTaps);
-          setAudioFiles(dataFactory.audioFiles);
-        })
-      );
-    }
+    promises.push(getTapsAsync().then(setTaps));
+    promises.push(getAudioTapsAsync().then(setAudioTaps));
+    promises.push(getAudioFilesAsync().then(setAudioFiles));
 
     Promise.all(promises)
       .then(() => {
@@ -159,7 +110,7 @@ export const DittiDataProvider = ({ children }: PropsWithChildren) => {
         console.error("Error during initial data fetch:", error);
         setDataLoading(false);
       });
-  }, [dataFactory, getAudioFilesAsync, getAudioTapsAsync, getTapsAsync]);
+  }, [getAudioFilesAsync, getAudioTapsAsync, getTapsAsync]);
 
   const refreshAudioFiles = async () => {
     setAudioFiles(await getAudioFilesAsync());

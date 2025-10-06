@@ -29,7 +29,6 @@ import { Title } from "../text/title";
 import { Subtitle } from "../text/subtitle";
 import { Button } from "../buttons/button";
 import { useDittiData } from "../../hooks/useDittiData";
-import { APP_ENV } from "../../environment";
 import { Link, useSearchParams } from "react-router-dom";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { useStudies } from "../../hooks/useStudies";
@@ -172,11 +171,7 @@ export const SubjectVisualsV2 = () => {
             <Link
               to={`/coordinator/ditti/participants/edit?dittiId=${dittiId}&sid=${String(studyId)}`}
             >
-              <Button
-                variant="secondary"
-                disabled={!(canEdit || APP_ENV === "demo")}
-                rounded={true}
-              >
+              <Button variant="secondary" disabled={!canEdit} rounded={true}>
                 Edit Details
               </Button>
             </Link>

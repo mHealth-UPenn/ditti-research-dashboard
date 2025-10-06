@@ -16,7 +16,6 @@ import { Column, TableData } from "../table/table.types";
 import { Table } from "../table/table";
 import { getAccess, getEnrollmentInfoForStudy } from "../../utils";
 import { SmallLoader } from "../loader/loader";
-import { APP_ENV } from "../../environment";
 import { Button } from "../buttons/button";
 import { LinkComponent } from "../links/linkComponent";
 import { Title } from "../text/title";
@@ -215,7 +214,7 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
                 variant="secondary"
                 size="sm"
                 className="h-full grow"
-                disabled={!(canEdit || APP_ENV === "demo")}
+                disabled={!canEdit}
                 fullWidth={true}
                 fullHeight={true}
               >
@@ -242,7 +241,7 @@ export const SubjectsContent = ({ app }: SubjectsContentProps) => {
     <Link
       to={`/coordinator/${appSlug}/participants/enroll?sid=${String(study?.id)}`}
     >
-      <Button disabled={!(canCreate || APP_ENV === "demo")} rounded={true}>
+      <Button disabled={!canCreate} rounded={true}>
         Enroll +
       </Button>
     </Link>

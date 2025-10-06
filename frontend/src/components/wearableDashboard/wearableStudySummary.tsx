@@ -22,7 +22,6 @@ import { Title } from "../text/title";
 import { Subtitle } from "../text/subtitle";
 import { Button } from "../buttons/button";
 import { CardContentRow } from "../cards/cardContentRow";
-import { APP_ENV } from "../../environment";
 import { WearableStudySubjects } from "./wearableStudySubjects";
 import { useCoordinatorStudySubjects } from "../../hooks/useCoordinatorStudySubjects";
 import { Link, useSearchParams } from "react-router-dom";
@@ -140,7 +139,7 @@ export function WearableStudySummary() {
         <CardContentRow>
           <Title>Active Subjects</Title>
           <div className="flex">
-            {(canCreate || APP_ENV === "demo") && (
+            {canCreate && (
               <Link
                 to={`/coordinator/wearable/participants/enroll?sid=${String(studyId)}`}
               >
