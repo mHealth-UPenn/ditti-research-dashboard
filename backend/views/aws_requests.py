@@ -10,10 +10,8 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-import json
 import logging
 import os
-import re
 import traceback
 from functools import reduce
 
@@ -23,9 +21,8 @@ from botocore.exceptions import ClientError, NoCredentialsError
 from flask import Blueprint, current_app, jsonify, make_response, request
 
 from backend.auth.decorators import researcher_auth_required
-from backend.extensions import db, ditti
+from backend.extensions import ditti
 from backend.models import JoinAccountStudy, Study
-from backend.utils.aws import MutationClient, Query, Updater
 
 blueprint = Blueprint("aws", __name__, url_prefix="/aws")
 logger = logging.getLogger(__name__)
@@ -389,15 +386,9 @@ def user_create():
     msg = "User Created Successfully"
 
     try:
-        client = MutationClient()
-        client.open_connection()
-        client.set_mutation(
-            "CreateUserPermissionInput",
-            "createUserPermission",
-            request.json.get("create"),
-        )
-
-        client.post_mutation()
+        data = request.json.get("create")
+        response = ditti.create("user_permission", data={"data": data})
+        msg = response.message
 
     except Exception:
         exc = traceback.format_exc()
@@ -452,57 +443,10 @@ def user_edit():
     """
     msg = "User Successfully Edited"
 
-    # Handle request.json whether it's a string or already parsed
-    request_data = request.json
-    if isinstance(request_data, str):
-        request_data = json.loads(request_data)
-
-    user_permission_id = request_data.get("user_permission_id")
-
-    # check that the user_permission_id is alphanumeric
-    if re.search(r"[^\dA-Za-z]", user_permission_id) is not None:
-        return jsonify(
-            {
-                "msg": "Invalid study or study subject Ditti ID: "
-                f"{user_permission_id}"
-            }
-        )
-
-    study_ditti_id = re.sub(r"[\d]+", "", user_permission_id)
-    study_id = request_data.get("study")
-
-    # Check if study_id is valid
-    if study_id:
-        try:
-            study = db.session.get(Study, study_id)
-            if not study or study.is_archived:
-                return make_response(
-                    jsonify(error=f"Invalid study_ditti_id: {study_id}"), 400
-                )
-
-        except Exception:
-            exc = traceback.format_exc()
-            logger.warning(exc)
-            return make_response(
-                {"msg": "Query failed due to internal server error."}, 500
-            )
-
-    # Check that the derived study_ditti_id matches the fetched study
-    if study and study_ditti_id != study.ditti_id:
-        return jsonify({"msg": f"Invalid study Ditti ID: {study_ditti_id}"})
-
-    query = f'user_permission_id=="{user_permission_id}"'
-    res = Query("User", query).scan()
-
-    # if the ditti id does not exist
-    if not res["Items"]:
-        return jsonify({"msg": f"Ditti ID not found: {user_permission_id}"})
-
     try:
-        updater = Updater("User")
-        updater.set_key_from_query(query)
-        updater.set_expression(request_data.get("edit"))
-        updater.update()
+        data = request.json.get("edit")
+        response = ditti.edit("user_permission", data={"data": data})
+        msg = response.message
 
     except Exception:
         exc = traceback.format_exc()
@@ -611,20 +555,9 @@ def audio_file_create():
     msg = "Audio File Created Successfully"
 
     try:
-        items = request.json.get("create")
-
-        # Add the bucket name the mutation body
-        for item in items:
-            item["bucket"] = current_app.config["AWS_AUDIO_FILE_BUCKET"]
-
-        client = MutationClient()
-        client.open_connection()
-        client.set_mutation_v2(items)
-        res = client.post_mutation()
-        data = json.loads(res)
-
-        if "data" not in data or not data["data"]:
-            raise Exception(data["errors"][0]["message"])
+        data = request.json.get("create")
+        response = ditti.create("audio_file", data={"data": data})
+        msg = response.message
 
     except Exception:
         exc = traceback.format_exc()
@@ -675,15 +608,15 @@ def audio_file_delete():
 
     try:
         # Get the audio file
-        audio_file_id = request.json["id"]
-        version = request.json["_version"]
-        audio_file = Query("AudioFile", f'id=="{audio_file_id}"').scan()["Items"][
-            0
-        ]
+        response = ditti.get(
+            "audio_file",
+            query=f'id=="{request.json["id"]}"',
+            attributes=["fileName"],
+        )
 
         # Try deleting the audio file from S3
         try:
-            key = audio_file["fileName"]
+            key = response.data[0]["fileName"]
             bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
             client = boto3.client("s3")
             deleted = client.delete_object(Bucket=bucket, Key=key)["DeleteMarker"]
@@ -698,15 +631,8 @@ def audio_file_delete():
             pass
 
         # Delete the audio file from DynamoDB
-        client = MutationClient()
-        client.open_connection()
-        client.set_mutation(
-            "DeleteAudioFileInput",
-            "deleteAudioFile",
-            {"id": audio_file_id, "_version": int(version)},
-        )
-
-        client.post_mutation()
+        response = ditti.delete("audio_file", delete_id=request.json["id"])
+        msg = response.message
 
     except Exception:
         exc = traceback.format_exc()
