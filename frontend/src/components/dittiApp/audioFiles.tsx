@@ -22,6 +22,7 @@ import { ListContent } from "../containers/lists/listContent";
 import { Link } from "react-router-dom";
 import { useFlashMessages } from "../../hooks/useFlashMessages";
 import { useDittiData } from "../../hooks/useDittiData";
+import { SmallLoader } from "../loader/loader";
 
 export const AudioFiles = () => {
   const [canCreateAudioFiles, setCanCreateAudioFiles] =
@@ -233,7 +234,9 @@ export const AudioFiles = () => {
   if (loading || dataLoading) {
     return (
       <ListView>
-        <ListContent />
+        <ListContent>
+          <SmallLoader />
+        </ListContent>
       </ListView>
     );
   }
