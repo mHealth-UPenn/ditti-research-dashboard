@@ -23,6 +23,7 @@ type DittiProxyEndpoint = Literal[
     "audio_tap",
     "tap",
     "user_permission",
+    "audio_file/presigned",
 ]
 
 
@@ -54,6 +55,19 @@ class DittiProxyEditResponse(BaseModel):
 class DittiProxyDeleteResponse(BaseModel):
     ids: list[str] = Field(alias="ids")
     message: str = Field(alias="message")
+
+
+class DittiProxyPresignedFile(BaseModel):
+    key: str = Field(alias="key")
+    type: str = Field(alias="type")
+
+
+class DittiProxyPresignedRequest(BaseModel):
+    files: list[DittiProxyPresignedFile] = Field(alias="files")
+
+
+class DittiProxyPresignedResponse(BaseModel):
+    urls: list[str] = Field(alias="urls")
 
 
 class DittiProxy:
@@ -151,6 +165,24 @@ class DittiProxy:
 
         return self._parse_delete_response(response.json())
 
+    def get_presigned_urls(
+        self,
+        *,
+        data: list[str],
+        timeout: int = 20,
+    ) -> DittiProxyPresignedResponse:
+        response = requests.post(
+            self._get_url("audio_file/presigned"),
+            headers=self._get_auth_header(),
+            json={"files": data},
+            timeout=timeout,
+        )
+
+        if response.status_code != 200:
+            self._handle_error(response.json())
+
+        return self._parse_presigned_response(response.json())
+
     @staticmethod
     def _validate_app(app: Flask) -> Literal[True]:
         required_config = {
@@ -218,5 +250,14 @@ class DittiProxy:
     ) -> DittiProxyDeleteResponse:
         try:
             return DittiProxyDeleteResponse(**response)
+        except ValidationError as e:
+            self._handle_error(response, e)
+
+    def _parse_presigned_response(
+        self,
+        response: dict[str, Any],
+    ) -> DittiProxyPresignedResponse:
+        try:
+            return DittiProxyPresignedResponse(**response)
         except ValidationError as e:
             self._handle_error(response, e)

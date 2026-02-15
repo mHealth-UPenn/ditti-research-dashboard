@@ -14,10 +14,8 @@ import logging
 import traceback
 from functools import reduce
 
-import boto3
 import pandas as pd
-from botocore.exceptions import ClientError, NoCredentialsError
-from flask import Blueprint, current_app, jsonify, make_response, request
+from flask import Blueprint, jsonify, make_response, request
 
 from backend.auth.decorators import researcher_auth_required
 from backend.extensions import ditti
@@ -671,29 +669,22 @@ def audio_file_generate_presigned_urls():
         msg: Unknown error while generating presigned URLs.
     }
     """
+    msg = "Presigned URLs successfully generated."
+
     try:
-        client = boto3.client("s3")
-        files = request.json["files"]
-        urls = []
+        data = request.json.get("files")
+        response = ditti.get_presigned_urls(data=data)
+        urls = response.urls
 
-        for file in files:
-            presigned_url = client.generate_presigned_url(
-                "put_object",
-                Params={
-                    "Bucket": current_app.config["AWS_AUDIO_FILE_BUCKET"],
-                    "Key": file["key"],
-                    "ContentType": file["type"],
-                },
-                ExpiresIn=3600,
-            )
-            urls.append(presigned_url)
+    except Exception:
+        exc = traceback.format_exc()
+        logger.warning(exc)
+        return make_response(
+            {
+                "msg": "Generation of presigned URLs failed "
+                "due to internal server error."
+            },
+            500,
+        )
 
-        return jsonify({"urls": urls})
-
-    except NoCredentialsError:
-        return jsonify({"msg": "AWS credentials not available"}), 500
-
-    except ClientError:
-        return jsonify(
-            {"msg": "Unknown error while generating presigned URLs"}
-        ), 500
+    return jsonify({"msg": msg, "urls": urls})
