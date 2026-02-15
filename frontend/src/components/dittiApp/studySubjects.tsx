@@ -32,7 +32,7 @@ export const StudySubjects: React.FC<StudySubjectsProps> = ({
 
   // Get only study subjects enrolled in the current study
   const filteredStudySubjects = studySubjects.filter((ss) =>
-    ss.dittiId.startsWith(study.dittiId)
+    new RegExp(`^${study.dittiId}\\d+$`).test(ss.dittiId)
   );
 
   const summaries: React.ReactElement[] = [];
