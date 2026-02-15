@@ -56,7 +56,7 @@ export const AudioFileUpload = () => {
 
   const fileInputRef = createRef<HTMLInputElement>();
 
-  const { dataLoading, audioFiles } = useDittiData();
+  const { dataLoading, audioFiles, refreshAudioFiles } = useDittiData();
   const { studiesLoading, studies } = useStudies();
 
   const { flashMessage } = useFlashMessages();
@@ -163,6 +163,7 @@ export const AudioFileUpload = () => {
 
       const opts = { method: "POST", data: body };
       await request("/aws/audio-file/create", opts);
+      await refreshAudioFiles();
     } catch (error) {
       const e = error as { msg: string };
       throw new AxiosError(e.msg);

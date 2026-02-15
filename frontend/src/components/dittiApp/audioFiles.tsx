@@ -78,7 +78,7 @@ export const AudioFiles = () => {
     const promises: Promise<void>[] = [];
     // Get whether user can upload audio files
     promises.push(
-      getAccess(2, "Create", "Participants")
+      getAccess(2, "Create", "Audio Files")
         .then(() => {
           setCanCreateAudioFiles(true);
         })
@@ -87,7 +87,7 @@ export const AudioFiles = () => {
         })
     );
 
-    // get whether the user can edit subjects
+    // get whether the user can delete audio files
     promises.push(
       getAccess(2, "Delete", "Audio Files")
         .then(() => {
