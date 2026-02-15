@@ -163,10 +163,16 @@ export const AudioFileUpload = () => {
 
       const opts = { method: "POST", data: body };
       await request("/aws/audio-file/create", opts);
-      await refreshAudioFiles();
     } catch (error) {
       const e = error as { msg: string };
       throw new AxiosError(e.msg);
+    } finally {
+      try {
+        await refreshAudioFiles();
+      } catch (error) {
+        // Log error but don't block
+        console.error("Error refreshing audio files:", error);
+      }
     }
   };
 
