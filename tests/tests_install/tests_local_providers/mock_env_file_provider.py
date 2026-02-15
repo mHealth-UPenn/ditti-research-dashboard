@@ -57,14 +57,6 @@ def root_env(config: ProjectConfigProvider) -> RootEnv:
             f"localhost:{Postgres.PORT.value}/{Postgres.DB.value}"
         ),
         "FLASK_APP": "run.py",
-        "APP_SYNC_HOST": "",
-        "APPSYNC_ACCESS_KEY": "",
-        "APPSYNC_SECRET_KEY": "",
-        "AWS_AUDIO_FILE_BUCKET": config.audio_bucket_name,
-        "AWS_TABLENAME_AUDIO_FILE": "",
-        "AWS_TABLENAME_AUDIO_TAP": "",
-        "AWS_TABLENAME_TAP": "",
-        "AWS_TABLENAME_USER": "",
         "COGNITO_PARTICIPANT_CLIENT_ID": config.participant_client_id,
         "COGNITO_PARTICIPANT_DOMAIN": (
             f"{config.participant_user_pool_domain}.auth."
