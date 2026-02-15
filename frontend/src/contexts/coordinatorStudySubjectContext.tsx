@@ -77,6 +77,7 @@ export function CoordinatorStudySubjectProvider({
       apis: [],
     };
     const emptyUser: UserModel = {
+      id: "",
       tapPermission: false,
       information: "",
       userPermissionId: "",
@@ -97,6 +98,7 @@ export function CoordinatorStudySubjectProvider({
 
       const res = {
         id: matchedStudySubject.id,
+        ddbId: matchedUserDetail.id,
         createdOn: matchedStudySubject.createdOn,
         dittiId: dittiId,
         studies: matchedStudySubject.studies,

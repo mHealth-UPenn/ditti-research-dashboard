@@ -22,6 +22,7 @@ import { ApiJoin, StudyJoin } from "./api";
  * @property teamEmail - The team email assigned to this user.
  */
 export interface UserModel {
+  id: string;
   tapPermission: boolean;
   information: string;
   userPermissionId: string;
@@ -84,6 +85,7 @@ export interface AccountModel {
  */
 export interface StudySubjectModel {
   id: number;
+  ddbId: string;
   createdOn: string;
   dittiId: string;
   studies: StudyJoin[];

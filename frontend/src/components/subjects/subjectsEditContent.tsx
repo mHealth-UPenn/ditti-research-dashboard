@@ -256,20 +256,21 @@ export const SubjectsEditContent = ({ app }: SubjectsEditContentProps) => {
    */
   const post = async (): Promise<void> => {
     // Prepare and make the request to the AWS backend
-    const dataAWS = {
-      tap_permission: tapPermission,
-      information: aboutSleepTemplateSelected.text,
-      user_permission_id: (study?.dittiId ?? "") + userPermissionId,
-      exp_time: dittiExpTime + "T00:00:00.000Z",
-      team_email: study?.email,
-    };
+    const dataAWS = [
+      {
+        id: studySubject?.ddbId,
+        tap_permission: tapPermission,
+        information: aboutSleepTemplateSelected.text,
+        user_permission_id: (study?.dittiId ?? "") + userPermissionId,
+        exp_time: dittiExpTime + "T00:00:00.000Z",
+        team_email: study?.email,
+      },
+    ];
 
     const bodyAWS = {
       app: app === "ditti" ? 2 : 3,
       study: study?.id ?? 0,
-      ...(dittiId
-        ? { user_permission_id: dittiId, edit: dataAWS }
-        : { create: dataAWS }),
+      ...(dittiId ? { edit: dataAWS } : { create: dataAWS }),
     };
 
     const optsAWS = { method: "POST", data: bodyAWS };

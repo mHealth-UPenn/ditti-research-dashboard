@@ -152,7 +152,7 @@ export const AudioFileUpload = () => {
         category: category,
         fileName: file.name,
         studies: selected.length ? selected : ["all"],
-        length: files[i].length,
+        length: Math.floor(files[i].length),
         title: files[i].title,
       }));
 

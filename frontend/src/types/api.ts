@@ -185,8 +185,6 @@ export interface User {
   exp_time: string;
   team_email: string;
   __typename: string;
-  _lastChangedAt: number;
-  _version: number;
   updatedAt: string;
   id: string;
 }
@@ -231,7 +229,6 @@ export interface AudioTap {
  */
 export interface AudioFile {
   id?: string;
-  _version?: number;
   fileName?: string;
   title?: string;
   category?: string;

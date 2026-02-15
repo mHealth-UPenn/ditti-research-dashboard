@@ -103,7 +103,7 @@ export const AudioFiles = () => {
     });
   }, []);
 
-  const handleDelete = async (id: string, _version: number, name: string) => {
+  const handleDelete = async (id: string, name: string) => {
     if (
       confirm(
         `Are you sure you want to delete ${name}? This action cannot be undone.`
@@ -112,7 +112,7 @@ export const AudioFiles = () => {
       try {
         await request("/aws/audio-file/delete", {
           method: "POST",
-          data: { app: 2, id, _version },
+          data: { app: 2, ids: [id] },
         });
         flashMessage(<span>Audio file deleted successfully</span>, "success");
         setLoading(true);
@@ -147,16 +147,8 @@ export const AudioFiles = () => {
    */
   const getData = (): TableData[][] => {
     const data: TableData[][] = audioFiles.map((audioFile) => {
-      const {
-        id,
-        _version,
-        fileName,
-        title,
-        category,
-        availability,
-        studies,
-        length,
-      } = audioFile;
+      const { id, fileName, title, category, availability, studies, length } =
+        audioFile;
 
       return [
         {
@@ -211,9 +203,7 @@ export const AudioFiles = () => {
                 variant="danger"
                 size="sm"
                 className="h-full grow"
-                onClick={() =>
-                  void handleDelete(id ?? "", _version ?? 0, fileName ?? "")
-                }
+                onClick={() => void handleDelete(id ?? "", fileName ?? "")}
                 disabled={!canDeleteAudioFiles}
               >
                 Delete
