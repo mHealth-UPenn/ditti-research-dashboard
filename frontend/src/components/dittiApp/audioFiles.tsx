@@ -110,13 +110,13 @@ export const AudioFiles = () => {
         `Are you sure you want to delete ${name}? This action cannot be undone.`
       )
     ) {
+      setLoading(true);
       try {
         await request("/aws/audio-file/delete", {
           method: "POST",
           data: { app: 2, ids: [id] },
         });
         flashMessage(<span>Audio file deleted successfully</span>, "success");
-        setLoading(true);
 
         refreshAudioFiles()
           .then(() => {
