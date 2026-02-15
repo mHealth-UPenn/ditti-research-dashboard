@@ -16,8 +16,6 @@ from logging.config import dictConfig
 
 from dotenv import load_dotenv
 
-from shared.lambda_secrets_provider import get_secret
-
 load_dotenv(override=True)
 
 # Set up logging before importing the app
@@ -44,6 +42,8 @@ dictConfig(
     }
 )
 logger = logging.getLogger(__name__)
+
+from shared.lambda_secrets_provider import get_secret  # noqa: E402
 
 flask_secret_payload = None
 # if the app is running in a production environment

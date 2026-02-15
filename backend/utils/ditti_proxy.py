@@ -42,17 +42,17 @@ class DittiProxyGetResponse(BaseModel):
 
 
 class DittiProxyCreateResponse(BaseModel):
-    id: str = Field(alias="id")
+    ids: list[str] = Field(alias="ids")
     message: str = Field(alias="message")
 
 
 class DittiProxyEditResponse(BaseModel):
-    id: str = Field(alias="id")
+    ids: list[str] = Field(alias="ids")
     message: str = Field(alias="message")
 
 
 class DittiProxyDeleteResponse(BaseModel):
-    id: str = Field(alias="id")
+    ids: list[str] = Field(alias="ids")
     message: str = Field(alias="message")
 
 
@@ -98,7 +98,7 @@ class DittiProxy:
         self,
         endpoint: DittiProxyEndpoint,
         *,
-        data: dict[str, Any],
+        data: list[dict[str, Any]],
         timeout: int = 20,
     ) -> DittiProxyCreateResponse:
         response = requests.put(
@@ -117,7 +117,7 @@ class DittiProxy:
         self,
         endpoint: DittiProxyEndpoint,
         *,
-        data: dict[str, Any],
+        data: list[dict[str, Any]],
         timeout: int = 20,
     ) -> DittiProxyEditResponse:
         response = requests.post(
@@ -136,13 +136,13 @@ class DittiProxy:
         self,
         endpoint: DittiProxyEndpoint,
         *,
-        delete_id: str,
+        delete_ids: list[str],
         timeout: int = 20,
     ) -> DittiProxyDeleteResponse:
         response = requests.delete(
             self._get_url(endpoint),
             headers=self._get_auth_header(),
-            json={"id": delete_id},
+            json={"ids": delete_ids},
             timeout=timeout,
         )
 
@@ -175,7 +175,9 @@ class DittiProxy:
         return {"Authorization": f"{self.client_id}:{self._get_client_secret()}"}
 
     def _handle_error(
-        self, response: dict[str, Any], e: Exception | None = None
+        self,
+        response: dict[str, Any],
+        e: Exception | None = None,
     ) -> None:
         if "message" in response:
             raise DittiProxyError(response["message"]) from e
@@ -184,7 +186,8 @@ class DittiProxy:
         raise DittiProxyError("An unknown error occurred") from e
 
     def _parse_get_response(
-        self, response: dict[str, Any]
+        self,
+        response: dict[str, Any],
     ) -> DittiProxyGetResponse:
         try:
             return DittiProxyGetResponse(**response)
@@ -192,7 +195,8 @@ class DittiProxy:
             self._handle_error(response, e)
 
     def _parse_create_response(
-        self, response: dict[str, Any]
+        self,
+        response: dict[str, Any],
     ) -> DittiProxyCreateResponse:
         try:
             return DittiProxyCreateResponse(**response)
@@ -200,7 +204,8 @@ class DittiProxy:
             self._handle_error(response, e)
 
     def _parse_edit_response(
-        self, response: dict[str, Any]
+        self,
+        response: dict[str, Any],
     ) -> DittiProxyEditResponse:
         try:
             return DittiProxyEditResponse(**response)
@@ -208,7 +213,8 @@ class DittiProxy:
             self._handle_error(response, e)
 
     def _parse_delete_response(
-        self, response: dict[str, Any]
+        self,
+        response: dict[str, Any],
     ) -> DittiProxyDeleteResponse:
         try:
             return DittiProxyDeleteResponse(**response)

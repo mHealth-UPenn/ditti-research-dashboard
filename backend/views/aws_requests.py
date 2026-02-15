@@ -11,7 +11,6 @@
 # under the License.
 
 import logging
-import os
 import traceback
 from functools import reduce
 
@@ -281,11 +280,12 @@ def get_users(account):
         information = user.get("information", "")
 
         return {
-            "tapPermission": user["tap_permission"],
+            "id": user.get("id", ""),
+            "tapPermission": user.get("tap_permission", False),
             "information": information,
-            "userPermissionId": user["user_permission_id"],
-            "expTime": user["exp_time"],
-            "teamEmail": user["team_email"],
+            "userPermissionId": user.get("user_permission_id", ""),
+            "expTime": user.get("exp_time", ""),
+            "teamEmail": user.get("team_email", ""),
         }
 
     users = None
@@ -299,6 +299,7 @@ def get_users(account):
             "user_permission",
             query="",
             attributes=[
+                "id",
                 "information",
                 "tap_permission",
                 "user_permission_id",
@@ -338,6 +339,7 @@ def get_users(account):
         "user_permission",
         query=query,
         attributes=[
+            "id",
             "information",
             "tap_permission",
             "user_permission_id",
@@ -362,13 +364,16 @@ def user_create():
     {
         app: 2,
         study: int,
-        create: {
-            exp_time: iso-formatted timestamp,
-            tap_permission: boolean,
-            team_email: str,
-            user_permission_id: str,
-            information: str
-        }
+        create: [
+            {
+                exp_time: iso-formatted timestamp,
+                tap_permission: boolean,
+                team_email: str,
+                user_permission_id: str,
+                information: str
+            },
+            ...
+        ]
     }
 
     Response syntax (200)
@@ -387,7 +392,7 @@ def user_create():
 
     try:
         data = request.json.get("create")
-        response = ditti.create("user_permission", data={"data": data})
+        response = ditti.create("user_permission", data=data)
         msg = response.message
 
     except Exception:
@@ -413,14 +418,16 @@ def user_edit():
     {
         app: 2,
         study: int,
-        user_permission_id: str,
-        edit: {
-            exp_time: iso-formatted timestamp,
-            tap_permission: boolean,
-            team_email: str,
-            user_permission_id: str,
-            information: str
-        }
+        edit: [
+            {
+                id: str,
+                exp_time: iso-formatted timestamp,
+                tap_permission: boolean,
+                team_email: str,
+                user_permission_id: str,
+                information: str
+            }
+        ]
     }
 
     All data in the request body are optional. Any attributes that are excluded
@@ -445,7 +452,7 @@ def user_edit():
 
     try:
         data = request.json.get("edit")
-        response = ditti.edit("user_permission", data={"data": data})
+        response = ditti.edit("user_permission", data=data)
         msg = response.message
 
     except Exception:
@@ -497,6 +504,7 @@ def get_audio_files():
             "audio_file",
             query="",
             attributes=[
+                "id",
                 "fileName",
                 "title",
                 "category",
@@ -556,7 +564,7 @@ def audio_file_create():
 
     try:
         data = request.json.get("create")
-        response = ditti.create("audio_file", data={"data": data})
+        response = ditti.create("audio_file", data=data)
         msg = response.message
 
     except Exception:
@@ -588,8 +596,7 @@ def audio_file_delete():
     --------------
     {
         app: 2,
-        id: str,
-        _version: int
+        ids: list[str]
     }
 
     Response syntax (200)
@@ -607,31 +614,8 @@ def audio_file_delete():
     msg = "Audio file successfully deleted."
 
     try:
-        # Get the audio file
-        response = ditti.get(
-            "audio_file",
-            query=f'id=="{request.json["id"]}"',
-            attributes=["fileName"],
-        )
-
-        # Try deleting the audio file from S3
-        try:
-            key = response.data[0]["fileName"]
-            bucket = os.getenv("AWS_AUDIO_FILE_BUCKET")
-            client = boto3.client("s3")
-            deleted = client.delete_object(Bucket=bucket, Key=key)["DeleteMarker"]
-
-            # Return an error if the audio file was not deleted
-            if not deleted:
-                msg = "Audio file not deleted"
-                return make_response({"msg": msg}, 500)
-
-        # Automatically delete entries with no fileName
-        except KeyError:
-            pass
-
-        # Delete the audio file from DynamoDB
-        response = ditti.delete("audio_file", delete_id=request.json["id"])
+        ids = request.json["ids"]
+        response = ditti.delete("audio_file", delete_ids=ids)
         msg = response.message
 
     except Exception:
