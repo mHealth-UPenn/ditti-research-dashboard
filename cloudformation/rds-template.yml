@@ -169,7 +169,7 @@ Resources:
       DatabaseName: !Ref DatabaseName
       MasterUsername: !Ref MasterUsername
       ManageMasterUserPassword: true
-      DBClusterIdentifier: !Sub ${App}-aurora-cluster
+      DBClusterIdentifier: !Sub ${App}-aurora-cluster-${Environment}
       VpcSecurityGroupIds:
         - Fn::ImportValue: !Sub ${VpcStackName}-RDSSecurityGroupId
       DBSubnetGroupName: !Ref DBSubnetGroup
@@ -189,7 +189,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-aurora-cluster
+          Value: !Sub ${App}-aurora-cluster-${Environment}
 
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -204,7 +204,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-db-subnet-group
+          Value: !Sub ${App}-db-subnet-group-${Environment}
 
   DBInstance:
     Type: AWS::RDS::DBInstance
@@ -219,7 +219,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${App}-aurora-instance
+          Value: !Sub ${App}-aurora-instance-${Environment}
 
   ################
   # DB Bootstrap #
@@ -285,7 +285,6 @@ Resources:
       LoggingConfig:
         ApplicationLogLevel: !Ref BootStrapApplicationLogLevel
         LogFormat: JSON
-        LogGroup: !Sub ${App}-db-bootstrap-lambda-log-group
         SystemLogLevel: !Ref BootStrapSystemLogLevel
       VpcConfig:
         SecurityGroupIds:
