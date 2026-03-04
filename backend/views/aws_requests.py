@@ -152,7 +152,9 @@ def get_audio_taps(account):
         app_id = request.args["app"]
         permissions = account.get_permissions(app_id)
         account.validate_ask("View", "All Studies", permissions)
-        users = ditti.get("user_permission", query="", attributes=["id"]).data
+        users = ditti.get(
+            "user_permission", query="", attributes=["id", "user_permission_id"]
+        ).data
 
     except ValueError:
         # Get users only for the studies the user as access to
@@ -166,7 +168,7 @@ def get_audio_taps(account):
         users = ditti.get(
             "user_permission",
             query=reduce(f, prefixes, ""),
-            attributes=["id"],
+            attributes=["id", "user_permission_id"],
         ).data
 
     except Exception:
